@@ -1011,7 +1011,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Доп. конечности дают доп. атаки/манипуляции — открывает НОВОЕ игровое действие (не модификатор существующего теста), нет соответствующего kind.",
         "benefit": "Механодендриты и лишние руки: до четырёх одноручных инструментов/оружий разом.",
         "source": "раса",
         "hasRating": true,
@@ -1103,7 +1103,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Активный тест T+0 в начале Хода → +X Ран при успехе — повторяющийся ход-триггерный тест с условным результатом, не пассивный модификатор; нет kind под «тест каждый ход с условным эффектом».",
         "benefit": "В начале каждого хода восстанавливает 2 Раны (не работает под Force/Sanctified/Warp Weapon).",
         "source": "раса",
         "hasRating": true,
@@ -1149,7 +1149,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Часть «свободно перемещается по вертикали» — вне формы Трудного Ландшафта, не смоделирована (только игнор Трудного Ландшафта по земле — Механика ниже).",
         "benefit": "Гравитационные подвески: свободно парит и перемещается по вертикали, игнорируя трудный ландшафт по земле.",
         "source": "раса",
         "hasRating": false,
@@ -1175,7 +1175,107 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "2JxIf88sW0dKPG5d",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "Evd7R21AlYXlnWAo",
+                  "kind": "terrainIgnore",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [
+                    "smoke",
+                    "mud",
+                    "bloodPool",
+                    "dark",
+                    "deepSnow",
+                    "thicket",
+                    "ice",
+                    "crowd",
+                    "corpses",
+                    "rubble",
+                    "earthquake"
+                  ],
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "Hovering / Парение",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1195,7 +1295,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отложенное возрождение актора через фиксированное время при условии целостности стороннего объекта (чана) — воскрешение/пересоздание актора, вне формы эффекта предмета.",
         "benefit": "Пока цел ферментный чан Ковена, погибший Гемункул возрождается через 1d5 дней в новом, улучшенном теле. Уничтожение навеки требует Выжигания Души / варп-оружия или разрушения чана.",
         "source": "раса",
         "hasRating": false,
@@ -1241,7 +1341,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Яды, созданные персонажем вручную (без авто-синтезатора) для таланта Отравитель, не требуют Избирательных попаданий. Эти яды могут использовать и другие персонажи.",
         "tier": "3",
         "requirement": "Scholastic Lore (Chymistry)+20, Trade (Chymist)+30, Poisoner",
@@ -1291,7 +1391,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Пытая Беспомощного врага 5 минут и успешно пройдя Interrogate−20(I) vs W+0, все друкхари, что могли насыщаться с жертвы, получают 2 Боли и восстанавливают 1d5 урона во все Характеристики. За каждые 3 Успеха восстанавливается ещё 1d5 Характеристики и +1 Боли. Каждый друкхари получает пользу не более W.b раз в сутки (включая усиления за доп. успехи в одной проверке).",
         "tier": 2,
         "requirement": "Нет",
@@ -1341,7 +1441,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Нанося Избирательное попадание оружием со свойством Toxic или заряженным ядом, цель должна перебрасывать успешные тесты против этого яда, а персонаж может бросать на урон от яда 2 раза, выбирая лучший.",
         "tier": 2,
         "requirement": "Medicae+10, Trade (Chymist)+20",
@@ -1391,7 +1491,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
         "benefit": "В начале Боя персонаж может нанести себе до 3 единиц непоглощаемого урона Свободным Действием и, будучи в броне друкхари, получить столько же Очков Боли. Эти Очки Боли сгорают в конце боя; эти Раны лечатся только естественным лечением.",
         "tier": 1,
         "requirement": "T 35, Armour Training (Друкхарийская Броня)",
@@ -1441,7 +1541,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
         "benefit": "Атаки примитивным оружием, безоружные атаки и атаки естественным оружием получают свойство Proven (3) против паникующих, обездвиженных, сбитых с ног и бессознательных целей.",
         "tier": 1,
         "requirement": "Нет",
@@ -1491,7 +1591,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Избирательные Атаки по противникам, уже имеющим Отравление, Кровотечение, Crippling или Piercing, и накладывающие его повторно, дают +1 к уровню состояния. Не чаще 1 раза в Раунд.",
         "tier": 3,
         "requirement": "Нет",
@@ -1564,9 +1664,60 @@
           "speedMod": 0
         }
       },
-      "effects": [],
+      "effects": [
+        {
+          "name": "Cruel Desire / Жестокое Желание",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.max",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "LjiOrkmm35N92Lc3",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "Реакция общая (движок не различает «только на Таланты Боли») — ограничение назначения соблюдается за столом.",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!escCRYWiHJvKMxv3.4Mk37fa7qqzoxi8F.LjiOrkmm35N92Lc3"
+        }
+      ],
       "sort": 0,
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1591,7 +1742,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Максимальный запас Боли персонажа увеличен на W.b. Этот талант можно брать до 3 раз.",
         "tier": 3,
         "requirement": "T 40, W 40",
@@ -1641,7 +1792,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж может, помимо Реакции, тратить Полудействия для поглощения Боли.",
         "tier": 1,
         "requirement": "Нет",
@@ -1714,9 +1865,60 @@
           "speedMod": 0
         }
       },
-      "effects": [],
+      "effects": [
+        {
+          "name": "Step Aside / Шаг в Сторону",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.defenseMax",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "zh5t4ZTBvq3DaCg0",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!escCRYWiHJvKMxv3.IPInxCDAzriV4G7M.zh5t4ZTBvq3DaCg0"
+        }
+      ],
       "sort": 0,
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1741,7 +1943,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте без штрафов.",
         "source": "раса",
         "hasRating": false,
@@ -1787,7 +1989,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия (10) — штраф атакующим от Ag.b носителя, канала нет.",
         "benefit": "Атакующим по нему −A.b к попаданию.",
         "source": "раса",
         "hasRating": true,
@@ -1945,13 +2147,64 @@
         }
       },
       "_id": "ZFUa5Sqi64gcgAhz",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Druchiiten / Друкхарийское Тело",
+          "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.max",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "Ug8y5perXZDWUwwh",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!escCRYWiHJvKMxv3.ZFUa5Sqi64gcgAhz.Ug8y5perXZDWUwwh"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1971,7 +2224,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Меняет Psyniscience на враждебный Навык (категория цены) + условная Реакция, впитывающая чужую боль — оба вне формы плоского testMod.",
         "benefit": "Копит Очки Боли (макс W.b) с крит-эффектов боли и болезненных смертей в радиусе P м (1/раунд с цели). Тратит их как Очки Бесчестья по строке таблицы. Развивает Psyniscience как враждебный навык (видит лишь тяжелораненых/в страхе).",
         "source": "раса",
         "hasRating": false,
@@ -2017,7 +2270,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отменяет Очки Судьбы/Бесчестья целиком (нет Покровительства) + подменяет их источник на Очки Боли для конкретных Талантов — переключение целой ресурсной подсистемы персонажа, не число.",
         "benefit": "Нет Очков Судьбы, Очков Бесчестья и Покровительства. Для талантов, требующих ОБ, тратит Очки Боли по уровню таланта. Смерть окончательна (кроме воскрешения Гемункулами — «Цена Бессмертия»).",
         "source": "раса",
         "hasRating": false,

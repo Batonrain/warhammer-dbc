@@ -522,7 +522,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отдельный режим движения «Полёт» со скоростью SPD×X, игнорируя Размер — как у Burrower/Hoverer, effects.speedMod — только аддитивная поправка обычной скорости, не новый тип движения/множитель.",
         "benefit": "Полёт со скоростью 4 (×2/×3/×6).",
         "source": "демон",
         "hasRating": true,
@@ -568,7 +568,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Переключает состояние Incorporeal (другой Черты) полудействием — общий каркас «переключаемая способность» (toggle-abilities.mjs) описан в плане [[doombc-buff-choice-mechanic-plan]], но ещё не реализован для произвольных пар Черт.",
         "benefit": "Может проходить сквозь твёрдую материю; поражается только силовым/варп/психическим.",
         "source": "демон",
         "hasRating": false,
@@ -614,7 +614,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума; не Обездвиживается обычным.",
         "source": "демон",
         "hasRating": false,
@@ -660,7 +660,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
         "benefit": "Тесты Нестабильности при уроне (или при любом действии при отриц. Истончении).",
         "source": "демон",
         "hasRating": false,
@@ -706,7 +706,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит в Варпе, сквозь Завесу, души и психическую активность.",
         "source": "демон",
         "hasRating": false,
@@ -752,7 +752,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Смертельное естественное оружие (Когти).",
         "source": "демон",
         "hasRating": false,
@@ -908,13 +908,64 @@
         }
       },
       "_id": "0i3To8R9wi7qBXAQ",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Paranoia / Паранойя (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 2,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "MVqI0DMLap55miy5",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!0jnCKB7qN7kcflqa.0i3To8R9wi7qBXAQ.MVqI0DMLap55miy5"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -934,7 +985,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Преимущество на пассивную Awareness.",
         "tier": 1,
         "requirement": "",
@@ -981,7 +1032,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Имитирует чужой голос.",
         "tier": 1,
         "requirement": "",
@@ -1028,7 +1079,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Вспоминает точные детали без теста.",
         "tier": 1,
         "requirement": "",
@@ -1075,7 +1126,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+10 на общение с этой фракцией.",
         "tier": 1,
         "requirement": "",
@@ -1122,7 +1173,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура на не-акторов (толпу 100+ человек) с условием стабилизации таймера изгнания — нет канала «присутствие толпы поблизости».",
         "benefit": "В 200 м от группы 100+ людей стабилизируется (стоп отсчёта изгнания) и усиливает их эмоции. Орда: ×2 радиус/эффект за каждые 5 Магнитуды.",
         "tier": 3,
         "requirement": "",

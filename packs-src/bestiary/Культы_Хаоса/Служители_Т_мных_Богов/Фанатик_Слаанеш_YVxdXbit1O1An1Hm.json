@@ -672,7 +672,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
         "tier": 1,
         "requirement": "A 30",
@@ -747,7 +747,26 @@
       },
       "effects": [],
       "sort": 0,
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "9tKcR2wYbNq8mXvL",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "3jHpF6sVdE0xC4bQ",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "technique.swiftAttack",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,

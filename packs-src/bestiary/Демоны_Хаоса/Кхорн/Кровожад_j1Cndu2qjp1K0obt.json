@@ -498,7 +498,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Стакающийся боевой бонус (+2 до макс. +8), триггерящийся убийством/изгнанием — нужен hook на событие «убийство/изгнание демоном», пассивного поля для условного триггера нет.",
         "benefit": "Иммунитет к Страху, Пиннингу, психосилам страха; жажда убийства.",
         "source": "демон",
         "hasRating": false,
@@ -845,7 +845,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Грант призываемого демонического оружия — новый предмет-оружие + механика призыва/отзыва, аналогично Дарам Одержимости; создание контента вне текущего прохода.",
         "benefit": "Может призывать/развеивать демоническое оружие.",
         "source": "демон",
         "hasRating": false,
@@ -891,7 +891,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура-штраф на ВРАГОВ в радиусе (−X к тестам W) — эффект на посторонних акторов, не на носителя; движок Ауры (module/regions/auras.mjs) поддерживает баффы союзникам/себе, не штрафы врагам в общем случае — не проверено без отдельного расследования.",
         "benefit": "Аура присутствия демона (20 м).",
         "source": "демон",
         "hasRating": false,
@@ -937,7 +937,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте.",
         "source": "демон",
         "hasRating": false,
@@ -983,7 +983,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«+X к SPD» рейтинг-зависим (аналог Unnatural Characteristic — заполняется на дропнутой копии), а «+5×X на Группирование» целится в узкое под-действие Athletics (не весь Навык) — нет такого скоупа testMod.",
         "benefit": "Пальцеходящие ноги: +2 к передвижению.",
         "source": "демон",
         "hasRating": false,
@@ -1029,7 +1029,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
         "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
         "source": "демон",
         "hasRating": false,
@@ -1121,7 +1121,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отдельный режим движения «Полёт» со скоростью SPD×X, игнорируя Размер — как у Burrower/Hoverer, effects.speedMod — только аддитивная поправка обычной скорости, не новый тип движения/множитель.",
         "benefit": "Полёт со скоростью 15.",
         "source": "демон",
         "hasRating": true,
@@ -1167,7 +1167,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Штраф атакующим по цели (−Ag.b) — динамическая величина от Бонуса Ловкости конкретного носителя, применяется к ЧУЖИМ броскам атаки по нему; нет канала «модификатор чужой атаки от Бонуса моей характеристики».",
         "benefit": "+10 к Уклонению.",
         "source": "демон",
         "hasRating": false,
@@ -1213,7 +1213,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Круговой сенсорный обзор на дистанции X м — сенсорная способность без правила восприятия/направленного зрения в движке (см. также Sonar Sense).",
         "benefit": "Сверхчутьё на 8 м.",
         "source": "демон",
         "hasRating": false,
@@ -1259,7 +1259,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
         "source": "демон",
         "hasRating": false,
@@ -1305,7 +1305,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
         "benefit": "Тесты Нестабильности при уроне.",
         "source": "демон",
         "hasRating": false,
@@ -1351,7 +1351,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит сквозь Завесу и души.",
         "source": "демон",
         "hasRating": false,
@@ -1397,7 +1397,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Рога, Когти×2, Копыта, Крылья×2, Укус.",
         "source": "демон",
         "hasRating": false,
@@ -2216,7 +2216,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 штраф за 2 оружия; нет штрафа за левую руку.",
         "tier": 1,
         "requirement": "",
@@ -2263,7 +2263,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+10 к атаке с Натиска.",
         "tier": 1,
         "requirement": "",
@@ -2310,7 +2310,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Переброс попаданий клинковым оружием.",
         "tier": 1,
         "requirement": "",
@@ -2357,7 +2357,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Больше контроля в Ярости.",
         "tier": 1,
         "requirement": "",
@@ -2425,13 +2425,64 @@
         }
       },
       "_id": "avI2xME5pr2ejKyw",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Combat Formation / Боевое Построение (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 1,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "DHyMH0dkfz9Rrz47",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!j1Cndu2qjp1K0obt.avI2xME5pr2ejKyw.DHyMH0dkfz9Rrz47"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -2451,7 +2502,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+½ WS.b к рукопашному урону.",
         "tier": 1,
         "requirement": "",
@@ -2498,7 +2549,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
         "benefit": "Улучшенная трата ОБ на ненавистных врагов.",
         "tier": 1,
         "requirement": "",
@@ -2545,7 +2596,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Может войти в Ярость: +10 WS, S, W, −20 BS, I, F.",
         "tier": 1,
         "requirement": "",
@@ -2592,7 +2643,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Переброс командования с передовой.",
         "tier": 1,
         "requirement": "",
@@ -2639,7 +2690,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
         "benefit": "Доп. атака за 1 Реакцию после Полной Атаки.",
         "tier": 1,
         "requirement": "",
@@ -2686,7 +2737,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+½ WS.b к Pen и Concussive для Полной атаки.",
         "tier": 1,
         "requirement": "",
@@ -2733,7 +2784,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+10 на рукопашные атаки по всем.",
         "tier": 1,
         "requirement": "",
@@ -2780,7 +2831,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Вызывает ненависть у толпы слушателей.",
         "tier": 1,
         "requirement": "",
@@ -2827,7 +2878,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
         "benefit": "1 ОБ, чтобы сделать Полную атаку неуклоняемой.",
         "tier": 1,
         "requirement": "",
@@ -2901,7 +2952,26 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "7wLpQ9tXaN3kR5mZ",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "1yGdM8sVfE2xB6qA",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "technique.lightningAttack",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -2921,7 +2991,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "S+0 vs S+0, чтобы пробить Парирование.",
         "tier": 1,
         "requirement": "",
@@ -2968,7 +3038,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Натиск со скоростью Бега.",
         "tier": 1,
         "requirement": "",
@@ -3015,7 +3085,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Полная атака с Натиска.",
         "tier": 1,
         "requirement": "",
@@ -3062,7 +3132,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "W+0, чтобы выбирать цель в Ярости.",
         "tier": 1,
         "requirement": "",
@@ -3109,7 +3179,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "1 ОБ, чтобы аннулировать психосилы на W+0.",
         "tier": 1,
         "requirement": "",
@@ -3177,13 +3247,64 @@
         }
       },
       "_id": "KpI7hCEVL0Y9yxFB",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Step Aside / Шаг в Сторону",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.defenseMax",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "ANkGwim39HJZ84WI",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!j1Cndu2qjp1K0obt.KpI7hCEVL0Y9yxFB.ANkGwim39HJZ84WI"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -3230,7 +3351,26 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "9tKcR2wYbNq8mXvL",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "3jHpF6sVdE0xC4bQ",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "technique.swiftAttack",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -3250,7 +3390,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же концепт, что канонический «Two Weapon Wielder / Два Оружия» (нотами не решён — там же генерик-штраф без фиксированного скилла), но здесь текст ещё и без специализации Melee/Ranged/Both — тот же повод, конкретной цели теста нет.",
         "benefit": "Бой двумя оружиями со штрафом −20.",
         "tier": 1,
         "requirement": "",
@@ -3297,7 +3437,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура 30 м, принуждающая ДРУГИХ акторов проходить тест Воли или входить в Ярость — эффект на чужих акторов по триггеру урона, не self-only.",
         "benefit": "Все в 30м при уроне — W+0 или Ярость; союзники входят/Избегают в Ярости свободно.",
         "tier": 3,
         "requirement": "",
@@ -3344,7 +3484,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Раз в Ход разрешает применить рукопашный приём с любой базой — снятие ограничения манёвра, не число.",
         "benefit": "Раз в Ход рукопашный приём с любой базой.",
         "tier": 3,
         "requirement": "",
@@ -3391,7 +3531,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Меняет расчёт встречного теста против конкретно Unnatural Strength у ПРОТИВНИКА — правило встречного теста, не собственный модификатор.",
         "benefit": "Unnatural S врага вдвое меньше — не считается при «авто-ничьей».",
         "tier": 3,
         "requirement": "",
@@ -3438,7 +3578,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тратит рейтинг Unnatural S как ресурс (ОБ) с условием восполнения по чужой смерти в радиусе — ресурсная механика, не пассивный бонус.",
         "benefit": "Тратит рейтинг Unnatural S как ОБ; восстанавливает 1 при смерти существа в 30м.",
         "tier": 3,
         "requirement": "",
@@ -3485,7 +3625,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Даёт распознавание конкретной категории иллюзий — «видит сквозь X» не имеет общего числового канала (аналогично Warp Sight/Dark Sight у Трейтов — тоже notes-only).",
         "benefit": "Распознаёт и видит сквозь колдовские иллюзии.",
         "tier": 3,
         "requirement": "",
@@ -3532,7 +3672,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Подменяет характеристику для двух конкретных типов командных тестов (I вместо F, WS вместо F) — подмена характеристики теста по условию, не плоский модификатор.",
         "benefit": "I вместо F для командования; WS вместо F для команд на рукопашные атаки.",
         "tier": 3,
         "requirement": "",

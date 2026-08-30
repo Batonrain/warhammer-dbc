@@ -819,7 +819,99 @@
       },
       "effects": [],
       "sort": 0,
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "8FXI8xJgdQLcQWRU",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "sgUqxvgEy3sxLF2L",
+                  "kind": "capability",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [],
+                  "rerollScope": "all",
+                  "rerollChar": "ag",
+                  "rerollMode": "keepBest",
+                  "modScope": "all",
+                  "modValueMode": "flat",
+                  "modCharBonus": "inf",
+                  "rerollWho": "self",
+                  "capabilityKey": "weapon.trained.drukhari",
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -844,7 +936,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж не получает штрафов к стрельбе за дальнюю и экстремальную дистанцию.",
         "tier": 2,
         "requirement": "BS 35, I 35",
@@ -894,7 +986,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж уменьшает штраф на стрелковые атаки за Избирательные атаки или Размер цели ниже 0 на 10.",
         "tier": 1,
         "requirement": "BS 30",
@@ -944,7 +1036,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж добавляет +½BS.b (окр.▲) ко всему своему стрелковому урону, кроме урона по площади (Blast/Spray); прямые попадания по цели в центре шаблона Blast получают бонус.",
         "tier": 3,
         "requirement": "BS 40",
@@ -994,7 +1086,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж бросает на Инициативу 2 раза и выбирает больший результат.",
         "tier": 1,
         "requirement": "Нет",
@@ -1044,7 +1136,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект тратит/даёт игровой ресурс (Очки Бесчестия/Судьбы/Боли/Когниции/Реакцию) на разовое действие — не тестовый модификатор Навыка/Характеристики.",
         "benefit": "Атаки примитивным оружием, безоружные атаки и атаки естественным оружием получают свойство Proven (3) против паникующих, обездвиженных, сбитых с ног и бессознательных целей.",
         "tier": 1,
         "requirement": "Нет",
@@ -1094,7 +1186,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "В ближнем бою друкхари получает Боль даже с противников, защищённых от боли (Сслиты, Астартес, Орки, Скитарии и т.д.), без сравнения характеристик.",
         "tier": 1,
         "requirement": "Нет",
@@ -1144,7 +1236,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте без штрафов.",
         "source": "раса",
         "hasRating": false,
@@ -1190,7 +1282,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия (10) — штраф атакующим от Ag.b носителя, канала нет.",
         "benefit": "Атакующим по нему −A.b к попаданию.",
         "source": "раса",
         "hasRating": true,
@@ -1348,13 +1440,64 @@
         }
       },
       "_id": "y4ArerYZIBwjuTrb",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Druchiiten / Друкхарийское Тело",
+          "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.max",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "iwFERhQuJ966UTe8",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!Xv0ZkH4WKbRiNxkB.y4ArerYZIBwjuTrb.iwFERhQuJ966UTe8"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1374,7 +1517,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Меняет Psyniscience на враждебный Навык (категория цены) + условная Реакция, впитывающая чужую боль — оба вне формы плоского testMod.",
         "benefit": "Копит Очки Боли (макс W.b) с крит-эффектов боли и болезненных смертей в радиусе P м (1/раунд с цели). Тратит их как Очки Бесчестья по строке таблицы. Развивает Psyniscience как враждебный навык (видит лишь тяжелораненых/в страхе).",
         "source": "раса",
         "hasRating": false,
@@ -1420,7 +1563,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отменяет Очки Судьбы/Бесчестья целиком (нет Покровительства) + подменяет их источник на Очки Боли для конкретных Талантов — переключение целой ресурсной подсистемы персонажа, не число.",
         "benefit": "Нет Очков Судьбы, Очков Бесчестья и Покровительства. Для талантов, требующих ОБ, тратит Очки Боли по уровню таланта. Смерть окончательна (кроме воскрешения Гемункулами — «Цена Бессмертия»).",
         "source": "раса",
         "hasRating": false,

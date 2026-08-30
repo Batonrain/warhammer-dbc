@@ -621,7 +621,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Грант естественного оружия с рейтингом (профиль зависит от X) — требует отдельного предмета-оружия через kind:\"integralAttack\" (паттерн Daemonic Breath/Дары Одержимости), это создание нового контента, не входит в точечный проход по текстам Черт.",
         "benefit": "Естественная атака укусом.",
         "source": "демон",
         "hasRating": false,
@@ -667,7 +667,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Грант призываемого демонического оружия — новый предмет-оружие + механика призыва/отзыва, аналогично Дарам Одержимости; создание контента вне текущего прохода.",
         "benefit": "Может призывать/развеивать демоническое оружие.",
         "source": "демон",
         "hasRating": false,
@@ -713,7 +713,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура-штраф на ВРАГОВ в радиусе (−X к тестам W) — эффект на посторонних акторов, не на носителя; движок Ауры (module/regions/auras.mjs) поддерживает баффы союзникам/себе, не штрафы врагам в общем случае — не проверено без отдельного расследования.",
         "benefit": "Аура присутствия демона.",
         "source": "демон",
         "hasRating": false,
@@ -759,7 +759,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте.",
         "source": "демон",
         "hasRating": false,
@@ -805,7 +805,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
         "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
         "source": "демон",
         "hasRating": false,
@@ -897,7 +897,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Штраф атакующим по цели (−Ag.b) — динамическая величина от Бонуса Ловкости конкретного носителя, применяется к ЧУЖИМ броскам атаки по нему; нет канала «модификатор чужой атаки от Бонуса моей характеристики».",
         "benefit": "+10 к Уклонению.",
         "source": "демон",
         "hasRating": false,
@@ -943,7 +943,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Даёт статус Псайкера (доступ к манифестации сил, свои поля PR) — управляется через actor.system.psyker и module/rules/psyker.mjs напрямую, не через словарь kind Механики Черты; сама по себе Черта-маркер без числового параметра для переноса.",
         "benefit": "Демонический псайкер, Сила Псионики 6.",
         "source": "демон",
         "hasRating": true,
@@ -989,7 +989,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Активируемый щит-купол с рейтингом поглощения и ручным вкл/выкл — новая механика активного щита (отдельная от брони/Shield-предметов), нет готового канала.",
         "benefit": "Колдовской щит-купол 1-35, вкл/выкл свободным действием.",
         "source": "демон",
         "hasRating": false,
@@ -1035,7 +1035,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
         "source": "демон",
         "hasRating": false,
@@ -1081,7 +1081,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
         "benefit": "Тесты Нестабильности при уроне.",
         "source": "демон",
         "hasRating": false,
@@ -1127,7 +1127,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит сквозь Завесу и души.",
         "source": "демон",
         "hasRating": false,
@@ -1173,7 +1173,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Смертельное естественное оружие.",
         "source": "демон",
         "hasRating": false,
@@ -1678,7 +1678,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Использует P.b для Init.",
         "tier": 1,
         "requirement": "",
@@ -1725,7 +1725,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Стрельба во время выхода из рукопашной.",
         "tier": 1,
         "requirement": "",
@@ -1772,7 +1772,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+2 Отрицательных Ран в стрельбе.",
         "tier": 1,
         "requirement": "",
@@ -1819,7 +1819,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Бросать два раза на феномен.",
         "tier": 1,
         "requirement": "",
@@ -1866,7 +1866,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Стрельба на полном ходу.",
         "tier": 1,
         "requirement": "",
@@ -1913,7 +1913,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Медитировать для усиления психосил.",
         "tier": 1,
         "requirement": "",
@@ -1960,7 +1960,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Имитация чужого голоса.",
         "tier": 1,
         "requirement": "",
@@ -2028,13 +2028,64 @@
         }
       },
       "_id": "ZPThsMQxPDYzbas6",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Paranoia / Паранойя (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 2,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "q8mwoDTr9tbepzAK",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!v1SP264vr6sA5A8M.ZPThsMQxPDYzbas6.q8mwoDTr9tbepzAK"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -2054,7 +2105,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Уничтожить гранаты выстрелом в полёте.",
         "tier": 1,
         "requirement": "",
@@ -2122,13 +2173,64 @@
         }
       },
       "_id": "ROqXeqgSzW0U5AQU",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Step Aside / Шаг в Сторону",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.defenseMax",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "8DvWoSJ3QCLPZrCy",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!v1SP264vr6sA5A8M.ROqXeqgSzW0U5AQU.8DvWoSJ3QCLPZrCy"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -2148,7 +2250,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Нет штрафа за стрельбу в рукопашную.",
         "tier": 1,
         "requirement": "",
@@ -2195,7 +2297,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+30 на трюкаческие выстрелы.",
         "tier": 1,
         "requirement": "",
@@ -2242,7 +2344,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Одна атакующая сила игнорирует штрафы к тPR.",
         "tier": 1,
         "requirement": "",
@@ -2289,7 +2391,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Psyniscience как свободное действие и реакция.",
         "tier": 1,
         "requirement": "",
@@ -2336,7 +2438,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Переключаемая раз в Ход аура на шесть разных граней — сводный текст-заголовок, отдельные грани лежат отдельными Чертами.",
         "benefit": "Мутация / Перемены / Преломление / Призыв / Разрушение / Трансмогрификация (переключение раз в Ход).",
         "tier": 3,
         "requirement": "",
@@ -2390,7 +2492,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Бонус к рейтингу щита с исключением одного конкретного типа щита — условная надбавка к отдельной подсистеме (чародейские щиты), не общий testMod.",
         "benefit": "Чародейский щит (кроме Sorcerous Barrier) получает +15 к рейтингу.",
         "tier": 3,
         "requirement": "",
@@ -2437,7 +2539,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Раз за сцену по триггеру урона ниже 0 Ран призывает нового актора и переносит на него урон — создание существа + перенаправление урона, вне формы эффекта предмета.",
         "benefit": "Раз за сцену при уроне ниже 0 Ран — призывает Розового Ужаса и переносит на него урон.",
         "tier": 3,
         "requirement": "",
@@ -2484,7 +2586,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Текст-ссылка на другого монстра («как у Ужасов»).",
         "benefit": "Как у Ужасов.",
         "tier": 3,
         "requirement": "",

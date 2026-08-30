@@ -888,13 +888,99 @@
         }
       },
       "_id": "pQ55rQE7T9qhSDjz",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Machine / Машина (X) (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.armorBonus.head",
+                "type": "add",
+                "value": 2,
+                "phase": "initial",
+                "priority": 0
+              },
+              {
+                "key": "system.armorBonus.body",
+                "type": "add",
+                "value": 2,
+                "phase": "initial",
+                "priority": 0
+              },
+              {
+                "key": "system.armorBonus.leftArm",
+                "type": "add",
+                "value": 2,
+                "phase": "initial",
+                "priority": 0
+              },
+              {
+                "key": "system.armorBonus.rightArm",
+                "type": "add",
+                "value": 2,
+                "phase": "initial",
+                "priority": 0
+              },
+              {
+                "key": "system.armorBonus.leftLeg",
+                "type": "add",
+                "value": 2,
+                "phase": "initial",
+                "priority": 0
+              },
+              {
+                "key": "system.armorBonus.rightLeg",
+                "type": "add",
+                "value": 2,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "OYacdBxuA5SGSNkN",
+          "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!b9MOXdoNAHNzy45x.pQ55rQE7T9qhSDjz.OYacdBxuA5SGSNkN"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -914,7 +1000,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Бонус урона привязан конкретно к Натиску/Верховой атаке — не найден read-хук в module/combat для условного «только при Натиске» урона от Черты (в отличие от безусловного weaponBuff Талантов, см. wdbc-g53k).",
         "benefit": "При атаке в Натиске: +2 к урону рукопашной атаки.",
         "source": "раса",
         "hasRating": true,
@@ -960,7 +1046,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "За полное действие персонаж входит в боевую ярость: +10 к WS, S и W; −20 на все тесты BS, I и F; игнорирует −10 от Усталости; не может быть Оглушён; авто-проходит тесты Морали. Обязан двигаться к ближайшему видимому врагу и атаковать его в рукопашной (если это не суицид), не может Избегать и общаться иначе, чем воплями, авто-проваливая социальные тесты кроме Запугивания. Псайкеры не могут манифестировать психосилы в Ярости и в начале каждого Хода проходят W+0, чтобы не прекратить поддержание. Выход из Ярости — тест W+0 (1 попытка/Ход) или потеря сознания; после боя +10 за каждый Ход. Однажды выйдя, нельзя войти снова до конца боя, кроме как наркотиками/психосилами.",
         "tier": 1,
         "requirement": "Нет",
@@ -1010,7 +1096,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж получает ещё +10 на рукопашные приёмы при Натиске.",
         "tier": 1,
         "requirement": "Нет",
@@ -1060,7 +1146,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Получив эффект Оглушения, персонаж может пройти тест на Т+0, чтобы проигнорировать его.",
         "tier": 1,
         "requirement": "T 40",
@@ -1135,7 +1221,26 @@
       },
       "effects": [],
       "sort": 0,
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "T3vQ7bXaqzR2mNsK",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "Wm4H9cLpXtY7jVfB",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "unarmed.warriorProfile",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1160,7 +1265,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Персонаж автоматически проходит тесты Морали, но, чтобы выйти из боя или отказаться от драки, должен пройти W+0.",
         "tier": 3,
         "requirement": "Nerves of Steel",
@@ -1210,7 +1315,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте без штрафов.",
         "source": "раса",
         "hasRating": false,
@@ -1256,7 +1361,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия (10) — штраф атакующим от Ag.b носителя, канала нет.",
         "benefit": "Атакующим по нему −A.b к попаданию.",
         "source": "раса",
         "hasRating": true,
@@ -1414,13 +1519,64 @@
         }
       },
       "_id": "MhkMAHkuaVtGr4Ks",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Druchiiten / Друкхарийское Тело",
+          "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.max",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "jMMVincVQHNGsJtl",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!b9MOXdoNAHNzy45x.MhkMAHkuaVtGr4Ks.jMMVincVQHNGsJtl"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1440,7 +1596,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Меняет Psyniscience на враждебный Навык (категория цены) + условная Реакция, впитывающая чужую боль — оба вне формы плоского testMod.",
         "benefit": "Копит Очки Боли (макс W.b) с крит-эффектов боли и болезненных смертей в радиусе P м (1/раунд с цели). Тратит их как Очки Бесчестья по строке таблицы. Развивает Psyniscience как враждебный навык (видит лишь тяжелораненых/в страхе).",
         "source": "раса",
         "hasRating": false,
@@ -1486,7 +1642,7 @@
       "img": "icons/svg/item-bag.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отменяет Очки Судьбы/Бесчестья целиком (нет Покровительства) + подменяет их источник на Очки Боли для конкретных Талантов — переключение целой ресурсной подсистемы персонажа, не число.",
         "benefit": "Нет Очков Судьбы, Очков Бесчестья и Покровительства. Для талантов, требующих ОБ, тратит Очки Боли по уровню таланта. Смерть окончательна (кроме воскрешения Гемункулами — «Цена Бессмертия»).",
         "source": "раса",
         "hasRating": false,
