@@ -49,6 +49,29 @@ describe("значение от своей характеристики", () => 
   });
 });
 
+describe("значение от собственного Пси-Рейтинга (wdbc-jw81 — «+PR» психосил/техночудес)", () => {
+  const rule = { id: "r", label: "Сила", when: {}, effects: [
+    { kind: "rollBonus", target: "char:s", valueFrom: { selfCharBonus: "pr" } }
+  ] };
+
+  it("берётся текущий (уже уменьшенный поддержанием) Пси-Рейтинг актора", () => {
+    const actor = { system: { psyker: { currentRating: 4 } } };
+    expect(rollModsFromRules([rule], { kind: "skill", char: "s", actor })[0].value).toBe(4);
+  });
+
+  it("multiplier масштабирует («+2×PR»)", () => {
+    const ruleX2 = { id: "r2", label: "Сила×2", when: {}, effects: [
+      { kind: "rollBonus", target: "char:s", valueFrom: { selfCharBonus: "pr", multiplier: 2 } }
+    ] };
+    const actor = { system: { psyker: { currentRating: 3 } } };
+    expect(rollModsFromRules([ruleX2], { kind: "skill", char: "s", actor })[0].value).toBe(6);
+  });
+
+  it("нет актора или psyker — ноль, без падения посреди броска", () => {
+    expect(rollModsFromRules([rule], { kind: "skill", char: "s" })[0].value).toBe(0);
+  });
+});
+
 describe("запись Конструктора «Модификатор теста»", () => {
   it("плоское число превращается в rollBonus нужной области", () => {
     const rules = rulesFromItemMechanics([item("Локус Цепей", [testMod()])]);
@@ -67,6 +90,22 @@ describe("запись Конструктора «Модификатор тес�
   it("области берутся те же, что у Переброса", () => {
     const rules = rulesFromItemMechanics([item("И", [testMod({ modScope: "char", rerollChar: "wp" })])]);
     expect(rules[0].effects[0].target).toBe("char:wp");
+  });
+
+  it("modCharBonusMultiplier пишет multiplier в valueFrom («+2×PR», wdbc-jw81)", () => {
+    const rules = rulesFromItemMechanics([item("Внутренние Часы", [
+      testMod({ modValueMode: "charBonus", modCharBonus: "pr", modCharBonusMultiplier: 2 })
+    ])]);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "pr", multiplier: 2 } }
+    ]);
+  });
+
+  it("modCharBonusMultiplier отсутствующий/1 не добавляет multiplier (как раньше)", () => {
+    const rules = rulesFromItemMechanics([item("Локус Цепей", [
+      testMod({ modValueMode: "charBonus", modCharBonus: "inf", modCharBonusMultiplier: 1 })
+    ])]);
+    expect(rules[0].effects[0].valueFrom).toEqual({ selfCharBonus: "inf" });
   });
 
   it("незаполненная область отбрасывается с жалобой", () => {

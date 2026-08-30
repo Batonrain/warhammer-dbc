@@ -97,9 +97,14 @@ function ruleFromEntry(item, entry) {
     if (target === null) return null;
     // Два режима значения: плоское число и «бонус своей характеристики».
     // Второй нужен там, где числа в данных быть не может: «+Inf герольда»
-    // у каждого Герольда своё (Локус Цепей).
+    // у каждого Герольда своё (Локус Цепей). modCharBonusMultiplier — для
+    // «+2×PR»/«+5×PR» (wdbc-jw81, Психосилы) — множитель selfCharBonus,
+    // читаемый effectValue() (module/rules/resolve-test.mjs); опущен/1 — как раньше.
     const effect = entry.modValueMode === "charBonus"
-      ? { kind: "rollBonus", target, valueFrom: { selfCharBonus: entry.modCharBonus || "inf" } }
+      ? { kind: "rollBonus", target, valueFrom: {
+          selfCharBonus: entry.modCharBonus || "inf",
+          ...(Number(entry.modCharBonusMultiplier) > 1 ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})
+        } }
       : { kind: "rollBonus", target, value: Number(entry.value) || 0 };
     return { id, label: entry.label || item.name, when: {}, effects: [effect] };
   }

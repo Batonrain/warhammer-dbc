@@ -5,7 +5,7 @@
   "folder": "W1zV82p7uTbeFAch",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Применена только «+5×PR на тесты P». Unnatural Senses (PR×2) и опциональное усиление одного чувства (Dark Sight/Sonar Sense/и т.д.) не смоделированы — выбор одного из пяти вариантов, вне testMod.",
     "cost": 150,
     "discipline": "biomancy",
     "subtype": "Метаморфозы",
@@ -57,7 +57,25 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "per",
+              "modValueMode": "charBonus",
+              "modCharBonus": "pr",
+              "modCharBonusMultiplier": 5,
+              "label": "Усиленные Чувства"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {
