@@ -193,7 +193,7 @@ import { MINION_TYPES, minionsOf, loyaltyAfterChange } from "./minions.mjs";
 import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics.mjs";
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
 import { dynamicAptKind }                     from "../constants/advancement.mjs";
-import { masteryTargets, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
+import { masteryTargets, masteryTarget, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
@@ -215,7 +215,7 @@ import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec } from "../rules/mech-when.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -577,6 +577,10 @@ export function describeMechEntry(entry) {
       return `Талант: ${entry.sourceName || "?"}${spec}${rating}`;
     }
     case "skill": {
+      if (entry.specKey === "__choice_any__") {
+        const rankLabel = SKILL_RANKS[entry.rank]?.label || entry.rank;
+        return `Навык: любой (на выбор актора) — ${rankLabel}${entry.grantsMastery ? " + Талант Mastery" : ""}`;
+      }
       if (!entry.skillKey) return "Навык: (не выбран)";
       const def = entry.skillScope === "group" ? GROUP_SKILLS_DEF[entry.skillKey] : SKILLS_DEF[entry.skillKey];
       const label = def?.label || entry.skillKey;
@@ -746,6 +750,10 @@ function isEntryComplete(e) {
     case "trait": case "talent":
       return !!e.sourceUuid;
     case "skill":
+      // "__choice_any__" (wdbc-2n5t) — Навык целиком на выбор актора при
+      // выдаче, автор его не указывает: skillKey/skillScope тут заведомо
+      // пусты, это не незаполненность записи.
+      if (e.specKey === "__choice_any__") return true;
       if (!e.skillKey) return false;
       if (e.skillScope === "group" && !groupSpecOk(e)) return false;
       return true;
@@ -826,6 +834,8 @@ function describeMechWhen(when, item = null) {
     });
     parts.push(`субмутация ${when?.negateSub ? "≠" : "="} ${names.join(" или ")}`);
   }
+  const ts = whenTalentSpec(when);
+  if (ts) parts.push(`Талант ${when?.negateTalent ? "≠" : "="} ${ts.name} (${ts.specialization})`);
   return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
@@ -1106,9 +1116,38 @@ function showAltSkillDialog(dupLabel, { group, candidates }) {
  * Если у записи skill/rollmod specKey:"__choice__" — просит актора выбрать ОДНУ
  * специализацию из отмеченных GM'ом кандидатов (specChoiceKeys) и возвращает
  * КОПИЮ записи с уже подставленными specKey/specialty; иначе — запись как есть.
+ *
+ * specKey:"__choice_any__" (wdbc-2n5t) — другая ось выбора: не специализация
+ * ВНУТРИ уже зафиксированного автором Навыка/группы (это делает "__choice__"
+ * выше), а САМ Навык/группа+специализация — целиком на усмотрение актора, из
+ * ПОЛНОГО списка masteryTargets() (rules/mastery-targets.mjs, тот же список,
+ * что у ручной покупки Таланта Mastery — «Знания Веков» и подобные мутации
+ * дают именно его). Голые группы без специализации исключены из кандидатов:
+ * ранг группового Навыка хранится ПОспециальностям (system.groupSkills), класть
+ * его некуда без выбранной специальности. entry.skillKey/skillScope автора не
+ * важны для этого режима — резолв сам решает и то, и другое по выбору актора,
+ * плюс кладёт masteryKey (композитный ключ masteryTargets) — по нему, если
+ * entry.grantsMastery, applyMechEntry ниже довыдаёт Талант Mastery на то же.
+ *
  * Пропуск диалога (Пропустить/закрыть) → null, вызывающий код не применяет запись.
  */
 async function resolveEntrySpecChoice(entry) {
+  if (entry.specKey === "__choice_any__") {
+    const choices = masteryTargets()
+      .filter(t => !t.group || t.spec)
+      .map(t => ({ key: t.key, display: t.label }));
+    if (!choices.length) return [];
+    const picked = await showSpecChoiceDialog("любой Навык", choices, 1);
+    if (!picked) return [];
+    const target = masteryTarget(picked.key);
+    if (!target) return [];
+    const resolved = target.group
+      ? { ...entry, skillScope: "group", skillKey: target.group, specKey: target.spec,
+          specialty: specOptions(target.group).find(s => s.key === target.spec)?.display || target.spec,
+          masteryKey: target.key }
+      : { ...entry, skillScope: "plain", skillKey: target.key, specKey: "", specialty: "", masteryKey: target.key };
+    return [resolved];
+  }
   if (entry.specKey !== "__choice__") return [entry];
   const def = GROUP_SKILLS_DEF[entry.skillKey];
   const keys = new Set(entry.specChoiceKeys || []);
@@ -1546,6 +1585,22 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       upd[`system.skills.${targetKey}.cost`] = 0;
     }
     await actor.update(upd);
+  }
+
+  // «+ Талант Mastery для этого же Навыка» (wdbc-2n5t, «Знания Веков» и
+  // подобные) — рекурсивный синтетический kind:"talent", переиспользует ВЕСЬ
+  // существующий путь выдачи Mastery (isMastery/masteryLabel/masteryAptitudes,
+  // отказ второй копии — компенсация опытом) без дублирования кода. masteryKey
+  // кладёт resolveEntrySpecChoice(specKey:"__choice_any__") — тот ЖЕ выбор
+  // актора, что дал сам Навык выше, а не второй независимый вопрос: следует за
+  // ИСХОДНЫМ выбором, даже если altSkill-политика перенаправила сам ранг
+  // Навыка на другой ключ при повторе.
+  if (entry.grantsMastery && entry.masteryKey) {
+    await applyMechEntry(actor, {
+      id: `${entry.id}:mastery`, kind: "talent",
+      sourceUuid: "", sourceName: "Mastery / Мастерство",
+      specialization: entry.masteryKey, rating: ""
+    }, sourceItem, fromChoice, applied);
   }
 }
 
@@ -2513,10 +2568,31 @@ function skillRefSelectHtml(cls, dataAttrs, ent, dis) {
   </select>`;
 }
 
-/** Дроплисты выбора навыка (+специализации, для групповых) — общие для kind:"skill" и kind:"rollmod". */
+/**
+ * Дроплисты выбора навыка (+специализации, для групповых) — общие для
+ * kind:"skill" и kind:"rollmod". «Любой Навык» (specKey:"__choice_any__",
+ * wdbc-2n5t) — отдельный переключатель, а не пункт ОБЩЕГО с Требованиями
+ * skillRefSelectHtml (см. его шапку): там «любой Навык» смысла не имеет,
+ * поэтому не трогаем тот список, а просто прячем его целиком под галочкой.
+ * Только у kind:"skill" — у rollmod такого режима нет, autor обязан указать
+ * конкретный Навык, «любой» тут был бы «любой штраф/бонус любому Навыку сразу».
+ */
 function buildSkillSelectorHtml(groupId, ent, dis) {
-  let out = skillRefSelectHtml("grant-entry-skillref",
-    `data-group-id="${groupId}" data-entry-id="${ent.id}"`, ent, dis);
+  const d = `data-group-id="${groupId}" data-entry-id="${ent.id}"`;
+  let out = "";
+  if (ent.kind === "skill") {
+    const isAny = ent.specKey === "__choice_any__";
+    out += `<label class="grant-skill-any-label" title="Навык целиком выбирает актор при получении — «Знания Веков» и подобные">
+      <input type="checkbox" class="grant-entry-skill-any" ${d} ${isAny ? "checked" : ""} ${dis}/> любой Навык
+    </label>`;
+    if (isAny) {
+      out += `<label class="grant-skill-any-mastery-label" title="Довыдать Талант Mastery на тот же Навык">
+        <input type="checkbox" class="grant-entry-grants-mastery" ${d} ${ent.grantsMastery ? "checked" : ""} ${dis}/> + Талант Mastery
+      </label>`;
+      return out;
+    }
+  }
+  out += skillRefSelectHtml("grant-entry-skillref", d, ent, dis);
   if (ent.skillScope === "group" && ent.skillKey) {
     const specs = specOptions(ent.skillKey);
     const isChoice = ent.specKey === "__choice__";
@@ -2607,6 +2683,22 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </div>`;
   })() : "";
 
+  // «Когда Талант» (wdbc-ta4y) — третий независимый гейт: «у актора есть
+  // Талант/Черта с таким именем И такой специализацией». Одно имя+специализация,
+  // не список ИЛИ-вариантов (см. mech-when.mjs) — свободный текст, а не
+  // выпадающий список: имя может быть любым Талантом/Чертой библиотеки, не
+  // только «Мастерством».
+  const ts = w.talentSpec || { name: "", specialization: "" };
+  const talentHtml = `<div class="grant-entry-when grant-entry-when-talent">
+    <span class="grant-when-label">Когда Талант</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-talent-negate" ${d} ${w.negateTalent ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <input type="text" class="grant-when-talent-name" ${d} value="${esc(ts.name)}" placeholder="Имя Таланта/Черты" ${dis}/>
+    <input type="text" class="grant-when-talent-spec" ${d} value="${esc(ts.specialization)}" placeholder="Специализация" ${dis}/>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -2615,7 +2707,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}`;
+  </div>${subHtml}${talentHtml}`;
 }
 
 function buildEntryHtml(groupId, ent, canEdit, depth = 1, item = null) {

@@ -2159,6 +2159,37 @@ export class WarhammerItemSheet
       e.when.negateSub = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда Талант» (entry.when.talentSpec/negateTalent, wdbc-ta4y) ──────
+    // Третий независимый гейт — см. mech-when.mjs. Имя+специализация — один
+    // объект, не список ИЛИ-вариантов, поэтому оба поля просто перезаписываются
+    // целиком при каждой правке, без data-when-idx.
+    const whenTalentSpecField = e => {
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.talentSpec = e.when.talentSpec || { name: "", specialization: "" };
+      return e.when.talentSpec;
+    };
+    on(".grant-when-talent-name", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      whenTalentSpecField(e).name = ev.currentTarget.value;
+      saveMech(arr);
+    });
+    on(".grant-when-talent-spec", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      whenTalentSpecField(e).specialization = ev.currentTarget.value;
+      saveMech(arr);
+    });
+    on(".grant-when-talent-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateTalent = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);
@@ -2215,6 +2246,27 @@ export class WarhammerItemSheet
       e.skillKey   = key || "";
       e.specKey = ""; e.specialty = "";
       saveMech(arr);
+    });
+    // «Любой Навык» (specKey:"__choice_any__", wdbc-2n5t) — переключатель
+    // ПОВЕРХ обычного выбора Навыка, не его пункт: включение стирает
+    // конкретный skillKey/скоуп (актор выберет их сам при получении),
+    // выключение возвращает к обычному выбору с чистого листа.
+    on(".grant-entry-skill-any", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      if (ev.currentTarget.checked) {
+        e.specKey = "__choice_any__";
+        e.skillScope = "plain"; e.skillKey = ""; e.specialty = ""; e.specChoiceKeys = [];
+      } else {
+        e.specKey = ""; e.grantsMastery = false;
+      }
+      saveMech(arr);
+    });
+    on(".grant-entry-grants-mastery", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.grantsMastery = !!ev.currentTarget.checked; saveMech(arr); }
     });
     on(".grant-entry-specialty", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
