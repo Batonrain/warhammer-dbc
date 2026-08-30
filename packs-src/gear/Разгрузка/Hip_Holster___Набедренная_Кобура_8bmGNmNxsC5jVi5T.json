@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Кобура на бедре под пистолет, компактную винтовку, нож или гладиус. По одной на каждое бедро.",
-    "notes": "",
+    "notes": "Число — вместимость слота разгрузки (2×1), не тестовый модификатор.",
     "quantity": 1,
     "weight": 0.3,
     "availability": -1,

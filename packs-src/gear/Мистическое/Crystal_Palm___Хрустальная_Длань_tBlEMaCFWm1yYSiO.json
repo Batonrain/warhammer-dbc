@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Латная рукавица из пластин психоактивного кристалла.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: руны для Пути Силы, урон при разрушении — не тестовый модификатор.",
     "quantity": 1,
     "weight": 0.4,
     "availability": 3,

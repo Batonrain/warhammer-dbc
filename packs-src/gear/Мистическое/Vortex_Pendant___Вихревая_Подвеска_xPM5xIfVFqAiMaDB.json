@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Фокус из редких психокристаллов для развеивания чужих чар.",
-    "notes": "",
+    "notes": "Не смоделировано: W−20 — порог собственного теста прерывания силы (уже описан в самом эффекте, не бонус).",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

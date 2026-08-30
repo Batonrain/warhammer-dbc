@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Искусственное сердце из псиоактивных кристаллов; не приживается у Нургла.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: замена результата Феномена, встречный тест W+0 — специфика психической механики (wdbc-jw81), не общий testMod.",
     "quantity": 1,
     "weight": 1,
     "availability": 3,

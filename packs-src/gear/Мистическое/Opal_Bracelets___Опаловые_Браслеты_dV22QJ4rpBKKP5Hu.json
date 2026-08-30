@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Пара золотых браслетов с белым камнем для ношения на лодыжках.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: копирование ритуальных кругов — новая механика, не тест.",
     "quantity": 2,
     "weight": 2,
     "availability": 3,

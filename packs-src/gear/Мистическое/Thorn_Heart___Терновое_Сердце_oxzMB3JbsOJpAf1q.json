@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Серебряная брошь-змея, обвивающая сердце шипами.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: +6 A при непоглощённом уроне (Кхорн) / снижение урона по счётчику (Слаанеш) — условные накопительные эффекты вне testMod.",
     "quantity": 1,
     "weight": 1,
     "availability": 3,

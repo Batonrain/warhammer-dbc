@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Виал масла, освящённого жрецом Бога Машины.",
-    "notes": "",
+    "notes": "+1 к Надёжности ОРУЖИЯ в следующем бою — свойство применяется к другому предмету (оружию) по расходу этого, не собственный тест владельца-Tools; не путать с armor/weapon-mods схемой.",
     "quantity": 1,
     "weight": 0,
     "availability": 1,

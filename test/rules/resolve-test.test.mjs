@@ -109,6 +109,12 @@ describe("галочки из эффектов", () => {
     expect(rollModsFromRules(rules, buildTestContext({ skill: "medicae" }))).toHaveLength(0);
   });
 
+  it("skill:<ключ> ловит и групповой Навык через ctx.group (Cartograph/Forgery Kit, wdbc-5dyh)", () => {
+    const rules = [rule([{ kind: "rollBonus", target: "skill:navigation", value: 10 }])];
+    expect(rollModsFromRules(rules, buildTestContext({ group: "navigation", specialty: "Surface" }))).toHaveLength(1);
+    expect(rollModsFromRules(rules, buildTestContext({ group: "trade", specialty: "Armourer" }))).toHaveLength(0);
+  });
+
   it("char:<ключ> попадает в тест характеристики, но не в навык на той же характеристике", () => {
     const rules = [rule([{ kind: "rollBonus", target: "char:wp", value: 10 }])];
     expect(rollModsFromRules(rules, buildTestContext({ char: "wp" }))).toHaveLength(1);

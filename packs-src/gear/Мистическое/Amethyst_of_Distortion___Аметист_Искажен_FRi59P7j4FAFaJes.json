@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Лучший аметистовый амулет К'Сала с частичками расщеплённых демонов.",
-    "notes": "",
+    "notes": "Не смоделировано: −15 — штраф ПРОТИВНИКАМ, атакующим психосилами носителя, не бонус/штраф самому носителю.",
     "quantity": 1,
     "weight": 0,
     "availability": 4,

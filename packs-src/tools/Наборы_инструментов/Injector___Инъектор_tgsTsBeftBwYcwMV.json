@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Ручной инъектор. 1 заряд, зарядка полудействие.",
-    "notes": "",
+    "notes": "Medicae+0 — порог применения, не бонус; инъекции как атака — отдельная боевая механика, не testMod.",
     "quantity": 1,
     "weight": 0.5,
     "availability": -1,

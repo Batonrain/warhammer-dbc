@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Камера гипно-индоктринации/обучения спящих космодесантников.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: имплантация знаний NPC — не тест владельца-игрока.",
     "quantity": 1,
     "weight": 0,
     "availability": 2,

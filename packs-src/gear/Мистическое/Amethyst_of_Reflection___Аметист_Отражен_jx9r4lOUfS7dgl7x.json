@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Продвинутый аметистовый амулет К'Сала с многослойными вязями.",
-    "notes": "",
+    "notes": "Не смоделировано: +15 на сопротивление психосилам/дарам/Одержимости — нет области testMod, охватывающей именно эти встречные тесты как класс.",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

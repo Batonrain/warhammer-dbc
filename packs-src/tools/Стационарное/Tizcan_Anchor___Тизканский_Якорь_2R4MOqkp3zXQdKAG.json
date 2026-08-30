@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Колонна хрусталя и психокристаллических матриц, стабилизирующая Варп r1км.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: изменение правил дублей для Феноменов и условный порог W−30 — специфика психической механики (wdbc-jw81), не testMod.",
     "quantity": 1,
     "weight": 0,
     "availability": 4,

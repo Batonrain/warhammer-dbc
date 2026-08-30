@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Костяной талисман-сердце, пожирающий и заменяющий собственное сердце (7 часов).",
-    "notes": "",
+    "notes": "Не смоделировано целиком: Трейты Regeneration/Stuff of Nightmares условно по Богу — не тестовый модификатор.",
     "quantity": 1,
     "weight": 1,
     "availability": 3,

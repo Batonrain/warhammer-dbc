@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Крюк на поясе, за который можно зацепить снятый шлем на марше.",
-    "notes": "",
+    "notes": "Текст — оговорка про Качество (не даёт функциональных бонусов), не тестовый модификатор.",
     "quantity": 1,
     "weight": 0.2,
     "availability": 0,

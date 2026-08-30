@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Изъеденный коррозией колокол на стойке над воротником брони.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: авто-успех/−20 Нурглитам и прочим — эффект на ДРУГИХ существ по триггеру, не тест владельца.",
     "quantity": 1,
     "weight": 14,
     "availability": 4,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Тяжёлый заплечный вокс-ретранслятор командных отрядов и наводчиков.",
-    "notes": "",
+    "notes": "Числа — дальность связи и бонус Инфограждения, не тестовые модификаторы.",
     "quantity": 1,
     "weight": 12,
     "availability": 0,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Еретехническая конструкция культов Слаанеш, создающая сферу тишины.",
-    "notes": "",
+    "notes": "Текст сам помечает эффект «ситуативно до +30» — не фиксированное число, применять как testMod означало бы дать бонус безусловно.",
     "quantity": 1,
     "weight": 3,
     "availability": 3,

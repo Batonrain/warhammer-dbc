@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Золотая нить 9 м с хрустальной иглой на катушке из кости Психнойена.",
-    "notes": "",
+    "notes": "Чисто описательное правило (нить = часть тела для психосил касания после часа медитации) — числового теста в тексте нет.",
     "quantity": 1,
     "weight": 1,
     "availability": 3,

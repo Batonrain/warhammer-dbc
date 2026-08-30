@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Накидка из волос/кожи/жил людей, умерших в одержимости.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: влияет на поведение НПС-демонов (восприятие/агрессия), не на тест владельца.",
     "quantity": 1,
     "weight": 3,
     "availability": 4,

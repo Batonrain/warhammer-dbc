@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Небольшой баллон CO2, химингибиторов и охладителей.",
-    "notes": "",
+    "notes": "Действие «потушить Горение» — не тест Навыка/Характеристики.",
     "quantity": 1,
     "weight": 1,
     "availability": 0,

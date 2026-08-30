@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Тюбик расширяющейся быстротвердеющей керамической пены для заделывания брешей в броне.",
-    "notes": "",
+    "notes": "Восстанавливает свойство Sealed/Void брони — воздействие на ДРУГОЙ предмет (доспех), не тест владельца.",
     "quantity": 10,
     "weight": 0,
     "availability": 1,

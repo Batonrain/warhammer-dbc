@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Визор с режимом ночного зрения. Является визором.",
-    "notes": "",
+    "notes": "Не смоделировано: выдаёт булевый Трейт Dark Sight при включении — вне схемы testMod (числового модификатора теста нет).",
     "quantity": 1,
     "weight": 0.2,
     "availability": 0,

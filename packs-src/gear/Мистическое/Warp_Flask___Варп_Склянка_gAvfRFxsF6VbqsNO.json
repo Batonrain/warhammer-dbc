@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Склянка Тёмных Апостолов с частицей низшего демона для межзвёздной связи.",
-    "notes": "",
+    "notes": "Устройство связи между парой предметов — тестового модификатора в тексте нет.",
     "quantity": 1,
     "weight": 0.2,
     "availability": 3,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Аэрозольная краска в баллончике-распылителе: искусство, метки для идущих следом, ритуальные круги.",
-    "notes": "",
+    "notes": "Не смоделировано: −20 — штраф ПРОТИВНИКУ (забрызганный визор), не владельцу.",
     "quantity": 1,
     "weight": 0.1,
     "availability": -4,

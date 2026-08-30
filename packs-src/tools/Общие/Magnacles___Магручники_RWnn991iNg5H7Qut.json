@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Как наручники, но сковывают одну конечность электромагнитом к магнитной поверхности.",
-    "notes": "",
+    "notes": "Числа — параметры удержания цели (движение/взлом), не тестовый модификатор владельцу.",
     "quantity": 1,
     "weight": 0.5,
     "availability": -1,

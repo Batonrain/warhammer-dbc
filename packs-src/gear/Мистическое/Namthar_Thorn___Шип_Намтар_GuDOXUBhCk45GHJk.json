@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Перстень из почернённого металла с алмазной иглой, резонирующей с Варпом.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: снятие «счётчика» уколом — своя условная механика ресурса, не тест.",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

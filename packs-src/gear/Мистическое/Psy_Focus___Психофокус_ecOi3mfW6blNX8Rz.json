@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Фокус психической энергии (медальон/браслет/пирсинг) из психоактивных материалов.",
-    "notes": "",
+    "notes": "Разрешает действие «Психофокус» при условии ношения — не тестовый модификатор.",
     "quantity": 1,
     "weight": 0,
     "availability": 1,

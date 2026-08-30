@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Заплечные ножны на перевязи для складывания двуручного рукопашного оружия на марше. Очень неудобные.",
-    "notes": "",
+    "notes": "Число — вместимость слота разгрузки (5×1), не тестовый модификатор.",
     "quantity": 1,
     "weight": 0.6,
     "availability": -1,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Массивный ранец для реактивного полёта. Варианты: Mars Mk7 / Seraphim / Type 12; Raptor; Phaeton (R3); Alatus (R3).",
-    "notes": "",
+    "notes": "Не смоделировано целиком: Трейт Flyer(12), условный полёт — не тестовый модификатор.",
     "quantity": 1,
     "weight": 25,
     "availability": 2,

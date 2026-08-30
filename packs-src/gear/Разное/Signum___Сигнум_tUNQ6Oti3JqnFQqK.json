@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Целеуказатель (свойство Independent).",
-    "notes": "",
+    "notes": "Не смоделировано: +10 BS — бонус СОЮЗНИКАМ владельца, не самому владельцу.",
     "quantity": 1,
     "weight": 2,
     "availability": 3,
