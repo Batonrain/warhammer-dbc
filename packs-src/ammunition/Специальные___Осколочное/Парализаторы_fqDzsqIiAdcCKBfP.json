@@ -5,7 +5,7 @@
   "folder": "ev14sDnVPb24ZUoV",
   "system": {
     "description": "Яд в этих кристаллах более утончённый и вместо простого отравления постепенно парализует цель. Дают Toxic (2). Урон от Toxic наносится в WS и A.",
-    "notes": "",
+    "notes": "Не смоделировано: урон от этого Toxic идёт в WS и A персонажа, а не как обычные Раны.",
     "weaponTypes": [
       "splinter"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Toxic (2); урон от Toxic — в WS и A",
-    "properties": []
+    "properties": [
+      {
+        "key": "toxic",
+        "rating": 2,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "fqDzsqIiAdcCKBfP",
   "effects": [],

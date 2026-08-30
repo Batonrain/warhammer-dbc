@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "+1 Надёжность оружия",
-    "properties": []
+    "properties": [
+      {
+        "key": "reliable",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "04lVyW1Cx9Ck3p8T",
   "effects": [],

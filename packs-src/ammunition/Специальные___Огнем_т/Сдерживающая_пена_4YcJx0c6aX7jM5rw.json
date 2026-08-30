@@ -5,7 +5,7 @@
   "folder": "GvPR6KfGTgZfQUph",
   "system": {
     "description": "Быстро расширяющаяся липкая пена, твердеющая в упругую массу, в которой вязнут противники. Не наносит урон, получает свойство Snare (0) и убирает Flame.",
-    "notes": "",
+    "notes": "«Без урона» не смоделировано — схема не несёт поля «переопределить урон на 0».",
     "weaponTypes": [
       "flame"
     ],
@@ -21,7 +21,16 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Без урона; Snare (0); убирает Flame",
-    "properties": []
+    "properties": [
+      {
+        "key": "snare",
+        "rating": 0,
+        "rating2": 0
+      }
+    ],
+    "removeProps": [
+      "flame"
+    ]
   },
   "_id": "4YcJx0c6aX7jM5rw",
   "effects": [],

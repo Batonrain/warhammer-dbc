@@ -5,7 +5,7 @@
   "folder": "ev14sDnVPb24ZUoV",
   "system": {
     "description": "Кристаллы резонируют с биологическими, магнитными и духовными свойствами цели, взрываясь при ощущении тел. Дают Blast (1) и Toxic (1). Дают штраф −2×Скорострельность на Избегание.",
-    "notes": "",
+    "notes": "Не смоделирован штраф −2×Скорострельность на Избегание цели.",
     "weaponTypes": [
       "splinter"
     ],
@@ -21,7 +21,18 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Blast (1), Toxic (1); −2×Скорострельность на Избегание",
-    "properties": []
+    "properties": [
+      {
+        "key": "blast",
+        "rating": 1,
+        "rating2": 0
+      },
+      {
+        "key": "toxic",
+        "rating": 1,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "G19uzgQ8XcJttrYn",
   "effects": [],

@@ -5,7 +5,7 @@
   "folder": "GDsWWXkKFi1EHIjH",
   "system": {
     "description": "Обогащённое дейтерием мельта-топливо, дающее более мощную реакцию, но больше радиации. Даёт свойства Proven (3) и Extreme (9/−1), но при выстреле стрелок получает 1d10 урона в Т от радиации.",
-    "notes": "",
+    "notes": "Не смоделировано: стрелок получает 1d10 непоглощаемого урона в Т (радиация) при выстреле — самоповреждение, не эффект на цель.",
     "weaponTypes": [
       "melta"
     ],
@@ -21,7 +21,18 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Proven (3), Extreme (9/−1); стрелок получает 1d10 урона в Т (радиация)",
-    "properties": []
+    "properties": [
+      {
+        "key": "proven",
+        "rating": 3,
+        "rating2": 0
+      },
+      {
+        "key": "extreme",
+        "rating": 9,
+        "rating2": -1
+      }
+    ]
   },
   "_id": "7a8aE6dEO50x6X5E",
   "effects": [],

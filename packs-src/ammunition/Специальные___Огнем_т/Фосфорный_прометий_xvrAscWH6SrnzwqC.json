@@ -5,7 +5,7 @@
   "folder": "GvPR6KfGTgZfQUph",
   "system": {
     "description": "Прометий с белым фосфором, используемый Скитариями. Меняет свойство Flame на Flame (2d10), Linger (1d5) на Linger (1d10) и даёт Blinding (0).",
-    "notes": "",
+    "notes": "Точные числа книги (Flame 2d10, Blinding(0)) — рейтинги здесь плейсхолдеры реестра, не боевая формула урона: схема ammo не несёт поля «переопределить формулу урона на 2d10».",
     "weaponTypes": [
       "flame"
     ],
@@ -21,7 +21,23 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Flame (2d10), Linger (1d10), Blinding (0)",
-    "properties": []
+    "properties": [
+      {
+        "key": "flame",
+        "rating": 0,
+        "rating2": 0
+      },
+      {
+        "key": "linger",
+        "rating": "1d10",
+        "rating2": 0
+      },
+      {
+        "key": "blinding",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "xvrAscWH6SrnzwqC",
   "effects": [],

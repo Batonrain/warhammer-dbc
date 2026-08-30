@@ -5,7 +5,7 @@
   "folder": "7tMmZVfLVWW2UvjL",
   "system": {
     "description": "Блок дроби, скреплённый восковой капсулой, позволяет наносить дополнительный кубик урона от свойства Scatter на Короткой дистанции так же, как в Упор.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: доп. кубик Scatter в тексте — только на Короткой дистанции (как в Упор), здесь Scatter применяется на любой дистанции.",
     "weaponTypes": [
       "solid"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Доп. кубик Scatter на Короткой дистанции (как в Упор)",
-    "properties": []
+    "properties": [
+      {
+        "key": "scatter",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "9DNPJOYaGQamY7O1",
   "effects": [],

@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Sanctified",
-    "properties": []
+    "properties": [
+      {
+        "key": "sanctified",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "99HkCfNOfWAiIKSC",
   "effects": [],

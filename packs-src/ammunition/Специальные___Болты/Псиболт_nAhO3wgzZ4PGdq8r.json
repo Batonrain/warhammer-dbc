@@ -5,7 +5,7 @@
   "folder": "IQWUde65VkbLfhC1",
   "system": {
     "description": "Чрезвычайно редкий болт, заряженный психическими отходами Золотого Трона (Инквизиция, Серые Рыцари). Даёт +½ Cor.b цели (округление вверх) к урону и свойство Sanctified, уменьшает Надёжность на 1.",
-    "notes": "",
+    "notes": "Не смоделирован доп. урон +½ Cor.b цели (окр. вверх) — нет точки входа для урона, зависящего от Порчи ЦЕЛИ.",
     "weaponTypes": [
       "bolt"
     ],
@@ -21,7 +21,18 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Sanctified; +½ Cor.b цели (окр. вверх) урона; −1 Надёжность",
-    "properties": []
+    "properties": [
+      {
+        "key": "sanctified",
+        "rating": 0,
+        "rating2": 0
+      },
+      {
+        "key": "unreliable",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "nAhO3wgzZ4PGdq8r",
   "effects": [],

@@ -5,7 +5,7 @@
   "folder": "IQWUde65VkbLfhC1",
   "system": {
     "description": "Болт с оболочкой из психоактивного яда, разработанный на Просперо против Психнойенов. Даёт Toxic (2), игнорирующий Трейты Daemonic и Stuff of Nightmares; цель, получившая урон от этого яда, также получает штраф −30 (не складывающийся) на все ментальные действия и встречные тесты против психосил, выжигания души, одержимости и прочих воздействий Варпа до конца следующего Хода стрелка.",
-    "notes": "",
+    "notes": "Не смоделировано: игнор Daemonic/Stuff of Nightmares у этого Toxic; −30 на ментальные/Варп-тесты цели до конца хода.",
     "weaponTypes": [
       "bolt"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Toxic (2) (игнор Daemonic/Stuff of Nightmares); −30 на ментальные/Варп-тесты до конца хода",
-    "properties": []
+    "properties": [
+      {
+        "key": "toxic",
+        "rating": 2,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "SBMBxqjCC7YLqDnA",
   "effects": [],

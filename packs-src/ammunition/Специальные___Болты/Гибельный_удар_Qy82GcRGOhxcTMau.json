@@ -21,7 +21,23 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Felling (4), Razor Sharp; −1 Надёжность",
-    "properties": []
+    "properties": [
+      {
+        "key": "felling",
+        "rating": 4,
+        "rating2": 0
+      },
+      {
+        "key": "razorSharp",
+        "rating": 0,
+        "rating2": 0
+      },
+      {
+        "key": "unreliable",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "Qy82GcRGOhxcTMau",
   "effects": [],

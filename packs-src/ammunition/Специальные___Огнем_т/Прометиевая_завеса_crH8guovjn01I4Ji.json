@@ -5,7 +5,7 @@
   "folder": "GvPR6KfGTgZfQUph",
   "system": {
     "description": "Прометий, выпускающий густой едкий дым. Получает свойство Smoke на весь шаблон огнемёта.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: Smoke в тексте — на весь шаблон огнемёта конкретно, здесь как обычное свойство оружия.",
     "weaponTypes": [
       "flame"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Smoke на весь шаблон огнемёта",
-    "properties": []
+    "properties": [
+      {
+        "key": "smoke",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "crH8guovjn01I4Ji",
   "effects": [],
