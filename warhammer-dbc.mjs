@@ -18,6 +18,7 @@ import { WEAPON_PROPERTIES }          from "./module/constants/weapon-properties
 
 import { WarhammerActor }             from "./module/documents/actor.mjs";
 import { WarhammerItem }              from "./module/documents/item.mjs";
+import { WarhammerCombatant }         from "./module/documents/combatant.mjs";
 import { ITEM_DATA_MODELS,
          ACTOR_DATA_MODELS }          from "./module/data/index.mjs";
 
@@ -209,6 +210,9 @@ Hooks.once("init", () => {
     formula: "1d10 + @initiative + @initiativeMod",
     decimals: 0
   };
+  // Серый Человек/Oteshii (wdbc-0tzr, capability combat.initiativeAdvantage) —
+  // Инициатива кидается трижды, берётся лучший результат.
+  CONFIG.Combatant.documentClass = WarhammerCombatant;
 
   CONFIG.WARHAMMER = {
     RACES, SUBRACES, CHARACTERISTICS, IMPROVEMENTS,

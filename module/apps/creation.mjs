@@ -25,6 +25,7 @@ import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
 import { skillGrantOutcome } from "../rules/duplicate-grants.mjs";
 import { matchSpec } from "../constants/skill-specializations.mjs";
 import { refundXP, skillStepsCost, skillReason } from "./duplicate-refund.mjs";
+import { pickHighest } from "../rules/roll-advantage.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -552,6 +553,49 @@ export async function rollFormula(actor, formula, flavor) {
   }
 }
 
+/**
+ * Как {@link rollFormula}, но «с Преимуществом»: бросает формулу N раз и
+ * оставляет больший итог (module/rules/roll-advantage.mjs) — субраса вида
+ * Эльданар (стр. 4, «бросает 3 раза на свой Inf и выбирает лучший»). Один
+ * бросок (n≤1) ведёт себя как rollFormula. Отброшенные попытки видны в чате:
+ * стол должен видеть, что было отброшено, не только итог.
+ */
+export async function rollFormulaAdvantage(actor, formula, n, flavor) {
+  if (formula === null || formula === undefined || formula === "") return 0;
+  if (typeof formula === "number") return formula;
+  const rolls = Math.max(1, Number(n) || 1);
+  if (rolls <= 1) return rollFormula(actor, formula, flavor);
+
+  try {
+    const evaluated = [];
+    for (let i = 0; i < rolls; i++) evaluated.push(await new Roll(String(formula)).evaluate());
+    const picked = pickHighest(evaluated.map(r => r.total));
+    const full = `${flavor} (Преимущество ×${rolls}, отброшено: ${picked.dropped.join(", ")})`;
+    await evaluated[picked.index].toMessage(
+      { speaker: ChatMessage.getSpeaker({ actor }), flavor: full },
+      { rollMode: game.settings.get("core", "rollMode") });
+    return picked.value;
+  } catch (e) {
+    console.warn("Warhammer DBC | формула создания (с Преимуществом):", formula, e);
+    return 0;
+  }
+}
+
+/**
+ * Обвязка над rollFormula/rollFormulaAdvantage для ОДНОЙ конкретной
+ * характеристики: субраса может объявить `charRollAdvantage: {char, rolls}`
+ * (module/data/item/subrace.mjs) — «этот бросок кидается N раз, берём
+ * лучший». Без объявления или для другой характеристики — обычный одиночный
+ * бросок, ничего не меняется.
+ */
+export async function rollFormulaForChar(actor, formula, charKey, sub, flavor) {
+  const adv = sub?.charRollAdvantage;
+  if (adv && adv.char === charKey && Number(adv.rolls) > 1) {
+    return rollFormulaAdvantage(actor, formula, Number(adv.rolls), flavor);
+  }
+  return rollFormula(actor, formula, flavor);
+}
+
 /** Выдаёт базовые импланты Механикум (пропуская уже имеющиеся). */
 export async function grantMechanicusImplants(actor) {
   const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
@@ -675,9 +719,9 @@ export async function applyCreation(actor,
   // Влияния — он старше общего правила и заменяет его целиком.
   if (wasEmpty.inf) {
     const infv = arch?.infRoll
-      ? await rollFormula(actor, arch.infRoll, `Влияние: ${arch.name}`)
-      : await rollFormula(actor,
-          startingInfamyFormula(sum.inf, !!charRolls), "Стартовое Бесчестие");
+      ? await rollFormulaForChar(actor, arch.infRoll, "inf", sub, `Влияние: ${arch.name}`)
+      : await rollFormulaForChar(actor,
+          startingInfamyFormula(sum.inf, !!charRolls), "inf", sub, "Стартовое Бесчестие");
     if (infv) updates["system.characteristics.inf.base"] = infv;
   }
 

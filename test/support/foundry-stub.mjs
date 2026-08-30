@@ -415,6 +415,11 @@ globalThis.ActiveEffect = class {};
 globalThis.Folder = class {};
 globalThis.JournalEntry = class {};
 globalThis.FilePicker = class {};
+globalThis.Combatant = class {};
+// Combatant#getInitiativeRoll (client/documents/combatant.mjs) строит бросок
+// именно так — не new Roll(...) напрямую. Заглушка переиспользует globalThis.Roll
+// выше: rollData ей не нужен, formula разбирает parseRollFormula.
+foundry.dice = { Roll: { create: formula => new Roll(formula) } };
 globalThis.Application = ApplicationStub;
 globalThis.Handlebars = { registerHelper: () => {} };
 globalThis.canvas = {};

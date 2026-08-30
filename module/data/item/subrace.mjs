@@ -21,6 +21,10 @@ export class SubraceData extends foundry.abstract.TypeDataModel {
       effect:        new StringField({ initial: "", label: "Действие" }),
       god:           new StringField({ initial: "", label: "Бог" }),
       charMods:      new ObjectField({ label: "Изменения характеристик" }),
+      // Бросок «с Преимуществом» на одну характеристику Мастера создания —
+      // {char:"inf", rolls:3}: кидается N раз, берётся лучший итог
+      // (module/rules/roll-advantage.mjs). Пусто — обычный одиночный бросок.
+      charRollAdvantage: new ObjectField({ label: "Бросок х-ки с Преимуществом" }),
       talents:       new StringField({ initial: "", label: "Стартовые таланты" }),
       // Имена расовых Черт, которые субраса снимает.
       removesTraits: new ArrayField(new StringField(), { label: "Снимает Черты" }),
