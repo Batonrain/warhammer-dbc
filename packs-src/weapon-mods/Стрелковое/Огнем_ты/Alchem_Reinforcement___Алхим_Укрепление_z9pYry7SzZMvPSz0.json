@@ -5,7 +5,7 @@
   "folder": "2MtEBZtz7NFwM9KH",
   "system": {
     "description": "Игнор уменьшения Надёжности от Токс Спрэя.",
-    "notes": "",
+    "notes": "Не смоделировано: игнор снижения Надёжности конкретно от Токс Спрэя — узко-условный иммунитет, нет такого поля.",
     "category": "ranged",
     "modGroup": "flamer",
     "requirement": "Flame оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

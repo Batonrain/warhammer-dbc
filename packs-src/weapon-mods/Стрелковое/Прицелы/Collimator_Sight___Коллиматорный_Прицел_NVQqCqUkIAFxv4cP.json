@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "(Прицеливание) +5 на попадание.",
-    "notes": "",
+    "notes": "Не смоделировано: +5 попадание работает ТОЛЬКО при Прицеливании — плоский attackMod дал бы бонус и без него, искажая правило.",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

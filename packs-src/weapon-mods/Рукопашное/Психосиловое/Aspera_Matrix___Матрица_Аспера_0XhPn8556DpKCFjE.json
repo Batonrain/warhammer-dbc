@@ -5,7 +5,7 @@
   "folder": "UlPidb6LNYEMdSga",
   "system": {
     "description": "При броске урона Выжигания Души псайкер может получить 2–6 непоглощаемого E Dmg в держащую конечность, чтобы дать броску Proven (2–6) соответственно.",
-    "notes": "",
+    "notes": "Психосиловая механика (Proven на броске Выжигания Души ценой самоурона) — вне схемы weaponMod, см. wdbc-jw81.",
     "category": "melee",
     "modGroup": "psychic",
     "requirement": "Психосиловое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

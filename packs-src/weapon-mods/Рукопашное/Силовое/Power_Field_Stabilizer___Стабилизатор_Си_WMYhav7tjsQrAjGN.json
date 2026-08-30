@@ -5,7 +5,7 @@
   "folder": "A0XOW6MPqQYnRHfq",
   "system": {
     "description": "Истончённое поле, ослабляющее лишь молекулярные связи на кромках: оружие наносит R или I(Cr) Dmg вместо E своими лезвиями/бойками, но −2 Dmg. Не светится и не искрит, кроме как при контакте с целью.",
-    "notes": "",
+    "notes": "Не смоделирована смена типа урона (E → R или I(Cr)) — только числовой штраф −2 Dmg, идущий с ней в комплекте по тексту.",
     "category": "melee",
     "modGroup": "power",
     "requirement": "Силовое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,7 +15,7 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
+      "damageMod": -2,
       "penMod": 0,
       "rangeMod": 0,
       "rangeMult": 1,

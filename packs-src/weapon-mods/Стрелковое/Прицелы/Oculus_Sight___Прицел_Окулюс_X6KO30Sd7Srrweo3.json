@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "Штрафы на Избирательные выстрелы −10 (−20, если цель в укрытии).",
-    "notes": "",
+    "notes": "Не смоделировано: снижает штраф Избирательных выстрелов — в схеме мода нет поля «модификатор Избирательной атаки».",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

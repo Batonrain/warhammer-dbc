@@ -5,7 +5,7 @@
   "folder": "0Wn4StGWfYU8mrae",
   "system": {
     "description": "Считывает генетику пользователя: работает только в руках владельца.",
-    "notes": "",
+    "notes": "Ограничение владения (работает только в руках владельца) — не числовой боевой эффект.",
     "category": "melee",
     "modGroup": "misc",
     "requirement": "Любое. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

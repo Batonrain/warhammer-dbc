@@ -5,7 +5,7 @@
   "folder": "BCNO9ZWfZHazXEdf",
   "system": {
     "description": "Оружие на цепи к броне: уронённое повисает, а не падает; висит на Неудобной разгрузке.",
-    "notes": "",
+    "notes": "Чистая флейвор-механика (оружие на цепи) — числового эффекта нет.",
     "category": "ranged",
     "modGroup": "other",
     "requirement": "Не тяжёлое. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

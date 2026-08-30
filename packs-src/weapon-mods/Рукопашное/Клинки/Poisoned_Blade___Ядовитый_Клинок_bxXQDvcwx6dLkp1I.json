@@ -5,7 +5,7 @@
   "folder": "kkPBRnRXnFwwlJmB",
   "system": {
     "description": "Сам материал клинка ядовит: профили лезвий и острий получают Toxic (0), даже если наносят не R урон.",
-    "notes": "",
+    "notes": "Рейтинг Toxic (0) — как в самом тексте: зависит от применяемого яда, книжный плейсхолдер, не константа. Оговорка «только R-профили» не смоделирована.",
     "category": "melee",
     "modGroup": "blades",
     "requirement": "Клинковое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,12 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "toxic",
+          "rating": 0
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

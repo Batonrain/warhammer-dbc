@@ -5,7 +5,7 @@
   "folder": "Z1EphNue3m2ra8os",
   "system": {
     "description": "Стрельба одной рукой, но Rng ×½ при стрельбе с одной руки.",
-    "notes": "",
+    "notes": "Не смоделировано: Дальность ×½ условна стрельбой одной рукой конкретно — нет поля, зависящего от хвата в момент выстрела.",
     "category": "ranged",
     "modGroup": "flexibility",
     "requirement": "Винтовка. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

@@ -5,7 +5,7 @@
   "folder": "6od60emBWLRKi4yS",
   "system": {
     "description": "Изгибающийся ствол: стрельба из-за угла, высунув лишь ствол (−1 Надёжность), с прицелом-перископом при Прицеливании. Сгибание/выпрямление — полудействие.",
-    "notes": "",
+    "notes": "Не смоделировано: стрельба из-за угла (тактическая позиция), сгибание/выпрямление полудействием — вне схемы.",
     "category": "ranged",
     "modGroup": "autoStab",
     "requirement": "Авто и Стаб оружие, винтовка, не карабин. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,13 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "unreliable",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

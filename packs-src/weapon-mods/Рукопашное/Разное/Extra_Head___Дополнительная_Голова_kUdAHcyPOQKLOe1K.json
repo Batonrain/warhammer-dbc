@@ -5,7 +5,7 @@
   "folder": "0Wn4StGWfYU8mrae",
   "system": {
     "description": "Доп. кончик хлыста/цепь с грузом: свойство Multi-strike (2/+1), но Предел Критических Провалов −2. Можно ставить несколько раз.",
-    "notes": "",
+    "notes": "Не смоделирован Предел Критических Провалов −2 (нет такого поля в схеме мода).",
     "category": "melee",
     "modGroup": "misc",
     "requirement": "Кнут или кистень. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,13 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "multiStrike",
+          "rating": 2,
+          "rating2": 1
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

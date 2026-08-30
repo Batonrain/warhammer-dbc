@@ -5,7 +5,7 @@
   "folder": "BCNO9ZWfZHazXEdf",
   "system": {
     "description": "Громкость выстрела с оглушительной до просто громкой.",
-    "notes": "",
+    "notes": "Снижение громкости выстрела — нет соответствующего поля скрытности звука в схеме мода.",
     "category": "ranged",
     "modGroup": "other",
     "requirement": "SP/Bolt, не тяжёлое, не дробовик. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

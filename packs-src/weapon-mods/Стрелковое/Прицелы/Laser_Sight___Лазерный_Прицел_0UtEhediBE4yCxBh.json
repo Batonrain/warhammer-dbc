@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "+10 на одиночные выстрелы. Точку лазера видно (Awareness−10), выдаёт стрелка.",
-    "notes": "",
+    "notes": "Не смоделировано: +10 условно ТОЛЬКО на одиночных выстрелах (не очередях) — режимо-зависимая директива, тот же класс что Ring Accelerator.",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

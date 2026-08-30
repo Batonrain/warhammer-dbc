@@ -5,7 +5,7 @@
   "folder": "PpXujqQbgrdCQvEE",
   "system": {
     "description": "Ударные поверхности укреплены пласталью/керамитом: +1 Dmg и теряет Primitive на всех профилях I(Cr) с Primitive, кроме Посоха. Щиты также +1 AP. Бонусы материалов не складываются.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: бонус в тексте — только на профилях I(Cr) с Primitive, кроме Посоха. «Щиты также +1 AP» — другая система (armor-mods), не эта запись.",
     "category": "melee",
     "modGroup": "materials",
     "requirement": "Примитивное/силовое оружие или примитивный щит. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,7 +15,7 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
+      "damageMod": 1,
       "penMod": 0,
       "rangeMod": 0,
       "rangeMult": 1,
@@ -27,7 +27,9 @@
       "balanceMod": 0,
       "weightPct": 0,
       "addProps": [],
-      "removeProps": []
+      "removeProps": [
+        "primitive"
+      ]
     },
     "drukhari": false
   },

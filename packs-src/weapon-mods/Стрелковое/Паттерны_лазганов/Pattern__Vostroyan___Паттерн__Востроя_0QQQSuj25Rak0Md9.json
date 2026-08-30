@@ -5,7 +5,7 @@
   "folder": "NvazMigqr5D1QKOM",
   "system": {
     "description": "+2 Dmg для одиночных выстрелов. Не встречается в качестве ниже Best.Q.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: +2 Dmg в тексте — только для одиночных выстрелов, здесь на любой режим огня.",
     "category": "ranged",
     "modGroup": "las",
     "requirement": "Лазпистолет, лазкарабин, лазган или лонглаз; паттерны между собой несовместимы. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,7 +15,7 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
+      "damageMod": 2,
       "penMod": 0,
       "rangeMod": 0,
       "rangeMult": 1,

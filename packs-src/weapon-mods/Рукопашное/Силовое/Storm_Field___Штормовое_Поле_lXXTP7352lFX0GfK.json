@@ -5,7 +5,7 @@
   "folder": "A0XOW6MPqQYnRHfq",
   "system": {
     "description": "Мощный нимб энергии: +2 Dmg, +2 Pen и шанс Power Field до 100% (с 75%), но при Критическом Провале на попадание — попадание в держащую руку (случайную из двух) без бонуса S.b к урону. Ярко светится, гремит при попадании/Парировании.",
-    "notes": "",
+    "notes": "Не смоделировано: рост шанса Power Field до 100% (с 75%) и штраф «попадание в руку» при Критическом Провале.",
     "category": "melee",
     "modGroup": "power",
     "requirement": "Силовое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,8 +15,8 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
-      "penMod": 0,
+      "damageMod": 2,
+      "penMod": 2,
       "rangeMod": 0,
       "rangeMult": 1,
       "clipMod": 0,

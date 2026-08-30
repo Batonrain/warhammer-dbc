@@ -5,7 +5,7 @@
   "folder": "BCNO9ZWfZHazXEdf",
   "system": {
     "description": "Закрепить без укрытия с поворотом 360° (по 90°/Ход).",
-    "notes": "",
+    "notes": "Механика установки/поворота — не числовой эффект атаки.",
     "category": "ranged",
     "modGroup": "other",
     "requirement": "Не пистолет. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

@@ -5,7 +5,7 @@
   "folder": "2MtEBZtz7NFwM9KH",
   "system": {
     "description": "Режим: 1 Dmg, Pen 0, теряет Flame и Linger, не тратит топливо. Только для топлива E(Fl). Для безопасного извлечения опутанных паутиной.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: переключаемый режим (1 Dmg, Pen 0, теряет Flame/Linger) — не постоянная дельта.",
     "category": "ranged",
     "modGroup": "flamer",
     "requirement": "Flame оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

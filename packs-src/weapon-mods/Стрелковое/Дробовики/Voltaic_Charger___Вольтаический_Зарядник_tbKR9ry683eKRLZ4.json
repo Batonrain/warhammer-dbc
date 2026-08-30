@@ -5,7 +5,7 @@
   "folder": "gJompqeGEkpUmHVS",
   "system": {
     "description": "Свойство Shocking и +1d10 Dmg против Machine/техники. Не работает с боеприпасами, убирающими Scatter.",
-    "notes": "",
+    "notes": "Не смоделировано: +1d10 урона конкретно против Machine/техники (условно целью) и несовместимость с боеприпасами, убирающими Scatter.",
     "category": "ranged",
     "modGroup": "shotgun",
     "requirement": "Дробовик. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,13 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "shocking",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

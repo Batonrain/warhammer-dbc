@@ -5,7 +5,7 @@
   "folder": "0CNvFjVKT5pJqmot",
   "system": {
     "description": "Режим: Rng 10 м, −1 кубик урона, ½ Pen, свойство Spray.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: переключаемый режим (иная дальность/урон/Pen/Spray) — не постоянная дельта.",
     "category": "ranged",
     "modGroup": "melta",
     "requirement": "Melta оружие, не тяжёлое. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

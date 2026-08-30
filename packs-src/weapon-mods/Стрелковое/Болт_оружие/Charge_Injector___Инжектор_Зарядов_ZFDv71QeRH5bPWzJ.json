@@ -5,7 +5,7 @@
   "folder": "v1rz4uG9QZ2dLs87",
   "system": {
     "description": "На Короткой +2 Dmg, в Упор/рукопашной +3 Dmg — только для болтов с X Dmg.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: бонус урона зависит от дистанции боя (Короткая/Упор) — режимо-зависимая директива, тот же класс что Ring Accelerator/Ионизированное.",
     "category": "ranged",
     "modGroup": "bolt",
     "requirement": "Bolt оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

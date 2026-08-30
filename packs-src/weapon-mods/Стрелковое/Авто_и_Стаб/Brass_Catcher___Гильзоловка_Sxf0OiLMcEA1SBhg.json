@@ -5,7 +5,7 @@
   "folder": "6od60emBWLRKi4yS",
   "system": {
     "description": "Контейнер на ствол ловит гильзы (~1 магазин); переполнен — лишние наружу. Меняется как магазин (Rld).",
-    "notes": "",
+    "notes": "Чистая флейвор-механика (сбор гильз) — числового эффекта нет.",
     "category": "ranged",
     "modGroup": "autoStab",
     "requirement": "Авто и Стаб оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

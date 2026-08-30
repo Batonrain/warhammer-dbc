@@ -5,7 +5,7 @@
   "folder": "v5YhteUMrvLbPV3O",
   "system": {
     "description": "Огромный двигатель в заплечном рюкзаке (8 кг, разгрузка 3×3 на спине), передающий момент по кабелю; ревёт как огнестрел. Оружие: +2 Dmg, +2 Pen и модификацию Цепь (отображает кабель).",
-    "notes": "",
+    "notes": "Не смоделировано: сопутствующая модификация «Цепь» (отображает кабель к ранцу).",
     "category": "melee",
     "modGroup": "chain",
     "requirement": "Цепное оружие без Аккатранской Шепчущей Цепи. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,8 +15,8 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
-      "penMod": 0,
+      "damageMod": 2,
+      "penMod": 2,
       "rangeMod": 0,
       "rangeMult": 1,
       "clipMod": 0,

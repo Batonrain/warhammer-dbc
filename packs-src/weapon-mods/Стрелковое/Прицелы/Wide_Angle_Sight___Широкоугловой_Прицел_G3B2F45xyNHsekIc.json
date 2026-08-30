@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "Сектор обстрела в Карауле до 180°.",
-    "notes": "",
+    "notes": "Не смоделировано: расширяет сектор обстрела в Карауле до 180° — геометрия обзора/арки, нет такого поля в схеме мода.",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

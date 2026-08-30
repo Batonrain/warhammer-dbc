@@ -5,7 +5,7 @@
   "folder": "DwJbqC2D0CdrjlqX",
   "system": {
     "description": "В Ход без движений — свойство Twin-Linked, но только на одиночные выстрелы.",
-    "notes": "",
+    "notes": "Не смоделировано: Twin-Linked условен отсутствием движения в этот Ход — режимо-зависимая директива.",
     "category": "ranged",
     "modGroup": "las",
     "requirement": "Las оружие, кроме тяжёлого. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
