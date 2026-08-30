@@ -5,7 +5,7 @@
   "folder": "vAuHo2O7CxjhPObv",
   "system": {
     "description": "Освящённое серебро: AP против Варп-Оружия, +10 на встречные тесты против психосил и демонической одержимости. Псайкер: −20 на все психотесты.",
-    "notes": "",
+    "notes": "Не смоделировано: +10 на встречные тесты против психосил/одержимости — testMod не имеет области «встречный тест против психосилы» как класса (нет по всей системе, тот же пробел, что в wdbc-jw81/wdbc-unku); −20 психотестам псайкера-носителя — нет области «психотест» для testMod на уровне предмета (только у CORE_RULES библиотеки, не у Конструктора).",
     "category": "armor",
     "modGroup": "general",
     "requirement": "Любая без Второй Кожи. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -40,7 +40,21 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "capability",
+              "capabilityKey": "armor.apVsWarpFull",
+              "label": "Гексаграмматические Печати"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -5,7 +5,7 @@
   "folder": "PJGdkJLkUXdx2JTp",
   "system": {
     "description": "Реактор перерабатывает отходы в воду и питательную пасту, подаваемые в шлем — есть/пить не снимая шлем; убирает необходимость в еде и питье.",
-    "notes": "",
+    "notes": "Логистика питания/питья — не тестовый модификатор.",
     "category": "powerSystem",
     "modGroup": "backpack",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

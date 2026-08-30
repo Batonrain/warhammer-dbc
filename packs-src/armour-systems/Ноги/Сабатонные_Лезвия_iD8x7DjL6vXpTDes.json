@@ -5,7 +5,7 @@
   "folder": "dkSLGHWWgFKBAlrr",
   "system": {
     "description": "Лезвия на носках сабатонов: атака ногами (Хв. Ног) 1d10+2 R, Pen 2, Reinforced, Bl −1. Только для обычной силовой брони.",
-    "notes": "",
+    "notes": "Встроенное оружие (атака ногами) — не эффект схемы armorMod.",
     "category": "powerSystem",
     "modGroup": "legs",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

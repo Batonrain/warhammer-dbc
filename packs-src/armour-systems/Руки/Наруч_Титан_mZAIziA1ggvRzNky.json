@@ -5,7 +5,7 @@
   "folder": "W4vOeJMG9tsPNQq9",
   "system": {
     "description": "Крепление для оружия с грав-суспензорами: винтовка/пистолет на руке. Оружие получает Inaccurate, Wrist, теряет Accurate/Precise. Берётся отдельно на каждую руку.",
-    "notes": "",
+    "notes": "Крепление оружия на руку с изменением его свойств (Inaccurate/Wrist) — эффект на другой предмет, вне testMod/capability.",
     "category": "powerSystem",
     "modGroup": "arms",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

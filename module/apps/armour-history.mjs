@@ -47,6 +47,37 @@ export function armourHistoryContext(item) {
   };
 }
 
+// Числовая часть особенностей (wdbc-sg57): некоторые записи PA_TABLES несут
+// def.mech — готовые записи Конструктора (testMod/cohesion/corruption), те же
+// kind, что читает обычная Механика предмета. Живут в СВОИХ группах
+// "armour-history"/"armour-history-second" внутри flags.warhammer-dbc.mechanics,
+// чтобы не задеть группы, которые GM мог добавить вручную через Конструктор
+// на этом же предмете брони. testMod читается live (rulesFromItemMechanics),
+// cohesion/corruption применяются через Hooks.on("updateItem", ...) →
+// applyItemMechanics — тот же путь, что у любой другой записи Механики,
+// сработает сам, раз mechanicsRelevantChange() видит смену flags.mechanics.
+//
+// Известное упрощение: если результат перебрасывается на другой (не «снять
+// совсем», а именно смена одной особенности на другую), уже применённые
+// cohesion/corruption от СТАРОЙ особенности не откатываются — реконсиляция
+// (reconcileCohesionForActor/_applyItemMechanics) требует, чтобы запись ещё
+// существовала на предмете, чтобы понять, что откатывать. На практике История
+// комплекта бросается один раз при получении брони, а не переигрывается —
+// смириться с этим дешевле, чем городить отдельный трекер отката (wdbc-sg57).
+const HISTORY_GROUP_ID = { primary: "armour-history", second: "armour-history-second" };
+
+/** Заменяет группу(ы) с этими id, не трогая остальные группы Механики предмета. */
+function replaceHistoryMechGroups(item, replacements) {
+  const stripIds = new Set(Object.keys(replacements));
+  const existing = Array.isArray(item.flags?.["warhammer-dbc"]?.mechanics)
+    ? item.flags["warhammer-dbc"].mechanics.filter(g => !stripIds.has(g.id))
+    : [];
+  const added = Object.entries(replacements)
+    .filter(([, entries]) => entries?.length)
+    .map(([id, entries]) => ({ id, operator: "AND", entries }));
+  return { "flags.warhammer-dbc.mechanics": [...existing, ...added] };
+}
+
 /** Записать особенность в предмет (по названию из таблицы). */
 export async function setArmourEntry(item, table, name, { second = false, roll = 0 } = {}) {
   const def = PA_TABLES[table]?.entries.find(e => e.name === name);
@@ -54,7 +85,8 @@ export async function setArmourEntry(item, table, name, { second = false, roll =
   const path = second ? "system.history.second" : "system.history";
   const data = {
     [`${path}.table`]: table, [`${path}.key`]: def.name, [`${path}.roll`]: roll,
-    [`${path}.name`]: def.name, [`${path}.desc`]: def.desc, [`${path}.effect`]: def.effect
+    [`${path}.name`]: def.name, [`${path}.desc`]: def.desc, [`${path}.effect`]: def.effect,
+    ...replaceHistoryMechGroups(item, { [second ? HISTORY_GROUP_ID.second : HISTORY_GROUP_ID.primary]: def.mech })
   };
   if (!second) data["system.history.choice"] = "";
   await relayItemUpdate(item, data);
@@ -66,7 +98,8 @@ export async function clearArmourHistory(item) {
     "system.history.table": "", "system.history.key": "", "system.history.roll": 0,
     "system.history.name": "", "system.history.desc": "", "system.history.effect": "",
     "system.history.choice": "", "system.history.zones": {},
-    "system.history.second": { table: "", key: "", roll: 0, name: "", desc: "", effect: "", choice: "" }
+    "system.history.second": { table: "", key: "", roll: 0, name: "", desc: "", effect: "", choice: "" },
+    ...replaceHistoryMechGroups(item, { [HISTORY_GROUP_ID.primary]: null, [HISTORY_GROUP_ID.second]: null })
   });
 }
 

@@ -5,7 +5,7 @@
   "folder": "xNAQXwc5PTqNbi9J",
   "system": {
     "description": "Прожектор на серво-перископе следит за головой/глазами: освещает направление взгляда лучом 30° (как Spray).",
-    "notes": "",
+    "notes": "Источник света (конус 30°, как Spray) — не числовой эффект теста.",
     "category": "armor",
     "modGroup": "backpack",
     "requirement": "Ранец. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

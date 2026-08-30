@@ -5,7 +5,7 @@
   "folder": "dkSLGHWWgFKBAlrr",
   "system": {
     "description": "Селенитские ЭФМ/каркас ног: когда броня отключена — нет штрафа −10 на действия ног и нет Max.A для движений/действий ног.",
-    "notes": "",
+    "notes": "Снимает штраф выключенной силовой брони, но ТОЛЬКО для ног — disabledArmourPenalty() (module/combat/armor-mods.mjs) актор-широкий, без разбивки по конечностям; заводить её ради одного предмета не входит в объём этого прохода.",
     "category": "powerSystem",
     "modGroup": "legs",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
