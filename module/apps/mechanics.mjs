@@ -611,8 +611,11 @@ export function describeMechEntry(entry) {
     case "testMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
       if (!scope) return "Модификатор теста: (область не выбрана)";
+      const mult = Number(entry.modCharBonusMultiplier) > 1 ? `${Number(entry.modCharBonusMultiplier)}×` : "";
+      const bonusOf = entry.modCharBonus === "pr" ? "Пси-Рейтинг"
+        : (CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus);
       const val = entry.modValueMode === "charBonus"
-        ? `+Бонус ${CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus}`
+        ? `+${mult}Бонус ${bonusOf}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
       return `Модификатор теста: ${scope} — ${val}`;
     }
@@ -908,6 +911,16 @@ function cohesionRoleMatches(entryRole, actualRole) {
  * любом изменении состава/постов ЛЮБОГО отряда — единая точка правды,
  * не разрозненные join/leave-обработчики.
  */
+/** Снять с отряда применённую этим предметом Слаженность и стереть флаг. */
+async function rollbackAppliedCohesion(item, applied) {
+  const oldSquad = await fromUuid(applied.squadUuid).catch(() => null);
+  if (oldSquad) {
+    const cur = Number(oldSquad.system.cohesion?.base) || 0;
+    await oldSquad.update({ "system.cohesion.base": cur - applied.amount });
+  }
+  await item.unsetFlag(FLAG, "cohesionApplied");
+}
+
 export async function reconcileCohesionForActor(actor) {
   if (!actor || !(actor instanceof Actor)) return;
   const squad = findMemberSquad(actor.uuid);
@@ -917,20 +930,20 @@ export async function reconcileCohesionForActor(actor) {
     const entry = getItemMechanics(item)
       .flatMap(g => g.entries || [])
       .find(e => e.kind === "cohesion" && isEntryComplete(e));
-    if (!entry) continue;
+    const applied = item.getFlag(FLAG, "cohesionApplied");
 
-    const applied     = item.getFlag(FLAG, "cohesionApplied");
+    // Записи уже нет (напр. Историю комплекта сняли/перебросили —
+    // apps/armour-history.mjs вырезает её группу), а Слаженность применена:
+    // откат идёт по флагу — в нём есть и отряд, и величина, запись не нужна.
+    if (!entry) {
+      if (applied?.squadUuid && applied.amount) await rollbackAppliedCohesion(item, applied);
+      continue;
+    }
+
     const shouldApply = !!squad && cohesionRoleMatches(entry.cohesionRole, role);
     if (shouldApply && applied?.squadUuid === squad.uuid) continue; // уже верно приложено
 
-    if (applied?.squadUuid && applied.amount) {
-      const oldSquad = await fromUuid(applied.squadUuid).catch(() => null);
-      if (oldSquad) {
-        const cur = Number(oldSquad.system.cohesion?.base) || 0;
-        await oldSquad.update({ "system.cohesion.base": cur - applied.amount });
-      }
-      await item.unsetFlag(FLAG, "cohesionApplied");
-    }
+    if (applied?.squadUuid && applied.amount) await rollbackAppliedCohesion(item, applied);
     if (!shouldApply) continue;
 
     const { total } = await evalFormula(entry.cohesionValue);
@@ -1366,11 +1379,18 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
           const owned = actor.items.filter(i => i.type === "talent").map(i => i.name);
           const candidates = altTalentCandidates(data.name, owned);
           const picked = candidates.length ? await showAltTalentDialog(data.name, candidates) : null;
-          const altSrc = picked ? talentLibraryEntry(picked.name) : null;
+          // Тот же источник, что у обычной выдачи выше — компендиум (с его
+          // Активными эффектами и флагом migratedEffect), иначе альтернатива
+          // несла бы другую механику, чем тот же Талант, выданный обычно.
+          // TALENT_LIBRARY — запасной путь, когда пака нет (стенд без Foundry).
+          const altDoc = picked ? await resolveMechSource({ kind: "talent", sourceName: picked.name }) : null;
+          const altSrc = altDoc ? altDoc.toObject() : (picked ? talentLibraryEntry(picked.name) : null);
           if (altSrc) {
             const altData = foundry.utils.deepClone(altSrc);
+            delete altData._id;
             altData.system = { ...altData.system, granted: true, purchased: false, cost: 0 };
-            altData.flags = { [FLAG]: { grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
+            altData.flags = { ...(altData.flags || {}), [FLAG]: { ...(altData.flags?.[FLAG] || {}),
+              grantedByItem: sourceItem.id, abilityEntryId: entry.id } };
             await actor.createEmbeddedDocuments("Item", [altData]);
             return;
           }
@@ -1468,7 +1488,11 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
         const label = GROUP_SKILLS_DEF[entry.skillKey]?.label || entry.skillKey;
         altSpec = await showAltSkillDialog(label, { group: true, candidates: [] });
       }
-      if (altSpec?.specialty) {
+      // Специализация вводится свободным текстом — уже имеющаяся строка дала бы
+      // второй такой же Навык; тогда идём по обычной ветке (ступень/возврат).
+      const norm = s => String(s || "").trim().toLowerCase();
+      const specTaken = altSpec?.specialty && arr.some(e => norm(e.specialty) === norm(altSpec.specialty));
+      if (altSpec?.specialty && !specTaken) {
         arr.push({ specialty: altSpec.specialty, rank: entry.rank, grantedRank: entry.rank, cost: 0 });
       } else {
         arr[idx].rank        = out.rank;
@@ -2105,6 +2129,12 @@ async function _applyItemMechanics(item) {
     operator: "AND",
     entries: getItemMechanics(item).map(g => ({ kind: "group", group: g, id: g.id }))
   }, item, applied);
+  // Запись kind:"cohesion" сняли с предмета, а её Слаженность на отряде
+  // осталась — applyGroupEntries до reconcile без записи не дойдёт.
+  if (item.getFlag(FLAG, "cohesionApplied")
+      && !getItemMechanics(item).some(g => (g.entries || []).some(e => e.kind === "cohesion"))) {
+    await reconcileCohesionForActor(actor);
+  }
   await syncMechanicsEffects(item);
   await syncWeaponPropItemEffects(item);
   await syncAuraFlag(item);
@@ -2252,9 +2282,9 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
-      Object.entries(CHARACTERISTICS).map(([k, c]) =>
-        `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+    const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+      [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>
+        `<option value="${k}" ${val === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
     let detail = "";
     if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
     else if (ent.modScope === "skill") {
@@ -2262,8 +2292,13 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
         <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
           `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
     }
+    // «Бонус характеристики» умеет и Пси-Рейтинг с множителем («+3×PR»,
+    // Психосилы, wdbc-jw81): без этих двух полей запись из пака показывалась
+    // бы неверно и затиралась первым же кликом по селекту.
     const valueField = ent.modValueMode === "charBonus"
-      ? charSel("mech-mod-char", ent.modCharBonus)
+      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"]])
+        + `<input type="number" class="mech-mod-char-mult" min="1" title="множитель бонуса (1 — как есть)"
+                  value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
       : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
