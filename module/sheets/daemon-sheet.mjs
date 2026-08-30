@@ -5,9 +5,8 @@
 
 import { WarhammerCharacterSheet, onSkillRoll } from "./actor-sheet.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
-import { pickReroll } from "../rules/reroll-pick.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
-import { testKindHtml, readTestKind, wireTestKindLive } from "../rules/test-kind-widget.mjs";
+import { testKindHtml, readTestKind, wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -186,11 +185,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     // Переброс берём первый доступный: выбирать не из чего — на тест
     // Нестабильности книга даёт максимум один (Локус Цепей его не даёт вовсе).
     const rr = rerolls[0] || null;
-    const rolled = [];
-    for (let i = 0; i < (rr ? Math.max(2, rr.rolls) : 1); i++) rolled.push(await new Roll("1d100").evaluate());
-    const picked = pickReroll(rolled.map(r => r.total), rr?.mode);
-    const roll = rolled[picked.index];
-    const rv = picked.value;
+    const { roll, rv, rolls: rolled, rerollNote } = await rollD100WithReroll(rr);
 
     const outcome = await resolveKindOutcome(this.actor, {
       kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
@@ -207,8 +202,8 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
           }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b>
             · Warp Instability (${rating})</div>
           ${outcome.combinedLine}
-          <div class="roll-dice">Бросок: <b>${rv}</b>${
-            picked.dropped.length ? ` <em class="roll-reroll-note">(переброс, отброшено ${picked.dropped.join(", ")})</em>` : ""}</div>
+          <div class="roll-dice">Бросок: <b>${rv}</b></div>
+          ${rerollNote}
           ${outcome.critLine}
           <div class="roll-outcome">${success
             ? `<span class="roll-success">Удержался — ${deg} ст.</span>`

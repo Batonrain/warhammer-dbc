@@ -45,6 +45,24 @@ const CONDITION_COUNTERS = {
  * @param {object} [options]
  * @param {boolean} [options.granted] добавить поля «выдано» (только Персонаж)
  */
+/**
+ * system.reactions был свободным текстом (памятка игрока «2 (Талант X)»),
+ * стал схемой экономики Реакций. Без переноса SchemaField._cast молча
+ * выбрасывает строку — непустой текст уезжает в system.notes, а поле
+ * очищается, чтобы схема заполнила значения по умолчанию. Зовётся из
+ * migrateData каждой модели, что раскладывает creatureSchema.
+ */
+export function migrateReactionsString(source) {
+  if (typeof source?.reactions !== "string") return source;
+  const memo = source.reactions.trim();
+  if (memo) {
+    const note = `<p><b>Реакции (старое поле):</b> ${memo}</p>`;
+    source.notes = source.notes ? `${source.notes}\n${note}` : note;
+  }
+  delete source.reactions;
+  return source;
+}
+
 export function creatureSchema({ granted = false } = {}) {
   const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
   const num  = (initial, label) => new NumberField({ initial, nullable: false, label });

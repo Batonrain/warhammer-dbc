@@ -32,7 +32,9 @@ export const MIGRATE_EFFECT_TYPES = new Set([
   "homeworld", "divination", "armorMod", "weaponMod"
 ]);
 const MIGRATE_COMPENDIA = [
-  "warhammer-dbc.traits", "warhammer-dbc.talents", "warhammer-dbc.implants",
+  "warhammer-dbc.traits", "warhammer-dbc.talents",
+  "warhammer-dbc.aeldari-traits", "warhammer-dbc.aeldari-talents",
+  "warhammer-dbc.implants",
   "warhammer-dbc.mutations", "warhammer-dbc.psychic-powers", "warhammer-dbc.tech-powers",
   "warhammer-dbc.homeworlds", "warhammer-dbc.divinations",
   "warhammer-dbc.armor-mods", "warhammer-dbc.weapon-mods"

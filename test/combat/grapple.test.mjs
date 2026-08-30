@@ -20,7 +20,17 @@ function actorWith(name, uuid) {
     getFlag: (_s, k) => flags[k],
     setFlag: async (_s, k, v) => { flags[k] = v; return v; },
     unsetFlag: async (_s, k) => { delete flags[k]; },
-    update: async (changes) => { updates.push(changes); Object.assign(flags, {}); return changes; },
+    update: async (changes) => {
+      updates.push(changes);
+      // Флаги теперь едут тем же update: разобрать пути flags.<scope>.<key> и -=<key>.
+      for (const [path, v] of Object.entries(changes)) {
+        let m = path.match(/^flags\.[^.]+\.-=(.+)$/);
+        if (m) { delete flags[m[1]]; continue; }
+        m = path.match(/^flags\.[^.]+\.(.+)$/);
+        if (m) flags[m[1]] = v;
+      }
+      return changes;
+    },
     _flags: flags, _updates: updates
   };
 }
@@ -44,8 +54,8 @@ describe("applyGrappleOnHit", () => {
 
     await applyGrappleOnHit(attacker, targetToken, true, { technique: "grapple" });
 
-    expect(attacker._updates).toContainEqual({ "system.conditions.grappling": true });
-    expect(target._updates).toContainEqual({ "system.conditions.grappling": true });
+    expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
+    expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": true }));
     expect(attacker._flags.grapplePartnerUuid).toBe("Actor.t1");
     expect(target._flags.grapplePartnerUuid).toBe("Actor.a1");
   });
@@ -95,7 +105,7 @@ describe("grapplePartner / endGrapple", () => {
 
     await endGrapple(attacker);
 
-    expect(attacker._updates).toContainEqual({ "system.conditions.grappling": false });
-    expect(target._updates).toContainEqual({ "system.conditions.grappling": false });
+    expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": false }));
+    expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": false }));
   });
 });

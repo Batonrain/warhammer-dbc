@@ -53,7 +53,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.wevYjICazW6VkgrG",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.wevYjICazW6VkgrG",
               "sourceName": "Eternal Exile / Вечное Изгнание",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,

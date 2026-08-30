@@ -75,3 +75,26 @@ describe("archetypesForRace: Полуэльдар — люди + Азуриан�
     expect(entries.length).toBeGreaterThan(0);
   });
 });
+
+// Пересохранение шапки не должно стирать уже выбранный архетип, даже если
+// текущий фильтр доступа (субраса/вайтлист) его больше не отдаёт: селектор
+// обязан удержать выбор, иначе submit пишет "" поверх system.archetype.
+describe("archetypeSheetContext: удержание текущего архетипа", () => {
+  it("архетип вне списка субрасы остаётся выбранным в селекторе", async () => {
+    const { archetypeSheetContext } = await import("../../module/apps/archetypes.mjs");
+    // Мандрагоре drCourtier недоступен, но у актора он уже выбран.
+    const actor = { system: { race: "drukhari", subrace: "mandrake", archetype: "drCourtier" } };
+    const ctx = archetypeSheetContext(actor);
+    const opts = ctx.groups.flatMap(g => g.opts);
+    const cur = opts.find(o => o.selected);
+    expect(cur?.key).toBe("drCourtier");
+  });
+
+  it("доступный архетип выбран как раньше", async () => {
+    const { archetypeSheetContext } = await import("../../module/apps/archetypes.mjs");
+    const actor = { system: { race: "drukhari", subrace: "mandrake", archetype: "drAssassin" } };
+    const ctx = archetypeSheetContext(actor);
+    const opts = ctx.groups.flatMap(g => g.opts);
+    expect(opts.find(o => o.selected)?.key).toBe("drAssassin");
+  });
+});
