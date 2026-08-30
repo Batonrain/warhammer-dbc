@@ -74,6 +74,7 @@ import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linge
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
 import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
          checkRunicWeaveZones }        from "./module/regions/runic-weave-zone.mjs";
+import { registerSceneLiveRecalc } from "./module/regions/scene-live-recalc.mjs";
 import { syncTokenBaseSize } from "./module/combat/tactical-map.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
@@ -1643,43 +1644,33 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
 // Триггеры: движение/появление/исчезновение токена на сцене и изменения
 // предметов актора, которые могли поменять набор/активность аур-источников
 // (сам флаг, экипировка, включение мода/поддержания). checkAuras — debounce
-// 150мс, лишние вызовы дёшевы.
-Hooks.on("canvasReady", () => checkAuras(canvas.scene));
-Hooks.on("createToken", doc => checkAuras(doc.parent));
-Hooks.on("deleteToken", doc => {
-  // Связанный актор уходит со сцены вместе с токеном — зачистка прогона его
-  // больше не увидит, выданная аура осталась бы на листе навсегда.
-  if (game.user.isGM && doc.actorLink && doc.actor) clearAuraGrants(doc.actor, doc.parent?.id);
-  checkAuras(doc.parent);
-});
-Hooks.on("updateToken", (doc, changes) => {
-  if (["x", "y", "elevation", "hidden", "disposition"].some(k => k in changes)) {
-    checkAuras(doc.parent);
-  }
-});
-// Предметы, выданные самим прогоном (auraSource), пересчёт не планируют:
-// иначе каждый sweep порождал бы второй, холостой.
-Hooks.on("createItem", item => { if (item.actor && !item.getFlag("warhammer-dbc", "auraSource")) checkAuras(canvas.scene); });
-Hooks.on("deleteItem", item => { if (item.actor && !item.getFlag("warhammer-dbc", "auraSource")) checkAuras(canvas.scene); });
-Hooks.on("updateItem", (item, changes) => {
-  if (!item.actor) return;
-  const touched = ["flags", "system.equipped", "system.activatable", "system.active"]
-    .some(k => k in changes || foundry.utils.hasProperty(changes, k));
-  if (touched) checkAuras(canvas.scene);
+// 150мс, лишние вызовы дёшевы. Регистратор общий с Рунич.Вязями ниже — см.
+// module/regions/scene-live-recalc.mjs.
+registerSceneLiveRecalc({
+  recalc: checkAuras,
+  tokenFields: ["x", "y", "elevation", "hidden", "disposition"],
+  onDeleteToken: doc => {
+    // Связанный актор уходит со сцены вместе с токеном — зачистка прогона его
+    // больше не увидит, выданная аура осталась бы на листе навсегда.
+    if (game.user.isGM && doc.actorLink && doc.actor) clearAuraGrants(doc.actor, doc.parent?.id);
+  },
+  itemWatch: {
+    fields: ["flags", "system.equipped", "system.activatable", "system.active"],
+    // Предметы, выданные самим прогоном (auraSource), пересчёт не планируют:
+    // иначе каждый sweep порождал бы второй, холостой.
+    filter: item => !item.getFlag("warhammer-dbc", "auraSource"),
+  },
 });
 
 // ── Рунические Вязи на помещение (стены) — тот же живой пересчёт, что у Аур,
-// см. module/regions/runic-weave-zone.mjs. Отдельные хуки: триггер — не
-// ЛЮБОЕ движение/предмет, а ещё и правка самого Region/поведения на сцене.
-Hooks.on("canvasReady", () => checkRunicWeaveZones(canvas.scene));
-Hooks.on("createToken", doc => checkRunicWeaveZones(doc.parent));
-Hooks.on("deleteToken", doc => checkRunicWeaveZones(doc.parent));
-Hooks.on("updateToken", (doc, changes) => {
-  if (["x", "y", "elevation", "hidden"].some(k => k in changes)) checkRunicWeaveZones(doc.parent);
+// см. module/regions/runic-weave-zone.mjs. Отличие — ещё и правка самого
+// Region/поведения на сцене (regionBehavior: true), полей Токена меньше
+// (без disposition — вязь не зависит от команды).
+registerSceneLiveRecalc({
+  recalc: checkRunicWeaveZones,
+  tokenFields: ["x", "y", "elevation", "hidden"],
+  regionBehavior: true,
 });
-Hooks.on("createRegionBehavior", doc => checkRunicWeaveZones(canvas.scene));
-Hooks.on("updateRegionBehavior", doc => checkRunicWeaveZones(canvas.scene));
-Hooks.on("deleteRegionBehavior", doc => checkRunicWeaveZones(canvas.scene));
 
 // ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
 // Ловим ЛЮБОЕ уменьшение system.fate.value одним хуком, а не правим каждое из

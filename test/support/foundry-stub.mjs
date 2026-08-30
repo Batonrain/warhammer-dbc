@@ -243,6 +243,18 @@ globalThis.foundry = {
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;"),
     getProperty: () => undefined,
     setProperty: () => true,
+    // Как у настоящего Foundry: путь через точку, но без создания
+    // промежуточных объектов — только проверка, что путь СУЩЕСТВУЕТ.
+    hasProperty: (object, key) => {
+      if (!key) return false;
+      if (key in Object(object)) return true;
+      let target = object;
+      for (const p of key.split(".")) {
+        if (target && typeof target === "object" && p in target) target = target[p];
+        else return false;
+      }
+      return true;
+    },
     // Настоящий debounce копит вызовы за delay мс; тестам синхронности не
     // нужно — важно только что module/regions/auras.mjs не падает при импорте.
     debounce: (fn, delay) => {
