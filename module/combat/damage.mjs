@@ -12,6 +12,7 @@ import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
 const LOCATION_TO_ARMOR = {
@@ -181,11 +182,17 @@ export async function applyDamageToActor(actor, damageData) {
   let tb, armorAP, effArmorAP, totalAbsorption;
 
   if (warpSoak) {
-    // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b
-    tb         = 0;
-    armorAP    = 0;
-    effArmorAP = 0;
-    totalAbsorption = system.characteristics?.wp?.bonus ?? 0;
+    // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только
+    // W.b, плюс ½AP брони (окр.▼), если у актора активна Руническая Вязь
+    // «Эгида Г'Нелле» (wdbc-unku). Только персонажи/твари — применение
+    // «по вязи на сторону» для техники не реализовано: урон технике идёт
+    // другим путём (combat/vehicle.mjs), не через эту функцию.
+    tb = 0;
+    armorAP = hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
+      ? Math.floor((absorption[armorKey] ?? 0) / 2)
+      : 0;
+    effArmorAP = armorAP;
+    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP;
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;

@@ -18,7 +18,7 @@ import { applyDamageToActor } from "../../module/combat/damage.mjs";
 /** Подставной Персонаж: броня, Стойкость, W.b и опционально активный щит. */
 function characterActor({
   armorAP = 0, toughnessBonus = 0, wpBonus = 0, wounds = 20,
-  shield = null
+  shield = null, aegisOfGnelle = false
 } = {}) {
   const updates = [];
   const items = shield ? [{
@@ -31,6 +31,13 @@ function characterActor({
     },
     async update() {}
   }] : [];
+  if (aegisOfGnelle) items.push({
+    id: "rw1", name: "Эгида Г'Нелле", type: "runicWeave",
+    system: { installedOnType: "vehicle" }, // кратчайший путь через isItemActive
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "runicWeave.aegisOfGnelle", label: "" }
+    ] }] } }
+  });
   return {
     id: "char1", name: "Псайкер", type: "character", updates,
     system: {
@@ -99,5 +106,27 @@ describe("Варп-Оружие (warpSoak): игнор брони/T.b, погл�
     expect(card).toContain("игнор брони/T.b");
     expect(card).toContain("W.b");
     expect(card).not.toContain("AP брони:");
+  });
+});
+
+describe("Руническая Вязь «Эгида Г'Нелле» (wdbc-unku): ½AP брони против Варп-оружия", () => {
+  it("без Вязи — AP брони не учитывается вовсе (контроль, тот же случай выше)", async () => {
+    const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20 });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(8); // 15 − 3 (W.b), AP полностью игнорируется
+  });
+
+  it("с Вязью — ½AP брони (окр.▼) добавляется к поглощению W.b", async () => {
+    // absorption.body = armorAP+toughnessBonus = 15, ½ окр.▼ = 7; поглощение = W.b(3)+7 = 10.
+    const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20, aegisOfGnelle: true });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(15); // 20 − (15 − 10) = 15
+  });
+
+  it("округление ½AP вниз — нечётный AP не даёт лишнего очка поглощения", async () => {
+    // absorption.body = armorAP(9)+toughnessBonus(0) = 9 → ½ = 4 (не 4.5/5).
+    const actor = characterActor({ armorAP: 9, toughnessBonus: 0, wpBonus: 0, wounds: 20, aegisOfGnelle: true });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(20 - (15 - 4)); // W.b=0 + ½AP=4 → непогл. 11
   });
 });
