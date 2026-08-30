@@ -11,6 +11,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP } from "./armor-properties.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
+import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
 const LOCATION_TO_ARMOR = {
@@ -160,7 +161,8 @@ export async function applyDamageToActor(actor, damageData) {
     warpSoak = false,  // Варп-Оружие: поглощение по W.b вместо AP+T.b
     lance = false,     // Копьё/Пика: AP цели капается до 20 (до вычета Pen)
     sanctified = false, // Освящённое: игнорирует чародейские (варп) щиты
-    melee = false      // Рукопашная атака — нужно свойству брони Rods (Стержни)
+    melee = false,      // Рукопашная атака — нужно свойству брони Rods (Стержни)
+    frontArcHit = false // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -199,7 +201,7 @@ export async function applyDamageToActor(actor, damageData) {
     armorAP = resolveArmorAbsorptionAP({
       baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
       vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
-      damageType, melee, hitLocation, primitive,
+      damageType, melee, hitLocation, primitive, frontArcHit,
       flags: absorption.propFlags?.[armorKey]
     });
     // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
@@ -333,10 +335,18 @@ export async function showApplyDamageDialog(damageData) {
     return;
   }
 
+  // Геометрия передней дуги (Cloak/Плащ, wdbc-p5el) — атакующий один на всю
+  // карточку, резолвится один раз; у каждого защищающегося своя дуга.
+  const attackerToken = await resolveAttackerToken(damageData.attackerUuid);
+  const withFacing = defenderToken => ({
+    ...damageData,
+    frontArcHit: attackerToken ? isFrontArcHit(defenderToken, attackerToken) : false
+  });
+
   // Один токен — применяем без диалога
   if (candidates.length === 1) {
     const actor = candidates[0].actor ?? candidates[0].document?.actor;
-    if (actor) await applyDamageToActor(actor, damageData);
+    if (actor) await applyDamageToActor(actor, withFacing(candidates[0]));
     return;
   }
 
@@ -367,7 +377,7 @@ export async function showApplyDamageDialog(damageData) {
           const idx   = parseInt(html.find("#dmg-target").val()) || 0;
           const token = candidates[idx];
           const actor = token.actor ?? token.document?.actor;
-          if (actor) await applyDamageToActor(actor, damageData);
+          if (actor) await applyDamageToActor(actor, withFacing(token));
         }
       },
       all: {
@@ -376,7 +386,7 @@ export async function showApplyDamageDialog(damageData) {
         callback: async () => {
           for (const token of candidates) {
             const actor = token.actor ?? token.document?.actor;
-            if (actor) await applyDamageToActor(actor, damageData);
+            if (actor) await applyDamageToActor(actor, withFacing(token));
           }
         }
       },

@@ -1,0 +1,102 @@
+// test/rules/facing.test.mjs
+//
+// Facing / угол обзора (wdbc-p5el): пеленг, дуга, передняя арка Cloak.
+// Соглашение — как у Foundry TokenDocument.rotation: 0° = на север (вверх),
+// по часовой стрелке.
+
+import { describe, it, expect } from "vitest";
+import {
+  normalizeAngle360, normalizeAngle180, bearingDegrees,
+  relativeBearing, isWithinArc, isFrontArcHit
+} from "../../module/rules/facing.mjs";
+
+describe("normalizeAngle360", () => {
+  it("уже в диапазоне — не трогает", () => { expect(normalizeAngle360(90)).toBe(90); });
+  it("отрицательный оборачивается", () => { expect(normalizeAngle360(-90)).toBe(270); });
+  it("больше 360 оборачивается", () => { expect(normalizeAngle360(450)).toBe(90); });
+});
+
+describe("normalizeAngle180", () => {
+  it("190 → -170 (короче через 0)", () => { expect(normalizeAngle180(190)).toBe(-170); });
+  it("180 остаётся 180 (граница включена)", () => { expect(normalizeAngle180(180)).toBe(180); });
+  it("-190 → 170", () => { expect(normalizeAngle180(-190)).toBe(170); });
+});
+
+describe("bearingDegrees — 0° на север, по часовой", () => {
+  const O = { x: 0, y: 0 };
+  it("точка выше (меньший Y) — 0° (север)", () => {
+    expect(bearingDegrees(O, { x: 0, y: -10 })).toBe(0);
+  });
+  it("точка справа — 90° (восток)", () => {
+    expect(bearingDegrees(O, { x: 10, y: 0 })).toBe(90);
+  });
+  it("точка ниже — 180° (юг)", () => {
+    expect(bearingDegrees(O, { x: 0, y: 10 })).toBe(180);
+  });
+  it("точка слева — 270° (запад)", () => {
+    expect(bearingDegrees(O, { x: -10, y: 0 })).toBe(270);
+  });
+  it("та же точка — 0°, не NaN/исключение", () => {
+    expect(bearingDegrees(O, O)).toBe(0);
+  });
+});
+
+describe("relativeBearing", () => {
+  it("наблюдатель смотрит на север (0), цель на севере — 0 (прямо по курсу)", () => {
+    expect(relativeBearing(0, 0)).toBe(0);
+  });
+  it("наблюдатель смотрит на восток (90), цель на севере — цель слева (-90)", () => {
+    expect(relativeBearing(90, 0)).toBe(-90);
+  });
+  it("цель точно сзади — 180", () => {
+    expect(relativeBearing(0, 180)).toBe(180);
+  });
+});
+
+describe("isWithinArc", () => {
+  it("прямо по курсу попадает в любую ненулевую дугу", () => {
+    expect(isWithinArc(45, 45, 90)).toBe(true);
+  });
+  it("на границе арки 90° (±45°) — попадает", () => {
+    expect(isWithinArc(0, 45, 90)).toBe(true);
+    expect(isWithinArc(0, 315, 90)).toBe(true); // -45 через 0
+  });
+  it("чуть за границей арки 90° — не попадает", () => {
+    expect(isWithinArc(0, 46, 90)).toBe(false);
+  });
+  it("сзади не попадает ни в какую разумную арку", () => {
+    expect(isWithinArc(0, 180, 90)).toBe(false);
+    expect(isWithinArc(0, 180, 210)).toBe(false);
+  });
+  it("базовый угол обзора персонажа 210° — почти всё видно, кроме узкого сектора сзади", () => {
+    expect(isWithinArc(0, 100, 210)).toBe(true);
+    expect(isWithinArc(0, 106, 210)).toBe(false);
+  });
+});
+
+describe("isFrontArcHit — передняя арка 90° Плаща (Cloak)", () => {
+  const defender = { x: 0, y: 0 };
+
+  it("атакующий строго спереди (защитник смотрит на север, атакующий выше) — фронтальный хит", () => {
+    expect(isFrontArcHit(defender, 0, { x: 0, y: -10 })).toBe(true);
+  });
+
+  it("атакующий строго сзади — не фронтальный хит, Плащ защищает", () => {
+    expect(isFrontArcHit(defender, 0, { x: 0, y: 10 })).toBe(false);
+  });
+
+  it("атакующий сбоку (90° от курса) — вне арки 90° (граница ровно на краю не входит)", () => {
+    expect(isFrontArcHit(defender, 0, { x: 10, y: 0 })).toBe(false);
+  });
+
+  it("разворот защитника меняет, что считается «спереди»", () => {
+    // Защитник развернулся на восток (90°): атакующий с востока — теперь спереди.
+    expect(isFrontArcHit(defender, 90, { x: 10, y: 0 })).toBe(true);
+    // А тот же атакующий с севера — теперь сбоку, вне арки.
+    expect(isFrontArcHit(defender, 90, { x: 0, y: -10 })).toBe(false);
+  });
+
+  it("нестандартная ширина арки — параметр, не захардкожен", () => {
+    expect(isFrontArcHit(defender, 0, { x: 10, y: 0 }, 210)).toBe(true);
+  });
+});

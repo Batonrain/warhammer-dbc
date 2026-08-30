@@ -1,0 +1,55 @@
+// module/combat/facing.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  FACING (wdbc-p5el) — обвязка чистой геометрии rules/facing.mjs под живой
+//  Foundry-токен: центр в пиксельных координатах сцены + rotation.
+// ════════════════════════════════════════════════════════════════════════════
+
+import { isFrontArcHit as isFrontArcHitPure } from "../rules/facing.mjs";
+
+/** Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не важен). */
+function tokenCenter(token) {
+  const doc = token?.document ?? token;
+  if (!doc) return null;
+  const size = canvas?.grid?.size || canvas?.scene?.grid?.size || 100;
+  return {
+    x: (Number(doc.x) || 0) + ((Number(doc.width)  || 1) * size) / 2,
+    y: (Number(doc.y) || 0) + ((Number(doc.height) || 1) * size) / 2
+  };
+}
+
+/** Разворот токена в градусах (0 = «на север», по часовой) — TokenDocument.rotation. */
+function tokenRotation(token) {
+  return Number((token?.document ?? token)?.rotation) || 0;
+}
+
+/**
+ * Была ли атака на defenderToken нанесена из его передней дуги (Cloak —
+ * arcWidthDegrees=90 по умолчанию). Любой из токенов без известной позиции —
+ * не фронтальный хит (безопасный дефолт: Плащ защищает, если геометрию
+ * посчитать не из чего — не наказываем игрока за отсутствующий токен).
+ * @param {Token} defenderToken
+ * @param {Token} attackerToken
+ * @param {number} [arcWidthDegrees]
+ */
+export function isFrontArcHit(defenderToken, attackerToken, arcWidthDegrees = 90) {
+  const defenderPos = tokenCenter(defenderToken);
+  const attackerPos = tokenCenter(attackerToken);
+  if (!defenderPos || !attackerPos) return false;
+  return isFrontArcHitPure(defenderPos, tokenRotation(defenderToken), attackerPos, arcWidthDegrees);
+}
+
+/**
+ * Токен атакующего по UUID актора — берёт первый активный токен этого
+ * актора на ТЕКУЩЕЙ отображаемой сцене (тот же компромисс, что и в других
+ * местах кода при нескольких токенах одного актора: см. armor-mods.mjs
+ * getInstalledArmorMods, комментарий про host). null, если не нашёлся —
+ * вызывающий сам решает, как трактовать «геометрию посчитать не из чего».
+ * @param {string} attackerUuid
+ * @returns {Promise<Token|null>}
+ */
+export async function resolveAttackerToken(attackerUuid) {
+  if (!attackerUuid) return null;
+  const actor = await fromUuid(attackerUuid).catch(() => null);
+  const tokens = actor?.getActiveTokens?.(true, true) ?? [];
+  return tokens[0] ?? null;
+}

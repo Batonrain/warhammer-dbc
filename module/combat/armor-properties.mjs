@@ -29,7 +29,8 @@ export function aggregateArmorAuto(props) {
   const a = {
     noEnergy: false, noImpact: false, doubleBlast: false,
     noRanged: false, noJointCalled: false, noEyeCalled: false,
-    blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false
+    blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
+    frontArcNoProtect: false
   };
   for (const p of props) {
     const au = p.def.auto;
@@ -42,6 +43,11 @@ export function aggregateArmorAuto(props) {
     if (au.noApEyeCalled)   a.noEyeCalled = true;
     if (au.blocksPrimitiveDouble) a.blocksPrimitiveDouble = true;
     if (au.noJointReduction) a.noJointReduction = true;
+    // Cloak / Плащ (wdbc-p5el): не защищает от атак с передней арки 90° —
+    // геометрия (isFrontArcHit, combat/facing.mjs) считается снаружи и
+    // приходит в resolveArmorAbsorptionAP параметром frontArcHit, здесь
+    // только флаг «у этой локации вообще есть такое свойство».
+    if (au.frontArcNoProtect) a.frontArcNoProtect = true;
   }
   return a;
 }
@@ -74,14 +80,16 @@ export function mergeArmorLocFlags(a, b) {
     noEyeCalled:             a.noEyeCalled || b.noEyeCalled,
     blocksPrimitiveDouble:   a.blocksPrimitiveDouble || b.blocksPrimitiveDouble,
     noJointReduction:        a.noJointReduction || b.noJointReduction,
-    isPowerArmor:            a.isPowerArmor || b.isPowerArmor
+    isPowerArmor:            a.isPowerArmor || b.isPowerArmor,
+    frontArcNoProtect:       a.frontArcNoProtect || b.frontArcNoProtect
   };
 }
 
 const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
-  blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false
+  blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
+  frontArcNoProtect: false
 });
 
 export function emptyArmorLocFlags() {
@@ -101,17 +109,22 @@ export function emptyArmorLocFlags() {
  * @param {string}  hitLocation  метка попадания (для Сочленения/Глаза)
  * @param {boolean} primitive    атакующее оружие имеет свойство Primitive
  * @param {object}  flags        propFlagsByLoc[armorKey] (mergeArmorLocFlags/emptyArmorLocFlags)
+ * @param {boolean} frontArcHit  атака пришла из передней дуги защищающегося
+ *   (combat/facing.mjs::isFrontArcHit, wdbc-p5el) — снимает AP локации с
+ *   Cloak/Плащом. Геометрия считается снаружи (нужны токены сцены), сюда
+ *   приходит уже готовым булевым.
  */
 export function resolveArmorAbsorptionAP({
   baseArmorAP, vsTypeBonus = 0, damageType, melee = false, hitLocation = "",
-  primitive = false, flags = null
+  primitive = false, flags = null, frontArcHit = false
 }) {
   const pf = flags || emptyArmorLocFlags();
   const armorNulled = (pf.noEnergy && damageType === "energy")
                     || (pf.noImpact && damageType === "impact")
                     || (pf.noRanged && !melee)
                     || (pf.noJointCalled && hitLocation === "Сочленение / Шея")
-                    || (pf.noEyeCalled  && hitLocation === "Глаз (Голова)");
+                    || (pf.noEyeCalled  && hitLocation === "Глаз (Голова)")
+                    || (pf.frontArcNoProtect && frontArcHit);
   if (armorNulled) return 0;
 
   // Попадание в Глаз — попадание в голову, игнорирующее AP шлема целиком
