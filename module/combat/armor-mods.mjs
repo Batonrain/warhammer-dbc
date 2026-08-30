@@ -10,6 +10,7 @@ import { carryRow, esc } from "../helpers/utils.mjs";
 import { SECONDS_PER_HOUR } from "../constants/imperial-calendar.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 
 const FLAG = "warhammer-dbc";
 const OVERLOAD_TEST_AT_FLAG = "disabledArmourOverloadTestAt";
@@ -223,18 +224,15 @@ export function disabledArmourOverloadTier(actor, armourWeight) {
 
 /**
  * Периодический тест «раз в T.b часов перевеса» (стр. 233) — секунд до
- * следующего теста (0 — доступен прямо сейчас), тем же приёмом, что
- * susAnHealCooldownRemaining (apps/sus-an-heal.mjs): чистая функция, дата
- * начала отсчёта (testAt) и текущий worldTime приходят снаружи, ничего не
- * читает сама. tb≤0 (нет Т.b — вырожденный случай, не встречается в живой
- * игре) — интервал делить не на что, кнопка остаётся доступна всегда, а не
- * виснет заблокированной навечно: 0 часов — не «никогда», а «постоянно».
+ * следующего теста (0 — доступен прямо сейчас), тем же общим примитивом
+ * worldTimeRemaining (module/rules/cooldown.mjs), что и susAnHealCooldownRemaining
+ * (apps/sus-an-heal.mjs). tb≤0 (нет Т.b — вырожденный случай, не встречается
+ * в живой игре) — интервал делить не на что, кнопка остаётся доступна
+ * всегда, а не виснет заблокированной навечно: 0 часов — не «никогда», а
+ * «постоянно».
  */
 export function disabledArmourPeriodicTestRemaining(testAt, worldTime, tb) {
-  const hours = Number(tb) || 0;
-  if (hours <= 0 || testAt == null) return 0;
-  const remaining = Number(testAt) + hours * SECONDS_PER_HOUR - Number(worldTime);
-  return remaining > 0 ? remaining : 0;
+  return worldTimeRemaining(testAt, worldTime, (Number(tb) || 0) * SECONDS_PER_HOUR);
 }
 
 /**
@@ -288,7 +286,7 @@ export async function useDisabledArmourPeriodicTest(actor) {
   const rv = roll.total;
   const success = rv <= t;
   if (!success) await addFatigue(actor, 1);
-  await actor.setFlag(FLAG, OVERLOAD_TEST_AT_FLAG, game.time.worldTime);
+  await markWorldTimeCooldownUsed(actor, OVERLOAD_TEST_AT_FLAG);
 
   const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();

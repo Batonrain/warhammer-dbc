@@ -32,6 +32,7 @@
 import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 
 const FLAG = "warhammer-dbc";
 const USED_AT_FLAG = "susAnHealUsedAt";
@@ -52,9 +53,7 @@ export function isSusAnMembraneItem(item) {
 export function susAnHealCooldownRemaining(item) {
   const usedAt = Number(item?.getFlag?.(FLAG, USED_AT_FLAG) ?? item?.flags?.[FLAG]?.[USED_AT_FLAG]) || 0;
   if (!usedAt) return 0;
-  const now = game.time.worldTime;
-  const remaining = usedAt + SECONDS_PER_DAY - now;
-  return remaining > 0 ? remaining : 0;
+  return worldTimeRemaining(usedAt, game.time.worldTime, SECONDS_PER_DAY);
 }
 
 function formatDuration(seconds) {
@@ -124,7 +123,7 @@ export async function useSusAnHeal(actor, item) {
   }
   // Перезарядка отсчитывается в любом случае — успех или провал, попытка
   // раз в сутки, а не «пока не получится».
-  await item.setFlag(FLAG, USED_AT_FLAG, game.time.worldTime);
+  await markWorldTimeCooldownUsed(item, USED_AT_FLAG);
 
   const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
