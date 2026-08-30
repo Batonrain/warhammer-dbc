@@ -114,7 +114,11 @@ export async function breachArmorAtLocation(actor, armorKey) {
     && (Number(i.system?.[armorKey]) || 0) > 0
     && !i.system?.breached
   );
-  for (const item of items) await item.update({ "system.breached": true });
+  // Один запрос на все предметы: по item.update() на каждый — это круг до
+  // сервера и перерисовка листов на каждое попадание (ср. resetActionEconomy).
+  if (items.length) {
+    await actor.updateEmbeddedDocuments("Item", items.map(i => ({ _id: i.id, "system.breached": true })));
+  }
   return items.length;
 }
 
@@ -135,10 +139,13 @@ export async function breachArmorAtLocation(actor, armorKey) {
  *   (combat/facing.mjs::isFrontArcHit, wdbc-p5el) — снимает AP локации с
  *   Cloak/Плащом. Геометрия считается снаружи (нужны токены сцены), сюда
  *   приходит уже готовым булевым.
+ * @param {number|null} wornAP  часть baseArmorAP от носимой брони/щита
+ *   (absorption.wornOnly); остаток — естественная броня Черт/имплантов.
+ *   Нужен только правилу Глаза; null — считать весь baseArmorAP носимым.
  */
 export function resolveArmorAbsorptionAP({
   baseArmorAP, vsTypeBonus = 0, damageType, melee = false, hitLocation = "",
-  primitive = false, flags = null, frontArcHit = false
+  primitive = false, flags = null, frontArcHit = false, wornAP = null
 }) {
   const pf = flags || emptyArmorLocFlags();
   const armorNulled = (pf.noEnergy && damageType === "energy")
@@ -152,7 +159,11 @@ export function resolveArmorAbsorptionAP({
   // Попадание в Глаз — попадание в голову, игнорирующее AP шлема целиком
   // (стр. 34), кроме силовых шлемов: у них по правилам дома всё равно есть
   // 4 AP на линзы очей. Плоское значение, а не доля от базового AP.
-  if (hitLocation === "Глаз (Голова)") return pf.isPowerArmor ? 4 : 0;
+  // Естественная броня (Черты, импланты) — не шлем, она остаётся.
+  if (hitLocation === "Глаз (Голова)") {
+    const natural = wornAP == null ? 0 : Math.max(0, baseArmorAP - (Number(wornAP) || 0));
+    return natural + (pf.isPowerArmor ? 4 : 0);
+  }
 
   let ap = baseArmorAP + vsTypeBonus;
   // Попадание в Сочленение/Шею — AP этой части тела втрое меньше настоящего,
