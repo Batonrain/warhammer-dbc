@@ -135,6 +135,10 @@
   padding: 5px 8px; font-size: 0.88em; font-weight: normal; border-radius: 3px;
   background: rgba(77,255,166,0.1); border: 1px solid rgba(77,255,166,0.4); color: #4dffa6;
 }
+.wh-statlog-note {
+  padding: 5px 8px; font-size: 0.88em; font-weight: normal; border-radius: 3px;
+  background: rgba(255,193,77,0.1); border: 1px solid rgba(255,193,77,0.4); color: #ffc14d;
+}
 
 /* ── Диалог атаки ── */
 .wh-attack-form {

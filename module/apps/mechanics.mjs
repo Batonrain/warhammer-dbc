@@ -197,6 +197,8 @@ import { masteryTargets, masteryAptitudes, masteryLabel } from "../rules/mastery
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
+import { hasSubmutations }                     from "../rules/submutations.mjs";
+import { rollSubmutation }                     from "./submutations.mjs";
 import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
 import { isMinionTalent }                      from "../rules/minion-build.mjs";
 import { applyMinionSlot, promptMinionSlot }   from "./minion-talent.mjs";
@@ -1304,7 +1306,12 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     // Многократный Талант (system.hasRating — Enemy и т.п.), уже взятый
     // раньше, не задваивается: createOrRankTalent поднимает ему ранг вместо
     // создания второго предмета. Для любых других выдач — обычное создание.
-    await createOrRankTalent(actor, data);
+    const { item: granted } = await createOrRankTalent(actor, data);
+    // Мутация с субмутациями сразу спрашивает свою строку — тот же приём,
+    // что у ручного добавления мутации (sheets/tabs/mutations.mjs).
+    if (granted?.type === "mutation" && hasSubmutations(granted.system?.benefit || "")) {
+      await rollSubmutation(granted, { actor });
+    }
     return;
   }
 

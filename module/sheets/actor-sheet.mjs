@@ -182,7 +182,13 @@ async function onStatAdd(event, target) {
   if (stat === "insanity") {
     await promptStatAdd(this.actor, { label: "Безумие", path: "system.insanity.value", allowDice: true });
   } else if (stat === "corruption") {
-    await promptStatAdd(this.actor, { label: "Порча", path: "system.corruption.value", allowDice: true });
+    const isEldanar = actorSubraceItem(this.actor)?.system?.key === "eldanar";
+    await promptStatAdd(this.actor, {
+      label: "Порча", path: "system.corruption.value", allowDice: true,
+      note: isEldanar
+        ? "Эльданар не получает дополнительный Cor от расы, путей и иных источников — только за то, что взято сознательно."
+        : ""
+    });
   } else if (stat === "xpTotal") {
     // Ловит на Лету (X) / Fast Learner: +X% к прибавляемому опыту, читаем
     // живой процент с актора (module/documents/actor.mjs, system.fastLearnerBonus).
