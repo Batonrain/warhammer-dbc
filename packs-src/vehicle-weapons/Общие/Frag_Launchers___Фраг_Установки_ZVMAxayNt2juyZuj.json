@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "launcher",
-    "range": 15,
+    "range": 30,
     "balance": 0,
     "reload": "–",
     "magazineCur": 12,

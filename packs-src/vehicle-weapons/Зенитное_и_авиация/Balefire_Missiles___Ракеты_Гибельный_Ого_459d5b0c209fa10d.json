@@ -1,0 +1,100 @@
+{
+  "name": "Balefire Missiles / Ракеты Гибельный Огонь",
+  "type": "weapon",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "y6NRxY4Ysr4zWzpz",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "heavy",
+    "weaponType": "launcher",
+    "range": 1200,
+    "balance": 0,
+    "reload": "–",
+    "magazineCur": 2,
+    "magazineMax": 2,
+    "rof_single": 1,
+    "rof_semi": 2,
+    "rof_full": 0,
+    "damage": "2d10+5",
+    "damageType": "energy",
+    "penetration": 4,
+    "quality": "common",
+    "availability": 3,
+    "weight": 0,
+    "attackBonus": 0,
+    "special": "Linger (1d5)",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": 10
+      },
+      {
+        "key": "corrosive",
+        "rating": 2
+      },
+      {
+        "key": "flame"
+      },
+      {
+        "key": "flush"
+      },
+      {
+        "key": "linger"
+      },
+      {
+        "key": "toxic",
+        "rating": 1
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": true,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    }
+  },
+  "_id": "459d5b0c209fa10d",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788090906691,
+    "modifiedTime": 1788090906691,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!items!459d5b0c209fa10d"
+}

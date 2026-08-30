@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "plasma",
-    "range": 180,
+    "range": 360,
     "balance": 0,
     "reload": "3",
     "magazineCur": 6,

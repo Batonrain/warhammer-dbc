@@ -558,6 +558,67 @@ export const DRUKHARI_BIOIMPLANTS = [].concat(
 
 );
 
+// ── Пак первичен, константа — запасной путь ──────────────────────────────
+// Категория "bioimplant" в компендиуме warhammer-dbc.implants уникальна для
+// друкхарийских биоимплантов (не переиспользуется другими расами) — это же
+// подтверждено пересчётом 30.08.2026: 118/118 записей константы 1:1
+// совпадают с паком по имени. Каталог Мастерской (craft-workshop.mjs) читает
+// компендиум, а константа остаётся лишь на случай, если пак ещё не готов —
+// тот же приём, что и Бог Таланта в patronage.mjs.
+const BIOIMPLANT_PACK_ID = "warhammer-dbc.implants";
+
+let _bioImplantCatalog = null; // null = ещё не строился
+
+function catalogEntryFrom(name, group, description) {
+  const m = /R\s*(-?\d+)/.exec(description || "");
+  return {
+    key: name, label: name, group,
+    rarity: m ? Number(m[1]) : 0,
+    advanced: !/^Обычные$/.test(group) && !/Ферментный/.test(group),
+    haemonculi: /Гемункульские/.test(group),
+    // «Крупный» имплант — целая конечность: у них по 3 цикла за редкость.
+    large: /Рука|Нога|Скелет|Панцирь|Доспех|Брюхо/i.test(name)
+  };
+}
+
+function fallbackBioImplantCatalog() {
+  return DRUKHARI_BIOIMPLANTS.map(b => catalogEntryFrom(b.name, b.folderPath?.[1] || "", b.system?.description));
+}
+
+async function _refreshBioImplantCatalog() {
+  const pack = (typeof game !== "undefined") ? game.packs?.get?.(BIOIMPLANT_PACK_ID) : null;
+  if (!pack) { _bioImplantCatalog = fallbackBioImplantCatalog(); return; }
+  try {
+    const index = await pack.getIndex({ fields: ["system.category", "system.description"] });
+    const byKey = new Map();
+    for (const e of index) {
+      if (e.system?.category !== "bioimplant") continue;
+      const group = pack.folders.get(e.folder)?.name || "";
+      byKey.set(e.name, catalogEntryFrom(e.name, group, e.system?.description));
+    }
+    // Константа как подстраховка: имплант, которого в паке ещё нет, не
+    // должен тихо пропасть из каталога крафта.
+    for (const entry of fallbackBioImplantCatalog()) if (!byKey.has(entry.key)) byKey.set(entry.key, entry);
+    _bioImplantCatalog = [...byKey.values()];
+  } catch (e) { _bioImplantCatalog = fallbackBioImplantCatalog(); }
+}
+
+/** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и
+ * обновляет его при правках компендиума warhammer-dbc.implants. До первого
+ * построения (или в тестах без game.packs) используется константа. */
+export function initBioImplantCatalog() {
+  Hooks.once("ready", () => _refreshBioImplantCatalog());
+  for (const h of ["createItem", "deleteItem", "updateItem"])
+    Hooks.on(h, doc => { if (doc?.pack === BIOIMPLANT_PACK_ID) _refreshBioImplantCatalog(); });
+}
+
+/** Каталог биоимплантов Друкхари для выпадашки Мастерской: [{key,label,group,
+ * rarity,advanced,haemonculi,large}, ...] — из компендиума, с константой как
+ * запасным путём для того, чего в паке ещё нет. */
+export function bioImplantCatalog() {
+  return _bioImplantCatalog || fallbackBioImplantCatalog();
+}
+
 // ════════════════════════════ ХИМИЯ ДРУКХАРИ ════════════════════════════
 // Яды Друкхари игнорируют таланты снижения ядов, естественный и психический
 // иммунитет к ядам (но не иммунитет демонов/чистых машин).

@@ -6,7 +6,7 @@ import { CHASSIS_TYPES, CHASSIS_NOTES, VEHICLE_TYPES, CREW_ROLES,
          REPAIR_CONDITIONS, REPAIR_REQUIREMENTS, REQUISITION_NOTES } from "../constants/vehicle.mjs";
 import { _executeAttackRoll } from "../combat/attack.mjs";
 import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/vehicle.mjs";
-import { VEHICLE_WEAPONS } from "../constants/vehicle-weapons-library.mjs";
+import { vehicleWeaponProfile } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
@@ -404,7 +404,7 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
       const item = this.actor.items.get(itemIdOf(ev.currentTarget));
       const name = ev.currentTarget.value;
       if (!item || item.name === name) return;
-      const src = VEHICLE_WEAPONS.find(w => w.name === name);
+      const src = vehicleWeaponProfile(name);
       if (!src) return ui.notifications.warn(`Профиль «${name}» не найден в библиотеке орудий техники.`);
       const sys = foundry.utils.deepClone(src.system);
       sys.vehicleMount = foundry.utils.deepClone(item.system.vehicleMount || {}); // разъём/опции/место/углы/БК

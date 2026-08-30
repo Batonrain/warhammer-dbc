@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "bolt",
-    "range": 100,
+    "range": 200,
     "balance": 0,
     "reload": "1",
     "magazineCur": 144,

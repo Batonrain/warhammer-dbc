@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "solid",
-    "range": 300,
+    "range": 600,
     "balance": 0,
     "reload": "2",
     "magazineCur": 1,
