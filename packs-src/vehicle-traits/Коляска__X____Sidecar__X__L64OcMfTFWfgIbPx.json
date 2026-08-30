@@ -35,7 +35,8 @@
       "autonomous": false,
       "flickerfield": false,
       "amphibious": false,
-      "ceramitePlating": false
+      "ceramitePlating": false,
+      "sidecarStructure": true
     }
   },
   "_id": "L64OcMfTFWfgIbPx",

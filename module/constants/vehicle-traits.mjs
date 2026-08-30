@@ -26,5 +26,9 @@ export const VEHICLE_TRAIT_EFFECTS = {
   // автоматизирован — свойство Melta пере-считывает Проб. до того, как
   // известна цель (combat/attack-outcome.mjs), автоматизация потребовала бы
   // протаскивать флаг через весь конвейер атаки; оставлено вручную ГМу.
-  ceramitePlating: false
+  ceramitePlating: false,
+  // Коляска (X): X читается из рейтинга Черты на предмете, как у
+  // deflectorShield/autonomous выше — добавляется к system.structure.max байка
+  // (rules/vehicle.mjs, wdbc-8nz6).
+  sidecarStructure: false
 };

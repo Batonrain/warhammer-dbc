@@ -30,7 +30,7 @@ import {
   MOUNT_SPEEDS, MOUNT_SKID, MOUNT_TERRAIN_MOD, STAY_MOD, BIKE_REPAIR, SELECTIVE_MODS,
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
-  hitTarget, mountSpd, mountSelectiveMod
+  hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue
 } from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -307,6 +307,110 @@ export async function showSkidDialog(rider) {
     <div class="roll-allout-note">Независимо от исхода: −10 на все физические действия до начала следующего Хода.</div>`, [roll]);
 
   await rider.update({ "system.mount.skidUsed": true });
+}
+
+// ── Лезвия (X) (стр. 478) ──────────────────────────────────────────────────
+//  Раз в Ход (больше — при высоком ранге Навыка управления), проезжая мимо
+//  врага, всадник свободным действием пытается попасть по нему Лезвиями/
+//  Шипами скакуна или байка. Лимит использований в Ход растёт с рангом:
+//  Тренированное (+10) — 1 раз, Опытный (+20) — 2 (по разным целям), Ветеран
+//  (+30) — 3. Ниже Тренированного способность вообще недоступна.
+//
+//  Схема Черты хранит X одним числом (NumberField), а книга называет его
+//  «профилем» — упрощение: X читается как плоский урон типа Rending без
+//  Проб., как и остальные X-рейтинги в этом файле (deflectorShield и т.п.).
+const BLADES_TIER_USES = { trained: 1, veteran: 2, expert: 3 };
+
+export async function showBladesDialog(rider) {
+  const ctx = await mountContext(rider);
+  if (!ctx) return;
+  const { mount, traits } = ctx;
+  if (!("blades" in traits)) {
+    return ui.notifications.warn("⚠️ У этого скакуна нет Черты Лезвия.");
+  }
+
+  const control  = mountControlSkill(mount, traits);
+  const sv       = skillValue(rider, control);
+  const maxUses  = BLADES_TIER_USES[sv.rank] || 0;
+  if (maxUses === 0) {
+    return ui.notifications.warn(
+      `⚠️ Нужен ${control.label}+10 (Тренированное) или выше — сейчас «${SKILL_RANKS[sv.rank]?.label ?? sv.rank}».`);
+  }
+  const used = Number(rider.system?.mount?.bladesUsed) || 0;
+  if (used >= maxUses) {
+    return ui.notifications.warn(`⚠️ Лезвия уже использованы ${used} из ${maxUses} раз в этот Ход.`);
+  }
+
+  const rating   = Number(traits.blades) || 0;
+  const baseEff  = sv.value - 10;
+
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Лезвия — ${mount.name}` },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 360 },
+    content: `
+      <div class="wh-skill-roll-form">
+        <div class="roll-dlg-header"><span>Лезвия — ${esc(mount.name)}</span></div>
+        <div class="roll-dlg-row"><label>${control.label} −10:</label><span>${sv.value} − 10 = ${baseEff}</span></div>
+        <div class="roll-dlg-row"><label>Использований:</label><span>${used} из ${maxUses} в этот Ход</span></div>
+        ${testKindHtml({ defaultKind: "base", label: "Лезвия" })}
+        ${diceModeHtml()}
+        <div id="auto-outcome-note" class="roll-dlg-note"></div>
+      </div>`,
+    buttons: [
+      {
+        action: "roll", icon: "fas fa-dice-d10", label: "Лезвия!", default: true,
+        callback: (event, button) => {
+          const val = sel => button.form.querySelector(sel)?.value ?? null;
+          const tk = readTestKind(val, { label: "Лезвия" });
+          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          return tk;
+        }
+      },
+      { action: "cancel", label: "Отмена", callback: () => false }
+    ],
+    render: (event, dialog) => wireTestKindLive(dialog.element, {
+      actor: rider, label: "Лезвия",
+      getBaseEff: () => baseEff + (parseInt(dialog.element.querySelector("#test-difficulty")?.value) || 0)
+    }),
+    rejectClose: false
+  });
+  if (!result) return;
+
+  const { roll, rv, rerollNote, outcome } = await rollWithKind(rider, baseEff, result, { actor: rider, kind: "skill" });
+  const { success: passed, deg } = outcome;
+
+  const body = passed
+    ? `<div class="roll-damage-section">
+        <div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Попадание Лезвиями, профиль <b>${rating}</b> R.</span></div>
+        <div class="roll-defense-section">
+          <div class="roll-section-head">Защита цели <span class="roll-head-hint">— выберите токен цели</span></div>
+          <button class="wh-dodge-btn" type="button" data-extra-mod="0" data-hits-count="1" data-attacker-uuid="${rider.uuid}">
+            Уклонение (как от рукопашной)
+          </button>
+        </div>
+        <div class="roll-apply-dmg-section">
+          <button class="wh-apply-dmg-btn" type="button"
+            data-damage="${rating}" data-penetration="0" data-damage-type="rending"
+            data-hit-location="Торс" data-weapon-name="Лезвия" data-attacker="${esc(mount.name)}"
+            data-felling="0" data-primitive="0" data-ignore-shield="0" data-warp-soak="0" data-melee="1">
+            Применить урон Лезвий: <b>${rating}</b> R
+          </button>
+        </div>
+      </div>`
+    : `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Попадания нет.</span></div>`;
+
+  await postCard(rider, `
+    <div class="roll-header">${rollIcon("blood", "#ff6b6b")}Лезвия${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(rider.name)}</div>
+    <div class="roll-threshold">${control.label} <b>${sv.value}</b> −10${result.difficulty ? ` ${sgn(result.difficulty)} (📊 Сложность)` : ""} → Порог <b>${baseEff}</b></div>
+    <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
+    ${rerollNote}
+    ${outcome.critLine}
+    ${body}
+    ${outcome.extendedLine}
+    ${outcome.opposedLine}`, [roll]);
+
+  await rider.update({ "system.mount.bladesUsed": used + 1 });
 }
 
 // ── Трудный Ландшафт верхом (стр. 477) ────────────────────────────────────

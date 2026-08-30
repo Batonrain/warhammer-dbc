@@ -346,6 +346,10 @@
         <button type="button" class="mount-action-btn" data-mount-action="skid" {{#unless mountSkidAllowed}}disabled{{/unless}}
           title="{{#if mountSkidBlocked}}Байк с Коляской Занос не совершает{{else}}Только после Натиска или Бега{{/if}}">Занос</button>
         <button type="button" class="mount-action-btn" data-mount-action="terrain">Трудный ландшафт</button>
+        {{#if mountBlades.available}}
+        <button type="button" class="mount-action-btn" data-mount-action="blades" {{#unless mountBlades.allowed}}disabled{{/unless}}
+          title="{{mountBlades.used}} из {{mountBlades.max}} в этот Ход — сброс при новой посадке">Лезвия</button>
+        {{/if}}
         <button type="button" class="mount-action-btn" data-mount-action="hit" title="Куда пришлось не-Избирательное попадание: дубль — по всаднику">Попадание</button>
         <button type="button" class="mount-action-btn" data-mount-action="damage" title="Скакун получил Крит. Эффект, сбит с ног или погиб — тест Акробатики">Скакуна тряхнуло</button>
         {{#if mountIsBike}}

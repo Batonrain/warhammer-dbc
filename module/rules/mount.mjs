@@ -240,6 +240,19 @@ export function skillValue(rider, info) {
 }
 
 /**
+ * Легион (стр. 478): байк для Космодесантников — седок Размером меньше 1
+ * ИЛИ с S.b меньше 8 получает −20 на все тесты управления этим байком.
+ * Обратный случай («космодесантник не помещается на мелкий байк без Трейта»)
+ * — не число, а поломка снаряжения, ГМ решает за столом, не автоматизируется.
+ */
+export function legionPenalty(rider, traits) {
+  if (!("legion" in (traits ?? {}))) return 0;
+  const riderSize = num(rider?.system?.sizeTotal ?? rider?.system?.size);
+  const sb = num(rider?.system?.characteristics?.s?.bonus);
+  return (riderSize < 1 || sb < 8) ? -20 : 0;
+}
+
+/**
  * Навык, которым всадник реально ведёт этот скакун: основной или замена
  * (Tech-Use у робоскакуна), смотря что выше. Ниже −20 не бывает: это и есть
  * бросок нетренированного.
@@ -252,13 +265,16 @@ export function skillValue(rider, info) {
 export function riderControl(rider, mount, traits = null) {
   const t = traits ?? mountTraits(mount);
   const main = mountControlSkill(mount, t);
+  const legion = legionPenalty(rider, t);
   const best = { ...skillValue(rider, main), info: main };
+  best.value += legion;
 
   if (main.alt) {
     const alt = { ...skillValue(rider, main.alt), info: main.alt };
-    if (alt.value > best.value) return { ...alt, combined: !alt.trained };
+    alt.value += legion;
+    if (alt.value > best.value) return { ...alt, combined: !alt.trained, legionPenalty: legion };
   }
-  return { ...best, combined: !best.trained };
+  return { ...best, combined: !best.trained, legionPenalty: legion };
 }
 
 // ── Поправки тестов ───────────────────────────────────────────────────────

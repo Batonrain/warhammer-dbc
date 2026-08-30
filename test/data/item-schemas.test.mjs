@@ -515,7 +515,7 @@ const TYPES = {
         commandBonus: 0, repairBonus: 0,
         deflectorShield: false, deflectorDaemonic: false, ignoreCrewCrits: false,
         autonomous: false, flickerfield: false,
-        amphibious: false, ceramitePlating: false
+        amphibious: false, ceramitePlating: false, sidecarStructure: false
       }
     }
   },
