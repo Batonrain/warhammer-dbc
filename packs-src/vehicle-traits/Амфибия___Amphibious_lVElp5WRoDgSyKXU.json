@@ -33,7 +33,9 @@
       "deflectorDaemonic": false,
       "ignoreCrewCrits": false,
       "autonomous": false,
-      "flickerfield": false
+      "flickerfield": false,
+      "amphibious": true,
+      "ceramitePlating": false
     }
   },
   "_id": "lVElp5WRoDgSyKXU",

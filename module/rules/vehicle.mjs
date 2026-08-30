@@ -33,7 +33,8 @@ export function prepareVehicleDerived(items, system) {
     commandBonus: 0, repairBonus: 0,
     deflector: 0, deflectorDaemonic: false, ignoreCrewCrits: false,
     autonomous: false, autonomousBS: 0, autonomousOperate: 0, autonomousAwareness: 0,
-    flickerfield: false
+    flickerfield: false,
+    amphibious: false, ceramitePlating: false
   };
   for (const it of items) {
     if (it.type !== "vehicleTrait") continue;
@@ -49,6 +50,8 @@ export function prepareVehicleDerived(items, system) {
     if (e.reloadRapid)            tf.reloadRapid = true;
     if (e.ignoreCrewCrits)        tf.ignoreCrewCrits = true;
     if (e.flickerfield)           tf.flickerfield = true;
+    if (e.amphibious)             tf.amphibious = true;
+    if (e.ceramitePlating)        tf.ceramitePlating = true;
     // Щит-дефлектор 1-X: X = рейтинг черты (берём максимальный).
     if (e.deflectorShield) {
       const x = Number(it.system.rating) || 0;
