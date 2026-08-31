@@ -15,7 +15,8 @@ import { rollHordePsychTest, psychHealLocked, PSYCH_TESTS } from "../combat/hord
 import { hordeContacts, hordeMeleeTargets } from "../combat/horde-tokens.mjs";
 import { attachItemPicker } from "./item-picker.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
-import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { convertHordeToActor } from "../apps/horde-convert.mjs";
 import { openContextMenu } from "./context-menu.mjs";
 
@@ -104,8 +105,7 @@ function onPick(event, target)      { return this._openItemPicker(target.dataset
 /** Психологический тест: массивные потери, Страх, Запугивание. */
 function onPsychTest(event, target) { return this._psychTestDialog(target.dataset.kind); }
 
-export class WarhammerHordeSheet
-  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+export class WarhammerHordeSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
     // wh-horde — на самой форме листа: у V1 её нёс <form> в шаблоне, и вся
@@ -158,18 +158,10 @@ export class WarhammerHordeSheet
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
-    Object.assign(context, actorFactionsContext(this.actor));
     const system = this.actor.system;
-    context.actor = this.actor;
-    context.system = system;
     // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
-    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
-    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(system.notes || "", enrichOpts);
-    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(system.gmNotes || "", enrichOpts);
-    // Активная вкладка: changeTab дальше сам переставляет .active по DOM, отсюда
-    // берётся только состояние на первый рендер и на перерисовку.
-    context.tab = this.tabGroups?.primary ?? WarhammerHordeSheet.TABS.primary.initial;
+    context.notesEnriched   = await this._enrich(system.notes);
+    context.gmNotesEnriched = await this._enrich(system.gmNotes);
 
     context.chars = CHAR_ORDER.map(k => {
       const total = system.characteristics?.[k]?.total ?? 0;
@@ -237,7 +229,6 @@ export class WarhammerHordeSheet
     // Токена на сцене может не быть — тогда панель просто молчит.
     context.hordeContacts = this._contacts();
 
-    context.isGM = game.user.isGM;
     return context;
   }
 
@@ -290,11 +281,7 @@ export class WarhammerHordeSheet
     // Перетаскивание предметов на лист: у ApplicationV2 своей привязки нет, а
     // без неё на Орду нельзя было положить ни броню, ни оружие из компендиума —
     // предметы заводились только кнопками самого листа.
-    try {
-      const DDC = foundry.applications?.ux?.DragDrop?.implementation
-               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-    } catch (e) { console.warn("Warhammer DBC | horde DnD bind:", e); }
+    this._bindManualDragDrop(el, "horde");
   }
 
   _canDragDrop(_selector) { return this.isEditable; }

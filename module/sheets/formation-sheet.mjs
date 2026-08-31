@@ -20,13 +20,12 @@ import { findGroupEntry } from "../constants/skill-specializations.mjs";
 import { FEATURES, isFeatureEnabled } from "../constants/features.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
+import { degreesOfSuccess } from "../constants/craft.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
-import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
-
-/** Степени успеха/провала: |порог − бросок| / 10 + 1. */
-const degrees = (threshold, roll) => Math.floor(Math.abs(threshold - roll) / 10) + 1;
+import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
+import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
@@ -109,8 +108,7 @@ function onEventCount(event, target) {
   return this.actor.update({ "system.attached": attached });
 }
 
-export class WarhammerFormationSheet
-  extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ActorSheetV2) {
+export class WarhammerFormationSheet extends WarhammerStructuralSheet {
 
   static DEFAULT_OPTIONS = {
     // formation-sheet-form — на самой форме листа: CSS цепляется за
@@ -242,18 +240,10 @@ export class WarhammerFormationSheet
 
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    context.actor = this.actor;
-    context.tab = this.tabGroups?.primary ?? WarhammerFormationSheet.TABS.primary.initial;
-    // Поле «Фракция» в шапке — общее для всех листов (apps/actor-factions.mjs).
-    Object.assign(context, actorFactionsContext(this.actor));
     const sys = this.actor.system;
-    context.system  = sys;
-    context.derived = sys.derived || {};
-    context.isGM    = game.user.isGM;
     // ── Заметки: prose-mirror с переключаемым режимом (как у Journal Entries).
-    const enrichOpts = { relativeTo: this.actor, secrets: this.actor.isOwner };
-    context.notesEnriched   = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.notes || "", enrichOpts);
-    context.gmNotesEnriched = await foundry.applications.ux.TextEditor.implementation.enrichHTML(sys.gmNotes || "", enrichOpts);
+    context.notesEnriched   = await this._enrich(sys.notes);
+    context.gmNotesEnriched = await this._enrich(sys.gmNotes);
 
     // Подсистема «Книга Битв» может быть выключена в настройках системы: лист
     // уже созданного формирования продолжает работать, но об этом стоит сказать.
@@ -358,12 +348,7 @@ export class WarhammerFormationSheet
 
   _canDragDrop(_selector) { return true; }
 
-  async _onDrop(event) {
-    let data = null;
-    try { data = JSON.parse(event.dataTransfer.getData("text/plain")); } catch (e) { /* нет данных */ }
-    if (data && (data.type === "Token" || data.type === "Actor")) return this._onDropActor(event, data);
-    return super._onDrop(event);
-  }
+  async _onDrop(event) { return this._dispatchActorOrItemDrop(event); }
 
   /** Формирование — не носитель снаряжения: всё оснащение абстрагировано качеством. */
   async _onDropItem(_event, _data) {
@@ -372,29 +357,18 @@ export class WarhammerFormationSheet
   }
 
   async _persistFormation(update) {
-    if (this.actor.isOwner) { await this.actor.update(update); return true; }
-    const gm = game.users.activeGM;
-    if (!gm) { ui.notifications.warn("Нужен активный ГМ на сессии, чтобы придать себя чужому формированию."); return false; }
-    game.socket.emit("system.warhammer-dbc", {
+    return this._persistOrRelay(update, {
       action: "formationRoster",
       formationUuid: this.actor.uuid,
       posts:    update["system.posts"]    ?? foundry.utils.deepClone(this.actor.system.posts    || {}),
-      attached: update["system.attached"] ?? foundry.utils.deepClone(this.actor.system.attached || []),
-      userId: game.user.id
-    });
-    return true;
+      attached: update["system.attached"] ?? foundry.utils.deepClone(this.actor.system.attached || [])
+    }, "Нужен активный ГМ на сессии, чтобы придать себя чужому формированию.");
   }
 
   async _onDropActor(event, data) {
-    const uuid = data.uuid
-      || (data.type === "Actor" && data.id ? `Actor.${data.id}` : null)
-      || (data.type === "Token" && data.sceneId && data.tokenId ? `Scene.${data.sceneId}.Token.${data.tokenId}` : null);
-    if (!uuid) return false;
-
-    let doc = null;
-    try { doc = await fromUuid(uuid); } catch (e) { doc = null; }
-    const actor = doc?.actor ?? doc;
-    if (!actor || actor.id === this.actor.id) return false;
+    const resolved = await this._resolveDroppedActor(data);
+    if (!resolved) return false;
+    const { uuid, actor } = resolved;
 
     if (!this.actor.isOwner && !actor.isOwner) {
       ui.notifications.warn("К чужому формированию можно придать только своего персонажа.");
@@ -438,11 +412,7 @@ export class WarhammerFormationSheet
 
     // Дроп привязываем всегда, а не только на редактируемом листе: игрок без
     // прав на формирование придаёт ему своего героя, запись идёт через ГМа.
-    try {
-      const DDC = foundry.applications?.ux?.DragDrop?.implementation
-               ?? foundry.applications?.ux?.DragDrop ?? globalThis.DragDrop;
-      if (DDC) new DDC({ dropSelector: null, callbacks: { drop: this._onDrop.bind(this) } }).bind(el);
-    } catch (e) { console.warn("Warhammer DBC | formation DnD bind:", e); }
+    this._bindManualDragDrop(el, "formation");
 
     if (!this.isEditable) return;
 
@@ -594,7 +564,7 @@ export class WarhammerFormationSheet
     const d = this.actor.system.derived || {};
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
-    const deg = degrees(threshold, rv);
+    const deg = Math.abs(degreesOfSuccess(rv, threshold));
 
     const update = { "system.order.key": key };
     const extra  = [];
@@ -934,7 +904,7 @@ export class WarhammerFormationSheet
 
           const roll = await new Roll("1d100").evaluate();
           const rv = roll.total, ok = rv <= target;
-          const deg = degrees(target, rv);
+          const deg = Math.abs(degreesOfSuccess(rv, target));
           if (!ok) await this.actor.update({ "system.status.fled": true });
 
           await ChatMessage.create(ChatMessage.applyRollMode({
@@ -1047,7 +1017,7 @@ export class WarhammerFormationSheet
     const e = KEY_EVENTS[key];
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
-    const deg = degrees(threshold, rv);
+    const deg = Math.abs(degreesOfSuccess(rv, threshold));
 
     const rolls = [roll];
     const update = {};
