@@ -260,7 +260,12 @@ const TYPES = {
       hasRating: false, rating: 0, targets: [],
       // Ручная цена (вкладка «Развитие», wdbc-cct) — тоже позже template.json.
       costManual: false,
-      effects: { initMod: 0, fearRating: 0, speedMod: 0 }
+      // weaponBuff (wdbc-g53k) — та же форма, что у psychic-power.mjs; читает
+      // module/combat/weapon-mods.mjs::getModEffects, без гейта isSustained.
+      effects: {
+        initMod: 0, fearRating: 0, speedMod: 0,
+        weaponBuff: { enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, addProps: [] }
+      }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },

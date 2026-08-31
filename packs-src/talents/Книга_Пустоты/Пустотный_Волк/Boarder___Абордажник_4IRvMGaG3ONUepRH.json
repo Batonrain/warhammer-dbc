@@ -5,7 +5,7 @@
   "folder": "HaggfreEznYtJu21",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
     "benefit": "Руководя или отражая Действия Абордаж и Ударил-отступил, персонаж получает +10 ко всем своим тестам.",
     "tier": 2,
     "requirement": "Command, Trade (Voidfarer) или Trade (Shipwright), Common Lore (War) +10 или Scholastic Lore (Tactica Imperialis) или Forbidden Lore (Codex Astartes)",

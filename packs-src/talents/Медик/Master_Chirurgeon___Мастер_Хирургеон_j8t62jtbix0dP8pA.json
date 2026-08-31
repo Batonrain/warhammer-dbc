@@ -5,7 +5,7 @@
   "folder": "vcniIwxQKfIoAxOg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Применена только «+10 на все тесты Medicae на лечение». «Пациенты восстанавливают +2 Раны от Первой Помощи и любого лечения» не смоделировано — бонус ДРУГОМУ персонажу (пациенту), не тестовый модификатор самого Хирургеона.",
     "benefit": "Персонаж получает +10 на все тесты Medicae на лечение, и его пациенты восстанавливают +2 Раны от его Первой Помощи и любого другого лечения.",
     "tier": 3,
     "requirement": "I 40, Medicae+20",
@@ -38,7 +38,24 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "medicae",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Мастер-Хирургеон"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

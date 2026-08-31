@@ -5,7 +5,7 @@
   "folder": "LxuLQVd7e1MeL0Mc",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
     "benefit": "Персонаж получает трейты Aversion to Order и Cloven One (см. стр. 9 DoomBC), Digitigrade (4) и Unnatural T (4); усиливает звериные облики и не теряет сознание, приняв облик во время Дикой Охоты. Усиленные облики: Сокол Курноуса — Flyer (A.b+P.b), Unnatural P (+6), Best.Q Спектральные Крылья, Deadly Natural Weapons (4, Когти, Eldar Precise, Power Field); Медведь — Unnatural S,T (+6), Natural Armour (7) с шипами, Deadly Natural Weapons (5, Укус, Когти); Волк — Unnatural F (+6, до 8 при признанном авторитете), общее поле зрения, +1 ОД на Командование, Deadly Natural Weapons (5); Кабан — Unnatural T (+7), Brutal Charge (7), Natural Armour (9), Regeneration (4); Змей — Natural Armour (4), Deadly Natural Weapons (4, Укус), Toxic (5); Дракон — Unnatural S,T (+4), Natural Armour (7), Flyer (A.b), Deadly Natural Weapons (5), профиль атаки Rng 40м, Dmg 1d10+14 E(Fl), Pen 5, Flame (2d10), Spray, Linger (2d10), штраф −40 на физическое избегание.",
     "tier": 3,
     "requirement": "Отдаться Охоте",
