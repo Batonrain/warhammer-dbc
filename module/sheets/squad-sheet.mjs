@@ -26,10 +26,10 @@ import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { testKindHtml, diceModeHtml, difficultyHtml, readDifficulty, critLineHtml,
-         readTestKind, readDiceChoice, mergeReroll, wireTestKindLive } from "../rules/test-kind-widget.mjs";
+         readTestKind, readDiceChoice, mergeReroll, wireTestKindLive,
+         rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
-import { pickReroll } from "../rules/reroll-pick.mjs";
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // Как на листах Орды, техники и звёздной системы: ApplicationV2 зовёт обработчик
@@ -676,15 +676,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
 
     // Переброс/Кубик — тот же путь, что у общего диалога Навыка/Характеристики.
     const reroll = tk.reroll || null;
-    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-    const rolls = [];
-    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
-    const roll   = rolls[picked.index];
-    const rv     = picked.value;
-    const rerollNote = reroll
-      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-      : "";
+    const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
     const outcome = await resolveKindOutcome(this.actor, {
       kind: tk.kind || "base", baseEff: threshold, rv,
@@ -873,15 +865,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const t1  = (parseInt(form.querySelector("#sq-b1").value) || 0) + mod + difficulty;
             const t2  = (parseInt(form.querySelector("#sq-b2").value) || 0) + mod + difficulty;
             const reroll = mergeReroll(null, readDiceChoice(val));
-            const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-            const rolls = [];
-            for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-            const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
-            const roll = rolls[picked.index];
-            const rv = picked.value;
-            const rerollNote = reroll
-              ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-              : "";
+            const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
             const ok1 = rv <= t1, ok2 = rv <= t2;
             const ok  = ok1 && ok2;
             // Комбинированный тест (свой, книжный: успех по худшему порогу) —

@@ -11,7 +11,7 @@ import { rollIcon }                                from "../constants/roll-icons
 import { ruleFlagLabels }                          from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
-import { pickReroll }                              from "../rules/reroll-pick.mjs";
+import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -35,15 +35,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const autoPass = infamy >= r.infamy;
 
   const reroll = tk.reroll || null;
-  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-  const rolls = [];
-  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-  const picked = pickReroll(rolls.map(rr => rr.total), reroll?.mode);
-  const roll   = rolls[picked.index];
-  const rv     = picked.value;
-  const rerollNote = reroll
-    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-    : "";
+  const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
   const outcome = await resolveKindOutcome(actor, {
     kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
@@ -114,15 +106,7 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   const baseEff = wp + mod + (tk.difficulty || 0);
 
   const reroll = tk.reroll || null;
-  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-  const rolls = [];
-  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-  const picked = pickReroll(rolls.map(rr => rr.total), reroll?.mode);
-  const roll   = rolls[picked.index];
-  const rv     = picked.value;
-  const rerollNote = reroll
-    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-    : "";
+  const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
   const outcome = await resolveKindOutcome(actor, {
     kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,

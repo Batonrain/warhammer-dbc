@@ -141,7 +141,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.tsSYOs3tTT9SuJgV",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.tsSYOs3tTT9SuJgV",
               "sourceName": "Professional Horseman / Профессиональный Всадник",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,

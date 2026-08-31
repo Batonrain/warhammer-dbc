@@ -62,8 +62,17 @@ function liveValue(unit) {
   return undefined;
 }
 
-/** Доступна ли Раз-в-<unit> возможность актора ("round" | "battle"). */
+/** Доступна ли Раз-в-<unit> возможность актора ("round" | "battle" |
+ *  "nextRound" — заблокирована и в раунд использования, И в следующий:
+ *  Медленная Перезарядка узла корабля, wdbc-qhwb; отметка при этом пишется
+ *  обычным markCapabilityUsed(…, "round")). */
 export function isCapabilityAvailable(actor, flag, unit = "round") {
+  if (unit === "nextRound") {
+    const cur = liveValue("round");
+    if (cur === undefined) return true;
+    const stored = actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.round;
+    return stored === undefined || cur > stored + 1 || cur < stored;
+  }
   const current = liveValue(unit);
   if (current === undefined) return true;
   const stored = actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.[unit];

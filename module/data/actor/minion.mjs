@@ -18,9 +18,12 @@
 //  значило бы держать одну вещь в двух местах.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { creatureSchema } from "./_creature.mjs";
+import { creatureSchema, migrateReactionsString } from "./_creature.mjs";
 
 export class MinionData extends foundry.abstract.TypeDataModel {
+  /** @override — строковые «Реакции» уезжают памяткой в notes (см. _creature.mjs). */
+  static migrateData(source) { return migrateReactionsString(source); }
+
 
   /** @override */
   static defineSchema() {
