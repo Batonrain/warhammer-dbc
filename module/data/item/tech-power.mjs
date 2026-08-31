@@ -28,7 +28,9 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
       miracleType:   new StringField({ initial: "imperative", label: "Тип чуда" }),
       extraTypes:    new ArrayField(new ObjectField(), { label: "Дополнительные типы" }),
       iron:          new StringField({ initial: "", label: "Железо" }),
-      cost:          num(0, "Стоимость" ),
+      // Книжная цена в Опыте (wdbc-2b61) — фиксированная, не зависит от
+      // Склонностей/Мировоззрения (мигрирована в module/migrations/tech-power-costs.mjs).
+      cost:          num(0, "Стоимость в опыте"),
       rating:        num(1, "Рейтинг"),
       cognitionCost: num(1, "Расход Когнитивности"),
       energyCost:    num(0, "Расход энергии"),

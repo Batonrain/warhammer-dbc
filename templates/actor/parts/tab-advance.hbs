@@ -77,7 +77,7 @@
         <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0" {{#if system.psyker.ratingFromTalent}}disabled title="Равен Рейтингу Таланта Psy Rating / Пси-Рейтинг"{{/if}}/> </label> <label>Текущий PR:
         <span class="psy-stat-value">{{system.psyker.currentRating}}</span> </label> </div> <table class="items-table"> <thead><tr><th>Название</th><th class="col-narrow">Цена</th></tr></thead> <tbody> {{#if psyPowers.length}}
           {{#each psyPowers as |p|}}
-          <tr> <td class="apt-char-name-cell">{{p.name}}{{#if p.disciplineLabel}} <em style="opacity:.7">· {{p.disciplineLabel}}</em>{{/if}}</td> <td class="advtal-cost-cell"> <input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0"/> </td> </tr> {{/each}}
+          <tr> <td class="apt-char-name-cell">{{p.name}}{{#if p.disciplineLabel}} <em style="opacity:.7">· {{p.disciplineLabel}}</em>{{/if}}</td> <td class="advtal-cost-cell"> <input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0"/> <button type="button" class="psy-cost-reset" data-item-id="{{p.id}}" title="Вернуть книжную цену из компендиума">↺</button> </td> </tr> {{/each}}
         {{else}}
           <tr class="items-empty"><td colspan="2"><em>Нет психосил</em></td></tr> {{/if}}
       </tbody> </table> <div class="gene-seed-hint" style="padding:4px 2px 0;">Сумма цен психосил автоматически идёт в «Потрачено на Психосилы» в Опыте. Синхронизировано с вкладкой «ПСИ».</div> </div> </div>{{!-- /tab advance --}}

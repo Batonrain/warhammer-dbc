@@ -15,6 +15,7 @@ import { isFriendlySpecialty } from "../../rules/friendly-specialties.mjs";
 import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { costFromCompendium } from "../../migrations/tech-power-costs.mjs";
 
 // Шаги продвижения характеристики (+5..+25) и ранги навыка — индексы в таблицах цен.
 // CHAR_IMP_STEPS экспортирован — им же на вкладке ПОКАЗАТЕЛИ считается ряд из
@@ -298,6 +299,29 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   html.find(".psy-cost-input, .tech-cost-input").on("change", ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) item.update({ "system.cost": parseInt(ev.currentTarget.value) || 0 });
+  });
+
+  // Вернуть книжную цену психосилы/техночуда из компендиума (wdbc-2b61) — та же
+  // логика поиска источника, что у пакетной миграции (migrations/tech-power-
+  // costs.mjs::costFromCompendium: сперва по _stats.compendiumSource, потом по
+  // имени), только по клику на один предмет, а не оптом на всех акторов.
+  html.find(".psy-cost-reset, .tech-cost-reset").on("click", async ev => {
+    ev.preventDefault();
+    const el   = ev.currentTarget;
+    const item = actor.items.get(el.dataset.itemId);
+    if (!item) return;
+    const packKey = item.type === "techPower"
+      ? "warhammer-dbc.tech-powers" : "warhammer-dbc.psychic-powers";
+    const pack = game.packs?.get(packKey);
+    const docs = pack ? await pack.getDocuments() : [];
+    const byUuid = new Map(docs.map(d => [d.uuid, d]));
+    const byName = new Map(docs.map(d => [d.name, d]));
+    const cost = costFromCompendium(item, byUuid, byName);
+    if (cost === null) {
+      ui.notifications.warn(`«${item.name}»: книжная цена не найдена в компендиуме.`);
+      return;
+    }
+    await item.update({ "system.cost": cost });
   });
 
   // ── Навыки: ранг и цена ───────────────────────────────────────────────────
