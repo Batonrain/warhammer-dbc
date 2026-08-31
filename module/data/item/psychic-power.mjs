@@ -23,6 +23,8 @@ function emptyEffects() {
   };
 }
 
+import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+
 export class PsychicPowerData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -61,4 +63,7 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
     };
   }
+
+  /** @override — общий разбор пары charBonusStat/charBonusValue. */
+  static migrateData(source) { return migrateCharBonusPair(source); }
 }

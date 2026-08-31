@@ -9,6 +9,8 @@
 //  опечатка в пути дала бы тихий ноль.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+
 export class WeaponModData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -46,4 +48,7 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
       drukhari:     new BooleanField({ initial: false, label: "Друкхари" })
     };
   }
+
+  /** @override — общий разбор пары charBonusStat/charBonusValue. */
+  static migrateData(source) { return migrateCharBonusPair(source); }
 }

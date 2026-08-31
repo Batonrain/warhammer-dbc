@@ -5,6 +5,8 @@
 //  `system.effects` — её копия прошлого формата (wdbc-43d).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+
 export class DivinationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -27,4 +29,7 @@ export class DivinationData extends foundry.abstract.TypeDataModel {
       effects:      new ObjectField({ initial: () => ({ charValueBonuses: [] }), label: "Механика" })
     };
   }
+
+  /** @override — общий разбор пары charBonusStat/charBonusValue. */
+  static migrateData(source) { return migrateCharBonusPair(source); }
 }
