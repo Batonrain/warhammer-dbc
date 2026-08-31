@@ -9,7 +9,7 @@ export default [
       sourceType: "module",
       globals: {
         ...globals.browser,
-        game: "readonly", ui: "readonly", Hooks: "readonly",
+        game: "readonly", ui: "readonly", Hooks: "readonly", Combatant: "readonly",
         foundry: "readonly", CONFIG: "readonly", CONST: "readonly",
         Roll: "readonly", ChatMessage: "readonly", Dialog: "readonly",
         Actor: "readonly", Item: "readonly", ActiveEffect: "readonly",

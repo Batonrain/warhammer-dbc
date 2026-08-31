@@ -833,7 +833,10 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "talentSpec": { "name": "Мастерство", "specialization": "Психонаука" },
+                "talentSpec": {
+                  "name": "Мастерство",
+                  "specialization": "Психонаука"
+                },
                 "negateTalent": false
               }
             }
