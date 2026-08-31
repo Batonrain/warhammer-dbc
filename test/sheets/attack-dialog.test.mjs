@@ -1068,6 +1068,92 @@ describe("Локус Сокрушения: раз в Раунд База «По�
   });
 });
 
+describe("Запрещённый Приём (Cheap Shot): атака Реакцией, а не действием (wdbc-hmcx)", () => {
+  afterEach(() => { globalThis.game.combat = undefined; });
+
+  /**
+   * Актор с экономикой действий (character несёт ОД/Реакции): actorFor
+   * заворачивает всё, кроме items, в system — actor.type ставим отдельно,
+   * это его читает ACTION_ECONOMY_ACTOR_TYPES (module/combat/action-economy.mjs).
+   */
+  function actorWithEconomy(overrides = {}) {
+    const a = attacker({
+      actionPoints: { value: 2, max: 2 },
+      reactions:    { value: 1, max: 1, defenseValue: 0, defenseMax: 0 },
+      ...overrides
+    });
+    a.type = "character";
+    a.getFlag = () => undefined;   // canSpendReaction проверяет флаг "running"
+    return a;
+  }
+
+  it("бейдж предупреждает, а другие Базы принудительно недоступны — персистентный Натиск игнорируется", () => {
+    const dagger = weaponFor({ weaponClass: "melee", weaponProps: [{ key: "cheapShot" }] },
+      { name: "Скрытый клинок" });
+    showAttackDialog(actorWithEconomy({ items: [dagger], meleeBase: "charge" }), dagger);
+    const html = captured.dialog.content;
+
+    expect(html).toContain("Запрещённый Приём: тратит Реакцию");
+    expect(html).toMatch(/name="atk-base" value="standard"[^>]*checked/);
+    // Charge/Полная Атака — не текущий выбор и не allowed, поэтому пилюли
+    // совсем убраны из разметки (тот же приём, что у fullAttackForced/Тренировки).
+    expect(html).not.toMatch(/name="atk-base" value="charge"/);
+    expect(html).not.toMatch(/name="atk-base" value="fullatk"/);
+    expect(dialogThreshold()).toBe(55);    // WS 45 + База «Стандартная» +10, не +20 Натиска
+  });
+
+  it("бросок тратит Реакцию, а не ОД", async () => {
+    globalThis.game.combat = { started: true };
+    const dagger = weaponFor({ weaponClass: "melee", weaponProps: [{ key: "cheapShot" }] });
+    const actor = actorWithEconomy({ items: [dagger] });
+
+    await pressRoll(showAttackDialog(actor, dagger));
+
+    expect(actor.updates).toContainEqual({ "system.reactions.value": 0 });
+    expect(actor.updates.some(u => "system.actionPoints.value" in u)).toBe(false);
+  });
+
+  it("без запасных Реакций — атака не проводится, ОД тоже не списываются", async () => {
+    globalThis.game.combat = { started: true };
+    const dagger = weaponFor({ weaponClass: "melee", weaponProps: [{ key: "cheapShot" }] });
+    const actor = actorWithEconomy({ items: [dagger], reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } });
+
+    await pressRoll(showAttackDialog(actor, dagger));
+
+    expect(captured.warnings.some(w => w.includes("Реакци"))).toBe(true);
+    expect(actor.updates.length).toBe(0);
+  });
+
+  it("обычное оружие без свойства — как раньше, тратит ОД, а не Реакцию", async () => {
+    globalThis.game.combat = { started: true };
+    const sword = weaponFor({ weaponClass: "melee" });
+    const actor = actorWithEconomy({ items: [sword] });
+
+    await pressRoll(showAttackDialog(actor, sword));
+
+    expect(actor.updates).toContainEqual({ "system.actionPoints.value": 1 });
+    expect(actor.updates.some(u => "system.reactions.value" in u)).toBe(false);
+  });
+
+  it("Хват «Хвост» временно даёт Cheap Shot: выбор запирает Базу и бейдж появляется", async () => {
+    globalThis.game.combat = { started: true };
+    // Оружие без своего Cheap Shot, но с альтернативным Хватом «Хвост» (стр.
+    // 39, GRIPS.Хв.addProp) — тот же флаг, только ситуативный, не постоянный.
+    const tail = weaponFor({ weaponClass: "melee", grips: "1р (Хв)" });
+    const actor = actorWithEconomy({ items: [tail] });
+
+    const p = showAttackDialog(actor, tail);
+    // Хват по умолчанию — основной («1р»), Cheap Shot ещё не активен.
+    expect(captured.dialog.content).not.toContain("Запрещённый Приём: тратит Реакцию");
+
+    await pressRoll(p, { "input[name='atk-grip']:checked": "Хв", "input[name='atk-base']:checked": "charge" });
+
+    // База принудительно standard даже при попытке форсировать Натиск в форме.
+    expect(actor.updates).toContainEqual({ "system.reactions.value": 0 });
+    expect(actor.updates.some(u => "system.actionPoints.value" in u)).toBe(false);
+  });
+});
+
 // Числовой перевес 2к1/3к1 (wdbc-5il7, п.5): meleeContactCount с ОБРАТНЫМ
 // обходом — считаем не врагов у атакующего, а «врагов цели» (т.е. атакующего
 // и его союзников) в контакте с целью.
