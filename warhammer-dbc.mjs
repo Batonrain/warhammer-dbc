@@ -33,7 +33,7 @@ import { WarhammerSquadSheet }        from "./module/sheets/squad-sheet.mjs";
 import { WarhammerFormationSheet }    from "./module/sheets/formation-sheet.mjs";
 import { WarhammerItemSheet }         from "./module/sheets/item-sheet.mjs";
 import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-config.mjs";
-import { refreshCalendarWidget, initTimeFlow } from "./module/apps/imperial-calendar.mjs";
+import { refreshCalendarWidget, initTimeFlow, checkCalendarWatchTriggers } from "./module/apps/imperial-calendar.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
@@ -614,7 +614,7 @@ Hooks.once("ready", () => {
   game.socket.on("system.warhammer-dbc", async (data) => {
     try {
       // Баннер Сессии/Сцены — у ВСЕХ клиентов (не только у активного ГМа).
-      if (data.action === "sessionSceneBanner") { showFateTurnBanner(data.text); return; }
+      if (data.action === "sessionSceneBanner") { showFateTurnBanner(data.text, { fontFamily: data.fontFamily }); return; }
       // Ответ Мастера на просьбу завести персонажа: лист и Мастер создания
       // открываются у того, кто просил, — остальные это сообщение пропускают.
       if (data.action === "characterStarted") {
@@ -853,7 +853,7 @@ Hooks.on("updateScene", (scene) => {
 //    поэтому Duration (Seconds) у эффектов синхронна с прокруткой без доп. кода) ──
 Hooks.once("ready", () => refreshCalendarWidget());
 Hooks.once("ready", () => initTimeFlow());
-Hooks.on("updateWorldTime", () => refreshCalendarWidget());
+Hooks.on("updateWorldTime", worldTime => { checkCalendarWatchTriggers(worldTime); refreshCalendarWidget(); });
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────
 // Сцены (имя/превью/флаг-переход/активна) и выбор токенов влияют на галерею.
