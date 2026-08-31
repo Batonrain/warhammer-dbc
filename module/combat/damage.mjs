@@ -15,6 +15,7 @@ import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
+import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -404,6 +405,10 @@ export async function applyDamageToActor(actor, damageData) {
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
+
+  // Enjoyment/Наслаждение (wdbc-sk8s): Непоглощённый Урон / Критический
+  // Эффект от атаки — 1 Боли раз за бой, без траты Реакции.
+  if (netDamage > 0) await maybeGrantEnjoymentPain(actor);
 
   // ── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ────────
   // Гейт capability weaponPropertyImmunity.<key> — Мутации/Дары («Пылающее

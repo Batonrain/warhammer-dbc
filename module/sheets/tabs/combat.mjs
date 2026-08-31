@@ -19,6 +19,13 @@ import { showGrappleDialog } from "../../combat/grapple.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
+import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
+import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
+import { avatarOfSlaughterAvailable, applyAvatarOfSlaughter } from "../../combat/avatar-of-slaughter.mjs";
+import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
+import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
+import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
+import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
@@ -67,6 +74,47 @@ export function activateCombatListeners(root, actor) {
   on(root, ".pain-absorb-btn", "click", () => painChange(actor, +1, "absorb"));
   on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));
   on(root, ".pain-soulburn-btn", "click", () => openPainSoulBurnDialog(actor));
+  on(root, ".skillful-torture-btn", "click", () => showSkillfulTortureDialog(actor));
+
+  // ── Ярость: лимит повторного входа за бой (wdbc-sk8s, module/combat/frenzy.mjs) ──
+  // «Однажды выйдя, нельзя войти снова до конца боя» — Frenzy/Ярость, снимается
+  // Чертой Butcher's Nails/Гвозди Мясника. Тумблер сам по себе (system.inRage)
+  // сохраняется формой Foundry как обычно — здесь только гейт входа и отметка выхода.
+  on(root, ".rage-toggle input", "change", async ev => {
+    const checked = ev.currentTarget.checked;
+    if (checked && frenzyEntryBlocked(actor)) {
+      ui.notifications.warn(`«${actor.name}» уже выходил(а) из Ярости в этом бою — повторный вход запрещён до конца боя (Frenzy/Ярость). Снимается Чертой Butcher's Nails / Гвозди Мясника.`);
+      await actor.update({ "system.inRage": false });
+      return;
+    }
+    if (!checked) await markFrenzyExited(actor);
+  });
+
+  // ── Аватар Резни (wdbc-sk8s, module/combat/avatar-of-slaughter.mjs) ──────
+  on(root, ".avatar-of-slaughter-btn", "click", async () => {
+    if (!avatarOfSlaughterAvailable(actor)) {
+      return ui.notifications.warn("Аватар Резни уже использован в этом бою.");
+    }
+    const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    if (!target) return ui.notifications.warn("Наведите таргет (T) на видимого противника.");
+    await applyAvatarOfSlaughter(actor, target);
+  });
+
+  // ── Грозный Вопль (wdbc-sk8s, module/combat/dread-wail.mjs) ──────────────
+  on(root, ".dread-wail-btn", "click", async () => {
+    if (!dreadWailAvailable(actor)) {
+      return ui.notifications.warn("Грозный Вопль уже использован максимум раз в этом бою.");
+    }
+    await showDreadWailDialog(actor);
+  });
+
+  // ── Блистательные Одеяния (wdbc-sk8s, module/combat/resplendent-raiment.mjs) ──
+  on(root, ".resplendent-raiment-btn", "click", async () => {
+    if (!resplendentRaimentAvailable(actor)) {
+      return ui.notifications.warn("Блистательные Одеяния уже использованы в этом бою/сцене.");
+    }
+    await showResplendentRaimentDialog(actor);
+  });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
   on(root, ".technique-btn", "click", ev => {

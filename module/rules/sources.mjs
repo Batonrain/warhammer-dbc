@@ -12,6 +12,8 @@ import { rulesFromItemMechanics } from "./item-rules.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
+import { adjutantRerollRules } from "./adjutant.mjs";
+import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 
 const SOURCES = new Map();
 
@@ -60,6 +62,20 @@ registerRuleSource("homeworld", a =>
 // снятое оружие и вынутый имплант правил не дают — ровно так же, как не дают
 // эффектов. См. module/rules/item-rules.mjs.
 registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemActive, a));
+
+// Adjutant/Адъютант (wdbc-sk8s) даёт способность не себе, а своему
+// Командиру — cross-actor проверка вне владельца Таланта, тем же приёмом,
+// что источник «dreadnought» ниже. Вне игры (тесты ядра) game.actors нет —
+// источник молчит, как и остальные Foundry-зависимые источники здесь.
+// Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — статичное when читает метку
+// на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget), не
+// требует cross-actor обхода — регистрируется так же, как "core".
+registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
+
+registerRuleSource("adjutant", a => {
+  if (typeof game === "undefined") return [];
+  return adjutantRerollRules(a, game.actors ?? []);
+});
 
 // Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
 // экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не

@@ -10,6 +10,7 @@ import { fatiguePenalty } from "./conditions.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
+import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 
 const DELIVERY_RU = {
   injection: "Инъекция",
@@ -228,6 +229,10 @@ export async function applyDrug(owner, item, recipient = null) {
   Object.assign(actorUpdates, extras.updates);
 
   if (Object.keys(actorUpdates).length > 0) await actor.update(actorUpdates);
+
+  // Enjoyment/Наслаждение (wdbc-sk8s): Наркотик триггерит, ТОЛЬКО когда его
+  // применил кто-то другой (applyToOther) — не сам персонаж себе.
+  if (applyToOther) await maybeGrantEnjoymentPain(actor);
 
   if (applyToOther) {
     await item.update({ "system.quantity": qty });

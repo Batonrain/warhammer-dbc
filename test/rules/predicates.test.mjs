@@ -217,7 +217,10 @@ describe("общее требование к предикатам", () => {
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
-    hasFaction: "chaos", targetHasFaction: "chaos"
+    hasFaction: "chaos", targetHasFaction: "chaos",
+    // Метка Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — читает флаг самого
+    // актора, значение из `when` не участвует.
+    avatarOfSlaughterOffTarget: undefined
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

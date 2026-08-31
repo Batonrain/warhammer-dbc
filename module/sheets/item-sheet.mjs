@@ -49,7 +49,7 @@ import { DW_GODS_MAP }                               from "../constants/demon-we
 import { summarizeEffectChanges, expectedPhase }     from "../constants/effect-keys.mjs";
 import { createBlankEffect } from "../apps/effects.mjs";
 import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml,
-         saveItemMechanics, findMechGroup, findMechEntry,
+         saveItemMechanics, findMechGroup, findMechEntry, runMechScriptEntry,
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-builder.mjs";
@@ -2097,6 +2097,21 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.code = ev.currentTarget.value; saveMech(arr); }
+    });
+    // «Частота» кнопки «▶ Запустить» (wdbc-f4jt), необязательный счётчик «до N раз», и сама кнопка.
+    on(".mech-script-throttle", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptThrottleUnit = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-script-throttle-max", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptThrottleMax = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
+    });
+    on(".mech-script-run", "click", async ev => {
+      ev.preventDefault();
+      await runMechScriptEntry(this.item, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
     });
     // ── «Когда» (entry.when) — гейт по Геносемени, общий для ЛЮБОГО kind ────
     // (см. entryWhenOk в mechanics.mjs). conditions — список вариантов (ИЛИ),

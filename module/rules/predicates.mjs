@@ -156,6 +156,17 @@ export const PREDICATES = {
     if (ctx?.socialFaction)
       return list(value).every(key => isSameOrDescendant(ctx.socialFaction, key, byKey));
     return inFactions(ctx?.targetActor, value);
+  },
+
+  // Avatar of Slaughter/Аватар Резни (wdbc-sk8s): цель провалила тест W−10
+  // против Берсерка → до конца боя −20 на атаки/манёвры, НЕ направленные на
+  // него. Метка — на самом акторе (module/combat/avatar-of-slaughter.mjs),
+  // читается здесь, а не через cross-actor источник (в отличие от Adjutant):
+  // условие целиком про самого актора и то, кого он сейчас атакует.
+  avatarOfSlaughterOffTarget: (actor, ctx) => {
+    const mark = actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark");
+    if (!mark?.berserkerUuid) return false;
+    return ctx?.targetActor?.uuid !== mark.berserkerUuid;
   }
 };
 

@@ -12,6 +12,7 @@ import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
+import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
 import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
@@ -29,6 +30,7 @@ import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, px
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
+import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
@@ -700,6 +702,12 @@ async function _applyWeaponPropEffect(ds) {
     }
     await actor.update(update);
     appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
+    // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
+    const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
+    if (conditionsToApply.some(([cond]) => ENJOYMENT_CONDITIONS.has(cond))) {
+      await maybeGrantEnjoymentPain(actor);
+    }
   }
 
   // Доп. урон (Токсичное и т.п.) — при провале теста, минуя броню
@@ -1164,6 +1172,10 @@ function _attachFateContextMenu(message, html) {
     if (nextCombatant?.actor) {
       await resetActionEconomy(nextCombatant.actor);
       await processPrismaTurnStart(nextCombatant.actor);
+      // Грозный Вопль (wdbc-sk8s): усилитель звукового оружия живёт «до
+      // начала следующего Хода» — снимается тут же, тем же тактом, что и
+      // сброс ОД/Реакций.
+      await clearDreadWailWeaponBuff(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

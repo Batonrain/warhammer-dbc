@@ -104,9 +104,9 @@ describe("collectRules", () => {
 });
 
 describe("источники по умолчанию", () => {
-  it("зарегистрированы основная книга, раса, Происхождение, предметы и Дредноут", () => {
+  it("зарегистрированы основная книга, раса, Происхождение, предметы, Аватар Резни, Адъютант и Дредноут", () => {
     expect(getRuleSources().map(([key]) => key))
-      .toEqual(["core", "race", "homeworld", "items", "dreadnought"]);
+      .toEqual(["core", "race", "homeworld", "items", "avatarOfSlaughter", "adjutant", "dreadnought"]);
   });
 
   // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.

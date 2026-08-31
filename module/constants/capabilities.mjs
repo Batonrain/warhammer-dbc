@@ -314,7 +314,7 @@ export const CAPABILITIES = {
   "maneuver.grantBrutalCharge.onCharge": {
     label: "Раз в бой после Натиска (до попаданий) можно получить Brutal Charge (+A.b); повторно — за очко судьбы",
     source: "Death Dance / Смертельный Танец",
-    reader: ""
+    reader: "module/combat/death-dance.mjs + кнопка в module/sheets/attack-dialog.mjs (wdbc-sk8s)"
   },
   "skillSwap.acrobatics.forAthletics": {
     label: "Acrobatics вместо Athletics в соревновательных тестах / тестах от получаса",
@@ -392,7 +392,7 @@ export const CAPABILITIES = {
   },
   "pain.freeGain.onceBattle.reactionEffect": {
     label: "Раз в бой получает 1 Боль без траты Реакции, получив выбранный эффект от противника (кроме Наркотика)",
-    source: "Enjoyment / Наслаждение", reader: ""
+    source: "Enjoyment / Наслаждение", reader: "module/combat/enjoyment.mjs (wdbc-sk8s)"
   },
   "maneuver.unlimitedFastLightning.hekatriiStance": {
     label: "В Стойке Гекатрии — неограниченные Быстрые/Молниеносные Атаки (ценой Реакции/Финта); доп. руки дерутся с −20 за руку",
@@ -440,7 +440,7 @@ export const CAPABILITIES = {
   },
   "ritual.groupPainHeal.tortureBeneficiary": {
     label: "Успешная 5-минутная пытка Беспомощного даёт всем причастным друкхари 2 Боли + 1d5 лечения всех Характеристик (+бонусы за доп. успехи, до W.b раз в сутки)",
-    source: "Skillful Torture / Искусная Пытка", reader: ""
+    source: "Skillful Torture / Искусная Пытка", reader: "module/apps/skillful-torture.mjs (wdbc-sk8s)"
   },
 
   // ── Трейты Тиранид/Некрон, заведённые в Фазе 1 (23-24.08.2026) — бестиарий
@@ -1752,7 +1752,7 @@ export const CAPABILITIES = {
   },
   "berserker.core.frenzy": {
     label: "За полное действие персонаж входит в боевую ярость: +10 к WS, S и W; −20 на все тесты BS, I и F; игнорирует −10 от Усталости;",
-    source: "Frenzy / Ярость", reader: ""
+    source: "Frenzy / Ярость", reader: "module/combat/frenzy.mjs — только лимит повторного входа за бой (wdbc-sk8s), остальное не смоделировано"
   },
   "berserker.core.furiousAssault": {
     label: "После успешной атаки с базой Полная Атака (даже отменённой Избеганием) персонаж может потратить Реакцию,",
@@ -2036,7 +2036,7 @@ export const CAPABILITIES = {
   // ── Лидерство
   "leadership.core.adjutant": {
     label: "Командир персонажа может до ½I.b (окр.▲) раз за бой перебросить тест Командования и раз в Раунд — любой тест Lore для распознания событий на…",
-    source: "Adjutant / Адъютант", reader: ""
+    source: "Adjutant / Адъютант", reader: "module/rules/adjutant.mjs (wdbc-sk8s) — источник правил \"adjutant\" в sources.mjs"
   },
   "leadership.core.airOfAuthority": {
     label: "Персонаж может применять Command (и Intimidate на подчинённых) на до F.b×20 целей одновременно. Его Миньоны-люди получают +10 Лояльности.",
@@ -2112,7 +2112,7 @@ export const CAPABILITIES = {
   },
   "leadership.core.voiceOfGod": {
     label: "До ½Inf.b (окр.▲) раз за бой, имея Риск 4+ и успешно отдавая Личную Команду, получатель также получает Очко Бесчестия,",
-    source: "Voice of God / Глас Божий", reader: ""
+    source: "Voice of God / Глас Божий", reader: "module/combat/voice-of-god.mjs (wdbc-sk8s), подключено в squad-sheet.mjs::_executeCommand"
   },
   "leadership.core.warChant": {
     label: "В начале Хода Лидер может распевать боевую песнь: раздаёт все 3 эффекта Командного Присутствия всем подчинённым, что слышат песнь (макс. W.",
@@ -4466,7 +4466,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.sweetCacophony": {
     label: "Звуковые усилители на броне пропитываются его душевной порчей. Может использовать Грозный Вопль до Cor.b раз за бой, а не только один раз.",
-    source: "Sweet Cacophony / Сладкая Какофония", reader: ""
+    source: "Sweet Cacophony / Сладкая Какофония", reader: "module/combat/dread-wail.mjs::dreadWailMax (wdbc-sk8s)"
   },
   "elite.elitnyeArhetipy.shumovoyDesantnik.wallOfDiscord": {
     label: "За полудействие может потратить Очко Бесчестия, чтобы выпустить стену хаотического звука в радиусе Cor.b×2 м.",
@@ -5231,11 +5231,11 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Берсерк_Кхорна — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.berserkKhorna.avatarOfSlaughter": {
     label: "Раз за бой в конце своего Хода может потратить Очко Бесчестия, чтобы направить кровожадность в одного противника в пределах видимости.",
-    source: "Avatar of Slaughter / Аватар Резни", reader: ""
+    source: "Avatar of Slaughter / Аватар Резни", reader: "module/combat/avatar-of-slaughter.mjs + rules/library/avatar-of-slaughter.mjs (wdbc-sk8s)"
   },
   "trait.elitnyeArhetipy.berserkKhorna.butcherSNails": {
     label: "Импланты гложут разум, держа на границе боевого безумия. Может входить в Ярость свободным действием, неограниченное число раз за бой.",
-    source: "Butcher's Nails / Гвозди Мясника", reader: ""
+    source: "Butcher's Nails / Гвозди Мясника", reader: "module/combat/frenzy.mjs::hasButchersNails (wdbc-sk8s)"
   },
   "trait.elitnyeArhetipy.berserkKhorna.unstoppableWrath": {
     label: "Раз за Раунд может пройти тест T+0, чтобы проигнорировать Критические Эффекты ранений, Оглушения,",
@@ -5913,7 +5913,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Шумовой_Десантник — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.shumovoyDesantnik.dreadWail": {
     label: "Раз за бой может потратить Очко Бесчестия, чтобы перегрузить динамики и звуковые усилители брони: до начала следующего Хода усилить Dmg и Pe…",
-    source: "Dread Wail / Грозный Вопль", reader: ""
+    source: "Dread Wail / Грозный Вопль", reader: "module/combat/dread-wail.mjs + apps/dread-wail-dialog.mjs (wdbc-sk8s)"
   },
   "trait.elitnyeArhetipy.shumovoyDesantnik.intoxicatingUproar": {
     label: "Шумовой Десантник слышит каждый щелчок и выстрел на поле боя, опьянён шумами смерти. Получает +20 на все тесты слуха и не может быть застигн…",
@@ -6287,7 +6287,7 @@ export const CAPABILITIES = {
   "gift.slaanesh.resplendentRaiment": {
     label: "Снаряжение выглядит как Best.Q (физически, не иллюзия); раз за бой/сцену+1 Бесчестия: видящие проходят W-30 или видят только чемпиона до след. Хода",
     source: "Дар Слаанеш (Resplendent Raiment)",
-    reader: ""
+    reader: "Реализовано (wdbc-sk8s): кнопка «👑 Блистательные Одеяния» (вкладка БОЙ) → module/combat/resplendent-raiment.mjs. Лимит раз за бой/сцену — game.combat?.started выбирает unit (battle/scene), throttleCount из cooldown.mjs. Трата Очка Бесчестия — system.fate.value. W-30 против всех токенов сцены кроме отмеченных кастером в диалоге исключений (LOS не автоматизирован). Провал ставит информационный флаг seesOnlyCaster — не enforced в движке видимости."
   },
   "gift.slaanesh.senseOfLust": {
     label: "Доп. чувство: засекает сексуальные эмоции в радиусе Cor.b км с направлением/природой, особенно чётко — влечение к самому чемпиону",

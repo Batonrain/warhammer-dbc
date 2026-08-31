@@ -12,7 +12,9 @@ import { describe, it, expect, afterEach } from "vitest";
 import {
   isCapabilityAvailable, markCapabilityUsed,
   isRuleUsageUsed, markRuleUsageUsed,
-  worldTimeRemaining, isWorldTimeCooldownReady, markWorldTimeCooldownUsed
+  worldTimeRemaining, isWorldTimeCooldownReady, markWorldTimeCooldownUsed,
+  THROTTLE_UNITS, isThrottleReady, markThrottleUsed,
+  throttleCount, isThrottleCountAvailable, incrementThrottleCount
 } from "../../module/rules/cooldown.mjs";
 
 function actorWithFlags() {
@@ -187,5 +189,153 @@ describe("isWorldTimeCooldownReady / markWorldTimeCooldownUsed", () => {
 
   it("без документа ничего не пишет", async () => {
     await expect(markWorldTimeCooldownUsed(null, "usedAt")).resolves.toBeUndefined();
+  });
+});
+
+describe("isThrottleReady / markThrottleUsed — диспетчер «Частоты» для kind:\"script\" (wdbc-f4jt)", () => {
+  function docWithFlags() {
+    const store = {};
+    return {
+      getFlag: (scope, key) => store[`${scope}.${key}`],
+      setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; }
+    };
+  }
+
+  it("THROTTLE_UNITS перечисляет ровно 5 единиц", () => {
+    expect(THROTTLE_UNITS).toEqual(["round", "battle", "scene", "session", "day"]);
+  });
+
+  it("round: делегирует в isCapabilityAvailable/markCapabilityUsed", async () => {
+    globalThis.game.combat = { round: 1 };
+    const doc = docWithFlags();
+    expect(isThrottleReady(doc, "flag", "round")).toBe(true);
+    await markThrottleUsed(doc, "flag", "round");
+    expect(isThrottleReady(doc, "flag", "round")).toBe(false);
+    globalThis.game.combat = { round: 2 };
+    expect(isThrottleReady(doc, "flag", "round")).toBe(true);
+  });
+
+  it("battle: делегирует в isCapabilityAvailable/markCapabilityUsed", async () => {
+    globalThis.game.combat = { id: "combat-1", round: 1 };
+    const doc = docWithFlags();
+    await markThrottleUsed(doc, "flag", "battle");
+    expect(isThrottleReady(doc, "flag", "battle")).toBe(false);
+    globalThis.game.combat = { id: "combat-2", round: 1 };
+    expect(isThrottleReady(doc, "flag", "battle")).toBe(true);
+  });
+
+  it("scene/session: делегирует в isRuleUsageUsed/markRuleUsageUsed, сброс не автоматический", async () => {
+    globalThis.game.combat = { id: "combat-1", round: 1 };
+    const doc = docWithFlags();
+    await markThrottleUsed(doc, "flag", "session");
+    expect(isThrottleReady(doc, "flag", "session")).toBe(false);
+    globalThis.game.combat = { id: "combat-2", round: 2 };
+    expect(isThrottleReady(doc, "flag", "session")).toBe(false);
+  });
+
+  it("day: делегирует в isWorldTimeCooldownReady/markWorldTimeCooldownUsed с интервалом в сутки", async () => {
+    globalThis.game.time = { worldTime: 100000 };
+    const doc = docWithFlags();
+    await markThrottleUsed(doc, "flag", "day");
+    expect(isThrottleReady(doc, "flag", "day")).toBe(false);
+    globalThis.game.time = { worldTime: 100000 + 86400 + 1 };
+    expect(isThrottleReady(doc, "flag", "day")).toBe(true);
+  });
+
+  it("неизвестная/пустая единица — всегда готово, markThrottleUsed ничего не пишет", async () => {
+    const doc = docWithFlags();
+    expect(isThrottleReady(doc, "flag", "")).toBe(true);
+    await markThrottleUsed(doc, "flag", "");
+    expect(isThrottleReady(doc, "flag", "")).toBe(true);
+  });
+});
+
+describe("throttleCount / isThrottleCountAvailable / incrementThrottleCount — «до N раз» (wdbc-f4jt)", () => {
+  function docWithFlags() {
+    const store = {};
+    return {
+      getFlag: (scope, key) => store[`${scope}.${key}`],
+      setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; }
+    };
+  }
+
+  it("без метки — счётчик 0, доступно", () => {
+    const doc = docWithFlags();
+    expect(throttleCount(doc, "flag", "session")).toBe(0);
+    expect(isThrottleCountAvailable(doc, "flag", "session", 3)).toBe(true);
+  });
+
+  it("session: копится до max, дальше недоступно", async () => {
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "session", 3);
+    await incrementThrottleCount(doc, "flag", "session", 3);
+    expect(throttleCount(doc, "flag", "session")).toBe(2);
+    expect(isThrottleCountAvailable(doc, "flag", "session", 3)).toBe(true);
+    await incrementThrottleCount(doc, "flag", "session", 3);
+    expect(throttleCount(doc, "flag", "session")).toBe(3);
+    expect(isThrottleCountAvailable(doc, "flag", "session", 3)).toBe(false);
+    // Молча не превышает max дальше.
+    await incrementThrottleCount(doc, "flag", "session", 3);
+    expect(throttleCount(doc, "flag", "session")).toBe(3);
+  });
+
+  it("round: живое сравнение — смена Раунда обнуляет счётчик", async () => {
+    globalThis.game.combat = { round: 1 };
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "round", 2);
+    expect(throttleCount(doc, "flag", "round")).toBe(1);
+    globalThis.game.combat = { round: 2 };
+    expect(throttleCount(doc, "flag", "round")).toBe(0);
+    expect(isThrottleCountAvailable(doc, "flag", "round", 2)).toBe(true);
+  });
+
+  it("battle: живое сравнение по combat.id", async () => {
+    globalThis.game.combat = { id: "combat-1", round: 1 };
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "battle", 2);
+    await incrementThrottleCount(doc, "flag", "battle", 2);
+    expect(throttleCount(doc, "flag", "battle")).toBe(2);
+    globalThis.game.combat = { id: "combat-2", round: 1 };
+    expect(throttleCount(doc, "flag", "battle")).toBe(0);
+  });
+
+  it("без документа/без Combat (round/battle) ничего не пишет", async () => {
+    await expect(incrementThrottleCount(null, "flag", "session", 3)).resolves.toBeUndefined();
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "round", 3);
+    expect(doc.getFlag("warhammer-dbc", "usageLimits.flag")).toBeUndefined();
+  });
+
+  it("метка одной записи не трогает другую", async () => {
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag.a", "session", 3);
+    expect(throttleCount(doc, "flag.b", "session")).toBe(0);
+  });
+
+  it("day: живое сравнение по номеру календарных суток (Skillful Torture, wdbc-sk8s) — смена суток обнуляет", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "day", 2);
+    await incrementThrottleCount(doc, "flag", "day", 2);
+    expect(throttleCount(doc, "flag", "day")).toBe(2);
+    expect(isThrottleCountAvailable(doc, "flag", "day", 2)).toBe(false);
+
+    // Тот же день (частично прошли сутки) — счётчик не сбрасывается.
+    globalThis.game.time = { worldTime: 40000 };
+    expect(throttleCount(doc, "flag", "day")).toBe(2);
+
+    // Наступили новые сутки — счётчик обнуляется.
+    globalThis.game.time = { worldTime: 86400 + 10 };
+    expect(throttleCount(doc, "flag", "day")).toBe(0);
+    expect(isThrottleCountAvailable(doc, "flag", "day", 2)).toBe(true);
+  });
+
+  it("day: не путается с worldTime-семьёй isThrottleReady (та же строка unit, разная плоскость хранения)", async () => {
+    globalThis.game.time = { worldTime: 100000 };
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "day", 3);
+    // isThrottleReady/markThrottleUsed для "day" — интервал между использованиями,
+    // читает СОВСЕМ другой флаг (не usageLimits.<key>) — счётчик его не трогает.
+    expect(isThrottleReady(doc, "flag", "day")).toBe(true);
   });
 });
