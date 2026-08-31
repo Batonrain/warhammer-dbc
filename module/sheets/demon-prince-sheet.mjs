@@ -188,7 +188,6 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       banished: !!dp.banished,
       trueFormDesc: dp.trueFormDesc || "",
       mortalName: dp.mortalName || "",
-      anointed: dp.anointed || "",
       retinueNotes: dp.retinueNotes || "",
       gifts: gifts.map(g => ({ ...g, xLabel: g.x ? ` (X=${g.x})` : "" })),
       giftsCommon: registry.filter(g => g.god === "common"),
@@ -372,6 +371,12 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       extra.armourMod = await this._pickChoice("Броня Хаоса — модификация",
         { spikes: "Шипы", reflec: "Отражающая", ceramite: "Керамит", ablative: "Аблативная" }) || "ceramite";
     }
+    // Помазанник(X) — дар нацелен на конкретного смертного (wdbc-yo6r); цель
+    // можно оставить пустой и привязать позже вручную через system.dp.gifts.
+    if (def.key === "anointed") {
+      extra.targetUuid = await this._pickProtege();
+      if (extra.targetUuid === undefined) return; // диалог отменён
+    }
 
     const favor = Math.max(0, Number(this.actor.system.dp?.favor) || 0);
     if (favor < cost) return ui.notifications.warn(`Недостаточно Фавора: нужно ${cost}, есть ${favor}.`);
@@ -390,6 +395,11 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
     const entry = { id: giftId, key: def.key, god: def.god, name: def.label, paid: cost, x, noSacrifice: !!def.noSacrifice };
     if (def.key === "immortalMight") entry.name = `Бессмертная Мощь: Unnatural ${DP_CHAR_LABELS[extra.stat]}`;
     if (extra.stat) entry.stat = extra.stat;
+    if (extra.targetUuid) {
+      entry.targetUuid = extra.targetUuid;
+      const target = await fromUuid(extra.targetUuid).catch(() => null);
+      if (target) entry.name = `Помазанник: ${target.name}`;
+    }
     gifts.push(entry);
     const upd = { "system.dp.gifts": gifts, "system.dp.favor": favor - cost };
 
@@ -433,6 +443,19 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       content: `<label>${title}: <select name="c">${opts}</select></label>`,
       ok: { label: "Выбрать", callback: (_ev, btn) => btn.form.elements.c.value }
     }).catch(() => null);
+  }
+
+  // Кого отметить Помазанником(X) (wdbc-yo6r) — можно оставить пустым и
+  // привязать позже вручную (запись живёт в system.dp.gifts до правки).
+  async _pickProtege() {
+    const candidates = game.actors.filter(a => a.type === "character");
+    const opts = ['<option value="">— решить позже —</option>']
+      .concat(candidates.map(a => `<option value="${a.uuid}">${esc(a.name)}</option>`)).join("");
+    return foundry.applications.api.DialogV2.prompt({
+      window: { title: "Помазанник — кто отмечен" },
+      content: `<label>Смертный: <select name="target">${opts}</select></label>`,
+      ok: { label: "Далее", callback: (_ev, btn) => btn.form.elements.target.value }
+    }).catch(() => undefined);
   }
 
   // Строит предметы, создаваемые Демоническим Даром (помечены flag dpGift=giftId).

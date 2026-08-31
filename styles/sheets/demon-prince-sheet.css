@@ -355,15 +355,6 @@
   background: rgba(0,0,0,0.35); border: 1px solid color-mix(in srgb, var(--gc) 28%, #2a1e44);
   color: #d9cff0; border-radius: 4px; padding: 5px 8px; font-size: 0.84em; line-height: 1.45;
 }
-.warhammer-dbc .dp-anointed-label {
-  display: flex; align-items: center; gap: 8px; margin-top: 6px;
-  font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.08em; color: #8a7fb0;
-}
-.warhammer-dbc .dp-anointed-label input {
-  flex: 1; background: rgba(0,0,0,0.4); border: 1px solid color-mix(in srgb, var(--gc) 30%, #2a1e44);
-  color: #e4daf8; border-radius: 4px; padding: 2px 8px; font-size: 1.2em; text-transform: none; letter-spacing: 0;
-}
-
 /* ── Чат-карточка Демон-Принца ────────────────────────── */
 .wh-dp-card {
   --gc: #b477ff; --gc2: #5c2d91;

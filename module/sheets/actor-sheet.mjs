@@ -43,6 +43,7 @@ import { refundXP, talentCost, talentReason } from "../apps/duplicate-refund.mjs
 import { activatePathListeners } from "./tabs/paths.mjs";
 import { activateCombatListeners } from "./tabs/combat.mjs";
 import { mountPanelContext, activateMountPanelListeners } from "./tabs/mount-panel.mjs";
+import { patronPanelContext, activatePatronPanelListeners } from "./tabs/patron-panel.mjs";
 import { dreadnoughtPanelContext } from "./tabs/dreadnought-panel.mjs";
 import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
          electrostimulatorBoost, ferumInfernusActive } from "../rules/dreadnought.mjs";
@@ -737,6 +738,11 @@ export class WarhammerCharacterSheet
     // Блок «ВЕРХОМ» на вкладке БОЙ: скакун ищется по списку акторов мира —
     // ссылку на него хранит сам всадник (rules/mount.mjs).
     Object.assign(context, mountPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Блок «ПАТРОН» / «ПРОТЕЖЕ» на СОЦИУМ (субраса «Наследник», Трейт
+    // Помазанник(X)): смертный хранит ссылку на Демона-Принца, сам Принц
+    // строит свою сторону по оформленным дарам «Помазанник» (wdbc-yo6r).
+    Object.assign(context, patronPanelContext(this.actor, [...(game.actors ?? [])]));
 
     // Блок «ЗДРАВОМЫСЛИЕ» там же: видим, только если какой-то Дредноут в мире
     // держит этого персонажа своим пилотом (rules/dreadnought.mjs, стр. 57-58).
@@ -1580,6 +1586,9 @@ export class WarhammerCharacterSheet
 
     // ── Блок «ВЕРХОМ» там же (стр. 477-478) ───────────────────────────────
     activateMountPanelListeners(root, this.actor, { editable: this.isEditable });
+
+    // ── Блок «ПАТРОН» / «ПРОТЕЖЕ» на СОЦИУМ (wdbc-yo6r) ────────────────────
+    activatePatronPanelListeners(root, this.actor, { editable: this.isEditable });
 
     // ── Контекстное меню предметов ────────────────────────────────────────
     activateItemContextMenu(html, this.actor);
