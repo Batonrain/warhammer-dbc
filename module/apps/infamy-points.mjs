@@ -11,6 +11,20 @@
 
 import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE } from "../constants/demon-prince.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
+
+/**
+ * Текущие Очки Бесчестия актора — тот же путь, что и лист (actor-sheet.mjs
+ * `_infamyPath`/demon-prince-sheet.mjs override), но по типу актора, а не по
+ * классу листа: нужен местам, у которых листа нет (module/combat/fear.mjs —
+ * тест Страха берёт свою Инфамию для автоуспеха, стр. 438).
+ */
+export function actorInfamyValue(actor) {
+  const raw = actor?.type === "demonPrince"
+    ? actor?.system?.dp?.ip
+    : actor?.system?.fate?.value;
+  return Math.max(0, Number(raw) || 0);
+}
 
 // Контекст для общего партиала infamy-strip.hbs.
 export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) {
@@ -30,13 +44,37 @@ export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) 
     ipPips: Array.from({ length: Math.max(ipMax, 1) }, (_, i) => i < ip),
     ipAbilities,
     patronAbility: DP_PATRON_ABILITIES[godKey] || null,
-    patronage: DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided
+    patronage: DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided,
+    // Временные Очки Бесчестия (Voice of God и т.п., module/rules/temp-infamy.mjs) —
+    // отдельная валюта поверх обычного пула, тратится первой (см. spendInfamy).
+    tempInfamy: tempInfamyInfo(actor)
   };
 }
 
 export async function changeInfamy(actor, ipFullPath, ipMax, delta) {
   const cur = Math.max(0, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0);
   await actor.update({ [ipFullPath]: Math.max(0, Math.min(ipMax, cur + delta)) });
+}
+
+/**
+ * Общая точка любого обычного списания пула Бесчестия/Судьбы/Боли (wdbc-e728):
+ * сперва уходит временный запас (module/rules/temp-infamy.mjs — Voice of God
+ * и т.п.), и только при его нехватке — обычный пул по poolFullPath
+ * (system.fate.value везде, кроме Демон-Принца — system.dp.ip). Списание
+ * временного запаса выполняется здесь же (actor.setFlag/unsetFlag); обычный
+ * пул только СЧИТАЕТСЯ — запись делает вызывающий код вместе с остальными
+ * полями своего update().
+ * @returns {{tempSpent:number, poolSpent:number, poolValue:number}}
+ *   poolValue — новое значение обычного пула после вычета poolSpent.
+ */
+export async function spendFromInfamyPool(actor, amount, poolFullPath) {
+  amount = Math.max(0, Number(amount) || 0);
+  const cur = Math.max(0, Number(foundry.utils.getProperty(actor, poolFullPath)) || 0);
+  const haveTemp = tempInfamyAmount(actor);
+  const tempSpent = Math.min(haveTemp, amount);
+  if (tempSpent > 0) await spendTempInfamy(actor, tempSpent);
+  const poolSpent = amount - tempSpent;
+  return { tempSpent, poolSpent, poolValue: Math.max(0, cur - poolSpent) };
 }
 
 function ipCard(meta, title, lines) {
@@ -64,7 +102,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   const s = actor.system;
   const cor = s.corruption?.value ?? 0;
   const ip = Math.max(0, Math.min(ipMax, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0));
-  if (ip < 1) return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
+  if (ip < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
 
   let ability = DP_INFAMY_ABILITIES.find(a => a.key === key);
   if (!ability && DP_PATRON_ABILITIES[godKey]?.key === key) ability = DP_PATRON_ABILITIES[godKey];
@@ -73,7 +111,8 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   const threshold = (ability.key === "success" && godKey === "tzeentch") ? 0 : (ability.cor ?? 0);
   if (cor < threshold) return ui.notifications.warn(`«${ability.label}»: нужно Порчи ≥ ${threshold} (сейчас ${cor}).`);
 
-  const upd = { [ipFullPath]: ip - 1 };
+  const spend = await spendFromInfamyPool(actor, 1, ipFullPath);
+  const upd = { [ipFullPath]: spend.poolValue };
   const lines = [];
   const rolls = [];
 
@@ -111,7 +150,9 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: ipCard(meta, `${ability.icon || "⚜"} ${ability.label} — ${esc(actor.name)}`,
-      [...lines, `<span style="font-size:0.82em;opacity:0.8;">Осталось Очков Бесчестия: <b>${ip - 1}</b> / ${ipMax}.</span>`]),
+      [...lines, spend.tempSpent
+        ? `<span style="font-size:0.82em;opacity:0.8;">Из временного запаса: <b>${spend.tempSpent}</b>. Осталось Очков Бесчестия: <b>${spend.poolValue}</b> / ${ipMax}.</span>`
+        : `<span style="font-size:0.82em;opacity:0.8;">Осталось Очков Бесчестия: <b>${spend.poolValue}</b> / ${ipMax}.</span>`]),
     rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
   }, rollMode));
 }

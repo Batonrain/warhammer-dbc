@@ -12,6 +12,7 @@ import { ruleFlagLabels }                          from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
+import { fatiguePenalty }                          from "../sheets/tabs/conditions.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -31,7 +32,10 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
   // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
   const tk = opts.tk || {};
-  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0);
+  // Усталость (стр. 26): диалог общего теста Навыка учитывает её сама, тест
+  // Страха забыл — тот же класс пробела, что у психотеста (wdbc-lfho).
+  const fatigue = fatiguePenalty(actor, "wp");
+  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + fatigue;
   const autoPass = infamy >= r.infamy;
 
   const reroll = tk.reroll || null;
@@ -76,7 +80,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx,
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0
+    difficulty: tk.difficulty || 0, fatigue
   });
 }
 
@@ -143,7 +147,7 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
  */
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
   { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "",
-    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0 } = {}) {
+    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, fatigue = 0 } = {}) {
   const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
@@ -179,7 +183,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""} → Порог: <b>${eff}</b></div>
         ${combinedLine}
         ${propsHtml}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>

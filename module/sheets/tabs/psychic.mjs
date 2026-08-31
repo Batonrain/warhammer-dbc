@@ -95,7 +95,8 @@ export function showManifestDialog(actor, item) {
                      wp: actor.system.characteristics?.wp?.bonus ?? 0 };
   const powerMod = Number(sys.testMod) || 0;
   const variantMods = variants.map(v => Number(v.testMod) || 0);
-  const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar };
+  const fatigue = fatiguePenalty(actor, cast.key);
+  const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue };
 
   // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
   // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
@@ -266,7 +267,7 @@ export function wirePsyManifestPreview(html, m) {
     });
     const thr = attackThreshold({
       base: m.charVal + 5 * ePR,
-      mods: [mod, ruleMod, pathTest, m.powerMod, varMod],
+      mods: [mod, ruleMod, pathTest, m.powerMod, varMod, m.fatigue],
       halvePenalty: halveRule
     });
 
@@ -406,11 +407,15 @@ export async function executePsychotest(actor, item, opts) {
   const variantMod = Number(variant?.testMod) || 0;
 
   const powerMod  = sys.testMod || 0; // собственный модификатор силы
+  // Усталость (стр. 26): контрпример уже был рядом — activateNavigatorPower
+  // ниже её учитывает, здесь на общий психотест забыли. Считаем сами, а не
+  // просим игрока вписать «Доп. мод.» руками (wdbc-lfho).
+  const fatigue = fatiguePenalty(actor, cast.key);
   // Складываем тем же счётчиком, что и атака: галочка «ополовинить штраф»
   // делит сумму, только если она в минус, и округляет в пользу игрока.
   const threshold = attackThreshold({
     base: charVal + 5 * ePR,
-    mods: [opts.modifier || 0, opts.ruleMod || 0, pathTestMod, powerMod, variantMod],
+    mods: [opts.modifier || 0, opts.ruleMod || 0, pathTestMod, powerMod, variantMod, fatigue],
     halvePenalty: !!opts.halveRulePenalty
   });
   const roll = await new Roll("1d100").evaluate();
@@ -619,7 +624,7 @@ export async function executePsychotest(actor, item, opts) {
           ${aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : ""}
           ${sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : ""}
           <div class="roll-threshold">
-            ${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}
+            ${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""}
             → Порог: <b>${threshold}</b>
           </div>
           ${variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : ""}
