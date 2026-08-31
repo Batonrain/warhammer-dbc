@@ -34,7 +34,7 @@ export function prepareVehicleDerived(items, system) {
     deflector: 0, deflectorDaemonic: false, ignoreCrewCrits: false,
     autonomous: false, autonomousBS: 0, autonomousOperate: 0, autonomousAwareness: 0,
     flickerfield: false,
-    amphibious: false, ceramitePlating: false
+    amphibious: false, ceramitePlating: false, sidecarStructure: 0
   };
   for (const it of items) {
     if (it.type !== "vehicleTrait") continue;
@@ -67,6 +67,8 @@ export function prepareVehicleDerived(items, system) {
     tf.manoeuvreMod    += Number(e.manoeuvreMod)    || 0;
     tf.spdMod          += Number(e.spdMod)          || 0;
     tf.spdDamageReduce += Number(e.spdDamageReduce) || 0;
+    // Коляска (X): +X Структуры байку (стр. 478).
+    if (e.sidecarStructure) tf.sidecarStructure += Number(it.system.rating) || 0;
     tf.commandBonus    += Number(e.commandBonus)    || 0;
     tf.repairBonus     += Number(e.repairBonus)     || 0;
     const fm = Number(e.fullMoveSpdMult) || 0;
@@ -74,6 +76,12 @@ export function prepareVehicleDerived(items, system) {
   }
   // Open Topped теперь задаётся Чертой (ручной чекбокс убран из Обзора).
   system.openTopped = tf.openTopped;
+  // Коляска (X): +X Структуры прибавляется к базовому максимуму байка (тот же
+  // приём, что у openTopped выше — не персистится, пересчитывается заново
+  // каждый раз из авторского значения).
+  if (tf.sidecarStructure && system.structure) {
+    system.structure.max = (Number(system.structure.max) || 0) + tf.sidecarStructure;
+  }
 
   const baseSpd = Number(ch.spd) || 0;
   // Многоногая (X) снижает урон Ходовой к SPD.

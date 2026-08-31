@@ -53,7 +53,7 @@ const MINION_FIELDS = {
 // полей нет в снимке. Ссылку на скакуна хранит ВСАДНИК — скакуном бывает и
 // техника, у которой общей схемы существа нет вовсе (rules/mount.mjs).
 const MOUNT_FIELDS = {
-  mount: { uuid: "", role: "rider", speed: "still", sync: false, linked: false, skidUsed: false }
+  mount: { uuid: "", role: "rider", speed: "still", sync: false, linked: false, skidUsed: false, bladesUsed: 0 }
 };
 
 /** Расхождения сверх общих для трёх типов с характеристиками. */

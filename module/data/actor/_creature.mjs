@@ -262,7 +262,11 @@ export function creatureSchema({ granted = false } = {}) {
       sync:     bool(false, "В ритм скакуна"),
       // Связь MIU, телепатия или подчинённый демон — тогда руки свободны.
       linked:   bool(false, "Связь без рук"),
-      skidUsed: bool(false, "Занос совершён")
+      skidUsed: bool(false, "Занос совершён"),
+      // Лезвия (X): счётчик атак Лезвиями в текущем Ходу — лимит зависит от
+      // ранга Навыка управления (Тренированное 1, Опытный 2, Ветеран 3), сброс
+      // вручную кнопкой панели, как и skidUsed выше (wdbc-8nz6).
+      bladesUsed: num(0, "Лезвия использованы в этот Ход")
     }, { label: "Верхом" }),
     insanity:   new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Безумие" }),
     corruption: new SchemaField({ value: num(0, "Значение"), threshold: num(0, "Порог") }, { label: "Порча" }),

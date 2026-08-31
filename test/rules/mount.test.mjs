@@ -11,7 +11,7 @@
 import { describe, it, expect } from "vitest";
 import {
   MOUNT_SPEEDS, MOUNT_TURNS, MOUNT_SKID, SELECTIVE_MODS, STAY_MOD, BIKE_REPAIR,
-  mountTraits, isBike, isAirborne, mountControlSkill, skillValue, riderControl,
+  mountTraits, isBike, isAirborne, mountControlSkill, skillValue, riderControl, legionPenalty,
   testMod, maneuverMods, turnOptions, skidInfo, rangedPenalty, passengerActionMod,
   isDouble, hitTarget, selectiveMod, fallFromSaddle, mountSpd, acrobaticsStayMod,
   handsNeeded, bonusHalfAction, ridersOf, passengerCount, sizeFits, pairInitiative,
@@ -42,12 +42,13 @@ const bike = ({ items = [], size = 1, spd = 8, structure = 6, critical = 0, chas
 });
 
 /** Всадник: характеристики, ранги Навыков и специализации Operate. */
-const rider = ({ ag = 40, per = 30, int = 35, survival = "untrained", techUse = "untrained",
+const rider = ({ ag = 40, per = 30, int = 35, sBonus = 8, survival = "untrained", techUse = "untrained",
                  operate = [], items = [], init = 5, size = 0, mountUuid = "" } = {}) => ({
   type: "character", uuid: "Actor.rider", items,
   system: {
     size, initiative: init,
-    characteristics: { ag: { total: ag }, per: { total: per }, int: { total: int } },
+    characteristics: { ag: { total: ag }, per: { total: per }, int: { total: int },
+                        s: { bonus: sBonus } },
     skills: { survival: { rank: survival, total: per - 20 }, techUse: { rank: techUse } },
     groupSkills: { operate },
     mount: { uuid: mountUuid, role: "rider" }
@@ -171,6 +172,37 @@ describe("каким Навыком ведётся скакун", () => {
   it("Operate берётся из нужной специализации, а не из любой записи группы", () => {
     const r = rider({ ag: 35, operate: [op("voidship", "expert"), op("surface", "knows")] });
     expect(riderControl(r, bike()).value).toBe(35);
+  });
+});
+
+describe("Легион (стр. 478)", () => {
+  const legionBike = bike({ items: [trait("Legion / Легион")] });
+
+  it("без Черты Легион штрафа нет, каким бы мелким ни был седок", () => {
+    expect(legionPenalty(rider({ size: 0, sBonus: 3 }), {})).toBe(0);
+  });
+
+  it("подходящий седок (Размер ≥1 и S.b ≥8) — штрафа нет", () => {
+    const r = rider({ size: 1, sBonus: 8 });
+    expect(legionPenalty(r, mountTraits(legionBike))).toBe(0);
+    expect(riderControl(r, legionBike).value).toBe(riderControl(rider({ ag: 40, size: 1, sBonus: 8 }), bike()).value);
+  });
+
+  it("Размер меньше 1 — штраф −20, даже если S.b хватает", () => {
+    const r = rider({ size: 0, sBonus: 10 });
+    expect(legionPenalty(r, mountTraits(legionBike))).toBe(-20);
+  });
+
+  it("S.b меньше 8 — штраф −20, даже если Размер хватает", () => {
+    const r = rider({ size: 2, sBonus: 5 });
+    expect(legionPenalty(r, mountTraits(legionBike))).toBe(-20);
+  });
+
+  it("штраф встроен в riderControl().value для всех верховых тестов", () => {
+    const r = rider({ ag: 40, size: 0, sBonus: 3 });
+    const control = riderControl(r, legionBike);
+    expect(control.value).toBe(riderControl(r, bike()).value - 20);
+    expect(control.legionPenalty).toBe(-20);
   });
 });
 

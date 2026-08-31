@@ -19,7 +19,10 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          MOUNT_ACTOR_TYPES, isBike, mountTraits, riderControl, testMod, STAY_MOD,
          handsNeeded, bonusHalfAction, sizeFits, pairInitiative, passengerCount,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
-         possessionOf, isPossessed } from "../../rules/mount.mjs";
+         possessionOf, isPossessed, mountControlSkill, skillValue } from "../../rules/mount.mjs";
+
+/** Лимит атак Лезвиями в Ход по рангу Навыка управления (стр. 478). */
+const BLADES_TIER_USES = { trained: 1, veteran: 2, expert: 3 };
 
 const rootEl = root => (root?.jquery ? root[0] : root);
 
@@ -99,6 +102,7 @@ export function mountPanelContext(actor, actors = []) {
     mountManoeuvreParts: man.parts,
     mountSkidAllowed: skid.allowed,
     mountSkidBlocked: skid.blockedBySidecar,
+    mountBlades: bladesInfo(actor, mount, traits),
     mountInitiative: init,
     mountTraitChips: Object.entries(traits).map(([key, rating]) => ({
       key,
@@ -106,6 +110,15 @@ export function mountPanelContext(actor, actors = []) {
       rating: MOUNT_TRAIT_DEFS[key]?.rated && rating ? rating : null
     }))
   };
+}
+
+/** Состояние Лезвий (X) для панели: доступна ли кнопка и сколько ещё осталось. */
+function bladesInfo(rider, mount, traits) {
+  if (!("blades" in traits)) return { available: false };
+  const sv  = skillValue(rider, mountControlSkill(mount, traits));
+  const max = BLADES_TIER_USES[sv.rank] || 0;
+  const used = Number(rider.system?.mount?.bladesUsed) || 0;
+  return { available: true, max, used, rankLabel: sv.rank, allowed: max > 0 && used < max };
 }
 
 const speedOptions = current => Object.entries(MOUNT_SPEEDS).map(([key, def]) => ({
@@ -183,6 +196,7 @@ export function activateMountPanelListeners(root, actor, { editable = true } = {
       switch (action) {
         case "turn":    return mod.showTurnDialog(actor);
         case "skid":    return mod.showSkidDialog(actor);
+        case "blades":  return mod.showBladesDialog(actor);
         case "terrain": return mod.showMountTerrainDialog(actor);
         case "hit":     return mod.showHitAllocationDialog(actor);
         case "damage":  return mod.showMountDamageTest(actor);
