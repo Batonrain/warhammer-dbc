@@ -97,6 +97,10 @@
   opacity: 1;
 }
 
+/* Диалог «Провести ритуал» (module/sheets/ritual-cast-dialog.mjs) переиспользует
+   разметку/стили бывшей вкладки «Ритуалы» окна Завесы (.wv-block/.wv-rit-*,
+   .wh-veil-app — CSS-переменные темы) — своих правил ему не нужно. */
+
 .roll-dlg-mini-btn {
   font-family: inherit;
   font-size: 0.82em;

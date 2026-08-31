@@ -1,21 +1,32 @@
 // ════════════════════════════════════════════════════════════════════════
-//  Завеса и Мистика — глобальное окно (Warhammer DBC).
-//  • Отдельное окно (как Таро/Мастерская), кнопка в панели контролей.
+//  Завеса и Мистика — окно ГМа (Warhammer DBC).
+//  • Отдельное окно (как Таро/Мастерская), кнопка в панели контролей —
+//    видна только ГМу.
 //  • Состояние ЗАВЕСЫ проецируется на СЦЕНУ (scene.flags), общее для всех.
-//  • Три вкладки: «Завеса» (плотность/факторы/события), «Ритуалы»
-//    (ритуалы, манипулирующие завесой), «Навигация» (навигаторы в Варпе).
-//  Редактирование — только ГМ; игроки видят актуальное состояние сцены.
+//  • Вкладки: «Завеса» (плотность/факторы/события), «Ритуалы», «Навигация»
+//    (навигаторы в Варпе), «Таро Императора», «Осквернение» (крафт
+//    демон-оружия).
+//  Редактирование — только ГМ.
+//
+//  29.08.2026: бросок ритуала теперь ДОСТУПЕН И С ЛИСТА ПЕРСОНАЖА (кнопка
+//  «Провести ритуал» → module/sheets/ritual-cast-dialog.mjs) — тот путь не
+//  требует ГМа и не даёт выбрать чужого Ритуалиста/пресет книги. Вкладка
+//  «Ритуалы» здесь ВРЕМЕННО оставлена рядом для сравнения (решение
+//  пользователя) и переписана как тонкая обёртка над той же математикой
+//  (module/apps/ritual-cast.mjs: ritualThreshold/castRitual) — дублирования
+//  расчёта между окном и диалогом больше нет, только выбор Ритуалиста/
+//  предмета остаётся тут своим (актор ещё не известен, в отличие от кнопки
+//  на его собственном листе). Пресет ритуала по имени книги (без предмета
+//  на акторе) убран вместе с module/constants/ritual-presets.mjs — у всех
+//  123 ритуалов книги теперь есть предмет в packs-src/rituals, отдельный
+//  рукописный список стал чистым дублированием.
 // ════════════════════════════════════════════════════════════════════════
 
 import { VEIL_FACTORS, VEIL_EVENTS, WARP_GODS, warpGod, defaultVeil, veilTotal, veilLevelInfo, veilNavMod }
   from "../constants/veil.mjs";
-import { RITUAL_TYPES, RITUAL_TYPES_MAP, TEST_CHARS, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY,
-         CURSE_SYMPATHY, NUMEROLOGY, WARP_AVERSION, lookupAversion, SUMMON_FORMS,
-         buildRitualSkills, ritualSkillOption, ritualDegrees, charAbbr,
-         applyRitualItem } from "../constants/rituals.mjs";
-import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
-import { ritualPresetGroups, applyRitualPreset } from "../constants/ritual-presets.mjs";
-import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
+import { RITUAL_TYPES, TEST_CHARS, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY,
+         NUMEROLOGY, SUMMON_FORMS, buildRitualSkills, applyRitualItem } from "../constants/rituals.mjs";
+import { ritualThreshold, castRitual, psykerMaxBonus } from "./ritual-cast.mjs";
 import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
          cardByN, cardTitle, cardSuitLine, cardImgSrc } from "../constants/tarot.mjs";
 import { DW_GODS, DW_GODS_MAP, DEMON_INF_FORMULAS, VESSEL_RESONANCE, VESSEL_RESONANCE_GROUPS,
@@ -28,8 +39,11 @@ import { ROUTE_STABILITY, JOURNEY_DURATION, GUIDE_ESTIMATE, ENTRY_LOCATIONS, jum
   from "../constants/warp-travel.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
 import { refreshVeilOverlay } from "./veil-overlay.mjs";
-import { resolveVeilContainer } from "../constants/scene-nexus.mjs";
+import { resolveVeilContainer, currentScene, veilShift,
+         readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
+
+export { veilShift };
 
 function _newJourney() {
   return {
@@ -40,14 +54,14 @@ function _newJourney() {
   };
 }
 
+// Состояние вкладки «Ритуалы» ГМ-консоли: ритуалист/предмет ещё не выбраны
+// (в отличие от диалога с листа персонажа, где оба уже известны) — форма
+// начинается пустой, начальные числа как у ритуала книги «по умолчанию».
 function _newRitual() {
   return {
-    // itemId — выбранный ритуал-предмет Ритуалиста: он даёт путь проведения и
-    // требования, которые гейтят проведение (wdbc-lla/j13). Пустой — ГМ ведёт
-    // ритуал руками или пресетом книги, как раньше.
     ritualistId: "", itemId: "", name: "", type: "summon",
     skillValue: "", testChar: "", gmMod: -20,
-    assistants: 0, assistBonus: 10,
+    assistants: 0, assistSacrificed: 0, assistBonus: 10,
     summon: {}, curseFam: "close", curseSymp: {},
     numerology: {}, numMod: 0, psyker: false, psykerBonus: 0,
     aversionPerFail: 5
@@ -87,33 +101,11 @@ function _newDefile() {
 const { Application } = foundry.appv1.api;
 const FLAG_SCOPE = "warhammer-dbc";
 const FLAG_KEY   = "veil";
-// ── Доступ к состоянию завесы текущей сцены ───────────────────────────────
-function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
-
-// Завеса резолвится через Нексус: если сцена входит в группу — источник группа
-// (общая Завеса), иначе — легаси-флаг самой сцены. См. constants/scene-nexus.mjs.
-function readVeil(scene) { return resolveVeilContainer(scene).read(); }
-
-async function writeVeil(scene, veil) {
-  if (!scene) { ui.notifications?.warn("Завеса: нет активной сцены."); return; }
-  if (!game.user.isGM) return;
-  await resolveVeilContainer(scene).write(veil);
-}
 
 // Подпись контейнера Завесы (имя группы или сцены) — для шапки окна.
 function veilContainerLabel(scene) {
   const c = resolveVeilContainer(scene);
   return c.kind === "group" ? `Группа: ${c.label}` : (scene?.name || "— нет сцены —");
-}
-
-// Публичный помощник: сдвинуть завесу текущей сцены (для феноменов/ритуалов).
-export async function veilShift(delta, note = "") {
-  const scene = currentScene();
-  if (!scene || !game.user.isGM) return;
-  const v = readVeil(scene);
-  v.manual = (Number(v.manual) || 0) + Number(delta || 0);
-  v.log = [{ delta: Number(delta || 0), note: String(note || "Сдвиг завесы"), time: Date.now() }, ...(v.log || [])].slice(0, 30);
-  await writeVeil(scene, v);
 }
 
 export class VeilMystic extends Application {
@@ -155,77 +147,73 @@ export class VeilMystic extends Application {
       .map(a => ({ id: a.id, name: a.name }))
       .sort((x, y) => x.name.localeCompare(y.name, "ru"));
   }
+
+  /**
+   * Контекст вкладки «Ритуалы» — тонкая обёртка над ritualThreshold
+   * (module/apps/ritual-cast.mjs): здесь только то, чего у диалога с листа
+   * нет — выбор Ритуалиста среди присутствующих на сцене и выбор ЕГО
+   * ритуала-предмета (у диалога оба уже даны кнопкой). Сама математика
+   * порога/разбивки — общая с диалогом, не дублируется.
+   */
   _ritualData() {
     const R = this.ritual;
     const actors = this._ritualActors();
     if (!actors.find(a => a.id === R.ritualistId)) R.ritualistId = actors[0]?.id || "";
     const actor = game.actors.get(R.ritualistId) || null;
-    const chars = actor?.system?.characteristics || {};
 
     // Ритуалы, лежащие на Ритуалисте. Смена ритуалиста роняет выбор: чужой
     // предмет к нему отношения не имеет, а его требования гейтили бы не того.
     const ritualItems = (actor?.items ?? []).filter(i => i.type === "ritual");
     if (!ritualItems.find(i => i.id === R.itemId)) R.itemId = "";
     const ritualItem = ritualItems.find(i => i.id === R.itemId) || null;
-    // Требования ритуалиста — тем же checkRequirements, которым отмечает строку
-    // раздела «Ритуалы» на листе (sheets/tabs/rituals.mjs). Требования к
-    // ассистентам сюда не входят: их проверяют по каждому помощнику отдельно.
-    const req = ritualItem
-      ? checkRequirements(actor, getItemRequirements(ritualItem, "req"))
-      : { ok: true, failed: [] };
 
     const skills = actor ? buildRitualSkills(actor) : [];
     if (!skills.find(s => s.value === R.skillValue)) R.skillValue = skills[0]?.value || "";
-    const skillOpt = ritualSkillOption(skills, R.skillValue);
-    if (!R.testChar) R.testChar = skillOpt?.char || "int";
+    if (!R.testChar) R.testChar = "int";
 
-    const charAdj = (skillOpt && R.testChar !== skillOpt.char)
-      ? ((chars[R.testChar]?.total ?? 0) - (chars[skillOpt.char]?.total ?? 0)) : 0;
-    const baseVal = skillOpt ? skillOpt.total + charAdj : -20;
-
-    const isCurse = R.type === "curse";
-    const assistTotal = (R.assistants || 0) * (R.assistBonus || 0);
-    const summonTotal = RITUAL_SUMMON_MODS.reduce((s, m) => s + (R.summon[m.key] ? m.value : 0), 0);
-    const famVal = isCurse ? (CURSE_FAMILIARITY.find(f => f.key === R.curseFam)?.value || 0) : 0;
-    const sympTotal = isCurse ? CURSE_SYMPATHY.reduce((s, m) => s + (R.curseSymp[m.key] ? m.value : 0), 0) : 0;
-    const prMax = actor?.system?.psyker ? 2 * (actor.system.psyker.rating || 0) : 0;
-    const prBonus = R.psyker ? Math.min(R.psykerBonus || 0, prMax) : 0;
-    const numMod = R.numMod || 0;
-
-    const threshold = baseVal + (R.gmMod || 0) + assistTotal + summonTotal + famVal + sympTotal + prBonus + numMod;
-
-    const sgn = (n) => (n >= 0 ? "+" : "") + n;
-    const rows = [
-      { label: skillOpt ? `${skillOpt.label} (${charAbbr(R.testChar)})` : "— навык —", val: baseVal, primary: true },
-      { label: "Сложность ритуала", val: R.gmMod || 0 },
-      ...(assistTotal ? [{ label: `Ассистенты ×${R.assistants}`, val: assistTotal }] : []),
-      ...(summonTotal ? [{ label: "Модификаторы призыва", val: summonTotal }] : []),
-      ...(isCurse && famVal ? [{ label: "Знакомство с целью", val: famVal }] : []),
-      ...(isCurse && sympTotal ? [{ label: "Симпатия", val: sympTotal }] : []),
-      ...(prBonus ? [{ label: `Псайкер (+2×PR)`, val: prBonus }] : []),
-      ...(numMod ? [{ label: "Нумерология", val: numMod }] : [])
-    ].map(r => ({ ...r, signed: sgn(r.val) }));
+    const d = ritualThreshold(R, actor, ritualItem);
+    const sgn = n => (n >= 0 ? "+" : "") + n;
 
     return {
       actors, hasActor: !!actor, ritualistName: actor?.name || "",
       types: RITUAL_TYPES.map(t => ({ ...t, selected: t.key === R.type })),
-      isCurse, isSummonLike: ["summon", "dominion", "binding", "gate"].includes(R.type),
-      name: R.name, gmMod: R.gmMod, assistants: R.assistants, assistBonus: R.assistBonus,
+      isCurse: d.isCurse, isSummonLike: d.isSummonLike,
+      name: R.name, gmMod: R.gmMod, assistants: R.assistants,
+      assistSacrificed: R.assistSacrificed, assistBonus: R.assistBonus,
       skills: skills.map(s => ({ value: s.value, label: s.label, selected: s.value === R.skillValue })),
       testChars: TEST_CHARS.map(c => ({ ...c, selected: c.key === R.testChar })),
       summonMods: RITUAL_SUMMON_MODS.map(m => ({ ...m, signed: sgn(m.value), pos: m.value > 0, active: !!R.summon[m.key] })),
       famOptions: CURSE_FAMILIARITY.map(f => ({ ...f, signed: sgn(f.value), selected: f.key === R.curseFam })),
       sympMods: CURSE_SYMPATHY.map(m => ({ ...m, signed: sgn(m.value), active: !!R.curseSymp[m.key] })),
       numerology: NUMEROLOGY.map(n => ({ ...n, active: !!R.numerology[n.key] })),
-      numMod, psyker: R.psyker, psykerBonus: R.psykerBonus, prMax,
+      numMod: R.numMod, psyker: R.psyker, psykerBonus: R.psykerBonus, prMax: d.prMax,
       summonForms: SUMMON_FORMS,
-      presetGroups: ritualPresetGroups(),
       ritualItems: ritualItems.map(i => ({ id: i.id, name: i.name, selected: i.id === R.itemId })),
       hasRitualItems: ritualItems.length > 0,
-      reqOk: req.ok, reqFailed: req.failed,
-      rows, threshold, thresholdSigned: sgn(threshold),
+      reqOk: d.reqOk, reqFailed: d.reqFailed,
+      rows: d.rows, threshold: d.threshold, thresholdSigned: sgn(d.threshold),
       aversionPerFail: R.aversionPerFail
     };
+  }
+
+  /** Применить ритуал-предмет выбранного Ритуалиста: путь проведения из его полей. */
+  _applyRitualItem(itemId) {
+    const R = this.ritual;
+    const actor = game.actors.get(R.ritualistId);
+    const item = itemId ? actor?.items?.get(itemId) : null;
+    if (!item) { R.itemId = ""; this.render(false); return; }
+    Object.assign(R, applyRitualItem(actor, item, buildRitualSkills));
+    this.render(false);
+  }
+
+  // ── Проведение ритуала: та же castRitual, что зовёт диалог с листа ───────
+  async _castRitual() {
+    const R = this.ritual;
+    const actor = game.actors.get(R.ritualistId);
+    if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); return; }
+    const ritualItems = (actor.items ?? []).filter(i => i.type === "ritual");
+    const item = ritualItems.find(i => i.id === R.itemId) || null;
+    await castRitual(R, actor, { item });
   }
 
   // ── Данные варп-путешествия ─────────────────────────────────────────────
@@ -866,15 +854,23 @@ export class VeilMystic extends Application {
     bindR("ritActor", "ritualistId"); bindR("ritType", "type"); bindR("ritSkill", "skillValue");
     bindR("ritChar", "testChar");
     bindR("ritGmMod", "gmMod", true); bindR("ritAssist", "assistants", true);
+    bindR("ritAssistSac", "assistSacrificed", true);
     bindR("ritAssistB", "assistBonus", true); bindR("ritNumMod", "numMod", true);
     bindR("ritPerFail", "aversionPerFail", true); bindR("ritCurseFam", "curseFam");
     el.querySelectorAll("[data-num]").forEach(cb => cb.addEventListener("change", e => {
       R.numerology[cb.dataset.num] = e.target.checked; rr2();
     }));
-    el.querySelector("[name=ritPreset]")?.addEventListener("change", e => this._applyPreset(e.target.value));
     el.querySelector("[name=ritItem]")?.addEventListener("change", e => this._applyRitualItem(e.target.value));
     el.querySelector("[name=ritName]")?.addEventListener("change", e => { R.name = e.target.value; });
-    el.querySelector("[name=ritPsyker]")?.addEventListener("change", e => { R.psyker = e.target.checked; rr2(); });
+    // Псайкер-Ритуалист (стр. 393): «может выбрать получить бонус ДО +2×PR» —
+    // галочка сама подставляет максимум, а не заставляет искать/множить PR
+    // вручную; поле бонуса остаётся редактируемым, если психик хочет взять
+    // меньше (тот же бонус летит и в бросок провала — риск, а не чистый плюс).
+    el.querySelector("[name=ritPsyker]")?.addEventListener("change", e => {
+      R.psyker = e.target.checked;
+      R.psykerBonus = R.psyker ? psykerMaxBonus(game.actors.get(R.ritualistId)) : 0;
+      rr2();
+    });
     el.querySelector("[name=ritPsykerB]")?.addEventListener("change", e => { R.psykerBonus = parseInt(e.target.value) || 0; rr2(); });
     el.querySelectorAll("[data-summon]").forEach(cb => cb.addEventListener("change", e => {
       R.summon[cb.dataset.summon] = e.target.checked; rr2();
@@ -1132,114 +1128,6 @@ export class VeilMystic extends Application {
     if (game.user.isGM) veilShift(row.veil, `Варп-шторм (сила ${row.s})`);
     await this._jPost(`${veilIcon("storm")} Варп-шторм — сила ${row.s}`, "infernal",
       `<div class="roll-dice">1d5: <b>${r.total}</b></div><div class="roll-threshold"><b>Астропатия:</b> ${esc(row.astro)}</div><div class="roll-threshold"><b>Путешествия:</b> ${esc(row.travel)}</div><div class="rf-veil">Завеса истончается на +${row.veil}.</div>`, [r]);
-  }
-
-  // Применить пресет ритуала к текущему Ритуалисту.
-  _applyPreset(idxStr) {
-    if (idxStr === "" || idxStr == null) return;
-    const actor = game.actors.get(this.ritual.ritualistId);
-    if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); this.render(false); return; }
-    const applied = applyRitualPreset(actor, Number(idxStr), buildRitualSkills);
-    // Пресет — не предмет: выбор ритуала-предмета снимается, иначе гейт
-    // требований остался бы от прошлого ритуала.
-    if (applied) Object.assign(this.ritual, applied, { itemId: "" });
-    this.render(false);
-  }
-
-  // Применить ритуал-предмет Ритуалиста: путь проведения из его полей.
-  _applyRitualItem(itemId) {
-    const R = this.ritual;
-    const actor = game.actors.get(R.ritualistId);
-    const item = itemId ? actor?.items?.get(itemId) : null;
-    if (!item) { R.itemId = ""; this.render(false); return; }
-    Object.assign(R, applyRitualItem(actor, item, buildRitualSkills));
-    this.render(false);
-  }
-
-  // ── Проведение ритуала ──────────────────────────────────────────────────
-  async _castRitual() {
-    const R = this.ritual;
-    const actor = game.actors.get(R.ritualistId);
-    if (!actor) { ui.notifications?.warn("Ритуал: выберите Ритуалиста."); return; }
-    const d = this._ritualData();
-    // Требования ритуала гейтят проведение, но не запрещают его наглухо:
-    // последнее слово за ГМом, поэтому спрашиваем подтверждение и называем,
-    // чего не хватает.
-    if (!d.reqOk && !(await this._confirmUnmet(actor, d.reqFailed))) return;
-    const threshold = d.threshold;
-    const roll = await new Roll("1d100").evaluate();
-    const rv = roll.total;
-    const deg = ritualDegrees(rv, threshold);
-    const success = deg > 0;
-    const allRolls = [roll];
-    const typeLabel = RITUAL_TYPES_MAP[R.type]?.label || R.type;
-    const breakdown = d.rows.map(r => `${r.label}: ${r.signed}`).join(" · ");
-
-    const failHtml = success ? "" : await this._ritualFailure(R, Math.abs(deg), d.prMax, allRolls);
-
-    const rollMode = game.settings.get("core", "rollMode");
-    const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result wh-ritual-card">
-        <div class="roll-header">${veilIcon("ritual")} Ритуал: ${esc(R.name || typeLabel)}</div>
-        <div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>
-        <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}</div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`
-          : `<span class="roll-failure">Ритуал провален — ${Math.abs(deg)} Провал(ов)</span>`}</div>
-        ${failHtml}
-        <details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>
-      </div>`,
-      rolls: allRolls, sound: CONFIG.sounds.dice
-    }, rollMode));
-  }
-
-  /** Ритуалист не проходит требования ритуала: подтвердить или отменить. */
-  async _confirmUnmet(actor, failed) {
-    return Dialog.confirm({
-      title: "Требования ритуала не выполнены",
-      content: `<p><b>${esc(actor.name)}</b> не проходит требования ритуала:</p>
-        <ul>${failed.map(f => `<li>${esc(f)}</li>`).join("")}</ul>
-        <p>Провести всё равно?</p>`,
-      defaultYes: false
-    });
-  }
-
-  async _ritualFailure(R, failures, prMax, allRolls) {
-    const kind = RITUAL_TYPES_MAP[R.type]?.failure || "phenomenon";
-    if (kind === "none") return "";
-    const prBonus = R.psyker ? Math.min(R.psykerBonus || 0, prMax) : 0;
-    const extra = Math.max(0, failures - 1) * (R.aversionPerFail || 5) + prBonus;
-    const extraTxt = extra ? ` +${extra}` : "";
-
-    if (kind === "aversion") {
-      const aRoll = await new Roll("1d100").evaluate(); allRolls.push(aRoll);
-      const total = aRoll.total + extra;
-      const a = lookupAversion(total);
-      if (a.veil && game.user.isGM) veilShift(a.veil, `Отвращение Варпа: ${a.name}`);
-      return `<div class="wh-ritual-fail wv-tier-torn">
-        <div class="rf-title">${veilIcon("spiral")} Отвращение Варпа: ${aRoll.total}${extraTxt} = <b>${total}</b> → ${esc(a.name)}</div>
-        <div class="rf-text">${esc(a.text)}</div>
-        ${a.veil ? `<div class="rf-veil">Завеса истончается на +${a.veil}.</div>` : ""}</div>`;
-    }
-    if (kind === "curse") {
-      return `<div class="wh-ritual-fail wv-tier-torn">
-        <div class="rf-title">${veilIcon("demon")} «Что Посеешь…»</div>
-        <div class="rf-text">Вырвавшиеся энергии проклинают самого Ритуалиста. При наличии ассистентов проклятье падает на главного Ритуалиста, но он может пройти Scholastic Lore (Occult) −20, чтобы перенаправить его на ассистента.</div></div>`;
-    }
-    // phenomenon / breach
-    const fRoll = await new Roll("1d100").evaluate(); allRolls.push(fRoll);
-    const total = fRoll.total + extra;
-    const asBreach = kind === "breach" || total >= 75;
-    const obj = asBreach ? getPeril(total) : getPhenomenon(total);
-    const nm = obj.label || obj.name || (asBreach ? "Варп-Прорыв" : "Феномен");
-    const tx = obj.text || obj.effect || obj.desc || "";
-    const failLabel = asBreach ? `${veilIcon("storm")} Варп-Прорыв` : `${veilIcon("star")} Психический Феномен`;
-    return `<div class="wh-ritual-fail wv-tier-thin">
-      <div class="rf-title">${failLabel}: ${fRoll.total}${extraTxt} = <b>${total}</b> → ${esc(nm)}</div>
-      ${tx ? `<div class="rf-text">${esc(tx)}</div>` : ""}</div>`;
   }
 
   _announce() {

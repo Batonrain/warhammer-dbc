@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "uKAJ7aWd77e8ZozH",
   "system": {
-    "description": "",
+    "description": "<p>Еретик просит Темных Богов наслать неудачу на своего врага.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Этот ритуал проводится в полном одиночестве. Ритуалист использует оружие или инструмент, чтобы уничтожить фокус, размалывая его в пыль или измельчая, и в течение часа произносит молитвы Темным Богам, взывающие кару на голову своей цели. В конце Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Heresy) (W) +10.",
+    "result": "Цель понижает Предел Критического Провала на 10 (обычно до 86+) и понижает Предел Критического Успеха до 1. В зависимости от использованного в ритуале орудия, цель также получает штраф –10 на тесты стрельбы, рукопашной или ремесла для соответственно стрелкового оружия, рукопашного оружия или инструмента. Чистые душой жертвы (не-Хаоситы Cor 0-9) имунны к эффекту.\nУсловия Снятия: Кривая Рука развеивается сама через Cor.b цели дней. Если цель выбрасывает Критический Успех на тесте, получавшем штраф –10 от этого проклятья, оно спадает досрочно.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": 10
+    "testMod": 10,
+    "failureType": "curse",
+    "aversionPerFail": 5
   },
   "_id": "k7Id7n6rtVp7czkH",
   "effects": [],
@@ -28,7 +30,36 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "7a9ee70783f34bfb",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3478e97d1960480f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

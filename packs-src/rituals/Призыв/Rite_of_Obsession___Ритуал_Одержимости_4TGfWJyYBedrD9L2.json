@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Этот ритуал вселяет дух демона в тело разумного смертного, но не как в Хост, управляемый демоном как марионетка, а как симбиоз двух душ в одном теле, создавая таким образом Одержимого.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,41 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Круг призыва рисуется на любой твердой поверхности, после чего в него призывается демон в Истинной Форме и входит персонаж, становящийся Сосудом. Ритуальные строки призыва распеваются вокруг круга в течение W.b демона минут. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) –20 или Forbidden Lore (Heresy) (W) –30 со следующими модификаторами:\n\n- +10 если демон вселяется в Сосуд добровольно;\n\n- +10 если демон и Сосуд уже пересекались в прошлом;\n\n- –10 если Сосуд участвует в ритуале против своей воли;\n\n- +10 за каждого ассистента, которого конце ритуала принесли в жертву вместе с обычными жертвами.",
+    "result": "Демон вселяется в сосуд. Если W сосуда выше W демона, он становится Одержимым (стр. 129), даже если ему не хватает опыта на получение этого Элитного Архетипа (он не может прокачивать ничего, пока не погасит «долг» в опыте). Если W демона выше, он становится главенствующей личностью в Одержимом. Вселение демона исцеляет все болезни и ранения Сосуда, даже отращивая потерянные конечности и останавливая отторжение органов Геносемени. Если Inf демона выше T Сосуда, сосуд не способен долго удерживать мощь Нерожденного, постепенно выгорая изнутри и получая 1 урона в T каждые 8+W.b–Inf.b демона часов (минимум 1), лишаясь возможности восстанавливать урон в T любым способом.",
+    "cost": "Остаточная энергия ритуала вырывается наружу, вызывая Прорыв, центрированный на Одержимом, при этом результаты в 91+ по таблице Прорывов перебрасываются.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +10 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе, Сосуде, или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "binding",
+    "aversionPerFail": 10,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -30,
+        "label": ""
+      }
+    ],
+    "extraMods": [
+      {
+        "label": "Демон вселяется в Сосуд добровольно",
+        "value": 10
+      },
+      {
+        "label": "Демон и Сосуд уже пересекались в прошлом",
+        "value": 10
+      },
+      {
+        "label": "Сосуд участвует в ритуале против своей воли",
+        "value": -10
+      }
+    ]
   },
   "_id": "4TGfWJyYBedrD9L2",
   "effects": [],
@@ -28,7 +54,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "992e7c914fef4986",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "8cc89dd0f35843f8",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "a6a2cdcd8219450a",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "e573302ac07d474b",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "ff0a1222932d4e3f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "893ab6d2bb8e41c1",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

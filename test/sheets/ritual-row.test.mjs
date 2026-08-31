@@ -7,7 +7,9 @@
 // (activateItemContextMenu вешается на всякую .item-row).
 //
 // Кнопка «＋» остаётся: контекстное меню умеет открывать и удалять, но не
-// добавлять.
+// добавлять. 29.08.2026 добавилась вторая: «Провести ритуал» (🕯) — открывает
+// module/sheets/ritual-cast-dialog.mjs, тоже мимо контекстного меню (это не
+// открыть/удалить, а действие с самим ритуалом).
 
 import "../support/foundry-stub.mjs";
 
@@ -41,11 +43,11 @@ describe("строка ритуала", () => {
       expect(ritualsTable, `${dead} осталась в разметке`).not.toContain(dead);
   });
 
-  it("раздел вешает только «＋», остальное — общему меню", () => {
+  it("раздел вешает «＋» и «Провести ритуал», остальное — общему меню", () => {
     const html = fakeHtml();
     activateRitualListeners(html, { items: [] });
 
-    expect(html.bound).toEqual([".ritual-add-btn"]);
+    expect(html.bound).toEqual([".ritual-add-btn", ".ritual-cast-btn"]);
   });
 
   it("мёртвых правил в стилях не осталось", () => {

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>В качестве особо жестокого наказания некоторые оккультисты вырывают души своих жертв, трансформируя их в фантомы, лишь чтобы сразу же поработить и использовать в других ритуалах, или как изощренный метод вырывания секретов из особо упорного пленника.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Живая жертва или сосуд с ее заключенной душой помещается в ритуальный круг и покрывается ритуальными вязями, после чего строки ритуала распеваются вокруг нее в течение W.b жертвы часов. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Warp) (I) –20 vs W+0 жертвы.",
+    "result": "Душа жертвы вырывается из тела или сосуда и трансформируется в Фантома. Фантом имеет стандартный профиль, но сохраняет все воспоминания и личность жертвы, он считается автоматически подчиненным Владычеством Главного Ритуалиста и стабилизирован в реальности на Успехи дней, или пока не покинет круг. Пока он находится в круге, все ритуалы для воздействия на Фантома получают бонус +5×Успехи на ритуале. Если душу вырывали из живого тела, оно впадает в кому, из которой его невозможно вывести, пока в него не вселят душу или демона. Через T дней без души тело умирает.",
+    "cost": "Нет.",
+    "failureCost": "Ритуал просто вырывает душу и отправляет ее в Варп, убивая жертву или разрушая сосуд.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "binding",
+    "aversionPerFail": 5
   },
   "_id": "BvV4c0YEocI9gPXn",
   "effects": [],
@@ -28,7 +30,62 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "14a798b27f7d44f6",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "1f9e16c89c2e4afc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "b2b0006a40ad4218",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "bd3a7458e20d4463",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

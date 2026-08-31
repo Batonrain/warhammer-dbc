@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "p6l9DMaZHahXOvrt",
   "system": {
-    "description": "",
+    "description": "<p>Легион Несущих Слово известен своим мастерством в создании Одержимых и самые опытные из их Темных Апостолов знают секреты вселения демонов в пилотов Дредноутов, дающие симбиозу человеческой души и демонического духа власть над его механическим телом, сравнимую с таковой обычного Одержимого.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 5,
     "assistMin": 2,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Корпус Дредноута разбирается и тщательно расписывается ритуальными текстами снаружи и внутри, после чего собирается обратно внутри ритуального круга. В круг призывается низший демон любым способом, после чего главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) –30.",
+    "result": "Демон вселяется в Дредноут. Если W пилота выше W демона, он становится Одержимым (стр. 129), даже если ему не хватает опыта на получение этого Элитного Архетипа (он не может прокачивать ничего, пока не погасит «долг» в опыте). Если W демона выше, он становится главенствующей личностью в Одержимом. Одержимый Дредноут получает такие же преимущества, как обычные Одержимые, но он не может проявлять демонические дары из группы Оружие, кроме Слияния и Руки-Пушки, которые он может выучить без траты опыта. При этом он игнорирует ограничение на тип оружия для дара Рука-Пушка и может применять его на любое установленное в него стрелковое оружие, хотя тяжелое оружие считается при этом как две руки.",
+    "cost": "Все ритуалисты с Cor 1-75 получают 1d5 Порчи.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +10 за каждый Провал после первого. Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": -30
+    "testMod": -30,
+    "failureType": "summon",
+    "aversionPerFail": 10
   },
   "_id": "mllY5NNZhiMcqlCZ",
   "effects": [],
@@ -28,7 +30,116 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "dcae54db29d54706",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "85d0cd11e72d43fd",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "f1dd06da73ea45e9",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "0204d579ba7f4430",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "linguistics",
+              "specKey": "chaosGlyphs",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "15fcd9f9a8f14412",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "8f30e07d5a34448b",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "13ff5acf4e6d4839",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

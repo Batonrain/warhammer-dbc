@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "qzRCeEvcR8nhiZKJ",
   "system": {
-    "description": "",
+    "description": "<p>Заключенные в сосудах человеческие души и духи демонов можно вселить в лишенные душ тела или другие сосуды, правильно свив потоки энергий Варпа. Могучие псайкеры порой используют этот ритуал для продления своей жизни, перемещая свои души в новые молодые тела.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист рисует ритуальный круг из символов вокруг обоих сосудов, один из которых должен содержать душу, а другой – быть пустым. После этого он в течение 1 часа зачитывает инкантации ритуала и закрепляет его, проводя тест на Forbidden Lore (Warp) (I) –20.",
+    "result": "Дух переселяется из одного сосуда в другой. Он сохраняет свои Характеристики, кроме S, T и A, которые берутся от нового сосуда, если у него они есть. Вселенная таким образом душа человека не имеет никаких воспоминаний и навыков от своей жизни, если она не была псайкером или как-то еще привязала свою память к душе. Вселенный дух получает доступ к памяти в сосуде, если тот содержал таковую, но его личность также частично изменяется сосудом, тем сильнее, чем больше тот отличается от начального сосуда этой души. Мастера плоти Консорциума или культов Скульпторов Плоти владеют медицинскими технологиями и оккультными практиками, способными копировать память и нейральные паттерны с одного тела на другое (услуги реквизируются по Редкости 4), позволяющими перенести душу и память в новое тело с минимальным искажением личности.",
+    "cost": "Нет.",
+    "failureCost": "Дух покидает сосуд и возвращается в Варп. Если второй сосуд является телом или машиной, в него вселяется случайный демон.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "9tuwGEs8UEJDBGdz",
   "effects": [],
@@ -28,7 +30,62 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "8abe709704fd467e",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "eff3d6dbfbb64355",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "7a7539e0aa0b4bee",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "aaa1d1e714804474",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

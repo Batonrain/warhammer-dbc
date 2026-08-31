@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "SlUiaVFmbXI89Lao",
   "system": {
-    "description": "",
+    "description": "<p>Достаточно разносторонний Ритуалист может раскрыть видение будущего в определенном месте.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист разбивает песочные часы и рисует песком из них круг, над которым он медитирует в течение 1 часа, мысленно зачитывая инкантации ритуала. Ассистенты должны быть мысленно связаны с главным Ритуалистом, чтобы их мысленное зачитывание шло в унисон с его. В конце Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –30.",
+    "result": "Над центром круга формируется сферический портал в будущее, сквозь который можно видеть и слышать, что произойдет в этом же месте через определенное при сотворении ритуала время. Будущее не определено, поэтому в видении сквозь портал могут накладываться друг на друга несколько альтернативных реальностей, от чего, чтобы что-то разобрать в этом месиве, нужно пройти тест на Awareness –10 для зрения и Awareness –40 для слуха. Окно существует в течение часа, или пока любой из ритуалистов не отойдет от него дальше, чем на W м, потеряет сознание, или умрет.\nБудущее сквозь окно проецируется без учета того, что наблюдатель увидит сквозь окно, и с большой вероятностью не сбудется именно из-за того, что полученные сквозь него знания меняют ход истории. Кроме того, варианты будущего сквозь окно имеют тенденцию быть худшими или наиболее драматичными из возможных, т.к. большие всплески эмоций в таких вариантах сильнее всего резонируют с Варпом.",
+    "cost": "Когда окно схлопывается, Ритуалист и все ассистенты получают 1d10 Усталости. Все, кто смотрел сквозь окно, должны при его схлопывании пройти тест на W+10, или получить 1d5 урона в W. Если этот тест Провален Критически, урон становится перманентным.",
+    "failureCost": "За каждый Провал на тесте вызывается один Феномен Варпа. Главный Ритуалист может выбрать центрировать любые из них на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -30
+    "testMod": -30,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "upsjWcdmCxfhWvUQ",
   "effects": [],
@@ -28,7 +30,116 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "22ff13fdbca2459a",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "13160bd119d8464c",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "psyniscience",
+              "specKey": "",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "fe674cb7c65c4cdc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "numerology",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "8afe61314adf467d",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "b9fedf8094344f30",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "36ee3da52aa94729",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "d2ba6d0da7744406",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

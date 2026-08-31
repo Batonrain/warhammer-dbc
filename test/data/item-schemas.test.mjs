@@ -531,10 +531,12 @@ const TYPES = {
     pack: "rituals",
     defaults: {
       description: "", notes: "", source: "", bookSource: "",
-      ritualType: "summon", record: 0, assistMin: 0, assistMax: 0,
+      ritualType: "summon", failureType: "", record: 0, assistMin: 0, assistMax: 0,
+      aversionPerFail: 5,
       procedure: "", result: "", cost: "", failureCost: "",
       testSkillScope: "", testSkillKey: "", testSpecialty: "",
-      testChar: "int", testMod: 0
+      testChar: "int", testMod: 0,
+      rollPaths: [], extraMods: [], conditionsGranted: []
     }
   },
 

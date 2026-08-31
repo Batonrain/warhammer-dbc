@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "rtbauhf1aQQ26DuN",
   "system": {
-    "description": "",
+    "description": "<p>Колдуны Лернейских Прокси создали этот ритуал для случаев, когда ячейка Альфа-Легиона находит мир, особенно нуждающийся в подкреплениях от Разрушительных Сил как можно скорее.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 3,
     "assistMin": 4,
     "assistMax": 8,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалисты рисуют на полу две пересекающиеся пентаграммы, на лучах которых расставляются жертвы – на лучах одной жертвы наряжаются и вооружаются как воины Хаоса, а на лучах другой – как воины противника, против которого ритуалисты ищут подмогу. Ритуалисты синхронно убивают жертв, отображающих противника, снимают с них оружие и ценности и ложат их под ноги жертв, отображающих воинов Хаоса. При завершении этой стадии главный Ритуалист проводит тест на Scholastic Lore (Occult) (I) –10. Каждая из жертв, отображающих воинов Хаоса, после этого должна пройти тест на W+0, или поднимает свою Порчу до 100. Если какие-то из жертв превращаются в Отродья Хаоса, эти Отродья приоретизируют сначала атаку других жертв, потом друг друга. Когда останутся либо только выжившие жертвы-хаоситы, либо только последнее Отродье, главный Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –50 или Forbidden Lore (Warp)(I) –40. Этот тест получает Преимущество, если жертвы-Хаоситы, действительно являются воинами Хаоса, а жертвы-враги, являются военнопленными или этих врагов.",
+    "result": "Выжившие жертвы-Хаоситы получают 1d5 Inf за каждую жертву-Хаосита, что не пережила ритуал (до максимума в 40 Inf). Если они были рядовыми солдатами или даже рабами, они перегенерируются как игровые персонажи с 0 xp, получая дополнительные силы и знания в награду за победу.\nЭхо разыгранного представления о победе над врагами и награда от него разносится по Варпу. Лидеры ближайших Успехи банд Хаоса, заинтересованных в войне на мире, где проводился ритуал, или победе над врагами на этом мире, получают видения о потенциальных выгодах от их участия в этой войне и маршруте до нее. Ритуал сформирован, чтобы видения доходили в основном бандам, которые гарантированно согласятся поменять их текущие планы и немедленно возьмут курс на планету, но за каждую банду бросьте 1d10 – на 2 лидер банды согласен прибыть как подкрепление, но с задержкой, пока не выполнит свою текущую миссию, а на 1 он не заинтересован вовсе.",
+    "cost": "Нет.",
+    "failureCost": "Зов разносится по Варпу, но достигает не той стороны, посылая Провалы видений врагам, а не союзникам. Имперские флоты и лояльные ордена космодесанта получают тревожные пророчества от Имперских Таро, Эльдарские Провидцы предрекают несчастье, если не вмешаться в конфликт, Варпоголовы Орков видят сны, обещающие отменную драку на этом мире, и т.п.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -50
+    "testMod": -50,
+    "failureType": "blessing",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -40,
+        "label": ""
+      }
+    ]
   },
   "_id": "gTk9ecmWqDJydL3c",
   "effects": [],
@@ -28,7 +40,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "2a7da08b1b3448cb",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "beb751ee1e7745bd",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "d0f93918ba6c4b73",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "b41e695e74394dca",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "f1f1d05978964c97",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "9a2d6184721a4a8f",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

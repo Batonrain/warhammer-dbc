@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "Ty6J9LvdHEQWGLi2",
   "system": {
-    "description": "",
+    "description": "<p>С помощью массовых жертвоприношений оккультисты способны выращивать сады, резонирующие с энергиями Варпа и силами Богов, наполняя ростки деревьев жертвенной кровью и вливая в них осколки душ.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист в течение 56 часов (с возможными перерывами) готовит почву будущего сада не более 30×30м, закапывая под землю таблички с оккультными формулами или молитвы в значимых местах, и формируя узоры из рвов и холмиков, после чего сажает в это подготовленное место саженцы деревьев, под каждым закапывая по трупу разумного обладавшего душой существа. В течение часа после того, как посадил последний саженец, Ритуалист обходит саженцы, над каждым убивая хотя бы одно разумное обладающее душой существо и поливая его кровью (или аналогом) корни, после чего закрепляет ритуал, проводя тест на Forbidden Lore (Heresy) (I) +0 или Forbidden Lore (Warp) (I) –10.",
+    "result": "Саженцы начинают ускоренно расти, добавляя суммарный объем древесины (разделенный между ними), равный объему пролитой крови в течение 56 часов, после чего эти деревья перестают расти (и стареть) естественным образом, хотя все еще могут выращивать листья, цветы, и плоды. Если на корни такого дерева пролить кровь разумного обладающего существа, убитого непосредственно рядом с этим деревом, оно вырастет на объем пролитой крови.\nЗавеса не всей территории рощи Истончается на 1. Все тесты ритуалов, проводимых полностью под кроной одного из деревьев Рощи Богов, получают Преимущество.\nДревесина деревьев рощи становится красной с белыми прожилками и известна как кровавое дерево, являясь психоактивным материалом. Из нее можно изготавливать заготовки для психосиловых посохов и древкового оружия, требующие в 10 раз меньше психокристаллов для Пронизывания, пол из кровавого дерева дает бонус +10 на все ритуалы, требующие ритуальных кругов, если круг полностью нарисован на этом полу, и оно служит отменным материалом для заготовок мистических предметов для ритуала Божественного Инструмента.",
+    "cost": "Нет.",
+    "failureCost": "Саженцы умирают и вянут, вместе со всеми растениями в радиусе Провалы км, а все ритуалисты получают 1d10+Провалы непоглощаемого R Dmg от психической отдачи.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "gate",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "thCbjIRQgJLAwNsT",
   "effects": [],
@@ -28,7 +40,122 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "9b293857e37f4469",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "3811f94e3a33473a",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "trade",
+              "specKey": "earthworks",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "7f56484b48904e3d",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "26531eed386347a1",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "a7836f631faf4f00",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "bd4c15bc49454886",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "a11cf9ee82ec4925",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "ee6da6683bfc401c",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

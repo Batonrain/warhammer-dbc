@@ -59,6 +59,7 @@ import { openSurgeon } from "./module/apps/surgeon.mjs";
 import { openVeilMystic, veilShift, refreshVeilWindow } from "./module/apps/veil.mjs";
 import { refreshVeilOverlay } from "./module/apps/veil-overlay.mjs";
 import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/apps/scene-nexus.mjs";
+import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
 import { openEnvironment, refreshEnvironment, refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
@@ -627,6 +628,23 @@ Hooks.once("ready", () => {
       const requester = game.users.get(data?.userId);
       if (!requester) return;
 
+      if (data.action === "veilShift") {
+        // Отвращение Варпа от игрока (module/apps/ritual-cast.mjs,
+        // defaultVeilShiftFn) — у не-ГМ veilShift() тихо не срабатывает,
+        // сдвиг сцены применяет активный ГМ.
+        const delta = Number(data.delta);
+        if (!Number.isFinite(delta) || !delta) return;
+        await veilShift(delta, String(data.note ?? "").slice(0, 200));
+        return;
+      }
+      if (data.action === "summonDemon") {
+        // Токен призванного демона (module/apps/demon-summon.mjs) — игрок не
+        // читает Бестиарий (ownership.PLAYER:"NONE"), поиск по имени и
+        // создание Актора/Токена делает активный ГМ.
+        const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "");
+        if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
+        return;
+      }
       if (data.action === "vehicleStations") {
         const veh = (await fromUuid(data.vehicleUuid))?.actor ?? await fromUuid(data.vehicleUuid);
         if (veh?.type !== "vehicle") return;

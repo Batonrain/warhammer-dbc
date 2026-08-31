@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "UdpVbIiQAHiQZfS5",
   "system": {
-    "description": "",
+    "description": "<p>Могучие псайкеры используют этот круг чтобы вырывать секреты мистических искусств из душ трофейных псайкеров, обладающих талантами к редким дисциплинам.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Это два касающихся друг друга круга, формирующие символ бесконечности и исписанные изнутри спиральным текстом на Просперианском. Создание круга требует целой смены работы и комбинированный тест на Scholastic Lore (Occult) (I) –40 и Trade (Calligraphy)(I) –20.",
+    "result": "Когда оба круга замыкаются изнутри псайкерами или чернокнижниками, они на время пребывания в круге знают все психосилы друг друга и могут их использовать. Если псайкер проведет минимум 9 часов медитируя внутри круга, он может тратить свой опыт, чтобы выучить известную другому из них психосилу без изучения. Это позволяет псайкерам с покровительством Богов изучать психосилы Высшего Колдовства, но не дает доступа к божественным дисциплинам.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -40
+    "testMod": -40,
+    "failureType": "circle",
+    "aversionPerFail": 5
   },
   "_id": "QDnHpRIfdBUNBg9a",
   "effects": [],
@@ -28,7 +30,36 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "519eec7877e94b53",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "5960b5bfdfc54616",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "expert",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

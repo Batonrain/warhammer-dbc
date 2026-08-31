@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Некоторые ритуалисты используют низших демонов, чтобы поддерживать жизнь в бездушном теле, если то стоит сохранения.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Низший демон призывается в Истинной Форме в круг с бездушным телом и подчиняется Владычеством, после чего строки ритуала распеваются вокруг круга в течение T.b жертвы минут. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) +0 vs W+0 демона.",
+    "result": "Демон вселяется в тело, погружая его в подобие стазиса. Все физиологические процессы в теле останавливаются и оно учетверяет свой T.b для поглощения урона. Любые ритуалы экзорцизма для изгнания демона из тела получают бонус +60.",
+    "cost": "Нет.",
+    "failureCost": "Демон вырывается из-под контроля, получая иммунитет к Владычеству и игнорируя все средства сдерживания в области ритуала в течение Провалы часов.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "binding",
+    "aversionPerFail": 5
   },
   "_id": "38iepYRPQD73FSuA",
   "effects": [],
@@ -28,7 +30,62 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "2e5994f143cb49ad",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "bd3a98ebd41f4a1a",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "1b593e5c1ee34057",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "49d2181eeba04246",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

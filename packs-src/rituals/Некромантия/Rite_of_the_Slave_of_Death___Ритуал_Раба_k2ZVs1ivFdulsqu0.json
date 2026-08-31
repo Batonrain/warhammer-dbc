@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "qzRCeEvcR8nhiZKJ",
   "system": {
-    "description": "",
+    "description": "<p>Поднятие мертвых многими некромантами считается вершиной их искусства, тогда как другие наоборот порицают этот ритуал как не более чем грубую подделку на основании демонологии.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 4,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист в течение 3 смен работы (с возможными перерывами) обрабатывает труп разумного обладающего душой существа, вырезая оккультные формулы на его костях, ремонтируя повреждения костей и мышц, и вбивая в символически значимые места на теле штифты из драгоценных и психоактивных материалов (Редкость 2), отмеченные особыми глифами, нарисованными кровью самого Ритуалиста.\nПодготовленный таким образом труп помещается в ритуальный круг, над которым Главный Ритуалист в течение 1 часа произносит инкантации ритуала и закрепляет его тестом на Forbidden Lore (Warp) (I) –30.",
+    "result": "Слабый и податливый энергиям ритуала малый хищник Варпа вселяется в тело, занимая место души и придавая телу подобие жизни. Раб Смерти имеет профиль как у трупа при жизни, но его I, P, W, и F уменьшаются до 10, он понижает все Навыки до +0, теряет все Таланты, требованиям которых он более не соответствует после потери Характеристик и Навыков, получает Трейты Daemonic (2), From Beyond, Stuff of Nightmares, и удваивает максимум Ран. Если он имел Трейты Psyker или Blunted, Раб Смерти теряет их, равно как и любые эффекты всех его мутаций и все прочие эффекты, что были «привязаны» к предыдущей душе в теле. Раб Смерти неспособен общаться, но может говорить в унисон с создавшим его Ритуалистом, если того пожелает, или служить его устами, если Ритуалист формирует свои слова в уме и мысленно посылает их Рабу – это кроме прочего позволяет использовать Рабов Смерти как ассистентов в ритуалах. Раб Смерти не имеет собственной воли и выполняет приказы любого из своих создателей, приоретизируя приказы Главного Ритуалиста. Без соответствующего приказа он даже не будет защищать себя от атак.\nГлавный Ритуалист не может создать более 2×W.b Рабов Смерти, и если достигает максимума, ритуал просто не сработает, пока какой-то из «лишних» не будет уничтожен.",
+    "cost": "Нет.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -30
+    "testMod": -30,
+    "failureType": "summon",
+    "aversionPerFail": 5
   },
   "_id": "k2ZVs1ivFdulsqu0",
   "effects": [],
@@ -28,7 +30,116 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "15e72b2e0aaa47c9",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "a952ba05efa04086",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "6e15652d320c4ef5",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "0eac04d11f4c4e64",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "trade",
+              "specKey": "scrimshawer",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "8ffe32964b6f4db6",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "f574a87b15134267",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "03fd366dcc264687",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "trade",
+              "specKey": "scrimshawer",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

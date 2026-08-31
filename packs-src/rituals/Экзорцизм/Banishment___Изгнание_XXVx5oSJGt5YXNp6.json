@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "QTCsuJzd1hEchlzu",
   "system": {
-    "description": "",
+    "description": "<p>Классический ритуал изгнания демона из хоста.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,34 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Ритуалист рисует круг вокруг цели – хоста демона (хост должен быть обездвижен для этого). Создание круга и инкантации занимают 5 минут работы, после чего Ритуалист проводит тест на Scholastic Lore (Imperial Creed) (W)–20 или Scholastic Lore (Occult) (I) –10.",
+    "result": "Демон в Хосте должен пройти тест на W+0 и набрать больше Успехов, чем Ритуалист, иначе его немедленно изгоняет из Хоста и выбрасывает в Варп. Если Хост еще сохранил свою душу, он теряет сознание как от Усталости и может по выбору ГМа сохранить часть мутаций, которые вызвал в нем демон, и получить Порчи – чем сильнее победа ритуалиста на тесте, тем меньше следов демона остается в Хосте.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Imperial Creed",
     "testChar": "wp",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "exorcism",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "scholasticLore",
+        "specialty": "Occult",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ],
+    "conditionsGranted": [
+      {
+        "key": "unconscious",
+        "level": 0,
+        "note": "Хост, если сохранил душу — при изгнании демона"
+      }
+    ]
   },
   "_id": "XXVx5oSJGt5YXNp6",
   "effects": [],
@@ -28,7 +47,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "1b55afa88c084ddb",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "c5d5beb05e1b4211",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "imperialCreed",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "70a5ed7802564484",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

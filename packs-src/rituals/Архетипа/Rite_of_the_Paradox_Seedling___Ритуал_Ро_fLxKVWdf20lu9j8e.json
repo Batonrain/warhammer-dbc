@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "p6l9DMaZHahXOvrt",
   "system": {
-    "description": "",
+    "description": "<p>Тех-Ассасины, сведущие в тайнах оккультизма и технологий, способны наделять свои ловушки и устройства прослушки частью своей защиты от технологического взора.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Этот ритуал требует кузнечных и техноарканных инструментов и должен проводиться в кузнице Механикум. Тех-Ассасин отсоединяет одну из своих конечностей и разбирает ее на составные части, вычленяя рунические цепи Вуали Парадокса. Он встраивает рунические цепи на внутреннюю сторону оболочки улучшаемого механизма, после чего переплавляет все остальные части конечности и формирует из них на внешней стороне оболочки лабиринтообразный узор. Весь процесс занимает смену работы и требует комбинированного теста на Scholastic Lore (Occult) (I) –10 и Tech-Use –40.",
+    "result": "Механизм, улучшаемый этим ритуалом, получает все преимущества Вуали Парадокса, но только пока он неподвижен.",
+    "cost": "Ассасин очевидно теряет одну конечность. Он может отрастить ее обратно с помощью Куколки только после завершения ритуала.",
+    "failureCost": "Улучшаемый механизм выгорает изнутри, уничтожаясь, а Тех-Ассасин получает 3d10 урона в I и W от психической отдачи.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -10
+    "testMod": -10,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "fLxKVWdf20lu9j8e",
   "effects": [],
@@ -28,7 +30,108 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "44f03ce6b92842d8",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "52acf01d81e04763",
+              "kind": "reqArchetype",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "Тех-Ассасин",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "c6ba2128685d4307",
+              "kind": "reqTalent",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Chrysalis / Куколка",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "7ff51eb95b11428c",
+              "kind": "reqTalent",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Disjoint / Разделение",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "faccd81efe734140",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "techUse",
+              "specKey": "",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "29f0d2058dbf4008",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

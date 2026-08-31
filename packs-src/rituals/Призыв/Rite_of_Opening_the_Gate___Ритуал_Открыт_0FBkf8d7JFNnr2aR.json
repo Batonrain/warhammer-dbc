@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Массовые жертвоприношения истончают Завесу сами по себе, но опытные ритуалисты способны усилить и расширить этот эффект многократно.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,35 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Этот ритуал проводится на месте массовой (500+) смерти разумных существ, будь это поле боя, госпиталь во время эпидемии смертельной болезни, поле массовых казней, массовое жертвоприношение в рамках другого ритуала или само по себе. Каждый из ритуалистов подготавливает собственную жертву и убивает ее, чтобы открыть канал к энергиям смерти, что наполнили место. Пока дух жертв покидает их тела, ритуалисты начинают зачитывать текст ритуала, что занимает 1 час. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Daemons) (I) –10 или Forbidden Lore (Heresy) (W) –20 или Forbidden Lore (Warp) (I) –20.",
+    "result": "Область истончения Завесы +1 радиусом 1км расходится вокруг центра ритуала и держится в течение 1 дня. Главный Ритуалист может потратить Успехи на Ритуал после первого, чтобы увеличивать степень Истончения на 1, радиус действия на 1 км или длительность на 1 день за каждый потраченный Успех. Эффект множественного проведения этого ритуала не складывается.",
+    "cost": "Ритуал вызывает Феномен с бонусом +30 – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +10 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "gate",
+    "aversionPerFail": 10,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Heresy",
+        "char": "wp",
+        "mod": -20,
+        "label": ""
+      },
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Daemons",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "0FBkf8d7JFNnr2aR",
   "effects": [],
@@ -28,7 +48,134 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "82bd839cd93a420c",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "785c03cbaa9240cf",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "6c0465ff9d5d4c09",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "6e8332a856934e2a",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "61b57897772e4e0f",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "1f57cfeb835f4d21",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "fed1d42c5ca24afc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "5e161007f6354e71",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

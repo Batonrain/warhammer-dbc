@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "JOHmLGId0SBT61W5",
   "system": {
-    "description": "",
+    "description": "<p>Наиболее известный почти повсеместной практикой в банде Кровавых Горгон, этот ритуал позволяет двум десантникам побрататься душами и телами с помощью ритуальной трансплантации органов.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Этот ритуал должен проводится в полноценной операционной. Два Космодесантника в сознании закрепляются на двух операционных столах голова-к-голове и их руки связываются друг с другом лентой пергамента из человеческой кожи, исписанной ритуальной вязью. Ритуалисты извлекают из каждого по однотипному органу, вроде основного сердца, печени или почки, вырезают на этих органах по одной руне скальпелем и имплантируют их обратно, поменяв местами между десантниками. Операция занимает 1 час. В конце главный Ритуалист закрепляет ритуал, проводя комбинированный тест на Scholastic Lore (Occult) +0 и Medicae –30.",
+    "result": "Последствия операции заживают буквально на глазах в течение минуты и органы мгновенно приживаются.\nПобратавшиеся десантники получают бонус +30 на любые тесты Командования и социального взаимодействия друг с другом. Если они находятся в пределах их суммы W.b м друг от друга, любой из них чувствует, когда другой подвергается действию яда или психической атаке, требующей встречного теста на W, будь это психосила, атака Одержимостью, выжигание души, или последствия Феномена или Прорыва. Когда один десантник проходит тест T против яда или тест W против психической атаки, другой может потратить Реакцию и пройти тест на T+0 или W+0 соответственно и, в случае Успеха, добавить свои Успехи к результатам своего брата (потенциально превращая его Провал в Успех). Он может выбрать применять эту способность после того, как определится, прошел ли его брат свой тест и достаточно ли он набрал Успехов, чтобы сопротивляться эффекту.\nПобратавшиеся десантники также считаются генными братьями, несущими одно геносемя, в отношении психосил и ритуалов.",
+    "cost": "Нет.",
+    "failureCost": "Оба десантника получают 2d10 непоглощаемого R урона в торс и становятся Беспомощными на Провалы дней.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "9kprK5SVDeVrsx8k",
   "effects": [],
@@ -28,7 +30,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "47004814a0d34096",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "73f3027387194043",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "e227830ab29a4a81",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "astartesImplants",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "e29323c435bf493f",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "5ed39396c7f64362",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "b7c12f7bbf284607",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

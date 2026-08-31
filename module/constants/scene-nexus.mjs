@@ -150,6 +150,30 @@ export function resolveVeilContainer(scene) {
 // Готовое состояние Завесы для сцены (для варп-оверлея у всех клиентов).
 export function readVeilForScene(scene) { return resolveVeilContainer(scene).read(); }
 
+export async function writeVeilForScene(scene, veil) {
+  if (!scene) { ui.notifications?.warn("Завеса: нет активной сцены."); return; }
+  if (!game.user.isGM) return;
+  await resolveVeilContainer(scene).write(veil);
+}
+
+// Текущая сцена (канва или активная у ГМа) — общий помощник для окна Завесы
+// и любого места, что сдвигает Завесу (провал ритуала, феномен, освящение).
+export function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
+
+// Публичный помощник: сдвинуть завесу текущей сцены (для феноменов/ритуалов).
+// Живёт здесь (не в apps/veil.mjs), чтобы module/apps/ritual-cast.mjs мог
+// звать его без циклического импорта apps/veil.mjs ⇄ apps/ritual-cast.mjs.
+// Молча не срабатывает у не-ГМ: провёдший ритуал игрок должен слать
+// сдвиг через сокет-релей (см. warhammer-dbc.mjs, action:"veilShift").
+export async function veilShift(delta, note = "") {
+  const scene = currentScene();
+  if (!scene || !game.user.isGM) return;
+  const v = readVeilForScene(scene);
+  v.manual = (Number(v.manual) || 0) + Number(delta || 0);
+  v.log = [{ delta: Number(delta || 0), note: String(note || "Сдвиг завесы"), time: Date.now() }, ...(v.log || [])].slice(0, 30);
+  await writeVeilForScene(scene, v);
+}
+
 // ── Окружающая среда: тот же принцип (группа → иначе флаг сцены) ───────────
 export async function writeGroupEnv(groupId, env) {
   const list = cloneGroups(); const g = list.find(x => x.id === groupId); if (!g) return;

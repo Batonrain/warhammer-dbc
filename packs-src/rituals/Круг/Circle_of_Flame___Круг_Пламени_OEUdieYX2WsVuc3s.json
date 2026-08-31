@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "UdpVbIiQAHiQZfS5",
   "system": {
-    "description": "",
+    "description": "<p>Разрушительная мощь пламени может использоваться для усиления психосил, ценой частичной утраты контроля над ними. Многие пироманты используют Круг Пламени, формируя его из своих колдовских огней в считанные секунды.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Круг является обычным кругом, полностью сформированным из пламени, не важно какого происхождения. Постоянные Круги Пламени можно создать только с помощью технологических факелов или психосилой Вечное Пламя. Создание круга требует тест на Scholastic Lore (Occult) (I) –10.",
+    "result": "Когда круг замыкается, пламя вздымается вверх, формируя решетчатую полусферу с основанием в круге. Вся психострельба, проводимая персонажами внутри круга, удваивает количество кубиков урона, дальность и площадь поражения (если она у нее есть), но, в случае неудачи, психосила попадает по самому псайкеру с 1 Успехом и вызывает Феномен сразу после этого.",
     "cost": "",
-    "failureCost": "",
+    "failureCost": "Небрежно сформированный Круг Пламени сжигает своего творца. При его замыкании, все пламя круга втягивается к Ритуалисту и обволакивает его – он получает 3d10 E(Fl) Dmg и Горит, а круг гаснет.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -10
+    "testMod": -10,
+    "failureType": "circle",
+    "aversionPerFail": 5
   },
   "_id": "OEUdieYX2WsVuc3s",
   "effects": [],
@@ -28,7 +30,36 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "5f0baa802fc343a8",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "46fdc6e9385047bf",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

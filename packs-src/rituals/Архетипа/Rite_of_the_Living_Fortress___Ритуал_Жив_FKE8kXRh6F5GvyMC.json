@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "p6l9DMaZHahXOvrt",
   "system": {
-    "description": "",
+    "description": "<p>Самые могучие из Королей Червей Извивающегося Мира известны тем, что формируют для своей паствы огромные живые крепости, обеспечивающие их народам укрытие от бурлящей агрессивной жизни поверхности этой планеты.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 5,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Семь Стражей Панциря под прямым контролем помещаются в круг из хитиновых колышков, созданных Рукой Изобилия, и заполненный плотью (которая должна быть добыта со стороны, а не произведена Рукой Изобилия), полностью погребая их, после чего Король взывает к Нурглу в течение 7 дней и проходит тест на Forbidden Lore (Heresy) (W) –20.",
+    "result": "Стражи и плоть в круге сливаются воедино, формируясь в огромную личинку Живой Крепости. Личинка находится под прямым контролем Короля Червей, но не считается как Рой. Она может только передвигаться (SPD 2) и есть, считаясь беспомощной, имея удвоенное T.b и AP одного из Стражей а также сумму их Ран в расчете получаемого урона. Каждый день личинка съедает свою массу плоти, удваивая свою массу, пока не достигнет Размера 6, после чего окукливается на 49 дней.\nСформировавшаяся Живая Крепость является циклопическим существом, способным тягаться в боевой мощи с тяжелыми титанами и мегагаргантами. Игрок и ГМ вместе определяют ее характеристики и способности, с учетом, что Крепость должна быть больше мобильной штаб-квартирой, чем боевой единицей, более эффективная в обороне, чем в нападении. Независимо от того, передвигается крепость на ногах, ползает, роет свой путь сквозь землю или летает, она медлительна (SPD 3) и не имеет дальнобойного вооружения, кроме того, что размещено на ее бастионах обитателями.\nКрепость нуждается в огромном количестве пищи для пропитания – на Извивающемся Мире ей достаточно пожирать слой плоти, покрывающей планету, но вне демонических миров жизни Нургла Король Червей должен тратить полный заряд своей Руки Изобилия, чтобы его крепость не умерла с голоду.\nКрепость действует как Освобожденный Рой, выполняя последнюю команду Короля, но она не принимает более ничьих команд, слушаясь только своего создателя. Если другой Король Червей убьет ее создателя и ритуально съест его труп, крепость начнет считать его своим создателем.",
+    "cost": "Нет.",
+    "failureCost": "Вся плоть в круге стремительно гниет, взрываясь облаком трупных газов и осколков кости и хитина. Все Ритуалисты и другие персонажи в области ритуала получают попадания с (Провалы)d10 X Dmg, Pen 0, Toxic (3), от которого невозможно Избегать.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Heresy",
     "testChar": "wp",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "FKE8kXRh6F5GvyMC",
   "effects": [],
@@ -28,7 +30,124 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "da5f3f453d9f4d77",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "14a460bf6e0148f5",
+              "kind": "reqArchetype",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "Король Червей",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "80577def48924715",
+              "kind": "reqTalent",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Shell Guard / Стражи Панциря",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "02fccb2da3754b7c",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "heresy",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "c51d73b30e8e4efb",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "832fe4dc87414424",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "corruption",
+              "statThreshold": 70
+            }
+          ]
+        },
+        {
+          "id": "52db53dbdbd54fe8",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e83b381bdb654cb3",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "psyRating",
+              "statThreshold": 7
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

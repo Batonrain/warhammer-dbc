@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "PCnGpOYRs43g0sed",
   "system": {
-    "description": "",
+    "description": "<p>Ритуалист способен перехватить чужой ритуал Призыва и использовать его, чтобы переместить через Варп своих чемпионов.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,24 @@
     "record": 2,
     "assistMin": 4,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Перед проведением ритуала главный Ритуалист использует Персональное Предвидение на себе, чтобы определить оптимальное время проведения ритуала, чтобы перенести своих чемпионов в нужное место. В назначенное время Ритуалисты рисуют два круга – один радиусом до 20м и второй радиусом 3м в центре первого. Группа воинов, которую ритуалисты хотят отправить, заходит во внешний круг, но не во внутренний, после чего Ритуалисты зачитывают инкантации ритуала. В конце главный Ритуалист закрепляет ритуал, проводя тест на Forbidden Lore (Warp) (I) –40.",
+    "result": "В центральном круге в Истинной Форме манифестируют демоны, которых призывали в демоническом ритуале в месте призыва. Эти демоны не могут пересекать внешний круг, имунны к Владычеству, и враждебны к воинам во внешнем круге. Демоны и воины сходятся в схватке. Если демоны побеждают, они пожирают души побежденных и разваливаются, появляясь на зов Призыва, что этот ритуал прервал. Если побеждают воины, они должны в течение 5 Ходов в полном составе войти во внутренний круг, после чего исчезают и появляются в круге призыва на месте назначения вместо призываемых демонов, получая +1d5 Порчи каждый (но не выше Cor 90).",
+    "cost": "После завершения ритуала все ритуалисты получают T.b+W.b Усталости и валятся без сознания.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +10 за каждый Провал после первого. Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска). Идеальный момент для перехвата пропущен, и главному Ритуалисту нужно искать новый, который может наступить нескоро, если в месте назначения ритуалы призыва демонов не проводятся очень часто.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -40
+    "testMod": -40,
+    "failureType": "gate",
+    "aversionPerFail": 10,
+    "conditionsGranted": [
+      {
+        "key": "unconscious",
+        "level": 0,
+        "note": "цена — все ритуалисты"
+      }
+    ]
   },
   "_id": "bzO2Fzsb9oa7EyjJ",
   "effects": [],
@@ -28,7 +37,106 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "d133b21a70434bac",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "007cb61ea74941d4",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "6520631d6fc44127",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "0f380eef120346dd",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "d326520124974032",
+              "kind": "reqPower",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "Personal Augury / Персональное Предсказание",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "",
+              "statThreshold": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "1219f31fca524d98",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "ad6ad4b13f094101",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

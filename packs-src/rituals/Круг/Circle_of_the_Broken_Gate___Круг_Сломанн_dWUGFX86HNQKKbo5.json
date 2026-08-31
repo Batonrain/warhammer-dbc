@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "UdpVbIiQAHiQZfS5",
   "system": {
-    "description": "",
+    "description": "<p>Более чем просто защитный инструмент, этот круг собирает гнев Варпа на псайкера и сгущает его в оружие для использования позже.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Этот относительно простой круг из двух кругов и рунической вязи между ними выполняется полностью из серебра, либо кузнечным делом, либо заливанием жидкого серебра в резьбу по камню. Создание круга требует тест на Scholastic Lore (Occult) (I) –30 и соответствующего крафта, а также тратит 10 кг серебра.",
+    "result": "Когда псайкер внутри этого замкнутого круга вызывает Феномен или Прорыв, круг выгорает и все серебро обращается в прах, но Феномен или Прорыв игнорируется. При этом в заранее отмеченном месте между двумя кругами формируется небольшой психокристалл, умещающийся в руке. Этот кристалл можно использовать как гранату, которая вызывает отмененный Феномен или Прорыв в месте попадания, применяя эффекты, обычно применимые к псайкеру, на ближайшее к месту попадания разумное существо, обладающее душой.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -30
+    "testMod": -30,
+    "failureType": "circle",
+    "aversionPerFail": 5
   },
   "_id": "dWUGFX86HNQKKbo5",
   "effects": [],
@@ -32,16 +34,16 @@
     "warhammer-dbc": {
       "req": [
         {
-          "id": "SS7rLr2zyC2X5Isj",
+          "id": "265f6a59b5ee4fe3",
           "operator": "AND",
           "entries": [
             {
-              "id": "UddC2Y7psKmmlYiY",
+              "id": "1910108550964280",
               "kind": "reqSkill",
               "skillScope": "group",
               "skillKey": "scholasticLore",
               "specKey": "occult",
-              "specialty": "Occult",
+              "specialty": "",
               "rank": "veteran",
               "sourceUuid": "",
               "sourceName": "",
@@ -50,7 +52,8 @@
               "rating": "",
               "raceKey": "",
               "archetypeName": "",
-              "patronKey": ""
+              "patronKey": "",
+              "capabilityKey": ""
             }
           ]
         }

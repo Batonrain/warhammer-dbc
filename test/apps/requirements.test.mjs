@@ -153,6 +153,35 @@ describe("движок Требований", () => {
       expect(actorMeetsReq(null, req("reqRace", { raceKey: "human" }))).toBe(false);
     });
 
+    it("психосила сверяется по имени, как Талант/Черта, но не путается с ними", () => {
+      const a = actorOf({}, [{ type: "psychicPower", name: "Prophecy / Пророчество", system: {} }]);
+      expect(actorMeetsReq(a, req("reqPower", { sourceName: "Prophecy / Пророчество" }))).toBe(true);
+      expect(actorMeetsReq(a, req("reqPower", { sourceName: "Transmutation / Трансмутация" }))).toBe(false);
+      // Талант с тем же именем психосилой не считается — тип имеет значение.
+      const b = actorOf({}, [{ type: "talent", name: "Prophecy / Пророчество", system: {} }]);
+      expect(actorMeetsReq(b, req("reqPower", { sourceName: "Prophecy / Пророчество" }))).toBe(false);
+    });
+
+    it("показатель: характеристика (Inf), Порча (Cor) и Психорейтинг (PR) — не ниже порога", () => {
+      const a = actorOf({
+        characteristics: { inf: { total: 45 } },
+        corruption: { value: 65 },
+        psyker: { rating: 6 }
+      });
+
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "inf", statThreshold: 40 }))).toBe(true);
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "inf", statThreshold: 50 }))).toBe(false);
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "corruption", statThreshold: 60 }))).toBe(true);
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "corruption", statThreshold: 70 }))).toBe(false);
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "psyRating", statThreshold: 6 }))).toBe(true);
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "psyRating", statThreshold: 7 }))).toBe(false);
+    });
+
+    it("показатель без выбранного ключа не выполнен", () => {
+      const a = actorOf({ corruption: { value: 99 } });
+      expect(actorMeetsReq(a, req("reqStat", { statKey: "", statThreshold: 0 }))).toBe(false);
+    });
+
     // Умолчание схемы ставило новому персонажу patronGod: "undivided", и
     // «Покровительство: Неделимый» проходило у любого, кто просто не трогал
     // выбор Бога, — включая имперцев (wdbc-osz). Неделимый — осмысленное
@@ -182,6 +211,20 @@ describe("движок Требований", () => {
     it("описание незаполненного честно говорит, чего не хватает", () => {
       expect(describeReqEntry(req("reqRace"))).toContain("не выбрана");
       expect(describeReqEntry(req("reqTalent"))).toContain("перетащите");
+      expect(describeReqEntry(req("reqPower"))).toContain("перетащите");
+      expect(describeReqEntry(req("reqStat"))).toContain("не выбран");
+    });
+
+    it("показатель заполнен только когда есть и ключ, и порог", () => {
+      expect(isReqComplete(req("reqStat"))).toBe(false);
+      expect(isReqComplete(req("reqStat", { statKey: "inf" }))).toBe(false);
+      expect(isReqComplete(req("reqStat", { statKey: "inf", statThreshold: 0 }))).toBe(true);
+      expect(isReqComplete(req("reqStat", { statKey: "inf", statThreshold: 40 }))).toBe(true);
+    });
+
+    it("психосила заполнена, когда есть имя источника", () => {
+      expect(isReqComplete(req("reqPower"))).toBe(false);
+      expect(isReqComplete(req("reqPower", { sourceName: "Prophecy / Пророчество" }))).toBe(true);
     });
   });
 

@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "NCpzJlV8mhsh1FAx",
   "system": {
-    "description": "",
+    "description": "<p>Этот кхорнитский ритуал обращается к силе Кровожада З’Сатропа Пожирателя Ведьм, благословляя крепость верного последователя Повелителя Черепов защитой от вероломного колдовства.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Этот ритуал должен проводится в замкнутом помещении. Ритуалисты обводят помещение по периметру нарисованной кровью линией. Это занимает столько времени, сколько Ритуалистам нужно, чтобы обойти периметр на скорости полудвижения. В конце Главный Ритуалист возносит в руке череп достойного противника, которого он сразил лично, и закрепляет ритуал, проводя тест на Forbidden Lore (Warp) (I) –20. Этот ритуал считается ритуалом призыва в расчете Талантов, Трейтов и гнева Кхорна.",
+    "result": "Череп и линия крови сгорают в красно-черном пламени, а границы помещения укутываются мистическим барьером, который для пси-чутья выглядит как стена из тысяч зубов, торчащих наружу. Барьер сохраняется, даже если стены и потолок помещения разрушаются, позволяя создавать его в произвольной форме, используя временные сооружения. Психосилы снаружи барьера не могут проникать внутрь, отражаясь от него, словно от зеркала. Например, если псайкер запустил психический снаряд, который должен был поразить цель в 10м за барьером под углом 30°, этот снаряд отскакивает от него под углом 30° и если в 10м по новой траектории есть цель, он поражает ее. Эффект действует, пока главный Ритуалист не умрет.",
+    "cost": "Все Ритуалисты получают 1 Усталости. Ассистенты, не имеющие покровительства Кхорна, вместо этого получают 1d5 Усталости, а если у них есть покровительство Тзинча или Слаанеш – 1d10 Усталости.",
+    "failureCost": "Архивраг З’Сатропа – Хранитель Секретов Шлакси Гроза Преисподних – перехватывает неудачное подношение и посылает своих придворных наказать глупцов. 2d10 Демонеток и 2d5 Извергов Слаанеш манифестируются где угодно в помещении по выбору ГМа в Истинной Форме и нападают на ритуалистов. Они получают иммунитет к Владычеству, игнорируют все средства сдерживания в области ритуала и автоматически проходят тесты Нестабильности, считая зону проведения ритуала имеющей истончение Завесы 5 в течение Провалы часов.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "summon",
+    "aversionPerFail": 5
   },
   "_id": "TMGU6eK4kLzlPFIt",
   "effects": [],
@@ -28,7 +30,98 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "dddbe3c14fad4066",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "c500ac646ca84d2d",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "03223c5f8a214acf",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "494650ff708b4982",
+              "kind": "reqPatron",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "khorne",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "c54cf9b4d1d647d6",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "8ee887ba3b954d05",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

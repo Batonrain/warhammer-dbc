@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "qzRCeEvcR8nhiZKJ",
   "system": {
-    "description": "",
+    "description": "<p>Опытные некроманты способны собирать энергии смерти, когда душа покидает тело, и вливать ее в тела других, оттягивая их смерти и затягивая их раны.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист рисует ритуальный круг на земле и помещает в него разумное живое существо, обладающее душой. После этого он в течение 5 минут зачитывает инкантации ритуала, убивает жертву внутри круга, и закрепляет ритуал, проводя тест на Forbidden Lore (Warp) (I) –20.",
+    "result": "С последним выдохом жертвы из ее рта и носа вылетают завитки тумана, собирающиеся в клубящуюся сферу в руке главного Ритуалиста. В течение Успехи часов он может за полудействие метнуть ее в любое обладающее душой существо в пределах видимости (попадая автоматически), но если он не метнет сгусток, или возьмет что-то в руку, что держит сгусток, тот развеивается. Цель сгустка исцеляет 1d5+W.b жертвы Ран, затягивает Кровотечение, снимает всю Усталость и Обескровливание, выходит из Оглушения (но не Ступора), прекращает эффекты ядов и пост-эффектов наркотиков на себе, и снимает один любой Критический Эффект по ее выбору (в т.ч. отращивая потерянные конечности и органы).",
+    "cost": "Все ритуалисты, не имеющие Трейта Daemonic или Machine, получают 1d5 Усталости, которую они не могут снять никаким образом в течение 5–Успехи Часов.",
+    "failureCost": "Вопль души умирающего разносится от колдовского круга, нанося всем живым существам в радиусе Провалы×10м 1d5+W.b жертвы непоглощаемого R Dmg в торс в виде стигматов.",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Warp",
     "testChar": "int",
-    "testMod": -20
+    "testMod": -20,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "H3IgXXC2dgvYsFyn",
   "effects": [],
@@ -28,7 +30,62 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "df8ecb060ce14aa9",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "7c6401f7d73a44cc",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "veteran",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "b3db7b8e44d84eae",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "41875e5b4d974892",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

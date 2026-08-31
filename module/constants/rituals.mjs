@@ -183,35 +183,81 @@ export function specMatches(label, spec) {
   return (SPEC_SYN[s] || []).some(syn => l.includes(syn));
 }
 
+/** Значение навыка (skills.mjs value) под конкретный путь проведения (группа+спец или обычный). */
+function resolveSkillValue(skills, scope, key, specialty) {
+  if (scope === "group" && key) {
+    const pref = `group:${key}:`;
+    const match = skills.find(o => o.value.startsWith(pref) && specMatches(o.label, specialty));
+    // Нужной специализации у актора может не быть — тогда любая из той же
+    // группы ближе к правде, чем первый навык списка.
+    return (match || skills.find(o => o.value.startsWith(pref)))?.value || "";
+  } else if (key) {
+    return skills.find(o => o.value === `skill:${key}`)?.value || "";
+  }
+  return "";
+}
+
+const sgnMod = n => (n >= 0 ? "+" : "") + n;
+
+/** Подпись пути в дропдауне: «Запретные знания (Daemons) · I −20». */
+function pathLabel(scope, key, specialty, char, mod) {
+  const defs = scope === "group" ? GROUP_SKILLS_DEF : SKILLS_DEF;
+  const base = defs[key]?.label || key || "—";
+  const spec = scope === "group" && specialty ? ` (${specialty})` : "";
+  return `${base}${spec} · ${charAbbr(char)} ${sgnMod(mod)}`;
+}
+
 /**
- * Путь проведения предмета-ритуала → поля формы консоли. Тот же приём, что у
- * applyRitualPreset: список навыков подаётся снаружи, поэтому функция чистая.
+ * Все пути проведения предмета-ритуала (основной + `rollPaths`) → пункты
+ * дропдауна диалога (module/sheets/ritual-cast-dialog.mjs): каждый со своим
+ * значением навыка (под РЕАЛЬНЫЕ навыки актёра), характеристикой и
+ * модификатором. Основной путь всегда первый и всегда есть (`key:"default"`),
+ * даже если `rollPaths` пуст — тогда дропдаун диалог просто не показывает.
+ */
+export function ritualPathOptions(actor, item, buildSkills) {
+  const s = item?.system || {};
+  const skills = buildSkills(actor);
+  const primary = {
+    key: "default",
+    label: pathLabel(s.testSkillScope, s.testSkillKey, s.testSpecialty, s.testChar || "int", Number(s.testMod) || 0),
+    skillValue: resolveSkillValue(skills, s.testSkillScope, s.testSkillKey, s.testSpecialty),
+    testChar: s.testChar || "int",
+    gmMod: Number(s.testMod) || 0
+  };
+  const extra = (Array.isArray(s.rollPaths) ? s.rollPaths : []).map((p, i) => ({
+    key: `alt:${i}`,
+    label: p.label || pathLabel(p.scope, p.key, p.specialty, p.char || "int", Number(p.mod) || 0),
+    skillValue: resolveSkillValue(skills, p.scope, p.key, p.specialty),
+    testChar: p.char || "int",
+    gmMod: Number(p.mod) || 0
+  }));
+  return [primary, ...extra];
+}
+
+/**
+ * Путь проведения предмета-ритуала → поля формы броска (module/apps/
+ * ritual-cast.mjs). Список навыков подаётся снаружи, поэтому функция чистая.
+ * Всегда основной путь (`ritualPathOptions(...)[0]`) — выбор альтернативы
+ * (`rollPaths`) диалог применяет поверх этого состояния сам.
  *
- * Движковый тип (Цена Ошибки при провале) НЕ подставляется: предмет хранит
- * контентный раздел книги, а у пресетов одного раздела встречаются и
- * blessing, и summon, и binding. Угадывать за ГМа нельзя.
+ * Движковый тип (`failureType`) и модификатор Отвращения за Провал —
+ * собственные поля предмета (см. module/data/item/ritual.mjs), заполненные
+ * из книги вместе с прозой — подставляются как есть, а не угадываются.
+ * Пустой failureType (старый предмет до миграции) не трогает R.type.
  */
 export function applyRitualItem(actor, item, buildSkills) {
   const s = item?.system || {};
-  const skills = buildSkills(actor);
-
-  let skillValue = "";
-  if (s.testSkillScope === "group" && s.testSkillKey) {
-    const pref = `group:${s.testSkillKey}:`;
-    const match = skills.find(o => o.value.startsWith(pref) && specMatches(o.label, s.testSpecialty));
-    // Нужной специализации у актора может не быть — тогда любая из той же
-    // группы ближе к правде, чем первый навык списка.
-    skillValue = (match || skills.find(o => o.value.startsWith(pref)))?.value || "";
-  } else if (s.testSkillKey) {
-    skillValue = skills.find(o => o.value === `skill:${s.testSkillKey}`)?.value || "";
-  }
+  const [primary] = ritualPathOptions(actor, item, buildSkills);
 
   return {
     itemId: item?.id || "",
     name: item?.name || "",
-    skillValue,
-    testChar: s.testChar || "int",
-    gmMod: Number(s.testMod) || 0
+    skillValue: primary.skillValue,
+    testChar: primary.testChar,
+    gmMod: primary.gmMod,
+    ...(s.failureType ? { type: s.failureType } : {}),
+    aversionPerFail: Number(s.aversionPerFail) || 5,
+    extraMods: Array.isArray(s.extraMods) ? s.extraMods : []
   };
 }
 

@@ -42,6 +42,16 @@ export function registerHooks() {
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
 
+    // Состояние, наложенное Ритуалом (module/apps/ritual-cast.mjs) — пилюля
+    // в карточке успешного проведения; ГМ тащит её на лист актора, которому
+    // она принадлежит (module/sheets/actor-sheet.mjs, _onDrop).
+    html.querySelectorAll(".wh-cond-drag").forEach(pill => {
+      pill.addEventListener("dragstart", ev => {
+        ev.dataTransfer.setData("text/plain", pill.dataset.payload);
+        ev.dataTransfer.effectAllowed = "copy";
+      });
+    });
+
     // Уклонение
     html.querySelectorAll(".wh-dodge-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {

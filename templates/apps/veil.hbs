@@ -134,7 +134,15 @@
   </div>
   {{/if}}
 
-  {{!-- ═══════════════════ ВКЛАДКА: РИТУАЛЫ ═══════════════════ --}}
+  {{!-- ═══════════════════ ВКЛАДКА: РИТУАЛЫ ═══════════════════
+        Временно оставлена рядом с диалогом на листе персонажа (module/sheets/
+        ritual-cast-dialog.mjs) — для сравнения, решение пользователя
+        29.08.2026. Сама математика — module/apps/ritual-cast.mjs, общая с
+        диалогом (см. _ritualData/_castRitual в module/apps/veil.mjs). Своё
+        здесь только то, чего у диалога нет: выбор Ритуалиста среди
+        присутствующих на сцене и выбор ЕГО ритуала-предмета. Пресет по
+        имени книги (без предмета) убран вместе с ritual-presets.mjs — у
+        всех ритуалов книги теперь есть предмет в packs-src/rituals. --}}
   {{#if isRituals}}
   {{#with ritual}}
   <div class="wv-ritual-tab">
@@ -144,17 +152,6 @@
       <div class="wv-rit-form">
         <div class="wv-block">
           <div class="wv-block-title">АНАТОМИЯ РИТУАЛА</div>
-          <div class="wv-rit-row">
-            <label class="wv-rit-lbl" title="Автозаполнить название, тип, сложность и навык под выбранного Ритуалиста">Пресет</label>
-            <select name="ritPreset" class="wv-rit-wide">
-              <option value="">— выбрать ритуал… —</option>
-              {{#each presetGroups as |g|}}
-              <optgroup label="{{g.cat}}">
-                {{#each g.items as |p|}}<option value="{{p.idx}}">{{p.label}}</option>{{/each}}
-              </optgroup>
-              {{/each}}
-            </select>
-          </div>
           <div class="wv-rit-row">
             <label class="wv-rit-lbl">Ритуалист</label>
             <select name="ritActor" class="wv-rit-wide">
@@ -205,6 +202,8 @@
           <div class="wv-rit-row">
             <label class="wv-rit-lbl">Ассистенты</label>
             <input type="number" name="ritAssist" class="wv-rit-xs" value="{{assistants}}" min="0"/>
+            <label class="wv-rit-lbl" title="Сколько из присутствующих принесены в жертву в конце ритуала — не больше числа ассистентов">Жертва</label>
+            <input type="number" name="ritAssistSac" class="wv-rit-xs" value="{{assistSacrificed}}" min="0" max="{{assistants}}"/>
             <label class="wv-rit-lbl">× бонус</label>
             <input type="number" name="ritAssistB" class="wv-rit-xs" value="{{assistBonus}}"/>
             <label class="wv-rit-cb" title="Псайкер-Ритуалист: +2×PR к тесту, но такой же бонус к броскам провала.">
@@ -282,12 +281,14 @@
           </div>
           {{#each numerology as |n|}}{{#if n.active}}<div class="wv-hint">◆ {{n.note}}</div>{{/if}}{{/each}}
         </div>
+        {{#if isSummonLike}}
         <div class="wv-block wv-lore">
           <div class="wv-block-title">ФОРМЫ ПРИЗЫВА</div>
           {{#each summonForms as |f|}}
           <div class="wv-form"><b>{{f.label}}</b> — {{f.dur}}<div class="wv-form-note">{{f.note}}</div></div>
           {{/each}}
         </div>
+        {{/if}}
       </div>
     </div>
     {{else}}
@@ -295,9 +296,11 @@
     {{/if}}
 
     <div class="wv-block wv-lore">
-      <div class="wv-block-title">О РИТУАЛАХ И НЕСТАБИЛЬНОСТИ</div>
+      <div class="wv-block-title">О РИТУАЛАХ{{#if isSummonLike}} И НЕСТАБИЛЬНОСТИ{{/if}}</div>
       <p>Ритуал: выберите Ритуалиста и Навык, задайте сложность и модификаторы, затем «Провести ритуал». При провале движок бросит <b>Отвращение Варпа</b> (призыв/владычество), Феномен или Прорыв — с учётом типа ритуала и +цены ошибки за каждый Провал после первого. Псайкер-бонус добавляется и к тесту, и к броску провала.</p>
+      {{#if isSummonLike}}
       <p>Если истончение отрицательное, демоны проходят тесты на <b>Нестабильность</b> при любом действии; Истинная Форма не может войти и мгновенно изгоняется.</p>
+      {{/if}}
     </div>
   </div>
   {{/with}}

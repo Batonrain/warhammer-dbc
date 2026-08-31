@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "hSLgsl8mE1dFhq6g",
   "system": {
-    "description": "",
+    "description": "<p>Культы, скрывающиеся в Имперском обществе, используют этот ритуал, чтобы оставлять друг другу тайные знаки и обмениваться сообщениями, незримыми для слуг Трупа на Троне.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 2,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Ритуалист сжигает обрезки своих ногтей и состриженные волосы, или другие регенерирующие части тела, чтобы набралась хотя бы одна ложка пепла. Он смешивает пепел с не более 1 л краски или чернил, помещает сосуд с ними в колдовской круг, и в течение часа зачитывает над ними строки ритуала. В конце он закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) –10.",
+    "result": "Только персонажи с Cor 30+ могут видеть краску или чернила и написанное и нарисованное ими – для более чистых душой краска или чернила выглядят прозрачной жидкостью, а написанное и нарисованное невидимо. Для персонажей с Cor 60+ краска и чернила не только видимы, но и светятся во тьме. Для персонажей с Cor 90+ свечение заметно даже на ярком свету.",
+    "cost": "Нет.",
+    "failureCost": "Сосуд с краской или чернилами взрывается, нанося 1d10+3 X Dmg, Blast (3). Ритуалист не может Избегать от этого взрыва, но все остальные могут. Все, кто получил это попадание оказываются забрызганы содержимым сосуда с головы до ног.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": -10
+    "testMod": -10,
+    "failureType": "blessing",
+    "aversionPerFail": 5
   },
   "_id": "fbJTaSuh9LCdX43t",
   "effects": [],
@@ -28,7 +30,62 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "39e6925977234004",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "b2db8b9871b24b43",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "a95d48b7dc39434f",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "32b0be637f9943d7",
+              "kind": "reqStat",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": "",
+              "statKey": "corruption",
+              "statThreshold": 60
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

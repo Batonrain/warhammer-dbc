@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "QTCsuJzd1hEchlzu",
   "system": {
-    "description": "",
+    "description": "<p>Опытные экзорцисты способны опалять демонов светом Императора или психической мощью, вырванной из Варпа правильной инкантацией.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 0,
     "assistMin": 0,
     "assistMax": 0,
-    "procedure": "",
-    "result": "",
+    "procedure": "Ритуалист воздевает вверх символический фокус, изрекая слова инкантации в течение W.b цели Ходов –1 Ход за каждый уровень продвижения его Навыка для ритуала выше +0 и еще –1 за Талант Mastery для этого Навыка (минимум 1 Ход). В течение всего ритуала цель – демон в любой из форм – должна находится в пределах прямой видимости Ритуалиста. В конце проведения он должен пройти тест на Scholastic Lore (Imperial Creed) (W)+0 или Scholastic Lore (Occult) (I) –10.",
+    "result": "За каждый Успех на тесте с символического фокуса слетает по снаряду психической энергии и автоматически попадает в демона. От снарядов нельзя Избегать и они поражают как материальных, так и Бесплотных демонов, но силовые щиты могут их останавливать. Каждый снаряд наносит демону 1d10 непоглощаемого E Dmg. При использовании этого ритуала через Scholastic Lore (Imperial Creed) снаряды также получают свойство Sanctified.",
     "cost": "",
     "failureCost": "",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Imperial Creed",
     "testChar": "wp",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "exorcism",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "scholasticLore",
+        "specialty": "Occult",
+        "char": "int",
+        "mod": -10,
+        "label": ""
+      }
+    ]
   },
   "_id": "GienO9M1KSZL8VVs",
   "effects": [],
@@ -28,7 +40,54 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "c14d22c0ec6f42c2",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "8ecda801450f4883",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "imperialCreed",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "5dd1c9ad706d4923",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

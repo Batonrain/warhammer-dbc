@@ -3,8 +3,10 @@
 //  Раздел «Ритуалы» на вкладке Способности (корбук стр. 393-425).
 //
 //  Показывает ритуалы, лежащие на акторе: раздел книги, Запись, вилку
-//  ассистентов, и раскрывает прозу по клику. Сам бросок ведёт движок Завесы
-//  (`module/constants/rituals.mjs`) — здесь только список и его правка.
+//  ассистентов, и раскрывает прозу по клику. Бросок — кнопка «Провести
+//  ритуал» открывает module/sheets/ritual-cast-dialog.mjs (29.08.2026: раньше
+//  ритуал мог провести только ГМ через окно «Завеса и Мистика», теперь любой
+//  владелец листа — сам движок остался в module/apps/ritual-cast.mjs).
 //
 //  Функция контекста принимает актора, а не лист, поэтому проверяется без
 //  Foundry.
@@ -15,6 +17,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { openCompendiumBrowser } from "../../apps/compendium-browser.mjs";
 import { getItemRequirements, isReqComplete, describeReqEntry,
          checkRequirements } from "../../apps/mechanics.mjs";
+import { showRitualCastDialog } from "../ritual-cast-dialog.mjs";
 
 /**
  * Требования набора — по строке на группу. Оператор группы обязан дожить до
@@ -113,5 +116,13 @@ export function activateRitualListeners(html, actor) {
     const data = src.toObject();
     delete data._id;
     await actor.createEmbeddedDocuments("Item", [data]);
+  });
+
+  // «Провести ритуал» — диалог с ситуативными модификаторами, доступен
+  // владельцу листа (не только ГМу), как и остальные кнопки действий на нём.
+  html.find(".ritual-cast-btn").on("click", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) showRitualCastDialog(actor, item);
   });
 }

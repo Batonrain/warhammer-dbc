@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "xqEzwdcxuCq5GezQ",
   "system": {
-    "description": "",
+    "description": "<p>Демонологи способны заключать дух призванного Нерожденного в жертвенной крови, оттягивая его манифестацию до момента, когда сосуд с этой кровью разбивают.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,17 @@
     "record": 1,
     "assistMin": 0,
     "assistMax": 4,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Круг этого ритуала рисуется вокруг круга ритуала призыва и между двумя кругами помещается угодная сущности демона разумная жертва и сосуд. Этот ритуал проводится сразу же после призыва демона в Истинной Форме. Главный Ритуалист или один из ассистентов убивают жертву и сливают ее кровь в сосуд, распевая слова силы в течение полного действия. После этого главный Ритуалист проводит встречный тест на Forbidden Lore (Daemons) +0 vs W+0 демона.",
+    "result": "Дух демона впитывается в кровь жизни жертвы и заключается в ней на Успехи лет. По истечении этого срока, или когда эта кровь выливается из сосуда, демон призывается к месту растекания крови в Истинной Форме. Демон враждебен ко всему живому и в течение 5×Успехи Ходов иммунен к Демоническому Владычеству.",
+    "cost": "Демон запоминает тех, кто связал его таким унизительным образом, и все дальнейшие попытки призвать того же демона, в которых участвует любой из Ритуалистов, получают штраф –30.",
+    "failureCost": "Неконтролируемый выброс энергии вызывает Отвращение Варпа с модификатором +5 за каждый Провал после первого – Главный Ритуалист может выбрать центрировать его на себе или одном из ассистентов (после броска).",
     "testSkillScope": "group",
     "testSkillKey": "forbiddenLore",
     "testSpecialty": "Daemons",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "binding",
+    "aversionPerFail": 5
   },
   "_id": "i3AFM8sUjJXGvQv4",
   "effects": [],
@@ -28,7 +30,80 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "1080fb70ab564330",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "8be6f06e64f5447b",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "5919401d484d4d97",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "f8762c2bec81458f",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "a125fe009b144cf0",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "daemons",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

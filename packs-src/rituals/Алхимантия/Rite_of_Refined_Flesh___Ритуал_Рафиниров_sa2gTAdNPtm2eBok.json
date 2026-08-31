@@ -4,7 +4,7 @@
   "img": "icons/svg/book.svg",
   "folder": "Ty6J9LvdHEQWGLi2",
   "system": {
-    "description": "",
+    "description": "<p>Колдуны Железных Воинов в типичном для их легиона прагматизме нашли способ «ужать» жертвы для ритуалов и колдовства до необходимого минимума, сделав их компактнее и удобнее в использовании.</p>",
     "notes": "",
     "source": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
     "bookSource": "DoomBC — Основная книга, Ритуалы (стр. 393-425)",
@@ -12,15 +12,27 @@
     "record": 3,
     "assistMin": 0,
     "assistMax": 2,
-    "procedure": "",
-    "result": "",
-    "cost": "",
-    "failureCost": "",
+    "procedure": "Разумное живое существо, обладающее душой, в стандартном апотекарионе или лучше подвергают операции, в которой под распевы строк ритуала извлекается его кора головного мозга и сердце, которые помещаются в компактный контейнер с системой жизнеобеспечения (R 0, Крафт через Tech-Use+0 и Medicae–10, Банк Успехов: 10). Операция длится ½ смены. В конце главный Ритуалист закрепляет ритуал, проводя тест на Scholastic Lore (Occult) (I) +0 или Forbidden Lore (Warp) (I) +0.",
+    "result": "Душа жертвы запирается в контейнере и энергии ритуала поддерживают его мозг и сердце живыми, невзирая на простоту и примитивность системы жизнеобеспечения, также служа источником питания для механизма. Контейнер весит 2 кг и занимает слот 1×1 на разгрузке. Контейнер может быть использован как жертва в любом ритуале, при этом дает дополнительно +5 к тесту этого ритуала. Он также может быть подготовлен как жертва для Пути Силы «Жертва», и тест его подготовки получает бонус +20. Персонаж с Tech-Use+0 может подключить контейнер к системам силовой брони или Имплантов Механикум инфо-кабелем или по воксу, позволяя убивать жертву свободным действием.\nЖертва находится в постоянном сознании и механизмы контейнера вызывают у нее постоянное ощущение ужаса и паники от электростимуляции определенных участков коры мозга. Трансплантировав кору мозга и сердце в другое тело, жертву можно спасти, но пережитый кошмар наверняка оставит ей Ментальное Расстройство по усмотрению ГМа.",
+    "cost": "Все Ритуалисты получают 1d5 урона в I и W. Если у них нет Таланта Jaded, они также бросают на Страх (3).",
+    "failureCost": "Жертва просто умирает.",
     "testSkillScope": "group",
     "testSkillKey": "scholasticLore",
     "testSpecialty": "Occult",
     "testChar": "int",
-    "testMod": 0
+    "testMod": 0,
+    "failureType": "blessing",
+    "aversionPerFail": 5,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": 0,
+        "label": ""
+      }
+    ]
   },
   "_id": "sa2gTAdNPtm2eBok",
   "effects": [],
@@ -28,7 +40,182 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "req": [
+        {
+          "id": "a62d8ae8ce84497d",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "6daa2356a8f04497",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "techUse",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "e046ce14fa17434b",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "e6630549c7ed4b24",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "trade",
+              "specKey": "chymist",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "7ac7d1e329cf411c",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "e34ab25e898547ae",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "293ac662718e4331",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "trained",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ],
+      "assistReq": [
+        {
+          "id": "44ab7f8933a94216",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "ca7477d88c7d408a",
+              "kind": "reqSkill",
+              "skillScope": "plain",
+              "skillKey": "medicae",
+              "specKey": "",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        },
+        {
+          "id": "6d0b2f4a39494da8",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "885f6b6b02c942e7",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "scholasticLore",
+              "specKey": "occult",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            },
+            {
+              "id": "87233f0177dc4901",
+              "kind": "reqSkill",
+              "skillScope": "group",
+              "skillKey": "forbiddenLore",
+              "specKey": "warp",
+              "specialty": "",
+              "rank": "knows",
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "raceKey": "",
+              "archetypeName": "",
+              "patronKey": "",
+              "capabilityKey": ""
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",

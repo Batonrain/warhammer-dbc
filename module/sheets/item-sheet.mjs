@@ -51,7 +51,7 @@ import { getItemMechanics, blankMechGroup, blankMechEntry, buildMechanicsTabHtml
          getItemRequirements, blankReqGroup, blankReqEntry, buildRequirementsHtml } from "../apps/mechanics.mjs";
 import { specOptions }                               from "../constants/skill-specializations.mjs";
 import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-builder.mjs";
-import { RITUAL_ITEM_TYPES }                         from "../constants/rituals.mjs";
+import { RITUAL_ITEM_TYPES, RITUAL_TYPES }            from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
 import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
          TARGET_FEATURES, PATRON_ANY, addTarget, removeTargetAt } from "../rules/talent-targets.mjs";
@@ -707,9 +707,10 @@ export class WarhammerItemSheet
     const entry = arr.find(g => g.id === groupId)?.entries?.find(e => e.id === entryId);
     if (!entry) return;
 
-    const want = entry.kind === "reqTalent" ? "talent" : "trait";
+    const want = entry.kind === "reqTalent" ? "talent"
+      : entry.kind === "reqPower" ? "psychicPower" : "trait";
     if (src.type !== want) {
-      const need = want === "talent" ? "Талант" : "Черту";
+      const need = want === "talent" ? "Талант" : want === "psychicPower" ? "Психосилу" : "Черту";
       return ui.notifications.warn(
         `Сюда нужно перетащить ${need}, а перетащено: ${ITEM_TYPES[src.type] || src.type}.`);
     }
@@ -1472,6 +1473,7 @@ export class WarhammerItemSheet
     // механических требований: к ритуалисту и к ассистентам.
     if (this.item.type === "ritual") {
       context.ritualItemTypes     = RITUAL_ITEM_TYPES;
+      context.ritualFailureTypes  = RITUAL_TYPES;
       context.ritualTest          = ritualTestContext(this.item);
       context.ritualReqHtml       = buildRequirementsHtml(this.item, "req", context.isGM);
       // Вилка «0—0» — ритуал проводится в одиночку: ассистентов у него не
@@ -2167,6 +2169,10 @@ export class WarhammerItemSheet
     on(".req-archetype", "change", ev => patchReq(ev, (e, el) => { e.archetypeName = el.value; }));
     on(".req-patron", "change",    ev => patchReq(ev, (e, el) => { e.patronKey = el.value; }));
     on(".req-capability-key", "change", ev => patchReq(ev, (e, el) => { e.capabilityKey = el.value; }));
+    on(".req-stat-key", "change",  ev => patchReq(ev, (e, el) => { e.statKey = el.value; }));
+    on(".req-stat-threshold", "change", ev => patchReq(ev, (e, el) => {
+      e.statThreshold = el.value === "" ? "" : (parseInt(el.value) || 0);
+    }));
 
     // Черта / Талант (драг-н-дроп резолвится в _onDropGrantItem)
     on(".grant-entry-rating", "change", ev => {
