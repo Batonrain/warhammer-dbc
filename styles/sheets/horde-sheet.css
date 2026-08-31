@@ -6,6 +6,13 @@
   display: flex; flex-direction: column; gap: 6px; height: 100%;
   background: #06120c; color: #c6ffe0; padding: 7px; font-size: 13px;
 }
+/* Обшивка «инфопланшет» (wdbc-cpv7, actor-housing.css) переопределяет
+   background/padding самого .wh-horde (это корень, this.element, корпус
+   инфопланшета) — старые 7px внутреннего отступа переезжают на .cog-screen,
+   которая теперь непосредственно оборачивает header/nav/body; gap тоже
+   нужен заново — раньше его давал .wh-horde своим прямым детям, теперь они
+   на уровень глубже. */
+.warhammer-dbc.wh-horde .cog-screen { padding: 7px; gap: 6px; }
 .wh-horde input, .wh-horde textarea, .wh-horde select {
   background: #0c2418; color: #eafff4; border: 1px solid #2f9e6a; border-radius: 3px; font-family: inherit;
 }
