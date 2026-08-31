@@ -460,7 +460,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура-штраф на ВРАГОВ в радиусе (−X к тестам W) — эффект на посторонних акторов, не на носителя; движок Ауры (module/regions/auras.mjs) поддерживает баффы союзникам/себе, не штрафы врагам в общем случае — не проверено без отдельного расследования.",
         "benefit": "Аура присутствия демона.",
         "source": "демон",
         "hasRating": false,
@@ -506,7 +506,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте.",
         "source": "демон",
         "hasRating": false,
@@ -552,7 +552,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
         "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
         "source": "демон",
         "hasRating": false,
@@ -598,7 +598,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отдельный режим движения «Полёт» со скоростью SPD×X, игнорируя Размер — как у Burrower/Hoverer, effects.speedMod — только аддитивная поправка обычной скорости, не новый тип движения/множитель.",
         "benefit": "Полёт со скоростью 12.",
         "source": "демон",
         "hasRating": true,
@@ -644,7 +644,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "+20 на тесты поворотов/Заноса Техники — тесты вождения техники ведутся через vehicle.mjs bespoke-диалоги (по образцу движения пехоты), не через общий testMod-резолвер.",
         "benefit": "Не получает штрафов за резкие манёвры.",
         "source": "демон",
         "hasRating": false,
@@ -690,7 +690,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Связь хозяин↔псайбер с манифестацией психосил через другого носителя — новая составная механика (второй актор/предмет-фамильяр), не число.",
         "benefit": "Псайбер: мысленная связь с хозяином.",
         "source": "демон",
         "hasRating": false,
@@ -736,7 +736,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Позиция всадника на скакуне (руки свободны, попадания по чётности делятся между всадником/скакуном) — состояние верхового боя module/combat/mount.mjs, не число уровня Черты.",
         "benefit": "Может служить устойчивой платформой.",
         "source": "демон",
         "hasRating": false,
@@ -782,7 +782,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
         "source": "демон",
         "hasRating": false,
@@ -828,7 +828,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит сквозь Завесу и души.",
         "source": "демон",
         "hasRating": false,
@@ -874,7 +874,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Смертельное естественное оружие (Бритвенные Шипы).",
         "source": "демон",
         "hasRating": false,
@@ -1016,7 +1016,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 на стрельбу по персонажу при Беге и Натиске.",
         "tier": 1,
         "requirement": "",
@@ -1063,7 +1063,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Паралич вместо контроля разума или тела.",
         "tier": 1,
         "requirement": "",
@@ -1131,13 +1131,64 @@
         }
       },
       "_id": "UZaFs39fJjIP8L1R",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Paranoia / Паранойя (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 2,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "4NoPeAOswHtbK4ZY",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!BoSawYMtDC4dWsE5.UZaFs39fJjIP8L1R.4NoPeAOswHtbK4ZY"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1157,7 +1208,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Полн. Движение — SPD×3, Бег — SPD×12.",
         "tier": 1,
         "requirement": "",
@@ -1204,7 +1255,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 штраф за Избирательный удар или Размер.",
         "tier": 1,
         "requirement": "",
@@ -1251,7 +1302,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "За полудействие меняет Размер в диапазоне — управляемое игроком действие с диапазоном значений, не фиксированный sizeMod.",
         "benefit": "За полудействие меняет Размер от −1 до 1.",
         "tier": 3,
         "requirement": "",
@@ -1298,7 +1349,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Круговое зрение 360° — правило слепых зон/обзора у токена (модуль сцены/освещения), в текущей Механике предметов канала нет.",
         "benefit": "Круговое зрение 360°.",
         "tier": 3,
         "requirement": "",
@@ -1345,7 +1396,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отдельный неперегружаемый щит-купол с возможностью передачи всаднику — вид записи под щиты в Конструкторе такого разделения (доп. получатель) не поддерживает.",
         "benefit": "Не перегружающийся колдовской щит-купол 1-50 (всадник может получать сам).",
         "tier": 3,
         "requirement": "",
@@ -1392,7 +1443,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Даёт возможность самостоятельно совершать манёвр Верховой Атаки — правило доступа к манёвру, не числовой модификатор.",
         "benefit": "Может совершать Верховую Атаку шипами самостоятельно.",
         "tier": 3,
         "requirement": "",

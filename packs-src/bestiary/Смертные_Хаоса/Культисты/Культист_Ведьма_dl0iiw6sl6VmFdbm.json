@@ -653,7 +653,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Рейтинг X = число полученных мутаций (см. книжную сверку 23.08) — сам X нигде не читается автоматически: правило «Сог миньона ≥X×20» не имеет ни числового поля, ни kind под условную формулу от количества другого гранта.",
         "benefit": "Одна мутация.",
         "source": "демон",
         "hasRating": false,
@@ -699,7 +699,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Даёт статус Псайкера (доступ к манифестации сил, свои поля PR) — управляется через actor.system.psyker и module/rules/psyker.mjs напрямую, не через словарь kind Механики Черты; сама по себе Черта-маркер без числового параметра для переноса.",
         "benefit": "Несвязанный псайкер, Сила Псионики 3.",
         "source": "демон",
         "hasRating": true,
@@ -745,7 +745,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Урон в Т, чтобы усилить психосилу.",
         "tier": 1,
         "requirement": "",
@@ -792,7 +792,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Снижает входящую Порчу конкретно от психосил/демонов на фиксированное число — это модификатор ВХОДЯЩЕГО эффекта (снижение начисления Порчи), не тест самого актора; канала «уменьшить получаемую Порчу» в testMod нет.",
         "benefit": "На 1 меньше Порчи от психосил и демонов.",
         "tier": 1,
         "requirement": "",
@@ -839,7 +839,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Иммунитет к обыденным ужасам.",
         "tier": 1,
         "requirement": "",
@@ -886,7 +886,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Усиление психосил и лечение Характеристик.",
         "tier": 1,
         "requirement": "",
@@ -954,13 +954,64 @@
         }
       },
       "_id": "UDZ8SSf812OBwnBm",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Paranoia / Паранойя (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 2,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "8i8l2mx26C9Z8L5v",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!dl0iiw6sl6VmFdbm.UDZ8SSf812OBwnBm.8i8l2mx26C9Z8L5v"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -980,7 +1031,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+10 на тесты сопротивления страху.",
         "tier": 1,
         "requirement": "",
@@ -1027,7 +1078,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Переброс тестов Страха.",
         "tier": 1,
         "requirement": "",
@@ -1074,7 +1125,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Psyniscience как свободное действие и реакция.",
         "tier": 1,
         "requirement": "",

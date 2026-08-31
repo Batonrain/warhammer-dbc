@@ -401,7 +401,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Эффект действует на ВРАГОВ демона (штраф на их Избегание), а не на самого носителя — Механика Черты применяется к актору-владельцу, канала «эффект на противника» нет.",
         "benefit": "Все враги −10 на Избегания против атак демона.",
         "source": "демон",
         "hasRating": false,
@@ -600,7 +600,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура-штраф на ВРАГОВ в радиусе (−X к тестам W) — эффект на посторонних акторов, не на носителя; движок Ауры (module/regions/auras.mjs) поддерживает баффы союзникам/себе, не штрафы врагам в общем случае — не проверено без отдельного расследования.",
         "benefit": "Аура присутствия демона (20 м).",
         "source": "демон",
         "hasRating": false,
@@ -646,7 +646,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте.",
         "source": "демон",
         "hasRating": false,
@@ -692,7 +692,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Удваивает SPD и вес Ношения» — множитель, а не надбавка; kind:\"movement\" пишет в system.movement.spdBonus (надбавка), семантика поля неочевидна как «итоговый множитель» без проверки на живом листе — рискованно применять вслепую.",
         "benefit": "Четвероногое: +бонус к передвижению.",
         "source": "демон",
         "hasRating": false,
@@ -738,7 +738,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Штраф атакующим по цели (−Ag.b) — динамическая величина от Бонуса Ловкости конкретного носителя, применяется к ЧУЖИМ броскам атаки по нему; нет канала «модификатор чужой атаки от Бонуса моей характеристики».",
         "benefit": "+10 к Уклонению.",
         "source": "демон",
         "hasRating": false,
@@ -784,7 +784,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
         "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
         "source": "демон",
         "hasRating": false,
@@ -876,7 +876,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Круговой сонарный обзор на дистанции — сенсорная способность без правила видимости/восприятия в движке (нет системы направленного зрения/слепых зон).",
         "benefit": "Ощущает окружение эхолокацией.",
         "source": "демон",
         "hasRating": false,
@@ -922,7 +922,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
         "source": "демон",
         "hasRating": false,
@@ -968,7 +968,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
         "benefit": "Тесты Нестабильности при уроне.",
         "source": "демон",
         "hasRating": false,
@@ -1014,7 +1014,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит сквозь Завесу и души.",
         "source": "демон",
         "hasRating": false,
@@ -1060,7 +1060,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Смертельное естественное оружие (Клешни, Хвост-Жало, Хлещущий Язык).",
         "source": "демон",
         "hasRating": false,
@@ -1407,7 +1407,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 штраф за 2 оружия; нет штрафа за левую руку.",
         "tier": 1,
         "requirement": "",
@@ -1454,7 +1454,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 на стрельбу по персонажу при Беге и Натиске.",
         "tier": 1,
         "requirement": "",
@@ -1501,7 +1501,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+10 к тестам на все чувства.",
         "tier": 1,
         "requirement": "",
@@ -1548,7 +1548,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Прыжки за полудействие.",
         "tier": 1,
         "requirement": "",
@@ -1616,13 +1616,64 @@
         }
       },
       "_id": "vWxPnJiXoq2RZM0y",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Step Aside / Шаг в Сторону",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.defenseMax",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "zsxvXxgHNmMFAk7p",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!onMBPgc7evPY5y42.vWxPnJiXoq2RZM0y.zsxvXxgHNmMFAk7p"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1663,13 +1714,64 @@
         }
       },
       "_id": "iMsnK9rG32bEolTh",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Strange Technique / Странная Техника",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.max",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "SkIUOOSl2S0CFm1v",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "Реакция общая (движок не различает узкий список разрешённых атак) — ограничение назначения соблюдается за столом.",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!onMBPgc7evPY5y42.iMsnK9rG32bEolTh.SkIUOOSl2S0CFm1v"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1689,7 +1791,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 штраф за Избирательный удар или Размер.",
         "tier": 1,
         "requirement": "",
@@ -1763,7 +1865,26 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "9tKcR2wYbNq8mXvL",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "3jHpF6sVdE0xC4bQ",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "technique.swiftAttack",
+                  "label": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1783,7 +1904,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же концепт, что канонический «Two Weapon Wielder / Два Оружия» (нотами не решён — там же генерик-штраф без фиксированного скилла), но здесь текст ещё и без специализации Melee/Ranged/Both — тот же повод, конкретной цели теста нет.",
         "benefit": "Бой двумя оружиями со штрафом −20.",
         "tier": 1,
         "requirement": "",
@@ -1830,7 +1951,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура 20 м с накопительным штрафом по числу Провалов у ЧУЖИХ тестов + отдельный штраф стрельбе извне ауры — многоусловная аура на чужие тесты.",
         "benefit": "Аура 20 м: враги тест W−10 (псайкеры −20) при каждой атаке по Извергу; 1-4 Провала — −5×Провалы, 5+ — не могут атаковать. Стрельба извне по целям в ауре −10.",
         "tier": 3,
         "requirement": "",
@@ -1877,7 +1998,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Считается двумя ассистентами конкретно при пытках/допросе — правило подсчёта помощников теста, не числовой модификатор своего теста.",
         "benefit": "При пытках/допросе считается 2 ассистентами.",
         "tier": 3,
         "requirement": "",

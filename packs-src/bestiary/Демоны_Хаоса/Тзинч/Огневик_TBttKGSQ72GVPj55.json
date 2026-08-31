@@ -533,7 +533,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура-штраф на ВРАГОВ в радиусе (−X к тестам W) — эффект на посторонних акторов, не на носителя; движок Ауры (module/regions/auras.mjs) поддерживает баффы союзникам/себе, не штрафы врагам в общем случае — не проверено без отдельного расследования.",
         "benefit": "Аура присутствия демона.",
         "source": "демон",
         "hasRating": false,
@@ -579,7 +579,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте.",
         "source": "демон",
         "hasRating": false,
@@ -625,7 +625,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
         "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
         "source": "демон",
         "hasRating": false,
@@ -717,7 +717,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Отдельный режим движения «Парение» со своей скоростью SPD×X, игнорируя Размер — как и у Burrower/Flyer, effects.speedMod — только аддитивная поправка обычной скорости, не новый тип движения.",
         "benefit": "Парит/скользит со скоростью 8.",
         "source": "демон",
         "hasRating": true,
@@ -789,7 +789,61 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "vHmme3ySw915NEqr",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "ZaEG7mypto8dLXBv",
+                  "kind": "poolMax",
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "",
+                  "code": ""
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -809,7 +863,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Активируемый щит-купол с рейтингом поглощения и ручным вкл/выкл — новая механика активного щита (отдельная от брони/Shield-предметов), нет готового канала.",
         "benefit": "Колдовской щит-купол 1-35, вкл/выкл свободным действием.",
         "source": "демон",
         "hasRating": false,
@@ -855,7 +909,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
         "source": "демон",
         "hasRating": false,
@@ -901,7 +955,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
         "benefit": "Тесты Нестабильности при уроне.",
         "source": "демон",
         "hasRating": false,
@@ -947,7 +1001,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит сквозь Завесу и души.",
         "source": "демон",
         "hasRating": false,
@@ -993,7 +1047,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Смертельное естественное оружие (Пасти, Пламя Перемен).",
         "source": "демон",
         "hasRating": false,
@@ -1241,7 +1295,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Более безопасная стрельба через союзников.",
         "tier": 1,
         "requirement": "",
@@ -1288,7 +1342,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 на стрельбу по персонажу при Беге и Натиске.",
         "tier": 1,
         "requirement": "",
@@ -1335,7 +1389,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Стрельба на полном ходу.",
         "tier": 1,
         "requirement": "",
@@ -1403,13 +1457,64 @@
         }
       },
       "_id": "Ai2dG1pZb9XtdhkL",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Paranoia / Паранойя (перенесено)",
+          "system": {
+            "changes": [
+              {
+                "key": "system.initiative",
+                "type": "add",
+                "value": 2,
+                "phase": "final",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "IBgEF5pKXPdDCsl6",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!TBttKGSQ72GVPj55.Ai2dG1pZb9XtdhkL.IBgEF5pKXPdDCsl6"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1429,7 +1534,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Переброс тестов против контроля разума.",
         "tier": 1,
         "requirement": "",
@@ -1476,7 +1581,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "На дубль урона выбор из таблицы d10 разных эффектов — критическая спецтаблица, вне формы плоского модификатора.",
         "benefit": "Дубль на уроне (стрельба/рукопашная) → эффект d10: Исцеляющее Пламя / Тех-Проклятье / Расплавление / Инферно / Негатив / Смещение / Пиростойкость / Щупальца / Гнев Варпа / Пламя Души.",
         "tier": 3,
         "requirement": "",
@@ -1523,7 +1628,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Реакция на чужой Натиск с точечной атакой по атакующему — триггерная реакция-контратака, не пассивный бонус.",
         "benefit": "Реакция при Натиске — попадание пламенем перемен по атакующему (точечно).",
         "tier": 3,
         "requirement": "",
@@ -1570,7 +1675,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Захвату/Snare + иммунитет к двум конкретным свойствам оружия сразу — Crippling/Piercing иммунитет уже заведён в capabilities.mjs (weaponPropertyImmunity.crippling/.piercing) БЕЗ этого источника; можно довыдать позже точечно, но иммунитет к Захвату/Snare-как-состоянию отдельного канала не имеет здесь.",
         "benefit": "Нельзя Захватить/Snare; иммунен к Crippling/Piercing.",
         "tier": 3,
         "requirement": "",
@@ -1617,7 +1722,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тратит Очко Судьбы на разовую подмену кубиков урона — ресурсное разовое действие, не пассивный эффект.",
         "benefit": "За Очко Судьбы бросить ещё 3d10 и заменять кубики урона.",
         "tier": 3,
         "requirement": "",
@@ -1664,7 +1769,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Составной иммунитет + удвоение поглощения конкретно против Energy (кроме Fl) — нет канала «поглощение ×2 против типа урона» (только vsType-надбавки числом, не множитель), не сводится к testMod/native effect.",
         "benefit": "Иммунен к E(Fl)/Горению; удваивает поглощение против прочего E; игнорирует атаки других Огневиков.",
         "tier": 3,
         "requirement": "",
@@ -1711,7 +1816,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Бонус команде с исключением сопротивления цели, только для одной конкретной пары «командующий/подчинённый» — межакторное правило, не собственный тест.",
         "benefit": "Тзинч герольда+ и меченые смертные: +60 на Команду Огневиками, те не могут сопротивляться приказам.",
         "tier": 3,
         "requirement": "",

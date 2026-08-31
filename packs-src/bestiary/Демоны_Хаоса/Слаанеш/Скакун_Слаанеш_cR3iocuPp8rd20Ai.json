@@ -401,7 +401,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Эффект действует на ВРАГОВ демона (штраф на их Избегание), а не на самого носителя — Механика Черты применяется к актору-владельцу, канала «эффект на противника» нет.",
         "benefit": "Все враги −10 на Избегания против атак демона.",
         "source": "демон",
         "hasRating": false,
@@ -549,7 +549,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Аура-штраф на ВРАГОВ в радиусе (−X к тестам W) — эффект на посторонних акторов, не на носителя; движок Ауры (module/regions/auras.mjs) поддерживает баффы союзникам/себе, не штрафы врагам в общем случае — не проверено без отдельного расследования.",
         "benefit": "Аура присутствия демона.",
         "source": "демон",
         "hasRating": false,
@@ -595,7 +595,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Флейвор-способность («видит в темноте») без числового правила видимости/освещения в движке — нечего мехнизировать.",
         "benefit": "Видит в темноте.",
         "source": "демон",
         "hasRating": false,
@@ -641,7 +641,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«+X к SPD» рейтинг-зависим (аналог Unnatural Characteristic — заполняется на дропнутой копии), а «+5×X на Группирование» целится в узкое под-действие Athletics (не весь Навык) — нет такого скоупа testMod.",
         "benefit": "Пальцеходящие ноги: бонус к прыжкам/бегу.",
         "source": "демон",
         "hasRating": false,
@@ -687,7 +687,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Иммунитет к Страху/Подавлению/Панике и к ментальным психосилам — множественный иммунитет к разным подсистемам сразу, нет единого поля «иммунитет к N категориям эффектов».",
         "benefit": "Не дышит/ест/спит; иммунен к ядам/болезням/удушью/вакууму.",
         "source": "демон",
         "hasRating": false,
@@ -779,7 +779,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "+20 на тесты поворотов/Заноса Техники — тесты вождения техники ведутся через vehicle.mjs bespoke-диалоги (по образцу движения пехоты), не через общий testMod-резолвер.",
         "benefit": "Не получает штрафов за резкие манёвры.",
         "source": "демон",
         "hasRating": false,
@@ -825,7 +825,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Круговой сонарный обзор на дистанции — сенсорная способность без правила видимости/восприятия в движке (нет системы направленного зрения/слепых зон).",
         "benefit": "Ощущает окружение эхолокацией.",
         "source": "демон",
         "hasRating": false,
@@ -871,7 +871,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Список из ~9 разных иммунитетов (Усталость/яды/болезни/радиация/темп./вакуум/Кровотечение/Оглушение/старение) — не сводится к одному числовому полю; каждый иммунитет — отдельная подсистема без общего «флага иммунитета».",
         "benefit": "Иммунитет к Страху/Оглушению/Крит-эффектам разума.",
         "source": "демон",
         "hasRating": false,
@@ -917,7 +917,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Управление скакуном без рук, кроме скорости Натиска/Бега» — правило верхового боя (module/combat/mount.mjs bespoke), не тест/характеристика.",
         "benefit": "Приучен к бою, не пугается сражений.",
         "source": "демон",
         "hasRating": false,
@@ -963,7 +963,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Может быть изгнан в Варп при уроне» — условный триггер на входящий урон с исходом «изгнание» (удаление токена/актора из боя), нет такого hook в общей Механике предметов.",
         "benefit": "Тесты Нестабильности при уроне.",
         "source": "демон",
         "hasRating": false,
@@ -1009,7 +1009,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "«Видит потоки имматериума» — сенсорная флейвор-способность без числового правила в движке.",
         "benefit": "Видит сквозь Завесу и души.",
         "source": "демон",
         "hasRating": false,
@@ -1055,7 +1055,7 @@
       "img": "icons/svg/aura.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Тот же случай, что рейтинговая версия выше — снятие Primitive с чужого предмета-оружия, канала нет.",
         "benefit": "Смертельное естественное оружие (Когти, Хвост, Хлещущий Язык).",
         "source": "демон",
         "hasRating": false,
@@ -1391,7 +1391,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Acrobatics+0 для отскока после атаки.",
         "tier": 1,
         "requirement": "",
@@ -1438,7 +1438,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "−10 на стрельбу по персонажу при Беге и Натиске.",
         "tier": 1,
         "requirement": "",
@@ -1485,7 +1485,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "+10 к тестам на все чувства.",
         "tier": 1,
         "requirement": "",
@@ -1532,7 +1532,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Прыжки за полудействие.",
         "tier": 1,
         "requirement": "",
@@ -1579,7 +1579,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Встать за свободное действие.",
         "tier": 1,
         "requirement": "",
@@ -1626,7 +1626,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Прыжок с пути несущегося вперёд врага.",
         "tier": 1,
         "requirement": "",
@@ -1673,7 +1673,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
         "benefit": "Натиск со скоростью Бега.",
         "tier": 1,
         "requirement": "",
@@ -1741,13 +1741,64 @@
         }
       },
       "_id": "ixqUp7cgs3kVlPPq",
-      "effects": [],
+      "effects": [
+        {
+          "name": "Step Aside / Шаг в Сторону",
+          "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
+          "system": {
+            "changes": [
+              {
+                "key": "system.reactions.defenseMax",
+                "type": "add",
+                "value": 1,
+                "phase": "initial",
+                "priority": 0
+              }
+            ]
+          },
+          "_id": "B1Fs9bCi6pCx5ZGW",
+          "type": "base",
+          "disabled": false,
+          "start": null,
+          "duration": {
+            "value": null,
+            "units": "seconds",
+            "expiry": null,
+            "expired": false
+          },
+          "description": "",
+          "origin": null,
+          "tint": "#ffffff",
+          "transfer": true,
+          "statuses": [],
+          "showIcon": 1,
+          "folder": null,
+          "sort": 0,
+          "flags": {},
+          "_stats": {
+            "coreVersion": "14.365",
+            "systemId": "warhammer-dbc",
+            "systemVersion": "0.1.0",
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "_key": "!actors.items.effects!cR3iocuPp8rd20Ai.ixqUp7cgs3kVlPPq.B1Fs9bCi6pCx5ZGW"
+        }
+      ],
       "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1767,7 +1818,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Часть «не оставляет следов, двигается по жидкостям/сыпучему» — вне формы Трудного Ландшафта, не смоделирована (только игнор Трудного Ландшафта — Механика ниже).",
         "benefit": "Игнорирует Трудный Ландшафт, не оставляет следов, может двигаться по жидкостям/сыпучему.",
         "tier": 3,
         "requirement": "",
@@ -1794,7 +1845,107 @@
       "ownership": {
         "default": 0
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "6lBwysVd60651ibF",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "G68iSOx9OW744VbN",
+                  "kind": "terrainIgnore",
+                  "group": null,
+                  "corruptionValue": "1",
+                  "woundsValue": "1",
+                  "cohesionRole": "any",
+                  "cohesionValue": "1",
+                  "charKey": "s",
+                  "field": "total",
+                  "op": "add",
+                  "value": 1,
+                  "sourceUuid": "",
+                  "sourceName": "",
+                  "sourceImg": "",
+                  "sourceHasRating": false,
+                  "rating": "",
+                  "specialization": "",
+                  "minionGroup": "",
+                  "minionTier": "",
+                  "skillScope": "plain",
+                  "skillKey": "",
+                  "specKey": "",
+                  "specialty": "",
+                  "specChoiceKeys": [],
+                  "specChoiceCount": 1,
+                  "rank": "untrained",
+                  "weightScope": "all",
+                  "weightMode": "kg",
+                  "weightValue": 1,
+                  "movementTarget": "spd",
+                  "movementValue": 1,
+                  "armourLocation": "body",
+                  "armourValue": 1,
+                  "ignoreTerrainProps": [
+                    "smoke",
+                    "mud",
+                    "bloodPool",
+                    "dark",
+                    "deepSnow",
+                    "thicket",
+                    "ice",
+                    "crowd",
+                    "corpses",
+                    "rubble",
+                    "earthquake"
+                  ],
+                  "fatigueAction": "threshold",
+                  "fatigueThresholdChar": "t",
+                  "equipMode": "direct",
+                  "equipQty": 1,
+                  "equipSourceUuid": "",
+                  "equipSourceName": "",
+                  "equipSourceImg": "",
+                  "equipCategoryPack": "weapons",
+                  "equipWeaponType": "",
+                  "equipWeaponProp": "",
+                  "equipArmorType": "",
+                  "equipMaxAvailability": 5,
+                  "equipQuality": "common",
+                  "equipTalentTier": "",
+                  "equipMaxPsyRating": "",
+                  "equipImplantCategory": "",
+                  "equipBudgetMode": "count",
+                  "equipBudgetValue": 1,
+                  "loyaltyMinionType": "",
+                  "loyaltyOp": "add",
+                  "loyaltyValue": 1,
+                  "weaponPropAction": "add",
+                  "weaponPropKey": "",
+                  "weaponPropLabel": "",
+                  "weaponPropHasRating": false,
+                  "weaponPropHasRating2": false,
+                  "weaponPropValue": "1",
+                  "weaponPropValue2": "0",
+                  "weaponPropNewKey": "",
+                  "weaponPropNewLabel": "",
+                  "weaponPropNewHasRating": false,
+                  "weaponPropNewHasRating2": false,
+                  "weaponPropNewValue": "1",
+                  "weaponPropNewValue2": "0",
+                  "label": "Изящный Аллюр",
+                  "code": "",
+                  "when": {
+                    "negate": false,
+                    "conditions": []
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -1814,7 +1965,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Ограничивает количество атакуемых целей лишними парами конечностей — это правило распределения атак по целям в бою, не модификатор одного теста.",
         "benefit": "Свободный Скакун — 2 атаки в Ход (когти+хвост или когти+язык), как Multiple Arms (4).",
         "tier": 3,
         "requirement": "",
