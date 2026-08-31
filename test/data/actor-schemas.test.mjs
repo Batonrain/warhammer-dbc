@@ -160,6 +160,8 @@ const DEVIATIONS = {
     "conditions.lostEyesCount": 0,
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
+    // Вызов/Challenge (X), wdbc-2xku — заведено гораздо позже template.json.
+    "conditions.challenged": false,
     // Экономика действий (стр. 12, wdbc-qleg/wdbc-fkdd): ОД — новое поле,
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.

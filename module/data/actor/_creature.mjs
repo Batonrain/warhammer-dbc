@@ -30,7 +30,11 @@ const CONDITION_FLAGS = [
   "dazed", "suffocating", "gangrene",
   "lostHands", "lostArms", "lostFeet", "lostLegs", "lostEyes",
   // Стр. 12 («Борьба») — состояние двух персонажей, связанных Захватом.
-  "grappling"
+  "grappling",
+  // Свойство оружия Вызов/Challenge (X), wdbc-2xku: до конца следующего Хода
+  // нельзя добровольно выйти из рукопашной (кроме уклонения от атаки по
+  // площади) — блокирует действие «Выход из Боя» (movement-actions.mjs).
+  "challenged"
 ];
 /** Состояния со счётчиком: имя поля → суффикс счётчика. */
 const CONDITION_COUNTERS = {

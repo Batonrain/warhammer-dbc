@@ -14,6 +14,7 @@ import { _performSwerve }                from "./combat/vehicle.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
 import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto } from "./combat/weapon-properties.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
+import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
@@ -434,6 +435,15 @@ export function registerHooks() {
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Подавленный персонаж не найден.");
         await rollSuppressionRecovery(actor, { bonus: parseInt(ds.bonus || "0") });
+      });
+    });
+
+    // Свободная атака (wdbc-2xku) — уходящий из рукопашной без «Выхода из Боя».
+    html.querySelectorAll(".wh-free-attack-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await resolveFreeAttackClick(ds.reactorUuid, ds.moverUuid);
       });
     });
 

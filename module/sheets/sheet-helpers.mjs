@@ -76,7 +76,9 @@ export const CONDITIONS_DEF = {
   lostLegs:      { label: "Потеря ног",      icon: "🦵", hasLevel: true,  levelField: "lostLegsCount",       css: "cond-lost-legs"      },
   lostEyes:      { label: "Потеря глаз",     icon: "👁️", hasLevel: true, levelField: "lostEyesCount",       css: "cond-lost-eyes"      },
   // ── Стр. 12 («Борьба») — связаны Захватом ────────────────────────────────
-  grappling:     { label: "Борьба",          icon: "🤼", hasLevel: false, levelField: null,                 css: "cond-grappling"      }
+  grappling:     { label: "Борьба",          icon: "🤼", hasLevel: false, levelField: null,                 css: "cond-grappling"      },
+  // Свойство оружия Вызов/Challenge (X), wdbc-2xku: блокирует «Выход из Боя».
+  challenged:    { label: "Вызван",          icon: "⚔️", hasLevel: false, levelField: null,                 css: "cond-challenged"     }
 };
 // Прикрепляем SVG-глиф и цвет к каждому состоянию (замена эмодзи).
 for (const [key, def] of Object.entries(CONDITIONS_DEF)) {

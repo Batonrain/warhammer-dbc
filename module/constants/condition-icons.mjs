@@ -86,7 +86,12 @@ export const CONDITION_ICONS = {
   grappling: { color: "#e08a3a", body:
     `<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
      <path d="M2.5 5.5C4 4 5.5 4.5 6 6.5S5 10.5 6.5 12.5"/>
-     <path d="M13.5 5.5C12 4 10.5 4.5 10 6.5S11 10.5 9.5 12.5"/></g>` }
+     <path d="M13.5 5.5C12 4 10.5 4.5 10 6.5S11 10.5 9.5 12.5"/></g>` },
+  // Вызов/Challenge (X) — скрещённые клинки (нельзя добровольно покинуть рукопашную).
+  challenged: { color: "#ff5a5a", body:
+    `<g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+     <path d="M2.5 2.5L13.5 13.5M4 2.5L2.5 4M13.5 4L12 2.5"/>
+     <path d="M13.5 2.5L2.5 13.5M12 13.5L13.5 12M2.5 12L4 13.5"/></g>` }
 };
 
 /** Готовый HTML-глиф состояния (inline svg в цветной обёртке). */
