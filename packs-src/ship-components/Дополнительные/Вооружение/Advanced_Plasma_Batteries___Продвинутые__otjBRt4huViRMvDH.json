@@ -23,10 +23,14 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "devastating"
+        "key": "devastating",
+        "rating": 2,
+        "rating2": "macrobattery"
       },
       {
-        "key": "effectiveDistance"
+        "key": "effectiveDistance",
+        "rating": 3,
+        "rating2": "macrobattery"
       }
     ],
     "hull": {

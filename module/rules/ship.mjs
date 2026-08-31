@@ -31,6 +31,11 @@ export function prepareShipDerived(items, system) {
   let cmLossMod = 0, cpLossMod = 0, boardingDef = 0, repairHiBonus = 0;
   let dpReduce = 0, dpFloor = 0, dpExtra = 0, silentRun = 0, augurVs = 0;
   let suppliesMax = 0;
+  // Ship-wide боевые директивы (wdbc-qhwb): не про один выстрел, а про весь
+  // корабль целиком — таран, урон определённых типов узлов, орбитальный удар.
+  const ramDice = [];
+  const devastatingByType = {};
+  let orbitalStrike = 0;
   const mods = { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0, hullIntegrity: 0 };
 
   // Применение авто-свойств узла (Aspects) к производным значениям корабля.
@@ -56,6 +61,14 @@ export function prepareShipDerived(items, system) {
       if (a.augurVsPer)     augurVs       += a.augurVsPer * (Number(p.rating2) || 0);
       // Запасы путешествия задают максимум месяцев (берём наибольший узел).
       if (a.suppliesMonths) suppliesMax    = Math.max(suppliesMax, r);
+      // Смертельный Таран: X — формула кубика (rating), не число; копим строки,
+      // катаются отдельно при резолве тарана (_resolveRam).
+      if (a.ramDicePer && p.rating) ramDice.push(String(p.rating));
+      // Разрушительное: +X к урону ВСЕХ узлов типа Y (rating2 — код wType).
+      if (a.devastatingPer && p.rating2) devastatingByType[p.rating2] = (devastatingByType[p.rating2] || 0) + r;
+      // Орбитальный Удар: бонус BS по планетарным целям, источник — любой узел
+      // (сканер/мостик), не обязательно оружие.
+      if (a.orbitalStrikePer) orbitalStrike += r;
     }
   };
 
@@ -191,6 +204,8 @@ export function prepareShipDerived(items, system) {
       cpLoss: cpLossMod, boardingDef, repairHiBonus, silentRun, augurVs
     },
     dpMods: { reduce: dpReduce, floor: dpFloor, extra: dpExtra },
+    // Ship-wide боевые директивы (wdbc-qhwb) — см. комментарий у объявления выше.
+    ramDice, devastatingByType, orbitalStrike,
     defilement: {
       value: dp, crossed: crossed.length, levels: crossed.map(t => t.name),
       weakSpirit: weakSpiritDp, isDaemon, nextDp: nextThr?.dp || null

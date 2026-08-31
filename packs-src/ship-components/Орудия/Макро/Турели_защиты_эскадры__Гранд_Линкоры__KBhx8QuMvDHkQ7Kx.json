@@ -23,7 +23,8 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "prow,dorsal,keel"
       },
       {
         "key": "limited"

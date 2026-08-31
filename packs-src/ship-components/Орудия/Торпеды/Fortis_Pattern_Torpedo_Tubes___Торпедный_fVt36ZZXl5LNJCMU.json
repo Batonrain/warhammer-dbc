@@ -23,13 +23,15 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "prow,keel"
       },
       {
         "key": "explosive"
       },
       {
-        "key": "penetrating"
+        "key": "penetrating",
+        "rating": "voidShields"
       }
     ],
     "hull": {

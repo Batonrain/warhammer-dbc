@@ -26,7 +26,8 @@
         "key": "xenotech"
       },
       {
-        "key": "penetrating"
+        "key": "penetrating",
+        "rating": "holofields"
       }
     ],
     "hull": {

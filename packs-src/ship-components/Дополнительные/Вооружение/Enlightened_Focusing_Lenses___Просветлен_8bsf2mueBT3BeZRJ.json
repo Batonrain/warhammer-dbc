@@ -23,7 +23,9 @@
     "modValue": 0,
     "shipProps": [
       {
-        "key": "effectiveDistance"
+        "key": "effectiveDistance",
+        "rating": 2,
+        "rating2": "lance"
       }
     ],
     "hull": {

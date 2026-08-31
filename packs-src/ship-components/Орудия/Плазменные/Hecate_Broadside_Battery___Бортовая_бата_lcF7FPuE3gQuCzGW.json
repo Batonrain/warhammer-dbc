@@ -26,7 +26,8 @@
         "key": "vapourisation"
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "star,port"
       }
     ],
     "hull": {

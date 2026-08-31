@@ -15,7 +15,8 @@
     "notes": "",
     "shipProps": [
       {
-        "key": "deadlyRamming"
+        "key": "deadlyRamming",
+        "rating": "1d10"
       },
       {
         "key": "dreadnought"

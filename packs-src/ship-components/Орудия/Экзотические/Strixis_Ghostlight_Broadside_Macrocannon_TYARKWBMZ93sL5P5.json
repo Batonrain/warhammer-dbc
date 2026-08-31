@@ -30,7 +30,8 @@
         "rating": 1
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "star,port"
       }
     ],
     "hull": {

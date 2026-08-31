@@ -26,10 +26,12 @@
         "key": "archeotech"
       },
       {
-        "key": "penetrating"
+        "key": "penetrating",
+        "rating": "armour"
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "star,port"
       }
     ],
     "hull": {

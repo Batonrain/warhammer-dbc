@@ -29,6 +29,9 @@ import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
+import { resolveShipProps } from "./combat/ship-attack.mjs";
+import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
+import { WC_CODE } from "./constants/ship.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -523,6 +526,8 @@ export function registerHooks() {
 
 // ── Применение урона Прочности к кораблю-цели ────────────────────────────────
 // Сначала берём отмеченную (target) цель-корабль, иначе выбранный токен.
+// Сама формула (HI + пропорциональный CP/CM) — module/combat/ship-node-damage.mjs
+// ::applyHullDamage, общая с авто-взрывом Explosive (wdbc-qhwb).
 async function _applyShipHullDamage(dmg) {
   const targeted = [...(game.user?.targets ?? [])]
     .map(t => t.actor ?? t.document?.actor).find(a => a?.type === "ship");
@@ -531,20 +536,9 @@ async function _applyShipHullDamage(dmg) {
   const actor = targeted || selected;
   if (!actor) return ui.notifications.warn("⚠️ Отметьте (target) или выберите токен корабля-цели!");
 
-  const d    = Number(dmg) || 0;
-  const cur  = actor.system.hullIntegrity?.value ?? 0;
-  const next = Math.max(0, cur - d);
-  const lost = cur - next;                       // фактически снятая Прочность
-  const cp   = Number(actor.system.crew?.population) || 0;
-  const cm   = Number(actor.system.crew?.morale) || 0;
-  // За каждое потерянное очко Прочности экипаж теряет 1 CP и 1 CM.
-  await actor.update({
-    "system.hullIntegrity.value": next,
-    "system.crew.population":     Math.max(0, cp - lost),
-    "system.crew.morale":         Math.max(0, cm - lost)
-  });
+  const { cur, next, lost } = await applyHullDamage(actor, dmg);
   const half = next === 0 ? " — ПОЛУРАЗРУШЕН!" : "";
-  ui.notifications.info(`${actor.name}: Прочность ${cur} → ${next} (−${d})${lost ? `, экипаж −${lost} CP/CM` : ""}${half}`);
+  ui.notifications.info(`${actor.name}: Прочность ${cur} → ${next} (−${Number(dmg) || 0})${lost ? `, экипаж −${lost} CP/CM` : ""}${half}`);
 }
 
 // ── Применение эффекта свойства оружия (Оглушающее, Ослепляющее и т.п.) ──────
@@ -1109,6 +1103,64 @@ function _attachFateContextMenu(message, html) {
     await syncDisabledArmourOverloadTimer(item.actor);
     if (userId === game.user?.id && changes?.system?.active === false) {
       await promptDisabledArmourForkTest(item.actor);
+    }
+  });
+
+  // Узлы корабля (wdbc-qhwb): запоминаем старый system.status ДО применения
+  // правки — preUpdate видит документ ещё нетронутым, а options — тот же
+  // объект, что дойдёт до post-хука ниже (стандартный приём Foundry для
+  // диффа old/new между pre/post update одной операции).
+  Hooks.on("preUpdateItem", (item, changes, options) => {
+    if (item.type === "component" && "status" in (changes.system || {})) {
+      options._prevStatus = item.system.status;
+    }
+  });
+  Hooks.on("updateItem", async (item, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (item.type !== "component" || !item.actor) return;
+    const sys = changes.system;
+    if (!sys) return;
+
+    // Требования к расположению (Location Requirements, wdbc-qhwb): предупредить,
+    // если дуга узла не входит в разрешённый набор — не блокировать, тот же
+    // стиль, что уже есть у предупреждения о перегрузке WC на вкладке «Узлы».
+    if (sys.weapon && "arc" in sys.weapon) {
+      const locReq = resolveShipProps(item).find(p => p.key === "locationReq");
+      if (locReq?.rating) {
+        const allowed = String(locReq.rating).split(",").map(s => s.trim()).filter(Boolean);
+        const raw  = String(sys.weapon.arc || "").trim();
+        const norm = WC_CODE[raw.toUpperCase()] || raw;   // принимает и «ПБ», и «star»
+        if (norm && !allowed.includes(norm)) {
+          ui.notifications.warn(`⚠️ «${item.name}»: Location Requirements не допускает дугу «${raw}» (разрешено: ${allowed.join(", ")}).`);
+        }
+      }
+    }
+
+    // Реакция на повреждение узла (explosive/fragileEngine/robustDesign).
+    if (!("status" in sys) || options._prevStatus === undefined) return;
+    const oldStatus = options._prevStatus;
+    const newStatus = item.system.status;
+    const { forceStatus, explosionDamage, revertStatus, note } =
+      await resolveNodeDamage(resolveShipProps(item), item.system.kind, oldStatus, newStatus,
+        async formula => (await (new Roll(formula)).evaluate()).total);
+    if (!forceStatus && !revertStatus) return;
+
+    if (revertStatus) {
+      await item.update({ "system.status": revertStatus });
+    } else if (forceStatus && forceStatus !== newStatus) {
+      await item.update({ "system.status": forceStatus });
+    }
+    if (explosionDamage) {
+      const roll = await (new Roll(explosionDamage)).evaluate();
+      const { cur, next, lost } = await applyHullDamage(item.actor, roll.total);
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: item.actor }),
+        content: `<div class="wh-roll-result"><div class="roll-header">💥 ${esc(item.name)} — ${note}</div>
+          <div class="roll-threshold">Урон Прочности: <b>${roll.total}</b> (${explosionDamage}): ${cur} → ${next}${lost ? `, экипаж −${lost} CP/CM` : ""}</div></div>`,
+        rolls: [roll], sound: CONFIG.sounds.dice
+      });
+    } else if (note) {
+      ui.notifications.info(`${item.name}: ${note}`);
     }
   });
 }

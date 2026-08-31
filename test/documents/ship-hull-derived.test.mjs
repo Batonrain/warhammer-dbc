@@ -92,3 +92,42 @@ describe("Корпус корабля — производные данные", 
     expect(system.derived.sp.spent).toBe(999); // сам узел всё равно тратит SP как обычный узел
   });
 });
+
+describe("Ship-wide боевые директивы (wdbc-qhwb)", () => {
+  it("deadlyRamming: формулы кубика с узлов+Корпуса копятся в derived.ramDice", () => {
+    const system = shipWith([
+      shipHull({ shipProps: [{ key: "deadlyRamming", rating: "1d10" }] }),
+      component({ shipProps: [{ key: "deadlyRamming", rating: "1d5" }] })
+    ]);
+    expect(system.derived.ramDice).toEqual(["1d10", "1d5"]);
+  });
+
+  it("deadlyRamming без rating (пустой бэкфилл) не попадает в ramDice", () => {
+    const system = shipWith([component({ shipProps: [{ key: "deadlyRamming" }] })]);
+    expect(system.derived.ramDice).toEqual([]);
+  });
+
+  it("devastating(X;Y): суммируется по типу узла Y в derived.devastatingByType", () => {
+    const system = shipWith([
+      component({ shipProps: [{ key: "devastating", rating: 2, rating2: "macrobattery" }] }),
+      component({ shipProps: [{ key: "devastating", rating: 1, rating2: "macrobattery" }] }),
+      component({ shipProps: [{ key: "devastating", rating: 3, rating2: "lance" }] })
+    ]);
+    expect(system.derived.devastatingByType).toEqual({ macrobattery: 3, lance: 3 });
+  });
+
+  it("orbitalStrike: суммируется ship-wide (не только с оружия)", () => {
+    const system = shipWith([
+      component({ kind: "augur", shipProps: [{ key: "orbitalStrike", rating: 5 }] }),
+      component({ kind: "bridge", shipProps: [{ key: "orbitalStrike", rating: 10 }] })
+    ]);
+    expect(system.derived.orbitalStrike).toBe(15);
+  });
+
+  it("узел damaged/destroyed не вносит ship-wide боевые директивы (как и обычные auto)", () => {
+    const system = shipWith([
+      component({ status: "destroyed", shipProps: [{ key: "orbitalStrike", rating: 10 }] })
+    ]);
+    expect(system.derived.orbitalStrike).toBe(0);
+  });
+});

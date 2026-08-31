@@ -2512,6 +2512,36 @@ export class WarhammerItemSheet
       const p     = props.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.shipProps": props }); }
     });
+    // Формула кубика (Deadly Ramming: «1d10») — не число, храним строкой как есть.
+    on(".shipprop-rating-dice", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const field = ev.currentTarget.dataset.field;
+      const val   = ev.currentTarget.value.trim();
+      const props = foundry.utils.deepClone(this.item.system.shipProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p[field] = val; await this.item.update({ "system.shipProps": props }); }
+    });
+    // Одиночный select (Y = тип узла-оружия у Devastating/Effective Distance).
+    on(".shipprop-rating-select", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const field = ev.currentTarget.dataset.field;
+      const val   = ev.currentTarget.value;
+      const props = foundry.utils.deepClone(this.item.system.shipProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p[field] = val; await this.item.update({ "system.shipProps": props }); }
+    });
+    // Множественный выбор (Penetrating: Armour/Void Shields; Location Requirements:
+    // дуги) — собираем все отмеченные чекбоксы той же группы key+field в строку через запятую.
+    on(".shipprop-rating-set", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const field = ev.currentTarget.dataset.field;
+      const group = ev.currentTarget.closest(".wprop-chip")
+        ?.querySelectorAll(`.shipprop-rating-set[data-key="${key}"][data-field="${field}"]`) || [];
+      const val   = [...group].filter(cb => cb.checked).map(cb => cb.value).join(",");
+      const props = foundry.utils.deepClone(this.item.system.shipProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p[field] = val; await this.item.update({ "system.shipProps": props }); }
+    });
 
     // ── Бонусы характеристик (множественные) психосилы / техночуда ──────────────
     on(".cbonus-add", "change", async ev => {

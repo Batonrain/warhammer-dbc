@@ -26,7 +26,8 @@
         "key": "xenotech"
       },
       {
-        "key": "locationReq"
+        "key": "locationReq",
+        "rating": "keel"
       }
     ],
     "hull": {

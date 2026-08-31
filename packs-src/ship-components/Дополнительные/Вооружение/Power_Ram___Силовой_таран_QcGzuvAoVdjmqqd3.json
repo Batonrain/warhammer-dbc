@@ -26,7 +26,8 @@
         "key": "external"
       },
       {
-        "key": "deadlyRamming"
+        "key": "deadlyRamming",
+        "rating": "1d10"
       }
     ],
     "hull": {
