@@ -24,6 +24,14 @@ describe("vitalNaturalStage", () => {
     expect(vitalNaturalStage("hunger", 0, 9 * DAY, ctx)).toBe(3);
   });
 
+  it("Голод: T.b 0-1 (или неизвестный вызывающему) — порог не ниже суток", () => {
+    // Иначе ½T.b = 0 суток: персонаж «голоден» (−10 ко всем характеристикам)
+    // ровно в тот момент, когда поел.
+    expect(vitalNaturalStage("hunger", 0, 0, { tb: 0 })).toBe(0);
+    expect(vitalNaturalStage("hunger", 0, 0.5 * DAY, { tb: 1 })).toBe(0);
+    expect(vitalNaturalStage("hunger", 0, DAY, { tb: 0 })).toBe(1);
+  });
+
   it("Жажда: порог 2 суток (человек) / 7 суток (космодесантник)", () => {
     expect(vitalNaturalStage("thirst", 0, 1.9 * DAY)).toBe(0);
     expect(vitalNaturalStage("thirst", 0, 2 * DAY)).toBe(1);

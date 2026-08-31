@@ -392,6 +392,10 @@ export function registerHooks() {
           // свойства метится пустым/непустым атрибутом, а не самим числом.
           haywireActive:   ds.haywire != null && ds.haywire !== "",
           haywireRating:   parseInt(ds.haywire || "0"),
+          // Выстрел Насквозь (wdbc-wlwf): применяется в applyDamageToActor —
+          // там уже известны AP цели и T.b, из которых и складывается тест
+          // «пробило ли» (combat/through-shot.mjs::throughShotPierces).
+          throughShot:     ds.throughShot === "1",
           // Куб(ы) Магнитуды Орды (wdbc-gzuf) — цель ещё не была известна на
           // момент броска (карточка Орды применяется позже, кнопкой), поэтому
           // эта часть урона едет отдельным числом: применяется в
@@ -502,7 +506,8 @@ export function registerHooks() {
             cripplingRating: parseInt(ds.crippling || "0"),
             piercing:        ds.piercing === "1",
             haywireActive:   ds.haywire != null && ds.haywire !== "",
-            haywireRating:   parseInt(ds.haywire   || "0")
+            haywireRating:   parseInt(ds.haywire   || "0"),
+            throughShot:     ds.throughShot === "1"
           };
           const drift = parseFloat(ds.lingerDrift || "0") || 0;
           const region = await placeLingerZone(shape, damageData, rounds, drift, ds.weaponName || "Остаётся");

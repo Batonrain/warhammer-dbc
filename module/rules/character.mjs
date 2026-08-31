@@ -384,13 +384,21 @@ export function prepareCharacterDerived(actor, system) {
     const charDamage = system.charDamage || {};
     // Авто-дебафф от потребностей (Голод/Жажда) — отдельно от ручного charDamage.
     // Эффективная стадия каждого Виталa — max(сохранённая, естественная по
-    // прошедшему worldTime) (wdbc-jnqj): T.b здесь берётся ДО пересчёта цикла
-    // ниже (chars.t.bonus ещё хранит значение прошлого прохода — тот же
-    // порядок, что и у tb ниже по файлу), поэтому на голод накопившийся за
-    // ход текущего T.b влияет с отставанием в один проход подготовки данных.
+    // прошедшему worldTime) (wdbc-jnqj). Порог Голода — ½T.b суток, но
+    // chars.t.bonus здесь ещё НЕ посчитан (это хранимое поле, считается циклом
+    // ниже и на первом проходе после загрузки актора равно 0) — читать его
+    // означало бы порог «0 суток» и вечный Голод 1-й стадии. Поэтому T.b
+    // складывается тут же из тех же слагаемых, что и в цикле, за вычетом
+    // самого дебаффа от Голода: голодание не должно занижать собственный порог.
     const vitalMods = (actor.type === "character" && system.vitals) ? vitalCharMods((() => {
+      const t = chars.t || {};
+      const tTotal = (t.base || 0) + (t.advance || 0) + (IMPROVEMENT_BONUS[t.improvement] || 0)
+                   + (armorCharBonus.t || 0) + (traitCharValueBonus.t || 0) + (t.totalFx || 0)
+                   + (charDamage.t || 0);
+      const tb = Math.floor(tTotal / 10) + (t.supernatural || 0) + (t.bonusFx || 0)
+               + (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
       const worldTime  = game.time?.worldTime ?? 0;
-      const vitalCtx    = { tb: chars.t?.bonus ?? 0, isAstartes: raceMatches(system, "astartes") };
+      const vitalCtx    = { tb, isAstartes: raceMatches(system, "astartes") };
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
