@@ -698,6 +698,16 @@ body.wh-aiming #board, body.wh-aiming canvas {
   font-size: 2.3em; font-weight: 700; line-height: 1; color: #4dffa6;
   text-shadow: 0 0 12px rgba(77,255,166,.5);
 }
+/* Построчная разбивка порога (wdbc-53lh) — каждое слагаемое отдельной
+   пилюлей под итогом, вместо непрозрачного одного числа. */
+.wh-atk-v2 .av-prev-breakdown {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 3px 6px;
+  margin-top: 3px; max-width: 100%;
+}
+.wh-atk-v2 .av-bd-item {
+  font-size: .74em; color: #9fe8c0; white-space: nowrap;
+}
+.wh-atk-v2 .av-bd-item b { color: #d8ffe8; font-weight: 700; }
 
 .wh-atk-v2 .av-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .wh-atk-v2 .av-row > label { font-size: .84em; color: #7fe0a8; min-width: 92px; flex: none; }
