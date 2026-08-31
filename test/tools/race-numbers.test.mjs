@@ -90,8 +90,10 @@ const EXPECTED_DIFFS = [
   { key: "race:replicant", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — replicant тоже нёс Черту без effects." },
   { key: "race:sslyth", path: "initMod", from: 0, to: 4,
     why: "Sslyth Physiology / Физиология Сслита в константах шёл вовсе без effects (только текст benefit, wdbc-j1nc); библиотечный документ пака теперь несёт настоящий effects.initMod:4 (+4 к Инициативе — один из немногих чистых плоских чисел в этом композитном тексте)." },
-  { key: "race:squat", path: "speedMod", from: 0, to: -1,
-    why: "Sure Tread / Надёжная Поступь в константах squat шёл без effects (только текст benefit, wdbc-j1nc); библиотечный документ пака теперь несёт настоящий effects.speedMod:-1 (знак уже был исправлен книжной сверкой 23.08, но сам перенос в effects сделан только сейчас)." }
+  // race:squat speedMod больше НЕ расхождение: −1 SPD Надёжной Поступи живёт
+  // записью Конструктора kind:movement (ревью второй стопки) — и константы,
+  // и библиотека сходятся на effects.speedMod 0; legacy-канал при
+  // migratedEffect был мёртв, AE целил в несуществующий system.speed.
   // «Hulking / Громила (Легион)» у replicant НЕ здесь: это был омоним, а не
   // недописанная константа — «Легион» (доступ к снаряжению) и «Размер»
   // (sizeMod:1) внутри библиотеки совпадали только словом. Разведены

@@ -5,7 +5,7 @@
   "folder": "OOKw6n1SDAMTIufD",
   "system": {
     "description": "",
-    "notes": "Применены «+3×PR к WS» и «+3×PR к S». «+3×PR к A» не смоделирован — Атаки не входят в 9 характеристик (нет char-scope testMod для derived-поля Attacks).",
+    "notes": "Применены «+3×PR к WS, S и A» (A — Ловкость, как везде в системе) тремя записями testMod с бонусом Пси-Рейтинга ×3.",
     "cost": 500,
     "discipline": "telekinesis",
     "subtype": "Тонкость",
@@ -78,6 +78,16 @@
               "kind": "testMod",
               "modScope": "char",
               "rerollChar": "s",
+              "modValueMode": "charBonus",
+              "modCharBonus": "pr",
+              "modCharBonusMultiplier": 3,
+              "label": "Телекинетическая Мантия"
+            },
+            {
+              "id": "e3",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "ag",
               "modValueMode": "charBonus",
               "modCharBonus": "pr",
               "modCharBonusMultiplier": 3,

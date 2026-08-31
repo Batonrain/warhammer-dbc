@@ -8,7 +8,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { toggleParentId, isToggleOn } from "../rules/toggle-abilities.mjs";
-import { activeRunicWeaveId } from "../rules/runic-weave.mjs";
+import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs";
 
 /**
  * Активен ли предмет прямо сейчас (по его собственным полям состояния) —
@@ -69,8 +69,9 @@ export function isItemActive(item) {
       if (!host) return true; // предмет пака/битая ссылка — судим по своим полям
       if (!isItemActive(host)) return false;
       if (host.type === "armorMod") return !!sys.active; // держатель (Загадка Маата) — ручной тумблер
-      const siblings = [...(item.parent?.items ?? [])]
-        .filter(i => i.type === "runicWeave" && i.system?.installedOn === sys.installedOn)
+      // Правило «кто из вязей действует» живёт одно — в rules/runic-weave.mjs
+      // (Collection.filter отдаёт массив, спред-копия всех предметов не нужна).
+      const siblings = siblingRunicWeaves(item.parent?.items, item)
         .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
       return activeRunicWeaveId(siblings) === item.id;
     }

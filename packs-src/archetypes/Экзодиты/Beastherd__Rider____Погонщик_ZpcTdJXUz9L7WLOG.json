@@ -222,7 +222,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.AxJBYrApcDscU9Ef",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.AxJBYrApcDscU9Ef",
               "sourceName": "Favorite Beast / Любимый Зверь",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,

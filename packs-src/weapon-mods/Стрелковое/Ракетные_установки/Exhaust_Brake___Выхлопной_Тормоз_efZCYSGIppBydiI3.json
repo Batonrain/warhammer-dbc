@@ -5,7 +5,7 @@
   "folder": "u6nFQBb3FL4iqbYZ",
   "system": {
     "description": "При пуске можно направить выхлоп вокруг себя: −1 Надёжность, на стрелке Smoke (1).",
-    "notes": "Не смоделировано: Smoke(1) на САМОМ стрелке при пуске (не на цели) — вне targetEffect, тот считает эффекты на цель.",
+    "notes": "Не смоделировано: −1 Надёжность только при направленном выхлопе и Smoke(1) на самом стрелке при пуске — постоянный Unreliable штрафовал бы и обычный пуск.",
     "category": "ranged",
     "modGroup": "launcher",
     "requirement": "Ракетная Установка. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,13 +26,7 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [
-        {
-          "key": "unreliable",
-          "rating": 0,
-          "rating2": 0
-        }
-      ],
+      "addProps": [],
       "removeProps": []
     },
     "drukhari": false

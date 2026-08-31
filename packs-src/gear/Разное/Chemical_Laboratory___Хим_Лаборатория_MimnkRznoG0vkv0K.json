@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Переносная лаборатория для пополнения стимуляторов во время налётов. Требует Tech-Use+10 либо Trade (Chymist)+10 и Tech-Use+0.",
-    "notes": "Отнесена к Medicae как ближайшему навыку изготовления химических препаратов — книга не называет конкретный Навык явно, требует сверки с первоисточником. Изготовление ядов/материалы не смоделированы.",
+    "notes": "Книга (Ветви Аэльдари): требует Tech-Use+10 или Trade (Chymist)+10 — бонус повешен на Tech-Use; групповой Trade (Chymist) как альтернатива не смоделирован. Изготовление ядов/материалы не смоделированы.",
     "quantity": 1,
     "weight": 8,
     "availability": 2,
@@ -71,7 +71,7 @@
               "minionGroup": "",
               "minionTier": "",
               "skillScope": "plain",
-              "skillKey": "medicae",
+              "skillKey": "techUse",
               "specKey": "",
               "specialty": "",
               "specChoiceKeys": [],

@@ -26,6 +26,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { TALENT_LIBRARY } from "../constants/talents-library.mjs";
 
@@ -230,8 +231,12 @@ export function altTalentCandidates(name, ownedNames = []) {
  * им здесь просто неоткуда взяться.
  */
 export async function talentLibraryEntry(name) {
-  const pack = (typeof game !== "undefined") ? game.packs?.get?.("warhammer-dbc.talents") : null;
-  if (pack) {
+  // Оба пака Талантов (warhammer-dbc.talents + aeldari-talents): тот же
+  // список TALENT_LIB_PACKS, которым ходит resolveMechSource — иначе
+  // аэльдарская альтернатива тихо падала бы на устаревшую константу.
+  for (const packId of TALENT_LIB_PACKS) {
+    const pack = (typeof game !== "undefined") ? game.packs?.get?.(packId) : null;
+    if (!pack) continue;
     try {
       const index = await pack.getIndex();
       const hit = index.find(e => e.name === name);
@@ -239,12 +244,14 @@ export async function talentLibraryEntry(name) {
         const doc = await pack.getDocument(hit._id);
         if (doc) return doc.toObject();
       }
-    } catch (e) { /* пак недоступен/не собран — запасной путь ниже */ }
+    } catch (e) { /* пак недоступен/не собран — следующий пак/запасной путь */ }
   }
   return TALENT_LIBRARY.find(t => t.name === name) || null;
 }
 
-/** Другие обычные (не групповые) Навыки, ещё не достигшие выдаваемого ранга. */
+/** Другие обычные (не групповые) Навыки с их текущим рангом. По рангу не
+ * фильтруются — выбор за игроком в диалоге; если выбранный уже на выдаваемой
+ * ступени, лишнее уходит в компенсацию опытом (refundSteps), как у дубля. */
 export function altSkillCandidates(skillKey, actorSkills = {}) {
   return Object.entries(SKILLS_DEF)
     .filter(([k]) => k !== skillKey)

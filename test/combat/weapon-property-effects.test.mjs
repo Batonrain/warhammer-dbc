@@ -50,7 +50,7 @@ function characterActor({
       },
       wounds: { value: wounds, critical: 0, max: wounds },
       armorCorrosion: { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0, ...armorCorrosion },
-      piercingWounds: { head: false, body: false, leftArm: false, rightArm: false, leftLeg: false, rightLeg: false, ...piercingWounds },
+      piercingWounds: { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0, ...piercingWounds },
       crippledWounds: [...crippledWounds],
       inRage
     },
@@ -115,19 +115,19 @@ describe("Piercing: снаряд в ране при непоглощённом �
   it("непоглощённый урон прошёл — рана ставится", async () => {
     const actor = characterActor({ armorAP: 0, toughnessBonus: 0, wounds: 20 });
     await applyDamageToActor(actor, damage({ rawDamage: 10, piercing: true }));
-    expect(actor.system.piercingWounds.body).toBe(true);
+    expect(actor.system.piercingWounds.body).toBe(1);
   });
 
   it("урон полностью поглощён — раны нет (нет непоглощённого урона)", async () => {
     const actor = characterActor({ armorAP: 20, toughnessBonus: 0, wounds: 20 });
     await applyDamageToActor(actor, damage({ rawDamage: 10, piercing: true }));
-    expect(actor.system.piercingWounds.body).toBe(false);
+    expect(actor.system.piercingWounds.body).toBe(0);
   });
 
   it("иммунитет — рана не ставится, несмотря на непоглощённый урон", async () => {
     const actor = characterActor({ armorAP: 0, toughnessBonus: 0, wounds: 20, immuneTo: "piercing" });
     await applyDamageToActor(actor, damage({ rawDamage: 10, piercing: true }));
-    expect(actor.system.piercingWounds.body).toBe(false);
+    expect(actor.system.piercingWounds.body).toBe(0);
   });
 
   it("заметка упоминает −1 SPD для торса/ноги, но не для руки", async () => {
@@ -144,7 +144,7 @@ describe("Piercing: снаряд в ране при непоглощённом �
   it("extractPiercingWound: снимает рану и наносит +1 непоглощ. R Dmg", async () => {
     const actor = characterActor({ piercingWounds: { body: true }, wounds: 20 });
     await extractPiercingWound(actor, "body");
-    expect(actor.system.piercingWounds.body).toBe(false);
+    expect(actor.system.piercingWounds.body).toBe(0);
     expect(actor.system.wounds.value).toBe(19);
   });
 
@@ -185,7 +185,7 @@ describe("Crippling: рана с шипами записывается, триг
   });
 });
 
-describe("Haywire: бросок 1d10+X по таблице (стр. 168)", () => {
+describe("Haywire: мощность — чистый 1d10 по таблице, X — только радиус (стр. 168)", () => {
   it("низкий бросок — Незначительно, эффекта нет", async () => {
     captured.nextRoll = 1;
     const actor = characterActor({ armorAP: 0, wounds: 20 });
@@ -197,13 +197,14 @@ describe("Haywire: бросок 1d10+X по таблице (стр. 168)", () =>
     expect(card).toContain("Незначительно");
   });
 
-  it("рейтинг X добавляется к броску и может дотянуть до ЭМИ Шторм (11+)", async () => {
+  it("рейтинг X к мощности НЕ прибавляется — он лишь радиус поля в заметке", async () => {
     captured.nextRoll = 8;
     const actor = characterActor({ armorAP: 0, wounds: 20 });
     await applyDamageToActor(actor, damage({ rawDamage: 0, haywireActive: true, haywireRating: 3 }));
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("=<b>11</b>");
-    expect(card).toContain("ЭМИ Шторм");
+    expect(card).toContain("=<b>8</b>");        // 8, не 8+3=11
+    expect(card).toContain("радиус 3 м");
+    expect(card).not.toContain("ЭМИ Шторм");    // до 11+ без «+X» не дотянуться на 8
   });
 
   it("иммунитет — броска не происходит вовсе, заметки нет", async () => {

@@ -57,4 +57,20 @@ export class ShipData extends foundry.abstract.TypeDataModel {
       notes:    new HTMLField({ initial: "", label: "Заметки" })
     };
   }
+
+  /**
+   * @override — свободная заметка «Класс корпуса» (shipClass) снята со схемы
+   * (wdbc-zuf4). У кораблей живых миров текст ещё лежит в _source и при
+   * первом же update() ушёл бы как неизвестный ключ — дописываем его в
+   * Заметки, если его там ещё нет. Идемпотентно.
+   */
+  static migrateData(source) {
+    const cls = String(source?.shipClass || "").trim();
+    if (cls) {
+      const notes = String(source.notes || "");
+      if (!notes.includes(cls)) source.notes = `<p>Класс корпуса: ${cls}</p>${notes}`;
+    }
+    delete source?.shipClass;
+    return source;
+  }
 }
