@@ -40,6 +40,15 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       // failureType — движковый тип (RITUAL_TYPES): summon/dominion/binding/
       // exorcism/curse/circle/gate/blessing/other. Пустое — не заполнено.
       failureType:    new StringField({ initial: "", label: "Тип провала" }),
+      // «Запись (N)» из книжной строки «Требования:» — номер конкретной
+      // ВАРИАЦИИ ритуала (стр. «Определение вариации», core.json: «нужно
+      // накладывать именно ту же вариацию Записи»), НЕ игровой порог, который
+      // должен набрать персонаж. У актора нет поля «Запись» вовсе — сравнивать
+      // не с чем. Используется только офлайн-сверкой конвейера книги
+      // (tools/ritual-reqs.mjs — подтверждает, что распознанный текст
+      // требований достался своему, а не соседнему по развороту ритуалу) и в
+      // игровой расчёт требований (checkRequirements, apps/mechanics.mjs) не
+      // входит и не должно (см. wdbc-c63 — закрыт как недоразумение).
       record:         num("Запись"),
       assistMin:      num("Ассистентов минимум"),
       assistMax:      num("Ассистентов максимум"),
