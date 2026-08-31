@@ -82,3 +82,55 @@ export function isWithinArc(observerRotation, bearing, arcWidthDegrees) {
 export function isFrontArcHit(defenderPos, defenderRotation, attackerPos, arcWidthDegrees = 90) {
   return isWithinArc(defenderRotation, bearingDegrees(defenderPos, attackerPos), arcWidthDegrees);
 }
+
+/**
+ * Разбирает строку сектора наводки орудия техники (vehicleMount.hArc/vArc,
+ * wdbc-m38e) в ширину дуги и её смещение от продольной оси машины —
+ * конвенция книги («Установка», ГН/ВН, machines.json): 0° — вперёд, +90° —
+ * вправо, −90° — влево, 360° — круговой траверс. Форматы:
+ *   "360°"        — не ограничено (ширина ≥360 всегда проходит isWithinArc,
+ *                    но отдаём null явно — вызывающему проще пропустить проверку)
+ *   "a°..b°"      — диапазон, читается КАК ЕСТЬ (не через кратчайшую дугу от
+ *                    a к b по модулю 360, а как обычный числовой интервал):
+ *                    центр (a+b)/2, ширина |b−a|. Так «−135°..−45°» (Скорпиус,
+ *                    спонсон) даёт центр −90°/ширину 90° без обёртывания, а
+ *                    «−5°..−175°» (Карахнос) — центр −90°/ширину 170° тоже без
+ *                    обёртывания через 0/180, просто потому что оба числа уже
+ *                    записаны с нужным знаком для этой стороны.
+ *   одиночное число — полная ширина дуги по центру оси (как ширина у isWithinArc).
+ * Нераспознанное или отсутствующее значение (в т.ч. "—", "", описательные
+ * пометки на рукопашном оружии вроде "рука"/"ноги"/"корпус" — см.
+ * MOUNT_NOTES/vehicle.mjs, у мукопашных «дуга» не при чём) — считается
+ * неограниченным: тот же принцип «нет данных — не наказываем», что и в
+ * isFrontArcHit/resolveAttackerToken.
+ * @param {string} spec
+ * @returns {{width:number, center:number}|null} null — сектор не ограничен
+ */
+export function parseMountArc(spec) {
+  const s = String(spec ?? "").trim();
+  if (!s) return null;
+  const nums = s.match(/[+−-]?\d+(?:[.,]\d+)?/g);
+  if (!nums || !nums.length) return null;
+  const toNum = t => Number(t.replace(/−/g, "-").replace(",", "."));
+  if (nums.length === 1) {
+    const width = Math.abs(toNum(nums[0]));
+    return width >= 360 ? null : { width, center: 0 };
+  }
+  const a = toNum(nums[0]), b = toNum(nums[1]);
+  const width = Math.abs(b - a);
+  return width >= 360 ? null : { width, center: (a + b) / 2 };
+}
+
+/**
+ * В секторе ли горизонтальной/вертикальной наводки орудия техники цель, с
+ * учётом разворота машины (wdbc-m38e — та же геометрия, что у Cloak,
+ * подключённая к vehicleMount.hArc/vArc вместо брони).
+ * @param {number} vehicleRotation  разворот техники (0-360, «на север»=0)
+ * @param {number} bearing          пеленг от техники к цели (bearingDegrees)
+ * @param {string} arcSpec          vehicleMount.hArc (или vArc, если наводка уже спроецирована в плоскость)
+ */
+export function isWithinMountArc(vehicleRotation, bearing, arcSpec) {
+  const arc = parseMountArc(arcSpec);
+  if (!arc) return true;
+  return isWithinArc(vehicleRotation + arc.center, bearing, arc.width);
+}

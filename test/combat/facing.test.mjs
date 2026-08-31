@@ -5,7 +5,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isFrontArcHit } from "../../module/combat/facing.mjs";
+import { isFrontArcHit, isTargetWithinVehicleArc } from "../../module/combat/facing.mjs";
 
 /** Токен-заглушка: та же форма, что у tactical-map.test.mjs (document.x/y/width/height). */
 function token({ x = 0, y = 0, width = 1, height = 1, rotation = 0 } = {}) {
@@ -55,5 +55,27 @@ describe("isFrontArcHit", () => {
     const sideAttacker = token({ x: 300, y: 0 }); // строго сбоку (90° от курса)
     expect(isFrontArcHit(defender, sideAttacker, 90)).toBe(false);
     expect(isFrontArcHit(defender, sideAttacker, 210)).toBe(true);
+  });
+});
+
+describe("isTargetWithinVehicleArc (wdbc-m38e)", () => {
+  it("корпусное орудие (узкий сектор) — цель спереди попадает, сбоку нет", () => {
+    const vehicle = token({ x: 0, y: 0, rotation: 0 });
+    const front = token({ x: 0, y: -300 });
+    const side  = token({ x: 300, y: 0 });
+    expect(isTargetWithinVehicleArc(vehicle, "−25°..+25°", front)).toBe(true);
+    expect(isTargetWithinVehicleArc(vehicle, "−25°..+25°", side)).toBe(false);
+  });
+
+  it("башенное 360° — попадает при любом развороте машины", () => {
+    const vehicle = token({ x: 0, y: 0, rotation: 45 });
+    const rear = token({ x: 0, y: 300 });
+    expect(isTargetWithinVehicleArc(vehicle, "360°", rear)).toBe(true);
+  });
+
+  it("нет позиции одного из токенов — безопасный дефолт true (не мешаем выстрелу)", () => {
+    const vehicle = token({ x: 0, y: 0 });
+    expect(isTargetWithinVehicleArc(vehicle, "−25°..+25°", null)).toBe(true);
+    expect(isTargetWithinVehicleArc(null, "−25°..+25°", vehicle)).toBe(true);
   });
 });
