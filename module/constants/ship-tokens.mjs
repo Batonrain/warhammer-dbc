@@ -3,6 +3,7 @@
 // (натовский стиль эшелонов) + цвет по «отношению» (тинт токена).
 
 import { SHIP_COMPONENTS } from "./ship-components.mjs";
+import { hullEntries } from "../apps/ship-hull-library.mjs";
 
 const ICON_BASE = "systems/warhammer-dbc/assets/ship-icons/";
 
@@ -65,8 +66,23 @@ const SHIPTYPE_CATEGORY = {
   battleship:   "Линкоры"
 };
 
-// Имя корпуса → множество категорий (из библиотеки узлов).
-const HULL_CATEGORY = (() => {
+// Имя корпуса → класс, живой пак warhammer-dbc.ship-components (кэш из
+// apps/ship-hull-library.mjs, уже строится при загрузке мира — Item'ы типа
+// "shipHull" несут system.hullClass напрямую). Ищем по имени, а не по
+// _id/uuid — этот путь нужен именно тогда, когда у найденного на актёре
+// корпуса ещё нет своего hullClass (см. computeShipIdentity).
+function liveHullClass(hullName) {
+  for (const h of Object.values(hullEntries())) {
+    if (h.name === hullName && h.hullClass) return h.hullClass;
+  }
+  return null;
+}
+
+// Легаси-запасной путь (wdbc-tfxh): имя корпуса → множество категорий,
+// собранное из старого JS-дубля SHIP_COMPONENTS. Срабатывает только для
+// корпусов, которых ещё нет в живом паке (немигрированные Item'ы без
+// system.hullClass) — присутствие в паке всегда выигрывает.
+const LEGACY_HULL_CATEGORY = (() => {
   const m = new Map();
   for (const c of SHIP_COMPONENTS) {
     if (c.system?.kind !== "hull") continue;
@@ -78,16 +94,20 @@ const HULL_CATEGORY = (() => {
   return m;
 })();
 
-/** Определить категорию корпуса по имени (+ shipType для снятия неоднозначности). */
+/** Определить категорию корпуса по имени (+ shipType для снятия неоднозначности).
+ * Живой пак — первый источник, легаси-константа SHIP_COMPONENTS — запасной
+ * путь для немигрированных данных. */
 export function shipHullCategory(hullName, shipType) {
-  const cats = HULL_CATEGORY.get(hullName);
   const byType = SHIPTYPE_CATEGORY[shipType] || null;
+  const live = liveHullClass(hullName);
+  if (live) return live;
+  const cats = LEGACY_HULL_CATEGORY.get(hullName);
   if (cats && cats.size) {
     if (cats.size === 1) return [...cats][0];
     if (byType && cats.has(byType)) return byType;
     return [...cats][0];
   }
-  return byType;   // корпуса нет в библиотеке — берём по типу актора
+  return byType;   // корпуса нет нигде — берём по типу актора
 }
 
 /** Размер токена [ширина, высота] по имени корпуса и его категории. */
@@ -105,9 +125,10 @@ export function computeShipIdentity(actor) {
   const hull = actor.items.find(i => i.type === "shipHull");
   const shipType = actor.system?.shipType || "";
   const hullName = hull?.name || "";
-  // Свой тип предмета несёт класс корпуса напрямую (system.hullClass) — точнее
-  // и надёжнее старого поиска по имени+папке легаси-константы SHIP_COMPONENTS,
-  // который остаётся резервом для не мигрированных данных.
+  // Свой тип предмета несёт класс корпуса напрямую (system.hullClass) —
+  // приоритетный путь. Если поле пусто (не мигрированный/ручной Item),
+  // shipHullCategory() сама сначала смотрит в живой пак по имени, и только
+  // затем — в легаси-константу SHIP_COMPONENTS.
   const category = hull?.system?.hullClass || shipHullCategory(hullName, shipType);
   if (!category) return null;
 
