@@ -149,6 +149,14 @@ function effectValue(effect, ctx, ruleId) {
   const { targetCharBonus, selfCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
   // Своя характеристика: «+Inf герольда на тесты Нестабильности» (Локус Цепей).
   // Числа в данных быть не может — Бесчестие у каждого своё.
+  // "pr" — не характеристика: Психосилы/Техночудеса скалируются собственным
+  // текущим Пси-Рейтингом кастера (актора.system.psyker.currentRating, уже
+  // уменьшенным поддерживаемыми силами), не бонусом characteristics[x].bonus
+  // (wdbc-jw81 — «+PR»/«+2×PR» встречается почти в каждой записи пака).
+  if (selfCharBonus === "pr") {
+    const pr = Number(ctx?.actor?.system?.psyker?.currentRating) || 0;
+    return pr * multiplier || 0;
+  }
   if (selfCharBonus) {
     const bonus = ctx?.actor?.system?.characteristics?.[selfCharBonus]?.bonus ?? 0;
     return bonus * multiplier || 0;

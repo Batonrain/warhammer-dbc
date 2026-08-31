@@ -5,7 +5,7 @@
   "folder": "ucMfNIrwP2mezoaI",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Применена только «+2×PR на все тесты WS». «Всегда знает время/дату» и авто-засечка искажений времени — не тестовый модификатор, не смоделированы.",
     "cost": 100,
     "discipline": "chronomancy",
     "subtype": "",
@@ -57,7 +57,25 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "ws",
+              "modValueMode": "charBonus",
+              "modCharBonus": "pr",
+              "modCharBonusMultiplier": 2,
+              "label": "Внутренние Часы"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

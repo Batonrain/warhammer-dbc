@@ -5,7 +5,7 @@
   "folder": "OOKw6n1SDAMTIufD",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Применены «+3×PR к WS» и «+3×PR к S». «+3×PR к A» не смоделирован — Атаки не входят в 9 характеристик (нет char-scope testMod для derived-поля Attacks).",
     "cost": 500,
     "discipline": "telekinesis",
     "subtype": "Тонкость",
@@ -57,7 +57,35 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "ws",
+              "modValueMode": "charBonus",
+              "modCharBonus": "pr",
+              "modCharBonusMultiplier": 3,
+              "label": "Телекинетическая Мантия"
+            },
+            {
+              "id": "e2",
+              "kind": "testMod",
+              "modScope": "char",
+              "rerollChar": "s",
+              "modValueMode": "charBonus",
+              "modCharBonus": "pr",
+              "modCharBonusMultiplier": 3,
+              "label": "Телекинетическая Мантия"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

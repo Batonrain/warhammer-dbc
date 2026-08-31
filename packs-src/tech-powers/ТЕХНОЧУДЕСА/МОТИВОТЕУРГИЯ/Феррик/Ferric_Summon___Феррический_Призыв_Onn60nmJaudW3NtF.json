@@ -5,7 +5,7 @@
   "folder": "UgkBDS5lckPm4iaG",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Не смоделировано: тип «manipula» — активируется разово/по условию, не держится через system.sustained; testMod на этом предмете гейтился бы isItemActive так же, как sustained-техночудеса, и никогда не считался бы активным для этого типа (module/apps/effects.mjs). Императив/Компенсатор/Манипула/Славословие/Анима/Доктрина — во всей категории.",
     "discipline": "motivotheurgy",
     "subtype": "Феррик",
     "miracleType": "manipula",
