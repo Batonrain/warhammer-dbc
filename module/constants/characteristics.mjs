@@ -41,7 +41,6 @@ export const APTITUDES = {
   finesse:    "Искусность",
   fieldcraft: "Полевые навыки",
   knowledge:  "Знание",
-  leadership: "Лидерство",
   social:     "Социальное",
   tech:       "Техника",
   psyker:     "Псайкер",
