@@ -61,6 +61,14 @@ describe("system.absorption.propFlags", () => {
     expect(system.absorption.propFlags.body.doubleBlast).toBe(true);
   });
 
+  it("Cloak на плаще поднимает frontArcNoProtect только у тела (wdbc-p5el)", () => {
+    const system = characterWith([
+      armorItem({ id: "a1", body: 2, properties: ["cloak"] })
+    ]);
+    expect(system.absorption.propFlags.body.frontArcNoProtect).toBe(true);
+    expect(system.absorption.propFlags.head.frontArcNoProtect).toBe(false);
+  });
+
   it("снятая (не equipped) броня не участвует", () => {
     const system = characterWith([
       armorItem({ id: "a1", body: 6, properties: ["conductive"], equipped: false })
@@ -75,7 +83,8 @@ describe("system.absorption.propFlags", () => {
     expect(system.absorption.propFlags.head).toEqual({
       noEnergy: false, noImpact: false, doubleBlast: false,
       noRanged: false, noJointCalled: false, noEyeCalled: false,
-      blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false
+      blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
+      frontArcNoProtect: false
     });
   });
 });
