@@ -145,6 +145,10 @@
   border: 1px solid color-mix(in srgb, var(--pc) 35%, transparent);
 }
 .warhammer-dbc .psy-pr-cell, .warhammer-dbc .psy-sustain-cell { text-align: center; }
+/* Дальность до выбранной цели (wdbc-iy0c) — предупреждение, не блокировка. */
+.warhammer-dbc .psy-range-verdict { font-size: 0.7em; margin-top: 1px; font-weight: 700; letter-spacing: 0.02em; }
+.warhammer-dbc .psy-range-verdict.in-bounds { color: #6fe6a0; }
+.warhammer-dbc .psy-range-verdict.out-bounds { color: #ff6b6b; }
 .warhammer-dbc .psy-row-sustained {
   background: color-mix(in srgb, var(--pc) 14%, transparent) !important;
   box-shadow: inset 3px 0 0 var(--pc2);

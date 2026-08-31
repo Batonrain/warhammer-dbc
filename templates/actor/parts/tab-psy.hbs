@@ -118,7 +118,7 @@
             <td class="psy-pr-cell">{{p.prRequired}}</td>
             <td class="psy-thr-cell">{{#if p.threshold}}<span class="psy-thr" title="Порог при эPR = тПР">{{p.testAbbr}} ≤{{p.threshold}}</span>{{else}}<span class="psy-thr-na">—</span>{{/if}}</td>
             <td>{{p.actionLabel}}</td>
-            <td>{{p.range}}</td>
+            <td>{{p.range}}{{#if p.rangeVerdictText}}<div class="psy-range-verdict {{#if p.rangeInBounds}}in-bounds{{else}}out-bounds{{/if}}">{{p.rangeVerdictText}}</div>{{/if}}</td>
             <td class="psy-sustain-cell">
               {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{else}}—{{/if}}
             </td>
