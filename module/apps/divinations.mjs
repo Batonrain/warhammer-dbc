@@ -43,8 +43,9 @@ export function divinationSheetContext(actor) {
     effect: item?.system?.effect || "",
     charLabel: item?.system?.charModLabel || "",
     // Список из компендиума; если он ещё не прочитан — из константной таблицы.
+    // effect — для предпросмотра (title у option) до выбора, не только после.
     options: packEntries(DIVINATION_TAG, () => DIVINATIONS.map(d => ({
-      key: d.key, name: d.text, roll: rollLabel(d)
+      key: d.key, name: d.text, roll: rollLabel(d), effect: d.effect || ""
     }))).map(o => ({ ...o, selected: o.key === cur }))
   };
 }
