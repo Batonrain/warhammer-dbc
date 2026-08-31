@@ -699,6 +699,9 @@ export const LEGIONS = [
         geneseed: "Как у Гвардии Ворона. Меланохром — белая просвечивающая кожа, белые волосы. Сус-ан Мембрана — раз/сутки исцеляет 2×СУ Ран (в конце след. Хода; засекается как Биомантия). Прогеноиды — 80% несовместимости вне евгенической программы.",
         culture: "«За Гранью Смерти» — Intimidate и Combat Sense, Never Die, Pain Is An Illusion, Hero’s Sleep, Mind Killer дружественны; Inquiry и True Grit, Crushing Blow, Frenzy, Deadeye Shot, Sharpshooter, Frontline Commander враждебны. Forbidden Lore (Psykers)+10, Resistance (Psychic Powers), Don’t Trust Your Eyes, Strong Minded.",
         curse: "«Пепельная Слепота» — как у Гвардии Ворона." ,
+        // susAnHeal — читает module/apps/sus-an-heal.mjs::isDeathSpectre() вместо
+        // сравнения legion==='XIX' && chapter==='deathspectres' (wdbc-l07y).
+        effects: { susAnHeal: true },
         cult: { friendlySkills: ["Intimidate"], friendlyTalents: ["Combat Sense", "Never Die", "Pain Is an Illusion", "Hero", "Mind Killer"],
                 hostileSkills: ["Inquiry"], hostileTalents: ["True Grit", "Crushing Blow", "Frenzy", "Deadeye Shot", "Sharpshooter", "Frontline Commander"],
                 grantSkills: ["Forbidden Lore (Psykers)+10"], grantTalents: ["Resistance", "Trust Your Eyes", "Strong Minded"] } }),

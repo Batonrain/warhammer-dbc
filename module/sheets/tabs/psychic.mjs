@@ -6,7 +6,7 @@
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
-import { isAeldariRace } from "../../apps/race-library.mjs";
+import { hasRuleFlag } from "../../rules/flags.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
@@ -49,8 +49,9 @@ export function resolvePsyCastAttr(actor, sys) {
 export function showManifestDialog(actor, item) {
   const sys      = item.system;
   const psy      = actor.system.psyker || {};
-  const isEldar  = isAeldariRace(actor.system.race);
-  // Аэльдари всегда используют Природу «Древнее Мастерство»
+  const isEldar  = hasRuleFlag(actor, "psyker.ancientMastery");
+  // Аэльдари всегда используют Природу «Древнее Мастерство» — флаг из данных
+  // расы (module/rules/library/aeldari.mjs), не сравнение имени расы.
   const nature   = isEldar ? "ancientMastery" : (psy.class || "bound");
   // Манифест. PR (mPR) — свободный выбор от 1 до текущего Пси-Рейтинга (тPR),
   // стр. 289: тPR = бPR −1 за каждую поддерживаемую силу, а эPR можно снижать

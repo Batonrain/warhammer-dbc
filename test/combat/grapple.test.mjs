@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon } from "../../module/combat/grapple.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -107,5 +107,32 @@ describe("grapplePartner / endGrapple", () => {
 
     expect(attacker._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": false }));
     expect(target._updates).toContainEqual(expect.objectContaining({ "system.conditions.grappling": false }));
+  });
+});
+
+// wdbc-l07y: раньше /укус/i (только русская половина) — оружие, записанное
+// одной английской половиной («Bite»), не находилось вовсе.
+describe("isBiteWeapon", () => {
+  it("находит по русской половине двуязычного имени", () => {
+    expect(isBiteWeapon({ type: "weapon", name: "Bite / Укус" })).toBe(true);
+  });
+
+  it("находит по чисто английскому имени (раньше не находил)", () => {
+    expect(isBiteWeapon({ type: "weapon", name: "Bite" })).toBe(true);
+  });
+
+  it("находит по чисто русскому имени", () => {
+    expect(isBiteWeapon({ type: "weapon", name: "Укус" })).toBe(true);
+  });
+
+  it("не оружие или не то оружие — нет", () => {
+    expect(isBiteWeapon({ type: "weapon", name: "Bolt Pistol" })).toBe(false);
+    expect(isBiteWeapon({ type: "implant", name: "Bite" })).toBe(false);
+  });
+
+  it("ranged/exotic класс оружия с этим именем не считается — только melee/пусто", () => {
+    expect(isBiteWeapon({ type: "weapon", name: "Bite", system: { weaponClass: "ranged" } })).toBe(false);
+    expect(isBiteWeapon({ type: "weapon", name: "Bite", system: { weaponClass: "melee" } })).toBe(true);
+    expect(isBiteWeapon({ type: "weapon", name: "Bite", system: {} })).toBe(true);
   });
 });

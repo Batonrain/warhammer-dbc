@@ -23,6 +23,7 @@
 import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
 
 const NS = "warhammer-dbc";
 const PARTNER_FLAG = "grapplePartnerUuid";
@@ -121,10 +122,16 @@ async function _doSqueeze(actor) {
   }, rollMode));
 }
 
+// Оружие «Укус» — обе половины двуязычного имени (wdbc-l07y: было /укус/i, не
+// находило предмет, записанный только английской половиной «Bite»).
+export function isBiteWeapon(item) {
+  return item?.type === "weapon" && (itemHasName(item, "Укус") || itemHasName(item, "Bite"))
+    && (item.system?.weaponClass === "melee" || !item.system?.weaponClass);
+}
+
 /** Укусы — свободное действие, автоматический бой в торс (или Избирательно). */
 async function _doBite(actor) {
-  const biteWeapon = actor.items.find(i => i.type === "weapon"
-    && /укус/i.test(i.name) && (i.system?.weaponClass === "melee" || !i.system?.weaponClass));
+  const biteWeapon = actor.items.find(isBiteWeapon);
   if (!biteWeapon) {
     ui.notifications.warn(`${actor.name}: не найдено оружие «Укус» в снаряжении — Укус доступен только персонажам, способным кусаться.`);
     return;

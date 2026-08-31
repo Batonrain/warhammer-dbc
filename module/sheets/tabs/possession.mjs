@@ -10,6 +10,7 @@
 
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../../constants/possession.mjs";
+import { giftNamesOf } from "../../rules/predicates.mjs";
 
 // Группировка каталога Даров Одержимого по группам (для вкладки «Одержимость»).
 // activeSet — имена Даров, реально надетых на актора (подсветка «активен»).
@@ -37,11 +38,8 @@ export function possessionContext(actor) {
   // Симбиоз ограничен min(Inf/15, Cor/15) окр.▼
   const symLimit = Math.max(0, Math.min(5, Math.floor(Math.min(cor, (system.characteristics?.inf?.total ?? 0)) / 15)));
   const wbDemon = Math.floor((p.demonWounds?.max ?? 0) / 10);
-  // Активные Дары на акторе (предметы-таланты «Дар: …») и лимит по профилю.
-  const activeGiftNames = actor.items
-    .filter(i => i.type === "talent" && i.name.startsWith("Дар: "))
-    .map(i => i.name.replace(/^Дар:\s*/, ""));
-  const activeGiftSet = new Set(activeGiftNames);
+  // Активные Дары на акторе (предметы-таланты «… / Дар: X») и лимит по профилю.
+  const activeGiftSet = giftNamesOf(actor);
   return {
     p, meta, cor, prof, sym, symLimit,
     demonOptions: TWIN_SPIRIT_DEMONS.map(d => ({ key: d.key, label: d.label, godLabel: (twinSpiritMeta(d.key).godLabel), selected: d.key === (p.demon || "katart") })),
@@ -60,9 +58,9 @@ export function possessionContext(actor) {
     // Проявление: состояние и применённые авто-бонусы
     manifested: !!p.manifested,
     applied: (system.possessionActive?.applied) || [],
-    activeGiftCount: activeGiftNames.length,
+    activeGiftCount: activeGiftSet.size,
     giftLimit: prof.gifts,
-    giftsOver: activeGiftNames.length > prof.gifts,
+    giftsOver: activeGiftSet.size > prof.gifts,
     // Руны True Tongue (генерируются в шаблоне; сюда — сид анимации по богу)
     runeSeed: (p.demon || "katart").length * 7 % 12
   };

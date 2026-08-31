@@ -80,13 +80,13 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     if (inf) inf.label = "Бесчестие";
 
     const alg = allegianceMeta(s.allegiance || "undivided");
-    const isKhorne = (s.allegiance || "undivided") === "khorne";
+    const canPsyker = alg.canPsyker !== false;      // Кхорн (canPsyker:false) ненавидит колдовство
     context.daemon = {
       allegiance: s.allegiance || "undivided",
       alg,
-      canPsyker: !isKhorne,                       // Кхорн ненавидит колдовство
+      canPsyker,
       isPsykerRaw: !!s.isPsyker,
-      showPsy: !!s.isPsyker && !isKhorne,
+      showPsy: !!s.isPsyker && canPsyker,
       allegianceOptions: DEMON_ALLEGIANCES.map(a => ({ key: a.key, label: a.label, selected: a.key === (s.allegiance || "undivided") })),
       rank: s.rank || "lesser",
       rankOptions: DEMON_RANKS.map(r => ({ key: r.key, label: r.label, selected: r.key === (s.rank || "lesser") })),
@@ -266,21 +266,20 @@ Hooks.on("preCreateActor", (actor, data) => {
   if ((data?.type || actor?.type) !== "daemon") return;
   const alg = data?.system?.allegiance || "undivided";
   const m = allegianceMeta(alg);
-  // Демоны по умолчанию — Демонические псайкеры (кроме Кхорна: он ненавидит колдовство).
-  const isKhorne = alg === "khorne";
+  // Демоны по умолчанию — Демонические псайкеры (кроме Богов с canPsyker:false, напр. Кхорна).
   actor.updateSource({
     img: m.sigil,
     prototypeToken: { texture: { src: m.sigil, tint: m.color }, actorLink: true },
-    system: { isPsyker: !isKhorne, psyker: { class: "daemonic" } }
+    system: { isPsyker: m.canPsyker !== false, psyker: { class: "daemonic" } }
   });
 });
 
 Hooks.on("updateActor", async (actor, changes) => {
   if (actor.type !== "daemon" || changes?.system?.allegiance === undefined) return;
-  // Кхорн ненавидит колдовство — демон Кхорна не может быть псайкером.
-  if (actor.system.allegiance === "khorne" && actor.system.isPsyker)
-    await actor.update({ "system.isPsyker": false });
   const m = allegianceMeta(actor.system.allegiance);
+  // Бог с canPsyker:false (Кхорн ненавидит колдовство) — его демон не может быть псайкером.
+  if (m.canPsyker === false && actor.system.isPsyker)
+    await actor.update({ "system.isPsyker": false });
   const upd = {};
   // Кастомный арт/токен не трогаем — синкаем только если стоит один из сигилов.
   if (SIGIL_PATHS.has(actor.img) && actor.img !== m.sigil) upd.img = m.sigil;

@@ -5,7 +5,8 @@
 // этом не меняется.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
-import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES } from "./library/aeldari.mjs";
+import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
+         HALF_ELDAR_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
@@ -15,6 +16,7 @@ import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
 import { adjutantRerollRules } from "./adjutant.mjs";
 import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
+import { PATRON_RULES } from "./library/patronage.mjs";
 
 const SOURCES = new Map();
 
@@ -59,10 +61,14 @@ const RACE_RULES = {
   wrack: DRUKHARI_RULES,
   azuriane: AZURIANE_RULES,
   harlequin: HARLEQUIN_RULES,
-  ynnari: YNNARI_RULES
+  ynnari: YNNARI_RULES,
+  halfEldar: HALF_ELDAR_RULES
 };
 
 registerRuleSource("race", a => RACE_RULES[a?.system?.race] ?? []);
+
+// Правила по Покровительству Бога (system.patronGod) — см. library/patronage.mjs.
+registerRuleSource("patron", a => PATRON_RULES[a?.system?.patronGod] ?? []);
 
 // Выключенная подсистема убирает свои правила из сборки: иначе выключатель
 // «Происхождения» гасил бы галочки в диалоге броска, а правила Происхождения

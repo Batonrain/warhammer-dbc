@@ -74,6 +74,20 @@ function wearsPowerArmour(actor) {
     i?.type === "armor" && i?.system?.equipped && POWER_ARMOUR_TYPES.has(i?.system?.armorType));
 }
 
+/**
+ * Сус-ан Мембрана — орган Геносемени Гвардии Ворона/Призраков Смерти
+ * (wdbc-l07y, дубль был в rules/death-save.mjs и apps/sus-an-heal.mjs).
+ * Русская половина в паке несёт книжный номер («12. Сус-ан Мембрана /
+ * Sus-an Membrane») — itemHasName сравнивает половины ЦЕЛИКОМ, поэтому номер
+ * сломал бы совпадение по русской половине; проверяем обе половины
+ * отдельно, а не одну надёжную (английскую) — старые фикстуры тестов и
+ * возможные ручные записи без номера остаются рабочими.
+ */
+export function isSusAnMembraneItem(item) {
+  return item?.type === "implant" &&
+    (itemHasName(item, "Сус-ан Мембрана") || itemHasName(item, "Sus-an Membrane"));
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
@@ -214,4 +228,28 @@ export function hasEliteArchetype(actor, name) {
 export function isPossessed(actor) {
   const sys = actor?.system || {};
   return (sys.alignment === "heretic" && !!sys.possessed) || hasEliteArchetype(actor, "Одержимый");
+}
+
+/**
+ * Дары Одержимого (module/constants/possession.mjs::POSSESSION_GIFTS) —
+ * предметы-таланты с двуязычным именем «Английское / Дар: Русское» (wdbc-rc5z).
+ * Раньше этот префикс был договором между rules/character.mjs (точное
+ * совпадение ВСЕЙ строки имени с «Дар: X» — не срабатывало на реальные
+ * бигвальные записи пака) и sheets/tabs/possession.mjs (name.startsWith,
+ * та же ошибка — реальное имя начинается с английской половины, не с
+ * префикса), закреплён только комментариями в двух местах.
+ */
+export const GIFT_NAME_PREFIX = "Дар: ";
+
+/** Множество активных имён Даров (без префикса) — предметы-таланты актора. */
+export function giftNamesOf(actor) {
+  const out = new Set();
+  for (const i of actor?.items ?? []) {
+    if (i?.type !== "talent") continue;
+    for (const part of String(i?.name ?? "").split("/")) {
+      const p = part.trim();
+      if (p.startsWith(GIFT_NAME_PREFIX)) { out.add(p.slice(GIFT_NAME_PREFIX.length).trim()); break; }
+    }
+  }
+  return out;
 }

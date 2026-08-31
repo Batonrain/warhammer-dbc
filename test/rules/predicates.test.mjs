@@ -268,7 +268,7 @@ describe("общее требование к предикатам", () => {
 });
 
 // ── Общие предикаты листа: Элитный архетип и Одержимый ──────────────────────
-import { hasEliteArchetype, isPossessed } from "../../module/rules/predicates.mjs";
+import { hasEliteArchetype, isPossessed, giftNamesOf, GIFT_NAME_PREFIX } from "../../module/rules/predicates.mjs";
 
 describe("hasEliteArchetype — три источника, двуязычные имена", () => {
   const actor = ({ elite = "", extra = [], items = [] } = {}) =>
@@ -293,5 +293,41 @@ describe("isPossessed — один предикат на вкладку и на 
   it("чекбокс без heretic не считается, архетип «Одержимый» — считается", () => {
     expect(isPossessed({ system: { alignment: "loyalist", possessed: true }, items: [] })).toBe(false);
     expect(isPossessed({ system: { alignment: "loyalist", eliteArchetype: "Одержимый" }, items: [] })).toBe(true);
+  });
+});
+
+// wdbc-rc5z: раньше по-разному сломано в двух местах — rules/character.mjs
+// сравнивал ВСЮ строку имени с «Дар: X» (не находил реальные бигвальные
+// записи пака), sheets/tabs/possession.mjs звал name.startsWith («Дар: » не
+// в начале строки у «Carapace / Дар: Панцирь»). Общий giftNamesOf проверяет
+// КАЖДУЮ половину имени на префикс.
+describe("giftNamesOf — Дары Одержимого по двуязычному имени", () => {
+  it("реальный формат пака: английская половина первая", () => {
+    const actor = { items: [{ type: "talent", name: "Carapace / Дар: Панцирь" }] };
+    expect(giftNamesOf(actor)).toEqual(new Set(["Панцирь"]));
+  });
+
+  it("старый формат без английской половины — тоже находит", () => {
+    const actor = { items: [{ type: "talent", name: "Дар: Гигант" }] };
+    expect(giftNamesOf(actor)).toEqual(new Set(["Гигант"]));
+  });
+
+  it("несколько Даров разом, не-таланты и предметы без префикса игнорируются", () => {
+    const actor = { items: [
+      { type: "talent", name: "Carapace / Дар: Панцирь" },
+      { type: "talent", name: "Giant / Дар: Гигант" },
+      { type: "trait", name: "Дар: Не считается — не talent" },
+      { type: "talent", name: "Iron Discipline" }
+    ] };
+    expect(giftNamesOf(actor)).toEqual(new Set(["Панцирь", "Гигант"]));
+  });
+
+  it("пустой актор — пустое множество", () => {
+    expect(giftNamesOf({ items: [] })).toEqual(new Set());
+    expect(giftNamesOf(null)).toEqual(new Set());
+  });
+
+  it("GIFT_NAME_PREFIX — общая константа с завершающим пробелом", () => {
+    expect(GIFT_NAME_PREFIX).toBe("Дар: ");
   });
 });

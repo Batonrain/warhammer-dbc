@@ -109,6 +109,18 @@ export const CAPABILITIES = {
     source: "Раса: Серый Человек (Oteshii)",
     reader: "module/rules/character.mjs — prepareCharacterDerived(), блок system.psyker, пересчитывается каждый цикл"
   },
+  // ── Природа психосилы «Древнее Мастерство» у всех рас Аэльдари (wdbc-l07y) ──
+  "psyker.ancientMastery": {
+    label: "Природа психосилы всегда «Древнее Мастерство» (независимо от system.psyker.class)",
+    source: "Расы группы «Аэльдари»: Экзодит/Друкхари/Азуриане/Арлекин/Иннари/Полуэльдар",
+    reader: "module/sheets/tabs/psychic.mjs — showManifestDialog(), isEldar/nature"
+  },
+  // ── Иммунитет к Грозному Воплю у посвящённых Слаанеш (wdbc-l07y) ─────────
+  "dreadWail.immune": {
+    label: "Иммунитет к звуковой волне Грозного Вопля",
+    source: "Покровительство: Слаанеш (system.patronGod)",
+    reader: "module/combat/dread-wail.mjs — applyDreadWailWave(), фильтр целей в радиусе"
+  },
   // ── Иммунитет к физическим мутациям (wdbc-gzuf) ──────────────────────────
   "mutation.physicalImmune": {
     label: "Не получает физических мутаций (таблица «Общие мутации» недоступна; Дары Богов — доступны)",

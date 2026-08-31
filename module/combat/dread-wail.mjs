@@ -27,6 +27,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -130,7 +131,7 @@ export async function applyDreadWailWave(actor, casterToken, effectKey) {
   const corBonus = Number(actor.system?.corruptionBonus) || 0;
   const radius = corBonus / 2;
   const inRange = tokensWithinRadius(casterToken, radius)
-    .filter(t => t.actor && t.actor.system?.patronGod !== "slaanesh");
+    .filter(t => t.actor && !hasRuleFlag(t.actor, "dreadWail.immune"));
 
   const lines = [];
   for (const tokenDoc of inRange) {

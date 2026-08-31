@@ -36,6 +36,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels } from "./dreadnought.mjs";
 import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { calcMovement } from "./movement.mjs";
 
@@ -179,7 +180,7 @@ export function prepareCharacterDerived(actor, system) {
       // «Не работает» — орган на месте (виден на карте тела), но неисправен:
       // его эффекты не считаются, пока GM/игрок не переключит статус обратно.
       if (t === "implant" && item.getFlag("warhammer-dbc", "disabled")) continue;
-      if (t === "implant" && /Чёрный Панцирь|Black Carapace/i.test(item.name)) {
+      if (t === "implant" && (itemHasName(item, "Чёрный Панцирь") || itemHasName(item, "Black Carapace"))) {
         hasBlackCarapaceBackup = true;
       }
       // Бионические конечности: +2 к эффективному Поглощению этой частью тела.
@@ -309,12 +310,11 @@ export function prepareCharacterDerived(actor, system) {
       traitCharBonus.t = (traitCharBonus.t || 0) + prof.daemonic;     // Daemonic → T.b (соглашение бестиария)
       traitFearRating  = Math.max(traitFearRating, prof.fear);        // Fear
       applied.push(`Unnatural S +${prof.unnaturalS}`, `Daemonic ${prof.daemonic} (T.b)`, `Fear ${prof.fear}`);
-      // Активные Дары (предметы-таланты с именем «Дар: …») с числовыми эффектами
-      const giftNames = new Set(actor.items.filter(i => i.type === "talent").map(i => i.name));
-      const hasGift = (n) => giftNames.has(`Дар: ${n}`);
-      if (hasGift("Панцирь"))               { traitArmourAll += corB; applied.push(`Панцирь: Natural Armour ${corB}`); }
-      if (hasGift("Гигант"))                { traitSizeMod += 1; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер, +10 S"); }
-      if (hasGift("Демоническая Скорость")) { const a = Math.floor(corB / 2); traitCharBonus.ag = (traitCharBonus.ag || 0) + a; applied.push(`Демон. Скорость: Unnatural A +${a}`); }
+      // Активные Дары (предметы-таланты «… / Дар: X») с числовыми эффектами
+      const giftNames = giftNamesOf(actor);
+      if (giftNames.has("Панцирь"))               { traitArmourAll += corB; applied.push(`Панцирь: Natural Armour ${corB}`); }
+      if (giftNames.has("Гигант"))                { traitSizeMod += 1; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер, +10 S"); }
+      if (giftNames.has("Демоническая Скорость")) { const a = Math.floor(corB / 2); traitCharBonus.ag = (traitCharBonus.ag || 0) + a; applied.push(`Демон. Скорость: Unnatural A +${a}`); }
       system.possessionActive = { prof, corB, applied };
     }
 
@@ -340,7 +340,7 @@ export function prepareCharacterDerived(actor, system) {
     // Голографическая защита, а не силовая: не поглощает попадания, а срывает
     // их. Носителю — бонус на избегание и Stealth, противнику — штраф на атаки.
     {
-      const cf = actor.items.find(i => /Clone Field|Клонирующее Поле/i.test(i.name)
+      const cf = actor.items.find(i => (itemHasName(i, "Clone Field") || itemHasName(i, "Клонирующее Поле"))
                                    && i.system?.worn !== false);
       system.cloneField = cf
         ? cloneFieldTier(cf.system?.availability ?? 2, cf.system?.quality)
@@ -481,7 +481,7 @@ export function prepareCharacterDerived(actor, system) {
     if (system.race === "drukhari" && system.fate) {
       const wb = chars.wp?.bonus ?? 0;
       const bottomless = Math.min(3, actor.items.filter(i =>
-        i.type === "talent" && /Bottomless Soul|Бездонная Душа/i.test(i.name)).length);
+        i.type === "talent" && (itemHasName(i, "Bottomless Soul") || itemHasName(i, "Бездонная Душа"))).length);
       system.fate.max = wb * (1 + bottomless);
       if ((system.fate.value ?? 0) > system.fate.max) system.fate.value = system.fate.max;
       system.painActive  = true;
@@ -499,7 +499,7 @@ export function prepareCharacterDerived(actor, system) {
     // module/rules/dreadnought.mjs).
     if (system.sanity) {
       const coreMemories = actor.items.filter(i =>
-        i.type === "talent" && /Core Memories|Ядро Воспоминаний/i.test(i.name)).length;
+        i.type === "talent" && (itemHasName(i, "Core Memories") || itemHasName(i, "Ядро Воспоминаний"))).length;
       system.sanity.max = sanityMax(chars.wp?.bonus ?? 0, coreMemories);
       system.sanity.value = Math.max(0, Math.min(system.sanity.max, Number(system.sanity.value) || 0));
       system.sanity.thresholds = madnessLevels(system.sanity.value);
@@ -760,7 +760,7 @@ export function prepareCharacterDerived(actor, system) {
     // не хранится, а вводится). Здесь только живой процент с Черты — читает его
     // тот же диалог в момент прибавления опыта.
     const fastLearner = actor.items.find(i => i.type === "trait"
-                                           && /Fast Learner|Ловит на Лету/i.test(i.name));
+                                           && (itemHasName(i, "Fast Learner") || itemHasName(i, "Ловит на Лету")));
     system.fastLearnerBonus = fastLearner ? (Number(fastLearner.system?.rating) || 0) : 0;
 
     // Автосумма цен характеристик

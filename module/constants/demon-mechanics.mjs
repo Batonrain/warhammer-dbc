@@ -15,8 +15,8 @@ const ASSET = (n) => `systems/warhammer-dbc/assets/${n}.png`;
 export const DEMON_ALLEGIANCES = [
   { key: "undivided", label: "Неделимый", divineTrait: "",
     note: "Демоны Неделимого не имеют узкого божественного Трейта, но универсальны." },
-  { key: "khorne", label: "Кхорн", divineTrait: "Blood for the Blood God",
-    note: "Кровь Богу Крови: убив живого или изгнав демона — +2 к рукопашному урону (склад. до +8) до конца боя; кровь/трупы — не трудный ландшафт." },
+  { key: "khorne", label: "Кхорн", divineTrait: "Blood for the Blood God", canPsyker: false,
+    note: "Кровь Богу Крови: убив живого или изгнав демона — +2 к рукопашному урону (склад. до +8) до конца боя; кровь/трупы — не трудный ландшафт. Кхорн ненавидит колдовство: его демоны не бывают псайкерами." },
   { key: "nurgle", label: "Нургл", divineTrait: "Mockery of Life",
     note: "Насмешка Над Жизнью: раз в Раунд при падении ниже 0 Ран — тест Т+10, при Успехе остаться с 0 Ран (не против свящ. оружия/Нестабильности). Иммунитет ко всем ядам." },
   { key: "tzeentch", label: "Тзинч", divineTrait: "Sorcerous Barrier",

@@ -11,6 +11,8 @@
 //  формулы вовсе (по прямому решению пользователя — последствия на ГМа).
 // ════════════════════════════════════════════════════════════════════════════
 
+import { isSusAnMembraneItem } from "./predicates.mjs";
+
 /** Пул очков, которым персонаж расплачивается — Судьба у лоялиста, Бесчестье у хаосита. */
 export function fatePoolLabel(actor) {
   return actor?.system?.alignment === "heretic" ? "Бесчестья" : "Судьбы";
@@ -34,9 +36,7 @@ export function hasDivineProtectionTalent(actor) {
 
 /** Установленная Сус-ан Мембрана (флаг installed — как у остальных имплантов Хирургеона). */
 export function hasSusAnMembrane(actor) {
-  return !!actor?.items?.some(i => i.type === "implant"
-    && /Сус-ан Мембрана/i.test(i.name || "")
-    && !!i.getFlag?.("warhammer-dbc", "installed"));
+  return !!actor?.items?.some(i => isSusAnMembraneItem(i) && !!i.getFlag?.("warhammer-dbc", "installed"));
 }
 
 /** Раны ещё не ушли ниже -15 — Замедленная Анимация всё ещё доступна. */
