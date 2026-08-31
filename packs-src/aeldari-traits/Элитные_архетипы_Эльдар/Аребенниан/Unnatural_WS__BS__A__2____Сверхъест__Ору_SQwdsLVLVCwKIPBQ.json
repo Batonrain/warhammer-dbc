@@ -38,13 +38,78 @@
     }
   },
   "_id": "SQwdsLVLVCwKIPBQ",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural WS, BS, A (2) / Сверхъест. Оружейное, Стрелковое Мастерство и Ловкость (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.ws.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.bs.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.ag.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "9FmAvibxLFx4wUBz",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090270626,
+        "modifiedTime": 1788090270626,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!SQwdsLVLVCwKIPBQ.9FmAvibxLFx4wUBz"
+    }
+  ],
   "folder": "DHQsbGR7cLw3fxds",
   "sort": 0,
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

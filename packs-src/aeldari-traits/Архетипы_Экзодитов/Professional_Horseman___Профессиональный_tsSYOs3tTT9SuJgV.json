@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Трата Очка Судьбы при провале теста WS/S/P → успех с 1 Успехом — тот же класс, что Legion Surgery/Survivor/Serpent's Tongue.",
     "benefit": "Мастерство всадничества среди драконьих воинов неоспоримо. Если персонаж проваливает любой тест WS, S, P, он может потратить очко судьбы и преуспеть в нем с 1 успехом.",
     "source": "Архетип: Драконий Воин",
     "bookSource": "Книга Аэльдари: Ответвления",

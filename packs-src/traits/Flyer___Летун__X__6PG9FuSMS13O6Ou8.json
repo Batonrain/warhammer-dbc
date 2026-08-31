@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Полноценно летает со скоростью SPD×X вместо обычной, игнорируя модификаторы Размера.",
-    "notes": "",
+    "notes": "Отдельный режим движения «Полёт» со скоростью SPD×X, игнорируя Размер — как у Burrower/Hoverer, effects.speedMod — только аддитивная поправка обычной скорости, не новый тип движения/множитель.",
     "benefit": "Полёт со скоростью SPD×X.",
     "source": "биология",
     "hasRating": true,

@@ -5,7 +5,7 @@
   "folder": "7dE5c2LfUfzblshX",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Рейтинг Daemonic не имеет соответствующего поля в system.effects/kind Механики (не путать с общими legacy-полями Unnatural/armourAll/etc.) — не проверено, какое поле актора его читает; применять вслепую рискованно.",
     "benefit": "+4 к рейтингу Daemonic.",
     "source": "Элитный архетип: Житель Бездны",
     "hasRating": false,

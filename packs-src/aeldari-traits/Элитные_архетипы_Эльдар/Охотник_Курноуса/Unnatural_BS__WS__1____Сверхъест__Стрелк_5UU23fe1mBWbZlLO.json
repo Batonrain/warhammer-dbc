@@ -34,13 +34,71 @@
     }
   },
   "_id": "5UU23fe1mBWbZlLO",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural BS, WS (1) / Сверхъест. Стрелковое и Оружейное Мастерство (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.bs.bonusFx",
+            "type": "add",
+            "value": 1,
+            "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.characteristics.ws.bonusFx",
+            "type": "add",
+            "value": 1,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "LrNoG75MMubTua92",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090270629,
+        "modifiedTime": 1788090270629,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!5UU23fe1mBWbZlLO.LrNoG75MMubTua92"
+    }
+  ],
   "folder": "JW11jvjFlHte6ysQ",
   "sort": 0,
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

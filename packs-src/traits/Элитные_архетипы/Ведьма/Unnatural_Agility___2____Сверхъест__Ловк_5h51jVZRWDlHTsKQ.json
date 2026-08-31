@@ -26,7 +26,54 @@
     "bookSource": "Домашнее правило (не из официальной книги)"
   },
   "_id": "5h51jVZRWDlHTsKQ",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural Agility (+2) / Сверхъест. Ловкость (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.ag.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "mK9kwaGvslrHcQ32",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090270622,
+        "modifiedTime": 1788090270622,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!5h51jVZRWDlHTsKQ.mK9kwaGvslrHcQ32"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

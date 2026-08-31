@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Hatred ко всем (склонность к презрению); может «скимать» эффекты Командования.",
-    "notes": "",
+    "notes": "«Hatred ко всем» — это грант состояния Hatred (отдельная игровая метка отношения), не тест/характеристика; нет kind под массовый грант Hatred.",
     "benefit": "Hatred ко всем.",
     "source": "Нага",
     "hasRating": false,

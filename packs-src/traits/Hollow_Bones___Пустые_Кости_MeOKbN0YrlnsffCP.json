@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Полые птичьи кости облегчают полёт, но хрупки: −5 к Поглощению против I(Cr) урона.",
-    "notes": "",
+    "notes": "Текст называет конкретный подтип «I(Cr)» (Ударный урон определённого качества), а движок system.absorption.vsType знает только 4 общих типа (energy/impact/rending/blast) без такого подтипа — применить −5 к общему impact исказило бы правило (задело бы весь Ударный урон, не только заявленный подтип).",
     "benefit": "−5 Поглощение vs I(Cr).",
     "source": "Гарпия",
     "hasRating": false,

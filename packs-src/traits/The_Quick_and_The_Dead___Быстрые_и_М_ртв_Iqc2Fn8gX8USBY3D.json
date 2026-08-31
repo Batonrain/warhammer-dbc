@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "+2 к Инициативе; может Избегать атак Орды и атак «Троек» под 2-м эффектом Командного Присутствия. При Размере 2+ остаётся только +2 к Инициативе.",
-    "notes": "",
+    "notes": "Механикой пока не выражено: Избегание атак Орды и атак «Троек» под 2-м эффектом Командного Присутствия.",
     "benefit": "+2 к Инициативе; Избегание атак Орды.",
     "source": "раса",
     "hasRating": false,
@@ -19,13 +19,60 @@
       "armourAll": 0,
       "fearRating": 0,
       "sizeMod": 0,
-      "initMod": 0,
+      "initMod": 2,
       "speedMod": 0
     },
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "Iqc2Fn8gX8USBY3D",
-  "effects": [],
+  "effects": [
+    {
+      "name": "The Quick and The Dead / Быстрые и Мёртвые (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.initiative",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "vBcWgrt2Us3dEh4U",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788036581209,
+        "modifiedTime": 1788036581209,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!Iqc2Fn8gX8USBY3D.vBcWgrt2Us3dEh4U"
+    }
+  ],
   "folder": null,
   "sort": 0,
   "ownership": {

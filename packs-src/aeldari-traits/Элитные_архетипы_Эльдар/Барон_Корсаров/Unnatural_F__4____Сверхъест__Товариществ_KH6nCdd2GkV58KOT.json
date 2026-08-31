@@ -25,13 +25,64 @@
     }
   },
   "_id": "KH6nCdd2GkV58KOT",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural F (4) / Сверхъест. Товарищество (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.fel.bonusFx",
+            "type": "add",
+            "value": 4,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "kQsmgBGsoGwaGweK",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090270627,
+        "modifiedTime": 1788090270627,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!KH6nCdd2GkV58KOT.kQsmgBGsoGwaGweK"
+    }
+  ],
   "folder": "rg7EN7pYKaYZ9Qkn",
   "sort": 0,
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

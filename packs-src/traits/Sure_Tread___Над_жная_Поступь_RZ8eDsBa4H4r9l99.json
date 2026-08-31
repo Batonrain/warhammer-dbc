@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Скват получает −1 SPD и не может двигаться пешком быстрее 3×SPD, но использует Awareness(P) вместо Athletics(A) для тестов Трудного Ландшафта (на 3+ Успеха тот не замедляет вовсе).",
-    "notes": "",
+    "notes": "Механикой не выражено: на Трудном Ландшафте использует Awareness(P) вместо Athletics(A), и при 3+ Успехах ландшафт не замедляет вовсе — диалог movement-terrain.mjs жёстко использует Ag и не читает подмену характеристики/testMod.",
     "benefit": "−1 SPD, максимум 3×SPD пешком; вместо A использует Awareness(P) на Трудном Ландшафте (3+ Успеха — не замедляет).",
     "source": "Скват",
     "hasRating": false,
@@ -20,12 +20,59 @@
       "fearRating": 0,
       "sizeMod": 0,
       "initMod": 0,
-      "speedMod": 0
+      "speedMod": -1
     },
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "RZ8eDsBa4H4r9l99",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Sure Tread / Надёжная Поступь (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.speed",
+            "type": "add",
+            "value": -1,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "Ik11m2oB50wCoGd3",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090859839,
+        "modifiedTime": 1788090859839,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!RZ8eDsBa4H4r9l99.Ik11m2oB50wCoGd3"
+    }
+  ],
   "folder": null,
   "sort": 0,
   "ownership": {

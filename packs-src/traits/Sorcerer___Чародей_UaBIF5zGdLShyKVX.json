@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/art/doombc-core/Sorcerer.webp",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Тот же класс, что Chaos Psyker/Imperial Sanctioning — грант Черты Psyker(PR2)+Порча+статус «Связанный» — пакет контента, не число.",
     "benefit": "Получает Трейт Psyker с PR2 и +1 Cor. В расчёте психической силы считается Связанным.",
     "source": "архетип",
     "bookSource": "",

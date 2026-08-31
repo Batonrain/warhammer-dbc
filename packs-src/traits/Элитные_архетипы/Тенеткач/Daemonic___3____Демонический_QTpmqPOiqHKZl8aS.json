@@ -5,7 +5,7 @@
   "folder": "iEDEFAendOS9kPKY",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Тот же случай, что другие Daemonic(+X) — рейтинг без подтверждённого поля-канала в system.effects/kind.",
     "benefit": "+3 к рейтингу Daemonic.",
     "source": "Элитный архетип: Скорбные Пасти",
     "hasRating": false,

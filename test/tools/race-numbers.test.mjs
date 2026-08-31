@@ -78,7 +78,20 @@ const EXPECTED_DIFFS = [
   { key: "subrace:wrack", path: "armourAll", from: 0, to: 2,
     why: "Machine (2) в константах wrack шёл с effects:{}; библиотечный шаблон «Machine / Машина (X)» несёт +X AP (armourAll)." },
   { key: "race:sslyth", path: "armourAll", from: 0, to: 3,
-    why: "Natural Armour (3) в константах sslyth указывал ключ effects.naturalArmour — его нет в схеме Черты (module/data/item/trait.mjs), никто и никогда его не читал; библиотечный шаблон «Natural Armour / Естественная Броня (X)» несёт настоящий effects.armourAll." }
+    why: "Natural Armour (3) в константах sslyth указывал ключ effects.naturalArmour — его нет в схеме Черты (module/data/item/trait.mjs), никто и никогда его не читал; библиотечный шаблон «Natural Armour / Естественная Броня (X)» несёт настоящий effects.armourAll." },
+  { key: "race:yigori", path: "initMod", from: 0, to: 2,
+    why: "The Quick and The Dead / Быстрые и Мёртвые в константах yigori шёл вовсе без effects (только текст benefit, wdbc-j1nc); библиотечный документ пака теперь несёт настоящий effects.initMod:2 (перенесено в ActiveEffect, как и у остальных Черт)." },
+  { key: "race:human", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — human тоже нёс Черту без effects." },
+  { key: "race:ratling", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — ratling тоже нёс Черту без effects." },
+  { key: "race:beastman", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — beastman тоже нёс Черту без effects." },
+  { key: "race:harpy", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — harpy тоже нёс Черту без effects." },
+  { key: "race:naga", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — naga тоже нёс Черту без effects." },
+  { key: "race:splice", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — splice тоже нёс Черту без effects." },
+  { key: "race:replicant", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — replicant тоже нёс Черту без effects." },
+  { key: "race:sslyth", path: "initMod", from: 0, to: 4,
+    why: "Sslyth Physiology / Физиология Сслита в константах шёл вовсе без effects (только текст benefit, wdbc-j1nc); библиотечный документ пака теперь несёт настоящий effects.initMod:4 (+4 к Инициативе — один из немногих чистых плоских чисел в этом композитном тексте)." },
+  { key: "race:squat", path: "speedMod", from: 0, to: -1,
+    why: "Sure Tread / Надёжная Поступь в константах squat шёл без effects (только текст benefit, wdbc-j1nc); библиотечный документ пака теперь несёт настоящий effects.speedMod:-1 (знак уже был исправлен книжной сверкой 23.08, но сам перенос в effects сделан только сейчас)." }
   // «Hulking / Громила (Легион)» у replicant НЕ здесь: это был омоним, а не
   // недописанная константа — «Легион» (доступ к снаряжению) и «Размер»
   // (sizeMod:1) внутри библиотеки совпадали только словом. Разведены

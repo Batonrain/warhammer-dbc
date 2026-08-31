@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "Когти остры как бритва: естественное оружие получает свойство Razor Sharp.",
-    "notes": "",
+    "notes": "Даёт свойство Razor Sharp естественному оружию, выданному ДРУГИМ предметом — Механика Черты не имеет канала «изменить свойство чужого уже выданного оружия».",
     "benefit": "Естественное оружие: Razor Sharp.",
     "source": "Гарпия",
     "hasRating": false,

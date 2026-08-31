@@ -26,7 +26,54 @@
     "bookSource": "Домашнее правило (не из официальной книги)"
   },
   "_id": "nd4zM5rLZoaFnwaw",
-  "effects": [],
+  "effects": [
+    {
+      "name": "Unnatural Intelligence (+2) / Сверхъест. Интеллект (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.int.bonusFx",
+            "type": "add",
+            "value": 2,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "JsfhLJbOPXxb8Wdl",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1788090270624,
+        "modifiedTime": 1788090270624,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!nd4zM5rLZoaFnwaw.JsfhLJbOPXxb8Wdl"
+    }
+  ],
   "sort": 0,
   "ownership": {
     "default": 0,

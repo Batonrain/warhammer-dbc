@@ -5,7 +5,7 @@
   "folder": "DoDmUjNRjDaA9i7t",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Тот же случай, что Lord of the Spires: Inf исключён из конвейера charBonusStat/bonusFx как характеристика без Бонуса на листе — прямой перенос risked бы быть немым эффектом.",
     "benefit": "+4 к Бонусу Влияния.",
     "source": "Элитный архетип: Архонт",
     "hasRating": false,

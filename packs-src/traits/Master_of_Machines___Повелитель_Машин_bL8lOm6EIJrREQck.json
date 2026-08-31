@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Игнор требования по Inf для конкретной категории миньонов — снятие чужого требования, а не бонус к тесту/характеристике.",
     "benefit": "Игнорирует требования по Inf для Миньонов-машин.",
     "source": "архетип",
     "bookSource": "",
