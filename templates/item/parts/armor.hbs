@@ -122,6 +122,26 @@
     {{/if}}
   </div>
 
+  {{!-- Запас воздуха Void (wdbc-jtqf, стр. 228) --}}
+  {{#if voidAir}}
+  <div class="weapon-row void-air-row" style="margin-top:6px;">
+    <label class="wr-label">Запас воздуха</label>
+    {{#if voidAir.breached}}
+    <span class="roll-failure">пробита — герметичность потеряна</span>
+    {{else if voidAir.remaining}}
+    <span>{{voidAir.remaining.hours}}ч {{voidAir.remaining.minutes}}м{{#unless voidAir.sealed}} (не запущен){{/unless}}</span>
+    {{else}}
+    <span class="{{#if voidAir.sealed}}roll-failure{{/if}}">безлимит</span>
+    {{/if}}
+    {{#unless voidAir.breached}}{{#unless voidAir.sealed}}
+    <button type="button" class="void-seal-btn" title="Начать расход запаса воздуха">Загерметизировать</button>
+    {{/unless}}{{/unless}}
+    {{#if voidAir.sealed}}
+    <button type="button" class="void-refill-btn" title="Снять таймер — следующая герметизация начнёт с полного запаса">Пополнить</button>
+    {{/if}}
+  </div>
+  {{/if}}
+
   {{!-- Силовая броня — доп. блок --}}
   {{#if (eq system.armorType "power")}}
   <div class="armor-power-block">
