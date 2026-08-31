@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon } from "../../module/combat/grapple.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -134,5 +134,29 @@ describe("isBiteWeapon", () => {
     expect(isBiteWeapon({ type: "weapon", name: "Bite", system: { weaponClass: "ranged" } })).toBe(false);
     expect(isBiteWeapon({ type: "weapon", name: "Bite", system: { weaponClass: "melee" } })).toBe(true);
     expect(isBiteWeapon({ type: "weapon", name: "Bite", system: {} })).toBe(true);
+  });
+});
+
+// wdbc-1d5u: auto.crunch (module/constants/weapon-properties.mjs) был заведён,
+// но нигде не читался — crunchWeapon() смыкает Хруст с уже готовым
+// aggregateAuto/resolveWeaponProps (тот же движок, что у диалога атаки).
+describe("crunchWeapon", () => {
+  const withProp = (key) => ({ type: "weapon", name: "Клешня", system: { weaponProps: [{ key }] } });
+
+  it("оружие со свойством Crunch — да", () => {
+    expect(crunchWeapon(withProp("crunch"))).toBe(true);
+  });
+
+  it("оружие без свойства Crunch — нет", () => {
+    expect(crunchWeapon(withProp("tearing"))).toBe(false);
+    expect(crunchWeapon({ type: "weapon", name: "Bolt Pistol", system: { weaponProps: [] } })).toBe(false);
+  });
+
+  it("не оружие — нет, даже если бы как-то нёс weaponProps", () => {
+    expect(crunchWeapon({ type: "implant", name: "Клешня", system: { weaponProps: [{ key: "crunch" }] } })).toBe(false);
+  });
+
+  it("оружие без system/weaponProps вовсе — нет, не падает", () => {
+    expect(crunchWeapon({ type: "weapon", name: "Голые руки" })).toBe(false);
   });
 });
