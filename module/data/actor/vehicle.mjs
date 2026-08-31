@@ -40,6 +40,19 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
       ammoReloads:  num(10, "Боекомплект"),
       openTopped:   new BooleanField({ initial: false, label: "Открытый верх" }),
       traits:       str("", "Черты"),
+      // Пустотные Щиты (X): по одному числу (текущая Структура щита, 0-20) на
+      // каждый щит. Длина массива синхронизируется с рейтингом Черты Void
+      // Shields в rules/vehicle.mjs::prepareVehicleDerived — новые щиты
+      // начинают полными, лишние (Черта снята/уменьшена) не удаляются молча
+      // (wdbc-y33b).
+      voidShields:  new ArrayField(num(20, "HP щита"), { label: "Пустотные щиты" }),
+      // Тормоза Падения: не чаще раза за бой/сцену, сбрасывается вручную ГМом
+      // (тот же компромисс, что у system.mount.skidUsed — wdbc-y33b).
+      fallBreaksUsed: new BooleanField({ initial: false, label: "Тормоза Падения использованы" }),
+      // Продвинутые Системы Управления: отмечает, что машина уже совершила Ход
+      // в этом Раунде — сбрасывается вручную каждый Раунд (в системе нет тика
+      // по Раундам для состояний машины вообще, не только у этого поля).
+      movedThisTurn: new BooleanField({ initial: false, label: "Совершила Ход в этот Раунд" }),
       stations:     new ArrayField(new ObjectField(), { label: "Места экипажа" }),
       damageStates: new ArrayField(new ObjectField(), { label: "Состояния повреждений" }),
       notes:        new HTMLField({ initial: "", label: "Заметки" }),

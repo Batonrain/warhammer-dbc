@@ -5,7 +5,9 @@ import { CHASSIS_TYPES, CHASSIS_NOTES, VEHICLE_TYPES, CREW_ROLES,
          VEHICLE_BREAKAGES, VEHICLE_STATUS_EFFECTS,
          REPAIR_CONDITIONS, REPAIR_REQUIREMENTS, REQUISITION_NOTES } from "../constants/vehicle.mjs";
 import { _executeAttackRoll } from "../combat/attack.mjs";
-import { showRamDialog, showTerrainDialog, showRepairDialog } from "../combat/vehicle.mjs";
+import { showRamDialog, showTerrainDialog, showRepairDialog, showVoidShieldRepairDialog,
+         showOrbitalDeployTurn1, showOrbitalDeployTurn2, showFireDetonationDialog,
+         showFallBreaksDialog, showDisembarkDialog, resolveVolleyAction } from "../combat/vehicle.mjs";
 import { isTargetWithinVehicleArc } from "../combat/facing.mjs";
 import { vehicleWeaponProfile } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -86,6 +88,10 @@ function onFireWeapon(event, target) {
   const it = this.actor.items.get(itemIdOf(target));
   if (it) return this._showVehicleFireDialog(it);
 }
+function onVolley(event, target) {
+  const stationId = target.closest("[data-station-id]")?.dataset.stationId;
+  if (stationId) return this._showVolleyDialog(stationId);
+}
 function onReloadWeapon(event, target) {
   const it = this.actor.items.get(itemIdOf(target));
   if (it) return this._reloadVehicleWeapon(it);
@@ -94,6 +100,12 @@ function onReloadWeapon(event, target) {
 function onRam()     { return showRamDialog(this.actor); }
 function onTerrain() { return showTerrainDialog(this.actor); }
 function onRepair()  { return showRepairDialog(this.actor); }
+function onVoidShieldRepair() { return showVoidShieldRepairDialog(this.actor); }
+function onOrbitalDeployTurn1() { return showOrbitalDeployTurn1(this.actor); }
+function onOrbitalDeployTurn2() { return showOrbitalDeployTurn2(this.actor); }
+function onFireDetonation()     { return showFireDetonationDialog(this.actor); }
+function onFallBreaks()         { return showFallBreaksDialog(this.actor); }
+function onDisembark()          { return showDisembarkDialog(this.actor); }
 
 async function onStateAdd() {
   const val = this.element.querySelector(".veh-state-select")?.value;
@@ -139,10 +151,17 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
       itemOpen:       whenEditable(onItemOpen),
       itemDelete:     whenEditable(onItemDelete),
       fireWeapon:     whenEditable(onFireWeapon),
+      volley:         whenEditable(onVolley),
       reloadWeapon:   whenEditable(onReloadWeapon),
       ram:            whenEditable(onRam),
       terrain:        whenEditable(onTerrain),
       repair:         whenEditable(onRepair),
+      voidShieldRepair: whenEditable(onVoidShieldRepair),
+      orbitalDeployTurn1: whenEditable(onOrbitalDeployTurn1),
+      orbitalDeployTurn2: whenEditable(onOrbitalDeployTurn2),
+      fireDetonation:     whenEditable(onFireDetonation),
+      fallBreaks:         whenEditable(onFallBreaks),
+      disembark:          whenEditable(onDisembark),
       stateAdd:       whenEditable(onStateAdd),
       stateDel:       whenEditable(onStateDel)
     }
@@ -201,6 +220,10 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
       ? { bs: sys.derived.autonomousBS, operate: sys.derived.autonomousOperate, aware: sys.derived.autonomousAwareness }
       : null;
     context.flickerfield = !!sys.derived?.flickerfield;
+    // Пустотные Щиты (X): по щиту на элемент массива, каждый максимум 20 (wdbc-y33b).
+    context.voidShields = (Array.isArray(sys.voidShields) ? sys.voidShields : []).map((hp, i) => ({
+      index: i, hp: Number(hp) || 0, collapsed: !(Number(hp) > 0)
+    }));
 
     // Справочник повреждений: крит-таблицы по частям, поломки, эффекты.
     context.critTables = Object.entries(VEHICLE_CRITS).map(([key, rows]) => ({
@@ -315,6 +338,16 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         };
       });
 
+    // Залп (Мультиприцел/Продвинутые Прицельные Системы, wdbc-y33b): по
+    // станции — если на ней ≥1 орудие и есть занявший её оператор (у него, не
+    // у машины, есть ОД, которые Залп тратит одним куском на всю станцию).
+    context.volleyStations = sys.derived?.traitFlags?.advancedTargeting
+      ? context.stations
+          .filter(s => s.occupied && context.weapons.some(w => w.stationId === s.id))
+          .map(s => ({ id: s.id, label: s.label, name: s.name,
+                       weaponCount: context.weapons.filter(w => w.stationId === s.id).length }))
+      : [];
+
     return context;
   }
 
@@ -427,6 +460,14 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         ?.update({ "system.active": ev.currentTarget.checked });
     }));
 
+    // Продвинутые Системы Управления: сброс "уже двигалась в этот Раунд"
+    // вручную (тот же приём, что fallBreaksUsed без своего тумблера — здесь
+    // сброс нужен каждый Раунд, а не раз за бой, поэтому тумблер есть).
+    el.querySelectorAll(".veh-flag-toggle").forEach(c => c.addEventListener("change", ev => {
+      const t = ev.currentTarget;
+      if (t.dataset.flag) this.actor.update({ [`system.${t.dataset.flag}`]: t.checked });
+    }));
+
     // ПКМ по строке орудия — то же меню, что у прочих строк предметов. Своя
     // копия здесь удаляла орудие молча, без вопроса (wdbc-9z9 чинил только
     // общий обработчик).
@@ -464,7 +505,9 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
   }
 
   // Компактный диалог стрельбы из орудия техники (переиспользует движок атаки).
-  _showVehicleFireDialog(item) {
+  // aimBonus — только из Залпа (wdbc-y33b): первое орудие станции получает
+  // преимущество Прицеливания, здесь — предзаполненный +10 в "Доп. мод.".
+  _showVehicleFireDialog(item, { aimBonus = 0 } = {}) {
     const sys = item.system;
     const vm  = sys.vehicleMount || {};
     const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown";
@@ -521,8 +564,40 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
           </select>
         </div>` : "";
 
+    // Продвинутые Системы Управления (wdbc-y33b, доводка): попытка автоматизации
+    // при отсутствии учёта «действия на движение» техники вообще — если машина
+    // уже отмечена movedThisTurn, этот выстрел просто идёт как обычно; если нет,
+    // этот же выстрел ЗАСЧИТЫВАЕТ Ход машины на этот Раунд (ставится флагом по
+    // факту "Огонь!", не отдельным чекбоксом — меньше кликов, тот же итог).
+    const advCtrlFixed  = !isMelee && vm.mount === "fixed" && !!der.traitFlags?.advancedControls;
+    const movedThisTurn = !!this.actor.system.movedThisTurn;
     const fixedNote = vm.mount === "fixed"
-      ? `<div class="atk-range-info" style="font-size:0.82em;">Закреплённое: выстрел комбинирован с Operate +10 мехвода — поворачивайте корпусом.</div>` : "";
+      ? `<div class="atk-range-info" style="font-size:0.82em;">Закреплённое: выстрел комбинирован с Operate +10 мехвода — поворачивайте корпусом.
+          ${advCtrlFixed ? (movedThisTurn
+              ? "<br>Продвинутые Системы Управления: Ход в этот Раунд уже засчитан — этот выстрел не требует отдельного действия."
+              : "<br>Продвинутые Системы Управления: этот выстрел засчитывается заодно с Ходом машины в этот Раунд (отметится автоматически).")
+            : ""}
+        </div>` : "";
+
+    // Штурм: во время Натиска выстрел всегда с Боевой дистанции — форсирует
+    // дальность вне зависимости от выбора в #vf-range (галочка).
+    const onslaughtRow = (!isMelee && der.traitFlags?.onslaught)
+      ? `<label class="veh-check"><input type="checkbox" id="vf-onslaught"/> Натиск (Штурм): стрельба с Боевой дистанции</label>` : "";
+
+    // Мультиприцел/Продвинутые Прицельные/Продвинутые Системы Управления —
+    // экономика действий стрельбы техники (сколько выстрелов на одно
+    // действие) нигде в системе не проверяется автоматически (см.
+    // doombc-mount-ranged-penalty-dead-parameters — тот же класс пробела),
+    // поэтому только заметка-напоминание, не автоматика.
+    const traitNotes = [];
+    if (der.traitFlags?.multiTargeter)
+      traitNotes.push("Мультиприцел: можно стрелять по разным целям независимо от углового расстояния.");
+    if (der.traitFlags?.advancedTargeting)
+      traitNotes.push("Продвинутые Прицельные Системы: чтобы выстрелить заодно всеми орудиями этой станции одним действием — кнопка «Залп» на вкладке «Обзор».");
+    if (der.traitFlags?.advancedControls)
+      traitNotes.push("Продвинутые Системы Управления: водитель может провести Ход и этот выстрел одним полным действием.");
+    const traitNoteHtml = traitNotes.length
+      ? `<div class="atk-range-info" style="font-size:0.82em;">${traitNotes.join("<br>")}</div>` : "";
 
     // Сектор наводки (wdbc-m38e, geometry: rules/facing.mjs) — предупреждение,
     // не блокировка: как и остальные правила установки орудий в этом окне
@@ -542,7 +617,8 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         <div class="atk-dlg-header"><span class="atk-weapon-name">${esc(item.name)}</span>
           <span style="opacity:.7">(${sys.damage || "—"}, Проб. ${sys.penetration || 0}, ${MOUNT_TYPES[vm.mount] || "—"})</span></div>
         <div class="atk-dlg-row"><label>BS оператора${opName ? ` (${opName})` : ""}:</label><input id="vf-bs" type="number" value="${opBS}"/></div>
-        <div class="atk-dlg-row"><label>Установленная модификация к попаданию:</label><input id="vf-atkbonus" type="number" value="${sys.attackBonus || 0}"/></div>
+        <div class="atk-dlg-row"><label>Установленная модификация к попаданию:</label><input id="vf-atkbonus" type="number" value="${(sys.attackBonus || 0) + aimBonus}"/></div>
+        ${aimBonus ? `<div class="atk-range-info" style="font-size:0.82em;">Залп: первое орудие станции получает Прицеливание (+${aimBonus}), уже учтено выше.</div>` : ""}
         <div class="veh-rof-group"><div class="atk-dlg-sub">Режим огня:</div>${rofHtml}</div>
         <div class="atk-dlg-row"><label>${aimLabelHint}:</label><select id="vf-aim">${aimHtml}</select></div>
         ${sideRow}
@@ -555,8 +631,10 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         </div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="vf-mod" type="number" value="0"/></div>
         <label class="veh-check"><input type="checkbox" id="vf-short"/> Короткая дистанция (Мельта/Рассеивание)</label>
+        ${onslaughtRow}
         ${fixedNote}
         ${arcNote}
+        ${traitNoteHtml}
       </div>`;
 
     return foundry.applications.api.DialogV2.wait({
@@ -578,7 +656,10 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
             const aimSel  = form.querySelector("#vf-aim");
             const aimVal  = aimSel?.value;
             const aimPen  = parseInt(aimSel?.selectedOptions?.[0]?.dataset.penalty) || 0;
-            const range   = num("#vf-range");
+            // Штурм: галочка форсирует Боевую дистанцию (+10, «Ближе/Короткая»)
+            // независимо от выбранного значения дальности.
+            const onslaughtChecked = !!form.querySelector("#vf-onslaught")?.checked;
+            const range   = onslaughtChecked ? 10 : num("#vf-range");
             const mod     = num("#vf-mod");
             const shortRange = !!form.querySelector("#vf-short")?.checked;
             const chosen = aimTargets.find(t => t.value === aimVal);
@@ -592,9 +673,44 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
             const vehicleSide = targetIsVehicle ? (form.querySelector("#vf-side")?.value || "side") : "";
             const threshold = bs + atkBon + rofBon + aimPen + range + mod;
             await _executeAttackRoll(this.actor, item, "bs", threshold, rofMode, aimTarget, { shortRange, vehicleSide });
+            // Продвинутые Системы Управления: этот выстрел засчитывает Ход
+            // машины на этот Раунд, если он ещё не был засчитан.
+            if (advCtrlFixed && !movedThisTurn) {
+              await this.actor.update({ "system.movedThisTurn": true });
+            }
           } },
         { action: "cancel", label: "Отмена" }
       ]
     }).catch(() => null);
+  }
+
+  // Залп (wdbc-y33b): списывает ОДНО полное действие у оператора станции
+  // (не у машины — у неё ОД нет), затем открывает стрельбу из первого орудия
+  // станции с Прицеливанием; остальные орудия той же станции доступны из
+  // обычного списка «ОГОНЬ — ОРУДИЯ» без дополнительной траты ОД в этот Раунд.
+  async _showVolleyDialog(stationId) {
+    const weapons = this.actor.items.filter(i =>
+      i.type === "weapon" && i.system.vehicleMount?.stationId === stationId);
+    if (!weapons.length) {
+      return ui.notifications.warn("⚠️ На этой станции нет орудий.");
+    }
+    const result = await resolveVolleyAction(this.actor, stationId);
+    if (!result.ok) return ui.notifications.warn(`⚠️ ${result.error}`);
+
+    const [first, ...rest] = weapons;
+    if (rest.length) {
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+        content: `
+          <div class="wh-roll-result">
+            <div class="roll-header">🎯 Залп — ${esc(this.actor.name)}</div>
+            <div class="roll-outcome"><span class="roll-success">Полное действие оператора (${esc(result.occupant.name)}) потрачено на всю станцию.</span></div>
+            <div class="roll-allout-note">Открывается стрельба из «${esc(first.name)}» (с Прицеливанием). Остальные орудия станции — без доп. траты ОД в этот Раунд: ${rest.map(w => esc(w.name)).join(", ")}.</div>
+          </div>`
+      });
+    }
+    // Не await/return: диалог стрельбы остаётся открытым до решения игрока,
+    // а Залп как действие уже завершён (ОД потрачены, заметка отправлена).
+    this._showVehicleFireDialog(first, { aimBonus: 10 });
   }
 }

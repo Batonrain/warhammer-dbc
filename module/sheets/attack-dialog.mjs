@@ -28,7 +28,9 @@ import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properti
 import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
-import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS } from "../rules/mount.mjs";
+import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
+         mountRangedPenalty, MOUNT_SPEEDS } from "../rules/mount.mjs";
+import { vehicleCoverMod } from "../rules/vehicle.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
@@ -112,6 +114,11 @@ function readAttackForm(form, ammoConds) {
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
     dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
     coverMod:   parseInt(el("#atk-cover")?.value) || 0,
+    // Штраф стрельбы с седла (wdbc-8nz6) — раньше нигде не применялся к
+    // настоящему броску, только показывался в панели «ВЕРХОМ». Авто-число
+    // предполагает обычное личное оружие; для Интегрированного/турели
+    // Коляски (штраф ниже/отсутствует) поле правится руками.
+    mountRangedMod: parseInt(el("#atk-mount-ranged")?.value) || 0,
     rofMode:    el(ROF)?.value,
     rofBonus:   attr(ROF, "bonus"),
     aimVal:     el("#atk-aim")?.value,
@@ -230,7 +237,30 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const attackerToken = actor.getActiveTokens?.(true)?.[0] ?? null;
   const targetToken    = [...(game.user?.targets ?? [])][0] ?? null;
   const measured        = (attackerToken && targetToken) ? measureTokens(attackerToken, targetToken) : null;
-  const autoCoverMod    = (attackerToken && targetToken) ? coverBonusForShot(attackerToken, targetToken) : 0;
+  // Укрытие ВНУТРИ техники (Закрытая/Открытая(X), wdbc-y33b) — независимо от
+  // Укрытия местности выше (можно быть и в машине, и в её укрытии сразу),
+  // поэтому складываются, а не выбирается большее.
+  const vehicleCover    = attackCtx.targetActor
+    ? vehicleCoverMod(attackCtx.targetActor, [...(game.actors ?? [])]) : 0;
+  const autoCoverMod    = ((attackerToken && targetToken) ? coverBonusForShot(attackerToken, targetToken) : 0)
+    + vehicleCover;
+
+  // Штраф стрельбы с седла (стр. 478, wdbc-8nz6) — до сих пор нигде не
+  // применялся к настоящему броску атаки, только показывался в панели
+  // «ВЕРХОМ» (см. doombc-mount-ranged-penalty-dead-parameters). Считается для
+  // ОБЫЧНОГО личного оружия (integral/sidecarTurret не проверяются — нет
+  // персистентной связи weapon→«это интегрированное орудие/турель этого
+  // байка» в схеме предмета); для Интегрированного Оружия/турели Коляски
+  // штраф ниже или отсутствует — поле правится руками, как #atk-cover.
+  const mountUuid       = actor.system?.mount?.uuid || "";
+  const attackerMount   = (!isMelee && mountUuid)
+    ? [...(game.actors ?? [])].find(a => a?.uuid === mountUuid) : null;
+  const autoMountRangedMod = attackerMount
+    ? mountRangedPenalty(
+        actor.system.mount.speed in MOUNT_SPEEDS ? actor.system.mount.speed : "still",
+        attackerMount)
+    : 0;
+
   const ruleMods = ruleRollModsHtml(actor, attackCtx);
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -1040,6 +1070,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <input id="atk-cover" class="av-input av-num" type="number" value="${autoCoverMod}"
                title="Авто по зоне Укрытия на линии огня (regions/cover.mjs) — всегда можно поправить руками"/>
       </div>
+      ${attackerMount ? `
+      <div class="av-row">
+        <label>Штраф стрельбы с седла</label>
+        <input id="atk-mount-ranged" class="av-input av-num" type="number" value="${autoMountRangedMod}"
+               title="Авто по скорости скакуна/байка на панели «ВЕРХОМ» — для Интегрированного Оружия (0) или турели Коляски (сниженный штраф) поправьте вручную"/>
+      </div>` : ""}
 
       ${techSectionsHtml}
       <div class="av-opt-note" id="atk-gripnote">${dyn0.note}</div>
@@ -1100,7 +1136,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       base: (actor.system.characteristics[f.char]?.total ?? 0)
             + (sys.attackBonus || 0) + wpAttackMod + sel.techBon + sel.stanceBon + ammoAtkMod + sel.gWs
             + (wp.noAim ? 0 : f.aimBonus),
-      mods: [f.modifier, f.coverMod, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
+      mods: [f.modifier, f.coverMod, f.mountRangedMod, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
              f.mountPenalty, f.extraBonus],
       halvePenalty: f.halvePenalty
     });

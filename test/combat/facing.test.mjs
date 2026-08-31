@@ -5,7 +5,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
-import { isFrontArcHit, isTargetWithinVehicleArc } from "../../module/combat/facing.mjs";
+import { isFrontArcHit, isTargetWithinVehicleArc, tokenDistance } from "../../module/combat/facing.mjs";
 
 /** Токен-заглушка: та же форма, что у tactical-map.test.mjs (document.x/y/width/height). */
 function token({ x = 0, y = 0, width = 1, height = 1, rotation = 0 } = {}) {
@@ -77,5 +77,37 @@ describe("isTargetWithinVehicleArc (wdbc-m38e)", () => {
     const vehicle = token({ x: 0, y: 0 });
     expect(isTargetWithinVehicleArc(vehicle, "−25°..+25°", null)).toBe(true);
     expect(isTargetWithinVehicleArc(null, "−25°..+25°", vehicle)).toBe(true);
+  });
+});
+
+describe("tokenDistance (wdbc-y33b, Пустотные Щиты)", () => {
+  it("считает по grid.distance сцены, не жёстко «1 клетка = 1 метр»", () => {
+    // Сцена: 1 клетка (100px) = 2 игровых метра.
+    globalThis.canvas = { grid: { size: 100 }, scene: { grid: { distance: 2 } } };
+    const a = token({ x: 0, y: 0 });
+    const b = token({ x: 300, y: 0 }); // 3 клетки по прямой
+    expect(tokenDistance(a, b)).toBe(6); // 3 клетки × 2 м/клетку
+  });
+
+  it("без scene.grid.distance откатывается к canvas.grid.distance, затем к 1", () => {
+    globalThis.canvas = { grid: { size: 100, distance: 5 } };
+    const a = token({ x: 0, y: 0 });
+    const b = token({ x: 200, y: 0 });
+    expect(tokenDistance(a, b)).toBe(10); // 2 клетки × 5
+
+    globalThis.canvas = { grid: { size: 100 } };
+    expect(tokenDistance(a, b)).toBe(2); // 2 клетки × 1 (дефолт)
+  });
+
+  it("учитывает центр по width/height (2×2 токен), не левый верхний угол", () => {
+    globalThis.canvas = { grid: { size: 100 }, scene: { grid: { distance: 1 } } };
+    const a = token({ x: 0, y: 0, width: 2, height: 2 }); // центр (100,100)
+    const b = token({ x: 100, y: 100, width: 1, height: 1 }); // центр (150,150)
+    expect(tokenDistance(a, b)).toBeCloseTo(Math.hypot(50, 50) / 100, 5);
+  });
+
+  it("нет позиции одного из токенов — null", () => {
+    globalThis.canvas = { grid: { size: 100 } };
+    expect(tokenDistance(token({ x: 0, y: 0 }), null)).toBeNull();
   });
 });

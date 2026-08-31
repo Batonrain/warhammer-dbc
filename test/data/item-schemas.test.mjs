@@ -515,7 +515,11 @@ const TYPES = {
         commandBonus: 0, repairBonus: 0,
         deflectorShield: false, deflectorDaemonic: false, ignoreCrewCrits: false,
         autonomous: false, flickerfield: false,
-        amphibious: false, ceramitePlating: false, sidecarStructure: false
+        amphibious: false, ceramitePlating: false, sidecarStructure: false, voidShields: false,
+        volatile: false, fallBreaks: false, orbitalDeployment: false,
+        onslaught: false, multiTargeter: false, advancedTargeting: false, advancedControls: false,
+        sideHatches: false, assaultRamp: false, enclosed: false, sealed: false,
+        daemonicAbsorb: false
       }
     }
   },

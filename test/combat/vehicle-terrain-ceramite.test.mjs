@@ -24,6 +24,7 @@ function vehicle(traitFlags = {}, overrides = {}) {
       derived: { traitFlags },
       ...overrides
     },
+    getActiveTokens: () => [],
     update: async data => { updates.push(data); },
     _updates: updates
   };
@@ -89,5 +90,42 @@ describe("Керамитовая Броня: АР ×2 против Flame", () =>
     expect(card).toContain("AP Бортовая: <b>20</b>");
     // 15 урона − 20 АР = поглощено полностью
     expect(card).toContain("Урон поглощён");
+  });
+});
+
+describe("Демонический (X): +X к поглощению, обнуляется против Sanctified/Warp Weapon", () => {
+  it("без Черты — АР как есть", async () => {
+    const actor = vehicle({});
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side" });
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("AP Бортовая: <b>10</b>");
+  });
+
+  it("с Чертой — АР увеличивается на X", async () => {
+    const actor = vehicle({ daemonicAbsorb: 6 });
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side" });
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("AP Бортовая: <b>16</b>");
+  });
+
+  it("Sanctified — бонус не действует", async () => {
+    const actor = vehicle({ daemonicAbsorb: 6 });
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", sanctified: true });
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("AP Бортовая: <b>10</b>");
+  });
+
+  it("Warp Weapon (warpSoak) — бонус не действует", async () => {
+    const actor = vehicle({ daemonicAbsorb: 6 });
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", warpSoak: true });
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("AP Бортовая: <b>10</b>");
+  });
+
+  it("складывается с Керамитовой Бронёй (Flame)", async () => {
+    const actor = vehicle({ daemonicAbsorb: 6, ceramitePlating: true });
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", flame: true });
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("AP Бортовая: <b>26</b>"); // (10×2) + 6
   });
 });
