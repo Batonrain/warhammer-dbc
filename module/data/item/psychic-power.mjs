@@ -35,7 +35,11 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
     return {
       description:   new HTMLField({ initial: "", label: "Описание" }),
       notes:         new HTMLField({ initial: "", label: "Заметки" }),
-      cost:          num(0, "Стоимость в ПР"),
+      // Книжная цена в Опыте (wdbc-2b61) — фиксированная, не зависит от
+      // Склонностей/Мировоззрения (в отличие от Талантов/Навыков). Метка
+      // "в ПР" — старая ошибка: Пси-Рейтинг для применения силы хранит
+      // prRequired ниже, cost всегда был ценой покупки за опыт.
+      cost:          num(0, "Стоимость в опыте"),
       discipline:    new StringField({ initial: "", label: "Дисциплина" }),
       subtype:       new StringField({ initial: "", label: "Подтип" }),
       powerType:     new StringField({ initial: "attack", label: "Тип силы" }),

@@ -5,6 +5,8 @@ import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
+import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
+import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger } from "./combat/damage.mjs";
@@ -13,7 +15,7 @@ import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
-import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
+import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
@@ -29,10 +31,14 @@ import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from ".
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from "./combat/action-economy.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
+import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
+import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
+import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
+import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -296,14 +302,16 @@ export function registerHooks() {
           return ui.notifications.warn(`«${ctx.label}» уже использована в этом столкновении.`);
         }
         const fate = Number(actor.system.fate?.value) || 0;
-        if (fate <= 0) return ui.notifications.warn("Нет Очков Судьбы/Бесчестья.");
+        if (fate <= 0 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Судьбы/Бесчестья.");
         ev.currentTarget.disabled = true;
 
         // Трата помечена whSkipFateSave: иначе её перехватила бы «Пламенная
         // вера» (Мир-храм) и Очко могло бы «не потратиться». Здесь это
-        // осознанная цена способности, а не обычный расход.
+        // осознанная цена способности, а не обычный расход. Временный запас
+        // (wdbc-e728, Voice of God и т.п.) уходит первым.
+        const spend = await spendFromInfamyPool(actor, 1, "system.fate.value");
         await actor.update({
-          "system.fate.value": fate - 1,
+          "system.fate.value": spend.poolValue,
           "system.corruption.value": (Number(actor.system.corruption?.value) || 0) + 1
         }, { whSkipFateSave: true });
         await markRuleUsageUsed(actor, FAITH_FLAG, "scene");
@@ -419,6 +427,35 @@ export function registerHooks() {
       });
     });
 
+    // Поглощение варп-урона Болью (Друкхари, wdbc-7as8) — число уже в карточке
+    // атаки (тот же data-damage, что у соседней «Применить урон»), не нужно
+    // перепечатывать его в диалог openPainSoulBurnDialog руками.
+    html.querySelectorAll(".wh-pain-absorb-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен персонажа, поглощающего урон Болью!");
+        if (!actor) return;
+        if (!actor.system?.painActive) {
+          return ui.notifications.warn("⚠️ У выбранного персонажа нет Очков Боли (Через Боль).");
+        }
+        await absorbPainDamage(actor, parseInt(ev.currentTarget.dataset.damage || "0"));
+      });
+    });
+
+    // Верховое попадание (wdbc-7as8) — бросок атаки уже в карточке, кнопка
+    // передаёт его в resolveHitAllocation вместо ручного «по коню/по всаднику».
+    html.querySelectorAll(".wh-mount-hit-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен цели верхом на сцене!");
+        if (!actor) return;
+        if (!actor.system?.mount?.uuid) {
+          return ui.notifications.warn("⚠️ Выбранный персонаж не верхом.");
+        }
+        await resolveHitAllocation(actor, ev.currentTarget.dataset.roll);
+      });
+    });
+
     // Шаблон зоны поражения (Взрывное/Распыление) — размещение мышью
     // (module/combat/templates.mjs). Без Linger — разовый эфемерный Region:
     // накрытые токены становятся целями, дальше «Применить урон» → «Всем»
@@ -503,6 +540,25 @@ export function registerHooks() {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         await _applyWeaponPropEffect(ev.currentTarget.dataset);
+      });
+    });
+
+    // Пилюли распознанных крит-эффектов/Шока (wdbc-xql6) — цель уже известна
+    // по data-actor-uuid (та же, что несла карточку урона/теста Страха),
+    // поэтому в отличие от wh-wprop-apply-btn выше не нужен выбор токена.
+    html.querySelectorAll(".wh-crit-apply-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Наложить состояние может владелец цели (или ГМ).");
+        }
+        el.disabled = true;
+        await applyCritEffectPill(actor, {
+          key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1"
+        });
       });
     });
 
@@ -870,7 +926,7 @@ function _attachFateContextMenu(message, html) {
     // Очки судьбы (название зависит от персонажа: Судьба/Бесчестье/Боль)
     const fate     = actor?.system?.fate;
     const fateVal  = fate?.value ?? 0;
-    const canSpend = actor && fateVal > 0;
+    const canSpend = actor && (fateVal > 0 || tempInfamyAmount(actor) > 0);
     const ft       = fateTerm(actor?.system);
 
     // Строим меню
@@ -942,8 +998,9 @@ function _attachFateContextMenu(message, html) {
 
       if (!canSpend) return;
 
-      // Тратим очко судьбы
-      await actor.update({ "system.fate.value": fateVal - 1 });
+      // Тратим очко судьбы — временный запас (wdbc-e728) уходит первым.
+      const reroll1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      await actor.update({ "system.fate.value": reroll1.poolValue });
 
       // Если это была атака — повторяем атаку целиком (новый бросок d100,
       // место попадания, урон, кнопки защиты), а не «голый» переброс.
@@ -955,7 +1012,7 @@ function _attachFateContextMenu(message, html) {
           await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold,
             atk.rofMode, atk.aimTarget, { ...(atk.opts || {}), skipAmmo: true });
           ui.notifications.info(
-            `✨ ${actor.name} тратит ${ft.one} на переброс атаки! Осталось: ${fateVal - 1}`);
+            `✨ ${actor.name} тратит ${ft.one} на переброс атаки! Осталось: ${reroll1.poolValue}`);
           return;
         }
       }
@@ -996,7 +1053,7 @@ function _attachFateContextMenu(message, html) {
           <div class="wh-roll-result">
             <div class="roll-header">Переброс за ${ft.one}</div>
             <div class="roll-damage-meta">
-              ${ft.word} потрачена (осталось: ${fateVal - 1})
+              ${ft.word} потрачена (осталось: ${reroll1.poolValue})
             </div>
             ${threshold !== null
               ? `<div class="roll-threshold">Порог: <b>${threshold}</b></div>`
@@ -1010,7 +1067,7 @@ function _attachFateContextMenu(message, html) {
       await ChatMessage.create(newMessageData);
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one} на переброс! Осталось: ${fateVal - 1}`
+        `✨ ${actor.name} тратит ${ft.one} на переброс! Осталось: ${reroll1.poolValue}`
       );
     });
 
@@ -1035,13 +1092,15 @@ function _attachFateContextMenu(message, html) {
         const atkActor = game.actors?.get(atkB.actorId) ?? actor;
         const atkItem  = atkActor?.items?.get(atkB.itemId);
         if (atkItem) {
-          await actor.update({ "system.fate.value": fateVal - 1 });
+          // Временный запас (wdbc-e728) уходит первым.
+          const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+          await actor.update({ "system.fate.value": bonus1.poolValue });
           await _executeAttackRoll(atkActor, atkItem, atkB.charKey,
             (Number(atkB.threshold) || 0) + FATE_BONUS,
             atkB.rofMode, atkB.aimTarget,
             { ...(atkB.opts || {}), forcedRoll: rv, skipAmmo: true });
           ui.notifications.info(
-            `➕ ${actor.name} тратит ${ft.one}: +10 к атаке! Осталось: ${fateVal - 1}`);
+            `➕ ${actor.name} тратит ${ft.one}: +10 к атаке! Осталось: ${bonus1.poolValue}`);
           return;
         }
       }
@@ -1058,7 +1117,9 @@ function _attachFateContextMenu(message, html) {
           "⚠️ В этом сообщении не виден Порог теста — +10 применить не к чему. Используйте переброс.");
       }
 
-      await actor.update({ "system.fate.value": fateVal - 1 });
+      // Временный запас (wdbc-e728) уходит первым.
+      const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
+      await actor.update({ "system.fate.value": bonus1.poolValue });
 
       const rollMode = game.settings.get("core", "rollMode");
       const outcomeHtml = outcome.success
@@ -1071,7 +1132,7 @@ function _attachFateContextMenu(message, html) {
           <div class="wh-roll-result">
             <div class="roll-header">+10 за ${ft.one}</div>
             <div class="roll-damage-meta">
-              ${ft.word} потрачена (осталось: ${fateVal - 1})
+              ${ft.word} потрачена (осталось: ${bonus1.poolValue})
             </div>
             <div class="roll-threshold">
               Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
@@ -1086,7 +1147,7 @@ function _attachFateContextMenu(message, html) {
       await ChatMessage.create(newMessageData);
 
       ui.notifications.info(
-        `✨ ${actor.name} тратит ${ft.one} на +10! Осталось: ${fateVal - 1}`
+        `✨ ${actor.name} тратит ${ft.one} на +10! Осталось: ${bonus1.poolValue}`
       );
     });
   });
@@ -1129,6 +1190,8 @@ function _attachFateContextMenu(message, html) {
     await resolveTrancesForCombat(combat);
     // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.
     await clearAvatarOfSlaughterMarks(combat);
+    // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
+    await clearSongOfSwiftnessBuffs(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
@@ -1170,15 +1233,25 @@ function _attachFateContextMenu(message, html) {
         await applyTurnEndStanceEffects(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
+        // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
+        // Хода», не в начале следующего.
+        await processConditionTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
       await resetActionEconomy(nextCombatant.actor);
+      // Карточка «сколько у меня ОД/Реакций» (wdbc-qjnk) — сразу после сброса,
+      // пока значения свежие; сама решает, нести ли этому типу актора экономику.
+      await postTurnStartCard(nextCombatant.actor);
       await processPrismaTurnStart(nextCombatant.actor);
       // Грозный Вопль (wdbc-sk8s): усилитель звукового оружия живёт «до
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
+      // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
+      // Горения выше (у тех книга явно говорит «в конце»).
+      await processConditionTurnStart(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

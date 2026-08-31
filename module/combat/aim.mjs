@@ -7,6 +7,7 @@
 // Вся возня с канвасом и мышью здесь; боёвке про неё знать незачем — она
 // получает уже назначенную цель через game.user.targets.
 import { esc } from "../helpers/utils.mjs";
+import { showWeaponRangeRings, clearRangeRings } from "./range-rings.mjs";
 
 const AIMING = "wh-aiming";
 const HINT_ID = "wh-aim-hint";
@@ -38,6 +39,7 @@ export function endTargeting() {
   _active = null;
   document.body.classList.remove(AIMING);
   document.getElementById(HINT_ID)?.remove();
+  clearRangeRings();
 }
 
 /**
@@ -50,6 +52,12 @@ export function endTargeting() {
 export function beginTargeting(actor, weapon, onPick, label = "") {
   if (!canvas?.ready) { ui.notifications?.warn("Сцена не готова."); return; }
   endTargeting();   // второй раз — начинаем заново, а не копим слушателей
+
+  // Кольца полос дальности вокруг стрелка — только для дальнобойного оружия
+  // (у ближнего/безоружного system.range нет или 0, кольца не рисуются).
+  const attackerToken = actor?.getActiveTokens?.(true)?.[0] ?? null;
+  const rng = Number(weapon?.system?.range) || 0;
+  if (attackerToken && rng > 0) showWeaponRangeRings(attackerToken, rng);
 
   document.body.classList.add(AIMING);
 

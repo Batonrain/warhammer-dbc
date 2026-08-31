@@ -33,21 +33,23 @@ import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
+import { getChapter } from "../constants/legions.mjs";
+import { isSusAnMembraneItem } from "../rules/predicates.mjs";
 
 const FLAG = "warhammer-dbc";
 const USED_AT_FLAG = "susAnHealUsedAt";
 const PENDING_FLAG = "susAnHealPending";
 
-/** Призрак Смерти — Гвардия Ворона (XIX легион), орден deathspectres. */
+/** Призрак Смерти — орден с effects.susAnHeal (сейчас deathspectres у Гвардии Ворона). */
 export function isDeathSpectre(actor) {
   const gs = actor?.system?.geneSeed;
-  return gs?.legion === "XIX" && gs?.chapter === "deathspectres";
+  return getChapter(gs?.legion, gs?.chapter)?.effects?.susAnHeal === true;
 }
 
-/** Сус-ан Мембрана — по имени, как и остальные органы Геносемени в паке. */
-export function isSusAnMembraneItem(item) {
-  return item?.type === "implant" && /Сус-ан Мембрана/i.test(item?.name || "");
-}
+// Сус-ан Мембрана — предикат теперь общий с rules/death-save.mjs (было два
+// независимых regex, wdbc-l07y); ре-экспорт сохраняет прежний путь импорта
+// (импортирован выше, используется и внутри этого файла).
+export { isSusAnMembraneItem };
 
 /** Секунд до следующей доступности (0 — доступно прямо сейчас). */
 export function susAnHealCooldownRemaining(item) {

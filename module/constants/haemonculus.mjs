@@ -11,6 +11,8 @@
 //  HAEM_TRAIT_MAP, isHaemonculus(), haemState().
 // ════════════════════════════════════════════════════════════════════════
 
+import { hasEliteArchetype } from "../rules/predicates.mjs";
+
 // ───────────────────────────── СТУПЕНИ ──────────────────────────────────
 // cost — опыт за саму ступень; inf — требуемое Влияние; sample — образец,
 // который нужно добыть и изучить; grants — машинные прибавки (складываются
@@ -159,9 +161,15 @@ export const HAEM_TRAIT_MAP = {
   warp:  Object.fromEntries(HAEM_WARP_TRAITS.map(t => [t.key, t]))
 };
 
-/** Гемункул ли персонаж — по Элитному архетипу в шапке листа. */
+/**
+ * Гемункул ли персонаж — Элитный архетип любым из трёх источников (строка
+ * шапки, список дополнительных, предмет) через канон hasEliteArchetype.
+ * Раньше — regex только по строке шапки: Гемункул, взятый ВТОРЫМ архетипом
+ * (в eliteArchetypesExtra) или купленный пикером предметом, не распознавался
+ * и терял Unnatural I + Fear расчёта (wdbc-91o8).
+ */
 export function isHaemonculus(actor) {
-  return /гемункул/i.test(String(actor?.system?.eliteArchetype || ""));
+  return hasEliteArchetype(actor, "Haemonculus / Гемункул");
 }
 
 /**

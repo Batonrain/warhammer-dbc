@@ -7,6 +7,7 @@
     "notes": "",
     "category": "mechFocus",
     "quality": "common",
+    "ironFocus": true,
     "effect": "Руны + психокристаллы в Черепных Цепях: персонаж может использовать I вместо W во всех тестах против психосил, Одержимости и прочих варп-эффектов.",
     "installed": "",
     "linkedWeapon": "",

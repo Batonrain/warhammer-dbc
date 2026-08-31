@@ -50,7 +50,7 @@ function _newProject() {
     crafterId: _crafterChoices()[0]?.id || "",
     categoryKey: CRAFT_CATEGORIES[3].key,
     rarity: 1, quality: "common", toolKey: "common",
-    gmMod: 0, assistants: 0, baseBank: null, improve: false, monotony: false,
+    gmMod: 0, assistants: 0, baseBank: null, improve: false, monotony: false, machineSize: 0,
     // Кубик смены (Преимущество/Помеха, стр. 26) — Сложность у Крафта уже
     // есть своя («Модификатор ГМа»), второй дропдаун не заводим.
     diceMode: "normal",
@@ -114,10 +114,14 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const tableBank = isResearch ? null : bankFromTable(category, proj.rarity);
     const notCraftable = !isResearch && tableBank === null && proj.baseBank == null;
     const baseBank = proj.baseBank ?? (isResearch ? 20 : (tableBank ?? 10));
-    const bank = bankFor(baseBank, proj.quality, proj.improve);
+    const isMachine = !!category?.machine && !isResearch;
+    // Машины: итоговый Банк ×(Размер+1) — раньше подсказка просила учесть это
+    // руками (wdbc-5il7), теперь размер вводится тут же и множится сразу.
+    const machineSize = isMachine ? Math.max(0, Number(proj.machineSize) || 0) : 0;
+    const bank = bankFor(baseBank, proj.quality, proj.improve) * (isMachine ? machineSize + 1 : 1);
 
     return { category, available, slots, combined, mods, bank, baseBank, tableBank, notCraftable,
-      machineNote: !!category?.machine && !isResearch, crafter, isResearch };
+      machineNote: isMachine, machineSize, crafter, isResearch };
   }
 
 
@@ -210,7 +214,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
       diceMode: proj.diceMode || "normal",
-      baseBankVal: R.baseBank, machineNote: R.machineNote, notCraftable: R.notCraftable,
+      baseBankVal: R.baseBank, machineNote: R.machineNote, machineSize: R.machineSize, notCraftable: R.notCraftable,
 
       testRows, limit,
       limitCls: limit >= 50 ? "good" : limit >= 20 ? "mid" : "bad",
@@ -259,6 +263,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=quality]", "change", e => upd(e.currentTarget, p => p.quality = e.target.value));
     on("[name=tool]", "change", e => upd(e.currentTarget, p => p.toolKey = e.target.value));
     on("[name=basebank]", "change", e => upd(e.currentTarget, p => p.baseBank = num(e.target.value, 1)));
+    on("[name=machinesize]", "change", e => upd(e.currentTarget, p => p.machineSize = Math.max(0, num(e.target.value))));
     on("[name=gmmod]", "change", e => upd(e.currentTarget, p => p.gmMod = num(e.target.value)));
     on("[name=assistants]", "change", e => upd(e.currentTarget, p => p.assistants = Math.max(0, num(e.target.value))));
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
@@ -402,4 +407,3 @@ export function openCraftWorkshop() {
   _instance.render(true);
   return _instance;
 }
-export function refreshCraftWorkshop() { if (_instance?.rendered) _instance.render(false); }

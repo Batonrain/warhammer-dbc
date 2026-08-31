@@ -7,9 +7,6 @@
 //  (модификатор теста T + частота), чтобы виджет/окно были едины с правилами.
 // ════════════════════════════════════════════════════════════════════════
 
-export const ENV_SCOPE = "warhammer-dbc";
-export const ENV_FLAG  = "env";
-
 // ── «Обстановка»: погода планеты + позиция/реальность корабля-в-пустоте.
 //    grp: planet → в виджете подпись «ПОГОДА»; void → «ЛОКАЦИЯ». В корбуке
 //    жёсткой таблицы нет — это флавор, задающий настроение сцены. ──────────
@@ -163,12 +160,6 @@ export function normalizeEnv(raw) {
     note:        raw.note || ""
   };
 }
-export function readEnv(scene) { return normalizeEnv(scene?.getFlag?.(ENV_SCOPE, ENV_FLAG)); }
-export async function writeEnv(scene, env) {
-  if (!scene || !game.user.isGM) return;
-  await scene.setFlag(ENV_SCOPE, ENV_FLAG, env);
-}
-
 // Полный «вид» окружения — единый источник для окна и виджета. Принимает уже
 // нормализованный env (резолвится группо-осознанно вызывающим — см. Нексус).
 export function envView(e) {

@@ -21,6 +21,7 @@ import {
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { spendFromInfamyPool } from "../../apps/infamy-points.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -43,19 +44,22 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
 
   const fateRoll = await new Roll(cfg.fateDie).evaluate();
   const loss = fateRoll.total + (cfg.fateFlat || 0);
-  const failed = fateSaveFails(current, loss);
+  // Временный запас (wdbc-e728, Voice of God и т.п.) гасит цену Спасения первым.
+  const spend = await spendFromInfamyPool(actor, loss, "system.fate.value");
+  const failed = fateSaveFails(current, spend.poolSpent);
+  const tempNote = spend.tempSpent ? `, из них ${spend.tempSpent} из временного запаса` : "";
 
   if (failed) {
-    await actor.update({ "system.fate.value": Math.max(0, current - loss) });
+    await actor.update({ "system.fate.value": spend.poolValue });
     await _postCard(actor, kind, [
-      `Пул ${pool}: <b>${current}</b> − (${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${loss}) → опустился бы до 0 и ниже.`,
+      `Пул ${pool}: <b>${current}</b> − (${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${loss}${tempNote}) → опустился бы до 0 и ниже.`,
       `<span class="roll-failure">Провал — Боги отвернулись. Персонаж мёртв по-настоящему.</span>`
     ], [fateRoll]);
     return;
   }
 
   const corRoll = await new Roll(cfg.corDie).evaluate();
-  const newFate = current - loss;
+  const newFate = spend.poolValue;
   const newCor  = (Number(actor.system.corruption?.value) || 0) + corRoll.total;
   const updates = {
     "system.fate.value": newFate,
@@ -68,7 +72,7 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
   await actor.update(updates);
 
   const lines = [
-    `Пул ${pool}: <b>${current}</b> − ${loss} → <b>${newFate}</b>.`,
+    `Пул ${pool}: <b>${current}</b> − ${loss}${tempNote} → <b>${newFate}</b>.`,
     `Порча: +${corRoll.total} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`,
     `<span class="roll-success">Успех — персонаж жив. Кардиомонитор перезапущен.</span>`
   ];

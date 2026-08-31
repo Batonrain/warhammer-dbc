@@ -57,6 +57,17 @@ function textNode() {
   };
 }
 
+/** Тот же приём, но для innerHTML — построчная разбивка порога пишет в него. */
+function htmlNode() {
+  let html = "";
+  return { get innerHTML() { return html; }, set innerHTML(v) { html = String(v); } };
+}
+
+/** Сумма всех <b>±N</b> в HTML построчной разбивки — должна равняться итогу. */
+function sumBreakdown(html) {
+  return [...html.matchAll(/<b>([+-]?\d+)<\/b>/g)].reduce((n, m) => n + Number(m[1]), 0);
+}
+
 beforeEach(() => {
   resetCaptured();
   setTargets([]);
@@ -402,6 +413,72 @@ describe("пересчёт порога в открытом окне", () => {
 
     expect(captured.dialog.content).not.toContain('data-autofail="true"');
     expect(captured.dialog.content).toContain("Ослеплён (-30)");
+  });
+});
+
+// wdbc-53lh: под итоговым порогом — список слагаемых, а не одно непрозрачное
+// число. Сумма списка должна ровно совпадать с показанным итогом (та же
+// арифметика, что thresholdOf), нулевые слагаемые в списке не показываются.
+describe("построчная разбивка порога (wdbc-53lh)", () => {
+  it("сумма слагаемых равна показанному итогу, нулевые слагаемые скрыты", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const display   = textNode();
+    const breakdown = htmlNode();
+    const form = attackForm(
+      { "#atk-modifier": "-5",
+        "input[name='atk-rof']:checked": { dataset: { bonus: "10" } },
+        "#atk-total-display": display, "#atk-threshold-breakdown": breakdown,
+        ".av-adv-hint": textNode() },
+      { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(20)],
+        ".atk-mod-cb:checked": [checkbox(20)] });
+
+    captured.rerender(form);
+    expect(display.textContent).toBe("70");                    // 45 − 5 + 10 + 20
+    expect(sumBreakdown(breakdown.innerHTML)).toBe(70);
+
+    expect(breakdown.innerHTML).toContain("BS <b>+45</b>");
+    expect(breakdown.innerHTML).toContain("Режим огня <b>+10</b>");
+    expect(breakdown.innerHTML).toContain("Доп. модификатор <b>-5</b>");
+    expect(breakdown.innerHTML).toContain("Ситуативные <b>+20</b>");
+    // Легион/Тренировка/Боеприпас и т.п. у этой заготовки все нулевые — не в списке.
+    expect(breakdown.innerHTML).not.toContain("Легион");
+    expect(breakdown.innerHTML).not.toContain("Боеприпас");
+  });
+
+  it("ополовиненный правилом штраф даёт отдельную поправочную строку, сумма всё равно сходится", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const display   = textNode();
+    const breakdown = htmlNode();
+    const form = attackForm(
+      { "#atk-total-display": display, "#atk-threshold-breakdown": breakdown, ".av-adv-hint": textNode() },
+      { ".rule-mod:checked": [{ dataset: { value: "-30", halve: "1" } }] });
+
+    captured.rerender(form);
+    // 45 база − 30 правило, ополовинено (округление в пользу игрока) → −15.
+    expect(display.textContent).toBe("30");
+    expect(sumBreakdown(breakdown.innerHTML)).toBe(30);
+    expect(breakdown.innerHTML).toContain("Спецправила <b>-30</b>");
+    expect(breakdown.innerHTML).toContain("Ополовинено");
+  });
+
+  it("заблокировано/провал/авто-успех — список слагаемых очищается, а не показывает устаревшее", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const display   = textNode();
+    const breakdown = htmlNode();
+    breakdown.innerHTML = "стухший список";
+    const form = attackForm(
+      { "#atk-total-display": display, "#atk-threshold-breakdown": breakdown, ".av-adv-hint": textNode() },
+      { ".atk-mod-cb[data-autofail]:checked": [checkbox(0)] });
+
+    captured.rerender(form);
+    expect(display.textContent).toBe("ПРОВАЛ");
+    expect(breakdown.innerHTML).toBe("");
   });
 });
 
@@ -988,5 +1065,69 @@ describe("Локус Сокрушения: раз в Раунд База «По�
       const card = captured.chat.at(-1).content;
       expect(card).toContain("Порог: <b>65</b>");
     });
+  });
+});
+
+// Числовой перевес 2к1/3к1 (wdbc-5il7, п.5): meleeContactCount с ОБРАТНЫМ
+// обходом — считаем не врагов у атакующего, а «врагов цели» (т.е. атакующего
+// и его союзников) в контакте с целью.
+describe("Числ. перевес: автоотметка 2к1/3к1 по контактам у цели", () => {
+  const prevCanvas = globalThis.canvas;
+
+  beforeEach(() => {
+    // grid.size 1 — doc.x/y читаются как метры напрямую (см. test/combat/
+    // tactical-map.test.mjs), без пересчёта клетка↔пиксель↔метр.
+    globalThis.canvas = { grid: { size: 1 }, tokens: { placeables: [] } };
+  });
+
+  afterEach(() => { globalThis.canvas = prevCanvas; });
+
+  function contactToken({ x, y, disposition }) {
+    return { document: { x, y, width: 1, height: 1, disposition } };
+  }
+
+  function setTargetToken(tt) {
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([tt]) };
+  }
+
+  it("без цели на сцене — нет автоотметки, галочки снимаемы вручную", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toContain("Числ. перевес 2к1");
+    expect(html).not.toMatch(/data-value="10"[^>]*checked/);
+    expect(html).not.toMatch(/data-value="20"[^>]*checked/);
+  });
+
+  it("двое в контакте с целью — автоотмечена «2к1», «3к1» — нет", () => {
+    const target = contactToken({ x: 0, y: 0, disposition: -1 });
+    const ally1  = contactToken({ x: 1, y: 0, disposition: 1 });
+    const ally2  = contactToken({ x: 0, y: 1, disposition: 1 });
+    canvas.tokens.placeables = [target, ally1, ally2];
+    setTargetToken(target);
+
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toMatch(/data-value="10"[^>]*checked/);
+    expect(html).not.toMatch(/data-value="20"[^>]*checked/);
+    expect(html).toContain("в контакте с целью: 2");
+  });
+
+  it("трое и больше в контакте с целью — автоотмечена «3к1»", () => {
+    const target = contactToken({ x: 0, y: 0, disposition: -1 });
+    const allies = [
+      contactToken({ x: 1, y: 0, disposition: 1 }),
+      contactToken({ x: 0, y: 1, disposition: 1 }),
+      contactToken({ x: -1, y: 0, disposition: 1 })
+    ];
+    canvas.tokens.placeables = [target, ...allies];
+    setTargetToken(target);
+
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toMatch(/data-value="20"[^>]*checked/);
+    expect(html).not.toMatch(/data-value="10"[^>]*checked/);
   });
 });

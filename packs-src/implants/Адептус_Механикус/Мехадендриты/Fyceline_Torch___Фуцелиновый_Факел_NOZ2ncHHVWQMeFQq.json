@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:3. Utility.",
-    "notes": "",
+    "notes": "Встроенное оружие мехадендрита (два профиля атаки) — нет поля под embedded-оружие с уникальным профилем; +10/+30 Tech-Use/Trade на ремонт/косметику — узкий контекст (только эти действия), не общий бонус к навыку.",
     "category": "mechadendrite",
     "quality": "common",
     "effect": "S 30, Дл. 2м, Rng 0-6. Удар 1d10+9 E(Fl), Pen 4, Contained, Flame, Imprecise (или 1d10+3 I(Cr), Imprecise, Primitive). +10 Tech-Use/Trade для ремонта (+30 перекраска/косметика). Стрельба как Легион-Огнемёт (Rng 5м, не тратит стандартные боеприпасы); 2 бака альтернативного топлива (переключение свободным действием).",

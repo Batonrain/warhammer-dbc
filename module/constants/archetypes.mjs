@@ -6,44 +6,6 @@
 // gear — текст (с выборами «или»); wounds — формула стартовых Ран.
 // trait — особый архетипный Трейт. Применение — Мастером создания.
 
-const ARCHETYPE_SOURCE = "Black Crusade — Архетипы (Мастер создания)";
-
-const RACE_FOLDER = {
-  astartes:   "Астартес (Космодесантники)",
-  human:      "Люди",
-  mechanicus: "Механикус",
-  azuriane:   "Азуриане",
-  drukhari:   "Друкхари",
-  harlequin:  "Арлекины"
-};
-
-// Предметы-Архетипы (type:"archetype") для компендиума warhammer-dbc.archetypes.
-// Источник истины при выборе (Мастер создания, шапка листа) — сам компендиум
-// (см. module/apps/archetypes.mjs); эта функция засеивает/синкает его из
-// констант ниже, как и остальные библиотеки.
-export function archetypeLibrary() {
-  return Object.entries(ARCHETYPES).map(([key, a]) => {
-    const top = RACE_FOLDER[a.race] || "Люди";
-    const useSub = a.race === "azuriane" && a.group;
-    return {
-      name: a.name, type: "archetype", img: "icons/svg/upgrade.svg",
-      folder: useSub ? a.group : top,
-      ...(useSub ? { folderParent: top } : {}),
-      system: {
-        key, race: a.race || "", group: a.group || "",
-        charBonus: { ...(a.charBonus || {}) }, charChoice: a.charChoice || "",
-        skills: a.skills || "", talents: a.talents || "", gear: a.gear || "",
-        wounds: a.wounds || "", infRoll: a.infRoll || "", requiredPath: a.requiredPath || "",
-        isPsyker: !!a.isPsyker, isTechpriest: !!a.isTechpriest, psykerClass: a.psykerClass || "",
-        grantsWarPlate: !!a.grantsWarPlate, grantsImplants: !!a.grantsImplants,
-        description: a.desc || "",
-        trait: { name: a.trait?.name || "", benefit: a.trait?.benefit || "" },
-        bookSource: ARCHETYPE_SOURCE
-      }
-    };
-  });
-}
-
 export const ARCHETYPES = {
 
   // ═══════════════════════════ КОСМОДЕСАНТНИКИ ════════════════════════════

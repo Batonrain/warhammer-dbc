@@ -12,7 +12,7 @@
 
 import "../support/foundry-stub.mjs";
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, listenerHtml } from "../support/foundry-stub.mjs";
 import { weaponFor } from "../support/combat-fixtures.mjs";
 import { eliteRaceMatch } from "../../module/sheets/elite-picker.mjs";
@@ -568,6 +568,55 @@ describe("Снаряжение: улучшения на носителе", () =>
     await handlers[".psy-cost-input, .tech-cost-input:change"](ev({ itemId: "psy-1" }, "400"));
 
     expect(power.updates[0]).toEqual({ "system.cost": 400 });
+  });
+
+  describe("возврат книжной цены психосилы/техночуда из компендиума (wdbc-2b61)", () => {
+    const realPacks = globalThis.game.packs;
+    afterEach(() => { globalThis.game.packs = realPacks; });
+
+    const stubPack = (key, docs) => {
+      globalThis.game.packs = { get: k => (k === key ? { getDocuments: async () => docs } : null) };
+    };
+
+    it("психосила: цена берётся из warhammer-dbc.psychic-powers по имени", async () => {
+      const power = {
+        id: "psy-1", type: "psychicPower", name: "Сила", system: { cost: 999 }, updates: [],
+        async update(data) { power.updates.push(data); return data; }
+      };
+      stubPack("warhammer-dbc.psychic-powers", [{ uuid: "u1", name: "Сила", system: { cost: 300 } }]);
+      const handlers = wire(sheetFor({ items: [power] }));
+
+      await handlers[".psy-cost-reset, .tech-cost-reset:click"](ev({ itemId: "psy-1" }));
+
+      expect(power.updates[0]).toEqual({ "system.cost": 300 });
+    });
+
+    it("техночудо: цена берётся из warhammer-dbc.tech-powers, а не из psychic-powers", async () => {
+      const power = {
+        id: "tech-1", type: "techPower", name: "Чудо", system: { cost: 999 }, updates: [],
+        async update(data) { power.updates.push(data); return data; }
+      };
+      stubPack("warhammer-dbc.tech-powers", [{ uuid: "u2", name: "Чудо", system: { cost: 500 } }]);
+      const handlers = wire(sheetFor({ items: [power] }));
+
+      await handlers[".psy-cost-reset, .tech-cost-reset:click"](ev({ itemId: "tech-1" }));
+
+      expect(power.updates[0]).toEqual({ "system.cost": 500 });
+    });
+
+    it("источник не найден в компендиуме — предупреждение, цена не трогается", async () => {
+      const power = {
+        id: "psy-1", type: "psychicPower", name: "Неизвестная", system: { cost: 42 }, updates: [],
+        async update(data) { power.updates.push(data); return data; }
+      };
+      stubPack("warhammer-dbc.psychic-powers", []);
+      const handlers = wire(sheetFor({ items: [power] }));
+
+      await handlers[".psy-cost-reset, .tech-cost-reset:click"](ev({ itemId: "psy-1" }));
+
+      expect(power.updates).toEqual([]);
+      expect(captured.warnings.some(w => w.includes("Неизвестная"))).toBe(true);
+    });
   });
 });
 

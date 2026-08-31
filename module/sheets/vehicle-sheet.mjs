@@ -9,6 +9,8 @@ import { showRamDialog, showTerrainDialog, showRepairDialog, showVoidShieldRepai
          showOrbitalDeployTurn1, showOrbitalDeployTurn2, showFireDetonationDialog,
          showFallBreaksDialog, showDisembarkDialog, resolveVolleyAction } from "../combat/vehicle.mjs";
 import { isTargetWithinVehicleArc } from "../combat/facing.mjs";
+import { measureTokens } from "../combat/tactical-map.mjs";
+import { rangeBandKey } from "../rules/tactical-map.mjs";
 import { vehicleWeaponProfile } from "../constants/vehicle-weapons-library.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
@@ -616,6 +618,20 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
       ? `<div class="atk-range-info" style="color:#c0392b;font-size:0.82em;">⚠ Вне сектора наводки (${esc(vm.hArc || "—")}): ${outOfArcTargets.map(t => esc(t.name)).join(", ")} — довернуть корпус/башню или сменить цель.</div>`
       : "";
 
+    // Полоса дальности (wdbc-5il7, п.4): та же измеренная дистанция и
+    // rangeBandKey, что у личного диалога атаки (wdbc-mysg) — переиспользуем
+    // готовую границу полос, не заводим свою. У техники дропдаун огрублён до
+    // 3 пунктов (Ближе/Короткая +10 · В пределах 0 · Дальняя −10), поэтому
+    // pointBlank/short схлопываются в «+10», long/extreme — в «−10».
+    const vfTarget = (!isMelee && vehicleToken) ? [...(game.user?.targets ?? [])][0] : null;
+    const vfMeasured = (vehicleToken && vfTarget) ? measureTokens(vehicleToken, vfTarget) : null;
+    const vfBandKey = vfMeasured ? rangeBandKey(vfMeasured.edgeM, Number(sys.range)) : null;
+    const vfAutoRange = vfBandKey === "pointBlank" || vfBandKey === "short" ? "10"
+                       : vfBandKey === "long" || vfBandKey === "extreme" || vfBandKey === "out" ? "-10"
+                       : "0";
+    const vfRangeNote = vfMeasured ? `<div class="atk-range-info" style="font-size:0.82em;">Измеренная дистанция: ${vfMeasured.edgeM} м${Number(sys.range) ? ` (Дальность оружия: ${sys.range} м)` : ""}</div>${vfBandKey === "out" ? `
+      <div class="atk-recharge-warn">⚠ Цель вне дальности: ${vfMeasured.edgeM} м при максимуме ${Number(sys.range) * 3} м (3×Rng)</div>` : ""}` : "";
+
     // Без <form>: DialogV2 сам оборачивает содержимое в форму, и вложенная
     // ломала бы button.form, через который читаются поля.
     const content = `
@@ -630,11 +646,12 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
         ${sideRow}
         <div class="atk-dlg-row"><label>Дистанция:</label>
           <select id="vf-range">
-            <option value="10">Ближе / Короткая (+10)</option>
-            <option value="0" selected>В пределах дальности (0)</option>
-            <option value="-10">Дальняя (−10)</option>
+            <option value="10" ${vfAutoRange === "10" ? "selected" : ""}>Ближе / Короткая (+10)</option>
+            <option value="0" ${vfAutoRange === "0" ? "selected" : ""}>В пределах дальности (0)</option>
+            <option value="-10" ${vfAutoRange === "-10" ? "selected" : ""}>Дальняя (−10)</option>
           </select>
         </div>
+        ${vfRangeNote}
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="vf-mod" type="number" value="0"/></div>
         <label class="veh-check"><input type="checkbox" id="vf-short"/> Короткая дистанция (Мельта/Рассеивание)</label>
         ${onslaughtRow}

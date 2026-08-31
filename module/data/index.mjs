@@ -1,11 +1,11 @@
 // module/data/index.mjs
 // ════════════════════════════════════════════════════════════════════════════
-//  Типы данных документов — то, что заменяет собой template.json.
+//  Типы данных документов — template.json в системе больше нет вовсе.
 //
-//  Переезд закончен: поля всех типов описаны здесь, а в template.json остался
-//  только перечень имён типов (Actor.types / Item.types) — Foundry берёт его
-//  оттуда, пока в system.json нет documentTypes. Записи типов там пусты, и
-//  такими должны остаться: два описания одной схемы разъезжаются.
+//  Перечень имён типов (Actor.types / Item.types) задаёт documentTypes в
+//  system.json; поля каждого типа описаны здесь и регистрируются как
+//  DataModel (CONFIG.Actor.dataModels / CONFIG.Item.dataModels, см.
+//  warhammer-dbc.mjs).
 // ════════════════════════════════════════════════════════════════════════════
 
 import { WeaponPropertyData } from "./item/weapon-property.mjs";

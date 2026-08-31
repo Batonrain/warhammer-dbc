@@ -4,8 +4,8 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1. Вариант руки.",
-    "notes": "",
-    "category": "bionic",
+    "notes": "+10 на использование ЭТОГО ВСТРОЕННОГО оружия — привязано к конкретному linkedWeapon предмета, не общий тест Навыка/Характеристики; оружие нельзя выбить — свойство защиты снаряжения вне схемы.",
+    "category": "bionic-arm",
     "quality": "common",
     "effect": "Встроенное интегрированное оружие (Compact); +10 на использование этого оружия; нельзя выбить из руки.",
     "installed": "",

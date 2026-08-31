@@ -21,46 +21,30 @@ describe("combinedThreshold", () => {
 });
 
 describe("resolveOpposed", () => {
-  it("оба преуспели — margin равен разнице степеней (пример книги, Малфас)", () => {
-    const mine = { deg: 6, success: true, threshold: 70 };
-    const theirs = { deg: 4, success: true, threshold: 70 };
-    expect(resolveOpposed(mine, theirs)).toEqual({ winner: "mine", margin: 2 });
-  });
-
-  it("успех против провала — margin складывает обе степени (пример книги)", () => {
-    const mine = { deg: 3, success: true, threshold: 60 };
-    const theirs = { deg: 2, success: false, threshold: 60 };
-    expect(resolveOpposed(mine, theirs)).toEqual({ winner: "mine", margin: 5 });
-  });
-
-  it("оба провалили — побеждает тот, у кого меньше Провалов", () => {
-    const mine = { deg: 2, success: false, threshold: 40 };
-    const theirs = { deg: 4, success: false, threshold: 40 };
-    expect(resolveOpposed(mine, theirs)).toEqual({ winner: "mine", margin: 2 });
-  });
-
-  it("равная степень — решает более высокий Предел, победа с 1 степенью", () => {
-    const mine = { deg: 3, success: true, threshold: 80 };
-    const theirs = { deg: 3, success: true, threshold: 50 };
-    expect(resolveOpposed(mine, theirs)).toEqual({ winner: "mine", margin: 1 });
-  });
-
-  it("равная степень и равный Предел — полная ничья, решает ГМ", () => {
-    const mine = { deg: 2, success: true, threshold: 60 };
-    const theirs = { deg: 2, success: true, threshold: 60 };
-    expect(resolveOpposed(mine, theirs)).toEqual({ winner: null, margin: 0 });
-  });
-
-  it("безопасный (vss): Провалы проигравшего не идут в margin победителя", () => {
-    const mine = { deg: 3, success: true, threshold: 60 };
-    const theirs = { deg: 2, success: false, threshold: 60 };
-    expect(resolveOpposed(mine, theirs, { safe: true })).toEqual({ winner: "mine", margin: 3 });
-  });
-
-  it("безопасный (vss): оба преуспели — та же формула, что у обычного встречного", () => {
-    const mine = { deg: 6, success: true, threshold: 70 };
-    const theirs = { deg: 4, success: true, threshold: 70 };
-    expect(resolveOpposed(mine, theirs, { safe: true })).toEqual({ winner: "mine", margin: 2 });
+  it.each([
+    ["оба преуспели — margin равен разнице степеней (пример книги, Малфас)",
+      { deg: 6, success: true, threshold: 70 }, { deg: 4, success: true, threshold: 70 }, {},
+      { winner: "mine", margin: 2 }],
+    ["успех против провала — margin складывает обе степени (пример книги)",
+      { deg: 3, success: true, threshold: 60 }, { deg: 2, success: false, threshold: 60 }, {},
+      { winner: "mine", margin: 5 }],
+    ["оба провалили — побеждает тот, у кого меньше Провалов",
+      { deg: 2, success: false, threshold: 40 }, { deg: 4, success: false, threshold: 40 }, {},
+      { winner: "mine", margin: 2 }],
+    ["равная степень — решает более высокий Предел, победа с 1 степенью",
+      { deg: 3, success: true, threshold: 80 }, { deg: 3, success: true, threshold: 50 }, {},
+      { winner: "mine", margin: 1 }],
+    ["равная степень и равный Предел — полная ничья, решает ГМ",
+      { deg: 2, success: true, threshold: 60 }, { deg: 2, success: true, threshold: 60 }, {},
+      { winner: null, margin: 0 }],
+    ["безопасный (vss): Провалы проигравшего не идут в margin победителя",
+      { deg: 3, success: true, threshold: 60 }, { deg: 2, success: false, threshold: 60 }, { safe: true },
+      { winner: "mine", margin: 3 }],
+    ["безопасный (vss): оба преуспели — та же формула, что у обычного встречного",
+      { deg: 6, success: true, threshold: 70 }, { deg: 4, success: true, threshold: 70 }, { safe: true },
+      { winner: "mine", margin: 2 }]
+  ])("%s", (_title, mine, theirs, opts, expected) => {
+    expect(resolveOpposed(mine, theirs, opts)).toEqual(expected);
   });
 });
 

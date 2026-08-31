@@ -132,9 +132,12 @@ export function armorAgilityCap(actor) {
 // выключенной силовой брони. Toughness сюда сознательно НЕ входит (как и у
 // fatiguePenalty в sheets/tabs/conditions.mjs) — книга говорит именно про
 // физические ДЕЙСТВИЯ (двигаться, бить, стрелять), а не про стойкость тела.
-const PHYSICAL_CHARS = new Set(["ws", "bs", "s", "ag"]);
+// Экспортированы: тот же набор реюзает rules/encumbrance.mjs (общий перегруз
+// инвентаря, wdbc-2l3x, — «штраф −10 на все движения и атаки» стр. 27
+// дословно совпадает по формулировке с этой веткой армора).
+export const PHYSICAL_CHARS = new Set(["ws", "bs", "s", "ag"]);
 // «Физические реакции» (стр. 233) — в этой системе это конкретно два навыка.
-const REACTION_SKILLS = new Set(["dodge", "parry"]);
+export const REACTION_SKILLS = new Set(["dodge", "parry"]);
 
 /**
  * Надета ли выключенная силовая броня — общая для штрафа действий/реакций

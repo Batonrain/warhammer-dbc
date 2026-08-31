@@ -64,5 +64,15 @@ export const CORE_RULES = [
       target: "skill:stealth",
       valueFrom: { selfSize: true, multiplier: -10 }
     }]
+  },
+  {
+    // «Доступна папка талантов Псайкера/Псайканы» (item-picker.mjs::
+    // talentGroupLock, wdbc-sauo) раньше читала Пси-Рейтинг актора напрямую —
+    // не по расе (любая раса с Пси-Рейтингом отпирает обе папки одинаково),
+    // поэтому правило общее, не расовое.
+    id: "core.psyker",
+    label: "Пси-Рейтинг",
+    when: { psyRatingMin: 1 },
+    effects: [{ kind: "grantFlag", target: "talents.psyker" }]
   }
 ];

@@ -74,6 +74,20 @@ function wearsPowerArmour(actor) {
     i?.type === "armor" && i?.system?.equipped && POWER_ARMOUR_TYPES.has(i?.system?.armorType));
 }
 
+/**
+ * Сус-ан Мембрана — орган Геносемени Гвардии Ворона/Призраков Смерти
+ * (wdbc-l07y, дубль был в rules/death-save.mjs и apps/sus-an-heal.mjs).
+ * Русская половина в паке несёт книжный номер («12. Сус-ан Мембрана /
+ * Sus-an Membrane») — itemHasName сравнивает половины ЦЕЛИКОМ, поэтому номер
+ * сломал бы совпадение по русской половине; проверяем обе половины
+ * отдельно, а не одну надёжную (английскую) — старые фикстуры тестов и
+ * возможные ручные записи без номера остаются рабочими.
+ */
+export function isSusAnMembraneItem(item) {
+  return item?.type === "implant" &&
+    (itemHasName(item, "Сус-ан Мембрана") || itemHasName(item, "Sus-an Membrane"));
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
@@ -97,6 +111,17 @@ function inFactions(actor, wanted) {
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
   subrace: (actor, ctx, value) => list(value).includes(actor?.system?.subrace),
+
+  // Легион Геносемени (module/constants/legions.mjs, id — римская цифра, "VIII"
+  // у Повелителей Ночи). Раса «astartes» одна на всех легионов, поэтому
+  // легионные Таланты (папка пикера «Повелители Ночи») не выразить условием
+  // `race` — нужен отдельный ключ (item-picker.mjs::talentGroupLock, wdbc-sauo).
+  geneSeedLegion: (actor, ctx, value) => list(value).includes(actor?.system?.geneSeed?.legion),
+
+  // Пси-Рейтинг не ниже указанного — общее условие книги (папки пикера
+  // «Псайкер»/«Псайкана», wdbc-sauo), было в справочнике нереализованным
+  // с самого этапа 1 плана.
+  psyRatingMin: (actor, ctx, value) => (Number(actor?.system?.psyker?.rating) || 0) >= Number(value),
 
   sizeMax: (actor, ctx, value) => sizeOf(actor) <= Number(value),
 
@@ -176,12 +201,23 @@ export const PREDICATES = {
  * или предмет типа eliteArchetype. Архетип бывает и предметом (куплен
  * пикером), и строкой (вписан руками/со старого листа) — обе формы отпирают
  * одно и то же. Раньше жил копиями в character-context и item-picker.
+ *
+ * `name` принимает и одну половину («Феларх»), и полное двуязычное имя
+ * («Felarch / Феларх»): совпадение любой половины искомого с любой половиной
+ * источника достаточно — старые архетипы записаны только русской половиной,
+ * новые полным именем, и обе формы встречаются с обеих сторон сверки
+ * (wdbc-91o8). Служебный префикс [WIP] у имени при сверке отбрасывается.
  */
 export function hasEliteArchetype(actor, name) {
+  const wanted = String(name ?? "").split("/").map(s => s.trim()).filter(Boolean);
+  if (!wanted.length) return false;
   const sys = actor?.system || {};
-  if (itemHasName({ name: sys.eliteArchetype }, name)) return true;
-  if ((sys.eliteArchetypesExtra || []).some(k => itemHasName({ name: k }, name))) return true;
-  return [...(actor?.items ?? [])].some(i => i.type === "eliteArchetype" && itemHasName(i, name));
+  const sources = [
+    sys.eliteArchetype,
+    ...(sys.eliteArchetypesExtra || []),
+    ...[...(actor?.items ?? [])].filter(i => i?.type === "eliteArchetype").map(i => i?.name)
+  ].map(n => ({ name: String(n ?? "").replace(/^\[WIP\]\s*/, "") }));
+  return wanted.some(w => sources.some(src => itemHasName(src, w)));
 }
 
 /**
@@ -192,4 +228,28 @@ export function hasEliteArchetype(actor, name) {
 export function isPossessed(actor) {
   const sys = actor?.system || {};
   return (sys.alignment === "heretic" && !!sys.possessed) || hasEliteArchetype(actor, "Одержимый");
+}
+
+/**
+ * Дары Одержимого (module/constants/possession.mjs::POSSESSION_GIFTS) —
+ * предметы-таланты с двуязычным именем «Английское / Дар: Русское» (wdbc-rc5z).
+ * Раньше этот префикс был договором между rules/character.mjs (точное
+ * совпадение ВСЕЙ строки имени с «Дар: X» — не срабатывало на реальные
+ * бигвальные записи пака) и sheets/tabs/possession.mjs (name.startsWith,
+ * та же ошибка — реальное имя начинается с английской половины, не с
+ * префикса), закреплён только комментариями в двух местах.
+ */
+export const GIFT_NAME_PREFIX = "Дар: ";
+
+/** Множество активных имён Даров (без префикса) — предметы-таланты актора. */
+export function giftNamesOf(actor) {
+  const out = new Set();
+  for (const i of actor?.items ?? []) {
+    if (i?.type !== "talent") continue;
+    for (const part of String(i?.name ?? "").split("/")) {
+      const p = part.trim();
+      if (p.startsWith(GIFT_NAME_PREFIX)) { out.add(p.slice(GIFT_NAME_PREFIX.length).trim()); break; }
+    }
+  }
+  return out;
 }

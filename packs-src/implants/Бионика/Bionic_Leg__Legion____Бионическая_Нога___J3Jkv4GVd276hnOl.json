@@ -4,8 +4,8 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:2. Вариант ноги.",
-    "notes": "",
-    "category": "bionic",
+    "notes": "Unnatural S для ног только в Беге/Натиске — характеристика для конкретного подмножества тестов конечности, не общий бонус S; «крупные и тяжёлые» — вес/габарит, отдельное поле вне testMod.",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Ноги десантника: Unnatural S для ног (Бег/Натиск), крупные и тяжёлые.",
     "installed": "",

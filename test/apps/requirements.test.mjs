@@ -149,6 +149,22 @@ describe("движок Требований", () => {
       expect(actorMeetsReq(a, req("reqPatron", { patronKey: "khorne" }))).toBe(false);
     });
 
+    // wdbc-91o8: reqArchetype смотрел строку шапки и «дополнительные», но НЕ
+    // предмет типа eliteArchetype — купленный пикером архетип требование не
+    // выполнял. Сверка ещё и билингвальная: старые листы несут одну половину.
+    it("элитный архетип: предмет, купленный пикером, тоже выполняет требование", () => {
+      const a = actorOf({}, [{ type: "eliteArchetype", name: "Haemonculus / Гемункул", system: {} }]);
+
+      expect(actorMeetsReq(a, req("reqArchetype", { archetypeName: "Haemonculus / Гемункул" }))).toBe(true);
+      expect(actorMeetsReq(a, req("reqArchetype", { archetypeName: "Гемункул" }))).toBe(true);
+      expect(actorMeetsReq(a, req("reqArchetype", { archetypeName: "Ведьма" }))).toBe(false);
+    });
+
+    it("элитный архетип: одна половина имени в шапке закрывает полное двуязычное требование", () => {
+      const a = actorOf({ eliteArchetype: "Феларх" });
+      expect(actorMeetsReq(a, req("reqArchetype", { archetypeName: "Felarch / Феларх" }))).toBe(true);
+    });
+
     it("актора нет — не выполнено ничего", () => {
       expect(actorMeetsReq(null, req("reqRace", { raceKey: "human" }))).toBe(false);
     });

@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { resolveTest } from "../../../module/rules/resolve-test.mjs";
+import { collectRules } from "../../../module/rules/collect.mjs";
 import { CORE_RULES } from "../../../module/rules/library/core.mjs";
 
 /** Подставной актор: обычный литерал, без Foundry. */
@@ -135,5 +136,20 @@ describe("core.sizeToHit и core.sizeStealth (стр. 30, таблица Раз�
   it("Скрытность обычного человека не трогается", () => {
     const { mods } = resolveTest({ actor: sized(0), skill: "stealth", char: "ag" });
     expect(mods).toEqual([]);
+  });
+});
+
+// «Доступна папка талантов Псайкера/Псайканы» (item-picker.mjs::
+// talentGroupLock, wdbc-sauo) — общее для всех рас, не расовое правило.
+describe("core.psyker", () => {
+  it("собирается при ненулевом Пси-Рейтинге, у любой расы", () => {
+    const flags = collectRules(actor({ psyker: { rating: 3 } }))
+      .flatMap(r => r.effects).filter(e => e.kind === "grantFlag").map(e => e.target);
+    expect(flags).toContain("talents.psyker");
+  });
+
+  it("не собирается при нулевом/отсутствующем Пси-Рейтинге", () => {
+    expect(collectRules(actor()).map(r => r.id)).not.toContain("core.psyker");
+    expect(collectRules(actor({ psyker: { rating: 0 } })).map(r => r.id)).not.toContain("core.psyker");
   });
 });

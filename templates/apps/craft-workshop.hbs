@@ -85,7 +85,12 @@
             <label class="wh-craft-check"><input type="radio" name="dicemode" value="disadvantage" {{#if (eq p.diceMode "disadvantage")}}checked{{/if}}/> Помеха</label>
           </div>
           {{#if p.notCraftable}}<div class="wh-craft-warn">⚠ По таблице предмет этой Категории не создаётся при выбранной Редкости — задайте Банк вручную или измените Редкость.</div>{{/if}}
-          {{#if p.machineNote}}<div class="wh-craft-hint">Машины: итоговый Банк ×(Размер+1) — учтите вручную. Орудия создаются отдельно.</div>{{/if}}
+          {{#if p.machineNote}}
+          <div class="wh-craft-toggles">
+            <label><span class="wh-craft-lbl">Размер машины</span><input type="number" name="machinesize" value="{{p.machineSize}}" min="0" class="wh-craft-num"/></label>
+            <div class="wh-craft-hint">Машины: итоговый Банк ×(Размер+1) — уже умножено выше. Орудия создаются отдельно.</div>
+          </div>
+          {{/if}}
         </div>
 
         {{!-- Комбинированный тест --}}

@@ -19,7 +19,7 @@
 //  теста и обязаны сами считаться с активностью источника.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { readToggleGroup, childrenOf, planToggle, toggleParentId } from "../rules/toggle-abilities.mjs";
+import { readToggleGroup, childrenOf, planToggle } from "../rules/toggle-abilities.mjs";
 import { syncItemEffectsDisabled } from "./effects.mjs";
 import { syncGrantedAbilities, syncGrantedEquipment, syncWeaponPropItemEffects } from "./mechanics.mjs";
 
@@ -62,12 +62,4 @@ export async function toggleAbility(actor, parentId, childId, want) {
     if (child) await syncToggleChild(child);
   }
   return plan;
-}
-
-/**
- * Подспособности, включённые у актора прямо сейчас. Нужна листу и всякому,
- * кто хочет показать «что сейчас включено» — например строке состояния в бою.
- */
-export function activeToggles(actor) {
-  return [...(actor?.items || [])].filter(i => toggleParentId(i) && i.getFlag(SYSTEM, "toggleOn"));
 }

@@ -20,6 +20,13 @@ function emptyEffects() {
 
 import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
 
+/** {poor,common,good,best} — общая форма для энергоMax/Компенсатора: значение может зависеть от Качества. */
+function qualityBonusField(label) {
+  const { NumberField, SchemaField } = foundry.data.fields;
+  const tier = () => new NumberField({ initial: 0, integer: true, nullable: false });
+  return new SchemaField({ poor: tier(), common: tier(), good: tier(), best: tier() }, { label });
+}
+
 export class ImplantData extends foundry.abstract.TypeDataModel {
 
   /** @override */
@@ -35,6 +42,13 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       linkedWeapon:  new StringField({ initial: "", label: "Связанное оружие" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      // Директивы автоматизации Техночудес (Кибернетика Механикум). Раньше жили
+      // ТОЛЬКО в таблице по имени (constants/implant-mechanics.mjs) — переименование
+      // импланта в паке молча обнуляло Энергию/Компенсатор/Технофокус (wdbc-9bzv).
+      // Таблица остаётся фоллбэком для немигрированных легаси-копий — см. character.mjs.
+      energyMax:     qualityBonusField("Прибавка к максимуму Энергии по Качеству"),
+      compensator:   qualityBonusField("Бонус к тесту Компенсатора по Качеству"),
+      ironFocus:     new BooleanField({ initial: false, label: "Технофокус (Железо для Техночудес)" }),
       // Встроенное защитное поле (Рефрактор Механикум и т.п.) — та же механика,
       // что у отдельного forcefield, но включается вместе с имплантом.
       shield: new SchemaField({

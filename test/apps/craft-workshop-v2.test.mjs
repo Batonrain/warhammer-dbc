@@ -78,6 +78,30 @@ describe("_prepareContext", () => {
     expect(ctx.multiple).toBe(true);
     expect(ctx.projects).toHaveLength(2);
   });
+
+  it("машины: Банк умножается на (Размер+1) сам, без ручного счёта (wdbc-5il7)", async () => {
+    const app = appLike([newProject({
+      categoryKey: "wheeled", rarity: 0, quality: "common", baseBank: null, machineSize: 2
+    })]);
+    const ctx = await CraftWorkshop.prototype._prepareContext.call(app, {});
+    const p = ctx.projects[0];
+    expect(p.machineNote).toBe(true);
+    expect(p.baseBankVal).toBe(40); // таблица категории "wheeled", редкость 0
+    expect(p.bank).toBe(120);       // 40 × (2 + 1)
+  });
+
+  it("машины: Размер 0 — Банк не меняется (×1)", async () => {
+    const app = appLike([newProject({ categoryKey: "wheeled", rarity: 0, baseBank: null, machineSize: 0 })]);
+    const ctx = await CraftWorkshop.prototype._prepareContext.call(app, {});
+    expect(ctx.projects[0].bank).toBe(40);
+  });
+
+  it("не-машина: machineSize игнорируется, Банк как обычно", async () => {
+    const app = appLike([newProject({ categoryKey: "explosive", baseBank: 20, machineSize: 5 })]);
+    const ctx = await CraftWorkshop.prototype._prepareContext.call(app, {});
+    expect(ctx.projects[0].machineNote).toBe(false);
+    expect(ctx.projects[0].bank).toBe(20);
+  });
 });
 
 describe("_onRender: разводка кнопок и полей", () => {

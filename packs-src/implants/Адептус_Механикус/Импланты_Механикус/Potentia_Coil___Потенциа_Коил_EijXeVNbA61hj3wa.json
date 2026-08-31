@@ -7,6 +7,7 @@
     "notes": "",
     "category": "mechanicus",
     "quality": "common",
+    "energyMax": { "poor": 1, "common": 3, "good": 5, "best": 7 },
     "effect": "Энергетический банк Техночудес: даёт заряды Энергии (Poor 1 / Common 3 / Good 5 / Best 7, максимум выставляется автоматически при установке). Заряжается Электу-Индукторами или генераторами ⚡ других имплантов Механикум.",
     "installed": "",
     "linkedWeapon": "",

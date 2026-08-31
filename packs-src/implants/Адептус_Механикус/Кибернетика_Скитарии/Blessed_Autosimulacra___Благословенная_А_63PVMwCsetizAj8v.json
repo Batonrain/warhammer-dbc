@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:3.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "skitarii",
     "quality": "common",
     "effect": "Микро-дроны затягивают раны: Трейт Regeneration (1), не конфликтует с бионикой. Подавляет/замораживает лучевую болезнь от Рад Печи. Poor.Q: только при пропуске Хода; Good.Q: +20 T на регенерацию; Best.Q: Трейт до 2.",

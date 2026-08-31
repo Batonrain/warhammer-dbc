@@ -1938,6 +1938,11 @@ export class WarhammerItemSheet
     mechField(".mech-mod-char-mult", (e, v) => { e.modCharBonusMultiplier = Math.max(1, Number(v) || 1); });
     mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
     mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
+    // Цена в пуле (wdbc-1dc8) — смена пула показывает/прячет поле числа,
+    // тот же приём каскада, что у .mech-fatigue-action ниже (saveMech даёт
+    // листу перерисоваться).
+    mechField(".mech-capability-cost-pool",   (e, v) => { e.capabilityCostPool = v; });
+    mechField(".mech-capability-cost-amount", (e, v) => { e.capabilityCostAmount = Math.max(1, Number(v) || 1); });
 
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
@@ -2086,6 +2091,11 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.auraIncludesSelf = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+    on(".mech-aura-immune", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.auraImmuneTraits = ev.currentTarget.value; saveMech(arr); }
     });
     // Код (kind:"script")
     on(".mech-script-label", "change", ev => {

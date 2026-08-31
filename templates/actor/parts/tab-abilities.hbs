@@ -57,17 +57,26 @@
   {{#if activeCapabilities.length}}
   <div class="ability-section-panel"> <div class="panel-title"> ВОЗМОЖНОСТИ СЕЙЧАС </div>
     <table class="items-table"> <thead> <tr>
-      <th class="col-wide">Что даёт</th><th class="col-narrow">Считает</th><th>Источник</th>
+      <th class="col-wide">Что даёт</th><th class="col-narrow">Считает</th><th>Источник</th><th class="col-narrow"></th>
     </tr> </thead> <tbody>
       {{#each activeCapabilities as |c|}}
       <tr class="item-row">
         <td class="item-name-cell">{{c.label}}</td>
         <td class="cap-auto-cell">{{#if c.auto}}<span title="Система учитывает сама">авто</span>{{else}}<span class="cap-manual" title="Читателя в расчёте нет — применяет ГМ">вручную</span>{{/if}}</td>
         <td>{{c.sources}}</td>
+        <td class="cap-spend-cell">
+          {{#if c.cost}}
+          <button type="button" class="cap-spend-btn" data-action="capabilitySpend" data-key="{{c.key}}" data-label="{{c.label}}"
+                  {{#if c.spendGate.disabled}}disabled{{/if}}
+                  title="{{#if c.spendGate.title}}{{c.spendGate.title}}{{else}}Списать {{c.costLabel}}{{/if}}">
+            − {{c.costLabel}}
+          </button>
+          {{/if}}
+        </td>
       </tr>
       {{/each}}
     </tbody> </table>
-    <div class="gene-seed-hint">Список собирается из записей Конструктора вида «Возможность» на активных предметах: включённые Локусы Герольда и всё прочее того же рода. «Вручную» значит, что расчёт эту возможность пока не читает.</div>
+    <div class="gene-seed-hint">Список собирается из записей Конструктора вида «Возможность» на активных предметах: включённые Локусы Герольда и всё прочее того же рода. «Вручную» значит, что расчёт эту возможность пока не читает. Кнопка списания видна только у записей с ценой (wdbc-1dc8).</div>
   </div>
   {{/if}}
 

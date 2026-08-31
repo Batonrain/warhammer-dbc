@@ -109,6 +109,18 @@ export const CAPABILITIES = {
     source: "Раса: Серый Человек (Oteshii)",
     reader: "module/rules/character.mjs — prepareCharacterDerived(), блок system.psyker, пересчитывается каждый цикл"
   },
+  // ── Природа психосилы «Древнее Мастерство» у всех рас Аэльдари (wdbc-l07y) ──
+  "psyker.ancientMastery": {
+    label: "Природа психосилы всегда «Древнее Мастерство» (независимо от system.psyker.class)",
+    source: "Расы группы «Аэльдари»: Экзодит/Друкхари/Азуриане/Арлекин/Иннари/Полуэльдар",
+    reader: "module/sheets/tabs/psychic.mjs — showManifestDialog(), isEldar/nature"
+  },
+  // ── Иммунитет к Грозному Воплю у посвящённых Слаанеш (wdbc-l07y) ─────────
+  "dreadWail.immune": {
+    label: "Иммунитет к звуковой волне Грозного Вопля",
+    source: "Покровительство: Слаанеш (system.patronGod)",
+    reader: "module/combat/dread-wail.mjs — applyDreadWailWave(), фильтр целей в радиусе"
+  },
   // ── Иммунитет к физическим мутациям (wdbc-gzuf) ──────────────────────────
   "mutation.physicalImmune": {
     label: "Не получает физических мутаций (таблица «Общие мутации» недоступна; Дары Богов — доступны)",
@@ -141,6 +153,67 @@ export const CAPABILITIES = {
     label: "Заключён в саркофаг Дредноута",
     source: "Книга Машин, «Дредноуты» (стр. 57-58)",
     reader: "module/rules/sources.mjs — источник «dreadnought»; Требования Талантов Дредноутов"
+  },
+
+  // ── Папки пикера Талантов (talentGroupLock, wdbc-sauo) ──────────────────
+  // Раньше — прямые сравнения race/legion/имени предмета в самом item-picker.mjs;
+  // теперь папку отпирает возможность, а раздают её раса/легион/предмет своими
+  // данными. talents.geneSeed была первым таким переводом (этап до wdbc-sauo) —
+  // добавлена сюда задним числом вместе с остальными.
+  "talents.geneSeed": {
+    label: "Доступна папка Талантов «Геносемя»",
+    source: "Раса: Астартес (module/rules/library/astartes.mjs, astartes.geneseed)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.nightLords": {
+    label: "Доступна папка Талантов «Повелители Ночи»",
+    source: "Астартес с Геносеменем легиона VIII (module/rules/library/astartes.mjs, astartes.nightLords)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.psyker": {
+    label: "Доступны папки Талантов «Псайкер»/«Псайкана»",
+    source: "Пси-Рейтинг больше 0, любая раса (module/rules/library/core.mjs, core.psyker)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.exodite": {
+    label: "Доступна папка Талантов Экзодитов",
+    source: "Раса: Экзодит (module/rules/library/aeldari.mjs, EXODITE_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.drukhari": {
+    label: "Доступны папки Талантов «Друкхари»/«Таланты Боли»",
+    source: "Раса: Друкхари и её субрасы (module/rules/library/aeldari.mjs, DRUKHARI_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.azuriane": {
+    label: "Доступна папка Талантов «Азуриани»",
+    source: "Раса: Азуриане (module/rules/library/aeldari.mjs, AZURIANE_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.harlequin": {
+    label: "Доступна папка Талантов Арлекинов",
+    source: "Раса: Арлекин (module/rules/library/aeldari.mjs, HARLEQUIN_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.ynnari": {
+    label: "Доступна папка Талантов «Иннари»",
+    source: "Раса: Иннари (module/rules/library/aeldari.mjs, YNNARI_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.navigatorGen": {
+    label: "Доступна папка Талантов «Ген навигатора»",
+    source: "Черта Navigator's Gen / Ген Навигатора (Mechanics самой Черты)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.skitarii": {
+    label: "Доступна папка Талантов «Скитарии»",
+    source: "Установленный имплант Skitarii War Plate / Боевые Латы Скитарии (Mechanics импланта)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.mechanicum": {
+    label: "Доступна папка Талантов «Механикум»/«Техномистик»",
+    source: "Черта Mechanicum Implants / Импланты Механикум (Mechanics самой Черты)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
   },
 
   // ── Саркофаг Дредноута (Книга Машин, стр. 57) ─────────────────────────────
@@ -515,7 +588,8 @@ export const CAPABILITIES = {
   //    Действия на психокостяную технику, не разовый бонус на взятие.
   "wraithbone.songOfRepair.techniqueOrArea": {
     label: "Костяная Песнь: восстанавливает структуру/AP техники (1 цель или область), до F.b раз за сессию",
-    source: "Bone Song / Костяная Песня", reader: ""
+    source: "Bone Song / Костяная Песня",
+    reader: "module/combat/bone-song.mjs (wdbc-sk8s) — applyBoneSongSingle/applyBoneSongArea; кнопка в sheets/tabs/combat.mjs, диалог apps/wraithbone-song-dialog.mjs. AP техники не отслеживается движком — не смоделировано."
   },
   "wraithbone.conjure.itemOrWeapon": {
     label: "Создаёт психокостяной предмет/оружие (без Reinforced), до F.b раз за сессию",
@@ -523,7 +597,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfShield.techniqueOrArea": {
     label: "Песнь Защиты: неперегружаемый щит-дефлектор технике (1 цель или область), до F.b раз за сессию",
-    source: "Preservation / Защита", reader: ""
+    source: "Preservation / Защита",
+    reader: "module/combat/preservation.mjs (wdbc-sk8s) — applyPreservationSingle/applyPreservationArea, встроенный Item type:forcefield; кнопка в sheets/tabs/combat.mjs. «Складывается с другими щитами» не смоделировано — движок берёт только сильнейший активный щит."
   },
   "wraithbone.songOfReformation.restoreOrDestroy": {
     label: "До F.b психокостяных вещей получают Восстановление или Разрушение (оружие/броня/снаряжение), до 3 раз за сессию",
@@ -535,7 +610,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfSwiftness.techniqueOrArea": {
     label: "Песнь Скорости: +SPD/манёвренность технике (1 цель или область) до конца боя, до 3 раз за сессию",
-    source: "Song of Swiftness / Песня Стремительности", reader: ""
+    source: "Song of Swiftness / Песня Стремительности",
+    reader: "module/combat/song-of-swiftness.mjs (wdbc-sk8s) — applySongOfSwiftnessSingle/applySongOfSwiftnessArea, встроенный Item type:vehicleTrait, снимается по hooks.mjs::deleteCombat; кнопка в sheets/tabs/combat.mjs."
   },
   "wraithbone.spiritTalk.possessConstruct": {
     label: "Захватывает контроль над психокостяным конструктом на F.b раундов (встречный тест на враждебном), до 3 раз за сессию",
@@ -2112,7 +2188,8 @@ export const CAPABILITIES = {
   },
   "leadership.core.voiceOfGod": {
     label: "До ½Inf.b (окр.▲) раз за бой, имея Риск 4+ и успешно отдавая Личную Команду, получатель также получает Очко Бесчестия,",
-    source: "Voice of God / Глас Божий", reader: "module/combat/voice-of-god.mjs (wdbc-sk8s), подключено в squad-sheet.mjs::_executeCommand"
+    source: "Voice of God / Глас Божий",
+    reader: "module/combat/voice-of-god.mjs (wdbc-sk8s) — hasVoiceOfGod/voiceOfGodAvailable/applyVoiceOfGod; module/sheets/squad-sheet.mjs::_executeCommand (kind:\"short\", cKey:\"personal\")"
   },
   "leadership.core.warChant": {
     label: "В начале Хода Лидер может распевать боевую песнь: раздаёт все 3 эффекта Командного Присутствия всем подчинённым, что слышат песнь (макс. W.",

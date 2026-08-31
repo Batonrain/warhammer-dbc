@@ -45,14 +45,17 @@ function grantCounterAttack() {
     effects: [{ kind: "grantFlag", target: COUNTER_ATTACK_CAPABILITY }] }]);
 }
 
+/** Экипирует меч с overrides/meta, заводит актора, зовёт _performParry и отдаёт текст карточки. */
+async function parryCard(weaponOverrides = {}, meta = {}, hitsCount) {
+  const sword = equippedMelee(weaponOverrides, meta);
+  const actor = attacker({ items: [sword] });
+  await _performParry(actor, 0, "Actor.attacker-1", hitsCount);
+  return captured.chat.at(-1).content;
+}
+
 describe("_performParry: кнопка Контратаки", () => {
   it("без Таланта — кнопки нет, даже при удачном Парировании", async () => {
-    const sword = equippedMelee();
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
+    const card = await parryCard();
     expect(card).toContain("Парирование успешно");
     expect(card).not.toContain("wh-counter-attack-btn");
   });
@@ -162,12 +165,7 @@ describe("_performParry: интегральные атаки не перехва
 describe("_performParry: несколько попаданий одной атаки (Очередь/Молниеносная)", () => {
   // WS 45 (actorFor), untrained −20, Баланс 0 → Порог 25; rv=10 → 2 степени.
   it("Успех меньше числа попаданий — снимает часть, остальные проходят", async () => {
-    const sword = equippedMelee();
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1", 5);
-
-    const card = captured.chat.at(-1).content;
+    const card = await parryCard({}, {}, 5);
     expect(card).toContain("Парирование успешно");
     expect(card).toContain("снимает 2 из 5 попаданий");
     expect(card).toContain("3 попадания всё ещё проходит");
@@ -175,35 +173,20 @@ describe("_performParry: несколько попаданий одной ата
   });
 
   it("Успех покрывает или превышает число попаданий — вся атака отражена", async () => {
-    const sword = equippedMelee();
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1", 2);
-
-    const card = captured.chat.at(-1).content;
+    const card = await parryCard({}, {}, 2);
     expect(card).toContain("снимает все 2 попадания");
     expect(card).toContain("Атака отражена");
   });
 
   it("Провал — ни одно из нескольких попаданий не снимается", async () => {
     captured.dice = [96];
-    const sword = equippedMelee();
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1", 5);
-
-    const card = captured.chat.at(-1).content;
+    const card = await parryCard({}, {}, 5);
     expect(card).toContain("Парирование провалено");
     expect(card).toContain("Все 5 попаданий проходят");
   });
 
   it("одно попадание (по умолчанию) — текст как раньше, без счёта попаданий", async () => {
-    const sword = equippedMelee();
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
+    const card = await parryCard();
     expect(card).toContain("Атака отражена");
     expect(card).not.toContain("снимает");
   });
@@ -213,67 +196,34 @@ describe("_performParry: несколько попаданий одной ата
 // разбивки, не подписанная как «Защитное» (той же defBonus раньше делили на
 // двоих без разметки источника).
 describe("_performParry: бонус Дуэлянтского", () => {
-  it("Дуэлянтское оружие добавляет +10 отдельной строкой «Дуэлянтское +10»", async () => {
-    const sword = equippedMelee({ weaponProps: [{ key: "duelingWeapon", rating: 0, rating2: 0 }] });
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("Дуэлянтское +10");
-    expect(card).not.toContain("Защитное");
-  });
-
-  it("Защитное и Дуэлянтское на одном оружии складываются и показаны раздельно", async () => {
-    const sword = equippedMelee({ weaponProps: [
-      { key: "duelingWeapon", rating: 0, rating2: 0 },
-      { key: "defensive",     rating: 0, rating2: 0 }
-    ] });
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("Защитное +15");
-    expect(card).toContain("Дуэлянтское +10");
-  });
-
-  it("без Дуэлянтского строки в разбивке нет", async () => {
-    const sword = equippedMelee();
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
-    expect(card).not.toContain("Дуэлянтское");
+  it.each([
+    ["Дуэлянтское оружие добавляет +10 отдельной строкой «Дуэлянтское +10»",
+      [{ key: "duelingWeapon", rating: 0, rating2: 0 }],
+      ["Дуэлянтское +10"], ["Защитное"]],
+    ["Защитное и Дуэлянтское на одном оружии складываются и показаны раздельно",
+      [{ key: "duelingWeapon", rating: 0, rating2: 0 }, { key: "defensive", rating: 0, rating2: 0 }],
+      ["Защитное +15", "Дуэлянтское +10"], []],
+    ["без Дуэлянтского строки в разбивке нет", [], [], ["Дуэлянтское"]]
+  ])("%s", async (_title, weaponProps, contains, notContains) => {
+    const card = await parryCard({ weaponProps });
+    for (const text of contains) expect(card).toContain(text);
+    for (const text of notContains) expect(card).not.toContain(text);
   });
 });
 
 // Шаг За Шагом (стр. 73 Книги Аэльдари): +10 к Парированию безусловно —
 // сам факт Парирования уже означает «в рукопашном бою».
 describe("_performParry: бонус Шаг За Шагом", () => {
-  it("оружие со Шаг За Шагом добавляет +10 отдельной строкой", async () => {
-    const sword = equippedMelee({ weaponProps: [{ key: "stepByStep", rating: 0, rating2: 0 }] });
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("Шаг За Шагом +10");
-  });
-
-  it("Дуэлянтское и Шаг За Шагом на одном оружии складываются (+20) и показаны раздельно", async () => {
-    const sword = equippedMelee({ weaponProps: [
-      { key: "duelingWeapon", rating: 0, rating2: 0 },
-      { key: "stepByStep",    rating: 0, rating2: 0 }
-    ] });
-    const actor = attacker({ items: [sword] });
-
-    await _performParry(actor, 0, "Actor.attacker-1");
-
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("Дуэлянтское +10");
-    expect(card).toContain("Шаг За Шагом +10");
+  it.each([
+    ["оружие со Шаг За Шагом добавляет +10 отдельной строкой",
+      [{ key: "stepByStep", rating: 0, rating2: 0 }],
+      ["Шаг За Шагом +10"]],
+    ["Дуэлянтское и Шаг За Шагом на одном оружии складываются (+20) и показаны раздельно",
+      [{ key: "duelingWeapon", rating: 0, rating2: 0 }, { key: "stepByStep", rating: 0, rating2: 0 }],
+      ["Дуэлянтское +10", "Шаг За Шагом +10"]]
+  ])("%s", async (_title, weaponProps, contains) => {
+    const card = await parryCard({ weaponProps });
+    for (const text of contains) expect(card).toContain(text);
   });
 });
 

@@ -4,8 +4,8 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:0. Бионический протез ноги.",
-    "notes": "",
-    "category": "bionic",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Протез ноги. Варианты: Гусеница, Дигитигрейд (+1 SPD, +10 Acrobatics), Вездеход (+30 vs Трудный Ландшафт), Легион (Unnatural S). Best.Q бонусы Группирования/Athletics.",
     "installed": "",

@@ -18,18 +18,17 @@ describe("каркас module/rules", () => {
     // Восемь условий этапа 1 плюс два про фракции (hasFaction/targetHasFaction),
     // targetLacksCondition (снятие штрафа «Проворный» у Оглушённых), hasSize/
     // targetHasSize (гейт Размера), targetKeepsNimbleInArmour (Чёрный Панцирь),
-    // woundTier (Уровень Ранения, rules/wound-tier.mjs) и avatarOfSlaughterOffTarget
-    // (метка Аватара Резни, wdbc-sk8s).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(16);
+    // woundTier (Уровень Ранения, rules/wound-tier.mjs), avatarOfSlaughterOffTarget
+    // (метка Аватара Резни, wdbc-sk8s) и geneSeedLegion/psyRatingMin (папки
+    // пикера Талантов, wdbc-sauo).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(18);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");
     expect(typeof collect.collectRules).toBe("function");
     expect(typeof matchContext.matchesContext).toBe("function");
-    // Библиотека Астартес наполнена на этапе 3, основной книги — на шаге 5.2
-    // («Проворный»), Аэльдари ждёт своей очереди: у неё проверяется форма.
-    expect(aeldari.AELDARI_RULES).toEqual([]);
     expect(Array.isArray(astartes.ASTARTES_RULES)).toBe(true);
     expect(Array.isArray(core.CORE_RULES)).toBe(true);
+    expect(Array.isArray(aeldari.EXODITE_RULES)).toBe(true);
   });
 });

@@ -33,6 +33,8 @@ import { WARP_GODS } from "../constants/veil.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { specCovers, matchSpec } from "../constants/skill-specializations.mjs";
+import { itemHasName } from "./predicates.mjs";
+import { rankAtLeast, statValue } from "./req-atom.mjs";
 
 /** Покровительства для выбора: боги Варпа плюс «любое». */
 export const PATRON_ANY = "any";
@@ -56,6 +58,7 @@ export const REQ_KINDS = [
   { key: "corruption",     label: "Порча"            },
   { key: "infamy",         label: "Бесчестие"        },
   { key: "characteristic", label: "Характеристика"   },
+  { key: "psyRating",      label: "Психорейтинг"     },
   { key: "xp",             label: "Опыт"             },
   { key: "other",          label: "Другое"           },
   { key: "or",             label: "Одно из (ИЛИ)"    }
@@ -71,8 +74,6 @@ export const blankEliteReq = () => ({ primary: [], secondary: [] });
 export const ELDAR_RACE_KEYS = ["azuriane", "drukhari", "exodite", "ynnari", "harlequin", "halfEldar"];
 
 const num = v => Number(v) || 0;
-const RANKS = ["untrained", "knows", "trained", "veteran", "expert"];
-const rankIdx = rank => Math.max(0, RANKS.indexOf(rank || "untrained"));
 /** Сколько предметов требуется: пусто и 0 значат «один». */
 const wantCount = e => Math.max(1, num(e?.count) || 1);
 
@@ -100,23 +101,26 @@ export function eliteCostNote(taken = 0) {
  * Снимок персонажа для проверки. Отдельным объектом, а не актором: правило
  * должно считаться и в тестах, и там, где актора ещё нет.
  *
- * { race, subrace, patron, traits: [имена], talents: [{name, specialization}],
+ * { race, subrace, patron, traits: [{name}], talents: [{name, specialization}],
  *   skills: { ключ: ранг }, groupSkills: { ключ: [{specKey|specialty, rank}] },
- *   corruption, infamy, chars: { ключ: значение }, spentXP }
+ *   corruption, infamy, psyRating, chars: { ключ: значение }, spentXP }
  */
-
-/** Совпадают ли имена: требование пишется частью имени («Mechanicum Implants»). */
-const nameHit = (have, want) => String(have || "").toLowerCase().includes(String(want).toLowerCase());
 
 /**
  * Требуемые Таланты. Счётчик считает РАЗНЫЕ специализации: «Hatred, любые 3» —
  * это три ненависти к разным целям, а не один Талант, записанный трижды.
+ *
+ * Сверка имени — общий слой (rules/req-atom.mjs → itemHasName, wdbc-0pki):
+ * двуязычная, по любой половине «Eng / Рус», совпадение ЦЕЛИКОМ (специализация
+ * в скобках на конце отбрасывается). До wdbc-0pki здесь была сверка ВХОЖДЕНИЕМ
+ * («Will» находило «Iron Will») — единственный из трёх движков, кто так делал;
+ * снята намеренно, см. test/rules/req-atom-cross-engine-snapshot.test.mjs.
  */
 function talentOk(entry, who) {
   const want = String(entry?.name || "").trim();
   if (!want) return true;
   const spec = String(entry?.specialization || "").toLowerCase();
-  const hits = (who.talents || []).filter(t => nameHit(t?.name, want)
+  const hits = (who.talents || []).filter(t => itemHasName(t, want)
     && (!spec || String(t?.specialization || "").toLowerCase() === spec));
   const need = wantCount(entry);
   if (need <= 1) return hits.length > 0;
@@ -125,10 +129,9 @@ function talentOk(entry, who) {
 }
 
 function skillOk(entry, who) {
-  const want = rankIdx(entry.rank);
-  if (entry.scope !== "group") return rankIdx(who.skills?.[entry.skillKey]) >= want;
+  if (entry.scope !== "group") return rankAtLeast(who.skills?.[entry.skillKey], entry.rank);
 
-  const list = (who.groupSkills?.[entry.skillKey] || []).filter(e => rankIdx(e.rank) >= want);
+  const list = (who.groupSkills?.[entry.skillKey] || []).filter(e => rankAtLeast(e.rank, entry.rank));
   if (entry.specKey) {
     // entry.specKey в требованиях Элитных архетипов пишут и ключом
     // («daemons»), и текстом («Демоны») — matchSpec понимает оба, отсюда и
@@ -159,7 +162,7 @@ function entryOk(entry, who) {
     case "notEldar": return !ELDAR_RACE_KEYS.includes(who.race);
     case "trait": {
       const want = String(entry.name || "").trim();
-      return !want || (who.traits || []).some(t => nameHit(t, want));
+      return !want || (who.traits || []).some(t => itemHasName(t, want));
     }
     case "patron":
       // «Любое» значит «хоть какое-то»: у безбожника Покровительства нет вовсе.
@@ -170,6 +173,11 @@ function entryOk(entry, who) {
     case "corruption":     return num(who.corruption) >= num(entry.value);
     case "infamy":         return num(who.infamy) >= num(entry.value);
     case "characteristic": return num(who.chars?.[entry.charKey]) >= num(entry.value);
+    // До wdbc-0pki этого вида не было вовсе — Элитный архетип нельзя было
+    // ограничить порогом Пси-рейтинга (см. снимок расхождений в
+    // test/rules/req-atom-cross-engine-snapshot.test.mjs). Заведён тем же
+    // req-atom.mjs statValue, что и mechanics.mjs reqStat/psyRating.
+    case "psyRating":      return num(who.psyRating) >= num(entry.value);
     case "xp":             return num(who.spentXP) >= num(entry.value);
     case "or": {
       const items = Array.isArray(entry.items) ? entry.items : [];
@@ -208,6 +216,7 @@ export function describeEliteReq(entry) {
     case "corruption":     return `Порча ${entry.value}`;
     case "infamy":         return `Бесчестие ${entry.value}`;
     case "characteristic": return `${CHARACTERISTICS[entry.charKey]?.abbr || entry.charKey} ${entry.value}`;
+    case "psyRating":      return `Психорейтинг ${entry.value}`;
     case "xp":             return `Потрачено опыта: ${entry.value}`;
     case "other":          return entry.text || "—";
     case "or": {
@@ -271,17 +280,21 @@ export function eliteWho(actor) {
   }
 
   const chars = {};
-  for (const [key, val] of Object.entries(s.characteristics ?? {})) chars[key] = num(val?.total);
+  for (const key of Object.keys(s.characteristics ?? {})) chars[key] = statValue(actor, key);
 
   return {
     race: s.race || "", subrace: s.subrace || "", patron: s.patronGod || "",
-    traits:  items.filter(i => i.type === "trait").map(i => i.name),
+    // itemHasName (rules/req-atom.mjs itemsNamed использует его же) читает
+    // item.name — traits остаются {name}, а не голыми строками, чтобы
+    // entryOk("trait") сверял имя тем же каноном, что и talent/mechanics.mjs.
+    traits:  items.filter(i => i.type === "trait").map(i => ({ name: i.name })),
     talents: items.filter(i => i.type === "talent")
       .map(i => ({ name: i.name, specialization: i.system?.specialization || "" })),
     skills, groupSkills, chars,
-    corruption: num(s.corruption?.value),
+    corruption: statValue(actor, "corruption"),
     // Бесчестие — Характеристика inf, отдельного поля у него нет.
-    infamy: num(s.characteristics?.inf?.total),
+    infamy: statValue(actor, "inf"),
+    psyRating: statValue(actor, "psyRating"),
     spentXP: num(s.experience?.spent)
   };
 }

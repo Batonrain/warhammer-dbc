@@ -110,7 +110,9 @@
               "weaponPropNewValue2": "0",
               "label": "Локус Фанатизма",
               "code": "",
-              "capabilityKey": "aura.touchedByFates"
+              "capabilityKey": "aura.touchedByFates",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1
             }
           ]
         }

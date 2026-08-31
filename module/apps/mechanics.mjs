@@ -206,6 +206,7 @@ import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
 import { dynamicAptKind }                     from "../constants/advancement.mjs";
 import { masteryTargets, masteryTarget, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
+import { statAtLeast, itemsNamed, rankAtLeast } from "../rules/req-atom.mjs";
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
@@ -228,11 +229,13 @@ import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
+import { CAPABILITY_COST_POOLS, capabilityCostLabel } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec } from "../rules/mech-when.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
+import { hasEliteArchetype }                  from "../rules/predicates.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 
@@ -551,6 +554,11 @@ export function blankMechEntry(kind = "characteristic") {
     rerollWho: "self",
     // capability — имя возможности из constants/capabilities.mjs
     capabilityKey: "",
+    // capability cost (wdbc-1dc8): пусто — бесплатно, иначе кнопка «Потратить»
+    // на листе актора списывает эту цену из пула при использовании
+    // (module/combat/capability-cost.mjs — pool не адрес хранения, три
+    // термина делят одно и то же поле актора, см. заголовок файла).
+    capabilityCostPool: "", capabilityCostAmount: 1,
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
@@ -574,6 +582,10 @@ export function blankMechEntry(kind = "characteristic") {
     // смены kind при дропе (см. _onDropAuraGrant в item-sheet.mjs) — движок
     // ауры клонирует любой предмет по UUID, не только Черту/Талант.
     auraRadius: "1", auraAffects: "allies", auraIncludesSelf: false,
+    // immuneTraitNames (wdbc-995w) — через запятую, имена Черт/Талантов,
+    // дающие цели иммунитет к этой ауре (Daemonic Presence: «Daemonic, From
+    // Beyond, Machine, Stuff of Nightmares»). Пусто — иммунитета нет ни у кого.
+    auraImmuneTraits: "",
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
     // «Новое свойство» — только при weaponPropAction:"replace".
     weaponPropAction: "add",
@@ -677,7 +689,10 @@ export function describeMechEntry(entry) {
     }
     case "capability": {
       if (!entry.capabilityKey) return "Возможность: (не выбрана)";
-      return `Возможность: ${CAPABILITIES[entry.capabilityKey]?.label || entry.capabilityKey}`;
+      const costLabel = entry.capabilityCostPool
+        ? ` — цена: ${capabilityCostLabel({ pool: entry.capabilityCostPool, amount: entry.capabilityCostAmount })}`
+        : "";
+      return `Возможность: ${CAPABILITIES[entry.capabilityKey]?.label || entry.capabilityKey}${costLabel}`;
     }
     case "testMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
@@ -737,8 +752,9 @@ export function describeMechEntry(entry) {
     case "aura": {
       const affectsLabel = { allies: "союзникам", enemies: "врагам", all: "всем" }[entry.auraAffects] || "союзникам";
       const selfNote = entry.auraIncludesSelf ? ", включая себя" : "";
-      if (!entry.sourceUuid) return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote} (перетащите предмет)`;
-      return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote} → ${entry.sourceName || "?"}`;
+      const immuneNote = entry.auraImmuneTraits ? `, кроме ${entry.auraImmuneTraits}` : "";
+      if (!entry.sourceUuid) return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote}${immuneNote} (перетащите предмет)`;
+      return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote}${immuneNote} → ${entry.sourceName || "?"}`;
     }
     case "rollmod": {
       if (!entry.skillKey) return "Модификатор броска: (не выбран навык)";
@@ -1844,6 +1860,7 @@ export async function syncAuraFlag(item) {
     radius: mechFormulaTotalSafe(first.auraRadius, rd),
     affects: first.auraAffects === "enemies" || first.auraAffects === "all" ? first.auraAffects : "allies",
     includesSelf: !!first.auraIncludesSelf,
+    immuneTraitNames: String(first.auraImmuneTraits || "").split(",").map(s => s.trim()).filter(Boolean),
     grant: entries.filter(e => e.sourceUuid).map(e => ({
       uuid: e.sourceUuid,
       rating: (e.rating !== "" && e.rating != null) ? mechFormulaTotalSafe(e.rating, rd) : null
@@ -1851,6 +1868,7 @@ export async function syncAuraFlag(item) {
   };
   const same = cur && cur.managed === want.managed && cur.radius === want.radius && cur.affects === want.affects
     && cur.includesSelf === want.includesSelf
+    && JSON.stringify(cur.immuneTraitNames || []) === JSON.stringify(want.immuneTraitNames)
     && JSON.stringify(cur.grant || []) === JSON.stringify(want.grant);
   if (!same) await item.setFlag(FLAG, "aura", want);
 }
@@ -2398,10 +2416,22 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "capability") {
     const opts = CAPABILITY_OPTIONS
       .map(([k, l]) => `<option value="${esc(k)}" ${ent.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+    // Цена в пуле (wdbc-1dc8): пусто — бесплатно (как раньше), иначе на листе
+    // актора у этой Возможности появляется кнопка «Потратить» (module/combat/
+    // capability-cost.mjs). Поле числа скрыто, пока пул не выбран — смена
+    // селекта сохраняет запись и даёт листу перерисоваться (тот же приём,
+    // что у .mech-fatigue-action ниже по файлу, item-sheet.mjs).
+    const poolOpts = [["", "— без цены —"], ...Object.entries(CAPABILITY_COST_POOLS).map(([k, p]) => [k, p.label])]
+      .map(([v, l]) => `<option value="${esc(v)}" ${(ent.capabilityCostPool || "") === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const amountHtml = ent.capabilityCostPool ? `
+      <input type="number" class="mech-capability-cost-amount" min="1" value="${esc(ent.capabilityCostAmount ?? 1)}"
+             title="Сколько списывать за использование" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
     return `<select class="mech-capability-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— возможность —</option>${opts}</select>
       <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
-             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <select class="mech-capability-cost-pool" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+              title="Цена в пуле: списывается кнопкой на листе актора">${poolOpts}</select>${amountHtml}`;
   }
 
   if (ent.kind === "testMod") {
@@ -2591,6 +2621,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <label class="grant-when-negate-label" title="Действует и на самого владельца, не только на окружающих">
         <input type="checkbox" class="mech-aura-self" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.auraIncludesSelf ? "checked" : ""} ${dis}/> вкл. себя
       </label>
+      <input type="text" class="mech-aura-immune" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.auraImmuneTraits ?? "")}" placeholder="иммунитет: Черты через запятую (необязательно)" title="Цель с любой из перечисленных Черт/Талантов не задевается этой аурой (напр. Daemonic, From Beyond, Machine, Stuff of Nightmares)" ${dis}/>
       <div class="grant-drop-zone aura-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
   }
 
@@ -3026,16 +3057,6 @@ export const REQ_STAT_OPTIONS = [
 ];
 const REQ_STAT_MAP = Object.fromEntries(REQ_STAT_OPTIONS.map(s => [s.key, s]));
 
-/** Текущее значение показателя у актора — читает нужное поле по ключу. */
-function actorStatValue(actor, key) {
-  if (key === "corruption") return Number(actor.system?.corruption?.value) || 0;
-  if (key === "psyRating")  return Number(actor.system?.psyker?.rating) || 0;
-  return Number(actor.system?.characteristics?.[key]?.total) || 0;
-}
-
-/** Сравнение имён: регистр и лишние пробелы значения не имеют. */
-const normReq = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-
 /** Пустая запись-требование. */
 export function blankReqEntry(kind = "reqSkill") {
   return {
@@ -3130,38 +3151,31 @@ export function actorMeetsReq(actor, e) {
   if (!actor) return false;
   switch (e.kind) {
     case "reqSkill": {
-      const need = SKILL_RANK_STEPS[e.rank] ?? 0;
       if (e.skillScope === "group") {
         const arr = actor.system.groupSkills?.[e.skillKey] || [];
         // Специализация не задана — годится любая специализация группы.
         if (!e.specKey && !e.specialty)
-          return arr.some(x => (SKILL_RANK_STEPS[x.rank] ?? 0) >= need);
+          return arr.some(x => rankAtLeast(x.rank, e.rank));
         // Задана — ищем её общим сопоставителем: в данных специализация
         // лежит то ключом, то английской меткой, то русской (Конструктор
         // персонажа пишет русскую), и сравнение строк напрямую не сходится.
         // Ранг спрашивается у НАЙДЕННОЙ записи: «Запретные знания (Демоны)
         // на Ветеране» не закрываются Ветераном по Варпу.
         const hit = findGroupEntry(actor, e.skillKey, e.specKey || e.specialty);
-        return !!hit && (SKILL_RANK_STEPS[hit.rank] ?? 0) >= need;
+        return !!hit && rankAtLeast(hit.rank, e.rank);
       }
-      return (SKILL_RANK_STEPS[actor.system.skills?.[e.skillKey]?.rank] ?? 0) >= need;
+      return rankAtLeast(actor.system.skills?.[e.skillKey]?.rank, e.rank);
     }
     case "reqTalent":
     case "reqTrait":
     case "reqPower": {
       const type = e.kind === "reqTalent" ? "talent" : e.kind === "reqTrait" ? "trait" : "psychicPower";
-      const want = normReq(e.sourceName);
-      // Пустое имя не выполняется ничем: сверка вхождением сделала бы пустую
-      // строку подходящей к любому предмету.
-      if (!want) return false;
-      // Сверяем по ИМЕНИ целиком: перетащенный из компендиума образец и
-      // лежащий на акторе предмет — разные документы, общее у них только
-      // name. Вхождением сверять нельзя — «Железная Воля» закрыла бы «Волю».
-      // Специализацию в скобках у имени предмета при этом отбрасываем, как
-      // это делает hasTalent (constants/talent-requirements.mjs).
-      const bare = s => normReq(s).replace(/\s*\([^)]*\)\s*$/, "");
-      const hits = actor.items.filter(i =>
-        i.type === type && (normReq(i.name) === want || bare(i.name) === want));
+      // Сверка имени — общий слой (rules/req-atom.mjs → itemHasName):
+      // двуязычная, по любой половине «Eng / Рус», специализация в скобках
+      // на конце отбрасывается. Тот же канон, что и у elite-requirements.mjs
+      // и talent-requirements.mjs (wdbc-0pki) — перетащенный из компендиума
+      // образец и лежащий на акторе предмет разные документы, общее только name.
+      const hits = itemsNamed(actor, e.sourceName, [type]);
       if (!hits.length) return false;
       // Рейтинг есть только у Черты: в схеме Таланта поля rating нет, и
       // требование по нему было бы невыполнимо навсегда.
@@ -3171,12 +3185,11 @@ export function actorMeetsReq(actor, e) {
     }
     case "reqRace":
       return actor.system.race === e.raceKey;
-    case "reqArchetype": {
-      const want = normReq(e.archetypeName);
-      // Элитные архетипы лежат и в поле актора, и списком «дополнительных».
-      const own = [actor.system.eliteArchetype, ...(actor.system.eliteArchetypesExtra || [])];
-      return own.some(a => normReq(a) === want);
-    }
+    case "reqArchetype":
+      // Канон hasEliteArchetype: строка шапки + список «дополнительных» +
+      // ПРЕДМЕТ типа eliteArchetype (куплен пикером) — раньше предмет не
+      // проверялся, и требование не видело честно взятый архетип (wdbc-91o8).
+      return hasEliteArchetype(actor, e.archetypeName);
     case "reqPatron":
       return actor.system.patronGod === e.patronKey;
     // Возможность спрашивается у общего реестра правил (module/rules/flags.mjs),
@@ -3186,7 +3199,7 @@ export function actorMeetsReq(actor, e) {
       return hasRuleFlag(actor, e.capabilityKey);
     case "reqStat":
       if (!e.statKey) return false;
-      return actorStatValue(actor, e.statKey) >= (Number(e.statThreshold) || 0);
+      return statAtLeast(actor, e.statKey, e.statThreshold);
     default:
       return false;
   }

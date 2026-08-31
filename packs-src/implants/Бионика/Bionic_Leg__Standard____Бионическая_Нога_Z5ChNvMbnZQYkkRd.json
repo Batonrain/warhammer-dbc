@@ -4,8 +4,8 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:0. Вариант ноги.",
-    "notes": "",
-    "category": "bionic",
+    "notes": "«Дублирует функции ноги» — по тексту не даёт механического отличия от обычной ноги, чисто предметная замена без числового эффекта.",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Дублирует функции ноги.",
     "installed": "",

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:4.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "cybernetic",
     "quality": "common",
     "effect": "Нейроконнекторы в череп: −1 штраф брони A на 10; MIU −штраф брони A на 10; Чёрный Панцирь (модификация). Волосы на голове перестают расти. Good.Q +броня/слух; Best.Q −штраф A −15 / +Max.A +15.",

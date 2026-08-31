@@ -82,12 +82,6 @@ export const NODE_STATES = [
   { name: "Уничтожен", desc: "Не существует механически; нельзя отремонтировать — только замена на мире-кузне/в доке." }
 ];
 
-// Профиль урона тарана по классу корабля (для действия «Таран»).
-export const RAM_DAMAGE = {
-  transport: "1d5", raider: "1d5", frigate: "1d10",
-  lightCruiser: "2d5", cruiser: "2d10", grandCruiser: "2d10", battleship: "2d10", other: "1d10"
-};
-
 // Справочник Манёвров (для вкладки «Бой»).
 export const SHIP_MANEUVERS = [
   { name: "По умолчанию", test: "—", desc: "Движение прямо на SPD или SPD/2, затем поворот на Turn Degree. Без теста." },

@@ -72,6 +72,7 @@ import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
 import { initMovementActionsHud } from "./module/combat/movement-actions.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
+import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
 import { LingerZoneBehaviorType, LINGER_ZONE_TYPE } from "./module/regions/linger-zone.mjs";
 import { CoverBehaviorType, COVER_TYPE } from "./module/regions/cover.mjs";
 import { RunicWeaveZoneBehaviorType, RUNIC_WEAVE_ZONE_TYPE,
@@ -198,8 +199,9 @@ Hooks.once("init", () => {
   CONFIG.Actor.documentClass = WarhammerActor;
   CONFIG.Item.documentClass  = WarhammerItem;
 
-  // Типы данных документов. Перечисленные здесь типы читают схему из
-  // module/data/, а не из template.json: там их записи пусты (см. index.mjs).
+  // Типы данных документов — template.json в системе больше нет вовсе.
+  // Перечень имён типов задаёт documentTypes в system.json; поля каждого
+  // типа описаны в module/data/ и регистрируются здесь (см. index.mjs).
   Object.assign(CONFIG.Item.dataModels, ITEM_DATA_MODELS);
   Object.assign(CONFIG.Actor.dataModels, ACTOR_DATA_MODELS);
 
@@ -1696,6 +1698,19 @@ registerSceneLiveRecalc({
     fields: ["flags", "system.equipped", "system.activatable", "system.active"],
     // Предметы, выданные самим прогоном (auraSource), пересчёт не планируют:
     // иначе каждый sweep порождал бы второй, холостой.
+    filter: item => !item.getFlag("warhammer-dbc", "auraSource"),
+  },
+});
+
+// ── Круги ауры на канвасе (wdbc-7t0z, хвост wdbc-995w) — тот же живой
+// пересчёт, что у выдачи эффектов выше, но БЕЗ isGM-гейта: чисто визуальный
+// оверлей (module/regions/aura-rings.mjs), каждый клиент рисует его сам из
+// уже синхронных документов.
+registerSceneLiveRecalc({
+  recalc: redrawAuraRings,
+  tokenFields: ["x", "y", "elevation", "hidden"],
+  itemWatch: {
+    fields: ["flags", "system.equipped", "system.activatable", "system.active"],
     filter: item => !item.getFlag("warhammer-dbc", "auraSource"),
   },
 });

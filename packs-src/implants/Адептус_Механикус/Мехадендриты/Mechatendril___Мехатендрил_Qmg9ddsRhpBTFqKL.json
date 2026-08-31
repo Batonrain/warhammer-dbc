@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1. Utility.",
-    "notes": "",
+    "notes": "Встроенное оружие мехадендрита — нет поля под embedded-оружие с уникальным профилем; «+5 на любые тесты Крафта за каждый мехатендрил» — динамическое масштабирование по количеству предметов, testMod несёт фиксированное число.",
     "category": "mechadendrite",
     "quality": "common",
     "effect": "S 40 (Unn 2), Дл. 3м, Rng 0-8. Профиль рукопашной 1d10+6 R, Flexible, Primitive. Дополнительная рука (инструменты, но не оружие). +5 на любые тесты Крафта за каждый мехатендрил.",

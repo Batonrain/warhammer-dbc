@@ -59,5 +59,17 @@ export const ASTARTES_RULES = [
       // штрафом за тесную спусковую скобу (rules/legion-fit.mjs).
       { kind: "grantFlag", target: "weapons.legion" }
     ]
+  },
+  {
+    // Отдельные Таланты легиона (папка пикера «Таланты Астартес» → «Повелители
+    // Ночи») раньше проверяли `system.geneSeed?.legion === "VIII"` прямо в
+    // item-picker.mjs — единственная легионная ветка гейта среди расовых
+    // (item-picker.mjs::talentGroupLock, wdbc-sauo). Условие живёт в данных
+    // правила, а не в коде листа: другой легион с такой же обособленной главой
+    // получит свою возможность тем же приёмом, без правки пикера.
+    id: "astartes.nightlords",
+    label: "Повелители Ночи / Night Lords",
+    when: { geneSeedLegion: "VIII" },
+    effects: [{ kind: "grantFlag", target: "talents.nightLords" }]
   }
 ];

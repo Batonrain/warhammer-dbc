@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R 5. Экстремофильные археи в коже и мышцах.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "bioimplant",
     "quality": "common",
     "effect": "Безоружные атаки: +8 Pen, Flame, тип урона E. В Борьбе противник получает в начале своего хода авто 2d10+4 E, Pen 6, Flame. Best.Q + эффект: Луч тепловой смерти (20 м, 2d10+5 E, Pen 10, Melta) / иммунитет к E(Fl) + 4 AP / контроль направления тепла.",

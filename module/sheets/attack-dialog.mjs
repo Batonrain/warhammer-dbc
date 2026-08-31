@@ -42,7 +42,9 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
-import { measureTokens, meleeContactCount }    from "../combat/tactical-map.mjs";
+import { measureTokens, meleeContactCount, hasHighGround } from "../combat/tactical-map.mjs";
+import { rangeBandKey, rangeBandBoundaries }   from "../rules/tactical-map.mjs";
+import { getTerrainInfoForToken }             from "../regions/difficult-terrain.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { hasDeathDance, deathDanceNextCost, markDeathDanceUsed } from "../combat/death-dance.mjs";
 
@@ -692,17 +694,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const rngMult = ammoSys?.rangeMultiplier ?? 1;
     const rngAdd  = ammoSys?.rangeMod ?? 0;
     const effRng  = Math.round(rng * rngMult) + rngAdd;
+    const bounds  = rangeBandBoundaries(effRng);
     rangeInfoHtml = `
       <div class="atk-range-info">
         <div class="atk-range-title">
           📏 Дистанции (Rng = ${rng}м${rngMult !== 1 ? ` ×${rngMult}` : ""}${rngAdd !== 0 ? ` ${rngAdd >= 0 ? "+" : ""}${rngAdd}м` : ""} = ${effRng}м)
         </div>
         <div class="atk-range-grid">
-          <span class="atr-zone atr-pb">В упор: 0,5–3м → <b>+30</b></span>
-          <span class="atr-zone atr-sh">Короткая: 3–${Math.ceil(effRng / 2)}м → <b>+10</b></span>
-          <span class="atr-zone atr-cb">Боевая: ${Math.ceil(effRng / 2)}–${effRng}м → <b>±0</b></span>
-          <span class="atr-zone atr-lg">Дальняя: ${effRng}–${effRng * 2}м → <b>−10</b></span>
-          <span class="atr-zone atr-ex">Экстрем.: ${effRng * 2}–${effRng * 3}м → <b>−30</b></span>
+          <span class="atr-zone atr-pb">В упор: 0,5–${bounds.pointBlank}м → <b>+30</b></span>
+          <span class="atr-zone atr-sh">Короткая: ${bounds.pointBlank}–${bounds.short}м → <b>+10</b></span>
+          <span class="atr-zone atr-cb">Боевая: ${bounds.short}–${bounds.combat}м → <b>±0</b></span>
+          <span class="atr-zone atr-lg">Дальняя: ${bounds.combat}–${bounds.long}м → <b>−10</b></span>
+          <span class="atr-zone atr-ex">Экстрем.: ${bounds.long}–${bounds.extreme}м → <b>−30</b></span>
         </div>
         <div class="atk-range-note" style="font-size:0.82em;opacity:0.8;">В ближнем бою — дистанция в упор, но модификатор ±0.</div>
       </div>`;
@@ -779,12 +782,33 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // (meleeContactCount), а не спрашиваем игрока на глаз — галочка лишь
   // подтверждает то, что уже видно на сцене, и её можно снять руками.
   const duelContacts = (wp.duelingParry && attackerToken) ? meleeContactCount(attackerToken) : null;
+  // Числовой перевес (2к1/3к1): та же meleeContactCount, но ОБРАТНЫЙ обход —
+  // считаем не врагов у атакующего, а «врагов цели» (т.е. атакующего и его
+  // союзников) в контакте с целью (wdbc-5il7, п.5).
+  const outnumberCount = (isMelee && targetToken) ? meleeContactCount(targetToken) : null;
+  // Тактическая карта: полоса дальности из уже измеренной дистанции и Rng
+  // оружия (стр. 40: в упор 0,5–3 м / короткая до Rng/2 / боевая до Rng /
+  // дальняя до Rng×2 / экстремальная до Rng×3, дальше выстрел невозможен).
+  // Автоотметка ровно одной галочки — все они по-прежнему снимаются руками,
+  // ГМ-клапан сохраняется. За 3×Rng — видимый warning у измеренной дистанции.
+  const bandKey  = (!isMelee && measured) ? rangeBandKey(measured.edgeM, Number(sys.range)) : null;
+  const bandNote = k => (bandKey === k ? `по измеренной дистанции ${measured.edgeM} м` : undefined);
+  // «Положение выше» (+10): сравнение elevation токенов атакующего и цели.
+  const highGround = (isMelee && measured) ? hasHighGround(attackerToken, targetToken) : null;
+  // «Трудный ландшафт» в рукопашной: зона Трудного Ландшафта под атакующим.
+  // Зона «очень трудный» не различает — автоотмечаем обычный (−10), сильнее руками.
+  const meleeTerrain = (isMelee && attackerToken)
+    ? getTerrainInfoForToken(attackerToken.document ?? attackerToken) : null;
   const specificMods = isMelee ? [
-    { label: "Трудный ландшафт",       value: -10 },
+    { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
+      note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
     { label: "Очень трудный ландшафт", value: -20 },
-    { label: "Числ. перевес 2к1",      value:  10 },
-    { label: "Числ. перевес 3к1",      value:  20 },
-    { label: "Положение выше",         value:  10 },
+    { label: "Числ. перевес 2к1",      value:  10, autoCheck: outnumberCount === 2,
+      note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
+      note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    { label: "Положение выше",         value:  10, autoCheck: highGround === true,
+      note: highGround === true ? "elevation токена выше цели" : undefined },
     { label: "Более длинное оружие",   value:   5 },
     ...(wp.duelingParry ? [{
       label: "Дуэлянтское: бой 1-на-1 (никто не мешает)", value: 5,
@@ -805,11 +829,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // отмечаем по самому факту Подавления, галочку можно снять руками.
     { label: "Подавлен огнём", value: -20, autoCheck: !!actor.system.conditions?.pinned },
     { label: "Стрельба в рукопашную",   value: -20 },
-    { label: "Дистанция в упор",        value:  30 },
-    { label: "Короткая дистанция",      value:  10 },
-    { label: "Боевая дистанция",        value:   0 },
-    { label: "Дальняя дистанция",       value: -10 },
-    { label: "Экстремальная дистанция", value: -30 },
+    { label: "Дистанция в упор",        value:  30, autoCheck: bandKey === "pointBlank", note: bandNote("pointBlank") },
+    { label: "Короткая дистанция",      value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
+    { label: "Боевая дистанция",        value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
+    { label: "Дальняя дистанция",       value: -10, autoCheck: bandKey === "long",       note: bandNote("long") },
+    { label: "Экстремальная дистанция", value: -30, autoCheck: bandKey === "extreme",    note: bandNote("extreme") },
     // Беспомощная цель, выстрел в упор/в рукопашной: как рукопашная — авто-
     // успех и удвоенный урон, а не просто +30 (см. targetHelpless выше). Это
     // ситуативный факт про конкретный выстрел (дистанция), а не хранимое
@@ -937,7 +961,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </select>
     </label>` : "";
   const distanceHintHtml = measured ? `
-    <div class="atk-distance-hint">${rollIcon("target","#8fd0ff")}Измеренная дистанция: ${measured.edgeM} м${Number(sys.range) ? ` (Дальность оружия: ${sys.range} м)` : ""}</div>` : "";
+    <div class="atk-distance-hint">${rollIcon("target","#8fd0ff")}Измеренная дистанция: ${measured.edgeM} м${Number(sys.range) ? ` (Дальность оружия: ${sys.range} м)` : ""}</div>${bandKey === "out" ? `
+    <div class="atk-recharge-warn">${rollIcon("warn","#ff6b6b")}Цель вне дальности: ${measured.edgeM} м при максимуме ${Number(sys.range) * 3} м (3×Rng)</div>` : ""}` : "";
   // Выключенное оружие (стр. 209-211): цепное/шоковое/силовое можно погасить
   // свободным действием, и полем Haywire — принудительно.
   const OFF_HINT = { chain: "−2 урона, −1 Проб., без Рвущего",
@@ -1028,6 +1053,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-preview">
         <div class="av-prev-lbl">Итоговый порог теста</div>
         <div class="av-prev-total" id="atk-total-display">${charVal}</div>
+        <div class="av-prev-breakdown" id="atk-threshold-breakdown"></div>
       </div>
 
       ${ammoDialogHtml}${rechargeWarnHtml}${wpDialogHtml}
@@ -1127,22 +1153,76 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     </div>`;
 
   /**
-   * Порог теста по прочитанной форме. Мод хвата и мод препаратов (в char.total)
-   * уже внутри базы; характеристику игрок может сменить в окне, а Стойка/База/
-   * Приём/Хват — прямо в этом же диалоге, поэтому база считается здесь заново
-   * из текущего выбора (resolveSelection), а не берётся из charVal.
+   * Порог теста по прочитанной форме, построчно (wdbc-53lh): каждое
+   * слагаемое, из которого складывался porog (раньше — одно число под
+   * итогом), плюс поправка на ополовинивание штрафа (halvePenalty бьёт по
+   * СУММЕ мод-слагаемых, не по каждому отдельно — attackThreshold считает её
+   * ОДИН раз, здесь та же функция вызывается для total, чтобы округление не
+   * разъехалось с диалогом броска навыка, см. attack-threshold.mjs). Мод
+   * хвата и мод препаратов (в char.total) уже внутри базы; характеристику
+   * игрок может сменить в окне, а Стойка/База/Приём/Хват — прямо в этом же
+   * диалоге, поэтому база считается здесь заново из текущего выбора
+   * (resolveSelection), а не берётся из charVal.
+   *
+   * @returns {{parts: {label:string, value:number}[], total: number}}
    */
-  const thresholdOf = f => {
+  const thresholdParts = f => {
     const sel = resolveSelectionSafe(f);
-    return attackThreshold({
-      base: (actor.system.characteristics[f.char]?.total ?? 0)
-            + (sys.attackBonus || 0) + wpAttackMod + sel.techBon + sel.stanceBon + ammoAtkMod + sel.gWs
-            + (wp.noAim ? 0 : f.aimBonus),
-      mods: [f.modifier, f.coverMod, f.mountRangedMod, f.sitMods + f.ammoMods + f.ruleMods, f.rofBonus, f.aimPenalty,
-             f.mountPenalty, f.extraBonus],
-      halvePenalty: f.halvePenalty
-    });
+    const baseParts = [
+      { label: CHARACTERISTICS[f.char]?.abbr || f.char, value: actor.system.characteristics[f.char]?.total ?? 0 },
+      { label: "Бонус оружия",       value: sys.attackBonus || 0 },
+      { label: "Свойства оружия",    value: wp.attackMod || 0 },
+      { label: "Модификации",        value: modFx.attackMod || 0 },
+      { label: "Качество",           value: qTestMod },
+      { label: "Легион",             value: legionFit.total },
+      { label: "Тренировка",         value: weaponTraining.total },
+      { label: "Стойка цели",        value: targetStanceMod },
+      { label: "Цель раскрыта",      value: exposedMod },
+      { label: "Беспомощная цель",   value: helplessRangedMod },
+      { label: "Цель бежит",         value: runningMod },
+      { label: "Шаг за шагом",       value: stepByStepMod },
+      { label: "База",               value: sel.baseBon },
+      { label: "Приём",              value: sel.maneuverBon },
+      { label: "Стойка",             value: sel.stanceBon },
+      { label: "Боеприпас",          value: ammoAtkMod },
+      { label: "Хват",               value: sel.gWs },
+      { label: "Прицеливание",       value: wp.noAim ? 0 : f.aimBonus }
+    ];
+    const modParts = [
+      { label: "Доп. модификатор",     value: f.modifier },
+      { label: "Укрытие",              value: f.coverMod },
+      { label: "Ситуативные",          value: f.sitMods },
+      { label: "Боеприпас: условия",   value: f.ammoMods },
+      { label: "Спецправила",          value: f.ruleMods },
+      { label: "Режим огня",           value: f.rofBonus },
+      { label: "Избирательная атака",  value: f.aimPenalty },
+      { label: "Верхом",               value: f.mountPenalty },
+      // Штраф стрельбы с седла (wdbc-8nz6) — отдельная строка от "Верхом"
+      // (f.mountPenalty — штраф Избирательной атаки по зоне пары): это два
+      // разных мода одной верховой атаки, см. комментарий у readAttackForm.
+      { label: "Штраф стрельбы с седла", value: f.mountRangedMod },
+      { label: "Атака всем телом",     value: f.extraBonus }
+    ];
+    const base         = baseParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
+    const rawModsSum    = modParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
+    const total = attackThreshold({ base, mods: modParts.map(p => p.value), halvePenalty: f.halvePenalty });
+    // Разница между «в лоб сложенным» и «ополовиненным Закалкой» штрафом —
+    // единственная поправка, которая не раскладывается на отдельные галочки:
+    // halvePenalty бьёт по итоговой сумме штрафов, а не по каждой отдельно.
+    const halveAdjust = total - base - rawModsSum;
+    const parts = [...baseParts, ...modParts];
+    if (halveAdjust) parts.push({ label: "Ополовинено (округление в пользу игрока)", value: halveAdjust });
+    return { parts: parts.filter(p => (Number(p.value) || 0) !== 0), total };
   };
+  const thresholdOf = f => thresholdParts(f).total;
+
+  /** Построчный список слагаемых порога под итогом — обновляется вместе с ним (updateTotal). */
+  function breakdownHtml(parts) {
+    return parts.map(p => {
+      const v = Number(p.value) || 0;
+      return `<span class="av-bd-item">${esc(p.label)} <b>${v >= 0 ? "+" : ""}${v}</b></span>`;
+    }).join("");
+  }
 
   // .then ниже: DialogV2 резолвит результат как `(await callback(...)) ?? action`
   // (scripts/foundry.mjs, #_onSubmit) — вернуть отсюда null нельзя, он подменится
@@ -1285,9 +1365,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { action: "cancel", label: "Отмена", callback: () => false }
     ],
     render: (event, dialog) => {
-      const form    = dialog.element.querySelector("form");
-      const display = form.querySelector("#atk-total-display");
-      const hint    = form.querySelector(".av-adv-hint");
+      const form      = dialog.element.querySelector("form");
+      const display   = form.querySelector("#atk-total-display");
+      const breakdown = form.querySelector("#atk-threshold-breakdown");
+      const hint      = form.querySelector(".av-adv-hint");
 
       const badgesEl        = form.querySelector("#atk-badges");
       const noteEl          = form.querySelector("#atk-gripnote");
@@ -1340,20 +1421,28 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         if (sel.blocked) {
           display.textContent = "ЗАБЛОКИРОВАНО";
           display.style.color = "#8b0000";
+          if (breakdown) breakdown.innerHTML = "";
           return;
         }
         if (f.autoFail) {
           display.textContent = "ПРОВАЛ";
           display.style.color = "#8b0000";
+          if (breakdown) breakdown.innerHTML = "";
           return;
         }
         if (helplessAutoMelee || f.autoSuccess) {
           display.textContent = "АВТО-УСПЕХ ×2";
           display.style.color = "#ff6b6b";
+          if (breakdown) breakdown.innerHTML = "";
           return;
         }
-        display.textContent = thresholdOf(f);
+        // wdbc-53lh: один вызов thresholdParts даёт и итог, и построчную
+        // разбивку под ним — сумма списка равна показанному итогу по построению
+        // (thresholdOf выше — тот же total, просто без списка).
+        const { parts: bdParts, total } = thresholdParts(f);
+        display.textContent = total;
         display.style.color = "";
+        if (breakdown) breakdown.innerHTML = breakdownHtml(bdParts);
         // Блок ситуативных свёрнут по умолчанию, поэтому его сводка должна быть
         // видна в заголовке — иначе авто-отметки (Усталость, Ослеплён) молча
         // уходят в порог, и непонятно, откуда взялся модификатор.

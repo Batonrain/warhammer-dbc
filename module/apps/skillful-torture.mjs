@@ -33,6 +33,7 @@ import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/coold
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { raceMatches } from "../rules/race.mjs";
 
 const FLAG = "skillfulTorture";
 
@@ -41,18 +42,9 @@ export function hasSkillfulTorture(actor) {
   return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Skillful Torture"));
 }
 
-/**
- * Друкхари ли актор — та же логика, что character-context.mjs::isDrukhari:
- * по расе, либо по «Прошлому» Иннари/Арлекина (system.ynnariPast/harlequinPast).
- */
+/** Друкхари ли актор — по расе, либо по «Прошлому» Иннари/Арлекина (module/rules/race.mjs). */
 export function isDrukhari(actor) {
-  const system = actor?.system;
-  if (!system) return false;
-  if (system.race === "drukhari") return true;
-  const pastRace = system.race === "ynnari" ? system.ynnariPast
-    : system.race === "harlequin" ? system.harlequinPast
-    : "";
-  return pastRace === "drukhari";
+  return raceMatches(actor?.system, "drukhari");
 }
 
 /** Порог Interrogate(Int)−20 пытающего — «(I)» книги, не Воля по умолчанию Навыка. */

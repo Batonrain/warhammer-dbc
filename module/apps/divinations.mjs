@@ -14,6 +14,7 @@ import { promptGrantChoices, applyGrants, clearGrantedBy,
 import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
+import { changeInfamy } from "./infamy-points.mjs";
 
 const PACK = "warhammer-dbc.divinations";
 const FLAG = "warhammer-dbc";
@@ -26,9 +27,6 @@ registerPackCache(PACK, DIVINATION_TAG);
 
 export function actorDivinationItem(actor) {
   return actor?.items?.find(i => i.type === "divination") || null;
-}
-export function actorDivinationKey(actor) {
-  return actorDivinationItem(actor)?.system?.key || "";
 }
 
 /** Данные дропдауна «Предсказание» для шапки листа. */
@@ -166,7 +164,14 @@ async function grantDivination(actor, key, def, entry, picks, rolled) {
 
   // Дополнительное Очко Бесчестья (100) и Фобия (68-71).
   const extra = [];
-  if (def.grants?.infamyPoint) extra.push(`<b>Очки Бесчестья:</b> +${def.grants.infamyPoint} (начислите вручную)`);
+  if (def.grants?.infamyPoint) {
+    // Тот же пул/потолок, что у actor-sheet.mjs::_infamyPath/_infamyMax
+    // (system.fate.value, потолок Inf.b) — начисляем сразу, не просим ГМа
+    // вспомнить об этом постфактум (wdbc-5il7).
+    const ipMax = Math.max(0, Number(actor.system.characteristics?.inf?.bonus) || 0);
+    await changeInfamy(actor, "system.fate.value", ipMax, def.grants.infamyPoint);
+    extra.push(`<b>Очки Бесчестья:</b> +${def.grants.infamyPoint} (начислено)`);
+  }
   if (def.phobia) extra.push(`<b>Фобия (−${def.phobia}):</b> согласуйте с ГМом конкретный страх`);
   if (def.giftRoll) extra.push("<b>Дары:</b> сделайте один бросок по таблице Даров");
   if (def.mutationInfBonus) extra.push(`<b>Мутации:</b> при бросках считайте Inf.b на ${def.mutationInfBonus} выше`);

@@ -18,6 +18,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap,
          disabledArmourOverloadTier, disabledArmourWeight } from "../combat/armor-mods.mjs";
+import { inventoryOverloadTier } from "./encumbrance.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags } from "../combat/armor-properties.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
@@ -35,6 +36,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels } from "./dreadnought.mjs";
 import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { calcMovement } from "./movement.mjs";
 
@@ -178,44 +180,58 @@ export function prepareCharacterDerived(actor, system) {
       // «Не работает» — орган на месте (виден на карте тела), но неисправен:
       // его эффекты не считаются, пока GM/игрок не переключит статус обратно.
       if (t === "implant" && item.getFlag("warhammer-dbc", "disabled")) continue;
-      if (t === "implant" && /Чёрный Панцирь|Black Carapace/i.test(item.name)) {
+      if (t === "implant" && (itemHasName(item, "Чёрный Панцирь") || itemHasName(item, "Black Carapace"))) {
         hasBlackCarapaceBackup = true;
       }
       // Бионические конечности: +2 к эффективному Поглощению этой частью тела.
       // Сторона не выбрана (флаг снят) — бонус никуда не начислять: раньше
       // невыбранная сторона молча уходила в "rightArm"/"rightLeg" через
       // тернарник по умолчанию, и снятие галочки Л/П не убирало бонус.
-      if (t === "implant" && item.system.category === "bionic") {
-        const k = classifyImplant(item.name, item.system.installed, item.system.category)?.kind;
+      // kind решает system.category ("bionic-arm"/"bionic-leg") — переименование
+      // предмета его больше не сбивает (wdbc-hgua). classifyImplant по имени —
+      // фоллбэк только для легаси-копий с общей category "bionic" без подвида.
+      const bionicCat = item.system.category;
+      if (t === "implant" && (bionicCat === "bionic" || bionicCat === "bionic-arm" || bionicCat === "bionic-leg")) {
+        let k;
+        if (bionicCat === "bionic-arm") k = "arm";
+        else if (bionicCat === "bionic-leg") k = "leg";
+        else k = classifyImplant(item.name, item.system.installed, bionicCat)?.kind;
         const side = item.getFlag("warhammer-dbc", "bodySide");
         if (side === "left" || side === "right") {
           if (k === "arm") traitArmorLoc[side === "left" ? "leftArm" : "rightArm"] += 2;
           else if (k === "leg") traitArmorLoc[side === "left" ? "leftLeg" : "rightLeg"] += 2;
         }
       }
-      // Роспись механик Техночудес. Числовое (un/val/ap) отсюда ушло: его
-      // складывали по ИМЕНИ предмета, мимо эффектов и Конструктора, так что на
-      // листе импланта не было ни значения, ни способа поправить (wdbc-cy2).
-      // Теперь эти числа лежат в самом предмете (packs-src → system.effects →
-      // эффект миграцией, см. migrations/item-effects.mjs) и приходят сюда
-      // общей дорогой ниже. У трёх имплантов пака та же надбавка лежала в обоих
-      // местах разом, и бонус выходил двойным: Крукс Механикус давал S.b +4.
+      // Роспись механик Техночудес. Числовое (un/val/ap) отсюда ушло раньше
+      // (wdbc-cy2): его складывали по ИМЕНИ предмета, мимо эффектов и
+      // Конструктора, так что на листе импланта не было ни значения, ни
+      // способа поправить. Теперь эти числа лежат в самом предмете (packs-src
+      // → system.effects → эффект миграцией, см. migrations/item-effects.mjs)
+      // и приходят сюда общей дорогой ниже. У трёх имплантов пака та же
+      // надбавка лежала в обоих местах разом, и бонус выходил двойным: Крукс
+      // Механикус давал S.b +4.
+      // energyMax/compensator/ironFocus читаются в первую очередь со схемы
+      // самого предмета (packs-src) — IMPLANT_MECH остаётся ТОЛЬКО фоллбэком
+      // для ещё не мигрированных копий: раньше эти три директивы жили
+      // единственно в таблице по имени, и переименование импланта в паке молча
+      // обнуляло Энергию/Компенсатор/Технофокус (wdbc-9bzv).
       if (t === "implant") {
+        const q = item.system.quality || "common";
+        const sysEnergy = item.system.energyMax;
+        const sysComp = item.system.compensator;
+        const hasSchemaEnergy = sysEnergy && Object.values(sysEnergy).some(v => v);
+        const hasSchemaComp = sysComp && Object.values(sysComp).some(v => v);
         const mech = implantMech(item.name);
-        if (mech) {
-          const q = item.system.quality || "common";
-          // energyMax — число (флат) либо {poor,common,good,best}, когда сама
-          // надбавка зависит от Качества импланта (базовая Катушка Потенции).
-          if (mech.energyMax) {
-            implantEnergyMax += typeof mech.energyMax === "object"
-              ? (mech.energyMax[q] ?? 0)
-              : mech.energyMax;
-          }
-          if (mech.compensator && (mech.compensator[q] ?? 0) > implantCompBonus)
-            implantCompBonus = mech.compensator[q] ?? 0;
-          if (mech.ironFocus)
-            techFocusInstalled.push({ name: item.name, quality: q, mod: ironModForQuality(q) });
-        }
+
+        if (hasSchemaEnergy) implantEnergyMax += sysEnergy[q] ?? 0;
+        else if (mech?.energyMax) implantEnergyMax += typeof mech.energyMax === "object"
+          ? (mech.energyMax[q] ?? 0) : mech.energyMax;
+
+        const compBonus = hasSchemaComp ? (sysComp[q] ?? 0) : (mech?.compensator?.[q] ?? 0);
+        if (compBonus > implantCompBonus) implantCompBonus = compBonus;
+
+        if (item.system.ironFocus || mech?.ironFocus)
+          techFocusInstalled.push({ name: item.name, quality: q, mod: ironModForQuality(q) });
       }
       // Мигрированные предметы несут ту же механику как embedded ActiveEffect
       // (см. migrations/item-effects.mjs) — читать старое поле тоже
@@ -294,12 +310,11 @@ export function prepareCharacterDerived(actor, system) {
       traitCharBonus.t = (traitCharBonus.t || 0) + prof.daemonic;     // Daemonic → T.b (соглашение бестиария)
       traitFearRating  = Math.max(traitFearRating, prof.fear);        // Fear
       applied.push(`Unnatural S +${prof.unnaturalS}`, `Daemonic ${prof.daemonic} (T.b)`, `Fear ${prof.fear}`);
-      // Активные Дары (предметы-таланты с именем «Дар: …») с числовыми эффектами
-      const giftNames = new Set(actor.items.filter(i => i.type === "talent").map(i => i.name));
-      const hasGift = (n) => giftNames.has(`Дар: ${n}`);
-      if (hasGift("Панцирь"))               { traitArmourAll += corB; applied.push(`Панцирь: Natural Armour ${corB}`); }
-      if (hasGift("Гигант"))                { traitSizeMod += 1; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер, +10 S"); }
-      if (hasGift("Демоническая Скорость")) { const a = Math.floor(corB / 2); traitCharBonus.ag = (traitCharBonus.ag || 0) + a; applied.push(`Демон. Скорость: Unnatural A +${a}`); }
+      // Активные Дары (предметы-таланты «… / Дар: X») с числовыми эффектами
+      const giftNames = giftNamesOf(actor);
+      if (giftNames.has("Панцирь"))               { traitArmourAll += corB; applied.push(`Панцирь: Natural Armour ${corB}`); }
+      if (giftNames.has("Гигант"))                { traitSizeMod += 1; traitCharValueBonus.s = (traitCharValueBonus.s || 0) + 10; applied.push("Гигант: +1 Размер, +10 S"); }
+      if (giftNames.has("Демоническая Скорость")) { const a = Math.floor(corB / 2); traitCharBonus.ag = (traitCharBonus.ag || 0) + a; applied.push(`Демон. Скорость: Unnatural A +${a}`); }
       system.possessionActive = { prof, corB, applied };
     }
 
@@ -325,7 +340,7 @@ export function prepareCharacterDerived(actor, system) {
     // Голографическая защита, а не силовая: не поглощает попадания, а срывает
     // их. Носителю — бонус на избегание и Stealth, противнику — штраф на атаки.
     {
-      const cf = actor.items.find(i => /Clone Field|Клонирующее Поле/i.test(i.name)
+      const cf = actor.items.find(i => (itemHasName(i, "Clone Field") || itemHasName(i, "Клонирующее Поле"))
                                    && i.system?.worn !== false);
       system.cloneField = cf
         ? cloneFieldTier(cf.system?.availability ?? 2, cf.system?.quality)
@@ -466,7 +481,7 @@ export function prepareCharacterDerived(actor, system) {
     if (system.race === "drukhari" && system.fate) {
       const wb = chars.wp?.bonus ?? 0;
       const bottomless = Math.min(3, actor.items.filter(i =>
-        i.type === "talent" && /Bottomless Soul|Бездонная Душа/i.test(i.name)).length);
+        i.type === "talent" && (itemHasName(i, "Bottomless Soul") || itemHasName(i, "Бездонная Душа"))).length);
       system.fate.max = wb * (1 + bottomless);
       if ((system.fate.value ?? 0) > system.fate.max) system.fate.value = system.fate.max;
       system.painActive  = true;
@@ -484,7 +499,7 @@ export function prepareCharacterDerived(actor, system) {
     // module/rules/dreadnought.mjs).
     if (system.sanity) {
       const coreMemories = actor.items.filter(i =>
-        i.type === "talent" && /Core Memories|Ядро Воспоминаний/i.test(i.name)).length;
+        i.type === "talent" && (itemHasName(i, "Core Memories") || itemHasName(i, "Ядро Воспоминаний"))).length;
       system.sanity.max = sanityMax(chars.wp?.bonus ?? 0, coreMemories);
       system.sanity.value = Math.max(0, Math.min(system.sanity.max, Number(system.sanity.value) || 0));
       system.sanity.thresholds = madnessLevels(system.sanity.value);
@@ -745,7 +760,7 @@ export function prepareCharacterDerived(actor, system) {
     // не хранится, а вводится). Здесь только живой процент с Черты — читает его
     // тот же диалог в момент прибавления опыта.
     const fastLearner = actor.items.find(i => i.type === "trait"
-                                           && /Fast Learner|Ловит на Лету/i.test(i.name));
+                                           && (itemHasName(i, "Fast Learner") || itemHasName(i, "Ловит на Лету")));
     system.fastLearnerBonus = fastLearner ? (Number(fastLearner.system?.rating) || 0) : 0;
 
     // Автосумма цен характеристик
@@ -825,6 +840,9 @@ export function prepareCharacterDerived(actor, system) {
     const stance  = system.meleeStance || "standard";
 
     let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
+    // Снимок базового SPD (Ag.b + Размер, до модификаторов) — для breakdown
+    // ниже (wdbc-zbiz), тем же приёмом, что charTotalTooltip у характеристик.
+    const spdBase = spd;
 
     // Бонус к базовой скорости (SPD) от Черт/имплантов/талантов/психосил, плюс
     // system.movement.spdBonus — входное поле для kind:"movement" (Конструктор,
@@ -839,13 +857,21 @@ export function prepareCharacterDerived(actor, system) {
     const overload = disabledArmourOverloadTier(actor, disabledArmourWeight(actor));
     system.disabledArmourOverload = overload;
     const overloadSpdMod = overload?.spdMod || 0;
+    // Перевес ОБЩЕГО инвентаря (стр. 27, wdbc-2l3x) — независимый источник от
+    // перевеса выключенной силовой брони выше (может действовать одновременно,
+    // не смешиваются): «носит больше Ношения, но меньше Подъёма» → SPD −1 и
+    // −10 на движения/атаки (штраф теста подключён в combat/defense.mjs и
+    // sheets/actor-sheet.mjs, не здесь — тут только вклад в SPD).
+    const inventoryOverload = inventoryOverloadTier(actor);
+    system.inventoryOverload = inventoryOverload;
+    const inventoryOverloadSpdMod = inventoryOverload?.spdMod || 0;
     // Свойство оружия Piercing (wdbc-plsf): снаряд в ране торса/ноги — плоский
     // −1 SPD, пока не извлечён (не складывается за несколько таких ран —
     // книга не описывает накопление, см. combat/damage.mjs, где рана ставится).
     const pw = system.piercingWounds || {};
     const piercingSpdMod = (pw.body || pw.leftLeg || pw.rightLeg) ? -1 : 0;
-    if (traitSpeedMod || spdBonus || overloadSpdMod || piercingSpdMod) {
-      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + piercingSpdMod);
+    if (traitSpeedMod || spdBonus || overloadSpdMod || inventoryOverloadSpdMod || piercingSpdMod) {
+      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + inventoryOverloadSpdMod + piercingSpdMod);
       halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
     }
 
@@ -862,6 +888,22 @@ export function prepareCharacterDerived(actor, system) {
     system.movement.move     = move;
     system.movement.charge   = charge;
     system.movement.run      = run;
+    // Откуда число (wdbc-zbiz): те же слагаемые, что складываются выше —
+    // Черты/импланты, Конструктор (kind:"movement"), Перевес брони, Piercing,
+    // Пружинящая Стойка. Полушаг = SPD×1, поэтому его breakdown суммируется в
+    // halfMove без остатка (Полное/Натиск/Бег — те же слагаемые, ×2/3/6).
+    const spdBreakdown = [{ label: "База", value: spdBase, note: "Ag.b + Размер" }];
+    if (traitSpeedMod)           spdBreakdown.push({ label: "Черты/импланты",              value: traitSpeedMod });
+    if (spdBonus)                spdBreakdown.push({ label: "Механика (Конструктор)",      value: spdBonus });
+    if (overloadSpdMod)          spdBreakdown.push({ label: "Перевес выключенной брони",   value: overloadSpdMod });
+    if (inventoryOverloadSpdMod) spdBreakdown.push({ label: "Перевес инвентаря",           value: inventoryOverloadSpdMod });
+    if (piercingSpdMod)          spdBreakdown.push({ label: "Piercing (снаряд в ране)",     value: piercingSpdMod });
+    if (stance === "springing")  spdBreakdown.push({ label: "Пружинящая Стойка",           value: -2 });
+    // Минимум SPD — 0.5 (стр. 28): сумма слагаемых может уйти в минус, порог
+    // это ловит раньше breakdown.
+    const spdRawSum = spdBreakdown.reduce((s, b) => s + b.value, 0);
+    if (spdRawSum !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
+    system.movement.spdBreakdown = spdBreakdown;
 
     // ── Инициатива ────────────────────────────────────────────────────────
     // Хранит Ag.bonus + модификаторы Талантов (Combat Formation, Paranoia).

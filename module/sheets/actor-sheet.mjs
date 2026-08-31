@@ -23,6 +23,7 @@ import { createDisorderItem, activateDisorderListeners,
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
 import { fatiguePenalty, marchPenalty, activateConditionsListeners, addCondition } from "./tabs/conditions.mjs";
 import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
+import { inventoryOverloadPenalty } from "../rules/encumbrance.mjs";
 import { painChatMsg } from "./tabs/pain.mjs";
 import { applyHealing } from "./tabs/healing.mjs";
 import { activateDrugListeners } from "./tabs/drugs.mjs";
@@ -53,6 +54,8 @@ import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
+import { ruleFlagCost } from "../rules/flags.mjs";
+import { spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
@@ -115,6 +118,15 @@ function onInfamyMinus()   { return this._ipChange(-1); }
 function onInfamyPlus()    { return this._ipChange(+1); }
 function onInfamyRestore() { return this._ipRestore(); }
 function onInfamySpend(event, target) { return this._ipSpend(target.dataset.ability); }
+
+// ── Возможности сейчас: кнопка «Потратить» у записей с ценой (wdbc-1dc8) ──
+// Цена не сериализуется в DOM — пересчитывается свежей ruleFlagCost на клик,
+// тем же путём, что и context.activeCapabilities (sheet-helpers.mjs), чтобы
+// не разъехаться со списком, отрисованным на момент рендера.
+function onCapabilitySpend(event, target) {
+  const cost = ruleFlagCost(this.actor, target.dataset.key, { kind: "skill" });
+  return spendCapabilityCost(this.actor, cost, target.dataset.label);
+}
 
 // ── Свёртки: состояние ОКНА, а не актора — без ре-рендера ──
 function onCombatCollapse(event, target) {
@@ -594,6 +606,7 @@ export class WarhammerCharacterSheet
       infamyPlus: whenEditable(onInfamyPlus),
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
+      capabilitySpend: whenEditable(onCapabilitySpend),
       // «Перезапустить мастера создания» больше не data-action: кнопка-меню
       // Механикум (_attachFrameListeners) зовёт this.openCreationWizard()
       // напрямую, минуя карту действий.
@@ -1953,7 +1966,8 @@ export class WarhammerCharacterSheet
               + this._getFatiguePenalty(charKey)
               + this._getMarchPenalty(charKey)
               + this._getHelmetlessBonus(charKey)
-              + disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+              + disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill })
+              + inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
           }
         });
 
@@ -2042,9 +2056,11 @@ export class WarhammerCharacterSheet
     // Парированию (стр. 233) — skill берётся из rollContext, если он у этого
     // навыка есть (Dodge/Parry передают его отдельным ключом, не через charKey).
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+    // Перевес общего инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник.
+    const overloadPenalty = inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty + overloadPenalty;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
@@ -2074,6 +2090,7 @@ export class WarhammerCharacterSheet
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
             ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
+            ${overloadPenalty !== 0 ? ` ${overloadPenalty} (◈ Перевес инвентаря)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${baseEff}</b>
           </div>
@@ -2117,9 +2134,11 @@ export class WarhammerCharacterSheet
     const helmetBonus = this._getHelmetlessBonus(charKey);
     // Выключенная силовая броня: −10 физической характеристике (стр. 233).
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey });
+    // Перевес общего инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник.
+    const overloadPenalty = inventoryOverloadPenalty(this.actor, { charKey });
 
     // Мод препаратов уже входит в target (через char.total)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty + overloadPenalty;
     // Переброс/Преимущество/Помеха — тот же путь, что у теста Навыка
     // (rules/reroll-pick.mjs::pickReroll); раньше здесь бросался только один
     // d100 и выбор диалога тихо игнорировался (см. ревизию главы «Тесты»).
@@ -2148,6 +2167,7 @@ export class WarhammerCharacterSheet
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
             ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
+            ${overloadPenalty !== 0 ? ` ${overloadPenalty} (◈ Перевес инвентаря)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${baseEff}</b>
           </div>

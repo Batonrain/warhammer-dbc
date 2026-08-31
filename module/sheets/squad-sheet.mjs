@@ -16,6 +16,7 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
 import { commandReachFor, presenceNumber } from "../rules/command.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
+import { tempInfamyInfo, clearTempInfamy } from "../rules/temp-infamy.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -101,8 +102,33 @@ function onBriefingRoll() { return this._briefingRoll(); }
 function onOrderRoll()    { return this._orderRoll(); }
 function onHeroicRoll()   { return this._heroicRoll(); }
 
+/**
+ * Voice of God/Глас Божий (wdbc-e728): «теряется в конце действия [Личной]
+ * Команды» — по концу Короткой Команды сжигаем временный запас получателя,
+ * если он до сих пор оттуда (source-метка, а не текущий system.shortCommand.key —
+ * тот мог уже смениться на другой приказ до снятия). Чужой временный запас
+ * (другой источник, например будущее «Пламя Душ») не трогаем.
+ */
+async function clearVoiceOfGodTemp(sheet) {
+  const uuid = sheet.actor.system.shortCommand?.recipientUuid || "";
+  const recipientDoc = uuid ? sheet._resolve(uuid) : null;
+  const info = recipientDoc ? tempInfamyInfo(recipientDoc) : null;
+  if (!info || info.source !== "Voice of God / Глас Божий") return;
+  await clearTempInfamy(recipientDoc);
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: recipientDoc }),
+    content: `<div class="wh-roll-result sq-chat">
+      <div class="roll-header">${rollIcon("crown", "#ffd24d")}Глас Божий — ${esc(recipientDoc.name)}</div>
+      <div class="roll-threshold">Личная Команда завершена — неиспользованное временное Очко Бесчестия сгорает.</div>
+    </div>`
+  }, game.settings.get("core", "rollMode")));
+}
+
 function onPresenceOff() { return this.actor.update({ "system.presence.active": false }); }
-function onShortOff()    { return this.actor.update({ "system.shortCommand.active": false }); }
+async function onShortOff() {
+  await clearVoiceOfGodTemp(this);
+  return this.actor.update({ "system.shortCommand.active": false });
+}
 function onDetailOff()   {
   return this.actor.update({ "system.detailCommand.active": false, "system.detailCommand.picks": [] });
 }
@@ -517,6 +543,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       content: `<p>Сбросить Слаженность отряда к базовой (<b>${base >= 0 ? "+" : ""}${base}</b>) и снять отметки потери Командования?</p>`
     });
     if (!ok) return;
+    await clearVoiceOfGodTemp(this);
     const members = foundry.utils.deepClone(this.actor.system.members || []);
     members.forEach(m => { m.moraleLost = false; });
     await this.actor.update({

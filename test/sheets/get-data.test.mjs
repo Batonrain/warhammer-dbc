@@ -7,7 +7,7 @@
 // подписи, состав выпадающих списков и кумулятивность градаций Пути. Ни одна
 // проверка не зависит от Foundry — только от actor.system и данных книг.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { sheetOf } from "../support/foundry-stub.mjs";
 import { WarhammerCharacterSheet } from "../../module/sheets/actor-sheet.mjs";
 import { characterContext } from "../../module/sheets/character-context.mjs";
@@ -484,6 +484,46 @@ describe("одинаковые Таланты и Черты на листе", ()
     const shown = ctx.abilityTalentGroups.flatMap(g => g.items);
     expect(shown).toHaveLength(1);
     expect(shown[0].name).toBe("Nerves of Steel / Стальные Нервы");
+  });
+});
+
+// wdbc-qjnk: кнопки Движения/ae-spend-btn должны быть серыми ДО клика, когда
+// ОД/Реакций не хватает — не тостом после. Гейт активен только в бою.
+describe("Экономика действий: гейт кнопок", () => {
+  afterEach(() => { globalThis.game.combat = undefined; });
+
+  it("вне Encounter кнопки не гейтятся, даже при 0 ОД", () => {
+    const ctx = ctxOf({ actionPoints: { value: 0, max: 2 }, reactions: { value: 0, max: 1 } });
+    expect(ctx.moveGate.half.disabled).toBe(false);
+    expect(ctx.moveGate.full.disabled).toBe(false);
+    expect(ctx.aeSpendGate.reaction.disabled).toBe(false);
+  });
+
+  it("в Encounter при 0 ОД Полушаг/Шаг серые, с причиной в title", () => {
+    globalThis.game.combat = { started: true };
+    const ctx = ctxOf({ actionPoints: { value: 0, max: 2 }, reactions: { value: 1, max: 1 } });
+    expect(ctx.moveGate.half.disabled).toBe(true);
+    expect(ctx.moveGate.half.title).toContain("Не хватает ОД");
+    expect(ctx.moveGate.full.disabled).toBe(true);
+  });
+
+  it("в Encounter при 1 ОД Полушаг активен, Шаг (2 ОД) — нет", () => {
+    globalThis.game.combat = { started: true };
+    const ctx = ctxOf({ actionPoints: { value: 1, max: 2 }, reactions: { value: 1, max: 1 } });
+    expect(ctx.moveGate.half.disabled).toBe(false);
+    expect(ctx.moveGate.full.disabled).toBe(true);
+  });
+
+  it("в Encounter при 0 Реакциях кнопка ae-spend-btn Реакции серая", () => {
+    globalThis.game.combat = { started: true };
+    const ctx = ctxOf({ actionPoints: { value: 2, max: 2 }, reactions: { value: 0, max: 1 } });
+    expect(ctx.aeSpendGate.reaction.disabled).toBe(true);
+    expect(ctx.aeSpendGate.reaction.title).toContain("Реакций");
+  });
+
+  it("Орда/техника — moveGate вовсе не добавляется в контекст (нет экономики действий)", () => {
+    const ctx = ctxOf({ type: "horde" });
+    expect(ctx.moveGate).toBeUndefined();
   });
 });
 

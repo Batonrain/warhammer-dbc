@@ -336,6 +336,23 @@
 }
 .wh-wprop-apply-btn:hover { background: #ffe0c0; }
 
+/* ── Пилюли распознанных крит-эффектов/Шока (wdbc-xql6) ────────────────── */
+.wh-crit-pills {
+  margin-top: 6px;
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.wh-crit-apply-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 1px 8px;
+  background: #d9cbaa; border: 1px solid var(--wh-border); border-radius: 10px;
+  font-family: "Book Antiqua", Palatino, serif;
+  font-size: 0.84em;
+  cursor: pointer;
+}
+.wh-crit-apply-btn:hover { background: #ecdfba; }
+.wh-crit-apply-btn:disabled { opacity: 0.55; cursor: default; }
+.wh-crit-apply-btn svg { width: 1em; height: 1em; }
+
 /* ── Просмотр кубов (разворачиваемый блок) ─────────────────── */
 .roll-dice-details {
   margin: 5px 0;
@@ -593,12 +610,14 @@
 .wh-dodge-btn,
 .wh-parry-btn,
 .wh-wprop-apply-btn,
+.wh-crit-apply-btn,
 .roll-defense-btns button {
   background: #0e2a1c !important; color: #d8ffe8 !important; border: 1px solid #2f9e6a !important; font-family: inherit !important;
 }
 .wh-dodge-btn:hover,
 .wh-parry-btn:hover,
 .wh-wprop-apply-btn:hover,
+.wh-crit-apply-btn:hover,
 .roll-defense-btns button:hover { background: #15492f !important; box-shadow: 0 0 7px rgba(77,255,166,0.4); }
 .wh-dodge-disabled { background: #14241c !important; color: #5a7a68 !important; border-color: #2a4a3a !important; }
 

@@ -56,46 +56,6 @@ export function parseWeaponCapacity(str) {
   return out;
 }
 
-// Категории узлов (Components / Узлы).
-export const SHIP_COMPONENT_CATEGORIES = {
-  drive:        "Плазменный двигатель",
-  warp:         "Варп-двигатель",
-  voidShield:   "Пустотные щиты",
-  bridge:       "Мостик",
-  occulum:      "Оккулум навигатора",
-  astropathic:  "Астропатический узел",
-  lifeSustainer:"Жизнеобеспечение",
-  quarters:     "Жилые отсеки",
-  augur:        "Ауспики / Авгуры",
-  weapon:       "Орудие",
-  hold:         "Грузовой трюм / Отсек",
-  supplemental: "Улучшение",
-  other:        "Прочее"
-};
-
-// Характеристика, которую модифицирует узел (для авто-суммирования).
-export const SHIP_MOD_CHARS = {
-  "":              "— нет —",
-  speed:           "SPD (Скорость)",
-  manoeuvrability: "MN (Манёвренность)",
-  detection:       "DT (Обнаружение)",
-  voidShields:     "VS (Пустотные щиты)",
-  armour:          "ARM (Броня)",
-  turretRating:    "TR (Класс турелей)",
-  hullIntegrity:   "HI (Прочность корпуса)"
-};
-
-// Бюджет Очков Корабля (SP) от Бесчестья/Влияния капитана (Inf).
-//   0-10→30, 11-20→40, 21-30→50, 31-40→60, 41-50→70, 51+→80
-export function spFromInfluence(inf) {
-  const v = Number(inf) || 0;
-  if (v >= 51) return 80;
-  if (v >= 41) return 70;
-  if (v >= 31) return 60;
-  if (v >= 21) return 50;
-  if (v >= 11) return 40;
-  return 30;
-}
 
 // Класс судна (категория корпуса) — для группировки/отыгрыша.
 export const SHIP_TYPES = {
@@ -255,8 +215,6 @@ export const CARGO_HOLD_BONUS = 20;
 // ── Экипаж: восстановление и бунт (раздел «Экипаж») ─────────────────────────
 
 // Число действий НИП за СР равно бонусу Выучки (CR/10): умелый — 3, ветераны — 5.
-// Альтернативное правило книги — жёсткий потолок в 3 действия.
-export const CREW_ACTION_CAP = 3;
 export function crewActionsPerSR(ratingLabel) {
   const r = CREW_RATING_TABLE.find(x => x.label === ratingLabel);
   return r ? Math.floor(r.skill / 10) : 0;
@@ -297,7 +255,5 @@ export const MUTINY_APPROACHES = [
     note: "Убить главарей, взять заложников, грозить выстудить отсеки. Командиры станут тиранами." }
 ];
 
-// Пороги CM, на которых требуется тест Command на бунт.
-export const MUTINY_THRESHOLDS = [70, 40, 10];
 // Бунтовщики побеждают окончательно при 4+ степенях успеха во встречном тесте.
 export const MUTINY_WIN_DOS = 4;

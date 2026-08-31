@@ -7,17 +7,7 @@
     "key": "outcast",
     "race": "astartes",
     "group": "",
-    "charBonus": {
-      "ws": null,
-      "bs": null,
-      "s": null,
-      "t": null,
-      "ag": null,
-      "int": null,
-      "per": null,
-      "wp": null,
-      "fel": null
-    },
+    "charBonus": {},
     "charChoice": "",
     "skills": "",
     "talents": "",

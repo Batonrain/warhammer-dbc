@@ -23,6 +23,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { isMinionTalent } from "./minion-build.mjs";
+import { AP_LOCATIONS } from "../constants/effect-keys.mjs";
 
 /**
  * Хвостовая скобка с рейтингом: «Nimble (10)», «Сверхъест. Сила (X)».
@@ -127,17 +128,65 @@ export function abilityLabel(group) {
   return parts.filter(Boolean).join(" ");
 }
 
+// ── Сводка авто-эффектов ────────────────────────────────────────────────────
+// Мигрированный предмет (flags.migratedEffect) хранит старое system.effects
+// лишь как легаси-справку: актор его не читает (documents/actor.mjs), реальная
+// механика лежит в embedded ActiveEffect. Сводка обязана смотреть туда же,
+// иначе строка на листе показывает бонус, которого в характеристиках уже нет
+// (wdbc-e2nm). Тот же гейт стоит у остальных читателей старого поля —
+// module/rules/character.mjs, module/combat/armor-mods.mjs.
+
+const SYSTEM_ID = "warhammer-dbc";
+const AP_LOC_KEYS = Object.keys(AP_LOCATIONS);
+// Только надбавка к БОНУСУ характеристики: ровно то, что складывала сводка до
+// миграции (charBonusStat/charBonuses → .bonusFx, constants/effect-keys.mjs).
+// Надбавку к Значению (.totalFx, старое charValueBonuses) сводка не показывала
+// и теперь: сложить её с бонусом в одно «+N к S» значило бы соврать — это
+// разные величины, а отдельная подпись потребовала бы своей колонки на листе.
+const CHAR_BONUS_FX_KEY = /^system\.characteristics\.(\w+)\.bonusFx$/;
+const AP_BONUS_KEY = /^system\.armorBonus\.(\w+)$/;
+
+function isEffectMigrated(item) {
+  return !!(item?.getFlag?.(SYSTEM_ID, "migratedEffect") ?? item?.flags?.[SYSTEM_ID]?.migratedEffect);
+}
+
+/** Вклад перенесённых ActiveEffect предмета — теми же ключами, что применяет актор. */
+function addMigratedEffects(item, out) {
+  const ap = {};
+  for (const effect of item?.effects ?? []) {
+    // Погашенный эффект (неактивный имплант, выключенный Локус) актор не
+    // применяет — и в сводке его быть не должно.
+    if (effect?.disabled) continue;
+    for (const c of effect.system?.changes ?? []) {
+      const value = Number(c?.value) || 0;
+      if (!value || !c?.key) continue;
+      const char = CHAR_BONUS_FX_KEY.exec(c.key)?.[1];
+      if (char) { out.charBonus[char] = (out.charBonus[char] || 0) + value; continue; }
+      const loc = AP_BONUS_KEY.exec(c.key)?.[1];
+      if (loc) { ap[loc] = (ap[loc] || 0) + value; continue; }
+      if      (c.key === "system.fearRating") out.fearRating = Math.max(out.fearRating, value);
+      else if (c.key === "system.sizeMod")    out.sizeMod   += value;
+      else if (c.key === "system.initiative") out.initMod   += value;
+    }
+  }
+  // Старое armourAll значило «AP всем шести зонам» и уехало шестью по-зонными
+  // записями (legacyEffectsToChanges); обратно это общий для всех зон минимум.
+  out.armourAll += Math.min(...AP_LOC_KEYS.map(k => ap[k] || 0));
+}
+
 /**
- * Сводка старых авто-эффектов по всей строке.
+ * Сводка авто-эффектов по всей строке.
  *
  * Складывается так же, как считает актор (documents/actor.mjs): бонусы
  * характеристик, броня, Размер и Инициатива суммой, Страх — максимумом.
- * Иначе подпись строки разошлась бы с числами на листе.
+ * Иначе подпись строки разошлась бы с числами на листе. У мигрированных
+ * предметов источник — их ActiveEffect, у остальных — старое system.effects.
  */
 export function mergeAbilityEffects(items = []) {
   const out = { charBonus: {}, armourAll: 0, fearRating: 0, sizeMod: 0, initMod: 0 };
 
   for (const item of items) {
+    if (isEffectMigrated(item)) { addMigratedEffects(item, out); continue; }
     const e = item?.system?.effects ?? {};
     if (e.charBonusStat && (e.charBonusValue || 0) !== 0)
       out.charBonus[e.charBonusStat] = (out.charBonus[e.charBonusStat] || 0) + e.charBonusValue;

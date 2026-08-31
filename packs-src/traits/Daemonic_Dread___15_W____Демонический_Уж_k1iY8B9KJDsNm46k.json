@@ -1,0 +1,98 @@
+{
+  "name": "Daemonic Dread (−15 W) / Демонический Ужас (−15 к W)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Присутствие твари подтачивает разум — воля слабеет, страх нарастает.",
+    "notes": "Грант-предмет движка Ауры (module/regions/auras.mjs) для kind:\"aura\" записей на Чертах-источниках (Daemonic Presence, packs-src/bestiary/**) — сам по себе не выдаётся, клонируется врагам, вошедшим в радиус источника, и снимается, когда они выходят. Фиксированный номинал вместо шаблона «(X)»: rescaleTraitByRating (module/apps/mechanics.mjs) переносит значения, РАВНЫЕ базовому rating, штраф же отрицателен — вместо обхода этой эвристики четыре фиксированных экземпляра (−5/−10/−15/−20) под все магнитуды, встречающиеся у Daemonic Presence в бестиарии.",
+    "benefit": "−15 к Итого Воли (W), пока актор в радиусе источника ауры — бьёт по всем тестам W, включая Страх/Психострельбу/сопротивление Порче.",
+    "source": "аура",
+    "bookSource": "DoomBC — Основная книга",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "k1iY8B9KJDsNm46k",
+  "effects": [
+    {
+      "name": "Daemonic Dread (−15 W) / Демонический Ужас (−15 к W)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.characteristics.wp.totalFx",
+            "type": "add",
+            "value": -15,
+            "phase": "initial",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "l1YUMspcozJvXRQD",
+      "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": null,
+        "modifiedTime": null,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "_key": "!items.effects!k1iY8B9KJDsNm46k.l1YUMspcozJvXRQD"
+    }
+  ],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!k1iY8B9KJDsNm46k"
+}

@@ -45,40 +45,72 @@ import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
-import { ruleFlags, ruleFlagLabels }                 from "../rules/flags.mjs";
+import { ruleFlags, ruleFlagLabels, ruleFlagCost }   from "../rules/flags.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
+import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
+import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mjs";
+import { measureTokens }                             from "../combat/tactical-map.mjs";
 
 // ── Определение всех состояний ────────────────────────────────────────────────
+// desc (wdbc-zbiz): текст по корбуку («Раны и Урон» стр. 30-31, если не
+// указано иное) — уходит в title тега на вкладке Эффекты, короткая версия
+// правила, не вся страница.
 export const CONDITIONS_DEF = {
-  bleeding:      { label: "Кровотечение",    icon: "🩸", hasLevel: true,  levelField: "bleedingLevel",      css: "cond-bleeding"      },
-  haemorrhaging: { label: "Обескровливание", icon: "💔", hasLevel: true,  levelField: "haemorrhagingLevel", css: "cond-haemorrhaging"  },
-  stunned:       { label: "Оглушение",       icon: "💫", hasLevel: true,  levelField: "stunnedRounds",      css: "cond-stunned"        },
-  fatigued:      { label: "Усталость",       icon: "😓", hasLevel: true,  levelField: "fatiguedLevel",      css: "cond-fatigued"       },
-  poisoned:      { label: "Отравление",      icon: "☠️", hasLevel: false, levelField: null,                 css: "cond-poisoned"       },
-  prone:         { label: "Повален",         icon: "🧎", hasLevel: false, levelField: null,                 css: "cond-prone"          },
-  helpless:      { label: "Беспомощный",     icon: "🪢", hasLevel: false, levelField: null,                 css: "cond-helpless"       },
-  unconscious:   { label: "Без сознания",    icon: "😵", hasLevel: false, levelField: null,                 css: "cond-unconscious"    },
-  blinded:       { label: "Ослеплён",        icon: "🙈", hasLevel: true,  levelField: "blindedRounds",      css: "cond-blinded"        },
-  deafened:      { label: "Оглох",           icon: "🔇", hasLevel: false, levelField: null,                 css: "cond-deafened"       },
-  burning:       { label: "Горение",         icon: "🔥", hasLevel: true,  levelField: "burningLevel",       css: "cond-burning"        },
-  radiation:     { label: "Радиация",        icon: "☢️", hasLevel: true,  levelField: "radiationLevel",     css: "cond-radiation"      },
-  hallucinogenic:{ label: "Галлюцинации",    icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-hallucinogenic" },
-  pinned:        { label: "Подавление",      icon: "📌", hasLevel: false, levelField: null,                 css: "cond-pinned"         },
-  crippling:     { label: "Калечение",       icon: "🦯", hasLevel: false, levelField: null,                 css: "cond-crippling"      },
-  addicted:      { label: "Зависимость",     icon: "💊", hasLevel: false, levelField: null,                 css: "cond-addicted"       },
+  bleeding:      { label: "Кровотечение",    icon: "🩸", hasLevel: true,  levelField: "bleedingLevel",      css: "cond-bleeding",
+    desc: "В конце каждого Хода — бросок d10: на 1-5 персонаж получает 1 уровень Обескровливания, на 0 и меньше — умирает. Снимается полудействием, тестом Medicae−10 (−30, если пациент активно действовал в прошлый Ход)." },
+  haemorrhaging: { label: "Обескровливание", icon: "💔", hasLevel: true,  levelField: "haemorrhagingLevel", css: "cond-haemorrhaging",
+    desc: "За каждый уровень: −1 к тестам на смерть от Кровотечения и −5 ко всем тестам T. Выше 5 (10 у десантников) — раз в минуту тест W+0 или потеря сознания. Снимается по 1 уровню в час." },
+  stunned:       { label: "Оглушение",       icon: "💫", hasLevel: true,  levelField: "stunnedRounds",      css: "cond-stunned",
+    desc: "Не может совершать Действия и Реакции, все атаки по нему получают +20. Не Беспомощен — видит, слышит, говорит с трудом." },
+  fatigued:      { label: "Усталость",       icon: "😓", hasLevel: true,  levelField: "fatiguedLevel",      css: "cond-fatigued",
+    desc: "−10 на все тесты, кроме T, Inf и Cor, с первого же уровня. При T.b+W.b Усталости персонаж теряет сознание." },
+  poisoned:      { label: "Отравление",      icon: "☠️", hasLevel: false, levelField: null,                 css: "cond-poisoned",
+    desc: "Снижает Предел Критического Провала на 10 для всех тестов, кроме T, Inf и Cor. Не касается Пределов Клина/Перегрева стрелкового оружия." },
+  prone:         { label: "Повален",         icon: "🧎", hasLevel: false, levelField: null,                 css: "cond-prone",
+    desc: "−20 на WS и Dodge(A), +20 на Stealth(A), SPD вдвое, нельзя Бег и Натиск. Стрельба по нему −20, рукопашная — +20. Встать — Полудействие." },
+  helpless:      { label: "Беспомощный",     icon: "🪢", hasLevel: false, levelField: null,                 css: "cond-helpless",
+    desc: "Не может совершать Физические действия. Рукопашная и выстрел в упор/в рукопашной по нему автоматически успешны и наносят удвоенный урон. Прочая стрельба получает +30." },
+  unconscious:   { label: "Без сознания",    icon: "😵", hasLevel: false, levelField: null,                 css: "cond-unconscious",
+    desc: "Не может совершать Действия и Реакции. Считается Беспомощным, не видит и не слышит окружающих." },
+  blinded:       { label: "Ослеплён",        icon: "🙈", hasLevel: true,  levelField: "blindedRounds",      css: "cond-blinded",
+    desc: "Не видит: автопровал BS, −30 на WS и тесты, требующие зрения. Весь незнакомый ландшафт — Трудный, −20 против настоящего Трудного Ландшафта. Все атаки по нему — Незримые." },
+  deafened:      { label: "Оглох",           icon: "🔇", hasLevel: false, levelField: null,                 css: "cond-deafened",
+    desc: "Не слышит, автопровал тестов на слух. Не получает эффектов Командования (кроме жестов/телепатии/Ноосферы). −30 на устные социальные тесты и Командование." },
+  burning:       { label: "Горение",         icon: "🔥", hasLevel: true,  levelField: "burningLevel",       css: "cond-burning",
+    desc: "В конце Хода 1d10 E(Fl) урона мимо брони и 1 Усталости при непоглощённом уроне (иначе тест T+0). В начале Хода — тест W+0 или пропуск Хода в панике. Тушится полудействием (себе A−20, другому A+0)." },
+  radiation:     { label: "Радиация",        icon: "☢️", hasLevel: true,  levelField: "radiationLevel",     css: "cond-radiation",
+    desc: "Периодический 1 урон в T от облучения. При накоплении 10/20/30... — тест T+0, провал даёт лучевую болезнь (доп. урон в T каждые 8 часов, лечится Medicae−30)." },
+  hallucinogenic:{ label: "Галлюцинации",    icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-hallucinogenic",
+    desc: "Провал теста T (обычно −10×X) — галлюцинации на 1 Раунд за Провал, случайный эффект по таблице (может валить с ног, вгонять в Ступор и т.п.)." },
+  pinned:        { label: "Подавление",      icon: "📌", hasLevel: false, levelField: null,                 css: "cond-pinned",
+    desc: "Тест W+0 (Мораль) под шквальным огнём. Вне укрытия — тратит все действия, чтобы добраться до него, иначе Залегает. В укрытии — только 1 ОД в Ход и −20 на BS. Снимается тестом W+0 в конце Хода." },
+  crippling:     { label: "Калечение",       icon: "🦯", hasLevel: false, levelField: null,                 css: "cond-crippling",
+    desc: "Оставленные в ране осколки/шипы (свойство оружия Crippling): X непоглощаемого урона того же типа в ту же часть тела каждый раз, когда цель тратит оба ОД на физические действия в Ход. Снимается медицинской помощью или полным исцелением." },
+  addicted:      { label: "Зависимость",     icon: "💊", hasLevel: false, levelField: null,                 css: "cond-addicted",
+    desc: "Провален тест Зависимости от наркотика/яда. Не удовлетворена в срок — штраф зависимости весь период. Тест на избавление — со штрафом −50 (+10 за каждый выдержанный без него период)." },
   // ── Стр. 30-31 (Раны и Урон, «Статусы») ──────────────────────────────────
-  dazed:         { label: "Ступор",          icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-dazed"          },
-  suffocating:   { label: "Удушье",          icon: "🫁", hasLevel: true,  levelField: "suffocatingRounds",  css: "cond-suffocating"    },
-  gangrene:      { label: "Гангрена",        icon: "🟢", hasLevel: false, levelField: null,                 css: "cond-gangrene"       },
-  lostHands:     { label: "Потеря кистей",   icon: "✋", hasLevel: true,  levelField: "lostHandsCount",      css: "cond-lost-hands"     },
-  lostArms:      { label: "Потеря рук",      icon: "💪", hasLevel: true,  levelField: "lostArmsCount",       css: "cond-lost-arms"      },
-  lostFeet:      { label: "Потеря стоп",     icon: "🦶", hasLevel: true,  levelField: "lostFeetCount",       css: "cond-lost-feet"      },
-  lostLegs:      { label: "Потеря ног",      icon: "🦵", hasLevel: true,  levelField: "lostLegsCount",       css: "cond-lost-legs"      },
-  lostEyes:      { label: "Потеря глаз",     icon: "👁️", hasLevel: true, levelField: "lostEyesCount",       css: "cond-lost-eyes"      },
+  dazed:         { label: "Ступор",          icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-dazed",
+    desc: "Не может совершать Действия и Реакции, все атаки по нему +20. Не Беспомощен, но не понимает происходящее вокруг. Считается Оглушённой целью для прочих эффектов." },
+  suffocating:   { label: "Удушье",          icon: "🫁", hasLevel: true,  levelField: "suffocatingRounds",  css: "cond-suffocating",
+    desc: "Задержка дыхания: T.b минут покоя или T.b×2 Раундов в активных действиях, дальше тест T+0 каждую минуту/Ход или +1 Усталости. Без вздоха — потеря сознания, смерть через T.b Раундов." },
+  gangrene:      { label: "Гангрена",        icon: "🟢", hasLevel: false, levelField: null,                 css: "cond-gangrene",
+    desc: "+1 неснимаемой Усталости, −20 на ментальные действия. Не восстанавливает урон T отдыхом/медитацией; каждые T.b×2 часов — 1d10 урона в T. Лечится операцией (Medicae−30), конечность теряется." },
+  lostHands:     { label: "Потеря кистей",   icon: "✋", hasLevel: true,  levelField: "lostHandsCount",      css: "cond-lost-hands",
+    desc: "−20 на все тесты, требующие двух рук. Этой рукой нельзя пользоваться оружием/предметами, кроме крепящихся к запястью." },
+  lostArms:      { label: "Потеря рук",      icon: "💪", hasLevel: true,  levelField: "lostArmsCount",       css: "cond-lost-arms",
+    desc: "Как потеря кисти, но без запястья — нельзя закрепить даже щит, когти или другой предмет." },
+  lostFeet:      { label: "Потеря стоп",     icon: "🦶", hasLevel: true,  levelField: "lostFeetCount",       css: "cond-lost-feet",
+    desc: "SPD уменьшена вдвое (окр. вниз), −20 на тесты Движения. Без обеих стоп нужен бросок Acrobatics−10 просто чтобы ходить." },
+  lostLegs:      { label: "Потеря ног",      icon: "🦵", hasLevel: true,  levelField: "lostLegsCount",       css: "cond-lost-legs",
+    desc: "Как потеря стопы, но дополнительно нельзя Уклоняться. Без обеих ног персонаж не может ходить." },
+  lostEyes:      { label: "Потеря глаз",     icon: "👁️", hasLevel: true, levelField: "lostEyesCount",       css: "cond-lost-eyes",
+    desc: "−10 на BS и тесты определения расстояний. Угол Караула сужен до 30°. Без обоих глаз персонаж Ослеплён." },
   // ── Стр. 12 («Борьба») — связаны Захватом ────────────────────────────────
-  grappling:     { label: "Борьба",          icon: "🤼", hasLevel: false, levelField: null,                 css: "cond-grappling"      },
+  grappling:     { label: "Борьба",          icon: "🤼", hasLevel: false, levelField: null,                 css: "cond-grappling",
+    desc: "После успешного Захвата: только действия Борьбы или не-Физические, прочие атаки по обоим +20. Цель не может Уклоняться; атакующий — если не тяжелее/крупнее цели." },
   // Свойство оружия Вызов/Challenge (X), wdbc-2xku: блокирует «Выход из Боя».
-  challenged:    { label: "Вызван",          icon: "⚔️", hasLevel: false, levelField: null,                 css: "cond-challenged"     }
+  challenged:    { label: "Вызван",          icon: "⚔️", hasLevel: false, levelField: null,                 css: "cond-challenged",
+    desc: "Свойство оружия Вызов (Challenge X): нельзя добровольно выйти из рукопашной, пока наложено — кроме уклонения от атаки по площади (решает ГМ)." }
 };
 // Прикрепляем SVG-глиф и цвет к каждому состоянию (замена эмодзи).
 for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
@@ -314,7 +346,8 @@ function _buildActiveConditions(system) {
       color:    def.color,
       css:      def.css,
       hasLevel: def.hasLevel,
-      level:    def.hasLevel && def.levelField ? (conds[def.levelField] ?? 0) : null
+      level:    def.hasLevel && def.levelField ? (conds[def.levelField] ?? 0) : null,
+      desc:     def.desc || ""
     });
   }
 
@@ -725,7 +758,7 @@ export function buildGetData(actor) {
   }));
 
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
-  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", "bionic-arm": "Бионика", "bionic-leg": "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
   // Органы Астартес (category "astartes") показаны отдельным блоком ГЕНОСЕМЯ
   // на вкладке ТЕЛО (context.geneSeedOrgans ниже) — здесь исключены, чтобы не
@@ -918,14 +951,23 @@ export function buildGetData(actor) {
   {
     const flags = ruleFlags(actor, { kind: "skill" });
     context.activeCapabilities = [...flags]
-      .map(key => ({
-        key,
-        label: CAPABILITIES[key]?.label || key,
-        sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
-        // Есть ли код, который эту возможность читает. Ложь честнее молчания:
-        // ГМ должен знать, что вот это система сама не посчитает.
-        auto: !!CAPABILITIES[key]?.reader
-      }))
+      .map(key => {
+        // Цена в пуле (wdbc-1dc8) — не у каждой записи; когда задана, на
+        // строке появляется кнопка «Потратить» (тот же гейт ДО клика, что
+        // wdbc-qjnk у ae-spend-btn — apSpendGate/capabilityCostGate).
+        const cost = ruleFlagCost(actor, key, { kind: "skill" });
+        return {
+          key,
+          label: CAPABILITIES[key]?.label || key,
+          sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
+          // Есть ли код, который эту возможность читает. Ложь честнее молчания:
+          // ГМ должен знать, что вот это система сама не посчитает.
+          auto: !!CAPABILITIES[key]?.reader,
+          cost,
+          costLabel: cost ? capabilityCostLabel(cost) : "",
+          spendGate: cost ? capabilityCostGate(actor, cost) : null
+        };
+      })
       .sort((a, b) => a.label.localeCompare(b.label, "ru"));
   }
 
@@ -981,12 +1023,21 @@ export function buildGetData(actor) {
   const _psyTpr   = Number(actor.system.psyker?.currentRating) || 0;
   const _psyChars = actor.system.characteristics ?? {};
   const _psyAbbr  = { wp: "WP", int: "Int", per: "Per", fel: "Fel", cor: "Cor", psyniscience: "Псин" };
+  // Дальность до цели (wdbc-iy0c): мерим один раз на весь список, не на силу —
+  // тот же снимок «текущая цель на сцене», что у attackerToken/targetToken в
+  // диалоге атаки (game.user.targets в момент рендера, не живой хук).
+  const _psyAttackerToken = actor.getActiveTokens?.(true)?.[0] ?? null;
+  const _psyTargetToken   = [...(game.user?.targets ?? [])][0] ?? null;
+  const _psyMeasured = (_psyAttackerToken && _psyTargetToken)
+    ? measureTokens(_psyAttackerToken, _psyTargetToken) : null;
   context.psyPowers = allItems.filter(i => i.type === "psychicPower").map(i => {
     const s = i.system;
     // Порог считаем только для тестов по характеристике (не Порча/Псинаука-навык).
     const stdChar = (s.testChar && s.testChar !== "cor" && s.testChar !== "psyniscience") ? s.testChar : null;
     const charVal = stdChar && _psyChars[stdChar] ? (_psyChars[stdChar].total || 0) : 0;
     const threshold = stdChar ? (charVal + 5 * _psyTpr + (Number(s.testMod) || 0)) : null;
+    const _rangeM = _psyMeasured ? parseRangeMeters(s.range, _psyTpr) : null;
+    const _verdict = _rangeM != null ? rangeVerdict(_psyMeasured.edgeM, _rangeM) : null;
     return {
       id:           i.id,
       name:         i.name,
@@ -999,6 +1050,10 @@ export function buildGetData(actor) {
       subtype:      s.subtype || "",
       actionLabel:  PSY_ACTIONS[s.action] ?? s.action ?? "",
       range:        s.range || "—",
+      rangeVerdictText: _verdict
+        ? `до цели: ${_verdict.edgeM} м — ${_verdict.inBounds ? "В ПРЕДЕЛАХ" : "ВНЕ"}`
+        : null,
+      rangeInBounds: _verdict ? _verdict.inBounds : null,
       sustainable:  s.sustainable || false,
       isSustained:  s.isSustained || false,
       sustainCost:  s.sustainCost ?? 1,

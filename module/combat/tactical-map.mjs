@@ -76,6 +76,18 @@ export function measureTokens(tokenA, tokenB) {
 }
 
 /**
+ * «Положение выше» (+10 в рукопашной): атакующий стоит выше цели по
+ * elevation токена. Принимает и placeable, и TokenDocument — сравнение
+ * чисел, никакой геометрии сцены не нужно.
+ * @returns {boolean|null} null — какого-то из токенов нет (отметят руками)
+ */
+export function hasHighGround(tokenA, tokenB) {
+  if (!tokenA || !tokenB) return null;
+  const elev = t => Number((t.document ?? t).elevation) || 0;
+  return elev(tokenA) > elev(tokenB);
+}
+
+/**
  * Число вражеских токенов сцены в Базовом/Глубоком контакте с атакующим —
  * «дерётся ли персонаж 1-на-1» (Дуэлянтское, стр. 73 Книги Аэльдари) без
  * ручного пересчёта на глаз. Не различает, отвлечён ли сам враг на кого-то

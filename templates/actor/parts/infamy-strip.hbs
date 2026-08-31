@@ -13,6 +13,13 @@
     <button type="button" class="dp-ip-restore" data-action="infamyRestore" title="Восстановить до максимума (конец сессии)">↻</button>
   </div>
 
+  {{#if tempInfamy}}
+  <div class="dp-ip-temp" title="{{tempInfamy.restriction}}">
+    <span class="dp-ip-temp-value">+{{tempInfamy.amount}}</span>
+    <span class="dp-ip-temp-label">временное · {{tempInfamy.source}}</span>
+  </div>
+  {{/if}}
+
   <div class="dp-ip-actions">
     {{#each ipAbilities as |a|}}
     <button type="button" class="dp-ip-spend {{#unless a.available}}dis{{/unless}}" data-action="infamySpend" data-ability="{{a.key}}" title="{{a.desc}}{{#unless a.available}} — {{a.reason}}{{/unless}}" {{#unless a.available}}disabled{{/unless}}><span class="dp-ip-ic">{{a.icon}}</span>{{a.label}}</button>

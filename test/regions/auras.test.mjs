@@ -9,7 +9,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { tokenRelationship, auraDescriptorsOf, auraAffects } from "../../module/regions/auras.mjs";
+import { tokenRelationship, auraDescriptorsOf, auraAffects, targetIsAuraImmune } from "../../module/regions/auras.mjs";
 
 describe("tokenRelationship", () => {
   it("оба FRIENDLY — союзники", () => {
@@ -68,6 +68,43 @@ describe("auraAffects", () => {
     expect(auraAffects(d, { isSelf: false, relationship: "enemy", distance: 5 })).toBe(true);
     expect(auraAffects(d, { isSelf: false, relationship: "neutral", distance: 5 })).toBe(true);
   });
+
+  it("immune гасит попадание независимо от радиуса/отношения/self (wdbc-995w: Daemonic Presence)", () => {
+    const d = { ...base, affects: "enemies", includesSelf: true };
+    expect(auraAffects(d, { isSelf: false, relationship: "enemy", distance: 1, immune: true })).toBe(false);
+    expect(auraAffects(d, { isSelf: true, relationship: "ally", distance: 0, immune: true })).toBe(false);
+  });
+
+  it("immune по умолчанию false — старые вызовы без ctx.immune ведут себя как раньше", () => {
+    expect(auraAffects(base, { isSelf: false, relationship: "ally", distance: 5 })).toBe(true);
+  });
+});
+
+describe("targetIsAuraImmune", () => {
+  const traitNamed = name => ({ name });
+
+  it("пустой список иммунитета — иммунитета нет ни у кого", () => {
+    expect(targetIsAuraImmune({ items: [traitNamed("Daemonic")] }, [])).toBe(false);
+  });
+
+  it("нет актора — не иммунен (нечего проверять)", () => {
+    expect(targetIsAuraImmune(null, ["Daemonic"])).toBe(false);
+  });
+
+  it("у цели есть одна из перечисленных Черт — иммунен", () => {
+    const actor = { items: [traitNamed("Machine")] };
+    expect(targetIsAuraImmune(actor, ["Daemonic", "From Beyond", "Machine", "Stuff of Nightmares"])).toBe(true);
+  });
+
+  it("совпадение терпит суффикс рейтинга и двуязычное имя (itemHasName)", () => {
+    const actor = { items: [traitNamed("Machine / Машина (3)")] };
+    expect(targetIsAuraImmune(actor, ["Machine"])).toBe(true);
+  });
+
+  it("ни одной подходящей Черты — не иммунен", () => {
+    const actor = { items: [traitNamed("Nimble")] };
+    expect(targetIsAuraImmune(actor, ["Daemonic", "Machine"])).toBe(false);
+  });
 });
 
 /** Предмет-фикстура: минимум полей, которые трогает isItemActive/getFlag. */
@@ -125,6 +162,20 @@ describe("auraDescriptorsOf", () => {
     const item = itemWith({ aura: { radius: 5, affects: "что-то не то" } });
     const [d] = auraDescriptorsOf(actorWith(item));
     expect(d.affects).toBe("allies");
+  });
+
+  it("immuneTraitNames нормализуется в дескрипторе (пусто, если флаг его не несёт)", () => {
+    const item = itemWith({ aura: { radius: 5, affects: "allies" } });
+    const [d] = auraDescriptorsOf(actorWith(item));
+    expect(d.immuneTraitNames).toEqual([]);
+  });
+
+  it("immuneTraitNames с пустыми/мусорными элементами фильтруется", () => {
+    const item = itemWith({
+      aura: { radius: 5, affects: "enemies", immuneTraitNames: ["Daemonic", "", null, "Machine"] }
+    });
+    const [d] = auraDescriptorsOf(actorWith(item));
+    expect(d.immuneTraitNames).toEqual(["Daemonic", "Machine"]);
   });
 });
 

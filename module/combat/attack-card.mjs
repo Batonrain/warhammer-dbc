@@ -152,7 +152,10 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
-  </button>`;
+  </button>${wp.warpSoak ? `
+  <button class="wh-pain-absorb-btn" type="button" data-damage="${d.total}" title="Друкхари с Очками Боли: выбранный токен цели поглощает урон Болью вместо Ран (3 урона за 1 Боль)">
+    🔥 Поглотить Болью ${i + 1}: <b>${d.total}</b>
+  </button>` : ""}`;
   }).join("");
   return `
   <div class="roll-apply-dmg-section">
@@ -415,6 +418,10 @@ export function attackCard({
       <summary>Показать кубы</summary>
       ${blocks.dice}
     </details>` : ""}
+        ${hit ? `
+    <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
+      🐎 Верховое попадание (выберите токен цели)
+    </button>` : ""}
         ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,

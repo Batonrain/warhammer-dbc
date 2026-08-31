@@ -785,17 +785,43 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, 
  * всадника, а Черта Stand делит по чётности. Бросок атаки вводится вручную:
  * карточка атаки не знает, верхом ли цель, — цель выбирается уже после броска.
  */
-export async function showHitAllocationDialog(rider) {
+/**
+ * Считает, куда пришлось попадание (по броску атаки), и постит карточку —
+ * общая логика для ручного диалога и кнопки «Определить» прямо в карточке
+ * атаки (wdbc-7as8, бросок уже известен — передаётся, не перепечатывается).
+ */
+export async function resolveHitAllocation(rider, rv) {
   const ctx = await mountContext(rider);
   if (!ctx) return;
   const { mount, traits } = ctx;
-  const stand = "stand" in traits;
+  rv = parseInt(rv) || 0;
+  const target = hitTarget(rv, mount, { traits, rider });
+  const toRider = target === "rider";
+  await postCard(rider, `
+    <div class="roll-header">${rollIcon("target", "#8fd0ff")}Попадание верхом — ${esc(rider.name)}</div>
+    <div class="roll-dice">Бросок атаки: <b>${rv}</b></div>
+    <div class="roll-outcome"><span class="${toRider ? "roll-failure" : "roll-success"}">
+      Попадание по ${toRider ? "ВСАДНИКУ" : `скакуну — ${esc(mount.name)}`}.</span></div>
+    <div class="roll-defense-note">Уклонение: ${toRider
+      ? "обычное, со штрафом −10."
+      : `комбинированное с ${ctx.control.label} ${sgn(testMod(STAY_MOD, mount))}; можно и Парировать.`}</div>
+    <div class="roll-defense-note">Избирательные атаки: по всаднику
+      <b>${sgn(mountSelectiveMod("rider", mount))}</b>${
+        mountSelectiveMod("rider", mount) === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""
+      }, по скакуну <b>${sgn(mountSelectiveMod("mount", mount))}</b>.</div>`);
+}
+
+/** Ручной диалог (fallback без карточки под рукой) — тот же расчёт, что и кнопка. */
+export async function showHitAllocationDialog(rider, defaultRv = 0) {
+  const ctx = await mountContext(rider);
+  if (!ctx) return;
+  const stand = "stand" in ctx.traits;
 
   new Dialog({
     title: `Попадание верхом — ${rider.name}`,
     content: `
       <form class="wh-vehicle-dialog" style="padding:6px;">
-        <div class="atk-dlg-row"><label>Бросок атаки:</label><input id="ha-roll" type="number" value="0" min="1" max="100"/></div>
+        <div class="atk-dlg-row"><label>Бросок атаки:</label><input id="ha-roll" type="number" value="${parseInt(defaultRv) || 0}" min="1" max="100"/></div>
         <div class="atk-range-info" style="font-size:0.82em;">
           ${stand
             ? "Стойка: чётный результат — по всаднику, нечётный — по скакуну."
@@ -804,23 +830,7 @@ export async function showHitAllocationDialog(rider) {
       </form>`,
     buttons: {
       ok: { icon: '<i class="fas fa-crosshairs"></i>', label: "Определить",
-        callback: async html => {
-          const rv = parseInt(html.find("#ha-roll").val()) || 0;
-          const target = hitTarget(rv, mount, { traits, rider });
-          const toRider = target === "rider";
-          await postCard(rider, `
-            <div class="roll-header">${rollIcon("target", "#8fd0ff")}Попадание верхом — ${esc(rider.name)}</div>
-            <div class="roll-dice">Бросок атаки: <b>${rv}</b></div>
-            <div class="roll-outcome"><span class="${toRider ? "roll-failure" : "roll-success"}">
-              Попадание по ${toRider ? "ВСАДНИКУ" : `скакуну — ${esc(mount.name)}`}.</span></div>
-            <div class="roll-defense-note">Уклонение: ${toRider
-              ? "обычное, со штрафом −10."
-              : `комбинированное с ${ctx.control.label} ${sgn(testMod(STAY_MOD, mount))}; можно и Парировать.`}</div>
-            <div class="roll-defense-note">Избирательные атаки: по всаднику
-              <b>${sgn(mountSelectiveMod("rider", mount))}</b>${
-                mountSelectiveMod("rider", mount) === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""
-              }, по скакуну <b>${sgn(mountSelectiveMod("mount", mount))}</b>.</div>`);
-        } },
+        callback: html => resolveHitAllocation(rider, html.find("#ha-roll").val()) },
       cancel: { label: "Отмена" }
     },
     default: "ok"

@@ -18,8 +18,6 @@ import { esc } from "../helpers/utils.mjs";
 /** Существа, которые умеют становиться Ордой: схема у всех четверых общая (creatureSchema). */
 export const HORDE_CONVERTIBLE_TYPES = ["character", "daemon", "demonPrince", "minion"];
 
-/** Куда Орда умеет превращаться обратно — только туда, откуда Орда обычно и берётся. */
-export const HORDE_REVERSE_TARGET_TYPES = ["character", "daemon"];
 
 /**
  * Обработчик кнопки «В Орду». Живёт здесь, а не в листе Персонажа: кнопка есть

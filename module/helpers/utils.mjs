@@ -143,15 +143,6 @@ export function splitTopLevel(str) {
   return out.map(s => s.trim()).filter(Boolean);
 }
 
-export function _getActorFromIds(actorId, tokenId) {
-  if (tokenId) {
-    const token = canvas.tokens?.get(tokenId);
-    if (token?.actor) return token.actor;
-  }
-  if (actorId) return game.actors.get(actorId);
-  return null;
-}
-
 // Канонические сокращения бонусов характеристик (Warhammer FFG).
 // Бонус = десятки значения характеристики. Поддерживаются и краткие (A,I,P,W,F),
 // и привычные расширенные формы (Ag,Int,Per,WP,Fel) — как алиасы.

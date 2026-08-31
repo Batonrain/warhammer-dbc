@@ -16,13 +16,33 @@ describe("правила Астартес", () => {
     expect(RACES.astartes.rules).toBe(ASTARTES_RULES);
   });
 
-  it("у актора расы astartes собираются все правила расы", () => {
+  it("у актора расы astartes собираются все безусловные правила расы", () => {
     // core.sizeStealth тоже подходит: у фикстуры Размер 1 (см. actor выше), а
     // это правило проверяет только собственный Размер, без цели/вида броска
     // (rules/library/core.mjs) — оно из источника «core», не «race», но
-    // collectRules() собирает оба сразу.
+    // collectRules() собирает оба сразу. astartes.nightLords сюда не входит —
+    // у него есть `when` (легион), и без geneSeed он не проходит отбор.
+    const unconditional = ASTARTES_RULES.filter(r => !Object.keys(r.when ?? {}).length).map(r => r.id);
     const ids = collectRules(actor()).map(r => r.id);
-    expect(ids).toEqual(["core.sizeStealth", ...ASTARTES_RULES.map(r => r.id)]);
+    expect(ids).toEqual(["core.sizeStealth", ...unconditional]);
+  });
+
+  // Единственная легионная ветка гейта среди расовых (было хардкодом
+  // `system.geneSeed?.legion === "VIII"` в item-picker.mjs, wdbc-sauo).
+  describe("astartes.nightlords", () => {
+    it("собирается у Астартес с Геносеменем легиона VIII", () => {
+      const ids = collectRules(actor({ geneSeed: { legion: "VIII" } })).map(r => r.id);
+      expect(ids).toContain("astartes.nightlords");
+    });
+
+    it("не собирается у другого легиона", () => {
+      const ids = collectRules(actor({ geneSeed: { legion: "I" } })).map(r => r.id);
+      expect(ids).not.toContain("astartes.nightlords");
+    });
+
+    it("не собирается без Геносемени вовсе", () => {
+      expect(collectRules(actor()).map(r => r.id)).not.toContain("astartes.nightlords");
+    });
   });
 
   it("Сверхъестественная Сила и Стойкость дают +4 к бонусу", () => {

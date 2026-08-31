@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "Металлический каркас в спинном мозге.",
-    "notes": "",
+    "notes": "Сокращает время хирургической установки последующих имплантов на 10 — параметр операции (apps/surgeon.mjs), не тестовый модификатор.",
     "category": "mechanicus",
     "quality": "common",
     "effect": "Каркас и универсальные сокеты в хребте; уменьшает время установки имплантов на 10.",

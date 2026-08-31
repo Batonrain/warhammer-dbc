@@ -26,6 +26,10 @@ import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
+import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
+import { preservationAvailable, applyPreservationSingle, applyPreservationArea } from "../../combat/preservation.mjs";
+import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftnessArea } from "../../combat/song-of-swiftness.mjs";
+import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
@@ -119,6 +123,32 @@ export function activateCombatListeners(root, actor) {
       return ui.notifications.warn("Блистательные Одеяния уже использованы в этом бою/сцене.");
     }
     await showResplendentRaimentDialog(actor);
+  });
+
+  // ── Певцы Кости (wdbc-sk8s, module/combat/{bone-song,preservation,song-of-swiftness}.mjs) ──
+  on(root, ".bone-song-btn", "click", async () => {
+    if (!boneSongAvailable(actor)) {
+      return ui.notifications.warn("Костяная Песня уже использована максимум раз в этой сессии.");
+    }
+    await showWraithboneSongDialog(actor, {
+      title: "Костяная Песня", applySingle: applyBoneSongSingle, applyArea: applyBoneSongArea
+    });
+  });
+  on(root, ".preservation-btn", "click", async () => {
+    if (!preservationAvailable(actor)) {
+      return ui.notifications.warn("Защита уже использована максимум раз в этой сессии.");
+    }
+    await showWraithboneSongDialog(actor, {
+      title: "Защита", applySingle: applyPreservationSingle, applyArea: applyPreservationArea
+    });
+  });
+  on(root, ".song-of-swiftness-btn", "click", async () => {
+    if (!songOfSwiftnessAvailable(actor)) {
+      return ui.notifications.warn("Песня Стремительности уже использована максимум раз в этой сессии.");
+    }
+    await showWraithboneSongDialog(actor, {
+      title: "Песня Стремительности", applySingle: applySongOfSwiftnessSingle, applyArea: applySongOfSwiftnessArea
+    });
   });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────

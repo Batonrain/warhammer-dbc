@@ -4,8 +4,8 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:0. Бионический протез руки.",
-    "notes": "",
-    "category": "bionic",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
+    "category": "bionic-arm",
     "quality": "common",
     "effect": "Протез руки. Варианты: Рука-Оружие, Интегрированное Оружие, Универсальный Порт, Легион (Unnatural S 4). Poor.Q −5 тонкая работа; Good.Q +10 манипуляции; Best.Q +10 + бонус.",
     "installed": "",

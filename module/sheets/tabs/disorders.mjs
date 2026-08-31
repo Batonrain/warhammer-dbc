@@ -12,6 +12,8 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
+import { actorInfamyValue } from "../../apps/infamy-points.mjs";
+import { fatiguePenalty } from "./conditions.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
 
@@ -48,7 +50,7 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-row"><label>Рейтинг Страха:</label><select id="fear-rating">${ratingOpts}</select></div>
         <div class="atk-dlg-row"><label>Тип персонажа:</label>
           <select id="fear-type"><option value="important">Важный (игрок)</option><option value="normal">Обычный</option></select></div>
-        <div class="atk-dlg-row"><label>Infamy:</label><input id="fear-infamy" type="number" value="0"/></div>
+        <div class="atk-dlg-row"><label>Infamy:</label><input id="fear-infamy" type="number" value="${actorInfamyValue(actor)}"/></div>
         <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fear-mod" type="number" value="0"/></div>
         <div class="atk-dlg-section">Свойства</div>
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
@@ -90,7 +92,7 @@ export function openFearDialog(actor) {
           const ratingMod = type === "important" ? r.important : r.normal;
           const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(root);
           const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
-          return wp + ratingMod + mod + difficulty;
+          return wp + ratingMod + mod + difficulty + fatiguePenalty(actor, "wp");
         }
       });
       root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>

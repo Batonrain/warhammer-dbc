@@ -36,16 +36,18 @@ import { isHelmetMod,
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
+import { raceMatches } from "../rules/race.mjs";
 
 /**
- * Текст всплывашки для ячейки «Итого» характеристики (title, поддерживает
- * перенос строки \n) — из чего сложилось число: разборку строит
- * documents/actor.mjs (char.totalBreakdown, тот же проход, что и сам total).
+ * Текст всплывашки «Итого» (title, поддерживает перенос строки \n) — из чего
+ * сложилось число: разборку строит documents/actor.mjs (тот же проход, что и
+ * сам total/halfMove — char.totalBreakdown, system.movement.spdBreakdown).
  */
 function charTotalTooltip(total, breakdown) {
   const lines = (breakdown || []).map(b => {
-    if (b.cap != null) return `${b.label}: не выше ${b.cap}`;
-    if (b.label === "База") return `${b.label}: ${b.value}`;
+    if (b.cap != null)   return `${b.label}: не выше ${b.cap}`;
+    if (b.floor != null) return `${b.label}: не ниже ${b.floor}`;
+    if (b.label === "База") return `${b.label}: ${b.value}${b.note ? ` (${b.note})` : ""}`;
     const sign = b.value > 0 ? "+" : "−";
     return `${b.label}: ${sign}${Math.abs(b.value)}`;
   });
@@ -66,9 +68,12 @@ import { hasSkillfulTorture }                    from "../apps/skillful-torture.
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
+import { hasBoneSong }                           from "../combat/bone-song.mjs";
+import { hasPreservation }                       from "../combat/preservation.mjs";
+import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
-import { hasActionEconomy, isEncounterActive,
-         effectiveDefenseReactionMax }            from "../combat/action-economy.mjs";
+import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
+         apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -136,12 +141,27 @@ export function characterContext(actor) {
       encounterActive: isEncounterActive(),
       exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive")
     };
+    // Гейт кнопок ДО клика (wdbc-qjnk): движение (Полушаг/Шаг/Бег — Натиск
+    // ОД на объявлении не тратит, см. apSpendGate) и ручная трата ae-spend-btn
+    // на вкладке БОЙ — тот же disabled+title, что у disabled-armour-periodic-
+    // test-btn. Вне активного Encounter apSpendGate/reactionSpendGate сами
+    // всегда {disabled:false} — кнопки остаются активны, как и раньше.
+    context.moveGate = {
+      half: apSpendGate(actor, 1),
+      full: apSpendGate(actor, 2),
+      run:  apSpendGate(actor, 2)
+    };
+    context.aeSpendGate = { ap1: apSpendGate(actor, 1), ap2: apSpendGate(actor, 2), reaction: reactionSpendGate(actor) };
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.
   // 30) видна только с Чертой Flyer/Hoverer — та же проверка, что и в самой
   // кнопке Token HUD/меню, продублирована здесь только ради видимости кнопки.
   context.movementCanFly = actorCanFly(actor);
+
+  // Откуда число (wdbc-zbiz): мод-бейдж Полушага (= SPD×1) — тот же приём,
+  // что charTotalTooltip у характеристик; breakdown строит documents/actor.mjs.
+  context.spdTooltip = charTotalTooltip(system.movement?.halfMove, system.movement?.spdBreakdown);
 
   // Дистанции-превью на кнопках вкладки БОЙ (стр. 29): базовая часть
   // формулы без бросков (Карабканье — SPD/2, Плавание — ½S.b, те же
@@ -342,10 +362,10 @@ export function characterContext(actor) {
   // У Друкхари вместо этого — Кабал/Культ Ведьм/Ковен.
   // Друкхари бывает не только по расе: Иннари и Арлекин выбирают «Прошлое», и
   // выбравшему Друкхари полагается Кабал/Культ/Ковен, а не Мир-Корабль.
-  const pastRace = system.race === "ynnari"    ? system.ynnariPast
-                 : system.race === "harlequin" ? system.harlequinPast
-                 : "";
-  context.isDrukhari     = system.race === "drukhari" || pastRace === "drukhari";
+  // Управляет только показом друкхарийских вкладок/полей — пул Очков Боли
+  // (actor.mjs, painActive) сознательно завязан строго на system.race==='drukhari',
+  // Прошлое на него не влияет (решение владельца 31.08.2026).
+  context.isDrukhari     = raceMatches(system, "drukhari");
   // Кнопка «Искусная Пытка» на вкладке БОЙ (wdbc-sk8s) — только владельцам Таланта.
   context.hasSkillfulTorture = hasSkillfulTorture(actor);
   // Кнопка «Аватар Резни» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
@@ -354,6 +374,10 @@ export function characterContext(actor) {
   context.hasDreadWail = hasDreadWail(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
+  // Кнопки Певцов Кости на вкладке БОЙ (wdbc-sk8s) — только владельцам соответствующего Таланта.
+  context.hasBoneSong = hasBoneSong(actor);
+  context.hasPreservation = hasPreservation(actor);
+  context.hasSongOfSwiftness = hasSongOfSwiftness(actor);
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");

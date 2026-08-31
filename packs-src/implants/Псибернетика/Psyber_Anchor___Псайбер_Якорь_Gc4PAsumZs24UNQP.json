@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:3.",
-    "notes": "",
+    "notes": "Позволяет манифестировать через якорь фамильяра (альтернативная точка манифестации) — структурная опция психосил, не testMod/characteristic.",
     "category": "psybernetic",
     "quality": "common",
     "effect": "Псайбер-матрица фамильяра с психо-якорной руной: можно манифестировать через псайбер-якорь фамильяра (касание/дальность); псайбер-якорь как у Парии.",
