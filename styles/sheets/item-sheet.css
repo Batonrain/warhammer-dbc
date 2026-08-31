@@ -178,8 +178,13 @@
 
 /* ── prose-mirror вместо textarea (Описание/Заметки): та же рамка/фон через
       .item-textarea выше, но контейнеру редактора нужен flex, а не block —
-      иначе тулбар и текст ProseMirror схлопываются. */
-prose-mirror.item-textarea { display: flex; }
+      иначе тулбар и текст ProseMirror схлопываются. Базовые 80px хватает под
+      обычный <textarea>, но у prose-mirror свой тулбар сам съедает ~42px —
+      с тем же min-height тексту остаётся полоска в пару строк с вечным
+      скроллом (баг wdbc-описание, найден 28.08.2026). Поэтому у prose-mirror
+      свой, больший min-height, обычные <textarea> с тем же классом не трогает. */
+prose-mirror.item-textarea { display: flex; min-height: 180px; }
+prose-mirror.item-textarea-tall { min-height: 260px; }
 /* Кнопка «Изменить»: у ядра прячется до наведения — здесь видна всегда. */
 prose-mirror.item-textarea button.toggle:enabled { display: block; }
 
@@ -571,8 +576,13 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 
 /* ── prose-mirror вместо textarea (Описание/Заметки): та же рамка/фон через
       .item-textarea выше, но контейнеру редактора нужен flex, а не block —
-      иначе тулбар и текст ProseMirror схлопываются. */
-prose-mirror.item-textarea { display: flex; }
+      иначе тулбар и текст ProseMirror схлопываются. Базовые 80px хватает под
+      обычный <textarea>, но у prose-mirror свой тулбар сам съедает ~42px —
+      с тем же min-height тексту остаётся полоска в пару строк с вечным
+      скроллом (баг wdbc-описание, найден 28.08.2026). Поэтому у prose-mirror
+      свой, больший min-height, обычные <textarea> с тем же классом не трогает. */
+prose-mirror.item-textarea { display: flex; min-height: 180px; }
+prose-mirror.item-textarea-tall { min-height: 260px; }
 /* Кнопка «Изменить»: у ядра прячется до наведения — здесь видна всегда. */
 prose-mirror.item-textarea button.toggle:enabled { display: block; }
 

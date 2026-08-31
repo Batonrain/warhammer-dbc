@@ -178,6 +178,9 @@
 /* Текст / правила */
 .horde-textarea { width: 100%; min-height: 110px; padding: 6px 8px; resize: vertical; line-height: 1.5; }
 .horde-textarea.tall { min-height: 210px; }
+/* prose-mirror (Заметки ГМа, без .tall): свой тулбар съедает ~42px, компактным
+   110px без него тесно — см. тот же баг у .item-textarea в item-sheet.css. */
+prose-mirror.horde-textarea { min-height: 180px; }
 prose-mirror.horde-textarea button.toggle:enabled { display: block; }
 .horde-gm .horde-panel-title { color: #ff9a9a; }
 .horde-rules p { font-size: 0.84em; line-height: 1.55; margin: 5px 0; color: #d2ffe6; }
