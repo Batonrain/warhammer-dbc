@@ -13,6 +13,131 @@ import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-propert
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
+
+// ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
+// Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
+// известны актор, место попадания (armorKey), тип урона и непоглощённый урон.
+
+/** Разъедающее: −X AP в месте попадания; остаток рейтинга — непоглощ. C Dmg. */
+async function _applyCorrosive(actor, armorKey, hitLocation, rating) {
+  const currentAP = Math.max(0, Number(actor.system.absorption?.armorOnly?.[armorKey]) || 0);
+  const existing  = Number(actor.system.armorCorrosion?.[armorKey]) || 0;
+  const lost      = Math.min(rating, currentAP);
+  const overflow  = rating - lost;
+  await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + lost });
+
+  let overflowNote = "";
+  if (overflow > 0) {
+    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, overflow);
+    overflowNote = `, остаток <b>${overflow}</b> — непоглощаемый урон (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})`;
+  }
+  return `<div class="dmg-tb-note">🧪 Разъедающее: −${lost} AP брони (${hitLocation})${overflowNote}</div>`;
+}
+
+/**
+ * Убирает урон в AP брони от Разъедающего в указанной локации: техобслуживание
+ * за ½ смены работы (без теста, Trade(Armourer)+0) — сам тест/время не
+ * проверяются, кнопка на листе (вкладка БОЙ) доступна всегда.
+ */
+export async function repairArmorCorrosion(actor, armorKey) {
+  if (!actor.system.armorCorrosion?.[armorKey]) {
+    return ui.notifications?.info(`${actor.name}: в этой части тела нет разъеденного AP.`);
+  }
+  await actor.update({ [`system.armorCorrosion.${armorKey}`]: 0 });
+}
+
+/**
+ * Проникающее: снаряд в ране (после непоглощённого урона) — −10 действий
+ * частью тела (GM-отыгрыш: нет понятия «тест использует эту часть тела»),
+ * −1 SPD торс/нога (автоматизировано, documents/actor.mjs). Кнопка
+ * извлечения — тот же полудействие+1 R Dmg, что и клик hooks.mjs
+ * (.wh-piercing-extract-btn) вызывает extractPiercingWound().
+ */
+async function _applyPiercing(actor, armorKey, hitLocation) {
+  const already = !!actor.system.piercingWounds?.[armorKey];
+  if (!already) await actor.update({ [`system.piercingWounds.${armorKey}`]: true });
+  const spdNote = ["body", "leftLeg", "rightLeg"].includes(armorKey) ? "; −1 SPD" : "";
+  return `<div class="dmg-tb-note">
+    🏹 Проникающее: снаряд в ране (${hitLocation}) — −10 действия этой частью тела${spdNote}, пока не извлечён${already ? " (рана уже была)" : ""}
+    <button class="wh-piercing-extract-btn" type="button" data-actor-uuid="${actor.uuid}" data-armor-key="${armorKey}" data-location="${hitLocation}">Извлечь снаряд (+1 непоглощ. R Dmg)</button>
+  </div>`;
+}
+
+/**
+ * Извлекает застрявший снаряд Проникающего: полудействие, +1 непоглощаемый
+ * R Dmg в ту же часть, снимает штраф/рану. Дёргается кнопкой в чате
+ * (.wh-piercing-extract-btn, hooks.mjs) из заметки _applyPiercing выше.
+ */
+export async function extractPiercingWound(actor, armorKey) {
+  if (!actor.system.piercingWounds?.[armorKey]) {
+    return ui.notifications?.info(`${actor.name}: в этой части тела нет застрявшего снаряда.`);
+  }
+  await actor.update({ [`system.piercingWounds.${armorKey}`]: false });
+  const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, 1);
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">🏹 Извлечение снаряда → ${esc(actor.name)}</div>
+      <div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
+    </div>`
+  });
+}
+
+/**
+ * Калечащее: рана с шипами — записывается в system.crippledWounds (список,
+ * видимый на будущее UI/для лечения) И сразу получает кнопку в этой же
+ * заметке чата: игрок/ГМ решают, когда «оба ОД в Ход ушли на физические
+ * действия» (в economy.mjs действия не размечены на физические/нефизические
+ * — отдельный, более широкий рефакторинг, не в этом тикете) и жмут её.
+ * Клик наносит непоглощаемый урон, НО НЕ снимает рану (снимается только
+ * лечением/полным исцелением, стр. 168) — кнопка кликабельна многократно.
+ */
+async function _applyCrippling(actor, armorKey, hitLocation, damageType, rating) {
+  const wounds = [...(actor.system.crippledWounds ?? [])];
+  wounds.push({ location: armorKey, locationLabel: hitLocation, rating, damageType });
+  await actor.update({ "system.crippledWounds": wounds });
+  return `<div class="dmg-tb-note">
+    🩸 Калечащее: рана с шипами в ${hitLocation} — снимается лечением/полным исцелением
+    <button class="wh-crippling-trigger-btn" type="button" data-actor-uuid="${actor.uuid}" data-rating="${rating}" data-location="${hitLocation}">Оба ОД на физ. действие — нанести ${rating} урона</button>
+  </div>`;
+}
+
+/** Наносит урон одной раны Калечащего (клик .wh-crippling-trigger-btn, hooks.mjs) — рана не снимается. */
+export async function applyCripplingTrigger(actor, rating, hitLocation) {
+  const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, rating);
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">🩸 Калечащее (${hitLocation}) → ${esc(actor.name)}</div>
+      <div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
+    </div>`
+  });
+}
+
+const HAYWIRE_TABLE = [
+  { max: 2,  label: "Незначительно",         text: "Никакого эффекта." },
+  { max: 4,  label: "Слабое Нарушение",       text: "Действия с хай-тек снаряжением −10. SPD силовой брони/Машин −1. Машины — 1 полудействие в Ход." },
+  { max: 6,  label: "Сильное Нарушение",      text: "Действия с хай-тек снаряжением −20. Рукопашное оружие — как примитивное. SPD силовой брони −3. Машины Оглушены, пока не покинут поле." },
+  { max: 8,  label: "Мёртвая Зона",           text: "Хай-тек снаряжение отключено: стрелковое не работает, рукопашное — как примитивное, силовая броня отключена, бионика отключена (штрафы по ГМу). Машины Беспомощны." },
+  { max: 10, label: "Длительная Мёртвая Зона", text: "Как Мёртвая Зона, но на два Хода." },
+  { max: Infinity, label: "ЭМИ Шторм",        text: "Как Мёртвая Зона + Качество электроники −1 (или отключение ниже Poor.Q), стрелковое Заклинивает, Машины — 1d5+1 непоглощ. E Dmg." }
+];
+
+/**
+ * ЭМИ: бросок 1d10+X по таблице (стр. 168). Применяется только к персонажам/
+ * тварям — Техника (actor.type "vehicle") уходит через applyDamageToVehicle
+ * ДО этой функции (см. applyDamageToActor), у неё нет system.absorption/
+ * этой ветки урона вовсе; урон «Машинам» по столбцу 11+ (1d5+1 E) — ручное
+ * применение ГМом через обычную кнопку «Применить урон», как и остальные
+ * эффекты таблицы (действия/SPD/Заклинивание/деградация Качества).
+ */
+async function _applyHaywire(actor, rating) {
+  const roll = await new Roll("1d10").evaluate();
+  const total = roll.total + rating;
+  const tier = HAYWIRE_TABLE.find(t => total <= t.max);
+  return `<div class="dmg-tb-note">📡 ЭМИ: 1d10${rating ? `+${rating}` : ""}=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
+}
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
 const LOCATION_TO_ARMOR = {
@@ -163,7 +288,12 @@ export async function applyDamageToActor(actor, damageData) {
     lance = false,     // Копьё/Пика: AP цели капается до 20 (до вычета Pen)
     sanctified = false, // Освящённое: игнорирует чародейские (варп) щиты
     melee = false,      // Рукопашная атака — нужно свойству брони Rods (Стержни)
-    frontArcHit = false // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
+    frontArcHit = false, // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
+    corrosiveRating = 0, // Разъедающее (X): −X AP в месте попадания (wdbc-plsf)
+    cripplingRating = 0, // Калечащее (X): рана с шипами (wdbc-plsf)
+    piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
+    haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
+    haywireRating = 0    // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -249,6 +379,23 @@ export async function applyDamageToActor(actor, damageData) {
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
+
+  // ── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ────────
+  // Гейт capability weaponPropertyImmunity.<key> — Мутации/Дары («Пылающее
+  // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
+  const propEffectNotes = [];
+  if (corrosiveRating > 0 && !hasWeaponPropertyImmunity(actor, "corrosive")) {
+    propEffectNotes.push(await _applyCorrosive(actor, armorKey, hitLocation, corrosiveRating));
+  }
+  if (piercing && netDamage > 0 && !hasWeaponPropertyImmunity(actor, "piercing")) {
+    propEffectNotes.push(await _applyPiercing(actor, armorKey, hitLocation));
+  }
+  if (cripplingRating > 0 && netDamage > 0 && !hasWeaponPropertyImmunity(actor, "crippling")) {
+    propEffectNotes.push(await _applyCrippling(actor, armorKey, hitLocation, damageType, cripplingRating));
+  }
+  if (haywireActive && !hasWeaponPropertyImmunity(actor, "haywire")) {
+    propEffectNotes.push(await _applyHaywire(actor, haywireRating));
+  }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const rollMode = game.settings.get("core", "rollMode");
@@ -336,6 +483,7 @@ export async function applyDamageToActor(actor, damageData) {
           <div class="roll-damage-meta">${woundsLine}</div>
         </div>
         ${critLine}
+        ${propEffectNotes.join("")}
       </div>`
   }, rollMode);
 

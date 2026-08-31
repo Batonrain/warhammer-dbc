@@ -14,11 +14,94 @@
 // текст способности уже лежит правильно, останется дописать чтение.
 
 export const CAPABILITIES = {
+  // ── Иммунитет к свойствам оружия (wdbc-plsf) ────────────────────────────
+  // Восемь свойств из ревизии Мутаций/Даров: Corrosive/Crippling/Flame
+  // (Burning)/Toxic/Piercing/Haywire/Shocking/Snare. Ключ — сам ключ свойства
+  // из module/constants/weapon-properties.mjs (не название состояния — Flame
+  // накладывает "burning", Toxic — "poisoned" и т.д., но иммунитет проверяется
+  // по свойству-источнику, не по состоянию: другие пути наложить то же
+  // состояние этим иммунитетом не гасятся).
+  "weaponPropertyImmunity.flame": {
+    label: "Иммунитет к свойству оружия Flame (не загорается)",
+    source: "Мутация: Burning Body / Shield of Purity (Общие мутации)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"burning\")"
+  },
+  "weaponPropertyImmunity.corrosive": {
+    label: "Иммунитет к свойству оружия Corrosive (не теряет AP брони)",
+    source: "Мутация: Shield of Purity (Общие мутации)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor (_applyCorrosive)"
+  },
+  "weaponPropertyImmunity.crippling": {
+    label: "Иммунитет к свойству оружия Crippling (не получает рану с шипами)",
+    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor (_applyCrippling)"
+  },
+  "weaponPropertyImmunity.piercing": {
+    label: "Иммунитет к свойству оружия Piercing (снаряд не застревает в ране)",
+    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor (_applyPiercing)"
+  },
+  "weaponPropertyImmunity.haywire": {
+    label: "Иммунитет к свойству оружия Haywire (не подвержен ЭМИ-полю)",
+    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor (_applyHaywire)"
+  },
+  "weaponPropertyImmunity.toxic": {
+    label: "Иммунитет к свойству оружия Toxic (не травится)",
+    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"poisoned\")"
+  },
+  "weaponPropertyImmunity.shocking": {
+    label: "Иммунитет к свойству оружия Shocking (не оглушается)",
+    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас (Дар Кхорна Purity of Wrath даёт похожий эффект, но только в Ярости — см. weaponPropertyImmunityInRage.shocking)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"stunned\")"
+  },
+  "weaponPropertyImmunity.snare": {
+    label: "Иммунитет к свойству оружия Snare (не обездвиживается)",
+    source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас (см. weaponPropertyImmunityInRage.snare)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"pinned\")"
+  },
+  // ── Иммунитет к свойствам оружия ТОЛЬКО в Ярости (wdbc-plsf) ────────────
+  // Второе пространство имён: hasWeaponPropertyImmunity() принимает его лишь
+  // когда system.inRage === true (простой тумблер — стойка/база принцип,
+  // tab-combat.hbs). Единственный известный источник на 30.08.2026 — Дар
+  // Кхорна Purity of Wrath.
+  "weaponPropertyImmunityInRage.crippling": {
+    label: "В Ярости: иммунитет к свойству оружия Crippling",
+    source: "Дар Кхорн (Purity of Wrath)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
+  },
+  "weaponPropertyImmunityInRage.piercing": {
+    label: "В Ярости: иммунитет к свойству оружия Piercing",
+    source: "Дар Кхорн (Purity of Wrath)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
+  },
+  "weaponPropertyImmunityInRage.haywire": {
+    label: "В Ярости: иммунитет к свойству оружия Haywire",
+    source: "Дар Кхорн (Purity of Wrath)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
+  },
+  "weaponPropertyImmunityInRage.shocking": {
+    label: "В Ярости: иммунитет к свойству оружия Shocking",
+    source: "Дар Кхорн (Purity of Wrath)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
+  },
+  "weaponPropertyImmunityInRage.snare": {
+    label: "В Ярости: иммунитет к свойству оружия Snare",
+    source: "Дар Кхорн (Purity of Wrath)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
+  },
   // ── Модификации брони против Варп-Оружия (wdbc-sg57) ────────────────────
   "armor.apVsWarpFull": {
     label: "AP брони этой локации целиком (не игнорируется) против Варп-Оружия",
     source: "Модификации брони «Гексаграмматические Печати» / «Руническая Кольчуга»",
     reader: "module/combat/damage.mjs — ветка warpSoak в applyDamageToActor, armorAP = absorption[loc] целиком"
+  },
+  // ── Избегание Орды как одиночной цели (wdbc-gzuf) ────────────────────────
+  "horde.singleTargetImmune": {
+    label: "Избегает атак Орды как одиночная цель (без бонусных кубиков урона за Магнитуду), теряется при Размере 2+",
+    source: "Раса: Серый Человек (Oteshii)",
+    reader: "module/combat/damage.mjs — applyDamageToActor() вычитает magDiceBonus из rawDamage, если sizeTotal < 2"
   },
   // ── Роли ──────────────────────────────────────────────────────────────────
   "pilot.dreadnought": {
@@ -5904,9 +5987,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.khorne.purityOfWrath": {
-    label: "В Ярости: иммунитет к ядам/радиации/болезням и к Crippling/Piercing/Haywire/Shocking/Snare — упирается в архитектурный пробел иммунитета к свойствам оружия (wdbc-plsf/wdbc-8b5) и в гейт по состоянию Ярости",
+    label: "В Ярости: иммунитет к ядам/радиации/болезням и к Crippling/Piercing/Haywire/Shocking/Snare — иммунитет к 5 свойствам оружия реализован через weaponPropertyImmunityInRage.* (гейт по system.inRage), см. те записи; иммунитет к ядам/радиации/болезням (не свойства оружия, отдельная категория) остаётся неавтоматизированным",
     source: "Дар Кхорн (Purity of Wrath)",
-    reader: ""
+    reader: "5 записей weaponPropertyImmunityInRage.{crippling,piercing,haywire,shocking,snare}"
   },
   "gift.khorne.redSun": {
     label: "В Ярости+1 Бесчестия: нимб над головой до конца Ярости — видящие его в 16м проходят W+0 или впадают в Ярость, не могут выйти из неё, пока видят нимб",
@@ -6054,7 +6137,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.weepingRot": {
-    label: "Иммунитет к Горению и свойствам Crippling/Corrosive (снаряжение всё равно страдает от Corrosive) и к ядам через раны — упирается в архитектурный пробел иммунитета к свойствам оружия (wdbc-plsf/wdbc-8b5)",
+    label: "Иммунитет к Горению и свойствам Crippling/Corrosive и к ядам через раны — иммунитет к Горению/Crippling/Corrosive реализован тремя записями (weaponPropertyImmunity.flame/.crippling/.corrosive, wdbc-plsf); нюанс «но снаряжение всё равно страдает от Corrosive» не автоматизирован (Corrosive считается по актору целиком, не отдельно предмет/носитель); иммунитет к ядам через раны — вне скоупа wdbc-plsf",
     source: "Дар Нургл (Weeping Rot)",
     reader: ""
   },
@@ -6469,7 +6552,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.burningBody": {
-    label: "Иммунитет к экстремальным температурам/Горению (подавляемо тестом W+0 на 1 час); рукопашные атакующие в Rng 0-1/Захвате — A+0 или 1d10 E(Fl) Dmg; 10 субмутаций варьируют профиль пламени — упирается в архитектурный пробел иммунитета к свойствам (wdbc-plsf)",
+    label: "Иммунитет к экстремальным температурам/Горению (подавляемо тестом W+0 на 1 час); рукопашные атакующие в Rng 0-1/Захвате — A+0 или 1d10 E(Fl) Dmg; 10 субмутаций варьируют профиль пламени. Иммунитет к Горению от Flame теперь реализован отдельной записью (weaponPropertyImmunity.flame, wdbc-plsf); экстремальные температуры/подавление тестом/атака в Захвате/субмутации остаются неавтоматизированы (эта запись — оставшаяся заглушка)",
     source: "Мутация: Burning Body (Общие мутации)",
     reader: ""
   },
@@ -6534,7 +6617,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.shieldOfPurity": {
-    label: "Иммунитет к Горению и свойству Corrosive — упирается в архитектурный пробел иммунитета к свойствам оружия (wdbc-plsf/wdbc-8b5)",
+    label: "Иммунитет к Горению и свойству Corrosive — полностью реализован двумя отдельными записями (weaponPropertyImmunity.flame + weaponPropertyImmunity.corrosive, wdbc-plsf); эта запись — оставшаяся историческая заглушка, ничего сверх них не читает",
     source: "Мутация: Shield of Purity (Общие мутации)",
     reader: ""
   },

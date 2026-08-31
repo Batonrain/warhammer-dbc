@@ -102,7 +102,11 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-warp-soak="${wp.warpSoak ? 1 : 0}"
       data-lance="${wp.lance ? 1 : 0}"
       data-sanctified="${wp.sanctified ? 1 : 0}"
-      data-power-field="${wp.powerField ? 1 : 0}"` : "";
+      data-power-field="${wp.powerField ? 1 : 0}"
+      data-corrosive="${wp.corrosiveRating ?? 0}"
+      data-crippling="${wp.cripplingRating ?? 0}"
+      data-piercing="${wp.piercing ? 1 : 0}"
+      data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"` : "";
   const templateBtn = (wp.blastRating > 0 || wp.spray) ? `
     <button class="wh-place-template-btn" type="button"
       data-shape="${wp.spray ? "cone" : "circle"}"
@@ -141,6 +145,10 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-weapon-range="${weaponRange}"
     data-melee="${isMelee ? 1 : 0}"
     data-burst="${burst ? 1 : 0}"
+    data-corrosive="${wp.corrosiveRating ?? 0}"
+    data-crippling="${wp.cripplingRating ?? 0}"
+    data-piercing="${wp.piercing ? 1 : 0}"
+    data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}

@@ -7,12 +7,12 @@ import { isRuleUsageUsed, markRuleUsageUsed,
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
-import { showApplyDamageDialog, applyDamageToActor } from "./combat/damage.mjs";
+import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger } from "./combat/damage.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog } from "./combat/mount.mjs";
-import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto } from "./combat/weapon-properties.mjs";
+import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
@@ -344,7 +344,17 @@ export function registerHooks() {
           devastating:  parseInt(ds.devastating || "0"),
           weaponRange:  parseInt(ds.weaponRange || "0"),
           melee:        ds.melee === "1",
-          burst:        ds.burst === "1"
+          burst:        ds.burst === "1",
+          // Corrosive/Crippling/Piercing/Haywire (wdbc-plsf) — применяются в
+          // applyDamageToActor (combat/damage.mjs), где уже известны и актор,
+          // и место попадания, и непоглощённый урон.
+          corrosiveRating: parseInt(ds.corrosive || "0"),
+          cripplingRating: parseInt(ds.crippling || "0"),
+          piercing:        ds.piercing === "1",
+          // Haywire(0) — валидный рейтинг («привязан к цели»), поэтому наличие
+          // свойства метится пустым/непустым атрибутом, а не самим числом.
+          haywireActive:   ds.haywire !== "",
+          haywireRating:   parseInt(ds.haywire || "0")
         };
         // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
         if (ds.forceHorde) {
@@ -354,6 +364,28 @@ export function registerHooks() {
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Извлечение снаряда Проникающего (wdbc-plsf)
+    html.querySelectorAll(".wh-piercing-extract-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Актор не найден (возможно, удалён).");
+        await extractPiercingWound(actor, ds.armorKey);
+      });
+    });
+
+    // Триггер раны Калечащего — «оба ОД в Ход на физ. действия» (wdbc-plsf)
+    html.querySelectorAll(".wh-crippling-trigger-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Актор не найден (возможно, удалён).");
+        await applyCripplingTrigger(actor, parseInt(ds.rating || "0"), ds.location || "");
       });
     });
 
@@ -394,7 +426,11 @@ export function registerHooks() {
             warpSoak:     ds.warpSoak     === "1",
             lance:        ds.lance        === "1",
             sanctified:   ds.sanctified   === "1",
-            powerField:   ds.powerField   === "1"
+            powerField:   ds.powerField   === "1",
+            corrosiveRating: parseInt(ds.corrosive || "0"),
+            cripplingRating: parseInt(ds.crippling || "0"),
+            piercing:        ds.piercing === "1",
+            haywireRating:   parseInt(ds.haywire   || "0")
           };
           const drift = parseFloat(ds.lingerDrift || "0") || 0;
           const region = await placeLingerZone(shape, damageData, rounds, drift, ds.weaponName || "Остаётся");
@@ -546,7 +582,20 @@ async function _applyWeaponPropEffect(ds) {
   const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
   if (!actor) return;
   const label     = ds.wpLabel    || "Эффект";
+  const propKey   = ds.wpKey      || "";
   const kind      = ds.wpKind      || "";
+
+  // Иммунитет к свойству оружия (wdbc-plsf) — Мутации/Дары вроде «Пылающее
+  // Тело»/«Щит Чистоты» дают weaponPropertyImmunity.<key> через Механику.
+  if (propKey && hasWeaponPropertyImmunity(actor, propKey)) {
+    return ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${label} → ${esc(actor.name)}</div>
+        <div class="roll-outcome"><span class="roll-success">Иммунитет — эффект не применён</span></div>
+      </div>`
+    });
+  }
   const condition = ds.wpCondition || "";
   const testChar  = ds.wpTestChar  || "";
   const testMod   = parseInt(ds.wpTestMod || "0");

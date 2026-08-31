@@ -20,6 +20,7 @@ import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
+import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun,
@@ -83,6 +84,19 @@ export function activateCombatListeners(root, actor) {
   on(root, ".technique-btn-base", "click", ev => {
     const key = ev.currentTarget.dataset.base;
     if (key) actor.update({ "system.meleeBase": key });
+  });
+
+  // ── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling — блок под
+  // бронёй на этой же вкладке (character-context.mjs hasWeaponPropWounds).
+  on(root, ".wh-sheet-corrosion-repair-btn", "click", ev => {
+    repairArmorCorrosion(actor, ev.currentTarget.dataset.loc);
+  });
+  on(root, ".wh-sheet-piercing-extract-btn", "click", ev => {
+    extractPiercingWound(actor, ev.currentTarget.dataset.loc);
+  });
+  on(root, ".wh-sheet-crippling-trigger-btn", "click", ev => {
+    const ds = ev.currentTarget.dataset;
+    applyCripplingTrigger(actor, parseInt(ds.rating || "0"), ds.location || "");
   });
 
   // ── Борьба (стр. 12) — кнопка видна, пока активно conditions.grappling

@@ -187,6 +187,13 @@ const DEVIATIONS = {
     // Тумблер «подключён к Ноосфере» (вкладка ТЕХ) — заведён гораздо позже
     // template.json, читают Таланты вида «Виртуальная Память».
     noosphereConnected: false,
+    // Свойства оружия Corrosive/Piercing/Crippling (wdbc-plsf) — заведены
+    // гораздо позже template.json, см. combat/damage.mjs.
+    armorCorrosion: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
+    piercingWounds: { head: 0, leftArm: 0, rightArm: 0, body: 0, leftLeg: 0, rightLeg: 0 },
+    crippledWounds: [],
+    // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
+    inRage: false,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

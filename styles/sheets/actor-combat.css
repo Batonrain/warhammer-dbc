@@ -651,6 +651,27 @@
   border-left: 3px solid var(--wh-border);
 }
 
+/* ─── Тумблер «В Ярости» (wdbc-plsf) — тот же приём, что .helmet-toggle ─── */
+.simple-toggle {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em;
+  margin-top: 6px;
+}
+.simple-toggle-label { font-weight: bold; }
+
+/* ─── Свойства оружия (Corrosive/Piercing/Crippling), wdbc-plsf ─── */
+.wprop-wounds-block .wprop-wound-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 1px 0;
+}
+.wprop-wounds-block .wprop-wound-row button {
+  font-size: 0.9em;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
 .armor-cell-wrap {
   display: flex;
   align-items: center;

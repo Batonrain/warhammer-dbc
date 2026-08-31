@@ -80,6 +80,29 @@ describe("карточка атаки", () => {
     expect(html).toContain("Применить урон 1: <b>11</b> → Торс");
   });
 
+  it("кнопка урона несёт Corrosive/Crippling/Piercing/Haywire (wdbc-plsf)", () => {
+    const html = card({
+      wp: { corrosiveRating: 3, cripplingRating: 2, piercing: true, haywire: true, haywireRating: 4 }
+    });
+    expect(html).toContain('data-corrosive="3"');
+    expect(html).toContain('data-crippling="2"');
+    expect(html).toContain('data-piercing="1"');
+    expect(html).toContain('data-haywire="4"');
+  });
+
+  it("Haywire(0) — валидный рейтинг («привязан к цели»), не путается с «свойства нет»", () => {
+    const html = card({ wp: { haywire: true, haywireRating: 0 } });
+    expect(html).toContain('data-haywire="0"');
+  });
+
+  it("без этих свойств атрибуты явно нулевые/пустые", () => {
+    const html = card();
+    expect(html).toContain('data-corrosive="0"');
+    expect(html).toContain('data-crippling="0"');
+    expect(html).toContain('data-piercing="0"');
+    expect(html).toContain('data-haywire=""'); // отсутствие свойства ≠ Haywire(0)
+  });
+
   it("Гибкое оружие запрещает Парирование, но не Уклонение", () => {
     const html = card({ wp: { flexible: true } });
     expect(html).toContain("Парирование (невозможно — Гибкое)");

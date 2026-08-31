@@ -21,6 +21,26 @@
         <div class="armor-tb-note" style="margin-top:4px;"> <button type="button" class="disabled-armour-fork-test-btn" title="Тест-развилка S+0 или Athletics(S)+10 — в начале своего Хода или при отключении брони (стр. 233). Провал (на тире 2 успех тоже) роняет Max.A брони до 10.">Тест S/Athletics — перевес</button> <span>жать в начале своего Хода</span>
         </div> {{/unless}}
         {{/if}}
+        {{#if hasWeaponPropWounds}}
+        <div class="armor-tb-note wprop-wounds-block" style="margin-top:6px;">
+          <div class="armor-loc-label" style="margin-bottom:2px;">Свойства оружия</div>
+          {{#if system.armorCorrosion.head}}<div class="wprop-wound-row">🧪 Голова: −{{system.armorCorrosion.head}} AP <button type="button" class="wh-sheet-corrosion-repair-btn" data-loc="head" title="Техобслуживание брони, ½ смены, Trade(Armourer)+0">Ремонт</button></div>{{/if}}
+          {{#if system.armorCorrosion.leftArm}}<div class="wprop-wound-row">🧪 Л. Рука: −{{system.armorCorrosion.leftArm}} AP <button type="button" class="wh-sheet-corrosion-repair-btn" data-loc="leftArm" title="Техобслуживание брони, ½ смены, Trade(Armourer)+0">Ремонт</button></div>{{/if}}
+          {{#if system.armorCorrosion.rightArm}}<div class="wprop-wound-row">🧪 П. Рука: −{{system.armorCorrosion.rightArm}} AP <button type="button" class="wh-sheet-corrosion-repair-btn" data-loc="rightArm" title="Техобслуживание брони, ½ смены, Trade(Armourer)+0">Ремонт</button></div>{{/if}}
+          {{#if system.armorCorrosion.body}}<div class="wprop-wound-row">🧪 Корпус: −{{system.armorCorrosion.body}} AP <button type="button" class="wh-sheet-corrosion-repair-btn" data-loc="body" title="Техобслуживание брони, ½ смены, Trade(Armourer)+0">Ремонт</button></div>{{/if}}
+          {{#if system.armorCorrosion.leftLeg}}<div class="wprop-wound-row">🧪 Л. Нога: −{{system.armorCorrosion.leftLeg}} AP <button type="button" class="wh-sheet-corrosion-repair-btn" data-loc="leftLeg" title="Техобслуживание брони, ½ смены, Trade(Armourer)+0">Ремонт</button></div>{{/if}}
+          {{#if system.armorCorrosion.rightLeg}}<div class="wprop-wound-row">🧪 П. Нога: −{{system.armorCorrosion.rightLeg}} AP <button type="button" class="wh-sheet-corrosion-repair-btn" data-loc="rightLeg" title="Техобслуживание брони, ½ смены, Trade(Armourer)+0">Ремонт</button></div>{{/if}}
+          {{#if system.piercingWounds.head}}<div class="wprop-wound-row">🏹 Голова: снаряд в ране <button type="button" class="wh-sheet-piercing-extract-btn" data-loc="head" title="Полудействие, +1 непоглощ. R Dmg">Извлечь</button></div>{{/if}}
+          {{#if system.piercingWounds.leftArm}}<div class="wprop-wound-row">🏹 Л. Рука: снаряд в ране <button type="button" class="wh-sheet-piercing-extract-btn" data-loc="leftArm" title="Полудействие, +1 непоглощ. R Dmg">Извлечь</button></div>{{/if}}
+          {{#if system.piercingWounds.rightArm}}<div class="wprop-wound-row">🏹 П. Рука: снаряд в ране <button type="button" class="wh-sheet-piercing-extract-btn" data-loc="rightArm" title="Полудействие, +1 непоглощ. R Dmg">Извлечь</button></div>{{/if}}
+          {{#if system.piercingWounds.body}}<div class="wprop-wound-row">🏹 Корпус: снаряд в ране (−1 SPD) <button type="button" class="wh-sheet-piercing-extract-btn" data-loc="body" title="Полудействие, +1 непоглощ. R Dmg">Извлечь</button></div>{{/if}}
+          {{#if system.piercingWounds.leftLeg}}<div class="wprop-wound-row">🏹 Л. Нога: снаряд в ране (−1 SPD) <button type="button" class="wh-sheet-piercing-extract-btn" data-loc="leftLeg" title="Полудействие, +1 непоглощ. R Dmg">Извлечь</button></div>{{/if}}
+          {{#if system.piercingWounds.rightLeg}}<div class="wprop-wound-row">🏹 П. Нога: снаряд в ране (−1 SPD) <button type="button" class="wh-sheet-piercing-extract-btn" data-loc="rightLeg" title="Полудействие, +1 непоглощ. R Dmg">Извлечь</button></div>{{/if}}
+          {{#each system.crippledWounds as |w|}}
+          <div class="wprop-wound-row">🩸 {{w.locationLabel}}: рана с шипами ({{w.rating}}) <button type="button" class="wh-sheet-crippling-trigger-btn" data-rating="{{w.rating}}" data-location="{{w.locationLabel}}" title="Снимается только лечением/полным исцелением">Оба ОД физ. — урон {{w.rating}}</button></div>
+          {{/each}}
+        </div>
+        {{/if}}
 
       </div> </div>{{!-- /броня --}}
 
@@ -213,6 +233,14 @@
   <div class="combat-section-panel"> <div class="panel-title">СТОЙКА</div> <div class="combat-collapse-body">
     <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{s.desc}}"> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
     </div>
+    {{!-- Ярость (wdbc-plsf) — простой тумблер состояния боя, тем же приёмом,
+          что helmetOff: сама механика Ярости (+10 WS/S/W, −20 BS/I/F и т.п.,
+          стр. 15) не реализована, поле нужно только как гейт для условных
+          возможностей вроде Дара Кхорна «Purity of Wrath». --}}
+    <label class="simple-toggle rage-toggle" title="Тумблер состояния «В Ярости» — только гейт для условных возможностей (напр. Дар Кхорна Purity of Wrath), сама механика Ярости не реализована.">
+      <input type="checkbox" name="system.inRage" {{checked system.inRage}}/>
+      <span class="simple-toggle-label">В Ярости</span>
+    </label>
   </div></div>{{!-- /стойка --}}
 
   {{!-- ═══ СИЛОВОЕ ПОЛЕ — отдельная строка под основной сеткой ═══ --}}

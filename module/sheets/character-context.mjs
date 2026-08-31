@@ -449,5 +449,15 @@ export function characterContext(actor) {
     .map(([k, l]) => `${l} +${vs[k]}`)
     .join(" · ");
 
+  // Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling — есть ли что
+  // показать в блоке под бронёй (сами значения читаются в hbs напрямую
+  // из system.armorCorrosion/piercingWounds/crippledWounds).
+  const corrosion = system.armorCorrosion || {};
+  const piercing  = system.piercingWounds || {};
+  context.hasWeaponPropWounds =
+    Object.values(corrosion).some(v => (Number(v) || 0) > 0) ||
+    Object.values(piercing).some(Boolean) ||
+    (system.crippledWounds?.length > 0);
+
   return context;
 }
