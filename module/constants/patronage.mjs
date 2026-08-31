@@ -68,57 +68,60 @@ export function skillPatronCat(skillKey, specialty, patronGod) {
   return god ? godRelationCat(patronGod, god) : "ally";
 }
 
-// ── Таланты: Бог уже лежит в TALENT_LIBRARY (talents-library.mjs), русской
-//    подписью — переводим в ключ godRelationCat(). Таланты без записи в
-//    библиотеке (Элитные Архетипы, руками заведённые ГМом) — Нейтрально,
-//    тем же правилом, что у них уже есть для Склонностей (стр. 24).
+// ── Таланты: Бог — русской подписью в system.god, переводим в ключ
+//    godRelationCat(). Таланты без записи (Элитные Архетипы, руками заведённые
+//    ГМом) — Нейтрально, тем же правилом, что у них уже есть для Склонностей
+//    (стр. 24).
+//
+//    Источник — СНАЧАЛА собранный компендиум warhammer-dbc.talents (пак —
+//    единственная полная картина, TALENT_LIBRARY отстаёт от него на сотни
+//    записей новых книг, см. wdbc-h59i), ПОТОМ константа как запасной путь,
+//    когда пак ещё не собран/не готов. Вызывающая цепочка
+//    (talentCostXP ← resolveTalentCat, живёт в синхронном рендере листа —
+//    цену Таланта нельзя посчитать за await) не может ждать pack.getIndex(),
+//    поэтому индекс строится ЗАРАНЕЕ и кэшируется — тот же приём, что
+//    _equipIndex в apps/mechanics.mjs (initEquipmentIndex).
 const TALENT_GOD_LABEL_KEY = {
   "слаанеш": "slaanesh", "нургл": "nurgle", "кхорн": "khorne", "тзинч": "tzeentch",
   "неделимый": "undivided"
 };
+const TALENT_PACK_ID = "warhammer-dbc.talents";
 
-const TALENTS_PACK_ID = "warhammer-dbc.talents";
-
-let _talentGodByName = null;
+let _talentGodByName = null; // null = ещё не строился
 function fallbackTalentGodIndex() {
   return new Map(TALENT_LIBRARY.map(t => [t.name, t.system?.god || ""]));
 }
-function talentGodIndex() {
-  if (_talentGodByName) return _talentGodByName;
-  _talentGodByName = fallbackTalentGodIndex();
-  return _talentGodByName;
-}
 
 async function _refreshTalentGodIndex() {
-  const pack = (typeof game !== "undefined") ? game.packs?.get?.(TALENTS_PACK_ID) : null;
+  const pack = (typeof game !== "undefined") ? game.packs?.get?.(TALENT_PACK_ID) : null;
   if (!pack) { _talentGodByName = fallbackTalentGodIndex(); return; }
   try {
-    const docs = await pack.getDocuments();
-    const byName = new Map(docs.map(d => [d.name, d.system?.god || ""]));
-    // Библиотека как подстраховка: талант, которого в паке ещё нет, не должен
-    // тихо стать «Неделимым» в ценах Покровительства.
+    const index = await pack.getIndex({ fields: ["system.god"] });
+    const byName = new Map(index.map(e => [e.name, e.system?.god || ""]));
+    // Константа как подстраховка: то, чего в паке ещё нет (новые записи,
+    // добавленные мимо сборки), не должно тихо потерять Бога.
     for (const [name, god] of fallbackTalentGodIndex()) if (!byName.has(name)) byName.set(name, god);
     _talentGodByName = byName;
-  } catch (e) { console.warn("Warhammer DBC | кэш «пак первичен» не построился, работает библиотека", e); _talentGodByName = fallbackTalentGodIndex(); }
+  } catch (e) { console.warn("Warhammer DBC | кэш Бога Таланта не построился, работает библиотека", e); _talentGodByName = fallbackTalentGodIndex(); }
 }
 
-/** Регистрируется в warhammer-dbc.mjs — тот же приём «пак первичен, константа —
- * запасной путь», что у initVehicleWeaponIndex/initBioImplantCatalog (wdbc-zaxa):
- * кэш Бога Таланта строится из warhammer-dbc.talents после готовности мира и
- * обновляется при правках компендиума. До первого построения (и в тестах без
- * game.packs) работает библиотека. Коммит 43363a23 звал эту функцию, но самой
- * функции не существовало — система падала на загрузке.
- */
+/** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и
+ * обновляет его при правках компендиума warhammer-dbc.talents. До первого
+ * построения (или в тестах без game.packs) используется прямой запасной путь. */
 export function initTalentGodIndex() {
   Hooks.once("ready", () => _refreshTalentGodIndex());
   for (const h of ["createItem", "deleteItem", "updateItem"])
-    Hooks.on(h, doc => { if (doc?.pack === TALENTS_PACK_ID) _refreshTalentGodIndex(); });
+    Hooks.on(h, doc => { if (doc?.pack === TALENT_PACK_ID) _refreshTalentGodIndex(); });
 }
 
 /** Ключ Бога Таланта по имени (как оно лежит в компендиуме/библиотеке), или
  * "undivided", если талант не найден или Бог не указан (Элитные Архетипы). */
 export function talentGodKeyOf(talentName) {
-  const label = talentGodIndex().get(talentName) || "";
+  // Мемоизация обязательна: до ready (и в тестах) иначе каждая цена Таланта
+  // собирала бы Map на 611 записей заново — по разу на строку списка.
+  _talentGodByName ??= fallbackTalentGodIndex();
+  const index = _talentGodByName;
+  const label = index.get(talentName) || "";
   return TALENT_GOD_LABEL_KEY[label.toLowerCase()] || "undivided";
 }
 

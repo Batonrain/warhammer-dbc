@@ -1488,12 +1488,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
           const owned = actor.items.filter(i => i.type === "talent").map(i => i.name);
           const candidates = altTalentCandidates(data.name, owned);
           const picked = candidates.length ? await showAltTalentDialog(data.name, candidates) : null;
-          // Тот же источник, что у обычной выдачи выше — компендиум (с его
-          // Активными эффектами и флагом migratedEffect), иначе альтернатива
-          // несла бы другую механику, чем тот же Талант, выданный обычно.
-          // TALENT_LIBRARY — запасной путь, когда пака нет (стенд без Foundry).
-          const altDoc = picked ? await resolveMechSource({ kind: "talent", sourceName: picked.name }) : null;
-          const altSrc = altDoc ? altDoc.toObject() : (picked ? talentLibraryEntry(picked.name) : null);
+          const altSrc = picked ? await talentLibraryEntry(picked.name) : null;
           if (altSrc) {
             const altData = foundry.utils.deepClone(altSrc);
             delete altData._id;
@@ -2169,7 +2164,11 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
     if (subEntries.some(e => applied.has(e.id))) return undefined;
     return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
   }
-  if ((entry.kind === "skill" || entry.kind === "rollmod") && entry.specKey === "__choice__"
+  // «Любой Навык» (__choice_any__, wdbc-2n5t) спрашивается тем же пакетным
+  // каскадом, что и обычный выбор: иначе вопросы всплывали бы по одному за
+  // клик «Далее» — регресс, который уже чинили 20.08 (parallel-spec-choices).
+  if ((entry.kind === "skill" || entry.kind === "rollmod")
+      && (entry.specKey === "__choice__" || entry.specKey === "__choice_any__")
       && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
   }
