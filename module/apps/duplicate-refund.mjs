@@ -19,7 +19,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { charAptitudeSet, skillCostXP, talentCostXP } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { isFriendlySpecialty } from "../rules/friendly-specialties.mjs";
-import { rankLabel, stepsUpTo } from "../rules/duplicate-grants.mjs";
+import { rankLabel } from "../rules/duplicate-grants.mjs";
 
 /** Культура легиона персонажа — она двигает категорию цены (стр. 58, 61). */
 function cultFxOf(actor) {
@@ -53,11 +53,6 @@ export function skillStepsCost(actor, skillKey, steps = [], { group = false, ent
   const { apts, itemApts, cat } = skillCat(actor, def, entryChar, group ? skillKey : "", specialty);
   const opts = { actor, skillKey, specialty };
   return steps.reduce((sum, step) => sum + skillCostXP(step, itemApts, apts, cat, opts), 0);
-}
-
-/** Цена прокачки Навыка с нуля до ранга — для подписи и для прямых вызовов. */
-export function skillRankCost(actor, skillKey, rank, opts = {}) {
-  return skillStepsCost(actor, skillKey, stepsUpTo(rank), opts);
 }
 
 /** Цена Таланта для этого персонажа — столько и возвращается за повтор. */

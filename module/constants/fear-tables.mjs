@@ -41,44 +41,6 @@ export const TRAUMA_TABLE = [
   { min: 171, max: 9999, text: "Полностью разбит и почти не реагирует: не может сам действовать, но его можно водить за собой. 1d5 дней." }
 ];
 
-// Ментальные Расстройства: бросок d100
-export const MENTAL_DISORDERS = [
-  { min: 1,  max: 3,   name: "Мания Величия" },
-  { min: 4,  max: 6,   name: "Гермофобия" },
-  { min: 7,  max: 9,   name: "Самобичевание" },
-  { min: 10, max: 11,  name: "Болтливость" },
-  { min: 12, max: 14,  name: "Иконокласт" },
-  { min: 15, max: 17,  name: "Утончённая Жестокость" },
-  { min: 18, max: 20,  name: "Гедонизм" },
-  { min: 21, max: 23,  name: "Аналитический Паралич" },
-  { min: 24, max: 26,  name: "Ненависть" },
-  { min: 27, max: 30,  name: "Мёртвый Внутри" },
-  { min: 31, max: 33,  name: "Мания Преследования" },
-  { min: 34, max: 36,  name: "Сноб" },
-  { min: 37, max: 39,  name: "Одержимость Секретами" },
-  { min: 40, max: 42,  name: "Иерархичность" },
-  { min: 43, max: 45,  name: "Ужасные Побуждения" },
-  { min: 46, max: 48,  name: "Ипохондрия" },
-  { min: 49, max: 50,  name: "Перфекционизм" },
-  { min: 51, max: 54,  name: "Депрессия" },
-  { min: 55, max: 56,  name: "Аскетизм" },
-  { min: 57, max: 58,  name: "Мания Комплексности" },
-  { min: 59, max: 61,  name: "Анорексия" },
-  { min: 62, max: 64,  name: "Теория Заговора" },
-  { min: 65, max: 67,  name: "Агрессия" },
-  { min: 68, max: 70,  name: "Кошмары" },
-  { min: 71, max: 73,  name: "Вспышки Гнева" },
-  { min: 74, max: 77,  name: "Фобия" },
-  { min: 78, max: 80,  name: "Психопатия" },
-  { min: 81, max: 82,  name: "Сердцеед" },
-  { min: 83, max: 86,  name: "Контузия" },
-  { min: 87, max: 89,  name: "Социофобия" },
-  { min: 90, max: 92,  name: "Эстет" },
-  { min: 93, max: 95,  name: "Клептомания" },
-  { min: 96, max: 98,  name: "Тревожное Расстройство" },
-  { min: 99, max: 100, name: "Галлюцинации" }
-];
-
 export function lookupTable(table, value) {
   return table.find(r => value >= r.min && value <= r.max) || null;
 }

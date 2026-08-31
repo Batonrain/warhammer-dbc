@@ -215,18 +215,6 @@ export const INHABITANTS = {
   heretics:    "Еретики (Хаос)"
 };
 
-// Шкала «Изобилия» ресурсов (усл. рейтинг богатства месторождения, как в RT).
-export const RESOURCE_TIERS = [
-  { min: 90, label: "колоссально" }, { min: 75, label: "очень богато" },
-  { min: 60, label: "богато" }, { min: 40, label: "умеренно" },
-  { min: 25, label: "скудно" }, { min: 1, label: "следы" }, { min: 0, label: "—" }
-];
-export function resourceTier(v) {
-  v = Number(v) || 0;
-  for (const t of RESOURCE_TIERS) if (v >= t.min) return t.label;
-  return "—";
-}
-
 // ── Классификация имперских миров ──────────────────────────────────────────────
 export const WORLD_CLASSES = {
   hive:        "Мир-улей",
@@ -579,10 +567,6 @@ export function improvementPool(o = {}) {
 export function makeImprovement(p) {
   return { id: rid(), name: p.n, desc: p.d || "", res: { ...(p.r || {}) }, cat: p.c || "",
            hidden: IMP_SCOUT.has(p.n), secret: IMP_SECRET.has(p.n) };
-}
-// Метаданные категории улучшения (для UI). Возвращает {label} или null.
-export function improvementCategory(cat) {
-  return IMP_CATEGORIES[cat] || null;
 }
 export function genImprovements(o = {}) {
   const pool = improvementPool(o);

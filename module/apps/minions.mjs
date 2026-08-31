@@ -37,10 +37,6 @@ export const MINION_TIERS = {
   superior: "Превосходящий Миньон"
 };
 
-/** Кто может иметь миньонов и кто может быть миньоном. */
-export const MASTER_ACTOR_TYPES = ["character", "daemon", "demonPrince"];
-export const MINION_ACTOR_TYPES = ["character", "daemon"];
-
 /** Акторы, чей masterUuid указывает на этого — его миньоны. */
 export function minionsOf(actor, actors = []) {
   if (!actor?.uuid) return [];

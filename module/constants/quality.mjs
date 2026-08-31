@@ -22,10 +22,6 @@ export const ITEM_QUALITY = {
 };
 
 export const ITEM_QUALITY_LIST  = ["poor", "common", "good", "best"];
-export const DRUKHARI_QUALITY_LIST = ["poor", "common", "good", "best", "artisan"];
-
-// Модификаторы добычи у друкхари СВОИ — Good и Best вдвое щедрее имперских.
-const DRUKHARI_ACQ = { poor: 10, common: 0, good: -20, best: -30, artisan: -70 };
 
 /** Нормализует ключ качества (устаревшее "best"="лучшее" тоже допускается). */
 export function normQuality(q) {
@@ -39,21 +35,6 @@ export function isDrukhariItem(item) {
 
 export function qualityInfo(q) {
   return ITEM_QUALITY[normQuality(q)];
-}
-
-/**
- * Модификатор сложности реквизиции/покупки/крафта/улучшения.
- * Вторым аргументом можно передать предмет — у друкхарийского своя шкала.
- */
-export function qualityAcqMod(q, item = null) {
-  const k = normQuality(q);
-  if (item && isDrukhariItem(item)) return DRUKHARI_ACQ[k] ?? 0;
-  return ITEM_QUALITY[k].acqMod;
-}
-
-/** Список качеств для выпадашки конкретного предмета. */
-export function qualityListFor(item) {
-  return isDrukhariItem(item) ? DRUKHARI_QUALITY_LIST : ITEM_QUALITY_LIST;
 }
 
 /**

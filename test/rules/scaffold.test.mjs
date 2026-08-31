@@ -27,10 +27,8 @@ describe("каркас module/rules", () => {
     expect(typeof sources.registerRuleSource).toBe("function");
     expect(typeof collect.collectRules).toBe("function");
     expect(typeof matchContext.matchesContext).toBe("function");
-    // Библиотека Астартес наполнена на этапе 3, основной книги — на шаге 5.2
-    // («Проворный»), Аэльдари ждёт своей очереди: у неё проверяется форма.
-    expect(aeldari.AELDARI_RULES).toEqual([]);
     expect(Array.isArray(astartes.ASTARTES_RULES)).toBe(true);
     expect(Array.isArray(core.CORE_RULES)).toBe(true);
+    expect(Array.isArray(aeldari.EXODITE_RULES)).toBe(true);
   });
 });

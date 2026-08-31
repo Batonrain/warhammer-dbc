@@ -21,15 +21,6 @@ export const VEHICLE_TYPES = {
   other:     "Прочее"
 };
 
-// Бонус Ходовой к тестам Маневрирования (Operate).
-export const CHASSIS_MANOEUVRE_BONUS = {
-  wheeled: 10,
-  tracked: 0,
-  walker:  0,
-  skimmer: 10,
-  plane:   0
-};
-
 // Краткая памятка по особенностям Ходовой (для листа).
 export const CHASSIS_NOTES = {
   wheeled: "Не может Поворот на месте. −20 Трудный Ландшафт, +10 Маневрирование. Урон в Ходовую: −1d5 SPD и −10 Маневрирование (складывается). Починка ×½ времени.",
@@ -47,15 +38,6 @@ export const CREW_ROLES = {
   loader:    "Заряжающий",
   pilot:     "Пилот",
   passenger: "Пассажир"
-};
-
-// Оператор орудия (кто наводит/стреляет).
-export const WEAPON_OPERATORS = {
-  commander: "Командир",
-  driver:    "Мехвод",
-  gunner:    "Стрелок",
-  loader:    "Заряжающий",
-  pilot:     "Пилот"
 };
 
 // ─── Установки орудий ────────────────────────────────────────────────────────
@@ -109,12 +91,6 @@ export const VEHICLE_AIM_TARGETS = [
 export function vehicleHitLocation(roll) {
   const r = Math.min(100, Math.max(1, Number(roll) || 1));
   return VEHICLE_HIT_LOCATIONS.find(l => r >= l.min && r <= l.max) || VEHICLE_HIT_LOCATIONS[1];
-}
-
-// Реверс броска попадания (41 → 14) как в правилах.
-export function reverseRoll(rv) {
-  const s = String(Math.min(100, Math.max(1, Number(rv) || 1))).padStart(2, "0");
-  return Math.min(100, Math.max(1, parseInt(s.split("").reverse().join(""))));
 }
 
 // ─── Трудный Ландшафт (штрафы из таблицы) ─────────────────────────────────────

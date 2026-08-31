@@ -102,10 +102,3 @@ export function isGenericImg(img) {
   if (!img) return true;
   return /^icons\//.test(img);
 }
-
-/** Управляемая нами иконка: дефолтная Foundry ИЛИ из нашего набора item-icons.
- *  (Позволяет миграции переназначать на более точную иконку, не трогая кастомные.) */
-export function isManagedImg(img) {
-  if (isGenericImg(img)) return true;
-  return typeof img === "string" && img.startsWith(BASE);
-}

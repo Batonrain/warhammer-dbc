@@ -97,11 +97,6 @@ export function bankFromTable(category, rarity) {
   return (v === null || v === undefined) ? null : v;
 }
 
-// ── Исследование: только Tech-Use, Medicae, Linguistics, Forbidden/Scholastic Lore ─
-export const RESEARCH_SKILLS = [
-  { skill: "techUse" }, { skill: "medicae" },
-  { group: "linguistics" }, { group: "forbiddenLore" }, { group: "scholasticLore" }
-];
 export const RESEARCH_KINDS = [
   { key: "blueprint", label: "Чертёж / рецепт для крафта" },
   { key: "psychic",   label: "Психосила / ритуал / вязь" },
@@ -131,32 +126,6 @@ export function reqSkillLabel(req) {
   const g = GROUP_SKILLS_DEF[req.group]?.label || req.group;
   return req.spec ? `${g} (${req.spec})` : g;
 }
-export function reqIsLore(req) {
-  if (req.group) return ["forbiddenLore", "scholasticLore", "commonLore"].includes(req.group);
-  return false;
-}
-export function reqIsTrade(req) { return req.group === "trade"; }
-
-export function resolveSkillTotal(actor, req) {
-  const label = reqSkillLabel(req);
-  if (!actor) return { label, total: null, trained: false };
-  const sys = actor.system || {};
-  if (req.skill) {
-    const sk = sys.skills?.[req.skill];
-    const total = sk?.total ?? null;
-    return { label, total, trained: !!sk && sk.rank && sk.rank !== "untrained" };
-  }
-  // Групповой навык: ищем спец по подстроке (RU/EN), иначе нетренированный (char −20).
-  const entries = Array.isArray(sys.groupSkills?.[req.group]) ? sys.groupSkills[req.group] : [];
-  const specLc  = (req.spec || "").toLowerCase();
-  const hit = entries.find(e => (e.name || "").toLowerCase().includes(specLc));
-  if (hit) return { label, total: hit.total ?? null, trained: hit.rank && hit.rank !== "untrained" };
-  // Нетренированный: характеристика группы − 20.
-  const def = GROUP_SKILLS_DEF[req.group];
-  const charVal = def ? (actor.system.characteristics?.[def.char]?.total ?? 0) : 0;
-  return { label, total: charVal - 20, trained: false };
-}
-
 const LORE_GROUPS = ["forbiddenLore", "scholasticLore", "commonLore"];
 
 // ── Реальные навыки крафтера для выбора вручную ─────────────────────────────

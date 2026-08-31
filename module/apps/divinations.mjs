@@ -28,9 +28,6 @@ registerPackCache(PACK, DIVINATION_TAG);
 export function actorDivinationItem(actor) {
   return actor?.items?.find(i => i.type === "divination") || null;
 }
-export function actorDivinationKey(actor) {
-  return actorDivinationItem(actor)?.system?.key || "";
-}
 
 /** Данные дропдауна «Предсказание» для шапки листа. */
 export function divinationSheetContext(actor) {

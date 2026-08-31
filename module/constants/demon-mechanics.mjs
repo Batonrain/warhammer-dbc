@@ -68,7 +68,6 @@ export const DEMON_RANKS = [
   { key: "lord",        label: "Лорд Демонов",           infamy: "",        infamyRange: "—",
     note: "Заседают в советах Бога; почти никогда не покидают Варп." }
 ];
-export const DEMON_RANKS_MAP = Object.fromEntries(DEMON_RANKS.map(r => [r.key, r]));
 
 // Формы манифестации (длительность до дестабилизации; +1 уровень Завесы — на ступень дольше).
 export const DEMON_FORMS = [

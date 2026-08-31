@@ -407,4 +407,3 @@ export function openCraftWorkshop() {
   _instance.render(true);
   return _instance;
 }
-export function refreshCraftWorkshop() { if (_instance?.rendered) _instance.render(false); }

@@ -238,11 +238,3 @@ export function divinationByRoll(roll) {
 export function hasChoices(d) {
   return !!((d?.charChoices || []).length || (d?.choices || []).length);
 }
-
-/** Ситуативные модификаторы предсказания для конкретного броска. */
-export function divinationRollMods(key, context = {}) {
-  const d = DIVINATION_BY_KEY[key];
-  if (!d?.rollMods?.length) return [];
-  return d.rollMods.filter(m => m.when?.kind === context.kind)
-    .map(m => ({ ...m, divination: d.text }));
-}
