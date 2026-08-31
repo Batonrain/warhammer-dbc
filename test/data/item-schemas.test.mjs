@@ -61,7 +61,7 @@ const TYPES = {
     pack: "gear",
     defaults: {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
-      quality: "common", gearCategory: "misc", linkedWeapon: "", worn: "",
+      quality: "common", gearCategory: "misc", linkedWeapon: "", worn: "", wornOn: "",
       effect: "", reminder: "", qualityEffects: { poor: "", good: "", best: "" },
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       itemSize: "", bonuses: [], drukhari: false, bookSource: "",

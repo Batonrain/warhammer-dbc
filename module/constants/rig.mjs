@@ -118,6 +118,17 @@ export const RIG_COMFORT_HINT = {
 const NS = "warhammer-dbc";
 const FLAG = "stowage";
 
+// Мелочь, надетая прямо на другой предмет (визор на шлеме, крепление на
+// броне) — system.wornOn у gear указывает на существующий предмет-носитель
+// (оружие/броню того же актора). Пока носитель на месте, вещь не нужно
+// класть в разгрузку — она физически закреплена на нём, а не лежит в кармане.
+export function wornOnHost(item, items) {
+  const hostId = item?.system?.wornOn;
+  if (!hostId) return null;
+  const host = items?.get?.(hostId);
+  return (host && (host.type === "armor" || host.type === "weapon")) ? host : null;
+}
+
 // Валидна ли локация (слот существующей разгрузки или её рюкзак).
 export function isValidStowLoc(loc, rigs) {
   if (!loc) return false;
@@ -144,7 +155,7 @@ export function rigManagerData(actor) {
   const stow = actor.getFlag(NS, FLAG) || {};
   const items = actor.items;
 
-  const stowable = items.filter(i => STOWABLE_TYPES.includes(i.type));
+  const stowable = items.filter(i => STOWABLE_TYPES.includes(i.type) && !wornOnHost(i, items));
   // Разгрузка бывает не только снаряжением (Ремень) — у силовой брони (стр. 27)
   // свои 12 магнитных замков на самом предмете брони.
   const rigs = items.filter(i => (i.type === "gear" || i.type === "armor") && i.system?.isRig);
