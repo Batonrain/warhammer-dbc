@@ -1067,3 +1067,67 @@ describe("Локус Сокрушения: раз в Раунд База «По�
     });
   });
 });
+
+// Числовой перевес 2к1/3к1 (wdbc-5il7, п.5): meleeContactCount с ОБРАТНЫМ
+// обходом — считаем не врагов у атакующего, а «врагов цели» (т.е. атакующего
+// и его союзников) в контакте с целью.
+describe("Числ. перевес: автоотметка 2к1/3к1 по контактам у цели", () => {
+  const prevCanvas = globalThis.canvas;
+
+  beforeEach(() => {
+    // grid.size 1 — doc.x/y читаются как метры напрямую (см. test/combat/
+    // tactical-map.test.mjs), без пересчёта клетка↔пиксель↔метр.
+    globalThis.canvas = { grid: { size: 1 }, tokens: { placeables: [] } };
+  });
+
+  afterEach(() => { globalThis.canvas = prevCanvas; });
+
+  function contactToken({ x, y, disposition }) {
+    return { document: { x, y, width: 1, height: 1, disposition } };
+  }
+
+  function setTargetToken(tt) {
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([tt]) };
+  }
+
+  it("без цели на сцене — нет автоотметки, галочки снимаемы вручную", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toContain("Числ. перевес 2к1");
+    expect(html).not.toMatch(/data-value="10"[^>]*checked/);
+    expect(html).not.toMatch(/data-value="20"[^>]*checked/);
+  });
+
+  it("двое в контакте с целью — автоотмечена «2к1», «3к1» — нет", () => {
+    const target = contactToken({ x: 0, y: 0, disposition: -1 });
+    const ally1  = contactToken({ x: 1, y: 0, disposition: 1 });
+    const ally2  = contactToken({ x: 0, y: 1, disposition: 1 });
+    canvas.tokens.placeables = [target, ally1, ally2];
+    setTargetToken(target);
+
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toMatch(/data-value="10"[^>]*checked/);
+    expect(html).not.toMatch(/data-value="20"[^>]*checked/);
+    expect(html).toContain("в контакте с целью: 2");
+  });
+
+  it("трое и больше в контакте с целью — автоотмечена «3к1»", () => {
+    const target = contactToken({ x: 0, y: 0, disposition: -1 });
+    const allies = [
+      contactToken({ x: 1, y: 0, disposition: 1 }),
+      contactToken({ x: 0, y: 1, disposition: 1 }),
+      contactToken({ x: -1, y: 0, disposition: 1 })
+    ];
+    canvas.tokens.placeables = [target, ...allies];
+    setTargetToken(target);
+
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const html = captured.dialog.content;
+    expect(html).toMatch(/data-value="20"[^>]*checked/);
+    expect(html).not.toMatch(/data-value="10"[^>]*checked/);
+  });
+});

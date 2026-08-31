@@ -781,6 +781,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // (meleeContactCount), а не спрашиваем игрока на глаз — галочка лишь
   // подтверждает то, что уже видно на сцене, и её можно снять руками.
   const duelContacts = (wp.duelingParry && attackerToken) ? meleeContactCount(attackerToken) : null;
+  // Числовой перевес (2к1/3к1): та же meleeContactCount, но ОБРАТНЫЙ обход —
+  // считаем не врагов у атакующего, а «врагов цели» (т.е. атакующего и его
+  // союзников) в контакте с целью (wdbc-5il7, п.5).
+  const outnumberCount = (isMelee && targetToken) ? meleeContactCount(targetToken) : null;
   // Тактическая карта: полоса дальности из уже измеренной дистанции и Rng
   // оружия (стр. 40: в упор 0,5–3 м / короткая до Rng/2 / боевая до Rng /
   // дальняя до Rng×2 / экстремальная до Rng×3, дальше выстрел невозможен).
@@ -798,8 +802,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Трудный ландшафт",       value: -10, autoCheck: !!meleeTerrain?.inTerrain,
       note: meleeTerrain?.inTerrain ? "зона Трудного Ландшафта под атакующим" : undefined },
     { label: "Очень трудный ландшафт", value: -20 },
-    { label: "Числ. перевес 2к1",      value:  10 },
-    { label: "Числ. перевес 3к1",      value:  20 },
+    { label: "Числ. перевес 2к1",      value:  10, autoCheck: outnumberCount === 2,
+      note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
+    { label: "Числ. перевес 3к1",      value:  20, autoCheck: outnumberCount != null && outnumberCount >= 3,
+      note: outnumberCount == null ? undefined : `в контакте с целью: ${outnumberCount}` },
     { label: "Положение выше",         value:  10, autoCheck: highGround === true,
       note: highGround === true ? "elevation токена выше цели" : undefined },
     { label: "Более длинное оружие",   value:   5 },
