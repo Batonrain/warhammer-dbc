@@ -35,8 +35,8 @@ export const ITEM_FILTERS = {
   talentTier: (it, want) => Number(it?.tier) === Number(want),
   /** Категория импланта: «Мехадендрит» — это system.category, а не папка. */
   implantCategory: (it, want) => it?.category === want,
-  /** Пси-Рейтинг силы не выше указанного: у психосилы system.cost — цена в ПР. */
-  maxPsyRating: (it, want) => (Number(it?.cost) || 0) <= Number(want)
+  /** Пси-Рейтинг силы не выше указанного: system.cost — цена в опыте, Пси-Рейтинг лежит в system.prRequired. */
+  maxPsyRating: (it, want) => (Number(it?.prRequired) || 0) <= Number(want)
 };
 
 /**
