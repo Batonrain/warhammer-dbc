@@ -2,8 +2,30 @@
       Вкладок «СОЦИУМ» здесь нет: Миньоны не могут брать своих Миньонов, а
       Отношения слуге ведёт Хозяин. Фракция — своя, отдельным полем в шапке
       (minion-header.hbs), не завязана на Хозяина (по просьбе пользователя,
-      22.08.2026). --}}
+      22.08.2026).
+
+      Обшивка «инфопланшет» (wdbc-ri8b, тот же приём — skill dbc-housing):
+      cog-frame навешан в actor-sheet.mjs (_applyThemeClasses, allow-list по
+      actor.type — PARTS.body.root=true отбрасывает классы прямо из шаблона).
+      Общие вкладки-партиалы уже когитаторные сами по себе (те же файлы, что
+      у character-sheet.hbs) — здесь достаточно обернуть шапку/вкладки/тело
+      тем же .cog-screen. --}}
 <div class="warhammer-dbc character-sheet minion-sheet">
+  <div class="cog-rivet tl"></div>
+  <div class="cog-rivet tr"></div>
+  <div class="cog-rivet bl"></div>
+  <div class="cog-rivet br"></div>
+
+  <div class="cog-plate-row">
+    <span class="cog-plate">Инфопланшет модели XIL</span>
+    <div class="cog-leds">
+      <i class="cog-led cog-led-green on"></i>
+      <i class="cog-led cog-led-amber {{#if (eq actor.system.wounds.tier "heavy")}}on{{/if}}"></i>
+      <i class="cog-led cog-led-red {{#if (eq actor.system.wounds.tier "dying")}}on{{/if}}"></i>
+    </div>
+  </div>
+
+  <div class="cog-screen">
   {{> "systems/warhammer-dbc/templates/actor/parts/minion-header.hbs"}}
 
   <nav class="sheet-tabs tabs" data-group="primary">
@@ -30,5 +52,10 @@
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
     {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}
+
+    <div class="screen-status-line"><i class="cog-status-dot"></i><span>Дух машины пробуждён</span></div>
   </div>
+  </div>
+
+  <div class="cog-status-row"></div>
 </div>
