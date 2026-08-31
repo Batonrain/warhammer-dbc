@@ -15,6 +15,7 @@
       </div>
       <div class="gl-bar"><div class="gl-fill load-{{encumbranceLevel}}" style="width:{{encumbrancePct}}%;"></div><span class="gl-pct">{{encumbrancePct}}%</span></div>
       <div class="gl-status load-{{encumbranceLevel}}">{{#if encumbranceOver}}◈ ПЕРЕГРУЗ{{else}}◈ В НОРМЕ{{/if}}</div>
+      <div class="gl-index" title="Стойкость.b + Сила.b — база строки ниже (стр. 27); итог ещё учитывает Родной мир и Мод. Экзоскелета/подобных (вкладка МЕХАНИКА, kind «Вес»)">T.b + S.b = {{encumbranceIndexSum}}</div>
       <div class="gl-tiers">
         <span title="Ношение — без штрафов">Ношение {{system.encumbrance.carry}} кг</span>
         <span title="Подъём — макс. вес, поднимаемый с земли">Подъём {{system.encumbrance.lift}} кг</span>
