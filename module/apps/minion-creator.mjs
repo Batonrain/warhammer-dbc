@@ -427,7 +427,11 @@ async function createMinionActor(master, state) {
   const actor = await Actor.create({
     name: `Миньон (${MINION_GROUPS[state.group]?.label || "?"})`,
     type: "minion",
-    system
+    system,
+    // Владение — как у Хозяина: без этого миньона видит только тот, кто
+    // нажал «+» (обычно ГМ, готовящий слугу заранее), а игрок-владелец
+    // Хозяина не может ни переименовать его, ни поставить токен.
+    ownership: foundry.utils.deepClone(master.ownership ?? {})
   });
   if (!actor) return null;
 
