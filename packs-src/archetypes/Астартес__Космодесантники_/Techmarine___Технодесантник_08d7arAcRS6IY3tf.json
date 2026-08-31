@@ -7,7 +7,9 @@
     "key": "techmarine",
     "race": "astartes",
     "group": "",
-    "charBonus": { "s": 1 },
+    "charBonus": {
+      "s": 1
+    },
     "charChoice": "",
     "skills": "",
     "talents": "",

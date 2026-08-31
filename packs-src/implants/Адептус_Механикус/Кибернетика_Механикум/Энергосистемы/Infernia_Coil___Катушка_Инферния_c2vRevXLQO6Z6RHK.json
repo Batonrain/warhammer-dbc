@@ -7,7 +7,12 @@
     "notes": "",
     "category": "mechEnergy",
     "quality": "common",
-    "compensator": { "poor": 10, "common": 10, "good": 15, "best": 20 },
+    "compensator": {
+      "poor": 10,
+      "common": 10,
+      "good": 15,
+      "best": 20
+    },
     "effect": "Катушка Потенции с заключённым демоном: при тесте Компенсатора можно включить — +10 к тесту, но −5 к Пределу Крит-Провала (обычно 91+) и Феномен при Крит-Провале. Poor.Q: −10 к Пределу; Good.Q: +15; Best.Q: +20.",
     "installed": "",
     "linkedWeapon": "",
