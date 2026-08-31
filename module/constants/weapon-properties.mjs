@@ -456,6 +456,19 @@ export const WEAPON_PROPERTIES = {
     auto: { reinforced: true }
   },
 
+  // Мутация «Hand of Death / Рука Смерти» (wdbc-hftn): срослось с рукой, само
+  // оружие получает +10 к тестам WS/BS (attackMod — тот же путь, что у всех
+  // остальных auto-надбавок к атаке). Ставится программно на КОНКРЕТНЫЙ
+  // предмет актора (module/apps/hand-of-death.mjs), не через Конструктор
+  // Механики самой Мутации — сама Мутация не может знать заранее, какое
+  // именно оружие игрок выберет.
+  fusedLimb: {
+    key: "fusedLimb", label: "Слито с рукой", en: "Fused Limb (Hand of Death)", rating: false, cat: "melee",
+    desc: "Срослось с рукой персонажа (Мутация «Рука Смерти»): +10 к тестам WS/BS.",
+    reminder: "🦾 Слито с рукой: +10 WS/BS",
+    auto: { attackMod: 10 }
+  },
+
   reliable: {
     key: "reliable", label: "Надёжное", en: "Reliable", rating: false, cat: "ranged",
     desc: "Очень надёжно. Заклинивает только при выпадении 100 на броске попадания. Повышает Надёжность на 1.",

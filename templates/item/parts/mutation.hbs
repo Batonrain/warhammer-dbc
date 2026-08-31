@@ -1,0 +1,22 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  МУТАЦИЯ — только «Рука Смерти» (wdbc-hftn): выбор своего оружия для     --}}
+{{!--  слияния, у остальных Мутаций пусто (isHandOfDeathItem проверяет имя).  --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{#if (eq item.type "mutation")}}
+
+<div class="item-section">
+  <div class="item-section-title">ПАРАМЕТРЫ МУТАЦИИ</div>
+  <div class="weapon-row">
+    <label class="wr-label">Книга</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+  </div>
+</div>
+
+{{#if handOfDeathHtml}}
+<div class="item-section">
+  <div class="item-section-title">РУКА СМЕРТИ</div>
+  {{{handOfDeathHtml}}}
+</div>
+{{/if}}
+{{/if}}{{!-- /mutation --}}

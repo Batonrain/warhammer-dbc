@@ -72,6 +72,9 @@
 {{#if (eq item.type "trait")}}
 {{> "systems/warhammer-dbc/templates/item/parts/trait.hbs"}}
 {{/if}}
+{{#if (eq item.type "mutation")}}
+{{> "systems/warhammer-dbc/templates/item/parts/mutation.hbs"}}
+{{/if}}
 {{#if (eq item.type "implant")}}
 {{> "systems/warhammer-dbc/templates/item/parts/implant.hbs"}}
 {{/if}}

@@ -46,6 +46,8 @@ import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
+import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
+import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
@@ -157,6 +159,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/item/parts/shield.hbs",
     "systems/warhammer-dbc/templates/item/parts/drug.hbs",          // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/trait.hbs",         // ← НОВОЕ
+    "systems/warhammer-dbc/templates/item/parts/mutation.hbs",      // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/psychic-power.hbs", // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/implant.hbs",       // ← НОВОЕ
     "systems/warhammer-dbc/templates/item/parts/tech-power.hbs",    // ← НОВОЕ
@@ -1584,6 +1587,23 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
   await syncCyberneticExcellenceArms(item.parent);
+});
+
+// Мутация «Рука Смерти» (wdbc-hftn): удаление ЛЮБОЙ из двух сторон слияния
+// должно снять свойства/пометки со ВТОРОЙ. Удалили саму Мутацию — снимаем
+// метки weaponProps с оружия (cleanupHandOfDeath). Удалили оружие — Foundry
+// его уже унёс само, чистить нечего физически, но флаги на Мутации
+// (fusedWeaponId/fusedHand) остаются устаревшими — сбрасываем, иначе кнопка
+// на её листе продолжит показывать несуществующее оружие как «слитое».
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  const actor = item.parent;
+  if (!(actor instanceof Actor)) return;
+  if (isHandOfDeathItem(item)) { await cleanupHandOfDeath(actor, item.id); return; }
+  if (item.type === "weapon" && item.getFlag("warhammer-dbc", "handOfDeathSource")) {
+    const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
+    if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });
+  }
 });
 
 // Откат перманентных правок характеристик/пулов, выданных шаблонами старого
