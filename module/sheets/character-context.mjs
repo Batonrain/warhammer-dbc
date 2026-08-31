@@ -36,6 +36,7 @@ import { isHelmetMod,
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
+import { raceMatches } from "../rules/race.mjs";
 
 /**
  * Текст всплывашки «Итого» (title, поддерживает перенос строки \n) — из чего
@@ -361,13 +362,10 @@ export function characterContext(actor) {
   // У Друкхари вместо этого — Кабал/Культ Ведьм/Ковен.
   // Друкхари бывает не только по расе: Иннари и Арлекин выбирают «Прошлое», и
   // выбравшему Друкхари полагается Кабал/Культ/Ковен, а не Мир-Корабль.
-  const pastRace = system.race === "ynnari"    ? system.ynnariPast
-                 : system.race === "harlequin" ? system.harlequinPast
-                 : "";
   // Управляет только показом друкхарийских вкладок/полей — пул Очков Боли
   // (actor.mjs, painActive) сознательно завязан строго на system.race==='drukhari',
   // Прошлое на него не влияет (решение владельца 31.08.2026).
-  context.isDrukhari     = system.race === "drukhari" || pastRace === "drukhari";
+  context.isDrukhari     = raceMatches(system, "drukhari");
   // Кнопка «Искусная Пытка» на вкладке БОЙ (wdbc-sk8s) — только владельцам Таланта.
   context.hasSkillfulTorture = hasSkillfulTorture(actor);
   // Кнопка «Аватар Резни» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.

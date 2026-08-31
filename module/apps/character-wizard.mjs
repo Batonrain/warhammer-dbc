@@ -66,6 +66,7 @@ import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, EQUIP_SHOP_PACKS, equipPointsTo
          canAffordRow, startingAmmoQuantity, SACRIFICE_MOD_COUNT, SACRIFICE_MOD_MAX_AVAILABILITY }
   from "../rules/equip-shop.mjs";
 import { ITEM_QUALITY_LIST, capUpgradeQuality, normQuality } from "../constants/quality.mjs";
+import { pastRaceKey, raceMatches } from "../rules/race.mjs";
 
 // Текст расы Астартес («Power Armour Mk III-VII» в race.gear) называет
 // ДИАПАЗОН марок, а не одну фиксированную вещь — игрок выбирает одну марку
@@ -920,7 +921,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   _charSum() {
     const sys = this.actor.system;
     const race = raceDef(sys.race);
-    const pastKey = sys.race === "ynnari" ? sys.ynnariPast : sys.race === "harlequin" ? sys.harlequinPast : "";
+    const pastKey = pastRaceKey(sys);
     const past = pastKey ? raceDef(pastKey) : null;
     const sub  = subracesOf(sys.race).find(s => s.key === sys.subrace) || null;
     return creationCharSum({ race, past, arch: null, sub });
@@ -2129,8 +2130,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   async _finishOriginStep() {
     const actor = this.actor;
     const sys = actor.system;
-    const pastKey = sys.race === "ynnari" ? sys.ynnariPast : sys.race === "harlequin" ? sys.harlequinPast : "";
-    if (sys.race === "azuriane" || pastKey === "azuriane") await actor.update({ "system.isPsyker": true });
+    if (raceMatches(sys, "azuriane")) await actor.update({ "system.isPsyker": true });
     await this._applyPendingHomeworldChoice();
     await this._applyPendingDivinationChoice();
   }

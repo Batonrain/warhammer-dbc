@@ -26,6 +26,7 @@ import { skillGrantOutcome } from "../rules/duplicate-grants.mjs";
 import { matchSpec } from "../constants/skill-specializations.mjs";
 import { refundXP, skillStepsCost, skillReason } from "./duplicate-refund.mjs";
 import { pickHighest } from "../rules/roll-advantage.mjs";
+import { pastRaceKey } from "../rules/race.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
 // Влияние (inf) сюда не входит — оно от arch.infRoll.
@@ -500,8 +501,7 @@ export function resolveCreation({ raceKey, subraceKey, archKey, ynnariPast, harl
   const race = raceDef(raceKey);
   const arch = archetypeEntries()[archKey];
   const sub  = subraceEntries()[subraceKey] || null;
-  const pastKey = raceKey === "ynnari" ? ynnariPast
-                : raceKey === "harlequin" ? harlequinPast : "";
+  const pastKey = pastRaceKey({ race: raceKey, ynnariPast, harlequinPast });
   const past = pastKey ? raceDef(pastKey) : null;
   return { race, arch, sub, past, pastKey };
 }
