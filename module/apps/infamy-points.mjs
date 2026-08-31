@@ -9,7 +9,7 @@
 //  преимущество/недостаток и особую кнопку-трату.
 // ════════════════════════════════════════════════════════════════════════
 
-import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE } from "../constants/demon-prince.mjs";
+import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE, DP_GODS_MAP } from "../constants/demon-prince.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
 
@@ -33,8 +33,9 @@ export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) 
   // а отрисовка — здесь, иначе полоса и пипсы показывают 5/3.
   ip = Math.max(0, Math.min(Number(ip) || 0, ipMax));
   const cor = actor.system.corruption?.value ?? 0;
+  const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
   const ipAbilities = DP_INFAMY_ABILITIES.map(a => {
-    const threshold = (a.key === "success" && godKey === "tzeentch") ? 0 : a.cor;
+    const threshold = (a.key === "success" && Number.isFinite(patron.successCorThreshold)) ? patron.successCorThreshold : a.cor;
     const dis = a.disGod === godKey;
     return { ...a, available: cor >= threshold && !dis,
       reason: dis ? "недоступно Богу" : (cor < threshold ? `нужно Cor ${threshold}` : "") };
@@ -101,6 +102,7 @@ export async function restoreInfamy(actor, ipFullPath, ipMax, meta) {
 export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta }) {
   const s = actor.system;
   const cor = s.corruption?.value ?? 0;
+  const patron = DP_PATRONAGE[godKey] || DP_PATRONAGE.undivided;
   const ip = Math.max(0, Math.min(ipMax, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0));
   if (ip < 1 && tempInfamyAmount(actor) < 1) return ui.notifications.warn("Нет Очков Бесчестия. Восстановите их в конце сессии.");
 
@@ -108,7 +110,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
   if (!ability && DP_PATRON_ABILITIES[godKey]?.key === key) ability = DP_PATRON_ABILITIES[godKey];
   if (!ability) return;
   if (ability.disGod === godKey) return ui.notifications.warn(`«${ability.label}» недоступно при этом Покровительстве.`);
-  const threshold = (ability.key === "success" && godKey === "tzeentch") ? 0 : (ability.cor ?? 0);
+  const threshold = (ability.key === "success" && Number.isFinite(patron.successCorThreshold)) ? patron.successCorThreshold : (ability.cor ?? 0);
   if (cor < threshold) return ui.notifications.warn(`«${ability.label}»: нужно Порчи ≥ ${threshold} (сейчас ${cor}).`);
 
   const spend = await spendFromInfamyPool(actor, 1, ipFullPath);
@@ -120,16 +122,16 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
     upd["system.fatigue.value"] = 0;
     lines.push("Прилив Сил: вся Усталость снята.");
   } else if (key === "heal") {
-    if (godKey === "khorne" && s.conditions?.bleeding)
-      return ui.notifications.warn("Кхорн: «Исцеление» недоступно при Кровотечении.");
+    if (patron.healBlockedByBleeding && s.conditions?.bleeding)
+      return ui.notifications.warn(`${DP_GODS_MAP[godKey]?.label || "Покровитель"}: «Исцеление» недоступно при Кровотечении.`);
     let dice, base = 0, clearNeg = false, maxHeal;
     if (cor >= 60)      { dice = "1d10"; clearNeg = true; maxHeal = 10; }
     else if (cor >= 20) { dice = "1d5";  base = 1; clearNeg = true; maxHeal = 6; }
     else                { dice = "1d5";  maxHeal = 5; }
     let healed;
-    if (godKey === "nurgle") { healed = maxHeal; lines.push("Живучесть Нургла: максимум без броска."); }
+    if (patron.healFlat) { healed = maxHeal; lines.push(`Живучесть ${DP_GODS_MAP[godKey]?.gen || "Покровителя"}: максимум без броска.`); }
     else { const r = await new Roll(dice).evaluate(); rolls.push(r); healed = r.total + base; }
-    if (godKey === "khorne") healed = Math.max(1, healed - 2);
+    if (patron.healPenalty) healed = Math.max(1, healed - patron.healPenalty);
     const val = Number(s.wounds?.value) || 0, wmax = Number(s.wounds?.max) || 0;
     upd["system.wounds.value"] = Math.min(wmax, val + healed);
     if (clearNeg) upd["system.wounds.critical"] = 0;
@@ -138,8 +140,8 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
     upd["system.conditions.stunned"] = false;
     upd["system.conditions.stunnedRounds"] = 0;
     lines.push("Приход в себя: снято Оглушение / Ступор / Шок.");
-  } else if (key === "success" && godKey === "tzeentch" && cor >= 20) {
-    const r = await new Roll("1d5").evaluate(); rolls.push(r);
+  } else if (key === "success" && patron.successBonusDice && cor >= (patron.successBonusDiceCor ?? Infinity)) {
+    const r = await new Roll(patron.successBonusDice).evaluate(); rolls.push(r);
     lines.push(`Вспышка Гения: +<b>${r.total}</b> Успехов к успешному тесту.`);
   } else {
     lines.push(ability.desc);
