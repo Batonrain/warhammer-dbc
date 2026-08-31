@@ -176,7 +176,10 @@ const TYPES = {
       talents: "", gear: "", wounds: "", infRoll: "", requiredPath: "",
       isPsyker: false, isTechpriest: false, psykerClass: "",
       grantsWarPlate: false, grantsImplants: false, description: "", notes: "",
-      trait: { name: "", benefit: "" }, bookSource: ""
+      trait: { name: "", benefit: "" }, bookSource: "",
+      // Таблица доступа Друкхари/Сслит (wdbc-t9ei) — значимо только у записей
+      // race:"drukhari", остальные архетипы держат пустые умолчания.
+      drukhariSubraces: [], sslythAccess: false
     }
   },
   // Элитные архетипы (корбук стр. 114-164): ступень поверх Архетипа. Трейты и

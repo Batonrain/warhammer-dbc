@@ -38,7 +38,10 @@ function docToDef(doc) {
     isPsyker: !!s.isPsyker, isTechpriest: !!s.isTechpriest, psykerClass: s.psykerClass || "",
     grantsWarPlate: !!s.grantsWarPlate, grantsImplants: !!s.grantsImplants,
     desc: s.description || "",
-    trait: hasTrait ? { name: s.trait.name || "", benefit: s.trait.benefit || "" } : null
+    trait: hasTrait ? { name: s.trait.name || "", benefit: s.trait.benefit || "" } : null,
+    // Таблица доступа Друкхари/Сслит (wdbc-t9ei) — значимо только у race:"drukhari".
+    drukhariSubraces: Array.isArray(s.drukhariSubraces) ? s.drukhariSubraces : [],
+    sslythAccess: !!s.sslythAccess
   };
 }
 
@@ -55,19 +58,13 @@ export async function refreshArchetypeCache() {
 export function archetypeEntries() { return CACHE || ARCHETYPES; }
 
 // Друкхарийские архетипы по субрасе (Книга Аэльдари: Ответвления, таблица
-// доступа). Недорождённый — базовая раса без выбранной субрасы: всё, кроме
-// Придворного (он только у Истиннорождённого). Ключи — system.key записей
-// компендиума archetypes/Друкхари.
-const DRUKHARI_BASE = ["drFreebooter", "drAssassin", "drOutcast", "drDuelist", "drPitFighter", "drAlchemist", "drKabalite"];
-const DRUKHARI_SUBRACE_ARCHETYPES = {
-  "":                 DRUKHARI_BASE,                                                          // Недорождённый
-  truebornDrukhari:   [...DRUKHARI_BASE, "drCourtier"],                                        // Истиннорождённый
-  mandrake:           ["drAssassin", "drOutcast", "drPitFighter"],                              // Мандрагора
-  wrack:              ["drFreebooter", "drAssassin", "drAlchemist", "drOutcast", "drPitFighter", "drKabalite"] // Развалина
-};
-// Сслит — не эльдар (races/Другие_Ксеносы), своих архетипов не имеет: таблица
-// даёт доступ к части архетипов Друкхари напрямую, теми же записями компендиума.
-const SSLYTH_ARCHETYPES = ["drFreebooter", "drDuelist", "drAssassin", "drOutcast", "drPitFighter"];
+// доступа) — данные лежат ПРЯМО НА ЗАПИСИ архетипа (drukhariSubraces/
+// sslythAccess, module/data/item/archetype.mjs, wdbc-t9ei): каждая запись
+// компендиума archetypes/Друкхари сама знает, каким субрасам и Сслит она
+// доступна, а не наоборот — код больше не держит отдельные списки ключей.
+// Известные значения субрасы Друкхари; неизвестное/пустое — как у
+// Недорождённого (тот же фоллбэк, что раньше давал `|| DRUKHARI_BASE`).
+const KNOWN_DRUKHARI_SUBRACES = ["", "truebornDrukhari", "mandrake", "wrack"];
 
 /**
  * Записи архетипов, доступные выбранной расе — та же фильтрация, что у Мастера создания.
@@ -86,10 +83,10 @@ export function archetypesForRace(raceKey, opts = {}) {
   if (raceKey === "azuriane")  return byRace("azuriane");
   if (raceKey === "harlequin") return byRace("harlequin");
   if (raceKey === "drukhari") {
-    const keys = DRUKHARI_SUBRACE_ARCHETYPES[subrace] || DRUKHARI_BASE;
-    return byRace("drukhari").filter(([k]) => keys.includes(k));
+    const key = KNOWN_DRUKHARI_SUBRACES.includes(subrace) ? subrace : "";
+    return byRace("drukhari").filter(([, a]) => (a.drukhariSubraces || []).includes(key));
   }
-  if (raceKey === "sslyth") return byRace("drukhari").filter(([k]) => SSLYTH_ARCHETYPES.includes(k));
+  if (raceKey === "sslyth") return byRace("drukhari").filter(([, a]) => !!a.sslythAccess);
   if (raceKey === "human")  return human();
   // Иннари: своих архетипов нет — «выберите любую прошлую расу и архетип».
   if (raceKey === "ynnari") return pastRace ? archetypesForRace(pastRace) : [];

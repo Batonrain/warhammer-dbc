@@ -331,6 +331,7 @@ export const ARCHETYPES = {
   // ─────────────────────────── ДРУКХАРИ ───────────────────────────
   drFreebooter: {
     name: "Вольный Стрелок", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari", "wrack"], sslythAccess: true,
     skills:  "Athletics+10, Awareness+10, Common Lore (War)+10, Medicae+10, Stealth+10, Tech-Use, Tech-Use+10 или Dodge+10, Trade (Armourer) или Trade (Weaponsmith)",
     talents: "Ambidextrous, Cold Hearted, Combat Sense, Bodyguard или Disarm или Double Team, Chamber In или Double Tap или Trick Shooter, Quick Draw или Rapid Reload, Die Hard или Iron Jaw, Sure Strike или Deadeye Shot или Marksman, Two Weapon Wielder (любой 1) или Reposition",
     gear:    "Splinter Rifle (Good.Q) или Splinter Pistol; 1 любое стрелковое оружие R0 (Best.Q) или R1 (Good.Q) или R2; 2 Hekatrix Blade (Best.Q)",
@@ -341,6 +342,7 @@ export const ARCHETYPES = {
   },
   drAssassin: {
     name: "Убийца", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari", "mandrake", "wrack"], sslythAccess: true,
     skills:  "Acrobatics+20, Athletics, Deceive, Dodge+10, Forbidden Lore (Underworld)+10, Stealth+10, Survival+10, Tech-Use, Interrogate или Sleight of Hand",
     talents: "Ambidextrous, Backstab, Blind Fighting, Blade Juggler, Cold Hearted, Close Quarters, Combat Sense, Knife Fighter или Riding the Momentum, Reposition или Preternatural Speed",
     gear:    "2 Hekatrix Blade (Best.Q); 2 Punch Dagger (Best.Q); Wychsuit (Good.Q)",
@@ -351,6 +353,7 @@ export const ARCHETYPES = {
   },
   drOutcast: {
     name: "Неприкаянный", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari", "mandrake", "wrack"], sslythAccess: true,
     skills:  "Awareness+10, Dodge+10, Parry+10, Common Lore (любые 2), Scholastic Lore (любое 1), Forbidden Lore (любое 1), Acrobatics+20 или Athletics+10, Charm+10 или Intimidate+10, Medicae+10 или Tech-Use+10, Stealth+10 или Security+10",
     talents: "7 талантов 1 уровня, 2 таланта 2 уровня, 1 талант 3 уровня (на выбор)",
     gear:    "1 любое рукопашное оружие R0 (Best.Q) или R1 (Good.Q) или R2; 1 любое стрелковое оружие R0 (Best.Q) или R1 (Good.Q) или R2",
@@ -361,6 +364,7 @@ export const ARCHETYPES = {
   },
   drCourtier: {
     name: "Придворный", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["truebornDrukhari"], sslythAccess: false,
     skills:  "Charm+10, Command+10, Common Lore (Intrigue)+10, Deceive+10, Forbidden Lore (Underworld)+10, Interrogate+10, Scrutiny+10, Command+20 или Charm+20, Interrogate+20 или Scrutiny+20",
     talents: "Air of Authority, Clues from the Crowds, Face in a Crowd, Mimic, Peer (3 организации на выбор), Pity the Weak, Radiant Presence, Minion (Высший, Человек, ×2)",
     gear:    "Splinter Swarm Pistol; Loud Hailer (Best.Q); Translator Rod (Best.Q); Disguise Kit (Good.Q)",
@@ -371,6 +375,7 @@ export const ARCHETYPES = {
   },
   drDuelist: {
     name: "Дуэлянт", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari"], sslythAccess: true,
     skills:  "Athletics+10, Awareness+10, Common Lore (War)+10, Dodge+10, Parry+10, Command+10 или Intimidate+10, Dodge+20 или Parry+20, Survival+10 или Stealth+10",
     talents: "Bodyguard, Blade Binding, Disarm, Leap Up, Quick Draw, Reaper, Steady Footwork, Sure Strike, Blade Reader или Deflect Shot",
     gear:    "Monomolecular Blade (Best.Q); 3 модификации для оружия (до R3)",
@@ -381,6 +386,7 @@ export const ARCHETYPES = {
   },
   drPitFighter: {
     name: "Боец Ямы", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari", "mandrake", "wrack"], sslythAccess: true,
     skills:  "Athletics+20, Acrobatics+20, Awareness+10, Dodge+10, Parry+10, Survival+10 или Stealth+10",
     talents: "Die Hard, Everything a Weapon, Headcracker, Iron Jaw, Precise Blow, Roundhouse Kick, Street Fighting, Sure Strike, Whack",
     gear:    "Xenohide Tunic (Best.Q) или Wychsuit (Best.Q); 1 любое рукопашное оружие R2 или 2 любых рукопашных R0; 1 любое стрелковое оружие R2 или 2 любых стрелковых R0",
@@ -391,6 +397,7 @@ export const ARCHETYPES = {
   },
   drAlchemist: {
     name: "Алхимик", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari", "wrack"], sslythAccess: false,
     skills:  "Tech-Use+10, Medicae+10, Scholastic Lore (Chymistry)+10, Tech-Use+20 или Medicae+20, Trade (Weaponsmith) или Trade (Armourer), Trade (Chymist)+10 или Trade (Stylist)+10, 1 Scholastic Lore на выбор",
     talents: "But a Scratch, Degustator, Fast Stitches, Restitching, Snake Eater, Deadeye Shot или Sure Strike",
     gear:    "Drukhari Pistol Needler (Good.Q) или Drukhari Autogun (Best.Q); Surgical Kit (Best.Q) или Chemical Laboratory (Best.Q) или Chemistry Analyzer (Best.Q); 20 доз друкхарийской химии до R1; 10 единиц химических реагентов; 3 рецепта Алхимии R1 и 1 рецепт R2, или 3 генетических шаблона R1 и 1 генетический шаблон R2; 4 биоимпланта (до R2 Good.Q или до R1 Best.Q) или Enzyme Vat (Good.Q, 2-й эффект)",
@@ -401,6 +408,7 @@ export const ARCHETYPES = {
   },
   drKabalite: {
     name: "Кабалит", race: "drukhari", group: "Друкхари",
+    drukhariSubraces: ["", "truebornDrukhari", "wrack"], sslythAccess: false,
     skills:  "Athletics+10, Awareness+10, Common Lore (War)+10, Common Lore (любой 1), Dodge+10, Parry+10, Dodge+20 или Parry+20",
     talents: "Ambidextrous, Cold Hearted, Combat Sense, Bodyguard или Disarm или Double Team, Chamber In или Double Tap или Trick Shooter, Quick Draw или Rapid Reload, Sure Strike или Deadeye Shot или Marksman, Two Weapon Wielder (любой 1) или Reposition",
     gear:    "Splinter Rifle (Best.Q) или Blaster",

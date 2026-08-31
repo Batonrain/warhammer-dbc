@@ -7,6 +7,8 @@
     "key": "drOutcast",
     "race": "drukhari",
     "group": "Друкхари",
+    "drukhariSubraces": ["", "truebornDrukhari", "mandrake", "wrack"],
+    "sslythAccess": true,
     "charBonus": {
       "t": 3,
       "s": 3

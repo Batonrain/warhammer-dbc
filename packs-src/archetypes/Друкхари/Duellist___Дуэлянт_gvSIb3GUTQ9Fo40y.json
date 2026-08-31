@@ -7,6 +7,8 @@
     "key": "drDuelist",
     "race": "drukhari",
     "group": "Друкхари",
+    "drukhariSubraces": ["", "truebornDrukhari"],
+    "sslythAccess": true,
     "charBonus": {
       "ws": 3,
       "ag": 3
