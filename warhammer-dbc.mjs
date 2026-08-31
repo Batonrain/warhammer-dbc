@@ -199,8 +199,9 @@ Hooks.once("init", () => {
   CONFIG.Actor.documentClass = WarhammerActor;
   CONFIG.Item.documentClass  = WarhammerItem;
 
-  // Типы данных документов. Перечисленные здесь типы читают схему из
-  // module/data/, а не из template.json: там их записи пусты (см. index.mjs).
+  // Типы данных документов — template.json в системе больше нет вовсе.
+  // Перечень имён типов задаёт documentTypes в system.json; поля каждого
+  // типа описаны в module/data/ и регистрируются здесь (см. index.mjs).
   Object.assign(CONFIG.Item.dataModels, ITEM_DATA_MODELS);
   Object.assign(CONFIG.Actor.dataModels, ACTOR_DATA_MODELS);
 
