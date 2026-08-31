@@ -17,7 +17,7 @@
       "openTopped": false,
       "manoeuvreMod": 0,
       "spdMod": 0,
-      "spdDamageReduce": 0,
+      "spdDamageReduce": false,
       "noMove": false,
       "swerveDisabled": false,
       "fullMoveSpdMult": 0,

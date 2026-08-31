@@ -6,7 +6,11 @@
 // одного потребителя нигде в module/ (проверено grep, wdbc-m38e, 29.08.2026);
 // удалён вместе с фабрикой T()/IMG, которые существовали только ради него.
 export const VEHICLE_TRAIT_EFFECTS = {
-  openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: 0, noMove: false,
+  openTopped: false, manoeuvreMod: 0, spdMod: 0,
+  // Флаг, не число: X читается из рейтинга Черты на самом предмете, как у
+  // deflectorShield/autonomous ниже — общий пак не может нести готовое число,
+  // разное у каждого шагохода (rules/vehicle.mjs, wdbc-07a6).
+  spdDamageReduce: false, noMove: false,
   swerveDisabled: false, fullMoveSpdMult: 0, smallMoveOnly: false, ignoreDifficultTerrain: false,
   critHalved: false, trackHitsToHull: false, siege: false, reloadRapid: false,
   commandBonus: 0, repairBonus: 0,

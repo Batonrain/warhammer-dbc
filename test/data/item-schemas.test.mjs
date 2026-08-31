@@ -508,7 +508,7 @@ const TYPES = {
       // в библиотеке Черт позже и лежат у всех предметов пака. Умолчание берётся
       // из самой библиотеки (VEHICLE_TRAIT_EFFECTS).
       effects: {
-        openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: 0,
+        openTopped: false, manoeuvreMod: 0, spdMod: 0, spdDamageReduce: false,
         noMove: false, swerveDisabled: false, fullMoveSpdMult: 0,
         smallMoveOnly: false, ignoreDifficultTerrain: false, critHalved: false,
         trackHitsToHull: false, siege: false, reloadRapid: false,

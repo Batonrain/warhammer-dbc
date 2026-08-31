@@ -88,7 +88,10 @@ export function prepareVehicleDerived(items, system) {
     }
     tf.manoeuvreMod    += Number(e.manoeuvreMod)    || 0;
     tf.spdMod          += Number(e.spdMod)          || 0;
-    tf.spdDamageReduce += Number(e.spdDamageReduce) || 0;
+    // Многоногая (X) и подобные — флаг + X = рейтинг Черты (тот же приём, что
+    // deflectorShield/autonomous выше): значение X разное у каждого шагохода,
+    // общий шаблон пака не может нести готовое число (wdbc-07a6).
+    if (e.spdDamageReduce) tf.spdDamageReduce += Number(it.system.rating) || 0;
     // Коляска (X): +X Структуры байку (стр. 478).
     if (e.sidecarStructure) tf.sidecarStructure += Number(it.system.rating) || 0;
     // Пустотные Щиты (X): X = число отдельных щитов.
