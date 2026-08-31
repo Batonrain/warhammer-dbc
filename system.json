@@ -898,6 +898,7 @@
     "RegionBehavior": {
       "difficultTerrain": {},
       "lingerZone": {},
+      "gravitonZone": {},
       "cover": {},
       "runicWeaveZone": {}
     }

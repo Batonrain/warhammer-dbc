@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 import {
   normalizeAngle360, normalizeAngle180, bearingDegrees,
   relativeBearing, isWithinArc, isFrontArcHit,
-  parseMountArc, isWithinMountArc
+  parseMountArc, isWithinMountArc, nearestPointBehindOnRay
 } from "../../module/rules/facing.mjs";
 
 describe("normalizeAngle360", () => {
@@ -140,5 +140,48 @@ describe("isWithinMountArc", () => {
   it("разворот машины сдвигает сектор вместе с ней", () => {
     // Машина развернулась на восток (90) — «левый» спонсон (центр −90 от курса) теперь смотрит на север (0).
     expect(isWithinMountArc(90, 0, "−135°..−45°")).toBe(true);
+  });
+});
+
+describe("nearestPointBehindOnRay (Выстрел Насквозь, wdbc-wlwf)", () => {
+  const shooter = { x: 0, y: 0 };
+  const target  = { x: 0, y: 100 }; // прямо «на юг» от стрелка
+
+  it("кандидат строго на продолжении луча, дальше цели — находится", () => {
+    const behind = { x: 0, y: 200, id: "behind" };
+    expect(nearestPointBehindOnRay(shooter, target, [behind], 10)).toEqual(behind);
+  });
+
+  it("кандидат МЕЖДУ стрелком и целью — не считается «позади»", () => {
+    const between = { x: 0, y: 50 };
+    expect(nearestPointBehindOnRay(shooter, target, [between], 10)).toBeNull();
+  });
+
+  it("кандидат ровно на позиции цели — не дальше, не считается", () => {
+    expect(nearestPointBehindOnRay(shooter, target, [{ x: 0, y: 100 }], 10)).toBeNull();
+  });
+
+  it("кандидат позади, но далеко в стороне от луча — вне коридора, не считается", () => {
+    const wide = { x: 500, y: 200 };
+    expect(nearestPointBehindOnRay(shooter, target, [wide], 10)).toBeNull();
+  });
+
+  it("кандидат позади и в пределах коридора вбок — считается", () => {
+    const nearLine = { x: 5, y: 200 };
+    expect(nearestPointBehindOnRay(shooter, target, [nearLine], 10)).toEqual(nearLine);
+  });
+
+  it("несколько кандидатов позади — берётся ближайший к цели (наименьшая проекция)", () => {
+    const near = { x: 0, y: 150, id: "near" };
+    const far  = { x: 0, y: 300, id: "far" };
+    expect(nearestPointBehindOnRay(shooter, target, [far, near], 10)).toEqual(near);
+  });
+
+  it("стрелок и цель в одной точке — направления нет, null", () => {
+    expect(nearestPointBehindOnRay(shooter, shooter, [{ x: 0, y: 200 }], 10)).toBeNull();
+  });
+
+  it("нет ни одного кандидата позади — null", () => {
+    expect(nearestPointBehindOnRay(shooter, target, [], 10)).toBeNull();
   });
 });

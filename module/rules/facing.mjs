@@ -58,6 +58,41 @@ export function bearingDegrees(from, to) {
 }
 
 /**
+ * Ближайшая точка из `candidates`, лежащая ПОЗАДИ `throughPos` на луче
+ * origin→throughPos (Выстрел Насквозь, wdbc-wlwf/wdbc-t9ei): «следующая
+ * цель по линии огня» — не любая ближайшая цель на сцене, а именно та, что
+ * находится дальше от стрелка, чем пробитая цель, и примерно на той же
+ * прямой (боковой допуск `corridorPx` — снаряд не идеальная линия толщиной
+ * в атом). Каждый элемент `candidates` — произвольный объект с {x,y}, лишние
+ * поля не трогаются и возвращаются как есть (вызывающая сторона сама
+ * прикладывает к позиции ссылку на токен).
+ * @param {{x:number,y:number}} originPos     Позиция стрелка.
+ * @param {{x:number,y:number}} throughPos    Позиция уже пробитой цели.
+ * @param {Array<{x:number,y:number}>} candidates
+ * @param {number} corridorPx  Допустимое боковое отклонение от луча, пиксели.
+ * @returns {object|null}  Элемент candidates с минимальной проекцией «дальше цели», либо null.
+ */
+export function nearestPointBehindOnRay(originPos, throughPos, candidates, corridorPx) {
+  const dx = throughPos.x - originPos.x;
+  const dy = throughPos.y - originPos.y;
+  const rayLen = Math.hypot(dx, dy);
+  if (!rayLen) return null; // стрелок и цель в одной точке — направления нет
+  const ux = dx / rayLen, uy = dy / rayLen;
+  const throughProj = dx * ux + dy * uy; // = rayLen, проекция самой цели
+
+  let best = null, bestProj = Infinity;
+  for (const c of candidates) {
+    const vx = c.x - originPos.x, vy = c.y - originPos.y;
+    const proj = vx * ux + vy * uy;
+    if (proj <= throughProj) continue; // не дальше пробитой цели — не «позади»
+    const lateral = Math.abs(vx * uy - vy * ux); // перпендикуляр к лучу
+    if (lateral > corridorPx) continue;
+    if (proj < bestProj) { bestProj = proj; best = c; }
+  }
+  return best;
+}
+
+/**
  * Насколько пеленг отклоняется от текущего разворота наблюдателя: 0 — прямо
  * по курсу, ±90 — строго сбоку, ±180/-180 — строго сзади. Знак — по часовой
  * (положительный = правее курса), но большинству вызывающих нужен только

@@ -31,6 +31,10 @@ import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from ".
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
+import { placeGravitonZone, processGravitonShooterTurnStart, clearAllGravitonZones } from "./regions/graviton-zone.mjs";
+import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
+import { findArcTarget } from "./combat/arc.mjs";
+import { findThroughShotTarget } from "./combat/through-shot.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from "./combat/action-economy.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
@@ -508,6 +512,25 @@ export function registerHooks() {
           return;
         }
 
+        // Гравитонное (wdbc-wlwf) — персистентная зона, что тает 1м/ход
+        // стрелка + Трудный Ландшафт−30 (module/regions/graviton-zone.mjs).
+        // Начальное попадание — как у обычного Взрывного: накрытые токены
+        // становятся целями, дальше «Применить урон» → «Всем» вручную.
+        if (ds.graviton === "1") {
+          if (!game.combat) return ui.notifications.warn("⚠️ Гравитонная зона отсчитывает раунды боя — начните бой.");
+          const result = await placeGravitonZone(shape, meters, ds.attackerUuid || "", ds.weaponName || "Гравитонное");
+          if (!result) return; // ГМ отменил размещение (ПКМ)
+          if (result.tokens.length) targetTokens(result.tokens);
+          ui.notifications.info(result.tokens.length
+            ? `Отмечено целей: ${result.tokens.length}. Дальше — «Применить урон» → «Всем».`
+            : "В зоне шаблона никого нет.");
+          triggerBlastAnimation({
+            attackerUuid: ds.attackerUuid, itemUuid: ds.itemUuid,
+            tokens: result.tokens, region: result.region
+          });
+          return;
+        }
+
         const result = await placeAttackTemplate(shape, ds.weaponName || "Зона поражения");
         if (!result) return; // ГМ отменил размещение (ПКМ)
         if (!result.tokens.length) {
@@ -520,6 +543,68 @@ export function registerHooks() {
           attackerUuid: ds.attackerUuid, itemUuid: ds.itemUuid,
           tokens: result.tokens, region: result.region
         });
+      });
+    });
+
+    // Дымовая завеса (свойство Smoke, wdbc-wlwf) — не накрывает целей, просто
+    // включает готовую галочку «Дым» Трудного Ландшафта на новой зоне
+    // (module/regions/difficult-terrain.mjs::placeSmokeZone).
+    html.querySelectorAll(".wh-place-smoke-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const meters = parseFloat(ds.meters) || 0;
+        if (meters <= 0) return ui.notifications.warn("⚠️ У оружия не задан радиус дымовой завесы.");
+        const shape = blastCircleShape(meters, pxPerMeter());
+        const region = await placeSmokeZone(shape, ds.weaponName || "Дым");
+        if (!region) return; // ГМ отменил размещение (ПКМ)
+      });
+    });
+
+    // Дуга (свойство Arc, wdbc-wlwf) — ГМ выбирает (control) уже поражённый
+    // токен на сцене, скрипт ищет ближайшего ДРУГОГО в 5м (кроме самого
+    // стрелка) и сразу применяет к нему Y(El) Dmg, Pen Y (module/combat/arc.mjs).
+    html.querySelectorAll(".wh-arc-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const primaryToken = canvas.tokens?.controlled?.[0];
+        if (!primaryToken?.actor) return ui.notifications.warn("⚠️ Выберите токен поражённой цели на сцене!");
+        const attackerToken = ds.attackerUuid
+          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(true)?.[0] : null;
+        const candidates = canvas.tokens.placeables.filter(t => t !== primaryToken && t !== attackerToken);
+        const target = findArcTarget(primaryToken, candidates, 5);
+        if (!target?.actor) return ui.notifications.info("⚡ В радиусе 5м от цели никого нет — Дуга не сработала.");
+        const arcDamage = parseInt(ds.arcDamage || "0");
+        await applyDamageToActor(target.actor, {
+          rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", hitLocation: "Торс",
+          weaponName: ds.weaponName || "", attackerName: ds.attacker || "", attackerUuid: ds.attackerUuid || ""
+        });
+        ui.notifications.info(`⚡ Дуга поразила ${target.name}.`);
+      });
+    });
+
+    // Выстрел Насквозь (wdbc-wlwf) — пробитие уже определено (damage.mjs),
+    // здесь только геометрия «следующей цели по линии огня»
+    // (module/combat/through-shot.mjs::findThroughShotTarget): находит и
+    // сразу отмечает целью, дальше новый бросок урона (со снижением) и
+    // «Применить урон» — вручную, как и раньше.
+    html.querySelectorAll(".wh-through-shot-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const attackerToken = ds.attackerUuid
+          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(true)?.[0] : null;
+        const targetActor  = ds.targetUuid ? await fromUuid(ds.targetUuid).catch(() => null) : null;
+        const targetToken  = targetActor?.getActiveTokens?.(true)?.[0];
+        if (!attackerToken || !targetToken) {
+          return ui.notifications.warn("⚠️ Нет токена стрелка или пробитой цели на сцене — геометрию посчитать не из чего.");
+        }
+        const candidates = canvas.tokens.placeables.filter(t => t.actor && t !== attackerToken && t !== targetToken);
+        const next = findThroughShotTarget(attackerToken, targetToken, candidates);
+        if (!next) return ui.notifications.info("🎯 Позади цели по линии огня никого нет.");
+        canvas.tokens.setTargets([next.id]);
+        ui.notifications.info(`🎯 Выстрел Насквозь: следующая цель — ${next.name}. Бросьте урон со снижением и примените обычной кнопкой.`);
       });
     });
 
@@ -1181,6 +1266,7 @@ function _attachFateContextMenu(message, html) {
     _lastTurnCombatant.delete(combat.id);
     // «На поле боя X ходов стрелка» вне боя не имеет смысла — считать больше не от чего.
     await clearAllLingerZones();
+    await clearAllGravitonZones();
   });
 
   // Бой кончился — снять транс «Дух героя» у всех, кто в него впадал, и
@@ -1205,6 +1291,15 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM) return;
     if (changed?.round === undefined && changed?.turn === undefined) return;
     if (combat.combatant) await processShooterTurnStart(combat.combatant);
+  });
+
+  // Гравитонные зоны (module/regions/graviton-zone.mjs, wdbc-wlwf) — тот же
+  // триггер, что и у «Остаётся»: усыхание на 1м привязано к началу Хода
+  // именно СТРЕЛКА, своя отдельная пара Hooks.on по тому же принципу.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM) return;
+    if (changed?.round === undefined && changed?.turn === undefined) return;
+    if (combat.combatant) await processGravitonShooterTurnStart(combat.combatant);
   });
 
   // ── Экономика действий (стр. 12): восполнить ОД/Реакции актору, чей Ход
