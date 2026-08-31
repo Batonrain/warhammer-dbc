@@ -36,6 +36,17 @@
           <span class="wh-hud-pips">{{#each fate.pips as |p|}}<span class="wh-hud-pip {{#if p.full}}full{{/if}}"></span>{{/each}}</span>
         </div>
         {{/if}}
+        {{!-- ОД/Реакции (wdbc-jpls) — единственное окно, которое игрок держит
+              открытым весь бой, раньше не показывало главный боевой ресурс.
+              Вне активного Encounter — нейтральный (тусклый) вид, не скрыт:
+              персонаж мог свернуть вкладку листа, и число всё равно полезно. --}}
+        {{#if actionEconomy}}
+        <div class="wh-hud-ae{{#unless actionEconomy.encounterActive}} wh-hud-ae-idle{{/unless}}"
+             data-tooltip="Очки Действия / Реакции (стр. 12){{#unless actionEconomy.encounterActive}} — вне боя не тратятся{{/unless}}">
+          <span class="wh-hud-ae-item"><span class="wh-hud-tlabel">ОД</span> {{actionEconomy.ap.value}}<span class="wh-hud-ae-max">/{{actionEconomy.ap.max}}</span></span>
+          <span class="wh-hud-ae-item"><span class="wh-hud-tlabel">РЕАКЦ.</span> {{actionEconomy.reactions.value}}<span class="wh-hud-ae-max">/{{actionEconomy.reactions.max}}</span></span>
+        </div>
+        {{/if}}
         {{#if lamps.length}}
         <div class="wh-hud-lamps">
           {{#each lamps as |l|}}<span class="wh-hud-lamp {{#if l.bad}}bad{{/if}}">{{l.label}}</span>{{/each}}
@@ -87,7 +98,8 @@
             </div>
             {{/if}}
             <div class="wh-hud-hact">
-              <a class="wh-hud-fire" data-fire="{{h.slot}}" data-tooltip="Выбрать цель и {{#if h.isMelee}}ударить{{else}}стрелять{{/if}}">
+              <a class="wh-hud-fire{{#if h.fireGate.disabled}} hud-disabled{{/if}}" data-fire="{{h.slot}}"
+                 data-tooltip="{{#if h.fireGate.title}}{{h.fireGate.title}}{{else}}Выбрать цель и {{#if h.isMelee}}ударить{{else}}стрелять{{/if}}{{/if}}">
                 <i class="fas fa-crosshairs"></i> {{#if h.isMelee}}УДАР{{else}}ОГОНЬ{{/if}}
               </a>
               {{#unless h.isMelee}}

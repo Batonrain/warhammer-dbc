@@ -135,6 +135,13 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 }
 .wh-hud-lamp.bad { color: #ff6b6b; border-color: #ff6b6b; animation: wh-hud-pulse 1.4s infinite; }
 
+/* ОД/Реакции (wdbc-jpls) — компактная строка рядом с Судьбой/лампочками. */
+.wh-hud-ae { display: flex; align-items: center; gap: 10px; }
+.wh-hud-ae-item { display: flex; align-items: baseline; gap: 4px; font-size: 13px; color: #4dffa6; font-weight: 700; }
+.wh-hud-ae-max { font-size: 11px; color: #5aa37e; font-weight: 400; }
+.wh-hud-ae-idle .wh-hud-ae-item { color: #6a8878; }
+.wh-hud-ae-idle .wh-hud-ae-max { color: #48604e; }
+
 /* ── Оружие: две руки ─────────────────────────────────────────────────── */
 .wh-hud-gun { flex: 1; min-width: 300px; max-width: 520px; gap: 4px; }
 .wh-hud-gname {
@@ -180,6 +187,13 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 }
 .wh-hud-fire:hover { background: linear-gradient(180deg, #a8ffd0, #4dffa6); box-shadow: 0 0 10px rgba(77,255,166,.45); }
 .wh-hud-fire:active { transform: scale(.96); }
+/* Гейт ОГОНЬ/УДАР при нехватке ОД (wdbc-jpls) — <a>, не <button>: клик
+   гасится в JS (hud.mjs, classList.contains), серый вид — здесь. */
+.wh-hud-fire.hud-disabled {
+  cursor: not-allowed; opacity: .5; filter: grayscale(.6);
+  background: linear-gradient(180deg, #6a8878, #3a5c4c); box-shadow: none;
+}
+.wh-hud-fire.hud-disabled:hover { background: linear-gradient(180deg, #6a8878, #3a5c4c); box-shadow: none; }
 
 .wh-hud-footrow { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .wh-hud-shield {

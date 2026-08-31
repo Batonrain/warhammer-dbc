@@ -14,6 +14,7 @@ import { _toggleShield } from "../combat/shield.mjs";
 import { GRIPS, parseGrips } from "../constants/combat.mjs";
 import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
+import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -153,7 +154,7 @@ const WOUND_COLOR = { healthy: "#4dffa6", wounded: "#e0c060", nearcrit: "#e0762a
 
 /* ── Данные панели ─────────────────────────────────────────────────────── */
 
-function hudData(actor) {
+export function hudData(actor) {
   const sys = actor.system ?? {};
   const ws  = woundStatus(sys);
 
@@ -203,6 +204,14 @@ function hudData(actor) {
           })))
       : [];
 
+    // Гейт кнопки ОГОНЬ/УДАР (wdbc-jpls, тот же предикат, что и wdbc-qjnk):
+    // рукопашная База всегда стоит минимум 1 ОД (Полудействие) — ни одна не
+    // бесплатна (module/constants/combat.mjs, MELEE_BASES), поэтому 0 ОД уже
+    // однозначно блокирует любой рукопашный Приём. Дальнобойная стрельба ОД
+    // сейчас не тратит вовсе (см. action-economy.mjs, apCostForActionType
+    // применяется только к рукопашной) — гейтить «ОГОНЬ» нечем, не гейтим.
+    const fireGate = melee ? apSpendGate(actor, 1) : { disabled: false, title: "" };
+
     return {
       slot: slotKey, label, empty: false,
       id: w.id, name: w.name, isMelee: melee,
@@ -212,7 +221,7 @@ function hudData(actor) {
       empty2: !melee && (Number(g.magazineCur) || 0) <= 0 && (Number(g.magazineMax) || 0) > 0,
       noMag: !Number(g.magazineMax),
       recharge: !!g.needsRecharge,
-      rof,
+      rof, fireGate,
       gripOpts, profOpts, hasOptions: gripOpts.length > 0 || profOpts.length > 0,
       damage: g.damage || "", pen: Number(g.penetration) || 0
     };
@@ -286,10 +295,21 @@ function hudData(actor) {
   const combatant = game.combat?.combatant;
   const myTurn = !!(combatant && combatant.actorId === actor.id);
 
+  // ОД/Реакции (wdbc-jpls): единственное окно, которое игрок держит открытым
+  // весь бой, раньше не показывало главный боевой ресурс вовсе — те же данные,
+  // что и на вкладке БОЙ листа (module/sheets/character-context.mjs), без
+  // доп. пула на Избегание (тут только быстрый статус, не полная панель).
+  const actionEconomy = hasActionEconomy(actor) ? {
+    ap:        { value: Number(sys.actionPoints?.value) || 0, max: Number(sys.actionPoints?.max) || 0 },
+    reactions: { value: Number(sys.reactions?.value) || 0, max: Number(sys.reactions?.max) || 0 },
+    encounterActive: isEncounterActive()
+  } : null;
+
   return {
     name: actor.name, img: actor.img,
     isGM: game.user.isGM,
     myTurn,
+    actionEconomy,
     armor,
     // Раны — крупным блоком.
     wounds: {
@@ -396,8 +416,11 @@ function wire(el, actor) {
   }));
 
   // Огонь/удар (по руке): Fallout-стиль — перекрестие → цель → диалог атаки
-  // (и для стрелкового, и для ближнего).
+  // (и для стрелкового, и для ближнего). Кнопка — <a>, не <button>: атрибут
+  // disabled её клик не остановит, гейт (wdbc-jpls, apSpendGate — тот же
+  // предикат, что wdbc-qjnk) держится классом hud-disabled из hudData.fireGate.
   el.querySelectorAll("[data-fire]").forEach(b => b.addEventListener("click", () => {
+    if (b.classList.contains("hud-disabled")) return;
     const w = handWeapon(b.dataset.fire);
     if (!own || !w) return;
     beginTargeting(actor, w, () => actor.sheet._showAttackDialog?.(w));
