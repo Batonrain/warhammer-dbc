@@ -28,7 +28,7 @@
 //  создаётся программно в момент атаки (та же геометрия из templates.mjs).
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { tokensInRegion } from "../combat/templates.mjs";
+import { tokensInRegion, pxPerMeter } from "../combat/templates.mjs";
 import { applyDamageToActor } from "../combat/damage.mjs";
 import { SCATTER_ROSE } from "../combat/scatter.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -107,7 +107,7 @@ export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
   async _drift() {
     const region = this.region;
     if (!region) return;
-    const px = canvas.dimensions.distancePixels;
+    const px = pxPerMeter();
 
     const dirRoll = await new Roll("1d8").evaluate();
     const rose = SCATTER_ROSE[dirRoll.total - 1];

@@ -19,6 +19,11 @@
 //  раньше цели туда ГМ отмечал вручную (см. doombc-blast-scatter).
 // ═══════════════════════════════════════════════════════════════════════════
 
+/** Пикселей на 1 метр текущей сцены — тот же приём у Шаблонов/Остаётся/Тактической карты. */
+export function pxPerMeter() {
+  return canvas?.dimensions?.distancePixels || canvas?.grid?.size || canvas?.scene?.grid?.size || 100;
+}
+
 /**
  * Круг радиусом `meters` — Взрывное (blastRating).
  * @param {number} meters

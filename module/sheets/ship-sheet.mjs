@@ -12,6 +12,7 @@ import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, O
          MUTINY_APPROACHES, MUTINY_WIN_DOS } from "../constants/ship.mjs";
 import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
+import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
@@ -1743,9 +1744,9 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     });
   }
 
-  /** Степени успеха: по десяткам разницы, как в основных правилах. */
+  /** Степени успеха: по десяткам разницы, как в основных правилах (0 при провале). */
   _dos(roll, target) {
-    return roll <= target ? Math.max(1, Math.floor((target - roll) / 10) + 1) : 0;
+    return Math.max(0, degreesOfSuccess(roll, target));
   }
 
   async _runRecovery(way, form) {

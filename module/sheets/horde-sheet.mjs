@@ -6,6 +6,7 @@ import { CHARACTERISTICS, SKILL_RANKS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES } from "../constants/items.mjs";
 import { HIT_LOCATIONS } from "../constants/combat.mjs";
+import { degreesOfSuccess } from "../constants/craft.mjs";
 import { resolveCharFormula, _degWord, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto, applyDamageDiceMods,
          buildPropertyChatBlock, buildTargetEffectButtons } from "../combat/weapon-properties.mjs";
@@ -550,7 +551,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
     const hit = rv <= threshold;                       // «промах» у Орды — тоже урон, но без кубов Магнитуды и его можно Избегать
-    const deg = hit ? Math.floor((threshold - rv) / 10) + 1 : Math.floor((rv - threshold) / 10) + 1;
+    const deg = Math.abs(degreesOfSuccess(rv, threshold));
 
     // Место попадания (по перевёрнутым цифрам, как в обычной атаке).
     const rvStr = String(rv).padStart(2, "0");
