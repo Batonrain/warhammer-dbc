@@ -8,6 +8,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { specChar } from "./skill-specializations.mjs";
+import { effectivePricingMode, charPatronCat, skillPatronCat, talentPatronCat, mixedCat }
+  from "./patronage.mjs";
 
 // Склонности характеристик (стр. 24): Хар → [склонность хар-ки, склонность спец.].
 export const CHAR_APTITUDES = {
@@ -89,18 +91,48 @@ export function fixedTalentCost(name, patron = "") {
 // cultCat: "ally" | "enemy" | null (см. legions.mjs → cultureCat).
 //
 // `opts` — имя Таланта и Покровитель персонажа: по ним берётся цена из книги,
-// если она у этого Таланта своя.
+// если она у этого Таланта своя. `opts.actor` — включает диспетчер режима цены
+// (constants/patronage.mjs, effectivePricingMode): без него (вызывающий не
+// передал актора) поведение прежнее — всегда по Склонностям, ничего не ломает
+// в местах, куда актор ещё не прокинут.
+//
+// Категория по действующему режиму цены персонажа: Склонности (как раньше),
+// Покровительство (Бог объекта ↔ patronGod персонажа) или Смешанная (обе
+// сразу, module/constants/patronage.mjs → mixedCat). Без актора — всегда
+// Склонности (безопасный дефолт для мест, ещё не прокинувших актора).
+export function resolveCharCat(charKey, charApts, actor) {
+  const apt = () => aptitudeCat(charApts, CHAR_APTITUDES[charKey] || []);
+  const mode = actor ? effectivePricingMode(actor) : "aptitude";
+  if (mode === "aptitude") return apt();
+  const patron = () => charPatronCat(charKey, actor.system?.patronGod, actor.system?.patronStereotype);
+  return mode === "patronage" ? patron() : mixedCat(apt(), patron());
+}
+export function resolveSkillCat(skillKey, specialty, itemApts, charApts, actor) {
+  const apt = () => aptitudeCat(charApts, itemApts);
+  const mode = actor ? effectivePricingMode(actor) : "aptitude";
+  if (mode === "aptitude" || !skillKey) return apt();
+  const patron = () => skillPatronCat(skillKey, specialty, actor.system?.patronGod);
+  return mode === "patronage" ? patron() : mixedCat(apt(), patron());
+}
+export function resolveTalentCat(talentName, itemApts, charApts, actor) {
+  const apt = () => aptitudeCat(charApts, itemApts);
+  const mode = actor ? effectivePricingMode(actor) : "aptitude";
+  if (mode === "aptitude" || !talentName) return apt();
+  const patron = () => talentPatronCat(talentName, actor.system?.patronGod);
+  return mode === "patronage" ? patron() : mixedCat(apt(), patron());
+}
+
 export function talentCostXP(tier, itemApts, charApts, cultCat = null, opts = {}) {
   const fixed = fixedTalentCost(opts.name, opts.patron);
   if (fixed !== null) return fixed;
-  const cat = cultCat || aptitudeCat(charApts, itemApts);
+  const cat = cultCat || resolveTalentCat(opts.name, itemApts, charApts, opts.actor);
   return TALENT_COST[cat][clampIdx((parseInt(tier) || 1) - 1, 2)];
 }
-export function charCostXP(stepIndex, charKey, charApts) {
-  return CHAR_COST[aptitudeCat(charApts, CHAR_APTITUDES[charKey] || [])][clampIdx(stepIndex, 4)];
+export function charCostXP(stepIndex, charKey, charApts, opts = {}) {
+  return CHAR_COST[resolveCharCat(charKey, charApts, opts.actor)][clampIdx(stepIndex, 4)];
 }
-export function skillCostXP(rankIndex, itemApts, charApts, cultCat = null) {
-  const cat = cultCat || aptitudeCat(charApts, itemApts);
+export function skillCostXP(rankIndex, itemApts, charApts, cultCat = null, opts = {}) {
+  const cat = cultCat || resolveSkillCat(opts.skillKey, opts.specialty, itemApts, charApts, opts.actor);
   return SKILL_COST[cat][clampIdx(rankIndex, 3)];
 }
 
