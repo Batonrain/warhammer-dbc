@@ -303,6 +303,10 @@ export function creatureSchema({ granted = false } = {}) {
     cognition: new SchemaField({
       value: num(0, "Текущая"), max: num(0, "Максимум"), regen: num(0, "Восстановление")
     }, { label: "Когнитивность" }),
+    // Общий тумблер «подключён к Ноосфере» (вкладка ТЕХ) — читают Таланты вида
+    // «Виртуальная Память», «Облачная Когниция» и т.п. (rules/library, kind:
+    // "capability" через predicates.mjs), а не заводят свой флаг каждый.
+    noosphereConnected: bool(false, "Подключён к Ноосфере"),
     energy: pool("Энергия"),
     geneSeed: new SchemaField({
       origin:         str("", "Происхождение"),

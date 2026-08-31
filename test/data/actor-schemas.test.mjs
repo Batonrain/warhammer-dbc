@@ -174,6 +174,9 @@ const DEVIATIONS = {
     // Данные для Limited Vision (текст на Записях, видимый только ГМ) —
     // заведено гораздо позже template.json, тот же приём, что и notes.
     limitedVisionData: "",
+    // Тумблер «подключён к Ноосфере» (вкладка ТЕХ) — заведён гораздо позже
+    // template.json, читают Таланты вида «Виртуальная Память».
+    noosphereConnected: false,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

@@ -82,6 +82,11 @@
 .warhammer-dbc .tech-tab .tg-head { display: flex; align-items: center; gap: 6px; font-size: 0.68em; font-weight: 800; letter-spacing: 0.06em; color: #b9c4d2; text-transform: uppercase; margin-bottom: 6px; }
 .warhammer-dbc .tech-tab .tg-head .wh-ico { width: 1.05em; height: 1.05em; }
 .warhammer-dbc .tech-tab .tg-lbl { white-space: nowrap; }
+.warhammer-dbc .tech-tab .tg-noosphere {
+  display: flex; align-items: center; gap: 3px; font-size: 0.85em; font-weight: 600;
+  color: #8fa0b4; white-space: nowrap; cursor: pointer; text-transform: none; letter-spacing: 0;
+}
+.warhammer-dbc .tech-tab .tg-noosphere:has(input:checked) { color: var(--mc-data); }
 .warhammer-dbc .tech-tab .cognition-rest-btn {
   margin-left: auto; padding: 2px 8px; font-size: 0.92em; border-radius: 4px; cursor: pointer; white-space: nowrap;
   background: color-mix(in srgb, var(--mc-data) 20%, #10141a); color: #dff7e8;
