@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, fakeHtml, resetCaptured } from "../support/foundry-stub.mjs";
-import { painChange, openPainSoulBurnDialog } from "../../module/sheets/tabs/pain.mjs";
+import { painChange, openPainSoulBurnDialog, absorbPainDamage } from "../../module/sheets/tabs/pain.mjs";
 
 function makeActor(options = {}) {
   const updates = [];
@@ -72,5 +72,23 @@ describe("pain points", () => {
       "system.wounds.critical": 5,
       "system.wounds.firstAidUsed": false
     });
+  });
+
+  it("absorbPainDamage: та же арифметика по прямому вызову кнопки из карточки (wdbc-7as8)", async () => {
+    const actor = makeActor({ pain: 2, painMax: 4, wounds: 3, critical: 0 });
+    await absorbPainDamage(actor, 8);
+
+    expect(actor.updates[0]).toMatchObject({
+      "system.fate.value": 0,
+      "system.wounds.value": 1
+    });
+    expect(captured.chat[0].content).toContain("Выжжено Боли: <b>2</b>");
+  });
+
+  it("openPainSoulBurnDialog принимает число из карточки как значение по умолчанию", async () => {
+    const actor = makeActor({ pain: 2, painMax: 4 });
+    openPainSoulBurnDialog(actor, 6);
+
+    expect(captured.dialog.content).toContain('value="6"');
   });
 });

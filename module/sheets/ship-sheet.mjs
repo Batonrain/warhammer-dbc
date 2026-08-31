@@ -1079,33 +1079,44 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       const devastatingBonus = Number(this.actor.system.derived?.devastatingByType?.[wt]) || 0;
       if (devastatingBonus && hitsAfter > 0) totalHI += devastatingBonus;
 
-      // Критическое попадание
+      // Критическое попадание. Нова/торпеда может дать N критов за один залп
+      // (по числу кубов урона, ушедших за порог) — раньше только первый
+      // крутился сам, а «×N — бросьте отдельно» перепечатывало остаток
+      // игроку руками (wdbc-7as8); теперь крутим все N сразу.
       let critSection = "";
-      let critRollVal = 0;
       const critHappens = (wt !== "nova" && wt !== "torpedo" && critN && deg >= critN);
-      if (critHappens || critByNova > 0) {
-        const cr = await (new Roll("1d5")).evaluate();
-        allRolls.push(cr);
-        // Опустошительное (Havoc X, wdbc-jr93): +X к результату крита ДО поиска в таблице.
-        critRollVal = cr.total + shipAuto.havocBonus;
-        const ce = getShipCrit(critRollVal);
-        const havocNote = shipAuto.havocBonus ? ` +${shipAuto.havocBonus} Havoc = <b>${critRollVal}</b>` : "";
-        const extra = critByNova > 1 ? ` (×${critByNova} крит. — для нова/торпед бросьте отдельно)` : "";
-        // Цепная реакция / Испарение (wdbc-qhwb): только на 1–2 по таблице критов
-        // эффект бьёт по нескольким узлам сразу — выбор КОНКРЕТНЫХ узлов остаётся
-        // текстовым решением ГМа (вся таблица критов не резолвит узлы в коде),
-        // здесь только пометка числа.
+      // Нова/торпеда может дать N критов за один залп (по числу кубов урона,
+      // ушедших за порог) — раньше только первый крутился сам, а «×N — бросьте
+      // отдельно» перепечатывало остаток игроку руками (wdbc-7as8); теперь
+      // крутим все N сразу, каждый — с Havoc и пометкой Цепной реакции/Испарения
+      // (wdbc-jr93/wdbc-qhwb), как и одиночный крит обычного орудия.
+      const numCrits = critByNova > 0 ? critByNova : (critHappens ? 1 : 0);
+      if (numCrits > 0) {
         const propsForCrit = resolveShipProps(item);
-        let multiNodeNote = "";
-        if (critRollVal <= 2) {
-          const chain = propsForCrit.find(p => p.key === "chainReaction");
-          if (chain) multiNodeNote = ` <span style="opacity:.8">(Цепная реакция: ×${Number(chain.rating) || 2} узла — выбрать вручную)</span>`;
-          else if (propsForCrit.some(p => p.key === "vapourisation")) multiNodeNote = ` <span style="opacity:.8">(Испарение: ×2 узла — выбрать вручную)</span>`;
+        const critParts = [];
+        for (let i = 0; i < numCrits; i++) {
+          const cr = await (new Roll("1d5")).evaluate();
+          allRolls.push(cr);
+          // Опустошительное (Havoc X, wdbc-jr93): +X к результату крита ДО поиска в таблице.
+          const critRollVal = cr.total + shipAuto.havocBonus;
+          const ce = getShipCrit(critRollVal);
+          const havocNote = shipAuto.havocBonus ? ` +${shipAuto.havocBonus} Havoc = <b>${critRollVal}</b>` : "";
+          // Цепная реакция / Испарение (wdbc-qhwb): только на 1–2 по таблице критов
+          // эффект бьёт по нескольким узлам сразу — выбор КОНКРЕТНЫХ узлов остаётся
+          // текстовым решением ГМа (вся таблица критов не резолвит узлы в коде),
+          // здесь только пометка числа.
+          let multiNodeNote = "";
+          if (critRollVal <= 2) {
+            const chain = propsForCrit.find(p => p.key === "chainReaction");
+            if (chain) multiNodeNote = ` <span style="opacity:.8">(Цепная реакция: ×${Number(chain.rating) || 2} узла — выбрать вручную)</span>`;
+            else if (propsForCrit.some(p => p.key === "vapourisation")) multiNodeNote = ` <span style="opacity:.8">(Испарение: ×2 узла — выбрать вручную)</span>`;
+          }
+          critParts.push(`<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ!${numCrits > 1 ? ` (${i + 1}/${numCrits})` : ""} 1d5 = <b>${cr.total}</b>${havocNote} — ${esc(ce?.name)}${multiNodeNote}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`);
         }
-        critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${cr.total}</b>${havocNote} — ${esc(ce?.name)}${extra}${multiNodeNote}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
+        critSection = critParts.join("");
       }
       // Крит без урона Прочности всё равно наносит 1 очко Прочности.
-      if ((critHappens || critByNova > 0) && totalHI === 0) totalHI = 1;
+      if (numCrits > 0 && totalHI === 0) totalHI = 1;
 
       // Забирающее жизни (Lifetaker, wdbc-qhwb): урон CP цели за каждое
       // непоглощённое попадание, В ДОПОЛНЕНИЕ к обычному урону макробатарей.
@@ -1312,10 +1323,19 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
           for (let i=0;i<hits;i++){ const dr = await new Roll("1d10+4").evaluate(); rolls.push(dr); sum += dr.total; parts.push(dr.total); }
           const dmg = Math.max(0, sum - arm);
           const crit = dos >= 4;
+          // 4+ успеха раньше только просили «бросьте Крит. таблицу» отдельно
+          // (wdbc-7as8) — крутим её сразу тем же кубом, что и орудийный крит.
+          let critSection = "";
+          if (crit) {
+            const cr = await new Roll("1d5").evaluate();
+            rolls.push(cr);
+            const ce = getShipCrit(cr.total);
+            critSection = `<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ! 1d5 = <b>${cr.total}</b> — ${esc(ce?.name)}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`;
+          }
           body = `<div class="roll-outcome"><span class="roll-success">Попаданий: <b>${hits}</b> (макс ${maxHits})${crit?` — <b>КРИТ</b>`:""}</span></div>
             <div class="roll-damage-section"><div class="roll-damage-label">${ICO.dmg} Урон Прочности: <b>${dmg}</b> [${parts.join("+")}] − броня ${arm} (щиты не спасают)</div>
             <button class="wh-ship-dmg-btn" type="button" data-hi="${dmg}">${ICO.dmg} Применить ${dmg} → отмеченной цели</button></div>
-            ${crit?`<div class="roll-threshold" style="font-size:0.82em;">4+ успеха — бросьте Крит. таблицу.</div>`:""}`;
+            ${critSection}`;
         } else {
           const boats = Math.min(dos, 6);
           const crit = dos >= 5;
