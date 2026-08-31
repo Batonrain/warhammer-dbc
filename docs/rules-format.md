@@ -140,6 +140,7 @@ export const PREDICATES = {
 | `damageDice` | `target`, `value` | замена формулы урона |
 | `grantValue` | `target`, `value` | плюс к производному полю (реакции, скорость) |
 | `grantFlag` | `target` | возможность по имени, см. «Возможности» ниже |
+| `grantAptitudeOverride` | `scope`, `match`, `align` | Навык/Талант/Характеристика всегда Дружественный/Враждебный независимо от Покровительства, см. ниже |
 | `fearRating` | `value` | рейтинг страха, берётся максимум, не сумма |
 | `grantItem` | `uuid`, `qty` | выдать предмет при получении источника |
 | `critRangeMod` | `target`, `side`, `value` | шире диапазон Критического Успеха/Провала (стр. 25) на `value` натуральных чисел; `side`: `success`, `failure` или `both` |
@@ -288,6 +289,44 @@ if (hasRuleFlag(patient, "healing.astartes")) { /* … */ }
 читает, иначе флаг молча ничего не делает. Второе: возможность подчиняется отбору
 как любой эффект — правило, не прошедшее `when`, её не выдаёт, иначе флаг стал бы
 просто вторым названием расы.
+
+## Override склонности (`grantAptitudeOverride`)
+
+Раса/субраса иногда объявляет Навык, Талант или Характеристику всегда
+Дружественными или Враждебными «независимо от Покровительства» — тем же
+языком книги, что и культура легиона Космодесанта (`cultureCat()`,
+[legions.mjs](../module/constants/legions.mjs)), но источник другой: не
+культура ордена, а сама раса/субраса (Африэль/Эльданар — N характеристик и
+навыков по выбору игрока; Серый Человек — целые ветки Скорость/
+Внимательность/Избегание, wdbc-zk69). Эффект:
+
+```js
+effects: [{ kind: "grantAptitudeOverride", scope: "skill", match: "Deceive", align: "ally" }]
+```
+
+`scope` — `"skill"` | `"talent"` | `"characteristic"`. `match` для
+характеристики сравнивается ТОЧНО с её ключом (`ws`, `bs`, …) — ключей всего
+девять, подстрока только путала бы. Для навыка/таланта — подстрокой по имени
+из компендиума, тем же приёмом, что у `cultureCat`: «Hatred (Imperial
+Fists)» ловится записью «Hatred», а `"группа:Скорость"` — целой веткой
+(специализация/папка совпадает с именем группы целиком). `align` —
+`"ally"` | `"enemy"`; при конфликте нескольких записей враждебность
+побеждает (тот же приём, что внутри `cultureCat`).
+
+Собирается [aptitude-overrides.mjs](../module/rules/aptitude-overrides.mjs)
+(`resolveAptitudeOverride`) через тот же `collectRules`, что и `hasRuleFlag`.
+Приоритет **выше** культуры легиона — вызывающий код (`module/sheets/tabs/
+advance.mjs`, `module/sheets/item-picker.mjs`, `module/apps/duplicate-
+refund.mjs`) проверяет override раньше `cultureCat()` и передаёт результат
+как `cultCat` в `charCostXP`/`skillCostXP`/`talentCostXP`
+([advancement.mjs](../module/constants/advancement.mjs)) — раса
+фундаментальнее полковой культуры, а текст субрас говорит то же «независимо
+от Покровительства».
+
+В Конструкторе Механики это второй режим записи «Возможность»
+(`kind:"capability"`, `capabilityMode:"aptOverride"` вместо обычного
+`capabilityKey`) — режим переключает автор, а не заполненность полей, иначе
+переключение назад на обычную Возможность оставляло бы «висячий» override.
 
 ## Вытеснение (`overrides`)
 

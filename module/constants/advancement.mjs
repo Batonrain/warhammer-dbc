@@ -123,8 +123,9 @@ export function talentCostXP(tier, itemApts, charApts, cultCat = null, opts = {}
   const cat = cultCat || resolveTalentCat(opts.name, itemApts, charApts, opts.actor);
   return TALENT_COST[cat][clampIdx((parseInt(tier) || 1) - 1, 2)];
 }
-export function charCostXP(stepIndex, charKey, charApts, opts = {}) {
-  return CHAR_COST[resolveCharCat(charKey, charApts, opts.actor)][clampIdx(stepIndex, 4)];
+export function charCostXP(stepIndex, charKey, charApts, cultCat = null, opts = {}) {
+  const cat = cultCat || resolveCharCat(charKey, charApts, opts.actor);
+  return CHAR_COST[cat][clampIdx(stepIndex, 4)];
 }
 export function skillCostXP(rankIndex, itemApts, charApts, cultCat = null, opts = {}) {
   const cat = cultCat || resolveSkillCat(opts.skillKey, opts.specialty, itemApts, charApts, opts.actor);

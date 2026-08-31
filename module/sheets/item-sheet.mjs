@@ -1943,6 +1943,12 @@ export class WarhammerItemSheet
     // листу перерисоваться).
     mechField(".mech-capability-cost-pool",   (e, v) => { e.capabilityCostPool = v; });
     mechField(".mech-capability-cost-amount", (e, v) => { e.capabilityCostAmount = Math.max(1, Number(v) || 1); });
+    // Возможность, второй режим — override склонности (wdbc-zk69). Смена
+    // capabilityMode/AptScope тоже перерисовывает лист, тем же каскадом.
+    mechField(".mech-capability-mode",      (e, v) => { e.capabilityMode = v; });
+    mechField(".mech-capability-apt-scope", (e, v) => { e.capabilityAptScope = v; });
+    mechField(".mech-capability-apt-match", (e, v) => { e.capabilityAptMatch = v; });
+    mechField(".mech-capability-apt-align", (e, v) => { e.capabilityAptAlign = v; });
 
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.

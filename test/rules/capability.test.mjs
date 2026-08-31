@@ -75,6 +75,52 @@ describe("возможность доходит до hasRuleFlag", () => {
   });
 });
 
+describe("запись «Возможность», режим override склонности (wdbc-zk69)", () => {
+  const aptCap = (over = {}) => ({
+    id: "e1", kind: "capability", capabilityMode: "aptOverride",
+    capabilityAptScope: "skill", capabilityAptMatch: "Deceive", capabilityAptAlign: "ally",
+    label: "", ...over
+  });
+
+  it("превращается в правило с эффектом grantAptitudeOverride, не grantFlag", () => {
+    expect(rulesFromItemMechanics([item("Африэль", [aptCap()])])).toEqual([{
+      id: "item.Африэль.e1",
+      label: "Африэль",
+      when: {},
+      effects: [{ kind: "grantAptitudeOverride", scope: "skill", match: "Deceive", align: "ally" }]
+    }]);
+  });
+
+  it("align по умолчанию ally, если не задан", () => {
+    const rules = rulesFromItemMechanics([item("И", [aptCap({ capabilityAptAlign: "" })])]);
+    expect(rules[0].effects[0].align).toBe("ally");
+  });
+
+  it("enemy задаётся явно", () => {
+    const rules = rulesFromItemMechanics([item("И", [aptCap({ capabilityAptAlign: "enemy" })])]);
+    expect(rules[0].effects[0].align).toBe("enemy");
+  });
+
+  it("без совпадения (capabilityAptMatch) запись отбрасывается с жалобой", () => {
+    expect(rulesFromItemMechanics([item("И", [aptCap({ capabilityAptMatch: "" })])])).toEqual([]);
+    expect(errors).toHaveBeenCalled();
+  });
+
+  it("capabilityKey остаётся обычной Возможностью — режимы не путаются", () => {
+    const rules = rulesFromItemMechanics([item("И", [cap()])]);
+    expect(rules[0].effects[0].kind).toBe("grantFlag");
+  });
+
+  it("режим определяет capabilityMode, а не заполненность полей — «висячий» aptScope после переключения назад на флаг не читается", () => {
+    // Автор переключил запись обратно на обычную Возможность, но старые поля
+    // override не были стёрты (тот же принцип, что у modValueMode/rerollScope).
+    const rules = rulesFromItemMechanics([item("И", [cap({
+      capabilityAptScope: "skill", capabilityAptMatch: "Deceive", capabilityAptAlign: "ally"
+    })])]);
+    expect(rules[0].effects[0].kind).toBe("grantFlag");
+  });
+});
+
 describe("новые области: щиты и встречные тесты", () => {
   const reroll = (scope) => item("Локус", [{
     id: "e", kind: "reroll", rerollScope: scope, rerollMode: "keepBest"
