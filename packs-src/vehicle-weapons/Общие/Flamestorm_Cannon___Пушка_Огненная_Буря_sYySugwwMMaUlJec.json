@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "flame",
-    "range": 40,
+    "range": 80,
     "balance": 0,
     "reload": "2",
     "magazineCur": 20,

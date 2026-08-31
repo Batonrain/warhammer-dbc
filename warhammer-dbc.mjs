@@ -88,9 +88,11 @@ import { runActorSetup } from "./module/apps/actor-setup.mjs";
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { registerDuplicateGrantSettings } from "./module/rules/duplicate-grants.mjs";
-import { registerAdvancePricingSettings } from "./module/constants/patronage.mjs";
+import { registerAdvancePricingSettings, initTalentGodIndex } from "./module/constants/patronage.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
+import { initVehicleWeaponIndex }     from "./module/constants/vehicle-weapons-library.mjs";
+import { initBioImplantCatalog }      from "./module/constants/drukhari-bio.mjs";
 import { setSystemPackLocks,
          warnEmptySystemPacks }      from "./module/apps/pack-locks.mjs";
 import { importBooks }                from "./module/apps/books.mjs";
@@ -1346,6 +1348,17 @@ initPackCaches();
 // Дерево фракций для предикатов правил: каталог лежит в компендиуме, а разбор
 // цепочки предков обязан быть чистыми функциями — см. module/rules/factions.mjs.
 initFactionIndex();
+
+// Пак первичен, константа — запасной путь: Бог Таланта (Покровительство),
+// профиль Орудия техники (свап на разъёме) и каталог биоимплантов Друкхари
+// (Мастерская) — три места, где раньше только константа, теперь сперва
+// компендиум. initTalentGodIndex() существовал в patronage.mjs, но не был
+// здесь зарегистрирован — кэш никогда не строился, и код молча всегда падал
+// в запасной путь константы (найдено 30.08.2026 при переносе того же приёма
+// на vehicle-weapons-library.mjs и drukhari-bio.mjs).
+initTalentGodIndex();
+initVehicleWeaponIndex();
+initBioImplantCatalog();
 
 /** Просил ли ГМ открыть библиотеки (настройка protectCompendiumEdits выше). */
 function _libsUnlocked() {

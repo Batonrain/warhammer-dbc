@@ -323,3 +323,47 @@ export const VEHICLE_WEAPONS = [
   VW(DRU, "Scythevane / Огромные Косы", { r:3, cls:"melee", type:"power", rng:0, rof:"–/–/–", dmg:"3d10+10 R", pen:9, clip:0, rld:"–", props:"Power Field, Reinforced", note:"Досягаемость 0–3. За каждые 5 м Налёта +4 Dmg/+3 Pen; после 15 м — Melta против техники." }),
   VW(DRU, "Scythes / Косы", { r:1, cls:"melee", type:"primitive", rng:0, rof:"–/–/–", dmg:"1d10+15 R", pen:0, clip:0, rld:"–", props:"Reinforced", note:"Досягаемость 0–6. При Налёте бьёт по цели в радиусе." })
 ];
+
+// ── Пак первичен, библиотека — запасной путь ─────────────────────────────
+// Компендиум warhammer-dbc.vehicle-weapons — то, что видно ГМу и правится
+// руками начиная с любой книги; VEHICLE_WEAPONS может отставать (или,
+// как сейчас, местами обгонять — см. doombc-vehicle-weapons) от него.
+// Тот же приём, что и Бог Таланта в patronage.mjs: индекс строится ЗАРАНЕЕ
+// и кэшируется, потому что свап орудия — обработчик change, а не место,
+// откуда естественно ждать pack.getIndex() каждый раз.
+const VEHICLE_WEAPONS_PACK_ID = "warhammer-dbc.vehicle-weapons";
+
+let _vehicleWeaponsByName = null; // null = ещё не строился
+
+function fallbackVehicleWeaponIndex() {
+  return new Map(VEHICLE_WEAPONS.map(w => [w.name, w]));
+}
+
+async function _refreshVehicleWeaponIndex() {
+  const pack = (typeof game !== "undefined") ? game.packs?.get?.(VEHICLE_WEAPONS_PACK_ID) : null;
+  if (!pack) { _vehicleWeaponsByName = fallbackVehicleWeaponIndex(); return; }
+  try {
+    const docs = await pack.getDocuments();
+    const byName = new Map(docs.map(d => [d.name, { name: d.name, img: d.img, system: d.system }]));
+    // Библиотека как подстраховка: профиль, которого в паке ещё нет
+    // (не перенесён/новая книга), не должен тихо пропасть со свапа.
+    for (const [name, w] of fallbackVehicleWeaponIndex()) if (!byName.has(name)) byName.set(name, w);
+    _vehicleWeaponsByName = byName;
+  } catch (e) { _vehicleWeaponsByName = fallbackVehicleWeaponIndex(); }
+}
+
+/** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и
+ * обновляет его при правках компендиума warhammer-dbc.vehicle-weapons. До
+ * первого построения (или в тестах без game.packs) используется библиотека. */
+export function initVehicleWeaponIndex() {
+  Hooks.once("ready", () => _refreshVehicleWeaponIndex());
+  for (const h of ["createItem", "deleteItem", "updateItem"])
+    Hooks.on(h, doc => { if (doc?.pack === VEHICLE_WEAPONS_PACK_ID) _refreshVehicleWeaponIndex(); });
+}
+
+/** Профиль орудия техники по имени (как оно лежит в компендиуме/библиотеке),
+ * или null, если не найден нигде. */
+export function vehicleWeaponProfile(name) {
+  const index = _vehicleWeaponsByName || fallbackVehicleWeaponIndex();
+  return index.get(name) || null;
+}
