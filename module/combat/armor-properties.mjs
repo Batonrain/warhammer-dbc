@@ -97,6 +97,28 @@ export function emptyArmorLocFlags() {
 }
 
 /**
+ * Помечает надетую броню, покрывающую локацию, как пробитую (wdbc-k0ff) —
+ * общее состояние между ударами, а не привязанное к конкретному свойству:
+ * ЧТО означает пробитие (теряет Sealed, теряет ещё что-то) решает читатель
+ * флага, не эта функция. Уже пробитую не трогает повторно (нет смысла — раз
+ * пробита, чинить действием система пока не умеет). Несколько предметов,
+ * покрывающих одну локацию (stacks:true) — помечаются все разом: удар,
+ * пробивший суммарный AP, компрометирует весь слой, не один конкретный предмет.
+ * @param {Actor} actor
+ * @param {string} armorKey  "head"/"body"/"leftArm"/... — как в LOCATION_TO_ARMOR
+ * @returns {Promise<number>} число помеченных предметов
+ */
+export async function breachArmorAtLocation(actor, armorKey) {
+  const items = (actor?.items ?? []).filter(i =>
+    i.type === "armor" && i.system?.equipped
+    && (Number(i.system?.[armorKey]) || 0) > 0
+    && !i.system?.breached
+  );
+  for (const item of items) await item.update({ "system.breached": true });
+  return items.length;
+}
+
+/**
  * Считает итоговый AP брони одной локации против одного попадания, применяя
  * флаги её свойств (см. mergeArmorLocFlags). Чистая функция — не знает про
  * пробитие/T.b/Копьё, это делает вызывающая сторона (module/combat/damage.mjs)

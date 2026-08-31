@@ -4,10 +4,11 @@
 // — без Foundry, чистые функции. Зеркало test/combat/attack-outcome.test.mjs
 // по духу: правила книги, не разметка.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags,
-  emptyArmorLocFlags, resolveArmorAbsorptionAP, aggregateArmorSkillMods
+  emptyArmorLocFlags, resolveArmorAbsorptionAP, aggregateArmorSkillMods,
+  breachArmorAtLocation
 } from "../../module/combat/armor-properties.mjs";
 
 describe("resolveArmorProps", () => {
@@ -192,5 +193,55 @@ describe("resolveArmorAbsorptionAP", () => {
       baseArmorAP: 6, vsTypeBonus: 4, damageType: "energy", primitive: true, flags
     });
     expect(ap).toBe(0);
+  });
+});
+
+describe("breachArmorAtLocation (wdbc-k0ff)", () => {
+  const armorItem = (over = {}) => {
+    const item = {
+      type: "armor",
+      system: { equipped: true, body: 4, head: 0, breached: false, ...over },
+      update: vi.fn(async patch => { item.system.breached = patch["system.breached"]; })
+    };
+    return item;
+  };
+
+  it("помечает надетую броню, покрывающую локацию, как пробитую", async () => {
+    const item = armorItem();
+    const actor = { items: [item] };
+    const n = await breachArmorAtLocation(actor, "body");
+    expect(n).toBe(1);
+    expect(item.update).toHaveBeenCalledWith({ "system.breached": true });
+  });
+
+  it("не трогает локацию, которую предмет не покрывает (AP===0)", async () => {
+    const item = armorItem();
+    const actor = { items: [item] };
+    await breachArmorAtLocation(actor, "head");
+    expect(item.update).not.toHaveBeenCalled();
+  });
+
+  it("не трогает снятую (не equipped) броню", async () => {
+    const item = armorItem({ equipped: false });
+    const actor = { items: [item] };
+    await breachArmorAtLocation(actor, "body");
+    expect(item.update).not.toHaveBeenCalled();
+  });
+
+  it("уже пробитую не трогает повторно", async () => {
+    const item = armorItem({ breached: true });
+    const actor = { items: [item] };
+    await breachArmorAtLocation(actor, "body");
+    expect(item.update).not.toHaveBeenCalled();
+  });
+
+  it("несколько слоёв на одной локации (stacks) — помечаются все разом", async () => {
+    const a = armorItem({ body: 2 });
+    const b = armorItem({ body: 3 });
+    const actor = { items: [a, b] };
+    const n = await breachArmorAtLocation(actor, "body");
+    expect(n).toBe(2);
+    expect(a.update).toHaveBeenCalledOnce();
+    expect(b.update).toHaveBeenCalledOnce();
   });
 });
