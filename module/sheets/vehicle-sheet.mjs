@@ -204,7 +204,9 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     // Максимум Структуры: производный (с +X Коляски) показывать нельзя как
     // value инпута — submitOnChange отправил бы раздутое число в БД, и
     // следующий пересчёт прибавил бы X снова (6 → 9 → 12 за пару кликов).
-    context.structureMaxBase = this.actor._source.system.structure?.max ?? 0;
+    // _source?. — у настоящего актора он есть всегда; заглушки тестов листа
+    // без него падают на производное значение, что для них и верно.
+    context.structureMaxBase = this.actor._source?.system?.structure?.max ?? sys.structure?.max ?? 0;
 
     // Шкала Структуры (для когитаторного индикатора в шапке).
     const _st = sys.structure || {};
