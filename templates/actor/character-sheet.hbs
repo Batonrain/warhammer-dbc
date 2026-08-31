@@ -1,8 +1,30 @@
 {{!-- Обёртка листа — <div>: сама форма теперь корневой элемент окна (ApplicationV2,
-     PARTS.body.root=true), поэтому классы wh-*/chaos-heretic и переменные темы
-     патрона на реальный DOM не попадают — их навешивает actor-sheet.mjs
-     (_applyThemeClasses/_applyChaosPatronTheme) на this.element после рендера. --}}
-<div class="warhammer-dbc character-sheet"> {{> "systems/warhammer-dbc/templates/actor/parts/header.hbs"}}
+     PARTS.body.root=true), поэтому классы wh-*/chaos-heretic/cog-frame и
+     переменные темы патрона на реальный DOM не попадают, если написать их прямо
+     здесь — их навешивает actor-sheet.mjs (_applyThemeClasses/
+     _applyChaosPatronTheme) на this.element после рендера.
+
+     .cog-frame (класс навешан в JS, см. выше) / .cog-rivet/.cog-plate-row/
+     .cog-status-row — металлический корпус инфопланшета (wdbc-m6as), сидит
+     прямо на корне (обёртку СНАРУЖИ корня добавить нельзя). .cog-screen —
+     внутренний wrapper вокруг header/nav/sheet-body, даёт контур-кольцо на
+     стыке корпус→экран одним элементом (styles/sheets/actor-housing.css). --}}
+<div class="warhammer-dbc character-sheet">
+  <div class="cog-rivet tl"></div>
+  <div class="cog-rivet tr"></div>
+  <div class="cog-rivet bl"></div>
+  <div class="cog-rivet br"></div>
+
+  <div class="cog-plate-row">
+    <span class="cog-plate">Инфопланшет модели XIL</span>
+    <div class="cog-leds">
+      <i class="cog-led cog-led-green on"></i>
+      <i class="cog-led cog-led-amber {{#if (eq actor.system.wounds.tier "heavy")}}on{{/if}}"></i>
+      <i class="cog-led cog-led-red {{#if (eq actor.system.wounds.tier "dying")}}on{{/if}}"></i>
+    </div>
+  </div>
+
+  <div class="cog-screen"> {{> "systems/warhammer-dbc/templates/actor/parts/header.hbs"}}
 
   {{#if infamy}}{{> "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs" infamy}}{{/if}}
 
@@ -29,4 +51,9 @@
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}
 {{#if possessed}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-possession.hbs"}}{{/if}}
 {{#if isHaemonculus}}{{> "systems/warhammer-dbc/templates/actor/parts/tab-haemonculus.hbs"}}{{/if}}
+
+    <div class="screen-status-line"><i class="cog-status-dot"></i><span>Дух машины пробуждён</span></div>
   </div> </div>
+
+  <div class="cog-status-row"></div>
+</div>

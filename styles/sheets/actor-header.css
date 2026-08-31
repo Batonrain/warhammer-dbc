@@ -221,8 +221,7 @@
 }
 .warhammer-dbc .header-cell-aspir .aspir-remove:hover { background: #7a2e2e; color: #ffb0b0; border-color: #7a2e2e; }
 .warhammer-dbc .header-cell-aspir .aspir-mods-line {
-  font-size: 0.72em; color: var(--wh-text-mid); min-height: 1em;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 0.72em; color: var(--wh-text-mid); min-height: 1em; line-height: 1.35;
 }
 
 /* Компактное read-only поле (Геносемя/Культура) — то же место, что и у
@@ -376,6 +375,62 @@
 .warhammer-dbc .sheet-tabs .item.active {
   background: var(--wh-panel-dark);
   color: var(--wh-text-light);
+}
+
+/* ── Лист Персонажа: вкладки как в Проводнике Windows (wdbc-m6as) ──
+   Активная вкладка перетекает в тело листа (общий фон + общая граница,
+   без шва); неактивная полоса заметно темнее. Акцентный цвет обводки/
+   свечения активной вкладки берётся по data-tab, чтобы Мистика/Тех
+   сохраняли свой акцент, а не приводились к общей когитаторной зелени. */
+.warhammer-dbc.cog-frame .sheet-tabs {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--wh-panel-dark) 88%, black), black);
+  gap: 3px;
+  padding: 4px 4px 0;
+}
+.warhammer-dbc.cog-frame .sheet-tabs .item {
+  border-right: none;
+  border-radius: 7px 7px 0 0;
+  color: color-mix(in srgb, var(--wh-text-mid) 65%, transparent);
+  background: transparent;
+}
+.warhammer-dbc.cog-frame .sheet-tabs .item:hover {
+  background: color-mix(in srgb, var(--cg, var(--wh-accent)) 10%, transparent);
+  color: var(--wh-text-light);
+}
+.warhammer-dbc.cog-frame .sheet-tabs .item.active {
+  background: var(--wh-parchment);
+  color: var(--wh-text-light);
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--cg, var(--wh-accent));
+  border-bottom: none;
+  box-shadow: 0 3px 16px 0 color-mix(in srgb, var(--cg, var(--wh-accent)) 22%, transparent);
+}
+.warhammer-dbc.cog-frame .sheet-tabs .item.active:hover { background: var(--wh-parchment); }
+/* Мистика/Тех — своя обводка/свечение вместо общей когитаторной зелени.
+   --pc/--mc с actor-psy.css/actor-tech.css заданы на .psy-tab/.tech-tab —
+   те сидят соседями .sheet-tabs (не предками), поэтому inheritance сюда не
+   дотягивается: фиксируем базовый акцент темы отдельным правилом (Мистика —
+   варп-фиолет по умолчанию, Природа Дара красит только содержимое вкладки,
+   не саму кнопку; Тех — культовый красный, у него акцент константный). */
+.warhammer-dbc.cog-frame .sheet-tabs .item[data-tab="psy"].active {
+  border-color: #b477ff;
+  box-shadow: 0 3px 16px 0 rgba(180,119,255,0.22);
+  animation: cogTabGlowPsy 4.5s ease-in-out infinite;
+}
+.warhammer-dbc.cog-frame .sheet-tabs .item[data-tab="tech"].active {
+  border-color: #c0392b;
+  box-shadow: 0 3px 16px 0 rgba(192,57,43,0.28);
+  animation: cogTabGlowTech 4.5s ease-in-out infinite;
+}
+@keyframes cogTabGlowPsy  { 0%,100% { text-shadow: 0 0 6px #b477ff; } 50% { text-shadow: 0 0 13px #b477ff; } }
+@keyframes cogTabGlowTech { 0%,100% { text-shadow: 0 0 6px #c0392b; } 50% { text-shadow: 0 0 13px #c0392b; } }
+
+/* «Перетекание» — общий фон/граница на стыке с активной вкладкой,
+   без верхней границы, чтобы шов не читался. */
+.warhammer-dbc.cog-frame .sheet-body {
+  border: 1px solid var(--cg, var(--wh-accent));
+  border-top: none;
 }
 
 /* ══════════════════════════════════════════════════════
