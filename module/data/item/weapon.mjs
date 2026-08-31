@@ -68,6 +68,10 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       loadedAmmoId: new StringField({ initial: "", label: "Заряженный боеприпас" }),
       weaponProps:  list("Свойства"),
       needsRecharge: new BooleanField({ initial: false, label: "Требует перезарядки" }),
+      // Призма (стр. 74 Книги Аэльдари): текущий накопленный заряд, живёт на
+      // предмете тем же приёмом, что needsRecharge — +1/Ход в руках (движок:
+      // module/combat/prisma.mjs), сбрасывается наполовину после выстрела.
+      prismaCharge: new NumberField({ initial: 0, integer: true, min: 0, label: "Заряд Призмы" }),
       legacyWeapon: new BooleanField({ initial: false, label: "Реликвия" }),
       sacred:       new BooleanField({ initial: false, label: "Освящённое" }),
       // Оружие Наследия (стр. 426-428). Признак «реликвия» выше существовал и

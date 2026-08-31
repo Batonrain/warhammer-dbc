@@ -69,7 +69,12 @@ export function effectiveDefenseReactionMax(actor) {
 export async function resetActionEconomy(actor) {
   if (!hasActionEconomy(actor)) return;
   const sys = actor.system;
-  const apMax          = Number(sys.actionPoints?.max) || 0;
+  // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
+  // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
+  // атаки: считаем по самому факту Подавления).
+  const apMax          = sys.conditions?.pinned
+    ? Math.min(1, Number(sys.actionPoints?.max) || 0)
+    : (Number(sys.actionPoints?.max) || 0);
   const reactMax       = Number(sys.reactions?.max) || 0;
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);

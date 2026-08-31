@@ -164,7 +164,13 @@ export async function activateTechMiracle(actor, item) {
             <button class="wh-apply-dmg-btn" type="button"
               data-damage="${dmgRoll.total}" data-penetration="${pen}"
               data-damage-type="${sys.damageType}" data-hit-location="Торс"
-              data-weapon-name="${item.name}" data-attacker="${actor.name}">
+              data-weapon-name="${item.name}" data-attacker="${actor.name}"
+              data-felling="${wp.fellingRating ?? 0}"
+              data-primitive="${wp.primitive ? 1 : 0}"
+              data-ignore-shield="${wp.ignoreShield ? 1 : 0}"
+              data-warp-soak="${wp.warpSoak ? 1 : 0}"
+              data-lance="${wp.lance ? 1 : 0}"
+              data-sanctified="${wp.sanctified ? 1 : 0}">
               Применить урон: ${dmgRoll.total} → Торс
             </button>
           </div>${extStr}`;

@@ -209,6 +209,74 @@ describe("_performParry: несколько попаданий одной ата
   });
 });
 
+// Дуэлянтское (стр. 73 Книги Аэльдари): +10 к Парированию — отдельная строка
+// разбивки, не подписанная как «Защитное» (той же defBonus раньше делили на
+// двоих без разметки источника).
+describe("_performParry: бонус Дуэлянтского", () => {
+  it("Дуэлянтское оружие добавляет +10 отдельной строкой «Дуэлянтское +10»", async () => {
+    const sword = equippedMelee({ weaponProps: [{ key: "duelingWeapon", rating: 0, rating2: 0 }] });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, 0, "Actor.attacker-1");
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Дуэлянтское +10");
+    expect(card).not.toContain("Защитное");
+  });
+
+  it("Защитное и Дуэлянтское на одном оружии складываются и показаны раздельно", async () => {
+    const sword = equippedMelee({ weaponProps: [
+      { key: "duelingWeapon", rating: 0, rating2: 0 },
+      { key: "defensive",     rating: 0, rating2: 0 }
+    ] });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, 0, "Actor.attacker-1");
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Защитное +15");
+    expect(card).toContain("Дуэлянтское +10");
+  });
+
+  it("без Дуэлянтского строки в разбивке нет", async () => {
+    const sword = equippedMelee();
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, 0, "Actor.attacker-1");
+
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("Дуэлянтское");
+  });
+});
+
+// Шаг За Шагом (стр. 73 Книги Аэльдари): +10 к Парированию безусловно —
+// сам факт Парирования уже означает «в рукопашном бою».
+describe("_performParry: бонус Шаг За Шагом", () => {
+  it("оружие со Шаг За Шагом добавляет +10 отдельной строкой", async () => {
+    const sword = equippedMelee({ weaponProps: [{ key: "stepByStep", rating: 0, rating2: 0 }] });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, 0, "Actor.attacker-1");
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Шаг За Шагом +10");
+  });
+
+  it("Дуэлянтское и Шаг За Шагом на одном оружии складываются (+20) и показаны раздельно", async () => {
+    const sword = equippedMelee({ weaponProps: [
+      { key: "duelingWeapon", rating: 0, rating2: 0 },
+      { key: "stepByStep",    rating: 0, rating2: 0 }
+    ] });
+    const actor = attacker({ items: [sword] });
+
+    await _performParry(actor, 0, "Actor.attacker-1");
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Дуэлянтское +10");
+    expect(card).toContain("Шаг За Шагом +10");
+  });
+});
+
 describe("_performDodge: несколько попаданий одной атаки", () => {
   // Ag 35 (actorFor), untrained −20 → Порог 15; rv=10 → 1 степень.
   it("Успех меньше числа попаданий — снимает часть, остальные проходят", async () => {

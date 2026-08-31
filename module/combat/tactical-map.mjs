@@ -9,6 +9,7 @@ import { baseSizeCells, edgeDistanceMeters, centerDistanceMeters, contactType }
   from "../rules/tactical-map.mjs";
 import { raceDef } from "../apps/race-library.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
+import { tokenRelationship } from "../regions/auras.mjs";
 
 /** Типы акторов личного масштаба, которым автоматизируем размер Базы. */
 export const BASE_SIZE_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -72,4 +73,30 @@ export function measureTokens(tokenA, tokenB) {
     centerM: centerDistanceMeters(rectA, rectB, cellMeters),
     contact: contactType(rectA, rectB)
   };
+}
+
+/**
+ * Число вражеских токенов сцены в Базовом/Глубоком контакте с атакующим —
+ * «дерётся ли персонаж 1-на-1» (Дуэлянтское, стр. 73 Книги Аэльдари) без
+ * ручного пересчёта на глаз. Не различает, отвлечён ли сам враг на кого-то
+ * ещё — «никто не мешает» в книге про то, мешают ли атакующему, а не о
+ * занятости противника.
+ * @param {Token} attackerToken
+ * @returns {number}
+ */
+export function meleeContactCount(attackerToken) {
+  const rectA = tokenRect(attackerToken);
+  if (!rectA) return 0;
+  const attackerDoc = attackerToken.document ?? attackerToken;
+  const others = canvas?.tokens?.placeables ?? [];
+  let count = 0;
+  for (const other of others) {
+    if (other === attackerToken) continue;
+    const otherDoc = other.document ?? other;
+    if (tokenRelationship(attackerDoc.disposition, otherDoc.disposition) !== "enemy") continue;
+    const rectB = tokenRect(other);
+    if (!rectB) continue;
+    if (contactType(rectA, rectB) !== "none") count++;
+  }
+  return count;
 }

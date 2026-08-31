@@ -12,6 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { _degWord } from "../helpers/utils.mjs";
+import { rollIcon } from "../constants/roll-icons.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -257,7 +258,7 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object}   [d.locShift]    { max, current } — кнопки сдвига места, либо null
  * @param {object}   [d.ammo]        блок боеприпасов (только стрелковое), либо null
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
- * @param {object}   [d.suppression] { pen, hits } — Подавление, либо null
+ * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
  * @param {object}   [d.notes]       текстовые примечания карточки (см. ниже)
  * @param {object}   [d.blocks]      готовые блоки: props, quality, splinter, targetEffects, dice
  */
@@ -304,11 +305,19 @@ export function attackCard({
     <div class="roll-wprop-note">
       💥 Каждый Взрыв этой очереди — отдельный шаблон, размещается до Уклонения.
     </div>` : "";
+  // Выстрел Насквозь: порог «пробивает ли» числом, не общей фразой — Pen×2
+  // прямо сейчас, у этого выстрела (стр. 74 Книги Аэльдари).
+  const throughShotNote = (wp.throughShot && hits.length) ? `
+    <div class="roll-wprop-note">
+      🎯 Выстрел Насквозь: пробивает укрытие/цель насквозь, если AP+T.b &lt; <b>${pen * 2}</b> (Pen×2) —
+      следующая цель получает попадание со сниженным на 1d10 уроном (затем 1d5, затем флэт −1), Pen падает на Поглощение пробитой цели.
+    </div>` : "";
   const damageSection = hits.length ? `
     <div class="roll-damage-section">
       <div class="roll-section-head">Урон</div>
       <div class="roll-damage-meta">${dtLabel} · Пробитие ${pen}${sbNote}${taintedNote}</div>
       ${blastNote}
+      ${throughShotNote}
       ${hitLines(hits, { blastRating: wp.blastRating })}
     </div>` : "";
 
@@ -330,9 +339,13 @@ export function attackCard({
   // Стр. 35: ГМ распределяет попадания по случайным целям в секторе, поэтому
   // урон не бросается автоматически — карточка подсказывает их число.
   const suppressionHtml = suppression ? `<div class="roll-suppression">
-      Подавление: все в секторе 45° проходят тест Подавление (${suppression.pen})<br>
+      Подавление: все в секторе 45°, прямой видимости, Короткой/Боевой дистанции —
+      тест Подавление (${suppression.testMod >= 0 ? "+" : ""}${suppression.testMod})<br>
       ГМ распределяет <b>${suppression.hits}</b> попадан${suppression.hits === 1 ? "ие" : suppression.hits < 5 ? "ия" : "ий"} в торс
       по случайным целям в секторе (нечётные Успехи, максимум RoF ${suppression.cap})
+      <button class="wh-suppression-test-btn" type="button" data-test-mod="${suppression.testMod}">
+        ${rollIcon("target","#ff9a4d")}Тест Подавления — выбранный токен цели
+      </button>
     </div>` : "";
 
   return `

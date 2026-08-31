@@ -90,6 +90,25 @@ describe("resetActionEconomy", () => {
     expect(actor.system.reactions.value).toBe(1);
   });
 
+  // Подавление (стр. 33): в укрытии — только 1 ОД в свой Ход, не полный запас.
+  it("Подавленный актор получает только 1 ОД вместо полного максимума", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { pinned: true } });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(1);
+  });
+
+  it("Подавленный актор с max 0 (нет экономики) — Math.min не поднимает выше max", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 0 }, conditions: { pinned: true } });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(0);
+  });
+
+  it("без Подавления — полный запас ОД как обычно", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { pinned: false } });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(2);
+  });
+
   it("Защитная Стойка даёт +1 доп. Реакцию на Избегание при сбросе", async () => {
     const actor = actorFor({ meleeStance: "defensive" });
     await resetActionEconomy(actor);

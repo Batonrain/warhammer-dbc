@@ -10,6 +10,7 @@ import { disabledArmourPenalty } from "./armor-mods.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
+import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 
@@ -166,10 +167,15 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const stance    = actor.system.meleeStance || "standard";
   const stBonus   = MELEE_STANCES[stance]?.parryBonus ?? 0;
 
-  // Свойства парирующего оружия (+ модификации): Защитное (+15), Силовое поле
-  const parryProps = resolveWeaponPropsList(mergeWeaponPropEntries(meleeWeapon, modFx));
-  const pwp         = aggregateAuto(parryProps);
-  const defBonus    = pwp.defensive ? 15 : 0;
+  // Свойства парирующего оружия (+ модификации): Защитное (+15), Силовое поле,
+  // Дуэлянтское (+10 Парирование), Шаг За Шагом (+10 — Парирование само по
+  // себе означает «в рукопашном бою», условие свойства выполнено безусловно)
+  const parryProps    = resolveWeaponPropsList(withWitchsEdge(meleeWeapon, mergeWeaponPropEntries(meleeWeapon, modFx)));
+  const pwp            = aggregateAuto(parryProps);
+  const defensiveBonus = pwp.defensive    ? 15 : 0;
+  const duelingBonus   = pwp.duelingParry ? 10 : 0;
+  const stepBonus      = pwp.stepByStep   ? 10 : 0;
+  const defBonus       = defensiveBonus + duelingBonus + stepBonus;
   // Та же правка, что у _performDodge выше — эта кнопка тоже не учитывала
   // ни Усталость, ни выключенную силовую броню.
   const fatigue       = fatiguePenalty(actor, "ws");
@@ -201,7 +207,9 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
   if (balanceMod !== 0)  modParts.push(`баланс ${balanceMod >= 0 ? "+" : ""}${balanceMod}`);
   if (stBonus !== 0)     modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
-  if (defBonus !== 0)    modParts.push(`Защитное +${defBonus}`);
+  if (defensiveBonus !== 0) modParts.push(`Защитное +${defensiveBonus}`);
+  if (duelingBonus !== 0)   modParts.push(`Дуэлянтское +${duelingBonus}`);
+  if (stepBonus !== 0)      modParts.push(`Шаг За Шагом +${stepBonus}`);
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);

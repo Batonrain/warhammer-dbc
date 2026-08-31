@@ -168,6 +168,29 @@ describe("psychic manifestation", () => {
     expect(captured.chat[0].content).toContain("d5: 4");
   });
 
+  // Жалоба игрока: «Варп-Оружие» на психосиле не срабатывает. wp (aggregateAuto)
+  // и раньше считал warpSoak верно — но кнопка «Применить урон» его не несла:
+  // клик уходил в applyDamageToActor с warpSoak по умолчанию false, и цель
+  // защищалась бронёй/Стойкостью как обычно. Тест бьёт по самой кнопке.
+  it("Варп-Оружие на психосиле кладёт warpSoak/ignoreShield в кнопку «Применить урон»", async () => {
+    const a = actor();
+    const power = item({ system: {
+      testChar: "wp", powerType: "attack", testMod: 0,
+      damage: "1d10+2", damageType: "energy",
+      weaponProps: [{ key: "warpWeapon", rating: 0, rating2: 0 }]
+    } });
+    captured.dice = [5, 7];
+
+    await executePsychotest(a, power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain('data-warp-soak="1"');
+    expect(card).toContain('data-ignore-shield="1"');
+  });
+
   it("callback диалога передаёт значения формы в психотест", async () => {
     const a = actor();
     showManifestDialog(a, item({ system: { testChar: "wp", powerType: "utility" } }));

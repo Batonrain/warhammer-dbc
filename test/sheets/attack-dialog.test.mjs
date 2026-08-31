@@ -405,6 +405,94 @@ describe("пересчёт порога в открытом окне", () => {
   });
 });
 
+// Дуэлянтское (стр. 73 Книги Аэльдари): +5 на все тесты в дуэли 1-на-1 —
+// галочка в специфичных модах рукопашной атаки, видна только когда у оружия
+// есть свойство duelingWeapon.
+describe("Дуэлянтское: галочка «бой 1-на-1»", () => {
+  it("оружие без Дуэлянтского — галочки в диалоге нет", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(captured.dialog.content).not.toContain("бой 1-на-1");
+  });
+
+  it("Дуэлянтское оружие показывает галочку +5", () => {
+    const sword = weaponFor({ weaponClass: "melee", weaponProps: [{ key: "duelingWeapon", rating: 0, rating2: 0 }] });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(captured.dialog.content).toContain("Дуэлянтское: бой 1-на-1 (никто не мешает)");
+    // Нет токена атакующего в тестовом сборе — не пытаемся угадать число
+    // контактов, честно просим отметить руками.
+    expect(captured.dialog.content).toContain("отметьте вручную");
+  });
+
+  it("отмеченная галочка добавляет ровно +5 к порогу", async () => {
+    // Промах намеренно (96): интересен только порог в карточке, не урон —
+    // тот же приём, что у теста Быстрой Атаки выше (не нужна очередь кубов урона).
+    const sword = weaponFor({ weaponClass: "melee", weaponProps: [{ key: "duelingWeapon", rating: 0, rating2: 0 }] });
+
+    captured.dice = [96];
+    await pressRoll(showAttackDialog(attacker({ items: [sword] }), sword));
+    const baseline = thresholdInCard();
+
+    resetCaptured();
+    captured.dice = [96];
+    await pressRoll(
+      showAttackDialog(attacker({ items: [sword] }), sword),
+      {}, { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(5)] });
+
+    expect(thresholdInCard()).toBe(baseline + 5);
+  });
+});
+
+// Шаг За Шагом (стр. 73 Книги Аэльдари): +10 к рукопашной атаке безусловно.
+describe("Шаг За Шагом: +10 к рукопашной атаке", () => {
+  it("рукопашное оружие со Шаг За Шагом поднимает порог на 10", async () => {
+    const plain = weaponFor({ weaponClass: "melee" });
+    captured.dice = [96];
+    await pressRoll(showAttackDialog(attacker({ items: [plain] }), plain));
+    const baseline = thresholdInCard();
+
+    resetCaptured();
+    captured.dice = [96];
+    const sword = weaponFor({ weaponClass: "melee", weaponProps: [{ key: "stepByStep", rating: 0, rating2: 0 }] });
+    await pressRoll(showAttackDialog(attacker({ items: [sword] }), sword));
+
+    expect(thresholdInCard()).toBe(baseline + 10);
+  });
+
+  it("на стрелковое оружие бонус не действует (свойство cat:melee, но проверим прямым путём)", async () => {
+    const plain = weaponFor();
+    captured.dice = [96];
+    await pressRoll(showAttackDialog(attacker({ items: [plain] }), plain));
+    const baseline = thresholdInCard();
+
+    resetCaptured();
+    captured.dice = [96];
+    const gun = weaponFor({ weaponProps: [{ key: "stepByStep", rating: 0, rating2: 0 }] });
+    await pressRoll(showAttackDialog(attacker({ items: [gun] }), gun));
+
+    expect(thresholdInCard()).toBe(baseline);
+  });
+});
+
+// Перемены (Change, стр. 74 Книги Аэльдари): +X Pen против бездушных/техники —
+// галочка в диалоге (не к попаданию, к Pen), видна только при этом свойстве.
+describe("Перемены: галочка «цель бездушна»", () => {
+  it("оружие без Перемен — галочки нет", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    expect(captured.dialog.content).not.toContain("atk-change-soulless");
+  });
+
+  it("оружие с Перемены (X) показывает галочку с рейтингом в подписи", () => {
+    const gun = weaponFor({ weaponProps: [{ key: "change", rating: 3, rating2: 0 }] });
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    expect(captured.dialog.content).toContain("atk-change-soulless");
+    expect(captured.dialog.content).toContain("+3 Pen");
+  });
+});
+
 describe("правила реестра в диалоге", () => {
   it("галочка правила меняет порог броска", async () => {
     clearRuleSources();
