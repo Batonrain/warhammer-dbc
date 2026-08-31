@@ -8,6 +8,7 @@
 // получает уже назначенную цель через game.user.targets.
 import { esc } from "../helpers/utils.mjs";
 import { showWeaponRangeRings, clearRangeRings } from "./range-rings.mjs";
+import { clearReachableCells } from "./reachable-cells.mjs";
 
 const AIMING = "wh-aiming";
 const HINT_ID = "wh-aim-hint";
@@ -40,6 +41,7 @@ export function endTargeting() {
   document.body.classList.remove(AIMING);
   document.getElementById(HINT_ID)?.remove();
   clearRangeRings();
+  clearReachableCells();
 }
 
 /**
