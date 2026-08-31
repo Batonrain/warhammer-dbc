@@ -83,6 +83,11 @@ export function activateCombatListeners(root, actor) {
   on(root, ".rage-toggle input", "change", async ev => {
     const checked = ev.currentTarget.checked;
     if (checked && frenzyEntryBlocked(actor)) {
+      // Слушатель висит на input, а лист (ApplicationV2, submitOnChange) — на
+      // form: без stopPropagation форма сабмитнула бы inRage:true из DOM
+      // СЛЕДОМ за нашим откатом, и гейт молча проигрывал бы гонку.
+      ev.stopPropagation();
+      ev.currentTarget.checked = false;
       ui.notifications.warn(`«${actor.name}» уже выходил(а) из Ярости в этом бою — повторный вход запрещён до конца боя (Frenzy/Ярость). Снимается Чертой Butcher's Nails / Гвозди Мясника.`);
       await actor.update({ "system.inRage": false });
       return;

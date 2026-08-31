@@ -119,8 +119,10 @@ export function entryWhenOk(actor, entry, item = null) {
   }
 
   let talentOk = true;
-  if (talentSpec) {
-    const has = !actor || hasTalentSpec(actor, talentSpec.name, talentSpec.specialization);
+  if (talentSpec && actor) {
+    // Без актора (предпросмотр вне владельца) условие считается пройденным —
+    // и для negateTalent тоже (раньше отрицание гасило запись в предпросмотре).
+    const has = hasTalentSpec(actor, talentSpec.name, talentSpec.specialization);
     talentOk = entry.when.negateTalent ? !has : has;
   }
 

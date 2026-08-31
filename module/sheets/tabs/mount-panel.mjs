@@ -19,10 +19,9 @@ import { MOUNT_SPEEDS, MOUNT_ROLES, MOUNT_TRAIT_DEFS, RIDER_ACTOR_TYPES,
          MOUNT_ACTOR_TYPES, isBike, mountTraits, riderControl, testMod, STAY_MOD,
          handsNeeded, bonusHalfAction, sizeFits, pairInitiative, passengerCount,
          maneuverMods, skidInfo, mountRangedPenalty, isBroken,
-         possessionOf, isPossessed, mountControlSkill, skillValue } from "../../rules/mount.mjs";
+         possessionOf, isPossessed, mountControlSkill, skillValue, BLADES_TIER_USES} from "../../rules/mount.mjs";
 
 /** Лимит атак Лезвиями в Ход по рангу Навыка управления (стр. 478). */
-const BLADES_TIER_USES = { trained: 1, veteran: 2, expert: 3 };
 
 const rootEl = root => (root?.jquery ? root[0] : root);
 
@@ -145,13 +144,14 @@ export async function setMount(actor, target) {
     ui.notifications?.warn(
       `«${target.name}» не крупнее седока на Размер — по книге он такого не понесёт (стр. 477). Связь всё равно заведена.`);
   }
-  await actor.update({ "system.mount.uuid": target.uuid, "system.mount.skidUsed": false });
+  await actor.update({ "system.mount.uuid": target.uuid, "system.mount.skidUsed": false, "system.mount.bladesUsed": 0 });
 }
 
 /** Спешиться: связь снимается, скорость возвращается к стоянке. */
 export async function clearMount(actor) {
   await actor.update({
-    "system.mount.uuid": "", "system.mount.speed": "still", "system.mount.skidUsed": false
+    "system.mount.uuid": "", "system.mount.speed": "still", "system.mount.skidUsed": false,
+    "system.mount.bladesUsed": 0
   });
 }
 

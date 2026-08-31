@@ -29,8 +29,7 @@ import {
   MOUNT_SPEEDS, MOUNT_SKID, MOUNT_TERRAIN_MOD, STAY_MOD, BIKE_REPAIR, SELECTIVE_MODS,
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
-  hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue
-} from "../rules/mount.mjs";
+  hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue, BLADES_TIER_USES} from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -310,7 +309,6 @@ export async function showSkidDialog(rider) {
 //  Схема Черты хранит X одним числом (NumberField), а книга называет его
 //  «профилем» — упрощение: X читается как плоский урон типа Rending без
 //  Проб., как и остальные X-рейтинги в этом файле (deflectorShield и т.п.).
-const BLADES_TIER_USES = { trained: 1, veteran: 2, expert: 3 };
 
 export async function showBladesDialog(rider) {
   const ctx = await mountContext(rider);

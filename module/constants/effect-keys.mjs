@@ -51,6 +51,7 @@ for (const [key, label] of Object.entries(AP_VS_TYPES)) {
   EFFECT_KEY_LABELS[`system.absorption.vsType.${key}`] = `AP против ${label}`;
 }
 Object.assign(EFFECT_KEY_LABELS, {
+  "system.corruptionBonus": "Cor.b (бонус Порчи, Unnatural)",
   "system.fearRating":  "Рейтинг Страха",
   "system.sizeMod":     "Размер (модификатор)",
   "system.initiative":  "Инициатива",

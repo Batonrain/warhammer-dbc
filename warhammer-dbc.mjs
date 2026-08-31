@@ -81,6 +81,7 @@ import { syncTokenBaseSize } from "./module/combat/tactical-map.mjs";
 import { migrateWeaponGrips } from "./module/migrations/weapon-grips.mjs";
 import { migrateRemoveGeneSeed } from "./module/migrations/gene-seed-cleanup.mjs";
 import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
+import { migrateVehicleTraitEffects } from "./module/migrations/vehicle-trait-effects.mjs";
 import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
@@ -374,6 +375,11 @@ Hooks.once("init", () => {
 
   // Версия перевода Корпусов кораблей на тип shipHull (одноразовая)
   game.settings.register("warhammer-dbc", "shipHullsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия дополнения effects встроенных Черт техники (одноразовая)
+  game.settings.register("warhammer-dbc", "vehicleTraitEffectsVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -796,6 +802,17 @@ Hooks.once("ready", async () => {
     await migrateShipHulls();
     await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
+});
+
+// Черты техники: дополнить effects встроенных копий из компендиума (wdbc-y33b)
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "vehicleTraitEffectsVersion") || 0) >= VERSION) return;
+  try {
+    await migrateVehicleTraitEffects();
+    await game.settings.set("warhammer-dbc", "vehicleTraitEffectsVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Черты техники:", e); }
 });
 
 // ── Одноразовая инверсия: знак Мод. характеристик (бывший «Урон в характеристику»)

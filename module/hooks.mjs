@@ -31,6 +31,7 @@ import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
+import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
@@ -1126,6 +1127,8 @@ function _attachFateContextMenu(message, html) {
   Hooks.on("deleteCombat", async combat => {
     if (!game.user.isGM) return;
     await resolveTrancesForCombat(combat);
+    // Метка Аватара Резни живёт «до конца боя» — снять со всех комбатантов.
+    await clearAvatarOfSlaughterMarks(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни

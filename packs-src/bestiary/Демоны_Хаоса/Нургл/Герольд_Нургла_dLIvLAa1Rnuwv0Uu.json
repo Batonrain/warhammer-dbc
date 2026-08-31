@@ -2484,7 +2484,7 @@
       "img": "icons/svg/upgrade.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "Не смоделировано: «+1 Реакция, которую можно потратить ТОЛЬКО на Трейт Стойкость» — в системе нет пула реакций под конкретную способность (reactions.defenseMax — только Избегание, класть туда нельзя: дал бы лишнее Уклонение). ГМ учитывает вручную.",
         "benefit": "Ещё +1 Реакция только на Трейт «Стойкость».",
         "tier": 3,
         "requirement": "",
@@ -2505,53 +2505,7 @@
         }
       },
       "_id": "xtAOrC5YGuZ7TBLv",
-      "effects": [
-        {
-          "name": "Истинная Стойкость (перенесено)",
-          "system": {
-            "changes": [
-              {
-                "key": "system.reactions.defenseMax",
-                "type": "add",
-                "value": 1,
-                "phase": "final",
-                "priority": 0
-              }
-            ]
-          },
-          "_id": "CSKEvebjb9779qB5",
-          "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
-          "type": "base",
-          "disabled": false,
-          "start": null,
-          "duration": {
-            "value": null,
-            "units": "seconds",
-            "expiry": null,
-            "expired": false
-          },
-          "description": "",
-          "origin": null,
-          "tint": "#ffffff",
-          "transfer": true,
-          "statuses": [],
-          "showIcon": 1,
-          "folder": null,
-          "sort": 0,
-          "flags": {},
-          "_stats": {
-            "coreVersion": "14.365",
-            "systemId": "warhammer-dbc",
-            "systemVersion": "0.1.0",
-            "createdTime": null,
-            "modifiedTime": null,
-            "lastModifiedBy": null,
-            "compendiumSource": null,
-            "duplicateSource": null
-          },
-          "_key": "!actors.items.effects!dLIvLAa1Rnuwv0Uu.xtAOrC5YGuZ7TBLv.CSKEvebjb9779qB5"
-        }
-      ],
+      "effects": [],
       "folder": null,
       "sort": 0,
       "ownership": {

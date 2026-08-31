@@ -1,0 +1,1138 @@
+[
+  {
+    "name": "Two-Weapon Wielder (Melee)",
+    "count": 9,
+    "benefit": "Бой двумя оружиями со штрафом −20.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Катарт_KqYWz0gwzz6HMhOy.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Герольд_Слаанеш_KcmpC0hggnCO0ASS.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Демонетка_Jx6orGZGIj1iSLb1.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Изверг_Слаанеш_onMBPgc7evPY5y42.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Хранитель_Секретов_BgwRB2LlKpRaW8np.json",
+      "packs-src\\bestiary\\Смертные_Хаоса\\Культисты\\Культист_Мутант_GSnpDK6RwNI0hwHk.json"
+    ]
+  },
+  {
+    "name": "Fire in the Blood",
+    "count": 4,
+    "benefit": "Вход в Ярость за полудействие.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Джаггернаут_jcbnJn8KhVboxptb.json",
+      "packs-src\\bestiary\\Смертные_Хаоса\\Культисты\\Культист_Мутант_GSnpDK6RwNI0hwHk.json",
+      "packs-src\\bestiary\\Смертные_Хаоса\\Культисты\\Культист_Фанатик_WZcxqLXzxUI2SwYU.json"
+    ]
+  },
+  {
+    "name": "Знания Орудий Гнева",
+    "count": 2,
+    "benefit": "Как у Кровопускателя.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровопускатель_ENFL0SqAMmG72gGd.json"
+    ]
+  },
+  {
+    "name": "Жажда Крови",
+    "count": 2,
+    "benefit": "Как у Кровопускателя.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровопускатель_ENFL0SqAMmG72gGd.json"
+    ]
+  },
+  {
+    "name": "Добровольное Вселение",
+    "count": 2,
+    "benefit": "Как у Катарта — вселяется в согласного носителя.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Катарт_KqYWz0gwzz6HMhOy.json"
+    ]
+  },
+  {
+    "name": "Мост Между Мирами",
+    "count": 2,
+    "benefit": "Как у Катарта, но считается 5-ю Катартами.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Катарт_KqYWz0gwzz6HMhOy.json"
+    ]
+  },
+  {
+    "name": "Сила Мученичества",
+    "count": 2,
+    "benefit": "Как у Катарта.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Катарт_KqYWz0gwzz6HMhOy.json"
+    ]
+  },
+  {
+    "name": "Зараженные Раны",
+    "count": 2,
+    "benefit": "Как у Чумоноса.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Герольд_Нургла_dLIvLAa1Rnuwv0Uu.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Чумонос_xbOpfugnjpitK6yv.json"
+    ]
+  },
+  {
+    "name": "Стойкость",
+    "count": 2,
+    "benefit": "Как у Чумоноса.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Герольд_Нургла_dLIvLAa1Rnuwv0Uu.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Чумонос_xbOpfugnjpitK6yv.json"
+    ]
+  },
+  {
+    "name": "Мультиатака",
+    "count": 2,
+    "benefit": "Атакует только одной парой лапок в Ход; лишние пары держат до 3 целей.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Гнильная_Муха_2a1yZTT9BPu6jEig.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Скакун_Слаанеш_cR3iocuPp8rd20Ai.json"
+    ]
+  },
+  {
+    "name": "Контролируемый Хаос",
+    "count": 2,
+    "benefit": "За Очко Судьбы бросить ещё 3d10 и заменять кубики урона.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Возвышенный_Огневик_Ke8RIFCnkom9ABHs.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Огневик_TBttKGSQ72GVPj55.json"
+    ]
+  },
+  {
+    "name": "Пиродемон",
+    "count": 2,
+    "benefit": "Иммунен к E(Fl)/Горению; удваивает поглощение против прочего E.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Возвышенный_Огневик_Ke8RIFCnkom9ABHs.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Огневик_TBttKGSQ72GVPj55.json"
+    ]
+  },
+  {
+    "name": "Текучее Тело",
+    "count": 2,
+    "benefit": "Нельзя Захватить/Snare; иммунен к Crippling/Piercing.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Возвышенный_Огневик_Ke8RIFCnkom9ABHs.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Огневик_TBttKGSQ72GVPj55.json"
+    ]
+  },
+  {
+    "name": "Непостоянство",
+    "count": 2,
+    "benefit": "Как у Ужасов.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Герольд_Тзинча_v1SP264vr6sA5A8M.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Розовый_Ужас_irMvHXtsVKS7YJzR.json"
+    ]
+  },
+  {
+    "name": "Терзающий Нырок",
+    "count": 2,
+    "benefit": "Может совершать Верховую Атаку шипами самостоятельно.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Диск_Тзинча_BoSawYMtDC4dWsE5.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Крикун_QLid3QzalEQ1ldhp.json"
+    ]
+  },
+  {
+    "name": "Разделение",
+    "count": 2,
+    "benefit": "Ниже 0 Ран (кроме свящ./варп/выжигания/нестабильности) → разваливается на 2 Синих Ужаса.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Розовый_Ужас_irMvHXtsVKS7YJzR.json",
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Синий_Ужас_OXFuZONQqUBVdFf4.json"
+    ]
+  },
+  {
+    "name": "Благословение Кровавого Бога",
+    "count": 1,
+    "benefit": "Раз в Раунд свободным действием: Ярость / Избегания в Ярости / авто 5 Успехов / подавить психосилы / приём с любой базой.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json"
+    ]
+  },
+  {
+    "name": "Локус Кхорна",
+    "count": 1,
+    "benefit": "Буйство / Гнев / Кровопролитие / Ограждение / Подношение / Сокрушение (переключение раз в Ход).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json"
+    ]
+  },
+  {
+    "name": "Могущество",
+    "count": 1,
+    "benefit": "Двуручное рукопашное оружие одной рукой (считая двуручным хватом).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json"
+    ]
+  },
+  {
+    "name": "Кровопускание",
+    "count": 1,
+    "benefit": "Как у Кровопускателя.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Герольд_Кхорна_fgby2TYIKPuGUfqh.json"
+    ]
+  },
+  {
+    "name": "Ошейник Кхорна",
+    "count": 1,
+    "benefit": "−30 на психотесты в 16 м; +30 на сопротивление психосилам; Force-оружие теряет Force при попадании по Гончей.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Гончая_Плоти_3DeWr1tzf04OrQ5d.json"
+    ]
+  },
+  {
+    "name": "Охотник за Колдунами",
+    "count": 1,
+    "benefit": "Переброс атак по целям, что колдовали в этом бою; чует псайкеров даже по старым следам.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Гончая_Плоти_3DeWr1tzf04OrQ5d.json"
+    ]
+  },
+  {
+    "name": "Закалённая в Крови Броня",
+    "count": 1,
+    "benefit": "Щит-дефлектор 1-15; против психосил/варп-оружия — 1-30.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Джаггернаут_jcbnJn8KhVboxptb.json"
+    ]
+  },
+  {
+    "name": "Неистовый Натиск",
+    "count": 1,
+    "benefit": "Атака рогом с Натиска — авто 8 Успехов; в конце Хода взрыв 2d10+8 I(Cr) Blast 2 (свои игнорируют).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Джаггернаут_jcbnJn8KhVboxptb.json"
+    ]
+  },
+  {
+    "name": "Пламенный Путь",
+    "count": 1,
+    "benefit": "Под всадником Inf 50-79 — Hoverer (8), Inf 80+ — Flyer (8).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Джаггернаут_jcbnJn8KhVboxptb.json"
+    ]
+  },
+  {
+    "name": "Аура Гнева",
+    "count": 1,
+    "benefit": "Все в 30м при уроне — W+0 или Ярость; союзники входят/Избегают в Ярости свободно.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json"
+    ]
+  },
+  {
+    "name": "Высший Воин",
+    "count": 1,
+    "benefit": "Раз в Ход рукопашный приём с любой базой.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json"
+    ]
+  },
+  {
+    "name": "Неостановимая Сила",
+    "count": 1,
+    "benefit": "Unnatural S врага вдвое меньше — не считается при «авто-ничьей».",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json"
+    ]
+  },
+  {
+    "name": "Пока Она Льётся",
+    "count": 1,
+    "benefit": "Тратит рейтинг Unnatural S как ОБ; восстанавливает 1 при смерти существа в 30м.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json"
+    ]
+  },
+  {
+    "name": "Взор Истины",
+    "count": 1,
+    "benefit": "Распознаёт и видит сквозь колдовские иллюзии.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json"
+    ]
+  },
+  {
+    "name": "Предводитель Крови",
+    "count": 1,
+    "benefit": "I вместо F для командования; WS вместо F для команд на рукопашные атаки.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровожад_j1Cndu2qjp1K0obt.json"
+    ]
+  },
+  {
+    "name": "Возвышение (Кровожнец)",
+    "count": 1,
+    "benefit": "I→42, W→48, F→32, Раны→24 + набор улучшений. Кавалерия (Кровокрушитель) на Джаггернауте.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Кхорн\\Кровопускатель_ENFL0SqAMmG72gGd.json"
+    ]
+  },
+  {
+    "name": "Bring It Down",
+    "count": 1,
+    "benefit": "Команды дают бонус к урону по большой цели.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json"
+    ]
+  },
+  {
+    "name": "Counter-Attack",
+    "count": 1,
+    "benefit": "Атака с −10 после парирования.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json"
+    ]
+  },
+  {
+    "name": "Локус Пантеона",
+    "count": 1,
+    "benefit": "Аура на демонов всех Богов: Грация / Несокрушимость / Гнев / Мутация / Цепи / Фанатизм (переключение раз в Ход).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json"
+    ]
+  },
+  {
+    "name": "Проводник Чистоты",
+    "count": 1,
+    "benefit": "Может использовать психосилы Чистой Демонологии, считая Cor = 0.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json"
+    ]
+  },
+  {
+    "name": "Врата Плоти",
+    "count": 1,
+    "benefit": "Вселившись в псайкера — за полное действие превращает его в портал в Варп (Размер 3).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Герольд_Пантеона_7AOK4HjycSOeLqua.json"
+    ]
+  },
+  {
+    "name": "Правоверное Служение",
+    "count": 1,
+    "benefit": "Откликается лишь на зов истинно верующих; не-фанатики −50 на призыв/Владычество.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Катарт_KqYWz0gwzz6HMhOy.json"
+    ]
+  },
+  {
+    "name": "Возвышение (Мученик)",
+    "count": 1,
+    "benefit": "I→36, W→52, F→33, Раны→22 + один комплект улучшений (WS/A/P/S/F + таланты).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Катарт_KqYWz0gwzz6HMhOy.json"
+    ]
+  },
+  {
+    "name": "Дикое Вселение",
+    "count": 1,
+    "benefit": "Вселяется в трупы диких животных (предпочтительно). Ритуал Призыва Презреннейших на летающих хищниках призывает 1d5 Призраков за Успех.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Призрак_C9VPD8S9Q5croh3J.json"
+    ]
+  },
+  {
+    "name": "Эмоциональный Паразит",
+    "count": 1,
+    "benefit": "В 200 м от группы 100+ людей стабилизируется (стоп отсчёта изгнания) и усиливает их эмоции. Орда: ×2 радиус/эффект за каждые 5 Магнитуды.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Фантом_0jnCKB7qN7kcflqa.json"
+    ]
+  },
+  {
+    "name": "Охотник Ужаса",
+    "count": 1,
+    "benefit": "Unnatural Senses (50) засекает только существ под Шоком/Подавлением/Паникой/Запугиванием; атакуя таких — +20 к попаданию (не работает, когда Фурия сама напугана).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Фурия_xGoZAJllemLC6z1Z.json"
+    ]
+  },
+  {
+    "name": "Угасание",
+    "count": 1,
+    "benefit": "Ниже 0 Ран от Варп/свящ./Выжигания/атак демона — 1d10, на 1 уничтожается вместо изгнания (Посвящённые иммунны).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Фурия_xGoZAJllemLC6z1Z.json"
+    ]
+  },
+  {
+    "name": "Посвящение (опц.)",
+    "count": 1,
+    "benefit": "Служа Богу, теряет Bestial и получает: С +10A+Alluring Presence; Н +10T+Mockery of Life; К +10S+Blood for the Blood God; Т +10W+Sorcerous Barrier.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Неделимый\\Фурия_xGoZAJllemLC6z1Z.json"
+    ]
+  },
+  {
+    "name": "Тантрум",
+    "count": 1,
+    "benefit": "Вместо атаки — взрыв оружия оземь: 3 шаблона Blast (3) профилем оружия (−1 кубик, Pen 0, Flush).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Великий_Нечистый_rcyewJ59CogO7t1N.json"
+    ]
+  },
+  {
+    "name": "Аура Энтропии",
+    "count": 1,
+    "benefit": "При непоглощённом уроне — призвать/вылечить Нурглингов; тест T против существа в 25м (урон S/Т, −1 к Качеству).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Великий_Нечистый_rcyewJ59CogO7t1N.json"
+    ]
+  },
+  {
+    "name": "Носильщики",
+    "count": 1,
+    "benefit": "Поглощает рой Нурглингов в 7м для ускорения движения.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Великий_Нечистый_rcyewJ59CogO7t1N.json"
+    ]
+  },
+  {
+    "name": "Мастер Жизни и Смерти",
+    "count": 1,
+    "benefit": "До 2 Контактов Плоти в Ход; всё оружие считается естественным для Контакта Плоти.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Великий_Нечистый_rcyewJ59CogO7t1N.json"
+    ]
+  },
+  {
+    "name": "Владыка Ложной Плоти",
+    "count": 1,
+    "benefit": "Психосилы Биомантии могут воздействовать на демонов как на плоть.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Великий_Нечистый_rcyewJ59CogO7t1N.json"
+    ]
+  },
+  {
+    "name": "Локус Нургла",
+    "count": 1,
+    "benefit": "Возрождение / Живучесть / Заразность / Неизбежность / Несокрушимость / Упорство (переключение раз в Ход).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Герольд_Нургла_dLIvLAa1Rnuwv0Uu.json"
+    ]
+  },
+  {
+    "name": "Мертвые Головы",
+    "count": 1,
+    "benefit": "∞ запас Моровых Гранат из брюха (естественное оружие); вынутая растекается через 3 Раунда.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Гнильная_Муха_2a1yZTT9BPu6jEig.json"
+    ]
+  },
+  {
+    "name": "Стоячий Воздух",
+    "count": 1,
+    "benefit": "Опирается крыльями на воздух как на скалу — плавный полёт без штрафов на атаки всадника.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Гнильная_Муха_2a1yZTT9BPu6jEig.json"
+    ]
+  },
+  {
+    "name": "Гниль Нургла",
+    "count": 1,
+    "benefit": "Выживший после непоглощ. урона от яда Нурглинга — после боя Т+10 или заражается Гнилью Нургла.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Нурглинги_cOAwocv9yqhLhBUE.json"
+    ]
+  },
+  {
+    "name": "Одиночные Нурглинги",
+    "count": 1,
+    "benefit": "Одиночный: Размер −2, SPD 0, 2 Раны, урон 1d5, без Экстрем. урона; теряет Fear и Swarm, W→25.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Нурглинги_cOAwocv9yqhLhBUE.json"
+    ]
+  },
+  {
+    "name": "Гниющий Трон",
+    "count": 1,
+    "benefit": "Всадник — не деградирующее укрытие AP 7 с задней арки 180°; посадка/спешивание только с передней 90°.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Паланкин_Нургла_nCMcUrHwHLTtS58r.json"
+    ]
+  },
+  {
+    "name": "Симбиотическое Восстановление",
+    "count": 1,
+    "benefit": "Использует Т всадника для Regeneration; всадник поглощает Раны Паланкина для снятия эффектов.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Паланкин_Нургла_nCMcUrHwHLTtS58r.json"
+    ]
+  },
+  {
+    "name": "Нурглинги-Оруженосцы",
+    "count": 1,
+    "benefit": "Хранят снаряжение всадника; 2 ассистента при надевании брони.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Паланкин_Нургла_nCMcUrHwHLTtS58r.json"
+    ]
+  },
+  {
+    "name": "Boxer",
+    "count": 1,
+    "benefit": "−10 штраф за 2 оружия для кулаков.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json"
+    ]
+  },
+  {
+    "name": "Игры и Забавы",
+    "count": 1,
+    "benefit": "Раз в Ход (d5): Облако Мух / След Слизи / Тошнотворные Газы / Проглотить Живьём / Кислотная Рвота.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json"
+    ]
+  },
+  {
+    "name": "Гротескная Регенерация",
+    "count": 1,
+    "benefit": "В начале Хода +1..+7 Ран (больше при низких Ранах).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json"
+    ]
+  },
+  {
+    "name": "Разъедающая Слизь",
+    "count": 1,
+    "benefit": "Все в Борьбе с Тварью в конце Хода — Corrosive (2); при AP 0 — Bane (3).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json"
+    ]
+  },
+  {
+    "name": "Игривая",
+    "count": 1,
+    "benefit": "Реакция — перехватить Натиск на союзника (SPD×2).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json"
+    ]
+  },
+  {
+    "name": "Рассеянность",
+    "count": 1,
+    "benefit": "Помнит приказы 3 Раунда; приказ = Command + Survival (F)+30.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Тварь_Нургла_WjmbTQIBGqdXcOyc.json"
+    ]
+  },
+  {
+    "name": "Приземление",
+    "count": 1,
+    "benefit": "При Натиске — авто 2d10+7 I(Cr) Primitive всем Размером ≤0 в контакте; тест S+20/A+10 или сбита с ног.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Чумная_Жаба_gvE72vKs126kkVfu.json"
+    ]
+  },
+  {
+    "name": "Проглотить Живьём",
+    "count": 1,
+    "benefit": "За полудействие глотает удержанное существо Размером ≤0.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Чумная_Жаба_gvE72vKs126kkVfu.json"
+    ]
+  },
+  {
+    "name": "Возвышение (Измученный)",
+    "count": 1,
+    "benefit": "I→44, W→48, F→34, Раны→26 + набор улучшений. Кавалерия (Чумной Трутень) на Гнильной Мухе.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Нургл\\Чумонос_xbOpfugnjpitK6yv.json"
+    ]
+  },
+  {
+    "name": "Локус Слаанеш",
+    "count": 1,
+    "benefit": "Быстрота / Грация / Мастерство / Очарование / Стремительность / Утончённость (переключение раз в Ход).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Герольд_Слаанеш_KcmpC0hggnCO0ASS.json"
+    ]
+  },
+  {
+    "name": "Танцовщица Тёмного Принца",
+    "count": 1,
+    "benefit": "Как у демонеток; +Неземная Грация: ещё +1 Реакция.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Герольд_Слаанеш_KcmpC0hggnCO0ASS.json"
+    ]
+  },
+  {
+    "name": "Арсенал Агонии",
+    "count": 1,
+    "benefit": "Как у демонеток.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Герольд_Слаанеш_KcmpC0hggnCO0ASS.json"
+    ]
+  },
+  {
+    "name": "В Глазах Смотрящего",
+    "count": 1,
+    "benefit": "Как у демонеток.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Герольд_Слаанеш_KcmpC0hggnCO0ASS.json"
+    ]
+  },
+  {
+    "name": "Возвышение (Соблазнительница)",
+    "count": 1,
+    "benefit": "I→34, W→48, F→44, Раны→22 + один комплект улучшений.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Демонетка_Jx6orGZGIj1iSLb1.json"
+    ]
+  },
+  {
+    "name": "Дискордантная Песнь",
+    "count": 1,
+    "benefit": "Аура 20 м: враги тест W−10 (псайкеры −20) при каждой атаке по Извергу; 1-4 Провала — −5×Провалы, 5+ — не могут атаковать. Стрельба извне по целям в ауре −10.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Изверг_Слаанеш_onMBPgc7evPY5y42.json"
+    ]
+  },
+  {
+    "name": "Мучитель",
+    "count": 1,
+    "benefit": "При пытках/допросе считается 2 ассистентами.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Изверг_Слаанеш_onMBPgc7evPY5y42.json"
+    ]
+  },
+  {
+    "name": "Арсенал Совершенства",
+    "count": 1,
+    "benefit": "Оружие Daemonic Armament: +1 кубик, Crippling (3), Shocking, Best.Q; раз в Ход трансформация оружия.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Хранитель_Секретов_BgwRB2LlKpRaW8np.json"
+    ]
+  },
+  {
+    "name": "Аура Уступчивости",
+    "count": 1,
+    "benefit": "Раз в Ход тест W+0 в 25м — цель очарована (подчиняется командам +30). Не на герольдов+.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Хранитель_Секретов_BgwRB2LlKpRaW8np.json"
+    ]
+  },
+  {
+    "name": "Мастер Отражений",
+    "count": 1,
+    "benefit": "До 2 атак в Ход, если одна — психосила Иллюзионизма; до 3 иллюзий без потери тPR.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Хранитель_Секретов_BgwRB2LlKpRaW8np.json"
+    ]
+  },
+  {
+    "name": "Владыка Умов",
+    "count": 1,
+    "benefit": "Психосилы на разум игнорируют From Beyond целей-демонов.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Слаанеш\\Хранитель_Секретов_BgwRB2LlKpRaW8np.json"
+    ]
+  },
+  {
+    "name": "Высшее Пламя Хаоса",
+    "count": 1,
+    "benefit": "При дубле на уроне эффект (d10) применяется в дополнение к попаданию (демон выбирает).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Возвышенный_Огневик_Ke8RIFCnkom9ABHs.json"
+    ]
+  },
+  {
+    "name": "Локус Тзинча",
+    "count": 1,
+    "benefit": "Мутация / Перемены / Преломление / Призыв / Разрушение / Трансмогрификация (переключение раз в Ход).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Герольд_Тзинча_v1SP264vr6sA5A8M.json"
+    ]
+  },
+  {
+    "name": "Укреплённый Щит",
+    "count": 1,
+    "benefit": "Чародейский щит (кроме Sorcerous Barrier) получает +15 к рейтингу.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Герольд_Тзинча_v1SP264vr6sA5A8M.json"
+    ]
+  },
+  {
+    "name": "Подстава",
+    "count": 1,
+    "benefit": "Раз за сцену при уроне ниже 0 Ран — призывает Розового Ужаса и переносит на него урон.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Герольд_Тзинча_v1SP264vr6sA5A8M.json"
+    ]
+  },
+  {
+    "name": "Адаптивный Размер",
+    "count": 1,
+    "benefit": "За полудействие меняет Размер от −1 до 1.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Диск_Тзинча_BoSawYMtDC4dWsE5.json"
+    ]
+  },
+  {
+    "name": "Многоглазый",
+    "count": 1,
+    "benefit": "Круговое зрение 360°.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Диск_Тзинча_BoSawYMtDC4dWsE5.json"
+    ]
+  },
+  {
+    "name": "Чародейский Щит 1-50",
+    "count": 1,
+    "benefit": "Не перегружающийся колдовской щит-купол 1-50 (всадник может получать сам).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Диск_Тзинча_BoSawYMtDC4dWsE5.json"
+    ]
+  },
+  {
+    "name": "Вопль",
+    "count": 1,
+    "benefit": "Постоянно кричит, не может молчать даже по приказу.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Крикун_QLid3QzalEQ1ldhp.json"
+    ]
+  },
+  {
+    "name": "Имматериальные Ветра",
+    "count": 1,
+    "benefit": "При Беге/Натиске/Верховой Атаке становится нематериальным (Immaterial) — проходит сквозь препятствия и атаки.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Крикун_QLid3QzalEQ1ldhp.json"
+    ]
+  },
+  {
+    "name": "Чутьё Структуры",
+    "count": 1,
+    "benefit": "Находит слабые места; против Размера 3+ — Избирательная атака пастью −20 наносит +2d10 урона.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Крикун_QLid3QzalEQ1ldhp.json"
+    ]
+  },
+  {
+    "name": "Пламя Хаоса",
+    "count": 1,
+    "benefit": "Дубль на уроне (стрельба/рукопашная) → эффект d10: Исцеляющее Пламя / Тех-Проклятье / Расплавление / Инферно / Негатив / Смещение / Пиростойкость / Щупальца / Гнев Варпа / Пламя Души.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Огневик_TBttKGSQ72GVPj55.json"
+    ]
+  },
+  {
+    "name": "Встречный Огонь",
+    "count": 1,
+    "benefit": "Реакция при Натиске — попадание пламенем перемен по атакующему (точечно).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Огневик_TBttKGSQ72GVPj55.json"
+    ]
+  },
+  {
+    "name": "Податливый",
+    "count": 1,
+    "benefit": "Тзинч герольда+ и меченые смертные: +60 на Команду Огневиками, те не могут сопротивляться приказам.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Огневик_TBttKGSQ72GVPj55.json"
+    ]
+  },
+  {
+    "name": "Аура Перемен",
+    "count": 1,
+    "benefit": "Раз в Раунд эффект на цель в 30м: отнять Успехи / телепорт в начало движения / перенаправить попадание / отменить трату ОБ.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Повелитель_Перемен_bd3z31GJEBmoCyqj.json"
+    ]
+  },
+  {
+    "name": "Верховный Магус",
+    "count": 1,
+    "benefit": "Доп. полудействие/Реакция на психосилы; до 2 атак (одна — психосила); до 3 психосил без потери тPR; игнор Феноменов.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Повелитель_Перемен_bd3z31GJEBmoCyqj.json"
+    ]
+  },
+  {
+    "name": "Щит Провидения",
+    "count": 1,
+    "benefit": "+35 к чародейским щитам против стрельбы; может дать союзнику за Реакцию.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Повелитель_Перемен_bd3z31GJEBmoCyqj.json"
+    ]
+  },
+  {
+    "name": "Возвышение (Радужный Ужас)",
+    "count": 1,
+    "benefit": "BS→55, I→42, W→50, F→34, Раны→22, Command+10, Warp Gifted (5) с 2 психосилами.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Розовый_Ужас_irMvHXtsVKS7YJzR.json"
+    ]
+  },
+  {
+    "name": "Пылающее Тело",
+    "count": 1,
+    "benefit": "Иммунен к E(Fl) и Горению; в Борьбе — цель в конце Хода получает 1d5+5 E(Fl), Pen 4, Flame.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Серный_Ужас_miDYVDIZjThxljjg.json"
+    ]
+  },
+  {
+    "name": "Серная Вонь",
+    "count": 1,
+    "benefit": "Все без герметичной брони/респиратора в 3 м — −5 WS/BS/A (−10 против Орды 20+).",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Серный_Ужас_miDYVDIZjThxljjg.json"
+    ]
+  },
+  {
+    "name": "Самосожжение",
+    "count": 1,
+    "benefit": "Рукопашная атака +20; при попадании цель получает 2d10+4 E(Fl), Pen 1, Flame (можно Избегать), а Ужас изгоняется.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Демоны_Хаоса\\Тзинч\\Серный_Ужас_miDYVDIZjThxljjg.json"
+    ]
+  },
+  {
+    "name": "Gaze Into the Abyss",
+    "count": 1,
+    "benefit": "На 1 меньше Порчи от психосил и демонов.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Смертные_Хаоса\\Культисты\\Культист_Ведьма_dl0iiw6sl6VmFdbm.json"
+    ]
+  },
+  {
+    "name": "Two-Weapon Wielder (Оба)",
+    "count": 1,
+    "benefit": "Бой двумя оружиями со штрафом −20.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Смертные_Хаоса\\Культисты\\Культист_Фанатик_WZcxqLXzxUI2SwYU.json"
+    ]
+  },
+  {
+    "name": "Носильщик",
+    "count": 1,
+    "benefit": "Союзник в контакте берёт/складывает предметы с разгрузки за свободное действие.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Смертные_Хаоса\\Слуги\\Носильщик_5cBF1MseZeqGLZSh.json"
+    ]
+  },
+  {
+    "name": "Сломленный",
+    "count": 1,
+    "benefit": "Выполняет любой приказ хозяина, но не получает преимуществ Командования; побег — тест W+0.",
+    "description": "",
+    "hasRating": null,
+    "rating": null,
+    "files": [
+      "packs-src\\bestiary\\Смертные_Хаоса\\Слуги\\Раб_unal2PpBdMHHG0UI.json"
+    ]
+  }
+]

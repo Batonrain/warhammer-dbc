@@ -79,9 +79,12 @@ describe("Техника: ходовая и Черты техники", () => {
       trait({ autonomous: true, fullMoveSpdMult: 3, swerveDisabled: true, critHalved: true, commandBonus: 10, repairBonus: 5 }, 40, 35, 30)
     ]);
     expect(s.openTopped).toBe(true);
+    // Многоногая (X): с третьей стопки (wdbc-07a6) spdDamageReduce берёт
+    // рейтинг Черты (X=3), а не число из effects — урон Ходовой 2 гасится
+    // целиком: spdDmg 0, effSpd 12−1−0 = 11.
     expect(s.derived).toMatchObject({
-      chassisType: "walker", effSpd: 10, spdDamaged: true,
-      movement: { smallMove: 10, fullMove: 30, run: 40 },
+      chassisType: "walker", effSpd: 11, spdDamaged: false,
+      movement: { smallMove: 11, fullMove: 33, run: 44 },
       manoeuvreMod: 15, swerveMod: -20, swerveDisabled: true, walker: true,
       strengthBonus: 7, liftKg: 14, halfWrecked: false, deflector: 3,
       autonomous: true, autonomousOperate: 40, autonomousBS: 35, autonomousAwareness: 30
