@@ -33,6 +33,18 @@ export function normalizeAngle180(deg) {
 }
 
 /**
+ * Евклидово расстояние между двумя точками сцены, в тех же единицах, что и
+ * координаты (пиксели). Перевод в игровые метры — на стороне Foundry-обвязки
+ * (combat/facing.mjs::tokenDistance), т.к. масштаб (grid.size/grid.distance)
+ * читается из canvas, а не передаётся сюда.
+ * @param {{x:number,y:number}} a
+ * @param {{x:number,y:number}} b
+ */
+export function pixelDistance(a, b) {
+  return Math.hypot(b.x - a.x, b.y - a.y);
+}
+
+/**
  * Пеленг из точки A в точку B, в градусах: 0° — на север, по часовой.
  * @param {{x:number,y:number}} from
  * @param {{x:number,y:number}} to

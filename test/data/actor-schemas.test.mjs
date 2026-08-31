@@ -80,7 +80,14 @@ const OWN_DEVIATIONS = {
 const DEVIATIONS = {
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
-    "availability": 0
+    "availability": 0,
+    // Пустотные Щиты (X) — персистентный массив HP щитов, заведён позже
+    // template.json (wdbc-y33b).
+    "voidShields": [],
+    // Тормоза Падения — лимит «раз за бой/сцену», заведён позже template.json (wdbc-y33b).
+    "fallBreaksUsed": false,
+    // Продвинутые Системы Управления — «уже двигалась в этот Раунд», заведён позже template.json (wdbc-y33b).
+    "movedThisTurn": false
   },
   ship: {
     // Свободная заметка «Класс корпуса» дублировала выбор реального Корпуса

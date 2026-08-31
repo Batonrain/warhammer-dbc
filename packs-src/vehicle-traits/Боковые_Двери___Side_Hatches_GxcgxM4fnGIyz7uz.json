@@ -33,7 +33,22 @@
       "deflectorDaemonic": false,
       "ignoreCrewCrits": false,
       "autonomous": false,
-      "flickerfield": false
+      "flickerfield": false,
+      "amphibious": false,
+      "ceramitePlating": false,
+      "sidecarStructure": false,
+      "voidShields": false,
+      "volatile": false,
+      "fallBreaks": false,
+      "orbitalDeployment": false,
+      "onslaught": false,
+      "multiTargeter": false,
+      "advancedTargeting": false,
+      "advancedControls": false,
+      "sideHatches": true,
+      "assaultRamp": false,
+      "enclosed": false,
+      "sealed": false
     }
   },
   "_id": "GxcgxM4fnGIyz7uz",

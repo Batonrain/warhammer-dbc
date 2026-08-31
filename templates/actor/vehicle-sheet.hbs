@@ -52,6 +52,12 @@
     </div>
     {{#if deflector}}<div class="veh-deflector{{#if deflectorDaemonic}} veh-deflector-daemon{{/if}}" title="{{#if deflectorDaemonic}}Колдовской{{else}}Технологический{{/if}} щит-дефлектор — попадание отражается на броске 1d100 ≤ {{deflector}}">🛡 Дефлектор 1–{{deflector}}</div>{{/if}}
     {{#if flickerfield}}<div class="veh-flicker" title="Мерцающие Поля: стрелковые атаки по машине дальше «в упор» получают −20; Size машины для попаданий по ней −2">✦ Мерцающие Поля −20</div>{{/if}}
+    {{#if voidShields.length}}
+    <div class="veh-void-shields" title="Пустотные Щиты: останавливают всю стрельбу с расстояния более 5 м. АР 30 + 20 Структуры на щит.">
+      {{#each voidShields as |s|}}<span class="veh-void-shield-pip{{#if s.collapsed}} veh-void-shield-down{{/if}}">🛡{{s.hp}}</span>{{/each}}
+      <button type="button" class="veh-void-shield-repair" data-action="voidShieldRepair" title="Ремонт Пустотного Щита (Tech-Use)"><i class="fas fa-wrench"></i></button>
+    </div>
+    {{/if}}
     {{#if derived.halfWrecked}}<div class="veh-wrecked-tag">ПОЛУРАЗРУШЕНА</div>{{/if}}
   </div>
 </header>
@@ -153,6 +159,15 @@
 
       <div class="veh-panel">
         <div class="veh-panel-title">ОГОНЬ — ОРУДИЯ</div>
+        {{#if volleyStations.length}}
+        <div class="veh-volley-bar">
+          {{#each volleyStations as |s|}}
+          <button type="button" class="veh-volley-btn" data-action="volley" data-station-id="{{s.id}}"
+            title="Полное действие {{s.name}} — стрельба всеми орудиями станции ({{s.weaponCount}}), первое с Прицеливанием">
+            <i class="fas fa-burst"></i> Залп: {{s.label}} ({{s.name}})</button>
+          {{/each}}
+        </div>
+        {{/if}}
         <div class="veh-firebar">
           {{#each weapons as |w|}}
           <div class="veh-fire-item" data-item-id="{{w.id}}">
@@ -199,6 +214,7 @@
       <div class="veh-empty">Мест нет. Добавьте места выше, затем перетащите на них персонажей.</div>
       {{/each}}
     </div>
+    <button type="button" class="veh-disembark" data-action="disembark" title="Обычно полудействие без движения; Боковые Двери/Штурмовая Рампа дают полное действие + Бег(/Натиск)"><i class="fas fa-person-running"></i> Выгрузка</button>
   </div>
 
   {{!-- ───────────── БОЙ (Оснащение + Действия) ───────────── --}}
@@ -210,7 +226,21 @@
         <button type="button" class="veh-ram" data-action="ram"><i class="fas fa-truck-monster"></i> Таран</button>
         <button type="button" class="veh-terrain" data-action="terrain"><i class="fas fa-mountain"></i> Трудный Ландшафт</button>
         <button type="button" class="veh-repair" data-action="repair"><i class="fas fa-wrench"></i> Ремонт</button>
+        <button type="button" class="veh-fire-detonation" data-action="fireDetonation" title="1d10 + Ходов Пожара — обычно детонирует на 10+, Взрывоопасная снижает до 6+"><i class="fas fa-fire"></i> Пожар: детонация</button>
+        {{#if derived.traitFlags.fallBreaks}}
+        <button type="button" class="veh-fall-breaks" data-action="fallBreaks" {{#if system.fallBreaksUsed}}disabled{{/if}} title="Крушение с Низкой высоты → с Приземной. Не чаще раза за бой/сцену."><i class="fas fa-parachute-box"></i> Тормоза Падения</button>
+        {{/if}}
+        {{#if derived.traitFlags.orbitalDeployment}}
+        <button type="button" class="veh-orbital-1" data-action="orbitalDeployTurn1" title="Ход 1: влетает на Высокую высоту, атаки по ней −30"><i class="fas fa-satellite"></i> Орб. высадка: Ход 1</button>
+        <button type="button" class="veh-orbital-2" data-action="orbitalDeployTurn2" title="Ход 2: приземление со смещением 2d10м, атаки из машины −20"><i class="fas fa-satellite"></i> Орб. высадка: Ход 2</button>
+        {{/if}}
       </div>
+      {{#if derived.traitFlags.advancedControls}}
+      <label class="veh-check" title="Ставится автоматически при выстреле из Закреплённого орудия; сбросьте вручную в начале нового Раунда">
+        <input type="checkbox" class="veh-flag-toggle" data-flag="movedThisTurn" {{#if system.movedThisTurn}}checked{{/if}}/>
+        Продвинутые Системы Управления: Ход в этот Раунд уже засчитан
+      </label>
+      {{/if}}
       <div class="veh-hint">
         <b>Место попадания</b> считается автоматически: отметьте (target) токен машины перед выстрелом — реверс броска даёт часть по таблице, а Избирательный прицел бьёт в выбранную часть. Урон применяется по стороне брони в Структуру.<br>
         <b>Вираж</b> — реакция: кнопка появляется на карточке атаки по машине (выберите токен машины).

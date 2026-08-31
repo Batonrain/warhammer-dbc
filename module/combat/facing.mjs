@@ -4,7 +4,8 @@
 //  Foundry-токен: центр в пиксельных координатах сцены + rotation.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc } from "../rules/facing.mjs";
+import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc,
+         pixelDistance } from "../rules/facing.mjs";
 
 /** Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не важен). */
 function tokenCenter(token) {
@@ -52,6 +53,35 @@ export async function resolveAttackerToken(attackerUuid) {
   const actor = await fromUuid(attackerUuid).catch(() => null);
   const tokens = actor?.getActiveTokens?.(true, true) ?? [];
   return tokens[0] ?? null;
+}
+
+/**
+ * Расстояние между центрами двух токенов в игровых единицах сцены (для этой
+ * системы — метры), а не в пикселях: пиксельное расстояние делится на
+ * canvas.grid.size (px на клетку) и умножается на «сколько единиц в клетке»
+ * из настроек СЦЕНЫ (grid.distance) — то же поле, что Foundry показывает в
+ * конфигурации сцены как «Grid Distance», а не захардкоженное «1 клетка = 1 м»
+ * (wdbc-y33b, Пустотные Щиты — нужна проверка «атака издалека, >5м»).
+ *
+ * УПРОЩЕНИЕ: считает по прямой (Евклидово), не по правилам диагоналей самого
+ * Foundry (5-10-5 и т.п. у сеточных карт) — для порогового «больше X м или
+ * нет» разница пренебрежимо мала, а без этого можно не завязываться на точную
+ * версию API `canvas.grid.measurePath`.
+ *
+ * null, если позиция любого токена неизвестна — вызывающий сам решает
+ * безопасный дефолт для своего случая (тот же принцип, что у isFrontArcHit/
+ * isTargetWithinVehicleArc выше).
+ * @param {Token} tokenA
+ * @param {Token} tokenB
+ * @returns {number|null}
+ */
+export function tokenDistance(tokenA, tokenB) {
+  const posA = tokenCenter(tokenA);
+  const posB = tokenCenter(tokenB);
+  if (!posA || !posB) return null;
+  const gridSize     = canvas?.grid?.size || 100;
+  const unitDistance = canvas?.scene?.grid?.distance ?? canvas?.grid?.distance ?? 1;
+  return (pixelDistance(posA, posB) / gridSize) * unitDistance;
 }
 
 /**
