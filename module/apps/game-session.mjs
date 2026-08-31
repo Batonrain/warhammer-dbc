@@ -106,27 +106,46 @@ export async function markRoundCapabilityUsed(actor, flag) {
   return markCapabilityUsed(actor, flag, "round");
 }
 
+/** Патч сброса одного usageLimits-словаря (плоского {key: {scope, used, count}}) по scope — used→false, count→0. */
+function usageLimitsResetPatch(limits, scope, prefix) {
+  const patch = {};
+  for (const [key, entry] of Object.entries(limits || {})) {
+    if (entry?.scope !== scope) continue;
+    if (entry.used) patch[`${prefix}.${key}.used`] = false;
+    if (entry.count) patch[`${prefix}.${key}.count`] = 0;
+  }
+  return patch;
+}
+
 /**
- * Сбросить разовые-за-scope эффекты: метки usageLimit у предметов и метки
- * usageLimits возможностей у самих акторов.
+ * Сбросить разовые-за-scope эффекты: метки usageLimit у предметов, метки
+ * usageLimits (round/battle/scene/session, булевые И счётчики — wdbc-f4jt)
+ * возможностей у самих акторов, и ТЕ ЖЕ usageLimits на предметах — с
+ * появлением кнопки «▶ Запустить» (module/apps/mechanics.mjs) флаг
+ * перезарядки scene/session-записи kind:"script" живёт на предмете, а не
+ * акторе (тем же приёмом, что slowReload оружия корабля), и без этой ветки
+ * никогда бы не откатывался.
  */
-async function resetUsageLimit(scope) {
+export async function resetUsageLimit(scope) {
   let n = 0;
   for (const actor of game.actors) {
     const updates = [];
     for (const it of actor.items) {
+      const patch = {};
       const ul = it.getFlag("warhammer-dbc", "usageLimit");
-      if (ul?.scope === scope && ul?.used) updates.push({ _id: it.id, "flags.warhammer-dbc.usageLimit.used": false });
+      if (ul?.scope === scope && ul?.used) patch["flags.warhammer-dbc.usageLimit.used"] = false;
+      Object.assign(patch, usageLimitsResetPatch(
+        it.getFlag("warhammer-dbc", "usageLimits"), scope, "flags.warhammer-dbc.usageLimits"
+      ));
+      if (Object.keys(patch).length) updates.push({ _id: it.id, ...patch });
     }
     if (updates.length) {
       await actor.updateEmbeddedDocuments("Item", updates);
       n += updates.length;
     }
-    const limits = actor.getFlag("warhammer-dbc", "usageLimits") || {};
-    const actorUpd = {};
-    for (const [key, ul] of Object.entries(limits)) {
-      if (ul?.scope === scope && ul?.used) actorUpd[`flags.warhammer-dbc.usageLimits.${key}.used`] = false;
-    }
+    const actorUpd = usageLimitsResetPatch(
+      actor.getFlag("warhammer-dbc", "usageLimits"), scope, "flags.warhammer-dbc.usageLimits"
+    );
     if (Object.keys(actorUpd).length) {
       await actor.update(actorUpd);
       n += Object.keys(actorUpd).length;
