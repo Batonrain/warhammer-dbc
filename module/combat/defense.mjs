@@ -7,6 +7,7 @@ import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { disabledArmourPenalty } from "./armor-mods.mjs";
+import { inventoryOverloadPenalty } from "../rules/encumbrance.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
@@ -50,7 +51,10 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   // отдельный от вкладки Навыков (_rollSkill), которая их уже учитывала.
   const fatigue       = fatiguePenalty(actor, "ag");
   const armourPenalty = disabledArmourPenalty(actor, { skillKey: "dodge" });
-  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus + fatigue + armourPenalty;
+  // Перевес инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник,
+  // может действовать одновременно с ней (не смешиваются, оба вычитаются).
+  const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "dodge" });
+  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus + fatigue + armourPenalty + overloadPenalty;
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -87,6 +91,7 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
+  if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
   if (picked.dropped.length) modParts.push(`навязанный переброс, отброшено ${picked.dropped.join(", ")}`);
 
   let outcomeHtml;
@@ -180,8 +185,9 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // ни Усталость, ни выключенную силовую броню.
   const fatigue       = fatiguePenalty(actor, "ws");
   const armourPenalty = disabledArmourPenalty(actor, { skillKey: "parry" });
+  const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "parry" });
 
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty;
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
