@@ -204,6 +204,85 @@ describe("сводка авто-эффектов склеенной строки
   });
 });
 
+// wdbc-e2nm: миграция system.effects → ActiveEffect старое поле НЕ стирает, а
+// актор у помеченного предмета его не читает. Сводка читала — и показывала
+// «+3 Силы», которых в характеристиках уже нет.
+describe("сводка мигрированного предмета берётся из ActiveEffect, не из старого поля", () => {
+  const AP_ZONES = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
+  const migrated = (name, changes = [], system = {}, over = {}) => ({
+    id: `m${++seq}`, type: "trait", name, system,
+    flags: { "warhammer-dbc": { migratedEffect: true } },
+    effects: [{ disabled: false, system: { changes }, ...over }]
+  });
+  const change = (key, value) => ({ key, value, type: "add" });
+  const apAll = n => AP_ZONES.map(z => change(`system.armorBonus.${z}`, n));
+
+  it("старое поле у помеченного предмета не считается вовсе", () => {
+    // Ровно тот расходящийся случай из тикета: в старом поле +3 Силы,
+    // в эффекте — ничего. Сводка обязана молчать, как молчит расчёт актора.
+    const fx = mergeAbilityEffects([
+      migrated("X", [], { effects: { charBonusStat: "s", charBonusValue: 3 } })
+    ]);
+    expect(fx.charBonus).toEqual({});
+  });
+
+  it("считается вклад ActiveEffect — надбавка к Бонусу характеристики", () => {
+    const fx = mergeAbilityEffects([
+      migrated("X", [change("system.characteristics.s.bonusFx", 2)])
+    ]);
+    expect(fx.charBonus).toEqual({ s: 2 });
+  });
+
+  it("пара «с флагом / без флага» одного имени складывается одной строкой", () => {
+    const fx = mergeAbilityEffects([
+      migrated("X", [change("system.characteristics.s.bonusFx", 2)]),
+      trait("X", { effects: { charBonusStat: "s", charBonusValue: 1 } })
+    ]);
+    expect(fx.charBonus).toEqual({ s: 3 });
+  });
+
+  it("погашенный эффект не считается — актор его тоже не применяет", () => {
+    const fx = mergeAbilityEffects([
+      migrated("X", [change("system.characteristics.s.bonusFx", 2)], {}, { disabled: true })
+    ]);
+    expect(fx.charBonus).toEqual({});
+  });
+
+  it("Страх максимумом, Размер и Инициатива суммой — как у старого поля", () => {
+    const fx = mergeAbilityEffects([
+      migrated("X", [change("system.fearRating", 1), change("system.sizeMod", 1),
+                     change("system.initiative", 2)]),
+      migrated("X", [change("system.fearRating", 3), change("system.sizeMod", 1),
+                     change("system.initiative", 3)])
+    ]);
+    expect(fx.fearRating).toBe(3);
+    expect(fx.sizeMod).toBe(2);
+    expect(fx.initMod).toBe(5);
+  });
+
+  it("armourAll — общий для всех шести зон AP: миграция разложила его по зонам", () => {
+    const fx = mergeAbilityEffects([migrated("X", apAll(2))]);
+    expect(fx.armourAll).toBe(2);
+  });
+
+  it("AP одной зоны общей бронёй не считается — её сводка не показывала и раньше", () => {
+    const fx = mergeAbilityEffects([
+      migrated("X", [change("system.armorBonus.head", 3)])
+    ]);
+    expect(fx.armourAll).toBe(0);
+  });
+
+  it("флаг читается и через getFlag живого документа, не только из сырых flags", () => {
+    const doc = {
+      id: "d1", type: "trait", name: "X",
+      system: { effects: { charBonusStat: "s", charBonusValue: 3 } },
+      getFlag: (scope, key) => scope === "warhammer-dbc" && key === "migratedEffect",
+      effects: [{ disabled: false, system: { changes: [change("system.characteristics.t.bonusFx", 4)] } }]
+    };
+    expect(mergeAbilityEffects([doc]).charBonus).toEqual({ t: 4 });
+  });
+});
+
 describe("подпись одного предмета — для вкладки «Развитие»", () => {
   it("специализация видна в строке, строки не склеиваются", () => {
     const items = [
