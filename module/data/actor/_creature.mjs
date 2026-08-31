@@ -49,6 +49,24 @@ const CONDITION_COUNTERS = {
  * @param {object} [options]
  * @param {boolean} [options.granted] добавить поля «выдано» (только Персонаж)
  */
+/**
+ * system.reactions был свободным текстом (памятка игрока «2 (Талант X)»),
+ * стал схемой экономики Реакций. Без переноса SchemaField._cast молча
+ * выбрасывает строку — непустой текст уезжает в system.notes, а поле
+ * очищается, чтобы схема заполнила значения по умолчанию. Зовётся из
+ * migrateData каждой модели, что раскладывает creatureSchema.
+ */
+export function migrateReactionsString(source) {
+  if (typeof source?.reactions !== "string") return source;
+  const memo = source.reactions.trim();
+  if (memo) {
+    const note = `<p><b>Реакции (старое поле):</b> ${memo}</p>`;
+    source.notes = source.notes ? `${source.notes}\n${note}` : note;
+  }
+  delete source.reactions;
+  return source;
+}
+
 export function creatureSchema({ granted = false } = {}) {
   const { StringField, HTMLField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
   const num  = (initial, label) => new NumberField({ initial, nullable: false, label });
@@ -321,9 +339,10 @@ export function creatureSchema({ granted = false } = {}) {
     cognition: new SchemaField({
       value: num(0, "Текущая"), max: num(0, "Максимум"), regen: num(0, "Восстановление")
     }, { label: "Когнитивность" }),
-    // Общий тумблер «подключён к Ноосфере» (вкладка ТЕХ) — читают Таланты вида
-    // «Виртуальная Память», «Облачная Когниция» и т.п. (rules/library, kind:
-    // "capability" через predicates.mjs), а не заводят свой флаг каждый.
+    // Общий тумблер «подключён к Ноосфере» (вкладка ТЕХ). Пока это ручная
+    // памятка ГМа: читателя у поля нет — Таланты вида «Виртуальная Память»
+    // ещё не смоделированы (у них notes «Не смоделировано»). Когда дойдёт,
+    // читать это поле, а не заводить свой флаг каждому Таланту.
     noosphereConnected: bool(false, "Подключён к Ноосфере"),
     energy: pool("Энергия"),
     geneSeed: new SchemaField({

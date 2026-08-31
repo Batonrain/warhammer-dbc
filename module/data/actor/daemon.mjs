@@ -5,7 +5,7 @@
 //  даёт власть над демоном).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { creatureSchema } from "./_creature.mjs";
+import { creatureSchema, migrateReactionsString } from "./_creature.mjs";
 
 export class DaemonData extends foundry.abstract.TypeDataModel {
 
@@ -34,6 +34,6 @@ export class DaemonData extends foundry.abstract.TypeDataModel {
    */
   static migrateData(source) {
     if (Array.isArray(source?.isPsyker)) source.isPsyker = source.isPsyker.some(Boolean);
-    return source;
+    return migrateReactionsString(source);
   }
 }

@@ -699,6 +699,18 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
   text-align: center;
   padding: 0 2px;
 }
+
+/* Контролы свойств узла корабля (wdbc-jr93): без ширины голый input/select
+   растягивался на всю форму внутри inline-чипа .wprop-chip. */
+.warhammer-dbc .shipprop-rating-dice,
+.warhammer-dbc .shipprop-rating-select {
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text);
+  font-size: 0.95em;
+}
+.warhammer-dbc .shipprop-rating-dice { width: 52px; }
+.warhammer-dbc .shipprop-rating-select { max-width: 140px; }
 .warhammer-dbc .wprop-remove,
 .warhammer-dbc .shipprop-remove,
 .warhammer-dbc .aprop-remove {

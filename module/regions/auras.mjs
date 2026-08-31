@@ -67,7 +67,10 @@ export function auraDescriptorsOf(actor) {
       radius: Number(aura.radius),
       affects: aura.affects === "enemies" || aura.affects === "all" ? aura.affects : "allies",
       includesSelf: !!aura.includesSelf,
-      grant: Array.isArray(aura.grant) ? aura.grant.filter(g => g?.uuid) : []
+      // Голый uuid — старый ручной формат флага: нормализуется, не теряется.
+      grant: (Array.isArray(aura.grant) ? aura.grant : [])
+        .map(g => typeof g === "string" ? { uuid: g, rating: null } : g)
+        .filter(g => g?.uuid)
     });
   }
   return out;

@@ -600,7 +600,7 @@ async function _refreshBioImplantCatalog() {
     // должен тихо пропасть из каталога крафта.
     for (const entry of fallbackBioImplantCatalog()) if (!byKey.has(entry.key)) byKey.set(entry.key, entry);
     _bioImplantCatalog = [...byKey.values()];
-  } catch (e) { _bioImplantCatalog = fallbackBioImplantCatalog(); }
+  } catch (e) { console.warn("Warhammer DBC | кэш «пак первичен» не построился, работает библиотека", e); _bioImplantCatalog = fallbackBioImplantCatalog(); }
 }
 
 /** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и

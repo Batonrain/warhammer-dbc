@@ -22,10 +22,9 @@ import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
-import { pickReroll } from "../rules/reroll-pick.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { testKindHtml, diceModeHtml, critLineHtml, readTestKind, readDiceChoice,
-         mergeReroll, wireTestKindLive } from "../rules/test-kind-widget.mjs";
+         mergeReroll, wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import {
   MOUNT_SPEEDS, MOUNT_SKID, MOUNT_TERRAIN_MOD, STAY_MOD, BIKE_REPAIR, SELECTIVE_MODS,
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
@@ -85,15 +84,7 @@ function valOf(html) {
  */
 async function rollWithKind(actor, baseEff, tk, ctx) {
   const reroll = tk.reroll || null;
-  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-  const rolls = [];
-  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-  const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
-  const roll = rolls[picked.index];
-  const rv = picked.value;
-  const rerollNote = reroll
-    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-    : "";
+  const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
   const outcome = await resolveKindOutcome(actor, {
     kind: tk.kind, baseEff: baseEff + tk.difficulty, rv,
     combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx

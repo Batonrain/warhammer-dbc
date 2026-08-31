@@ -10,8 +10,10 @@
 
 import { resolveTest } from "./resolve-test.mjs";
 
-export function ruleRollModsHtml(actor, context) {
-  const { mods } = resolveTest({ actor, ...context });
+export function ruleRollModsHtml(actor, context, resolved = null) {
+  // resolved — уже посчитанный resolveTest: избавляет вызывающего от
+  // повторного обхода правил актора (attack-dialog зовёт трижды за диалог).
+  const { mods } = resolved ?? resolveTest({ actor, ...context });
   if (!mods.length) return { html: "", mods };
   const rows = mods.map((m, i) => {
     const sign = m.value > 0 ? `+${m.value}` : (m.value < 0 ? `${m.value}` : "");
@@ -40,9 +42,9 @@ export function ruleRollModsHtml(actor, context) {
  * ведёт учёт Раундов на акторе, и молчаливый счётчик соврал бы. Это остаётся
  * за столом, как и прежде.
  */
-export function ruleRerollsHtml(actor, context) {
+export function ruleRerollsHtml(actor, context, resolved = null) {
   // Только СВОИ перебросы: навязанные цели бросает она сама, у себя.
-  const rerolls = (resolveTest({ actor, ...context }).rerolls || []).filter(r => r.who !== "target");
+  const rerolls = ((resolved ?? resolveTest({ actor, ...context })).rerolls || []).filter(r => r.who !== "target");
   if (!rerolls.length) return { html: "", rerolls };
   const rows = rerolls.map((r, i) => `
     <label class="attack-mod-check rule-reroll">
