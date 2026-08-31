@@ -126,7 +126,7 @@
               "modScope": "char",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "rerollChar": "wp",
+              "rerollChar": "s",
               "label": "Каталептический Узел: против ментальных потрясений (Уничтожители)",
               "code": "",
               "when": {
@@ -211,7 +211,7 @@
               "modScope": "char",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "rerollChar": "wp",
+              "rerollChar": "s",
               "label": "Каталептический Узел: стойкость товарищества (Пожиратели Миров)",
               "code": "",
               "when": {

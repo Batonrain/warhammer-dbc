@@ -5,7 +5,7 @@
   "folder": "Tq50XREBi9J6CsOa",
   "system": {
     "description": "Кольчуга из обломков Демон-Оружия: +8 AP против Варп-оружия в торс, +20 против Одержимости, штраф W от демон-присутствия −10.",
-    "notes": "",
+    "notes": "Упрощение: книга даёт +8 AP против Варп-оружия ТОЛЬКО в торс, здесь — та же capability armor.apVsWarpFull, что применяет AP локации ПОЛНОСТЬЮ (не +8) и на ЛЮБУЮ локацию (нет per-location инфраструктуры vsType, см. Гексаграмматические Печати); +20 против Одержимости и −10 штрафа демон-присутствия не смоделированы (тот же пробел встречных/демон-присутствия тестов, что и везде в этом проходе).",
     "category": "armor",
     "modGroup": "torso",
     "requirement": "Жёсткий нагрудник. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -40,7 +40,21 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "capability",
+              "capabilityKey": "armor.apVsWarpFull",
+              "label": "Руническая Кольчуга"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

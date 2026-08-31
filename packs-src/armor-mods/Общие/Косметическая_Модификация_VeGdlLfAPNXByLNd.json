@@ -5,7 +5,7 @@
   "folder": "vAuHo2O7CxjhPObv",
   "system": {
     "description": "Украшения/геральдика/трофеи: +5 на тесты Charm, Commerce, Command или Intimidate (выбирается при покупке).",
-    "notes": "",
+    "notes": "+5 к ОДНОМУ из 4 Навыков на выбор ПРИ ПОКУПКЕ — выбор конкретного экземпляра, не свойство записи компендиума в целом (тот же класс, что Unholy Tomes в wdbc-unku).",
     "category": "armor",
     "modGroup": "general",
     "requirement": "Полный комплект (шлем не обязателен). Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

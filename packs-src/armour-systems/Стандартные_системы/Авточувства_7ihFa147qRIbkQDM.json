@@ -5,7 +5,7 @@
   "folder": "PJGdkJLkUXdx2JTp",
   "system": {
     "description": "Сенсорный комплекс шлема: ночное зрение, +10 на зрение и слух, обнаружение радиации, иммунитет к Blinding (затемнение линз) и к оглушительно громким звукам.",
-    "notes": "",
+    "notes": "«+10 на зрение и слух» отображено единым Awareness (ближайший навык восприятия) — не дословно два разных канала. Ночное зрение/обнаружение радиации/иммунитеты не смоделированы (булевы Трейты).",
     "category": "powerSystem",
     "modGroup": "helmet",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -38,7 +38,27 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "awareness",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Авточувства"
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

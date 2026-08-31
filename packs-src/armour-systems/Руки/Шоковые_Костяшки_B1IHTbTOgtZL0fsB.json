@@ -5,7 +5,7 @@
   "folder": "W4vOeJMG9tsPNQq9",
   "system": {
     "description": "Шоковые генераторы в перчатках: безоружные атаки получают Shocking. Раз/Ход своб. действием в Борьбе — 1d10+4 E(El), Pen 0, Shocking в торс/руку. Изолирует ладони (снимает Conductive).",
-    "notes": "",
+    "notes": "Свойство Shocking безоружным атакам + встроенная атака — свойство оружия/боевая механика, не эффект схемы armorMod.",
     "category": "powerSystem",
     "modGroup": "arms",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

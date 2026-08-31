@@ -5,7 +5,7 @@
   "folder": "dkSLGHWWgFKBAlrr",
   "system": {
     "description": "Грав-репульсоры и рессоры в сабатоне: в сознании и не Оглушён — расчётная высота падения −20 м, падение ≤20 м — на ноги без вреда. −20 на Stealth для бесшумной ходьбы. Версии для Терминаторской брони — R4.",
-    "notes": "",
+    "notes": "Смягчение падения (расчётная высота −20м, ≤20м без вреда) не смоделировано: нет механики броска на падение с числовым порогом высоты в системе.",
     "category": "powerSystem",
     "modGroup": "legs",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -37,7 +37,27 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "stealth",
+              "modValueMode": "flat",
+              "value": -20,
+              "label": "Грав Рессоры"
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

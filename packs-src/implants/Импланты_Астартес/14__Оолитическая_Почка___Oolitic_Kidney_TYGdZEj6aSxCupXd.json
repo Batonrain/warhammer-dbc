@@ -196,7 +196,7 @@
               "modScope": "char",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "rerollChar": "t",
+              "rerollChar": "s",
               "label": "Оолитическая Почка: против болезней и ядов (Гвардия Смерти)",
               "code": "",
               "when": {

@@ -5,7 +5,7 @@
   "folder": "O6B4w1qFjZnPFssq",
   "system": {
     "description": "Сетка проводов из переплавленной брони Кустодес: расчётная сила Haywire на эту броню −6 (на 3 строки вверх по таблице Haywire).",
-    "notes": "",
+    "notes": "Не смоделировано: снижение силы Haywire — нет расчёта/таблицы Haywire в системе вообще, нечего снижать.",
     "category": "powerSystem",
     "modGroup": "torso",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

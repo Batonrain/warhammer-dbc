@@ -5,7 +5,7 @@
   "folder": "L0a7VMT0FyRw8Kb6",
   "system": {
     "description": "Инструменты апотекарских авточувств: тепловое и рентгеновское зрение (рентген требует фонаря Нартеция), идентификация источников радиации (Awareness+20), +10 к Medicae (+20 для диагностики, +30 с Нартецием).",
-    "notes": "",
+    "notes": "Применена только базовая часть +10 Medicae. Эскалация до +20 (диагностика конкретно) и +30 (с Нартецием) не смоделирована — нет различия «вид Medicae-теста» в testMod; Awareness+20 радиации и рентген-зрение (условно с фонарём) тоже не смоделированы.",
     "category": "powerSystem",
     "modGroup": "helmet",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -37,7 +37,27 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "medicae",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Шлем Диагностор"
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

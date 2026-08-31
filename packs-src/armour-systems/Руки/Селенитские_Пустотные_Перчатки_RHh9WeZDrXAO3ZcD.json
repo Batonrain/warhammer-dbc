@@ -5,7 +5,7 @@
   "folder": "W4vOeJMG9tsPNQq9",
   "system": {
     "description": "Селенитские ЭФМ/каркас рук: когда броня отключена — нет штрафа −10 на действия рук и нет Max.A для действий рук.",
-    "notes": "",
+    "notes": "Та же причина, что у Селенитских Пустотных Поножей — disabledArmourPenalty() не разбит по конечностям.",
     "category": "powerSystem",
     "modGroup": "arms",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

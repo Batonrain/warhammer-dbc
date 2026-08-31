@@ -5,7 +5,7 @@
   "folder": "Tq50XREBi9J6CsOa",
   "system": {
     "description": "Адамантиевая кольчуга на бёдрах: Критические Эффекты от не-Избирательных попаданий в ноги −2, но −5 на Stealth.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: снижение Критических Эффектов от не-Избирательных попаданий в ноги −2 — нет схемного поля «снизить степень крита по локации», применяется только штраф Stealth.",
     "category": "armor",
     "modGroup": "torso",
     "requirement": "Любая. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -40,7 +40,24 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "stealth",
+              "modValueMode": "flat",
+              "value": -5,
+              "label": "Кольчужная Юбка"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

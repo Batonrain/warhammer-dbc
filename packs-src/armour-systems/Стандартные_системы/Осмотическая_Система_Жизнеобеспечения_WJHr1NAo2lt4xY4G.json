@@ -5,7 +5,7 @@
   "folder": "PJGdkJLkUXdx2JTp",
   "system": {
     "description": "Герметизация и репроцессор кислорода: неограниченный воздух в вакууме и иммунитет к газовым атакам (Sealed, Void).",
-    "notes": "",
+    "notes": "Даёт Sealed/Void и иммунитет к газам — не числовой тестовый эффект; консьюмер потери Sealed при пробитии ещё не построен (см. Герметизирующую Пену той же категории).",
     "category": "powerSystem",
     "modGroup": "torso",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

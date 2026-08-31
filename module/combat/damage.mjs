@@ -182,15 +182,19 @@ export async function applyDamageToActor(actor, damageData) {
   let tb, armorAP, effArmorAP, totalAbsorption;
 
   if (warpSoak) {
-    // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только
-    // W.b, плюс ½AP брони (окр.▼), если у актора активна Руническая Вязь
-    // «Эгида Г'Нелле» (wdbc-unku). Только персонажи/твари — применение
-    // «по вязи на сторону» для техники не реализовано: урон технике идёт
-    // другим путём (combat/vehicle.mjs), не через эту функцию.
+    // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b.
+    // Два источника «AP всё же считается» (wdbc-unku/wdbc-sg57), не суммируются
+    // друг с другом — берётся лучший: capability armor.apVsWarpFull (освящённая
+    // броня/руническая кольчуга — AP брони этой локации целиком) приоритетнее
+    // Рунической Вязи «Эгида Г'Нелле» (½AP, окр.▼). Только персонажи/твари —
+    // применение «по вязи на сторону» для техники не реализовано: урон
+    // технике идёт другим путём (combat/vehicle.mjs), не через эту функцию.
     tb = 0;
-    armorAP = hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
-      ? Math.floor((absorption[armorKey] ?? 0) / 2)
-      : 0;
+    armorAP = hasRuleFlag(actor, "armor.apVsWarpFull")
+      ? (absorption[armorKey] ?? 0)
+      : hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
+        ? Math.floor((absorption[armorKey] ?? 0) / 2)
+        : 0;
     effArmorAP = armorAP;
     totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP;
   } else {

@@ -5,7 +5,7 @@
   "folder": "vAuHo2O7CxjhPObv",
   "system": {
     "description": "Капсулы быстротвердеющей пены: броня не теряет Sealed и Void при пробитии.",
-    "notes": "",
+    "notes": "Не смоделировано: «не теряет Sealed/Void при пробитии» — сам консьюмер потери Sealed от пробития ещё не построен (wdbc-k0ff закрыт только с трекером breached, Sealed-потребитель — открытый вопрос по тексту его close reason), нечего блокировать.",
     "category": "armor",
     "modGroup": "general",
     "requirement": "Любая. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

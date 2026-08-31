@@ -5,7 +5,7 @@
   "folder": "xXsl76FcEIZVD61b",
   "system": {
     "description": "Прожектор на шлеме: освещает цели, на которые смотрит персонаж, лучом 30° (как Spray).",
-    "notes": "",
+    "notes": "Источник света (конус 30°, как Spray) — не числовой эффект теста.",
     "category": "armor",
     "modGroup": "helmet",
     "requirement": "Жёсткий шлем. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

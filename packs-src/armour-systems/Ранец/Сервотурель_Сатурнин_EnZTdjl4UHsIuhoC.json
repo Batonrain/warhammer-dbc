@@ -5,7 +5,7 @@
   "folder": "GarS9rGiqsJL0CSe",
   "system": {
     "description": "Полуавтоматическая турель с грав-суспензорами: любая винтовка/пистолет на ранце. Оружие получает Inaccurate, Independent, теряет Accurate/Precise, ×2 Rld (до 10). Несовместима с прыжковыми ранцами/гравишютами. Не для лёгкой силовой брони.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: меняет свойства УСТАНОВЛЕННОГО оружия (Inaccurate/Independent/Rld×2) — эффект на другой предмет по сложному правилу совместимости, вне testMod/capability этого прохода.",
     "category": "powerSystem",
     "modGroup": "backpack",
     "requirement": "Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",

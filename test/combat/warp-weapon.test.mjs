@@ -18,7 +18,7 @@ import { applyDamageToActor } from "../../module/combat/damage.mjs";
 /** Подставной Персонаж: броня, Стойкость, W.b и опционально активный щит. */
 function characterActor({
   armorAP = 0, toughnessBonus = 0, wpBonus = 0, wounds = 20,
-  shield = null, aegisOfGnelle = false
+  shield = null, aegisOfGnelle = false, apVsWarpFull = false
 } = {}) {
   const updates = [];
   const items = shield ? [{
@@ -36,6 +36,13 @@ function characterActor({
     system: { installedOnType: "vehicle" }, // кратчайший путь через isItemActive
     flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
       { id: "e", kind: "capability", capabilityKey: "runicWeave.aegisOfGnelle", label: "" }
+    ] }] } }
+  });
+  if (apVsWarpFull) items.push({
+    id: "am1", name: "Гексаграмматические Печати", type: "armorMod",
+    system: { installedOn: "armor-host", category: "armor" },
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+      { id: "e", kind: "capability", capabilityKey: "armor.apVsWarpFull", label: "" }
     ] }] } }
   });
   return {
@@ -128,5 +135,29 @@ describe("Руническая Вязь «Эгида Г'Нелле» (wdbc-unku)
     const actor = characterActor({ armorAP: 9, toughnessBonus: 0, wpBonus: 0, wounds: 20, aegisOfGnelle: true });
     await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
     expect(actor.system.wounds.value).toBe(20 - (15 - 4)); // W.b=0 + ½AP=4 → непогл. 11
+  });
+});
+
+describe("Модификация брони «armor.apVsWarpFull» (wdbc-sg57): AP локации целиком против Варп-оружия", () => {
+  it("без модификации — AP полностью игнорируется (контроль)", async () => {
+    const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20 });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(8); // 15 − 3 (W.b)
+  });
+
+  it("с модификацией — AP локации применяется целиком, не половиной", async () => {
+    // absorption.body = 15, целиком (не ½=7) + W.b(3) = 18 поглощения > 15 урона.
+    const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20, apVsWarpFull: true });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(20); // 15 − 18 → 0, урона не прошло
+  });
+
+  it("armor.apVsWarpFull приоритетнее runicWeave.aegisOfGnelle при наличии обоих", async () => {
+    const actor = characterActor({
+      armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20,
+      aegisOfGnelle: true, apVsWarpFull: true
+    });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(20); // целиком, не половина — та же полная защита
   });
 });
