@@ -34,7 +34,7 @@ export const OFFICER_POSTS = [
 // Порядок позиций Орудийной оснащённости для отображения.
 export const WC_ORDER = ["prow", "dorsal", "port", "star", "keel"];
 // Коды из строки WC корпуса (напр. «Н1, ПБ1, ЛБ1») → ключ позиции.
-const WC_CODE = { "Н": "prow", "НП": "dorsal", "ПБ": "star", "ЛБ": "port", "К": "keel" };
+export const WC_CODE = { "Н": "prow", "НП": "dorsal", "ПБ": "star", "ЛБ": "port", "К": "keel" };
 
 /**
  * Разбор строки Орудийной оснащённости (Weapon Capacity) корпуса в число
