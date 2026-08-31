@@ -18,6 +18,7 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
+import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
@@ -641,6 +642,8 @@ export async function executePsychotest(actor, item, opts) {
     rolls: allRolls,
     sound: CONFIG.sounds.dice
   }, rollMode));
+  // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
+  triggerAttackAnimation({ actor, item, hit: success });
 }
 
 export function rollPsyniscience(actor, rollSkill) {

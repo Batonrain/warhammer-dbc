@@ -15,6 +15,7 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
+import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -227,6 +228,8 @@ export async function activateTechMiracle(actor, item) {
     rolls: allRolls,
     sound: CONFIG.sounds.dice
   }, rollMode));
+  // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
+  triggerAttackAnimation({ actor, item, hit: success });
 }
 
 // ── Генерация Когниции/Энергии от имплантов Кибернетики Механикум ──────────

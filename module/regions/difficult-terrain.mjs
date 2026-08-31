@@ -11,7 +11,8 @@
 //  нативного поведения "Изменить стоимость движения").
 // ════════════════════════════════════════════════════════════════════════
 
-export const DIFFICULT_TERRAIN_TYPE = "warhammer-dbc.difficultTerrain";
+// Без префикса пакета — см. комментарий у LINGER_ZONE_TYPE (module/regions/linger-zone.mjs).
+export const DIFFICULT_TERRAIN_TYPE = "difficultTerrain";
 
 // Таблица «Ландшафт — модификатор» (корбук, стр. 29). Ключ поля схемы →
 // подпись чекбокса → модификатор теста A+0 при Беге/Натиске через зону.

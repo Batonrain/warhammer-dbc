@@ -24,6 +24,7 @@ import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens } from "./combat/templates.mjs";
+import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
@@ -370,6 +371,10 @@ export function registerHooks() {
             weaponName:   ds.weaponName  || "",
             attackerName: ds.attacker    || "",
             attackerUuid: ds.attackerUuid || "",
+            // itemUuid — не для applyDamageToActor (её не читает), а чтобы
+            // LingerZoneBehaviorType мог звать Automated Animations на каждое
+            // попадание зоны (module/regions/linger-zone.mjs).
+            itemUuid:     ds.itemUuid || "",
             felling:      parseInt(ds.felling || "0"),
             primitive:    ds.primitive    === "1",
             ignoreShield: ds.ignoreShield === "1",
@@ -394,6 +399,10 @@ export function registerHooks() {
         }
         targetTokens(result.tokens);
         ui.notifications.info(`Отмечено целей: ${result.tokens.length}. Дальше — «Применить урон» → «Всем».`);
+        triggerBlastAnimation({
+          attackerUuid: ds.attackerUuid, itemUuid: ds.itemUuid,
+          tokens: result.tokens, region: result.region
+        });
       });
     });
 

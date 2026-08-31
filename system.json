@@ -894,6 +894,12 @@
       "subrace": {},
       "eliteArchetype": {},
       "runicWeave": {}
+    },
+    "RegionBehavior": {
+      "difficultTerrain": {},
+      "lingerZone": {},
+      "cover": {},
+      "runicWeaveZone": {}
     }
   },
   "grid": {
