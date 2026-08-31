@@ -197,7 +197,7 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
   // Перевод специализаций групповых навыков (лор-ориентированный).
   const SPEC_RU = {
     "imperium":"Империум","war":"Война","chaos":"Хаос","astartes":"Астартес",
-    "adeptus astartes":"Астартес","adeptus mechanicus":"Механикус","mechanicus":"Механикус",
+    "adeptus astartes":"Астартес","adeptus mechanicus":"Механикус",
     "daemons":"Демоны","warp":"Варп","heresy":"Ересь","horus heresy":"Ересь Хоруса",
     "long war":"Долгая Война","xenos":"Ксеносы","psykers":"Псайкеры","mutants":"Мутанты",
     "heraldry":"Геральдика","tactica imperialis":"Тактика Империалис","codex astartes":"Кодекс Астартес",

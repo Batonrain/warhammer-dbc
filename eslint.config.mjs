@@ -20,7 +20,16 @@ export default [
     },
     rules: {
       "no-undef": "error",
-      "no-unused-vars": ["warn", { args: "none" }]
+      "no-unused-vars": ["warn", { args: "none" }],
+      // Взято из js.configs.recommended точечно, не целиком — остальные правила
+      // пресета (no-empty, no-cond-assign и т.д.) дают тысячи находок в уже
+      // рабочем коде, который никто не просил чинить этим тикетом (wdbc-swzz).
+      // no-dupe-keys уже поймал живой дубль ("squad" дважды в
+      // test/data/actor-schemas.test.mjs, wdbc-e728/wdbc-sk8s) — исправлен тут же.
+      "no-dupe-class-members": "error",
+      "no-dupe-keys": "error",
+      "no-unreachable": "error",
+      "no-fallthrough": "error"
     }
   },
   {
