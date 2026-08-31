@@ -17,5 +17,14 @@ export const VEHICLE_TRAIT_EFFECTS = {
   // Автопилот: рейтинги черты = Operate(X)/BS(Y)/Awareness(Z). Заменяет экипаж.
   autonomous: false,
   // Друкхари: мерцающее поле (−20 стрелкам издали, Size −2 для попаданий по ней).
-  flickerfield: false
+  flickerfield: false,
+  // Амфибия: не считает неглубокую воду Трудным Ландшафтом (машина-скидка в
+  // диалоге Трудного Ландшафта, combat/vehicle.mjs).
+  amphibious: false,
+  // Керамитовая Броня: АР удваивается против урона со свойством Flame
+  // (combat/vehicle.mjs::applyDamageToVehicle). Иммунитет к Melta НЕ
+  // автоматизирован — свойство Melta пере-считывает Проб. до того, как
+  // известна цель (combat/attack-outcome.mjs), автоматизация потребовала бы
+  // протаскивать флаг через весь конвейер атаки; оставлено вручную ГМу.
+  ceramitePlating: false
 };

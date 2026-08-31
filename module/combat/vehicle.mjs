@@ -102,6 +102,13 @@ export async function showTerrainDialog(actor) {
   const manOpts = TERRAIN_MANEUVER_MODS
     .map((m, i) => `<option value="${m.mod}"${m.mod === 0 ? " selected" : ""}>${m.label}</option>`).join("");
 
+  // Амфибия: не считает неглубокую воду Трудным Ландшафтом — GM отмечает
+  // галочкой, что этот проезд именно по воде, и штраф ландшафта обнуляется.
+  const amphibious = !!der.traitFlags?.amphibious;
+  const amphRow = amphibious
+    ? `<div class="atk-dlg-row"><label>Амфибия — по воде?</label><input id="tr-amph" type="checkbox"/></div>`
+    : "";
+
   new Dialog({
     title: "Трудный Ландшафт",
     content: `
@@ -110,6 +117,7 @@ export async function showTerrainDialog(actor) {
         <div class="atk-dlg-row"><label>Ландшафт:</label><select id="tr-terrain">${terrainOpts}</select></div>
         <div class="atk-dlg-row"><label>Манёвр:</label><select id="tr-man">${manOpts}</select></div>
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="tr-mod" type="number" value="0"/></div>
+        ${amphRow}
         <div class="atk-range-info" style="font-size:0.82em;">
           Провал → Провалы непоглощаемого урона в Ходовую. 5+ Провалов / Крит.Провал → остановка.
           Если суммарный штраф ≥ 0 — проезд безопасен без теста${der.walker ? " (Шагоход не замедляется)" : ""}.
@@ -122,7 +130,8 @@ export async function showTerrainDialog(actor) {
           const ter = parseInt(html.find("#tr-terrain").val()) || 0;
           const man = parseInt(html.find("#tr-man").val()) || 0;
           const md  = parseInt(html.find("#tr-mod").val()) || 0;
-          await _resolveTerrain(actor, op, ter, man, md);
+          const amph = amphibious && html.find("#tr-amph").is(":checked");
+          await _resolveTerrain(actor, op, ter, man, md, amph);
         } },
       cancel: { label: "Отмена" }
     },
@@ -130,7 +139,15 @@ export async function showTerrainDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod) {
+async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amphibiousWater = false) {
+  // Амфибия по воде: неглубокая вода не считается Трудным Ландшафтом вовсе.
+  if (amphibiousWater) {
+    return ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
+        <div class="roll-outcome"><span class="roll-success">Амфибия — неглубокая вода не считается Трудным Ландшафтом, тест не требуется.</span></div></div>`
+    });
+  }
   const totalMod  = terrainMod + manMod + extraMod;
   const threshold = operate + totalMod;
 
@@ -269,7 +286,7 @@ async function _resolveRam(actor, fast, targetBigger) {
 export async function applyDamageToVehicle(actor, damageData) {
   const {
     rawDamage, penetration = 0, damageType = "impact",
-    side = "side",
+    side = "side", flame = false,
     attackerName = "", weaponName = ""
   } = damageData;
 
@@ -288,7 +305,9 @@ export async function applyDamageToVehicle(actor, damageData) {
   }
 
   const armour  = actor.system.armour || {};
-  const ap      = Number(armour[side]) || 0;
+  // Керамитовая Броня: АР удваивается против урона со свойством Flame.
+  const apBase  = Number(armour[side]) || 0;
+  const ap      = (tf.ceramitePlating && flame) ? apBase * 2 : apBase;
   const effAP   = Math.max(0, ap - (Number(penetration) || 0));
   const rawNet  = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
   // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой
