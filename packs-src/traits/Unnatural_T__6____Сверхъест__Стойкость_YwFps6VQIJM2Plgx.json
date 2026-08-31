@@ -13,8 +13,8 @@
     "hasRating2": false,
     "rating2": 0,
     "effects": {
-      "charBonusStat": "",
-      "charBonusValue": 0,
+      "charBonusStat": "t",
+      "charBonusValue": 6,
       "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
