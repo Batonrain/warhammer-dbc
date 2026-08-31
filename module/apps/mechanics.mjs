@@ -1471,7 +1471,7 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
           const owned = actor.items.filter(i => i.type === "talent").map(i => i.name);
           const candidates = altTalentCandidates(data.name, owned);
           const picked = candidates.length ? await showAltTalentDialog(data.name, candidates) : null;
-          const altSrc = picked ? talentLibraryEntry(picked.name) : null;
+          const altSrc = picked ? await talentLibraryEntry(picked.name) : null;
           if (altSrc) {
             const altData = foundry.utils.deepClone(altSrc);
             altData.system = { ...altData.system, granted: true, purchased: false, cost: 0 };

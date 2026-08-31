@@ -176,11 +176,11 @@ describe("альтернативный Талант той же Группы и 
     expect(altTalentCandidates("Такого таланта нет", [])).toEqual([]);
   });
 
-  it("полная запись библиотеки доступна по имени для выдачи выбранной альтернативы", () => {
-    const entry = talentLibraryEntry("Combat Sense / Чувство Боя");
+  it("полная запись доступна по имени для выдачи выбранной альтернативы (пак-первичный путь, wdbc-h59i)", async () => {
+    const entry = await talentLibraryEntry("Combat Sense / Чувство Боя");
     expect(entry?.type).toBe("talent");
     expect(entry?.system?.tier).toBe(1);
-    expect(talentLibraryEntry("Такого таланта нет")).toBeNull();
+    expect(await talentLibraryEntry("Такого таланта нет")).toBeNull();
   });
 });
 

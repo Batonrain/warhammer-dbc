@@ -183,24 +183,31 @@ export function registerDuplicateGrantSettings() {
   });
 }
 
-/** Группа (папка) и Ступень Таланта по его имени — из статической библиотеки
- * (module/constants/talents-library.mjs), не из предмета на акторе: у
- * встроенного в актора Таланта своей папки нет, она есть только у записи
- * библиотеки/компендиума. */
+/** Группа (папка) и Ступень Таланта по его имени.
+ *
+ * ОСТАЁТСЯ на статической библиотеке (module/constants/talents-library.mjs)
+ * намеренно, не переведена на pack-первичный паттерн вместе с
+ * talentLibraryEntry() ниже (wdbc-h59i). Причина — не техническая, а
+ * смысловая: «Группа» здесь означает функциональную категорию правила
+ * («Общие», «Боевые», …, стр. 62 — «Таланты той же Группы и Ступени»), и
+ * именно её несёт folder в TALENT_LIBRARY. Folder документа В КОМПЕНДИУМЕ —
+ * это ID папки, отражающей ФИЗИЧЕСКУЮ организацию пака (по книге/архетипу,
+ * см. packs-src/talents/Книга_Пустоты/Пустотный_Волк/…), другая ось
+ * классификации; своего поля вроде system.category/system.group у Таланта в
+ * схеме нет вовсе. Слепой перенос на pack.index[].folder подменил бы
+ * «того же функционального назначения» на «из той же книги» — таланты
+ * получали бы неверные альтернативы. Заводить system.category и раскладывать
+ * по нему все 1273 записи пака — самостоятельная архитектурная задача, не
+ * часть wdbc-h59i. */
 export function talentGroupOf(name) {
   const entry = TALENT_LIBRARY.find(t => t.name === name);
   return entry ? { folder: entry.folder, tier: entry.system.tier } : null;
 }
 
-/** Полная запись библиотеки по имени — чтобы выдать выбранную альтернативу
- * как обычный Талант (те же поля, что дал бы компендиум). */
-export function talentLibraryEntry(name) {
-  return TALENT_LIBRARY.find(t => t.name === name) || null;
-}
-
 /**
  * Таланты той же Группы и Ступени, что и уже имеющийся дублирующий, минус те,
- * что персонаж уже взял (по имени, без учёта регистра).
+ * что персонаж уже взял (по имени, без учёта регистра). См. talentGroupOf()
+ * выше — та же причина остаться на статической библиотеке.
  */
 export function altTalentCandidates(name, ownedNames = []) {
   const grp = talentGroupOf(name);
@@ -210,6 +217,31 @@ export function altTalentCandidates(name, ownedNames = []) {
     .filter(t => t.folder === grp.folder && t.system.tier === grp.tier
       && !owned.has(String(t.name).trim().toLowerCase()))
     .map(t => ({ name: t.name, tier: t.system.tier, folder: t.folder }));
+}
+
+/**
+ * Полная запись по имени — чтобы выдать выбранную альтернативу как обычный
+ * Талант (те же поля, что дал бы компендиум). Pack-первичный (wdbc-h59i):
+ * сперва собранный компендиум warhammer-dbc.talents — единственный источник,
+ * несущий Механику (flags.mechanics) и полный текст новых книг; TALENT_LIBRARY
+ * отстаёт на ~518/1273 записей и остаётся только запасным путём (пак ещё не
+ * собран, тесты без game.packs). Тот же приём, что mutationItemData()
+ * (module/constants/mutations.mjs) — индекс по имени, не по хранимому UUID,
+ * им здесь просто неоткуда взяться.
+ */
+export async function talentLibraryEntry(name) {
+  const pack = (typeof game !== "undefined") ? game.packs?.get?.("warhammer-dbc.talents") : null;
+  if (pack) {
+    try {
+      const index = await pack.getIndex();
+      const hit = index.find(e => e.name === name);
+      if (hit) {
+        const doc = await pack.getDocument(hit._id);
+        if (doc) return doc.toObject();
+      }
+    } catch (e) { /* пак недоступен/не собран — запасной путь ниже */ }
+  }
+  return TALENT_LIBRARY.find(t => t.name === name) || null;
 }
 
 /** Другие обычные (не групповые) Навыки, ещё не достигшие выдаваемого ранга. */
