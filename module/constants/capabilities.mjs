@@ -6629,8 +6629,13 @@ export const CAPABILITIES = {
     source: "Мутация: Infernal Will (Общие мутации)",
     reader: ""
   },
+  // «Любой Навык до +10 + Талант Mastery» (первая половина правила) закрыта
+  // wdbc-2n5t БЕЗ этой capability — отдельной декларативной записью
+  // kind:"skill", specKey:"__choice_any__" + grantsMastery:true (см.
+  // module/apps/mechanics.mjs::resolveEntrySpecChoice/applyMechEntry). Эта
+  // запись держит только ВТОРУЮ, ещё не мехнизированную половину.
   "mutation.knowledgeOfAges": {
-    label: "Без траты опыта изучает любой Навык по выбору до +10 + Талант Mastery; Усиление/Успех/Переброс для этого Навыка — переброс 1d10 (9-10: бесплатно, 1: Ступор) — «любой Навык» вне ограниченного списка specChoiceKeys (см. wdbc-2n5t)",
+    label: "Усиление/Успех/Переброс для добытого Навыка — переброс 1d10 (9-10: бесплатно, 1: Ступор)",
     source: "Мутация: Knowledge of Ages (Общие мутации)",
     reader: ""
   },
