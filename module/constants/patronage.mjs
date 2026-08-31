@@ -99,7 +99,7 @@ async function _refreshTalentGodIndex() {
     // тихо стать «Неделимым» в ценах Покровительства.
     for (const [name, god] of fallbackTalentGodIndex()) if (!byName.has(name)) byName.set(name, god);
     _talentGodByName = byName;
-  } catch (e) { _talentGodByName = fallbackTalentGodIndex(); }
+  } catch (e) { console.warn("Warhammer DBC | кэш «пак первичен» не построился, работает библиотека", e); _talentGodByName = fallbackTalentGodIndex(); }
 }
 
 /** Регистрируется в warhammer-dbc.mjs — тот же приём «пак первичен, константа —

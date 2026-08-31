@@ -107,7 +107,7 @@ export const CAPABILITIES = {
   "psyker.alwaysBound": {
     label: "Независимо от обстоятельств всегда считается «Связанным» (system.psyker.class)",
     source: "Раса: Серый Человек (Oteshii)",
-    reader: "module/documents/actor.mjs — prepareDerivedData(), блок system.psyker, пересчитывается каждый цикл"
+    reader: "module/rules/character.mjs — prepareCharacterDerived(), блок system.psyker, пересчитывается каждый цикл"
   },
   // ── Иммунитет к физическим мутациям (wdbc-gzuf) ──────────────────────────
   "mutation.physicalImmune": {
@@ -6811,7 +6811,7 @@ export const CAPABILITIES = {
   "runicWeave.steelGrimoire": {
     label: "Снимает штраф −1 эPR за поддержание одной психосилы (какая именно «вписана» — схема не различает, прощается 1 очко суммарной стоимости поддержания)",
     source: "Руническая Вязь «Стальной Гриммуар» (Core, стр. 434)",
-    reader: "module/documents/actor.mjs — _prepareDerivedData, sustainedCost −1 перед currentRating"
+    reader: "module/rules/character.mjs — prepareCharacterDerived(), sustainedCost −1 перед currentRating"
   },
   "runicWeave.cobaltFlame": {
     label: "Непоглощённый урон по заражённому — тест T на исцеление болезни, урон Нурглову покровительствуемому — предметы типа disease не имеют тестовой функции лечения (чистый текстовый StringField), не автоматизировано",

@@ -3,7 +3,7 @@
 // wdbc-gzuf (Серый Человек): «Psyniscience — все штрафы, включая необученность,
 // вдвое меньше» — новый scope Конструктора МЕХАНИКА, kind:"testMod" +
 // modValueMode:"halvePenalty". Два разных потребителя одной записи:
-//   1. Штраф необученности — derived-поле skill.total (documents/actor.mjs),
+//   1. Штраф необученности — derived-поле skill.total (rules/character.mjs),
 //      считается всегда, без диалога.
 //   2. Ситуативный штраф теста — галочка диалога броска (kind:"penaltyMul",
 //      resolve-test.mjs::rollModsFromRules через item-rules.mjs), НЕ применяется
@@ -52,6 +52,22 @@ describe("Конструктор МЕХАНИКА: testMod halvePenalty", () => 
     const per = system.characteristics.per.total ?? 0;
     expect(system.skills.psyniscience.total).toBe(per - 10);
     expect(system.skills.athletics.total).toBe((system.characteristics.s.total ?? 0) - 20);
+  });
+
+  it("camelCase-навык (techUse) тоже ополовинивается — ключ сверяется без изменения регистра", () => {
+    const system = characterWith({ items: [halvePenaltyTraitItem({ skillKey: "techUse" })] });
+    const int = system.characteristics.int.total ?? 0;
+    expect(system.skills.techUse.total).toBe(int - 10);
+  });
+
+  it("групповой навык: запись с ключом группы ополовинивает необученность её записей", () => {
+    const item = halvePenaltyTraitItem({ skillKey: "commonLore" });
+    const system = new ACTOR_DATA_MODELS.character({}).toObject();
+    system.groupSkills.commonLore = [{ specialty: "Империум", rank: "untrained", specKey: "" }];
+    const list = [item]; list.get = id => list.find(i => i.id === id) ?? null;
+    WarhammerActor.prototype.prepareDerivedData.call({ type: "character", name: "x", system, items: list, getFlag: () => undefined });
+    const int = system.characteristics.int.total ?? 0;
+    expect(system.groupSkills.commonLore[0].total).toBe(int - 10);
   });
 
   it("ruleFromEntry: testMod+halvePenalty на предмете рождает kind:penaltyMul, а не rollBonus", () => {

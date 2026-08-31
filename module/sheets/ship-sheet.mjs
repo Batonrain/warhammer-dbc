@@ -894,8 +894,8 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     // троттлинг по раунду боя (см. module/rules/cooldown.mjs), нет активного
     // Combat — считаем доступным (отследить нечем).
     const hasSlowReload = resolveShipProps(item).some(p => p.key === "slowReload");
-    if (hasSlowReload && !isCapabilityAvailable(item, "slowReload", "round")) {
-      return ui.notifications.warn(`⚠️ «${item.name}» — Медленная Перезарядка: не может стрелять в этот СХ.`);
+    if (hasSlowReload && !isCapabilityAvailable(item, "slowReload", "nextRound")) {
+      return ui.notifications.warn(`⚠️ «${item.name}» — Медленная Перезарядка: не может стрелять на следующий СХ после атаки.`);
     }
 
     // BS канонира: из офицера-канонира (Мастер-канонир / любой «канонир»), если занят.
@@ -1112,14 +1112,12 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       let lifetakerSection = "";
       if (shipAuto.lifetakerCP > 0 && hitsAfter > 0) {
         const cpDmg = shipAuto.lifetakerCP * hitsAfter;
-        const tgtShip = [...(game.user?.targets ?? [])].map(t => t.actor ?? t.document?.actor).find(a => a?.type === "ship");
-        if (tgtShip) {
-          const cpNow = Number(tgtShip.system.crew?.population) || 0;
-          await tgtShip.update({ "system.crew.population": Math.max(0, cpNow - cpDmg) });
-          lifetakerSection = `<div class="roll-threshold" style="font-size:0.84em;">${ICO.crit} Забирающее жизни: <b>${esc(tgtShip.name)}</b> CP −${cpDmg} (${cpNow} → ${Math.max(0, cpNow - cpDmg)})</div>`;
-        } else {
-          lifetakerSection = `<div class="roll-threshold" style="font-size:0.84em;">${ICO.crit} Забирающее жизни: CP −${cpDmg} (нет отмеченной цели — примените вручную)</div>`;
-        }
+        // Не пишем в чужого актора отсюда: у игрока нет прав на вражеский
+        // корабль, и упавший update ронял всю карточку атаки. Кнопкой из
+        // чата (hooks.mjs), как соседние wh-ship-dmg-btn/wh-ship-vs-btn —
+        // жмёт тот, у кого есть права (ГМ).
+        lifetakerSection = `<div class="roll-threshold" style="font-size:0.84em;">${ICO.crit} Забирающее жизни: CP −${cpDmg}
+          <button class="wh-ship-cp-btn" type="button" data-cp="${cpDmg}">Применить к цели</button></div>`;
       }
       const holofieldsNote = shipAuto.penetrating.has("holofields")
         ? `<div class="roll-threshold" style="font-size:0.8em;opacity:.7;">Penetrating: Holofields — в системе нет механики голополей, судить текстом.</div>` : "";
