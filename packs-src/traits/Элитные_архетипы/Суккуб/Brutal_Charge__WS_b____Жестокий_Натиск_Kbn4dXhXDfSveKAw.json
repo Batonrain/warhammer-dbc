@@ -5,7 +5,7 @@
   "folder": "3GbZaQILTU9luTyq",
   "system": {
     "description": "",
-    "notes": "Тот же класс, что общий Brutal Charge(X) — бонус урона привязан конкретно к Натиску, нет read-хука для условного «только при Натиске» урона Черты.",
+    "notes": "Читается module/combat/attack.mjs::brutalChargeDamageBonus() при rofMode===\"charge\" (wdbc-sk8s) — величина берётся живым Бонусом WS актора на момент атаки.",
     "benefit": "Дополнительный урон при Натиске, равный Бонусу Оружейного Мастерства.",
     "source": "Элитный архетип: Суккуб",
     "hasRating": false,

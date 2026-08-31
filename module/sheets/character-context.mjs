@@ -62,6 +62,10 @@ function charTotalTooltip(total, breakdown) {
 import { divinationSheetContext }                from "../apps/divinations.mjs";
 import { haemonculusContext }                    from "./tabs/haemonculus.mjs";
 import { possessionContext }                     from "./tabs/possession.mjs";
+import { hasSkillfulTorture }                    from "../apps/skillful-torture.mjs";
+import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
+import { hasDreadWail }                          from "../combat/dread-wail.mjs";
+import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive,
          effectiveDefenseReactionMax }            from "../combat/action-economy.mjs";
@@ -342,6 +346,14 @@ export function characterContext(actor) {
                  : system.race === "harlequin" ? system.harlequinPast
                  : "";
   context.isDrukhari     = system.race === "drukhari" || pastRace === "drukhari";
+  // Кнопка «Искусная Пытка» на вкладке БОЙ (wdbc-sk8s) — только владельцам Таланта.
+  context.hasSkillfulTorture = hasSkillfulTorture(actor);
+  // Кнопка «Аватар Резни» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
+  context.hasAvatarOfSlaughter = hasAvatarOfSlaughter(actor);
+  // Кнопка «Грозный Вопль» на вкладке БОЙ (wdbc-sk8s) — только владельцам Черты.
+  context.hasDreadWail = hasDreadWail(actor);
+  // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
+  context.hasResplendentRaiment = hasResplendentRaiment(actor);
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");

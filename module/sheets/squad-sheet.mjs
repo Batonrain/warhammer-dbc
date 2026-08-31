@@ -15,6 +15,7 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
 import { commandReachFor, presenceNumber } from "../rules/command.mjs";
+import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
@@ -312,6 +313,14 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     context.shortLabel    = shortDef.label;
     context.shortNote     = sys.shortCommand?.note || "";
     context.shortLimits   = SHORT_COMMAND_LIMITS;
+    // Получатель «Личной Команды» — структурная ссылка (wdbc-sk8s, Voice of
+    // God/Глас Божий: «получатель тоже получает Очко Бесчестия»), не только
+    // текст в note. Список — те же подчинённые, что и роспись Слаженности.
+    context.showPersonalRecipient = shortKey === "personal";
+    context.personalRecipientUuid = sys.shortCommand?.recipientUuid || "";
+    context.personalRecipientOptions = context.members.map(m => ({
+      uuid: m.uuid, name: m.name, selected: m.uuid === context.personalRecipientUuid
+    }));
 
     const detailSux   = Number(sys.detailCommand?.successes) || 0;
     const detailPicks = Array.isArray(sys.detailCommand?.picks) ? sys.detailCommand.picks : [];
@@ -713,6 +722,22 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       };
       effect = `<div class="sq-chat-effect"><b>${esc(c.label)}</b> — бонус <b class="sq-chat-big">+${bonus}</b> (${sux}×${c.mult})
         <div class="sq-chat-desc">${esc(c.desc)}</div></div>`;
+
+      // Voice of God/Глас Божий (wdbc-sk8s): успешная Личная Команда,
+      // отдана Командиром (не Координатором — тот лишь советует, см.
+      // комментарий выше про потолок Успехов), Риск 4+, лимит ½Inf.b/бой —
+      // структурный получатель (system.shortCommand.recipientUuid) получает
+      // временное Очко Бесчестия (module/rules/temp-infamy.mjs).
+      if (ok && !isCo && cKey === "personal") {
+        const commanderDoc = this._resolve(roller.uuid);
+        if (voiceOfGodAvailable(commanderDoc, sys.risk)) {
+          const recipientDoc = this._resolve(sys.shortCommand?.recipientUuid || "");
+          if (recipientDoc) {
+            await applyVoiceOfGod(commanderDoc, recipientDoc);
+            effect += `<div class="sq-chat-note">${rollIcon("crown", "#ffd24d")}Глас Божий: <b>${esc(recipientDoc.name)}</b> получает временное Очко Бесчестия (только Переброс/Усиление/Успех этой Команды).</div>`;
+          }
+        }
+      }
     }
     else if (kind === "detail") {
       if (ok) update = {

@@ -39,7 +39,19 @@
 //      sourceImg/sourceHasRating (драг-н-дроп) + rating (Черта) или
 //      specialization (Талант).
 //    skill: skillScope:"plain"|"group", skillKey, specKey/specialty, rank.
-//    script: { label, code } — свободный JS, исполняется через
+//    script: { label, code, scriptThrottleUnit, scriptThrottleMax } —
+//      свободный JS. Два независимых пути исполнения: (1) applyMechEntry —
+//      автоматически, РОВНО ОДИН РАЗ при получении предмета (как и всё
+//      остальное в этом файле); (2) кнопка «▶ Запустить» (runMechScriptEntry,
+//      wdbc-f4jt) — повторно нажимаемая, для активных многократно
+//      используемых способностей. scriptThrottleUnit ("round"/"battle"/
+//      "scene"/"session"/"day"/"" — без гейта) гейтит ТОЛЬКО кнопку, через
+//      module/rules/cooldown.mjs; applyMechEntry throttleUnit не читает.
+//      scriptThrottleMax (умолчание 1) — при >1 гейт идёт через СЧЁТЧИК «до
+//      N раз» (cooldown.mjs::incrementThrottleCount, wdbc-sk8s) вместо
+//      единичного gate — для любого из пяти unit, включая "day" (там свой
+//      смысл — номер календарных суток, а не worldTime-интервал между
+//      использованиями из единичного gate выше). Оба пути зовут
 //      executeItemCode() из item-script.mjs (тот же контекст: item, actor,
 //      token, speaker, game, ui, ChatMessage, event).
 //    weight: { weightScope:"all"|"carry"|"lift"|"push",
@@ -203,6 +215,9 @@ import { MINION_GROUPS, MINION_TIERS }         from "../constants/minions.mjs";
 import { isMinionTalent }                      from "../rules/minion-build.mjs";
 import { applyMinionSlot, promptMinionSlot }   from "./minion-talent.mjs";
 import { executeItemCode }                    from "./item-script.mjs";
+import { isThrottleReady, markThrottleUsed,
+         throttleCount, isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
+import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
 import { AVAILABILITY }                       from "../constants/items.mjs";
@@ -276,6 +291,48 @@ const COHESION_ROLE_OPTIONS = [
   { value: "commander",   label: "Командир" },
   { value: "subordinate", label: "Подчинённый" }
 ];
+// «Частота» кнопки «▶ Запустить» у kind:"script" (wdbc-f4jt) — единицы те
+// же, что у module/rules/cooldown.mjs::THROTTLE_UNITS, "" = без гейта (кнопка
+// доступна всегда). Список продублирован (не импортирует THROTTLE_UNITS
+// напрямую), т.к. тут нужны русские лейблы для <select>, а не сами значения.
+const SCRIPT_THROTTLE_OPTIONS = [
+  { value: "",        label: "Без ограничения" },
+  { value: "round",   label: "Раз в Раунд" },
+  { value: "battle",  label: "Раз за бой" },
+  { value: "scene",   label: "Раз за сцену" },
+  { value: "session", label: "Раз за сессию" },
+  { value: "day",     label: "Раз в сутки" }
+];
+const SCRIPT_THROTTLE_LABELS = Object.fromEntries(SCRIPT_THROTTLE_OPTIONS.map(o => [o.value, o.label]));
+/** Ключ флага перезарядки кнопки «▶ Запустить» конкретной записи kind:"script". */
+const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
+// Счётчик «до N раз» (module/rules/cooldown.mjs::incrementThrottleCount,
+// wdbc-sk8s) — при scriptThrottleMax > 1 гейт идёт через счётчик вместо
+// единичного isThrottleReady/markThrottleUsed (та worldTime-семья "day" —
+// интервал МЕЖДУ использованиями, не лимит НА сутки; здесь "day" — свой
+// смысл, номер календарных суток, см. cooldown.mjs::liveValue). При
+// scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
+const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day"]);
+
+/** Готова ли кнопка «▶ Запустить» записи (учитывает scriptThrottleMax > 1 — счётчик, не единичный gate). */
+function scriptRunReady(item, entry) {
+  const unit = entry.scriptThrottleUnit || "";
+  if (!unit) return true;
+  const max = Number(entry.scriptThrottleMax) || 1;
+  const flag = scriptThrottleFlag(entry.id);
+  if (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit)) return isThrottleCountAvailable(item, flag, unit, max);
+  return isThrottleReady(item, flag, unit);
+}
+
+/** Отмечает «▶ Запустить» использованной — счётчиком или единичным gate, см. scriptRunReady. */
+async function markScriptRunUsed(item, entry) {
+  const unit = entry.scriptThrottleUnit || "";
+  if (!unit) return;
+  const max = Number(entry.scriptThrottleMax) || 1;
+  const flag = scriptThrottleFlag(entry.id);
+  if (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit)) return incrementThrottleCount(item, flag, unit, max);
+  return markThrottleUsed(item, flag, unit);
+}
 const KIND_LABELS = {
   corruption: "Порча", wounds: "Раны", cohesion: "Слаженность отряда",
   characteristic: "Характеристика", trait: "Черта", talent: "Талант", skill: "Навык",
@@ -525,6 +582,10 @@ export function blankMechEntry(kind = "characteristic") {
     weaponPropNewValue: "1", weaponPropNewValue2: "0",
     // script / rollmod (label) / poolMax (value, shared with characteristic)
     label: "", code: "",
+    // script — «Частота» кнопки «▶ Запустить» (wdbc-f4jt): "" = без гейта,
+    // scriptThrottleMax > 1 — счётчик «до N раз» вместо единичного gate
+    // (round/battle/scene/session; "day" считает только 1, см. mechanics.mjs).
+    scriptThrottleUnit: "", scriptThrottleMax: 1,
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -895,23 +956,8 @@ export function rescaleTraitByRating(data, rating) {
 }
 
 // ── Слаженность отряда (kind:"cohesion") ─────────────────────────────────
-
-/** Роль актора в КОНКРЕТНОМ отряде: пост важнее простого членства. null — не состоит вовсе. */
-function squadRoleOf(squad, actorUuid) {
-  if (!squad || !actorUuid) return null;
-  const posts = squad.system?.posts || {};
-  if (posts.leader?.uuid === actorUuid)      return "leader";
-  if (posts.commander?.uuid === actorUuid)   return "commander";
-  if (posts.coordinator?.uuid === actorUuid) return "coordinator";
-  const inMembers = (squad.system?.members || []).some(m => m.uuid === actorUuid);
-  return inMembers ? "subordinate" : null;
-}
-
-/** Отряд, в котором состоит актор (первый найденный — обычно он один). */
-function findMemberSquad(actorUuid) {
-  if (!actorUuid) return null;
-  return game.actors.find(a => a.type === "squad" && squadRoleOf(a, actorUuid) !== null) || null;
-}
+// squadRoleOf/findMemberSquad переехали в module/rules/squad-roles.mjs
+// (wdbc-sk8s) — понадобились ещё и находкам Adjutant/Voice of God.
 
 function cohesionRoleMatches(entryRole, actualRole) {
   if (!actualRole) return false;
@@ -2542,7 +2588,14 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "script") {
+    const unit = ent.scriptThrottleUnit || "";
+    const throttleOpts = SCRIPT_THROTTLE_OPTIONS.map(o => optHtml(o.value, o.label, unit === o.value)).join("");
+    const maxInput = (unit && COUNTABLE_THROTTLE_UNITS.has(unit))
+      ? `<input type="number" class="mech-script-throttle-max" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.scriptThrottleMax ?? 1)}" min="1" title="До скольки раз (1 = единожды)" ${dis}/>`
+      : "";
     return `<input type="text" class="mech-script-label" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.label || "")}" placeholder="Название (для себя)" ${dis}/>
+      <select class="mech-script-throttle" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Частота кнопки «▶ Запустить»" ${dis}>${throttleOpts}</select>
+      ${maxInput}
       <textarea class="mech-script-code" data-group-id="${groupId}" data-entry-id="${ent.id}" spellcheck="false" placeholder="// произвольный JS — item, actor, token, speaker, game, ui, ChatMessage, event" ${dis}>${esc(ent.code || "")}</textarea>`;
   }
 
@@ -2710,6 +2763,36 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
   </div>${subHtml}${talentHtml}`;
 }
 
+/**
+ * Кнопка «▶ Запустить» записи kind:"script" (wdbc-f4jt) — ручной, повторно
+ * нажимаемый путь в отличие от applyMechEntry (тот отыгрывает код РОВНО
+ * ОДИН РАЗ, при получении предмета, и не годится для повторно используемых
+ * способностей вроде «Костяной Песни»). Без item (нет актора/контекста,
+ * напр. предпросмотр вне листа) не рендерится вовсе — запускать код
+ * без документа-владельца флага перезарядки не на чем.
+ */
+function buildScriptRunHtml(groupId, ent, canEdit, item) {
+  if (!item) return "";
+  const unit = ent.scriptThrottleUnit || "";
+  const max = Number(ent.scriptThrottleMax) || 1;
+  const ready = !unit || scriptRunReady(item, ent);
+  const hasCode = !!(ent.code && ent.code.trim());
+  let statusLabel = "";
+  if (hasCode && unit) {
+    if (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit)) {
+      const used = throttleCount(item, scriptThrottleFlag(ent.id), unit);
+      statusLabel = `— ${used}/${max} (${SCRIPT_THROTTLE_LABELS[unit] || unit})`;
+    } else if (!ready) {
+      statusLabel = `— занято (${SCRIPT_THROTTLE_LABELS[unit] || unit})`;
+    }
+  }
+  return `<div class="grant-entry-script-run">
+    <button type="button" class="mech-script-run" data-group-id="${groupId}" data-entry-id="${ent.id}"
+      ${(!canEdit || !hasCode || !ready) ? "disabled" : ""} title="Выполнить код записи">▶ Запустить</button>
+    <span class="mech-script-run-status">${esc(statusLabel)}</span>
+  </div>`;
+}
+
 function buildEntryHtml(groupId, ent, canEdit, depth = 1, item = null) {
   const kindEntries = Object.entries(KIND_LABELS)
     .filter(([k]) => k !== "group" || ent.kind === "group" || depth < MAX_GROUP_DEPTH);
@@ -2722,6 +2805,7 @@ function buildEntryHtml(groupId, ent, canEdit, depth = 1, item = null) {
       ${buildEntryFieldsHtml(groupId, ent, canEdit)}
       ${canEdit ? `<button type="button" class="grant-entry-remove" data-action="grantEntryRemove" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Удалить запись">✕</button>` : ""}
     </div>
+    ${isScript ? buildScriptRunHtml(groupId, ent, canEdit, item) : ""}
     ${buildEntryWhenHtml(groupId, ent, canEdit, item)}
     <div class="grant-entry-preview">${esc(describeMechEntry(ent) + describeMechWhen(ent.when, item))}</div>
     ${isGroup ? buildGroupHtml(ent.group || blankMechGroup(), canEdit, depth + 1, true, item) : ""}
@@ -2787,6 +2871,38 @@ function collectBrokenFormulas(entries) {
     try { mechFormulaTotal(v, {}); } catch { bad.push(String(v)); }
   }
   return bad;
+}
+
+/**
+ * Запускает код записи kind:"script" по кнопке «▶ Запустить» (wdbc-f4jt) —
+ * повторно нажимаемый путь, в отличие от applyMechEntry (тот отыгрывает
+ * script РОВНО ОДИН РАЗ, при получении предмета — не годится для активных
+ * многократно используемых способностей вроде «Костяной Песни»). Флаг
+ * перезарядки хранится на ПРЕДМЕТЕ (scriptThrottleFlag), тем же приёмом,
+ * что slowReload оружия корабля (module/sheets/ship-sheet.mjs) — свой
+ * экземпляр способности у каждого владельца копии предмета.
+ *
+ * Провал кода НЕ тратит попытку — сперва выполняем, только потом (при
+ * успехе) отмечаем использованной, тем же порядком, что и remaining-семья
+ * в module/rules/cooldown.mjs у остальных троттлингов.
+ */
+export async function runMechScriptEntry(item, groupId, entryId) {
+  if (!item) return;
+  const entry = findMechEntry(getItemMechanics(item), groupId, entryId);
+  if (!entry || entry.kind !== "script") return;
+  const code = (entry.code || "").trim();
+  if (!code) return ui.notifications.warn(`У записи «${entry.label || "без названия"}» нет кода.`);
+  const unit = entry.scriptThrottleUnit || "";
+  if (unit && !scriptRunReady(item, entry)) {
+    return ui.notifications.warn(`«${entry.label || item.name}» пока недоступна (${SCRIPT_THROTTLE_LABELS[unit] || unit}).`);
+  }
+  try {
+    await executeItemCode(item, code, null);
+  } catch (e) {
+    console.error(`Warhammer DBC | Ошибка скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
+    return ui.notifications.error(`Скрипт «${entry.label || item.name}»: ${e.message}`);
+  }
+  if (unit) await markScriptRunUsed(item, entry);
 }
 
 /**

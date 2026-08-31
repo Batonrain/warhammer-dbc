@@ -30,9 +30,12 @@ export async function painChange(actor, delta, kind) {
   }
   const next = Math.max(0, Math.min(max, cur + delta));
   await actor.update({ "system.fate.value": next });
-  await painChatMsg(actor, kind === "absorb"
+  const text = kind === "absorb"
     ? `＋ Впитана <b>1</b> Боль (Реакция). Текущая Боль: <b>${next}</b> / ${max}.`
-    : `− Потрачена <b>1</b> Боль. Осталось: <b>${next}</b> / ${max}.`);
+    : kind === "enjoyment"
+      ? `＋ Получена <b>1</b> Боль (Наслаждение, без траты Реакции). Текущая Боль: <b>${next}</b> / ${max}.`
+      : `− Потрачена <b>1</b> Боль. Осталось: <b>${next}</b> / ${max}.`;
+  await painChatMsg(actor, text);
 }
 
 /** Выжигание Души / Варп-урон: Боль выжигается первой (3 урона за 1 Боль). */

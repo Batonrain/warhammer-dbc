@@ -24,6 +24,7 @@ import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
+import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 
 /**
@@ -60,6 +61,33 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
     if (!targetIsVehicle) critEffect = getCriticalEffect(damageType, hitLocation, extremeLevel);
   }
   return { hasExtreme, extremeLevel, critEffect, exRoll };
+}
+
+/**
+ * Бонус урона от Черт «Brutal Charge/Брутальный Натиск» — раньше не читался
+ * НИГДЕ (оба существующих трейта сами это отмечали в своих notes: «бонус
+ * привязан к Натиску, но нет read-хука»). Читает ДВА варианта:
+ *   - «Brutal Charge (X) / Брутальный Натиск (X)» — общий, hasRating:true,
+ *     фиксированное число в system.rating.
+ *   - «Brutal Charge (WS.b) / Жестокий Натиск» — Суккуба, hasRating:false,
+ *     величина = текущий Бонус Оружейного Мастерства актора.
+ * Вызывающая сторона гейтит по rofMode==="charge" (только Натиск) — «или
+ * Верховая Атака» из текста общей Черты сюда не входит: отдельное понятие
+ * (actor.system.mount.uuid, module/sheets/attack-dialog.mjs:342), не
+ * исследовано, оставлено как отдельный открытый пробел, не решается тут.
+ */
+export function brutalChargeDamageBonus(actor) {
+  let total = 0;
+  for (const i of actor?.items ?? []) {
+    if (i.type !== "trait") continue;
+    const name = i.name || "";
+    if (/Brutal Charge \(WS\.b\)|Жестокий Натиск/i.test(name)) {
+      total += Number(actor?.system?.characteristics?.ws?.bonus) || 0;
+    } else if (/Brutal Charge|Брутальный Натиск/i.test(name)) {
+      total += Number(i.system?.rating) || 0;
+    }
+  }
+  return total;
 }
 
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
@@ -277,8 +305,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // бездушной/техникой в диалоге атаки (галочка, не авто — трейта «бездушный»
   // на акторе нет).
   const changePenBonus = (opts.changeSoulless && wp.changeRating) ? wp.changeRating : 0;
+  // Грозный Вопль/Dread Wail (wdbc-sk8s) — усилитель звукового оружия, живёт
+  // до начала следующего Хода (module/combat/dread-wail.mjs).
+  const dreadWailBonus = dreadWailWeaponBonus(actor, item);
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen,
     wp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -298,7 +329,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // вписывает число вручную — напр. Экстремальный урон правила, разовая
   // ситуативная надбавка без отдельного галочки в реестре модификаторов).
   const dmgBonus    = Number(opts.dmgBonus) || 0;
-  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus;
+  // Brutal Charge/Брутальный Натиск — только при Натиске (rofMode==="charge"),
+  // см. brutalChargeDamageBonus() выше.
+  const chargeBonus = (isMelee && rofMode === "charge") ? brutalChargeDamageBonus(actor) : 0;
+  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg;
   const dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee

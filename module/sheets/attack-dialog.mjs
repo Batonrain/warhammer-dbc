@@ -42,6 +42,7 @@ import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
 import { measureTokens, meleeContactCount }    from "../combat/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
+import { hasDeathDance, deathDanceNextCost, markDeathDanceUsed } from "../combat/death-dance.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -1021,6 +1022,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="0"
                title="Ручной бонус к урону этой атаки — прибавляется к итоговому урону после броска, отдельно от порога теста"/>
       </div>
+      ${(isMelee && hasDeathDance(actor)) ? `
+      <div class="av-row" id="atk-death-dance-row">
+        <label>Death Dance</label>
+        <button type="button" id="atk-death-dance-btn" class="av-pill av-pill-disabled" disabled><span>+ Brutal Charge</span></button>
+        <span class="av-opt-note" id="atk-death-dance-status"></span>
+      </div>` : ""}
       ${wp.changeRating ? `
       <div class="av-row">
         <label class="attack-mod-check">
@@ -1321,6 +1328,52 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           hint.textContent = "— разверни, если нужны";
         }
       };
+
+      // Death Dance / Смертельный Танец (wdbc-sk8s) — кнопка живёт своим
+      // слушателем рядом с общим updateTotal: активна только при выбранной
+      // Базе «Натиск» и хватающих Очках Судьбы на эскалирующую цену (см.
+      // module/combat/death-dance.mjs). Добавляет +A.b в то же поле «Бонус
+      // урона», что игрок и так может вписать руками — не отдельный путь
+      // в attack.mjs.
+      const ddBtn    = form.querySelector("#atk-death-dance-btn");
+      const ddStatus = form.querySelector("#atk-death-dance-status");
+      if (ddBtn) {
+        const refreshDeathDance = () => {
+          const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
+          const isCharge   = sel.baseKey === "charge";
+          const cost       = deathDanceNextCost(actor);
+          const fate       = actor.system.fate?.value ?? 0;
+          const affordable = cost === 0 || fate >= cost;
+          ddBtn.disabled   = !isCharge || !affordable;
+          ddBtn.classList.toggle("av-pill-disabled", !isCharge || !affordable);
+          ddStatus.textContent = !isCharge
+            ? "— доступно только при Базе «Натиск»"
+            : cost === 0
+              ? "— бесплатно (первый раз в этом бою)"
+              : `— цена ${cost} Очков Судьбы${affordable ? "" : " (не хватает)"}`;
+        };
+        ddBtn.addEventListener("click", async ev => {
+          ev.preventDefault();
+          const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
+          if (sel.baseKey !== "charge") return;
+          const cost = deathDanceNextCost(actor);
+          const fate = actor.system.fate?.value ?? 0;
+          if (cost > 0) {
+            if (fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");
+            await actor.update({ "system.fate.value": fate - cost });
+          }
+          await markDeathDanceUsed(actor);
+          const agBonus  = Number(actor.system.characteristics?.ag?.bonus) || 0;
+          const dmgInput = form.querySelector("#atk-dmg-bonus");
+          dmgInput.value = (parseInt(dmgInput.value) || 0) + agBonus;
+          ui.notifications.info(`Смертельный Танец: +${agBonus} к Бонусу урона (Brutal Charge).`);
+          refreshDeathDance();
+          updateTotal();
+        });
+        form.addEventListener("change", refreshDeathDance);
+        form.addEventListener("input",  refreshDeathDance);
+        refreshDeathDance();
+      }
 
       // Один слушатель на форму вместо списка селекторов: события всплывают,
       // и новая галочка в разметке не требует правки этого места.

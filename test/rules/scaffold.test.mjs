@@ -17,9 +17,10 @@ describe("каркас module/rules", () => {
 
     // Восемь условий этапа 1 плюс два про фракции (hasFaction/targetHasFaction),
     // targetLacksCondition (снятие штрафа «Проворный» у Оглушённых), hasSize/
-    // targetHasSize (гейт Размера), targetKeepsNimbleInArmour (Чёрный Панцирь)
-    // и woundTier (Уровень Ранения, rules/wound-tier.mjs).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(15);
+    // targetHasSize (гейт Размера), targetKeepsNimbleInArmour (Чёрный Панцирь),
+    // woundTier (Уровень Ранения, rules/wound-tier.mjs) и avatarOfSlaughterOffTarget
+    // (метка Аватара Резни, wdbc-sk8s).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(16);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

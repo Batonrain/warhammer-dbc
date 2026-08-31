@@ -150,6 +150,7 @@
       <button type="button" class="pain-absorb-btn" title="Реакция: впитать страдания (+1 Боль; не более 1 с одной жертвы за Раунд)">＋ Впитать (Реакция)</button>
       <button type="button" class="pain-spend-btn" title="Потратить 1 Очко Боли (как Очко Бесчестья)">− Потратить</button>
       <button type="button" class="pain-soulburn-btn" title="Выжигание Души / Варп-урон: Боль выжигается первой — 3 урона за 1 Боль">🔥 Поглотить Выжигание</button>
+      {{#if hasSkillfulTorture}}<button type="button" class="skillful-torture-btn" title="Искусная Пытка — наведите таргет (T) на Беспомощную жертву, тест Interrogate(Int)−20 vs Воля цели">🗡️ Искусная Пытка</button>{{/if}}
     </div>
   </div>
   {{/if}}
@@ -241,6 +242,15 @@
       <input type="checkbox" name="system.inRage" {{checked system.inRage}}/>
       <span class="simple-toggle-label">В Ярости</span>
     </label>
+    {{#if hasAvatarOfSlaughter}}
+    <button type="button" class="technique-btn avatar-of-slaughter-btn" style="margin-top:6px;" title="Аватар Резни — наведите таргет (T) на видимого противника; тратит 1 Очко Бесчестия, раз за бой"><span class="tech-name">🩸 Аватар Резни</span></button>
+    {{/if}}
+    {{#if hasDreadWail}}
+    <button type="button" class="technique-btn dread-wail-btn" style="margin-top:6px;" title="Грозный Вопль — усиление звукового оружия ИЛИ звуковая волна AoE"><span class="tech-name">📢 Грозный Вопль</span></button>
+    {{/if}}
+    {{#if hasResplendentRaiment}}
+    <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
+    {{/if}}
   </div></div>{{!-- /стойка --}}
 
   {{!-- ═══ СИЛОВОЕ ПОЛЕ — отдельная строка под основной сеткой ═══ --}}

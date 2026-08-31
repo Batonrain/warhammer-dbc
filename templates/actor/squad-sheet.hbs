@@ -280,8 +280,19 @@
         </div>
         <div class="sq-row">
           <label>Уточнение</label>
-          <input type="text" name="system.shortCommand.note" value="{{shortNote}}" placeholder="Вид тестов / получатель Личной Команды"/>
+          <input type="text" name="system.shortCommand.note" value="{{shortNote}}" placeholder="Вид тестов"/>
         </div>
+        {{#if showPersonalRecipient}}
+        <div class="sq-row">
+          <label>Получатель</label>
+          <select name="system.shortCommand.recipientUuid">
+            <option value="">— выберите подчинённого —</option>
+            {{#each personalRecipientOptions as |m|}}
+            <option value="{{m.uuid}}" {{#if m.selected}}selected{{/if}}>{{m.name}}</option>
+            {{/each}}
+          </select>
+        </div>
+        {{/if}}
         <div class="sq-actions">
           <button type="button" class="sq-btn sq-btn-roll sq-short-roll" data-action="shortRoll"><i class="fas fa-dice-d10"></i> Отдать Короткую Команду</button>
           {{#if shortActive}}<button type="button" class="sq-btn sq-short-off" data-action="shortOff"><i class="fas fa-power-off"></i> Снять</button>{{/if}}

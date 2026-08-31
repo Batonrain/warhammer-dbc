@@ -40,7 +40,12 @@ export class SquadData extends foundry.abstract.TypeDataModel {
         active:    new BooleanField({ initial: false, label: "Отдан" }),
         key:       new StringField({ initial: "inspire", label: "Приказ" }),
         successes: num(0, "Успехи"),
-        note:      str("Пометка")
+        note:      str("Пометка"),
+        // Получатель «Личной Команды» (key:"personal") — структурная ссылка,
+        // не только текст в note. Нужна Voice of God/Глас Божий (wdbc-sk8s):
+        // «получатель Личной Команды тоже получает Очко Бесчестия» — раньше
+        // получателя нигде не хранили, выбор был устным.
+        recipientUuid: str("Получатель")
       }, { label: "Короткий приказ" }),
       detailCommand: new SchemaField({
         active:    new BooleanField({ initial: false, label: "Отдан" }),
