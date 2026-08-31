@@ -29,7 +29,7 @@ import { buildMasqueOptions, getMasque }         from "../constants/harlequin-ma
 import { BODY_TYPES }                            from "../constants/body-map.mjs";
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
-import { actorCanFly }                           from "../combat/movement-actions.mjs";
+import { actorCanFly, narrativeSpeed }           from "../combat/movement-actions.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
@@ -138,6 +138,23 @@ export function characterContext(actor) {
   // 30) видна только с Чертой Flyer/Hoverer — та же проверка, что и в самой
   // кнопке Token HUD/меню, продублирована здесь только ради видимости кнопки.
   context.movementCanFly = actorCanFly(actor);
+
+  // Дистанции-превью на кнопках вкладки БОЙ (стр. 29): базовая часть
+  // формулы без бросков (Карабканье — SPD/2, Плавание — ½S.b, те же
+  // формулы, что показывает сам диалог в movement-actions.mjs); Прыжок и
+  // Падение зависят от выбора в диалоге/броска — превью для них не строим.
+  {
+    const _halfMove = Number(system.movement?.halfMove) || 0;
+    const _sBonus = Number(system.characteristics?.s?.bonus) || 0;
+    context.movementDist = {
+      climb: (_halfMove / 2).toFixed(1),
+      swim: (_sBonus / 2).toFixed(1)
+    };
+  }
+  // Базовая нарративная скорость (таблица «Движение в нарративном
+  // времени», стр. 29) — строка-подсказка над кнопками маршей: марши
+  // умножают именно эту базу (×2/×3/как обычно).
+  context.movementNarrative = narrativeSpeed(system.movement?.halfMove);
 
   // ── Снаряжение: сенсор нагрузки (когитатор) ─────────────────────────────
   const _enc = system.encumbrance || {};

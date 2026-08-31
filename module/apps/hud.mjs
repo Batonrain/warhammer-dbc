@@ -302,13 +302,24 @@ function hudData(actor) {
     // Ресурс судьбы: у Друкхари это Очки Боли, у Хаоситов — Очки Бесчестья
     // (общий хелпер fateTerm, как в шапке листа) — подпись на HUD должна
     // совпадать с листом, иначе игрок ищет «Судьбу», которой у него нет.
+    // Максимум Очков Бесчестья (Хаосит/Демон-Принц) — Inf.b, СЧИТАЕТСЯ, а не
+    // читается из system.fate.max (actor-sheet.mjs::_infamyMax,
+    // demon-prince-sheet.mjs — тот же геттер): комментарий там прямо говорит,
+    // что расхождение с fate.max было багом. HUD раньше читал только
+    // sys.fate.max напрямую — на Хаосите это давало неверное число пипсов
+    // (напр. хранимое fate.max=2 при реальном Inf.b=4 обрезало полосу до 2
+    // ячеек, хотя fate.value корректно был 4) — расхождение с листом.
     fateTerm: fateTerm(sys),
-    fate: {
-      value: Number(sys.fate?.value) || 0,
-      max: Number(sys.fate?.max) || 0,
-      pips: Array.from({ length: clamp(Number(sys.fate?.max) || 0, 0, 10) },
-        (_, i) => ({ full: i < (Number(sys.fate?.value) || 0) }))
-    },
+    fate: (() => {
+      const value = actor.type === "demonPrince" ? (Number(sys.dp?.ip) || 0) : (Number(sys.fate?.value) || 0);
+      const max = (actor.type === "demonPrince" || sys.alignment === "heretic")
+        ? Math.max(0, Number(sys.characteristics?.inf?.bonus) || 0)
+        : (Number(sys.fate?.max) || 0);
+      return {
+        value, max,
+        pips: Array.from({ length: clamp(max, 0, 10) }, (_, i) => ({ full: i < value }))
+      };
+    })(),
     lamps,
     hands, showOff,
     hasWeapon: !!(mainId || offId),

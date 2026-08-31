@@ -727,7 +727,10 @@ export function buildGetData(actor) {
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
   const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
-  context.gearImplants = allItems.filter(i => i.type === "implant").map(i => ({
+  // Органы Астартес (category "astartes") показаны отдельным блоком ГЕНОСЕМЯ
+  // на вкладке ТЕЛО (context.geneSeedOrgans ниже) — здесь исключены, чтобы не
+  // дублироваться в общей таблице Имплантов.
+  context.gearImplants = allItems.filter(i => i.type === "implant" && i.system.category !== "astartes").map(i => ({
     id: i.id, name: i.name,
     category:  IMPL_CAT[i.system.category] ?? i.system.category ?? "",
     quality:   QUAL[i.system.quality] ?? i.system.quality ?? "",

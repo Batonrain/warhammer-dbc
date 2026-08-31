@@ -20,7 +20,7 @@
     "sustainable": false,
     "sustainCost": 1,
     "sustainAction": "free",
-    "damage": "2×PR",
+    "damage": "2*PR",
     "damageType": "impact",
     "penetration": 0,
     "weaponProps": [],

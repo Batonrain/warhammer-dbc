@@ -484,6 +484,48 @@ function _showFlightLocDialog(actor, alt) {
 // C. Марш/Бег/Форсированный марш вне боя (стр. 29)
 // ════════════════════════════════════════════════════════════════════════
 
+// ── Базовая нарративная скорость (таблица «Движение в нарративном
+//    времени», стр. 29) — используется для строки-подсказки над кнопками
+//    маршей на вкладке БОЙ (character-context.mjs::movementNarrative).
+//    В минуту точно равно SPD×24м на всех строках таблицы, в день точно
+//    равно часу×10 на всех строках — обе зависимости подтверждены по
+//    книге. Час — НЕ чистая формула (округления автора книги
+//    непоследовательны, см. транскрипт сессии), поэтому опорные точки
+//    книги ниже + линейная интерполяция между ними, за пределами
+//    последней пары — экстраполяция по наклону последнего отрезка.
+const NARRATIVE_HOUR_KM_TABLE = [
+  [0.5, 1], [1, 2], [2, 3], [3, 4], [4, 6], [5, 7],
+  [6, 9], [7, 10], [8, 12], [9, 13], [10, 14]
+];
+
+function _narrativeHourKm(spd) {
+  const t = NARRATIVE_HOUR_KM_TABLE;
+  if (spd <= t[0][0]) return t[0][1] * (spd / t[0][0]);
+  for (let i = 1; i < t.length; i++) {
+    const [x0, y0] = t[i - 1], [x1, y1] = t[i];
+    if (spd <= x1) return y0 + (y1 - y0) * (spd - x0) / (x1 - x0);
+  }
+  const [x0, y0] = t[t.length - 2], [x1, y1] = t[t.length - 1];
+  return y1 + (y1 - y0) / (x1 - x0) * (spd - x1);
+}
+
+/** Базовая (×1, неспешный темп) нарративная скорость по SPD — стр. 29, плюс
+ *  готовые значения под множители Ускоренного марша (×2, единица — день,
+ *  т.к. держится до T.b часов) и Бега (×3, единица — час, т.к. держится
+ *  1 час) — ими подписаны кнопки маршей на вкладке БОЙ. */
+export function narrativeSpeed(spd) {
+  const s = Number(spd) || 0.5;
+  const hourKm = _narrativeHourKm(s);
+  const perDay = Number((hourKm * 10).toFixed(1));
+  return {
+    perMinute: Math.round(s * 24),
+    perHour: Number(hourKm.toFixed(1)),
+    perDay,
+    perDayX2: Number((perDay * 2).toFixed(1)),
+    perHourX3: Number((hourKm * 3).toFixed(1))
+  };
+}
+
 /** Общий кумулятивный тест «час за часом» (Марш/Бег/Форс.марш/длит. Плавание):
  *  штраф −10× уже проваленных часов подряд, провал → +1 к счётчику и Усталость. */
 async function _hourlyTest(actor, { threshold, slow = false }) {
@@ -503,7 +545,7 @@ const MARCH_KINDS = {
     note: "До T.b часов без теста; тест T+0 при превышении, дальше — каждый час, кумулятивно."
   },
   run: {
-    label: "Бег (марш)", mult: "×3", pPenalty: -20, trackBonus: 30,
+    label: "Марафонский бег", mult: "×3", pPenalty: -20, trackBonus: 30,
     note: "1 час; тест T каждый час, кумулятивно."
   },
   forced: {
@@ -591,7 +633,7 @@ export function showMovementMenu(actor) {
   }
   if (!isEncounterActive()) {
     buttons.marchA = { label: "Ускоренный марш", callback: () => showMarchDialog(actor, "accelerated") };
-    buttons.marchR = { label: "Бег (марш)", callback: () => showMarchDialog(actor, "run") };
+    buttons.marchR = { label: "Марафонский бег", callback: () => showMarchDialog(actor, "run") };
     buttons.marchF = { label: "Форсированный марш", callback: () => showMarchDialog(actor, "forced") };
   }
   buttons.cancel = { label: "Закрыть" };

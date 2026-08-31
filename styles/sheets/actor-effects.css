@@ -111,20 +111,24 @@
 .warhammer-dbc .noosphere-name { display: block; font-weight: 700; color: #234a52; font-size: 0.9em; }
 .warhammer-dbc .noosphere-desc { display: block; font-size: 0.88em; color: var(--wh-text); }
 
-/* ── Геносемя (Астартес) ───────────────────────────────────── */
-.warhammer-dbc .gene-seed-panel { border: 1px solid #4a6a3a; }
+/* ── Геносемя (Астартес) — тот же вид/яркость, что у ИМПЛАНТЫ (.gear-cat/
+   .gear-table, actor-gear.css): раньше рамка/подписи были захардкожены в
+   тускло-оливковый (#4a6a3a и т.п.), никогда не менялись под тему листа
+   (когитаторный --wh-holo, перекраска Бога-покровителя) — из-за этого рядом
+   с Имплантами выглядело тусклее и, у Хаоситов, даже в другой оттенок
+   (hue-rotate от разных базовых цветов). Теперь те же переменные, что у
+   .ability-section-panel/.gear-cat: рамка/фон уже наследуются оттуда без
+   переопределения, здесь добавлена только шапка таблицы органов, как у
+   .gear-table thead. */
 .warhammer-dbc .gene-seed-head {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px;
+  background: var(--wh-panel-dark);
 }
-.warhammer-dbc .gene-origin-label { display: flex; flex-direction: column; gap: 2px; font-size: 0.82em; font-weight: 700; color: var(--wh-text-mid, #5a4a30); flex: 1 1 220px; }
+.warhammer-dbc .gene-origin-label { display: flex; flex-direction: column; gap: 2px; font-size: 0.82em; font-weight: 700; color: var(--wh-text-light); flex: 1 1 220px; }
 .warhammer-dbc .gene-origin-input { width: 100%; }
-.warhammer-dbc .gene-apply-btn {
-  width: auto; flex: 0 0 auto; padding: 4px 12px;
-  background: #2e4a22; color: #d8e8c0; border: 1px solid #4a6a3a; border-radius: 3px;
-  cursor: pointer; font-family: inherit; font-size: 0.85em; font-weight: 600; transition: background 0.12s;
-}
-.warhammer-dbc .gene-apply-btn:hover { background: #3e5e2e; }
-.warhammer-dbc .gene-seed-hint { font-size: 0.82em; font-style: italic; color: var(--wh-text-mid, #5a4a30); padding: 0 10px 6px; }
+.warhammer-dbc .gene-seed-table thead tr { background: var(--wh-panel-dark); }
+.warhammer-dbc .gene-seed-table tbody tr:hover { background: rgba(0,0,0,0.06); }
+.warhammer-dbc .gene-seed-hint { font-size: 0.82em; font-style: italic; color: var(--wh-text-mid); padding: 0 10px 6px; }
 .warhammer-dbc .size-trait-badge { font-size: 0.78em; color: #3a5a1a; font-weight: 600; }
 .warhammer-dbc .size-total-value { margin-left: 6px; font-weight: 700; color: #3a5a1a; }
 

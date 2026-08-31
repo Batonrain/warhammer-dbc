@@ -62,16 +62,24 @@
 .warhammer-dbc .bc-trackers-2col { display: grid; grid-template-columns: 1fr 1fr; }
 .warhammer-dbc .bc-trackers-2col > .stat-panel { min-width: 0; }
 
-/* Общий стиль монитор-панели */
+/* Общий стиль монитор-панели — Усталость (compact-виджет без panel-title,
+   plain .stat-panel фон её не красил) и Безумие/Порча (.bc-trackers >
+   .stat-panel, тоже голый .stat-panel под капотом stats-cog-хака) добавлены
+   сюда же, чтобы выглядеть как остальные мониторы ТЕЛА, а не плоским боксом
+   рядом с Кардио-монитором. !important — тот же приём, что у combat-cog/
+   stats-cog: перебивает базовый .stat-panel{background:var(--wh-parchment2)}
+   той же специфичности. */
 .warhammer-dbc .bc-figure-panel,
 .warhammer-dbc .bc-ecg,
 .warhammer-dbc .bc-implants,
 .warhammer-dbc .bc-vitals,
+.warhammer-dbc .bc-fatigue-compact,
+.warhammer-dbc .bc-trackers > .stat-panel,
 .warhammer-dbc .bc-panels .effects-section-panel {
   background:
     radial-gradient(120% 80% at 50% 0%, rgba(77,255,176,0.06), transparent 60%),
-    linear-gradient(180deg, var(--bc-scr2), var(--bc-scr));
-  border: 1px solid var(--bc-line);
+    linear-gradient(180deg, var(--bc-scr2), var(--bc-scr)) !important;
+  border: 1px solid var(--bc-line) !important;
   border-radius: 4px;
   box-shadow: inset 0 0 22px rgba(0,0,0,0.55), 0 0 0 1px rgba(77,255,176,0.05);
 }

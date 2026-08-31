@@ -35,71 +35,88 @@
         <span class="helmet-kept-note">— только передача звука через горжет</span> </div> {{/if}} <div class="helmet-action">{{helmetless.action}}</div> {{else}}
       <div class="helmet-hint">Многие боевые братья снимают шлем, когда нет прямой угрозы: это стоит защиты головы и авточувств, но подкупает врагов и соратников.</div> {{/if}}
     </div> </div> {{/if}}
-    {{!-- ДВИЖЕНИЕ --}}
-    <div class="stat-panel"> <div class="panel-title">ДВИЖЕНИЕ</div> <div class="panel-body movement-body"> <div class="movement-row"> <label>Полушаг</label> <span class="movement-val">{{system.movement.halfMove}}</span> </div> <div class="movement-row"> <label>Шаг</label> <span class="movement-val">{{system.movement.move}}</span> </div> <div class="movement-row"> <label>Натиск</label> <span class="movement-val">{{system.movement.charge}}</span> </div> <div class="movement-row"> <label>Бег</label> <span class="movement-val">{{system.movement.run}}</span> </div> </div>
-      {{!-- Кнопки боевых типов движения (стр. 32) и отдельных механик
-            (стр. 29-30) — module/combat/movement-actions.mjs, тот же
-            обработчик, что у Token HUD-кнопки «Движение». --}}
-      <div class="panel-body movement-actions-body">
-        <div class="movement-actions-row">
-          <button type="button" class="wh-move-btn" data-move-action="halfmove" title="Полудействие (1 ОД). Перемещение до SPD×1.">Полудвижение</button>
-          <button type="button" class="wh-move-btn" data-move-action="fullmove" title="Полное действие (2 ОД). Перемещение до SPD×2.">Полное движение</button>
-          <button type="button" class="wh-move-btn" data-move-action="charge" title="Выбирает Базу «Натиск» — рукопашный приём +20, 2 ОД спишутся на броске атаки.">Натиск</button>
-          <button type="button" class="wh-move-btn" data-move-action="run" title="Полное действие (2 ОД). До начала следующего Хода: нельзя Реакции, Стрельба по персонажу −20, Рукопашная +20.">Бег</button>
+    {{!-- ДВИЖЕНИЕ — растянута на всю ширину combat-layout (grid-column:
+          1/-1 в CSS), три узкие boковые колонки иначе не влезли бы в
+          прежний 155px-слот третьей колонки сетки. --}}
+    <div class="stat-panel movement-panel-full"> <div class="panel-title">ДВИЖЕНИЕ</div>
+      {{!-- Три колонки: боевые типы (стр. 32, кнопка = значение дистанции,
+            заменяет прежнюю отдельную таблицу Полушаг/Шаг/Натиск/Бег) ·
+            отдельные механики (стр. 29-30, с превью дистанции у Карабканья
+            и Плавания — те же формулы, что в самом диалоге) · марши вне боя
+            (стр. 29, с базовой нарративной скоростью сверху) —
+            module/combat/movement-actions.mjs, тот же обработчик, что у
+            Token HUD-кнопки «Движение». --}}
+      <div class="panel-body movement-cols">
+        <div class="movement-col">
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="halfmove" title="Полудействие (1 ОД). Перемещение до SPD×1.">Полушаг</button> <span class="mv-box">{{system.movement.halfMove}}</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="fullmove" title="Полное действие (2 ОД). Перемещение до SPD×2.">Шаг</button> <span class="mv-box">{{system.movement.move}}</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="charge" title="Выбирает Базу «Натиск» — рукопашный приём +20, 2 ОД спишутся на броске атаки.">Натиск</button> <span class="mv-box">{{system.movement.charge}}</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="run" title="Полное действие (2 ОД). До начала следующего Хода: нельзя Реакции, Стрельба по персонажу −20, Рукопашная +20.">Бег</button> <span class="mv-box">{{system.movement.run}}</span> </div>
         </div>
-        <div class="movement-actions-row">
-          <button type="button" class="wh-move-btn" data-move-action="climb" title="Карабканье (стр. 29): Athletics/Acrobatics.">Карабканье</button>
-          <button type="button" class="wh-move-btn" data-move-action="jump" title="Прыжок (стр. 29-30): Acrobatics.">Прыжок</button>
-          <button type="button" class="wh-move-btn" data-move-action="swim" title="Плавание (стр. 30): Athletics.">Плавание</button>
-          <button type="button" class="wh-move-btn" data-move-action="fall" title="Падение и Группирование (стр. 30).">Падение</button>
+        <div class="movement-col">
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="climb" title="Карабканье (стр. 29): Athletics/Acrobatics. Дистанция: SPD/2 + Успехи.">Карабканье</button> <span class="mv-box">{{movementDist.climb}}</span> </div>
+          <button type="button" class="wh-move-btn" data-move-action="jump" title="Прыжок (стр. 29-30): Acrobatics. Дистанция зависит от типа прыжка (в диалоге).">Прыжок</button>
+          <button type="button" class="wh-move-btn" data-move-action="fall" title="Падение и Группирование (стр. 30). Урон по высоте, не дистанция.">Падение</button>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="swim" title="Плавание (стр. 30): Athletics. Успех — SPD = ½S.b.">Плавание</button> <span class="mv-box">{{movementDist.swim}}</span> </div>
           {{#if movementCanFly}}
           <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).">Полёт</button>
           {{/if}}
         </div>
-        <div class="movement-actions-row">
-          <button type="button" class="wh-move-btn" data-move-action="march-accelerated" title="Ускоренный марш (стр. 29): ×2 SPD, тест T.">Ускор. марш</button>
-          <button type="button" class="wh-move-btn" data-move-action="march-run" title="Бег вне боя (стр. 29): ×3 SPD, тест T каждый час.">Бег (марш)</button>
-          <button type="button" class="wh-move-btn" data-move-action="march-forced" title="Форсированный марш (стр. 29): после 8ч, Усталость восстанавливается вдвое медленнее.">Форс. марш</button>
+        <div class="movement-col">
+          <div class="movement-col-note" title="Неспешный темп по свободному ландшафту при текущем SPD ({{system.movement.halfMove}}) — стр. 29, таблица «Движение в нарративном времени». Марши ниже умножают эту базу.">
+            Баз. скорость: {{movementNarrative.perMinute}}м/мин · {{movementNarrative.perHour}}км/ч · {{movementNarrative.perDay}}км/день
+          </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="march-accelerated" title="Ускоренный марш (стр. 29): ×2 базовой скорости, до T.b часов без теста, дальше — тест T каждый час.">Ускоренный марш</button> <span class="mv-box mv-box-wide">{{movementNarrative.perDayX2}}км/день</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="march-run" title="Бег вне боя (стр. 29): ×3 базовой скорости, 1 час, тест T каждый час.">Марафонский бег</button> <span class="mv-box mv-box-wide">{{movementNarrative.perHourX3}}км/ч</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="march-forced" title="Форсированный марш (стр. 29): как обычный марш (после 8ч), тест T каждый час, Усталость восстанавливается вдвое медленнее.">Форсированный марш</button> <span class="mv-box mv-box-wide">{{movementNarrative.perDay}}км/день</span> </div>
         </div>
       </div>
-      <div class="panel-title" style="margin-top:4px;">ПРОЧЕЕ</div> <div class="panel-body movement-body"> <div class="movement-row initiative-row"> <label title="1d10 + Ag.Бонус + модификатор">Инициатива</label> <div class="initiative-controls"> <span class="movement-val initiative-base" title="Ag.Бонус (авторасчёт)">{{system.initiative}}</span> <span class="initiative-sep">+</span> <input type="number" class="initiative-mod-input" name="system.initiativeMod" value="{{system.initiativeMod}}" min="-99" max="99" title="Доп. модификатор к инициативе" placeholder="0"/> <button type="button" class="initiative-roll-btn" data-action="initiativeRoll" title="Бросок Инициативы в трекер (1d10 + Ag.Бонус + модификатор)">🎲</button> </div> </div> <div class="movement-row"> <label>Размер{{#if system.sizeMod}} <span class="size-trait-badge" title="Вклад Черт">(+{{system.sizeMod}} от Черт)</span>{{/if}}</label> <input type="number" name="system.size" value="{{system.size}}" min="-4" max="6" title="База. Итоговый размер с Чертами: {{system.sizeTotal}}"/> {{#if system.sizeMod}}
+      <div class="panel-title" style="margin-top:4px;">ПРОЧЕЕ</div>
+      {{!-- Инициатива/Размер слева, Экономика Действий (ОД/Реакции) справа
+            в компактном многострочном виде — раньше была отдельной
+            во всю ширину листа полосой под combat-layout, теперь в одной
+            строке с ПРОЧЕЕ. Только Полудействие/Полное действие/Реакция
+            тратят пул — Свободное действие бесплатно и кнопки не имеет.
+            Восполняется автоматически в начале Хода актора (updateCombat,
+            module/combat/action-economy.mjs); кнопки ниже — ручная трата
+            для действий без своей кнопки в другом месте листа
+            (Уклонение/Парирование уже тратят Реакцию сами). --}}
+      <div class="panel-body movement-other-row">
+        <div class="movement-body movement-other-col"> <div class="movement-row initiative-row"> <label title="1d10 + Ag.Бонус + модификатор">Инициатива</label> <div class="initiative-controls"> <span class="movement-val initiative-base" title="Ag.Бонус (авторасчёт)">{{system.initiative}}</span> <span class="initiative-sep">+</span> <input type="number" class="initiative-mod-input" name="system.initiativeMod" value="{{system.initiativeMod}}" min="-99" max="99" title="Доп. модификатор к инициативе" placeholder="0"/> <button type="button" class="initiative-roll-btn" data-action="initiativeRoll" title="Бросок Инициативы в трекер (1d10 + Ag.Бонус + модификатор)">🎲</button> </div> </div> <div class="movement-row"> <label>Размер{{#if system.sizeMod}} <span class="size-trait-badge" title="Вклад Черт">(+{{system.sizeMod}} от Черт)</span>{{/if}}</label> <input type="number" name="system.size" value="{{system.size}}" min="-4" max="6" title="База. Итоговый размер с Чертами: {{system.sizeTotal}}"/> {{#if system.sizeMod}}
           <span class="size-total-value" title="Итоговый Размер (база + Черты)">= {{system.sizeTotal}}</span> {{/if}}
-        </div> </div> </div>{{!-- /движение --}}
+        </div> </div>
+        {{#if actionEconomy}}
+        <div class="action-economy-bar action-economy-compact{{#unless actionEconomy.encounterActive}} action-economy-idle{{/unless}}">
+          <div class="ae-pool" title="Очки Действия (стр. 12): Полудействие −1, Полное действие −2">
+            <span class="ae-pool-label">ОД</span>
+            <span class="ae-pool-value">{{actionEconomy.ap.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.ap.max}}</span>
+            <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="1" title="Списать 1 ОД (Полудействие)">−1</button>
+            <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="2" title="Списать 2 ОД (Полное действие)">−2</button>
+          </div>
+          <div class="ae-pool" title="Реакции (стр. 12): тратятся Уклонением/Парированием и подобными действиями вне своего Хода">
+            <span class="ae-pool-label">Реакции</span>
+            <span class="ae-pool-value">{{actionEconomy.reactions.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.reactions.max}}</span>
+            <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" title="Списать 1 Реакцию вручную">−1</button>
+          </div>
+          {{#if actionEconomy.defense}}
+          <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
+            <span class="ae-pool-label">Реакции (Избегание)</span>
+            <span class="ae-pool-value">{{actionEconomy.defense.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.defense.max}}</span>
+          </div>
+          {{/if}}
+          <div class="ae-pool ae-pool-status">
+            {{#if actionEconomy.exposed}}
+            <span class="atk-training-warn" title="Агрессивная Стойка: в конце Хода терять было нечего — атаки по персонажу +20 до начала следующего Хода">⚔️ Раскрыт (+20 атакам по персонажу)</span>
+            {{/if}}
+            <span class="ae-status" title="{{#if actionEconomy.encounterActive}}Идёт бой — пул тратится и восполняется каждый Ход{{else}}Вне активного Encounter трата не считается{{/if}}">{{#if actionEconomy.encounterActive}}⚔️ В бою{{else}}Вне боя{{/if}}</span>
+            <button type="button" class="ae-reset-btn" title="Восполнить ОД и Реакции до максимума вручную">Сброс</button>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+    </div>{{!-- /движение --}}
 
   </div>{{!-- /combat-layout --}}
-
-  {{!-- ═══ ЭКОНОМИКА ДЕЙСТВИЙ (стр. 12): ОД / Реакции ═══
-        Только Полудействие/Полное действие/Реакция тратят пул — Свободное
-        действие бесплатно и кнопки не имеет. Восполняется автоматически в
-        начале Хода актора (updateCombat, module/combat/action-economy.mjs);
-        кнопки ниже — ручная трата для действий без своей кнопки в другом
-        месте листа (Уклонение/Парирование уже тратят Реакцию сами). --}}
-  {{#if actionEconomy}}
-  <div class="action-economy-bar{{#unless actionEconomy.encounterActive}} action-economy-idle{{/unless}}">
-    <div class="ae-pool" title="Очки Действия (стр. 12): Полудействие −1, Полное действие −2">
-      <span class="ae-pool-label">ОД</span>
-      <span class="ae-pool-value">{{actionEconomy.ap.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.ap.max}}</span>
-      <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="1" title="Списать 1 ОД (Полудействие)">−1</button>
-      <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="2" title="Списать 2 ОД (Полное действие)">−2</button>
-    </div>
-    <div class="ae-pool" title="Реакции (стр. 12): тратятся Уклонением/Парированием и подобными действиями вне своего Хода">
-      <span class="ae-pool-label">Реакции</span>
-      <span class="ae-pool-value">{{actionEconomy.reactions.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.reactions.max}}</span>
-      <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" title="Списать 1 Реакцию вручную">−1</button>
-    </div>
-    {{#if actionEconomy.defense}}
-    <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
-      <span class="ae-pool-label">Реакции (Избегание)</span>
-      <span class="ae-pool-value">{{actionEconomy.defense.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.defense.max}}</span>
-    </div>
-    {{/if}}
-    {{#if actionEconomy.exposed}}
-    <span class="atk-training-warn" title="Агрессивная Стойка: в конце Хода терять было нечего — атаки по персонажу +20 до начала следующего Хода">⚔️ Раскрыт (+20 атакам по персонажу)</span>
-    {{/if}}
-    <span class="ae-status" title="{{#if actionEconomy.encounterActive}}Идёт бой — пул тратится и восполняется каждый Ход{{else}}Вне активного Encounter трата не считается{{/if}}">{{#if actionEconomy.encounterActive}}⚔️ В бою{{else}}Вне боя{{/if}}</span>
-    <button type="button" class="ae-reset-btn" title="Восполнить ОД и Реакции до максимума вручную">Сброс</button>
-  </div>
-  {{/if}}
 
   {{!-- ═══ ОЧКИ БОЛИ (Друкхари, талант «Через Боль») ═══ --}}
   {{#if system.painActive}}
@@ -187,6 +204,17 @@
   </div>
   {{/if}}
 
+  {{!-- СТОЙКА — то же постоянное состояние (system.meleeStance), что читает
+        диалог атаки как стартовое значение и умеет сменить на разовый
+        бросок; здесь — посмотреть и сменить текущий выбор без начала атаки.
+        Клик пишет то же поле, что и диалог — расхождения не будет. База
+        сюда больше не входит — выбирается прямо в диалоге атаки (Натиск
+        дополнительно выставляет её кнопкой на панели ДВИЖЕНИЕ). --}}
+  <div class="combat-section-panel"> <div class="panel-title">СТОЙКА</div> <div class="combat-collapse-body">
+    <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{s.desc}}"> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
+    </div>
+  </div></div>{{!-- /стойка --}}
+
   {{!-- ═══ СИЛОВОЕ ПОЛЕ — отдельная строка под основной сеткой ═══ --}}
   {{#if activeShield}}
   <div class="shield-combat-bar shield-bar-active"> <div class="shield-bar-left"> <span class="shield-bar-icon"> {{#if (eq activeShield.shieldNature "technological")}}{{else}}{{/if}}
@@ -211,17 +239,6 @@
     </div> {{/if}}
   </div> {{/if}}
   {{!-- /силовое поле --}}
-
-  {{!-- СТОЙКА/БАЗА — то же постоянное состояние (system.meleeStance/meleeBase),
-        что читает диалог атаки как стартовое значение и умеет сменить на
-        разовый бросок; здесь — посмотреть и сменить текущий выбор без начала
-        атаки. Клик пишет то же поле, что и диалог — расхождения не будет. --}}
-  <div class="combat-section-panel"> <div class="panel-title">СТОЙКА И БАЗА</div> <div class="combat-collapse-body">
-    <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{s.desc}}"> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
-    </div>
-    <div class="technique-grid"> {{#each combatBaseOptions as |b|}}<button type="button" class="technique-btn technique-btn-base {{#if b.active}}is-on{{/if}}" data-base="{{b.key}}" title="{{b.desc}}"> <span class="tech-name">{{b.label}}</span> </button> {{/each}}
-    </div>
-  </div></div>{{!-- /стойка и база --}}
 
   {{!-- СОСТЯЗАНИЯ — Стойка/База/обычные Приёмы теперь выбираются прямо в
         диалоге атаки; Состязания (Повалить/Финт/Давление/Напролом) в диалог
@@ -357,6 +374,24 @@
         </div> </div> {{/each}}
     {{else}}
       <div class="rwc-empty"> <em>Нет дальнего оружия (отметьте «Экипировано» в Снаряжении)</em> </div> {{/if}}
+  </div> {{!-- ПРИМЕНИТЬ ПРЕПАРАТ — переехало со вкладки ТЕЛО (tab-effects.hbs)
+        по просьбе пользователя, контекст (gearDrugs) не менялся. АКТИВНЫЕ
+        ПРЕПАРАТЫ остались на ТЕЛЕ. --}}
+  <div class="combat-section-panel"> <div class="panel-title">ПРИМЕНИТЬ ПРЕПАРАТ</div> {{#if gearDrugs.length}}
+    <table class="items-table effects-drug-table"> <thead> <tr> <th>Препарат</th> <th>Категория</th> <th>Приём</th> <th>Длит.</th> <th>Кол-во</th> <th></th> </tr> </thead> <tbody> {{#each gearDrugs as |drug|}}
+        <tr class="drug-apply-row {{#if drug.isActive}}drug-row-active{{/if}}"> <td class="drug-name-cell"> <span class="drug-name-link" data-item-id="{{drug.id}}">{{drug.name}}</span> {{#if drug.isActive}}
+              <span class="drug-active-dot" title="Активен · {{drug.roundsRemaining}} ход.">●</span> {{/if}}
+            {{#if drug.hasAddiction}}
+            <button type="button" class="addiction-test-btn drug-name-test-btn" data-item-id="{{drug.id}}" data-char="{{drug.addictionTestChar}}" data-mod="{{drug.addictionTestMod}}" title="Тест Зависимости">Зав.</button> {{/if}}
+          </td> <td>{{drug.categoryLabel}}</td> <td>{{drug.deliveryLabel}}</td> <td class="drug-duration-cell"> {{#if drug.duration}}
+            <span class="drug-duration-text" title="Бросается автоматически при применении">{{drug.duration}}</span> {{else}}—{{/if}}
+          </td> <td class="drug-qty-cell">{{drug.quantity}}</td> <td> <div class="drug-apply-actions"> <button type="button" class="drug-apply-btn" data-item-id="{{drug.id}}" {{#if (eq drug.quantity 0)}}disabled{{/if}}
+                      title="Применить на себе: {{drug.name}}"> Применить
+              </button> <button type="button" class="drug-apply-other-btn" data-item-id="{{drug.id}}" {{#if (eq drug.quantity 0)}}disabled{{/if}}
+                      title="Применить на выделенной/нацеленной цели (другой токен)"> На другом
+              </button> </div> </td> </tr> {{/each}}
+      </tbody> </table> {{else}}
+    <div class="effects-empty">Нет препаратов в снаряжении</div> {{/if}}
   </div> {{!-- ПСИХОСИЛЫ --}}
   {{#if system.isPsyker}}
   <div class="combat-section-panel"> <div class="panel-title">ПСИХОСИЛЫ</div> <div class="psy-combat-header"> <label>Класс:

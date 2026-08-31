@@ -23,7 +23,7 @@
     "sustained": false,
     "compiled": false,
     "range": "Сам",
-    "damage": "2d10+2×I.b",
+    "damage": "2d10+2*I.b",
     "damageType": "rending",
     "penetration": 0,
     "effect": "[Железо: Repository of Moravec · Цена: 5К · Процесс: Нет · Тип: Анима, Атака, Стрельба] Треб.: I 55, For.Lore(Warp)+30, Moravec Eyes. Шаблон на техножреце (не бьёт его/дружественных, но может их телепортировать): 2d10+2×I.b R, Pen 0, Blast (I.b), Shocking, Tearing. Цели в шаблоне телепортируются на <больший кубик урона> м в выбранном направлении.",

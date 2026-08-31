@@ -20,7 +20,7 @@
     "sustainable": true,
     "sustainCost": 1,
     "sustainAction": "free",
-    "damage": "2d10+2×T.b",
+    "damage": "2d10+2*T.b",
     "damageType": "energy",
     "penetration": 0,
     "weaponProps": [],
