@@ -21,6 +21,7 @@ import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels } from "../rules/dreadnought.mjs";
 import { psyRatingFromTalents } from "../rules/psyker.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { woundLevel } from "../rules/wound-tier.mjs";
 import { calcMovement } from "../rules/movement.mjs";
 import { prepareShipDerived } from "../rules/ship.mjs";
@@ -1011,6 +1012,13 @@ export class WarhammerActor extends Actor {
       let sustainedCost = 0;
       for (const i of this.items) {
         if (i.type === "psychicPower" && i.system.isSustained) sustainedCost += (i.system.sustainCost ?? 1);
+      }
+      // Руническая Вязь «Стальной Гриммуар» (wdbc-unku): снимает штраф −1 эPR
+      // за поддержание одной силы. Схема не различает, какая именно сила
+      // «вписана» в Гриммуар — прощаем 1 очко суммарной стоимости поддержания
+      // в целом (только если что-то вообще поддерживается).
+      if (sustainedCost > 0 && hasRuleFlag(this, "runicWeave.steelGrimoire")) {
+        sustainedCost = Math.max(0, sustainedCost - 1);
       }
       system.psyker.sustain       = sustainedCost;
       system.psyker.currentRating = Math.max(0, (system.psyker.rating || 0) - sustainedCost);

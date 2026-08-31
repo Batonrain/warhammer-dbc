@@ -20,6 +20,7 @@ import {
   toyOfGodsApplies
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { hasRuleFlag } from "../../rules/flags.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -75,8 +76,13 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
   await _postCard(actor, kind, lines, [fateRoll, corRoll]);
 }
 
-async function doMiraculousSave(actor) {
-  await _resolveFateSave(actor, "Чудесное Спасение", MIRACULOUS_SAVE, {
+export async function doMiraculousSave(actor) {
+  // Руническая Вязь «Прах Феникса» (wdbc-unku): тратит только 1d5 Порчи/Бесчестия
+  // вместо обычного 1d10 — тот же MIRACULOUS_SAVE, только corDie сужен.
+  const cfg = hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix")
+    ? { ...MIRACULOUS_SAVE, corDie: "1d5" }
+    : MIRACULOUS_SAVE;
+  await _resolveFateSave(actor, "Чудесное Спасение", cfg, {
     restoreToZero: true,
     resurrectNote: "Урон и эффекты смертельного попадания откатываются — персонаж как будто не получал этот удар."
   });
@@ -129,6 +135,8 @@ export function showDeathSaveDialog(actor) {
   const pool = fatePoolLabel(actor);
   const canDivine = hasDivineProtectionTalent(actor);
   const canSusAn  = hasSusAnMembrane(actor) && susAnEligible(actor);
+  const phoenix = hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix");
+  const miracCorNote = phoenix ? "1d5 Порчи (Прах Феникса)" : "1d10 Порчи";
   const toyNote = toyOfGodsApplies(actor)
     ? `<div class="atk-range-info" style="font-size:0.82em;color:#e0a83a;">⚠ Игрушка Богов: на первом смертельном ранении сессии Покровительство обычно обязывает воспользоваться Спасением/Защитой, если это не подняло бы Cor до 100 — решение за столом.</div>`
     : "";
@@ -143,7 +151,7 @@ export function showDeathSaveDialog(actor) {
     <div class="wh-wizard-form" style="padding:6px;">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("skull","#ff6b6b")}Спасение от смерти</span></div>
       ${toyNote}
-      ${opt("miraculous", "Чудесное Спасение", `1d10+10 ${pool} и 1d10 Порчи — провал, если пул опустится до 0.`)}
+      ${opt("miraculous", "Чудесное Спасение", `1d10+10 ${pool} и ${miracCorNote} — провал, если пул опустится до 0.`)}
       ${opt("divine", "Божественная Защита", canDivine
         ? `1d5+5 ${pool} и 1d5 Порчи — провал, если пул опустится до 0.`
         : "Требует Талант «Божественная Защита» — не найден на листе.", canDivine)}
