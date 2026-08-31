@@ -20,6 +20,7 @@ import { ARMOR_PROPERTIES,
 import { qualityEffects, itemSpecificQuality }       from "../constants/quality.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
+import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { WEAPON_PROPERTIES,
@@ -916,6 +917,8 @@ export class WarhammerItemSheet
     context.tab = this.tabGroups?.["item-primary"] ?? WarhammerItemSheet.TABS["item-primary"].initial;
     // Истории силовой брони — только для брони Астартес и при включённом расширении.
     context.armourHistory = armourHistoryContext(this.item);
+    // Транс «Дух героя» — пусто у истории без транса (module/apps/armour-history-trance.mjs).
+    context.tranceHtml    = tranceButtonHtml(this.item, this.item.parent);
     // Инфограждение — только у не-примитивных/не-мистических weapon/armor/gear/tool.
     context.infoguard     = infoguardContext(this.item);
     // Субмутации — только у мутаций, у которых таблица есть в тексте (стр. 440).
@@ -1768,6 +1771,13 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useSusAnHeal(actor, this.item);
+    });
+
+    // ── История брони: транс «Дух героя» ────────────────────────────────────
+    on(".pa-trance-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useTrance(actor, this.item);
     });
 
     // ── МЕХАНИКА (единый Конструктор: Характеристика/Черта/Талант/Навык/Код,

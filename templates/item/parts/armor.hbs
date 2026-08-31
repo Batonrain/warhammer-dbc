@@ -428,6 +428,7 @@
     <div class="pa-hist-name">{{armourHistory.name}}{{#if armourHistory.roll}} <span class="pa-hist-roll">к10 = {{armourHistory.roll}}</span>{{/if}}</div>
     <div class="pa-hist-desc">{{armourHistory.desc}}</div>
     <div class="pa-hist-effect">{{armourHistory.effect}}</div>
+    {{#if tranceHtml}}{{{tranceHtml}}}{{/if}}
     {{#if armourHistory.needsChoice}}
     <div class="pa-hist-choice">
       <label>{{armourHistory.choiceLabel}}</label>
