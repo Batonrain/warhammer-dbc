@@ -19,9 +19,9 @@ describe("каркас module/rules", () => {
     // targetLacksCondition (снятие штрафа «Проворный» у Оглушённых), hasSize/
     // targetHasSize (гейт Размера), targetKeepsNimbleInArmour (Чёрный Панцирь),
     // woundTier (Уровень Ранения, rules/wound-tier.mjs), avatarOfSlaughterOffTarget
-    // (метка Аватара Резни, wdbc-sk8s) и geneSeedLegion/psyRatingMin (папки
-    // пикера Талантов, wdbc-sauo).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(18);
+    // (метка Аватара Резни, wdbc-sk8s), geneSeedLegion/psyRatingMin (папки
+    // пикера Талантов, wdbc-sauo) и inRage (гейт Ярости entry.when, wdbc-wyr3).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(19);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

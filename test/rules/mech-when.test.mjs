@@ -1,9 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec } from "../../module/rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier } from "../../module/rules/mech-when.mjs";
 
 const actorWithItems = (items = [], geneSeed = {}) => ({
   system: { geneSeed, bio: { age: 0 } },
   items
+});
+
+const actorWith = ({ wounds = {}, inRage = false } = {}) => ({
+  system: { geneSeed: {}, bio: { age: 0 }, wounds: { tier: "healthy", ...wounds }, inRage },
+  items: []
 });
 
 describe("entryWhenOk: без условий — всегда true", () => {
@@ -86,6 +91,67 @@ describe("entryWhenOk: гейты независимы и складываютс
       }
     };
     expect(entryWhenOk(actor, entry)).toBe(false);
+  });
+});
+
+describe("entryWhenOk: Тир Ран (wdbc-wyr3)", () => {
+  const heavyOrDying = { when: { woundTier: ["heavy", "dying"] } };
+
+  it("Здоров — вне списка, false", () => {
+    expect(entryWhenOk(actorWith({ wounds: { tier: "healthy" } }), heavyOrDying)).toBe(false);
+  });
+
+  it("Тяжело ранен — в списке, true", () => {
+    expect(entryWhenOk(actorWith({ wounds: { tier: "heavy" } }), heavyOrDying)).toBe(true);
+  });
+
+  it("При смерти — тоже в списке (ИЛИ между вариантами), true", () => {
+    expect(entryWhenOk(actorWith({ wounds: { tier: "dying" } }), heavyOrDying)).toBe(true);
+  });
+
+  it("negateWoundTier переворачивает результат: «Здоров/Легко ранен» = НЕ Тяжело/При смерти", () => {
+    const healthyOrLight = { when: { woundTier: ["heavy", "dying"], negateWoundTier: true } };
+    expect(entryWhenOk(actorWith({ wounds: { tier: "healthy" } }), healthyOrLight)).toBe(true);
+    expect(entryWhenOk(actorWith({ wounds: { tier: "light" } }), healthyOrLight)).toBe(true);
+    expect(entryWhenOk(actorWith({ wounds: { tier: "heavy" } }), healthyOrLight)).toBe(false);
+  });
+
+  it("нет актора (превью) — условие пройдено", () => {
+    expect(entryWhenOk(null, heavyOrDying)).toBe(true);
+  });
+
+  it("whenWoundTier: пустой список без woundTier", () => {
+    expect(whenWoundTier({})).toEqual([]);
+  });
+});
+
+describe("entryWhenOk: Ярость", () => {
+  const requireRage = { when: { requireRage: true } };
+
+  it("не в Ярости — false", () => {
+    expect(entryWhenOk(actorWith({ inRage: false }), requireRage)).toBe(false);
+  });
+
+  it("в Ярости — true", () => {
+    expect(entryWhenOk(actorWith({ inRage: true }), requireRage)).toBe(true);
+  });
+
+  it("negateRage переворачивает результат", () => {
+    const negated = { when: { requireRage: true, negateRage: true } };
+    expect(entryWhenOk(actorWith({ inRage: true }), negated)).toBe(false);
+    expect(entryWhenOk(actorWith({ inRage: false }), negated)).toBe(true);
+  });
+
+  it("нет актора (превью) — условие пройдено", () => {
+    expect(entryWhenOk(null, requireRage)).toBe(true);
+  });
+});
+
+describe("entryWhenOk: Тир Ран и Ярость складываются с остальными гейтами через И", () => {
+  it("Тир Ран подходит, Ярость — нет: итог false", () => {
+    const entry = { when: { woundTier: ["healthy", "light"], requireRage: true } };
+    expect(entryWhenOk(actorWith({ wounds: { tier: "healthy" }, inRage: false }), entry)).toBe(false);
+    expect(entryWhenOk(actorWith({ wounds: { tier: "healthy" }, inRage: true }), entry)).toBe(true);
   });
 });
 

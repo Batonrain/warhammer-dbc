@@ -51,8 +51,21 @@
 // та же подпись из того же списка (item-picker.mjs), совпадают дословно.
 // Нет актора (предпросмотр вне владельца) — условие пройдено, тот же принцип,
 // что у Геносемени/субмутации выше.
+//
+// ── Тир Ран (when.woundTier/when.negateWoundTier) ───────────────────────────
+// Четвёртый независимый гейт (wdbc-wyr3): список из healthy/light/heavy/dying
+// (PREDICATES.woundTier, rules/predicates.mjs — тот же ключ, что подписан в
+// блоке РАНЫ на листе), между вариантами ИЛИ — «Тяжело раненный или хуже»
+// пишется woundTier:["heavy","dying"]. Нет актора — условие пройдено, тот же
+// принцип, что у остальных гейтов.
+//
+// ── Ярость (when.requireRage/when.negateRage) ───────────────────────────────
+// Пятый независимый гейт: простой тумблер по actor.system.inRage
+// (PREDICATES.inRage) — «Горящая Голова» (Fear 2 только в Ярости),
+// Бронзовый Мирмидон/Красный Ангел (Трейт только пока в Ярости). Не
+// заполнено (requireRage:false) — условия нет вовсе, не «вне Ярости».
 
-import { itemHasName } from "./predicates.mjs";
+import { itemHasName, PREDICATES } from "./predicates.mjs";
 
 /** Заполненные варианты (легион задан) из entry.when.conditions. */
 export function whenConditions(when) {
@@ -68,6 +81,11 @@ export function whenSubmutations(when) {
 export function whenTalentSpec(when) {
   const ts = when?.talentSpec;
   return (ts?.name && ts?.specialization) ? ts : null;
+}
+
+/** Заполненные ключи тира Ран из entry.when.woundTier. */
+export function whenWoundTier(when) {
+  return (when?.woundTier || []).filter(Boolean);
 }
 
 const normSpec = s => String(s ?? "").trim().toLowerCase();
@@ -90,7 +108,9 @@ export function entryWhenOk(actor, entry, item = null) {
   const conditions = whenConditions(entry?.when);
   const subs = whenSubmutations(entry?.when);
   const talentSpec = whenTalentSpec(entry?.when);
-  if (!conditions.length && !subs.length && !talentSpec) return true;
+  const tiers = whenWoundTier(entry?.when);
+  const requireRage = !!entry?.when?.requireRage;
+  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -126,5 +146,17 @@ export function entryWhenOk(actor, entry, item = null) {
     talentOk = entry.when.negateTalent ? !has : has;
   }
 
-  return geneOk && subOk && talentOk;
+  let tierOk = true;
+  if (tiers.length && actor) {
+    const matches = PREDICATES.woundTier(actor, {}, tiers);
+    tierOk = entry.when.negateWoundTier ? !matches : matches;
+  }
+
+  let rageOk = true;
+  if (requireRage && actor) {
+    const inRage = PREDICATES.inRage(actor);
+    rageOk = entry.when.negateRage ? !inRage : inRage;
+  }
+
+  return geneOk && subOk && talentOk && tierOk && rageOk;
 }
