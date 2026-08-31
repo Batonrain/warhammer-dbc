@@ -12,6 +12,7 @@ import { esc } from "../../helpers/utils.mjs";
 import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
 import { addFatigue } from "./conditions.mjs";
+import { worldTimeRemaining } from "../../rules/cooldown.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -35,15 +36,13 @@ function medicSkill(medic) {
 
 /**
  * Раз в 10−T.b дней (стр. 232) — секунд до следующей попытки вывести из
- * комы (0 — доступна прямо сейчас). Тот же приём, что и
- * disabledArmourPeriodicTestRemaining (combat/armor-mods.mjs): чистая
- * функция, testAt/worldTime приходят снаружи.
+ * комы (0 — доступна прямо сейчас). worldTime-троттлинг из
+ * module/rules/cooldown.mjs (wdbc-f4jt): дни ≥ 10−T.b дают interval ≤ 0,
+ * что worldTimeRemaining уже трактует как «всегда доступно».
  */
 export function comaWakeRemaining(testAt, worldTime, tb) {
   const days = 10 - (Number(tb) || 0);
-  if (days <= 0 || testAt == null) return 0;
-  const remaining = Number(testAt) + days * SECONDS_PER_DAY - Number(worldTime);
-  return remaining > 0 ? remaining : 0;
+  return worldTimeRemaining(testAt, worldTime, days * SECONDS_PER_DAY);
 }
 
 /** Диалог лечения: себя или выбранной цели (тест Медики/Стойкости). */
