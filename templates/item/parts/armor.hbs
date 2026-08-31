@@ -39,6 +39,14 @@
            {{#if system.stacks}}checked{{/if}}
            style="margin:0 6px;"/>
 
+    <label class="wr-label" style="margin-left:10px;"
+           title="Ставится сама первым непоглощённым уроном по этой броне (wdbc-k0ff); снять после починки.">
+      Пробита
+    </label>
+    <input type="checkbox" name="system.breached"
+           {{#if system.breached}}checked{{/if}}
+           style="margin:0 6px;"/>
+
     <label class="wr-label" style="margin-left:10px;">Макс. Ловкость</label>
     <input type="number" name="system.maxAgility"
            value="{{system.maxAgility}}" min="0" class="wr-input-xs"/>
@@ -309,10 +317,14 @@
     <input type="number" name="system.effects.apVsRending" value="{{system.effects.apVsRending}}" class="wr-input-xs"/>
     <label class="wr-label" title="против Взрывного">vs Взрыв.</label>
     <input type="number" name="system.effects.apVsBlast" value="{{system.effects.apVsBlast}}" class="wr-input-xs"/>
+  </div>
+  {{/if}}
+  {{!-- Макс.A — ключа Активного эффекта у него нет (LEGACY_ONLY_KEYS в
+       migrations/item-effects.mjs), актор читает его отсюда и после переноса. --}}
+  <div class="weapon-row">
     <label class="wr-label" title="Изменение Макс. Ловкости">Макс.A</label>
     <input type="number" name="system.effects.maxAgilityMod" value="{{system.effects.maxAgilityMod}}" class="wr-input-xs"/>
   </div>
-  {{/if}}
 </div>
 
 <div class="item-section">

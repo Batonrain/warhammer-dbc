@@ -18,7 +18,27 @@
 import { TEST_KINDS, diceModeFor } from "./test-kind.mjs";
 import { DIFFICULTY_STEPS, DEFAULT_DIFFICULTY } from "./difficulty.mjs";
 import { extendedTestKey } from "./extended-test.mjs";
+import { pickReroll } from "./reroll-pick.mjs";
 import { esc } from "../helpers/utils.mjs";
+
+/**
+ * Бросок d100 с перебросом от правила: бросаем сколько сказано, оставляем
+ * один (какой — решает rules/reroll-pick.mjs), отброшенные показываем в
+ * карточке. Этот конвейер был переписан вручную в восьми диалогах — здесь
+ * единственная копия, рядом с чтением того же виджета (mergeReroll).
+ * @param {{rolls:number, mode:string, label:string}|null} reroll
+ * @returns {Promise<{roll:Roll, rv:number, rolls:Roll[], rerollNote:string}>}
+ */
+export async function rollD100WithReroll(reroll) {
+  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
+  const rolls = [];
+  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
+  const rerollNote = reroll
+    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
+    : "";
+  return { roll: rolls[picked.index], rv: picked.value, rolls, rerollNote };
+}
 
 /**
  * Разметка переключателя Вида теста + Сложности + трёх подблоков

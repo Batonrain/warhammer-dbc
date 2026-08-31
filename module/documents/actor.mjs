@@ -746,6 +746,10 @@ export class WarhammerActor extends Actor {
       rightLeg: best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0),
     };
 
+    // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
+    // попадание в Глаз игнорирует AP шлема, а не всей головы (стр. 34).
+    const wornOnly = Object.fromEntries(Object.keys(armorAP).map(k => [k, best(k)]));
+
     system.absorption = {
       head:           armorAP.head     + tb,
       body:           armorAP.body     + tb,
@@ -755,6 +759,7 @@ export class WarhammerActor extends Actor {
       rightLeg:       armorAP.rightLeg + tb,
       toughnessBonus: tb,
       armorOnly:      armorAP,
+      wornOnly,
       vsType:         armorVsType,
       propFlags:      propFlagsByLoc
     };

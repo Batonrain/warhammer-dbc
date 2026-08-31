@@ -12,9 +12,8 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
-import { pickReroll } from "../../rules/reroll-pick.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
-         mergeReroll, wireTestKindLive } from "../../rules/test-kind-widget.mjs";
+         mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -321,15 +320,7 @@ export async function rollDisorderTest(actor, item) {
   if (!result) return;
   const { kind, difficulty, combined, extended, opposed, reroll } = result;
 
-  const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-  const rolls = [];
-  for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-  const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
-  const roll   = rolls[picked.index];
-  const rv     = picked.value;
-  const rerollNote = reroll
-    ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-    : "";
+  const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
   const eff0 = baseEffNoDiff + difficulty;
   const outcome = await resolveKindOutcome(actor, {
