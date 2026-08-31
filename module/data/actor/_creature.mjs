@@ -323,6 +323,11 @@ export function creatureSchema({ granted = false } = {}) {
       souvenir:   str("", "Памятная вещь")
     }, { label: "Внешность" }),
     notes:          new HTMLField({ initial: "", label: "Заметки" }),
+    // Заготовка под Limited Vision (стр. правил про Ограниченное зрение):
+    // текст, который ГМ пишет отдельно от Заметок — то, что видно владельцу
+    // ограниченного зрения на этом акторе. Пока просто текстовое поле на
+    // Записях; сама фильтрация показа по типу зрения — отдельная задача.
+    limitedVisionData: new HTMLField({ initial: "", label: "Данные (Limited Vision)" }),
     craftAvailable: bool(false, "Доступно ремесло"),
     possessed:      bool(false, "Одержим"),
     possession: new SchemaField({

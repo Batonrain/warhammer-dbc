@@ -64,20 +64,6 @@
   text-shadow: none; box-shadow: 0 0 8px -1px var(--cg-fire);
 }
 
-/* стойки — терминальные карточки */
-.warhammer-dbc .combat-cog .stance-label {
-  border: 1px solid var(--cg-line) !important; background: rgba(6,24,14,0.55) !important; border-radius: 3px; transition: all 0.13s;
-}
-.warhammer-dbc .combat-cog .stance-label:hover { border-color: var(--cg-dim) !important; box-shadow: inset 0 0 14px rgba(77,255,166,0.1); }
-.warhammer-dbc .combat-cog .stance-label.stance-active {
-  border-color: var(--cg) !important; background: rgba(77,255,166,0.08) !important;
-  box-shadow: 0 0 12px -3px var(--cg), inset 0 0 14px rgba(77,255,166,0.12);
-}
-.warhammer-dbc .combat-cog .stance-name { color: #daffe8; text-shadow: 0 0 5px rgba(77,255,166,0.45); }
-.warhammer-dbc .combat-cog .stance-active .stance-name { color: var(--cg); }
-.warhammer-dbc .combat-cog .stance-desc { color: #86c4a4; }
-.warhammer-dbc .combat-cog .stance-radio { accent-color: var(--cg); }
-
 /* приёмы — терминальные клавиши */
 .warhammer-dbc .combat-cog .technique-btn {
   background: linear-gradient(180deg, #0c2418, #071510) !important; border: 1px solid var(--cg-line) !important;
@@ -85,6 +71,12 @@
 }
 .warhammer-dbc .combat-cog .technique-btn:hover { border-color: var(--cg) !important; box-shadow: 0 0 12px -4px var(--cg); color: #eafff4 !important; transform: translateY(-1px); }
 .warhammer-dbc .combat-cog .technique-btn:active { background: rgba(77,255,166,0.14) !important; transform: none; }
+/* Стойка/База — текущий выбор (persistent, не разовый клик, как у Приёмов). */
+.warhammer-dbc .combat-cog .technique-btn.is-on {
+  border-color: var(--cg) !important; background: rgba(77,255,166,0.14) !important;
+  box-shadow: 0 0 12px -3px var(--cg), inset 0 0 10px rgba(77,255,166,0.12);
+}
+.warhammer-dbc .combat-cog .technique-btn.is-on .tech-name { color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.6); }
 .warhammer-dbc .combat-cog .tech-name { text-shadow: 0 0 4px rgba(77,255,166,0.4); }
 .warhammer-dbc .combat-cog .tech-action { color: #7fbf9c; }
 .warhammer-dbc .combat-cog .tech-mod { color: var(--cg-fire); text-shadow: 0 0 5px rgba(255,184,77,0.4); }

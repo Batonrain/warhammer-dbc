@@ -9,6 +9,8 @@
     "benefit": "Персонаж может установить дополнительную бионическую руку, получая Трейт Multiple Arms (+1). Можно брать до ½I.b+1 (окр.▼) раз.",
     "tier": 2,
     "requirement": "I 40",
+    "hasRating": true,
+    "rating": 1,
     "aptitudes": [
       "int",
       "tech"

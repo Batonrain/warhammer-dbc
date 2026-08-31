@@ -15,38 +15,22 @@ export function closeContextMenus(jq = globalThis.$) {
   jq(globalThis.document).off("click.wh-ctx");
 }
 
-/**
- * Показать меню у курсора.
- *
- * @param {object} ev      событие contextmenu (нужны clientX/clientY)
- * @param {Array}  entries пункты: { cls, label, onClick } (обычный) либо
- *                         { cls, label, checkbox: true, checked, onClick }
- *                         (переключатель — та же семантика клика, чекбокс
- *                         только рисует текущее состояние; сам onClick сам
- *                         решает, на что переключить) либо разделитель { sep: true }
- * @param {Function} jq    jQuery (подменяется в тестах)
- */
-export function openContextMenu(ev, entries, jq = globalThis.$) {
-  jq(".wh-context-menu").remove();
+/** HTML одного пункта меню — рекурсивно раскрывает вложенное {submenu}. */
+function entryHtml(e) {
+  if (e.sep) return `<div class="wh-ctx-sep"></div>`;
+  if (e.submenu) return `<div class="wh-ctx-item wh-ctx-parent ${e.cls || ""}">`
+    + `<span>${e.label}</span><span class="wh-ctx-arrow">▸</span>`
+    + `<div class="wh-context-menu wh-ctx-submenu">${e.submenu.map(entryHtml).join("")}</div></div>`;
+  if (e.checkbox) return `<label class="wh-ctx-item wh-ctx-checkbox ${e.cls}">`
+    + `<input type="checkbox" ${e.checked ? "checked" : ""}/> <span>${e.label}</span></label>`;
+  return `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`;
+}
 
-  const items = entries
-    .map(e => {
-      if (e.sep) return `<div class="wh-ctx-sep"></div>`;
-      if (e.checkbox) return `<label class="wh-ctx-item wh-ctx-checkbox ${e.cls}">`
-        + `<input type="checkbox" ${e.checked ? "checked" : ""}/> <span>${e.label}</span></label>`;
-      return `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`;
-    })
-    .join("");
-  const menu = jq(`<div class="wh-context-menu">${items}</div>`)
-    .css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
-
-  jq("body").append(menu);
-  // Задержка: клик, открывший меню, ещё всплывает — без неё меню закрылось бы
-  // тем же событием, которым открылось.
-  setTimeout(() => { jq(globalThis.document).one("click.wh-ctx", () => menu.remove()); }, 50);
-
+/** Вешает клики на листовые пункты (без {submenu} — те раскрываются наведением). */
+function wireEntries(entries, menu, jq) {
   for (const entry of entries) {
     if (entry.sep) continue;
+    if (entry.submenu) { wireEntries(entry.submenu, menu, jq); continue; }
     menu.find(`.${entry.cls}`).on("click", ev2 => {
       ev2.stopPropagation();
       menu.remove();
@@ -57,6 +41,35 @@ export function openContextMenu(ev, entries, jq = globalThis.$) {
       return entry.onClick(ev2);
     });
   }
+}
+
+/**
+ * Показать меню у курсора.
+ *
+ * @param {object} ev      событие contextmenu (нужны clientX/clientY)
+ * @param {Array}  entries пункты: { cls, label, onClick } (обычный) либо
+ *                         { cls, label, checkbox: true, checked, onClick }
+ *                         (переключатель — та же семантика клика, чекбокс
+ *                         только рисует текущее состояние; сам onClick сам
+ *                         решает, на что переключить), { cls, label, submenu: [...] }
+ *                         (каскадный подпункт — раскрывается наведением влево,
+ *                         сам клика не имеет, только вложенные листовые пункты)
+ *                         либо разделитель { sep: true }
+ * @param {Function} jq    jQuery (подменяется в тестах)
+ */
+export function openContextMenu(ev, entries, jq = globalThis.$) {
+  jq(".wh-context-menu").remove();
+
+  const items = entries.map(entryHtml).join("");
+  const menu = jq(`<div class="wh-context-menu">${items}</div>`)
+    .css({ top: ev.clientY + "px", left: ev.clientX + "px", position: "fixed" });
+
+  jq("body").append(menu);
+  // Задержка: клик, открывший меню, ещё всплывает — без неё меню закрылось бы
+  // тем же событием, которым открылось.
+  setTimeout(() => { jq(globalThis.document).one("click.wh-ctx", () => menu.remove()); }, 50);
+
+  wireEntries(entries, menu, jq);
 
   return menu;
 }

@@ -254,4 +254,24 @@ describe("_prepareContext", () => {
     expect(ctx.daemon.canPsyker).toBe(false);           // Кхорн ненавидит колдовство
     expect(ctx.showPatronPicker).toBe(false);
   });
+
+  // wdbc: Лоялист/Ренегат с per-actor оверрайдом «Покровительство»/«Смешанная»
+  // не мог выбрать Бога вовсе — панель жила строго внутри isHeretic, а цена
+  // Продвижения при этом молча считалась «Нейтрально» по всем категориям
+  // (найдено живым тестированием после восстановления доступа к песочнице).
+  it("не-Хаосит с оверрайдом «Покровительство» всё равно видит выбор Бога", async () => {
+    const ctx = await ctxOf(WarhammerCharacterSheet, { alignment: "loyalist", pricingModeOverride: "patronage" });
+
+    expect(ctx.isHeretic).toBe(false);
+    expect(ctx.showPatronPicker).toBe(true);
+    expect(ctx.chaosPatrons?.length).toBeGreaterThan(0);
+    expect(ctx.infamy).toBeUndefined();   // Инфейми остаётся строго Хаоситским
+  });
+
+  it("не-Хаосит без оверрайда Покровительства/Смешанной — панель Бога скрыта", async () => {
+    const ctx = await ctxOf(WarhammerCharacterSheet, { alignment: "loyalist" });
+
+    expect(ctx.showPatronPicker).toBeUndefined();
+    expect(ctx.chaosPatrons).toBeUndefined();
+  });
 });

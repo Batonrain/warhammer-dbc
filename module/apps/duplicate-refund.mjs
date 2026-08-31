@@ -29,7 +29,7 @@ function cultFxOf(actor) {
   } catch { return null; }
 }
 
-/** Категория цены Навыка для этого персонажа: Склонности плюс культура. */
+/** Категория цены Навыка для этого персонажа: Склонности/Покровительство плюс культура. */
 function skillCat(actor, def, entryChar = "", group = "", specialty = "") {
   const apts = charAptitudeSet(actor.system?.aptitudes);
   const itemApts = [entryChar || def.char, def.apt2].filter(Boolean);
@@ -51,7 +51,8 @@ export function skillStepsCost(actor, skillKey, steps = [], { group = false, ent
   const def = group ? GROUP_SKILLS_DEF[skillKey] : SKILLS_DEF[skillKey];
   if (!def || !steps.length) return 0;
   const { apts, itemApts, cat } = skillCat(actor, def, entryChar, group ? skillKey : "", specialty);
-  return steps.reduce((sum, step) => sum + skillCostXP(step, itemApts, apts, cat), 0);
+  const opts = { actor, skillKey, specialty };
+  return steps.reduce((sum, step) => sum + skillCostXP(step, itemApts, apts, cat, opts), 0);
 }
 
 /** Цена прокачки Навыка с нуля до ранга — для подписи и для прямых вызовов. */
@@ -65,7 +66,7 @@ export function talentCost(actor, talent) {
   const sys = talent?.system ?? {};
   const cat = cultureCat("talent", talent?.name || "", sys.specialization || "", cultFxOf(actor));
   return talentCostXP(sys.tier, sys.aptitudes || [], apts, cat,
-    { name: talent?.name, patron: actor.system?.patronGod });
+    { name: talent?.name, patron: actor.system?.patronGod, actor });
 }
 
 /**

@@ -29,9 +29,12 @@ function actorFor({ type = "character", meleeStance = "standard", ...overrides }
   };
   doc.update = async (changes = {}) => {
     for (const [path, value] of Object.entries(changes)) {
-      // Снятие флага через "flags.<scope>.-=<key>" — как в настоящем update.
-      const del = path.match(/^flags\.([^.]+)\.-=(.+)$/);
-      if (del) { delete store[`${del[1]}.${del[2]}`]; continue; }
+      const m = path.match(/^flags\.([^.]+)\.(-=)?(.+)$/);
+      if (m) {
+        const [, scope, del, key] = m;
+        if (del) delete store[`${scope}.${key}`]; else store[`${scope}.${key}`] = value;
+        continue;
+      }
       const keys = path.split(".");
       let node = doc;
       for (const key of keys.slice(0, -1)) node = (node[key] ??= {});

@@ -43,6 +43,8 @@ import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэш
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
 import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
+import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
+import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
@@ -80,6 +82,7 @@ import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
+import { registerAdvancePricingSettings } from "./module/constants/patronage.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
 import { setSystemPackLocks,
@@ -101,6 +104,7 @@ Hooks.once("init", () => {
   // ── Флажки подключаемых подсистем ─────────────────────────────────────────
   // Регистрируем первыми: ниже по коду их значения уже могут читаться.
   registerFeatureSettings();
+  registerAdvancePricingSettings();
   registerSettingsSections();   // подразделы в окне настроек
 
   // ── Загрузка партиалов ────────────────────────────────────────────────────
@@ -1457,6 +1461,30 @@ Hooks.on("updateItem", async (item, changed, options, userId) => {
   if (!mechanicsRelevantChange(changed)) return;
   if (item.parent instanceof Actor) await applyItemMechanics(item);
   else await syncMechanicsEffects(item);
+});
+
+// ── Cybernetic Excellence / Кибернетическое Превосходство (стр. книги,
+// Механикум) — повторяемый Талант (hasRating), каждая покупка ставит бионич.
+// руку и должна поднять Трейт Multiple Arms на 1 (module/apps/cybernetic-
+// excellence.mjs держит сам Трейт в согласии с числом покупок). Три хука —
+// заводят/обновляют/убирают его на создании, правке рейтинга и удалении
+// самого Таланта; userId-гвард, иначе каждый подключённый клиент писал бы
+// свою копию поверх других (см. doombc-foundry-v13-gotchas).
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
+  await syncCyberneticExcellenceArms(item.parent);
+});
+Hooks.on("updateItem", async (item, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.system?.rating === undefined) return;
+  if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
+  await syncCyberneticExcellenceArms(item.parent);
+});
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
+  await syncCyberneticExcellenceArms(item.parent);
 });
 
 // Откат перманентных правок характеристик/пулов, выданных шаблонами старого

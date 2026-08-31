@@ -21,6 +21,7 @@ import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from ".
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens } from "./combat/templates.mjs";
 import { placeLingerZone, processShooterTurnStart, clearAllLingerZones } from "./regions/linger-zone.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects } from "./combat/action-economy.mjs";
+import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -993,6 +994,24 @@ function _attachFateContextMenu(message, html) {
   // (характеристики, снаряжение).
   Hooks.on("updateActor", async actor => {
     await syncDisabledArmourOverloadTimer(actor);
+  });
+
+  // ── Пересчёт цены Продвижения при смене Покровителя/стереотипа/режима ───
+  // Склонности уже пересчитывались сами (setAptitudes зовёт recalc напрямую
+  // из своего же обработчика на «Развитии»); patronGod/patronStereotype/
+  // pricingModeOverride правятся простыми полями формы в разных местах листа
+  // (ЗАПИСИ, «Настройки листа»), поэтому единая точка — хук на updateActor,
+  // а не обработчик на каждом месте. userId-гвард — иначе каждый подключённый
+  // клиент запустил бы свой пересчёт и свою запись поверх других (см.
+  // doombc-foundry-v13-gotchas, «Multi-client hook duplication»).
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (game.user.id !== userId) return;
+    if (actor.type !== "character") return;
+    const sys = changes.system;
+    if (!sys) return;
+    if ("patronGod" in sys || "patronStereotype" in sys || "pricingModeOverride" in sys) {
+      await recalcAllAdvanceCosts(actor);
+    }
   });
   // Хук стреляет у всех, кто в игре, — авто-диалог теста-развилки (S+0/
   // Athletics(S)+10, стр. 233) должен всплыть только у того, кто саму броню

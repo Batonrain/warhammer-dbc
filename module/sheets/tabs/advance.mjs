@@ -41,7 +41,7 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
   const steps = CHAR_IMP_STEPS[improvement] ?? 0;
   const floor = CHAR_IMP_STEPS[grantedImp ?? actor.system.characteristics?.[charKey]?.grantedImp] ?? 0;
   let sum = 0;
-  for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts);
+  for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts, { actor });
   return sum;
 }
 
@@ -50,7 +50,7 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
  * entryChar — своя Характеристика записи Группы Навыков (Operate (Voidship) —
  * Интеллект), она же меняет склонности, а значит и категорию цены.
  */
-export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, specialty) {
+export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, specialty, skillKey) {
   const apts     = charAptitudeSet(actor.system.aptitudes);
   const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
   const steps    = SKILL_RANK_STEPS[rank] ?? 0;
@@ -62,7 +62,10 @@ export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, sp
   const cat = def?.alwaysAlly ? "ally"
     : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
     : cultureCat("skill", def?.label || def?.name || "", "", cultFxOf(actor));
-  for (let i = Math.max(floor, 0); i < steps; i++) sum += skillCostXP(i, itemApts, apts, cat);
+  // Ключ для Бога Навыка (patronage.mjs, skillGodOf) — у группового ключ группы
+  // (forbiddenLore и т.п.), у обычного — его собственный (dodge и т.п.).
+  const opts = { actor, skillKey: group || skillKey, specialty };
+  for (let i = Math.max(floor, 0); i < steps; i++) sum += skillCostXP(i, itemApts, apts, cat, opts);
   return sum;
 }
 
@@ -92,20 +95,24 @@ export async function removeAptitude(actor, index) {
 }
 
 /**
- * Смена склонностей → пересчёт цен характеристик, навыков, групповых навыков
- * (стр. 24) и купленных талантов-предметов. Стартовые таланты с ценой 0 не
- * трогаем: за них опыт не платили.
+ * Полный пересчёт цен ВСЕХ уже купленных продвижений (Характеристики, Навыки,
+ * Групповые Навыки, Таланты-предметы) при текущей категории — Склонности,
+ * Покровительство или Смешанная (constants/patronage.mjs, effectivePricingMode).
+ * Книга требует его при смене Склонности (стр. 24) И при смене Покровителя
+ * (стр. 23) — «стоимость всех ранее купленных Продвижений пересчитывается» —
+ * поэтому один общий проход, а не отдельная логика на каждый триггер. Может
+ * увести «потрачено» выше «всего» — это штатно (книга блокирует НОВЫЕ покупки,
+ * не откатывает старые), здесь ничего дополнительно не чинится.
+ * Стартовые/выданные продвижения с ценой 0 не трогаем — за них не платили.
  */
-export async function setAptitudes(actor, list) {
-  await actor.update({ "system.aptitudes": list });
-
+export async function recalcAllAdvanceCosts(actor) {
   const upd = {};
   for (const [k, c] of Object.entries(actor.system.characteristics || {}))
     if (c?.improvement && c.improvement !== "none")
       upd[`system.characteristics.${k}.cost`] = charImpCost(actor, k, c.improvement, c.grantedImp || "none");
   for (const [k, s] of Object.entries(actor.system.skills || {}))
     if (s?.rank && s.rank !== "untrained")
-      upd[`system.skills.${k}.cost`] = skillCumCost(actor, SKILLS_DEF[k], s.rank, null, s.grantedRank || "untrained");
+      upd[`system.skills.${k}.cost`] = skillCumCost(actor, SKILLS_DEF[k], s.rank, null, s.grantedRank || "untrained", null, "", k);
   for (const [gk, entries] of Object.entries(actor.system.groupSkills || {})) {
     if (!Array.isArray(entries) || !entries.length) continue;
     const def = GROUP_SKILLS_DEF[gk];
@@ -122,8 +129,8 @@ export async function setAptitudes(actor, list) {
   const defs = { skills: SKILLS_DEF, groupSkills: GROUP_SKILLS_DEF };
   const talUpd = actor.items
     // costManual — ГМ вписал цену руками (вкладка «Развитие»): пересчёт по
-    // Склонностям её не трогает, иначе правка терялась бы на следующую же
-    // смену Склонности (wdbc-cct).
+    // Склонностям/Покровительству её не трогает, иначе правка терялась бы на
+    // следующую же смену (wdbc-cct).
     .filter(it => it.type === "talent" && it.system?.purchased && !it.system?.costManual)
     .map(it => {
       // Mastery / Beyond Human считаем по склонностям привязанной Х-ки/Навыка
@@ -132,9 +139,15 @@ export async function setAptitudes(actor, list) {
         ? resolveTalentAptitudes(it.name, it.system.aptitudes || [], it.system.aptSource, defs)
         : (it.system.aptitudes || []);
       return { _id: it.id, "system.cost": talentCostXP(it.system.tier, a, apts,
-        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod }) };
+        talentCategory(actor, it.name), { name: it.name, patron: actor.system.patronGod, actor }) };
     });
   if (talUpd.length) await actor.updateEmbeddedDocuments("Item", talUpd);
+}
+
+/** Смена склонностей → полный пересчёт цен (recalcAllAdvanceCosts, стр. 24). */
+export async function setAptitudes(actor, list) {
+  await actor.update({ "system.aptitudes": list });
+  await recalcAllAdvanceCosts(actor);
 }
 
 // ── Записи Групп Навыков ────────────────────────────────────────────────────
@@ -292,7 +305,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     const granted = actor.system.skills?.[key]?.grantedRank || "untrained";
     actor.update({
       [`system.skills.${key}.rank`]: el.value,
-      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted)
+      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key)
     });
   });
   html.find(".skill-cost-input").change(ev => {
@@ -330,7 +343,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
     actor.update({
       [`system.skills.${key}.grantedRank`]: nextGranted,
-      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], rank, null, nextGranted)
+      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], rank, null, nextGranted, null, "", key)
     });
   });
 
@@ -354,7 +367,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       await item.update({
         "system.granted": false, "system.purchased": true, "system.costManual": false,
         "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-          { name: item.name, patron: actor.system.patronGod })
+          { name: item.name, patron: actor.system.patronGod, actor })
       });
     } else {
       await item.update({ "system.granted": true, "system.purchased": false,
@@ -390,7 +403,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     await item.update({
       "system.costManual": false,
       "system.cost": talentCostXP(item.system.tier, a, apts, talentCategory(actor, item.name),
-        { name: item.name, patron: actor.system.patronGod })
+        { name: item.name, patron: actor.system.patronGod, actor })
     });
   });
 

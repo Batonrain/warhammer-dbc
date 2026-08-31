@@ -212,6 +212,17 @@
   </div> {{/if}}
   {{!-- /силовое поле --}}
 
+  {{!-- СТОЙКА/БАЗА — то же постоянное состояние (system.meleeStance/meleeBase),
+        что читает диалог атаки как стартовое значение и умеет сменить на
+        разовый бросок; здесь — посмотреть и сменить текущий выбор без начала
+        атаки. Клик пишет то же поле, что и диалог — расхождения не будет. --}}
+  <div class="combat-section-panel"> <div class="panel-title">СТОЙКА И БАЗА</div> <div class="combat-collapse-body">
+    <div class="technique-grid"> {{#each combatStanceOptions as |s|}}<button type="button" class="technique-btn technique-btn-stance {{#if s.active}}is-on{{/if}}" data-stance="{{s.key}}" title="{{s.desc}}"> <span class="tech-name">{{s.label}}</span> </button> {{/each}}
+    </div>
+    <div class="technique-grid"> {{#each combatBaseOptions as |b|}}<button type="button" class="technique-btn technique-btn-base {{#if b.active}}is-on{{/if}}" data-base="{{b.key}}" title="{{b.desc}}"> <span class="tech-name">{{b.label}}</span> </button> {{/each}}
+    </div>
+  </div></div>{{!-- /стойка и база --}}
+
   {{!-- СОСТЯЗАНИЯ — Стойка/База/обычные Приёмы теперь выбираются прямо в
         диалоге атаки; Состязания (Повалить/Финт/Давление/Напролом) в диалог
         не переехали (отдельный встречный тест, module/combat/techniques.mjs),

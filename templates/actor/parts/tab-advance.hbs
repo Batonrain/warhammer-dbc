@@ -1,4 +1,4 @@
-<div class="tab advance-cog {{#if (eq tab "advance")}}active{{/if}}" data-tab="advance" data-group="primary"> <div class="advance-top"> <div class="stat-panel advance-aptitudes"> <div class="panel-title"> СКЛОННОСТИ
+<div class="tab advance-cog {{#if (eq tab "advance")}}active{{/if}}" data-tab="advance" data-group="primary"> <div class="advance-top"> {{#if usesAptitudes}}<div class="stat-panel advance-aptitudes"> <div class="panel-title"> СКЛОННОСТИ
         <button type="button" class="apt-char-add-btn" title="Добавить склонность (нужно 8; «Общая» есть у всех)">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <tbody>
             <tr class="apt-general-row"><td colspan="2"><span class="apt-general">Общая</span> <span class="apt-general-note">— всегда, по умолчанию</span></td></tr>
             {{#if system.aptitudes.length}}
@@ -6,7 +6,7 @@
             <tr> <td class="apt-char-name-cell"> <select data-index="{{idx}}" class="apt-char-select">{{#each ../aptitudeChoices as |c|}}<option value="{{c.key}}" {{#if (eq c.key apt)}}selected{{/if}}>{{c.label}}</option>{{/each}}</select> </td> <td class="apt-char-del-cell"> <button type="button" class="apt-char-remove" data-index="{{idx}}" title="Удалить">✕</button> </td> </tr> {{/each}}
           {{else}}
             <tr class="items-empty"><td colspan="2"><em>Добавь 8 склонностей кнопкой ＋</em></td></tr> {{/if}}
-        </tbody> </table> </div> </div> <div class="stat-panel advance-talents"> <div class="panel-title"> ТАЛАНТЫ
+        </tbody> </table> </div> </div>{{/if}} <div class="stat-panel advance-talents"> <div class="panel-title"> ТАЛАНТЫ
         <button type="button" class="advtal-add-btn" title="Добавить талант">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <colgroup><col/><col style="width:56px;"/><col style="width:46px;"/></colgroup> <thead><tr><th>Название</th><th class="col-narrow">Цена</th><th></th></tr></thead> <tbody> {{#each purchasedTalents as |p|}}
             <tr class="advtal-bought {{#if p.isGranted}}is-granted{{/if}} {{#if p.costManual}}is-cost-manual{{/if}}" title="Талант-предмет с листа">
               <td class="apt-char-name-cell"><span class="advtal-bought-name">{{p.name}}</span></td>

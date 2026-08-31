@@ -36,6 +36,11 @@ function actorWith({ t = 40, tb = 4, wb = 3, overload = null, testAt, maxAgility
       captured.updates.push(data);
       if ("system.fatigue.value" in data) actor.system.fatigue.value = data["system.fatigue.value"];
       if ("system.fatigue.max" in data) actor.system.fatigue.max = data["system.fatigue.max"];
+      for (const [path, value] of Object.entries(data)) {
+        const m = path.match(/^flags\.warhammer-dbc\.(-=)?(.+)$/);
+        if (!m) continue;
+        if (m[1]) delete flags[m[2]]; else flags[m[2]] = value;
+      }
     }
   };
   return actor;
