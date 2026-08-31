@@ -20,6 +20,11 @@ export function registerHandlebarsHelpers() {
     return weaponTypes.includes(type);
   });
 
+  // Чекбоксы множественного рейтинга свойства узла корабля (rating = "armour,voidShields").
+  Handlebars.registerHelper("codeIncludes", function(csv, code) {
+    return String(csv ?? "").split(",").map(s => s.trim()).includes(code);
+  });
+
   // Сравнение строгое
   Handlebars.registerHelper("eq", function(a, b) {
     return a === b;
