@@ -1,4 +1,23 @@
+{{!-- Обшивка «инфопланшет» (wdbc-zuf4, skill dbc-housing). Пергаментная тема
+     листа (ship-panel-title градиент и т.п.) не трогается — та же логика,
+     что у Отряда (wdbc-0owk): housing оборачивает готовые .ship-tabs/
+     .sheet-body без редизайна под Проводник. .ship-sheet — свой класс без
+     подклассов, безопасен без доп. JS-маркера. --}}
+<div class="cog-rivet tl"></div>
+<div class="cog-rivet tr"></div>
+<div class="cog-rivet bl"></div>
+<div class="cog-rivet br"></div>
 
+<div class="cog-plate-row">
+  <span class="cog-plate">Инфопланшет модели XIL</span>
+  <div class="cog-leds">
+    <i class="cog-led cog-led-green on"></i>
+    <i class="cog-led cog-led-amber {{#if derived.crippled}}on{{/if}}"></i>
+    <i class="cog-led cog-led-red {{#if derived.defilement.isDaemon}}on{{/if}}"></i>
+  </div>
+</div>
+
+<div class="cog-screen">
 <header class="ship-header">
   <img class="ship-portrait" src="{{actor.img}}" data-action="portrait" data-edit="img" title="Портрет корабля"/>
   <div class="ship-head-fields">
@@ -23,7 +42,7 @@
       </label>
     </div>
     <div class="ship-head-row">
-      <label>Класс корпуса (заметка) <input type="text" name="system.shipClass" value="{{system.shipClass}}" placeholder="напр. Иерихон"/></label>
+      <label>Очки Корабля (макс.) <input type="number" name="system.spMax" value="{{system.spMax}}" min="0" title="Бюджет Очков Корабля"/></label>
     </div>
     <div class="ship-head-row">
       <label>Капитан <input type="text" name="system.captain" value="{{system.captain}}"/></label>
@@ -51,7 +70,6 @@
   <a class="item {{#if (eq tab "overview")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="overview">Обзор</a>
   <a class="item {{#if (eq tab "components")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="components">Узлы</a>
   <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">Бой</a>
-  {{#if hasHangar}}<a class="item {{#if (eq tab "hangar")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="hangar">Ангар</a>{{/if}}
   <a class="item {{#if (eq tab "crew")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="crew">Экипаж</a>
   <a class="item {{#if (eq tab "cargo")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="cargo">Грузы</a>
   <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">Записи</a>
@@ -116,6 +134,36 @@
       <div class="ship-warn">100+ DP — ДЕМОНИЧЕСКИЙ КОРАБЛЬ. Поле Геллера не работает; судно получает Искажение «Оскверненный дух» (или случайную мутацию, если уже имело его) и собственный непокорный разум.</div>
       {{/if}}
       <details class="ship-note"><summary>Как работает осквернение</summary>Пороги 10/30/50/70/90 дают Искажение. Бросок 1d100 + модификатор порога (с реверсом знака). Лоялисты и не почитающие Богов ксеносы игнорируют первые два порога. За каждый пройденный порог судно получает Weak Spirit (5), если экипаж не хаоситы.</details>
+
+      {{!-- Ручное Искажение — рядом с броском, тот же журнал (wdbc-zuf4). --}}
+      <div class="ship-distort-manual-row">
+        <label>Искажение вручную</label>
+        <select class="ship-distort-pick">
+          {{#each shipDistortionOptions as |o|}}<option value="{{o.idx}}" data-submut='{{{o.submutJson}}}'>{{o.label}}</option>{{/each}}
+        </select>
+        <select class="ship-distort-submut-pick" style="display:none">
+          <option value="">— бросить (1d10) —</option>
+        </select>
+        <button type="button" class="btn-add-small" data-action="applyDistortion">Применить</button>
+      </div>
+
+      <div class="ship-distort-log-title">Журнал искажений</div>
+      {{#if distortions.length}}
+      <div class="ship-distort-log">
+        {{#each distortions as |d|}}
+        <div class="ship-distort-entry" data-id="{{d.id}}">
+          <div class="ship-distort-entry-head">
+            <span class="ship-distort-name">{{d.name}}{{#if d.range}} ({{d.range}}){{/if}}{{#if d.submut}} · {{d.submut}}{{/if}}</span>
+            <span class="ship-distort-meta">{{d.threshold}}{{#if d.roll}} · бросок {{d.roll}}→{{d.total}}{{/if}}{{#if d.when}} · {{d.when}}{{/if}}</span>
+            <button type="button" class="ship-distort-del" data-action="distortDel" data-id="{{d.id}}" title="Удалить запись">✕</button>
+          </div>
+          {{#if d.desc}}<div class="ship-distort-entry-desc">{{d.desc}}</div>{{/if}}
+        </div>
+        {{/each}}
+      </div>
+      {{else}}
+      <div class="ship-empty">Искажений пока нет. Появятся здесь автоматически при броске или ручном выборе выше.</div>
+      {{/if}}
     </div>
 
     </div>{{!-- /ship-overview-grid --}}
@@ -128,6 +176,9 @@
     {{#unless derived.hasHull}}
     <div class="ship-panel ship-warn">Нет узла «Корпус». Перетащите или создайте узел типа «Корпус» — он задаёт Пространство, Выработку, характеристики, Прочность, Поворот и Орудийную оснащённость.</div>
     {{/unless}}
+    {{#if missingRequired.length}}
+    <div class="ship-panel ship-warn">Не установлены обязательные узлы: {{#each missingRequired}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}.</div>
+    {{/if}}
 
     <div class="ship-panel">
       <div class="ship-panel-title">
@@ -299,60 +350,10 @@
       <details class="ship-note"><summary>Малые суда и турели</summary>Турели: защита от торпед/малых судов (BS + 5×TR). Запуск бомбардировщиков/лодок: Command + CR, цель защищается турелями. Бой истребителей: встречный Command + CR. Профили МЛА — в компендиуме «Малые суда».</details>
     </div>
 
-    <details class="ship-panel ship-ref-panel">
-      <summary class="ship-panel-title">МАНЁВРЫ (СПРАВКА)</summary>
-      <div class="ship-ref-list">
-        {{#each shipManeuvers as |m|}}
-        <div class="ship-ref-row">
-          <span class="ship-ref-name">{{m.name}}</span>
-          <span class="ship-ref-test">{{m.test}}</span>
-          <span class="ship-ref-desc">{{m.desc}}</span>
-        </div>
-        {{/each}}
-      </div>
-    </details>
-
-    <details class="ship-panel ship-ref-panel">
-      <summary class="ship-panel-title">ДЛИТЕЛЬНЫЕ ДЕЙСТВИЯ (СПРАВКА)</summary>
-      <div class="ship-ref-list">
-        {{#each shipLongActions as |a|}}
-        <div class="ship-ref-row">
-          <span class="ship-ref-name">{{a.name}}</span>
-          <span class="ship-ref-test">{{a.test}}</span>
-          <span class="ship-ref-desc">{{a.desc}}</span>
-        </div>
-        {{/each}}
-      </div>
-    </details>
-
-    <details class="ship-panel ship-ref-panel">
-      <summary class="ship-panel-title">СОСТОЯНИЯ УЗЛОВ И УНИЧТОЖЕНИЕ (СПРАВКА)</summary>
-      <div class="ship-ref-list">
-        {{#each nodeStates as |n|}}
-        <div class="ship-ref-row"><span class="ship-ref-name">{{n.name}}</span><span class="ship-ref-desc" style="grid-column:2">{{n.desc}}</span></div>
-        {{/each}}
-        <div class="ship-ref-row"><span class="ship-ref-name">Прочность 0</span><span class="ship-ref-desc" style="grid-column:2">Полуразрушен (см. баннер). Любое пробившее броню/крит-орудие попадание = Крит; эффект = пробившему урону (1–11).</span></div>
-        <div class="ship-ref-row"><span class="ship-ref-name">Упрощение для НИП</span><span class="ship-ref-desc" style="grid-column:2">(опц.) При Прочности 0: крит 1–9 — бесполезный остов; 10–12 — катастрофический взрыв.</span></div>
-        <div class="ship-ref-row"><span class="ship-ref-name">Системы наведения торпед</span><span class="ship-ref-desc" style="grid-column:2">{{#each torpedoNav as |t|}}{{t.label}} (TR {{t.tr}}, R {{t.r}}){{#unless @last}}; {{/unless}}{{/each}}</span></div>
-      </div>
-    </details>
-
-  </div>
-
-  {{!-- ───────────── АНГАР ───────────── --}}
-  {{#if hasHangar}}
-  <div class="tab ship-tab {{#if (eq tab "hangar")}}active{{/if}}" data-tab="hangar" data-group="primary">
-
-    <div class="ship-panel">
-      <div class="ship-panel-title">ЗАПУСК И ЗАЩИТА</div>
-      <div class="ship-attack-actions">
-        <button type="button" class="ship-turret-roll ship-attack-btn" data-action="turretRoll"><i class="fas fa-shield-halved"></i> Турели</button>
-        <button type="button" class="ship-bomber-roll ship-attack-btn" data-action="bomberRoll"><i class="fas fa-bomb"></i> Бомбардировщики</button>
-        <button type="button" class="ship-assault-roll ship-attack-btn" data-action="assaultRoll"><i class="fas fa-anchor"></i> Штурм. лодки</button>
-        <button type="button" class="ship-fighter-roll ship-attack-btn" data-action="fighterRoll"><i class="fas fa-fighter-jet"></i> Бой истребителей</button>
-      </div>
-    </div>
-
+    {{!-- Ангар (была отдельной вкладкой, слита в «Бой» — wdbc-zuf4). Кнопочная
+         панель «Запуск и защита» НЕ переносится — дублирует «МЛА и турели»
+         выше. --}}
+    {{#if hasHangar}}
     <div class="ship-panel">
       <div class="ship-panel-title">АНГАРНЫЕ ОТСЕКИ</div>
       <div class="ship-hangar-summary">
@@ -396,9 +397,47 @@
         {{/each}}
       </div>
     </div>
+    {{/if}}
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">МАНЁВРЫ (СПРАВКА)</summary>
+      <div class="ship-ref-list">
+        {{#each shipManeuvers as |m|}}
+        <div class="ship-ref-row">
+          <span class="ship-ref-name">{{m.name}}</span>
+          <span class="ship-ref-test">{{m.test}}</span>
+          <span class="ship-ref-desc">{{m.desc}}</span>
+        </div>
+        {{/each}}
+      </div>
+    </details>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">ДЛИТЕЛЬНЫЕ ДЕЙСТВИЯ (СПРАВКА)</summary>
+      <div class="ship-ref-list">
+        {{#each shipLongActions as |a|}}
+        <div class="ship-ref-row">
+          <span class="ship-ref-name">{{a.name}}</span>
+          <span class="ship-ref-test">{{a.test}}</span>
+          <span class="ship-ref-desc">{{a.desc}}</span>
+        </div>
+        {{/each}}
+      </div>
+    </details>
+
+    <details class="ship-panel ship-ref-panel">
+      <summary class="ship-panel-title">СОСТОЯНИЯ УЗЛОВ И УНИЧТОЖЕНИЕ (СПРАВКА)</summary>
+      <div class="ship-ref-list">
+        {{#each nodeStates as |n|}}
+        <div class="ship-ref-row"><span class="ship-ref-name">{{n.name}}</span><span class="ship-ref-desc" style="grid-column:2">{{n.desc}}</span></div>
+        {{/each}}
+        <div class="ship-ref-row"><span class="ship-ref-name">Прочность 0</span><span class="ship-ref-desc" style="grid-column:2">Полуразрушен (см. баннер). Любое пробившее броню/крит-орудие попадание = Крит; эффект = пробившему урону (1–11).</span></div>
+        <div class="ship-ref-row"><span class="ship-ref-name">Упрощение для НИП</span><span class="ship-ref-desc" style="grid-column:2">(опц.) При Прочности 0: крит 1–9 — бесполезный остов; 10–12 — катастрофический взрыв.</span></div>
+        <div class="ship-ref-row"><span class="ship-ref-name">Системы наведения торпед</span><span class="ship-ref-desc" style="grid-column:2">{{#each torpedoNav as |t|}}{{t.label}} (TR {{t.tr}}, R {{t.r}}){{#unless @last}}; {{/unless}}{{/each}}</span></div>
+      </div>
+    </details>
 
   </div>
-  {{/if}}
 
   {{!-- ───────────── ЭКИПАЖ ───────────── --}}
   <div class="tab ship-tab {{#if (eq tab "crew")}}active{{/if}}" data-tab="crew" data-group="primary">
@@ -647,33 +686,6 @@
   <div class="tab ship-tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
 
     <div class="ship-panel">
-      <div class="ship-panel-title">ОСКВЕРНЕНИЕ — ЖУРНАЛ ИСКАЖЕНИЙ</div>
-      {{#if distortions.length}}
-      <div class="ship-distort-log">
-        {{#each distortions as |d|}}
-        <div class="ship-distort-entry" data-id="{{d.id}}">
-          <div class="ship-distort-entry-head">
-            <span class="ship-distort-name">{{d.name}}{{#if d.range}} ({{d.range}}){{/if}}{{#if d.submut}} · {{d.submut}}{{/if}}</span>
-            <span class="ship-distort-meta">{{d.threshold}} · бросок {{d.roll}}→{{d.total}}{{#if d.when}} · {{d.when}}{{/if}}</span>
-            <button type="button" class="ship-distort-del" data-action="distortDel" data-id="{{d.id}}" title="Удалить запись">✕</button>
-          </div>
-          {{#if d.desc}}<div class="ship-distort-entry-desc">{{d.desc}}</div>{{/if}}
-        </div>
-        {{/each}}
-      </div>
-      {{else}}
-      <div class="ship-empty">Искажений пока нет. Они записываются сюда автоматически при броске «Бросить искажение» на вкладке «Обзор».</div>
-      {{/if}}
-    </div>
-
-    <div class="ship-panel">
-      <div class="ship-panel-title">ПАРАМЕТРЫ</div>
-      <label class="ship-spmax-field">Очки Корабля (макс.)
-        <input type="number" name="system.spMax" value="{{system.spMax}}" min="0" title="Бюджет Очков Корабля"/>
-      </label>
-    </div>
-
-    <div class="ship-panel">
       <div class="ship-panel-title">ОТНОШЕНИЕ (ЦВЕТ ТОКЕНА)</div>
       <label class="ship-relation-field ship-relation-{{system.shipRelation}}">Отношение корабля
         <select name="system.shipRelation">
@@ -690,4 +702,8 @@
     </div>
   </div>
 
+  <div class="screen-status-line"><i class="cog-status-dot"></i><span>Дух машины корабля спокоен</span></div>
 </section>
+</div>
+
+<div class="cog-status-row"></div>

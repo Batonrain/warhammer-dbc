@@ -3,7 +3,7 @@ import { SHIP_CHARS, SHIP_TYPES, getCargoType, CARGO_QUALITY, SHIP_WEAPON_ARCS,
          buildCargoTypeOptions, CARGO_TYPES, CARGO_TRADE, CARGO_DAMAGE,
          CARGO_HOLD_BONUS, cargoRarity } from "../constants/ship.mjs";
 import { SHIP_PROPERTIES } from "../constants/ship-properties.mjs";
-import { SHIP_DEFILEMENT_THRESHOLDS, findDistortion, findSubmutation } from "../constants/ship-corruption.mjs";
+import { SHIP_DEFILEMENT_THRESHOLDS, SHIP_DISTORTIONS, findDistortion, findSubmutation } from "../constants/ship-corruption.mjs";
 import { getShipCrit, SHIP_MANEUVERS, SHIP_LONG_ACTIONS,
          TORPEDO_NAV_SYSTEMS, NODE_STATES,
          torpedoProfile } from "../constants/ship-combat.mjs";
@@ -253,6 +253,50 @@ async function onRollDistortion() {
   await this.actor.update({ "system.distortions": arr });
 }
 
+/** Ручное применение конкретного Искажения (без броска) — выбор ГМа из
+ *  полного списка SHIP_DISTORTIONS, тот же журнал, что и у броска. Сама
+ *  запись выбирается без броска; если у неё есть таблица субмутации
+ *  (Пересмешник/Касание богов и т.п.), ГМ может либо выбрать конкретную
+ *  субмутацию вторым пикером, либо оставить «— бросить —» для броска 1d10. */
+async function onApplyDistortion() {
+  const idx = Number(this.element.querySelector(".ship-distort-pick")?.value);
+  const dist = SHIP_DISTORTIONS[idx];
+  if (!Number.isInteger(idx) || !dist) return ui.notifications?.warn("Выберите Искажение из списка.");
+  const range = dist.min === dist.max ? `${dist.min === 100 ? "00" : dist.min}` : `${dist.min}–${dist.max}`;
+
+  let submutText = "";
+  if (dist.submut) {
+    const manual = this.element.querySelector(".ship-distort-submut-pick")?.value;
+    let sub = null, sm;
+    if (manual) sm = findSubmutation(dist.submut, Number(manual));
+    else {
+      sub = await (new Roll("1d10")).evaluate();
+      sm = findSubmutation(dist.submut, sub.total);
+    }
+    submutText = sm ? sm.name : "";
+    const rollMode = game.settings.get("core", "rollMode");
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: `
+        <div class="wh-roll-result">
+          <div class="roll-header">Осквернение корабля — Искажение (вручную): ${esc(dist.name)}</div>
+          <div class="roll-threshold">${dist.submut.label}: <b>${sub ? sub.total : "вручную"}</b>${sm ? ` — <b>${esc(sm.name)}</b>` : ""}</div>
+          ${sm ? `<div class="roll-distort-desc">${sm.desc}</div>` : ""}
+        </div>`,
+      rolls: sub ? [sub] : [],
+      ...(sub ? { sound: CONFIG.sounds.dice } : {})
+    }, rollMode));
+  }
+
+  const arr = foundry.utils.deepClone(this.actor.system.distortions || []);
+  arr.push({
+    id: foundry.utils.randomID(), name: dist.name, range,
+    threshold: "Вручную", roll: null, total: null,
+    submut: submutText, desc: dist.desc || "", ts: Date.now()
+  });
+  await this.actor.update({ "system.distortions": arr });
+}
+
 /** Удалить запись искажения из журнала. */
 function onDistortDel(event, target) {
   const arr = (this.actor.system.distortions || []).filter(d => d.id !== target.dataset.id);
@@ -353,6 +397,7 @@ export class WarhammerShipSheet
       suppliesStep:    whenEditable(onSuppliesStep),
       suppliesFull:    whenEditable(onSuppliesFull),
       rollDistortion:  whenEditable(onRollDistortion),
+      applyDistortion: whenEditable(onApplyDistortion),
       distortDel:      whenEditable(onDistortDel),
       initRoll:        whenEditable(onInitRoll),
       fireWeapon:      whenEditable(onFireWeapon),
@@ -389,7 +434,6 @@ export class WarhammerShipSheet
         { id: "overview",   label: "Обзор" },
         { id: "components", label: "Узлы" },
         { id: "combat",     label: "Бой" },
-        { id: "hangar",     label: "Ангар" },
         { id: "crew",       label: "Экипаж" },
         { id: "cargo",      label: "Грузы" },
         { id: "notes",      label: "Записи" }
@@ -438,6 +482,29 @@ export class WarhammerShipSheet
         aspects:  (i.system.shipProps || []).map(propLabel).filter(Boolean).join(", ")
                   || i.system.aspects || ""
       }));
+
+    // Предупреждение на вкладке «Узлы» (wdbc-zuf4): те же категории, что уже
+    // KIND_LABELS считает жизненно важными помимо Корпуса (тот проверяется
+    // отдельно через derived.hasHull — свой слот, не обычный «component»).
+    const REQUIRED_KINDS = [["drive", "Плазменный двигатель"], ["warp", "Варп-двигатель"],
+      ["bridge", "Мостик"], ["lifeSustainer", "Жизнеобеспечение"]];
+    context.missingRequired = REQUIRED_KINDS
+      .filter(([kind]) => !context.components.some(c => c.kind === kind))
+      .map(([, label]) => label);
+
+    // Пикер ручного Искажения (wdbc-zuf4) — тот же список, что у броска.
+    // Каждой записи с таблицей субмутации прикладываем её варианты JSON'ом —
+    // второй пикер (заполняется в _onRender) даёт выбрать субмутацию вручную
+    // вместо обязательного броска 1d10.
+    context.shipDistortionOptions = SHIP_DISTORTIONS.map((d, idx) => ({
+      idx, label: `${d.min === d.max ? (d.min === 100 ? "00" : d.min) : `${d.min}–${d.max}`} — ${d.name}`,
+      submutJson: d.submut
+        ? JSON.stringify(d.submut.table.map(s => ({
+            value: s.min,
+            label: `${s.min === s.max ? s.min : `${s.min}–${s.max}`} — ${s.name}`
+          }))).replace(/'/g, "\\u0027")
+        : ""
+    }));
 
     // Орудия для вкладки «Бой».
     const shipAimer = context.derived.aimer || 0;
@@ -747,6 +814,23 @@ export class WarhammerShipSheet
       const it = this.actor.items.get(itemIdOf(ev.currentTarget));
       if (it) await it.update({ "system.quantity": Math.max(0, Number(ev.currentTarget.value) || 0) });
     });
+
+    // Ручной выбор Искажения: второй пикер подставляет варианты субмутации
+    // выбранной записи (или явную возможность просто бросить кубик), см.
+    // onApplyDistortion.
+    const distPick = el.querySelector(".ship-distort-pick");
+    const submutPick = el.querySelector(".ship-distort-submut-pick");
+    if (distPick && submutPick) {
+      const syncSubmutPick = () => {
+        let options = [];
+        try { options = JSON.parse(distPick.selectedOptions[0]?.dataset.submut || "[]"); } catch { options = []; }
+        submutPick.innerHTML = `<option value="">— бросить (1d10) —</option>` +
+          options.map(o => `<option value="${o.value}">${esc(o.label)}</option>`).join("");
+        submutPick.style.display = options.length ? "" : "none";
+      };
+      distPick.addEventListener("change", syncSubmutPick);
+      syncSubmutPick();
+    }
 
     // Назначение позиции орудия (Оснащённость).
     on(".ship-arc-select", "change", ev => {
