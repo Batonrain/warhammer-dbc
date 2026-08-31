@@ -16,10 +16,6 @@
 
 /* ══════════════ ШАПКА ══════════════ */
 
-/* Слаженность и Риск занимают правую колонку, как Судьба/Усталость у персонажа */
-.warhammer-dbc .sq-coh-cell,
-.warhammer-dbc .sq-risk-cell { grid-column: 3; }
-
 .warhammer-dbc .sq-coh-values { gap: 4px; }
 .warhammer-dbc .sq-coh-input { width: 52px; font-size: 1.05em; }
 .warhammer-dbc .sq-coh-btn {
@@ -63,15 +59,17 @@
 .warhammer-dbc .sq-coh-state.sq-coh-band-strained { background: none; color: var(--sq-warn); }
 .warhammer-dbc .sq-coh-state.sq-coh-band-spent    { background: none; color: var(--sq-bad); }
 
-.warhammer-dbc .sq-risk-select { width: 128px; font-size: 0.82em; padding: 1px 3px;
+/* Раньше жил в шапке (узкая колонка, width:128px) — с переездом на вкладку
+   «Команды» (wdbc-0owk) панель шире, ширину увеличил под неё. */
+.warhammer-dbc .sq-risk-select { width: 220px; font-size: 0.82em; padding: 1px 3px;
   background: var(--wh-input-bg); border: 1px solid var(--wh-border-light); color: var(--wh-text); }
-.warhammer-dbc .sq-risk-hint {
-  font-size: 0.68em; line-height: 1.25; text-align: right; max-width: 150px;
-  color: var(--wh-text-mid); opacity: 0.9;
-}
 
 .warhammer-dbc .sq-header-checks { justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 .warhammer-dbc .sq-delegate { font-size: 0.8em; }
+/* Внутри карточки поста Лидера (wdbc-0owk) — отделить от .sq-post-hint над ней. */
+.warhammer-dbc .sq-post-delegate {
+  margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--wh-border);
+}
 .warhammer-dbc .sq-header-chips { display: flex; gap: 5px; flex-wrap: wrap; }
 .warhammer-dbc .sq-chip {
   font-size: 0.72em; padding: 2px 7px; border-radius: 9px;
