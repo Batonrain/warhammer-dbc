@@ -84,6 +84,7 @@ import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
+import { registerDuplicateGrantSettings } from "./module/rules/duplicate-grants.mjs";
 import { registerAdvancePricingSettings } from "./module/constants/patronage.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
@@ -106,6 +107,7 @@ Hooks.once("init", () => {
   // ── Флажки подключаемых подсистем ─────────────────────────────────────────
   // Регистрируем первыми: ниже по коду их значения уже могут читаться.
   registerFeatureSettings();
+  registerDuplicateGrantSettings();
   registerAdvancePricingSettings();
   registerSettingsSections();   // подразделы в окне настроек
 
