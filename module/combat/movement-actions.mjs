@@ -26,12 +26,21 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
-import { showMovementRing } from "./range-rings.mjs";
+import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
+import { showReachableCells } from "./reachable-cells.mjs";
 
-/** Кольцо досягаемости SPD×N вокруг токена актора, если он есть на канвасе. */
+/**
+ * Достижимость SPD×N вокруг токена актора — честная подсветка клеток
+ * (wdbc-rgi8), а на Gridless сцене (клетки не применимы) резервный круг
+ * showMovementRing (M-ступень wdbc-fb2d). Гасит кольца дальности оружия
+ * (range-rings.mjs), если прицеливание было активно — один активный
+ * канвас-оверлей за раз, как и раньше.
+ */
 function _showReachRing(actor, meters) {
   const token = actor?.getActiveTokens?.(true)?.[0] ?? null;
-  if (token) showMovementRing(token, meters);
+  if (!token) return;
+  clearRangeRings();
+  if (!showReachableCells(token, meters)) showMovementRing(token, meters);
 }
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
