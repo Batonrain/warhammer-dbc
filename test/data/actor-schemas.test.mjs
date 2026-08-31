@@ -78,6 +78,12 @@ const OWN_DEVIATIONS = {
 
 /** Намеренные расхождения схемы с прежним template.json: путь → почему. */
 const DEVIATIONS = {
+  squad: {
+    // Получатель «Личной Команды» — структурная ссылка (wdbc-e728, Voice of
+    // God/Глас Божий: «получатель тоже получает Очко Бесчестия»), заведена
+    // гораздо позже template.json, раньше был только текст в note.
+    "shortCommand.recipientUuid": ""
+  },
   vehicle: {
     // Объявлена не была, но лежит у всех 56 машин пака.
     "availability": 0,
