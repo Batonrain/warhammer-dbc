@@ -5,6 +5,7 @@
 // этом не меняется.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
+import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
@@ -45,7 +46,21 @@ registerRuleSource("core", () => CORE_RULES);
 
 // Машинная часть расовых Черт остаётся кодом (этап 3 плана): в данные уехало
 // описание расы, а не её правила.
-const RACE_RULES = { astartes: ASTARTES_RULES };
+//
+// Друкхари зарегистрирован под всеми четырьмя историческими значениями
+// system.race (сама раса плюс три её субрасы) — см. комментарий у
+// DRUKHARI_RULES в library/aeldari.mjs.
+const RACE_RULES = {
+  astartes: ASTARTES_RULES,
+  exodite: EXODITE_RULES,
+  drukhari: DRUKHARI_RULES,
+  truebornDrukhari: DRUKHARI_RULES,
+  mandrake: DRUKHARI_RULES,
+  wrack: DRUKHARI_RULES,
+  azuriane: AZURIANE_RULES,
+  harlequin: HARLEQUIN_RULES,
+  ynnari: YNNARI_RULES
+};
 
 registerRuleSource("race", a => RACE_RULES[a?.system?.race] ?? []);
 

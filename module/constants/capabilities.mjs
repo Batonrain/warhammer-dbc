@@ -143,6 +143,67 @@ export const CAPABILITIES = {
     reader: "module/rules/sources.mjs — источник «dreadnought»; Требования Талантов Дредноутов"
   },
 
+  // ── Папки пикера Талантов (talentGroupLock, wdbc-sauo) ──────────────────
+  // Раньше — прямые сравнения race/legion/имени предмета в самом item-picker.mjs;
+  // теперь папку отпирает возможность, а раздают её раса/легион/предмет своими
+  // данными. talents.geneSeed была первым таким переводом (этап до wdbc-sauo) —
+  // добавлена сюда задним числом вместе с остальными.
+  "talents.geneSeed": {
+    label: "Доступна папка Талантов «Геносемя»",
+    source: "Раса: Астартес (module/rules/library/astartes.mjs, astartes.geneseed)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.nightLords": {
+    label: "Доступна папка Талантов «Повелители Ночи»",
+    source: "Астартес с Геносеменем легиона VIII (module/rules/library/astartes.mjs, astartes.nightLords)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.psyker": {
+    label: "Доступны папки Талантов «Псайкер»/«Псайкана»",
+    source: "Пси-Рейтинг больше 0, любая раса (module/rules/library/core.mjs, core.psyker)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.exodite": {
+    label: "Доступна папка Талантов Экзодитов",
+    source: "Раса: Экзодит (module/rules/library/aeldari.mjs, EXODITE_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.drukhari": {
+    label: "Доступны папки Талантов «Друкхари»/«Таланты Боли»",
+    source: "Раса: Друкхари и её субрасы (module/rules/library/aeldari.mjs, DRUKHARI_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.azuriane": {
+    label: "Доступна папка Талантов «Азуриани»",
+    source: "Раса: Азуриане (module/rules/library/aeldari.mjs, AZURIANE_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.harlequin": {
+    label: "Доступна папка Талантов Арлекинов",
+    source: "Раса: Арлекин (module/rules/library/aeldari.mjs, HARLEQUIN_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.ynnari": {
+    label: "Доступна папка Талантов «Иннари»",
+    source: "Раса: Иннари (module/rules/library/aeldari.mjs, YNNARI_RULES)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.navigatorGen": {
+    label: "Доступна папка Талантов «Ген навигатора»",
+    source: "Черта Navigator's Gen / Ген Навигатора (Mechanics самой Черты)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.skitarii": {
+    label: "Доступна папка Талантов «Скитарии»",
+    source: "Установленный имплант Skitarii War Plate / Боевые Латы Скитарии (Mechanics импланта)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+  "talents.mechanicum": {
+    label: "Доступна папка Талантов «Механикум»/«Техномистик»",
+    source: "Черта Mechanicum Implants / Импланты Механикум (Mechanics самой Черты)",
+    reader: "module/sheets/item-picker.mjs — talentGroupLock"
+  },
+
   // ── Саркофаг Дредноута (Книга Машин, стр. 57) ─────────────────────────────
   // Пункты книги, которые не выражаются числом. Раздаются, пока актор назначен
   // пилотом; читатели — там, где книга их применяет.

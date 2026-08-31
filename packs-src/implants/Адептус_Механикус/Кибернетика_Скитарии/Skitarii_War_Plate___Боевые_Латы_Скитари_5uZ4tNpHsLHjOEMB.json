@@ -131,7 +131,21 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "capability",
+              "capabilityKey": "talents.skitarii",
+              "label": "Skitarii War Plate / Боевые Латы Скитарии"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

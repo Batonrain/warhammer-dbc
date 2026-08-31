@@ -34,7 +34,21 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "capability",
+              "capabilityKey": "talents.mechanicum",
+              "label": "Mechanicum Implants / Импланты Механикум"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -57,6 +57,38 @@ describe("sizeMax", () => {
   });
 });
 
+describe("geneSeedLegion", () => {
+  const geneSeedLegion = PREDICATES.geneSeedLegion;
+
+  it("легион актора есть в списке", () => {
+    expect(geneSeedLegion(actor({ geneSeed: { legion: "VIII" } }), {}, ["VIII"])).toBe(true);
+  });
+
+  it("легион актора вне списка", () => {
+    expect(geneSeedLegion(actor({ geneSeed: { legion: "I" } }), {}, ["VIII"])).toBe(false);
+  });
+
+  it("Геносемени нет вовсе", () => {
+    expect(geneSeedLegion(actor(), {}, ["VIII"])).toBe(false);
+  });
+});
+
+describe("psyRatingMin", () => {
+  const psyRatingMin = PREDICATES.psyRatingMin;
+
+  it("рейтинг не ниже порога", () => {
+    expect(psyRatingMin(actor({ psyker: { rating: 3 } }), {}, 1)).toBe(true);
+  });
+
+  it("рейтинг ниже порога", () => {
+    expect(psyRatingMin(actor({ psyker: { rating: 0 } }), {}, 1)).toBe(false);
+  });
+
+  it("Пси-Рейтинга нет вовсе — как ноль", () => {
+    expect(psyRatingMin(actor(), {}, 1)).toBe(false);
+  });
+});
+
 describe("woundTier", () => {
   const woundTier = PREDICATES.woundTier;
   const withTier = tier => actor({ wounds: { tier } });
@@ -211,7 +243,8 @@ describe("hasSize и targetHasSize", () => {
 
 describe("общее требование к предикатам", () => {
   const value = {
-    race: ["human"], subrace: ["navigator"], sizeMax: 1, charMin: { s: 40 },
+    race: ["human"], subrace: ["navigator"], geneSeedLegion: ["VIII"], psyRatingMin: 1,
+    sizeMax: 1, charMin: { s: 40 },
     woundTier: ["heavy"],
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",

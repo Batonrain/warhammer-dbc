@@ -70,17 +70,25 @@ export function talentCategory(actor, name, folder = "") {
  */
 export function talentGroupLock(actor, kind, parent, folderName) {
   if (kind !== "talent") return null;
-  const sys = actor?.system || {};
-  const items = actor?.items || [];
-  const DRUKHARI_RACES = ["drukhari", "truebornDrukhari", "mandrake", "wrack"];
 
+  // Гейт из :137/:145 ниже (Геносемя/Дредноуты) — эталон, по которому переведены
+  // остальные ветки (wdbc-sauo): вместо `race`/`legion===`/точного имени
+  // предмета код спрашивает возможность у общего реестра правил
+  // (module/rules/flags.mjs), а возможность раздаёт раса/легион/предмет своими
+  // ДАННЫМИ (module/rules/sources.mjs, module/rules/library/*.mjs). Новая раса
+  // или новый предмет с той же способностью получает ту же папку без правки
+  // этого файла — а не так, как раньше, когда вторая раса с Геносеменем
+  // требовала бы новой строки здесь.
   if (parent === "Книга Пустоты" && folderName === "Ген навигатора") {
-    const has = items.some(i => i.type === "trait" && i.name === "Navigator's Gen / Ген Навигатора");
-    return has ? null : "Нужна Черта Navigator's Gen / Ген Навигатора";
+    return hasRuleFlag(actor, "talents.navigatorGen") ? null : "Нужна Черта Navigator's Gen / Ген Навигатора";
   }
   if (parent === "Элитные архетипы") {
-    // Архетип бывает и предметом на листе, и строкой в шапке: предметом — когда
-    // куплен пикером, строкой — когда вписан руками или пришёл со старого листа.
+    // НЕ переведено на hasRuleFlag, хотя и попало в опись гейтов wdbc-sauo:
+    // здесь папка ИМЕНЕМ указывает, какой конкретно из 58+ архетипов её
+    // отпирает — заводить статичный capabilityKey на каждый архетип означало
+    // бы вернуть тот же хардкод «нового архетипа» другим способом. Архетип
+    // бывает и предметом на листе, и строкой в шапке: предметом — когда куплен
+    // пикером, строкой — когда вписан руками или пришёл со старого листа.
     // Сверку ведёт канон hasEliteArchetype — билингвально, а не точным
     // равенством строк: у старых листов записана одна половина имени (wdbc-91o8).
     const has = hasEliteArchetype(actor, folderName);
@@ -93,39 +101,40 @@ export function talentGroupLock(actor, kind, parent, folderName) {
       : "Нужна включённая опция «Одержимый» (вкладка Записи) или Элитный архетип «Одержимый»";
   }
   if (parent === "Таланты Астартес" && folderName === "Повелители Ночи") {
-    return sys.geneSeed?.legion === "VIII" ? null : "Нужно Геносемя Повелителей Ночи (или одной из их варбанд)";
+    return hasRuleFlag(actor, "talents.nightLords") ? null : "Нужно Геносемя Повелителей Ночи (или одной из их варбанд)";
   }
   if (parent === "Книга Пустоты" && folderName === "Псайкер") {
-    return (Number(sys.psyker?.rating) || 0) > 0 ? null : "Нужен Пси-Рейтинг больше 0";
+    return hasRuleFlag(actor, "talents.psyker") ? null : "Нужен Пси-Рейтинг больше 0";
   }
   if (!parent && folderName.startsWith("Экзодиты — ")) {
-    return sys.race === "exodite" ? null : "Нужна раса Экзодит";
+    return hasRuleFlag(actor, "talents.exodite") ? null : "Нужна раса Экзодит";
   }
   if (!parent && folderName === "Друкхари") {
-    return DRUKHARI_RACES.includes(sys.race) ? null : "Нужна раса Друкхари";
+    return hasRuleFlag(actor, "talents.drukhari") ? null : "Нужна раса Друкхари";
   }
   if (!parent && folderName === "Азуриани") {
-    return sys.race === "azuriane" ? null : "Нужна раса Азуриане";
+    return hasRuleFlag(actor, "talents.azuriane") ? null : "Нужна раса Азуриане";
   }
   if (!parent && folderName.startsWith("Арлекины — ")) {
-    return sys.race === "harlequin" ? null : "Нужна раса Арлекин";
+    return hasRuleFlag(actor, "talents.harlequin") ? null : "Нужна раса Арлекин";
   }
   if (!parent && folderName === "Иннари") {
-    return sys.race === "ynnari" ? null : "Нужна раса Иннари";
+    return hasRuleFlag(actor, "talents.ynnari") ? null : "Нужна раса Иннари";
   }
   if (!parent && folderName === "Псайкана") {
-    return (Number(sys.psyker?.rating) || 0) > 0 ? null : "Нужен Пси-Рейтинг больше 0";
+    return hasRuleFlag(actor, "talents.psyker") ? null : "Нужен Пси-Рейтинг больше 0";
   }
   if (!parent && folderName === "Скитарии") {
-    const has = items.some(i => i.type === "implant" && i.name === "Skitarii War Plate / Боевые Латы Скитарии");
-    return has ? null : "Нужны установленные Боевые Латы Скитарии";
+    return hasRuleFlag(actor, "talents.skitarii") ? null : "Нужны установленные Боевые Латы Скитарии";
   }
+  // Таланты Боли — та же способность расы, что и папка «Друкхари» выше: обе
+  // отпирает Друкхари-семья (сама раса и три её субрасы), поэтому один и тот
+  // же флаг, не отдельная копия списка.
   if (!parent && folderName === "Таланты Боли") {
-    return DRUKHARI_RACES.includes(sys.race) ? null : "Нужна раса Друкхари";
+    return hasRuleFlag(actor, "talents.drukhari") ? null : "Нужна раса Друкхари";
   }
   if (!parent && (folderName === "Механикум" || folderName === "Техномистик")) {
-    const has = items.some(i => i.type === "trait" && i.name === "Mechanicum Implants / Импланты Механикум");
-    return has ? null : "Нужна Черта Mechanicum Implants / Импланты Механикум";
+    return hasRuleFlag(actor, "talents.mechanicum") ? null : "Нужна Черта Mechanicum Implants / Импланты Механикум";
   }
   // Возможность, а не раса: доступ открывает правило «astartes.geneseed»
   // (module/rules/library/astartes.mjs). Любая другая раса с Геносеменем

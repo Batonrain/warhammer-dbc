@@ -98,6 +98,17 @@ export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
   subrace: (actor, ctx, value) => list(value).includes(actor?.system?.subrace),
 
+  // Легион Геносемени (module/constants/legions.mjs, id — римская цифра, "VIII"
+  // у Повелителей Ночи). Раса «astartes» одна на всех легионов, поэтому
+  // легионные Таланты (папка пикера «Повелители Ночи») не выразить условием
+  // `race` — нужен отдельный ключ (item-picker.mjs::talentGroupLock, wdbc-sauo).
+  geneSeedLegion: (actor, ctx, value) => list(value).includes(actor?.system?.geneSeed?.legion),
+
+  // Пси-Рейтинг не ниже указанного — общее условие книги (папки пикера
+  // «Псайкер»/«Псайкана», wdbc-sauo), было в справочнике нереализованным
+  // с самого этапа 1 плана.
+  psyRatingMin: (actor, ctx, value) => (Number(actor?.system?.psyker?.rating) || 0) >= Number(value),
+
   sizeMax: (actor, ctx, value) => sizeOf(actor) <= Number(value),
 
   // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
