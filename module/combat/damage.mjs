@@ -17,6 +17,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
+import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -307,6 +308,7 @@ export async function applyDamageToActor(actor, damageData) {
     damageType,      // строка — "impact", "rending" и т.д.
     hitLocation,     // строка — "Голова", "Торс" и т.д.
     attackerName,    // строка
+    attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf)
     weaponName,      // строка
     felling = 0,     // Разящее (X): −X к Сверхъест. Стойкости цели
     primitive = false, // Примитивное: броня цели ×2 (макс +6)
@@ -320,7 +322,8 @@ export async function applyDamageToActor(actor, damageData) {
     cripplingRating = 0, // Калечащее (X): рана с шипами (wdbc-plsf)
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
-    haywireRating = 0    // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
+    haywireRating = 0,   // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
+    throughShot = false  // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -495,6 +498,18 @@ export async function applyDamageToActor(actor, damageData) {
       Щит не сработал — урон применён
     </div>` : "";
 
+  // Выстрел Насквозь (wdbc-wlwf): AP+T.b цели < Pen×2 — пробило, кнопка ищет
+  // геометрию «следующей цели по линии огня» (findThroughShotTarget,
+  // hooks.mjs). Сам новый бросок урона (со снижением по throughShotReductionDie)
+  // и продолжение цепочки — вручную, как и раньше. warpSoak не участвует:
+  // варп-оружие уже обходит броню целиком, тест «AP+T.b» для него не имеет смысла.
+  const throughShotBtn = (throughShot && !warpSoak && throughShotPierces(armorAP, tb, penetration)) ? `
+    <button class="wh-through-shot-btn" type="button"
+      data-attacker-uuid="${attackerUuid}" data-target-uuid="${actor.uuid}"
+      data-weapon-name="${esc(weaponName || "")}">
+      🎯 Пробило насквозь — найти следующую цель по линии огня (${throughShotReductionDie(1) ? `−${throughShotReductionDie(1)}` : "флэт −1"} к урону)
+    </button>` : "";
+
   const messageData = ChatMessage.applyRollMode({
     speaker: { alias: "Система" },
     content: `
@@ -519,6 +534,7 @@ export async function applyDamageToActor(actor, damageData) {
         </div>
         ${critLine}
         ${propEffectNotes.join("")}
+        ${throughShotBtn}
       </div>`
   }, rollMode);
 

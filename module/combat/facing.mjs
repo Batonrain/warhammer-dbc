@@ -7,8 +7,14 @@
 import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc,
          pixelDistance } from "../rules/facing.mjs";
 
-/** Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не важен). */
-function tokenCenter(token) {
+/**
+ * Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не
+ * важен). Экспортируется отдельно от tokenDistance — Дуга/Выстрел Насквозь
+ * (module/combat/arc.mjs, through-shot.mjs, wdbc-wlwf) считают геометрию,
+ * которой мало одной дистанции (нужны сами координаты для луча/поиска
+ * ближайшего в радиусе).
+ */
+export function tokenCenter(token) {
   const doc = token?.document ?? token;
   if (!doc) return null;
   const size = canvas?.grid?.size || canvas?.scene?.grid?.size || 100;

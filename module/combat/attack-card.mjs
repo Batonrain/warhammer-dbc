@@ -106,17 +106,41 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-corrosive="${wp.corrosiveRating ?? 0}"
       data-crippling="${wp.cripplingRating ?? 0}"
       data-piercing="${wp.piercing ? 1 : 0}"
-      data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"` : "";
+      data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
+      data-through-shot="${wp.throughShot ? 1 : 0}"` : "";
+  // Гравитонное (wdbc-wlwf): только на Blast/Spray-шаблоне, взаимоисключимо с
+  // Остаётся (Linger) — если у оружия почему-то есть оба, приоритет у Linger
+  // (она размещается веткой выше по data-linger, здесь graviton просто не
+  // читается на стороне hooks.mjs, когда linger > 0).
+  const gravitonAttrs = (wp.shrinkTemplate > 0) ? ` data-graviton="1"` : "";
   const templateBtn = (wp.blastRating > 0 || wp.spray) ? `
     <button class="wh-place-template-btn" type="button"
       data-shape="${wp.spray ? "cone" : "circle"}"
       data-meters="${wp.spray ? weaponRange : wp.blastRating}"
       data-weapon-name="${weaponName}"
       data-attacker-uuid="${attackerUuid}"
-      data-item-uuid="${itemUuid}"${lingerAttrs}>
+      data-item-uuid="${itemUuid}"${lingerAttrs}${gravitonAttrs}>
       🎯 ${wp.lingerRating > 0
         ? `Разместить зону «Остаётся» (${wp.lingerRating} раунд.) и отметить цели`
-        : "Разместить шаблон и отметить цели"}
+        : wp.shrinkTemplate > 0
+          ? "Разместить Гравитонную зону (тает 1м/ход, Ландшафт−30) и отметить цели"
+          : "Разместить шаблон и отметить цели"}
+    </button>` : "";
+  // Дым (wdbc-wlwf) — отдельная кнопка: не накрывает целей, не зависит от
+  // Взрывного/Распыления (может быть у оружия без них).
+  const smokeBtn = (wp.smokeRating > 0) ? `
+    <button class="wh-place-smoke-btn" type="button"
+      data-meters="${wp.smokeRating}" data-weapon-name="${weaponName}">
+      🌫️ Разместить дымовую завесу (${wp.smokeRating}м)
+    </button>` : "";
+  // Дуга (wdbc-wlwf): показывается только если первое попадание очереди
+  // достигло порога X (arcRating) — тот же «первый удар очереди» ориентир,
+  // что и у lingerAttrs (hits[0]).
+  const arcBtn = (wp.arcRating > 0 && hits.length && hits[0].total >= wp.arcRating) ? `
+    <button class="wh-arc-btn" type="button"
+      data-arc-damage="${wp.arcDamage}" data-weapon-name="${weaponName}"
+      data-attacker="${actorName}" data-attacker-uuid="${attackerUuid}">
+      ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
     </button>` : "";
   const buttons = hits.map((d, i) => {
     // «Прячась в Орде»: попадание, уведённое в союзную Орду, применяется к ней,
@@ -149,6 +173,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-crippling="${wp.cripplingRating ?? 0}"
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
+    data-through-shot="${wp.throughShot ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
       wp.blastRating > 0 ? ` <span class="roll-hit-extra">(отметьте всех в радиусе ${wp.blastRating}м — «Всем»)</span>` : ""}
@@ -160,8 +185,10 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
   return `
   <div class="roll-apply-dmg-section">
     ${templateBtn}
+    ${smokeBtn}
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
     ${buttons}
+    ${arcBtn}
   </div>`;
 }
 

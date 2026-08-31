@@ -11,6 +11,8 @@
 //  нативного поведения "Изменить стоимость движения").
 // ════════════════════════════════════════════════════════════════════════
 
+import { esc } from "../helpers/utils.mjs";
+
 // Без префикса пакета — см. комментарий у LINGER_ZONE_TYPE (module/regions/linger-zone.mjs).
 export const DIFFICULT_TERRAIN_TYPE = "difficultTerrain";
 
@@ -111,6 +113,45 @@ export class DifficultTerrainBehaviorType extends foundry.data.regionBehaviors.R
  * @param {TokenDocument} tokenDoc
  * @returns {{inTerrain: boolean, props: {key:string,label:string,mod:number}[], extraMod: number}}
  */
+/**
+ * Свойство оружия Дым (Smoke, wdbc-wlwf): «Блокирует зрение в области
+ * поражения. Создаёт дымовую завесу радиусом X метров.» В таблице Трудного
+ * Ландшафта (стр. 29) уже есть готовый чекбокс «Дым или туман» — здесь он
+ * просто включается программно на новой персистентной зоне вместо того,
+ * чтобы ГМ рисовал её вручную и щёлкал галочку. Блокировка обзора (движка
+ * видимости в проекте нет, см. память doombc-lighting-engine-graymen-camo-
+ * hook) — не автоматизирована, только заметка в чат для ГМа.
+ * @param {object} shape   blastCircleShape(meters, pxPerMeter()).
+ * @param {string} [name]
+ * @returns {Promise<RegionDocument|null>}  null — размещение отменено (ПКМ).
+ */
+export async function placeSmokeZone(shape, name = "Дым") {
+  if (!canvas.ready) throw new Error("Нет активной сцены");
+  const region = await canvas.regions.placeRegion({
+    name,
+    shapes: [shape],
+    color: game.user.color.toString(),
+    highlightMode: "coverage",
+    displayMeasurements: true,
+    behaviors: [{
+      name: "Трудный ландшафт (Дым)",
+      type: DIFFICULT_TERRAIN_TYPE,
+      system: { smoke: true }
+    }]
+  });
+  if (!region) return null;
+
+  await ChatMessage.create({
+    speaker: { alias: "Система" },
+    content: `<div class="wh-roll-result">
+      <div class="roll-outcome">🌫️ Дымовая завеса «${esc(region.name)}» размещена — блокирует зрение в этой зоне,
+      ГМ определяет затронутые линии обзора вручную (движок видимости не автоматизирован в проекте).</div>
+    </div>`
+  });
+
+  return region;
+}
+
 export function getTerrainInfoForToken(tokenDoc) {
   const regions = tokenDoc?.regions;
   if (!regions || !regions.size) return { inTerrain: false, props: [], extraMod: 0 };
