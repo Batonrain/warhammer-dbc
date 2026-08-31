@@ -329,9 +329,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // вписывает число вручную — напр. Экстремальный урон правила, разовая
   // ситуативная надбавка без отдельного галочки в реестре модификаторов).
   const dmgBonus    = Number(opts.dmgBonus) || 0;
-  // Brutal Charge/Брутальный Натиск — только при Натиске (rofMode==="charge"),
-  // см. brutalChargeDamageBonus() выше.
-  const chargeBonus = (isMelee && rofMode === "charge") ? brutalChargeDamageBonus(actor) : 0;
+  // Brutal Charge/Брутальный Натиск — только при Базе «Натиск». rofMode у
+  // рукопашной всегда "melee" (база живёт в opts.baseKey из диалога) —
+  // прежний гейт rofMode==="charge" не срабатывал никогда.
+  const chargeBonus = (isMelee && opts.baseKey === "charge") ? brutalChargeDamageBonus(actor) : 0;
   const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg;
   const dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,

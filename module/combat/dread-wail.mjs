@@ -73,9 +73,13 @@ export function dreadWailWeaponBonus(actor, item) {
 }
 
 async function spendAndCount(actor) {
-  await incrementThrottleCount(actor, FLAG, "battle", dreadWailMax(actor));
+  // Очко Бесчестия — условие активации, а не побочный эффект: без него
+  // способность не срабатывает и счётчик за бой не растёт.
   const fate = actor.system.fate?.value ?? 0;
-  if (fate > 0) await actor.update({ "system.fate.value": fate - 1 });
+  if (fate <= 0) { ui.notifications?.warn("Нет Очка Бесчестия — Грозный Вопль не активирован."); return false; }
+  await actor.update({ "system.fate.value": fate - 1 });
+  await incrementThrottleCount(actor, FLAG, "battle", dreadWailMax(actor));
+  return true;
 }
 
 /** Ветка «усиление оружия»: +Per.b Dmg/Pen звуковому оружию до начала следующего Хода. */

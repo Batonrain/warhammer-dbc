@@ -57,9 +57,11 @@ export function resplendentRaimentAvailable(actor) {
  */
 export async function applyResplendentRaiment(caster, casterToken, excludedIds = new Set()) {
   const unit = resplendentUnit();
-  await markThrottleUsed(caster, FLAG, unit);
+  // Очко Бесчестия — условие активации: без него не срабатывает и лимит цел.
   const fate = caster.system.fate?.value ?? 0;
-  if (fate > 0) await caster.update({ "system.fate.value": fate - 1 });
+  if (fate <= 0) return ui.notifications?.warn("Нет Очка Бесчестия — Блистательное Одеяние не активировано.");
+  await caster.update({ "system.fate.value": fate - 1 });
+  await markThrottleUsed(caster, FLAG, unit);
 
   const scene = casterToken?.parent;
   const candidates = (scene?.tokens?.contents ?? [])

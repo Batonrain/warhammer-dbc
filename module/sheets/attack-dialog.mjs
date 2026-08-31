@@ -1056,7 +1056,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </div>
       ${(isMelee && hasDeathDance(actor)) ? `
       <div class="av-row" id="atk-death-dance-row">
-        <label>Death Dance</label>
+        <label>Смертельный Танец</label>
         <button type="button" id="atk-death-dance-btn" class="av-pill av-pill-disabled" disabled><span>+ Brutal Charge</span></button>
         <span class="av-opt-note" id="atk-death-dance-status"></span>
       </div>` : ""}
@@ -1239,6 +1239,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
               isAllOut: f.allOut,
+              // База рукопашной («Натиск» и т.п.): rofMode у рукопашной всегда
+              // "melee", по нему Brutal Charge не отличить (wdbc-ревью стопки 3).
+              baseKey: sel.baseKey ?? null,
               // Переброс от правила (Локус Буйства) или общий Кубик —
               // бросок катает несколько кубов и оставляет один — см.
               // combat/attack.mjs. crit — расширение диапазона Критического

@@ -112,6 +112,10 @@ export const MOUNT_TURNS = {
 /** Занос — полудействие после Натиска или Бега. */
 export const MOUNT_SKID = { mod: -10, angle: 90, penalty: -10, afterSpeeds: ["charge", "run"] };
 
+// Лезвия (стр. 478): применений за посадку по рангу Навыка Выживания —
+// одна таблица на диалог (combat/mount.mjs) и панель (mount-panel.mjs).
+export const BLADES_TIER_USES = { trained: 1, veteran: 2, expert: 3 };
+
 /** Штраф маневрирования за пассажира за спиной (Коляска его не даёт). */
 export const PASSENGER_MANEUVER_MOD = -10;
 

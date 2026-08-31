@@ -43,9 +43,12 @@ export function avatarOfSlaughterAvailable(actor) {
  */
 export async function applyAvatarOfSlaughter(berserker, target) {
   if (!target) return;
-  await markCapabilityUsed(berserker, FLAG, "battle");
+  // Очко Бесчестия — условие активации (стр. книги), а не побочный эффект:
+  // без него способность не срабатывает и лимит за бой не списывается.
   const fate = berserker.system.fate?.value ?? 0;
-  if (fate > 0) await berserker.update({ "system.fate.value": fate - 1 });
+  if (fate <= 0) return ui.notifications?.warn("Нет Очка Бесчестия — Аватар Резни не активирован.");
+  await berserker.update({ "system.fate.value": fate - 1 });
+  await markCapabilityUsed(berserker, FLAG, "battle");
 
   const threshold = (Number(target.system?.characteristics?.wp?.total) || 0) - 10;
   const roll = await new Roll("1d100").evaluate();
@@ -66,4 +69,19 @@ export async function applyAvatarOfSlaughter(berserker, target) {
         : `<span class="roll-failure">Провал — до конца боя −20 на атаки/манёвры не по Берсерку</span>`}</div>
     </div>`
   }, game.settings.get("core", "rollMode")));
+}
+
+/**
+ * Снимает метки Аватара Резни со всех комбатантов закончившегося боя —
+ * «до конца боя» иначе превращалось в «навсегда»: флаг нигде не показывается
+ * и предикат читал его во всех последующих боях (зов — hooks.mjs, deleteCombat,
+ * тем же тактом, что resolveTrancesForCombat).
+ */
+export async function clearAvatarOfSlaughterMarks(combat) {
+  for (const combatant of combat?.combatants ?? []) {
+    const actor = combatant.actor;
+    if (actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark")) {
+      await actor.unsetFlag("warhammer-dbc", "avatarOfSlaughterMark");
+    }
+  }
 }
