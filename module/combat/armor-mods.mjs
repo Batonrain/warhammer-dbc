@@ -52,6 +52,25 @@ export function getInstalledArmorMods(actor, armor) {
   );
 }
 
+/**
+ * Подавители Отдачи (wdbc-cnju, стр. 243) — перчатки силовой/аспектной брони,
+ * снимающие гейт Отдачи (Recoil) у винтовки/длинной винтовки (weaponClass
+ * "basic" — своей категории «длинная винтовка» в схеме нет, обе лежат тут же).
+ * Ключа/флага у armorMod нет (в отличие от weaponProps), поэтому — по имени,
+ * как isHelmetMod рядом; "не активируемый" мод (activatable:false) уже
+ * пропускает гейт активности в getInstalledArmorMods.
+ */
+const RECOIL_SUPPRESSOR_RE = /подавител[а-я]*\s*отдач|recoil\s*suppressor/i;
+export function hasRecoilSuppressor(actor) {
+  if (!actor?.items) return false;
+  for (const armor of actor.items) {
+    if (armor.type !== "armor" || !armor.system?.equipped) continue;
+    if (getInstalledArmorMods(actor, armor).some(m => RECOIL_SUPPRESSOR_RE.test(m.name || "")))
+      return true;
+  }
+  return false;
+}
+
 /** Свёрнутые эффекты всех модификаций данной брони. */
 export function getArmorModEffects(actor, armor) {
   const fx = {

@@ -361,6 +361,22 @@ export const CAPABILITIES = {
             "Настоящую экзотику (weaponType:\"exotic\") не покрывает — она вообще не проверяется системой.",
     reader: "module/rules/weapon-training.mjs — weaponTrainingPenalty"
   },
+  // ── Хват дальнобойного (wdbc-3hxg и потомки) ────────────────────────────
+  "weapon.doubleGripPistol": {
+    label: "Пистолет двумя руками: Прицеливание +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10",
+    source: "Double Grip / Двойной Хват (стр. 62), BS 35",
+    reader: "module/sheets/attack-dialog.mjs — doubleGripActive"
+  },
+  "weapon.commandoCarbine": {
+    label: "Карабины (свойство Carbine) в одной руке считаются пистолетами",
+    source: "Commando / Командо (Стрелок), BS 45, S 40",
+    reader: "module/sheets/attack-dialog.mjs — commandoGrip"
+  },
+  "weapon.fanningRevolver": {
+    label: "Револьвер в одной руке со свободной второй: Длинная очередь без штрафа −10",
+    source: "Fanning / Быстрый Курок (Оружейник), BS 40, A 40",
+    reader: "module/sheets/attack-dialog.mjs — fanningActive"
+  },
   "mutation.burningHead": {
     label: "Удар головой меняет профиль: 1d10 E, Pen 0, Cheap Shot, Tainted",
     source: "Burning Head / Горящая Голова (Общие мутации, d100 43)",

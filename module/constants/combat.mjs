@@ -273,6 +273,29 @@ export const GRIPS = {
   "Хв":  { label: "Хвост (Хв)",       ws: 0,   addProp: "cheapShot", balSet: -2, rngSet: 0, note: "Rng 0, Баланс −2, свойство Cheap Shot." }
 };
 
+// Хват дальнобойного оружия (wdbc-3hxg, стр. 166 — свойство Отдача/Recoil).
+// Своя, упрощённая версия рядом с рукопашным GRIPS: та несёт WS/урон/Баланс —
+// семантику холодного оружия, дальнобойному эти поля не подходят вовсе.
+// Ключи те же "1р"/"2р" — sys.grips общий StringField на обоих классах
+// оружия (module/data/item/weapon.mjs), parseGrips ниже их уже разбирает.
+// Доступность — не числовой эффект, а гейт (Отдача запрещает "1р", если
+// S.b персонажа меньше рейтинга свойства) — считает сам attack-dialog.mjs,
+// не этот реестр.
+export const RANGED_GRIPS = {
+  "1р": { label: "Одной рукой (1р)", note: "Стрельба одной рукой." },
+  "2р": { label: "Двумя руками (2р)", note: "Стрельба двумя руками — стандартный хват винтовок и тяжёлого оружия." }
+};
+
+// Эффекты выбранного дальнобойного хвата — та же форма возврата, что у
+// gripEffects (ws/dmgFlat/addProps/sbHalf/balSet), но числовые поля всегда
+// нулевые: дальнобойному покамест нечего в них класть (Pistol Grip/Secondary
+// Grip/Double Grip — отдельные тикеты поверх этого же поля, не в этом реестре).
+export function rangedGripEffects(key) {
+  const g = RANGED_GRIPS[key];
+  if (!g) return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, balSet: null, label: "", note: "" };
+  return { ws: 0, dmgFlat: 0, addProps: [], sbHalf: false, balSet: null, label: g.label, note: g.note };
+}
+
 // Парсит строку хватов из профиля («1р (2р, Об)» или «1р [Об]») в список ключей;
 // первый — основной. Возвращает [] если распознать нечего.
 export function parseGrips(str) {

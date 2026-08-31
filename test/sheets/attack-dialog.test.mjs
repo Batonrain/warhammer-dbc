@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeForm, checkbox } from "../support/foundry-stub.mjs";
-import { actorFor, weaponFor, ammoFor, setTargets } from "../support/combat-fixtures.mjs";
+import { actorFor, weaponFor, ammoFor, setTargets, char } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "../../module/sheets/attack-dialog.mjs";
 
@@ -849,6 +849,353 @@ describe("Арсенал: доступность Стойки/Хвата/Баз�
     showAttackDialog(attacker({ items: [sword] }), sword);
     expect(captured.dialog.content).toContain("Цель: Защитная (-20)");
     expect(dialogThreshold()).toBe(35);   // WS 45 + База «Стандартная» 10 − 20 (цель в Защитной Стойке)
+  });
+});
+
+describe("Хват дальнобойного оружия и Отдача (wdbc-3hxg, стр. 166)", () => {
+  it("Отдача(X), S.b < X — '1р' виден, но заблокирован (текущий выбор, не убирается), '2р' свободен", () => {
+    const gun = weaponFor({
+      weaponClass: "pistol", grips: "1р (2р)",
+      weaponProps: [{ key: "recoil", rating: 6 }]
+    });
+    showAttackDialog(attacker({ items: [gun], characteristics: { bs: char(45), s: char(40) } }), gun);
+    const html = captured.dialog.content;
+
+    // S.b 4 < рейтинг 6 — primGrip "1р" остаётся стартовым выбором (тот же
+    // приём, что у рукопашного: пилюля не пропадает, раз она текущая), но
+    // помечена disabled и не уходит в бросок без явной смены (см. ниже).
+    expect(html).toMatch(/name="atk-grip" value="1р"[^>]*disabled/);
+    expect(html).toContain("Отдача: нужен S.b ≥ 6 для стрельбы одной рукой (сейчас 4)");
+    expect(html).toMatch(/name="atk-grip" value="2р"/);
+    expect(html).not.toMatch(/name="atk-grip" value="2р"[^>]*disabled/);
+    // Хват — не WS/урон-модификатор у дальнобойного: в порог BS не подмешан.
+    expect(dialogThreshold()).toBe(45);
+  });
+
+  it("Отдача(X), S.b ≥ X — '1р' свободен", () => {
+    const gun = weaponFor({
+      weaponClass: "pistol", grips: "1р (2р)",
+      weaponProps: [{ key: "recoil", rating: 6 }]
+    });
+    showAttackDialog(attacker({ items: [gun], characteristics: { bs: char(45), s: char(60) } }), gun);
+    const html = captured.dialog.content;
+
+    expect(html).toMatch(/name="atk-grip" value="1р"/);
+    expect(html).not.toMatch(/name="atk-grip" value="1р"[^>]*disabled/);
+    expect(html).not.toContain("Отдача: нужен");
+  });
+
+  it("бросок с заблокированным '1р' уходит с Хватом '2р', не '1р' (resolveSelectionSafe)", async () => {
+    const gun = weaponFor({
+      weaponClass: "pistol", grips: "1р (2р)",
+      weaponProps: [{ key: "recoil", rating: 6 }]
+    });
+    const savedGrips = [];
+    gun.setFlag = async (scope, key, value) => { savedGrips.push(value); };
+    const p = showAttackDialog(attacker({ items: [gun], characteristics: { bs: char(45), s: char(40) } }), gun);
+
+    await pressRoll(p, { "input[name='atk-grip']:checked": "1р" });
+    // Заблокированная пилюля "1р" всё равно приходит :checked (readAttackForm
+    // читает форму независимо от disabled) — resolveSelectionSafe должен
+    // подменить её на "2р" ДО броска, как и у рукопашного (стр. 847 выше).
+    expect(savedGrips).toEqual(["2р"]);
+  });
+
+  it("винтовка/тяжёлое без Отдачи — оба Хвата доступны без гейта", () => {
+    const rifle = weaponFor({ weaponClass: "basic", grips: "2р (1р)" });
+    showAttackDialog(attacker({ items: [rifle] }), rifle);
+    const html = captured.dialog.content;
+
+    expect(html).toMatch(/name="atk-grip" value="2р"/);
+    expect(html).toMatch(/name="atk-grip" value="1р"/);
+    expect(html).not.toMatch(/disabled/);
+  });
+
+  it("оружие без второго Хвата (grips пуст) — пилюль Хвата нет вовсе", () => {
+    const rifle = weaponFor({ weaponClass: "basic" });   // grips не задан
+    showAttackDialog(attacker({ items: [rifle] }), rifle);
+    expect(captured.dialog.content).not.toMatch(/name="atk-grip"/);
+  });
+});
+
+describe("Занятость рук (wdbc-3xqh) — бейдж в диалоге атаки", () => {
+  // weaponFor() не проставляет .type (не нужен было до сих пор) —
+  // module/rules/hands.mjs требует item.type==="weapon", как настоящий
+  // документ Foundry; здесь задаём его явно, не трогая общую фикстуру.
+  const gunItem = system => {
+    const w = weaponFor(system);
+    return { ...w, type: "weapon", system: { equipped: true, ...w.system } };
+  };
+
+  it("тяжёлое оружие в одиночку — рук хватает, бейдж не тревожный", () => {
+    const heavy = gunItem({ weaponClass: "heavy" });
+    showAttackDialog(attacker({ items: [heavy] }), heavy);
+    const html = captured.dialog.content;
+
+    expect(html).toContain("Руки: 2");
+    expect(html).not.toContain("не хватает");
+  });
+
+  it("тяжёлое оружие + уже надетый щит — рук не хватает, бейдж тревожный", () => {
+    const heavy  = gunItem({ weaponClass: "heavy" });
+    const shield = { id: "shield-1", type: "weapon",
+      system: { weaponClass: "melee", equipped: true, shieldAP: 5 }, getFlag: () => undefined };
+    showAttackDialog(attacker({ items: [heavy, shield] }), heavy);
+    const html = captured.dialog.content;
+
+    expect(html).toContain("Руки: 2 (не хватает, свободно 1)");
+  });
+
+  it("пистолет с Independent — бейдж рук не показывается (0 рук)", () => {
+    const gun = gunItem({ weaponClass: "pistol", weaponProps: [{ key: "independent" }] });
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    expect(captured.dialog.content).not.toMatch(/atk-hands-badge/);
+  });
+
+  it("рукопашное — бейдж рук не показывается вовсе (только дальнобойное)", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    expect(captured.dialog.content).not.toMatch(/atk-hands-badge/);
+  });
+
+  // Рука на поводьях/руле (стр. 477) — не входит в статичный бюджет
+  // hands.mjs (он не знает про скорость Хода), учитывается только тут.
+  describe("верхом — рука на поводьях/руле (module/rules/mount.mjs handsNeeded)", () => {
+    beforeEach(() => {
+      globalThis.game.actors = [{ uuid: "Actor.bike", type: "vehicle", system: {} }];
+    });
+
+    it("пистолет (1 рука) верхом на скакуне без Черт — как раз впритык (1 в руке + 1 на поводьях = 2)", () => {
+      const gun = gunItem({ weaponClass: "pistol" });
+      showAttackDialog(attacker({ items: [gun], mount: { uuid: "Actor.bike", speed: "still" } }), gun);
+      const html = captured.dialog.content;
+      expect(html).toContain("Руки: 1");
+      expect(html).not.toContain("не хватает");
+      expect(html).toContain("из них на поводьях/руле: 1");
+    });
+
+    it("тяжёлое оружие (2 руки) верхом — рук не хватает: одна занята поводьями", () => {
+      const heavy = gunItem({ weaponClass: "heavy" });
+      showAttackDialog(attacker({ items: [heavy], mount: { uuid: "Actor.bike", speed: "still" } }), heavy);
+      expect(captured.dialog.content).toContain("Руки: 2 (не хватает, свободно 1)");
+    });
+
+    it("не верхом (mount.uuid не задан) — та же связка (пистолет) не тревожная", () => {
+      const gun = gunItem({ weaponClass: "pistol" });
+      showAttackDialog(attacker({ items: [gun] }), gun);
+      const html = captured.dialog.content;
+      expect(html).toContain("Руки: 1");
+      expect(html).not.toContain("не хватает");
+    });
+  });
+});
+
+describe("Хват дальнобойного: 6 отложенных потребителей (wdbc-8vp1/aj6t/mu6v/eduq/cnju/fy33)", () => {
+  const modOn = (weaponId, system, over = {}) => ({
+    id: over.id ?? "mod-1", type: "weaponMod", name: over.name ?? "Мод",
+    system: { installedOn: weaponId, ...system }
+  });
+  const talentWithCapability = (name, capabilityKey) => ({
+    type: "talent", name, system: {}, getFlag: () => undefined,
+    flags: { "warhammer-dbc": { mechanics: [
+      { id: "g1", operator: "AND", entries: [{ id: "e1", kind: "capability", capabilityKey, label: "" }] }
+    ] } }
+  });
+
+  describe("Pistol Grip (wdbc-8vp1)", () => {
+    it("даёт винтовке Хват «1р», которого нет в её sys.grips", () => {
+      const rifle = weaponFor({ weaponClass: "basic", grips: "2р", range: 100 });
+      const mod = modOn(rifle.id, { grantsGrip: "1р", gripRangeMult: 0.5 });
+      showAttackDialog(attacker({ items: [rifle, mod] }), rifle);
+      expect(captured.dialog.content).toMatch(/name="atk-grip" value="1р"/);
+    });
+
+    it("Rng ×0.5 применяется только пока выбран именно этот Хват", () => {
+      const rifle = weaponFor({ weaponClass: "basic", grips: "1р (2р)", range: 100 });
+      const mod = modOn(rifle.id, { grantsGrip: "1р", gripRangeMult: 0.5 });
+      showAttackDialog(attacker({ items: [rifle, mod] }), rifle);
+      // Хват "1р" — стартовый (первый в grips), значит уже применён (полосы
+      // дальности "Дистанции" считаются от gripRange, не голого sys.range).
+      expect(captured.dialog.content).toContain("Rng = 50м");
+
+      resetCaptured();
+      const rifle2р = weaponFor({ weaponClass: "basic", grips: "1р (2р)", range: 100 },
+        { flags: { "warhammer-dbc.hudGrip": "2р" } });
+      const mod2р = modOn(rifle2р.id, { grantsGrip: "1р", gripRangeMult: 0.5 });
+      showAttackDialog(attacker({ items: [rifle2р, mod2р] }), rifle2р);
+      expect(captured.dialog.content).toContain("Rng = 100м");
+    });
+  });
+
+  describe("Secondary Grip (wdbc-aj6t)", () => {
+    it("бонус от бедра — без Прицеливания и НЕ хватом «1р»", () => {
+      const rifle = weaponFor({ weaponClass: "basic", rof_semi: 2, rof_full: 4, grips: "2р" });
+      const mod = modOn(rifle.id, { hipFireSemiMod: 5, hipFireFullMod: 10, hipFireSuppressionMod: 15 });
+      showAttackDialog(attacker({ items: [rifle, mod], aiming: "none" }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toContain("Короткая очередь (+5, от бедра +5, 2 выстр.)");
+      expect(html).toContain("Длинная очередь (±0");
+      expect(html).toContain("от бедра +10");
+      expect(html).toContain("Стрельба на подавление (−5, от бедра +15)");
+    });
+
+    it("не работает хватом «1р» (Pistol Grip на той же винтовке)", () => {
+      const rifle = weaponFor({ weaponClass: "basic", rof_semi: 2, grips: "1р (2р)" });
+      const secGrip = modOn(rifle.id, { hipFireSemiMod: 5 }, { id: "m1" });
+      showAttackDialog(attacker({ items: [rifle, secGrip], aiming: "none" }), rifle);
+      // gripKey стартует с "1р" (первый в grips) — бонус от бедра не должен примешаться.
+      expect(captured.dialog.content).toContain("Короткая очередь (±0, 2 выстр.)");
+    });
+
+    it("не работает во время Прицеливания", () => {
+      const rifle = weaponFor({ weaponClass: "basic", rof_semi: 2, grips: "2р" });
+      const mod = modOn(rifle.id, { hipFireSemiMod: 5 });
+      showAttackDialog(attacker({ items: [rifle, mod], aiming: "half" }), rifle);
+      expect(captured.dialog.content).toContain("Короткая очередь (±0, 2 выстр.)");
+    });
+  });
+
+  describe("Double Grip (wdbc-mu6v)", () => {
+    it("без Таланта — пистолет только «1р», нет пилюли «2р»", () => {
+      const pistol = weaponFor({ weaponClass: "pistol" });
+      showAttackDialog(attacker({ items: [pistol] }), pistol);
+      expect(captured.dialog.content).not.toMatch(/name="atk-grip"/);
+    });
+
+    it("с Талантом — пистолет получает «2р», Прицеливание +15/+30, очереди +5/+10", () => {
+      const pistol = weaponFor({ weaponClass: "pistol", rof_semi: 2, rof_full: 4 });
+      const talent = talentWithCapability("Double Grip / Двойной Хват", "weapon.doubleGripPistol");
+      pistol.getFlag = (ns, key) => (key === "hudGrip" ? "2р" : undefined);
+      showAttackDialog(attacker({ items: [pistol, talent] }), pistol);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/name="atk-grip" value="2р"/);
+      expect(html).toContain("Полу +15");
+      expect(html).toContain("Полное +30");
+      expect(html).toContain("Короткая очередь (+5, Double Grip +5, 2 выстр.)");
+      expect(html).toContain("Double Grip +10");
+    });
+  });
+
+  describe("Commando (wdbc-eduq)", () => {
+    it("без Таланта — карабин (Carbine) не получает «1р» сверх своего grips", () => {
+      const carbine = weaponFor({ weaponClass: "basic", grips: "2р", weaponProps: [{ key: "carbine" }] });
+      showAttackDialog(attacker({ items: [carbine] }), carbine);
+      expect(captured.dialog.content).not.toMatch(/name="atk-grip" value="1р"/);
+    });
+
+    it("с Талантом — карабин получает «1р» без гейта Отдачи", () => {
+      const carbine = weaponFor({ weaponClass: "basic", grips: "2р", weaponProps: [{ key: "carbine" }] });
+      const talent = talentWithCapability("Commando / Командо", "weapon.commandoCarbine");
+      showAttackDialog(attacker({ items: [carbine, talent] }), carbine);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/name="atk-grip" value="1р"/);
+      expect(html).not.toMatch(/name="atk-grip" value="1р"[^>]*disabled/);
+    });
+  });
+
+  describe("Recoil Suppressors (wdbc-cnju)", () => {
+    const armorWith = mod => ({ id: "armor-1", type: "armor",
+      system: { equipped: true, armorType: "flak" }, __mod: mod });
+
+    it("без брони — Отдача блокирует «1р» как обычно", () => {
+      const rifle = weaponFor({ weaponClass: "basic", grips: "1р (2р)",
+        weaponProps: [{ key: "recoil", rating: 6 }] });
+      showAttackDialog(attacker({ items: [rifle], characteristics: { bs: char(45), s: char(40) } }), rifle);
+      expect(captured.dialog.content).toMatch(/name="atk-grip" value="1р"[^>]*disabled/);
+    });
+
+    it("с надетой бронёй + активным модом «Подавители Отдачи» — гейт снят целиком", () => {
+      const rifle = weaponFor({ weaponClass: "basic", grips: "1р (2р)",
+        weaponProps: [{ key: "recoil", rating: 6 }] });
+      const armor = { id: "armor-1", type: "armor", name: "Силовая броня",
+        system: { equipped: true, armorType: "power" } };
+      const suppressor = { id: "sup-1", type: "armorMod", name: "Подавители Отдачи",
+        system: { installedOn: "armor-1", category: "powerSystem", activatable: false, active: false } };
+      showAttackDialog(attacker({ items: [rifle, armor, suppressor],
+        characteristics: { bs: char(45), s: char(40) } }), rifle);
+      const html = captured.dialog.content;
+      expect(html).toMatch(/name="atk-grip" value="1р"/);
+      expect(html).not.toMatch(/name="atk-grip" value="1р"[^>]*disabled/);
+    });
+  });
+
+  describe("Fanning / Быстрый Курок (wdbc-fy33)", () => {
+    it("без Таланта — револьвер «1р» несёт обычный штраф −10 на Длинную очередь", () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] });
+      showAttackDialog(attacker({ items: [revolver] }), revolver);
+      expect(captured.dialog.content).toContain("Длинная очередь (−10");
+    });
+
+    it("с Талантом, револьвер «1р» и свободная вторая рука — Длинная очередь без штрафа", () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] });
+      const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
+      showAttackDialog(attacker({ items: [revolver, talent] }), revolver);
+      expect(captured.dialog.content).toContain("Быстрый Курок (±0");
+    });
+
+    it("та же связка, но вторая рука занята вторым пистолетом — штраф остаётся обычным", () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] }, { id: "rev-1" });
+      revolver.type = "weapon";
+      revolver.system.equipped = true;
+      const other = { id: "p2", type: "weapon", name: "Второй пистолет",
+        system: { weaponClass: "pistol", equipped: true, grips: "" }, getFlag: () => undefined };
+      const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
+      showAttackDialog(attacker({ items: [revolver, other, talent] }), revolver);
+      expect(captured.dialog.content).toContain("Длинная очередь (−10");
+      expect(captured.dialog.content).not.toContain("Быстрый Курок");
+    });
+
+    it("с Талантом — поле выбора RoF (2..BS.b) появляется в разметке", () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] });
+      const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
+      showAttackDialog(attacker({ items: [revolver, talent],
+        characteristics: { bs: char(47) } }), revolver);
+      // BS.b от 47 = 4 — потолок max="4".
+      expect(captured.dialog.content).toMatch(/id="atk-fanning-rof"[^>]*min="2"[^>]*max="4"/);
+    });
+
+    it("без Таланта — поля выбора RoF нет вовсе", () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] });
+      showAttackDialog(attacker({ items: [revolver] }), revolver);
+      expect(captured.dialog.content).not.toMatch(/id="atk-fanning-rof"/);
+    });
+
+    it("Прицеливание не даёт бонуса в самом броске Длинной очереди с Быстрым Курком", async () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] });
+      const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
+      const p = showAttackDialog(attacker({ items: [revolver, talent],
+        characteristics: { bs: char(45) } }), revolver);
+
+      captured.dice = [23, 6, 6];   // атака + до 2 попаданий (deg 3 → ceil(3/2)=2)
+      await pressRoll(p, {
+        "input[name='atk-rof']:checked": { value: "full", dataset: { bonus: "0" } },
+        "input[name='atk-aiming']:checked": { value: "half", dataset: { bonus: "10" } },
+        "#atk-fanning-rof": "6"
+      });
+      // BS 45, без +10 Прицеливания (тот же rofCapOverride:6 уходит в бросок).
+      expect(thresholdInCard()).toBe(45);
+    });
+
+    it("та же Прицеливание, но режим Короткой очереди — бонус применяется как обычно", async () => {
+      const revolver = weaponFor({ weaponClass: "pistol", rof_semi: 2, rof_full: 4, grips: "1р",
+        weaponProps: [{ key: "revolver" }] });
+      const talent = talentWithCapability("Fanning / Быстрый Курок", "weapon.fanningRevolver");
+      const p = showAttackDialog(attacker({ items: [revolver, talent],
+        characteristics: { bs: char(45) } }), revolver);
+
+      captured.dice = [23, 6, 6];
+      await pressRoll(p, {
+        "input[name='atk-rof']:checked": { value: "semi", dataset: { bonus: "0" } },
+        "input[name='atk-aiming']:checked": { value: "half", dataset: { bonus: "10" } }
+      });
+      expect(thresholdInCard()).toBe(55);
+    });
   });
 });
 

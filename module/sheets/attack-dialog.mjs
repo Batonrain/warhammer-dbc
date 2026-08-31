@@ -17,7 +17,8 @@
 
 import { CHARACTERISTICS }                    from "../constants/characteristics.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }       from "../constants/items.mjs";
-import { MELEE_STANCES, MELEE_BASES, MELEE_MANEUVERS, GRIPS, parseGrips, gripEffects } from "../constants/combat.mjs";
+import { MELEE_STANCES, MELEE_BASES, MELEE_MANEUVERS, GRIPS, parseGrips, gripEffects,
+         RANGED_GRIPS, rangedGripEffects } from "../constants/combat.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
@@ -25,16 +26,18 @@ import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpe
 import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
-import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
+import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
+import { hasRecoilSuppressor } from "../combat/armor-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
-         mountRangedPenalty, MOUNT_SPEEDS } from "../rules/mount.mjs";
+         mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
+import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
@@ -123,6 +126,9 @@ function readAttackForm(form, ammoConds) {
     mountRangedMod: parseInt(el("#atk-mount-ranged")?.value) || 0,
     rofMode:    el(ROF)?.value,
     rofBonus:   attr(ROF, "bonus"),
+    // Fanning / Быстрый Курок (wdbc-fy33): RoF Длинной очереди 2..BS.b по
+    // выбору — 0 значит «поля в форме нет» (Талант неактивен для этого броска).
+    fanningRof: parseInt(el("#atk-fanning-rof")?.value) || 0,
     aimVal:     el("#atk-aim")?.value,
     aimPenalty: attr("#atk-aim option:checked", "penalty"),
     // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
@@ -172,14 +178,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const isMelee = sys.weaponClass === "melee" || forceMelee;
   const charKey = isMelee ? "ws" : "bs";
 
-  // ── Хват и профиль: значения по умолчанию (из HUD-флагов оружия или opts) ──
-  //   Теперь выбираются прямо в этом окне (см. resolveSelection ниже) — эти
-  //   переменные лишь стартовые значения, с которых открывается диалог.
-  const gripList  = isMelee ? parseGrips(sys.grips) : [];
-  const primGrip  = gripList[0] || "";
-  const gripKey   = techniqueOpts.gripKey
-                 ?? item.getFlag?.("warhammer-dbc", "hudGrip")
-                 ?? primGrip;
   const atkProfiles = Array.isArray(sys.profiles) ? sys.profiles : [];
   let   profIdx   = techniqueOpts.profileIdx;
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
@@ -205,6 +203,54 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   }
   const wProps      = resolveWeaponPropsList(_entries);
   const wp           = aggregateAuto(wProps);
+
+  // ── Хват и профиль: значения по умолчанию (из HUD-флагов оружия или opts) ──
+  //   Теперь выбираются прямо в этом окне (см. resolveSelection ниже) — эти
+  //   переменные лишь стартовые значения, с которых открывается диалог.
+  //   sys.grips — общее поле обоих классов оружия (module/data/item/weapon.mjs),
+  //   parseGrips тот же для рукопашного и дальнобойного (wdbc-3hxg) — токены
+  //   "1р"/"2р" валидны в обоих реестрах (GRIPS и RANGED_GRIPS).
+  //   Доп. хваты сверх собственного sys.grips предмета (только дальнобойное):
+  //   Pistol Grip (weaponMod.grantsGrip, wdbc-8vp1), Commando (карабин 1р как
+  //   пистолет, wdbc-eduq) и Double Grip (пистолет 2р, wdbc-mu6v) — их самих
+  //   на предмете нет, добавляются здесь.
+  const installedMods   = isMelee ? [] : getInstalledMods(actor, item);
+  const modGrantedGrips = installedMods.map(m => m.system?.grantsGrip).filter(Boolean);
+  const commandoGrip    = (!isMelee && wp.carbine && hasRuleFlag(actor, "weapon.commandoCarbine")) ? "1р" : null;
+  const doubleGripGrip  = (!isMelee && sys.weaponClass === "pistol" && hasRuleFlag(actor, "weapon.doubleGripPistol")) ? "2р" : null;
+  const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []), ...(doubleGripGrip ? [doubleGripGrip] : [])];
+  const ownGrips = parseGrips(sys.grips);
+  // Предмет без собственного sys.grips (пак ещё не заполнен, стр. 171) —
+  // добавляем природный Хват по классу, иначе доп. Хват окажется в списке
+  // ОДИН, а пилюли Хвата рисуются только при >1 варианте (gripBlockHtml ниже).
+  const classDefaultGrip = ["pistol", "thrown"].includes(sys.weaponClass) ? "1р" : "2р";
+  const baseGrips = (ownGrips.length || !extraGrips.length) ? ownGrips : [classDefaultGrip];
+  const gripList  = [...new Set([...baseGrips, ...extraGrips])];
+  const primGrip  = gripList[0] || "";
+  // S.b — нужен только для гейта Отдачи (стр. 166): персонаж с S.b меньше
+  // рейтинга свойства не может выбрать "1р", должен стрелять "2р".
+  const sBonus    = actor.system.characteristics?.s?.bonus ?? 0;
+  const gripKey   = techniqueOpts.gripKey
+                 ?? item.getFlag?.("warhammer-dbc", "hudGrip")
+                 ?? primGrip;
+  // Double Grip (wdbc-mu6v, стр. 62): держа пистолет "2р", Прицеливание
+  // +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10 сверх обычного.
+  // Вычисляется один раз от СТАРТОВОГО Хвата (как qTestMod/legionFit ниже) —
+  // если сменить Хват прямо в открытом окне, число не переоткроется само.
+  const doubleGripActive = !!doubleGripGrip && gripKey === "2р";
+  // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): револьвер в одной руке +
+  // свободная вторая — Длинная очередь без обычного штрафа −10, RoF 2..BS.b
+  // по выбору игрока (вместо фиксированного sys.rof_full) и без бонуса
+  // Прицеливания именно в этом режиме броска.
+  // Без exclude: revolver сам уже сидит в handHeldItems (равно, если экипирован) —
+  // нужна ЛИШНЯЯ свободная рука сверх той, что держит сам револьвер.
+  const fanningActive = !isMelee && wp.revolver && gripKey === "1р"
+    && hasRuleFlag(actor, "weapon.fanningRevolver")
+    && handsOccupied(actor).free >= 1;
+  const bsBonus = actor.system.characteristics?.bs?.bonus ?? 0;
+  // Потолок выбора — не меньше 2 (текст Таланта), даже если BS.b мал.
+  const fanningRofMax = Math.max(2, bsBonus);
+
   // Качество: рукопашное даёт мод на тесты с оружием (Poor −10 / Good +5 / Best +10)
   const qTestMod     = isMelee ? (qualityEffects(item).auto.testMod || 0) : 0;
   // Легион (стр. 179): своё оружие Астартес берут без штрафа, чужое — со
@@ -260,14 +306,23 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const mountUuid       = actor.system?.mount?.uuid || "";
   const attackerMount   = (!isMelee && mountUuid)
     ? [...(game.actors ?? [])].find(a => a?.uuid === mountUuid) : null;
+  const mountSpeedKey   = actor.system.mount?.speed in MOUNT_SPEEDS ? actor.system.mount.speed : "still";
   // Гиро-Стабилизированное (wdbc-z56a, стр. 168): «игнорирует штрафы... за
   // нестабильную платформу (в т.ч. верхом)» — тот же штраф, что и «стрельба с
   // седла» выше (Dragoon правит эту же цифру по книге, только на -10, а не
   // до нуля — тот Талант не автоматизирован, здесь трогать нечего).
   const autoMountRangedMod = attackerMount
-    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(
-        actor.system.mount.speed in MOUNT_SPEEDS ? actor.system.mount.speed : "still",
-        attackerMount))
+    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(mountSpeedKey, attackerMount))
+    : 0;
+  // Рука на поводьях/руле (стр. 477, wdbc-3xqh): пока едет со скоростью,
+  // требующей управления руками (не Стойка/Связь/Боевая Тренировка вне
+  // Натиска-Бега — handsNeeded уже учитывает все три исключения), одна рука
+  // занята вне зависимости от того, что в ней держат — бюджет hands.mjs
+  // об этом ничего не знает (он статичный, экипировка не привязана к Ходу),
+  // поэтому вычитается только тут, в информационном бейдже.
+  const mountHands = attackerMount
+    ? handsNeeded(mountSpeedKey, attackerMount,
+        { traits: mountTraits(attackerMount), linked: !!actor.system.mount?.linked }).hands
     : 0;
 
   // Один обход правил актора на диалог: mods/rerolls/crit из одного результата.
@@ -385,10 +440,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const hasShieldEquipped = isMelee && actor.items.some(i => i.system?.equipped && isHandShield(i));
 
   const currentAiming = actor.system.aiming || "none";
-  const aimingBonus   = currentAiming === "half" ? 10 : currentAiming === "full" ? 20 : 0;
+  const halfAimBonus  = doubleGripActive ? 15 : 10;
+  const fullAimBonus  = doubleGripActive ? 30 : 20;
+  const aimingBonus   = currentAiming === "half" ? halfAimBonus : currentAiming === "full" ? fullAimBonus : 0;
   const aimingLabel   = currentAiming === "half"
-    ? "Полу-прицеливание (+10)"
-    : currentAiming === "full" ? "Полное прицеливание (+20)" : "";
+    ? `Полу-прицеливание (+${halfAimBonus})`
+    : currentAiming === "full" ? `Полное прицеливание (+${fullAimBonus})` : "";
 
   const loadedAmmo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
   const ammoSys    = loadedAmmo?.system;
@@ -441,7 +498,26 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       return { key, label: def.label, allowed: trainingOk && groundedOk && fitOk, reason };
     });
   }
+  // Дальнобойный Хват (wdbc-3hxg) — не про Тренировку, а про Отдачу (стр. 166):
+  // "1р" запрещён, если на оружии есть свойство Отдача(X) и S.b персонажа
+  // меньше X — иначе персонаж обязан стрелять "2р". "2р" всегда доступен.
+  // Подавители Отдачи (wdbc-cnju, armorMod на руках) снимают гейт Отдачи
+  // целиком у винтовки/длинной винтовки (weaponClass "basic") — своей
+  // категории у «длинной винтовки» в схеме нет, обе лежат в "basic".
+  const recoilSuppressed = !isMelee && sys.weaponClass === "basic" && hasRecoilSuppressor(actor);
+  function computeRangedGripOptions() {
+    return gripList.map(key => {
+      const recoilBlocked = key === "1р" && !recoilSuppressed
+        && wp.recoilRating > 0 && sBonus < wp.recoilRating;
+      return {
+        key, label: RANGED_GRIPS[key]?.label || key,
+        allowed: !recoilBlocked,
+        reason: recoilBlocked ? `Отдача: нужен S.b ≥ ${wp.recoilRating} для стрельбы одной рукой (сейчас ${sBonus})` : ""
+      };
+    });
+  }
   function computeGripOptions(pIdx) {
+    if (!isMelee) return computeRangedGripOptions();
     const trained = trainingFor(pIdx).trained;
     return gripList.map(key => ({
       key, label: GRIPS[key]?.label || key,
@@ -528,7 +604,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const stanceBon = isMelee ? (stDef.wsBonus ?? 0) : 0;
 
     const gKey = sel.gripKey ?? gripKey;
-    const gDef = GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null;
+    const gDef = isMelee
+      ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null)
+      : (RANGED_GRIPS[gKey] ? rangedGripEffects(gKey) : null);
     const gWs  = gDef ? gDef.ws : 0;
 
     // Запрещённый Приём (Cheap Shot, стр. 166): тратит Реакцию вместо
@@ -577,9 +655,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
    */
   function resolveSelectionSafe(f = {}) {
     const sel = resolveSelection(f);
-    if (!isMelee) return sel;
     const ok = (opts, key, field = "key") =>
       opts.find(o => o[field] === key)?.allowed ?? true;
+    if (!isMelee) {
+      // Только Хват может стать недоступным у дальнобойного (Отдача) — тот же
+      // приём сброса на безопасное значение, что у рукопашного ниже, просто
+      // без Стойки/Базы/Приёма (у них тут нет пилюль вовсе).
+      if (gripList.length && !ok(computeRangedGripOptions(), sel.gKey)) {
+        const fallback = computeRangedGripOptions().find(o => o.allowed)?.key ?? "2р";
+        return resolveSelection({ ...f, gripKey: fallback });
+      }
+      return sel;
+    }
     const fix = {};
     if (!ok(computeStanceOptions(sel.pIdx), sel.stanceKey)) fix.stanceKey = "standard";
     const stanceKey = fix.stanceKey ?? sel.stanceKey;
@@ -592,6 +679,29 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   const dyn0 = resolveSelection();
 
+  /**
+   * Занятость рук (wdbc-3xqh) — только дальнобойное: сколько рук требует
+   * ВЫБРАННЫЙ прямо в диалоге Хват (ещё не обязательно сохранённый во флаг)
+   * против того, что реально свободно у актора помимо этого оружия
+   * (module/rules/hands.mjs), минус рука на поводьях/руле (mountHands выше,
+   * стр. 477) — она не входит в статичный бюджет hands.mjs (тот не знает про
+   * скорость Хода), поэтому вычитается только здесь. Чисто информационно, не
+   * блокирует бросок — легальность самой связки снаряжения уже проверяет
+   * экипировка (sheets/tabs/gear.mjs).
+   */
+  function handsBadge(sel) {
+    if (isMelee) return "";
+    const need = gripList.length && (sel.gKey === "1р" || sel.gKey === "2р")
+      ? (sel.gKey === "1р" ? 1 : 2)
+      : weaponHandsRequired(item, actor);
+    if (need <= 0) return "";
+    const { free: freeBase, max } = handsOccupied(actor, { exclude: item.id });
+    const free  = Math.max(0, freeBase - mountHands);
+    const short = need > free;
+    const mountNote = mountHands ? `, из них на поводьях/руле: ${mountHands}` : "";
+    return `<span class="atk-hands-badge${short ? " atk-training-warn" : ""}" title="Свободно рук помимо этого оружия: ${free} из ${max}${mountNote}">🖐️ Руки: ${need}${short ? ` (не хватает, свободно ${free})` : ""}</span>`;
+  }
+
   function badgesHtml(sel) {
     const stanceBadge = (isMelee && sel.stanceBon !== 0)
       ? `<span class="atk-stance-badge">${rollIcon("sword")}Стойка: ${sel.stanceBon >= 0 ? "+" : ""}${sel.stanceBon}</span>`
@@ -602,7 +712,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -643,14 +753,38 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // начале следующего Хода (action-economy.mjs).
     const impulseStationary = !!wp.impulse && !actor.getFlag?.("warhammer-dbc", "movedThisTurn");
     const impulseBonus = wp.impulse ? (impulseStationary ? 20 : 10) : 0;
-    const fmtMod = n => n === 0 ? "±0" : (n > 0 ? `+${n}` : `${n}`);
+    const fmtMod = n => n === 0 ? "±0" : (n > 0 ? `+${n}` : `−${-n}`);
     const impulseHint = impulseStationary ? ", не двигался ×2" : "";
-    if (sys.rof_semi > 0)
-      rofModes.push({ value: "semi",   label: `Короткая очередь (${fmtMod(impulseBonus)}${impulseHint}, ${sys.rof_semi} выстр.)`,  bonus: impulseBonus   });
-    if (sys.rof_full > 0)
-      rofModes.push({ value: "full",   label: `Длинная очередь (${fmtMod(impulseBonus - 10)}${impulseHint}, ${sys.rof_full} выстр.)`,  bonus: impulseBonus - 10 });
-    if (sys.rof_semi > 0 || sys.rof_full > 0)
-      rofModes.push({ value: "suppression", label: "Стрельба на подавление (−20)", bonus: -20 });
+    // Secondary Grip (wdbc-aj6t, стр. 166): стрельба от бедра без Прицеливания
+    // — бонус только пока не Прицелились И не держат "1р" (мод сам этого не
+    // даёт, стр. 166: «не работает при стрельбе одной рукой»).
+    const hipFireOk   = !isMelee && currentAiming === "none" && gripKey !== "1р";
+    const hipFireSemi = hipFireOk ? installedMods.reduce((n, m) => n + (Number(m.system?.hipFireSemiMod) || 0), 0) : 0;
+    const hipFireFull = hipFireOk ? installedMods.reduce((n, m) => n + (Number(m.system?.hipFireFullMod) || 0), 0) : 0;
+    const hipFireSupp = hipFireOk ? installedMods.reduce((n, m) => n + (Number(m.system?.hipFireSuppressionMod) || 0), 0) : 0;
+    // Double Grip (wdbc-mu6v): пистолет "2р" — те же +5/+10 короткой/длинной.
+    const dgSemi = doubleGripActive ? 5 : 0;
+    const dgFull = doubleGripActive ? 10 : 0;
+    const extraHint = (hip, dg) => [hip ? `от бедра ${fmtMod(hip)}` : "", dg ? `Double Grip ${fmtMod(dg)}` : ""]
+      .filter(Boolean).map(s => `, ${s}`).join("");
+    if (sys.rof_semi > 0) {
+      const semiBonus = impulseBonus + hipFireSemi + dgSemi;
+      rofModes.push({ value: "semi", label: `Короткая очередь (${fmtMod(semiBonus)}${impulseHint}${extraHint(hipFireSemi, dgSemi)}, ${sys.rof_semi} выстр.)`, bonus: semiBonus });
+    }
+    if (sys.rof_full > 0) {
+      // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): револьвер "1р" со
+      // свободной второй рукой — Длинная очередь БЕЗ обычного штрафа −10,
+      // вместо обычного расчёта (RoF 2..BS.b по выбору не смоделирован).
+      const fullBonus = fanningActive ? 0 : (impulseBonus - 10 + hipFireFull + dgFull);
+      const label = fanningActive
+        ? `Длинная очередь — Быстрый Курок (${fmtMod(fullBonus)}, RoF 2..BS.b по выбору, без бонуса Прицеливания)`
+        : `Длинная очередь (${fmtMod(fullBonus)}${impulseHint}${extraHint(hipFireFull, dgFull)}, ${sys.rof_full} выстр.)`;
+      rofModes.push({ value: "full", label, bonus: fullBonus });
+    }
+    if (sys.rof_semi > 0 || sys.rof_full > 0) {
+      const suppBonus = -20 + hipFireSupp;
+      rofModes.push({ value: "suppression", label: `Стрельба на подавление (${fmtMod(suppBonus)}${extraHint(hipFireSupp, 0)})`, bonus: suppBonus });
+    }
   }
 
   const rofHtml = rofModes.map((m, i) =>
@@ -714,9 +848,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <b>${mountRiderPen}</b>${mountRiderPen === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""} сверх штрафа зоны.
       </div>` : "";
 
+  // Pistol Grip (wdbc-8vp1, стр. 166): Дальность ×0.5 действует ТОЛЬКО пока
+  // выбран Хват, который дал сам мод (в отличие от безусловного modFx.rangeMult
+  // выше) — считается один раз от стартового gripKey, как doubleGripActive.
+  const gripRangeMult = installedMods
+    .filter(m => m.system?.grantsGrip && m.system.grantsGrip === gripKey)
+    .reduce((mult, m) => mult * (Number(m.system?.gripRangeMult) || 1), 1);
+  const gripRange = Math.round((Number(sys.range) || 0) * gripRangeMult);
+
   let rangeInfoHtml = "";
   if (!isMelee && sys.range > 0) {
-    const rng     = sys.range;
+    const rng     = gripRange;
     const rngMult = ammoSys?.rangeMultiplier ?? 1;
     const rngAdd  = ammoSys?.rangeMod ?? 0;
     const effRng  = Math.round(rng * rngMult) + rngAdd;
@@ -829,7 +971,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // дальняя до Rng×2 / экстремальная до Rng×3, дальше выстрел невозможен).
   // Автоотметка ровно одной галочки — все они по-прежнему снимаются руками,
   // ГМ-клапан сохраняется. За 3×Rng — видимый warning у измеренной дистанции.
-  const bandKey  = (!isMelee && measured) ? rangeBandKey(measured.edgeM, Number(sys.range)) : null;
+  const bandKey  = (!isMelee && measured) ? rangeBandKey(measured.edgeM, gripRange) : null;
   const bandNote = k => (bandKey === k ? `по измеренной дистанции ${measured.edgeM} м` : undefined);
   // «Положение выше» (+10): сравнение elevation токенов атакующего и цели.
   const highGround = (isMelee && measured) ? hasHighGround(attackerToken, targetToken) : null;
@@ -988,8 +1130,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Тактическая карта (wdbc-8k0i): «Короткая дистанция» по половине Дальности
   // (устоявшееся правило Мельты/Рассеивания в WH40k-семействе систем) — авто-
   // галочка, но её всё ещё можно снять руками, если ситуация особая.
-  const autoShortRange = !!(measured && !isMelee && Number(sys.range) > 0
-    && measured.edgeM <= Number(sys.range) / 2);
+  const autoShortRange = !!(measured && !isMelee && gripRange > 0
+    && measured.edgeM <= gripRange / 2);
   const shortRangeHtml = wantShortBox ? `
     <label class="attack-mod-check">
       <input type="checkbox" id="atk-shortrange" class="atk-mod-cb" data-value="${wp.scatter ? 10 : 0}" ${autoShortRange ? "checked" : ""}/>
@@ -1018,8 +1160,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       </select>
     </label>` : "";
   const distanceHintHtml = measured ? `
-    <div class="atk-distance-hint">${rollIcon("target","#8fd0ff")}Измеренная дистанция: ${measured.edgeM} м${Number(sys.range) ? ` (Дальность оружия: ${sys.range} м)` : ""}</div>${bandKey === "out" ? `
-    <div class="atk-recharge-warn">${rollIcon("warn","#ff6b6b")}Цель вне дальности: ${measured.edgeM} м при максимуме ${Number(sys.range) * 3} м (3×Rng)</div>` : ""}` : "";
+    <div class="atk-distance-hint">${rollIcon("target","#8fd0ff")}Измеренная дистанция: ${measured.edgeM} м${gripRange ? ` (Дальность оружия: ${gripRange} м${gripRangeMult !== 1 ? ` — ×${gripRangeMult} на этом Хвате, база ${sys.range} м` : ""})` : ""}</div>${bandKey === "out" ? `
+    <div class="atk-recharge-warn">${rollIcon("warn","#ff6b6b")}Цель вне дальности: ${measured.edgeM} м при максимуме ${gripRange * 3} м (3×Rng)</div>` : ""}` : "";
   // Выключенное оружие (стр. 209-211): цепное/шоковое/силовое можно погасить
   // свободным действием, и полем Haywire — принудительно.
   const OFF_HINT = { chain: "−2 урона, −1 Проб., без Рвущего",
@@ -1044,7 +1186,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const rofPills = rofModes.map((mm, i) =>
     `<label class="av-pill"><input type="radio" name="atk-rof" value="${mm.value}" data-bonus="${mm.bonus}" ${i === 0 ? "checked" : ""}/><span>${mm.label}</span></label>`
   ).join("");
-  const aimingPills = [["none", 0, "Без прицела"], ["half", 10, "Полу +10"], ["full", 20, "Полное +20"]].map(([v, bon, lbl]) =>
+  const aimingPills = [["none", 0, "Без прицела"], ["half", halfAimBonus, `Полу +${halfAimBonus}`], ["full", fullAimBonus, `Полное +${fullAimBonus}`]].map(([v, bon, lbl]) =>
     `<label class="av-pill"><input type="radio" name="atk-aiming" value="${v}" data-bonus="${bon}" ${currentAiming === v ? "checked" : ""}/><span>${lbl}</span></label>`
   ).join("");
 
@@ -1083,7 +1225,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-pills" id="atk-base-pills">${pillsHtml("atk-base", computeBaseOptions(dyn0.stanceKey, dyn0.gKey), dyn0.baseKey)}</div>
       <div class="av-opt-note" id="atk-base-note">${dyn0.bDef.note}</div>
     </div>` : "";
-  const gripBlockHtml = (isMelee && gripList.length > 1) ? `
+  const gripBlockHtml = (gripList.length > 1) ? `
     <div class="av-section">
       <div class="av-sec-lbl">Хват</div>
       <div class="av-pills" id="atk-grip-pills">${pillsHtml("atk-grip", computeGripOptions(dyn0.pIdx), dyn0.gKey)}</div>
@@ -1169,6 +1311,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <div class="av-sec-lbl">Режим атаки</div>
         <div class="av-pills">${rofPills}</div>
       </div>
+      ${fanningActive ? `
+      <div class="av-row">
+        <label>Быстрый Курок: RoF Длинной очереди</label>
+        <input id="atk-fanning-rof" class="av-input av-num" type="number"
+               min="2" max="${fanningRofMax}" value="${fanningRofMax}"
+               title="2..BS.b (${fanningRofMax}) по выбору — заменяет фиксированный RoF револьвера в режиме Длинной очереди. Без бонуса Прицеливания."/>
+      </div>` : ""}
       <div class="av-section">
         <div class="av-sec-lbl">Прицеливание</div>
         <div class="av-pills">${aimingPills}</div>
@@ -1243,7 +1392,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Стойка",             value: sel.stanceBon },
       { label: "Боеприпас",          value: ammoAtkMod },
       { label: "Хват",               value: sel.gWs },
-      { label: "Прицеливание",       value: wp.noAim ? 0 : f.aimBonus }
+      // Fanning: «без бонусов от Прицеливания» — только в режиме Длинной
+      // очереди, которую этот Талант и меняет (stanceKey/база и т.п. живут своей
+      // жизнью, тут проверяется именно выбранный rofMode этого броска).
+      { label: "Прицеливание",       value: (fanningActive && f.rofMode === "full") ? 0 : (wp.noAim ? 0 : f.aimBonus) }
     ];
     const modParts = [
       { label: "Доп. модификатор",     value: f.modifier },
@@ -1353,7 +1505,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
           if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
           await actor.update(actorUpdates);
-          if (isMelee && sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
+          if (sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
           if (sel.pIdx !== profIdx) await item.setFlag?.("warhammer-dbc", "hudProfile", sel.pIdx);
           // Локус Сокрушения тратится реальным броском — отменённая или
           // закрытая атака способность не расходует (см. meleeBaseKey выше).
@@ -1407,12 +1559,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
               gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
+              // Fanning / Быстрый Курок (wdbc-fy33): RoF 2..BS.b по выбору
+              // заменяет фиксированный sys.rof_full только в режиме "full".
+              rofCapOverride: (fanningActive && f.rofMode === "full") ? f.fanningRof : 0,
               // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
               ammoCondLabels: f.ammoSel.map(c => c.label),
               aimingLabel: (f.aiming !== "none" && !wp.noAim)
-                ? (f.aiming === "half" ? "Полу-прицеливание (+10)" : "Полное прицеливание (+20)")
+                ? (f.aiming === "half" ? `Полу-прицеливание (+${f.aimBonus})` : `Полное прицеливание (+${f.aimBonus})`)
                 : "",
               // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
               // обычно один токен — без этой строки попадание во всадника ушло

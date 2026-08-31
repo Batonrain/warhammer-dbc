@@ -18,6 +18,8 @@
  * неизвестна — считаем левую (щит обычно в неосновной руке).
  */
 
+import { getHeldHand } from "../rules/hands.mjs";
+
 // Ключи локаций брони системы.
 const LOC = {
   head: "head", body: "body",
@@ -99,7 +101,7 @@ export function shieldArmorByLocation(actor) {
     if (!isHandShield(item) || !item.system.equipped) continue;
     const ap = Number(item.system.shieldAP) || 0;
     if (ap <= 0) continue;
-    const hand   = item.getFlag?.("warhammer-dbc", "shieldHand") || "left";
+    const hand   = getHeldHand(item) || "left";
     const raised = !!item.getFlag?.("warhammer-dbc", "shieldRaised");
     const z = parseShieldZones(item.system.shieldZones, hand);
     const locs = [...z.full];
@@ -117,7 +119,7 @@ export function shieldArmorByLocation(actor) {
 /** Человекочитаемая сводка «что прикрывает» — для листа и подсказок. */
 export function shieldCoverageLabel(item) {
   if (!isHandShield(item)) return "";
-  const hand = item.getFlag?.("warhammer-dbc", "shieldHand") || "left";
+  const hand = getHeldHand(item) || "left";
   const z = parseShieldZones(item.system.shieldZones, hand);
   const RU = { head: "Голова", body: "Торс", leftArm: "Л.рука", rightArm: "П.рука",
                leftLeg: "Л.нога", rightLeg: "П.нога" };

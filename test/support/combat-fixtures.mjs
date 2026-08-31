@@ -15,7 +15,7 @@ function setPath(obj, path, value) {
 }
 
 /** Характеристика в формате листа: важен только bonus (десятки). */
-const char = total => ({ total, bonus: Math.floor(total / 10) });
+export const char = total => ({ total, bonus: Math.floor(total / 10) });
 
 /**
  * Актор-стрелок. `items` — предметы на нём (оружие, боеприпас, модификации,

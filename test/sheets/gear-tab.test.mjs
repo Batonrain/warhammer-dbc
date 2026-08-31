@@ -105,25 +105,25 @@ describe("gear tab helpers", () => {
     });
   });
 
-  it("setShieldHand записывает руку щита", async () => {
+  it("setShieldHand записывает руку щита (единый флаг heldHand, module/rules/hands.mjs)", async () => {
     const shield = item();
 
     await setShieldHand(shield, "right");
 
-    expect(shield.flags.shieldHand).toBe("right");
+    expect(shield.flags.heldHand).toBe("right");
   });
 
   it("setWeaponHand записывает руку оружия, повторный клик той же рукой снимает", async () => {
     const weapon = item();
 
     await setWeaponHand(weapon, "right");
-    expect(weapon.flags.weaponHand).toBe("right");
+    expect(weapon.flags.heldHand).toBe("right");
 
     await setWeaponHand(weapon, "right");
-    expect(weapon.flags.weaponHand).toBe("");
+    expect(weapon.flags.heldHand).toBe("");
 
     await setWeaponHand(weapon, "left");
-    expect(weapon.flags.weaponHand).toBe("left");
+    expect(weapon.flags.heldHand).toBe("left");
   });
 
   it("toggleShieldRaised переключает поднятый щит", async () => {
@@ -218,9 +218,9 @@ describe("gear tab listeners", () => {
       { "system.installedOn": "", "system.active": false },
       { "system.active": true }
     ]);
-    expect(shield.flags.shieldHand).toBe("right");
+    expect(shield.flags.heldHand).toBe("right");
     expect(shield.flags.shieldRaised).toBe(true);
-    expect(weapon.flags.weaponHand).toBe("right");
+    expect(weapon.flags.heldHand).toBe("right");
     expect(shield.sheet.rendered).toBe(1);
     expect(calls.map(c => c[0])).toEqual(["reload", "toggle", "roll", "repair"]);
     expect(calls.every(c => c[1] === a)).toBe(true);
