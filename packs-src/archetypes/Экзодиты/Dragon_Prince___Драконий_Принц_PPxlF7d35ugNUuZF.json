@@ -222,7 +222,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.rPm90K8pztSscP28",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.rPm90K8pztSscP28",
               "sourceName": "Hereditary Nobility / Наследственная Благородность",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,

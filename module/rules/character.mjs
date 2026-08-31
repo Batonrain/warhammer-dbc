@@ -595,6 +595,12 @@ export function prepareCharacterDerived(actor, system) {
       rightLeg: Math.max(0, best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0) - corroded("rightLeg")),
     };
 
+    // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
+    // попадание в Глаз игнорирует AP шлема, а не всей головы (стр. 34).
+    // Минус коррозия: она разъедает носимое, и разность armorAP − wornOnly
+    // (естественная броня) не должна плыть от Corrosive.
+    const wornOnly = Object.fromEntries(Object.keys(armorAP).map(k => [k, Math.max(0, best(k) - corroded(k))]));
+
     system.absorption = {
       head:           armorAP.head     + tb,
       body:           armorAP.body     + tb,
@@ -604,6 +610,7 @@ export function prepareCharacterDerived(actor, system) {
       rightLeg:       armorAP.rightLeg + tb,
       toughnessBonus: tb,
       armorOnly:      armorAP,
+      wornOnly,
       vsType:         armorVsType,
       propFlags:      propFlagsByLoc
     };

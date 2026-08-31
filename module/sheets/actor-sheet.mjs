@@ -58,10 +58,9 @@ import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRIC
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
-import { pickReroll } from "../rules/reroll-pick.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
-         wireTestKindLive } from "../rules/test-kind-widget.mjs";
+         wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -71,6 +70,7 @@ import { applyDivination } from "../apps/divinations.mjs";
 import { applyRace, applySubrace, clearRace, clearSubrace,
          actorRaceItem, actorSubraceItem,
          applyYnnari, applyHarlequin } from "../apps/races.mjs";
+import { raceDef } from "../apps/race-library.mjs";
 import { raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
 import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
@@ -549,7 +549,16 @@ function onRaceOpen()    { return actorRaceItem(this.actor)?.sheet?.render(true)
 function onSubraceOpen() { return actorSubraceItem(this.actor)?.sheet?.render(true); }
 function onRaceClear()   { return clearRace(this.actor); }
 function onSubraceClear(){ return clearSubrace(this.actor); }
-function onRaceApply()   { return applyRace(this.actor, this.actor.system.race || ""); }
+// Кроме Черт (их выдаёт Механика носителя расы) — и стартовые таланты по
+// констанам расы: раньше их выдавала только кнопка Геносемени (geneApply,
+// снята по просьбе пользователя) и Мастер создания; для уже существующих
+// персонажей ручной путь остался только здесь.
+async function onRaceApply() {
+  const key = this.actor.system.race || "";
+  await applyRace(this.actor, key);
+  const def = raceDef(key);
+  if (key && def?.talents?.length) await this._applyStartingTalents([def.talents].flat(), def?.label || key);
+}
 function onSubraceApply(){ return applySubrace(this.actor, this.actor.system.subrace || ""); }
 
 export class WarhammerCharacterSheet
@@ -2032,17 +2041,7 @@ export class WarhammerCharacterSheet
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
-    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-    const rolls = [];
-    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
-    const roll   = rolls[picked.index];
-    const rv     = picked.value;
-    // Отброшенные броски показываем в карточке: иначе переброс выглядит как
-    // «мастер что-то посчитал», а не как потраченная возможность.
-    const rerollNote = reroll
-      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-      : "";
+    const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
 
@@ -2117,15 +2116,7 @@ export class WarhammerCharacterSheet
     // Переброс/Преимущество/Помеха — тот же путь, что у теста Навыка
     // (rules/reroll-pick.mjs::pickReroll); раньше здесь бросался только один
     // d100 и выбор диалога тихо игнорировался (см. ревизию главы «Тесты»).
-    const rollCount = reroll ? Math.max(2, reroll.rolls) : 1;
-    const rolls = [];
-    for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
-    const picked = pickReroll(rolls.map(r => r.total), reroll?.mode);
-    const roll   = rolls[picked.index];
-    const rv     = picked.value;
-    const rerollNote = reroll
-      ? `<div class="roll-reroll-note">${esc(reroll.label)}: отброшено ${picked.dropped.join(", ")}</div>`
-      : "";
+    const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
     const rollMode = game.settings.get("core", "rollMode");
 
     const outcome = await resolveKindOutcome(this.actor, {

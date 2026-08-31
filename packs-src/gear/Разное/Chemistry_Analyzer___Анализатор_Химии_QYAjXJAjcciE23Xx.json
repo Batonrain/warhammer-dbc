@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Столик-анализатор, распознающий химический след и предвидящий взаимодействия на уровне биохимии. Требует Tech-Use+10 либо Trade (Chymist)+10 и Tech-Use+0.",
-    "notes": "Та же оговорка, что у Хим-Лаборатории — Navyк не назван явно в тексте.",
+    "notes": "Книга (Ветви Аэльдари): опознание химических веществ тестом Tech-Use с бонусом +10 — бонус на Tech-Use, как у Хим-Лаборатории.",
     "quantity": 1,
     "weight": 5,
     "availability": 2,
@@ -71,7 +71,7 @@
               "minionGroup": "",
               "minionTier": "",
               "skillScope": "plain",
-              "skillKey": "medicae",
+              "skillKey": "techUse",
               "specKey": "",
               "specialty": "",
               "specChoiceKeys": [],
