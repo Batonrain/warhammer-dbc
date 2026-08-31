@@ -88,6 +88,8 @@ const EXPECTED_DIFFS = [
   { key: "race:naga", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — naga тоже нёс Черту без effects." },
   { key: "race:splice", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — splice тоже нёс Черту без effects." },
   { key: "race:replicant", path: "initMod", from: 0, to: 2, why: "Тот же случай The Quick and The Dead, что у yigori (wdbc-j1nc) — replicant тоже нёс Черту без effects." },
+  { key: "race:squat", path: "speedMod", from: -1, to: 0,
+    why: "−1 SPD Надёжной Поступи переехал из system.effects.speedMod в запись Конструктора kind:movement (ревью второй стопки): legacy-канал при migratedEffect был мёртв, а AE целил в несуществующий system.speed — фактическое поведение НЕ меняется, штраф теперь реально применяется через movement.spdBonus." },
   { key: "race:sslyth", path: "initMod", from: 0, to: 4,
     why: "Sslyth Physiology / Физиология Сслита в константах шёл вовсе без effects (только текст benefit, wdbc-j1nc); библиотечный документ пака теперь несёт настоящий effects.initMod:4 (+4 к Инициативе — один из немногих чистых плоских чисел в этом композитном тексте)." },
   { key: "race:squat", path: "speedMod", from: 0, to: -1,

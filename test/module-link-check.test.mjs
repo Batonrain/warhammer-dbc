@@ -10,6 +10,7 @@
 
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
+import process from "node:process";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
