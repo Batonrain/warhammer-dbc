@@ -620,7 +620,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
     const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
-    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) : 0;
+    // Щупальце (Мутация, wdbc-vkwe): «+20 на приём Захват» — модификатор
+    // конкретного манёвра, не Стойки/Базы (те целятся во ВСЕ манёвры разом).
+    // Нет общего вида записи «+N к манёвру X» в Конструкторе — решение по
+    // тикету: точечный capability-флаг вместо новой инфраструктуры modScope,
+    // тот же приём, что stanceWs/FULL_ATTACK_CAPABILITY выше в этом файле.
+    // «...и все тесты в Борьбе» (module/combat/grapple.mjs, Сжать/Метнуть)
+    // НЕ подключено — отдельная точка входа (_showContestDialog), не эта.
+    const maneuverCapBonus = (isMelee && maneuverKey === "grapple" && hasRuleFlag(actor, "mutation.tentacle")) ? 20 : 0;
+    const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus : 0;
 
     const pIdx = sel.profIdx ?? profIdx;
     const prof = (pIdx >= 0) ? (atkProfiles[pIdx] || null) : null;
@@ -635,7 +643,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
     const note = [
       prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
-      gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : ""
+      gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
+      maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : ""
     ].filter(Boolean).join("<br>");
 
     return {
