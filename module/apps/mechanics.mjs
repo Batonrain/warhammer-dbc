@@ -438,6 +438,10 @@ function applyFourOp(cur, op, amount) {
  * тем же проходом ниже (wdbc-5wm). Фазу к ключу подбирает expectedPhase.
  */
 export function characteristicEffectKey(entry) {
+  // Инициатива (wdbc-v9a7) — не характеристика с Бонусом/Значением, а плоское
+  // производное число (documents/actor.mjs). "Итог"/"Бонус" тут ни при чём,
+  // charKey:"initiative" целится напрямую в system.initiative.
+  if (entry.charKey === "initiative") return "system.initiative";
   const field = (entry.field || "total") === "bonus" ? "bonusFx" : "totalFx";
   return `system.characteristics.${entry.charKey}.${field}`;
 }
@@ -643,6 +647,10 @@ export function describeMechEntry(entry) {
     }
     case "characteristic": {
       if (!entry.charKey) return "Характеристика: (не выбрана)";
+      if (entry.charKey === "initiative") {
+        const sign = OP_SIGN[entry.op] ?? entry.op;
+        return `Инициатива: ${sign} ${entry.value ?? ""}`;
+      }
       const abbr = CHARACTERISTICS[entry.charKey]?.abbr ?? entry.charKey;
       const fieldLabel = entry.field === "bonus" ? "бонус" : "значение";
       const sign = OP_SIGN[entry.op] ?? entry.op;
@@ -2344,12 +2352,17 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "characteristic") {
-    const charOpts = Object.entries(CHARACTERISTICS).map(([k, m]) => optHtml(k, `${m.abbr} — ${m.label}`, ent.charKey === k)).join("");
+    // Инициатива (wdbc-v9a7) — псевдо-характеристика в конце списка: не из
+    // CHARACTERISTICS (тех ровно 10, Инициатива не входит), у неё нет
+    // Бонуса/Итога — плоское число, поэтому поле "field" для неё скрыто.
+    const isInitiative = ent.charKey === "initiative";
+    const charOpts = Object.entries(CHARACTERISTICS).map(([k, m]) => optHtml(k, `${m.abbr} — ${m.label}`, ent.charKey === k)).join("")
+      + optHtml("initiative", "Иниц. — Инициатива", isInitiative);
     const fieldOpts = [["total", "Итоговое значение"], ["bonus", "Бонус (÷10)"]]
       .map(([v, l]) => optHtml(v, l, (ent.field || "total") === v)).join("");
     const opOpts = OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-char-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>
-      <select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>
+      ${isInitiative ? "" : `<select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>`}
       <select class="mech-char-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-char-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
