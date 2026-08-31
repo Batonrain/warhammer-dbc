@@ -613,6 +613,20 @@ describe("Применение расы, Прошлого и легиона", ()
   const traitNames = () => captured.created.filter(d => d.type === "trait").map(d => d.name);
   const actions = WarhammerCharacterSheet.DEFAULT_OPTIONS.actions;
 
+  // Кнопка Геносемени (geneApply) снята по просьбе пользователя — стартовые
+  // таланты расы для существующих персонажей теперь выдаёт «Применить расу»
+  // (raceApply) по константам расы. splitTopLevel обязан разобрать
+  // «Resistance (Cold, Heat, Poisons)», не развалив её по запятым в скобках.
+  it("«Применить расу» выдаёт и стартовые таланты расы", async () => {
+    const sheet = sheetFor({ characteristics: {}, race: "astartes" });
+
+    await actions.raceApply.call(sheet, ev());
+
+    const talentNames = captured.created.filter(d => d.type === "talent").map(d => d.name);
+    expect(talentNames).toContain("Resistance (Cold, Heat, Poisons)");
+    expect(talentNames.length).toBe(9);   // 9 стартовых талантов Астартес в константах
+  });
+
   it("Иннари получает Черты Иннари поверх бонусов Прошлого", async () => {
     const sheet = sheetFor({ characteristics: {}, ynnariPast: "aeldari" });
 

@@ -152,6 +152,16 @@ describe("resolveArmorAbsorptionAP", () => {
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 4, damageType: "impact", hitLocation: "Голова", melee: true, flags })).toBe(4);
   });
 
+  it("в Глаз: AP шлема игнорируется, естественная броня головы остаётся", () => {
+    // Голова 6 = шлем 4 + естественная 2 (Черта/имплант): в Глаз — только 2.
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, wornAP: 4, damageType: "impact", hitLocation: "Глаз (Голова)" })).toBe(2);
+    // Силовой шлем: 4 на линзы + естественная 2.
+    const power = { ...emptyArmorLocFlags(), isPowerArmor: true };
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 10, wornAP: 8, damageType: "impact", hitLocation: "Глаз (Голова)", flags: power })).toBe(6);
+    // Без разбивки (wornAP не передан) — весь AP считается шлемом, как раньше.
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", hitLocation: "Глаз (Голова)" })).toBe(0);
+  });
+
   it("Флак удваивает AP только против Взрывного урона", () => {
     const flags = { ...emptyArmorLocFlags(), doubleBlast: true };
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, damageType: "blast", flags })).toBe(10);
@@ -197,51 +207,54 @@ describe("resolveArmorAbsorptionAP", () => {
 });
 
 describe("breachArmorAtLocation (wdbc-k0ff)", () => {
-  const armorItem = (over = {}) => {
-    const item = {
-      type: "armor",
-      system: { equipped: true, body: 4, head: 0, breached: false, ...over },
-      update: vi.fn(async patch => { item.system.breached = patch["system.breached"]; })
-    };
-    return item;
-  };
+  let nextId = 0;
+  const armorItem = (over = {}) => ({
+    id: `a${++nextId}`, type: "armor",
+    system: { equipped: true, body: 4, head: 0, breached: false, ...over }
+  });
+  /** Актор с заглушкой пакетного обновления — как у настоящего Actor. */
+  const actorWith = (...items) => ({
+    items,
+    updateEmbeddedDocuments: vi.fn(async (_type, patches) => {
+      for (const p of patches) items.find(i => i.id === p._id).system.breached = p["system.breached"];
+    })
+  });
 
-  it("помечает надетую броню, покрывающую локацию, как пробитую", async () => {
+  it("помечает надетую броню, покрывающую локацию, как пробитую — одним запросом", async () => {
     const item = armorItem();
-    const actor = { items: [item] };
+    const actor = actorWith(item);
     const n = await breachArmorAtLocation(actor, "body");
     expect(n).toBe(1);
-    expect(item.update).toHaveBeenCalledWith({ "system.breached": true });
+    expect(actor.updateEmbeddedDocuments).toHaveBeenCalledWith("Item", [{ _id: item.id, "system.breached": true }]);
+    expect(item.system.breached).toBe(true);
   });
 
   it("не трогает локацию, которую предмет не покрывает (AP===0)", async () => {
-    const item = armorItem();
-    const actor = { items: [item] };
+    const actor = actorWith(armorItem());
     await breachArmorAtLocation(actor, "head");
-    expect(item.update).not.toHaveBeenCalled();
+    expect(actor.updateEmbeddedDocuments).not.toHaveBeenCalled();
   });
 
   it("не трогает снятую (не equipped) броню", async () => {
-    const item = armorItem({ equipped: false });
-    const actor = { items: [item] };
+    const actor = actorWith(armorItem({ equipped: false }));
     await breachArmorAtLocation(actor, "body");
-    expect(item.update).not.toHaveBeenCalled();
+    expect(actor.updateEmbeddedDocuments).not.toHaveBeenCalled();
   });
 
   it("уже пробитую не трогает повторно", async () => {
-    const item = armorItem({ breached: true });
-    const actor = { items: [item] };
+    const actor = actorWith(armorItem({ breached: true }));
     await breachArmorAtLocation(actor, "body");
-    expect(item.update).not.toHaveBeenCalled();
+    expect(actor.updateEmbeddedDocuments).not.toHaveBeenCalled();
   });
 
-  it("несколько слоёв на одной локации (stacks) — помечаются все разом", async () => {
+  it("несколько слоёв на одной локации (stacks) — помечаются все разом, одним запросом", async () => {
     const a = armorItem({ body: 2 });
     const b = armorItem({ body: 3 });
-    const actor = { items: [a, b] };
+    const actor = actorWith(a, b);
     const n = await breachArmorAtLocation(actor, "body");
     expect(n).toBe(2);
-    expect(a.update).toHaveBeenCalledOnce();
-    expect(b.update).toHaveBeenCalledOnce();
+    expect(actor.updateEmbeddedDocuments).toHaveBeenCalledOnce();
+    expect(a.system.breached).toBe(true);
+    expect(b.system.breached).toBe(true);
   });
 });

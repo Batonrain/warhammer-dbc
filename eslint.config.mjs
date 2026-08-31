@@ -3,7 +3,7 @@ import globals from "globals";
 export default [
   {
     files: ["**/*.mjs"],
-    ignores: ["node_modules/**", "packs/**", "assets/**"],
+    ignores: ["node_modules/**", "packs/**", "assets/**", ".claude/worktrees/**"],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: "module",

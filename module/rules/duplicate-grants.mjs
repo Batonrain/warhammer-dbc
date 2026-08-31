@@ -244,7 +244,9 @@ export async function talentLibraryEntry(name) {
   return TALENT_LIBRARY.find(t => t.name === name) || null;
 }
 
-/** Другие обычные (не групповые) Навыки, ещё не достигшие выдаваемого ранга. */
+/** Другие обычные (не групповые) Навыки с их текущим рангом. По рангу не
+ * фильтруются — выбор за игроком в диалоге; если выбранный уже на выдаваемой
+ * ступени, лишнее уходит в компенсацию опытом (refundSteps), как у дубля. */
 export function altSkillCandidates(skillKey, actorSkills = {}) {
   return Object.entries(SKILLS_DEF)
     .filter(([k]) => k !== skillKey)

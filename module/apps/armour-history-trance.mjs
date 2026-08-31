@@ -179,6 +179,9 @@ export async function useTrance(actor, item) {
   const data = await buildTranceCarrierData(option, item, game.combat, trance);
   if (!data) return ui.notifications.warn(`Талант «${option.talentName}» не найден в компендиуме.`);
   await actor.createEmbeddedDocuments("Item", [data]);
+  // Кнопка живёт на листе БРОНИ, а носитель создан на АКТОРЕ — сам по себе
+  // лист брони не перерисуется, и кнопка застревает в состоянии «Впасть».
+  item.sheet?.rendered && item.sheet.render(false);
 
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -219,5 +222,9 @@ export async function resolveTrancesForCombat(combat) {
       });
     }
     await actor.deleteEmbeddedDocuments("Item", carriers.map(i => i.id));
+    // Открытые листы брони этого актора всё ещё показывают «В трансе».
+    for (const it of actor.items) {
+      if (it.type === "armor" && it.sheet?.rendered) it.sheet.render(false);
+    }
   }
 }

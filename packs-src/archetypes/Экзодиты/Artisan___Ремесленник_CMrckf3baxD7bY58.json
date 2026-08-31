@@ -141,7 +141,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.ogJQSuWDvPSn16JK",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.ogJQSuWDvPSn16JK",
               "sourceName": "Ancient Traditions / Древние Традиции",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,

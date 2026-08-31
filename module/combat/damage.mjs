@@ -52,13 +52,13 @@ export async function repairArmorCorrosion(actor, armorKey) {
 /**
  * Проникающее: снаряд в ране (после непоглощённого урона) — −10 действий
  * частью тела (GM-отыгрыш: нет понятия «тест использует эту часть тела»),
- * −1 SPD торс/нога (автоматизировано, documents/actor.mjs). Кнопка
+ * −1 SPD торс/нога (автоматизировано, rules/character.mjs). Кнопка
  * извлечения — тот же полудействие+1 R Dmg, что и клик hooks.mjs
  * (.wh-piercing-extract-btn) вызывает extractPiercingWound().
  */
 async function _applyPiercing(actor, armorKey, hitLocation) {
   const already = !!actor.system.piercingWounds?.[armorKey];
-  if (!already) await actor.update({ [`system.piercingWounds.${armorKey}`]: true });
+  if (!already) await actor.update({ [`system.piercingWounds.${armorKey}`]: 1 }); // NumberField — Foundry кастовал бы true в 1
   const spdNote = ["body", "leftLeg", "rightLeg"].includes(armorKey) ? "; −1 SPD" : "";
   return `<div class="dmg-tb-note">
     🏹 Проникающее: снаряд в ране (${hitLocation}) — −10 действия этой частью тела${spdNote}, пока не извлечён${already ? " (рана уже была)" : ""}
@@ -75,7 +75,7 @@ export async function extractPiercingWound(actor, armorKey) {
   if (!actor.system.piercingWounds?.[armorKey]) {
     return ui.notifications?.info(`${actor.name}: в этой части тела нет застрявшего снаряда.`);
   }
-  await actor.update({ [`system.piercingWounds.${armorKey}`]: false });
+  await actor.update({ [`system.piercingWounds.${armorKey}`]: 0 });
   const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, 1);
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -135,10 +135,12 @@ const HAYWIRE_TABLE = [
  * эффекты таблицы (действия/SPD/Заклинивание/деградация Качества).
  */
 async function _applyHaywire(actor, rating) {
+  // X у Haywire — РАДИУС поля в метрах, к мощности не прибавляется:
+  // «Изначальная мощность ЭМИ-поля определяется броском 1d10» (стр. 168).
   const roll = await new Roll("1d10").evaluate();
-  const total = roll.total + rating;
+  const total = roll.total;
   const tier = HAYWIRE_TABLE.find(t => total <= t.max);
-  return `<div class="dmg-tb-note">📡 ЭМИ: 1d10${rating ? `+${rating}` : ""}=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -344,10 +346,14 @@ export async function applyDamageToActor(actor, damageData) {
     // применение «по вязи на сторону» для техники не реализовано: урон
     // технике идёт другим путём (combat/vehicle.mjs), не через эту функцию.
     tb = 0;
+    // absorption[armorKey] хранит AP + T.b (documents/actor.mjs) — Варп-Оружие
+    // Стойкость не учитывает никогда, поэтому T.b вычитается, как и в обычной
+    // ветке ниже: иначе «AP брони» протаскивал бы Бонус Стойкости обратно.
+    const warpArmorAP = (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
     armorAP = hasRuleFlag(actor, "armor.apVsWarpFull")
-      ? (absorption[armorKey] ?? 0)
+      ? warpArmorAP
       : hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
-        ? Math.floor((absorption[armorKey] ?? 0) / 2)
+        ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
     totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP;
@@ -367,7 +373,8 @@ export async function applyDamageToActor(actor, damageData) {
       baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
       vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
       damageType, melee, hitLocation, primitive, frontArcHit,
-      flags: absorption.propFlags?.[armorKey]
+      flags: absorption.propFlags?.[armorKey],
+      wornAP: absorption.wornOnly?.[armorKey]
     });
     // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
     // поглощения, ДО вычета пробития (стр. 168).

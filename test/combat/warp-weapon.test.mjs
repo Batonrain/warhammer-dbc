@@ -124,10 +124,11 @@ describe("Руническая Вязь «Эгида Г'Нелле» (wdbc-unku)
   });
 
   it("с Вязью — ½AP брони (окр.▼) добавляется к поглощению W.b", async () => {
-    // absorption.body = armorAP+toughnessBonus = 15, ½ окр.▼ = 7; поглощение = W.b(3)+7 = 10.
+    // absorption.body = armorAP+toughnessBonus = 15, но T.b против Варпа не
+    // считается: ½AP(10) = 5; поглощение = W.b(3)+5 = 8.
     const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20, aegisOfGnelle: true });
     await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
-    expect(actor.system.wounds.value).toBe(15); // 20 − (15 − 10) = 15
+    expect(actor.system.wounds.value).toBe(13); // 20 − (15 − 8) = 13
   });
 
   it("округление ½AP вниз — нечётный AP не даёт лишнего очка поглощения", async () => {
@@ -146,10 +147,10 @@ describe("Модификация брони «armor.apVsWarpFull» (wdbc-sg57): 
   });
 
   it("с модификацией — AP локации применяется целиком, не половиной", async () => {
-    // absorption.body = 15, целиком (не ½=7) + W.b(3) = 18 поглощения > 15 урона.
+    // AP(10) целиком (не ½=5), T.b(5) по-прежнему не считается: + W.b(3) = 13 поглощения.
     const actor = characterActor({ armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20, apVsWarpFull: true });
     await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
-    expect(actor.system.wounds.value).toBe(20); // 15 − 18 → 0, урона не прошло
+    expect(actor.system.wounds.value).toBe(18); // 20 − (15 − 13) = 18
   });
 
   it("armor.apVsWarpFull приоритетнее runicWeave.aegisOfGnelle при наличии обоих", async () => {
@@ -158,6 +159,6 @@ describe("Модификация брони «armor.apVsWarpFull» (wdbc-sg57): 
       aegisOfGnelle: true, apVsWarpFull: true
     });
     await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
-    expect(actor.system.wounds.value).toBe(20); // целиком, не половина — та же полная защита
+    expect(actor.system.wounds.value).toBe(18); // целиком (13), не половина (8) — та же защита, что и без Вязи
   });
 });

@@ -1334,11 +1334,13 @@ Hooks.on("updateActor", (doc, changes) => {
   if (changes.system?.race === undefined && changes.system?.subrace === undefined) return;
   syncTokenBaseSize(doc);
 });
+// Гейт на largeBase: обычная броня Базу не меняет никогда, а без фильтра
+// массовый импорт снаряжения гонял бы ресинк на каждый предмет.
 Hooks.on("createItem", (item) => {
-  if (game.user.isGM && item.type === "armor" && item.parent) syncTokenBaseSize(item.parent);
+  if (game.user.isGM && item.type === "armor" && item.system?.largeBase && item.parent) syncTokenBaseSize(item.parent);
 });
 Hooks.on("deleteItem", (item) => {
-  if (game.user.isGM && item.type === "armor" && item.parent) syncTokenBaseSize(item.parent);
+  if (game.user.isGM && item.type === "armor" && item.system?.largeBase && item.parent) syncTokenBaseSize(item.parent);
 });
 Hooks.on("updateItem", (item, changes) => {
   if (!game.user.isGM || item.type !== "armor" || !item.parent) return;
@@ -1773,6 +1775,9 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
 // Новый бой сбрасывает «атакован в этом бою» — миролюбие возвращается на
 // старте каждого столкновения, не только один раз в жизни персонажа.
 Hooks.on("combatStart", async (combat) => {
+  // Хук стреляет у всех клиентов: пишет один ГМ, иначе игрок без прав на
+  // чужого актора ловит отказ Foundry, а владельцы дублируют запись.
+  if (!game.user.isGM) return;
   for (const combatant of combat.combatants ?? []) {
     const actor = combatant.actor;
     if (actor?.getFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG)) {
