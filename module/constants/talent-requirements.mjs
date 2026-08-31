@@ -22,6 +22,7 @@
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "./skills.mjs";
 import { SKILL_RANKS } from "./characteristics.mjs";
 import { matchSpec, specCovers } from "./skill-specializations.mjs";
+import { itemsNamed } from "../rules/req-atom.mjs";
 
 /** Сокращения характеристик из требований → ключи системы. */
 const CHAR_ALIASES = {
@@ -221,22 +222,25 @@ const rankBonus = (rank) => SKILL_RANKS[rank]?.bonus ?? -20;
 // требование искало бы талант со специализацией по имени «любой».
 const ANY_SPEC = new Set(["любой", "любая", "любое", "любых", "any"]);
 
+// Сверка имени — общий слой (rules/req-atom.mjs → itemHasName, wdbc-0pki):
+// двуязычная, по любой половине «Eng / Рус», специализация в скобках на конце
+// отбрасывается. До wdbc-0pki здесь сверялась только ПЕРВАЯ половина имени
+// предмета («Frenzy» из «Frenzy / Бешенство») — на билингвальных предметах,
+// записанных «Рус / Eng», совпадение молча терялось; itemHasName проверяет
+// обе половины.
 function hasTalent(actor, atom) {
-  const wanted = norm((atom.base || atom.name || "").split("/")[0]);
+  const wanted = (atom.base || atom.name || "").trim();
+  if (!wanted) return false;
   const rawSpec = norm(atom.spec || "");
   const spec   = ANY_SPEC.has(rawSpec) ? "" : rawSpec;
-  for (const i of actor.items) {
-    if (i.type !== "talent" && i.type !== "trait") continue;
-    const nm = norm(String(i.name).split("/")[0]);
-    // Имя предмета может уже содержать специализацию в скобках.
-    const bare = nm.replace(/\s*\([^)]*\)\s*$/, "");
-    if (bare !== wanted && nm !== wanted) continue;
-    if (!spec) return true;
+  const hits = itemsNamed(actor, wanted, ["talent", "trait"]);
+  if (!hits.length) return false;
+  if (!spec) return true;
+  return hits.some(i => {
     const itemSpec = norm(i.system?.specialization || "");
-    const inName   = norm((/\(([^)]*)\)/.exec(nm) || [])[1] || "");
-    if (itemSpec.includes(spec) || inName.includes(spec)) return true;
-  }
-  return false;
+    const inName    = norm((/\(([^)]*)\)/.exec(norm(i.name)) || [])[1] || "");
+    return itemSpec.includes(spec) || inName.includes(spec);
+  });
 }
 
 /** Проверка одного варианта: true / false / null (не смогли определить). */

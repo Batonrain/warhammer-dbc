@@ -58,7 +58,7 @@ export function blankEntry(kind = "race") {
     case "notEldar": return { ...base };
     case "patron":   return { ...base, key: "" };
     case "other":  return { ...base, text: "" };
-    case "corruption": case "infamy": case "xp": return { ...base, value: 0 };
+    case "corruption": case "infamy": case "xp": case "psyRating": return { ...base, value: 0 };
     case "characteristic": return { ...base, charKey: Object.keys(CHARACTERISTICS)[0], value: 0 };
     default:       return { ...base, key: "", name: "", uuid: "" };  // раса, субраса, Черта
   }
@@ -147,7 +147,7 @@ function fieldsHtml(e, dis) {
       return "";   // содержимое ИЛИ-группы рисуется отдельно, вложенными строками
 
     default:
-      // Порча, Бесчестие и потраченный опыт — одно число.
+      // Порча, Бесчестие, Психорейтинг и потраченный опыт — одно число.
       return `<input type="number" class="elite-req-field elite-req-num" data-field="value" value="${e.value ?? 0}" ${dis}/>`;
   }
 }

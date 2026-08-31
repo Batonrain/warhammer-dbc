@@ -18,7 +18,7 @@ import {
 /** Персонаж-снимок: правило не знает про актора и проверяется без Foundry. */
 const who = (over = {}) => ({
   race: "drukhari", subrace: "", patron: "",
-  traits: ["Безбожник"], talents: [{ name: "Cleave", specialization: "" }],
+  traits: [{ name: "Безбожник" }], talents: [{ name: "Cleave", specialization: "" }],
   skills: { acrobatics: "veteran" }, groupSkills: {},
   corruption: 10, infamy: 20, chars: { ws: 50, a: 60 }, spentXP: 2000,
   ...over
@@ -136,6 +136,15 @@ describe("прочие требования — «чего ты добился»
     expect(checkEliteRequirements(req, who()).warn).toBe(false);
     expect(checkEliteRequirements(req, who({ spentXP: 500 })).secondaryUnmet)
       .toEqual(["Потрачено опыта: 2000"]);
+  });
+
+  // wdbc-0pki: до общего слоя этого вида не было вовсе — Элитный архетип
+  // psyRating-порогом ограничить было нельзя (см. cross-engine-snapshot).
+  it("Психорейтинг — не ниже порога", () => {
+    const req = { ...blankEliteReq(), primary: [{ kind: "psyRating", value: 3 }] };
+    expect(checkEliteRequirements(req, who({ psyRating: 2 })).available).toBe(false);
+    expect(checkEliteRequirements(req, who({ psyRating: 3 })).available).toBe(true);
+    expect(describeEliteReq({ kind: "psyRating", value: 3 })).toBe("Психорейтинг 3");
   });
 
   // Свободную строку машина не читает: она не «провалена», но и не выполнена —

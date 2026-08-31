@@ -106,12 +106,14 @@ describe("wdbc-0pki: снимок трёх движков Требований �
       expect(checkRequirement(a, "PR 4").state).toBe("fail");
     });
 
-    // Реальный пробел, не случайность теста: у elite-requirements.mjs вовсе
-    // нет вида требования «Пси-рейтинг» — Элитный архетип psyRating-порогом
-    // ограничить сегодня нельзя. Зафиксировано, чтобы будущий общий слой
-    // либо унаследовал этот пробел явно, либо закрыл его — но не потерял тихо.
-    it("elite-requirements.mjs: вид требования «Пси-рейтинг» отсутствует вовсе", () => {
-      expect(REQ_KINDS.some(k => k.key === "psyRating")).toBe(false);
+    // wdbc-0pki: пробел закрыт — elite-requirements.mjs теперь тоже видит
+    // вид требования «Пси-рейтинг», тем же статом req-atom.mjs, что и
+    // mechanics.mjs reqStat/psyRating.
+    it("elite-requirements.mjs (psyRating) — вид требования заведён", () => {
+      expect(REQ_KINDS.some(k => k.key === "psyRating")).toBe(true);
+      const req = eliteReq({ kind: "psyRating", value: 3 });
+      expect(checkEliteRequirements(req, eliteWho(a)).available).toBe(true);
+      expect(checkEliteRequirements(eliteReq({ kind: "psyRating", value: 4 }), eliteWho(a)).available).toBe(false);
     });
   });
 
@@ -179,8 +181,13 @@ describe("wdbc-0pki: снимок трёх движков Требований �
   // даёт РАЗНЫЙ вердикт в зависимости от того, какой из трёх движков спросили.
   // Тест не «падает» на расхождении — он его документирует.
 
-  describe("РАСХОЖДЕНИЕ: сверка имени вхождением (elite) против точным совпадением (mechanics/talent-requirements)", () => {
+  describe("wdbc-0pki: имя теперь сверяется одним каноном везде — itemHasName, совпадение ЦЕЛИКОМ", () => {
     // У актора Талант «Iron Will». Требование хочет «Will» — подстроку.
+    // ДО общего слоя elite-requirements.mjs сверял имя ВХОЖДЕНИЕМ («Will»
+    // находилось внутри «Iron Will») — единственный из трёх движков, кто так
+    // делал. Общий слой (rules/req-atom.mjs → itemHasName) сверяет имя
+    // ЦЕЛИКОМ, как уже делали mechanics.mjs и talent-requirements.mjs —
+    // расхождение унифицировано осознанно, а не потеряно тихо.
     const a = makeActor({ items: [talentItem("Iron Will")] });
 
     it("mechanics.mjs: сверка ТОЛЬКО по целому имени — не выполнено", () => {
@@ -191,12 +198,22 @@ describe("wdbc-0pki: снимок трёх движков Требований �
       expect(checkRequirement(a, "Will").state).toBe("fail");
     });
 
-    it("elite-requirements.mjs: nameHit сверяет ВХОЖДЕНИЕМ — «Will» находится внутри «Iron Will», выполнено", () => {
-      expect(checkEliteRequirements(eliteReq({ kind: "talent", name: "Will" }), eliteWho(a)).available).toBe(true);
+    it("elite-requirements.mjs: теперь тоже целиком, вхождением больше не находится — не выполнено", () => {
+      expect(checkEliteRequirements(eliteReq({ kind: "talent", name: "Will" }), eliteWho(a)).available).toBe(false);
     });
   });
 
-  describe("РАСХОЖДЕНИЕ: Талант и Черта — разные типы (mechanics/elite) или взаимозаменяемы (talent-requirements)", () => {
+  // wdbc-0pki, РЕШЕНИЕ (не унифицировать): расхождение оставлено как есть
+  // осознанно, не по недосмотру. mechanics.mjs/elite-requirements.mjs дают
+  // автору выбрать вид требования ЯВНО — отдельный пункт «Талант» и отдельный
+  // «Черта» в редакторе, перетаскивание типизированного документа
+  // (elite-req-builder.mjs reqDropType). talent-requirements.mjs, наоборот,
+  // разбирает СВОБОДНУЮ строку требования из книги («Frenzy») — книга не
+  // говорит, Талант это или Черта в терминах system.json, различать там
+  // нечем и незачем. Общий слой (itemsNamed/hasItemNamed, rules/req-atom.mjs)
+  // это отражает: адаптеры сами решают, каким списком типов его звать — тип
+  // остаётся параметром вызова, а не свойством общего слоя.
+  describe("РАСХОЖДЕНИЕ (оставлено намеренно): Талант и Черта — разные типы (mechanics/elite) или взаимозаменяемы (talent-requirements)", () => {
     // Физически это ЧЕРТА (item.type === "trait") с именем «Frenzy».
     const a = makeActor({ items: [traitItem("Frenzy")] });
 

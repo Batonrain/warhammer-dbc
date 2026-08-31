@@ -206,6 +206,7 @@ import { SKILL_RANKS, CHARACTERISTICS }       from "../constants/characteristics
 import { specOptions, findGroupEntry }        from "../constants/skill-specializations.mjs";
 import { dynamicAptKind }                     from "../constants/advancement.mjs";
 import { masteryTargets, masteryTarget, masteryAptitudes, masteryLabel } from "../rules/mastery-targets.mjs";
+import { statAtLeast, itemsNamed, rankAtLeast } from "../rules/req-atom.mjs";
 import { normalizeBudget, BUDGET_XP, BUDGET_MODES } from "../rules/pick-budget.mjs";
 import { pickXPCost }                          from "../rules/pick-xp-cost.mjs";
 import { ITEM_QUALITY, ITEM_QUALITY_LIST }     from "../constants/quality.mjs";
@@ -3056,16 +3057,6 @@ export const REQ_STAT_OPTIONS = [
 ];
 const REQ_STAT_MAP = Object.fromEntries(REQ_STAT_OPTIONS.map(s => [s.key, s]));
 
-/** Текущее значение показателя у актора — читает нужное поле по ключу. */
-function actorStatValue(actor, key) {
-  if (key === "corruption") return Number(actor.system?.corruption?.value) || 0;
-  if (key === "psyRating")  return Number(actor.system?.psyker?.rating) || 0;
-  return Number(actor.system?.characteristics?.[key]?.total) || 0;
-}
-
-/** Сравнение имён: регистр и лишние пробелы значения не имеют. */
-const normReq = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-
 /** Пустая запись-требование. */
 export function blankReqEntry(kind = "reqSkill") {
   return {
@@ -3160,38 +3151,31 @@ export function actorMeetsReq(actor, e) {
   if (!actor) return false;
   switch (e.kind) {
     case "reqSkill": {
-      const need = SKILL_RANK_STEPS[e.rank] ?? 0;
       if (e.skillScope === "group") {
         const arr = actor.system.groupSkills?.[e.skillKey] || [];
         // Специализация не задана — годится любая специализация группы.
         if (!e.specKey && !e.specialty)
-          return arr.some(x => (SKILL_RANK_STEPS[x.rank] ?? 0) >= need);
+          return arr.some(x => rankAtLeast(x.rank, e.rank));
         // Задана — ищем её общим сопоставителем: в данных специализация
         // лежит то ключом, то английской меткой, то русской (Конструктор
         // персонажа пишет русскую), и сравнение строк напрямую не сходится.
         // Ранг спрашивается у НАЙДЕННОЙ записи: «Запретные знания (Демоны)
         // на Ветеране» не закрываются Ветераном по Варпу.
         const hit = findGroupEntry(actor, e.skillKey, e.specKey || e.specialty);
-        return !!hit && (SKILL_RANK_STEPS[hit.rank] ?? 0) >= need;
+        return !!hit && rankAtLeast(hit.rank, e.rank);
       }
-      return (SKILL_RANK_STEPS[actor.system.skills?.[e.skillKey]?.rank] ?? 0) >= need;
+      return rankAtLeast(actor.system.skills?.[e.skillKey]?.rank, e.rank);
     }
     case "reqTalent":
     case "reqTrait":
     case "reqPower": {
       const type = e.kind === "reqTalent" ? "talent" : e.kind === "reqTrait" ? "trait" : "psychicPower";
-      const want = normReq(e.sourceName);
-      // Пустое имя не выполняется ничем: сверка вхождением сделала бы пустую
-      // строку подходящей к любому предмету.
-      if (!want) return false;
-      // Сверяем по ИМЕНИ целиком: перетащенный из компендиума образец и
-      // лежащий на акторе предмет — разные документы, общее у них только
-      // name. Вхождением сверять нельзя — «Железная Воля» закрыла бы «Волю».
-      // Специализацию в скобках у имени предмета при этом отбрасываем, как
-      // это делает hasTalent (constants/talent-requirements.mjs).
-      const bare = s => normReq(s).replace(/\s*\([^)]*\)\s*$/, "");
-      const hits = actor.items.filter(i =>
-        i.type === type && (normReq(i.name) === want || bare(i.name) === want));
+      // Сверка имени — общий слой (rules/req-atom.mjs → itemHasName):
+      // двуязычная, по любой половине «Eng / Рус», специализация в скобках
+      // на конце отбрасывается. Тот же канон, что и у elite-requirements.mjs
+      // и talent-requirements.mjs (wdbc-0pki) — перетащенный из компендиума
+      // образец и лежащий на акторе предмет разные документы, общее только name.
+      const hits = itemsNamed(actor, e.sourceName, [type]);
       if (!hits.length) return false;
       // Рейтинг есть только у Черты: в схеме Таланта поля rating нет, и
       // требование по нему было бы невыполнимо навсегда.
@@ -3215,7 +3199,7 @@ export function actorMeetsReq(actor, e) {
       return hasRuleFlag(actor, e.capabilityKey);
     case "reqStat":
       if (!e.statKey) return false;
-      return actorStatValue(actor, e.statKey) >= (Number(e.statThreshold) || 0);
+      return statAtLeast(actor, e.statKey, e.statThreshold);
     default:
       return false;
   }
