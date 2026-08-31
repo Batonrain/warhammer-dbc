@@ -5,7 +5,7 @@
   "folder": "v1rz4uG9QZ2dLs87",
   "system": {
     "description": "Режим длинной очереди RoF 6, но требует Закрепления на укрытии/биподе/триподе (даже с Bulging Biceps).",
-    "notes": "",
+    "notes": "Не смоделировано целиком: длинная очередь RoF6 требует Закрепления — условный режим, зависящий от боевой позиции, не постоянная дельта rofFullMod.",
     "category": "ranged",
     "modGroup": "bolt",
     "requirement": "Bolt оружие, винтовка. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

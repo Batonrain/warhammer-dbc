@@ -5,7 +5,7 @@
   "folder": "R1XlhRTA7APP5Ylh",
   "system": {
     "description": "Детонация после 1–2 рикошетов; Таланты Grenade Cooking и Grenadier работают как при метании гранаты.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: детонация после рикошетов, взаимодействие с Талантами — новая механика вне числовых полей мода.",
     "category": "ranged",
     "modGroup": "grenade",
     "requirement": "Гранатомёт. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

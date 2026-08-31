@@ -5,7 +5,7 @@
   "folder": "UlPidb6LNYEMdSga",
   "system": {
     "description": "Держа это оружие, псайкер может раз в Раунд проводить Выжигание Души безоружной атакой или естественным оружием.",
-    "notes": "",
+    "notes": "Психосиловая механика (Выжигание Души безоружной атакой) — вне схемы weaponMod, см. wdbc-jw81.",
     "category": "melee",
     "modGroup": "psychic",
     "requirement": "Психосиловое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

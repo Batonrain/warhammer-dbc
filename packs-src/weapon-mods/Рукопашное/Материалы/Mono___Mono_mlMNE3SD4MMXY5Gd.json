@@ -5,7 +5,7 @@
   "folder": "PpXujqQbgrdCQvEE",
   "system": {
     "description": "Мономолекулярно заточенное пластальное лезвие: +2 Pen и теряет Primitive на всех профилях R с Primitive. Бонусы материалов не складываются.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: бонус в тексте — только на профилях R со свойством Primitive, здесь применяется ко всему оружию.",
     "category": "melee",
     "modGroup": "materials",
     "requirement": "Примитивное или силовое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -16,7 +16,7 @@
     "effects": {
       "attackMod": 0,
       "damageMod": 0,
-      "penMod": 0,
+      "penMod": 2,
       "rangeMod": 0,
       "rangeMult": 1,
       "clipMod": 0,
@@ -27,7 +27,9 @@
       "balanceMod": 0,
       "weightPct": 0,
       "addProps": [],
-      "removeProps": []
+      "removeProps": [
+        "primitive"
+      ]
     },
     "drukhari": false
   },

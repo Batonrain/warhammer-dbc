@@ -5,7 +5,7 @@
   "folder": "cVyj1Vqb4Q5Z7x83",
   "system": {
     "description": "Интегрированное стрелковое оружие (любая винтовка/пистолет): теряет Accurate, получает Inaccurate, Rld ×2 (макс 10). Винтовка без Combi снижает Баланс на 1. Считается штыком для Bayonet Charge. Легион-оружие принимает не-Легион без штрафа, но не наоборот. Стрелковое добывается отдельно.",
-    "notes": "",
+    "notes": "Не смоделировано: Rld×2 (макс 10, нет поля-множителя перезарядки), −1 Баланс у не-Combi винтовки (условно).",
     "category": "melee",
     "modGroup": "polearm",
     "requirement": "Древковое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,8 +26,16 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
-      "removeProps": []
+      "addProps": [
+        {
+          "key": "inaccurate",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
+      "removeProps": [
+        "accurate"
+      ]
     },
     "drukhari": false
   },

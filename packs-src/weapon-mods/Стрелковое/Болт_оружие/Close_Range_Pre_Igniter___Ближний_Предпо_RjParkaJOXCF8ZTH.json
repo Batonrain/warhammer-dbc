@@ -5,7 +5,7 @@
   "folder": "v1rz4uG9QZ2dLs87",
   "system": {
     "description": "Дистанция в Упор до 5 м.",
-    "notes": "",
+    "notes": "Не смоделировано: сдвигает порог дистанции «в Упор» до 5м — нет поля, меняющего границы дистанционных зон.",
     "category": "ranged",
     "modGroup": "bolt",
     "requirement": "Bolt оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

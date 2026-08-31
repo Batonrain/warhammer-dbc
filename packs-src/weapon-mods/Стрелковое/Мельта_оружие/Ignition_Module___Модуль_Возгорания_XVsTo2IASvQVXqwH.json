@@ -5,7 +5,7 @@
   "folder": "0CNvFjVKT5pJqmot",
   "system": {
     "description": "Режим: −50% Rng, свойства Flame, Maximal, Overheats.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: переключаемый режим (Flame/Maximal/Overheats с иной дальностью) — не постоянная дельта.",
     "category": "ranged",
     "modGroup": "melta",
     "requirement": "Melta оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

@@ -5,7 +5,7 @@
   "folder": "cVyj1Vqb4Q5Z7x83",
   "system": {
     "description": "Шоковый конденсатор на тупом конце: свойство Shocking и теряет Primitive на профиле Посоха.",
-    "notes": "",
+    "notes": "Оговорка: потеря Primitive в тексте — только на профиле Посоха, здесь на всё оружие.",
     "category": "melee",
     "modGroup": "polearm",
     "requirement": "Древковое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,8 +26,16 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
-      "removeProps": []
+      "addProps": [
+        {
+          "key": "shocking",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
+      "removeProps": [
+        "primitive"
+      ]
     },
     "drukhari": false
   },

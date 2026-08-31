@@ -5,7 +5,7 @@
   "folder": "gJompqeGEkpUmHVS",
   "system": {
     "description": "Дистанция в Упор до 5 м, но −1 Надёжность. Снять/надеть за полное действие.",
-    "notes": "",
+    "notes": "Не смоделировано: сдвиг границы дистанции «в Упор» до 5м, снятие/надевание полным действием.",
     "category": "ranged",
     "modGroup": "shotgun",
     "requirement": "Дробовик. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,13 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "unreliable",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

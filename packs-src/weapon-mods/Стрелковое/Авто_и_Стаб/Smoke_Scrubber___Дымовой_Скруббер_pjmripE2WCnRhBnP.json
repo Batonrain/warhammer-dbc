@@ -5,7 +5,7 @@
   "folder": "6od60emBWLRKi4yS",
   "system": {
     "description": "Нет порохового дыма, выдающего по запаху.",
-    "notes": "",
+    "notes": "Чистая флейвор-механика (нет порохового дыма) — числового эффекта нет.",
     "category": "ranged",
     "modGroup": "autoStab",
     "requirement": "Авто и Стаб оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

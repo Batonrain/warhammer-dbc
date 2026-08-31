@@ -5,7 +5,7 @@
   "folder": "PpXujqQbgrdCQvEE",
   "system": {
     "description": "Зубья из латейской стали: +2 Dmg, +1 Pen и Reinforced на всех профилях лезвий. Бонусы материалов не складываются.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: бонус в тексте — только на профилях лезвий, здесь применяется ко всему оружию.",
     "category": "melee",
     "modGroup": "materials",
     "requirement": "Цепное оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,8 +15,8 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
-      "penMod": 0,
+      "damageMod": 2,
+      "penMod": 1,
       "rangeMod": 0,
       "rangeMult": 1,
       "clipMod": 0,
@@ -26,7 +26,11 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "reinforced"
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

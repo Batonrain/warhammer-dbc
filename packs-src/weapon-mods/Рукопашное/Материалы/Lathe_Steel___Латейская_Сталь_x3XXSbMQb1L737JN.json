@@ -5,7 +5,7 @@
   "folder": "PpXujqQbgrdCQvEE",
   "system": {
     "description": "Сплав стали и адамантия, отлитый в сверхгравитации: +2 Dmg, +3 Pen, теряет Primitive и получает Reinforced на всех профилях лезвий. Несовместимо с Укреплённой Трансталью. Бонусы материалов не складываются.",
-    "notes": "",
+    "notes": "Оговорка не смоделирована: бонус в тексте — только на профилях лезвий, здесь применяется ко всему оружию.",
     "category": "melee",
     "modGroup": "materials",
     "requirement": "Примитивное или силовое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,8 +15,8 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
-      "penMod": 0,
+      "damageMod": 2,
+      "penMod": 3,
       "rangeMod": 0,
       "rangeMult": 1,
       "clipMod": 0,
@@ -26,8 +26,14 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
-      "removeProps": []
+      "addProps": [
+        {
+          "key": "reinforced"
+        }
+      ],
+      "removeProps": [
+        "primitive"
+      ]
     },
     "drukhari": false
   },

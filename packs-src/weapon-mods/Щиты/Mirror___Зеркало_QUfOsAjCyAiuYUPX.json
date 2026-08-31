@@ -5,7 +5,7 @@
   "folder": "qyeMndFytvLJ1Fu8",
   "system": {
     "description": "Зеркало над рукояткой/креплением: при Таланте Blind Fighting — Избегать атак со спины без обычных штрафов. Также работает как обычное зеркало.",
-    "notes": "",
+    "notes": "Не смоделировано: требует Таланта Blind Fighting — не числовой эффект атаки без предпосылки Таланта.",
     "category": "shield",
     "modGroup": "shield",
     "requirement": "Любой щит. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

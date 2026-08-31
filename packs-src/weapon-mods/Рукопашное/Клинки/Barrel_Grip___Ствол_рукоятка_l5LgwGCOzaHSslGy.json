@@ -5,7 +5,7 @@
   "folder": "kkPBRnRXnFwwlJmB",
   "system": {
     "description": "В рукоятке спрятан однозарядный пистолет (любой с модификацией Компактное): теряет Accurate, получает Inaccurate, Rld ×2 (макс 10), Clip 1. Стрелять только в Обратном Хвате. Легион-оружие принимает не-Легион пистолет, но не наоборот. Пистолет добывается отдельно.",
-    "notes": "",
+    "notes": "Не смоделировано: Clip 1 (нет поля «переопределить магазин», только дельта), Rld×2, обратный хват.",
     "category": "melee",
     "modGroup": "blades",
     "requirement": "Нож или меч. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,8 +26,16 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
-      "removeProps": []
+      "addProps": [
+        {
+          "key": "inaccurate",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
+      "removeProps": [
+        "accurate"
+      ]
     },
     "drukhari": false
   },

@@ -5,7 +5,7 @@
   "folder": "BCNO9ZWfZHazXEdf",
   "system": {
     "description": "+5 на BS/WS с этим оружием для владельца (под кого подстроено), −5 для других.",
-    "notes": "",
+    "notes": "Асимметричный бонус (+5 владельцу/−5 прочим) — та же причина, что у рукопашного варианта: нет поля attackMod-per-actor.",
     "category": "ranged",
     "modGroup": "other",
     "requirement": "Любое, не наручное/наплечное. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

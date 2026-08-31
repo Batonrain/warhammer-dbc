@@ -5,7 +5,7 @@
   "folder": "kkPBRnRXnFwwlJmB",
   "system": {
     "description": "Желоб вдоль клинка с ядом из рукояти: профили R получают Toxic (0). Яд заменяем (контейнер на 10 зарядов, перезарядка как оружие с Rld 1).",
-    "notes": "",
+    "notes": "Рейтинг Toxic (0) — как в самом тексте: зависит от применяемого яда. Расходуемый контейнер на 10 зарядов и его перезарядка не смоделированы.",
     "category": "melee",
     "modGroup": "blades",
     "requirement": "Не силовое и не цепное оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,12 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "toxic",
+          "rating": 0
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

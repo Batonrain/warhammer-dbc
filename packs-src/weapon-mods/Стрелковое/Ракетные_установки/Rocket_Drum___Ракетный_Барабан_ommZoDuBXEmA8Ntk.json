@@ -5,7 +5,7 @@
   "folder": "u6nFQBb3FL4iqbYZ",
   "system": {
     "description": "Барабан на 3 ракеты: Clip 3, свойство Revolver, но Перезарядка — 1 ракета; Rapid Reload — только на первую Перезарядку в Раунд.",
-    "notes": "",
+    "notes": "Не смоделировано: Clip 3 (нет поля «переопределить магазин»), перезарядка по 1 ракете, ограничение Rapid Reload на первую перезарядку/Раунд.",
     "category": "ranged",
     "modGroup": "launcher",
     "requirement": "Ракетная Установка с Clip 1. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,7 +26,13 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
-      "addProps": [],
+      "addProps": [
+        {
+          "key": "revolver",
+          "rating": 0,
+          "rating2": 0
+        }
+      ],
       "removeProps": []
     },
     "drukhari": false

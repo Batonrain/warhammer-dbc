@@ -5,7 +5,7 @@
   "folder": "BCNO9ZWfZHazXEdf",
   "system": {
     "description": "Считывает генетику владельца: работает только в его руках.",
-    "notes": "",
+    "notes": "Ограничение владения — не числовой боевой эффект.",
     "category": "ranged",
     "modGroup": "other",
     "requirement": "Любое. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

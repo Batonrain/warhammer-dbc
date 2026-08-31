@@ -5,7 +5,7 @@
   "folder": "2MtEBZtz7NFwM9KH",
   "system": {
     "description": "Режим воздушного взрыва: теряет Flame и Linger, +1d10 Dmg (+1d10 по Swarm). После — сменить бак (Rld 2, R0). Только для топлива E(Fl).",
-    "notes": "",
+    "notes": "Не смоделировано целиком: переключаемый режим (теряет Flame/Linger, +1d10 Dmg, только для топлива E(Fl)) — не постоянная дельта.",
     "category": "ranged",
     "modGroup": "flamer",
     "requirement": "Flame оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

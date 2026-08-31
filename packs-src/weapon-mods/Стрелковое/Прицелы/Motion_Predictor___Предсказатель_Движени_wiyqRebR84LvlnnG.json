@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "(Прицеливание) Игнор штрафов за скорость и высоту цели.",
-    "notes": "",
+    "notes": "Не смоделировано: игнор штрафов скорости/высоты цели работает только при Прицеливании.",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

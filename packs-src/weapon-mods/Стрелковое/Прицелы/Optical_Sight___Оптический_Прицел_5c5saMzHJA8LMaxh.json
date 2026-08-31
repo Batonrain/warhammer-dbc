@@ -5,7 +5,7 @@
   "folder": "kbUzIayq4lxfwMlj",
   "system": {
     "description": "(Прицеливание) Нет штрафов на попадание с дальней и экстремальной дистанции.",
-    "notes": "",
+    "notes": "Не смоделировано: снятие штрафов дальней/экстремальной дистанции работает только при Прицеливании.",
     "category": "ranged",
     "modGroup": "sights",
     "requirement": "Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

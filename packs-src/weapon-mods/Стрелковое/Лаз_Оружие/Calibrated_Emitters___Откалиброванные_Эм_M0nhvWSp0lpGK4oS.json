@@ -5,7 +5,7 @@
   "folder": "DwJbqC2D0CdrjlqX",
   "system": {
     "description": "При Экстремальном Уроне — свойство Flame (поджог одежды/раскал брони, тушится как Горение).",
-    "notes": "",
+    "notes": "Не смоделировано: Flame триггерится только Экстремальным Уроном, не безусловно — применять addProps:[flame] означало бы дать это свойство на КАЖДЫЙ выстрел.",
     "category": "ranged",
     "modGroup": "las",
     "requirement": "Las оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",

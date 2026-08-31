@@ -5,7 +5,7 @@
   "folder": "PpXujqQbgrdCQvEE",
   "system": {
     "description": "Древко из редких прочных сортов дерева: +1 Dmg и теряет Primitive на профиле Посоха. Бонусы материалов не складываются.",
-    "notes": "",
+    "notes": "Текст ограничивает бонус профилем Посоха — здесь применяется ко всему оружию (для древковых материалов это обычно единственный профиль).",
     "category": "melee",
     "modGroup": "materials",
     "requirement": "Древковое оружие. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -15,7 +15,7 @@
     "quality": "common",
     "effects": {
       "attackMod": 0,
-      "damageMod": 0,
+      "damageMod": 1,
       "penMod": 0,
       "rangeMod": 0,
       "rangeMult": 1,
@@ -27,7 +27,9 @@
       "balanceMod": 0,
       "weightPct": 0,
       "addProps": [],
-      "removeProps": []
+      "removeProps": [
+        "primitive"
+      ]
     },
     "drukhari": false
   },
