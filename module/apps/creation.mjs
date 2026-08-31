@@ -16,7 +16,7 @@ import { raceDef, subraceEntries, subracesOf, isAeldariRace, raceGroupList }
 import { applyRace, applySubrace }      from "./races.mjs";
 import { buildLegionOptions, buildChapterOptions,
          buildCultureLegionOptions, resolveCultureFx } from "../constants/legions.mjs";
-import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE } from "../constants/implants.mjs";
+import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } from "../constants/implants.mjs";
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace, applyArchetype } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
@@ -549,6 +549,19 @@ export async function grantMechanicusImplants(actor) {
   return toAdd.length;
 }
 
+/**
+ * Выдаёт Черту-гейт «Mechanicum Implants / Импланты Механикум» — без неё
+ * требование "Трейт Mechanicum Implants" у Элитных архетипов Механикус
+ * (Архимагос, Секутор, Малагра и т.д., см. rules/elite-requirements.mjs)
+ * никогда не проходит, хотя физические импланты уже выданы. Идемпотентно.
+ */
+export async function grantMechanicumImplantsTrait(actor) {
+  const has = actor.items.some(i => i.type === "trait" && i.name === MECHANICUM_IMPLANTS_TRAIT.name);
+  if (has) return 0;
+  await actor.createEmbeddedDocuments("Item", [foundry.utils.deepClone(MECHANICUM_IMPLANTS_TRAIT)]);
+  return 1;
+}
+
 /** Выдаёт Скитарию Боевые Латы Скитарии (броня + дефлектор) вместо имплантов Механикум. */
 export async function grantSkitariiWarPlate(actor) {
   const existing = new Set(actor.items.filter(i => i.type === "implant").map(i => i.name));
@@ -681,8 +694,10 @@ export async function applyCreation(actor,
 
   // Импланты Механикум / Боевые Латы Скитарии
   let implants = 0;
-  if (arch?.grantsImplants) implants = await grantMechanicusImplants(actor);
-  else if (arch?.grantsWarPlate) implants = await grantSkitariiWarPlate(actor);
+  if (arch?.grantsImplants) {
+    implants = await grantMechanicusImplants(actor);
+    traits += await grantMechanicumImplantsTrait(actor);
+  } else if (arch?.grantsWarPlate) implants = await grantSkitariiWarPlate(actor);
 
   // Стартовые таланты: раса + Прошлое + субраса + архетип (выборы — через диалог)
   // Культура легиона выдаёт свои Таланты (стр. 489-506). Культура может быть

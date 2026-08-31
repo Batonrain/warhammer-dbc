@@ -65,6 +65,27 @@ export const SKITARII_WAR_PLATE = {
   }
 };
 
+// Черта-гейт «Импланты Механикум» — тот же компендиумный предмет, что
+// получает Варп-Кузнец через свою Механику (traits/Элитные_архетипы/
+// Варп_Кузнец/Mechanicum_Implants). Требуют её как Трейт многие Элитные
+// архетипы Механикус (Архимагос, Секутор, Малагра, Электрожрец и т.д. —
+// см. rules/elite-requirements.mjs). Архетипы с grantsImplants (Техножрец/
+// heretek, Технодесантник/techmarine) выдают физические Импланты, но не
+// проводят Механику — без этой Черты их требование "Трейт Mechanicum
+// Implants" никогда не проходит, хотя импланты у персонажа уже стоят.
+export const MECHANICUM_IMPLANTS_TRAIT = {
+  name: "Mechanicum Implants / Импланты Механикум",
+  type: "trait", img: "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  system: {
+    description: "", notes: "",
+    benefit: "Персонаж носит полный комплект имплантов Механикум.",
+    source: "", hasRating: false, rating: 0, hasRating2: false, rating2: 0,
+    effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [], charValueBonuses: [],
+      armourAll: 0, fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0 },
+    bookSource: "Домашнее правило (не из официальной книги)"
+  }
+};
+
 // ─────────────────────────── МЕХАНИКУС ──────────────────────────────────────
 export const MECHANICUS_IMPLANTS = [
   I("Electro-Graft / Электро-Имплантат", "mechanicus",
