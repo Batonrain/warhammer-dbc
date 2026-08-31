@@ -3,6 +3,7 @@ import { listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   activateBodyListeners,
   adjustVital,
+  satisfyVital,
   setDeceased,
   setVital,
   toggleBodyType,
@@ -47,7 +48,7 @@ function actor({ vitals = {}, items = [] } = {}) {
   return a;
 }
 
-beforeEach(resetCaptured);
+beforeEach(() => { resetCaptured(); game.time = { worldTime: 0 }; });
 
 describe("body tab helpers", () => {
   it("toggleBodyType переключает фигуру в обе стороны", async () => {
@@ -81,6 +82,17 @@ describe("body tab helpers", () => {
     expect(a.updates).toEqual([
       { "system.vitals.hunger": 3 },
       { "system.vitals.thirst": 0 }
+    ]);
+  });
+
+  it("satisfyVital обнуляет стадию И метку времени последнего удовлетворения (wdbc-jnqj)", async () => {
+    const a = actor({ vitals: { hunger: 2 } });
+    game.time = { worldTime: 123456 };
+
+    await satisfyVital(a, "hunger");
+
+    expect(a.updates).toEqual([
+      { "system.vitals.hunger": 0, "system.vitals.lastFed": 123456 }
     ]);
   });
 
@@ -132,7 +144,7 @@ describe("body tab listeners", () => {
     expect(surgeonCalls).toEqual([a]);
     expect(a.updates).toEqual([
       { "system.vitals.hunger": 2 },
-      { "system.vitals.hunger": 0 }
+      { "system.vitals.hunger": 0, "system.vitals.lastFed": 0 }
     ]);
     expect(a.flags.deceased).toBe(true);
     expect(eye.flags.bodySide).toBe("left");
