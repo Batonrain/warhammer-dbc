@@ -1,3 +1,26 @@
+{{!-- Обшивка «инфопланшет» (wdbc-70g5) — top-level siblings, как у Отряда/
+     Орды/Формирования: root:true всё равно распаковывает верхний уровень в
+     this.element, обёртка снаружи не нужна (skill dbc-housing).
+     .warhammer-dbc.star-system-sheet уже статикой в DEFAULT_OPTIONS.classes
+     (самостоятельный лист, без подклассов). Янтарный/красный LED тут
+     сознательно не завязаны ни на что — у Звёздной системы нет аналога
+     wounds/tier/crippled/broken (это пассивный лист состояния мира, не
+     боевой актор), выдумывать несуществующую «опасность» не стал. --}}
+<div class="cog-rivet tl"></div>
+<div class="cog-rivet tr"></div>
+<div class="cog-rivet bl"></div>
+<div class="cog-rivet br"></div>
+
+<div class="cog-plate-row">
+  <span class="cog-plate">Инфопланшет модели XIL</span>
+  <div class="cog-leds">
+    <i class="cog-led cog-led-green on"></i>
+    <i class="cog-led cog-led-amber"></i>
+    <i class="cog-led cog-led-red"></i>
+  </div>
+</div>
+
+<div class="cog-screen">
 <header class="ship-header">
   <img class="ship-portrait" src="{{actor.img}}" data-action="portrait" data-edit="img" title="Карта системы"/>
   <div class="ship-head-fields">
@@ -157,3 +180,6 @@
   </div>
 
 </section>
+</div>
+
+<div class="cog-status-row"></div>
