@@ -77,11 +77,42 @@ const TALENT_GOD_LABEL_KEY = {
   "неделимый": "undivided"
 };
 
+const TALENTS_PACK_ID = "warhammer-dbc.talents";
+
 let _talentGodByName = null;
+function fallbackTalentGodIndex() {
+  return new Map(TALENT_LIBRARY.map(t => [t.name, t.system?.god || ""]));
+}
 function talentGodIndex() {
   if (_talentGodByName) return _talentGodByName;
-  _talentGodByName = new Map(TALENT_LIBRARY.map(t => [t.name, t.system?.god || ""]));
+  _talentGodByName = fallbackTalentGodIndex();
   return _talentGodByName;
+}
+
+async function _refreshTalentGodIndex() {
+  const pack = (typeof game !== "undefined") ? game.packs?.get?.(TALENTS_PACK_ID) : null;
+  if (!pack) { _talentGodByName = fallbackTalentGodIndex(); return; }
+  try {
+    const docs = await pack.getDocuments();
+    const byName = new Map(docs.map(d => [d.name, d.system?.god || ""]));
+    // Библиотека как подстраховка: талант, которого в паке ещё нет, не должен
+    // тихо стать «Неделимым» в ценах Покровительства.
+    for (const [name, god] of fallbackTalentGodIndex()) if (!byName.has(name)) byName.set(name, god);
+    _talentGodByName = byName;
+  } catch (e) { _talentGodByName = fallbackTalentGodIndex(); }
+}
+
+/** Регистрируется в warhammer-dbc.mjs — тот же приём «пак первичен, константа —
+ * запасной путь», что у initVehicleWeaponIndex/initBioImplantCatalog (wdbc-zaxa):
+ * кэш Бога Таланта строится из warhammer-dbc.talents после готовности мира и
+ * обновляется при правках компендиума. До первого построения (и в тестах без
+ * game.packs) работает библиотека. Коммит 43363a23 звал эту функцию, но самой
+ * функции не существовало — система падала на загрузке.
+ */
+export function initTalentGodIndex() {
+  Hooks.once("ready", () => _refreshTalentGodIndex());
+  for (const h of ["createItem", "deleteItem", "updateItem"])
+    Hooks.on(h, doc => { if (doc?.pack === TALENTS_PACK_ID) _refreshTalentGodIndex(); });
 }
 
 /** Ключ Бога Таланта по имени (как оно лежит в компендиуме/библиотеке), или
