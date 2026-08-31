@@ -2109,7 +2109,12 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.value = ev.currentTarget.value === "" ? "" : (parseFloat(ev.currentTarget.value) || 0); saveMech(arr); }
     });
-    // Очки Судьбы или Бесчестья (kind:"poolMax")
+    // Очки Судьбы/Бесчестья либо Аблативные Раны (kind:"poolMax")
+    on(".mech-poolmax-target", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.poolTarget = ev.currentTarget.value; saveMech(arr); }
+    });
     on(".mech-poolmax-value", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

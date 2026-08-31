@@ -6143,9 +6143,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.absurdlyFat": {
-    label: "+10 аблативных Ран (авторегенерация 1/Ход), Размер +1 без влияния на SPD — упирается в отсутствие пула аблативных Ран (wdbc-smy7)",
+    label: "+10 аблативных Ран и авторегенерация 1/Ход механизированы (kind:\"poolMax\"/ablativeWounds). Размер +1 без влияния на SPD — не механизировано: в системе нет Конструктор-кайнда для бонуса к Размеру",
     source: "Дар Нургл (Absurdly Fat)",
-    reader: ""
+    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart)"
   },
   "gift.nurgle.blackPhysician": {
     label: "Полное действие+1R себе: заражает до 3 трупов в 2м, оживают зомби (Раны×2, теряют Навыки/Таланты кроме оружейных), контроль до Cor.b зомби",
