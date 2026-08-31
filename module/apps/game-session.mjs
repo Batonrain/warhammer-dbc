@@ -21,7 +21,21 @@
 //  метка на самом акторе — flags.warhammer-dbc.usageLimits.<возможность>,
 //  см. isRuleUsageUsed/markRuleUsageUsed ниже. Ею живёт «Абсолютная вера в
 //  прошлое» (Мир-кладбище): один раз за столкновение.
+//
+//  Все четыре формы «разово» (round/battle/scene/session) — тонкие обёртки
+//  этого файла над module/rules/cooldown.mjs (wdbc-f4jt): там единая метка
+//  usageLimits.<key> и чтение/запись ОДНОЙ записи, здесь остаётся то, что
+//  реально Foundry-тяжёлое и специфично для этой панели — массовый скан всех
+//  актёров/предметов по кнопке (resetUsageLimit), сами кнопки, чат-баннеры и
+//  восполнение пулов Судьбы/Бесчестия. Имена и поведение экспортов здесь
+//  сохранены ради существующих вызывающих мест — новый код пусть берёт
+//  cooldown.mjs напрямую.
 // ════════════════════════════════════════════════════════════════════════
+
+import {
+  isCapabilityAvailable, markCapabilityUsed,
+  isRuleUsageUsed as cooldownIsRuleUsageUsed, markRuleUsageUsed as cooldownMarkRuleUsageUsed
+} from "../rules/cooldown.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -67,41 +81,29 @@ function broadcastBanner(text) {
 // есть предмет-носитель. У возможности из реестра правил (grantFlag) носителя
 // нет: правило приходит от Происхождения, расы или книги, а не от предмета.
 // Поэтому вторая, такая же по смыслу метка живёт на самом акторе и ключуется
-// именем возможности. Точка в имени ключа флага Foundry означала бы вложенный
-// путь, поэтому она заменяется дефисом.
-const usageKey = flag => String(flag ?? "").replace(/\./g, "-");
+// именем возможности — см. заголовок файла, тонкая обёртка над cooldown.mjs.
 
 /** Израсходована ли разовая возможность актора в текущем scope. */
 export function isRuleUsageUsed(actor, flag) {
-  return actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.used === true;
+  return cooldownIsRuleUsageUsed(actor, flag);
 }
 
 /** Отметить разовую возможность актора израсходованной до конца сцены/сессии. */
 export async function markRuleUsageUsed(actor, flag, scope = "scene") {
-  if (!actor) return;
-  await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, { scope, used: true });
+  return cooldownMarkRuleUsageUsed(actor, flag, scope);
 }
 
 // ── Разовые-за-РАУНД возможности актора ─────────────────────────────────────
-// Тот же примитив, что isRuleUsageUsed/markRuleUsageUsed выше, но раунд не
-// нужно откатывать кнопкой: он и так меняется сам, поэтому вместо булева
-// used запоминается НОМЕР раунда последнего использования и сравнивается с
-// текущим (game.combat.round) — совпал номер, значит уже потрачено в этом
-// раунде. Без активного Combat раунд отследить нечем: возможность считается
-// доступной, чтобы отсутствие боевого трекера не отнимало её у игрока.
+// См. заголовок файла — обёртки над module/rules/cooldown.mjs (unit="round").
 
 /** Доступна ли Раз-в-Раунд возможность актора в текущем Раунде боя. */
 export function isRoundCapabilityAvailable(actor, flag) {
-  if (!game.combat) return true;
-  const usedRound = actor?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`)?.round;
-  return usedRound !== game.combat.round;
+  return isCapabilityAvailable(actor, flag, "round");
 }
 
 /** Отметить Раз-в-Раунд возможность актора потраченной в текущем Раунде. */
 export async function markRoundCapabilityUsed(actor, flag) {
-  if (!actor || !game.combat) return;
-  await actor.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`,
-    { scope: "round", used: true, round: game.combat.round });
+  return markCapabilityUsed(actor, flag, "round");
 }
 
 /**
