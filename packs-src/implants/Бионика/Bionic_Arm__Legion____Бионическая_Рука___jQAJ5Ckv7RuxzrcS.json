@@ -5,7 +5,7 @@
   "system": {
     "description": "R:2. Вариант руки.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-arm",
     "quality": "common",
     "effect": "Рука десантника: Unnatural S (4) для этой руки; крупная и тяжёлая, не для людей.",
     "installed": "",

@@ -5,7 +5,7 @@
   "system": {
     "description": "R:0. Вариант руки.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-arm",
     "quality": "common",
     "effect": "Дублирует функции руки. Poor.Q −5 тонкая работа; Good.Q +10 на манипуляции; Best.Q +10 + бонус.",
     "installed": "",

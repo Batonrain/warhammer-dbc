@@ -5,7 +5,7 @@
   "system": {
     "description": "R:2. Вариант ноги.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Ноги десантника: Unnatural S для ног (Бег/Натиск), крупные и тяжёлые.",
     "installed": "",

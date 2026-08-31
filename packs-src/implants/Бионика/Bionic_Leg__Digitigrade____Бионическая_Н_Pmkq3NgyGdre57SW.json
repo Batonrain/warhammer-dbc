@@ -5,7 +5,7 @@
   "system": {
     "description": "R:1. Вариант ноги.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Звериная нога: Trait Digitigrade, +10 Acrobatics, +Успехи на Группирование.",
     "installed": "",

@@ -130,6 +130,44 @@ describe("Абейянт: генерация ресурсов по подклю�
   });
 });
 
+// wdbc-9bzv: energyMax/compensator/ironFocus раньше жили ТОЛЬКО в IMPLANT_MECH
+// по имени — переименование импланта в паке молча обнуляло Энергию/
+// Компенсатор/Технофокус. Теперь эти три директивы читаются в первую очередь
+// со схемы самого предмета; таблица остаётся фоллбэком для немигрированных
+// легаси-копий (последний тест ниже).
+describe("energyMax/compensator/ironFocus: со схемы предмета, не по имени", () => {
+  function implantSchema(name, extra = {}) {
+    return { id: `implant-${name}`, name, type: "implant",
+             system: { effects: {}, category: "cybernetic", quality: "common", ...extra },
+             getFlag: (_s, k) => (k === "installed" ? true : undefined) };
+  }
+
+  it("energyMax в схеме работает даже при имени, не совпадающем ни с одной записью таблицы", () => {
+    const system = characterWith([
+      implantSchema("Renamed Potentia Coil", { energyMax: { poor: 0, common: 3, good: 0, best: 0 } })
+    ]);
+    expect(system.energy.maxTotal).toBe(3);
+  });
+
+  it("compensator в схеме работает даже при имени, не совпадающем ни с одной записью таблицы", () => {
+    const system = characterWith([
+      implantSchema("Renamed Infernia Coil", { compensator: { poor: 0, common: 10, good: 0, best: 0 } })
+    ]);
+    expect(system.techCompBonus).toBe(10);
+  });
+
+  it("ironFocus в схеме работает даже при имени, не совпадающем ни с одной записью таблицы", () => {
+    const system = characterWith([implantSchema("Renamed EFM Circuits", { ironFocus: true })]);
+    expect(system.techFocus).toHaveLength(1);
+    expect(system.techFocus[0].name).toBe("Renamed EFM Circuits");
+  });
+
+  it("легаси-имплант без полей схемы всё ещё получает бонус по таблице (фоллбэк)", () => {
+    const system = characterWith([implantSchema("Potentia Coil / Потенциа Коил")]);
+    expect(system.energy.maxTotal).toBe(3); // common → 3 из таблицы IMPLANT_MECH
+  });
+});
+
 describe("ключи числовой росписи", () => {
   it("каждая характеристика в un/val существует", () => {
     const bad = [];

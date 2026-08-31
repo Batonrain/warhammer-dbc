@@ -5,7 +5,9 @@
 //  • buildBodyState()   — сводит импланты в состояние регионов/оверлеев.
 //                         аугметикой красятся цветом КАТЕГОРИИ импланта.
 //  • buildEcg()         — кардиограмма, зависящая от текущих Ран.
-//  Механику эта модель НЕ трогает — только визуализирует.
+//  НЕ единственно визуал: classifyImplant() также питает +2 АР руки/ноги в
+//  character.mjs (bionic-arm/bionic-leg), но лишь как фоллбэк для легаси-
+//  имплантов с общей category "bionic" без своего подвида — см. character.mjs.
 // ════════════════════════════════════════════════════════════════════════
 import { esc } from "../helpers/utils.mjs";
 import { AELDARI_RACES } from "./races.mjs";
@@ -48,6 +50,8 @@ const IMPLANT_KINDS = [
  */
 export function classifyImplant(name = "", installed = "", category = "") {
   if (category === "mechadendrite") return { kind: "mechadendrite" };
+  if (category === "bionic-arm") return { kind: "arm" };
+  if (category === "bionic-leg") return { kind: "leg" };
   const hay = `${name} ${installed}`.toLowerCase();
   if (/всё тело|все тело|полностью|whole body|full body|all body/i.test(hay))
     return { kind: "fullbody" };
@@ -63,6 +67,8 @@ const CAT_COLORS = {
   mechOther:    "#ff9a3c",
   mechadendrite:"#ff9a3c",
   bionic:       "#4dd2ff",
+  "bionic-arm": "#4dd2ff",   // подвид "bionic" (wdbc-hgua) — та же бионика, свой цвет не нужен
+  "bionic-leg": "#4dd2ff",
   cybernetic:   "#7fe0a8",
   psybernetic:  "#c06fff",
   archeotech:   "#ffd24d",

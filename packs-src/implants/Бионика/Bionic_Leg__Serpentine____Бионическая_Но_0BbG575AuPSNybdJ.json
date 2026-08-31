@@ -5,7 +5,7 @@
   "system": {
     "description": "R:3. Вариант ноги.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Змеиный хвост вместо ног: Trait Crawler и Sturdy, Таланты Sprint и Preternatural Speed; хвост как доп. пара рук для Захвата/Борьбы.",
     "installed": "",

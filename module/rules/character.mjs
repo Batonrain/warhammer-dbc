@@ -186,37 +186,51 @@ export function prepareCharacterDerived(actor, system) {
       // Сторона не выбрана (флаг снят) — бонус никуда не начислять: раньше
       // невыбранная сторона молча уходила в "rightArm"/"rightLeg" через
       // тернарник по умолчанию, и снятие галочки Л/П не убирало бонус.
-      if (t === "implant" && item.system.category === "bionic") {
-        const k = classifyImplant(item.name, item.system.installed, item.system.category)?.kind;
+      // kind решает system.category ("bionic-arm"/"bionic-leg") — переименование
+      // предмета его больше не сбивает (wdbc-hgua). classifyImplant по имени —
+      // фоллбэк только для легаси-копий с общей category "bionic" без подвида.
+      const bionicCat = item.system.category;
+      if (t === "implant" && (bionicCat === "bionic" || bionicCat === "bionic-arm" || bionicCat === "bionic-leg")) {
+        let k;
+        if (bionicCat === "bionic-arm") k = "arm";
+        else if (bionicCat === "bionic-leg") k = "leg";
+        else k = classifyImplant(item.name, item.system.installed, bionicCat)?.kind;
         const side = item.getFlag("warhammer-dbc", "bodySide");
         if (side === "left" || side === "right") {
           if (k === "arm") traitArmorLoc[side === "left" ? "leftArm" : "rightArm"] += 2;
           else if (k === "leg") traitArmorLoc[side === "left" ? "leftLeg" : "rightLeg"] += 2;
         }
       }
-      // Роспись механик Техночудес. Числовое (un/val/ap) отсюда ушло: его
-      // складывали по ИМЕНИ предмета, мимо эффектов и Конструктора, так что на
-      // листе импланта не было ни значения, ни способа поправить (wdbc-cy2).
-      // Теперь эти числа лежат в самом предмете (packs-src → system.effects →
-      // эффект миграцией, см. migrations/item-effects.mjs) и приходят сюда
-      // общей дорогой ниже. У трёх имплантов пака та же надбавка лежала в обоих
-      // местах разом, и бонус выходил двойным: Крукс Механикус давал S.b +4.
+      // Роспись механик Техночудес. Числовое (un/val/ap) отсюда ушло раньше
+      // (wdbc-cy2): его складывали по ИМЕНИ предмета, мимо эффектов и
+      // Конструктора, так что на листе импланта не было ни значения, ни
+      // способа поправить. Теперь эти числа лежат в самом предмете (packs-src
+      // → system.effects → эффект миграцией, см. migrations/item-effects.mjs)
+      // и приходят сюда общей дорогой ниже. У трёх имплантов пака та же
+      // надбавка лежала в обоих местах разом, и бонус выходил двойным: Крукс
+      // Механикус давал S.b +4.
+      // energyMax/compensator/ironFocus читаются в первую очередь со схемы
+      // самого предмета (packs-src) — IMPLANT_MECH остаётся ТОЛЬКО фоллбэком
+      // для ещё не мигрированных копий: раньше эти три директивы жили
+      // единственно в таблице по имени, и переименование импланта в паке молча
+      // обнуляло Энергию/Компенсатор/Технофокус (wdbc-9bzv).
       if (t === "implant") {
+        const q = item.system.quality || "common";
+        const sysEnergy = item.system.energyMax;
+        const sysComp = item.system.compensator;
+        const hasSchemaEnergy = sysEnergy && Object.values(sysEnergy).some(v => v);
+        const hasSchemaComp = sysComp && Object.values(sysComp).some(v => v);
         const mech = implantMech(item.name);
-        if (mech) {
-          const q = item.system.quality || "common";
-          // energyMax — число (флат) либо {poor,common,good,best}, когда сама
-          // надбавка зависит от Качества импланта (базовая Катушка Потенции).
-          if (mech.energyMax) {
-            implantEnergyMax += typeof mech.energyMax === "object"
-              ? (mech.energyMax[q] ?? 0)
-              : mech.energyMax;
-          }
-          if (mech.compensator && (mech.compensator[q] ?? 0) > implantCompBonus)
-            implantCompBonus = mech.compensator[q] ?? 0;
-          if (mech.ironFocus)
-            techFocusInstalled.push({ name: item.name, quality: q, mod: ironModForQuality(q) });
-        }
+
+        if (hasSchemaEnergy) implantEnergyMax += sysEnergy[q] ?? 0;
+        else if (mech?.energyMax) implantEnergyMax += typeof mech.energyMax === "object"
+          ? (mech.energyMax[q] ?? 0) : mech.energyMax;
+
+        const compBonus = hasSchemaComp ? (sysComp[q] ?? 0) : (mech?.compensator?.[q] ?? 0);
+        if (compBonus > implantCompBonus) implantCompBonus = compBonus;
+
+        if (item.system.ironFocus || mech?.ironFocus)
+          techFocusInstalled.push({ name: item.name, quality: q, mod: ironModForQuality(q) });
       }
       // Мигрированные предметы несут ту же механику как embedded ActiveEffect
       // (см. migrations/item-effects.mjs) — читать старое поле тоже

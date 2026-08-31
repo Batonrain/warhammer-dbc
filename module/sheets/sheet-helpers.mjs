@@ -758,7 +758,7 @@ export function buildGetData(actor) {
   }));
 
   // ── Импланты (Механикус/Бионика/Кибернетика) ────────────────────────────────
-  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
+  const IMPL_CAT = { mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус", mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика", "bionic-arm": "Бионика", "bionic-leg": "Бионика", cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех", skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес" };
   const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
   // Органы Астартес (category "astartes") показаны отдельным блоком ГЕНОСЕМЯ
   // на вкладке ТЕЛО (context.geneSeedOrgans ниже) — здесь исключены, чтобы не

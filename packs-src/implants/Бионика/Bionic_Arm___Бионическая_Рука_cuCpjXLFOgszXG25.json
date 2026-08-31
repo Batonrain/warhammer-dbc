@@ -5,7 +5,7 @@
   "system": {
     "description": "R:0. Бионический протез руки.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-arm",
     "quality": "common",
     "effect": "Протез руки. Варианты: Рука-Оружие, Интегрированное Оружие, Универсальный Порт, Легион (Unnatural S 4). Poor.Q −5 тонкая работа; Good.Q +10 манипуляции; Best.Q +10 + бонус.",
     "installed": "",

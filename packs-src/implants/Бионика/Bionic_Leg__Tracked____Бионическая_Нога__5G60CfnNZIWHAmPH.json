@@ -5,7 +5,7 @@
   "system": {
     "description": "R:1. Вариант ноги.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Гусеничный блок: быстрее по ровному, но −Acrobatics, нельзя прыгать, +Sb Ношения.",
     "installed": "",

@@ -4,9 +4,12 @@
 // Механикум и Латы Скитарии. Полный каталог имплантов для выбора игроком —
 // в packs-src/implants (раскладка по папкам категорий), сюда не дублируется.
 //
-// system.category: "mechanicus" | "bionic" | "cybernetic" | "archeotech" | "bioimplant"
-//                | "skitarii" | "astartes" (органы Геносемени — они живут только
-//                  в packs-src/implants/Импланты Астартес, библиотеки здесь нет)
+// system.category: "mechanicus" | "bionic" | "bionic-arm" | "bionic-leg" | "cybernetic"
+//                | "archeotech" | "bioimplant" | "skitarii" | "astartes" (органы
+//                  Геносемени — они живут только в packs-src/implants/Импланты
+//                  Астартес, библиотеки здесь нет)
+// "bionic-arm"/"bionic-leg" — подвиды "bionic": решают +2 АР конечности в
+// character.mjs (wdbc-hgua), не только цвет на карте тела.
 // Эффекты по Качеству (Poor.Q/Good.Q/Best.Q) указаны в тексте effect.
 
 const IMG = "icons/svg/item-bag.svg";

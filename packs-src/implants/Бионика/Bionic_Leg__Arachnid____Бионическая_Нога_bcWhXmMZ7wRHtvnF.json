@@ -5,7 +5,7 @@
   "system": {
     "description": "R:2. Вариант ноги.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Восемь насекомовидных конечностей вместо ног: игнор Трудного Ландшафта, +30 vs сдвиг с места, +30 Карабканье, Trait Sturdy.",
     "installed": "",

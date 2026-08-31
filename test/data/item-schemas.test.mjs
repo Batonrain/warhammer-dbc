@@ -108,7 +108,12 @@ const TYPES = {
       },
       // Свойства встроенного оружия импланта — правятся на листе предмета
       // (item-sheet.mjs), а в template.json объявлены не были.
-      weaponProps: []
+      weaponProps: [],
+      // Директивы автоматизации Техночудес (wdbc-9bzv) — тоже не было в
+      // template.json, схема родилась вместе с полями сама.
+      energyMax: { poor: 0, common: 0, good: 0, best: 0 },
+      compensator: { poor: 0, common: 0, good: 0, best: 0 },
+      ironFocus: false
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },

@@ -5,7 +5,7 @@
   "system": {
     "description": "R:1. Вариант руки.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-arm",
     "quality": "common",
     "effect": "Встроенное интегрированное оружие (Compact); +10 на использование этого оружия; нельзя выбить из руки.",
     "installed": "",

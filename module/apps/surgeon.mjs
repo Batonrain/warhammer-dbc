@@ -19,6 +19,7 @@ const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" 
 const IMPL_CAT = {
   mechanicus: "Механикус", mechEnergy: "Механикус", mechFocus: "Механикус",
   mechOther: "Механикус", mechadendrite: "Механикус", bionic: "Бионика",
+  "bionic-arm": "Бионика", "bionic-leg": "Бионика",
   cybernetic: "Кибернетика", psybernetic: "Псибернетика", archeotech: "Археотех",
   skitarii: "Скитарии", bioimplant: "Биоимплант", astartes: "Импланты Астартес",
 };

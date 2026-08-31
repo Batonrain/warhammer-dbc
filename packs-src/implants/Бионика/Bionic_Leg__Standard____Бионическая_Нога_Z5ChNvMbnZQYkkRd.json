@@ -5,7 +5,7 @@
   "system": {
     "description": "R:0. Вариант ноги.",
     "notes": "",
-    "category": "bionic",
+    "category": "bionic-leg",
     "quality": "common",
     "effect": "Дублирует функции ноги.",
     "installed": "",
