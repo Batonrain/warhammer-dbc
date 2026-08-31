@@ -38,6 +38,7 @@ import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
+import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -539,6 +540,25 @@ export function registerHooks() {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         await _applyWeaponPropEffect(ev.currentTarget.dataset);
+      });
+    });
+
+    // Пилюли распознанных крит-эффектов/Шока (wdbc-xql6) — цель уже известна
+    // по data-actor-uuid (та же, что несла карточку урона/теста Страха),
+    // поэтому в отличие от wh-wprop-apply-btn выше не нужен выбор токена.
+    html.querySelectorAll(".wh-crit-apply-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const actor = await fromUuid(ds.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Наложить состояние может владелец цели (или ГМ).");
+        }
+        el.disabled = true;
+        await applyCritEffectPill(actor, {
+          key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1"
+        });
       });
     });
 

@@ -13,6 +13,7 @@ import { isRuleUsageUsed }                         from "../apps/game-session.mj
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
 import { fatiguePenalty }                          from "../sheets/tabs/conditions.mjs";
+import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -56,9 +57,13 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
       shockHtml = `<div class="roll-outcome"><span class="roll-success">${rollIcon("shield","#4dffa6")}Шок предотвращён (Infamy)</span></div>`;
     } else {
       const row = lookupTable(SHOCK_TABLE, total);
+      // wdbc-xql6: та же пилюльная обвязка, что у крит-таблиц — цель Шока
+      // это сам actor теста Страха, известен уже здесь.
+      const shockPills = row?.text ? parseCritEffectPills(row.text) : [];
       shockHtml = `<div class="roll-damage-section">
         <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${infamy ? ` −${infamy}` : ""} = ${total}):</div>
-        <div class="roll-threshold">${row?.text ?? "—"}</div></div>`;
+        <div class="roll-threshold">${row?.text ?? "—"}</div>
+        ${critPillsHtml(shockPills, actor.uuid)}</div>`;
     }
   }
   // 5+ степеней провала Страха → Ментальная Травма (в конце сцены)
