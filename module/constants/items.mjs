@@ -138,7 +138,7 @@ export const ARMOR_MOD_GROUPS = {
 // на листе), как у большинства WEAPON_PROPERTIES.
 export const ARMOR_PROPERTIES = {
   blinders:   { label: "Blinders / Шоры",        desc: "Шлем. Уменьшает угол обзора до X°." },
-  cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций." },
+  cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций.", auto: { frontArcNoProtect: true } },
   conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона.", auto: { noApVsType: "energy" } },
   flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий.", auto: { doubleApVsType: "blast" } },
   gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном попадании в голову — бросок 1d10." },

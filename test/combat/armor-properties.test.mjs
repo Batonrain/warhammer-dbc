@@ -65,7 +65,9 @@ describe("aggregateArmorAuto", () => {
   });
 
   it("свойства без auto (gorget, hard, void…) не поднимают ни одного флага", () => {
-    const props = resolveArmorProps({ system: { properties: ["gorget", "hard", "void", "cloak"] } });
+    // cloak сюда больше не входит — с wdbc-p5el у него появился auto.frontArcNoProtect,
+    // см. отдельный describe "aggregateArmorAuto — cloak" ниже.
+    const props = resolveArmorProps({ system: { properties: ["gorget", "hard", "void"] } });
     expect(aggregateArmorAuto(props)).toEqual(emptyArmorLocFlags());
   });
 });
@@ -93,6 +95,13 @@ describe("aggregateArmorSkillMods (wdbc-vzyi)", () => {
   it("свойства без skillMod (conductive, gorget…) не поднимают запись", () => {
     const props = resolveArmorProps({ system: { properties: ["conductive", "gorget"] } });
     expect(aggregateArmorSkillMods(props)).toEqual({});
+  });
+});
+
+describe("aggregateArmorAuto — cloak (wdbc-p5el)", () => {
+  it("cloak → frontArcNoProtect", () => {
+    const props = resolveArmorProps({ system: { properties: ["cloak"] } });
+    expect(aggregateArmorAuto(props).frontArcNoProtect).toBe(true);
   });
 });
 
@@ -151,6 +160,16 @@ describe("resolveArmorAbsorptionAP", () => {
   it("Флак удваивает уже с учётом vsType-бонуса (моды брони)", () => {
     const flags = { ...emptyArmorLocFlags(), doubleBlast: true };
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, vsTypeBonus: 1, damageType: "blast", flags })).toBe(12);
+  });
+
+  it("Cloak: обнуляет AP локации при фронтальном хите, не трогает нефронтальный (wdbc-p5el)", () => {
+    const flags = { ...emptyArmorLocFlags(), frontArcNoProtect: true };
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", flags, frontArcHit: true })).toBe(0);
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", flags, frontArcHit: false })).toBe(6);
+  });
+
+  it("frontArcHit сам по себе ничего не делает без свойства Cloak на броне", () => {
+    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", frontArcHit: true })).toBe(6);
   });
 
   it("Примитивное оружие удваивает AP (макс +6) без флага брони", () => {
