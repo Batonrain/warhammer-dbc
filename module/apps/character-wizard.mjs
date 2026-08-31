@@ -44,7 +44,7 @@ import { grantChoiceBlocksHtml, wireGrantChoiceBlocks, readGrantChoicePicks } fr
 import { characterContext }      from "../sheets/character-context.mjs";
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { CREATION_ROLL_CHARS, creationBonusRolls, rollCharSet, creationCharSum,
-         rollFormula, APT_CHAR_KEYS, APT_OTHER_KEYS, APT_PICK, resolveCreation,
+         rollFormula, rollFormulaForChar, APT_CHAR_KEYS, APT_OTHER_KEYS, APT_PICK, resolveCreation,
          grantCreationSkills, grantMechanicusImplants, grantMechanicumImplantsTrait,
          grantSkitariiWarPlate, ruSpec } from "./creation.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
@@ -1055,7 +1055,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       // единственно верном проходе. Защита от повтора — свой отдельный флаг
       // сессии Мастера, не значение поля.
       if (this._wasEmpty.inf && !this._infamyRolled) {
-        const infv = await rollFormula(actor, startingInfamyFormula(sum.inf, true), "Стартовое Бесчестие");
+        const sys = actor.system;
+        const { sub } = resolveCreation({
+          raceKey: sys.race, subraceKey: sys.subrace, archKey: sys.archetype,
+          ynnariPast: sys.ynnariPast, harlequinPast: sys.harlequinPast
+        });
+        const infv = await rollFormulaForChar(actor,
+          startingInfamyFormula(sum.inf, true), "inf", sub, "Стартовое Бесчестие");
         this._infamyRolled = true;
         if (infv) await actor.update({ "system.characteristics.inf.base": infv });
       }

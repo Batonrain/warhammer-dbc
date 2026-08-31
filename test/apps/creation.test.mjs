@@ -3,8 +3,9 @@ import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
 import { splitTopLevel } from "../../module/helpers/utils.mjs";
 import { grantCreationSkills, grantCultureSkills, grantCreationGear,
          resolveCreation, creationCharSum, rollCharSet, applyCreation,
-         showCreationWizard } from "../../module/apps/creation.mjs";
+         rollFormulaAdvantage, showCreationWizard } from "../../module/apps/creation.mjs";
 import * as racesModule from "../../module/apps/races.mjs";
+import * as raceLibraryModule from "../../module/apps/race-library.mjs";
 
 /** Обновление по плоскому пути: Foundry меняет документ на месте, тесты — тоже. */
 function applyPath(target, path, value) {
@@ -317,6 +318,66 @@ describe("применение создания", () => {
     expect(a.flags["warhammer-dbc"].setupDone).toBe(true);
     expect(a.system.alignment).toBe("heretic");
     expect(d.calls.theme).toBe(1);
+  });
+});
+
+describe("rollFormulaAdvantage: бросок «с Преимуществом» (wdbc-0tzr)", () => {
+  it("N бросков — оставляет больший итог, отброшенные видны в чате", async () => {
+    captured.dice = [3, 4]; // «19+1d5»: 19+3=22, 19+4=23 — второй больше
+    const v = await rollFormulaAdvantage({}, "19+1d5", 2, "Стартовое Бесчестие");
+    expect(v).toBe(23);
+    expect(captured.rolls).toEqual(["19+1d5", "19+1d5"]);
+    expect(captured.chat).toHaveLength(1);
+    expect(captured.chat[0].flavor).toContain("Преимущество ×2");
+    expect(captured.chat[0].flavor).toContain("отброшено: 22");
+  });
+
+  it("n≤1 ведёт себя как обычный одиночный бросок", async () => {
+    captured.nextRoll = 21;
+    const v = await rollFormulaAdvantage({}, "19+1d5", 1, "Стартовое Бесчестие");
+    expect(v).toBe(21);
+    expect(captured.rolls).toHaveLength(1);
+  });
+
+  it("пустая формула — 0, без обращения к Roll", async () => {
+    expect(await rollFormulaAdvantage({}, "", 3, "x")).toBe(0);
+    expect(captured.rolls).toHaveLength(0);
+  });
+});
+
+// Эльданар объявляет charRollAdvantage:{char:"inf",rolls:3} на реальном паке
+// (packs-src/races/Субрасы/Eldanar...json) — здесь читается из подставного
+// race-library, чтобы не тянуть Foundry-компендиум в юнит-тест.
+describe("Субраса с charRollAdvantage кидает Inf N раз (wdbc-0tzr, Эльданар)", () => {
+  let spy;
+  beforeEach(() => {
+    spy = vi.spyOn(raceLibraryModule, "subraceEntries").mockReturnValue({
+      eldanar: {
+        key: "eldanar", label: "Эльданар", parent: "azuriane",
+        charMods: {}, charRollAdvantage: { char: "inf", rolls: 3 },
+        talents: "", removesTraits: [], uuid: ""
+      }
+    });
+  });
+  afterEach(() => spy.mockRestore());
+
+  it("кидает формулу трижды и берёт лучший итог", async () => {
+    const a = actor();
+    captured.dice = [1, 3, 2]; // 1d5 трижды: итоги 1, 3, 2 — второй бросок лучший
+    await settle(applyCreation(a, { raceKey: "azuriane", subraceKey: "eldanar",
+      charRolls: {} }, sheetDeps()));
+    expect(a.system.characteristics.inf.base).toBe(3);
+    expect(captured.rolls).toHaveLength(3);
+    expect(new Set(captured.rolls).size).toBe(1); // все три — одна и та же формула
+  });
+
+  it("другая субраса (без charRollAdvantage) — обычный одиночный бросок", async () => {
+    spy.mockReturnValue({});
+    const a = actor();
+    captured.dice = [4];
+    await settle(applyCreation(a, { raceKey: "azuriane", charRolls: {} }, sheetDeps()));
+    expect(a.system.characteristics.inf.base).toBe(4);
+    expect(captured.rolls).toHaveLength(1);
   });
 });
 

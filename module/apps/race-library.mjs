@@ -65,6 +65,9 @@ const subFromDoc = doc => ({
   parent: doc.system?.parentKey || "", cost: doc.system?.cost || 0,
   effect: doc.system?.effect || "", god: doc.system?.god || "",
   charMods: { ...(doc.system?.charMods || {}) },
+  // wdbc-0tzr: {char, rolls} — бросок «с Преимуществом» Мастера создания
+  // (см. module/rules/roll-advantage.mjs); пусто у субрас без правила.
+  charRollAdvantage: { ...(doc.system?.charRollAdvantage || {}) },
   talents: doc.system?.talents || "",
   removesTraits: [...(doc.system?.removesTraits || [])],
   uuid: doc.uuid
@@ -77,6 +80,7 @@ const subFromConst = (key, label) => {
     parent: Object.entries(RACES).find(([, r]) => (r.subraces || []).includes(key))?.[0] || "",
     cost: s.cost || 0, effect: s.effect || "", god: s.god || "",
     charMods: { ...(s.charMods || {}) },
+    charRollAdvantage: { ...(s.charRollAdvantage || {}) },
     talents: Array.isArray(s.talents) ? s.talents.join(", ") : (s.talents || ""),
     removesTraits: [...(s.removesTraits || [])], uuid: ""
   };

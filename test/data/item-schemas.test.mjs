@@ -201,7 +201,10 @@ const TYPES = {
   subrace: {
     pack: "races",
     defaults: {
-      key: "", parentKey: "", cost: 0, effect: "", god: "", charMods: {}, talents: "",
+      key: "", parentKey: "", cost: 0, effect: "", god: "", charMods: {},
+      // Бросок «с Преимуществом» на характеристику Мастера создания
+      // (wdbc-0tzr) — {char, rolls}, пусто у субрас без такого правила.
+      charRollAdvantage: {}, talents: "",
       removesTraits: [], description: "", notes: "", bookSource: ""
     }
   },

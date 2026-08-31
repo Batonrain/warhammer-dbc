@@ -127,6 +127,15 @@ export const CAPABILITIES = {
     source: "Раса: Серый Человек (Oteshii)",
     reader: "module/combat/damage.mjs — applyDamageToActor() вычитает magDiceBonus из rawDamage, если sizeTotal < 2"
   },
+  // ── Бросок «с Преимуществом» на боевую Инициативу (wdbc-0tzr) ────────────
+  // НЕ то же самое, что charRollAdvantage субрасы (module/rules/roll-advantage.mjs) —
+  // тот про разовый бросок Мастера создания (Inf), этот про боевой трекер,
+  // каждый бой заново.
+  "combat.initiativeAdvantage": {
+    label: "Инициатива в бою кидается трижды, берётся лучший результат",
+    source: "Раса: Серый Человек (Oteshii)",
+    reader: "module/documents/combatant.mjs — WarhammerCombatant.getInitiativeRoll() подменяет кубик формулы на kh"
+  },
   // ── Роли ──────────────────────────────────────────────────────────────────
   "pilot.dreadnought": {
     label: "Заключён в саркофаг Дредноута",
