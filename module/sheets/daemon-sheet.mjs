@@ -22,7 +22,10 @@ function onAvatar()      { return this._pickAvatar(); }
 
 export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
   static DEFAULT_OPTIONS = {
-    classes: ["warhammer-dbc", "sheet", "actor", "daemon", "wh-holo", "wh-daemon"],
+    // "daemon-sheet" — не дублирующий синоним "daemon": daemon-sheet.css
+    // скоупит цвет Патрона/фон/hue-rotate именно на .daemon-sheet (тот же
+    // класс, что раньше писался мёртвым кодом в hbs, см. _applyDaemonTheme).
+    classes: ["warhammer-dbc", "sheet", "actor", "daemon", "daemon-sheet", "wh-holo", "wh-daemon"],
     position: { width: 820, height: 880 },
     actions: {
       // Навигация по вкладкам — своя разметка, общий обработчик.
@@ -109,11 +112,31 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
 
   _onRender(context, options) {
     super._onRender(context, options);
+    this._applyDaemonTheme();
     if (!this.isEditable) return;
     // Клик по аватару — действие daemonAvatar; ПКМ действием не выражается:
     // у ApplicationV2 действие — это клик.
     this.element?.querySelectorAll(".daemon-sigil").forEach(n =>
       n.addEventListener("contextmenu", ev => { ev.preventDefault(); this._resetAvatar(); }));
+  }
+
+  /**
+   * Цвет Патрона на реальный DOM (wdbc-nzn7 — найдено при переносе обшивки):
+   * daemon-sheet.hbs раньше писал daemon-god-{key}/--gc/--gc2/--glow/--dp-hue
+   * прямо на корневой <div> шаблона, но PARTS.body.root=true отбрасывает
+   * классы/инлайн-стиль корня — этот код НИКОГДА не применялся, и лист любого
+   * демона визуально красился в дефолт «Неделимый» (см. .warhammer-dbc.
+   * daemon-sheet fallback в daemon-sheet.css) независимо от system.allegiance.
+   * Симметрично _applyChaosPatronTheme() у Персонажа.
+   */
+  _applyDaemonTheme() {
+    const root = this.element;
+    if (!root) return;
+    const meta = allegianceMeta(this.actor.system.allegiance || "undivided");
+    root.style.setProperty("--gc", meta.color);
+    root.style.setProperty("--gc2", meta.gc2);
+    root.style.setProperty("--glow", meta.glow);
+    root.style.setProperty("--dp-hue", meta.hue);
   }
 
   _pickAvatar() {

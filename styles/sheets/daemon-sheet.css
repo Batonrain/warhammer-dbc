@@ -5,6 +5,12 @@
 
 .warhammer-dbc.daemon-sheet { --gc: #b477ff; --gc2: #5c2d91; --glow: rgba(180,119,255,0.9); --dp-hue: 113deg; }
 
+/* ── Обшивка «инфопланшет» (wdbc-nzn7): зелёный LED плашки — цвет Патрона,
+   не универсальный --cg (см. actor-housing.css) — по мокапу Design Canvas. */
+.warhammer-dbc.daemon-sheet.cog-frame .cog-led-green.on {
+  background: var(--gc); box-shadow: 0 0 6px var(--gc);
+}
+
 /* ── Единый сдвиг тона: зелёный терминал вкладок → цвет Бога (как у Принца) ── */
 .warhammer-dbc.daemon-sheet .stats-cog,
 .warhammer-dbc.daemon-sheet .combat-cog,
