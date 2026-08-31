@@ -19,14 +19,6 @@ export function resolveWeaponProps(item) {
   return resolveWeaponPropsList(item?.system?.weaponProps);
 }
 
-export function findProp(props, key) {
-  return props.find(p => p.key === key) || null;
-}
-
-export function hasProp(props, key) {
-  return props.some(p => p.key === key);
-}
-
 /**
  * Сворачивает все директивы auto.* свойств в один плоский объект,
  * который потребляют диалог атаки и бросок.

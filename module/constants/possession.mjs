@@ -5,9 +5,9 @@
 //  демонов ([[daemon-system]]): цвета/сигилы богов из veil.mjs.
 //
 //  Экспортирует: TWIN_SPIRIT_DEMONS (5 демонов Двойного Духа), таблицу
-//  Проявления (по Cor) + manifestProfile(cor), каталог Даров (POSSESSION_GIFTS),
-//  Таланты архетипа (POSSESSION_TALENTS), и POSSESSION_LIBRARY для компендиума
-//  талантов (папка «Таланты одержимых»).
+//  Проявления (по Cor) + manifestProfile(cor), каталог Даров (POSSESSION_GIFTS)
+//  и Таланты архетипа (POSSESSION_TALENTS). Компендиум «Таланты одержимых»
+//  наполнен из packs-src напрямую, эти списки — только для текста на листе.
 // ════════════════════════════════════════════════════════════════════════
 
 import { WARP_GODS_MAP } from "./veil.mjs";
@@ -131,37 +131,4 @@ export const POSSESSION_TALENTS = [
     "В Проявлении считается двумя персонажами для численного превосходства; раз в Ход переброс промаха меньшим WS/BS."),
   TA("Общее Колдовство", 3, "Тзинч", "Симбиоз 4",
     "Неконтролирующая душа раз в Раунд манифестирует психосилу (своб./полу-/полное действие; штраф-простой после полу-/полного).")
-];
-
-// ── Библиотека для компендиума талантов (папка «Таланты одержимых») ─────────
-const IMG_T = "icons/svg/upgrade.svg";
-const IMG_G = "icons/svg/aura.svg";
-const ROOT  = "Таланты одержимых";
-
-// Проверено по packs-src/books/core.json: "Одержимый" открывается на
-// pdfPage 129, "Дары Одержимых" — на 131 (перед "Инзорцист" на 140).
-const POSSESSION_BOOK = "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Одержимый», стр. 129-132)";
-
-const talItem = (t) => ({
-  name: t.name, type: "talent", img: IMG_T,
-  folderParent: ROOT, folder: "Таланты архетипа",
-  system: { description: "", notes: "", benefit: t.text, tier: t.level,
-    requirement: t.req || "", aptitudes: [], god: t.god || "", specialization: "",
-    bookSource: POSSESSION_BOOK,
-    effects: { charBonusStat: "", charBonusValue: 0, initMod: 0, fearRating: 0 } }
-});
-const giftItem = (g) => ({
-  name: `Дар: ${g.name}`, type: "talent", img: IMG_G,
-  folderParent: ROOT, folder: `Дары — ${g.group}`,
-  system: { description: "", notes: "", benefit: g.text,
-    tier: g.cost >= 400 ? 3 : (g.cost >= 100 ? 2 : 1),
-    requirement: (g.cost ? `${g.cost} xp` : "Базовый") + (g.sym ? `, Симбиоз ${g.sym}` : ""),
-    aptitudes: [], god: "", specialization: "Дар Одержимого",
-    bookSource: POSSESSION_BOOK,
-    effects: { charBonusStat: "", charBonusValue: 0, initMod: 0, fearRating: 0 } }
-});
-
-export const POSSESSION_LIBRARY = [
-  ...POSSESSION_TALENTS.map(talItem),
-  ...POSSESSION_GIFTS.map(giftItem)
 ];

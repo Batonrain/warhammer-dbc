@@ -15,7 +15,7 @@
 //  Модуль знает про актора, но не про Foundry: на вход идут его system и items.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { talentCostXP, resolveTalentCat, charAptitudeSet } from "../constants/advancement.mjs";
+import { talentCostXP, charAptitudeSet } from "../constants/advancement.mjs";
 
 const num = v => Number(v) || 0;
 
@@ -37,11 +37,3 @@ export function pickXPCost(actor, item) {
   return num(item.cost);
 }
 
-/**
- * Категория цены записи — для подписи в списке («Дружественная»/«Враждебная»).
- * Отдельно от цены: подпись нужна не всегда, а считать её дешевле, чем цену.
- */
-export function pickCostCategory(actor, item) {
-  if (item?.type !== "talent") return null;
-  return resolveTalentCat(item.name, item.aptitudes || [], charAptitudeSet(actor?.system?.aptitudes || []), actor);
-}

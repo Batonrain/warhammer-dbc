@@ -44,8 +44,8 @@ describe("перенос Элитных архетипов в компендиу
     const src = ELITE_ARCHETYPES.find(a => a.traits?.length && a.talents?.length);
     const { doc } = docsOnly(eliteDocs()).find(d => d.doc.name === src.name);
 
-    expect(doc.system.traits).toEqual(src.traits.map(t => t[0]));
-    expect(doc.system.talents).toEqual(src.talents.map(t => t[0]));
+    expect(doc.system.traits).toEqual(src.traits);
+    expect(doc.system.talents).toEqual(src.talents);
     expect(doc.system.traits.every(t => typeof t === "string")).toBe(true);
   });
 
