@@ -521,3 +521,12 @@
 /* Панель «Возможности сейчас»: пометка, считает ли систему сама. */
 .warhammer-dbc .cap-auto-cell { text-align: center; font-size: 0.8em; opacity: 0.75; }
 .warhammer-dbc .cap-manual { color: #e0b062; }
+/* Кнопка списания цены (wdbc-1dc8) — тот же вид/гейт, что .ae-spend-btn. */
+.warhammer-dbc .cap-spend-cell { text-align: right; white-space: nowrap; }
+.warhammer-dbc .cap-spend-btn {
+  padding: 1px 6px; font-size: 0.82em; cursor: pointer;
+  background: var(--wh-input-bg); border: 1px solid var(--wh-border); border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.warhammer-dbc .cap-spend-btn:hover { background: var(--wh-accent, #2a6f4c); color: #fff; }
+.warhammer-dbc .cap-spend-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--wh-input-bg); color: var(--wh-text, inherit); }

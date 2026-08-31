@@ -81,6 +81,8 @@
               "modCharBonus": "inf",
               "rerollWho": "self",
               "capabilityKey": "gift.tzeentch.hiddenThreat",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
