@@ -37,6 +37,7 @@ import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
+import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -1212,6 +1213,9 @@ function _attachFateContextMenu(message, html) {
         await applyTurnEndStanceEffects(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
+        // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
+        // Хода», не в начале следующего.
+        await processConditionTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
@@ -1224,6 +1228,10 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
+      // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
+      // Горения выше (у тех книга явно говорит «в конце»).
+      await processConditionTurnStart(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });
