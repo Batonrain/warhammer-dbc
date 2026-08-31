@@ -59,7 +59,11 @@ function onUnascend()     { return this._undoAscension(); }
 
 export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
   static DEFAULT_OPTIONS = {
-    classes: ["warhammer-dbc", "sheet", "actor", "demon-prince", "wh-dp"],
+    // "demon-prince-sheet" — не дублирующий синоним "demon-prince":
+    // demon-prince-sheet.css скоупит цвет Патрона/hue-rotate/фон именно на
+    // .demon-prince-sheet (класс, что раньше писался мёртвым кодом в hbs,
+    // см. _applyDpTheme).
+    classes: ["warhammer-dbc", "sheet", "actor", "demon-prince", "demon-prince-sheet", "wh-dp"],
     position: { width: 860, height: 920 },
     actions: {
       // Навигация по вкладкам — своя разметка, общий обработчик.
@@ -204,6 +208,7 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
   // разом, и смена мира применялась дважды.
   _onRender(context, options) {
     super._onRender(context, options);
+    this._applyDpTheme();
     if (!this.isEditable) return;
     // Клик по аватару — действие dpAvatar; ПКМ возвращает сигил бога.
     this.element?.querySelectorAll(".dp-sigil").forEach(n =>
@@ -211,6 +216,28 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
         ev.preventDefault();
         this._setAvatar(dpGodMeta(this.actor.system.allegiance || "undivided").sigil);
       }));
+  }
+
+  /**
+   * Цвет Патрона на реальный DOM (wdbc-xzvt — та же находка, что у Демона,
+   * wdbc-nzn7): demon-prince-sheet.hbs писал dp-god-{key}/--gc/--gc2/--glow
+   * прямо на корневой <div> шаблона, но PARTS.body.root=true отбрасывает
+   * классы/инлайн-стиль корня — ни класс (а с ним и --dp-hue, который задаёт
+   * ТОЛЬКО класс .dp-god-* в demon-prince-sheet.css), ни --gc/--gc2/--glow
+   * никогда не применялись. DEFAULT_OPTIONS.classes тоже не содержал
+   * буквальной строки "demon-prince-sheet" — все правила `.warhammer-dbc.
+   * demon-prince-sheet ...` были мертвы независимо от инлайна (см. ниже,
+   * добавлено в classes). Симметрично _applyDaemonTheme() у Демона.
+   */
+  _applyDpTheme() {
+    const root = this.element;
+    if (!root) return;
+    const meta = this._god;
+    root.classList.remove(...[...root.classList].filter(c => /^dp-god-/.test(c)));
+    root.classList.add(`dp-god-${meta.key}`);
+    root.style.setProperty("--gc", meta.color);
+    root.style.setProperty("--gc2", meta.gc2);
+    root.style.setProperty("--glow", meta.glow);
   }
 
   // Очки Бесчестия у Принца: хранятся в system.dp.ip (макс = Inf.b), свой

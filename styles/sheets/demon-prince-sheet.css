@@ -33,6 +33,12 @@
 .warhammer-dbc.demon-prince-sheet.dp-god-tzeentch  { --dp-hue: 51deg; }
 .warhammer-dbc.demon-prince-sheet.dp-god-slaanesh  { --dp-hue: 155deg; }
 
+/* ── Обшивка «инфопланшет» (wdbc-xzvt): зелёный LED плашки — цвет Патрона,
+   не универсальный --cg (см. actor-housing.css) — по мокапу Design Canvas. */
+.warhammer-dbc.demon-prince-sheet.cog-frame .cog-led-green.on {
+  background: var(--gc); box-shadow: 0 0 6px var(--gc);
+}
+
 /* Единый сдвиг тона: зелёный терминал → чистый Варп цвета Бога.
    В общих вкладках нет <img>, поэтому фильтр ничего не искажает.
    Шапка/Истинное Имя/АПОФЕОЗ — вне этих обёрток и красятся через --gc. */
