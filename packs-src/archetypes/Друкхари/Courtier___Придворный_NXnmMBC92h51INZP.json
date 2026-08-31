@@ -7,7 +7,9 @@
     "key": "drCourtier",
     "race": "drukhari",
     "group": "Друкхари",
-    "drukhariSubraces": ["truebornDrukhari"],
+    "drukhariSubraces": [
+      "truebornDrukhari"
+    ],
     "sslythAccess": false,
     "charBonus": {
       "fel": 5,

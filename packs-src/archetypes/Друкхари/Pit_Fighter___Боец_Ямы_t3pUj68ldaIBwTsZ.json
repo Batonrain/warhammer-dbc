@@ -7,7 +7,12 @@
     "key": "drPitFighter",
     "race": "drukhari",
     "group": "Друкхари",
-    "drukhariSubraces": ["", "truebornDrukhari", "mandrake", "wrack"],
+    "drukhariSubraces": [
+      "",
+      "truebornDrukhari",
+      "mandrake",
+      "wrack"
+    ],
     "sslythAccess": true,
     "charBonus": {
       "ws": 3,
