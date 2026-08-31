@@ -2164,7 +2164,11 @@ async function resolveDirectAsk(entry, applied, sourceItem, actor) {
     if (subEntries.some(e => applied.has(e.id))) return undefined;
     return { type: "or", chosen: (await showMechChoiceDialog(sourceItem, subEntries)) || null };
   }
-  if ((entry.kind === "skill" || entry.kind === "rollmod") && entry.specKey === "__choice__"
+  // «Любой Навык» (__choice_any__, wdbc-2n5t) спрашивается тем же пакетным
+  // каскадом, что и обычный выбор: иначе вопросы всплывали бы по одному за
+  // клик «Далее» — регресс, который уже чинили 20.08 (parallel-spec-choices).
+  if ((entry.kind === "skill" || entry.kind === "rollmod")
+      && (entry.specKey === "__choice__" || entry.specKey === "__choice_any__")
       && !applied.has(entry.id) && entryWhenOk(actor, entry, sourceItem)) {
     return { type: "spec", resolved: await resolveEntrySpecChoice(entry) };
   }
