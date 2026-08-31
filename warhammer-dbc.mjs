@@ -47,6 +47,7 @@ import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellenc
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
+import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
 import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
   from "./module/rules/fate-save.mjs";
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
@@ -100,6 +101,7 @@ import { registerHandlebarsHelpers }  from "./module/helpers/handlebars.mjs";
 import { registerHooks }              from "./module/hooks.mjs";
 import { registerCharacterStartButton, openStartedCharacter, NEW_CHARACTER_NAME } from "./module/apps/character-start.mjs";
 import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
+import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG, postPacifismGateCard } from "./module/combat/pacifism.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
@@ -1726,6 +1728,58 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
       <div class="roll-outcome"><span class="roll-success">Очко ${fatePoolLabel(doc)} не потрачено${saved > 1 ? ` (×${saved})` : ""}</span></div>
     </div>`
   }, game.settings.get("core", "rollMode")));
+});
+
+// ── «Считает Cor как Безумие» (Серый Человек, wdbc-gzuf) ─────────────────────
+// Любое изменение system.corruption.value перенаправляется в system.insanity.value
+// той же величиной — и рост, и снижение (снижающие Cor бонусы работают и против
+// Безумия — та же строка правила). Одна точка перехвата вместо правки ~10 мест,
+// что пишут Cor напрямую (mechanics.mjs/psychic.mjs/homeworlds.mjs/creation.mjs/...) —
+// preUpdateActor мутирует changes синхронно, отдельного updateActor не нужно.
+// Арифметика — module/rules/corruption-madness.mjs (тестируется без стенда).
+Hooks.on("preUpdateActor", (doc, changes) => {
+  const newCor = foundry.utils.getProperty(changes, "system.corruption.value");
+  if (typeof newCor !== "number") return;
+  if (!hasRuleFlag(doc, "corruption.redirectsToMadness")) return;
+  const result = redirectCorruptionToMadness(
+    Number(doc.system?.corruption?.value) || 0, newCor, Number(doc.system?.insanity?.value) || 0);
+  if (!result) return;
+  foundry.utils.setProperty(changes, "system.corruption.value", result.corruption);
+  foundry.utils.setProperty(changes, "system.insanity.value", result.insanity);
+});
+
+// ── «Крайне миролюбив» (Серый Человек, wdbc-gzuf) ─────────────────────────────
+// Вход в Ярость (system.inRage) до первой атаки по себе в этом бою гейтится
+// тестом Воли−20/отказом (module/combat/pacifism.mjs). preUpdateActor снимает
+// попытку и метит options, updateActor следом показывает карточку выбора —
+// тот же приём, что у «Пламенной веры» (whFatePrev/whSkipFateSave выше).
+Hooks.on("preUpdateActor", (doc, changes, options) => {
+  if (changes.system?.inRage !== true) return;
+  if (options.whSkipPacifismGate) return;
+  if (doc.system?.inRage === true) return; // уже в Ярости — тумблер выключения не гейтим
+  if (!hasRuleFlag(doc, PACIFISM_CAPABILITY)) return;
+  if (doc.getFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG)) return; // уже атакован — обычный вход
+  delete changes.system.inRage;
+  options.whPacifismGateTriggered = true;
+});
+Hooks.on("updateActor", async (doc, changes, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!options.whPacifismGateTriggered) return;
+  await postPacifismGateCard(doc);
+});
+
+// Новый бой сбрасывает «атакован в этом бою» — миролюбие возвращается на
+// старте каждого столкновения, не только один раз в жизни персонажа.
+Hooks.on("combatStart", async (combat) => {
+  // Хук стреляет у всех клиентов: пишет один ГМ, иначе игрок без прав на
+  // чужого актора ловит отказ Foundry, а владельцы дублируют запись.
+  if (!game.user.isGM) return;
+  for (const combatant of combat.combatants ?? []) {
+    const actor = combatant.actor;
+    if (actor?.getFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG)) {
+      await actor.unsetFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG);
+    }
+  }
 });
 
 Hooks.on("createItem", async (item, options, userId) => {

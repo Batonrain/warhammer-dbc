@@ -151,6 +151,11 @@ export function prepareCharacterDerived(actor, system) {
     let traitSizeMod = 0;
     let traitInitMod = 0;
     let traitSpeedMod = 0;
+    // Навыки, у которых Черта/Талант/Имплант ополовинивает штрафы (Конструктор
+    // МЕХАНИКА, kind:"testMod" + modValueMode:"halvePenalty") — сам штраф теста
+    // остаётся галочкой в диалоге (item-rules.mjs), а вот штраф необученности
+    // здесь же, derived-полем skill.total, отдельного диалога для него нет.
+    const skillPenaltyHalved = new Set();
     // ── Кибернетика Механикум: авто-автоматизация Техночудес ────────────────
     let implantEnergyMax   = 0;   // +N к максимуму Катушки Потенции (Manipulus и т.п.)
     let implantCompBonus   = 0;   // лучший бонус к тесту Компенсатора среди имплантов
@@ -252,6 +257,26 @@ export function prepareCharacterDerived(actor, system) {
       if (e.sizeMod)    traitSizeMod    += e.sizeMod;
       if (e.initMod)    traitInitMod    += e.initMod;
       if (e.speedMod)   traitSpeedMod   += e.speedMod;
+      // Ключ — как в SKILLS_DEF/GROUP_SKILLS_DEF (sleightOfHand, techUse…):
+      // .toLowerCase() здесь ломал бы camelCase-навыки. Вложенные И-подгруппы
+      // обходим тоже; ИЛИ-группы пропускаются — их выбор кладёт запись напрямую.
+      const collectHalved = (list) => {
+        for (const me of list ?? []) {
+          if (!me) continue;
+          if (me.kind === "group") {
+            const sub = me.group ?? me;
+            if ((sub.operator ?? "AND") !== "OR") collectHalved(sub.entries);
+            continue;
+          }
+          if (me.kind === "testMod" && me.modScope === "skill" && me.modValueMode === "halvePenalty" && me.skillKey) {
+            skillPenaltyHalved.add(String(me.skillKey));
+          }
+        }
+      };
+      for (const g of item.flags?.["warhammer-dbc"]?.mechanics ?? []) {
+        if (g.operator === "OR") continue;
+        collectHalved(g.entries);
+      }
     }
     // ── Одержимый: авто-эффекты Проявления (DoomBC 129-132) ─────────────────
     // Пока демон проявлен, профиль (по Cor) даёт Unnatural S, Daemonic (→T.b),
@@ -598,7 +623,7 @@ export function prepareCharacterDerived(actor, system) {
     // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
     // попадание в Глаз игнорирует AP шлема, а не всей головы (стр. 34).
     // Минус коррозия: она разъедает носимое, и разность armorAP − wornOnly
-    // (естественная броня) не должна плыть от Corrosive.
+    // (естественная броня для правила Глаза) не должна плыть от Corrosive.
     const wornOnly = Object.fromEntries(Object.keys(armorAP).map(k => [k, Math.max(0, best(k) - corroded(k))]));
 
     system.absorption = {
@@ -620,7 +645,9 @@ export function prepareCharacterDerived(actor, system) {
     for (const [key, sk] of Object.entries(skills)) {
       const def     = SKILLS_DEF[key];
       const charVal = def ? (chars[def.char]?.total ?? 0) : 0;
-      sk.total = charVal + (SKILL_RANKS[sk.rank]?.bonus ?? -20);
+      let rankBonus = SKILL_RANKS[sk.rank]?.bonus ?? -20;
+      if (rankBonus < 0 && skillPenaltyHalved.has(key)) rankBonus = Math.ceil(rankBonus / 2);
+      sk.total = charVal + rankBonus;
     }
 
     // ── Групповые навыки ──────────────────────────────────────────────────
@@ -633,7 +660,9 @@ export function prepareCharacterDerived(actor, system) {
         // иначе берётся характеристика группы по умолчанию.
         const entryChar = entry.char || def?.char;
         const charVal   = entryChar ? (chars[entryChar]?.total ?? 0) : 0;
-        entry.total = charVal + (SKILL_RANKS[entry.rank]?.bonus ?? -20);
+        let gRankBonus  = SKILL_RANKS[entry.rank]?.bonus ?? -20;
+        if (gRankBonus < 0 && skillPenaltyHalved.has(groupKey)) gRankBonus = Math.ceil(gRankBonus / 2);
+        entry.total = charVal + gRankBonus;
       }
     }
 

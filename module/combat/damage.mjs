@@ -14,6 +14,7 @@ import { applyWoundLoss } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
+import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -50,13 +51,13 @@ export async function repairArmorCorrosion(actor, armorKey) {
 /**
  * Проникающее: снаряд в ране (после непоглощённого урона) — −10 действий
  * частью тела (GM-отыгрыш: нет понятия «тест использует эту часть тела»),
- * −1 SPD торс/нога (автоматизировано, documents/actor.mjs). Кнопка
+ * −1 SPD торс/нога (автоматизировано, rules/character.mjs). Кнопка
  * извлечения — тот же полудействие+1 R Dmg, что и клик hooks.mjs
  * (.wh-piercing-extract-btn) вызывает extractPiercingWound().
  */
 async function _applyPiercing(actor, armorKey, hitLocation) {
   const already = !!actor.system.piercingWounds?.[armorKey];
-  if (!already) await actor.update({ [`system.piercingWounds.${armorKey}`]: true });
+  if (!already) await actor.update({ [`system.piercingWounds.${armorKey}`]: 1 }); // NumberField — Foundry кастовал бы true в 1
   const spdNote = ["body", "leftLeg", "rightLeg"].includes(armorKey) ? "; −1 SPD" : "";
   return `<div class="dmg-tb-note">
     🏹 Проникающее: снаряд в ране (${hitLocation}) — −10 действия этой частью тела${spdNote}, пока не извлечён${already ? " (рана уже была)" : ""}
@@ -73,7 +74,7 @@ export async function extractPiercingWound(actor, armorKey) {
   if (!actor.system.piercingWounds?.[armorKey]) {
     return ui.notifications?.info(`${actor.name}: в этой части тела нет застрявшего снаряда.`);
   }
-  await actor.update({ [`system.piercingWounds.${armorKey}`]: false });
+  await actor.update({ [`system.piercingWounds.${armorKey}`]: 0 });
   const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, 1);
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -133,10 +134,12 @@ const HAYWIRE_TABLE = [
  * эффекты таблицы (действия/SPD/Заклинивание/деградация Качества).
  */
 async function _applyHaywire(actor, rating) {
+  // X у Haywire — РАДИУС поля в метрах, к мощности не прибавляется:
+  // «Изначальная мощность ЭМИ-поля определяется броском 1d10» (стр. 168).
   const roll = await new Roll("1d10").evaluate();
-  const total = roll.total + rating;
+  const total = roll.total;
   const tier = HAYWIRE_TABLE.find(t => total <= t.max);
-  return `<div class="dmg-tb-note">📡 ЭМИ: 1d10${rating ? `+${rating}` : ""}=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -260,6 +263,14 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
 
 // ─── Применить урон к актору ──────────────────────────────────────────────────
 export async function applyDamageToActor(actor, damageData) {
+  // «Крайне миролюбив» (wdbc-gzuf, Серый Человек) — флаг «атакован в этом
+  // бою» взводится здесь, в единой точке резолва урона (обычные атаки через
+  // hooks.mjs, атаки Орды через horde-sheet.mjs — оба пути доходят сюда).
+  // Сбрасывается Hooks.on("combatStart") в warhammer-dbc.mjs. Гейт на вход
+  // в Ярость читает флаг там же — module/combat/pacifism.mjs.
+  if (hasRuleFlag(actor, PACIFISM_CAPABILITY) && !actor.getFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG)) {
+    await actor.setFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG, true);
+  }
   // Техника: урон сразу в Структуру. Сторона брони пришла из окна атаки
   // (damageData.side), часть машины — из авто-места попадания (damageData.hitLocation).
   if (actor.type === "vehicle") {
@@ -273,6 +284,20 @@ export async function applyDamageToActor(actor, damageData) {
   // Орда: Ран у неё нет, Поглощение лежит одним числом, а попадания всегда идут
   // в торс — общий расчёт зон брони и Критических Ран ей не подходит.
   if (actor.type === "horde") return applyDamageToHorde(actor, damageData);
+
+  // «Избегает атак Орды как одиночная цель» (wdbc-gzuf, Серый Человек) —
+  // цель ещё не была известна на момент броска Орды (magDiceBonus едет
+  // отдельным числом от horde-sheet.mjs через hooks.mjs), поэтому кубы
+  // Магнитуды вычитаются здесь, где актор-цель уже точно известен. Теряется
+  // при Размере 2+ (тот же sizeTotal, что читает sizeOf() в horde-damage.mjs).
+  if (Number(damageData.magDiceBonus) > 0) {
+    const sizeTotal = actor.system?.sizeTotal != null
+      ? Number(actor.system.sizeTotal) || 0
+      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0);
+    if (sizeTotal < 2 && hasRuleFlag(actor, "horde.singleTargetImmune")) {
+      damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
+    }
+  }
 
   const {
     rawDamage,       // число — урон до поглощения

@@ -20,7 +20,7 @@
       "fearRating": 0,
       "sizeMod": 0,
       "initMod": 0,
-      "speedMod": -1
+      "speedMod": 0
     },
     "bookSource": "DoomBC — Основная книга"
   },
@@ -81,7 +81,23 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "sureTreadSpd01a",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "sureTreadSpd01b",
+              "kind": "movement",
+              "movementTarget": "spd",
+              "movementValue": -1,
+              "op": "add",
+              "label": "Надёжная Поступь: −1 SPD"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

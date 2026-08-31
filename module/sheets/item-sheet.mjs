@@ -1998,6 +1998,11 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.equipQty = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    on(".mech-equip-pr-delta", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.equipPrRequiredDelta = parseInt(ev.currentTarget.value) || 0; saveMech(arr); }
+    });
     // Ступень Таланта и потолок Пси-Рейтинга — фильтры небоевых паков.
     // Пустая строка значит «любая», поэтому пустое НЕ приводится к нулю.
     const setEquipFilter = (sel, field) => on(sel, "change", ev => {

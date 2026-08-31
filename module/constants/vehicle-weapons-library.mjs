@@ -349,7 +349,7 @@ async function _refreshVehicleWeaponIndex() {
     // (не перенесён/новая книга), не должен тихо пропасть со свапа.
     for (const [name, w] of fallbackVehicleWeaponIndex()) if (!byName.has(name)) byName.set(name, w);
     _vehicleWeaponsByName = byName;
-  } catch (e) { _vehicleWeaponsByName = fallbackVehicleWeaponIndex(); }
+  } catch (e) { console.warn("Warhammer DBC | кэш «пак первичен» не построился, работает библиотека", e); _vehicleWeaponsByName = fallbackVehicleWeaponIndex(); }
 }
 
 /** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и

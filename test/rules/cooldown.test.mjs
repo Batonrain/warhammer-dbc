@@ -77,6 +77,28 @@ describe("isCapabilityAvailable / markCapabilityUsed — battle", () => {
   });
 });
 
+describe("isCapabilityAvailable — nextRound (Медленная Перезарядка)", () => {
+  it("заблокирована в раунд использования И в следующий, доступна через один", async () => {
+    globalThis.game.combat = { round: 3 };
+    const actor = actorWithFlags();
+    await markCapabilityUsed(actor, "slowReload", "round");
+    expect(isCapabilityAvailable(actor, "slowReload", "nextRound")).toBe(false); // тот же СХ
+    globalThis.game.combat = { round: 4 };
+    expect(isCapabilityAvailable(actor, "slowReload", "nextRound")).toBe(false); // следующий СХ
+    globalThis.game.combat = { round: 5 };
+    expect(isCapabilityAvailable(actor, "slowReload", "nextRound")).toBe(true);
+  });
+
+  it("без Combat и без отметки — доступна; откат раунда назад не блокирует навсегда", async () => {
+    const actor = actorWithFlags();
+    expect(isCapabilityAvailable(actor, "slowReload", "nextRound")).toBe(true);
+    globalThis.game.combat = { round: 5 };
+    await markCapabilityUsed(actor, "slowReload", "round");
+    globalThis.game.combat = { round: 2 };  // ГМ отмотал бой назад
+    expect(isCapabilityAvailable(actor, "slowReload", "nextRound")).toBe(true);
+  });
+});
+
 describe("isRuleUsageUsed / markRuleUsageUsed — scene/session (сброс явной кнопкой, не живым значением)", () => {
   it("не отмечена — не израсходована", () => {
     const actor = actorWithFlags();

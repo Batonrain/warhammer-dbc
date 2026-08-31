@@ -8,6 +8,7 @@ import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger } from "./combat/damage.mjs";
+import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve }                from "./combat/vehicle.mjs";
@@ -315,6 +316,27 @@ export function registerHooks() {
       });
     });
 
+    // «Крайне миролюбив» (Серый Человек, wdbc-gzuf) — карточка-гейт на вход в
+    // Ярость до первой атаки по себе: тест Воли−20 или явный отказ.
+    html.querySelectorAll(".wh-pacifism-test-btn, .wh-pacifism-refuse-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ctx = message.flags?.["warhammer-dbc"]?.pacifismGate;
+        if (!ctx) return;
+        const actor = game.actors?.get(ctx.actorId);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Решить может только владелец персонажа (или ГМ).");
+        }
+        const row = ev.currentTarget.closest(".roll-defense-btns");
+        row?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+        if (ev.currentTarget.classList.contains("wh-pacifism-test-btn")) {
+          await rollPacifismTest(actor);
+        } else {
+          ui.notifications.info(`${actor.name} отказывается входить в Ярость.`);
+        }
+      });
+    });
+
     // Применение урона
     html.querySelectorAll(".wh-apply-dmg-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -353,8 +375,13 @@ export function registerHooks() {
           piercing:        ds.piercing === "1",
           // Haywire(0) — валидный рейтинг («привязан к цели»), поэтому наличие
           // свойства метится пустым/непустым атрибутом, а не самим числом.
-          haywireActive:   ds.haywire !== "",
-          haywireRating:   parseInt(ds.haywire || "0")
+          haywireActive:   ds.haywire != null && ds.haywire !== "",
+          haywireRating:   parseInt(ds.haywire || "0"),
+          // Куб(ы) Магнитуды Орды (wdbc-gzuf) — цель ещё не была известна на
+          // момент броска (карточка Орды применяется позже, кнопкой), поэтому
+          // эта часть урона едет отдельным числом: применяется в
+          // applyDamageToActor (combat/damage.mjs), где актор-цель уже известен.
+          magDiceBonus:    parseInt(ds.magDiceBonus || "0")
         };
         // «Прячась в Орде»: попадание уже расписано в Орду — цель не выбирается.
         if (ds.forceHorde) {
@@ -430,6 +457,7 @@ export function registerHooks() {
             corrosiveRating: parseInt(ds.corrosive || "0"),
             cripplingRating: parseInt(ds.crippling || "0"),
             piercing:        ds.piercing === "1",
+            haywireActive:   ds.haywire != null && ds.haywire !== "",
             haywireRating:   parseInt(ds.haywire   || "0")
           };
           const drift = parseFloat(ds.lingerDrift || "0") || 0;
@@ -531,6 +559,23 @@ export function registerHooks() {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         await _applyShipHullDamage(parseInt(ev.currentTarget.dataset.hi || "0"));
+      });
+    });
+
+    // Забирающее жизни (Lifetaker): урон CP кораблю-цели — жмёт тот, у кого
+    // есть права на цель (обычно ГМ), сама карточка атаки прав не требует.
+    html.querySelectorAll(".wh-ship-cp-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const cpDmg = parseInt(ev.currentTarget.dataset.cp || "0");
+        if (!cpDmg) return;
+        const targeted = [...(game.user?.targets ?? [])].map(t => t.actor ?? t.document?.actor).find(a => a?.type === "ship");
+        const selected = (canvas.tokens?.controlled ?? []).map(t => t.actor).find(a => a?.type === "ship");
+        const actor = targeted || selected;
+        if (!actor) return ui.notifications.warn("⚠️ Отметьте или выберите токен корабля-цели!");
+        const cpNow = Number(actor.system.crew?.population) || 0;
+        await actor.update({ "system.crew.population": Math.max(0, cpNow - cpDmg) });
+        ui.notifications.info(`${actor.name}: Забирающее жизни — CP ${cpNow} → ${Math.max(0, cpNow - cpDmg)}`);
       });
     });
 
@@ -1036,6 +1081,12 @@ function _attachFateContextMenu(message, html) {
       );
     });
   });
+}
+
+// Хуки ниже — ОДНОКРАТНЫЕ регистрации на весь клиент. Раньше они по ошибке
+// жили внутри _attachFateContextMenu и вешались заново на КАЖДУЮ карточку
+// чата с .wh-roll-result: старые обработчики были идемпотентны и это
+// маскировали, а урон узла корабля катал детонацию по разу на карточку.
 
   // ── Новый Раунд обнуляет счётчики потерь Орд ─────────────────────────────
   // Тест W+Магнитуда требуется за массивный урон «в один Раунд», поэтому
@@ -1161,7 +1212,7 @@ function _attachFateContextMenu(message, html) {
   // диффа old/new между pre/post update одной операции).
   Hooks.on("preUpdateItem", (item, changes, options) => {
     if (item.type === "component" && "status" in (changes.system || {})) {
-      options._prevStatus = item.system.status;
+      options.whPrevNodeStatus = item.system.status;
     }
   });
   Hooks.on("updateItem", async (item, changes, options, userId) => {
@@ -1186,8 +1237,8 @@ function _attachFateContextMenu(message, html) {
     }
 
     // Реакция на повреждение узла (explosive/fragileEngine/robustDesign).
-    if (!("status" in sys) || options._prevStatus === undefined) return;
-    const oldStatus = options._prevStatus;
+    if (!("status" in sys) || options.whPrevNodeStatus === undefined) return;
+    const oldStatus = options.whPrevNodeStatus;
     const newStatus = item.system.status;
     const { forceStatus, explosionDamage, revertStatus, note } =
       await resolveNodeDamage(resolveShipProps(item), item.system.kind, oldStatus, newStatus,
@@ -1212,7 +1263,6 @@ function _attachFateContextMenu(message, html) {
       ui.notifications.info(`${item.name}: ${note}`);
     }
   });
-}
 
 // ── Вспомогательные функции ───────────────────────────────────────────────────
 
