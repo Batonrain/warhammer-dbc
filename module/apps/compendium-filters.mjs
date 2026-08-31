@@ -21,8 +21,11 @@ import { normalizeBudget, BUDGET_COUNT } from "../rules/pick-budget.mjs";
 export const ITEM_FILTERS = {
   /** Тип предмета: "faction" либо список ["weapon","ammo"]. */
   type: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.type),
-  /** Папка компендиума — «Тип» оружия в этом проекте задаётся именно папкой. */
-  folderId: (it, want) => it?.folderId === want,
+  /** Папка компендиума — «Тип» оружия в этом проекте задаётся именно папкой.
+   *  Список вместо одной строки — «любое рукопашное/стрелковое» (целая ветка,
+   *  см. weaponTypeFolderIds в compendium-browser.mjs): предметы лежат только
+   *  в листьях, поэтому ветка раскрывается в список её листьев ДО фильтра. */
+  folderId: (it, want) => (Array.isArray(want) ? want : [want]).includes(it?.folderId),
   /** Свойство оружия по ключу (system.properties[].key). */
   weaponProp: (it, want) => (it?.properties || []).some(p => p?.key === want),
   /** Тип брони (system.armorType). */

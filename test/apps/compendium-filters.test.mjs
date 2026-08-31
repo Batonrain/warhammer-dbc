@@ -45,6 +45,15 @@ describe("matchesFilters", () => {
       expect(matchesFilters(item({ folderId: "abc" }), { folderId: "abc" })).toBe(true);
       expect(matchesFilters(item({ folderId: "abc" }), { folderId: "xyz" })).toBe(false);
     });
+
+    // Ветка «Рукопашное/Стрелковое — любое» (compendium-browser.mjs,
+    // weaponTypeFolderIds) раскрывается в список её листьев ДО фильтра —
+    // список должен матчить любой из них, тем же приёмом, что у type выше.
+    it("список папок читается как «любая из перечисленных»", () => {
+      expect(matchesFilters(item({ folderId: "leaf1" }), { folderId: ["leaf1", "leaf2"] })).toBe(true);
+      expect(matchesFilters(item({ folderId: "leaf2" }), { folderId: ["leaf1", "leaf2"] })).toBe(true);
+      expect(matchesFilters(item({ folderId: "leaf3" }), { folderId: ["leaf1", "leaf2"] })).toBe(false);
+    });
   });
 
   describe("weaponProp", () => {

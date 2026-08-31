@@ -146,29 +146,64 @@ async function buildPackTree(pack) {
 }
 
 /**
- * Папки-«Типы» оружия из корбука (АВТО И СТАБ, ДРОБОВИКИ, АВТОПУШКИ, СИЛОВОЕ,
- * ШОКОВОЕ и т.д.) — в этом проекте это НЕ поле в системе предмета, а прямые
- * дочерние папки «Рукопашное»/«Стрелковое» внутри «Имперское» (корбук; ветки
- * прочих фракций-источников — Астартес/Друкхари/Азуриане/... — сюда намеренно
- * не входят, kind:"equipment" режим «Выбор» ограничен основной книгой). Метка
- * содержит родителя в скобках — среди этих папок есть одноимённые дубли (своё
- * «Примитивное»/«Импровизированное» и для Рукопашного, и для Стрелкового).
- * @returns {{id:string, name:string}[]}
+ * Разбор дерева папок пака «Оружие» до Рукопашного/Стрелкового корбука —
+ * общая опора и для списка «Типов» (coreWeaponTypeFolders), и для раскрытия
+ * ветки в листья при фильтрации (weaponTypeFolderIds). Ветки прочих
+ * фракций-источников — Астартес/Друкхари/Азуриане/... — сюда намеренно не
+ * входят, kind:"equipment" режим «Выбор» ограничен основной книгой.
+ * @returns {{folders:object[], parentId:(f:object)=>?string, core:?object, branches:object[]}}
  */
-export function coreWeaponTypeFolders() {
+function coreWeaponBranches() {
   const pack = game.packs.get("warhammer-dbc.weapons");
   const folders = pack?.folders?.contents ?? [];
   const parentId = f => (typeof f.folder === "string" ? f.folder : f.folder?.id) ?? null;
-  const byId = new Map(folders.map(f => [f.id, f]));
   const core = folders.find(f => f.name === "Имперское" && !parentId(f));
+  const branches = core
+    ? folders.filter(f => parentId(f) === core.id && (f.name === "Рукопашное" || f.name === "Стрелковое"))
+    : [];
+  return { folders, parentId, core, branches };
+}
+
+/**
+ * Папки-«Типы» оружия из корбука (АВТО И СТАБ, ДРОБОВИКИ, АВТОПУШКИ, СИЛОВОЕ,
+ * ШОКОВОЕ и т.д.) — в этом проекте это НЕ поле в системе предмета, а прямые
+ * дочерние папки «Рукопашное»/«Стрелковое» внутри «Имперское» (см.
+ * coreWeaponBranches). Метка листа содержит родителя в скобках — среди этих
+ * папок есть одноимённые дубли (своё «Примитивное»/«Импровизированное» и для
+ * Рукопашного, и для Стрелкового). Сама ветка целиком — «Рукопашное — любое»/
+ * «Стрелковое — любое»: книжные записи вида «1 любое оружие ближнего боя
+ * R1/R2/R3» не называют конкретный тип, только категорию целиком (см.
+ * weaponTypeFolderIds — при фильтрации ветка раскрывается в список листьев,
+ * сама она предметов не хранит).
+ * @returns {{id:string, name:string}[]}
+ */
+export function coreWeaponTypeFolders() {
+  const { folders, parentId, core, branches } = coreWeaponBranches();
   if (!core) return [];
-  const branchIds = new Set(folders
-    .filter(f => parentId(f) === core.id && (f.name === "Рукопашное" || f.name === "Стрелковое"))
-    .map(f => f.id));
-  return folders
+  const byId = new Map(folders.map(f => [f.id, f]));
+  const branchIds = new Set(branches.map(f => f.id));
+  const leaves = folders
     .filter(f => branchIds.has(parentId(f)))
-    .map(f => ({ id: f.id, name: `${f.name} (${byId.get(parentId(f))?.name})` }))
-    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    .map(f => ({ id: f.id, name: `${f.name} (${byId.get(parentId(f))?.name})` }));
+  const whole = branches.map(f => ({ id: f.id, name: `${f.name} — любое` }));
+  return [...whole, ...leaves].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+}
+
+/**
+ * Айди листовых папок, которые должен покрыть фильтр «Тип оружия» (module/
+ * apps/compendium-filters.mjs, ITEM_FILTERS.folderId): для конкретного листа
+ * (Болтерное, Мельта…) — он сам; для целой ветки (Рукопашное/Стрелковое,
+ * выбранной как «— любое» в coreWeaponTypeFolders) — все её листья, потому
+ * что предметы лежат только в листьях, а не прямо в ветке — точное сравнение
+ * folderId иначе не нашло бы вообще ничего для «любого» выбора.
+ * @param {string} folderId
+ * @returns {string[]}
+ */
+export function weaponTypeFolderIds(folderId) {
+  if (!folderId) return [];
+  const { folders, parentId, branches } = coreWeaponBranches();
+  if (!branches.some(f => f.id === folderId)) return [folderId];
+  return folders.filter(f => parentId(f) === folderId).map(f => f.id);
 }
 
 /** Число предметов в узле рекурсивно — бейдж-счётчик у категории/папки. */

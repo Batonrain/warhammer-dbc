@@ -173,7 +173,7 @@
 .warhammer-dbc.wh-holo .ss-imp-desc,
 .warhammer-dbc.wh-holo .ss-imp-read-desc,
 .warhammer-dbc.wh-holo .atk-dlg-row label,
-.warhammer-dbc.wh-holo .wh-wizard-form label { color: #9af2c4 !important; opacity: 1 !important; }
+.warhammer-dbc.wh-holo :is(.wh-wizard-form, .wh-char-wizard) label { color: #9af2c4 !important; opacity: 1 !important; }
 .warhammer-dbc.wh-holo .ss-imp-row,
 .warhammer-dbc.wh-holo .ss-imp-read { background: rgba(120,255,180,0.06); }
 .warhammer-dbc.wh-holo .ss-gen-hint,

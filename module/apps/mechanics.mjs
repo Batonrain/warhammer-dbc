@@ -220,7 +220,7 @@ import { isThrottleReady, markThrottleUsed,
          throttleCount, isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
-import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders } from "./compendium-browser.mjs";
+import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive }                       from "./effects.mjs";
@@ -1394,7 +1394,10 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
       // категории/типа/свойства/типа брони/макс. Редкости (см. compendium-browser.mjs
       // pickMode). Отмена (null) — просто ничего не выдаём, без ошибки.
       const filters = {};
-      if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType) filters.folderId = entry.equipWeaponType;
+      // Раскрываем ветку («Рукопашное — любое») в список её листьев ДО фильтра —
+      // предметы лежат только в листьях, ITEM_FILTERS.folderId сравнивает
+      // folderId предмета с этим списком (compendium-filters.mjs).
+      if (entry.equipCategoryPack === "weapons" && entry.equipWeaponType) filters.folderId = weaponTypeFolderIds(entry.equipWeaponType);
       if (entry.equipCategoryPack === "weapons" && entry.equipWeaponProp) filters.weaponProp = entry.equipWeaponProp;
       if (entry.equipCategoryPack === "armor"   && entry.equipArmorType)  filters.armorType = entry.equipArmorType;
       if (entry.equipTalentTier !== "" && entry.equipTalentTier != null)   filters.talentTier = Number(entry.equipTalentTier);
@@ -3047,6 +3050,12 @@ export async function saveItemMechanics(item, groups) {
     `«${item.name}»: формула не разбирается, запись не применится: ${broken.map(f => `«${f}»`).join(", ")}`);
   if (item.isOwner) {
     await item.setFlag("warhammer-dbc", "mechanics", groups);
+    // Без этого вкладка «Эффекты» врала бы про уже НЕСУЩЕСТВУЮЩУЮ Механику:
+    // syncMechanicsEffects раньше звалась только из хука createItem/updateItem
+    // НА АКТОРЕ (_applyItemMechanics) — правка Механики на предмете без
+    // актора (или до его выдачи) молча оставляла старые ActiveEffect висеть,
+    // хотя порождавшая их запись уже удалена/заменена в этом же saveMechanics.
+    await syncMechanicsEffects(item);
     await syncWeaponPropItemEffects(item);
     return;
   }

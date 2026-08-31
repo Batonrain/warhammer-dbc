@@ -32,6 +32,37 @@
       </div>
       <div class="xp-table"> <div class="xp-row"> <label>Всего</label> <input type="number" name="system.experience.total" value="{{system.experience.total}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="xpTotal" title="Добавить Опыт">＋</button> </div> <div class="xp-row"> <label>Потрачено на Характеристики</label> <span class="xp-auto">{{system.experience.spentChar}}</span> </div> <div class="xp-row"> <label>Потрачено на Навыки</label> <span class="xp-auto">{{system.experience.spentSkills}}</span> </div> <div class="xp-row"> <label>Потрачено на Таланты</label> <span class="xp-auto">{{system.experience.spentTalents}}</span> </div> <div class="xp-row"> <label>Потрачено на Психосилы</label> <span class="xp-auto">{{system.experience.spentPsy}}</span> </div> <div class="xp-row"> <label>Потрачено на Техночудеса</label> <span class="xp-auto">{{system.experience.spentTech}}</span> </div> <div class="xp-row"> <label>Потрачено на Элитные архетипы</label> <span class="xp-auto">{{system.experience.spentElite}}</span> </div> <div class="xp-row"> <label>Потрачено на другое</label> <input type="number" name="system.experience.spentOther" value="{{system.experience.spentOther}}" min="0"/> </div> <div class="xp-row xp-row-result"> <label>Всего потрачено</label> <span>{{system.experience.spent}}</span> </div> <div class="xp-row xp-row-current"> <label>Текущий</label> <span>{{system.experience.current}}</span> </div> </div> </div> </div>{{!-- /advance-top --}}
 
+  {{#if showPatronPicker}}
+  <div class="stat-panel chaos-patron-panel" style="margin-bottom:8px;">
+    <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>
+    <div class="chaos-patron-grid">
+      {{#each chaosPatrons as |p|}}
+      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.label}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
+        <input type="radio" name="system.patronGod" value="{{p.key}}" {{#if p.selected}}checked{{/if}}/>
+        <span class="chaos-patron-sigil" style="-webkit-mask:url('{{p.sigil}}') center/contain no-repeat;mask:url('{{p.sigil}}') center/contain no-repeat"></span>
+        <span class="chaos-patron-name">{{p.label}}</span>
+        <span class="chaos-patron-favor">
+          <span class="chaos-patron-favor-val" title="Благосклонность — {{p.label}}">{{p.favor}}</span>
+          <button type="button" class="stat-add-btn patron-favor-add" data-action="statAdd" data-stat="patronFavor" data-god="{{p.key}}" title="Добавить Благосклонность — {{p.label}}">＋</button>
+        </span>
+      </label>
+      {{/each}}
+    </div>
+    <div class="chaos-patron-note">Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438); в режиме Покровительства/Смешанной — ещё и цену Продвижения ниже.</div>
+    {{#if usesPatronStereotype}}
+    <div class="patron-stereotype-row" title="Стереотип определяет союзную и 2 враждебные Характеристики для цены их Продвижения (корбук 24) — режим цены задан в Настройках листа/мира.">
+      <label>Стереотип Покровительства</label>
+      <select name="system.patronStereotype" class="patron-stereotype-select">
+        <option value="">— не выбран —</option>
+        {{#each patronStereotypes as |s|}}
+        <option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>
+        {{/each}}
+      </select>
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
   {{!-- Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Возврат
         за совпавшую выдачу приходит сам собой, посреди применения расы или
         Архетипа, и без этой ленты разобраться потом было бы негде. --}}
