@@ -15,7 +15,7 @@ import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
 import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-import { isPossessed } from "../rules/predicates.mjs";
+import { isPossessed, hasEliteArchetype } from "../rules/predicates.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
@@ -34,22 +34,18 @@ import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mj
  *
  * Формат специализации у существующих 58 архетипов и у новых различается:
  * старые пишут только русскую половину («Элитный архетип: Архимаг»), новые —
- * полное двуязычное имя («Элитный архетип: Felarch / Феларх»). Сверка идёт
- * по ЛЮБОЙ половине с любой стороны, а не только по английской — иначе гейт
- * ложно проваливался бы у всех 58 старых архетипов, даже когда персонаж
- * архетип честно взял.
+ * полное двуязычное имя («Элитный архетип: Felarch / Феларх»). Наличие
+ * архетипа проверяет канон hasEliteArchetype (rules/predicates.mjs): сверка
+ * по любой половине с любой стороны И по всем трём источникам — предмет,
+ * строка шапки, список дополнительных. Раньше здесь смотрели только предметы,
+ * и персонаж с архетипом, вписанным строкой (со старого листа), гейт не
+ * проходил (wdbc-91o8).
  */
 export function archetypeGateOk(actor, specialization) {
   const m = /^Элитный архетип:\s*(.+)$/.exec(String(specialization || "").trim());
   if (!m) return null;
-  const wantParts = m[1].split(" / ").map(s => s.trim().toLowerCase()).filter(Boolean);
-  if (!wantParts.length) return null;
-  return (actor.items || []).some(i => {
-    if (i.type !== "eliteArchetype") return false;
-    const nameParts = String(i.name || "").replace(/^\[WIP\]\s*/, "")
-      .split(" / ").map(s => s.trim().toLowerCase());
-    return wantParts.some(w => nameParts.includes(w));
-  });
+  if (!m[1].split("/").some(s => s.trim())) return null;
+  return hasEliteArchetype(actor, m[1]);
 }
 
 function cultFxOf(actor) {
@@ -85,9 +81,9 @@ export function talentGroupLock(actor, kind, parent, folderName) {
   if (parent === "Элитные архетипы") {
     // Архетип бывает и предметом на листе, и строкой в шапке: предметом — когда
     // куплен пикером, строкой — когда вписан руками или пришёл со старого листа.
-    const has = sys.eliteArchetype === folderName
-      || (sys.eliteArchetypesExtra || []).includes(folderName)
-      || items.some(i => i.type === "eliteArchetype" && i.name === folderName);
+    // Сверку ведёт канон hasEliteArchetype — билингвально, а не точным
+    // равенством строк: у старых листов записана одна половина имени (wdbc-91o8).
+    const has = hasEliteArchetype(actor, folderName);
     return has ? null : `Нужен Элитный архетип «${folderName}»`;
   }
   if (parent === "Таланты одержимых") {

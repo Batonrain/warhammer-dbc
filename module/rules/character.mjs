@@ -18,6 +18,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { carryRow }                        from "../helpers/utils.mjs";
 import { getArmorModEffects, armorModApForLocation, armorAgilityCap,
          disabledArmourOverloadTier, disabledArmourWeight } from "../combat/armor-mods.mjs";
+import { inventoryOverloadTier } from "./encumbrance.mjs";
 import { shieldArmorByLocation } from "../combat/hand-shield.mjs";
 import { resolveArmorProps, aggregateArmorAuto, mergeArmorLocFlags, emptyArmorLocFlags } from "../combat/armor-properties.mjs";
 import { qualityEffects } from "../constants/quality.mjs";
@@ -825,6 +826,9 @@ export function prepareCharacterDerived(actor, system) {
     const stance  = system.meleeStance || "standard";
 
     let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
+    // Снимок базового SPD (Ag.b + Размер, до модификаторов) — для breakdown
+    // ниже (wdbc-zbiz), тем же приёмом, что charTotalTooltip у характеристик.
+    const spdBase = spd;
 
     // Бонус к базовой скорости (SPD) от Черт/имплантов/талантов/психосил, плюс
     // system.movement.spdBonus — входное поле для kind:"movement" (Конструктор,
@@ -839,13 +843,21 @@ export function prepareCharacterDerived(actor, system) {
     const overload = disabledArmourOverloadTier(actor, disabledArmourWeight(actor));
     system.disabledArmourOverload = overload;
     const overloadSpdMod = overload?.spdMod || 0;
+    // Перевес ОБЩЕГО инвентаря (стр. 27, wdbc-2l3x) — независимый источник от
+    // перевеса выключенной силовой брони выше (может действовать одновременно,
+    // не смешиваются): «носит больше Ношения, но меньше Подъёма» → SPD −1 и
+    // −10 на движения/атаки (штраф теста подключён в combat/defense.mjs и
+    // sheets/actor-sheet.mjs, не здесь — тут только вклад в SPD).
+    const inventoryOverload = inventoryOverloadTier(actor);
+    system.inventoryOverload = inventoryOverload;
+    const inventoryOverloadSpdMod = inventoryOverload?.spdMod || 0;
     // Свойство оружия Piercing (wdbc-plsf): снаряд в ране торса/ноги — плоский
     // −1 SPD, пока не извлечён (не складывается за несколько таких ран —
     // книга не описывает накопление, см. combat/damage.mjs, где рана ставится).
     const pw = system.piercingWounds || {};
     const piercingSpdMod = (pw.body || pw.leftLeg || pw.rightLeg) ? -1 : 0;
-    if (traitSpeedMod || spdBonus || overloadSpdMod || piercingSpdMod) {
-      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + piercingSpdMod);
+    if (traitSpeedMod || spdBonus || overloadSpdMod || inventoryOverloadSpdMod || piercingSpdMod) {
+      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + inventoryOverloadSpdMod + piercingSpdMod);
       halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
     }
 
@@ -862,6 +874,22 @@ export function prepareCharacterDerived(actor, system) {
     system.movement.move     = move;
     system.movement.charge   = charge;
     system.movement.run      = run;
+    // Откуда число (wdbc-zbiz): те же слагаемые, что складываются выше —
+    // Черты/импланты, Конструктор (kind:"movement"), Перевес брони, Piercing,
+    // Пружинящая Стойка. Полушаг = SPD×1, поэтому его breakdown суммируется в
+    // halfMove без остатка (Полное/Натиск/Бег — те же слагаемые, ×2/3/6).
+    const spdBreakdown = [{ label: "База", value: spdBase, note: "Ag.b + Размер" }];
+    if (traitSpeedMod)           spdBreakdown.push({ label: "Черты/импланты",              value: traitSpeedMod });
+    if (spdBonus)                spdBreakdown.push({ label: "Механика (Конструктор)",      value: spdBonus });
+    if (overloadSpdMod)          spdBreakdown.push({ label: "Перевес выключенной брони",   value: overloadSpdMod });
+    if (inventoryOverloadSpdMod) spdBreakdown.push({ label: "Перевес инвентаря",           value: inventoryOverloadSpdMod });
+    if (piercingSpdMod)          spdBreakdown.push({ label: "Piercing (снаряд в ране)",     value: piercingSpdMod });
+    if (stance === "springing")  spdBreakdown.push({ label: "Пружинящая Стойка",           value: -2 });
+    // Минимум SPD — 0.5 (стр. 28): сумма слагаемых может уйти в минус, порог
+    // это ловит раньше breakdown.
+    const spdRawSum = spdBreakdown.reduce((s, b) => s + b.value, 0);
+    if (spdRawSum !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
+    system.movement.spdBreakdown = spdBreakdown;
 
     // ── Инициатива ────────────────────────────────────────────────────────
     // Хранит Ag.bonus + модификаторы Талантов (Combat Formation, Paranoia).

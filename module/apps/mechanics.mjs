@@ -228,11 +228,13 @@ import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
+import { CAPABILITY_COST_POOLS, capabilityCostLabel } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec } from "../rules/mech-when.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
+import { hasEliteArchetype }                  from "../rules/predicates.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { TRAIT_LIB_PACKS, TALENT_LIB_PACKS } from "../constants/library-packs.mjs";
 
@@ -551,6 +553,11 @@ export function blankMechEntry(kind = "characteristic") {
     rerollWho: "self",
     // capability — имя возможности из constants/capabilities.mjs
     capabilityKey: "",
+    // capability cost (wdbc-1dc8): пусто — бесплатно, иначе кнопка «Потратить»
+    // на листе актора списывает эту цену из пула при использовании
+    // (module/combat/capability-cost.mjs — pool не адрес хранения, три
+    // термина делят одно и то же поле актора, см. заголовок файла).
+    capabilityCostPool: "", capabilityCostAmount: 1,
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
@@ -677,7 +684,10 @@ export function describeMechEntry(entry) {
     }
     case "capability": {
       if (!entry.capabilityKey) return "Возможность: (не выбрана)";
-      return `Возможность: ${CAPABILITIES[entry.capabilityKey]?.label || entry.capabilityKey}`;
+      const costLabel = entry.capabilityCostPool
+        ? ` — цена: ${capabilityCostLabel({ pool: entry.capabilityCostPool, amount: entry.capabilityCostAmount })}`
+        : "";
+      return `Возможность: ${CAPABILITIES[entry.capabilityKey]?.label || entry.capabilityKey}${costLabel}`;
     }
     case "testMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
@@ -2398,10 +2408,22 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "capability") {
     const opts = CAPABILITY_OPTIONS
       .map(([k, l]) => `<option value="${esc(k)}" ${ent.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
+    // Цена в пуле (wdbc-1dc8): пусто — бесплатно (как раньше), иначе на листе
+    // актора у этой Возможности появляется кнопка «Потратить» (module/combat/
+    // capability-cost.mjs). Поле числа скрыто, пока пул не выбран — смена
+    // селекта сохраняет запись и даёт листу перерисоваться (тот же приём,
+    // что у .mech-fatigue-action ниже по файлу, item-sheet.mjs).
+    const poolOpts = [["", "— без цены —"], ...Object.entries(CAPABILITY_COST_POOLS).map(([k, p]) => [k, p.label])]
+      .map(([v, l]) => `<option value="${esc(v)}" ${(ent.capabilityCostPool || "") === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const amountHtml = ent.capabilityCostPool ? `
+      <input type="number" class="mech-capability-cost-amount" min="1" value="${esc(ent.capabilityCostAmount ?? 1)}"
+             title="Сколько списывать за использование" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
     return `<select class="mech-capability-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— возможность —</option>${opts}</select>
       <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
-             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <select class="mech-capability-cost-pool" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+              title="Цена в пуле: списывается кнопкой на листе актора">${poolOpts}</select>${amountHtml}`;
   }
 
   if (ent.kind === "testMod") {
@@ -3171,12 +3193,11 @@ export function actorMeetsReq(actor, e) {
     }
     case "reqRace":
       return actor.system.race === e.raceKey;
-    case "reqArchetype": {
-      const want = normReq(e.archetypeName);
-      // Элитные архетипы лежат и в поле актора, и списком «дополнительных».
-      const own = [actor.system.eliteArchetype, ...(actor.system.eliteArchetypesExtra || [])];
-      return own.some(a => normReq(a) === want);
-    }
+    case "reqArchetype":
+      // Канон hasEliteArchetype: строка шапки + список «дополнительных» +
+      // ПРЕДМЕТ типа eliteArchetype (куплен пикером) — раньше предмет не
+      // проверялся, и требование не видело честно взятый архетип (wdbc-91o8).
+      return hasEliteArchetype(actor, e.archetypeName);
     case "reqPatron":
       return actor.system.patronGod === e.patronKey;
     // Возможность спрашивается у общего реестра правил (module/rules/flags.mjs),

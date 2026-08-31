@@ -176,12 +176,23 @@ export const PREDICATES = {
  * или предмет типа eliteArchetype. Архетип бывает и предметом (куплен
  * пикером), и строкой (вписан руками/со старого листа) — обе формы отпирают
  * одно и то же. Раньше жил копиями в character-context и item-picker.
+ *
+ * `name` принимает и одну половину («Феларх»), и полное двуязычное имя
+ * («Felarch / Феларх»): совпадение любой половины искомого с любой половиной
+ * источника достаточно — старые архетипы записаны только русской половиной,
+ * новые полным именем, и обе формы встречаются с обеих сторон сверки
+ * (wdbc-91o8). Служебный префикс [WIP] у имени при сверке отбрасывается.
  */
 export function hasEliteArchetype(actor, name) {
+  const wanted = String(name ?? "").split("/").map(s => s.trim()).filter(Boolean);
+  if (!wanted.length) return false;
   const sys = actor?.system || {};
-  if (itemHasName({ name: sys.eliteArchetype }, name)) return true;
-  if ((sys.eliteArchetypesExtra || []).some(k => itemHasName({ name: k }, name))) return true;
-  return [...(actor?.items ?? [])].some(i => i.type === "eliteArchetype" && itemHasName(i, name));
+  const sources = [
+    sys.eliteArchetype,
+    ...(sys.eliteArchetypesExtra || []),
+    ...[...(actor?.items ?? [])].filter(i => i?.type === "eliteArchetype").map(i => i?.name)
+  ].map(n => ({ name: String(n ?? "").replace(/^\[WIP\]\s*/, "") }));
+  return wanted.some(w => sources.some(src => itemHasName(src, w)));
 }
 
 /**

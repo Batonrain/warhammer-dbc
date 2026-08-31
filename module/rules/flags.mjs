@@ -51,3 +51,21 @@ export function ruleFlagLabels(actor, flag, ctx = {}) {
     .map(rule => rule.label || rule.id)
     .filter(Boolean);
 }
+
+/**
+ * Цена в пуле (wdbc-1dc8, module/combat/capability-cost.mjs) у первой
+ * найденной записи, давшей эту возможность — null, если возможность
+ * бесплатна. Несколько источников одного имени с разной ценой — редкий
+ * край, решается первым найденным (тот же компромисс, что у CAPABILITIES[key]
+ * .label — общий для всех источников одного имени).
+ */
+export function ruleFlagCost(actor, flag, ctx = {}) {
+  const name = nameOf(flag);
+  if (!name) return null;
+  for (const rule of collectRules(actor, ctx)) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind === "grantFlag" && nameOf(effect.target) === name && effect.cost) return effect.cost;
+    }
+  }
+  return null;
+}

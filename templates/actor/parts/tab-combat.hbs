@@ -68,10 +68,10 @@
             Token HUD-кнопки «Движение». --}}
       <div class="panel-body movement-cols">
         <div class="movement-col">
-          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="halfmove" title="Полудействие (1 ОД). Перемещение до SPD×1.">Полушаг</button> <span class="mv-box">{{system.movement.halfMove}}</span> </div>
-          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="fullmove" title="Полное действие (2 ОД). Перемещение до SPD×2.">Шаг</button> <span class="mv-box">{{system.movement.move}}</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="halfmove" {{#if moveGate.half.disabled}}disabled{{/if}} title="{{#if moveGate.half.title}}{{moveGate.half.title}}{{else}}Полудействие (1 ОД). Перемещение до SPD×1.{{/if}}">Полушаг</button> <span class="mv-box" title="{{spdTooltip}}">{{system.movement.halfMove}}</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="fullmove" {{#if moveGate.full.disabled}}disabled{{/if}} title="{{#if moveGate.full.title}}{{moveGate.full.title}}{{else}}Полное действие (2 ОД). Перемещение до SPD×2.{{/if}}">Шаг</button> <span class="mv-box">{{system.movement.move}}</span> </div>
           <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="charge" title="Выбирает Базу «Натиск» — рукопашный приём +20, 2 ОД спишутся на броске атаки.">Натиск</button> <span class="mv-box">{{system.movement.charge}}</span> </div>
-          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="run" title="Полное действие (2 ОД). До начала следующего Хода: нельзя Реакции, Стрельба по персонажу −20, Рукопашная +20.">Бег</button> <span class="mv-box">{{system.movement.run}}</span> </div>
+          <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="run" {{#if moveGate.run.disabled}}disabled{{/if}} title="{{#if moveGate.run.title}}{{moveGate.run.title}}{{else}}Полное действие (2 ОД). До начала следующего Хода: нельзя Реакции, Стрельба по персонажу −20, Рукопашная +20.{{/if}}">Бег</button> <span class="mv-box">{{system.movement.run}}</span> </div>
         </div>
         <div class="movement-col">
           <div class="movement-item"> <button type="button" class="wh-move-btn" data-move-action="climb" title="Карабканье (стр. 29): Athletics/Acrobatics. Дистанция: SPD/2 + Успехи.">Карабканье</button> <span class="mv-box">{{movementDist.climb}}</span> </div>
@@ -110,13 +110,13 @@
           <div class="ae-pool" title="Очки Действия (стр. 12): Полудействие −1, Полное действие −2">
             <span class="ae-pool-label">ОД</span>
             <span class="ae-pool-value">{{actionEconomy.ap.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.ap.max}}</span>
-            <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="1" title="Списать 1 ОД (Полудействие)">−1</button>
-            <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="2" title="Списать 2 ОД (Полное действие)">−2</button>
+            <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="1" {{#if aeSpendGate.ap1.disabled}}disabled{{/if}} title="{{#if aeSpendGate.ap1.title}}{{aeSpendGate.ap1.title}}{{else}}Списать 1 ОД (Полудействие){{/if}}">−1</button>
+            <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="2" {{#if aeSpendGate.ap2.disabled}}disabled{{/if}} title="{{#if aeSpendGate.ap2.title}}{{aeSpendGate.ap2.title}}{{else}}Списать 2 ОД (Полное действие){{/if}}">−2</button>
           </div>
           <div class="ae-pool" title="Реакции (стр. 12): тратятся Уклонением/Парированием и подобными действиями вне своего Хода">
             <span class="ae-pool-label">Реакции</span>
             <span class="ae-pool-value">{{actionEconomy.reactions.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.reactions.max}}</span>
-            <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" title="Списать 1 Реакцию вручную">−1</button>
+            <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" {{#if aeSpendGate.reaction.disabled}}disabled{{/if}} title="{{#if aeSpendGate.reaction.title}}{{aeSpendGate.reaction.title}}{{else}}Списать 1 Реакцию вручную{{/if}}">−1</button>
           </div>
           {{#if actionEconomy.defense}}
           <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
@@ -250,6 +250,15 @@
     {{/if}}
     {{#if hasResplendentRaiment}}
     <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
+    {{/if}}
+    {{#if hasBoneSong}}
+    <button type="button" class="technique-btn bone-song-btn" style="margin-top:6px;" title="Костяная Песня — одна техника или вся в радиусе 10 м, восстанавливает Структуру"><span class="tech-name">🦴 Костяная Песня</span></button>
+    {{/if}}
+    {{#if hasPreservation}}
+    <button type="button" class="technique-btn preservation-btn" style="margin-top:6px;" title="Защита — одна техника или вся в радиусе 10 м, даёт щит"><span class="tech-name">🛡️ Защита</span></button>
+    {{/if}}
+    {{#if hasSongOfSwiftness}}
+    <button type="button" class="technique-btn song-of-swiftness-btn" style="margin-top:6px;" title="Песня Стремительности — одна техника или вся в радиусе 10 м, +SPD/Манёвренность до конца боя"><span class="tech-name">🏃 Песня Стремительности</span></button>
     {{/if}}
   </div></div>{{!-- /стойка --}}
 

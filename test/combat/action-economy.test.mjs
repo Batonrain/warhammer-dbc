@@ -6,13 +6,15 @@
 // Реакций (Агрессивная теряет 1 в конце Хода, Защитная даёт +1 на Избегание).
 
 import "../support/foundry-stub.mjs";
+import { captured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import {
   hasActionEconomy, isEncounterActive, resetActionEconomy,
   applyTurnEndStanceEffects, apCostForActionType,
   canSpendActionPoints, spendActionPoints,
-  canSpendReaction, spendReaction, effectiveDefenseReactionMax
+  canSpendReaction, spendReaction, effectiveDefenseReactionMax,
+  postTurnStartCard, apSpendGate, reactionSpendGate
 } from "../../module/combat/action-economy.mjs";
 
 /** Актор-стрелок из module/data/actor/_creature.mjs — только нужные поля. */
@@ -215,5 +217,62 @@ describe("effectiveDefenseReactionMax", () => {
   it("Защитная Стойка — 1, без неё — 0 (без надбавок Талантов)", () => {
     expect(effectiveDefenseReactionMax(actorFor({ meleeStance: "defensive" }))).toBe(1);
     expect(effectiveDefenseReactionMax(actorFor({ meleeStance: "standard" }))).toBe(0);
+  });
+});
+
+// wdbc-qjnk: гейт кнопок ДО клика (disabled+title), а не тост после клика.
+describe("apSpendGate / reactionSpendGate", () => {
+  it("вне Encounter всегда {disabled: false}, даже при 0 ОД/Реакций", () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } });
+    expect(apSpendGate(actor, 2)).toEqual({ disabled: false, title: "" });
+    expect(reactionSpendGate(actor)).toEqual({ disabled: false, title: "" });
+  });
+
+  it("в Encounter при нехватке ОД — disabled с причиной («нужно X, есть Y»)", () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 1, max: 2 } });
+    const gate = apSpendGate(actor, 2);
+    expect(gate.disabled).toBe(true);
+    expect(gate.title).toBe("Не хватает ОД: нужно 2, есть 1");
+  });
+
+  it("в Encounter при достаточном ОД — не гейтится", () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 } });
+    expect(apSpendGate(actor, 2)).toEqual({ disabled: false, title: "" });
+  });
+
+  it("cost 0 (напр. Натиск — ОД спишутся позже, на броске атаки) не гейтится", () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 } });
+    expect(apSpendGate(actor, 0)).toEqual({ disabled: false, title: "" });
+  });
+
+  it("в Encounter без Реакций — disabled", () => {
+    globalThis.game.combat = { started: true };
+    const actor = actorFor({ reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 } });
+    expect(reactionSpendGate(actor)).toEqual({ disabled: true, title: "Не хватает Реакций" });
+  });
+});
+
+// wdbc-qjnk: карточка «сколько у меня ОД/Реакций» в начале своего Хода.
+describe("postTurnStartCard", () => {
+  it("постит в чат карточку с текущими ОД и Реакциями", async () => {
+    captured.chat = [];
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } });
+    actor.name = "Тестовый";
+    await postTurnStartCard(actor);
+    expect(captured.chat).toHaveLength(1);
+    expect(captured.chat[0].content).toContain("Тестовый");
+    expect(captured.chat[0].content).toContain("ОД");
+    expect(captured.chat[0].content).toContain("2");
+    expect(captured.chat[0].content).toContain("Реакции");
+  });
+
+  it("Орда/техника — ничего не постит (нет экономики действий)", async () => {
+    captured.chat = [];
+    const actor = actorFor({ type: "horde" });
+    await postTurnStartCard(actor);
+    expect(captured.chat).toHaveLength(0);
   });
 });

@@ -1938,6 +1938,11 @@ export class WarhammerItemSheet
     mechField(".mech-mod-char-mult", (e, v) => { e.modCharBonusMultiplier = Math.max(1, Number(v) || 1); });
     mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
     mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
+    // Цена в пуле (wdbc-1dc8) — смена пула показывает/прячет поле числа,
+    // тот же приём каскада, что у .mech-fatigue-action ниже (saveMech даёт
+    // листу перерисоваться).
+    mechField(".mech-capability-cost-pool",   (e, v) => { e.capabilityCostPool = v; });
+    mechField(".mech-capability-cost-amount", (e, v) => { e.capabilityCostAmount = Math.max(1, Number(v) || 1); });
 
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.

@@ -26,6 +26,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { MELEE_STANCES } from "../constants/combat.mjs";
+import { esc } from "../helpers/utils.mjs";
+import { rollIcon } from "../constants/roll-icons.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -90,6 +92,25 @@ export async function resetActionEconomy(actor) {
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
   if (Object.keys(upd).length) await actor.update(upd);
+}
+
+/**
+ * Карточка начала Хода (wdbc-qjnk): игрок сейчас узнаёт «сколько у меня ОД»
+ * только зайдя на вкладку листа посреди боя — эта карточка говорит прямо в
+ * чат сразу после resetActionEconomy (hooks.mjs, updateCombat), пока данные
+ * уже свежие (actor.update мутирует документ синхронно до персиста).
+ */
+export async function postTurnStartCard(actor) {
+  if (!hasActionEconomy(actor)) return;
+  const ap    = actor.system.actionPoints ?? {};
+  const react = actor.system.reactions ?? {};
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("run", "#4dffa6")}${esc(actor.name)} — Начало Хода</div>
+      <div class="roll-threshold">ОД <b>${Number(ap.value) || 0}</b>/${Number(ap.max) || 0} · Реакции <b>${Number(react.value) || 0}</b>/${Number(react.max) || 0}</div>
+    </div>`
+  }, game.settings.get("core", "rollMode")));
 }
 
 /**
@@ -158,4 +179,29 @@ export async function spendReaction(actor, { forDefense = false } = {}) {
     await actor.update({ "system.reactions.value": Math.max(0, universal - 1) });
   }
   return true;
+}
+
+/**
+ * {disabled, title} для кнопки, тратящей ОД — образец disabled-armour-
+ * periodic-test-btn (templates/actor/parts/tab-combat.hbs): гейт виден ДО
+ * клика, а не тостом после клика. Вне активного Encounter
+ * canSpendActionPoints сама всегда true — кнопки остаются активны, как и
+ * раньше; cost 0 (напр. Натиск, ОД которого списываются позже, на броске
+ * атаки) тоже всегда проходит.
+ */
+export function apSpendGate(actor, cost) {
+  const ok = canSpendActionPoints(actor, cost);
+  return {
+    disabled: !ok,
+    title: ok ? "" : `Не хватает ОД: нужно ${cost}, есть ${Number(actor.system.actionPoints?.value) || 0}`
+  };
+}
+
+/** То же для Реакции (forDefense не гейтится здесь — Уклонение/Парирование сами проверяют свой доп. пул). */
+export function reactionSpendGate(actor) {
+  const ok = canSpendReaction(actor);
+  return {
+    disabled: !ok,
+    title: ok ? "" : "Не хватает Реакций"
+  };
 }

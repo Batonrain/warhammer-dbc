@@ -127,8 +127,15 @@ function ruleFromEntry(item, entry) {
     if (!isKnownCapability(key)) {
       console.error(`Warhammer DBC | запись «Возможность» (${id}): имя «${key}» не значится в constants/capabilities.mjs`);
     }
+    // Цена в пуле (wdbc-1dc8) едет вместе с флагом — ruleFlagCost (rules/flags.mjs)
+    // читает её у того же эффекта, что даёт саму возможность. Поле добавляется,
+    // только когда цена реально задана — большинство записей остаются
+    // бесплатными, и их эффект не меняет формы (тесты старого поведения целы).
+    const cost = entry.capabilityCostPool
+      ? { pool: entry.capabilityCostPool, amount: Math.max(1, Number(entry.capabilityCostAmount) || 1) }
+      : null;
     return { id, label: entry.label || item.name, when: {},
-             effects: [{ kind: "grantFlag", target: key }] };
+             effects: [{ kind: "grantFlag", target: key, ...(cost ? { cost } : {}) }] };
   }
 
   return null;
