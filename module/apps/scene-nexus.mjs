@@ -19,7 +19,7 @@ import { openVeilMystic } from "./veil.mjs";
 import { openEnvironment } from "./environment.mjs";
 import { esc } from "../helpers/utils.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
 // ── Телепорт токенов (исполняется активным ГМ; для ГМ — локально) ──────────
 // Уведомить инициатора: себе — тост; игроку — через флаг его User (document-sync,
@@ -94,17 +94,20 @@ export async function execSceneTeleport(data, requester) {
   }
 }
 
-export class SceneNexus extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-scene-nexus",
-      classes: ["warhammer-dbc", "wh-holo", "wh-scene-nexus"],
-      title: "Нексус Сцен",
+export class SceneNexus extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-scene-nexus",
+    classes: ["warhammer-dbc", "wh-holo", "wh-scene-nexus"],
+    window: { title: "Нексус Сцен", resizable: true },
+    position: { width: 880, height: 720 }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/scene-nexus.hbs",
-      width: 880, height: 720, resizable: true,
-      scrollY: [".wh-nx-body"]
-    });
-  }
+      root: true, scrollable: [".wh-nx-body"]
+    }
+  };
 
   constructor(...args) {
     super(...args);
@@ -114,7 +117,7 @@ export class SceneNexus extends Application {
   _saveCollapsed() { try { localStorage.setItem("wh-nexus-collapsed", JSON.stringify(this._collapsed)); } catch (e) {} }
   _toggleCollapse(id) { this._collapsed[id] = !this._collapsed[id]; this._saveCollapsed(); this.render(false); }
 
-  getData() {
+  async _prepareContext(options) {
     const isGM    = game.user.isGM;
     const curId   = canvas?.scene?.id || game.scenes?.current?.id || "";
     const activeId = game.scenes?.active?.id || "";
@@ -312,9 +315,9 @@ export class SceneNexus extends Application {
     if (ups.length) { await Promise.all(ups); this.render(); }
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     const isGM = game.user.isGM;
 
     // Клик по карточке — телепорт выбранных токенов.

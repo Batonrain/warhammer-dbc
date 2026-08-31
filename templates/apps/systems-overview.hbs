@@ -1,15 +1,15 @@
 <div class="wh-so">
-  <nav class="wh-so-tabs tabs">
-    <a class="item" data-tab="systems">СИСТЕМЫ</a>
-    <a class="item" data-tab="protectorate">ПРОТЕКТОРАТ</a>
-    {{#if isGM}}<a class="item" data-tab="dynasties">НАСТРОЙКИ</a>{{/if}}
-    <a class="item" data-tab="help">СПРАВКА</a>
+  <nav class="wh-so-tabs tabs" data-group="primary">
+    <a class="item {{#if (eq tab "systems")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="systems">СИСТЕМЫ</a>
+    <a class="item {{#if (eq tab "protectorate")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="protectorate">ПРОТЕКТОРАТ</a>
+    {{#if isGM}}<a class="item {{#if (eq tab "dynasties")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="dynasties">НАСТРОЙКИ</a>{{/if}}
+    <a class="item {{#if (eq tab "help")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="help">СПРАВКА</a>
   </nav>
 
   <div class="wh-so-body">
 
     {{!-- ── СИСТЕМЫ ── --}}
-    <div class="tab" data-tab="systems">
+    <div class="tab {{#if (eq tab "systems")}}active{{/if}}" data-group="primary" data-tab="systems">
       {{#if hasSystems}}
       <table class="wh-so-table">
         <thead><tr><th>Система</th><th>Сектор</th><th class="wh-so-c">Статус</th><th class="wh-so-c">Действия</th></tr></thead>
@@ -37,7 +37,7 @@
     </div>
 
     {{!-- ── ПРОТЕКТОРАТ ── --}}
-    <div class="tab" data-tab="protectorate">
+    <div class="tab {{#if (eq tab "protectorate")}}active{{/if}}" data-group="primary" data-tab="protectorate">
 
       {{!-- Династия --}}
       <div class="wh-so-panel wh-so-dyn-panel">
@@ -164,7 +164,7 @@
 
     {{!-- ── НАСТРОЙКИ ── --}}
     {{#if isGM}}
-    <div class="tab" data-tab="dynasties">
+    <div class="tab {{#if (eq tab "dynasties")}}active{{/if}}" data-group="primary" data-tab="dynasties">
       <div class="wh-so-panel">
         <div class="wh-so-panel-title">СЕКТОР ПО УМОЛЧАНИЮ <span class="wh-so-dim">— будет подставляться в новые системы</span></div>
         <div class="wh-so-add">
@@ -198,7 +198,7 @@
     {{/if}}
 
     {{!-- ── СПРАВКА ── --}}
-    <div class="tab" data-tab="help">
+    <div class="tab {{#if (eq tab "help")}}active{{/if}}" data-group="primary" data-tab="help">
       <div class="wh-so-panel wh-so-help">
         <div class="wh-so-panel-title">КАК РАБОТАЕТ ПРОТЕКТОРАТ</div>
         <p>Протекторат — владение Вольного Торговца. Каждая <b>разведанная</b> планета/станция протектората даёт ресурсы в общий котёл. На вкладке «Протекторат» считается <b>БАЛАНС</b>: по каждому ресурсу <span class="wh-help-inc">доход</span> минус <span class="wh-help-exp">расход</span>, сгруппировано по продукции / сырью / прочему.</p>

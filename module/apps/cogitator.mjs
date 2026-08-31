@@ -8,7 +8,7 @@
 // ════════════════════════════════════════════════════════════════════════
 import { esc } from "../helpers/utils.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const NS = "warhammer-dbc";
 const FLAG = "cogitator";
 
@@ -163,15 +163,22 @@ function renderBody(page, opts = {}) {
 }
 
 // ── Менеджер когитаторов ────────────────────────────────────────────────────
-export class CogitatorManager extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-cogitator-manager", classes: ["warhammer-dbc", "wh-holo", "wh-cog-manager"],
-      title: "Когитаторы", template: "systems/warhammer-dbc/templates/apps/cogitator-manager.hbs",
-      width: 560, height: 520, resizable: true
-    });
-  }
-  getData() {
+export class CogitatorManager extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-cogitator-manager",
+    classes: ["warhammer-dbc", "wh-holo", "wh-cog-manager"],
+    window: { title: "Когитаторы", resizable: true },
+    position: { width: 560, height: 520 }
+  };
+
+  static PARTS = {
+    body: {
+      template: "systems/warhammer-dbc/templates/apps/cogitator-manager.hbs",
+      root: true, scrollable: [".wh-cog-mgr-list"]
+    }
+  };
+
+  async _prepareContext(options) {
     const L = CONST.DOCUMENT_OWNERSHIP_LEVELS;
     const isGM = game.user.isGM;
     const root = cogRoot();
@@ -194,9 +201,9 @@ export class CogitatorManager extends Application {
 
     return { isGM, groups, hasRoot: !!root };
   }
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     el.querySelector("[data-act=create]")?.addEventListener("click", async () => {
       const root = await ensureCogRoot();
       const folderId = await this._promptCreate(root);
@@ -272,18 +279,48 @@ export class CogitatorManager extends Application {
   }
 }
 
+// ── Заголовок окна: две ГМ-кнопки-тумблера («⋮» в шапке ApplicationV2) ──────
+// `visible` — штатное поле ApplicationHeaderControlsEntry (ApplicationV2,
+// см. Foundry client/applications/api/application.mjs): пункт меню целиком
+// скрыт от не-ГМ, без ручной проверки внутри самого действия.
+function onToggleEdit() {
+  if (this.mode === "edit") { this.draft = null; this.mode = "view"; this.currentPageId = null; }
+  else { this._initDraft(); }
+  this.render(false);
+}
+function onTogglePlayerView() {
+  if (this.mode === "edit") { this.draft = null; this.mode = "view"; this.currentPageId = null; }
+  this.asPlayer = !this.asPlayer;
+  this.render(false);
+}
+
 // ── Консоль (просмотр / правка) ─────────────────────────────────────────────
-export class CogitatorConsole extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "wh-cog"],
+export class CogitatorConsole extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    classes: ["warhammer-dbc", "wh-cog"],
+    position: { width: 680, height: 640 },
+    window: {
+      resizable: true,
+      controls: [
+        { action: "togglePlayerView", icon: "fas fa-eye", label: "Глазами игрока ⇄ ГМ", visible: () => game.user.isGM },
+        { action: "toggleEdit", icon: "fas fa-pen", label: "Правка ⇄ Консоль", visible: () => game.user.isGM }
+      ]
+    },
+    actions: {
+      toggleEdit: onToggleEdit,
+      togglePlayerView: onTogglePlayerView
+    }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/cogitator.hbs",
-      width: 680, height: 640, resizable: true
-    });
-  }
+      root: true, scrollable: [".cog-screen", ".cog-b-scroll"]
+    }
+  };
+
   constructor(journalId, edit = false, options = {}) {
-    super(options);
-    this.options.id = "wh-cog-" + journalId;   // уникальный DOM-id на каждый когитатор
+    super({ id: `wh-cog-${journalId}`, ...options });   // уникальный DOM-id на каждый когитатор
     this.journalId = journalId;
     this.mode = "view";
     this.currentPageId = null;
@@ -293,31 +330,13 @@ export class CogitatorConsole extends Application {
     this.asPlayer = false;   // ГМ: смотреть глазами игрока (бинарь/скрапкод)
     if (edit && game.user.isGM) this._initDraft();
   }
+  get title() {
+    return (getCog(this.journal)?.title || "Когитатор") + (this.mode === "edit" ? " — правка" : "");
+  }
   _initDraft() {
     this.draft = foundry.utils.deepClone(getCog(this.journal)) || defaultCogitator();
     this.selectedPageId = this.draft.startPage || this.draft.pages[0]?.id;
     this.mode = "edit";
-  }
-  _getHeaderButtons() {
-    const btns = super._getHeaderButtons();
-    if (game.user.isGM) {
-      // Одна кнопка-тумблер: поведение определяется режимом в момент клика
-      // (шапка appv1 не перестраивается при render(false)).
-      btns.unshift({ label: "Правка ⇄ Консоль", class: "cog-hdr", icon: "fas fa-pen",
-        onclick: () => {
-          if (this.mode === "edit") { this.draft = null; this.mode = "view"; this.currentPageId = null; }
-          else { this._initDraft(); }
-          this.render(false);
-        } });
-      // Тумблер «глазами игрока»: бинарь/скрапкод как у игроков.
-      btns.unshift({ label: "Глазами игрока ⇄ ГМ", class: "cog-hdr-eye", icon: "fas fa-eye",
-        onclick: () => {
-          if (this.mode === "edit") { this.draft = null; this.mode = "view"; this.currentPageId = null; }
-          this.asPlayer = !this.asPlayer;
-          this.render(false);
-        } });
-    }
-    return btns;
   }
 
   // ── ПКМ-меню авторинга по телу страницы ──
@@ -442,10 +461,9 @@ export class CogitatorConsole extends Application {
   _stopScrap() { if (this._scrapTimer) { clearInterval(this._scrapTimer); this._scrapTimer = null; } }
   async close(options) { this._stopScrap(); return super.close(options); }
 
-  getData() {
+  async _prepareContext(options) {
     const j = this.journal;
     if (!j) return { missing: true };
-    this.options.title = (getCog(j)?.title || "Когитатор") + (this.mode === "edit" ? " — правка" : "");
     const isGM = game.user.isGM;
 
     if (this.mode === "edit") {
@@ -502,9 +520,9 @@ export class CogitatorConsole extends Application {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     this._stopScrap();   // сброс таймера скрапкода перед каждой перерисовкой
 
     // Навигация по ссылкам-токенам (просмотр, запасной способ — клик).

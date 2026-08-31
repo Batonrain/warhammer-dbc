@@ -16,7 +16,7 @@ import { craftIcon } from "../constants/craft-icons.mjs";
 import { VAT_QUALITY, BIO_TARGET_QUALITY, BIO_TEST_SKILLS, BIO_OUTCOMES,
          VAT_ENTRY_REQ, TEMPLATE_RESEARCH, vatPlan, failQuality,
          templateSuccesses } from "../constants/bio-lab.mjs";
-import { DRUKHARI_BIOIMPLANTS } from "../constants/drukhari-bio.mjs";
+import { bioImplantCatalog } from "../constants/drukhari-bio.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { diceModeFor } from "../rules/test-kind.mjs";
@@ -25,7 +25,7 @@ import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
 /** Персонаж, которым владеет игрок (не ГМ) — такой всегда доступен для крафта,
  *  вне зависимости от чекбокса «Доступен для крафта» (тот остаётся ручным
@@ -64,17 +64,20 @@ function _newProject() {
   };
 }
 
-export class CraftWorkshop extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-craft-workshop",
-      classes: ["warhammer-dbc", "wh-holo", "wh-craft"],
-      title: "Мастерская — Крафт и Исследования",
+export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-craft-workshop",
+    classes: ["warhammer-dbc", "wh-holo", "wh-craft"],
+    window: { title: "Мастерская — Крафт и Исследования", resizable: true },
+    position: { width: 860, height: 800 }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/craft-workshop.hbs",
-      width: 860, height: 800, resizable: true,
-      scrollY: [".wh-craft-scroll"]
-    });
-  }
+      root: true, scrollable: [".wh-craft-scroll"]
+    }
+  };
 
   constructor(...args) {
     super(...args);
@@ -118,21 +121,10 @@ export class CraftWorkshop extends Application {
   }
 
 
-  /** Каталог биоимплантов для выпадашки: имя, редкость и группа. */
+  /** Каталог биоимплантов для выпадашки: имя, редкость и группа —
+   * из компендиума warhammer-dbc.implants, см. drukhari-bio.mjs. */
   _bioCatalog() {
-    return DRUKHARI_BIOIMPLANTS.map(b => {
-      const group = b.folderPath?.[1] || "";
-      // Редкость лежит в начале описания как «R 2. …».
-      const m = /R\s*(-?\d+)/.exec(b.system?.description || "");
-      return {
-        key: b.name, label: b.name, group,
-        rarity: m ? Number(m[1]) : 0,
-        advanced: !/^Обычные$/.test(group) && !/Ферментный/.test(group),
-        haemonculi: /Гемункульские/.test(group),
-        // «Крупный» имплант — целая конечность: у них по 3 цикла за редкость.
-        large: /Рука|Нога|Скелет|Панцирь|Доспех|Брюхо/i.test(b.name)
-      };
-    });
+    return bioImplantCatalog();
   }
 
   /** Расчёт партии в чане: ресурсы, время, модификатор, запреты. */
@@ -229,7 +221,7 @@ export class CraftWorkshop extends Application {
     };
   }
 
-  getData() {
+  async _prepareContext(options) {
     return {
       isGM: game.user.isGM,
       projects: this.projects.map(p => this._projectVM(p)),
@@ -243,9 +235,9 @@ export class CraftWorkshop extends Application {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
     const pidOf = (t) => t.closest("[data-pid]")?.dataset.pid;
     const on = (sel, evt, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(evt, fn));

@@ -345,11 +345,21 @@ function renderNodeHtml(node, multi) {
  * см. character-wizard.mjs). Через duck typing по id, а не импорт класса —
  * тот сам тянет mechanics.mjs → compendium-browser.mjs, обратный импорт
  * замкнул бы цикл.
+ *
+ * CharacterWizard — ApplicationV2, тот в `ui.windows` НЕ попадает вовсе (это
+ * реестр только для `foundry.appv1.api.Application`) — рендерящиеся
+ * ApplicationV2 живут в отдельном `foundry.applications.instances`
+ * (`Map`, ключ — уже разрешённый `app.id`, а не шаблон `options.id` с
+ * `{id}`). Оставляем и старую ветку — дёшево на случай, если когда-нибудь
+ * появится V1-окно с таким же префиксом id.
  */
 function findRenderedCharacterWizards() {
-  if (!ui?.windows) return [];
-  return Object.values(ui.windows).filter(a =>
+  const out = Object.values(ui?.windows ?? {}).filter(a =>
     a?.rendered && typeof a.minimize === "function" && a.options?.id?.startsWith?.("wh-char-wizard-"));
+  for (const a of foundry.applications?.instances?.values?.() ?? []) {
+    if (a?.rendered && typeof a.minimize === "function" && a.id?.startsWith?.("wh-char-wizard-")) out.push(a);
+  }
+  return out;
 }
 
 export function openCompendiumBrowser(force = false, pickMode = null) {

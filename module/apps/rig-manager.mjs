@@ -8,23 +8,28 @@
 
 import { RIG_VARIANT_FLAG, rigManagerData, fits, itemSizeStr } from "../constants/rig.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const NS = "warhammer-dbc";
 const FLAG = "stowage";
 
-export class RigManager extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "wh-holo", "wh-rig"],
+export class RigManager extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-rig-{id}",
+    classes: ["warhammer-dbc", "wh-holo", "wh-rig"],
+    position: { width: 760, height: 720 },
+    window: { resizable: true }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/rig-manager.hbs",
-      width: 760, height: 720, resizable: true,
-      scrollY: [".wr-col-rigs", ".wr-col-unassigned"]
-    });
-  }
+      root: true, scrollable: [".wr-col-rigs", ".wr-col-unassigned"]
+    }
+  };
+
   constructor(actor, options = {}) {
-    super(options);
+    super({ id: `wh-rig-${actor.id}`, ...options });
     this.actorId = actor.id;
-    this.options.id = "wh-rig-" + actor.id;
   }
   get actor() { return game.actors.get(this.actorId); }
   get title() { return `Разгрузка — ${this.actor?.name || ""}`; }
@@ -66,14 +71,14 @@ export class RigManager extends Application {
     if (Object.keys(upd).length) { await this.actor.update(upd); this.render(false); }
   }
 
-  getData() {
+  async _prepareContext(options) {
     if (!this.actor) return { missing: true };
     return rigManagerData(this.actor);
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     // Убрать из слота
     el.querySelectorAll("[data-slot-clear]").forEach(b => b.addEventListener("click", () => this._clearSlot(b.dataset.slotClear)));
     // Сменить вариант слота (кобура → ножны → петля)

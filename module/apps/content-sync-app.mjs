@@ -12,7 +12,7 @@
 
 import { buildLiveSyncReport, applySyncReport } from "./content-sync.mjs";
 
-const { FormApplication } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
 function fmtVal(v) {
   if (v === null || v === undefined || v === "") return "—";
@@ -20,29 +20,31 @@ function fmtVal(v) {
   return String(v);
 }
 
-// FormApplication, не голый Application: game.settings.registerMenu (Foundry
+// ApplicationV2 (не голый Application): game.settings.registerMenu (Foundry
 // v14) требует FormApplication/ApplicationV2 у пункта меню и синхронно бросает
 // иначе — этот бросок обрывал ВЕСЬ остаток общего Hooks.once("init", ...) в
 // warhammer-dbc.mjs, из-за чего все настройки, зарегистрированные ПОСЛЕ этого
 // пункта меню (sceneGroups, imperialCalendar/timeFlow и т.д. — десятки штук),
 // не регистрировались вовсе на живом мире. Окно не использует настоящую
-// сдачу формы (кнопки/чекбоксы уже сами всё обрабатывают в activateListeners),
-// поэтому _updateObject — заглушка, а не отсутствующий метод.
-export class ContentSyncApp extends FormApplication {
-  async _updateObject() {}
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: "wh-content-sync",
-      classes: ["warhammer-dbc", "wh-holo", "wh-content-sync"],
-      title: "Обновить мир",
-      template: "systems/warhammer-dbc/templates/apps/content-sync.hbs",
-      width: 820, height: 700, resizable: true,
-      scrollY: [".wh-cs-body"]
-    });
-  }
+// сдачу формы (кнопки/чекбоксы уже сами всё обрабатывают в _onRender), поэтому
+// блок form в DEFAULT_OPTIONS не нужен — ApplicationV2 его не требует.
+export class ContentSyncApp extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    id: "wh-content-sync",
+    classes: ["warhammer-dbc", "wh-holo", "wh-content-sync"],
+    window: { title: "Обновить мир", resizable: true },
+    position: { width: 820, height: 700 }
+  };
 
-  constructor(...args) {
-    super(...args);
+  static PARTS = {
+    body: {
+      template: "systems/warhammer-dbc/templates/apps/content-sync.hbs",
+      root: true, scrollable: [".wh-cs-body"]
+    }
+  };
+
+  constructor(options = {}) {
+    super(options);
     /** @type {{rows: object[], unmatched: object[]} | null} */
     this.report = null;
     this.selected = new Set();   // entryKey = "<itemId>::<path>"
@@ -86,7 +88,7 @@ export class ContentSyncApp extends FormApplication {
     };
   }
 
-  async getData() {
+  async _prepareContext(options) {
     await this._ensureReport();
     const rows = this.report.rows
       .slice()
@@ -106,9 +108,9 @@ export class ContentSyncApp extends FormApplication {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
     const on = (sel, evt, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(evt, fn));
 
     on("[data-act=toggle-group]", "click", e => {

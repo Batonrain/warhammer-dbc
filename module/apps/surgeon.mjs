@@ -12,7 +12,7 @@ import { buildBodyState, buildBodyLayers, buildImplantsSvg,
 import { syncItemEffectsDisabled } from "./effects.mjs";
 import { syncGrantedEquipment } from "./mechanics.mjs";
 
-const { Application } = foundry.appv1.api;
+const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const NS = "warhammer-dbc";
 
 const QUAL = { poor: "Poor.Q", common: "Comm.Q", good: "Good.Q", best: "Best.Q" };
@@ -55,19 +55,23 @@ const SYSTEMS = [
 const NS_INST = "installed"; // флаг «хирургически установлен»
 const kindOf = (item) => classifyImplant(item.name, item.system?.installed, item.system?.category)?.kind || null;
 
-export class SurgeonWindow extends Application {
-  static get defaultOptions() {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      classes: ["warhammer-dbc", "wh-holo", "wh-surgeon"],
+export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
+  static DEFAULT_OPTIONS = {
+    classes: ["warhammer-dbc", "wh-holo", "wh-surgeon"],
+    position: { width: 1020, height: 780 },
+    window: { resizable: true }
+  };
+
+  static PARTS = {
+    body: {
       template: "systems/warhammer-dbc/templates/apps/surgeon.hbs",
-      width: 1020, height: 780, resizable: true,
-      scrollY: [".wh-surg-col"],
-    });
-  }
+      root: true, scrollable: [".wh-surg-col"]
+    }
+  };
+
   constructor(actor, options = {}) {
-    super(options);
+    super({ id: `wh-surgeon-${actor.id}`, ...options });
     this.actorId = actor.id;
-    this.options.id = "wh-surgeon-" + actor.id;
     this._lib = null;
   }
   get actor() { return game.actors.get(this.actorId); }
@@ -85,7 +89,7 @@ export class SurgeonWindow extends Application {
     return this._lib;
   }
 
-  async getData() {
+  async _prepareContext(options) {
     const actor = this.actor;
     if (!actor) return { missing: true };
 
@@ -150,9 +154,9 @@ export class SurgeonWindow extends Application {
     };
   }
 
-  activateListeners(html) {
-    super.activateListeners(html);
-    const el = html[0] ?? html;
+  _onRender(context, options) {
+    super._onRender?.(context, options);
+    const el = this.element;
 
     // Имплантировать: «own:<id>» — установить имеющийся (флаг); «lib:<uuid>» — создать из компендиума и установить.
     el.querySelectorAll("[data-install]").forEach(sel => sel.addEventListener("change", async e => {
