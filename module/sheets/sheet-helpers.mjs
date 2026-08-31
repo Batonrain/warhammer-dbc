@@ -513,6 +513,9 @@ export function buildGetData(actor) {
       shieldHand:      i.getFlag?.("warhammer-dbc", "shieldHand") || "left",
       shieldRaised:    !!i.getFlag?.("warhammer-dbc", "shieldRaised"),
       shieldCoverage:  s.shieldAP != null ? shieldCoverageLabel(i) : "",
+      // В какой руке оружие (module/apps/hud.mjs, карточки правая/левая) — без
+      // дефолта, в отличие от shieldHand: одиночное оружие руку не форсирует.
+      hand:            i.getFlag?.("warhammer-dbc", "weaponHand") || "",
       hasMods,
       modNames:        modFx.names.join(", "),
       attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,

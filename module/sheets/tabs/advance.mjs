@@ -17,7 +17,9 @@ import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
 // Шаги продвижения характеристики (+5..+25) и ранги навыка — индексы в таблицах цен.
-const CHAR_IMP_STEPS   = { none: 0, simple: 1, average: 2, trained: 3, significant: 4, expert: 5 };
+// CHAR_IMP_STEPS экспортирован — им же на вкладке ПОКАЗАТЕЛИ считается ряд из
+// 5 меток «сколько раз куплено» под ячейкой Характеристики (character-context.mjs).
+export const CHAR_IMP_STEPS = { none: 0, simple: 1, average: 2, trained: 3, significant: 4, expert: 5 };
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 
 /**

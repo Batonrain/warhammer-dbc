@@ -108,6 +108,19 @@ describe("характеристики", () => {
     expect(ws).toMatchObject({ base: 30, advance: 15, total: 45, bonus: 4, cost: 250, charDamage: 4 });
   });
 
+  it("improvementSteps/improvementPips — ряд из 5 меток купленных Продвижений", () => {
+    const steps = imp => {
+      const c = ctxOf({ characteristics: { ws: char(30, { improvement: imp }) } }).chars.find(c => c.key === "ws");
+      return { steps: c.improvementSteps, on: c.improvementPips.filter(p => p.on).length, len: c.improvementPips.length };
+    };
+    expect(steps("none")).toEqual({ steps: 0, on: 0, len: 5 });
+    expect(steps("simple")).toEqual({ steps: 1, on: 1, len: 5 });
+    expect(steps("average")).toEqual({ steps: 2, on: 2, len: 5 });
+    expect(steps("trained")).toEqual({ steps: 3, on: 3, len: 5 });
+    expect(steps("significant")).toEqual({ steps: 4, on: 4, len: 5 });
+    expect(steps("expert")).toEqual({ steps: 5, on: 5, len: 5 });
+  });
+
   it("у Хаосита Влияние называется Бесчестием", () => {
     const inf = k => ctxOf(k).chars.find(c => c.key === "inf");
     expect(inf({ alignment: "heretic" }).label).toBe("Бесчестие");

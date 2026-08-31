@@ -3,7 +3,10 @@
    постоянная свёртываемая перетаскиваемая панель, видят все. */
 #wh-cal-widget {
   position: fixed; z-index: 57; width: 208px;
-  font-family: "Oswald", "Roboto Condensed", sans-serif; pointer-events: auto;
+  /* Тот же когитаторный набор, что у #wh-hud (styles/ui/hud.css) — свой,
+     документ-уровневый виджет вне .warhammer-dbc.character-sheet. */
+  --cg: #4dffa6; --cg-dim: #2f9e6a; --cg-line: #1f6f4a; --cg-fire: #ffb84d;
+  font-family: "Consolas", "Lucida Console", "Courier New", monospace; pointer-events: auto;
   border: 1px solid rgba(47,158,106,0.4); border-radius: 8px; overflow: hidden;
   background: linear-gradient(160deg, rgba(8,22,14,0.62), rgba(4,14,9,0.66));
   box-shadow: 0 6px 22px rgba(0,0,0,0.4), inset 0 0 30px -18px #4dffa6;
@@ -14,6 +17,13 @@
 #wh-cal-widget.collapsed .wh-cal-w-body { display: none; }
 #wh-cal-widget.collapsed .wh-cal-w-head { border-bottom: none; }
 #wh-cal-widget.collapsed .wh-cal-w-collapse { transform: rotate(-90deg); }
+/* Угловые скобки — тот же приём, что у .hud-panel/.stat-panel. */
+#wh-cal-widget::before, #wh-cal-widget::after {
+  content: ""; position: absolute; width: 8px; height: 8px; pointer-events: none; opacity: .7; z-index: 1;
+  border-color: var(--cg-dim); border-style: solid;
+}
+#wh-cal-widget::before { top: 2px; left: 2px; border-width: 1px 0 0 1px; }
+#wh-cal-widget::after  { bottom: 2px; right: 2px; border-width: 0 1px 1px 0; }
 
 .wh-cal-w-head {
   display: flex; align-items: center; gap: 7px; padding: 5px 10px; cursor: grab;
@@ -28,20 +38,30 @@
 .wh-cal-w-settings, .wh-cal-w-collapse { cursor: pointer; font-size: 1.05em; line-height: 1; opacity: 0.7; transition: transform 0.15s, opacity 0.15s; }
 .wh-cal-w-settings:hover, .wh-cal-w-collapse:hover { opacity: 1; color: #4dffa6; }
 
-.wh-cal-w-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; }
+.wh-cal-w-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
 .wh-cal-w-date {
-  font-size: 1.05em; font-weight: 700; letter-spacing: 0.03em; color: #eafff4;
-  text-align: center; text-shadow: 0 0 8px rgba(77,255,166,0.35);
+  font-size: 1.2em; font-weight: 700; letter-spacing: 0.03em; color: var(--cg);
+  text-align: center; text-shadow: 0 0 10px rgba(77,255,166,0.45);
 }
 .wh-cal-w-date-part { cursor: help; border-bottom: 1px dotted rgba(154,242,196,0.5); }
-.wh-cal-w-date-part:hover { color: #9af2c4; border-bottom-color: #9af2c4; }
+.wh-cal-w-date-part:hover { color: #eafff4; border-bottom-color: #eafff4; }
 .wh-cal-w-date-dot { opacity: 0.7; }
+/* Подпись под датой: занятая ватга/вахта (если GM включил хотя бы одну), либо
+   плейсхолдер-приглашение — макетное «место для дополнительного летоисчисления». */
+.wh-cal-w-note {
+  text-align: center; font-size: 0.66em; color: #6a9c82; font-style: italic;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+}
+.wh-cal-w-note-ic { font-style: normal; }
+.wh-cal-w-clock {
+  text-align: center; font-size: 1.55em; font-weight: 700; color: #eafff4;
+  letter-spacing: 0.04em; text-shadow: 0 0 10px rgba(77,255,166,0.4); margin: 1px 0;
+}
 .wh-cal-w-watch {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   font-size: 0.8em; color: #9fc4b2; flex-wrap: wrap;
 }
 .wh-cal-w-watch-ic { font-size: 1.1em; }
-.wh-cal-w-watch-primary { font-size: 0.85em; color: #cfe9dc; }
 .wh-cal-w-watch-secondary { font-size: 0.74em; opacity: 0.85; }
 
 .wh-cal-w-controls { display: flex; justify-content: space-between; gap: 4px; margin-top: 3px; }

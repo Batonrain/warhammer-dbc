@@ -33,9 +33,15 @@
 .warhammer-dbc .stats-cog .corruption-roll:hover { border-color: var(--cg-red); box-shadow: 0 0 12px -4px var(--cg-red); color: #ffd8d8; }
 
 .warhammer-dbc .stats-cog .char-grid-body { padding: 8px !important; }
+/* Все ячейки — 10 книжных Характеристик (WS..Inf) + COR/INS (+PF у Rogue
+   Trader) — в ОДНУ строку на всю ширину листа, сколько бы их ни было:
+   grid-auto-flow:column без grid-template-columns держит все элементы в
+   одном ряду, а grid-auto-columns:1fr делит ширину поровну между реальным
+   числом ячеек этого актора (12 обычно, 13 у Rogue Trader), а не хардкодит 10. */
 .warhammer-dbc .stats-cog .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   gap: 5px;
 }
 .warhammer-dbc .stats-cog .char-cell {
@@ -59,6 +65,17 @@
   margin-left: 1px; font-size: 0.55em; font-weight: 800; line-height: 1;
   color: var(--cg); text-shadow: 0 0 6px rgba(77,255,166,0.5);
 }
+/* Ряд из 5 меток — сколько раз куплено Продвижение этой Характеристики
+   (system.characteristics.*.improvement, 0-5 через CHAR_IMP_STEPS). Тот же
+   приём точек, что у .fate-pips/.fate-pip (actor-advance-cog.css), но
+   зелёным --cg, а не янтарным --cg-fire — Судьба и Продвижения не путаются. */
+.warhammer-dbc .stats-cog .char-imp-pips { display: flex; gap: 2px; margin: 1px 0; }
+.warhammer-dbc .stats-cog .char-imp-pip {
+  width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.06);
+  border: 1px solid color-mix(in srgb, var(--cg) 40%, #2a3038);
+}
+.warhammer-dbc .stats-cog .char-imp-pip.on { background: var(--cg); border-color: var(--cg); box-shadow: 0 0 6px -1px var(--cg); }
+
 .warhammer-dbc .stats-cog .char-cell-mod,
 .warhammer-dbc .stats-cog .char-cell-mod-spacer { width: 34px; height: 16px; }
 .warhammer-dbc .stats-cog .char-cell-mod {

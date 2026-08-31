@@ -24,6 +24,15 @@ export async function setShieldHand(item, hand) {
   await item.setFlag("warhammer-dbc", "shieldHand", hand);
 }
 
+// В какой руке оружие (для карточек «правая/левая» на HUD, module/apps/hud.mjs) —
+// без дефолта, в отличие от shieldHand: большинство персонажей носят одно
+// оружие, форсировать руку незачем. Повторный клик по уже активной руке снимает.
+export async function setWeaponHand(item, hand) {
+  if (!item) return;
+  const current = item.getFlag("warhammer-dbc", "weaponHand");
+  await item.setFlag("warhammer-dbc", "weaponHand", current === hand ? "" : hand);
+}
+
 export async function toggleShieldRaised(item) {
   if (!item) return;
   const on = !item.getFlag("warhammer-dbc", "shieldRaised");
@@ -84,6 +93,12 @@ export function activateGearListeners(root, actor, {
     ev.preventDefault();
     const el = ev.currentTarget;
     await setShieldHand(actor.items.get(el.dataset.itemId), el.dataset.hand);
+  });
+  // Рука оружия (module/apps/hud.mjs читает weaponHand для карточек правая/левая).
+  on(root, ".weapon-hand-btn", "click", async ev => {
+    ev.preventDefault();
+    const el = ev.currentTarget;
+    await setWeaponHand(actor.items.get(el.dataset.itemId), el.dataset.hand);
   });
   on(root, ".shield-raise-btn", "click", async ev => {
     ev.preventDefault();

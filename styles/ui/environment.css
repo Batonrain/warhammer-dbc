@@ -137,7 +137,9 @@
 #wh-env-widget {
   /* Позицию задаёт JS (перетаскивается, сохраняется); дефолт — правее списка игроков. */
   position: fixed; z-index: 57; width: 208px;
-  font-family: "Oswald", "Roboto Condensed", sans-serif; pointer-events: auto;
+  /* Тот же когитаторный набор, что у #wh-hud/#wh-cal-widget. */
+  --cg: #4dffa6; --cg-dim: #2f9e6a; --cg-line: #1f6f4a; --cg-fire: #ffb84d;
+  font-family: "Consolas", "Lucida Console", "Courier New", monospace; pointer-events: auto;
   border: 1px solid rgba(47,158,106,0.4); border-radius: 8px; overflow: hidden;
   /* Полупрозрачный, чтобы не спорить с HUD. */
   background: linear-gradient(160deg, rgba(8,22,14,0.62), rgba(4,14,9,0.66));
