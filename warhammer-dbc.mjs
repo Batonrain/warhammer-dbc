@@ -1325,11 +1325,13 @@ Hooks.on("updateActor", (doc, changes) => {
   if (changes.system?.race === undefined && changes.system?.subrace === undefined) return;
   syncTokenBaseSize(doc);
 });
+// Гейт на largeBase: обычная броня Базу не меняет никогда, а без фильтра
+// массовый импорт снаряжения гонял бы ресинк на каждый предмет.
 Hooks.on("createItem", (item) => {
-  if (game.user.isGM && item.type === "armor" && item.parent) syncTokenBaseSize(item.parent);
+  if (game.user.isGM && item.type === "armor" && item.system?.largeBase && item.parent) syncTokenBaseSize(item.parent);
 });
 Hooks.on("deleteItem", (item) => {
-  if (game.user.isGM && item.type === "armor" && item.parent) syncTokenBaseSize(item.parent);
+  if (game.user.isGM && item.type === "armor" && item.system?.largeBase && item.parent) syncTokenBaseSize(item.parent);
 });
 Hooks.on("updateItem", (item, changes) => {
   if (!game.user.isGM || item.type !== "armor" || !item.parent) return;

@@ -40,10 +40,10 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
   const target = targetToken?.actor;
   if (!actor || !target || target === actor) return;
 
-  await actor.update({ "system.conditions.grappling": true });
-  await target.update({ "system.conditions.grappling": true });
-  await actor.setFlag(NS, PARTNER_FLAG, target.uuid);
-  await target.setFlag(NS, PARTNER_FLAG, actor.uuid);
+  // Состояние и флаг партнёра одним update на актора: каждая отдельная
+  // запись — это prepareData + re-render листа и токена у всех клиентов.
+  await actor.update({ "system.conditions.grappling": true, [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
+  await target.update({ "system.conditions.grappling": true, [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
 
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -66,11 +66,9 @@ export function grapplePartner(actor) {
 /** Снять Борьбу с обоих участников разом (кнопка «Разорвать Захват» и любой Выход). */
 export async function endGrapple(actor) {
   const partner = grapplePartner(actor);
-  await actor.update({ "system.conditions.grappling": false });
-  await actor.unsetFlag(NS, PARTNER_FLAG);
+  await actor.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   if (partner) {
-    await partner.update({ "system.conditions.grappling": false });
-    await partner.unsetFlag(NS, PARTNER_FLAG);
+    await partner.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   }
 }
 

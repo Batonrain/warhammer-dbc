@@ -303,7 +303,7 @@
               "field": "total",
               "op": "add",
               "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.klK1ajRlSvktomgJ",
+              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.klK1ajRlSvktomgJ",
               "sourceName": "Knowing Forests / Знание Лесов",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,

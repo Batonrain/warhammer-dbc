@@ -208,7 +208,11 @@ export async function processShooterTurnStart(combatant) {
   if (!game.user.isGM || !combatant?.actor) return;
   const attackerUuid = combatant.actor.uuid;
 
-  for (const scene of game.scenes) {
+  // Зоны живут на сцене боя (там их размещали) — полный обход всех сцен
+  // мира на каждую смену хода был бы и тратой, и ошибкой: _drift()/
+  // tokensInRegion читают canvas, который валиден только для текущей сцены.
+  const combatScene = combatant.combat?.scene ?? canvas?.scene;
+  for (const scene of combatScene ? [combatScene] : []) {
     const toDelete = [];
     for (const region of scene.regions) {
       const behavior = region.behaviors.find(b => b.type === LINGER_ZONE_TYPE && !b.disabled);
