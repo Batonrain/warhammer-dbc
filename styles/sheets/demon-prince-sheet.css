@@ -442,6 +442,14 @@
 .warhammer-dbc .dp-ip-patronage { display: flex; flex-direction: column; gap: 2px; }
 .warhammer-dbc .dp-ip-adv { font-size: 0.72em; color: #8fce6a; }
 .warhammer-dbc .dp-ip-dis { font-size: 0.72em; color: #d98a8a; }
+.warhammer-dbc .dp-ip-temp {
+  display: flex; align-items: baseline; gap: 6px; justify-content: center;
+  padding: 3px 8px; border-radius: 5px; cursor: help;
+  background: color-mix(in srgb, #ffd24d 16%, transparent);
+  border: 1px solid color-mix(in srgb, #ffd24d 45%, transparent);
+}
+.warhammer-dbc .dp-ip-temp-value { font-weight: 700; color: #ffd24d; }
+.warhammer-dbc .dp-ip-temp-label { font-size: 0.72em; color: #cbb98a; }
 
 /* ═══════════════════════════════════════════════════════
    Панель вкладок: варп-полоса вместо имперской парчи.
