@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Еретех Тёмных Механикус для связывания/хранения демонов (для машин/оружия).",
-    "notes": "",
+    "notes": "Не смоделировано целиком: многоступенчатый ритуал призыва/удержания демона (Tech-Use(I) вместо W, вместимость по типу демона) — вне схемы testMod.",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

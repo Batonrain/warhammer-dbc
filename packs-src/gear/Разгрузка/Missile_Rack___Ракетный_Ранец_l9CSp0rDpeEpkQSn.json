@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Большой заплечный ранец для переноски ракет (обычно у заряжающего расчёта ракетной установки).",
-    "notes": "",
+    "notes": "Числа — боезапас/условие извлечения по Ходам, не тестовый модификатор.",
     "quantity": 1,
     "weight": 3,
     "availability": 0,

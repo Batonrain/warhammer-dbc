@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Четыре клыка каннибала, пропитанные смертью.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: встроенная атака Укусом с лечением/зависимостью — новое оружие+механика ресурса, не testMod.",
     "quantity": 1,
     "weight": 0.3,
     "availability": 5,

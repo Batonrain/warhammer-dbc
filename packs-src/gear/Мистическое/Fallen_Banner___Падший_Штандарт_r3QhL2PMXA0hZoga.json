@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Стяг Нургла, сплетённый из 7 любимых Отцом Чумы трупов.",
-    "notes": "",
+    "notes": "Не смоделировано: +1/−1 SPD и тест T+0 — эффект на группу существ в радиусе по критерию Покровительства, не личный testMod.",
     "quantity": 1,
     "weight": 2,
     "availability": 2,

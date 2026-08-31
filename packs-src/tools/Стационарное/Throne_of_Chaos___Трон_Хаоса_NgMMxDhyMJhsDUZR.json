@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Массивный трон, освящённый в жертвенной крови. Связывается с Хаоситом Inf 60+ (перековка под другого — смена работы).",
-    "notes": "",
+    "notes": "Не смоделировано: выдаёт Демонические Трейты чемпиону — вне схемы testMod.",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Выбрасыватель на наруч/предплечье под компактный пистолет или нож. По одному на каждую руку.",
-    "notes": "",
+    "notes": "Не смоделировано: +2 Инициатива условна Талантом Quick Draw в первый Ход; Awareness−30 — порог теста наблюдателя.",
     "quantity": 1,
     "weight": 0.5,
     "availability": 1,

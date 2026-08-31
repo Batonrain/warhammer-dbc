@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Тяжёлый бронзовый ошейник с рунами ненависти.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: −30/+30 к психотестам — область «психотест» отсутствует в testMod (wdbc-jw81); прочее (Sanctified укус, потеря Psyker) — не тест.",
     "quantity": 1,
     "weight": 1,
     "availability": 3,

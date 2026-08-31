@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Кристалл ~1м на рунной подставке — мощный фокус ритуалов и психосил.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: аура +20 в радиусе на ГРУППУ (не владельца), плюс каскадный взрыв при разрушении — area-эффект, не testMod.",
     "quantity": 1,
     "weight": 0,
     "availability": 1,

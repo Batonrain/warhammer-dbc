@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Наручники для сковывания цели в Борьбе (приём Пересилить).",
-    "notes": "",
+    "notes": "Числа — пороги взлома/вырывания СКОВАННОЙ целью и характеристики самого предмета (Размер/AP/Структура), не бонус владельцу.",
     "quantity": 1,
     "weight": 0.5,
     "availability": -2,

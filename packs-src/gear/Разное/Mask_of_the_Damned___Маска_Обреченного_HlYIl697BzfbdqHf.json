@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Маска, наполненная эссенцией гладиатора, осознавшего обречённость своего состояния и не желавшего умирать.",
-    "notes": "",
+    "notes": "Не смоделировано: W−10 — порог теста ПРОТИВНИКА, не владельца.",
     "quantity": 1,
     "weight": 0.3,
     "availability": 1,

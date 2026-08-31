@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Кобура на боку под пистолет ≤1.5 кг или нож. До двух штук.",
-    "notes": "",
+    "notes": "Та же причина, что у Кобуры в Сапоге — порог теста наблюдателя.",
     "quantity": 1,
     "weight": 0.2,
     "availability": -1,

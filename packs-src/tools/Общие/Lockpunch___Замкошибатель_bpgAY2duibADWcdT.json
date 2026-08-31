@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Устройство вышибания замков (цилиндр с батареей и грав-пластиной).",
-    "notes": "",
+    "notes": "«AP ≤16 → уничтожить замок» — порог применения инструмента (сравнение с AP предмета), не тест Навыка/Характеристики.",
     "quantity": 1,
     "weight": 5,
     "availability": 1,

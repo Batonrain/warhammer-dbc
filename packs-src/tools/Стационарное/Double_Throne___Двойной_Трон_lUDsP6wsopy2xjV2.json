@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Техноеретик: металлический ящик с двумя снопами электродов.",
-    "notes": "",
+    "notes": "Чисто описательная возможность (принудительное вождение через пленного Навигатора) — числового теста в тексте нет.",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

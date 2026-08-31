@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Ремень с кармашками/петлями для магазинов, патронов и гранат, носимый через плечо. Одновременно до двух штук.",
-    "notes": "",
+    "notes": "Числа — количество карманов/петель разгрузки, не тестовый модификатор.",
     "quantity": 1,
     "weight": 0.6,
     "availability": -2,

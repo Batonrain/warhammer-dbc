@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Сигнализация с датчиком движения (периметр лагеря/проходы). Установка Tech-Use+0.",
-    "notes": "",
+    "notes": "«Проходит Awareness на 1-75» — это шанс срабатывания ловушки, не бонус теста владельца.",
     "quantity": 1,
     "weight": 2,
     "availability": -1,

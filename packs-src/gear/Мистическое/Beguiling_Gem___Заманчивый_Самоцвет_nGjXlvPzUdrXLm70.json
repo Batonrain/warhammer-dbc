@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Гранёный самоцвет из дымчатого берилла, отражающий тёмные мечты.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: W−10 — порог теста ПРОТИВНИКА, атакующего носителя, не бонус носителю.",
     "quantity": 1,
     "weight": 0,
     "availability": 3,

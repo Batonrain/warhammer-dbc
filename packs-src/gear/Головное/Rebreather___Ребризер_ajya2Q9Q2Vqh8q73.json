@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Тяжёлая дыхательная маска с запасом воздуха.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: 1 час воздуха, иммунитет к газам/удушью — расходный ресурс/иммунитет, не тест.",
     "quantity": 1,
     "weight": 0.8,
     "availability": 0,

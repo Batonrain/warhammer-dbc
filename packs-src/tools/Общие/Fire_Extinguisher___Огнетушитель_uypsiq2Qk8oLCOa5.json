@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Баллон с пеной/сжатым газом для тушения. 10 зарядов. Слот разгрузки 4×1.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: тушение пламени — бросок урона против порога, не тест Навыка/Характеристики.",
     "quantity": 1,
     "weight": 3,
     "availability": -3,

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Ошейник со взрывчаткой, детонирующий по вокс-сигналу и убивающий носителя.",
-    "notes": "",
+    "notes": "Не смоделировано: числа — пороги теста взлома (Security+0/Tech-Use−20), не бонусы владельцу.",
     "quantity": 1,
     "weight": 0.5,
     "availability": -1,

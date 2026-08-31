@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Автоинжектор, вкалывающий заряженные препараты по нажатию кнопки (полудействие) или по вокс-команде.",
-    "notes": "",
+    "notes": "Число — ёмкость (3 капсулы), не тестовый модификатор.",
     "quantity": 1,
     "weight": 1,
     "availability": 1,

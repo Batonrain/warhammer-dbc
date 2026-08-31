@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Психический инструмент, задерживающий сформированную психоэнергию.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: заключение силы в жезл при манифестации — специфика психической механики (wdbc-jw81), не testMod.",
     "quantity": 1,
     "weight": 1,
     "availability": 5,

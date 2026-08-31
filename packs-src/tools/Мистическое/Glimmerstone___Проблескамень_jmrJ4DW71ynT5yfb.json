@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Пористый камень из гнёзд Проблескрылов (варп-штормы). Мешочек по 10 шт.",
-    "notes": "",
+    "notes": "Не смоделировано: W+0 — порог сохранения эффекта, не бонус; снятие штрафов PR/Феноменов — специфика психической механики (wdbc-jw81).",
     "quantity": 10,
     "weight": 0.1,
     "availability": 2,

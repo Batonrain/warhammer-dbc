@@ -117,6 +117,14 @@ function effectAppliesTo(target, ctx) {
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
+  // Групповой навык (Навигация/Ремесло/…) несёт ключ в ctx.group, не ctx.skill
+  // (см. onSkillRoll, actor-sheet.mjs) — «skill:navigation» обязано ловить его
+  // так же, как обычный навык: одно и то же правило книги («+10 Navigation
+  // (Surface)», Cartograph) не должно молчать только потому, что навык
+  // групповой. Специализация (ctx.specialty) в отборе не участвует — запись
+  // не умеет её сузить, тот же компромисс, что у остальных ситуативных
+  // модификаторов этой области.
+  if (ctx.group)  return scope === `skill:${String(ctx.group).toLowerCase()}`;
   if (ctx.char)  return scope === `char:${String(ctx.char).toLowerCase()}`;
   return false;
 }

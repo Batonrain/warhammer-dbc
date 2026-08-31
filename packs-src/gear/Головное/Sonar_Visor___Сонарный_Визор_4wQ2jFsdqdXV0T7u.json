@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Эхолокатор с выводом на широкоугловой визор. Является визором.",
-    "notes": "",
+    "notes": "Не смоделировано: выдаёт Трейт Sonar Sense — вне схемы testMod.",
     "quantity": 1,
     "weight": 0.6,
     "availability": 2,

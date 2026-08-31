@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/gear.svg",
   "system": {
     "description": "Тёмная сфера из застывшего антисвета, наполненного психокостью эльдар. Размером с фраг-гранату.",
-    "notes": "",
+    "notes": "Не смоделировано целиком: телепортация группы существ — новая механика, не тест.",
     "quantity": 1,
     "weight": 0.3,
     "availability": 3,

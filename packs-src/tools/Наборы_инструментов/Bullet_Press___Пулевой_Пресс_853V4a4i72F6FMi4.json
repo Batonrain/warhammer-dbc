@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/tool.svg",
   "system": {
     "description": "Набор для отливки пуль, прессовки гильз/капсюлей, ремонта боеприпасов.",
-    "notes": "",
+    "notes": "Разрешает крафт боеприпасов в поле — новая возможность действия, не тестовый модификатор (числа в тексте нет).",
     "quantity": 1,
     "weight": 3,
     "availability": -1,
