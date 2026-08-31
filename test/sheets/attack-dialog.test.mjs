@@ -57,6 +57,17 @@ function textNode() {
   };
 }
 
+/** Тот же приём, но для innerHTML — построчная разбивка порога пишет в него. */
+function htmlNode() {
+  let html = "";
+  return { get innerHTML() { return html; }, set innerHTML(v) { html = String(v); } };
+}
+
+/** Сумма всех <b>±N</b> в HTML построчной разбивки — должна равняться итогу. */
+function sumBreakdown(html) {
+  return [...html.matchAll(/<b>([+-]?\d+)<\/b>/g)].reduce((n, m) => n + Number(m[1]), 0);
+}
+
 beforeEach(() => {
   resetCaptured();
   setTargets([]);
@@ -402,6 +413,72 @@ describe("пересчёт порога в открытом окне", () => {
 
     expect(captured.dialog.content).not.toContain('data-autofail="true"');
     expect(captured.dialog.content).toContain("Ослеплён (-30)");
+  });
+});
+
+// wdbc-53lh: под итоговым порогом — список слагаемых, а не одно непрозрачное
+// число. Сумма списка должна ровно совпадать с показанным итогом (та же
+// арифметика, что thresholdOf), нулевые слагаемые в списке не показываются.
+describe("построчная разбивка порога (wdbc-53lh)", () => {
+  it("сумма слагаемых равна показанному итогу, нулевые слагаемые скрыты", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const display   = textNode();
+    const breakdown = htmlNode();
+    const form = attackForm(
+      { "#atk-modifier": "-5",
+        "input[name='atk-rof']:checked": { dataset: { bonus: "10" } },
+        "#atk-total-display": display, "#atk-threshold-breakdown": breakdown,
+        ".av-adv-hint": textNode() },
+      { ".atk-mod-cb:not([data-autofail]):checked": [checkbox(20)],
+        ".atk-mod-cb:checked": [checkbox(20)] });
+
+    captured.rerender(form);
+    expect(display.textContent).toBe("70");                    // 45 − 5 + 10 + 20
+    expect(sumBreakdown(breakdown.innerHTML)).toBe(70);
+
+    expect(breakdown.innerHTML).toContain("BS <b>+45</b>");
+    expect(breakdown.innerHTML).toContain("Режим огня <b>+10</b>");
+    expect(breakdown.innerHTML).toContain("Доп. модификатор <b>-5</b>");
+    expect(breakdown.innerHTML).toContain("Ситуативные <b>+20</b>");
+    // Легион/Тренировка/Боеприпас и т.п. у этой заготовки все нулевые — не в списке.
+    expect(breakdown.innerHTML).not.toContain("Легион");
+    expect(breakdown.innerHTML).not.toContain("Боеприпас");
+  });
+
+  it("ополовиненный правилом штраф даёт отдельную поправочную строку, сумма всё равно сходится", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const display   = textNode();
+    const breakdown = htmlNode();
+    const form = attackForm(
+      { "#atk-total-display": display, "#atk-threshold-breakdown": breakdown, ".av-adv-hint": textNode() },
+      { ".rule-mod:checked": [{ dataset: { value: "-30", halve: "1" } }] });
+
+    captured.rerender(form);
+    // 45 база − 30 правило, ополовинено (округление в пользу игрока) → −15.
+    expect(display.textContent).toBe("30");
+    expect(sumBreakdown(breakdown.innerHTML)).toBe(30);
+    expect(breakdown.innerHTML).toContain("Спецправила <b>-30</b>");
+    expect(breakdown.innerHTML).toContain("Ополовинено");
+  });
+
+  it("заблокировано/провал/авто-успех — список слагаемых очищается, а не показывает устаревшее", () => {
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const display   = textNode();
+    const breakdown = htmlNode();
+    breakdown.innerHTML = "стухший список";
+    const form = attackForm(
+      { "#atk-total-display": display, "#atk-threshold-breakdown": breakdown, ".av-adv-hint": textNode() },
+      { ".atk-mod-cb[data-autofail]:checked": [checkbox(0)] });
+
+    captured.rerender(form);
+    expect(display.textContent).toBe("ПРОВАЛ");
+    expect(breakdown.innerHTML).toBe("");
   });
 });
 

@@ -84,3 +84,34 @@ export function contactType(rectA, rectB) {
   if (rectsInContact(rectA, rectB)) return "base";
   return "none";
 }
+
+// ─── Полосы дальности стрельбы (стр. 40 корбука, раздел «Дистанция») ────────
+// «+30 в упор 0,5–3 м · +10 короткая до Rng/2 · +0 боевая до Rng ·
+//  −10 дальняя до Rng×2 · −30 экстремальная до Rng×3», дальше выстрел
+// невозможен. Ключи совпадают с лейблами галочек в диалоге атаки.
+export const RANGE_BANDS = [
+  { key: "pointBlank", label: "Дистанция в упор",        mod:  30 },
+  { key: "short",      label: "Короткая дистанция",      mod:  10 },
+  { key: "combat",     label: "Боевая дистанция",        mod:   0 },
+  { key: "long",       label: "Дальняя дистанция",       mod: -10 },
+  { key: "extreme",    label: "Экстремальная дистанция", mod: -30 }
+];
+
+/**
+ * Полоса дальности по измеренной дистанции и Rng оружия — чистая логика
+ * для автоотметки в диалоге атаки. Каскад «≤» терпит вырожденные полосы
+ * (у Rng 4 короткая полоса пуста: в упор ≤3, боевая ≤4).
+ * @param {number} distM  метры от края Базы до края Базы (edgeM)
+ * @param {number} rng    Rng оружия, м
+ * @returns {"pointBlank"|"short"|"combat"|"long"|"extreme"|"out"|null}
+ *          null — считать нечего (нет Rng или дистанции), "out" — вне 3×Rng.
+ */
+export function rangeBandKey(distM, rng) {
+  if (!Number.isFinite(distM) || distM < 0 || !(rng > 0)) return null;
+  if (distM > rng * 3) return "out";
+  if (distM <= 3)       return "pointBlank";
+  if (distM <= rng / 2) return "short";
+  if (distM <= rng)     return "combat";
+  if (distM <= rng * 2) return "long";
+  return "extreme";
+}
