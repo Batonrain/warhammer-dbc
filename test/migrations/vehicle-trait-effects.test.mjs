@@ -30,4 +30,17 @@ describe("matchTraitDoc", () => {
   it("незнакомое имя — null, Черта не трогается", () => {
     expect(matchTraitDoc("Неизвестная", docs)).toBeNull();
   });
+
+  it("рейтинг копии «(4)» матчится с шаблоном «(X)» канона", () => {
+    const rated = [{ name: "Демонический (X) / Daemonic (X)", system: { effects: { daemonicAbsorb: true } } }];
+    expect(matchTraitDoc("Демонический (4)", rated)).toBe(rated[0]);
+    expect(matchTraitDoc("Daemonic (4)", rated)).toBe(rated[0]);
+  });
+});
+
+describe("смена семантики spdDamageReduce (число → флаг)", () => {
+  it("falsy 0 на копии перезаписывается каноном, truthy правка ГМа — нет", () => {
+    expect(missingEffectKeys({ spdDamageReduce: true }, { spdDamageReduce: 0 })).toEqual({ spdDamageReduce: true });
+    expect(missingEffectKeys({ spdDamageReduce: true }, { spdDamageReduce: true })).toEqual({});
+  });
 });

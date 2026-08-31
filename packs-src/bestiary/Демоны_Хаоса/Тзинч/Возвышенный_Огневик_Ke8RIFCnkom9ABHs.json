@@ -822,7 +822,7 @@
                   "charKey": "s",
                   "field": "total",
                   "op": "add",
-                  "value": 1,
+                  "value": 3,
                   "sourceUuid": "",
                   "sourceName": "",
                   "sourceImg": "",

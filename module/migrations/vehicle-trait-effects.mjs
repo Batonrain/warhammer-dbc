@@ -16,21 +16,31 @@
 
 const PACK = "warhammer-dbc.vehicle-traits";
 
-/** Ключи effects, которых нет в current, со значениями из canon (чистая часть). */
+// Ключи, у которых третья стопка сменила СЕМАНТИКУ (число → флаг): старое
+// значение 0 на копии — не «авторская правка», а мёртвый рудимент, его надо
+// перезаписать каноном, иначе truthy-гейт читателя не сработает никогда.
+const SEMANTIC_CHANGED_KEYS = ["spdDamageReduce"];
+
+/** Ключи effects, которых нет в current (или сменивших семантику и falsy),
+ *  со значениями из canon (чистая часть). */
 export function missingEffectKeys(canon = {}, current = {}) {
   const out = {};
   for (const [k, v] of Object.entries(canon)) {
-    if (!(k in current)) out[k] = v;
+    if (!(k in current)) { out[k] = v; continue; }
+    if (SEMANTIC_CHANGED_KEYS.includes(k) && v && !current[k]) out[k] = v;
   }
   return out;
 }
 
-/** Каноническая запись пака по имени встроенной Черты («A / Б» матчится половинами). */
+/** Каноническая запись пака по имени встроенной Черты: «A / Б» матчится
+ *  половинами, рейтинг «(4)» приводится к шаблонному «(X)» — иначе
+ *  «Демонический (4)» не находил канон «Демонический (X)» нигде. */
 export function matchTraitDoc(name, docs = []) {
-  const n = String(name || "").trim().toLowerCase();
+  const norm = s => String(s || "").trim().toLowerCase().replace(/\(\s*[\d½]+\s*\)/g, "(x)");
+  const n = norm(name);
   if (!n) return null;
   return docs.find(d => {
-    const full = String(d.name || "").trim().toLowerCase();
+    const full = norm(d.name);
     if (full === n) return true;
     return full.split("/").map(x => x.trim()).includes(n);
   }) || null;
