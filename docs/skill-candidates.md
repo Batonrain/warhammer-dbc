@@ -11,4 +11,5 @@
 
 ## Накопленные находки
 
+- 2026-08-31 — при каждом новом предикате (predicates.mjs) или rule source (sources.mjs) приходится вручную чинить 3 захардкоженных счётчика в тестах (test/rules/collect.test.mjs — список источников, test/rules/scaffold.test.mjs — `toHaveLength(N)` предикатов, test/rules/predicates.test.mjs — карта эталонных значений); за сессию повторилось на каждой из ~3 новых сущностей — кандидат на тест, который считает сам (`Object.keys(...).length`), а не хардкодит число — источник: сессия wdbc-sk8s (Avatar of Slaughter / Adjutant / Dread Wail).
 <!-- новые строки добавлять сюда -->
