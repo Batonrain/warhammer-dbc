@@ -981,12 +981,17 @@ Hooks.on("getSceneControlButtons", (controls) => {
     // onChange только у tool'а: при смене контрола Foundry зовёт и групповой,
     // и инструментный колбэк (#postActivate), двойная подписка открывала два
     // одинаковых диалога друг на друге.
+    // onChange(event, active) зовётся Foundry и на активацию, и на деактивацию
+    // tool'а (SceneControls#postActivate/#preActivate) — наш собственный
+    // triggerHub через 60мс сам переключает контрол обратно на "tokens", это
+    // и есть деактивация «open», без проверки active второй вызов открывал
+    // тот же диалог ещё раз (подтверждено вживую 25.08.2026).
     if (controls && typeof controls === "object" && !Array.isArray(controls)) {
       controls["wh-hub"] = {
         name: "wh-hub", title: "Doom BC", icon: ICON, order: 90, visible: true,
         tools: {
           open: { name: "open", title: "Doom BC", icon: ICON,
-                  order: 1, button: true, onChange: () => triggerHub() }
+                  order: 1, button: true, onChange: (event, active) => { if (active) triggerHub(); } }
         },
         activeTool: "open"
       };
