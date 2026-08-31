@@ -581,6 +581,10 @@ export function blankMechEntry(kind = "characteristic") {
     // смены kind при дропе (см. _onDropAuraGrant в item-sheet.mjs) — движок
     // ауры клонирует любой предмет по UUID, не только Черту/Талант.
     auraRadius: "1", auraAffects: "allies", auraIncludesSelf: false,
+    // immuneTraitNames (wdbc-995w) — через запятую, имена Черт/Талантов,
+    // дающие цели иммунитет к этой ауре (Daemonic Presence: «Daemonic, From
+    // Beyond, Machine, Stuff of Nightmares»). Пусто — иммунитета нет ни у кого.
+    auraImmuneTraits: "",
     // weaponProp — «Свойство» перетаскивается (weaponPropKey/Label/HasRating[2]),
     // «Новое свойство» — только при weaponPropAction:"replace".
     weaponPropAction: "add",
@@ -747,8 +751,9 @@ export function describeMechEntry(entry) {
     case "aura": {
       const affectsLabel = { allies: "союзникам", enemies: "врагам", all: "всем" }[entry.auraAffects] || "союзникам";
       const selfNote = entry.auraIncludesSelf ? ", включая себя" : "";
-      if (!entry.sourceUuid) return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote} (перетащите предмет)`;
-      return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote} → ${entry.sourceName || "?"}`;
+      const immuneNote = entry.auraImmuneTraits ? `, кроме ${entry.auraImmuneTraits}` : "";
+      if (!entry.sourceUuid) return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote}${immuneNote} (перетащите предмет)`;
+      return `Аура: ${entry.auraRadius ?? "?"}м, ${affectsLabel}${selfNote}${immuneNote} → ${entry.sourceName || "?"}`;
     }
     case "rollmod": {
       if (!entry.skillKey) return "Модификатор броска: (не выбран навык)";
@@ -1854,6 +1859,7 @@ export async function syncAuraFlag(item) {
     radius: mechFormulaTotalSafe(first.auraRadius, rd),
     affects: first.auraAffects === "enemies" || first.auraAffects === "all" ? first.auraAffects : "allies",
     includesSelf: !!first.auraIncludesSelf,
+    immuneTraitNames: String(first.auraImmuneTraits || "").split(",").map(s => s.trim()).filter(Boolean),
     grant: entries.filter(e => e.sourceUuid).map(e => ({
       uuid: e.sourceUuid,
       rating: (e.rating !== "" && e.rating != null) ? mechFormulaTotalSafe(e.rating, rd) : null
@@ -1861,6 +1867,7 @@ export async function syncAuraFlag(item) {
   };
   const same = cur && cur.managed === want.managed && cur.radius === want.radius && cur.affects === want.affects
     && cur.includesSelf === want.includesSelf
+    && JSON.stringify(cur.immuneTraitNames || []) === JSON.stringify(want.immuneTraitNames)
     && JSON.stringify(cur.grant || []) === JSON.stringify(want.grant);
   if (!same) await item.setFlag(FLAG, "aura", want);
 }
@@ -2613,6 +2620,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <label class="grant-when-negate-label" title="Действует и на самого владельца, не только на окружающих">
         <input type="checkbox" class="mech-aura-self" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.auraIncludesSelf ? "checked" : ""} ${dis}/> вкл. себя
       </label>
+      <input type="text" class="mech-aura-immune" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.auraImmuneTraits ?? "")}" placeholder="иммунитет: Черты через запятую (необязательно)" title="Цель с любой из перечисленных Черт/Талантов не задевается этой аурой (напр. Daemonic, From Beyond, Machine, Stuff of Nightmares)" ${dis}/>
       <div class="grant-drop-zone aura-drop-zone" data-group-id="${groupId}" data-entry-id="${ent.id}">${dropInner}</div>`;
   }
 

@@ -16,8 +16,9 @@ import { applyItemMechanics } from "../../module/apps/mechanics.mjs";
 const FLAG = "warhammer-dbc";
 
 const andGroup = (...entries) => ({ id: "g1", operator: "AND", entries });
-const auraEntry = (id, { radius, affects = "allies", includesSelf = false, sourceUuid, rating = "", when = null } = {}) => ({
+const auraEntry = (id, { radius, affects = "allies", includesSelf = false, sourceUuid, rating = "", when = null, immuneTraits = "" } = {}) => ({
   id, kind: "aura", auraRadius: radius, auraAffects: affects, auraIncludesSelf: includesSelf,
+  auraImmuneTraits: immuneTraits,
   sourceUuid, sourceName: "Regeneration / Регенерация (X)", sourceImg: "icons/svg/aura.svg", rating, when
 });
 
@@ -56,9 +57,20 @@ describe("syncAuraFlag через applyItemMechanics", () => {
     });
     await applyItemMechanics(item);
     expect(item.getFlag(FLAG, "aura")).toEqual({
-      managed: true, radius: 3, affects: "all", includesSelf: true,
+      managed: true, radius: 3, affects: "all", includesSelf: true, immuneTraitNames: [],
       grant: [{ uuid: "Compendium.warhammer-dbc.traits.Item.6cf11ucGdzYt6ndt", rating: 1 }]
     });
+  });
+
+  it("иммунитет: строка через запятую разбирается в массив имён (wdbc-995w)", async () => {
+    const item = itemOnActor({
+      mechanics: [andGroup(auraEntry("e1", {
+        radius: "10", affects: "enemies", immuneTraits: "Daemonic, From Beyond, Machine, Stuff of Nightmares",
+        sourceUuid: "Compendium.warhammer-dbc.traits.Item.dread"
+      }))]
+    });
+    await applyItemMechanics(item);
+    expect(item.getFlag(FLAG, "aura").immuneTraitNames).toEqual(["Daemonic", "From Beyond", "Machine", "Stuff of Nightmares"]);
   });
 
   it("запись без rating — grant несёт rating:null (клонируем как есть)", async () => {

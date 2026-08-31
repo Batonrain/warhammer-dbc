@@ -2092,6 +2092,11 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.auraIncludesSelf = !!ev.currentTarget.checked; saveMech(arr); }
     });
+    on(".mech-aura-immune", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.auraImmuneTraits = ev.currentTarget.value; saveMech(arr); }
+    });
     // Код (kind:"script")
     on(".mech-script-label", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));

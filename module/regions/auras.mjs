@@ -7,8 +7,13 @@
 //
 //  Формат: item.flags["warhammer-dbc"].aura = {
 //    radius: <метры>, affects: "allies"|"enemies"|"all",
-//    includesSelf: <bool>, grant: [{uuid: <uuid>, rating: <number|null>}, ...]
+//    includesSelf: <bool>, grant: [{uuid: <uuid>, rating: <number|null>}, ...],
+//    immuneTraitNames: [<имя Черты/Таланта>, ...]   // wdbc-995w, необязательно
 //  }
+//  immuneTraitNames — цель с любой из перечисленных Черт/Талантов этой аурой
+//  не задевается вовсе (Daemonic Presence: «Daemonic, From Beyond, Machine,
+//  Stuff of Nightmares» — существа-иммуны к собственному ужасу демонов).
+//  Проверяется на ЦЕЛИ через targetIsAuraImmune(), не на источнике.
 //  rating — не голый uuid: «Черта-шаблон (X)» (Regeneration и т.п.) хранит
 //  в паке свой базовый рейтинг, а выдача Ауры может требовать другой —
 //  rescaleTraitByRating() пересчитывает эффект под него, как и путь
@@ -26,6 +31,7 @@
 
 import { isItemActive } from "../apps/effects.mjs";
 import { rescaleTraitByRating } from "../apps/mechanics.mjs";
+import { itemHasName } from "../rules/predicates.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -70,7 +76,11 @@ export function auraDescriptorsOf(actor) {
       // Голый uuid — старый ручной формат флага: нормализуется, не теряется.
       grant: (Array.isArray(aura.grant) ? aura.grant : [])
         .map(g => typeof g === "string" ? { uuid: g, rating: null } : g)
-        .filter(g => g?.uuid)
+        .filter(g => g?.uuid),
+      // Имена Черт/Талантов, дающие иммунитет к ЭТОЙ ауре (Daemonic Presence,
+      // wdbc-995w: «Персонажи с Daemonic/From Beyond/Machine/Stuff of
+      // Nightmares иммунны») — проверяется на ЦЕЛИ, не на источнике.
+      immuneTraitNames: (Array.isArray(aura.immuneTraitNames) ? aura.immuneTraitNames : []).filter(Boolean)
     });
   }
   return out;
@@ -80,13 +90,27 @@ export function auraDescriptorsOf(actor) {
  * Задета ли цель конкретной аурой — чистое решение по уже посчитанным
  * входным данным (никакого canvas здесь).
  * @param {{radius:number, affects:string, includesSelf:boolean}} descriptor
- * @param {{isSelf:boolean, relationship:"ally"|"enemy"|"neutral", distance:number}} ctx
+ * @param {{isSelf:boolean, relationship:"ally"|"enemy"|"neutral", distance:number, immune?:boolean}} ctx
  */
-export function auraAffects(descriptor, { isSelf, relationship, distance }) {
+export function auraAffects(descriptor, { isSelf, relationship, distance, immune = false }) {
+  if (immune) return false;
   if (isSelf) return !!descriptor.includesSelf;
   if (distance > descriptor.radius) return false;
   if (descriptor.affects === "all") return true; // независимо от отношения, включая нейтральных
   return descriptor.affects === "enemies" ? relationship === "enemy" : relationship === "ally";
+}
+
+/**
+ * Есть ли у цели Черта/Талант из списка иммунитета данной ауры — чистая
+ * проверка по уже загруженным items цели, переиспользует itemHasName
+ * (совпадение по имени, терпит суффикс «(X)» и «/»-разделённые языки).
+ * @param {{items: Iterable<Item>}|null} targetActor
+ * @param {string[]} immuneTraitNames
+ */
+export function targetIsAuraImmune(targetActor, immuneTraitNames) {
+  if (!immuneTraitNames?.length || !targetActor) return false;
+  const items = [...(targetActor.items ?? [])];
+  return immuneTraitNames.some(name => items.some(it => itemHasName(it, name)));
 }
 
 /**
@@ -141,7 +165,9 @@ export async function sweepAurasOnScene(scene) {
       const distance = isSelf ? 0 : tokenDocDistance(source, target, scene.grid);
       const relationship = tokenRelationship(source.disposition, target.disposition);
       for (const d of descriptors) {
-        if (auraAffects(d, { isSelf, relationship, distance })) {
+        const immune = !isSelf && d.immuneTraitNames.length > 0
+          && targetIsAuraImmune(target.actor, d.immuneTraitNames);
+        if (auraAffects(d, { isSelf, relationship, distance, immune })) {
           desired.get(target.actor.uuid).add(d.sourceItemUuid);
         }
       }
