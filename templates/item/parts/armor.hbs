@@ -285,6 +285,9 @@
 
 <div class="item-section">
   <div class="item-section-title">ЭФФЕКТЫ AP</div>
+  {{#if effectsMigrated}}
+  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Эти поля актор больше не читает.</div>
+  {{else}}
   <div class="weapon-row">
     <label class="wr-label" title="AP ко всем локациям">AP везде</label>
     <input type="number" name="system.effects.apAll" value="{{system.effects.apAll}}" class="wr-input-xs"/>
@@ -309,10 +312,14 @@
     <label class="wr-label" title="Изменение Макс. Ловкости">Макс.A</label>
     <input type="number" name="system.effects.maxAgilityMod" value="{{system.effects.maxAgilityMod}}" class="wr-input-xs"/>
   </div>
+  {{/if}}
 </div>
 
 <div class="item-section">
   <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока броня надета)</div>
+  {{#if effectsMigrated}}
+  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Это поле актор больше не читает.</div>
+  {{else}}
   <div class="weapon-props-section">
     <div class="weapon-props-head">
       <label class="wr-label">Добавить</label>
@@ -335,6 +342,7 @@
     </div>
     {{/if}}
   </div>
+  {{/if}}
 </div>
 
 <div class="item-section">

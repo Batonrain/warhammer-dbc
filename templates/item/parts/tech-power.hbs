@@ -188,6 +188,9 @@
 
 <div class="item-section">
   <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока поддерживается/пассивно)</div>
+  {{#if effectsMigrated}}
+  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Это поле актор больше не читает.</div>
+  {{else}}
   <div class="weapon-props-section">
     <div class="weapon-props-head">
       <label class="wr-label">Добавить</label>
@@ -211,6 +214,7 @@
     {{/if}}
   </div>
   <div class="drug-stat-hint">Бонусы действуют, пока техночудо поддерживается (или для типа «Пассивное» — всегда).</div>
+  {{/if}}
 </div>
 
 <div class="item-section">
