@@ -123,6 +123,13 @@ describe("showAddConditionDialog", () => {
 
     expect(a.updates[0]).toEqual({ "system.conditions.stunned": true });
   });
+
+  it("не предлагает «Усталость» — тег зеркалит fatigue.value, ручного добавления нет", () => {
+    const a = makeActor();
+    showAddConditionDialog(a);
+
+    expect(captured.dialog.content).not.toContain('data-condition="fatigued"');
+  });
 });
 
 describe("condition rows", () => {
@@ -156,6 +163,15 @@ describe("condition rows", () => {
       { "system.conditions.stunnedRounds": 3 },
       { "system.conditions.stunnedRounds": 0 }
     ]);
+  });
+
+  it("removeCondition и setConditionLevel молчат для «Усталости» — правится только на ТЕЛЕ", async () => {
+    const a = makeActor();
+
+    await removeCondition(a, "fatigued");
+    await setConditionLevel(a, "fatigued", "5");
+
+    expect(a.updates).toEqual([]);
   });
 });
 

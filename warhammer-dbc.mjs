@@ -59,6 +59,7 @@ import { refreshVeilOverlay } from "./module/apps/veil-overlay.mjs";
 import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/apps/scene-nexus.mjs";
 import { openEnvironment, refreshEnvironment, refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
+import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
 import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/apps/callouts.mjs";
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
@@ -184,6 +185,10 @@ Hooks.once("init", () => {
   // module/data/, а не из template.json: там их записи пусты (см. index.mjs).
   Object.assign(CONFIG.Item.dataModels, ITEM_DATA_MODELS);
   Object.assign(CONFIG.Actor.dataModels, ACTOR_DATA_MODELS);
+
+  // СОСТОЯНИЯ листа ↔ статус-иконки токена (module/apps/token-conditions.mjs):
+  // общий набор CONFIG.statusEffects + хуки двусторонней синхронизации.
+  initConditionStatusEffects();
 
   CONFIG.Combat.initiative = {
     formula: "1d10 + @initiative + @initiativeMod",
