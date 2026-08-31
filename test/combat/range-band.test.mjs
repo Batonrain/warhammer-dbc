@@ -8,7 +8,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import { rangeBandKey, RANGE_BANDS } from "../../module/rules/tactical-map.mjs";
+import { rangeBandKey, RANGE_BANDS, rangeBandBoundaries } from "../../module/rules/tactical-map.mjs";
 import { hasHighGround } from "../../module/combat/tactical-map.mjs";
 
 describe("rangeBandKey: метры + Rng → полоса", () => {
@@ -54,6 +54,24 @@ describe("rangeBandKey: метры + Rng → полоса", () => {
     const mods = Object.fromEntries(RANGE_BANDS.map(b => [b.key, b.mod]));
     expect(mods).toEqual({ pointBlank: 30, short: 10, combat: 0, long: -10, extreme: -30 });
     for (const b of RANGE_BANDS) expect(RANGE_BANDS.filter(x => x.key === b.key)).toHaveLength(1);
+  });
+});
+
+describe("rangeBandBoundaries: границы полос в метрах (общая точка правды подсказки диалога и колец дальности wdbc-fb2d)", () => {
+  it("Rng 30 — стандартные границы", () => {
+    expect(rangeBandBoundaries(30)).toEqual({ pointBlank: 3, short: 15, combat: 30, long: 60, extreme: 90 });
+  });
+
+  it("нечётный Rng — граница короткой полосы округляется вверх (для подсказки/колец), сам rangeBandKey делит по точной половине", () => {
+    const b = rangeBandBoundaries(15);
+    expect(b.short).toBe(8);
+    expect(rangeBandKey(7, 15)).toBe("short");
+    expect(rangeBandKey(8, 15)).toBe("combat");
+  });
+
+  it("Rng 0 или отсутствующий — все границы схлопываются в 0, кроме упора", () => {
+    expect(rangeBandBoundaries(0)).toEqual({ pointBlank: 3, short: 0, combat: 0, long: 0, extreme: 0 });
+    expect(rangeBandBoundaries(undefined)).toEqual({ pointBlank: 3, short: 0, combat: 0, long: 0, extreme: 0 });
   });
 });
 

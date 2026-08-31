@@ -43,7 +43,7 @@ import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
 import { measureTokens, meleeContactCount, hasHighGround } from "../combat/tactical-map.mjs";
-import { rangeBandKey }                       from "../rules/tactical-map.mjs";
+import { rangeBandKey, rangeBandBoundaries }   from "../rules/tactical-map.mjs";
 import { getTerrainInfoForToken }             from "../regions/difficult-terrain.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { hasDeathDance, deathDanceNextCost, markDeathDanceUsed } from "../combat/death-dance.mjs";
@@ -694,17 +694,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const rngMult = ammoSys?.rangeMultiplier ?? 1;
     const rngAdd  = ammoSys?.rangeMod ?? 0;
     const effRng  = Math.round(rng * rngMult) + rngAdd;
+    const bounds  = rangeBandBoundaries(effRng);
     rangeInfoHtml = `
       <div class="atk-range-info">
         <div class="atk-range-title">
           📏 Дистанции (Rng = ${rng}м${rngMult !== 1 ? ` ×${rngMult}` : ""}${rngAdd !== 0 ? ` ${rngAdd >= 0 ? "+" : ""}${rngAdd}м` : ""} = ${effRng}м)
         </div>
         <div class="atk-range-grid">
-          <span class="atr-zone atr-pb">В упор: 0,5–3м → <b>+30</b></span>
-          <span class="atr-zone atr-sh">Короткая: 3–${Math.ceil(effRng / 2)}м → <b>+10</b></span>
-          <span class="atr-zone atr-cb">Боевая: ${Math.ceil(effRng / 2)}–${effRng}м → <b>±0</b></span>
-          <span class="atr-zone atr-lg">Дальняя: ${effRng}–${effRng * 2}м → <b>−10</b></span>
-          <span class="atr-zone atr-ex">Экстрем.: ${effRng * 2}–${effRng * 3}м → <b>−30</b></span>
+          <span class="atr-zone atr-pb">В упор: 0,5–${bounds.pointBlank}м → <b>+30</b></span>
+          <span class="atr-zone atr-sh">Короткая: ${bounds.pointBlank}–${bounds.short}м → <b>+10</b></span>
+          <span class="atr-zone atr-cb">Боевая: ${bounds.short}–${bounds.combat}м → <b>±0</b></span>
+          <span class="atr-zone atr-lg">Дальняя: ${bounds.combat}–${bounds.long}м → <b>−10</b></span>
+          <span class="atr-zone atr-ex">Экстрем.: ${bounds.long}–${bounds.extreme}м → <b>−30</b></span>
         </div>
         <div class="atk-range-note" style="font-size:0.82em;opacity:0.8;">В ближнем бою — дистанция в упор, но модификатор ±0.</div>
       </div>`;

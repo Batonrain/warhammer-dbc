@@ -26,6 +26,13 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { showMovementRing } from "./range-rings.mjs";
+
+/** Кольцо досягаемости SPD×N вокруг токена актора, если он есть на канвасе. */
+function _showReachRing(actor, meters) {
+  const token = actor?.getActiveTokens?.(true)?.[0] ?? null;
+  if (token) showMovementRing(token, meters);
+}
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -75,6 +82,7 @@ async function _postCard(actor, content) {
 export async function declareHalfMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полудвижение</div>
     <div class="roll-threshold">Полудействие (1 ОД). Перемещение до SPD×1.</div>
@@ -84,6 +92,7 @@ export async function declareHalfMove(actor) {
 export async function declareFullMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×2.</div>
@@ -94,6 +103,7 @@ export async function declareFullMove(actor) {
 export async function declareCharge(actor) {
   if (!actor) return;
   await actor.update({ "system.meleeBase": "charge" });
+  _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
     <div class="roll-threshold">Перемещение до SPD×3 (не менее 4м), заканчивая в контакте с противником.</div>
@@ -121,6 +131,7 @@ export async function declareDisengage(actor) {
   }
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×1, не провоцирует Свободную Атаку.</div>
@@ -131,6 +142,7 @@ export async function declareRun(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
+  _showReachRing(actor, actor.system.movement?.run);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×6.</div>

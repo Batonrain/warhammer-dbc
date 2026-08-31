@@ -115,3 +115,21 @@ export function rangeBandKey(distM, rng) {
   if (distM <= rng * 2) return "long";
   return "extreme";
 }
+
+/**
+ * Границы полос дальности (верхний край каждой полосы, в метрах) для
+ * эффективного Rng оружия — общая точка правды для диалога атаки
+ * (подсказка с сеткой полос) и превью-колец дальности на канвасе (wdbc-fb2d),
+ * чтобы числа не разъезжались между двумя местами отображения.
+ * @param {number} effRng  Эффективный Rng (после множителя/надбавки боеприпаса)
+ */
+export function rangeBandBoundaries(effRng) {
+  const rng = Number(effRng) || 0;
+  return {
+    pointBlank: 3,
+    short: Math.ceil(rng / 2),
+    combat: rng,
+    long: rng * 2,
+    extreme: rng * 3
+  };
+}
