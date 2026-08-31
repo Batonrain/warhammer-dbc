@@ -159,7 +159,7 @@ describe("Уклонение верхом: не трогаем встречну�
   it("диалог НЕ предлагает Вид теста/Кубик", async () => {
     resolveMountAs(beast());
     const r = rider();
-    const promise = showMountedDodgeDialog(r, 0, null);
+    const promise = showMountedDodgeDialog(r, 0);
     await flush();
     expect(captured.dialog).toBeTruthy();
     expect(captured.dialog.content).not.toContain("test-kind");
@@ -170,5 +170,27 @@ describe("Уклонение верхом: не трогаем встречну�
     await promise;
 
     expect(captured.chat[0].content).toContain("Критический Успех");
+  });
+});
+
+// Очередь (несколько попаданий одной атаки) верхом — та же механика, что у
+// пешего Уклонения (стр. 12 «Избегание множественных попаданий»): Успех
+// снимает попадания по одному за степень, не встречная проверка.
+describe("Уклонение верхом: несколько попаданий одной атаки", () => {
+  it("Успех меньше числа попаданий — снимает часть, остальные проходят", async () => {
+    resolveMountAs(beast());
+    const r = rider();
+    // Ag 40, untrained −20, попадание по всаднику −10 → Порог 10; rv=5 → 1 степень.
+    const promise = showMountedDodgeDialog(r, 0, 3);
+    await flush();
+
+    captured.nextRoll = 5;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "rider" }));
+    await promise;
+
+    const card = captured.chat[0].content;
+    expect(card).toContain("Уклонение успешно");
+    expect(card).toContain("снимает 1 из 3 попадания");
+    expect(card).toContain("2 попадания всё ещё проходит");
   });
 });

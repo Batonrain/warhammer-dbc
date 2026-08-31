@@ -1,4 +1,5 @@
 import { _performDodge, _performParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
@@ -43,19 +44,19 @@ export function registerHooks() {
           return ui.notifications.warn("⚠️ Выберите токен защищающегося персонажа на сцене!");
         }
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const attackDeg = ev.currentTarget.dataset.attackDeg != null
-          ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
+        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         if (!await confirmHordeDefense(selectedToken.actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
         // карточке одна, а знает о седле только сама цель, поэтому развилка
         // здесь: карточка на момент броска ещё не знает, в кого попадут.
         if (selectedToken.actor.system?.mount?.uuid) {
-          const handled = await showMountedDodgeDialog(selectedToken.actor, extraMod, attackDeg);
+          const handled = await showMountedDodgeDialog(selectedToken.actor, extraMod, hitsCount, attackerUuid);
           if (handled !== null) return;
         }
-        await _performDodge(selectedToken.actor, extraMod, attackDeg,
-          ev.currentTarget.dataset.forceReroll || "");
+        await _performDodge(selectedToken.actor, extraMod,
+          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
       });
     });
 
@@ -68,11 +69,10 @@ export function registerHooks() {
           return ui.notifications.warn("⚠️ Выберите токен защищающегося персонажа на сцене!");
         }
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const attackDeg = ev.currentTarget.dataset.attackDeg != null
-          ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
+        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         if (!await confirmHordeDefense(selectedToken.actor, "Парирование")) return;
-        await _performParry(selectedToken.actor, extraMod, attackDeg,
-          ev.currentTarget.dataset.attackerUuid || "");
+        await _performParry(selectedToken.actor, extraMod,
+          ev.currentTarget.dataset.attackerUuid || "", hitsCount);
       });
     });
 
@@ -129,9 +129,32 @@ export function registerHooks() {
           return ui.notifications.warn("⚠️ Выберите токен машины на сцене!");
         }
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const attackDeg = ev.currentTarget.dataset.attackDeg != null
-          ? parseInt(ev.currentTarget.dataset.attackDeg) : null;
-        await _performSwerve(selectedToken.actor, extraMod, attackDeg);
+        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        await _performSwerve(selectedToken.actor, extraMod, hitsCount, attackerUuid);
+      });
+    });
+
+    // Пул Избегания (стр. 12): траты неизрасходованных Успехов с прошлой
+    // успешной защиты того же противника в этом Ходу — без броска и без
+    // Реакции, module/combat/evasion-pool.mjs.
+    html.querySelectorAll(".wh-pool-spend-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const selectedToken = canvas.tokens?.controlled?.[0];
+        if (!selectedToken?.actor) {
+          return ui.notifications.warn("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        }
+        const el = ev.currentTarget;
+        await performPoolSpend(selectedToken.actor, {
+          attackerUuid: el.dataset.attackerUuid || "",
+          hitsCount: parseInt(el.dataset.hitsCount || "1"),
+          dodgeMod: parseInt(el.dataset.dodgeMod || "0"),
+          parryMod: parseInt(el.dataset.parryMod || "0"),
+          targetIsVehicle: el.dataset.targetVehicle === "1",
+          flexible: el.dataset.flexible === "1",
+          forcedDefenceReroll: el.dataset.forceReroll || ""
+        });
       });
     });
 

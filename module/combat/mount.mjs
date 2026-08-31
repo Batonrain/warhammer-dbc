@@ -15,7 +15,8 @@
 //  потому что различаются они только порогом: последствие у всех одно.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { _degWord, esc } from "../helpers/utils.mjs";
+import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
+import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
@@ -576,7 +577,7 @@ export async function showMountDamageTest(rider) {
  *  • по всаднику — обычное Уклонение, но со штрафом −10.
  * Поэтому диалог сначала спрашивает, куда пришлось попадание.
  */
-export async function showMountedDodgeDialog(rider, extraMod = 0, attackDeg = null) {
+export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1, attackerUuid = "") {
   const ctx = await mountContext(rider);
   if (!ctx) return null;
   const { mount, control } = ctx;
@@ -602,7 +603,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, attackDeg = nu
         roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Уклонение!",
           callback: async html => {
             const target = html.find("#md-target").val();
-            await resolveMountedDodge(rider, ctx, target, extraMod, attackDeg);
+            await resolveMountedDodge(rider, ctx, target, extraMod, hitsCount, attackerUuid);
             resolve(true);
           } },
         cancel: { label: "Отмена", callback: () => resolve(false) }
@@ -612,7 +613,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, attackDeg = nu
   });
 }
 
-async function resolveMountedDodge(rider, ctx, target, extraMod, attackDeg) {
+async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, attackerUuid = "") {
   // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
   // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
   if (!(await spendReaction(rider, { forDefense: true }))) return _noReactionCard(rider, "Уклонение");
@@ -641,18 +642,27 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, attackDeg) {
 
   const passed = dodgePassed && (!ctrlPart || ctrlPart.passed);
   const deg = ctrlPart && passed ? Math.min(dodgeDeg, ctrlPart.deg) : dodgeDeg;
-  const opposed = Number.isFinite(attackDeg);
-  const evaded = passed && (!opposed || deg > attackDeg);
+  const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
+  // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
+  // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). Пеналти — extraMod
+  // (мод. приёма атаки), а не внутренний −10 «по всаднику»: тот не от атаки.
+  const leftover = passed ? deg - negated : 0;
+  const banked = leftover > 0 && await addEvasionSurplus(rider, attackerUuid, leftover, extraMod);
 
   let outcome;
   if (!passed) {
     outcome = `<span class="roll-failure">Уклонение провалено${
-      ctrlPart && !ctrlPart.passed && dodgePassed ? " — подвёл сам скакун" : ""} — попадание проходит.</span>`;
-  } else if (evaded) {
-    outcome = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${opposed ? ` против ${attackDeg}` : ""}!</span>`;
+      ctrlPart && !ctrlPart.passed && dodgePassed ? " — подвёл сам скакун" : ""} — ${
+      totalHits > 1 ? `все ${totalHits} ${_hitWord(totalHits)} проходят.` : "попадание проходит."}</span>`;
+  } else if (remaining === 0) {
+    outcome = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${
+      totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}!</span>`;
   } else {
-    outcome = `<span class="roll-failure">${rollIcon("warn", "#ffb84d")}Уклонение удалось (${deg} ${_degWord(deg)}), но атака сильнее (${attackDeg}).</span>`;
+    outcome = `<span class="roll-failure">${rollIcon("warn", "#ffb84d")}Уклонение успешно — ${deg} ${_degWord(deg)}, снимает ${negated} из ${totalHits} ${_hitWord(totalHits)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит.</span>`;
   }
+  const leftoverNote = banked
+    ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
+    : "";
 
   await postCard(rider, `
     <div class="roll-header">${rollIcon("run")}Уклонение верхом — ${esc(rider.name)}</div>
@@ -661,9 +671,9 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, attackDeg) {
       · 1d100: <b>${dodgeRv}</b> — ${dodgePassed ? "успех" : "провал"}</div>
     ${ctrlPart ? `<div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(testMod(STAY_MOD, mount))}
       → Порог <b>${ctrlPart.threshold}</b> · 1d100: <b>${ctrlPart.rv}</b> — ${ctrlPart.passed ? "успех" : "провал"}</div>` : ""}
-    ${opposed ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>` : ""}
     ${critLine}
-    <div class="roll-outcome">${outcome}</div>`, rolls);
+    <div class="roll-outcome">${outcome}</div>
+    ${leftoverNote}`, rolls);
 }
 
 // ── Куда пришлось попадание ───────────────────────────────────────────────

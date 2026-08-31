@@ -1,6 +1,6 @@
 import { SKILL_RANKS }    from "../constants/characteristics.mjs";
 import { MELEE_STANCES, BALANCE_PARRY_MOD } from "../constants/combat.mjs";
-import { _degWord, esc }       from "../helpers/utils.mjs";
+import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
@@ -11,6 +11,7 @@ import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
 import { spendReaction }  from "./action-economy.mjs";
+import { addEvasionSurplus } from "./evasion-pool.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -33,7 +34,7 @@ export async function _noReactionCard(actor, label) {
   }, rollMode));
 }
 
-export async function _performDodge(actor, extraMod = 0, attackDeg = null, forcedReroll = "") {
+export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "") {
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
@@ -64,10 +65,19 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
     : Math.floor((rv - threshold) / 10) + 1;
   const rollMode = game.settings.get("core", "rollMode");
 
-  // Встречная проверка: защита превосходит атаку только если степеней успеха
-  // строго больше, чем у атакующего. Ничья и меньше — попадание проходит.
-  const opposed  = Number.isFinite(attackDeg);
-  const evaded   = passed && (!opposed || deg > attackDeg);
+  // Стр. 12: при Успехе персонаж уклоняется от атаки и попадание становится
+  // промахом — сравнивать степени успеха со степенью атакующего не нужно (это
+  // не встречная проверка). Очередь/Быстрая/Молниеносная Атака дают больше
+  // одного попадания за атаку — тогда Успех снимает их по одному за каждую
+  // степень, не больше их числа («Избегание множественных попаданий», стр. 12).
+  const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
+  // Излишек Успехов сверх того, что нужно было ЭТОЙ атаке — банкуется на
+  // попадания ДРУГИХ атак того же противника в этом Ходу (стр. 12, «...после
+  // успешного Избегания одной его атаки у персонажа остались не потраченные
+  // Успехи...», module/combat/evasion-pool.mjs). Молча ничего не делает вне
+  // боя или без attackerUuid (кнопки контратаки/старые вызовы его не несут).
+  const leftover = passed ? deg - negated : 0;
+  const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
@@ -78,17 +88,19 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
   if (picked.dropped.length) modParts.push(`навязанный переброс, отброшено ${picked.dropped.join(", ")}`);
 
-  const oppLine = opposed
-    ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>`
-    : "";
   let outcomeHtml;
   if (!passed) {
-    outcomeHtml = `<span class="roll-failure">Уклонение провалено — ${deg} ${_degWord(deg)}. Получает попадание.</span>`;
-  } else if (evaded) {
-    outcomeHtml = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${opposed ? ` против ${attackDeg}` : ""}! Атака промахивается.</span>`;
+    outcomeHtml = `<span class="roll-failure">Уклонение провалено — ${deg} ${_degWord(deg)}. ${
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}</span>`;
+  } else if (remaining === 0) {
+    outcomeHtml = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${
+      totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака промахивается.</span>`;
   } else {
-    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Уклонение удалось (${deg} ${_degWord(deg)}), но атака сильнее (${attackDeg}) — попадание проходит.</span>`;
+    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Уклонение успешно — ${deg} ${_degWord(deg)}, снимает ${negated} из ${totalHits} ${_hitWord(totalHits)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит.</span>`;
   }
+  const leftoverNote = banked
+    ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
+    : "";
 
     const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -99,9 +111,9 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
           Ag: <b>${agTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
           → Порог: <b>${threshold}</b>
         </div>
-        ${oppLine}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${outcomeHtml}</div>
+        ${leftoverNote}
       </div>`,
     rolls: [roll],
     sound: CONFIG.sounds.dice
@@ -110,7 +122,7 @@ export async function _performDodge(actor, extraMod = 0, attackDeg = null, force
   await ChatMessage.create(messageData);
 }
 
-export async function _performParry(actor, extraMod = 0, attackDeg = null, attackerUuid = "") {
+export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -173,10 +185,17 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null, attac
     : Math.floor((rv - threshold) / 10) + 1;
   const rollMode = game.settings.get("core", "rollMode");
 
-  // Встречная проверка: парирование отражает атаку только при строго большем
-  // числе степеней успеха. Ничья и меньше — попадание проходит.
-  const opposed  = Number.isFinite(attackDeg);
-  const parried  = passed && (!opposed || deg > attackDeg);
+  // Стр. 12: при Успехе персонаж отбивает или блокирует атаку и попадание
+  // становится промахом — сравнивать степени успеха со степенью атакующего не
+  // нужно (это не встречная проверка). Очередь/Быстрая/Молниеносная Атака дают
+  // больше одного попадания за атаку — тогда Успех снимает их по одному за
+  // каждую степень, не больше их числа («Избегание множественных попаданий»).
+  const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
+  const parried = passed;
+  // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
+  // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). См. _performDodge.
+  const leftover = passed ? deg - negated : 0;
+  const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
@@ -187,17 +206,19 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null, attac
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
 
-  const oppLine = opposed
-    ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>`
-    : "";
   let outcomeHtml;
   if (!passed) {
-    outcomeHtml = `<span class="roll-failure">Парирование провалено — ${deg} ${_degWord(deg)}. Получает попадание.</span>`;
-  } else if (parried) {
-    outcomeHtml = `<span class="roll-success">Парирование успешно — ${deg} ${_degWord(deg)}${opposed ? ` против ${attackDeg}` : ""}! Атака отражена.</span>`;
+    outcomeHtml = `<span class="roll-failure">Парирование провалено — ${deg} ${_degWord(deg)}. ${
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Получает попадание."}</span>`;
+  } else if (remaining === 0) {
+    outcomeHtml = `<span class="roll-success">Парирование успешно — ${deg} ${_degWord(deg)}${
+      totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака отражена.</span>`;
   } else {
-    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Парирование удалось (${deg} ${_degWord(deg)}), но атака сильнее (${attackDeg}) — попадание проходит.</span>`;
+    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Парирование успешно — ${deg} ${_degWord(deg)}, снимает ${negated} из ${totalHits} ${_hitWord(totalHits)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит.</span>`;
   }
+  const leftoverNote = banked
+    ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
+    : "";
 
   // Силовое поле: при успешном парировании автоматически кидаем 1d100 —
   // на 1–75 оружие противника (без Power Field / Reinforced) уничтожено.
@@ -241,7 +262,6 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null, attac
           WS: <b>${wsTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
           → Порог: <b>${threshold}</b>
         </div>
-        ${oppLine}
         ${meleeWeapon
           ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">
                Оружие: ${meleeWeapon.name} (Баланс ${balance >= 0 ? "+" : ""}${balance})
@@ -250,6 +270,7 @@ export async function _performParry(actor, extraMod = 0, attackDeg = null, attac
         }
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${outcomeHtml}</div>
+        ${leftoverNote}
         ${powerFieldNote}
         ${counterAttackHtml}
       </div>`,

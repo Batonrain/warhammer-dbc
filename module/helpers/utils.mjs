@@ -99,6 +99,37 @@ export function _degWord(n) {
   return "степеней";
 }
 
+export function _hitWord(n) {
+  if (n === 1) return "попадание";
+  if (n < 5)  return "попадания";
+  return "попаданий";
+}
+
+/** «N неизрасходованный Успех» / «...ых Успеха» / «...ых Успехов» — для
+ *  примечания о пуле Избегания (module/combat/evasion-pool.mjs). */
+export function _leftoverSuccessPhrase(n) {
+  if (n === 1) return "неизрасходованный Успех";
+  if (n < 5)  return "неизрасходованных Успеха";
+  return "неизрасходованных Успехов";
+}
+
+/**
+ * Уклонение/Парирование против атаки с несколькими попаданиями (Очередь,
+ * Быстрая/Молниеносная Атака — стр. 12): «может Избежать по одному попаданию
+ * за каждый Успех». Это не встречная проверка со степенью атакующего — просто
+ * своя степень успеха защиты режет попадания этой атаки, по одному за штуку,
+ * не больше их числа. Провал защиты не снимает ничего.
+ *
+ * @param {boolean} passed     тест защиты пройден
+ * @param {number}  deg        степень успеха защиты (если провалена — не используется)
+ * @param {number}  hitsCount  число попаданий атаки (1 у обычной одиночной)
+ */
+export function negatedHits(passed, deg, hitsCount = 1) {
+  const total = Math.max(1, hitsCount);
+  const negated = passed ? Math.min(deg, total) : 0;
+  return { total, negated, remaining: total - negated };
+}
+
 /** Разбивает строку по запятым верхнего уровня (запятые внутри скобок не режут). */
 export function splitTopLevel(str) {
   const out = []; let depth = 0, cur = "";

@@ -151,11 +151,37 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
   </div>`;
 }
 
-/** Кнопки защиты цели. Уклонение и Парирование гасятся приёмом или Гибким. */
-function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, deg, attackerUuid = "" }) {
+/**
+ * Кнопки защиты цели. Уклонение и Парирование гасятся приёмом или Гибким.
+ *
+ * Экспортирована: её же реюзает module/combat/evasion-pool.mjs, чтобы
+ * дорисовать свежие кнопки на ОСТАТОК попаданий после частичной траты пула
+ * (та же разметка, без второй копии).
+ *
+ * @param {object} [pool]  { successes, hits, cost, perHit } — остаток пула
+ *   неизрасходованных Успехов с ДРУГИХ атак этого же противника в этом Ходу
+ *   (стр. 12), уже посчитанный вызывающей стороной (module/combat/attack.mjs
+ *   — она одна касается документов Foundry, этот модуль их не читает).
+ */
+export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
+                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
+  // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
+  // атаку — кнопки несут их число, чтобы Уклонение/Парирование/Вираж снимали
+  // по одному попаданию за степень успеха, а не всю атаку разом (стр. 12).
+  const hitsNote = hitsCount > 1
+    ? `<div class="roll-defense-note">Эта атака даёт ${hitsCount} попаданий — Успех защиты снимает их по одному за степень.</div>`
+    : "";
+  const poolBtn = pool && pool.hits > 0
+    ? `<button class="wh-pool-spend-btn" type="button"
+         data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
+         data-dodge-mod="${dodgeMod}" data-parry-mod="${parryMod}"
+         data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
+         data-force-reroll="${forcedDefenceReroll}">
+         💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
+       </button>`
+    : "";
   return `
     <div class="roll-defense-section">
       <div class="roll-section-head">Защита цели <span class="roll-head-hint">— выберите токен защищающегося</span></div>
@@ -164,7 +190,7 @@ function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, n
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -172,17 +198,19 @@ function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, n
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-attack-deg="${deg}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
         ${targetIsVehicle
-          ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attack-deg="${deg}"
+          ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
                title="Техника: Operate − Размер×10">Вираж</button>`
           : ""}
+        ${poolBtn}
       </div>
       ${note && (dodgeMod !== 0 || parryMod !== 0 || cannotDodge)
         ? `<div class="roll-defense-note">${note}</div>` : ""}
+      ${hitsNote}
     </div>`;
 }
 
@@ -254,6 +282,9 @@ export function attackCard({
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
   weaponRange = 0, burst = false, attackerUuid = "", hordeHits = null,
+  // Остаток пула неизрасходованных Успехов защиты с ДРУГИХ атак этого же
+  // противника в этом Ходу (стр. 12) — null, если пула нет или он пуст.
+  pool = null,
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
@@ -361,7 +392,7 @@ export function attackCard({
       <summary>Показать кубы</summary>
       ${blocks.dice}
     </details>` : ""}
-        ${hit ? defenseSection(defense, { wp, deg, attackerUuid }) : ""}
+        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, hordeHits })}

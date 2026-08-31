@@ -3,7 +3,8 @@
 // урона по Структуре (броня по стороне). Интеграция с чат-карточками — в том
 // же стиле, что Уклонение/Парирование и Применение урона для персонажей.
 
-import { _degWord, esc }        from "../helpers/utils.mjs";
+import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
+import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
@@ -18,8 +19,9 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
 // ─── Вираж (реакция уклонения техникой) ───────────────────────────────────────
 // Порог = Operate мехвода + swerveMod (−Размер×10, −10 для гусеничной) + extraMod.
-// Встречная проверка против степеней успеха атаки, как обычное Уклонение.
-export async function _performSwerve(actor, extraMod = 0, attackDeg = null) {
+// При Успехе попадание становится промахом — как обычное Уклонение (стр. книги
+// про машины: «аналогично как с пешим Уклонением»), без сравнения степеней.
+export async function _performSwerve(actor, extraMod = 0, hitsCount = 1, attackerUuid = "") {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }
@@ -38,25 +40,30 @@ export async function _performSwerve(actor, extraMod = 0, attackDeg = null) {
     ? Math.floor((threshold - rv) / 10) + 1
     : Math.floor((rv - threshold) / 10) + 1;
 
-  const opposed = Number.isFinite(attackDeg);
-  const evaded  = passed && (!opposed || deg > attackDeg);
+  const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
+  // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
+  // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). См. defense.mjs.
+  const leftover = passed ? deg - negated : 0;
+  const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
   const modParts = [];
   modParts.push(`Размер ${sgn(-(Number(actor.system.size) || 0) * 10)}`);
   if (der.chassisType === "tracked") modParts.push("гусеничная −10");
   if (extraMod !== 0)                modParts.push(`мод ${sgn(extraMod)}`);
 
-  const oppLine = opposed
-    ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Встречная проверка — атака: <b>${attackDeg}</b> ${_degWord(attackDeg)}</div>`
-    : "";
   let outcomeHtml;
   if (!passed) {
-    outcomeHtml = `<span class="roll-failure">Вираж провален — ${deg} ${_degWord(deg)}. Попадание проходит.</span>`;
-  } else if (evaded) {
-    outcomeHtml = `<span class="roll-success">Вираж успешен — ${deg} ${_degWord(deg)}${opposed ? ` против ${attackDeg}` : ""}! Атака промахивается.</span>`;
+    outcomeHtml = `<span class="roll-failure">Вираж провален — ${deg} ${_degWord(deg)}. ${
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Попадание проходит."}</span>`;
+  } else if (remaining === 0) {
+    outcomeHtml = `<span class="roll-success">Вираж успешен — ${deg} ${_degWord(deg)}${
+      totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака промахивается.</span>`;
   } else {
-    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Вираж удался (${deg} ${_degWord(deg)}), но атака сильнее (${attackDeg}) — попадание проходит.</span>`;
+    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Вираж успешен — ${deg} ${_degWord(deg)}, снимает ${negated} из ${totalHits} ${_hitWord(totalHits)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит.</span>`;
   }
+  const leftoverNote = banked
+    ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
+    : "";
 
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -67,9 +74,9 @@ export async function _performSwerve(actor, extraMod = 0, attackDeg = null) {
         <div class="roll-threshold">
           Operate: <b>${operate}</b> (${modParts.join(", ")}) → Порог: <b>${threshold}</b>
         </div>
-        ${oppLine}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${outcomeHtml}</div>
+        ${leftoverNote}
       </div>`,
     rolls: [roll], sound: CONFIG.sounds.dice
   }, rollMode));
