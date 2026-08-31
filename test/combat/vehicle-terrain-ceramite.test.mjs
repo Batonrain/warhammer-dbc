@@ -69,63 +69,31 @@ describe("Амфибия: Трудный Ландшафт по воде", () => 
 });
 
 describe("Керамитовая Броня: АР ×2 против Flame", () => {
-  it("без Черты — Flame не меняет АР", async () => {
-    const actor = vehicle({});
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", flame: true });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>10</b>");
-  });
-
-  it("с Чертой, попадание без Flame — АР не меняется", async () => {
-    const actor = vehicle({ ceramitePlating: true });
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", flame: false });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>10</b>");
-  });
-
-  it("с Чертой, попадание Flame — АР удваивается", async () => {
-    const actor = vehicle({ ceramitePlating: true });
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", flame: true });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>20</b>");
+  it.each([
+    ["без Черты — Flame не меняет АР", {}, { flame: true }, "AP Бортовая: <b>10</b>"],
+    ["с Чертой, попадание без Flame — АР не меняется", { ceramitePlating: true }, { flame: false }, "AP Бортовая: <b>10</b>"],
     // 15 урона − 20 АР = поглощено полностью
-    expect(card).toContain("Урон поглощён");
+    ["с Чертой, попадание Flame — АР удваивается, урон поглощён", { ceramitePlating: true }, { flame: true }, "AP Бортовая: <b>20</b>", "Урон поглощён"]
+  ])("%s", async (_title, traits, dmgOverrides, apExpected, extraExpected) => {
+    const actor = vehicle(traits);
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", ...dmgOverrides });
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain(apExpected);
+    if (extraExpected) expect(card).toContain(extraExpected);
   });
 });
 
 describe("Демонический (X): +X к поглощению, обнуляется против Sanctified/Warp Weapon", () => {
-  it("без Черты — АР как есть", async () => {
-    const actor = vehicle({});
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side" });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>10</b>");
-  });
-
-  it("с Чертой — АР увеличивается на X", async () => {
-    const actor = vehicle({ daemonicAbsorb: 6 });
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side" });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>16</b>");
-  });
-
-  it("Sanctified — бонус не действует", async () => {
-    const actor = vehicle({ daemonicAbsorb: 6 });
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", sanctified: true });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>10</b>");
-  });
-
-  it("Warp Weapon (warpSoak) — бонус не действует", async () => {
-    const actor = vehicle({ daemonicAbsorb: 6 });
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", warpSoak: true });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>10</b>");
-  });
-
-  it("складывается с Керамитовой Бронёй (Flame)", async () => {
-    const actor = vehicle({ daemonicAbsorb: 6, ceramitePlating: true });
-    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", flame: true });
-    const card = captured.chat.at(-1).content;
-    expect(card).toContain("AP Бортовая: <b>26</b>"); // (10×2) + 6
+  it.each([
+    ["без Черты — АР как есть", {}, {}, "AP Бортовая: <b>10</b>"],
+    ["с Чертой — АР увеличивается на X", { daemonicAbsorb: 6 }, {}, "AP Бортовая: <b>16</b>"],
+    ["Sanctified — бонус не действует", { daemonicAbsorb: 6 }, { sanctified: true }, "AP Бортовая: <b>10</b>"],
+    ["Warp Weapon (warpSoak) — бонус не действует", { daemonicAbsorb: 6 }, { warpSoak: true }, "AP Бортовая: <b>10</b>"],
+    // (10×2) + 6
+    ["складывается с Керамитовой Бронёй (Flame)", { daemonicAbsorb: 6, ceramitePlating: true }, { flame: true }, "AP Бортовая: <b>26</b>"]
+  ])("%s", async (_title, traits, dmgOverrides, expected) => {
+    const actor = vehicle(traits);
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "side", ...dmgOverrides });
+    expect(captured.chat.at(-1).content).toContain(expected);
   });
 });

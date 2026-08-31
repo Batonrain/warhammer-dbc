@@ -123,33 +123,31 @@ describe("resolveArmorAbsorptionAP", () => {
     expect(ap).toBe(8);
   });
 
-  it("Conductive обнуляет AP только против Энергетического урона", () => {
-    const flags = { ...emptyArmorLocFlags(), noEnergy: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "energy", flags })).toBe(0);
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", flags })).toBe(6);
-  });
-
-  it("Мягкая (soft) обнуляет AP только против Ударного урона", () => {
-    const flags = { ...emptyArmorLocFlags(), noImpact: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", flags })).toBe(0);
-  });
-
-  it("Стержни (rods) обнуляют AP от стрелковой атаки, но не от рукопашной", () => {
-    const flags = { ...emptyArmorLocFlags(), noRanged: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", melee: false, flags })).toBe(0);
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", melee: true,  flags })).toBe(6);
-  });
-
-  it("Стержни обнуляют AP при Избирательном в Сочленение, но не в другие части", () => {
-    const flags = { ...emptyArmorLocFlags(), noJointCalled: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", hitLocation: "Сочленение / Шея", melee: true, flags })).toBe(0);
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", hitLocation: "Торс", melee: true, flags })).toBe(6);
-  });
-
-  it("Открытый шлем обнуляет AP только при попадании в Глаз", () => {
-    const flags = { ...emptyArmorLocFlags(), noEyeCalled: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 4, damageType: "impact", hitLocation: "Глаз (Голова)", melee: true, flags })).toBe(0);
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 4, damageType: "impact", hitLocation: "Голова", melee: true, flags })).toBe(4);
+  it.each([
+    ["Conductive обнуляет AP только против Энергетического урона", { noEnergy: true }, [
+      [{ damageType: "energy" }, 0], [{ damageType: "impact" }, 6]
+    ]],
+    ["Мягкая (soft) обнуляет AP только против Ударного урона", { noImpact: true }, [
+      [{ damageType: "impact" }, 0]
+    ]],
+    ["Стержни (rods) обнуляют AP от стрелковой атаки, но не от рукопашной", { noRanged: true }, [
+      [{ damageType: "impact", melee: false }, 0], [{ damageType: "impact", melee: true }, 6]
+    ]],
+    ["Стержни обнуляют AP при Избирательном в Сочленение, но не в другие части", { noJointCalled: true }, [
+      [{ damageType: "impact", hitLocation: "Сочленение / Шея", melee: true }, 0],
+      [{ damageType: "impact", hitLocation: "Торс", melee: true }, 6]
+    ]],
+    ["Открытый шлем обнуляет AP только при попадании в Глаз", { noEyeCalled: true }, [
+      [{ baseArmorAP: 4, damageType: "impact", hitLocation: "Глаз (Голова)", melee: true }, 0],
+      [{ baseArmorAP: 4, damageType: "impact", hitLocation: "Голова", melee: true }, 4]
+    ]],
+    ["Флак удваивает AP только против Взрывного урона", { doubleBlast: true }, [
+      [{ baseArmorAP: 5, damageType: "blast" }, 10], [{ baseArmorAP: 5, damageType: "impact" }, 5]
+    ]]
+  ])("%s", (_title, flagOverride, cases) => {
+    const flags = { ...emptyArmorLocFlags(), ...flagOverride };
+    for (const [override, expected] of cases)
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, flags, ...override })).toBe(expected);
   });
 
   it("в Глаз: AP шлема игнорируется, естественная броня головы остаётся", () => {
@@ -160,12 +158,6 @@ describe("resolveArmorAbsorptionAP", () => {
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 10, wornAP: 8, damageType: "impact", hitLocation: "Глаз (Голова)", flags: power })).toBe(6);
     // Без разбивки (wornAP не передан) — весь AP считается шлемом, как раньше.
     expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "impact", hitLocation: "Глаз (Голова)" })).toBe(0);
-  });
-
-  it("Флак удваивает AP только против Взрывного урона", () => {
-    const flags = { ...emptyArmorLocFlags(), doubleBlast: true };
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, damageType: "blast", flags })).toBe(10);
-    expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, damageType: "impact", flags })).toBe(5);
   });
 
   it("Флак удваивает уже с учётом vsType-бонуса (моды брони)", () => {

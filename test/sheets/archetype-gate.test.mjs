@@ -23,34 +23,21 @@ describe("archetypeGateOk", () => {
     expect(archetypeGateOk(actorWith([]), undefined)).toBeNull();
   });
 
-  it("гейт есть, архетипа у актора нет — false", () => {
-    const actor = actorWith(["Corsair Prince / Барон Корсаров"]);
-    expect(archetypeGateOk(actor, "Элитный архетип: Felarch / Феларх")).toBe(false);
-  });
-
-  it("гейт есть, архетип взят — true (сверка по английской половине имени)", () => {
-    const actor = actorWith(["Felarch / Феларх"]);
-    expect(archetypeGateOk(actor, "Элитный архетип: Felarch / Феларх")).toBe(true);
-  });
-
-  it("не чувствителен к регистру и к префиксу [WIP]", () => {
-    const actor = actorWith(["[WIP] Felarch / Феларх"]);
-    expect(archetypeGateOk(actor, "Элитный архетип: felarch / Феларх")).toBe(true);
-  });
-
-  it("другой архетип с тем же актором не проходит", () => {
-    const actor = actorWith(["Felarch / Феларх"]);
-    expect(archetypeGateOk(actor, "Элитный архетип: Corsair Prince / Барон Корсаров")).toBe(false);
-  });
-
-  it("58 старых архетипов пишут только русскую половину — тоже проходит", () => {
-    const actor = actorWith(["Archmage / Архимаг"]);
-    expect(archetypeGateOk(actor, "Элитный архетип: Архимаг")).toBe(true);
-  });
-
-  it("русская специализация без взятого архетипа — false, не null", () => {
-    const actor = actorWith(["Felarch / Феларх"]);
-    expect(archetypeGateOk(actor, "Элитный архетип: Архимаг")).toBe(false);
+  it.each([
+    ["гейт есть, архетипа у актора нет — false",
+      ["Corsair Prince / Барон Корсаров"], "Элитный архетип: Felarch / Феларх", false],
+    ["гейт есть, архетип взят — true (сверка по английской половине имени)",
+      ["Felarch / Феларх"], "Элитный архетип: Felarch / Феларх", true],
+    ["не чувствителен к регистру и к префиксу [WIP]",
+      ["[WIP] Felarch / Феларх"], "Элитный архетип: felarch / Феларх", true],
+    ["другой архетип с тем же актором не проходит",
+      ["Felarch / Феларх"], "Элитный архетип: Corsair Prince / Барон Корсаров", false],
+    ["58 старых архетипов пишут только русскую половину — тоже проходит",
+      ["Archmage / Архимаг"], "Элитный архетип: Архимаг", true],
+    ["русская специализация без взятого архетипа — false, не null",
+      ["Felarch / Феларх"], "Элитный архетип: Архимаг", false]
+  ])("%s", (_title, names, spec, expected) => {
+    expect(archetypeGateOk(actorWith(names), spec)).toBe(expected);
   });
 
   // wdbc-91o8: гейт смотрел ТОЛЬКО предметы. Архетип, вписанный строкой в

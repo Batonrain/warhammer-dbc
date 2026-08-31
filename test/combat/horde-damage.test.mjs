@@ -45,16 +45,18 @@ const damage = (over = {}) => ({
 beforeEach(resetCaptured);
 
 describe("урон по Орде вместо расчёта Ран", () => {
-  it("пробившее попадание снимает ровно одну Магнитуду", async () => {
-    const horde = hordeActor();
-    await applyDamageToActor(horde, damage());
-    expect(horde.system.magnitude.value).toBe(39);
-  });
-
-  it("огромный урон снимает столько же — толпе всё равно", async () => {
-    const horde = hordeActor();
-    await applyDamageToActor(horde, damage({ rawDamage: 300 }));
-    expect(horde.system.magnitude.value).toBe(39);
+  it.each([
+    ["пробившее попадание снимает ровно одну Магнитуду", {}, {}, 39],
+    ["огромный урон снимает столько же — толпе всё равно", {}, { rawDamage: 300 }, 39],
+    ["Взрывное снимает по Магнитуде за каждое попадание", {}, { blast: 3 }, 36],
+    // 1 + 20/5
+    ["Распыление считает попадания от дальности конуса", {}, { spray: true, weaponRange: 20 }, 35],
+    ["Опустошительное добавляет урон сверх попаданий", {}, { devastating: 2 }, 37],
+    ["Магнитуда не уходит в минус", { magnitude: 2 }, { blast: 9 }, 0]
+  ])("%s", async (_title, hordeOverrides, dmgOverrides, expected) => {
+    const horde = hordeActor(hordeOverrides);
+    await applyDamageToActor(horde, damage(dmgOverrides));
+    expect(horde.system.magnitude.value).toBe(expected);
   });
 
   it("Поглощение Орды считается её собственным числом, а не зонами брони", async () => {
@@ -69,30 +71,6 @@ describe("урон по Орде вместо расчёта Ран", () => {
     await applyDamageToActor(horde, damage());
     for (const update of horde.updates)
       expect(Object.keys(update).some(k => k.startsWith("system.wounds"))).toBe(false);
-  });
-
-  it("Взрывное снимает по Магнитуде за каждое попадание", async () => {
-    const horde = hordeActor();
-    await applyDamageToActor(horde, damage({ blast: 3 }));
-    expect(horde.system.magnitude.value).toBe(36);
-  });
-
-  it("Распыление считает попадания от дальности конуса", async () => {
-    const horde = hordeActor();
-    await applyDamageToActor(horde, damage({ spray: true, weaponRange: 20 }));
-    expect(horde.system.magnitude.value).toBe(35);   // 1 + 20/5
-  });
-
-  it("Опустошительное добавляет урон сверх попаданий", async () => {
-    const horde = hordeActor();
-    await applyDamageToActor(horde, damage({ devastating: 2 }));
-    expect(horde.system.magnitude.value).toBe(37);
-  });
-
-  it("Магнитуда не уходит в минус", async () => {
-    const horde = hordeActor({ magnitude: 2 });
-    await applyDamageToActor(horde, damage({ blast: 9 }));
-    expect(horde.system.magnitude.value).toBe(0);
   });
 
   it("карточка называет число попаданий и остаток Магнитуды", async () => {
