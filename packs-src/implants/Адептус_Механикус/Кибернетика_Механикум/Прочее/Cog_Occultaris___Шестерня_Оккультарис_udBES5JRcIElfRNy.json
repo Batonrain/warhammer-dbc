@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:2. Прочее.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "mechOther",
     "quality": "common",
     "effect": "Шифрует потоки данных: для засечки его Техночудес Ноосферным сканированием нужно 3 Успеха вместо 1. Poor.Q: 2; Good.Q: 4; Best.Q: 5.",

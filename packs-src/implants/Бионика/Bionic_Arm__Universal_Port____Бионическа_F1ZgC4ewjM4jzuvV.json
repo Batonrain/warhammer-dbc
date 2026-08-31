@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1. Вариант руки.",
-    "notes": "",
+    "notes": "Сменные насадки (оружие/инструмент) полудействием — механика смены снаряжения, не тестовый модификатор.",
     "category": "bionic-arm",
     "quality": "common",
     "effect": "Сменные насадки — оружие или инструмент; смена — полудействие.",

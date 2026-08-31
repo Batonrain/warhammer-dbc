@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1.",
-    "notes": "",
+    "notes": "+1 PR при манифестации в усиленном режиме и объединение модов брони «разом» — оба вне схемы testMod/characteristic.",
     "category": "psybernetic",
     "quality": "common",
     "effect": "Металлические стержни в позвоночник: +1 PR при манифестации в усиленном режиме на 10; модификации брони разом (R2).",

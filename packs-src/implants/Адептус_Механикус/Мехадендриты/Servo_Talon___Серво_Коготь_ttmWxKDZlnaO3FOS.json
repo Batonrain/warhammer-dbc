@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:4. Оружие.",
-    "notes": "",
+    "notes": "Встроенное оружие мехадендрита (боевая версия с генератором силового поля) — нет поля под embedded-оружие с уникальным профилем.",
     "category": "mechadendrite",
     "quality": "common",
     "effect": "S 75 (Unn 7), Дл. 1.5м, Rng 1-5. Удар 2d10+18 E, Pen 10, Imprecise, Power Field, Bl −2. Боевая версия Серво-Руки с генератором силового поля (защита от вражеского силового оружия). Занимает 2 порта Кибер-Мантии.",

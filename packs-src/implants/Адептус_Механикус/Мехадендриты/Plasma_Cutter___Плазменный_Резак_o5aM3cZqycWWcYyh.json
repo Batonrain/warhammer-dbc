@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:3. Оружие.",
-    "notes": "",
+    "notes": "Встроенное оружие мехадендрита (два профиля атаки) — нет поля под embedded-оружие; +20 Tech-Use/Trade — узкий контекст (резка/сварка), не общий бонус к навыку.",
     "category": "mechadendrite",
     "quality": "common",
     "effect": "S 30, Дл. 2м, Rng 0-6. Удар 1d10+10 E, Pen 8, Contained (или 1d10+3 I(Cr), Imprecise). Резка до 3м листа/100мм или сварка 0,3м шва за Ход. +20 Tech-Use/Trade на резку/сварку. Стрельба как Легион-Плазменный Пистолет (Rng 5м, без Maximal, не тратит боеприпасы).",

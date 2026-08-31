@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1. Бионический протез органов слуха.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "bionic",
     "quality": "common",
     "effect": "Протез слуха. Poor.Q −20 слух; Good.Q норма + встроенная вокс-бусина; Best.Q бонусы.",

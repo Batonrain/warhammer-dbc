@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:2.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "skitarii",
     "quality": "common",
     "effect": "Дублирующие системы: +10 Ран и Трейт Fanatic (обязан использовать, засекая атаку на командира). +1 Реакция только на Fanatic. Запах масла/гнили: +30 выслеживанию по нюху, возможные штрафы на социальное. Poor.Q: 6 Ран; Good.Q: 13; Best.Q: 16.",

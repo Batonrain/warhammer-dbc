@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R 3. Перья, прошитые друкхарийскими нитями.",
-    "notes": "",
+    "notes": "+1 к Natural Armour ОТ ДРУГОГО импланта (обычных Перьев, итог 3) — межпредметная зависимость; свойство Reinforced на оголённых частях тела и требование ухода — не testMod/characteristic.",
     "category": "bioimplant",
     "quality": "common",
     "effect": "Перья прошиты тонкими нитями друкхарийских материалов.\n• +1 к Natural Armour от обычных Перьев (итого 3).\n• Даёт свойство Reinforced всем оголённым частям тела персонажа.\n• Горят не так сильно, но требуют особого ухода каждый час в день.",

@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:0.",
-    "notes": "",
+    "notes": "Даёт дополнительное получасовое действие — механика экономии действий, не тестовый модификатор.",
     "category": "cybernetic",
     "quality": "common",
     "effect": "Полу-автономный манипулятор с оружием/инструментом: доп. полудействие. Можно ставить поверх другой бионики.",

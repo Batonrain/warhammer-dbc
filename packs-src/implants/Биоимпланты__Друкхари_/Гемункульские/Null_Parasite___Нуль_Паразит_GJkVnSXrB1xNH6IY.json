@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R 5. Червь на основе генокода Парий.",
-    "notes": "",
+    "notes": "Делает носителя Парией «по всем правилам и механикам без исключений» — не бонус, а смена целой категории правил персонажа (статус Парии), не поле testMod/characteristic.",
     "category": "bioimplant",
     "quality": "common",
     "effect": "Пока паразит жив в мозге — носитель становится Парией по всем правилам и механикам без исключений.",

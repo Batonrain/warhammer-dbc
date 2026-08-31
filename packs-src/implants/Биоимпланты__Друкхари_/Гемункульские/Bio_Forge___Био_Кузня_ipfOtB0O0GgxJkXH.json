@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R 5. Живая фабрика боевых спор в груди.",
-    "notes": "",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "bioimplant",
     "quality": "common",
     "effect": "Внутренняя фабрика ядов/вирусов: считается Best.Q Camp Crystallizer (со всеми улучшениями), Medkit, Surgical Kit, Chemical Laboratory и Chemistry Analyzer. Производит яды и наркотики до R2 без компонентов; крафт остальных — за ½ времени.",

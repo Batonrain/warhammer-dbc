@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "Электрические порты-татуировки.",
-    "notes": "",
+    "notes": "Даёт способ подзарядки батарей полным действием через Tech-Use — новый источник действия, не бонус к тесту.",
     "category": "mechanicus",
     "quality": "common",
     "effect": "Подзарядка от внешних источников электричества; полное действие — зарядить батарею через Tech-Use.",

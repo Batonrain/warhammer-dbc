@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1. Вариант ноги.",
-    "notes": "",
+    "notes": "Разнонаправленные модификаторы по типу поверхности/действия (быстрее по ровному, но −Acrobatics, нельзя прыгать, +переносимый вес) — набор условных числовых эффектов, не единый testMod.",
     "category": "bionic-leg",
     "quality": "common",
     "effect": "Гусеничный блок: быстрее по ровному, но −Acrobatics, нельзя прыгать, +Sb Ношения.",

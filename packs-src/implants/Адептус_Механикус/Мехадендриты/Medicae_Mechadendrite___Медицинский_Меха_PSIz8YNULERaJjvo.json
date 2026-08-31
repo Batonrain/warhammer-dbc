@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:2. Utility.",
-    "notes": "",
+    "notes": "Встроенное оружие мехадендрита (профиль атаки, 6 инъекторов) — нет поля под embedded-оружие; «+10 к практическим Medicae и Interrogate» — узкий контекст практического применения, не общий тест Навыка.",
     "category": "mechadendrite",
     "quality": "common",
     "effect": "S 30, Дл. 3м, Rng 0-8. Удар 1d5+3 R, Flexible, Razor Sharp, Toxic(0). +10 к практическим Medicae и Interrogate (пытки). 6 инъекторов; инъекции как рукопашные атаки (всегда попадают по союзникам, можно Натиск на союзника). Полудействием вылечить Кровотечение или авто-успех фиксации/ампутации конечности.",
