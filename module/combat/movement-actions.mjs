@@ -8,6 +8,15 @@
 //      Реакции бегущего). Выход из Боя ставит disengageActive — гасит
 //      Свободную Атаку на следующее движение (module/combat/free-attack.mjs,
 //      wdbc-2xku), блокируется Вызовом/Challenge (system.conditions.challenged).
+//      Все пять также ставят flags.warhammer-dbc.movedThisTurn — тот же флаг
+//      ставит и просто перемещение токена по канвасу (initMovedFlagTracking,
+//      конец файла), независимо от того, было ли оно объявлено кнопкой отсюда.
+//      Читается Импульсным (wp.impulse, attack-dialog.mjs — бонус к очередям
+//      удваивается, пока стрелок НЕ двигался). Снимается resetActionEconomy
+//      в начале следующего Хода актора (action-economy.mjs) — тот же приём,
+//      что у running/exposedAggressive. НЕ путать с system.movedThisTurn на
+//      схеме Техники (data/actor/vehicle.mjs) — другое поле, другой владелец,
+//      сбрасывается вручную ГМом, сюда отношения не имеет.
 //   B. Отдельные механики кнопками (Карабканье/Прыжки/Плавание/Падение/
 //      Полёт) — по образцу showDifficultTerrainDialog из movement-terrain.mjs:
 //      Dialog + тест 1d100 + чат-карточка исхода.
@@ -44,6 +53,16 @@ function _showReachRing(actor, meters) {
 }
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
+
+/**
+ * Флаг «двигался в этом Ходу» — ставят и Действия Движения ниже (раздел A),
+ * и реальное перемещение токена по канвасу (initMovedFlagTracking, конец
+ * файла). Идемпотентно: повторная постановка уже true — без лишнего update.
+ */
+export async function markMovedThisTurn(actor) {
+  if (!actor || actor.getFlag("warhammer-dbc", "movedThisTurn")) return;
+  await actor.setFlag("warhammer-dbc", "movedThisTurn", true);
+}
 
 // Полёт (стр. 30) доступен только актору с Чертой Flyer/Hoverer (module/rules/
 // mount.mjs держит тот же список для скакунов/байков — здесь та же проверка,
@@ -91,6 +110,7 @@ async function _postCard(actor, content) {
 export async function declareHalfMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await markMovedThisTurn(actor);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полудвижение</div>
@@ -101,6 +121,7 @@ export async function declareHalfMove(actor) {
 export async function declareFullMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  await markMovedThisTurn(actor);
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
@@ -112,6 +133,7 @@ export async function declareFullMove(actor) {
 export async function declareCharge(actor) {
   if (!actor) return;
   await actor.update({ "system.meleeBase": "charge" });
+  await markMovedThisTurn(actor);
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
@@ -140,6 +162,7 @@ export async function declareDisengage(actor) {
   }
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  await markMovedThisTurn(actor);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
@@ -151,6 +174,7 @@ export async function declareRun(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
+  await markMovedThisTurn(actor);
   _showReachRing(actor, actor.system.movement?.run);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
@@ -708,5 +732,33 @@ export function initMovementActionsHud() {
       showMovementMenu(actor);
     });
     col.appendChild(btn);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Флаг «двигался в этом Ходу» от РЕАЛЬНОГО перемещения токена по канвасу —
+// не только от кнопок раздела A выше (drag мышью, macro, любой чужой код,
+// меняющий x/y). Тот же приём обнаружения, что у Свободной Атаки
+// (module/combat/free-attack.mjs, movesPosition/preUpdateToken), но здесь
+// не нужен «before» контактов — только сам факт смещения. Отдельная
+// подписка на updateToken, а не довесок к initFreeAttackHooks — система
+// уже держит несколько независимых updateToken/updateCombat обработчиков
+// под разные задачи, не смешивая их в одну функцию (см. те же зоны Ord/
+// graviton, экономику действий в hooks.mjs).
+function _movesPosition(changes) {
+  return Object.prototype.hasOwnProperty.call(changes, "x")
+      || Object.prototype.hasOwnProperty.call(changes, "y");
+}
+
+export function initMovedFlagTracking() {
+  Hooks.on("updateToken", async (tokenDoc, changes, options, userId) => {
+    // Только клиент-инициатор перемещения — иначе флаг попытались бы
+    // выставить с каждого подключённого клиента разом (тот же приём, что у
+    // free-attack.mjs).
+    if (userId !== game.user.id) return;
+    if (!_movesPosition(changes)) return;
+    const actor = tokenDoc.actor;
+    if (!actor || MOVEMENT_MENU_EXCLUDED_TYPES.includes(actor.type)) return;
+    await markMovedThisTurn(actor);
   });
 }

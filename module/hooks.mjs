@@ -9,11 +9,11 @@ import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
-import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger } from "./combat/damage.mjs";
+import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
-import { _performSwerve }                from "./combat/vehicle.mjs";
+import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
@@ -778,10 +778,14 @@ async function _applyWeaponPropEffect(ds) {
   const label     = ds.wpLabel    || "Эффект";
   const propKey   = ds.wpKey      || "";
   const kind      = ds.wpKind      || "";
+  // Считается другим свойством для иммунитета (Monofilament → Snare, книга:
+  // «Считается Snare в расчёте эффектов и иммунитетов»).
+  const immunityAlias = ds.wpImmunityAlias || "";
 
   // Иммунитет к свойству оружия (wdbc-plsf) — Мутации/Дары вроде «Пылающее
   // Тело»/«Щит Чистоты» дают weaponPropertyImmunity.<key> через Механику.
-  if (propKey && hasWeaponPropertyImmunity(actor, propKey)) {
+  if ((propKey && hasWeaponPropertyImmunity(actor, propKey))
+    || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias))) {
     return ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
@@ -802,7 +806,26 @@ async function _applyWeaponPropEffect(ds) {
   const provalyMult  = parseInt(ds.wpProvalyMult || "1");
   const provalyAdd   = parseInt(ds.wpProvalyAdd  || "0");
   const minDoP       = parseInt(ds.wpMinDop || "1") || 1;
+  const vehicleFlat  = ds.wpVehicleFlat === "1";
+  const armorPen     = ds.wpArmorPen === "1";
   const rollMode  = game.settings.get("core", "rollMode");
+
+  // Bane и т.п. (vehicleFlatDamage): против Техники тест/provalyDamage не
+  // применяются вовсе — рейтинг X идёт в Структуру напрямую, без броска.
+  if (vehicleFlat && actor.type === "vehicle") {
+    const { currentValue, newValue, newCritical, gotCritical } = await applyStructureLoss(actor, rating);
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `
+        <div class="wh-roll-result">
+          <div class="roll-header">${label} → ${esc(actor.name)}</div>
+          <div class="roll-outcome"><span class="roll-failure">Техника: ${rating} непоглощаемого урона (автоматически, без теста)</span></div>
+          <div class="roll-threshold">Структура: <b>${currentValue}</b> → <b>${newValue}</b>${gotCritical ? ` (крит. ${newCritical})` : ""}</div>
+        </div>`,
+      rolls: [],
+      sound: null
+    }, rollMode));
+  }
 
   const allRolls = [];
 
@@ -865,6 +888,14 @@ async function _applyWeaponPropEffect(ds) {
     const dmg = dmgRoll.total;
     const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+  } else if (!resisted && isProvaly && armorPen) {
+    // Monofilament: та же формула рейтинг×mult+add+Провалы, но урон идёт
+    // ЧЕРЕЗ поглощение брони (Pen X) — applyMonofilamentHit постит свою
+    // отдельную карточку с разбивкой AP/T.b, здесь только итог броска 1d5.
+    const dmg = rating * provalyMult + provalyAdd + deg;
+    const { jointRoll, isJoint, hitLocation } = await applyMonofilamentHit(actor, { rating, damage: dmg, weaponName: label });
+    allRolls.push(jointRoll);
+    dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}1d5 на Сочленение (≤${rating}): <b>${jointRoll.total}</b> → ${isJoint ? `попадание в ${hitLocation}` : "обычное попадание (Торс)"}; урон (${dmg}, Pen ${rating}) и AP брони (−1 везде) — отдельной карточкой ниже</div>`;
   } else if (!resisted && isProvaly) {
     // «X+Провалы» (Bane, Vibro и т.п.): не кубик, а рейтинг×mult + add + Провалы
     // проваленного теста сопротивления — уже посчитано выше как deg.

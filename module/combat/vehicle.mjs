@@ -459,6 +459,23 @@ export async function applyDamageToVehicle(actor, damageData) {
   }, game.settings.get("core", "rollMode")));
 }
 
+/**
+ * Непоглощаемый урон в Структуру напрямую, мимо брони и без теста (Bane
+ * Технике — «Техника при попадании автоматически получает X урона», без
+ * условия пробития). Та же арифметика overflow→Критические, что у Ран
+ * (rules/wounds.mjs::woundLossAfter), только пишет в system.structure —
+ * applyWoundLoss пишет в system.wounds и для Техники не подходит.
+ */
+export async function applyStructureLoss(actor, amount) {
+  const curVal  = Number(actor.system.structure?.value)    || 0;
+  const curCrit = Number(actor.system.structure?.critical) || 0;
+  const { value: newVal, critical: newCrit, overflow: gotCritical } =
+    woundLossAfter(curVal, curCrit, amount);
+  if ((Number(amount) || 0) > 0) {
+    await actor.update({ "system.structure.value": newVal, "system.structure.critical": newCrit });
+  }
+  return { currentValue: curVal, currentCritical: curCrit, newValue: newVal, newCritical: newCrit, gotCritical };
+}
 
 // ─── Ремонт (восстановление Структуры / снятие поломок) ───────────────────────
 // Тест ремонтного Навыка (значение вводится вручную) с модификаторами Условий и

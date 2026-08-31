@@ -84,7 +84,7 @@ describe("system.absorption.propFlags", () => {
       noEnergy: false, noImpact: false, doubleBlast: false,
       noRanged: false, noJointCalled: false, noEyeCalled: false,
       blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-      frontArcNoProtect: false
+      frontArcNoProtect: false, runesOfProtection: false
     });
   });
 });

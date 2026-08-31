@@ -69,7 +69,7 @@ import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/app
 import { initTokenVariants } from "./module/apps/token-variants.mjs";
 import { DifficultTerrainBehaviorType, DIFFICULT_TERRAIN_TYPE } from "./module/regions/difficult-terrain.mjs";
 import { initDifficultTerrainHud } from "./module/combat/movement-terrain.mjs";
-import { initMovementActionsHud } from "./module/combat/movement-actions.mjs";
+import { initMovementActionsHud, initMovedFlagTracking } from "./module/combat/movement-actions.mjs";
 import { initFreeAttackHooks } from "./module/combat/free-attack.mjs";
 import { checkAuras, clearAuraGrants } from "./module/regions/auras.mjs";
 import { redrawAuraRings } from "./module/regions/aura-rings.mjs";
@@ -890,6 +890,7 @@ Hooks.once("ready", () => initHUD());
 Hooks.once("init", () => initTokenVariants());
 Hooks.once("init", () => initDifficultTerrainHud());
 Hooks.once("init", () => initMovementActionsHud());
+Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());

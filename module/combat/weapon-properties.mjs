@@ -72,7 +72,10 @@ export function aggregateAuto(props) {
     // haywire (bool) отдельно от haywireRating: Haywire(0) — валидный рейтинг
     // («привязан к цели», книга стр. 168), 0 не должен читаться как «нет
     // свойства», в отличие от Corrosive/Crippling, где рейтинг 0 бессмыслен.
-    corrosiveRating: 0, cripplingRating: 0, piercing: false, haywire: false, haywireRating: 0
+    corrosiveRating: 0, cripplingRating: 0, piercing: false, haywire: false, haywireRating: 0,
+    // Monofilament: «+2 Экстремальный урон или Крит. эффект» — в этом движке
+    // extremeLevel сразу и то, и другое (rollExtremeDamage, combat/attack.mjs).
+    extremeLevelBonus: 0
   };
 
   for (const p of props) {
@@ -125,6 +128,7 @@ export function aggregateAuto(props) {
     if (au.crippling)     a.cripplingRating = Math.max(a.cripplingRating, r);
     if (au.piercing)      a.piercing = true;
     if (au.haywire)     { a.haywire = true; a.haywireRating = Math.max(a.haywireRating, r); }
+    if (au.extremeLevelBonus) a.extremeLevelBonus = Math.max(a.extremeLevelBonus, au.extremeLevelBonus);
     if (au.forcePR)       a.forcePR = true;
     if (au.deflagrate) { a.deflagrate = true; a.deflagrateRating = Math.max(a.deflagrateRating, r); }
     if (au.warpSoak)      a.warpSoak = true;
@@ -261,6 +265,10 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         // Ключ свойства (не состояния) — иммунитет проверяется в
         // _applyWeaponPropEffect по нему (wdbc-plsf), а не по te.condition.
         `data-wp-key="${p.def.key}"`,
+        // Считается другим свойством для иммунитета (Monofilament → Snare,
+        // книга) — _applyWeaponPropEffect проверяет weaponPropertyImmunity и
+        // по этому ключу тоже, не только по data-wp-key.
+        `data-wp-immunity-alias="${p.def.immunityAlias ?? ""}"`,
         `data-wp-kind="${te.kind ?? ""}"`,
         `data-wp-condition="${te.condition ?? ""}"`,
         `data-wp-test-char="${te.testChar ?? ""}"`,
@@ -273,7 +281,9 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         `data-wp-provaly="${te.provalyDamage ? 1 : 0}"`,
         `data-wp-provaly-mult="${te.provalyDamage?.mult ?? 1}"`,
         `data-wp-provaly-add="${te.provalyDamage?.add ?? 0}"`,
-        `data-wp-min-dop="${te.conditionMinDoP ?? 1}"`
+        `data-wp-min-dop="${te.conditionMinDoP ?? 1}"`,
+        `data-wp-vehicle-flat="${te.vehicleFlatDamage ? 1 : 0}"`,
+        `data-wp-armor-pen="${te.armorPenDamage ? 1 : 0}"`
       ].join(" ");
 
       const testStr = te.testChar

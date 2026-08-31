@@ -91,6 +91,9 @@ export async function resetActionEconomy(actor) {
     upd["system.reactions.defenseValue"] = defenseMaxBase + defenseBonus;
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
+  // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
+  // прошлого раунда» начинается заново с каждым Ходом этого актора.
+  if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;
   if (Object.keys(upd).length) await actor.update(upd);
 }
 
