@@ -5,7 +5,7 @@
   "folder": "GDsWWXkKFi1EHIjH",
   "system": {
     "description": "Редкое сверхтекучее топливо вливает больше топлива в камеру реакции. Даёт +1 кубик урона и Tearing, но тратит 2 топлива на выстрел; непрореагировавшие излишки выливаются из ствола шаблоном 2d10 E(Fl), Pen 2, Flame, Blast (2), Linger (1d5), центрированным на краю Базы стрелка в направлении выстрела.",
-    "notes": "",
+    "notes": "Tearing уже даёт +1 кубик урона движком (module/combat/weapon-properties.mjs, applyDamageDiceMods) — ровно то, что просит текст. Не смоделировано: расход 2 топлива; брызги (2d10 E(Fl), Pen 2, Flame, Blast(2), Linger(1d5)) — отдельный вторичный эффект, не свойство самого попадания.",
     "weaponTypes": [
       "melta"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "+1 кубик урона, Tearing; тратит 2 топлива; брызги 2d10 E(Fl), Pen 2, Flame, Blast (2), Linger (1d5)",
-    "properties": []
+    "properties": [
+      {
+        "key": "tearing",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "hNGZDKtlF7uJaZGv",
   "effects": [],

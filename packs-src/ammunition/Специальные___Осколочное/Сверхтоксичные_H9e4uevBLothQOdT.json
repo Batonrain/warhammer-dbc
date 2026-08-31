@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Toxic (4)",
-    "properties": []
+    "properties": [
+      {
+        "key": "toxic",
+        "rating": 4,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "H9e4uevBLothQOdT",
   "effects": [],

@@ -5,7 +5,7 @@
   "folder": "IQWUde65VkbLfhC1",
   "system": {
     "description": "При детонации создаёт локализированное сотрясение земли. Даёт Concussive (2); все стоящие на земле цели в радиусе 3 м от цели (включая саму цель) должны пройти тест A−20, или их сбивает с ног.",
-    "notes": "",
+    "notes": "Не смоделирована area-часть: все стоящие на земле в радиусе 3 м проходят тест A−20 или сбиты с ног — нужна AoE-геометрия (см. wdbc-wlwf).",
     "weaponTypes": [
       "bolt"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Concussive (2); все на земле в радиусе 3 м — тест A−20 или сбиты с ног",
-    "properties": []
+    "properties": [
+      {
+        "key": "concussive",
+        "rating": 2,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "zzQS35pKmHAZ47XT",
   "effects": [],

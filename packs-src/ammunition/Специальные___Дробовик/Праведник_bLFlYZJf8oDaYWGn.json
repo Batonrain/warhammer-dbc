@@ -5,7 +5,7 @@
   "folder": "7tMmZVfLVWW2UvjL",
   "system": {
     "description": "Выстрел, начинённый священными солями из слёз пилигримов на священных мирах Экклезиархии. Даёт +½ Cor.b цели (округление вверх) к урону и свойство Sanctified.",
-    "notes": "",
+    "notes": "Не смоделирован доп. урон +½ Cor.b цели (окр. вверх) — нет точки входа для урона, зависящего от Порчи ЦЕЛИ.",
     "weaponTypes": [
       "solid"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Sanctified; +½ Cor.b цели (окр. вверх) к урону",
-    "properties": []
+    "properties": [
+      {
+        "key": "sanctified",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "bLFlYZJf8oDaYWGn",
   "effects": [],

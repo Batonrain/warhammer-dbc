@@ -21,7 +21,16 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Против целей с Имплантами Механикум: тест I+0 или потеря Процессов",
-    "properties": []
+    "properties": [],
+    "condMods": [
+      {
+        "label": "Цель — носитель Имплантов Механикум",
+        "atk": 0,
+        "dmg": 0,
+        "wp": [],
+        "note": "Тест Intelligence+0 цели, иначе теряет случайный Процесс"
+      }
+    ]
   },
   "_id": "LSzvMi7RqYLJGhk7",
   "effects": [],

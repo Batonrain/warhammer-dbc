@@ -5,7 +5,7 @@
   "folder": "AZy9yYGenftjbgbF",
   "system": {
     "description": "Дейтериево-тритиевая смесь, запускающая термоядерную реакцию при перегрузке плазмы. В режиме Maximal даёт +2 урона и свойство Blast (1) (или +1 к Blast); во всех режимах уменьшает Надёжность на 1.",
-    "notes": "",
+    "notes": "Перенесена безусловная часть (−1 Надёжность во всех режимах). Не смоделировано: +2 урона и Blast(1)/+1 к Blast конкретно в режиме Maximal — режимо-зависимая директива.",
     "weaponTypes": [
       "plasma"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "В режиме Maximal: +2 урона и Blast (1) (или +1 к Blast); −1 Надёжность во всех режимах",
-    "properties": []
+    "properties": [
+      {
+        "key": "unreliable",
+        "rating": 0,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "Ub2wwb2v4OsF45t4",
   "effects": [],

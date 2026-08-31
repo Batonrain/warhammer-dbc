@@ -5,7 +5,7 @@
   "folder": "GvPR6KfGTgZfQUph",
   "system": {
     "description": "Быстро расширяющаяся химическая пена. Не наносит урон и убирает Flame, тушит горящие цели, оставляя их слепыми и глухими, пока они не потратят полудействие, чтобы прочистить глаза и уши.",
-    "notes": "",
+    "notes": "Не смоделировано: тушение горящих целей, ослепление и оглушение в área — новые эффекты вне текущего движка targetEffect (нужна area-логика, wdbc-wlwf).",
     "weaponTypes": [
       "flame"
     ],
@@ -21,7 +21,10 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Без урона; убирает Flame; тушит горящих, ослепляет и оглушает",
-    "properties": []
+    "properties": [],
+    "removeProps": [
+      "flame"
+    ]
   },
   "_id": "SVOwVcODNsypl0yp",
   "effects": [],

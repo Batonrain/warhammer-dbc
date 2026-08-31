@@ -5,7 +5,7 @@
   "folder": "ev14sDnVPb24ZUoV",
   "system": {
     "description": "Особо редкие ядовитые кристаллы, создаваемые преимущественно только гемункулами для своих нужд — они способны поражать сам варп своим ядом, но куда более слабее органику. Дают Toxic (2), игнорирующий трейты Daemonic и Stuff Of Nightmares. Снижают Toxic до 0 против живых целей.",
-    "notes": "",
+    "notes": "Не смоделировано: против живых целей рейтинг Toxic должен быть 0 (сейчас применяется 2 всегда); игнор Daemonic/Stuff of Nightmares — не только числовой рейтинг.",
     "weaponTypes": [
       "splinter"
     ],
@@ -21,7 +21,13 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Toxic (2) игнор Daemonic/Stuff Of Nightmares; против живых Toxic 0",
-    "properties": []
+    "properties": [
+      {
+        "key": "toxic",
+        "rating": 2,
+        "rating2": 0
+      }
+    ]
   },
   "_id": "h1lFlxYIf70k3h15",
   "effects": [],

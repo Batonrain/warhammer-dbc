@@ -21,7 +21,16 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "+5 на следующий выстрел по той же цели",
-    "properties": []
+    "properties": [],
+    "condMods": [
+      {
+        "label": "Повторный выстрел по той же цели",
+        "atk": 5,
+        "dmg": 0,
+        "wp": [],
+        "note": ""
+      }
+    ]
   },
   "_id": "jJJdBqpt8uwRao5m",
   "effects": [],
