@@ -114,6 +114,7 @@ const TYPES = {
   },
   weaponMod: {
     pack: "weapon-mods",
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"],
     defaults: {
       description: "", notes: "", category: "ranged", modGroup: "other",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
@@ -129,6 +130,7 @@ const TYPES = {
   armorMod: {
     // Модификации брони лежат в двух паках: обычные и Системы силовой брони.
     pack: ["armor-mods", "armour-systems"],
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"],
     defaults: {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
@@ -146,6 +148,7 @@ const TYPES = {
   // template.json не было: лист предмета показывает это поле всем типам.
   homeworld: {
     pack: "homeworlds",
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"],
     defaults: {
       key: "", description: "", notes: "", source: "", bookSource: "",
       featureName: "", featureDesc: "", charModLabel: "", choices: {},
@@ -154,6 +157,7 @@ const TYPES = {
   },
   divination: {
     pack: "divinations",
+    migratedAway: ["effects.charBonusStat", "effects.charBonusValue"],
     defaults: {
       key: "", roll: "", rollMin: 0, rollMax: 0, text: "", effect: "",
       source: "", bookSource: "", charModLabel: "", choices: {},

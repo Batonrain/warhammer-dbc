@@ -343,10 +343,14 @@ export async function applyDamageToActor(actor, damageData) {
     // применение «по вязи на сторону» для техники не реализовано: урон
     // технике идёт другим путём (combat/vehicle.mjs), не через эту функцию.
     tb = 0;
+    // absorption[armorKey] хранит AP + T.b (documents/actor.mjs) — Варп-Оружие
+    // Стойкость не учитывает никогда, поэтому T.b вычитается, как и в обычной
+    // ветке ниже: иначе «AP брони» протаскивал бы Бонус Стойкости обратно.
+    const warpArmorAP = (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0);
     armorAP = hasRuleFlag(actor, "armor.apVsWarpFull")
-      ? (absorption[armorKey] ?? 0)
+      ? warpArmorAP
       : hasRuleFlag(actor, "runicWeave.aegisOfGnelle")
-        ? Math.floor((absorption[armorKey] ?? 0) / 2)
+        ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
     totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP;
@@ -366,7 +370,8 @@ export async function applyDamageToActor(actor, damageData) {
       baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
       vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
       damageType, melee, hitLocation, primitive, frontArcHit,
-      flags: absorption.propFlags?.[armorKey]
+      flags: absorption.propFlags?.[armorKey],
+      wornAP: absorption.wornOnly?.[armorKey]
     });
     // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
     // поглощения, ДО вычета пробития (стр. 168).

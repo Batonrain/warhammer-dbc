@@ -307,6 +307,15 @@ describe("типы данных акторов", () => {
       expect(vehicle.stations).toEqual([{ id: "s1", role: "gunner", uuid: "", name: "", img: "" }]);
     });
 
+    it("заметка «Класс корпуса» корабля переезжает в Заметки, а не теряется", () => {
+      const ship = new ACTOR_DATA_MODELS.ship({ shipClass: "Иерихон", notes: "<p>Флагман</p>" });
+      expect(ship.notes).toBe("<p>Класс корпуса: Иерихон</p><p>Флагман</p>");
+      expect(ship.shipClass).toBeUndefined();
+      // Повторный проход по уже перенесённым Заметкам ничего не дописывает.
+      expect(new ACTOR_DATA_MODELS.ship({ shipClass: "Иерихон", notes: ship.notes }).notes).toBe(ship.notes);
+      expect(new ACTOR_DATA_MODELS.ship({ shipClass: "" }).notes).toBe("");
+    });
+
     it("список isPsyker сворачивается в флаг, а не считается правдой целиком", () => {
       expect(new ACTOR_DATA_MODELS.daemon({ isPsyker: [false, false] }).isPsyker).toBe(false);
       expect(new ACTOR_DATA_MODELS.daemon({ isPsyker: [true, true] }).isPsyker).toBe(true);

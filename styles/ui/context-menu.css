@@ -10,7 +10,9 @@
   border-radius: 4px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 8px rgba(77,255,166,0.2);
   min-width: 180px;
-  overflow: hidden;
+  /* Без overflow: hidden — каскадное подменю (.wh-ctx-submenu, absolute внутри
+     .wh-ctx-parent) иначе режется границей родительского меню целиком.
+     Скругление углов держат крайние пункты сами. */
 }
 
 .wh-ctx-item {
@@ -23,7 +25,8 @@
   user-select: none;
 }
 
-.wh-ctx-item:last-child { border-bottom: none; }
+.wh-ctx-item:first-child { border-radius: 3px 3px 0 0; }
+.wh-ctx-item:last-child { border-bottom: none; border-radius: 0 0 3px 3px; }
 .wh-ctx-item:hover { background: #15492f; color: #eafff4; }
 
 /* ── Пункт-чекбокс (переключатели «Настройки листа») ── */
