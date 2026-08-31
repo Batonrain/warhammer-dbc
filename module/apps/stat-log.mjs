@@ -34,9 +34,11 @@ function parseDelta(raw, allowDice) {
  *   отрицательные и нулевые правки не действует, книга говорит только про «получает»)
  * @param {string} [opts.bonusLabel] — подпись источника модификатора (для окна и чата);
  *   умолчание — единственный источник, который сейчас передаёт bonusPercent.
+ * @param {string} [opts.note] — произвольная памятка-напоминание в окне (не влияет на
+ *   расчёт, просто видна ДО ввода) — напр. «раса не получает доп. Cor от иных источников».
  */
 export async function promptStatAdd(actor, { label, path, allowDice = false, clampMin = 0, clampMax = null,
-    bonusPercent = 0, bonusLabel = "Ловит на Лету / Fast Learner" } = {}) {
+    bonusPercent = 0, bonusLabel = "Ловит на Лету / Fast Learner", note = "" } = {}) {
   const hint = allowDice ? "целое число, либо XdY+Z, напр. 2d10+3" : "целое число";
   // Видно ДО ввода, не только в чате постфактум — иначе игрок вводит число
   // вслепую, не зная, что оно вырастет.
@@ -44,11 +46,12 @@ export async function promptStatAdd(actor, { label, path, allowDice = false, cla
     ? `<div class="wh-statlog-bonus" title="Действует только на положительные значения — книга говорит про «получает», не про правки задним числом.">
          ⚡ Активен модификатор: <b>${esc(bonusLabel)} +${bonusPercent}%</b></div>`
     : "";
+  const noteHint = note ? `<div class="wh-statlog-note">📝 ${esc(note)}</div>` : "";
   const result = await foundry.applications.api.DialogV2.prompt({
     window: { title: `${label} — добавить` },
     content: `
       <div class="wh-statlog-form">
-        ${bonusHint}
+        ${bonusHint}${noteHint}
         <label>Значение <small>(${hint})</small>
           <input type="text" name="delta" autofocus required/>
         </label>
