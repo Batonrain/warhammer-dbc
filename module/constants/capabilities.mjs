@@ -6708,7 +6708,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.headless": {
-    label: "−2 Инициатива (system.initiative — валидный ключ EFFECT_KEY_LABELS, но нет ни одного прецедента ручной записи item.effects[] в контенте всего packs-src — проверено; см. wdbc-v9a7), угол обзора 120°, попадания в голову = попадания в торс",
+    label: "Угол обзора 120°, попадания в голову = попадания в торс (−2 Инициатива вынесена отдельной записью kind:characteristic/charKey:initiative, wdbc-v9a7) — обзора/facing в системе нет вовсе, редиректа попаданий в локацию тоже, гейтить нечем",
     source: "Мутация: Headless (Общие мутации)",
     reader: ""
   },
