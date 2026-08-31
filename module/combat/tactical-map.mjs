@@ -42,11 +42,16 @@ export async function syncTokenBaseSize(actor) {
   if (proto && (proto.width !== size || proto.height !== size)) {
     await actor.update({ "prototypeToken.width": size, "prototypeToken.height": size });
   }
-  const tokens = actor.getActiveTokens?.(true, true) ?? [];
-  for (const token of tokens) {
+  // Пакетом по сценам: отдельный doc.update на каждый токен — это раунд-трип
+  // и перерисовка канвы на каждый, updateEmbeddedDocuments делает это разом.
+  const perScene = new Map();
+  for (const token of actor.getActiveTokens?.(true, true) ?? []) {
     const doc = token.document ?? token;
-    if (doc.width !== size || doc.height !== size) await doc.update({ width: size, height: size });
+    if (doc.width === size && doc.height === size) continue;
+    if (!perScene.has(doc.parent)) perScene.set(doc.parent, []);
+    perScene.get(doc.parent).push({ _id: doc.id, width: size, height: size });
   }
+  for (const [scene, updates] of perScene) await scene.updateEmbeddedDocuments("Token", updates);
 }
 
 /**
