@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/tools/handoff.py",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/tools/handoff.py",
             "timeout": 30
           }
         ]
@@ -17,10 +17,14 @@
       "Bash(git pull*)",
       "Bash(git fetch*)",
       "Bash(git commit*)",
-      "Bash(git merge*)"
+      "Bash(git merge*)",
+      "Bash(git push origin *)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr edit*)",
+      "Bash(gh pr merge*)"
     ],
     "deny": [
-      "Bash(git push*)",
       "Bash(git rebase*)",
       "Bash(git reset --hard*)",
       "Bash(git clean -f*)"
