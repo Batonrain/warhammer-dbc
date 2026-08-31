@@ -10,11 +10,17 @@ export class ArchetypeData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, BooleanField, ObjectField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, BooleanField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
     return {
       key:             new StringField({ initial: "", label: "Ключ" }),
       race:            new StringField({ initial: "", label: "Раса" }),
       group:           new StringField({ initial: "", label: "Группа" }),
+      // Таблица доступа Друкхари/Сслит (Книга Аэльдари: Ответвления, wdbc-t9ei) —
+      // раньше списки ключей в module/apps/archetypes.mjs (DRUKHARI_SUBRACE_
+      // ARCHETYPES/SSLYTH_ARCHETYPES). "" в subraces — доступ Недорождённому
+      // (у Друкхари субраса не выбрана). Значимо только для race:"drukhari".
+      drukhariSubraces: new ArrayField(new StringField(), { initial: [], label: "Субрасы Друкхари с доступом" }),
+      sslythAccess:    new BooleanField({ initial: false, label: "Доступен Сслит" }),
       // Ключ — характеристика, значение — прибавка; набор задаёт сам архетип.
       charBonus:       new ObjectField({ label: "Бонусы характеристик" }),
       charChoice:      new StringField({ initial: "", label: "Выбор характеристики" }),

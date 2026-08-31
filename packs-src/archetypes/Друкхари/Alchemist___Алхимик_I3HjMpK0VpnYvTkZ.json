@@ -7,6 +7,8 @@
     "key": "drAlchemist",
     "race": "drukhari",
     "group": "Друкхари",
+    "drukhariSubraces": ["", "truebornDrukhari", "wrack"],
+    "sslythAccess": false,
     "charBonus": {
       "int": 3,
       "t": 3

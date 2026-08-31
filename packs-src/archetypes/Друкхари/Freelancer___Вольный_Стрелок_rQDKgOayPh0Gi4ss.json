@@ -7,6 +7,8 @@
     "key": "drFreebooter",
     "race": "drukhari",
     "group": "Друкхари",
+    "drukhariSubraces": ["", "truebornDrukhari", "wrack"],
+    "sslythAccess": true,
     "charBonus": {
       "ws": 3,
       "bs": 3
