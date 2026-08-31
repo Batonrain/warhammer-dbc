@@ -515,7 +515,8 @@ export const CAPABILITIES = {
   //    Действия на психокостяную технику, не разовый бонус на взятие.
   "wraithbone.songOfRepair.techniqueOrArea": {
     label: "Костяная Песнь: восстанавливает структуру/AP техники (1 цель или область), до F.b раз за сессию",
-    source: "Bone Song / Костяная Песня", reader: ""
+    source: "Bone Song / Костяная Песня",
+    reader: "module/combat/bone-song.mjs (wdbc-sk8s) — applyBoneSongSingle/applyBoneSongArea; кнопка в sheets/tabs/combat.mjs, диалог apps/wraithbone-song-dialog.mjs. AP техники не отслеживается движком — не смоделировано."
   },
   "wraithbone.conjure.itemOrWeapon": {
     label: "Создаёт психокостяной предмет/оружие (без Reinforced), до F.b раз за сессию",
@@ -523,7 +524,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfShield.techniqueOrArea": {
     label: "Песнь Защиты: неперегружаемый щит-дефлектор технике (1 цель или область), до F.b раз за сессию",
-    source: "Preservation / Защита", reader: ""
+    source: "Preservation / Защита",
+    reader: "module/combat/preservation.mjs (wdbc-sk8s) — applyPreservationSingle/applyPreservationArea, встроенный Item type:forcefield; кнопка в sheets/tabs/combat.mjs. «Складывается с другими щитами» не смоделировано — движок берёт только сильнейший активный щит."
   },
   "wraithbone.songOfReformation.restoreOrDestroy": {
     label: "До F.b психокостяных вещей получают Восстановление или Разрушение (оружие/броня/снаряжение), до 3 раз за сессию",
@@ -535,7 +537,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfSwiftness.techniqueOrArea": {
     label: "Песнь Скорости: +SPD/манёвренность технике (1 цель или область) до конца боя, до 3 раз за сессию",
-    source: "Song of Swiftness / Песня Стремительности", reader: ""
+    source: "Song of Swiftness / Песня Стремительности",
+    reader: "module/combat/song-of-swiftness.mjs (wdbc-sk8s) — applySongOfSwiftnessSingle/applySongOfSwiftnessArea, встроенный Item type:vehicleTrait, снимается по hooks.mjs::deleteCombat; кнопка в sheets/tabs/combat.mjs."
   },
   "wraithbone.spiritTalk.possessConstruct": {
     label: "Захватывает контроль над психокостяным конструктом на F.b раундов (встречный тест на враждебном), до 3 раз за сессию",
@@ -2112,7 +2115,8 @@ export const CAPABILITIES = {
   },
   "leadership.core.voiceOfGod": {
     label: "До ½Inf.b (окр.▲) раз за бой, имея Риск 4+ и успешно отдавая Личную Команду, получатель также получает Очко Бесчестия,",
-    source: "Voice of God / Глас Божий", reader: "module/combat/voice-of-god.mjs (wdbc-sk8s), подключено в squad-sheet.mjs::_executeCommand"
+    source: "Voice of God / Глас Божий",
+    reader: "module/combat/voice-of-god.mjs (wdbc-sk8s) — hasVoiceOfGod/voiceOfGodAvailable/applyVoiceOfGod; module/sheets/squad-sheet.mjs::_executeCommand (kind:\"short\", cKey:\"personal\")"
   },
   "leadership.core.warChant": {
     label: "В начале Хода Лидер может распевать боевую песнь: раздаёт все 3 эффекта Командного Присутствия всем подчинённым, что слышат песнь (макс. W.",
