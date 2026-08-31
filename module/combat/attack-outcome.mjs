@@ -65,8 +65,8 @@ export function hitCount({ hit, isMelee, rofMode, deg, wp, sys = {}, isSwift = f
     case "full":        count = Math.min(Math.ceil(deg / 2), sys.rof_full); break;
     case "suppression": count = 0; break;
   }
-  // Шторм — удвоение попаданий; Спаренное/Квад — +1 при успехе.
-  if (wp.extraHits === "storm")                          count *= 2;
+  // Шторм (X) — попадания и потолок RoF умножаются на X; Спаренное/Квад — +1 при успехе.
+  if (wp.extraHits === "storm")                          count *= (wp.stormRating || 2);
   else if (wp.extraHits === "twinLinked" && count > 0)   count += 1;
   return { count, label };
 }

@@ -487,10 +487,10 @@ export const WEAPON_PROPERTIES = {
   },
 
   storm: {
-    key: "storm", label: "Шторм", en: "Storm", rating: false, cat: "ranged",
-    desc: "Удваивает число попаданий и расход боеприпасов.",
-    reminder: "🌩️ Шторм: ×2 попадания и ×2 расход боеприпасов",
-    auto: { extraHits: "storm", ammoMult: 2 }
+    key: "storm", label: "Шторм", en: "Storm", rating: true, cat: "ranged",
+    desc: "Невероятная скорострельность. При стрельбе любой очередью расход боеприпасов увеличивается в X раз, а также в X раз увеличивается число попаданий и ограничение на максимальное число попаданий от RoF (после умножения).",
+    reminder: "🌩️ Шторм (X): ×X попаданий и ×X расход боеприпасов",
+    auto: { extraHits: "storm", ammoMult: null }
   },
 
   surge: {
