@@ -102,7 +102,7 @@ async function _refreshTalentGodIndex() {
     // добавленные мимо сборки), не должно тихо потерять Бога.
     for (const [name, god] of fallbackTalentGodIndex()) if (!byName.has(name)) byName.set(name, god);
     _talentGodByName = byName;
-  } catch (e) { _talentGodByName = fallbackTalentGodIndex(); }
+  } catch (e) { console.warn("Warhammer DBC | кэш Бога Таланта не построился, работает библиотека", e); _talentGodByName = fallbackTalentGodIndex(); }
 }
 
 /** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и
@@ -117,7 +117,10 @@ export function initTalentGodIndex() {
 /** Ключ Бога Таланта по имени (как оно лежит в компендиуме/библиотеке), или
  * "undivided", если талант не найден или Бог не указан (Элитные Архетипы). */
 export function talentGodKeyOf(talentName) {
-  const index = _talentGodByName || fallbackTalentGodIndex();
+  // Мемоизация обязательна: до ready (и в тестах) иначе каждая цена Таланта
+  // собирала бы Map на 611 записей заново — по разу на строку списка.
+  _talentGodByName ??= fallbackTalentGodIndex();
+  const index = _talentGodByName;
   const label = index.get(talentName) || "";
   return TALENT_GOD_LABEL_KEY[label.toLowerCase()] || "undivided";
 }

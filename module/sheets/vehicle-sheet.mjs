@@ -201,6 +201,10 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     context.hitLocations  = VEHICLE_HIT_LOCATIONS;
     context.crewActions   = CREW_ACTIONS;
     context.isWalker      = sys.chassis?.type === "walker";
+    // Максимум Структуры: производный (с +X Коляски) показывать нельзя как
+    // value инпута — submitOnChange отправил бы раздутое число в БД, и
+    // следующий пересчёт прибавил бы X снова (6 → 9 → 12 за пару кликов).
+    context.structureMaxBase = this.actor._source.system.structure?.max ?? 0;
 
     // Шкала Структуры (для когитаторного индикатора в шапке).
     const _st = sys.structure || {};
