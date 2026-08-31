@@ -101,7 +101,9 @@
           "repairBonus": 0,
           "deflectorShield": false,
           "deflectorDaemonic": false,
-          "ignoreCrewCrits": false
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
         }
       },
       "_id": "kgcAc75RMym79o8S",
@@ -158,7 +160,24 @@
           "repairBonus": 0,
           "deflectorShield": false,
           "deflectorDaemonic": false,
-          "ignoreCrewCrits": false
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": false,
+          "sideHatches": false,
+          "assaultRamp": false,
+          "enclosed": true,
+          "sealed": false
         }
       },
       "_id": "VDbBTUjK9f3EGcnw",
@@ -215,7 +234,24 @@
           "repairBonus": 0,
           "deflectorShield": false,
           "deflectorDaemonic": false,
-          "ignoreCrewCrits": false
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": false,
+          "sideHatches": false,
+          "assaultRamp": false,
+          "enclosed": false,
+          "sealed": true
         }
       },
       "_id": "r0966YQ2avpEMFRA",

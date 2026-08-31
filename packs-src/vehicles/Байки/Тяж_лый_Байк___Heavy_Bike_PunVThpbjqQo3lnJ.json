@@ -82,7 +82,10 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": true
         }
       },
       "_id": "WDJHsBPvvMmLDO5G",

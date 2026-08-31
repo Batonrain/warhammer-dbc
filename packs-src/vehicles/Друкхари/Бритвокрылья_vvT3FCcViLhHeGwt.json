@@ -391,7 +391,18 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": true,
+          "advancedControls": false
         }
       },
       "_id": "RPIrEIB0Mmx2bV9o",
@@ -450,7 +461,18 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": true
         }
       },
       "_id": "sWz1i2m9ShD22VSu",
@@ -509,7 +531,22 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": false,
+          "sideHatches": false,
+          "assaultRamp": false,
+          "enclosed": true,
+          "sealed": false
         }
       },
       "_id": "7CDUR89d3hxVBMDs",
@@ -627,7 +664,14 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": true,
+          "orbitalDeployment": false
         }
       },
       "_id": "MrbIEMMnaFF08pst",
@@ -863,7 +907,22 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": false,
+          "sideHatches": false,
+          "assaultRamp": false,
+          "enclosed": false,
+          "sealed": true
         }
       },
       "_id": "mAfGN1Ru0lNBJykB",
@@ -922,7 +981,18 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": true,
+          "advancedTargeting": false,
+          "advancedControls": false
         }
       },
       "_id": "lJ4MLmAN0yJLdaZ9",

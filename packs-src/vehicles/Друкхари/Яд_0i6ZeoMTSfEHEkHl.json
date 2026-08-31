@@ -330,7 +330,18 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": true
         }
       },
       "_id": "C6s8FZ3fFgOIdUDR",
@@ -389,7 +400,22 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": false,
+          "sideHatches": false,
+          "assaultRamp": false,
+          "enclosed": true,
+          "sealed": false
         }
       },
       "_id": "d4VRSeBZuPaCCAdY",
@@ -507,7 +533,14 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": true,
+          "orbitalDeployment": false
         }
       },
       "_id": "PWG2v4rD12CDHpbp",
@@ -566,7 +599,22 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": false,
+          "sideHatches": false,
+          "assaultRamp": false,
+          "enclosed": false,
+          "sealed": true
         }
       },
       "_id": "mvvE6v1mMo4HkHAP",

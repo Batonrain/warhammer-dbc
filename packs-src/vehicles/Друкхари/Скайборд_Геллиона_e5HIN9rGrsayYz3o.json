@@ -268,7 +268,18 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": false,
+          "orbitalDeployment": false,
+          "onslaught": false,
+          "multiTargeter": false,
+          "advancedTargeting": false,
+          "advancedControls": true
         }
       },
       "_id": "6BYaqbKlzqPqTrpW",
@@ -386,7 +397,14 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": true,
+          "orbitalDeployment": false
         }
       },
       "_id": "ko3N9fsQ7xwgaedQ",

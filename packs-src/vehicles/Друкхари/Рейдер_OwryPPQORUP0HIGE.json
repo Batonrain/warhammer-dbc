@@ -465,7 +465,14 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": false,
+          "amphibious": false,
+          "ceramitePlating": false,
+          "sidecarStructure": false,
+          "voidShields": false,
+          "volatile": false,
+          "fallBreaks": true,
+          "orbitalDeployment": false
         }
       },
       "_id": "HyIbk7N7iKUmCDVT",
