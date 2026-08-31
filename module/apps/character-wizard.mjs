@@ -18,6 +18,16 @@
 
 const { Application } = foundry.appv1.api;
 
+// Флаг «Этап 4 применён» — раньше идемпотентность проверялась по
+// system.experience.total > 0, но возврат опыта за совпавший Навык из
+// нескольких источников (раса+культура и т.п., rules/duplicate-grants.mjs)
+// законно приходит уже на Этапе 3, до всякого применения Этапа 4 — total
+// оказывался > 0, «Далее» решал, что стартовый опыт уже выдан, и молча
+// пропускал реальную выдачу. Отдельный флаг отличает «Этап 4 реально
+// подтверждён» от «на счету случайно оказалась ненулевая сумма».
+const START_LEVEL_FLAG_SCOPE = "warhammer-dbc";
+const START_LEVEL_FLAG_KEY   = "startLevelApplied";
+
 import { disabledRaceKeys }      from "../constants/features.mjs";
 import { BODY_TYPES }            from "../constants/body-map.mjs";
 import { raceGroupList, subracesOf, raceDef } from "./race-library.mjs";
@@ -845,22 +855,24 @@ export class CharacterWizard extends Application {
       startCap: START_CAP,
       startExtraXp: this.startExtraXp, startExtraInf: this.startExtraInf, startExtraCor: this.startExtraCor,
       startIsAstartes: sys.race === "astartes",
-      // Уже применяли Уровень старта на этом персонаже раньше (опыт не пуст) —
-      // предупреждаем, а не молча копим бонусы Влияния/Порчи ещё раз поверх.
-      startAlreadyApplied: (Number(sys.experience?.total) || 0) > 0
+      // Уже применяли Уровень старта на этом персонаже раньше — предупреждаем,
+      // а не молча копим бонусы Влияния/Порчи ещё раз поверх. Флаг, а не
+      // «опыт не пуст»: возврат опыта за совпавший Навык (Этап 3) законно
+      // делает total ненулевым ДО Этапа 4.
+      startAlreadyApplied: !!actor.getFlag(START_LEVEL_FLAG_SCOPE, START_LEVEL_FLAG_KEY)
     };
   }
 
   /**
    * Закрепляет Этап 4: опыт по колонке своей расы, бонусы к Влиянию/Порче —
    * поверх уже брошенных (капается по START_CAP), как в старом Мастере. Не
-   * трогает, если опыт уже когда-то выдавался — повторный запуск не должен
-   * молча копить бонусы ещё раз.
+   * трогает, если Этап 4 на этом персонаже уже подтверждали — повторный
+   * запуск не должен молча копить бонусы ещё раз.
    */
   async _confirmAspirations() {
     const actor = this.actor;
     const sys = actor.system;
-    if ((Number(sys.experience?.total) || 0) > 0) return;
+    if (actor.getFlag(START_LEVEL_FLAG_SCOPE, START_LEVEL_FLAG_KEY)) return;
 
     const start = startLevelValues({
       level: this.startLevelKey, astartes: sys.race === "astartes",
@@ -868,11 +880,15 @@ export class CharacterWizard extends Application {
     });
     if (!start) return;
     const cap = v => Math.max(0, Math.min(START_CAP, Math.round(v)));
+    // «+», не «=»: на счету уже может лежать законный возврат опыта за
+    // совпавший Навык (Этап 3, rules/duplicate-grants.mjs) — стартовый опыт
+    // должен добавиться поверх, а не стереть его.
     await actor.update({
-      "system.experience.total":   start.xp,
-      "system.experience.current": start.xp,
+      "system.experience.total":   (Number(sys.experience?.total) || 0) + start.xp,
+      "system.experience.current": (Number(sys.experience?.current) || 0) + start.xp,
       "system.characteristics.inf.base": cap((Number(sys.characteristics?.inf?.base) || 0) + start.infamy),
-      "system.corruption.value":   cap((Number(sys.corruption?.value) || 0) + start.corruption)
+      "system.corruption.value":   cap((Number(sys.corruption?.value) || 0) + start.corruption),
+      [`flags.${START_LEVEL_FLAG_SCOPE}.${START_LEVEL_FLAG_KEY}`]: true
     });
   }
 

@@ -23,6 +23,7 @@ import { splitTopLevel, esc }           from "../helpers/utils.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
 import { skillGrantOutcome } from "../rules/duplicate-grants.mjs";
+import { matchSpec } from "../constants/skill-specializations.mjs";
 import { refundXP, skillStepsCost, skillReason } from "./duplicate-refund.mjs";
 
 // 9 основных характеристик, в которые Мастер создания кидает 2d10 (корник вахи).
@@ -319,9 +320,14 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
           }
           for (const raw of namedPs) {
             const ru = specRu(raw);
+            const sd = matchSpec(gkey, raw);
             let ent = arr.find(e => norm(e.specialty)===norm(ru));
-            if (ent) { ent.grantedRank = rank; if ((STEP[ent.rank]||0)<STEP[rank]) ent.rank = rank; ent.cost = 0; }
-            else arr.push({ specialty: ru, rank, grantedRank: rank, cost: 0 });
+            if (ent) {
+              ent.grantedRank = rank; if ((STEP[ent.rank]||0)<STEP[rank]) ent.rank = rank; ent.cost = 0;
+              if (!ent.specKey && sd) ent.specKey = sd.key;
+              if (!ent.char && sd?.char) ent.char = sd.char;
+            } else arr.push({ specialty: ru, rank, grantedRank: rank, cost: 0,
+                              ...(sd ? { specKey: sd.key } : {}), ...(sd?.char ? { char: sd.char } : {}) });
           }
         } else {
           // Несколько специализаций ТОЛЬКО через запятую (в названиях бывает «and»/«и»,
@@ -333,9 +339,14 @@ export async function grantCreationSkills(actor, { race, past, sub, arch }) {
             : inside.split(/\s*,\s*/).map(s=>s.trim()).filter(Boolean);
           for (const raw of specs) {
             const ru = specRu(raw);
+            const sd = matchSpec(gkey, raw);
             let ent = arr.find(e => norm(e.specialty)===norm(ru));
-            if (ent) { ent.grantedRank = rank; if ((STEP[ent.rank]||0)<STEP[rank]) ent.rank = rank; ent.cost = 0; }
-            else arr.push({ specialty: ru, rank, grantedRank: rank, cost: 0 });
+            if (ent) {
+              ent.grantedRank = rank; if ((STEP[ent.rank]||0)<STEP[rank]) ent.rank = rank; ent.cost = 0;
+              if (!ent.specKey && sd) ent.specKey = sd.key;
+              if (!ent.char && sd?.char) ent.char = sd.char;
+            } else arr.push({ specialty: ru, rank, grantedRank: rank, cost: 0,
+                              ...(sd ? { specKey: sd.key } : {}), ...(sd?.char ? { char: sd.char } : {}) });
           }
         }
         continue;

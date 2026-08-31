@@ -107,6 +107,14 @@ describe("выдача стартовых навыков", () => {
     expect(a.system.groupSkills.trade.every(e => e.cost === 0)).toBe(true);
   });
 
+  it("специализация получает specKey — иначе Таланты с требованием Trade(Armourer) не находят её на русской подписи", async () => {
+    const a = actor();
+    await grantCreationSkills(a, { race: { skills: "Trade (Voidfarer)+10" } });
+    expect(a.system.groupSkills.trade).toEqual([
+      expect.objectContaining({ specialty: "Космоход", specKey: "voidfarer" })
+    ]);
+  });
+
   it("«Warp, Daemons and Psykers» — одна специализация, запятая внутри имени", async () => {
     const a = actor();
     await grantCreationSkills(a, { race: { skills: "Forbidden Lore (Warp, Daemons and Psykers)" } });
