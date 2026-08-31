@@ -77,6 +77,7 @@
   color: var(--wh-text, inherit);
 }
 .warhammer-dbc .ae-spend-btn:hover, .warhammer-dbc .ae-reset-btn:hover { background: var(--wh-accent, #2a6f4c); color: #fff; }
+.warhammer-dbc .ae-spend-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--wh-input-bg); color: var(--wh-text, inherit); }
 .warhammer-dbc .ae-reset-btn { margin-left: auto; }
 .warhammer-dbc .ae-status { opacity: 0.75; cursor: help; }
 

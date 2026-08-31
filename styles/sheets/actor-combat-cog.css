@@ -93,6 +93,11 @@
 }
 .warhammer-dbc .combat-cog .wh-move-btn:hover { border-color: var(--cg) !important; box-shadow: 0 0 12px -4px var(--cg); color: #eafff4 !important; transform: translateY(-1px); }
 .warhammer-dbc .combat-cog .wh-move-btn:active { background: rgba(77,255,166,0.14) !important; transform: none; }
+/* Гейт при нехватке ОД (wdbc-qjnk) — серая ДО клика, а не тост после. */
+.warhammer-dbc .combat-cog .wh-move-btn:disabled {
+  opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important;
+}
+.warhammer-dbc .combat-cog .wh-move-btn:disabled:hover { border-color: var(--cg-line) !important; color: #c8ffe4 !important; }
 /* Кнопка + отдельное поле дистанции рядом — заменяет прежнюю таблицу
    Полушаг/Шаг/Натиск/Бег и превью-значения у Карабканья/Плавания/маршей. */
 .warhammer-dbc .combat-cog .movement-item { display: flex; gap: 4px; }
