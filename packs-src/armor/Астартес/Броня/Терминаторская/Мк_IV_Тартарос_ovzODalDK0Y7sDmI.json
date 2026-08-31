@@ -24,6 +24,95 @@
     "strengthBonus": 30,
     "wpBonus": 0,
     "special": "Сверхброня. Второй профиль AP: 3/5/4/4. +10 аблативных Ран. Штраф −15 к Ловкости. Самая подвижная. Неперегружаемый щит-дефлектор 1–35.",
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        }
+      ],
+      "magLocks": [
+        {
+          "size": "4x1",
+          "count": 2,
+          "note": "бёдра"
+        },
+        {
+          "size": "3x1",
+          "count": 2,
+          "note": "бока кирасы"
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени спереди",
+          "awkward": true
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени сзади",
+          "awkward": "veryAwkward"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "предплечья",
+          "variants": [
+            {
+              "key": "shield",
+              "label": "щит",
+              "size": "3x3"
+            }
+          ]
+        },
+        {
+          "size": "4x1",
+          "count": 1,
+          "note": "пояс сзади",
+          "awkward": true
+        },
+        {
+          "size": "5x3",
+          "count": 1,
+          "note": "ранец сзади",
+          "awkward": "veryAwkward"
+        }
+      ]
+    },
     "propRatings": {
       "gorget": 6
     }

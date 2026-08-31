@@ -2,16 +2,19 @@
   {{#if missing}}
   <div class="wr-empty">Актор не найден.</div>
   {{else}}
+
+  {{#unless hasRigs}}
+  <div class="wr-empty">Нет разгрузок. Добавьте предмет-разгрузку (Снаряжение → категория «Разгрузка») из библиотеки.</div>
+  {{/unless}}
+
+  {{#if backConflict}}
+  <div class="wr-warn">Внимание: несколько разгрузок занимают спину — обычно можно носить только одну заплечную разгрузку.</div>
+  {{/if}}
+
   <div class="wh-rig-scroll">
+  <div class="wr-columns">
 
-    {{#unless hasRigs}}
-    <div class="wr-empty">Нет разгрузок. Добавьте предмет-разгрузку (Снаряжение → категория «Разгрузка») из библиотеки.</div>
-    {{/unless}}
-
-    {{#if backConflict}}
-    <div class="wr-warn">Внимание: несколько разгрузок занимают спину — обычно можно носить только одну заплечную разгрузку.</div>
-    {{/if}}
-
+    <div class="wr-col wr-col-rigs">
     {{#each rigs as |rig|}}
     <div class="wr-rig">
       <div class="wr-rig-head">
@@ -27,31 +30,23 @@
       {{#if rig.comfortHint}}<div class="wr-hint">{{rig.comfortHint}}</div>{{/if}}
 
       {{#if (eq rig.type "armor")}}
-      {{!-- Схема силовой брони (стр. 27): своя раскладка, не копия иллюстрации
-           книги — те же 12 замков и пояс, отрисованные в стиле этого окна.
-           Клик по зоне подсвечивает соответствующие карточки слотов ниже. --}}
+      {{!-- Схема силовой брони (стр. 27): те же 12 замков и пояс, отрисованные
+           поверх портрета доспеха. Клик по зоне подсвечивает соответствующие
+           карточки слотов ниже. --}}
       <div class="wr-schema">
-        <svg viewBox="0 0 260 400" xmlns="http://www.w3.org/2000/svg">
-          <g class="wr-sil">
-            <circle cx="130" cy="26" r="20"/>
-            <path d="M80,50 L180,50 L170,150 L90,150 Z"/>
-            <rect x="48" y="55" width="28" height="55" rx="8"/>
-            <rect x="184" y="55" width="28" height="55" rx="8"/>
-            <rect x="90" y="190" width="80" height="60" rx="6"/>
-            <rect x="88" y="320" width="30" height="30" rx="6"/>
-            <rect x="142" y="320" width="30" height="30" rx="6"/>
-          </g>
-          <rect class="wr-sr" data-slot-region="предплечья" x="42" y="112" width="30" height="55" rx="6"><title>Предплечья — 2×(1×1, может держать щит)</title></rect>
-          <rect class="wr-sr" data-slot-region="предплечья" x="188" y="112" width="30" height="55" rx="6"><title>Предплечья — 2×(1×1, может держать щит)</title></rect>
-          <rect class="wr-sr" data-slot-region="бока кирасы" x="78" y="60" width="14" height="70" rx="4"><title>Бока кирасы — 2×3×1</title></rect>
-          <rect class="wr-sr" data-slot-region="бока кирасы" x="168" y="60" width="14" height="70" rx="4"><title>Бока кирасы — 2×3×1</title></rect>
-          <rect class="wr-sr wr-sr-slot" data-slot-region="пояс спереди, слева" x="90" y="155" width="35" height="30" rx="4"><title>Пояс спереди, слева — 4×1×1 (2 меняются на кобуру)</title></rect>
-          <rect class="wr-sr wr-sr-slot" data-slot-region="пояс спереди, справа" x="135" y="155" width="35" height="30" rx="4"><title>Пояс спереди, справа — 4×1×1 (2 меняются на кобуру)</title></rect>
-          <rect class="wr-sr" data-slot-region="бёдра" x="85" y="255" width="35" height="60" rx="6"><title>Бёдра — 2×4×1</title></rect>
-          <rect class="wr-sr" data-slot-region="бёдра" x="140" y="255" width="35" height="60" rx="6"><title>Бёдра — 2×4×1</title></rect>
-          <rect class="wr-sr wr-sr-awkward" data-slot-region="голени спереди" x="86" y="325" width="34" height="55" rx="6"><title>Голени спереди — 2×2×1, неудобные</title></rect>
-          <rect class="wr-sr wr-sr-awkward" data-slot-region="голени спереди" x="140" y="325" width="34" height="55" rx="6"><title>Голени спереди — 2×2×1, неудобные</title></rect>
-          <text class="wr-sl" x="130" y="15" text-anchor="middle">СПЕРЕДИ</text>
+        <svg viewBox="0 0 334 490" xmlns="http://www.w3.org/2000/svg">
+          <image href="systems/warhammer-dbc/assets/art/doombc-core/tactical-vest.webp" x="0" y="0" width="334" height="490" preserveAspectRatio="xMidYMid meet"/>
+          <rect class="wr-sr" data-slot-region="предплечья" x="20" y="185" width="50" height="42" rx="6"><title>Предплечья — 2×(1×1, может держать щит)</title></rect>
+          <rect class="wr-sr" data-slot-region="предплечья" x="264" y="182" width="50" height="42" rx="6"><title>Предплечья — 2×(1×1, может держать щит)</title></rect>
+          <rect class="wr-sr" data-slot-region="бока кирасы" x="95" y="65" width="18" height="75" rx="4"><title>Бока кирасы — 2×3×1</title></rect>
+          <rect class="wr-sr" data-slot-region="бока кирасы" x="221" y="65" width="18" height="75" rx="4"><title>Бока кирасы — 2×3×1</title></rect>
+          <rect class="wr-sr wr-sr-slot" data-slot-region="пояс спереди, слева" x="118" y="160" width="48" height="26" rx="4"><title>Пояс спереди, слева — 4×1×1 (2 меняются на кобуру)</title></rect>
+          <rect class="wr-sr wr-sr-slot" data-slot-region="пояс спереди, справа" x="167" y="160" width="48" height="26" rx="4"><title>Пояс спереди, справа — 4×1×1 (2 меняются на кобуру)</title></rect>
+          <rect class="wr-sr" data-slot-region="бёдра" x="85" y="168" width="54" height="155" rx="6"><title>Бёдра — 2×4×1</title></rect>
+          <rect class="wr-sr" data-slot-region="бёдра" x="195" y="168" width="54" height="155" rx="6"><title>Бёдра — 2×4×1</title></rect>
+          <rect class="wr-sr wr-sr-awkward" data-slot-region="голени спереди" x="50" y="364" width="71" height="50" rx="6"><title>Голени спереди — 2×2×1, неудобные</title></rect>
+          <rect class="wr-sr wr-sr-awkward" data-slot-region="голени спереди" x="209" y="364" width="71" height="50" rx="6"><title>Голени спереди — 2×2×1, неудобные</title></rect>
+          <text class="wr-sl" x="6" y="14">СПЕРЕДИ</text>
         </svg>
         <div class="wr-schema-back">
           <div class="wr-schema-back-h">СЗАДИ</div>
@@ -69,28 +64,22 @@
       {{/if}}
 
       {{#if rig.container}}
-      {{!-- Рюкзак-контейнер --}}
-      <div class="wr-bp">
+      {{!-- Рюкзак-контейнер: перетащите предмет из «Не размещено» --}}
+      <div class="wr-bp" data-bp-drop="{{rig.id}}">
         <div class="wr-bp-hint">Доставание из рюкзака — полное действие.</div>
         {{#each rig.contents as |it|}}
-        <div class="wr-bp-item"><span class="wr-it-name">{{it.name}}</span> <span class="wr-it-size">{{it.size}}</span> <span class="wr-it-w">{{it.weight}} кг</span>
+        <div class="wr-bp-item" draggable="true" data-drag-item="{{it.id}}"><span class="wr-it-name">{{it.name}}</span> <span class="wr-it-size">{{it.size}}</span> <span class="wr-it-w">{{it.weight}} кг</span>
           <button type="button" class="wr-x" data-item-clear="{{it.id}}" title="Достать">✕</button></div>
         {{else}}
-        <div class="wr-bp-empty">Пусто</div>
+        <div class="wr-bp-empty">Пусто — перетащите сюда предмет</div>
         {{/each}}
-        {{#if rig.addable.length}}
-        <select class="wr-add" data-bp-add="{{rig.id}}">
-          <option value="">+ положить в рюкзак…</option>
-          {{#each rig.addable as |o|}}<option value="{{o.id}}">{{o.name}} ({{o.size}})</option>{{/each}}
-        </select>
-        {{/if}}
       </div>
 
       {{else}}
       {{!-- Слоты --}}
       <div class="wr-slots">
         {{#each rig.slots as |sl|}}
-        <div class="wr-slot {{#if sl.isMag}}mag{{/if}} {{#if sl.item}}filled{{/if}}">
+        <div class="wr-slot {{#if sl.isMag}}mag{{/if}} {{#if sl.item}}filled{{/if}}" data-slot-drop="{{sl.id}}" data-slot-size="{{sl.size}}">
           <div class="wr-slot-top"><span class="wr-slot-size">{{sl.size}}</span>{{#if sl.isMag}}<span class="wr-badge mag">МАГ</span>{{/if}}{{#if sl.awkward}}<span class="wr-badge">{{#if (eq sl.awkward "veryAwkward")}}очень неудобный{{else}}неудобный{{/if}}</span>{{/if}}</div>
           {{#if sl.note}}<div class="wr-slot-note">{{sl.note}}</div>{{/if}}
           {{#if sl.variants.length}}
@@ -100,15 +89,13 @@
           </select>
           {{/if}}
           {{#if sl.item}}
-          <div class="wr-slot-item"><span class="wr-it-name">{{sl.item.name}}</span>
-            <button type="button" class="wr-x" data-slot-clear="{{sl.id}}" title="Убрать">✕</button></div>
+          <div class="wr-slot-item" draggable="true" data-drag-item="{{sl.item.id}}">
+            <span class="wr-it-name">{{sl.item.name}}</span>
+            <button type="button" class="wr-x" data-slot-clear="{{sl.id}}" title="Убрать">✕</button>
+          </div>
+          {{else}}
+          <div class="wr-slot-empty">перетащите сюда</div>
           {{/if}}
-          {{#if sl.opts.length}}
-          <select class="wr-add" data-slot-assign="{{sl.id}}">
-            <option value="">{{#if sl.item}}— заменить на…{{else}}— пусто —{{/if}}</option>
-            {{#each sl.opts as |o|}}<option value="{{o.id}}">{{o.name}} ({{o.size}})</option>{{/each}}
-          </select>
-          {{else}}{{#unless sl.item}}<div class="wr-slot-empty">— пусто —</div>{{/unless}}{{/if}}
         </div>
         {{/each}}
       </div>
@@ -116,16 +103,18 @@
       {{/if}}
     </div>
     {{/each}}
+    </div>
 
-    <div class="wr-unassigned">
+    <div class="wr-col wr-col-unassigned" data-unassign-drop="true">
       <div class="wr-unassigned-h">Не размещено (в руках / вне разгрузок) · {{unassignedWeight}} кг</div>
       {{#each unassigned as |it|}}
-      <div class="wr-un-item"><span class="wr-it-name">{{it.name}}</span> <span class="wr-it-type">{{it.type}}</span> <span class="wr-it-size">{{it.size}}</span> <span class="wr-it-w">{{it.weight}} кг</span></div>
+      <div class="wr-un-item" draggable="true" data-drag-item="{{it.id}}"><span class="wr-it-name">{{it.name}}</span> <span class="wr-it-type">{{it.type}}</span> <span class="wr-it-size">{{it.size}}</span> <span class="wr-it-w">{{it.weight}} кг</span></div>
       {{else}}
       <div class="wr-bp-empty">Всё размещено.</div>
       {{/each}}
     </div>
 
+  </div>
   </div>
   {{/if}}
 </div>
