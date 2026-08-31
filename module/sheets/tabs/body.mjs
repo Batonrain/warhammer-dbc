@@ -10,6 +10,7 @@ import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
 import { on } from "../../helpers/utils.mjs";
 import { showDeathSaveDialog, doResurrect } from "./death.mjs";
+import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -28,6 +29,16 @@ export async function setVital(actor, key, value) {
 export async function adjustVital(actor, key, delta) {
   const cur = Math.round(Number(actor.system.vitals?.[key]) || 0);
   return setVital(actor, key, cur + Number(delta));
+}
+
+/** «Поесть/Попить/Поспать»: стадия → 0 И метка времени → сейчас (wdbc-jnqj) —
+ *  иначе автопрогресс по game.time.worldTime тут же снова поднимет стадию по
+ *  старой метке (vitalEffectiveStage в constants/vitals.mjs). */
+export async function satisfyVital(actor, key) {
+  const field = VITAL_TIME_FIELD[key];
+  const update = { [`system.vitals.${key}`]: 0 };
+  if (field) update[`system.vitals.${field}`] = game.time?.worldTime ?? 0;
+  await actor.update(update);
 }
 
 export async function setDeceased(actor, deceased) {
@@ -86,7 +97,7 @@ export function activateBodyListeners(root, actor, { openSurgeonWindow = openSur
   });
   on(root, "[data-vital-reset]", "click", ev => {
     ev.preventDefault();
-    setVital(actor, ev.currentTarget.dataset.vitalReset, 0);
+    satisfyVital(actor, ev.currentTarget.dataset.vitalReset);
   });
 
   const figPanel = root.querySelector(".bc-figure-panel");

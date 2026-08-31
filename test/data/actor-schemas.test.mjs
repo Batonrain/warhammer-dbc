@@ -69,7 +69,10 @@ const OWN_DEVIATIONS = {
     hibernation: { active: false },
     // Стереотип Покровительства и своя система цены Продвижения — заведены
     // гораздо позже template.json (constants/patronage.mjs).
-    patronStereotype: "", pricingModeOverride: ""
+    patronStereotype: "", pricingModeOverride: "",
+    // Момент последнего «Поесть/Попить/Поспать» (worldTime) для автопрогресса
+    // стадий по времени (wdbc-jnqj) — заведён гораздо позже template.json.
+    vitals: { hunger: 0, thirst: 0, sleep: 0, lastFed: null, lastDrank: null, lastSlept: null }
   },
   // Вкладку «ТЕЛО» Принцу открыли позже: она общая с Персонажем, и её хранимые
   // поля (фигура голо-скана и жизнеобеспечение) пришлось завести и здесь.

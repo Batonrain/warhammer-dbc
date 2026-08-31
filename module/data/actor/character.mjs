@@ -62,7 +62,13 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       vitals: new SchemaField({
         hunger: num(0, "Голод"),
         thirst: num(0, "Жажда"),
-        sleep:  num(0, "Сон")
+        sleep:  num(0, "Сон"),
+        // Момент (game.time.worldTime) последнего «Поесть/Попить/Поспать» — null,
+        // пока автопрогресс по времени (constants/vitals.mjs, wdbc-jnqj) ещё не
+        // инициализирован для этого актора (без штрафа задним числом).
+        lastFed:   new NumberField({ initial: null, nullable: true, label: "Наелся (время)" }),
+        lastDrank: new NumberField({ initial: null, nullable: true, label: "Напился (время)" }),
+        lastSlept: new NumberField({ initial: null, nullable: true, label: "Выспался (время)" })
       }, { label: "Потребности" }),
       helmetOff: new BooleanField({ initial: false, label: "Шлем снят" }),
       // Максимум и пороги — производные (module/documents/actor.mjs), value

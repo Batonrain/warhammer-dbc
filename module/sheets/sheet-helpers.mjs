@@ -40,7 +40,8 @@ import { SHIELD_STATUS }                             from "../constants/shields.
 import { condIconHTML, CONDITION_ICONS }            from "../constants/condition-icons.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
-import { VITALS, VITAL_MAX_STAGE }                   from "../constants/vitals.mjs";
+import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
+import { raceMatches }                               from "../rules/race.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
@@ -806,9 +807,12 @@ export function buildGetData(actor) {
       diseaseCount:   context.diseases.length,
       disorderCount:  context.mentalDisorders.length,
       drugCount:      context.activeDrugs.length,
-      // Жизненные потребности (корбук 483): Голод/Жажда/Сон
+      // Жизненные потребности (корбук 483): Голод/Жажда/Сон — стадия двигается
+      // сама по game.time.worldTime, см. vitalEffectiveStage (wdbc-jnqj).
       life: VITALS.map(v => {
-        const val = Math.max(0, Math.min(VITAL_MAX_STAGE, Math.round(Number(system.vitals?.[v.key]) || 0)));
+        const vitalCtx = { tb: Number(system.characteristics?.t?.bonus) || 0, isAstartes: raceMatches(system, "astartes") };
+        const val = vitalEffectiveStage(v.key, system.vitals?.[v.key], system.vitals?.[VITAL_TIME_FIELD[v.key]],
+          game.time?.worldTime ?? 0, vitalCtx);
         const st  = v.stages[val];
         return {
           key: v.key, label: v.label, icon: v.icon, tone: v.tone, action: v.action,

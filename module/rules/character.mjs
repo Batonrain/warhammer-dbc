@@ -29,7 +29,8 @@ import { implantMech, ironModForQuality } from "../constants/implant-mechanics.m
 import { readEnvForScene } from "../constants/scene-nexus.mjs";
 import { computePathPassives } from "../constants/aeldari-paths.mjs";
 import { manifestProfile } from "../constants/possession.mjs";
-import { vitalCharMods } from "../constants/vitals.mjs";
+import { vitalCharMods, vitalEffectiveStage, VITAL_TIME_FIELD } from "../constants/vitals.mjs";
+import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
@@ -382,7 +383,19 @@ export function prepareCharacterDerived(actor, system) {
     // ── Характеристики ────────────────────────────────────────────────────
     const charDamage = system.charDamage || {};
     // Авто-дебафф от потребностей (Голод/Жажда) — отдельно от ручного charDamage.
-    const vitalMods = (actor.type === "character") ? vitalCharMods(system.vitals) : {};
+    // Эффективная стадия каждого Виталa — max(сохранённая, естественная по
+    // прошедшему worldTime) (wdbc-jnqj): T.b здесь берётся ДО пересчёта цикла
+    // ниже (chars.t.bonus ещё хранит значение прошлого прохода — тот же
+    // порядок, что и у tb ниже по файлу), поэтому на голод накопившийся за
+    // ход текущего T.b влияет с отставанием в один проход подготовки данных.
+    const vitalMods = (actor.type === "character" && system.vitals) ? vitalCharMods((() => {
+      const worldTime  = game.time?.worldTime ?? 0;
+      const vitalCtx    = { tb: chars.t?.bonus ?? 0, isAstartes: raceMatches(system, "astartes") };
+      const eff = {};
+      for (const key of Object.keys(VITAL_TIME_FIELD))
+        eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
+      return eff;
+    })()) : {};
     for (const [key, char] of Object.entries(chars)) {
       const impBonus  = IMPROVEMENT_BONUS[char.improvement] || 0;
       const drugMod   = drugCharMods[key]   || 0;
