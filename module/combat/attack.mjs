@@ -60,7 +60,9 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
 
 export async function _executeAttackRoll(actor, item, charKey, threshold, rofMode, aimTarget, opts = {}) {
   const sys     = item.system;
-  const isMelee = sys.weaponClass === "melee" || sys.weaponClass === "thrown";
+  // Метательное (Граната и т.п.) по умолчанию бросается по BS — стр. 40:
+  // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
+  const isMelee = sys.weaponClass === "melee" || !!opts.forceMelee;
   // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
@@ -272,7 +274,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   const ammoCondDmg = Number(opts.ammoCondDmg) || 0;
   const bandDmg     = Number(band?.dmg) || 0;
-  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0);
+  // Ручной бонус к урону из диалога атаки (поле «Бонус урона», ГМ/игрок
+  // вписывает число вручную — напр. Экстремальный урон правила, разовая
+  // ситуативная надбавка без отдельного галочки в реестре модификаторов).
+  const dmgBonus    = Number(opts.dmgBonus) || 0;
+  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus;
   const dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee

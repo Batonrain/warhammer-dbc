@@ -130,9 +130,12 @@ export const ARMOR_MOD_GROUPS = {
 // при поглощении): noApVsType — не даёт AP от указанного типа урона;
 // doubleApVsType — удваивает AP от указанного типа урона; noApRanged — не даёт
 // AP от стрелковых атак; noApJointCalled/noApEyeCalled — не даёт AP при
-// Избирательном попадании в Сочленение/Глаз; blocksPrimitiveDouble — Примитивное
-// оружие атакующего не удваивает AP этой брони. Свойство без auto — только
-// напоминание (десk/label на листе), как у большинства WEAPON_PROPERTIES.
+// Избирательном попадании в Сочленение/Глаз (полностью, сверх базового правила
+// ÷3 — см. resolveArmorAbsorptionAP); noJointReduction — у этой брони нет
+// сочленений, которые можно выцелить (Мягкая): базовое ÷3 к ней не применяется,
+// идёт полный AP; blocksPrimitiveDouble — Примитивное оружие атакующего не
+// удваивает AP этой брони. Свойство без auto — только напоминание (десk/label
+// на листе), как у большинства WEAPON_PROPERTIES.
 export const ARMOR_PROPERTIES = {
   blinders:   { label: "Blinders / Шоры",        desc: "Шлем. Уменьшает угол обзора до X°." },
   cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций." },
@@ -148,7 +151,7 @@ export const ARMOR_PROPERTIES = {
   sealed:     { label: "Sealed / Закрытая",        desc: "Защита от химии на коже. Теряется при пробитии брони." },
   stealthed:  { label: "Stealthed / Скрытная",    desc: "+10 к Stealth. Скрывает от тепловизора." },
   undersuit:  { label: "Undersuit / Подкладка",   desc: "Носится под другой бронёй." },
-  soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact" } },
+  soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact", noJointReduction: true } },
   void:       { label: "Void / Пустотная",         desc: "Защита от вакуума, жара, газов, радиации. 6 часов воздуха." },
   // ── Эльдарские (Азуриане) ──
   aspect:     { label: "Aspect / Аспект",          desc: "Броня аспекта. Без соответствующего Пути — штраф −20 на все тесты, пока носишь броню. Не-Асуриане/Иннари: модификация R3 убирает штраф." },

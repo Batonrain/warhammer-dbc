@@ -29,7 +29,7 @@ export function aggregateArmorAuto(props) {
   const a = {
     noEnergy: false, noImpact: false, doubleBlast: false,
     noRanged: false, noJointCalled: false, noEyeCalled: false,
-    blocksPrimitiveDouble: false
+    blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false
   };
   for (const p of props) {
     const au = p.def.auto;
@@ -41,6 +41,7 @@ export function aggregateArmorAuto(props) {
     if (au.noApJointCalled) a.noJointCalled = true;
     if (au.noApEyeCalled)   a.noEyeCalled = true;
     if (au.blocksPrimitiveDouble) a.blocksPrimitiveDouble = true;
+    if (au.noJointReduction) a.noJointReduction = true;
   }
   return a;
 }
@@ -54,14 +55,16 @@ export function mergeArmorLocFlags(a, b) {
     noRanged:                a.noRanged || b.noRanged,
     noJointCalled:           a.noJointCalled || b.noJointCalled,
     noEyeCalled:             a.noEyeCalled || b.noEyeCalled,
-    blocksPrimitiveDouble:   a.blocksPrimitiveDouble || b.blocksPrimitiveDouble
+    blocksPrimitiveDouble:   a.blocksPrimitiveDouble || b.blocksPrimitiveDouble,
+    noJointReduction:        a.noJointReduction || b.noJointReduction,
+    isPowerArmor:            a.isPowerArmor || b.isPowerArmor
   };
 }
 
 const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
-  blocksPrimitiveDouble: false
+  blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false
 });
 
 export function emptyArmorLocFlags() {
@@ -94,7 +97,16 @@ export function resolveArmorAbsorptionAP({
                     || (pf.noEyeCalled  && hitLocation === "Глаз (Голова)");
   if (armorNulled) return 0;
 
+  // Попадание в Глаз — попадание в голову, игнорирующее AP шлема целиком
+  // (стр. 34), кроме силовых шлемов: у них по правилам дома всё равно есть
+  // 4 AP на линзы очей. Плоское значение, а не доля от базового AP.
+  if (hitLocation === "Глаз (Голова)") return pf.isPowerArmor ? 4 : 0;
+
   let ap = baseArmorAP + vsTypeBonus;
+  // Попадание в Сочленение/Шею — AP этой части тела втрое меньше настоящего,
+  // округление вниз (стр. 34). У брони без сочленений (Мягкая) выцелить
+  // нечего — идёт полный AP.
+  if (hitLocation === "Сочленение / Шея" && !pf.noJointReduction) ap = Math.floor(ap / 3);
   if (pf.doubleBlast && damageType === "blast") ap *= 2;
   if (primitive && !pf.blocksPrimitiveDouble && ap > 0) ap += Math.min(ap, 6);
   return ap;

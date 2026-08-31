@@ -75,7 +75,7 @@ describe("system.absorption.propFlags", () => {
     expect(system.absorption.propFlags.head).toEqual({
       noEnergy: false, noImpact: false, doubleBlast: false,
       noRanged: false, noJointCalled: false, noEyeCalled: false,
-      blocksPrimitiveDouble: false
+      blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false
     });
   });
 });

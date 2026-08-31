@@ -53,7 +53,7 @@ const SYSTEMS = [
 ];
 
 const NS_INST = "installed"; // флаг «хирургически установлен»
-const kindOf = (item) => classifyImplant(item.name, item.system?.installed)?.kind || null;
+const kindOf = (item) => classifyImplant(item.name, item.system?.installed, item.system?.category)?.kind || null;
 
 export class SurgeonWindow extends Application {
   static get defaultOptions() {
@@ -80,7 +80,7 @@ export class SurgeonWindow extends Application {
     this._lib = docs.map(d => ({
       uuid: d.uuid, name: d.name,
       category: d.system?.category || "cybernetic",
-      kind: classifyImplant(d.name, d.system?.installed)?.kind || null,
+      kind: classifyImplant(d.name, d.system?.installed, d.system?.category)?.kind || null,
     }));
     return this._lib;
   }
