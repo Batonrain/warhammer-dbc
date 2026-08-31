@@ -478,16 +478,22 @@ function pickFromList({ title, prompt, options, withLabel = false }) {
 export class WarhammerItemSheet
   extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.sheets.ItemSheetV2) {
 
+  /** @override — без модуля Automated Animations кнопки в шапке нет. */
+  _getHeaderControls() {
+    const controls = super._getHeaderControls();
+    return isAutoAnimationsActive() ? controls : controls.filter(c => c.action !== "openAutoAnimations");
+  }
+
   static DEFAULT_OPTIONS = {
     // item-sheet — на самой форме листа: CSS цепляется за «.warhammer-dbc.item-sheet»,
     // а у V1 этот класс нёс <form> в шаблоне. Класс по типу предмета
     // («weapon-sheet» и т.п.) добавляется в _onRender: он динамический.
     classes: ["warhammer-dbc", "sheet", "item", "wh-holo", "item-sheet"],
     position: { width: 600, height: 640 },
-    // controls — доступен всегда: game.modules ещё не гарантированно готов в
+    // controls — объявлен всегда: game.modules ещё не гарантированно готов в
     // момент вычисления static DEFAULT_OPTIONS (модульная загрузка идёт до
-    // ready), поэтому проверку на активность autoanimations делает сам
-    // onOpenAutoAnimations по клику, а не объявление кнопки.
+    // ready). Прячет кнопку без модуля _getHeaderControls() на рендере;
+    // onOpenAutoAnimations проверяет активность ещё раз по клику.
     window: { resizable: true, controls: [
       { icon: "fa-solid fa-film", label: "Automated Animations", action: "openAutoAnimations" }
     ] },
@@ -1919,6 +1925,7 @@ export class WarhammerItemSheet
     mechField(".mech-mod-scope",     (e, v) => { e.modScope = v; });
     mechField(".mech-mod-valuemode", (e, v) => { e.modValueMode = v; });
     mechField(".mech-mod-char",      (e, v) => { e.modCharBonus = v; });
+    mechField(".mech-mod-char-mult", (e, v) => { e.modCharBonusMultiplier = Math.max(1, Number(v) || 1); });
     mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
     mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
 

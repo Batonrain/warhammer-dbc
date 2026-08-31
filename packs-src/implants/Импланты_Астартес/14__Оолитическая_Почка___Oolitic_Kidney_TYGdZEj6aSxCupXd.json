@@ -132,7 +132,7 @@
               "woundsValue": "1",
               "cohesionRole": "any",
               "cohesionValue": "1",
-              "charKey": "s",
+              "charKey": "t",
               "field": "total",
               "op": "add",
               "value": 20,
@@ -196,7 +196,7 @@
               "modScope": "char",
               "modValueMode": "flat",
               "modCharBonus": "inf",
-              "rerollChar": "s",
+              "rerollChar": "t",
               "label": "Оолитическая Почка: против болезней и ядов (Гвардия Смерти)",
               "code": "",
               "when": {

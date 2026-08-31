@@ -31,7 +31,14 @@ function characterActor({ armorAP = 0, toughnessBonus = 0, wounds = 20, items = 
       absorption: { body: armorAP + toughnessBonus, toughnessBonus, propFlags: {} },
       wounds: { value: wounds, critical: 0, max: wounds }
     },
-    async update() {}
+    async update() {},
+    // Пометка пробития идёт одним пакетным запросом (breachArmorAtLocation).
+    async updateEmbeddedDocuments(_type, patches) {
+      for (const p of patches) {
+        const it = list.find(i => i.id === p._id);
+        if (it && p["system.breached"] !== undefined) it.system.breached = p["system.breached"];
+      }
+    }
   };
 }
 
@@ -57,11 +64,12 @@ describe("применение урона помечает броню проби
     expect(armor.system.breached).toBe(false);
   });
 
-  it("уже пробитую броню повторно не трогает (update не зовётся снова)", async () => {
+  it("уже пробитую броню повторно не трогает (запрос не уходит снова)", async () => {
     const armor = armorItem({ body: 4, breached: true });
-    let updateCalls = 0;
-    armor.update = async patch => { updateCalls++; if (patch["system.breached"] !== undefined) armor.system.breached = patch["system.breached"]; };
     const actor = characterActor({ armorAP: 4, toughnessBonus: 0, items: [armor] });
+    let updateCalls = 0;
+    const orig = actor.updateEmbeddedDocuments;
+    actor.updateEmbeddedDocuments = async (...a) => { updateCalls++; return orig.apply(actor, a); };
     await applyDamageToActor(actor, damage({ rawDamage: 15 }));
     expect(updateCalls).toBe(0);
   });

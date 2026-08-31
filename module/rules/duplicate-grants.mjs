@@ -212,7 +212,9 @@ export function altTalentCandidates(name, ownedNames = []) {
     .map(t => ({ name: t.name, tier: t.system.tier, folder: t.folder }));
 }
 
-/** Другие обычные (не групповые) Навыки, ещё не достигшие выдаваемого ранга. */
+/** Другие обычные (не групповые) Навыки с их текущим рангом. По рангу не
+ * фильтруются — выбор за игроком в диалоге; если выбранный уже на выдаваемой
+ * ступени, лишнее уходит в компенсацию опытом (refundSteps), как у дубля. */
 export function altSkillCandidates(skillKey, actorSkills = {}) {
   return Object.entries(SKILLS_DEF)
     .filter(([k]) => k !== skillKey)
