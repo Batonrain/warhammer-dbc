@@ -66,6 +66,14 @@ describe("computeReachableCells", () => {
     // что разница вызвана именно удвоением, а не багом бюджета.
   });
 
+  it("бюджет Бега не обрезается потолком обхода (SPD×6 ≈ 30 клеток)", () => {
+    // 4-связная сетка: клеток на манхэттенском расстоянии ≤ b ровно 2b(b+1).
+    // При потолке в 600 клеток подсветка Бега молча показывала бы круг меньше
+    // настоящего — проверяем полное число клеток, а не «не пусто».
+    const cells = computeReachableCells(tokenAt(0, 0), 30);
+    expect(cells).toHaveLength(2 * 30 * 31);
+  });
+
   it("Gridless — null, вызывающий берёт круг вместо клеток", () => {
     globalThis.canvas.grid = makeGrid({ gridless: true });
     expect(computeReachableCells(tokenAt(0, 0), 5)).toBeNull();

@@ -28,7 +28,11 @@
 import { DIFFICULT_TERRAIN_TYPE } from "../regions/difficult-terrain.mjs";
 
 const SAFETY_TIMEOUT_MS = 20_000;
-const MAX_CELLS = 600;
+// Предохранитель на случай экзотической сетки: обрезка области обхода. Бег —
+// SPD×6 (до ~24-48м у обычного персонажа), на метровой клетке это тысячи
+// клеток, поэтому потолок взят с запасом: меньший молча показывал бы игроку
+// круг меньше настоящего Бега.
+const MAX_CELLS = 4000;
 const HIGHLIGHT_NAME = "wh-reach-cells";
 const FILL_COLOR = 0x6fe6ff;
 const FILL_ALPHA = 0.35;
@@ -71,6 +75,20 @@ export function computeReachableCells(token, budgetMeters) {
   const origin = canvas.grid.getOffset(token.center);
   const originKey = `${origin.i},${origin.j}`;
 
+  // Стоимость шага зависит только от смещения соседа (и чётности ряда/колонки
+  // на гексе), но не от места на сцене — measurePath зовётся один раз на ВИД
+  // шага. Иначе на бюджете Бега это десятки тысяч вызовов подряд.
+  const stepCost = new Map();
+  const stepDistance = (from, to, a, b) => {
+    const key = `${to.i - from.i},${to.j - from.j},${((from.i % 2) + 2) % 2},${((from.j % 2) + 2) % 2}`;
+    let d = stepCost.get(key);
+    if (d === undefined) {
+      d = canvas.grid.measurePath([a, b]).distance;
+      stepCost.set(key, d);
+    }
+    return d;
+  };
+
   const best = new Map([[originKey, 0]]);
   const frontier = [{ offset: origin, cost: 0 }];
   const reached = [];
@@ -88,7 +106,7 @@ export function computeReachableCells(token, budgetMeters) {
     for (const next of canvas.grid.getAdjacentOffsets(offset)) {
       const a = canvas.grid.getCenterPoint(offset);
       const b = canvas.grid.getCenterPoint(next);
-      const stepDist = canvas.grid.measurePath([a, b]).distance;
+      const stepDist = stepDistance(offset, next, a, b);
       const mult = _isDifficultAt(b.x, b.y, elevation, terrainRegions) ? 2 : 1;
       const nextCost = cost + stepDist * mult;
       if (nextCost > budgetMeters + 1e-6) continue;
