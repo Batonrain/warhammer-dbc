@@ -599,6 +599,143 @@ export const CAPABILITIES = {
     source: "Rune Strike / Рунный Удар", reader: ""
   },
 
+  // ── Шаман Зверолюдей (wdbc-xxb7, DoomBC — Психокеры-Жабы, стр. 102-104) —
+  //    книжный принцип: «Таланты Шамана Зверолюда чутка изменяются при
+  //    наличии Метки одного из богов» (Кхорн/Нургл/Слаанеш/Тзинч),
+  //    5 из 6 Талантов. Метка/простое Покровительство не различаются —
+  //    гейт when.patronGod (module/rules/mech-when.mjs, entryWhenOk) читает
+  //    ЕДИНОЕ actor.system.patronGod, ту же Покровительство, которым уже
+  //    пользуется вся система (constants/patronage.mjs) — отдельного поля
+  //    «Метка» на акторе нет, книжный порог Inf 70+ для «просто
+  //    Покровительства» тоже не смоделирован. Каждый Талант несёт в
+  //    Конструкторе одну kind:"capability" запись БЕЗ гейта (базовый эффект)
+  //    и по одной с when.patronGod на god-ответвление — так лист актора
+  //    показывает только реально доступную сейчас ветку, а не все четыре
+  //    сразу. Само срабатывание (кнопка/бросок/наложение состояния на цель)
+  //    не автоматизировано — общий паттерн проекта для триггерных
+  //    способностей вне статичных видов Конструктора, см. capability-стабы
+  //    «Мёртвое Могущество» Иннари выше в этом файле.
+  "aura.beastmanShaman.primalHowl.base": {
+    label: "Полное Действие раз в бой: союзники-зверолюди/мутанты в радиусе Cor.b×10 м получают +10 S/+10 T до начала следующего Хода персонажа, враги считают персонажа источником Fear (+1)",
+    source: "Primal Howl / Первобытный Вой", reader: ""
+  },
+  "aura.beastmanShaman.primalHowl.khorneVariant": {
+    label: "Кхорн: бонус к T заменяется на +10 WS, рукопашный урон союзников +4, союзники без Frenzy входят в Ярость (с Frenzy — за Свободное Действие)",
+    source: "Primal Howl / Первобытный Вой", reader: ""
+  },
+  "aura.beastmanShaman.primalHowl.nurgleVariant": {
+    label: "Нургл: вместо бонуса к S — +1d10 аблативных ран, переброс проваленных тестов сопротивления движению",
+    source: "Primal Howl / Первобытный Вой", reader: ""
+  },
+  "aura.beastmanShaman.primalHowl.slaaneshVariant": {
+    label: "Слаанеш: вместо обычных бонусов — +10 A до конца следующего Хода и снятие 1 Усталости; враги, провалившие тест на Страх, получают 1 Усталость",
+    source: "Primal Howl / Первобытный Вой", reader: ""
+  },
+  "aura.beastmanShaman.primalHowl.tzeentchVariant": {
+    label: "Тзинч: вместо обычных бонусов — +10 P союзникам; враги получают неизбегаемое попадание Hallucinogenic(1); варп-феномены до конца следующего хода получают +20",
+    source: "Primal Howl / Первобытный Вой", reader: ""
+  },
+  "mark.beastmanShaman.hexMarkedPrey.base": {
+    label: "Полудействие, Соревновательный тест W+0 vs W+10: цель получает Метку Проклятого до конца боя, союзники-зверолюди получают +15 на атаки против неё",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+  },
+  "mark.beastmanShaman.hexMarkedPrey.khorneVariant": {
+    label: "Кхорн: атаки союзников по цели получают Proven(3); крит с R-уроном дополнительно вызывает кровотечение",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+  },
+  "mark.beastmanShaman.hexMarkedPrey.nurgleVariant": {
+    label: "Нургл: атаки союзников по цели получают Toxic(1); выживший при непоглощённом уроне провал T+10 в конце боя = Гниль Нургла",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+  },
+  "mark.beastmanShaman.hexMarkedPrey.slaaneshVariant": {
+    label: "Слаанеш: цель не может добровольно удаляться от шамана дальше 20 м, штраф −10 Dodge/Parry против его атак; урон шамана цели восстанавливает ему 1d3 Раны",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+  },
+  "mark.beastmanShaman.hexMarkedPrey.tzeentchVariant": {
+    label: "Тзинч: выбранная характеристика цели (S/T/A/I/W) −10 на время метки; провал цели по ней даёт шаману +5 к следующей манифестации психосилы",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.base": {
+    label: "Полудействие: 1d5+1 непоглощаемого R Dmg себе в руку → +2 эPR до конца следующего Хода, ближний бой получает Tainted на тот же срок",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.khorneVariant": {
+    label: "Кхорн: вместо эPR — бонус к Dmg = непоглощённый урон ×2; урон можно взять максимальным (6) без броска",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.nurgleVariant": {
+    label: "Нургл: эPR-бонус −1, но в начале следующего хода восстанавливает бPR Ран и центрирует на себе 1d10+T.b C(Tx), Pen 0, Blast(T.b), Toxic(1)",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.slaaneshVariant": {
+    label: "Слаанеш: эPR-бонус −1, но +10 A, +2 Реакции и атака за Реакцию (штраф −15, вне лимита, только утончённым оружием/Bl 2)",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.tzeentchVariant": {
+    label: "Тзинч: дополнительно +20 к манифестации следующей психосилы; во время ритуала — ускорение и +20 к самому ритуалу",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+  },
+  "aura.beastmanShaman.warpTaintedAura.base": {
+    label: "Полудействие раз в час: аура 20 м до начала следующего Хода — не-еретики проваливший W−10 получают 1 Cor, союзники в ауре +20 к Сопротивлению (пока нет метки)",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+  },
+  "aura.beastmanShaman.warpTaintedAura.khorneVariant": {
+    label: "Кхорн: провалившие тест враги немедленно проходят тест на Fear(4)",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+  },
+  "aura.beastmanShaman.warpTaintedAura.nurgleVariant": {
+    label: "Нургл: провалившие враги Задыхаются (−30 на Удушение) в ауре; герметичная броня — попадание Corrosive(Cor.b)",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+  },
+  "aura.beastmanShaman.warpTaintedAura.slaaneshVariant": {
+    label: "Слаанеш: провалившие враги очарованы — не атакуют шамана/стадо на Провалы Раунда, пока не атакованы первыми",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+  },
+  "aura.beastmanShaman.warpTaintedAura.tzeentchVariant": {
+    label: "Тзинч: провалившие враги смещаются на PR метров по горизонтали; внутри препятствия — 1d5 непоглощаемого X урона в торс и выталкивание",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.base": {
+    label: "Создаёт руну (1 час, тест Schol.Lore(Occult)−20 + Trade−20, 1 Очко Бесчестия) с одной известной психосилой; в бою — Свободное Действие/Реакция, манифестация с Успехами = бPR на момент создания; лимит Cor.b рун",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.khorneVariant": {
+    label: "Кхорн: вместо психосилы — нуль-поле радиусом Cor.b×3 м на Cor.b раундов, не вредящее персонажу",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.nurgleVariant": {
+    label: "Нургл: психосила получает Toxic(2); шаблон/аура даёт Toxic(1) всем в нём; союзник от руны получает +PR аблативных ран",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.slaaneshVariant": {
+    label: "Слаанеш: после использования руну можно немедленно восстановить за Очко Бесчестия",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.tzeentchVariant": {
+    label: "Тзинч: при успешном создании — бросок на феномен (бонус PR×3, PR×2 на прорыв), запирается в руне и высвобождается на дистанции PR+W.b+Cor.b м",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "ritual.beastmanShaman.summonHerdSpirits.grantsRitual": {
+    label: "Открывает доступ к Ритуалу «Summon Herd Spirits / Призыв Духов Стада» (warhammer-dbc.rituals)",
+    source: "Summon Herd Spirits / Призыв Духов Стада", reader: ""
+  },
+  "trigger.beastmanShaman.ritualBloodletting.onKillBuff": {
+    label: "Убив живое существо с душой — Свободное Действие: персонаж и союзники-зверолюди в радиусе F м получают +5 ко всем тестам и иммунитет к Страху/Подавлению до начала следующего Хода (×2, если жертва была особо важной; не складывается)",
+    source: "Ritual Bloodletting / Ритуал Кровопускания", reader: ""
+  },
+  "psyfocus.beastmanShaman.symbolOfPower.hornFocusAndPainBoost": {
+    label: "Рог как Good.Q пси-фокус (10 мин на изготовление) + врождённый Comm.Q пси-фокус; при манифестации может добровольно получить 1d5+2 R Dmg Pen∞ за +2 эPR, тогда манифестация всегда вызывает варп-феномен +10; Natural Weapons → Deadly Natural Weapons + отдельный трейт рогов Deadly Natural Weapons (бPR, Рога) со свойством Tainted, пока есть покровительство",
+    source: "Symbol of Power / Символ Власти", reader: ""
+  },
+  "skill.beastmanShaman.symbolOfPower.aversionAndCyberneticsExemption": {
+    label: "Навыки Lore/Trade не считаются враждебными от Aversion to Order (обычные правила цены), нет штрафов от кибернетики/имплантов",
+    source: "Symbol of Power / Символ Власти", reader: ""
+  },
+  "trait.beastmanShaman.symbolOfPower.loseStepchildrenOfTheGods": {
+    label: "Персонаж лишается трейта Stepchildren of the Gods",
+    source: "Symbol of Power / Символ Власти", reader: ""
+  },
+
   // ── Таланты Певцов Кости (DoomBC — Аэльдари, стр. 11) — Фаза 2,
   //    book-verified 23.08.2026. Все — активные F.b-раз-за-сессию Полные
   //    Действия на психокостяную технику, не разовый бонус на взятие.

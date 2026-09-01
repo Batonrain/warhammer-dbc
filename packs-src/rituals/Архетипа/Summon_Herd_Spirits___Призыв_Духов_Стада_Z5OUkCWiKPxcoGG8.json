@@ -1,0 +1,58 @@
+{
+  "name": "Summon Herd Spirits / Призыв Духов Стада",
+  "type": "ritual",
+  "img": "systems/warhammer-dbc/assets/item-icons/ritual.svg",
+  "system": {
+    "description": "<p>Ритуал Элитного Архетипа «Шаман Зверолюдей» — открывается Талантом Summon Herd Spirits / Призыв Духов Стада.</p>",
+    "notes": "",
+    "source": "Beastman Shaman / Шаман Зверолюдей",
+    "bookSource": "DoomBC — Психокеры-Жабы (Toad Psykers), стр. 102-104",
+    "ritualType": "archetype",
+    "failureType": "summon",
+    "record": 0,
+    "assistMin": 0,
+    "assistMax": 4,
+    "aversionPerFail": 5,
+    "procedure": "Требования: Forbidden Lore (Daemons)+20 и Forbidden Lore (Warp)+20.\nАссистенты: 0–4 | Forbidden Lore (Daemons)+0 и Forbidden Lore (Warp)+0.\nШаман и возможные ассистенты собираются вокруг постамента, посвящённого Богам Хаоса или Стаду, и начинают читать тёмные инкантации, рассыпать прах мёртвых и дарить подарки умершим, чтобы вернуть их в жизнь для предстоящей битвы. В течение 30−W.b−Inf.b−Cor.b часов ритуал должен продолжаться и не прерываться. В конце главный шаман закрепляет ритуал, проводя тест на Forbidden Lore (Daemons)(I)−20 или Forbidden Lore (Warp)(I)−30.",
+    "result": "Вокруг камня появляются духи умерших предков-зверолюдей — за каждые 3 успеха можно вызвать 1 Минотавра, за 5 успехов — Тролля, а за 8 успехов — Великана. Если у персонажа есть метка какого-либо бога, он может вызвать существо с соответствующей субрасой. Пока существа находятся на одной планете с шаманом, на одном пустотном объекте или не дальше Inf километров от него, они привязываются к материальному миру; также привязываются, если находятся на территории племени шамана. Один шаман может провести лишь три таких ритуала — при проведении четвёртого он должен отозвать предков одного из других ритуалов обратно в варп. Шаблоны существ смотреть в Бестиарии.",
+    "cost": "",
+    "failureCost": "Появляются предки другого племени, которые атакуют шамана и ритуалистов.",
+    "testSkillScope": "group",
+    "testSkillKey": "forbiddenLore",
+    "testSpecialty": "Daemons",
+    "testChar": "int",
+    "testMod": -20,
+    "rollPaths": [
+      {
+        "scope": "group",
+        "key": "forbiddenLore",
+        "specialty": "Warp",
+        "char": "int",
+        "mod": -30,
+        "label": ""
+      }
+    ],
+    "extraMods": [],
+    "conditionsGranted": []
+  },
+  "_id": "Z5OUkCWiKPxcoGG8",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!items!Z5OUkCWiKPxcoGG8"
+}
