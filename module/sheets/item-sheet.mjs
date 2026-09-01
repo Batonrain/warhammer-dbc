@@ -2815,6 +2815,14 @@ export class WarhammerItemSheet
       propRatings[key] = val;
       await this.item.update({ "system.propRatings": propRatings });
     });
+    // Текстовый рейтинг (Aspect — «Варп-Пауки» и т.п., wdbc-8b5/wdbc-28ld).
+    on(".aprop-rating-text", "change", async ev => {
+      const key = ev.currentTarget.dataset.key;
+      const val = ev.currentTarget.value.trim();
+      const propRatings = { ...(this.item.system.propRatings || {}) };
+      propRatings[key] = val;
+      await this.item.update({ "system.propRatings": propRatings });
+    });
 
     // ── Типы боеприпасов ──────────────────────────────────────────────────────
     on(".ammo-type-cb", "change", () => {

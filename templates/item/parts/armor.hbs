@@ -116,7 +116,11 @@
       <div class="wprop-chip" title="{{p.def.desc}}">
         <span class="wprop-name">{{p.def.label}}</span>
         {{#if p.def.rating}}
+        {{#if p.def.ratingText}}
+        <input type="text" class="aprop-rating-text" data-key="{{p.key}}" value="{{p.rating}}" title="Путь/группа (напр. Варп-Пауки)" placeholder="Путь/группа" style="width:110px;"/>
+        {{else}}
         <input type="number" class="aprop-rating" data-key="{{p.key}}" value="{{p.rating}}" min="0" title="Рейтинг X" style="width:36px;"/>
+        {{/if}}
         {{/if}}
         <button type="button" class="aprop-remove" data-action="apropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>

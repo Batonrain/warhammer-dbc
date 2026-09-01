@@ -180,7 +180,14 @@ export const ARMOR_PROPERTIES = {
   soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact", noJointReduction: true } },
   void:       { label: "Void / Пустотная",         desc: "Защита от вакуума, жара, газов, радиации. 6 часов воздуха." },
   // ── Эльдарские (Азуриане) ──
-  aspect:     { label: "Aspect / Аспект",          desc: "Броня аспекта. Без соответствующего Пути — штраф −20 на все тесты, пока носишь броню. Не-Асуриане/Иннари: модификация R3 убирает штраф." },
+  // rating: текст Пути/группы (напр. «Варп-Пауки»), как у оружейного aspect —
+  // хранится в system.propRatings.aspect (та же строка, что и у Gorget/
+  // Protective, но текстом, не числом). Штраф −20 на ВСЕ тесты, пока не
+  // соответствует Пути — sheets/actor-sheet.mjs::_armorAspectModHtml
+  // (wdbc-8b5/wdbc-28ld), тот же общий диалог Навыка/Характеристики
+  // (_showSkillRollDialog), что уже даёт Heavy/Stealthed. Матчинг текста
+  // рейтинга с AZURIANE_PATHS — constants/aeldari-paths.mjs::findAspectPathKey.
+  aspect:     { label: "Aspect / Аспект",          desc: "Броня аспекта. Без соответствующего Пути — штраф −20 на все тесты, пока носишь броню. Не-Асуриане/Иннари: модификация R3 убирает штраф.", rating: true, ratingText: true },
   // «+бPR×5 на тесты против 9 состояний» убрано (30/31.08.2026): в
   // первоисточнике (aeldari.json, рядом с Wraithbone Regeneration) этой
   // фразы нет — только тест на AP-бонус и «считается чародейским силовым
