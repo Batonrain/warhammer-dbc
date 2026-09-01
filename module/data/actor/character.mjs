@@ -71,6 +71,18 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
         lastSlept: new NumberField({ initial: null, nullable: true, label: "Выспался (время)" })
       }, { label: "Потребности" }),
       helmetOff: new BooleanField({ initial: false, label: "Шлем снят" }),
+      // Патрон-Демон-Принц (субраса «Наследник»: Трейт Помазанник(X) — races/
+      // Наследник). uuid пуст, пока актор Принца не выбран или ещё не
+      // существует — тогда name/godKey держат текстовую заглушку. rating —
+      // резервная копия X на случай недоступности актора Принца; источник
+      // истины — экземпляр дара «Помазанник» в system.dp.gifts самого Принца
+      // (targetUuid === uuid этого актора), см. sheets/tabs/patron-panel.mjs.
+      anointed: new SchemaField({
+        uuid:   new StringField({ initial: "", label: "Демон-Принц" }),
+        name:   new StringField({ initial: "", label: "Имя патрона" }),
+        godKey: new StringField({ initial: "", label: "Бог патрона" }),
+        rating: num(0, "Помазанник (X)")
+      }, { label: "Помазанник" }),
       // Максимум и пороги — производные (module/documents/actor.mjs), value
       // и max начинаются с нуля: заключение в саркофаг — событие в игре, а не
       // при создании персонажа, и заполнять его в схеме нечем и незачем.

@@ -145,6 +145,9 @@ function readAttackForm(form, ammoConds) {
     allOut,
     extraBonus: allOut ? 20 : 0,
     shortRange: on("#atk-shortrange"),
+    // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
+    // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
+    meleeShot:  on("#atk-melee-shot"),
     // Перемены (Change, стр. 74 Книги Аэльдари): цель бездушна/техника → +X Pen.
     changeSoulless: on("#atk-change-soulless"),
     weaponOff:  on("#atk-weaponoff"),
@@ -257,10 +260,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const mountUuid       = actor.system?.mount?.uuid || "";
   const attackerMount   = (!isMelee && mountUuid)
     ? [...(game.actors ?? [])].find(a => a?.uuid === mountUuid) : null;
+  // Гиро-Стабилизированное (wdbc-z56a, стр. 168): «игнорирует штрафы... за
+  // нестабильную платформу (в т.ч. верхом)» — тот же штраф, что и «стрельба с
+  // седла» выше (Dragoon правит эту же цифру по книге, только на -10, а не
+  // до нуля — тот Талант не автоматизирован, здесь трогать нечего).
   const autoMountRangedMod = attackerMount
-    ? mountRangedPenalty(
+    ? (wp.gyroStabilized ? 0 : mountRangedPenalty(
         actor.system.mount.speed in MOUNT_SPEEDS ? actor.system.mount.speed : "still",
-        attackerMount)
+        attackerMount))
     : 0;
 
   // Один обход правил актора на диалог: mods/rerolls/crit из одного результата.
@@ -789,6 +796,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
   }
+  // Зенитное (wdbc-z56a, стр. 166): «игнорирует все штрафы на попадание за
+  // скорость цели, вроде –20 за Бег» — гасит именно эту строку, не отдельный
+  // штраф (в диалоге атаки его отдельно и не было, штрафа скорости цели вне
+  // «Цель бежит» книга не даёт числом).
+  if (!isMelee && wp.antiAir) {
+    const runMod = commonMods.find(m => m.label === "Цель бежит");
+    if (runMod && !runMod.immune) {
+      runMod.value = 0;
+      runMod.immune = true;
+      runMod.note = "Зенитное: игнорирует штраф скорости цели";
+    }
+  }
   const charSwapWhy  = ruleFlagLabels(actor, "charSwap.wp.forWsS", attackCtx);
   const twoWeaponWhy = ruleFlagLabels(actor, "penalty.twoWeapon.off", attackCtx);
   const twoWeaponOff  = twoWeaponWhy.length > 0;
@@ -843,7 +862,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // «В укрытии относительно источника» не проверяем (ситуативно) — авто-
     // отмечаем по самому факту Подавления, галочку можно снять руками.
     { label: "Подавлен огнём", value: -20, autoCheck: !!actor.system.conditions?.pinned },
-    { label: "Стрельба в рукопашную",   value: -20 },
+    // id нужен readAttackForm — Карабин (wdbc-z56a) читает именно этот флаг,
+    // чтобы решить, дать ли цели в рукопашной +30 или +10 на Уклонение.
+    { id: "atk-melee-shot", label: "Стрельба в рукопашную",   value: -20 },
     { label: "Дистанция в упор",        value:  30, autoCheck: bandKey === "pointBlank", note: bandNote("pointBlank") },
     { label: "Короткая дистанция",      value:  10, autoCheck: bandKey === "short",      note: bandNote("short") },
     { label: "Боевая дистанция",        value:   0, autoCheck: bandKey === "combat",     note: bandNote("combat") },
@@ -857,7 +878,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       id: "atk-helpless-close", label: "Беспомощная цель: в упор / в рукопашной",
       value: 0, autosuccess: true,
       note: "заменяет +30 на авто-успех и ×2 урона"
-    }] : [])
+    }] : []),
+    // ── Ситуативные штрафы боя (wdbc-z56a, стр. 32/166): теснота/высота-
+    // скорость цели/нестабильная платформа — раньше в диалоге не существовали
+    // вовсе, поэтому Anti-Air/Gyro-Stabilized нечего было гасить. ──────────
+    // Высота цели (стр. 32): Низкая –10 к попаданию, Высокая — попасть в
+    // принципе нельзя без Зенитного (не просто штраф, отсюда autofail, как у
+    // «Ослеплён» выше), Зенитное снимает оба штрафа целиком.
+    { label: "Низкая высота цели",  value: wp.antiAir ? 0 : -10, immune: wp.antiAir,
+      note: wp.antiAir ? "снято: Зенитное" : "цель на Низкой высоте (полёт)" },
+    { label: "Высокая высота цели", value: 0, autofail: !wp.antiAir, immune: wp.antiAir,
+      note: wp.antiAir ? "снято: Зенитное" : "без Зенитного попасть в принципе нельзя" },
+    // Тяжёлое оружие (стр. 40): –30 без Закрепления, ещё –10 если стрелок
+    // Двигался в этот Ход — Гиро-Стабилизированное снижает первое до –10 и
+    // полностью снимает второе (стр. 168).
+    { label: "Тяжёлое оружие: без Закрепления", value: wp.gyroStabilized ? -10 : -30,
+      note: wp.gyroStabilized ? "Гиро-стаб.: –30 снижено до –10" : undefined },
+    { label: "Тяжёлое оружие: стрельба на ходу", value: wp.gyroStabilized ? 0 : -10, immune: wp.gyroStabilized,
+      note: wp.gyroStabilized ? "снято: Гиро-стаб." : undefined }
   ];
 
   const makeMods = arr => arr.map(m => {
@@ -1358,6 +1396,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
               dmgBonus: f.dmgBonus, changeSoulless: f.changeSoulless,
+              meleeShot: f.meleeShot,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
               profile: sel.prof, attackNote: sel.note,
               weaponOff: f.weaponOff, gripKey: sel.gKey,

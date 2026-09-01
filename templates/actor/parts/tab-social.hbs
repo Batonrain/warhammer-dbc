@@ -104,6 +104,73 @@
     {{else}}<div class="gene-seed-hint">Ни в одном Отряде, Формировании, экипаже или расчёте не числится.</div>{{/if}}
   </div>
 
+  {{!-- ── Патрон / Протеже: субраса «Наследник», Трейт Помазанник(X) ──
+        Наследник хранит ссылку на своего Демона-Принца; сам Принц отдельного
+        списка не хранит — видит подопечных по оформленным дарам «Помазанник»
+        (вкладка АПОФЕОЗ) и незавершённым заявкам с их стороны (wdbc-yo6r). --}}
+  {{#if patronAvailable}}
+  {{#if isProtegeList}}
+  <div class="notes-section-panel social-minions">
+    <div class="panel-title">
+      ПРОТЕЖЕ
+      <span class="gene-seed-hint" style="font-weight:400;">— смертные, отмеченные даром «Помазанник» (вкладка АПОФЕОЗ)</span>
+    </div>
+    {{#if proteges.length}}
+    <div class="minion-cards">
+      {{#each proteges as |p|}}
+      <div class="minion-card{{#if p.uuid}} patron-open-link{{/if}}" data-uuid="{{p.uuid}}"
+           title="{{#if p.uuid}}Открыть лист: {{p.name}}{{else}}Цель ещё не выбрана — правится в system.dp.gifts{{/if}}">
+        <img class="minion-card-img" src="{{p.img}}" alt=""/>
+        <div class="minion-card-name">{{p.name}}{{#if p.missing}} (актор удалён){{/if}}</div>
+        <div class="minion-card-meta">Помазанник ({{p.rating}})</div>
+      </div>
+      {{/each}}
+    </div>
+    {{else}}
+    <div class="gene-seed-hint">Дар «Помазанник» ещё не оформлен ни на кого.</div>
+    {{/if}}
+    {{#if patronPending.length}}
+    <div class="gene-seed-hint">Заявили этого Принца патроном, но дар не оформлен:
+      {{#each patronPending as |p|}}<span class="minion-slot-chip patron-open-link" data-uuid="{{p.uuid}}" title="Открыть лист">{{p.name}}</span>{{/each}}
+    </div>
+    {{/if}}
+  </div>
+  {{else}}
+  <div class="notes-section-panel social-minions">
+    <div class="panel-title">
+      ПАТРОН
+      <span class="gene-seed-hint" style="font-weight:400;">— субраса «Наследник»: Трейт Помазанник(X) Демона-Принца</span>
+    </div>
+    {{#if patronLinked}}
+      {{#if patronActor}}
+      <div class="minion-cards">
+        <div class="minion-card patron-open-link" data-uuid="{{patronActor.uuid}}" title="Открыть лист: {{patronActor.name}}">
+          <img class="minion-card-img" src="{{patronActor.img}}" alt=""/>
+          <div class="minion-card-name">{{patronActor.name}}</div>
+          <div class="minion-card-meta">{{patronActor.godLabel}} · Помазанник ({{patronRating}}){{#unless patronConfirmed}} — дар не найден на его стороне{{/unless}}</div>
+        </div>
+      </div>
+      {{else}}
+      <div class="gene-seed-hint">Связанный актор Демона-Принца не найден в мире (удалён или недоступен).</div>
+      {{/if}}
+      <button type="button" class="patron-clear-btn" title="Снять связь">Снять патрона</button>
+    {{else}}
+      <div class="gene-seed-hint">Патрон ещё не выбран — перетащите сюда актора Демона-Принца, если он уже есть в мире, или впишите его текстом заранее.</div>
+      <div class="social-relations-zone patron-drop-zone" data-tooltip="Перетащите актора Демона-Принца сюда">
+        <label>Имя (пока нет актора): <input type="text" class="patron-name-input" value="{{patronStub.name}}" placeholder="Имя патрона"/></label>
+        <label>Бог:
+          <select class="patron-god-select">
+            <option value="">—</option>
+            {{#each patronGods as |g|}}<option value="{{g.key}}" {{#if g.selected}}selected{{/if}}>{{g.label}}</option>{{/each}}
+          </select>
+        </label>
+      </div>
+      <label>Помазанник (X, ожидаемо): <input type="number" class="patron-rating-input" value="{{patronRating}}" min="0"/></label>
+    {{/if}}
+  </div>
+  {{/if}}
+  {{/if}}
+
   {{!-- ── Командование вне Отряда ──
         Командовать можно и теми, кто в Отряд не сведён. Слаженности и Риска у
         такой группы нет — это свойства сведённого отряда, — поэтому порог

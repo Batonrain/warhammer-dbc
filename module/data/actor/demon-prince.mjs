@@ -9,6 +9,25 @@ import { DaemonData } from "./daemon.mjs";
 
 export class DemonPrinceData extends DaemonData {
 
+  /**
+   * @override — свободный текстовый инпут `dp.anointed` («Помазанники»,
+   * заглушка-заметка) снят со схемы: дар «Помазанник» теперь реальная
+   * механика (system.dp.gifts, targetUuid — wdbc-yo6r, см. sheets/tabs/
+   * patron-panel.mjs), и дублирующая заметка только путала бы со структурным
+   * блоком «ПРОТЕЖЕ» на СОЦИУМ. Непустой текст переезжает в Заметки, не
+   * теряется — тот же приём, что и у ship.mjs:shipClass (wdbc-zuf4).
+   */
+  static migrateData(source) {
+    super.migrateData(source);
+    const note = String(source?.dp?.anointed || "").trim();
+    if (note) {
+      const notes = String(source.notes || "");
+      if (!notes.includes(note)) source.notes = `<p>Помазанники (заметка до переезда на дар): ${note}</p>${notes}`;
+    }
+    if (source?.dp) delete source.dp.anointed;
+    return source;
+  }
+
   /** @override */
   static defineSchema() {
     const { StringField, BooleanField, NumberField, ObjectField, SchemaField, ArrayField } = foundry.data.fields;
@@ -30,7 +49,6 @@ export class DemonPrinceData extends DaemonData {
         gifts:        new ArrayField(new ObjectField(), { label: "Дары" }),
         banished:     new BooleanField({ initial: false, label: "Изгнан" }),
         trueFormDesc: new StringField({ initial: "", label: "Описание истинной формы" }),
-        anointed:     new StringField({ initial: "", label: "Помазанник" }),
         retinueNotes: new StringField({ initial: "", label: "Свита" }),
         mortalName:   new StringField({ initial: "", label: "Смертное имя" }),
         ascended:     new BooleanField({ initial: false, label: "Вознёсся" }),

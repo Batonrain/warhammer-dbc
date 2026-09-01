@@ -72,11 +72,20 @@ const OWN_DEVIATIONS = {
     patronStereotype: "", pricingModeOverride: "",
     // Момент последнего «Поесть/Попить/Поспать» (worldTime) для автопрогресса
     // стадий по времени (wdbc-jnqj) — заведён гораздо позже template.json.
-    vitals: { hunger: 0, thirst: 0, sleep: 0, lastFed: null, lastDrank: null, lastSlept: null }
+    vitals: { hunger: 0, thirst: 0, sleep: 0, lastFed: null, lastDrank: null, lastSlept: null },
+    // Патрон-Демон-Принц (субраса «Наследник», Трейт Помазанник(X), wdbc-yo6r) —
+    // заведено гораздо позже template.json.
+    anointed: { uuid: "", name: "", godKey: "", rating: 0 }
   },
   // Вкладку «ТЕЛО» Принцу открыли позже: она общая с Персонажем, и её хранимые
   // поля (фигура голо-скана и жизнеобеспечение) пришлось завести и здесь.
-  demonPrince: { bodyType: "male", vitals: { hunger: 0, thirst: 0, sleep: 0 } }
+  demonPrince: {
+    bodyType: "male", vitals: { hunger: 0, thirst: 0, sleep: 0 },
+    // Свободный текстовый инпут dp.anointed снят со схемы (wdbc-yo6r) — дар
+    // «Помазанник» стал реальной механикой, старую заметку-заглушку убрали;
+    // непустой текст мигрирует в Заметки (см. тест ниже).
+    "dp.anointed": undefined
+  }
 };
 
 /** Намеренные расхождения схемы с прежним template.json: путь → почему. */
@@ -334,6 +343,15 @@ describe("типы данных акторов", () => {
       // Повторный проход по уже перенесённым Заметкам ничего не дописывает.
       expect(new ACTOR_DATA_MODELS.ship({ shipClass: "Иерихон", notes: ship.notes }).notes).toBe(ship.notes);
       expect(new ACTOR_DATA_MODELS.ship({ shipClass: "" }).notes).toBe("");
+    });
+
+    it("заметка «Помазанники» Демона-Принца переезжает в Заметки, а не теряется", () => {
+      const dp = new ACTOR_DATA_MODELS.demonPrince({ dp: { anointed: "Кассий Вейн" }, notes: "<p>Флагман культа</p>" });
+      expect(dp.notes).toBe("<p>Помазанники (заметка до переезда на дар): Кассий Вейн</p><p>Флагман культа</p>");
+      expect(dp.dp.anointed).toBeUndefined();
+      // Повторный проход по уже перенесённым Заметкам ничего не дописывает.
+      expect(new ACTOR_DATA_MODELS.demonPrince({ dp: { anointed: "Кассий Вейн" }, notes: dp.notes }).notes).toBe(dp.notes);
+      expect(new ACTOR_DATA_MODELS.demonPrince({ dp: { anointed: "" } }).notes).toBe("");
     });
 
     it("список isPsyker сворачивается в флаг, а не считается правдой целиком", () => {
