@@ -128,6 +128,18 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // голое число (новый modValueMode:"formula" в item-rules.mjs/resolve-
     // test.mjs/mechanics.mjs, wdbc-1rno), считается заново на каждый бросок
     // от ctx.actor, не застывает при получении предмета.
-    expect(stubOnly.length).toBeLessThanOrEqual(125);
+    // Countenance of Khorne/Nurgle, Majestic Horns — переоценка ранее
+    // отвергнутого «target-type пробела»: все модификаторы testMod в системе
+    // уже читаются как ОПЦИОНАЛЬНЫЕ галочки диалога броска (rule-mod/item-mod
+    // checkbox, actor-sheet.mjs/attack-dialog.mjs/roll-mods.mjs), не
+    // применяются молча — значит флэт testMod с честной подписью цели
+    // («+20 социальные тесты (солдаты/воины)») безопасен без какого-либо
+    // распознавания типа цели в коде: игрок сам решает, ставить ли галочку
+    // против конкретного собеседника, тот же принцип, что у halvePenalty.
+    // Прежний вывод «флэт дал бы бонус против любого — ошибка» не учитывал
+    // эту механику галочек. Khorne/Nurgle получили по 3 testMod-записи
+    // (базовый/культистский тир социальных + доп. Навык/штраф), Majestic
+    // Horns — одну.
+    expect(stubOnly.length).toBeLessThanOrEqual(122);
   });
 });
