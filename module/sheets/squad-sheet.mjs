@@ -15,6 +15,7 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
 import { commandReachFor, presenceNumber } from "../rules/command.mjs";
+import { hasPlagueShepherd, plagueShepherdGrant } from "../rules/plague-shepherd.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
 import { tempInfamyInfo, clearTempInfamy } from "../rules/temp-infamy.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -776,6 +777,10 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     const cohMod = cohesionBonus(coh, isCo);
     const title = { presence: "Командное Присутствие", short: "Короткая Команда", detail: "Детальная Команда" }[kind];
     const missed = ok ? this._notReachedBy(kind, extra) : "";
+    // Чумной Пастырь (wdbc-w8ws) — только Короткая/Детальная Команда, не
+    // Присутствие (мутация прямо называет «Команду», Присутствие — отдельный
+    // книжный термин).
+    const plague = (ok && kind !== "presence") ? await this._applyPlagueShepherd(roller.uuid, sux) : "";
 
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -794,6 +799,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
         ${outcome.opposedLine}
         ${effect}
         ${missed}
+        ${plague}
       </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice
@@ -818,6 +824,43 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       ? `выбранное преимущество (эффект ${presenceNumber(benefit)}) до них не доходит`
       : "Команды на них не действуют — только эффекты 1 и 3 Присутствия";
     return `<div class="sq-chat-note sq-chat-missed">Не получают: <b>${names}</b> — ${why}.</div>`;
+  }
+
+  /**
+   * Чумной Пастырь (wdbc-w8ws): успешная Команда/Брифинг отдающего с этой
+   * Мутацией — подчинённые с покровительством Нургла, до которых Команды
+   * вообще доходят (см. commandReachFor — не Орда), дополнительно получают
+   * Успехи аблативных Ран, не складывая их с прошлой командой. Возвращает
+   * строку для чат-карточки, либо "" — нет Мутации/нулевые Успехи/некому давать.
+   */
+  async _applyPlagueShepherd(commanderUuid, sux) {
+    if (!sux) return "";
+    const commanderDoc = this._resolve(commanderUuid);
+    if (!hasPlagueShepherd(commanderDoc)) return "";
+
+    const FLAG = "warhammer-dbc";
+    const recipients = (this.actor.system.members || [])
+      .map(m => ({ uuid: m.uuid, data: this._memberData(m) }))
+      .filter(x => !x.data.missing && x.data.reach.commands)
+      .map(x => this._resolve(x.uuid))
+      .filter(doc => doc?.system?.patronGod === "nurgle");
+    if (!recipients.length) return "";
+
+    const names = [];
+    for (const doc of recipients) {
+      const prevContribution = Number(doc.getFlag(FLAG, "plagueShepherdAblative")) || 0;
+      const { newAblative, newAblativeMax, contribution } = plagueShepherdGrant(doc.system, prevContribution, sux);
+      // ablativeMax двигается вместе с ablative (не только Конструктор-poolMax
+      // даёт максимум) — иначе клэмп rules/character.mjs::prepareCharacterDerived
+      // стёр бы грант на первом же такте расчёта подчинённого.
+      await doc.update({
+        "system.wounds.ablative": newAblative,
+        "system.wounds.ablativeMax": newAblativeMax,
+        [`flags.${FLAG}.plagueShepherdAblative`]: contribution
+      });
+      names.push(doc.name);
+    }
+    return `<div class="sq-chat-note">${rollIcon("bolt", "#7a9c3f")}Чумной Пастырь: <b>${esc(names.join(", "))}</b> — аблативные Раны <b>${sux}</b> (не складывается с прошлой командой).</div>`;
   }
 
   /** Покупка/отмена эффекта Детальной Команды за накопленные Успехи. */
@@ -905,6 +948,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
               resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
             if (ok) await this.actor.update({ "system.briefing.successes": sux });
+            // Чумной Пастырь (wdbc-w8ws) — «Команда ИЛИ Брифинг» одинаково.
+            const plague = ok ? await this._applyPlagueShepherd(cmd.uuid, sux) : "";
 
             await ChatMessage.create(ChatMessage.applyRollMode({
               speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -920,6 +965,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
                   : `<span class="roll-failure">Провал${!ok1 ? " (Command)" : ""}${!ok2 ? " (Logic)" : ""}</span>`}</div>
                 ${ok ? `<div class="sq-chat-effect">Подчинённые получают <b>${sux}</b> Ход(ов) в следующем бою с преимуществами
                   Короткой Команды силой <b>${power}</b> Успехов (½ I.b, окр.▼), по выбору их Лидера.</div>` : ""}
+                ${plague}
               </div>`,
               rolls: [roll], sound: CONFIG.sounds.dice
             }, game.settings.get("core", "rollMode")));

@@ -48,6 +48,10 @@ import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellenc
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
 import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
 import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
+import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
+  from "./module/apps/cancerous-healing.mjs";
+import { reconcileFlayedToFit } from "./module/apps/flayed.mjs";
+import { reconcilePlagueShepherdToFit } from "./module/rules/plague-shepherd.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
@@ -1604,6 +1608,38 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
     if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });
   }
+});
+
+// Динамические источники аблативных Ран (wdbc-w8ws: Раковое Исцеление,
+// Освежёванный, Чумной Пастырь) держат СВОЮ долю общего пула флагом на
+// акторе-получателе и двигают её ablativeMax вместе с ablative — без этого
+// клэмп rules/character.mjs::prepareCharacterDerived («осиротевший пул без
+// источника должен затухать», #291) стёр бы грант на первом же такте
+// расчёта. Как только общий пул уменьшается по ЛЮБОЙ причине (поглощение
+// урона боевым уроном), каждая доля сжимается вслед за ним — иначе
+// ablativeMax источника завис бы на историческом пике и подпитывал бы
+// лишний пассивный реген (module/combat/ablative-wounds.mjs, +1/Ход).
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.system?.wounds?.ablative === undefined) return;
+  await reconcileCancerousHealingToFit(actor);
+  await reconcileFlayedToFit(actor);
+  await reconcilePlagueShepherdToFit(actor);
+  if (actor.effects?.some(e => e.getFlag?.("warhammer-dbc", "cancerousHealingPenalty")))
+    await syncCancerousHealingPenalty(actor);
+});
+
+// Раковое Исцеление (wdbc-w8ws): «если восстанавливает Раны лечением, лишние
+// аблативные Раны теряются» — доля цели пересчитывается от текущих
+// недостающих Ран при КАЖДОМ изменении её Ран/максимума (лечение, урон —
+// формула сама только сжимает, никогда не растит, см.
+// cancerousHealingShrinkAfterHeal). Отдельный хук от аблатив-реконсиляции
+// выше: этот следит за system.wounds.value/.max, не за .ablative.
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  const w = changed?.system?.wounds;
+  if (!w || (w.value === undefined && w.max === undefined)) return;
+  await reconcileCancerousHealingAfterHeal(actor);
 });
 
 // Откат перманентных правок характеристик/пулов, выданных шаблонами старого

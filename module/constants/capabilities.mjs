@@ -6143,9 +6143,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.absurdlyFat": {
-    label: "+10 аблативных Ран и авторегенерация 1/Ход механизированы (kind:\"poolMax\"/ablativeWounds). Размер +1 без влияния на SPD — не механизировано: в системе нет Конструктор-кайнда для бонуса к Размеру",
+    label: "+10 аблативных Ран и авторегенерация 1/Ход (kind:\"poolMax\"/ablativeWounds); Размер +1 без влияния на SPD — kind:\"characteristic\"/charKey:\"sizeNoSpd\" (wdbc-w8ws)",
     source: "Дар Нургл (Absurdly Fat)",
-    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart)"
+    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart), module/apps/mechanics.mjs (characteristicEffectKey charKey:\"sizeNoSpd\" → system.sizeModNoSpd), module/rules/character.mjs (traitSizeModNoSpd, не идёт в calcMovement)"
   },
   "gift.nurgle.blackPhysician": {
     label: "Полное действие+1R себе: заражает до 3 трупов в 2м, оживают зомби (Раны×2, теряют Навыки/Таланты кроме оружейных), контроль до Cor.b зомби",
@@ -6158,9 +6158,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.cancerousHealing": {
-    label: "Полное действие: касание раненого лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим (−2 A/−2 S за каждую) — тоже упирается в wdbc-smy7",
+    label: "Полное действие: касание раненого (текущая цель game.user.targets) лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S за каждую живой ActiveEffect на цели",
     source: "Дар Нургл (Cancerous Healing)",
-    reader: ""
+    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (кнопка на листе Мутации, useCancerousHealing/syncCancerousHealingPenalty), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф. Не проверено вживую: бьёт ли книга по Значению или Бонусу характеристики (выбрано Значение, .totalFx) — см. bd wdbc-w8ws"
   },
   "gift.nurgle.castOutOfDeath": {
     label: "Не может умереть от Критического Эффекта (эффект применяется в остальном); уничтоженные части тела регенерируют за 7ч до минимально функционального состояния",
@@ -6228,9 +6228,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.plagueShepherd": {
-    label: "Команда/Брифинг: подчинённые-Нурглиты с покровительством дополнительно получают Успехи аблативных Ран; если сам и все подчинённые заражены — Короткая Команда свободным действием, Детальная — полудействием",
+    label: "Команда/Брифинг: подчинённые с patronGod:\"nurgle\" (кому вообще доходят Команды) дополнительно получают Успехи аблативных Ран, не складывая с прошлой командой. НЕ механизировано: «сам и все подчинённые заражены → Короткая Команда свободным действием, Детальная — полудействием» (нужна интеграция с экономикой действий, не сделано в этом проходе)",
     source: "Дар Нургл (Plague Shepherd)",
-    reader: ""
+    reader: "module/rules/plague-shepherd.mjs, module/sheets/squad-sheet.mjs (_applyPlagueShepherd, вызывается из _executeCommand и _briefingRoll)"
   },
   "gift.nurgle.prophetOfGallerpox": {
     label: "Полное действие: заражает большую жизнеобеспечивающую машину Гэллерпоксом (одержание Чумоносом), не-Нурглиты в радиусе действия машины −30 к тестам против ядов/болезней; удалённое вкл/выкл машины в пределах 7км полным действием",
