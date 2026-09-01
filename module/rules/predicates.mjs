@@ -125,6 +125,11 @@ export const PREDICATES = {
 
   sizeMax: (actor, ctx, value) => sizeOf(actor) <= Number(value),
 
+  // В Ярости (system.inRage, тот же флаг, что читает weapon-properties.mjs
+  // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
+  // Ярости (wdbc-wyr3).
+  inRage: (actor) => !!actor?.system?.inRage,
+
   // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
   // heavy/dying, тот же ключ, что подписан в блоке РАНЫ на листе. Список — «в
   // списке», как у race/subrace/weaponClass: правило «Тяжело раненный или

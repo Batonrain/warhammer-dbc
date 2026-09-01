@@ -246,6 +246,9 @@ describe("общее требование к предикатам", () => {
     race: ["human"], subrace: ["navigator"], geneSeedLegion: ["VIII"], psyRatingMin: 1,
     sizeMax: 1, charMin: { s: 40 },
     woundTier: ["heavy"],
+    // В Ярости (wdbc-wyr3) — читает actor.system.inRage, значение из `when`
+    // не участвует (тот же случай, что avatarOfSlaughterOffTarget ниже).
+    inRage: undefined,
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

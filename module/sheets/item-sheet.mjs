@@ -2228,6 +2228,45 @@ export class WarhammerItemSheet
       e.when.negateTalent = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда Тир Ран» (entry.when.woundTier/negateWoundTier, wdbc-wyr3) ───
+    // Четвёртый независимый гейт — см. mech-when.mjs. Ключ берётся из
+    // data-tier-key, не индекса — тот же приём, что у субмутации выше.
+    on(".grant-when-tier", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      const tiers = new Set(e.when.woundTier || []);
+      const key = ev.currentTarget.dataset.tierKey;
+      if (ev.currentTarget.checked) tiers.add(key); else tiers.delete(key);
+      e.when.woundTier = [...tiers];
+      saveMech(arr);
+    });
+    on(".grant-when-tier-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateWoundTier = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда Ярость» (entry.when.requireRage/negateRage) — пятый гейт ─────
+    on(".grant-when-rage", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.requireRage = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    on(".grant-when-rage-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateRage = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);

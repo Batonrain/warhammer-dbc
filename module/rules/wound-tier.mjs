@@ -14,7 +14,7 @@
 // displayKey/displayLabel — то же самое для читателя листа, только "light"
 // с lost=0 показывается отдельным «Здоров»: на лечение это не влияет
 // (формулы «Лёгкого» уже верны и для полного здоровья), только на подпись.
-const TIER_LABELS = { healthy: "Здоров", light: "Легко ранен", heavy: "Тяжело ранен", dying: "При смерти" };
+export const TIER_LABELS = { healthy: "Здоров", light: "Легко ранен", heavy: "Тяжело ранен", dying: "При смерти" };
 
 export function woundLevel(system) {
   const value = system.wounds?.value ?? 0;

@@ -232,7 +232,8 @@ import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs"
 import { CAPABILITY_COST_POOLS, capabilityCostLabel } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier } from "../rules/mech-when.mjs";
+import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
 import { hasEliteArchetype }                  from "../rules/predicates.mjs";
@@ -942,6 +943,12 @@ function describeMechWhen(when, item = null) {
   }
   const ts = whenTalentSpec(when);
   if (ts) parts.push(`Талант ${when?.negateTalent ? "≠" : "="} ${ts.name} (${ts.specialization})`);
+  const tiers = whenWoundTier(when);
+  if (tiers.length) {
+    const names = tiers.map(t => WOUND_TIER_LABELS[t] || t);
+    parts.push(`Тир Ран ${when?.negateWoundTier ? "≠" : "="} ${names.join(" или ")}`);
+  }
+  if (when?.requireRage) parts.push(`Ярость ${when?.negateRage ? "≠" : "="} да`);
   return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
@@ -2886,6 +2893,37 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <input type="text" class="grant-when-talent-spec" ${d} value="${esc(ts.specialization)}" placeholder="Специализация" ${dis}/>
   </div>`;
 
+  // «Когда Тир Ран» (wdbc-wyr3) — четвёртый независимый гейт: список из
+  // healthy/light/heavy/dying (WOUND_TIER_LABELS, тот же ключ, что подписан
+  // в блоке РАНЫ на листе), между вариантами ИЛИ.
+  const tierChosen = new Set(w.woundTier || []);
+  const tierBoxes = Object.entries(WOUND_TIER_LABELS).map(([key, label]) => `<label class="grant-when-tier-row">
+    <input type="checkbox" class="grant-when-tier" ${d} data-tier-key="${key}" ${tierChosen.has(key) ? "checked" : ""} ${dis}/>
+    <span>${esc(label)}</span>
+  </label>`).join("");
+  const tierHtml = `<div class="grant-entry-when grant-entry-when-tier">
+    <span class="grant-when-label">Когда Тир Ран</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-tier-negate" ${d} ${w.negateWoundTier ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <div class="grant-when-tier-list">${tierBoxes}</div>
+  </div>`;
+
+  // «Когда Ярость» — пятый независимый гейт: простой тумблер по
+  // actor.system.inRage («Горящая Голова», Бронзовый Мирмидон и т.п.).
+  const rageHtml = `<div class="grant-entry-when grant-entry-when-rage">
+    <span class="grant-when-label">Когда Ярость</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-rage-negate" ${d} ${w.negateRage ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <label class="grant-when-rage-row">
+      <input type="checkbox" class="grant-when-rage" ${d} ${w.requireRage ? "checked" : ""} ${dis}/>
+      <span>актор в Ярости</span>
+    </label>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -2894,7 +2932,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}`;
 }
 
 /**
