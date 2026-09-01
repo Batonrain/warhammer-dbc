@@ -5,7 +5,7 @@
   "folder": "Z1EphNue3m2ra8os",
   "system": {
     "description": "Стрельба одной рукой, но Rng ×½ при стрельбе с одной руки.",
-    "notes": "Не смоделировано: Дальность ×½ условна стрельбой одной рукой конкретно — нет поля, зависящего от хвата в момент выстрела.",
+    "notes": "Реализовано (wdbc-8vp1): grantsGrip добавляет Хват «1р» этой винтовке в диалоге атаки, gripRangeMult ×0.5 действует только пока выбран именно этот Хват (полосы дальности/автогалочка «в упор» тоже пересчитываются).",
     "category": "ranged",
     "modGroup": "flexibility",
     "requirement": "Винтовка. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,6 +26,11 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
+      "grantsGrip": "1р",
+      "gripRangeMult": 0.5,
+      "hipFireSemiMod": 0,
+      "hipFireFullMod": 0,
+      "hipFireSuppressionMod": 0,
       "addProps": [],
       "removeProps": []
     },

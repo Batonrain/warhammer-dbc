@@ -5,7 +5,7 @@
   "folder": "Z1EphNue3m2ra8os",
   "system": {
     "description": "Стрельба от бедра без Прицеливания: +5 короткие очереди, +10 длинные, +15 на подавление. Не работает одной рукой.",
-    "notes": "Не смоделировано целиком: бонусы стрельбы от бедра (без Прицеливания) по очередям/подавлению — режимо-зависимо, применять безусловно неверно.",
+    "notes": "Реализовано (wdbc-aj6t): hipFireSemiMod/hipFireFullMod/hipFireSuppressionMod в attack-dialog.mjs применяются только пока Прицеливание не взято И Хват не «1р».",
     "category": "ranged",
     "modGroup": "flexibility",
     "requirement": "Винтовка или длинная винтовка. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,6 +26,11 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
+      "grantsGrip": "",
+      "gripRangeMult": 1,
+      "hipFireSemiMod": 5,
+      "hipFireFullMod": 10,
+      "hipFireSuppressionMod": 15,
       "addProps": [],
       "removeProps": []
     },

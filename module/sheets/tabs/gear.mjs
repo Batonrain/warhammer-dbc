@@ -8,9 +8,20 @@ import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on } from "../../helpers/utils.mjs";
+import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
 
+/**
+ * Экипировка. Надевание оружия/щита (не брони — она рук не занимает)
+ * блокируется, если рук не хватает (wdbc-3xqh) — только на ПРИРОСТ занятости,
+ * старые «нелегальные» связки на существующих листах не трогает и не рвёт.
+ */
 export async function equipItem(item, equipped) {
   if (!item) return;
+  if (equipped && item.type === "weapon" && item.parent && !canEquipInHands(item.parent, item)) {
+    const { free, max } = handsOccupied(item.parent, { exclude: item.id });
+    ui.notifications?.warn(`${item.name}: не хватает рук (свободно ${free} из ${max}) — сначала снимите что-то с рук.`);
+    return;
+  }
   await item.update({ "system.equipped": equipped });
   await syncItemEffectsDisabled(item, equipped);
   // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
@@ -20,17 +31,16 @@ export async function equipItem(item, equipped) {
 }
 
 export async function setShieldHand(item, hand) {
-  if (!item) return;
-  await item.setFlag("warhammer-dbc", "shieldHand", hand);
+  await setHeldHand(item, hand);
 }
 
 // В какой руке оружие (для карточек «правая/левая» на HUD, module/apps/hud.mjs) —
-// без дефолта, в отличие от shieldHand: большинство персонажей носят одно
+// без дефолта, в отличие от щита: большинство персонажей носят одно
 // оружие, форсировать руку незачем. Повторный клик по уже активной руке снимает.
 export async function setWeaponHand(item, hand) {
   if (!item) return;
-  const current = item.getFlag("warhammer-dbc", "weaponHand");
-  await item.setFlag("warhammer-dbc", "weaponHand", current === hand ? "" : hand);
+  const current = getHeldHand(item);
+  await setHeldHand(item, current === hand ? "" : hand);
 }
 
 export async function toggleShieldRaised(item) {

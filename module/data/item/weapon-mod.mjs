@@ -40,6 +40,19 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
         reliabilityMod: new NumberField({ initial: 0, nullable: false, label: "Надёжность" }),
         balanceMod:     new NumberField({ initial: 0, nullable: false, label: "Баланс" }),
         weightPct:      new NumberField({ initial: 0, nullable: false, label: "Вес, %" }),
+        // Хват (wdbc-8vp1, Pistol Grip): мод даёт оружию НОВЫЙ вариант хвата
+        // (напр. винтовке — "1р"), которого нет в собственном sys.grips
+        // предмета — attack-dialog.mjs добавляет его в список пилюль. gripRangeMult
+        // — множитель Дальности, действующий ТОЛЬКО пока выбран именно этот
+        // хват (в отличие от безусловного rangeMult выше).
+        grantsGrip:     new StringField({ initial: "", label: "Даёт Хват" }),
+        gripRangeMult:  new NumberField({ initial: 1, nullable: false, label: "Дальность на этом Хвате, множитель" }),
+        // Стрельба от бедра без Прицеливания (wdbc-aj6t, Secondary Grip) —
+        // отдельные от безусловных rofSemiMod/rofFullMod поля, применяются
+        // только пока Прицеливание не взято И хват не "1р" (см. attack-dialog.mjs).
+        hipFireSemiMod:       new NumberField({ initial: 0, nullable: false, label: "От бедра: короткая очередь" }),
+        hipFireFullMod:       new NumberField({ initial: 0, nullable: false, label: "От бедра: длинная очередь" }),
+        hipFireSuppressionMod: new NumberField({ initial: 0, nullable: false, label: "От бедра: подавление" }),
         addProps:        props("Добавляет свойства"),
         removeProps:     props("Снимает свойства"),
         mechAddProps:    props("Добавляет свойства (механикум)"),

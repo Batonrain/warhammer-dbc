@@ -255,9 +255,17 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     return locationForHit(i, { label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart });
   };
 
+  // Fanning / Быстрый Курок (wdbc-fy33, стр. 39): RoF Длинной очереди 2..BS.b
+  // по выбору игрока заменяет фиксированный sys.rof_full — только для
+  // потолка попаданий и расхода патронов этого броска, реальный предмет не
+  // трогаем (клон, не мутация sys).
+  const rofOverride = Number(opts.rofCapOverride) || 0;
+  const hitCountSys = (rofMode === "full" && rofOverride > 0)
+    ? { ...sys, rof_full: rofOverride } : sys;
+
   // Попадания и расход патронов
   const { count: hitsCount, label: rofLabel } = hitCount({
-    hit, isMelee, rofMode, deg, wp, sys,
+    hit, isMelee, rofMode, deg, wp, sys: hitCountSys,
     isSwift: opts.isSwift, isLightning: opts.isLightning,
     // Потолок попаданий Быстрой/Молниеносной — бонус WS атакующего (стр. 14).
     wsBonus: Number(actor.system?.characteristics?.ws?.bonus) || 0
@@ -288,7 +296,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Тратим патроны
   let ammoWarning = "";
   if (!isMelee && rofMode !== "melee") {
-    ammoSpent = _getAmmoSpent(item, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
+    ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
     if (ammoSpent > 0 && !opts.skipAmmo) {
       const curMag = sys.magazineCur || 0;

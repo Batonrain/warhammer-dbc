@@ -15,6 +15,7 @@ import { GRIPS, parseGrips } from "../constants/combat.mjs";
 import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
+import { getHeldHand } from "../rules/hands.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -114,8 +115,8 @@ function handWeaponIds(actor) {
   // Интегральные атаки (кулак/пинок/головой) надеты всегда — в руки не
   // назначаются, иначе они занимали бы слоты раньше настоящего оружия.
   const real = eq.filter(w => !isIntegralAttack(w));
-  const byHand = h => real.find(w => w.getFlag(SYSTEM, "weaponHand") === h)
-                    ?? eq.find(w => w.getFlag(SYSTEM, "weaponHand") === h) ?? null;
+  const byHand = h => real.find(w => getHeldHand(w) === h)
+                    ?? eq.find(w => getHeldHand(w) === h) ?? null;
 
   let mainId = byHand("right")?.id ?? null;
   let offId  = byHand("left")?.id  ?? null;
