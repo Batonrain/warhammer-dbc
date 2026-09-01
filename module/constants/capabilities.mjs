@@ -6199,7 +6199,7 @@ export const CAPABILITIES = {
   "gift.khorne.eternalWarrior": {
     label: "Умирая в Ярости — раз за сессию бесплатное Чудесное Спасение/Божественная Защита (без траты Бесчестия/Порчи), либо за Очко Бесчестия при дальней стрелковой смерти",
     source: "Дар Кхорн (Eternal Warrior)",
-    reader: ""
+    reader: "module/combat/eternal-warrior.mjs (wdbc-sk8s) — eternalWarriorEligible/eternalWarriorFreeSaveAvailable/markEternalWarriorUsed; module/sheets/tabs/death.mjs::_resolveFateSave(eternalWarrior). «Дистанция Натиска до убийцы» не отслеживается движком — путь FLAT (1 Очко Бесчестия) подтверждается самим игроком флажком в диалоге, не автоопределением."
   },
   "gift.khorne.eyeOfChallenge": {
     label: "+1 Бесчестия: выделить 4 сильнейших воинов в поле зрения, узнать WS/S/Parry/Берсерк-Таланты одного — не бросить вызов за минуту = 2d10+8 урона в W",

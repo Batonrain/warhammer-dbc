@@ -22,6 +22,9 @@ import {
 import { computeWoundHealing } from "./wounds.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { spendFromInfamyPool } from "../../apps/infamy-points.mjs";
+import {
+  eternalWarriorEligible, eternalWarriorFreeSaveAvailable, markEternalWarriorUsed
+} from "../../combat/eternal-warrior.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -37,30 +40,45 @@ async function _postCard(actor, header, lines, rolls = []) {
   }, rollMode));
 }
 
-/** Чудесное Спасение и Божественная Защита расплачиваются пулом Судьбы/Бесчестья одинаково. */
-async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote }) {
+/**
+ * Чудесное Спасение и Божественная Защита расплачиваются пулом Судьбы/Бесчестья
+ * одинаково. eternalWarrior: null (обычная стоимость по cfg), "free" (Вечный
+ * Воин, путь 1 — 0 пула/0 Порчи, отмечает разовый заряд сессии), "flat" (путь
+ * 2 — фиксированная 1 Очко Бесчестия, без кубика, без Порчи).
+ */
+async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote, eternalWarrior = null }) {
   const pool = fatePoolLabel(actor);
   const current = Number(actor.system.fate?.value) || 0;
+  const free = eternalWarrior === "free" || eternalWarrior === "flat";
 
-  const fateRoll = await new Roll(cfg.fateDie).evaluate();
-  const loss = fateRoll.total + (cfg.fateFlat || 0);
+  let fateRoll = null, loss;
+  if (eternalWarrior === "free") loss = 0;
+  else if (eternalWarrior === "flat") loss = 1;
+  else {
+    fateRoll = await new Roll(cfg.fateDie).evaluate();
+    loss = fateRoll.total + (cfg.fateFlat || 0);
+  }
   // Временный запас (wdbc-e728, Voice of God и т.п.) гасит цену Спасения первым.
   const spend = await spendFromInfamyPool(actor, loss, "system.fate.value");
   const failed = fateSaveFails(current, spend.poolSpent);
   const tempNote = spend.tempSpent ? `, из них ${spend.tempSpent} из временного запаса` : "";
+  const lossLabel = fateRoll ? `(${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${loss}${tempNote})` : `${loss}${tempNote}`;
 
   if (failed) {
     await actor.update({ "system.fate.value": spend.poolValue });
     await _postCard(actor, kind, [
-      `Пул ${pool}: <b>${current}</b> − (${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${loss}${tempNote}) → опустился бы до 0 и ниже.`,
+      `Пул ${pool}: <b>${current}</b> − ${lossLabel} → опустился бы до 0 и ниже.`,
       `<span class="roll-failure">Провал — Боги отвернулись. Персонаж мёртв по-настоящему.</span>`
-    ], [fateRoll]);
+    ], fateRoll ? [fateRoll] : []);
     return;
   }
 
-  const corRoll = await new Roll(cfg.corDie).evaluate();
+  if (eternalWarrior === "free") await markEternalWarriorUsed(actor);
+
+  const corRoll = free ? null : await new Roll(cfg.corDie).evaluate();
+  const corGain = corRoll ? corRoll.total : 0;
   const newFate = spend.poolValue;
-  const newCor  = (Number(actor.system.corruption?.value) || 0) + corRoll.total;
+  const newCor  = (Number(actor.system.corruption?.value) || 0) + corGain;
   const updates = {
     "system.fate.value": newFate,
     "system.corruption.value": Math.min(100, newCor)
@@ -73,14 +91,16 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
 
   const lines = [
     `Пул ${pool}: <b>${current}</b> − ${loss}${tempNote} → <b>${newFate}</b>.`,
-    `Порча: +${corRoll.total} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`,
+    free
+      ? `Порча: без изменений (Вечный Воин, ${eternalWarrior === "free" ? "раз за сессию" : "дальнобойная смерть"} — бесплатно в Ярости).`
+      : `Порча: +${corGain} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`,
     `<span class="roll-success">Успех — персонаж жив. Кардиомонитор перезапущен.</span>`
   ];
   if (resurrectNote) lines.push(resurrectNote);
-  await _postCard(actor, kind, lines, [fateRoll, corRoll]);
+  await _postCard(actor, kind, lines, [fateRoll, corRoll].filter(Boolean));
 }
 
-export async function doMiraculousSave(actor) {
+export async function doMiraculousSave(actor, { eternalWarrior = null } = {}) {
   // Руническая Вязь «Прах Феникса» (wdbc-unku): тратит только 1d5 Порчи/Бесчестия
   // вместо обычного 1d10 — тот же MIRACULOUS_SAVE, только corDie сужен.
   const cfg = hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix")
@@ -88,15 +108,17 @@ export async function doMiraculousSave(actor) {
     : MIRACULOUS_SAVE;
   await _resolveFateSave(actor, "Чудесное Спасение", cfg, {
     restoreToZero: true,
-    resurrectNote: "Урон и эффекты смертельного попадания откатываются — персонаж как будто не получал этот удар."
+    resurrectNote: "Урон и эффекты смертельного попадания откатываются — персонаж как будто не получал этот удар.",
+    eternalWarrior
   });
 }
 
-async function doDivineProtection(actor) {
+export async function doDivineProtection(actor, { eternalWarrior = null } = {}) {
   await _resolveFateSave(actor, "Божественная Защита", DIVINE_PROTECTION, {
     restoreToZero: true,
     resurrectNote: "Персонаж без сознания до конца сцены/боя, а до конца сессии может совершать только полудвижения. "
-      + "Если Inf/Cor теперь 50+ и есть безопасная база — можно чудом переместиться туда (по решению игрока/ГМа)."
+      + "Если Inf/Cor теперь 50+ и есть безопасная база — можно чудом переместиться туда (по решению игрока/ГМа).",
+    eternalWarrior
   });
 }
 
@@ -145,6 +167,24 @@ export function showDeathSaveDialog(actor) {
     ? `<div class="atk-range-info" style="font-size:0.82em;color:#e0a83a;">⚠ Игрушка Богов: на первом смертельном ранении сессии Покровительство обычно обязывает воспользоваться Спасением/Защитой, если это не подняло бы Cor до 100 — решение за столом.</div>`
     : "";
 
+  // Eternal Warrior/Вечный Воин (wdbc-sk8s): в Ярости следующий Miraculous/Divine
+  // бесплатен (раз за сессию), либо всегда за фиксированную 1 Очко Бесчестия при
+  // дальнобойной смерти вне дистанции Натиска — «дистанция Натиска до убийцы»
+  // движком не отслеживается вовсе, флажок ниже — самоподтверждение игрока
+  // (тот же честный компромисс, что у Deadly Effectiveness).
+  const ewEligible = eternalWarriorEligible(actor);
+  const ewFreeAvail = ewEligible && eternalWarriorFreeSaveAvailable(actor);
+  const ewNote = ewEligible
+    ? `<div class="atk-range-info" style="font-size:0.82em;color:#9a7fe0;">
+        ☠ Вечный Воин (в Ярости): следующее Спасение/Защита ниже бесплатно —
+        <label style="display:block;margin-top:2px;"><input type="radio" name="ew-mode" value="free" ${ewFreeAvail ? "checked" : "disabled"}/>
+          раз за сессию${ewFreeAvail ? "" : " (уже потрачено)"}</label>
+        <label style="display:block;"><input type="radio" name="ew-mode" value="flat" ${ewFreeAvail ? "" : "checked"}/>
+          дальнобойная смерть вне дистанции Натиска — за 1 Очко Бесчестия (не тратит заряд сессии)</label>
+        <label style="display:block;"><input type="radio" name="ew-mode" value="" />обычная стоимость (не использовать Вечного Воина)</label>
+      </div>`
+    : "";
+
   const opt = (key, label, note, enabled = true) => `
     <button type="button" class="wh-death-action" data-action="${key}" ${enabled ? "" : "disabled"}
       style="width:100%;text-align:left;margin:3px 0;${enabled ? "" : "opacity:0.45;"}">
@@ -155,6 +195,7 @@ export function showDeathSaveDialog(actor) {
     <div class="wh-wizard-form" style="padding:6px;">
       <div class="atk-dlg-header"><span class="atk-weapon-name">${rollIcon("skull","#ff6b6b")}Спасение от смерти</span></div>
       ${toyNote}
+      ${ewNote}
       ${opt("miraculous", "Чудесное Спасение", `1d10+10 ${pool} и ${miracCorNote} — провал, если пул опустится до 0.`)}
       ${opt("divine", "Божественная Защита", canDivine
         ? `1d5+5 ${pool} и 1d5 Порчи — провал, если пул опустится до 0.`
@@ -175,8 +216,10 @@ export function showDeathSaveDialog(actor) {
       const form = dialog.element.querySelector("form") || dialog.element;
       form.querySelectorAll(".wh-death-action:not([disabled])").forEach(b => b.addEventListener("click", async () => {
         const key = b.dataset.action;
-        if (key === "miraculous") await doMiraculousSave(actor);
-        else if (key === "divine") await doDivineProtection(actor);
+        const ewChecked = form.querySelector('input[name="ew-mode"]:checked')?.value || null;
+        const eternalWarrior = ewChecked || null;
+        if (key === "miraculous") await doMiraculousSave(actor, { eternalWarrior });
+        else if (key === "divine") await doDivineProtection(actor, { eternalWarrior });
         else if (key === "susan") await doSusAnimation(actor);
         dialog.close();
       }));
