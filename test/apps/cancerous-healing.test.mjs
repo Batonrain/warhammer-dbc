@@ -129,28 +129,35 @@ describe("reconcileCancerousHealingToFit", () => {
 });
 
 describe("syncCancerousHealingPenalty", () => {
-  it("нет аблатива — эффект удаляется", async () => {
-    const target = fakeActor({ ablative: 0 });
+  it("нет своей доли — эффект удаляется, даже если на акторе есть посторонний аблатив", async () => {
+    const target = fakeActor({ ablative: 4 }); // весь пул — постороннего источника
     const fx = { flags: { "warhammer-dbc": { cancerousHealingPenalty: true } }, getFlag(ns, k) { return this.flags[ns][k]; }, deleted: false, async delete() { this.deleted = true; } };
     target.effects.push(fx);
     await syncCancerousHealingPenalty(target);
     expect(fx.deleted).toBe(true);
   });
 
-  it("есть аблатив, эффекта ещё нет — создаётся", async () => {
-    const target = fakeActor({ ablative: 3 });
+  it("есть своя доля, эффекта ещё нет — создаётся по НЕЙ, не по всему пулу", async () => {
+    const target = fakeActor({ ablative: 3, flags: { cancerousHealingAblative: 3 } });
     await syncCancerousHealingPenalty(target);
     expect(target.effects).toHaveLength(1);
     expect(target.effects[0].changes[0].value).toBe(6);
   });
 
-  it("аблатив изменился — существующий эффект пересчитывается, не дублируется", async () => {
-    const target = fakeActor({ ablative: 3 });
+  it("своя доля изменилась — существующий эффект пересчитывается, не дублируется", async () => {
+    const target = fakeActor({ ablative: 3, flags: { cancerousHealingAblative: 3 } });
     await syncCancerousHealingPenalty(target);
-    target.system.wounds.ablative = 5;
+    target.flags["warhammer-dbc"].cancerousHealingAblative = 5;
     await syncCancerousHealingPenalty(target);
     expect(target.effects).toHaveLength(1);
     expect(target.effects[0].changes[0].value).toBe(10);
+  });
+
+  it("посторонний аблатив на том же акторе (напр. Absurdly Fat) не штрафуется", async () => {
+    // Пул 9: 3 от Ракового Исцеления + 6 постороннего.
+    const target = fakeActor({ ablative: 9, flags: { cancerousHealingAblative: 3 } });
+    await syncCancerousHealingPenalty(target);
+    expect(target.effects[0].changes[0].value).toBe(6); // 2×3, не 2×9
   });
 });
 

@@ -6158,9 +6158,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.cancerousHealing": {
-    label: "Полное действие: касание раненого (текущая цель game.user.targets) лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S за каждую живой ActiveEffect на цели",
+    label: "Полное действие: касание раненого (текущая цель game.user.targets) лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S (Значение, .totalFx — сверено с книгой) за каждую, живой ActiveEffect на цели, считает только СВОЮ долю пула",
     source: "Дар Нургл (Cancerous Healing)",
-    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (кнопка на листе Мутации, useCancerousHealing/syncCancerousHealingPenalty), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф. Не проверено вживую: бьёт ли книга по Значению или Бонусу характеристики (выбрано Значение, .totalFx) — см. bd wdbc-w8ws"
+    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (кнопка на листе Мутации, useCancerousHealing/syncCancerousHealingPenalty — читает флаг cancerousHealingAblative, не весь system.wounds.ablative), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф и долю"
   },
   "gift.nurgle.castOutOfDeath": {
     label: "Не может умереть от Критического Эффекта (эффект применяется в остальном); уничтоженные части тела регенерируют за 7ч до минимально функционального состояния",
@@ -6228,9 +6228,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.plagueShepherd": {
-    label: "Команда/Брифинг: подчинённые с patronGod:\"nurgle\" (кому вообще доходят Команды) дополнительно получают Успехи аблативных Ран, не складывая с прошлой командой. НЕ механизировано: «сам и все подчинённые заражены → Короткая Команда свободным действием, Детальная — полудействием» (нужна интеграция с экономикой действий, не сделано в этом проходе)",
+    label: "Команда/Брифинг: подчинённые с patronGod:\"nurgle\" (кому вообще доходят Команды) дополнительно получают Успехи аблативных Ран, не складывая с прошлой командой. Сам+все подчинённые заражены → Короткая Команда/Детальная Команда показываются свободным действием/полудействием на листе Отряда (справочно, как «Подвиг» — в системе нет цифрового трекера ОД на Команды вообще)",
     source: "Дар Нургл (Plague Shepherd)",
-    reader: "module/rules/plague-shepherd.mjs, module/sheets/squad-sheet.mjs (_applyPlagueShepherd, вызывается из _executeCommand и _briefingRoll)"
+    reader: "module/rules/plague-shepherd.mjs (plagueShepherdGrant/plagueShepherdFreeCommandActive/isInfected), module/sheets/squad-sheet.mjs (_applyPlagueShepherd + context.plagueShepherdFreeCommand, вызывается из _executeCommand/_briefingRoll/_prepareContext), templates/actor/squad-sheet.hbs (заголовки панелей Короткой/Детальной Команды)"
   },
   "gift.nurgle.prophetOfGallerpox": {
     label: "Полное действие: заражает большую жизнеобеспечивающую машину Гэллерпоксом (одержание Чумоносом), не-Нурглиты в радиусе действия машины −30 к тестам против ядов/болезней; удалённое вкл/выкл машины в пределах 7км полным действием",

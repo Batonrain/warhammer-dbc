@@ -6,7 +6,8 @@
 // module/sheets/squad-sheet.mjs (_applyPlagueShepherd), не здесь.
 
 import { describe, it, expect } from "vitest";
-import { isPlagueShepherdItem, hasPlagueShepherd, plagueShepherdGrant, plagueShepherdShrinkToFit }
+import { isPlagueShepherdItem, hasPlagueShepherd, plagueShepherdGrant, plagueShepherdShrinkToFit,
+         isInfected, plagueShepherdFreeCommandActive }
   from "../../module/rules/plague-shepherd.mjs";
 
 describe("isPlagueShepherdItem / hasPlagueShepherd", () => {
@@ -50,5 +51,46 @@ describe("plagueShepherdShrinkToFit: доля не больше, чем реал
   });
   it("пул не просел — сжимать нечего", () => {
     expect(plagueShepherdShrinkToFit({ wounds: { ablative: 5, ablativeMax: 5 } }, 5)).toBeNull();
+  });
+});
+
+describe("isInfected", () => {
+  it("есть embedded Item type:disease — заражён", () => {
+    expect(isInfected({ items: [{ type: "disease" }] })).toBe(true);
+  });
+  it("нет — не заражён", () => {
+    expect(isInfected({ items: [{ type: "talent" }] })).toBe(false);
+    expect(isInfected({ items: [] })).toBe(false);
+    expect(isInfected(null)).toBe(false);
+  });
+});
+
+describe("plagueShepherdFreeCommandActive: Короткая свободным, Детальная полудействием", () => {
+  const shepherd = (infected = true) => ({
+    items: [
+      { type: "mutation", name: "Plague Shepherd / Чумной Пастырь" },
+      ...(infected ? [{ type: "disease" }] : [])
+    ]
+  });
+  const member = infected => ({ items: infected ? [{ type: "disease" }] : [] });
+
+  it("командир и все подчинённые заражены — активно", () => {
+    expect(plagueShepherdFreeCommandActive(shepherd(true), [member(true), member(true)])).toBe(true);
+  });
+
+  it("хотя бы один подчинённый не заражён — неактивно", () => {
+    expect(plagueShepherdFreeCommandActive(shepherd(true), [member(true), member(false)])).toBe(false);
+  });
+
+  it("сам командир не заражён — неактивно, даже если все подчинённые заражены", () => {
+    expect(plagueShepherdFreeCommandActive(shepherd(false), [member(true)])).toBe(false);
+  });
+
+  it("нет Мутации у командира — неактивно", () => {
+    expect(plagueShepherdFreeCommandActive({ items: [{ type: "disease" }] }, [member(true)])).toBe(false);
+  });
+
+  it("нет подчинённых вовсе — неактивно (нечего проверять)", () => {
+    expect(plagueShepherdFreeCommandActive(shepherd(true), [])).toBe(false);
   });
 });

@@ -15,7 +15,7 @@ import { SQUAD_LEAD_TYPES, SQUAD_MEMBER_TYPES, SQUAD_TYPE_LABEL,
          MORALE_RULES, BROKEN_SQUAD_RULE,
          cohesionBonus, riskCap } from "../constants/squad.mjs";
 import { commandReachFor, presenceNumber } from "../rules/command.mjs";
-import { hasPlagueShepherd, plagueShepherdGrant } from "../rules/plague-shepherd.mjs";
+import { hasPlagueShepherd, plagueShepherdGrant, plagueShepherdFreeCommandActive } from "../rules/plague-shepherd.mjs";
 import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs";
 import { tempInfamyInfo, clearTempInfamy } from "../rules/temp-infamy.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -322,6 +322,20 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     }));
 
     // ── Команды ──
+    // Чумной Пастырь (wdbc-w8ws), вторая часть: Командир и ВСЕ подчинённые,
+    // до которых Команды вообще доходят (не Орда — commandReachFor), заражены
+    // болезнью → Короткая Команда свободным действием, Детальная — полудействием.
+    // Справочно, как «Подвиг»/«Героический Конец» (COMMAND_REFERENCE) — в
+    // системе нет цифрового трекера ОД на Команды, лист не блокирует и не
+    // списывает, только подсказывает.
+    context.plagueShepherdFreeCommand = plagueShepherdFreeCommandActive(
+      this._resolve(context.activeCommander?.uuid),
+      (Array.isArray(sys.members) ? sys.members : [])
+        .map(m => ({ data: this._memberData(m), uuid: m.uuid }))
+        .filter(x => !x.data.missing && x.data.reach.commands)
+        .map(x => this._resolve(x.uuid))
+    );
+
     const shortKey = sys.shortCommand?.key || "inspire";
     const shortDef = SHORT_COMMANDS.find(c => c.key === shortKey) || SHORT_COMMANDS[0];
     const shortSux = Number(sys.shortCommand?.successes) || 0;

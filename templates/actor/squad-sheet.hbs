@@ -265,9 +265,12 @@
     </div>
 
     <div class="stat-panel sq-panel{{#if shortActive}} sq-panel-on{{/if}}">
-      <div class="panel-title">КОРОТКАЯ КОМАНДА — ПОЛУДЕЙСТВИЕ{{#if shortActive}} · +{{shortBonus}}{{/if}}</div>
+      <div class="panel-title">КОРОТКАЯ КОМАНДА — {{#if plagueShepherdFreeCommand}}СВОБОДНОЕ ДЕЙСТВИЕ{{else}}ПОЛУДЕЙСТВИЕ{{/if}}{{#if shortActive}} · +{{shortBonus}}{{/if}}</div>
       <div class="panel-body">
         <div class="sq-hint">Тест Command(F)+0. Даёт все преимущества Командного Присутствия и один эффект до начала следующего Хода Командира.</div>
+        {{#if plagueShepherdFreeCommand}}
+        <div class="sq-hint sq-plague-shepherd-note">Чумной Пастырь: Командир и все подчинённые заражены болезнью — Короткая Команда даётся свободным действием.</div>
+        {{/if}}
         <div class="sq-cmd-list">
           {{#each shortCommands as |c|}}
           <label class="sq-radio{{#if c.selected}} sq-radio-on{{/if}}">
@@ -304,9 +307,12 @@
     </div>
 
     <div class="stat-panel sq-panel{{#if detailActive}} sq-panel-on{{/if}}">
-      <div class="panel-title">ДЕТАЛЬНАЯ КОМАНДА — ПОЛНОЕ ДЕЙСТВИЕ{{#if detailActive}} · Успехов {{detailLeft}} / {{detailSux}}{{/if}}</div>
+      <div class="panel-title">ДЕТАЛЬНАЯ КОМАНДА — {{#if plagueShepherdFreeCommand}}ПОЛУДЕЙСТВИЕ{{else}}ПОЛНОЕ ДЕЙСТВИЕ{{/if}}{{#if detailActive}} · Успехов {{detailLeft}} / {{detailSux}}{{/if}}</div>
       <div class="panel-body">
         <div class="sq-hint">Тест Command(F)+0. Даёт все преимущества Командного Присутствия; Успехи тратятся на эффекты до начала следующего Хода Командира.</div>
+        {{#if plagueShepherdFreeCommand}}
+        <div class="sq-hint sq-plague-shepherd-note">Чумной Пастырь: Командир и все подчинённые заражены болезнью — Детальная Команда даётся полудействием.</div>
+        {{/if}}
         <div class="sq-detail-list">
           {{#each detailCommands as |c|}}
           <div class="sq-detail{{#if c.picked}} sq-detail-on{{/if}}{{#if c.disabled}} sq-detail-off{{/if}}">

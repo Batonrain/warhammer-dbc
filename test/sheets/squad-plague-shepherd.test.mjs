@@ -36,10 +36,13 @@ function sheetLike(actor, extra = {}) {
     { actor, isEditable: true, tabGroups: { primary: "roster" } }, extra);
 }
 
-function commanderPers({ hasPlagueShepherd = true } = {}) {
+function commanderPers({ hasPlagueShepherd = true, infected = false } = {}) {
+  const items = [];
+  if (hasPlagueShepherd) items.push({ type: "mutation", name: "Plague Shepherd / Чумной Пастырь" });
+  if (infected) items.push({ type: "disease" });
   return {
     name: "Чумной Командир", img: "cmd.png", type: "character",
-    items: hasPlagueShepherd ? [{ type: "mutation", name: "Plague Shepherd / Чумной Пастырь" }] : [],
+    items,
     system: {
       characteristics: { fel: { total: 45, bonus: 4 }, wp: { total: 40 }, int: { total: 38 } },
       skills: { command: { total: 50 }, logic: { total: 40 } },
@@ -49,9 +52,10 @@ function commanderPers({ hasPlagueShepherd = true } = {}) {
   };
 }
 
-function memberDoc({ uuid, patronGod = "nurgle", ablative = 0, ablativeMax = 0 } = {}) {
+function memberDoc({ uuid, patronGod = "nurgle", ablative = 0, ablativeMax = 0, infected = false } = {}) {
   const doc = {
     name: `Нурглит ${uuid}`, type: "character",
+    items: infected ? [{ type: "disease" }] : [],
     system: { characteristics: { wp: { total: 30 }, per: { bonus: 3 } },
               patronGod, wounds: { value: 5, max: 10, ablative, ablativeMax } },
     flags: {},
@@ -160,5 +164,59 @@ describe("_executeCommand: Чумной Пастырь (wdbc-w8ws)", () => {
     captured.nextRoll = 40; // слабее, но всё ещё успех — меньше Успехов
     await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50, { shortKey: "inspire" });
     expect(nurglite.system.wounds.ablative).toBeLessThan(firstGrant);
+  });
+});
+
+describe("_prepareContext: Чумной Пастырь — Короткая/Детальная Команда дешевле при заражении (wdbc-w8ws)", () => {
+  it("командир и все подчинённые заражены — плагueShepherdFreeCommand true", async () => {
+    const cmdDoc = commanderPers({ infected: true });
+    const m1 = memberDoc({ uuid: "Actor.m1", infected: true });
+    const m2 = memberDoc({ uuid: "Actor.m2", infected: true });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.m1": m1, "Actor.m2": m2 });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m1", uuid: "Actor.m1", name: m1.name, type: "character" },
+                { id: "m2", uuid: "Actor.m2", name: m2.name, type: "character" }]
+    });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.plagueShepherdFreeCommand).toBe(true);
+  });
+
+  it("хотя бы один подчинённый не заражён — false", async () => {
+    const cmdDoc = commanderPers({ infected: true });
+    const m1 = memberDoc({ uuid: "Actor.m3", infected: true });
+    const m2 = memberDoc({ uuid: "Actor.m4", infected: false });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.m3": m1, "Actor.m4": m2 });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m3", uuid: "Actor.m3", name: m1.name, type: "character" },
+                { id: "m4", uuid: "Actor.m4", name: m2.name, type: "character" }]
+    });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.plagueShepherdFreeCommand).toBe(false);
+  });
+
+  it("сам командир не заражён — false", async () => {
+    const cmdDoc = commanderPers({ infected: false });
+    const m1 = memberDoc({ uuid: "Actor.m5", infected: true });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.m5": m1 });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m5", uuid: "Actor.m5", name: m1.name, type: "character" }]
+    });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.plagueShepherdFreeCommand).toBe(false);
+  });
+
+  it("нет Мутации у командира — false, даже если все заражены", async () => {
+    const cmdDoc = commanderPers({ hasPlagueShepherd: false, infected: true });
+    const m1 = memberDoc({ uuid: "Actor.m6", infected: true });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.m6": m1 });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m6", uuid: "Actor.m6", name: m1.name, type: "character" }]
+    });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.plagueShepherdFreeCommand).toBe(false);
   });
 });

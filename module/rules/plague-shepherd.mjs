@@ -29,6 +29,30 @@ export function hasPlagueShepherd(actor) {
   return !!actor?.items?.some(i => isPlagueShepherdItem(i));
 }
 
+/** Заражён ли актор хотя бы одной болезнью (embedded Item type:"disease", см. sheets/tabs/diseases.mjs). */
+export function isInfected(actor) {
+  return !!actor?.items?.some(i => i?.type === "disease");
+}
+
+/**
+ * Вторая часть Мутации: «Если как сам чемпион, так и все подчинённые,
+ * которыми он командует, заражены хотя бы одной болезнью, он может
+ * совершать Короткую Команду свободным действием и Детальную Команду
+ * полудействием». В системе нет цифрового трекера ОД на Команды вообще
+ * (тот же уровень «справочно», что у «Подвига»/«Героического Конца» —
+ * COMMAND_REFERENCE в constants/squad.mjs) — здесь только чистое условие,
+ * лист показывает его как подсказку у кнопок, не блокирует/не списывает.
+ *
+ * @param {Actor}   commanderDoc  тот, кто отдаёт Команду (Командир/Лидер)
+ * @param {Actor[]} memberDocs    подчинённые, до которых Команды вообще доходят
+ */
+export function plagueShepherdFreeCommandActive(commanderDoc, memberDocs) {
+  if (!hasPlagueShepherd(commanderDoc) || !isInfected(commanderDoc)) return false;
+  const members = memberDocs || [];
+  if (!members.length) return false;
+  return members.every(isInfected);
+}
+
 /**
  * Новый вклад подчинённого = Успехи текущей команды, ЗАМЕНЯЕТ вклад прошлой
  * (RAW: «не складываются с Ранами от его предыдущих команд»), не трогая

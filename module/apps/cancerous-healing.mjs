@@ -8,12 +8,12 @@
 //
 // Штраф −2 A/−2 S за каждую аблативную Рану цели живёт отдельным embedded
 // ActiveEffect ПРЯМО НА АКТОРЕ цели (не на предмете — цель не носит саму
-// Мутацию), пересобирается заново при каждом изменении её аблативного пула
-// (см. syncCancerousHealingPenalty ниже и хук updateActor в warhammer-dbc.mjs).
-// Ограничение: штраф считается от ВСЕГО аблативного пула актора, не только
-// от доли, добавленной именно этим касанием — если на одном акторе
-// одновременно окажется другой источник (напр. Absurdly Fat), штраф
-// затронет и его аблатив тоже; отдельно источники пул не различает.
+// Мутацию), пересобирается заново при каждом изменении её флага-вклада
+// CANCEROUS_HEALING_FLAG (см. syncCancerousHealingPenalty ниже и хук
+// updateActor в warhammer-dbc.mjs) — считается ТОЛЬКО от доли именно этого
+// касания, посторонний аблатив на том же акторе (напр. Absurdly Fat) не
+// штрафуется, тем же разделением, что и сам грант (rules/wounds.mjs::
+// replaceAblativeContribution).
 
 import { isCancerousHealingItem, cancerousHealingGrant, cancerousHealingPenaltyValue,
          cancerousHealingShrinkAfterHeal, cancerousHealingShrinkToFit, CANCEROUS_HEALING_FLAG }
@@ -33,20 +33,23 @@ function penaltyEffectOf(actor) {
 }
 
 /**
- * Пересобрать штраф под ТЕКУЩИЙ размер аблативного пула актора. Вызывать
- * после любого изменения system.wounds.ablative у актора, несущего этот
- * эффект (см. хук updateActor в warhammer-dbc.mjs) — пул может как расти
- * (новое касание), так и падать (поглощение урона, клэмп при лечении).
+ * Пересобрать штраф под ТЕКУЩИЙ размер доли ИМЕННО этого источника (флаг
+ * CANCEROUS_HEALING_FLAG, не весь system.wounds.ablative актора — на нём
+ * может сидеть и посторонний аблатив, книга штрафует только «за каждую
+ * аблативную Рану от Ракового Исцеления»). Вызывать после любого изменения
+ * доли этого источника (см. хук updateActor в warhammer-dbc.mjs) — она
+ * может как расти (новое касание), так и падать (поглощение урона, клэмп
+ * при лечении).
  */
 export async function syncCancerousHealingPenalty(actor) {
   if (!actor) return;
-  const ablative = Number(actor.system?.wounds?.ablative) || 0;
+  const ownAblative = Number(actor.getFlag(FLAG, CANCEROUS_HEALING_FLAG)) || 0;
   const existing = penaltyEffectOf(actor);
-  if (ablative <= 0) {
+  if (ownAblative <= 0) {
     if (existing) await existing.delete().catch(() => {});
     return;
   }
-  const value = cancerousHealingPenaltyValue(ablative);
+  const value = cancerousHealingPenaltyValue(ownAblative);
   const agKey = "system.characteristics.ag.totalFx";
   const sKey  = "system.characteristics.s.totalFx";
   const changes = [
@@ -129,13 +132,13 @@ export async function useCancerousHealing(casterActor, item) {
   await target.update(update);
   await syncCancerousHealingPenalty(target);
 
-  const penalty = cancerousHealingPenaltyValue(newAblative);
+  const penalty = cancerousHealingPenaltyValue(contribution);
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: casterActor }),
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("heart","#7a9c3f")}Раковое Исцеление — ${esc(target.name)}</div>
       <div class="roll-threshold">Аблативные Раны: <b>${newAblative}</b>${granted > 0 ? ` (+${granted})` : missing === 0 ? " (цель не ранена)" : " (без изменений — уже не меньше)"}</div>
-      ${newAblative > 0 ? `<div class="roll-threshold">Штраф от аблативных Ран: A и S <b>−${penalty}</b> каждая</div>` : ""}
+      ${contribution > 0 ? `<div class="roll-threshold">Штраф от аблативных Ран: A и S <b>−${penalty}</b> каждая</div>` : ""}
       ${cured.length ? `<div class="roll-threshold">Снято: <b>${esc(cured.join(", "))}</b></div>` : ""}
     </div>`,
     sound: null
