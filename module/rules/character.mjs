@@ -928,8 +928,14 @@ export function prepareCharacterDerived(actor, system) {
 
     // ── Инициатива ────────────────────────────────────────────────────────
     // Хранит Ag.bonus + модификаторы Талантов (Combat Formation, Paranoia).
-    // Сам бросок = 1d10 + system.initiative.
-    system.initiative = agBonus + (traitInitMod || 0);
+    // Сам бросок = 1d10 + system.initiative. Читаем текущее значение ДО
+    // перезаписи (wdbc-v9a7): kind:"characteristic" с charKey:"initiative"
+    // (apps/mechanics.mjs) выдаётся как embedded ActiveEffect с ключом
+    // system.initiative, фаза "final" — применяется Foundry раньше этой
+    // строки, и без чтения назад перезапись стёрла бы вклад Мутаций
+    // («Безголовый» −2) тем же способом, каким раньше терялся sizeMod
+    // Астартес (см. комментарий у traitSizeMod выше).
+    system.initiative = agBonus + (traitInitMod || 0) + (Number(system.initiative) || 0);
 
     // ── Когниция (Техножрец) ───────────────────────────────────────────────
     // Пул Когниции = Int.bonus; в начале Хода восстанавливается ½ Int.b.
