@@ -41,7 +41,7 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
-import { spendActionPoints, apCostForActionType } from "../combat/action-economy.mjs";
+import { spendActionPoints, apCostForActionType, spendReaction } from "../combat/action-economy.mjs";
 import { measureTokens, meleeContactCount, hasHighGround } from "../combat/tactical-map.mjs";
 import { rangeBandKey, rangeBandBoundaries }   from "../rules/tactical-map.mjs";
 import { getTerrainInfoForToken }             from "../regions/difficult-terrain.mjs";
@@ -470,15 +470,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     });
   }
   /**
-   * Пилюли Базы зависят от ТЕКУЩЕЙ Стойки (Частокол запрещает Натиск, стр. 15)
-   * и от Верховой Атаки (только верхом) — пересчитываются заново на каждое
-   * изменение формы (см. #atk-base-pills в updateTotal), а не один раз.
+   * Пилюли Базы зависят от ТЕКУЩЕЙ Стойки (Частокол запрещает Натиск, стр. 15),
+   * от Верховой Атаки (только верхом) и от Запрещённого Приёма (Cheap Shot,
+   * стр. 166: «считается Стандартной Атакой» — свойство либо у самого оружия
+   * (wp.cheapShot), либо временно даёт текущий Хват, см. GRIPS.Хв.addProp) —
+   * пересчитываются заново на каждое изменение формы (см. #atk-base-pills в
+   * updateTotal), а не один раз.
    */
-  function computeBaseOptions(stanceKeyNow) {
+  function computeBaseOptions(stanceKeyNow, gKeyNow) {
     const noCharge = MELEE_STANCES[stanceKeyNow]?.noCharge === true;
+    const gDefNow = GRIPS[gKeyNow] ? gripEffects(gKeyNow, gKeyNow !== primGrip) : null;
+    const cheapShotActive = !!(wp.cheapShot || gDefNow?.addProps?.includes("cheapShot"));
     return Object.entries(MELEE_BASES).map(([key, def]) => {
       let allowed = !fullAttackForced || key === "fullatk";
       let reason = "";
+      if (allowed && cheapShotActive && key !== "standard") {
+        allowed = false;
+        reason = "Запрещённый Приём (Cheap Shot): только Стандартная Атака, тратит Реакцию";
+      }
       if (allowed && def.requiresMount && !isMounted) { allowed = false; reason = "Только верхом на байке/скакуне"; }
       if (allowed && noCharge && key === "charge") { allowed = false; reason = "Недоступно в Стойке «Частокол»"; }
       return { key, label: def.label, allowed, reason };
@@ -511,17 +520,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const stDef     = MELEE_STANCES[stanceKey] || MELEE_STANCES.standard;
     const stanceBon = isMelee ? (stDef.wsBonus ?? 0) : 0;
 
-    const baseKey = fullAttackForced ? "fullatk" : (sel.baseKey ?? meleeBaseKey);
+    const gKey = sel.gripKey ?? gripKey;
+    const gDef = GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null;
+    const gWs  = gDef ? gDef.ws : 0;
+
+    // Запрещённый Приём (Cheap Shot, стр. 166): тратит Реакцию вместо
+    // действия, но «считается Стандартной Атакой» — База принудительно
+    // становится standard, как fullAttackForced принудительно ставит fullatk.
+    const cheapShotActive = isMelee && !!(wp.cheapShot || gDef?.addProps?.includes("cheapShot"));
+
+    const baseKey = fullAttackForced ? "fullatk" : (cheapShotActive ? "standard" : (sel.baseKey ?? meleeBaseKey));
     const bDef    = MELEE_BASES[baseKey] || MELEE_BASES.standard;
     const baseBon = isMelee ? (bDef.wsBonus ?? 0) : 0;
 
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
     const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
     const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) : 0;
-
-    const gKey = sel.gripKey ?? gripKey;
-    const gDef = GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null;
-    const gWs  = gDef ? gDef.ws : 0;
 
     const pIdx = sel.profIdx ?? profIdx;
     const prof = (pIdx >= 0) ? (atkProfiles[pIdx] || null) : null;
@@ -542,6 +556,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     return {
       stanceKey, stDef, stanceBon, baseKey, bDef, baseBon,
       maneuverKey, mDef, maneuverBon, gKey, gDef, gWs, pIdx, prof,
+      cheapShotActive,
       techBon: baseBon + maneuverBon, targetDodgeMod, targetParryMod, blocked, note
     };
   }
@@ -561,7 +576,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const fix = {};
     if (!ok(computeStanceOptions(sel.pIdx), sel.stanceKey)) fix.stanceKey = "standard";
     const stanceKey = fix.stanceKey ?? sel.stanceKey;
-    if (!ok(computeBaseOptions(stanceKey), sel.baseKey)) fix.baseKey = "standard";
+    if (!ok(computeBaseOptions(stanceKey, sel.gKey), sel.baseKey)) fix.baseKey = "standard";
     const baseKey = fix.baseKey ?? sel.baseKey;
     if (!ok(computeManeuverOptions(baseKey, sel.pIdx), sel.maneuverKey)) fix.maneuverKey = "standard";
     if (gripList.length && !ok(computeGripOptions(sel.pIdx), sel.gKey)) fix.gripKey = primGrip;
@@ -575,7 +590,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ? `<span class="atk-stance-badge">${rollIcon("sword")}Стойка: ${sel.stanceBon >= 0 ? "+" : ""}${sel.stanceBon}</span>`
       : "";
     const baseBadge = isMelee
-      ? `<span class="atk-base-badge">${rollIcon("sword")}База: ${sel.bDef?.label ?? "Стандартная Атака"} (${sel.baseBon >= 0 ? "+" : ""}${sel.baseBon})${fullAttackForced ? " — Локус Сокрушения" : ""}</span>`
+      ? `<span class="atk-base-badge">${rollIcon("sword")}База: ${sel.bDef?.label ?? "Стандартная Атака"} (${sel.baseBon >= 0 ? "+" : ""}${sel.baseBon})${fullAttackForced ? " — Локус Сокрушения" : (sel.cheapShotActive ? " — Запрещённый Приём: тратит Реакцию" : "")}</span>`
       : "";
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
@@ -1023,7 +1038,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const baseBlockHtml = isMelee ? `
     <div class="av-section">
       <div class="av-sec-lbl">База</div>
-      <div class="av-pills" id="atk-base-pills">${pillsHtml("atk-base", computeBaseOptions(dyn0.stanceKey), dyn0.baseKey)}</div>
+      <div class="av-pills" id="atk-base-pills">${pillsHtml("atk-base", computeBaseOptions(dyn0.stanceKey, dyn0.gKey), dyn0.baseKey)}</div>
       <div class="av-opt-note" id="atk-base-note">${dyn0.bDef.note}</div>
     </div>` : "";
   const gripBlockHtml = (isMelee && gripList.length > 1) ? `
@@ -1102,7 +1117,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="av-row">
         <label>Штраф стрельбы с седла</label>
         <input id="atk-mount-ranged" class="av-input av-num" type="number" value="${autoMountRangedMod}"
-               title="Авто по скорости скакуна/байка на панели «ВЕРХОМ» — для Интегрированного Оружия (0) или турели Коляски (сниженный штраф) поправьте вручную"/>
+               title="Авто по скорости скакуна/байка на панели «ВЕРХОМ» (0 при Гиро-Стабилизированном) — для Интегрированного Оружия (0) или турели Коляски (сниженный штраф) поправьте вручную"/>
       </div>` : ""}
 
       ${techSectionsHtml}
@@ -1272,10 +1287,21 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           // Атака и т.п. уже несут это поле. Стрелковые режимы (rofModes)
           // пока не несут своего actionType (нерешённая часть wdbc-niv7,
           // не связанная с Движением) — для них ОД сознательно не тратятся.
-          const apCost = isMelee ? apCostForActionType(sel.bDef.actionType) : 0;
-          if (!await spendActionPoints(actor, apCost)) {
-            ui.notifications.warn("⚠️ Не хватает ОД.");
-            return false;
+          // Запрещённый Приём (Cheap Shot, стр. 166, wdbc-hmcx): вместо ОД
+          // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
+          // "standard" (resolveSelection), здесь остаётся только сменить
+          // ресурс списания на тот же spendReaction, что у Уклонения/Парирования.
+          if (isMelee && sel.cheapShotActive) {
+            if (!await spendReaction(actor)) {
+              ui.notifications.warn("⚠️ Не хватает Реакций (Запрещённый Приём).");
+              return false;
+            }
+          } else {
+            const apCost = isMelee ? apCostForActionType(sel.bDef.actionType) : 0;
+            if (!await spendActionPoints(actor, apCost)) {
+              ui.notifications.warn("⚠️ Не хватает ОД.");
+              return false;
+            }
           }
 
           // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
@@ -1382,6 +1408,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       let lastStanceKey = dyn0.stanceKey;
       let lastBaseKey   = dyn0.baseKey;
       let lastProfIdx   = dyn0.pIdx;
+      let lastGKey      = dyn0.gKey;
 
       const updateTotal = () => {
         const f = readAttackForm(form, ammoConds);
@@ -1394,12 +1421,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         if (stanceNoteEl)   stanceNoteEl.innerHTML   = sel.stDef.note;
         if (baseNoteEl)     baseNoteEl.innerHTML     = sel.bDef.note;
         if (maneuverNoteEl) maneuverNoteEl.innerHTML = sel.mDef.note;
-        // База зависит от выбранной Стойки (Частокол запрещает Натиск, стр. 15) —
-        // перерисовываем пилюли только когда Стойка реально поменялась, чтобы
-        // не сбрасывать фокус на каждый несвязанный ввод в форме.
-        if (basePillsEl && sel.stanceKey !== lastStanceKey) {
+        // База зависит от выбранной Стойки (Частокол запрещает Натиск, стр. 15)
+        // И от Хвата (Хвост временно даёт Cheap Shot, см. computeBaseOptions) —
+        // перерисовываем пилюли только когда что-то из этого реально
+        // поменялось, чтобы не сбрасывать фокус на каждый несвязанный ввод.
+        if (basePillsEl && (sel.stanceKey !== lastStanceKey || sel.gKey !== lastGKey)) {
           lastStanceKey = sel.stanceKey;
-          basePillsEl.innerHTML = pillsHtml("atk-base", computeBaseOptions(sel.stanceKey), sel.baseKey);
+          lastGKey      = sel.gKey;
+          basePillsEl.innerHTML = pillsHtml("atk-base", computeBaseOptions(sel.stanceKey, sel.gKey), sel.baseKey);
         }
         // Смена Профиля меняет категорию оружия (у альт-профиля своя «голова»,
         // см. categoryFor выше) — вместе с ней и доступность Стойки/Хвата, а
