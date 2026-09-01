@@ -39,6 +39,7 @@ import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
+import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
@@ -1315,6 +1316,27 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+  });
+
+  // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
+  // wdbc-1rno: «Cor.b минут»/«Cor.b Раундов» у активируемых Мутаций вроде
+  // Трансформации Тумана/Пространственной Нестабильности) — в отличие от
+  // Песни Стремительности выше это НЕ «до конца боя», а конкретный
+  // worldTime-момент или номер Раунда, поэтому снимается на updateWorldTime
+  // И на смену Раунда, не на конец боя. Сканирует только комбатантов —
+  // temp-grant вне боя (истечение по worldTime у актора не в бою) отловит
+  // updateWorldTime-хук ниже отдельно.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM || changed?.round === undefined) return;
+    for (const combatant of combat.combatants ?? []) {
+      if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
+    }
+  });
+  Hooks.on("updateWorldTime", async () => {
+    if (!game.user.isGM) return;
+    for (const actor of game.actors ?? []) {
+      await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
+    }
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
