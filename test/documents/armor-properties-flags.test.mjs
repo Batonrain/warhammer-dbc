@@ -22,8 +22,8 @@ function armorItem({ id, head = 0, body = 0, leftArm = 0, rightArm = 0, leftLeg 
   };
 }
 
-function characterWith(items = []) {
-  const system = new ACTOR_DATA_MODELS.character({}).toObject();
+function characterWith(items = [], systemOverrides = {}) {
+  const system = { ...new ACTOR_DATA_MODELS.character({}).toObject(), ...systemOverrides };
   const list = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
   const actor = { type: "character", name: "Подставной", system, items: list, getFlag: () => undefined };
@@ -130,6 +130,20 @@ describe("system.absorption.propFlags", () => {
       armorItem({ id: "a1", head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, properties: ["sealed"] }),
       armorItem({ id: "a2", rightLeg: 1, properties: ["sealed"], breached: true })
     ]);
+    expect(system.sealedFullSuit).toBe(false);
+  });
+
+  it("Sealed+Wraithbone Regeneration в руках псайкера — пробитая часть всё равно считается закрытой (wdbc-8b5)", () => {
+    const full = { head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, rightLeg: 1,
+                    properties: ["sealed", "wraithboneRegen"], breached: true };
+    const system = characterWith([armorItem({ id: "a1", ...full })], { isPsyker: true });
+    expect(system.sealedFullSuit).toBe(true);
+  });
+
+  it("Sealed+Wraithbone Regeneration без псайкера-носителя — пробитая часть теряет Sealed как обычно (wdbc-8b5)", () => {
+    const full = { head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, rightLeg: 1,
+                    properties: ["sealed", "wraithboneRegen"], breached: true };
+    const system = characterWith([armorItem({ id: "a1", ...full })]);
     expect(system.sealedFullSuit).toBe(false);
   });
 });

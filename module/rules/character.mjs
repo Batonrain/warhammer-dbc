@@ -609,7 +609,14 @@ export function prepareCharacterDerived(actor, system) {
       }
       // Sealed «полным комплектом» (wdbc-8b5): локация закрыта непробитым
       // Sealed-предметом — считаем это ниже AND'ом по всем 6 локациям.
-      if ((s.properties || []).includes("sealed") && !s.breached) {
+      // Wraithbone Regeneration в руках псайкера (aeldari.json) не теряет
+      // Sealed при пробитии — та же оговорка, что у Void (rules/void-air.mjs).
+      // system.isPsyker — актора, который сейчас в prepareDerivedData (не
+      // item.parent.system: тот же документ, но ещё не факт, что уже
+      // проставлен во встроенном предмете на подставных тестовых акторах).
+      const armorIgnoresBreach = s.breached
+        && (s.properties || []).includes("wraithboneRegen") && !!system.isPsyker;
+      if ((s.properties || []).includes("sealed") && (!s.breached || armorIgnoresBreach)) {
         for (const k of Object.keys(ap)) { if (ap[k] > 0) sealedCoverage[k] = true; }
       }
 

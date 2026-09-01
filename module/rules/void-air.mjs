@@ -37,19 +37,30 @@ export function hasVoidSupply(item) {
 }
 
 /**
+ * Wraithbone Regeneration (wdbc-8b5, aeldari.json): «броня с этим свойством
+ * не теряет свойства Sealed и Void при пробитии», пока её носит псайкер
+ * (`system.isPsyker` — тот же флаг, что talent-targets.mjs::psyker.test).
+ * item.parent — актор-владелец у встроенного Foundry-документа.
+ */
+export function wraithboneRegenIgnoresBreach(item) {
+  return (item?.system?.properties ?? []).includes("wraithboneRegen") && !!item?.parent?.system?.isPsyker;
+}
+
+/**
  * Остаток запаса воздуха в секундах прямо сейчас. Пробитая броня (wdbc-k0ff)
- * теряет герметичность немедленно — 0 независимо от таймера. Не запущенный
- * таймер — полный запас (ничего ещё не тратилось).
+ * теряет герметичность немедленно — 0 независимо от таймера (кроме Wraithbone
+ * Regeneration в руках псайкера — см. выше). Не запущенный таймер — полный
+ * запас (ничего ещё не тратилось).
  */
 export function voidAirRemainingSeconds(item) {
-  if (item?.system?.breached) return 0;
+  if (item?.system?.breached && !wraithboneRegenIgnoresBreach(item)) return 0;
   const total = voidAirTotalHours(item?.system?.quality) * SECONDS_PER_HOUR;
   return supplyRemaining(supplyStartedAt(item, FLAG), game.time.worldTime, total);
 }
 
 /** Загерметизировать (начать расход запаса) — уже запущенный/пробитый таймер не трогает. */
 export async function sealVoidArmour(item) {
-  if (item?.system?.breached) return;
+  if (item?.system?.breached && !wraithboneRegenIgnoresBreach(item)) return;
   await startSupplyTimer(item, FLAG);
 }
 

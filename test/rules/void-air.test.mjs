@@ -8,13 +8,15 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import {
   voidAirTotalHours, hasVoidSupply, voidAirRemainingSeconds,
-  sealVoidArmour, refillVoidArmour, voidAirRemainingDisplay
+  sealVoidArmour, refillVoidArmour, voidAirRemainingDisplay,
+  wraithboneRegenIgnoresBreach
 } from "../../module/rules/void-air.mjs";
 
-function voidArmour({ quality = "common", breached = false, properties = ["void"] } = {}) {
+function voidArmour({ quality = "common", breached = false, properties = ["void"], parent = null } = {}) {
   const store = {};
   return {
     system: { quality, breached, properties },
+    parent,
     getFlag: (scope, key) => store[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; },
     unsetFlag: async (scope, key) => { delete store[`${scope}.${key}`]; }
@@ -71,6 +73,25 @@ describe("voidAirRemainingSeconds / sealVoidArmour / refillVoidArmour", () => {
     globalThis.game.time = { worldTime: 100000 };
     const item = voidArmour({ quality: "best", breached: true });
     await sealVoidArmour(item); // не должен даже запуститься
+    expect(voidAirRemainingSeconds(item)).toBe(0);
+  });
+
+  it("Wraithbone Regeneration в руках псайкера (wdbc-8b5): пробитая броня НЕ теряет запас", async () => {
+    globalThis.game.time = { worldTime: 100000 };
+    const item = voidArmour({
+      quality: "common", breached: true, properties: ["void", "wraithboneRegen"],
+      parent: { system: { isPsyker: true } }
+    });
+    await sealVoidArmour(item);
+    globalThis.game.time = { worldTime: 100000 + 3600 };
+    expect(voidAirRemainingSeconds(item)).toBe(5 * 3600);
+  });
+
+  it("Wraithbone Regeneration без псайкера-носителя — пробитая броня теряет запас как обычно", () => {
+    const item = voidArmour({
+      breached: true, properties: ["void", "wraithboneRegen"],
+      parent: { system: { isPsyker: false } }
+    });
     expect(voidAirRemainingSeconds(item)).toBe(0);
   });
 
