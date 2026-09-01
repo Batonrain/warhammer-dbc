@@ -34,7 +34,7 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
-import { sanityMax, madnessLevels } from "./dreadnought.mjs";
+import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG } from "./dreadnought.mjs";
 import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -360,6 +360,22 @@ export function prepareCharacterDerived(actor, system) {
     const pathPassives = computePathPassives(system.paths);
     system.pathCharBonus = pathPassives.charBonus;
 
+    // ── Саркофаг Дредноута: рейтинги Сверхъестественного (стр. 57, wdbc-drn) ──
+    // «Уменьшает рейтинг Unnatural S на 4, T на 2» — не плоский модификатор
+    // (пилот без Сверхъестественной Силы не должен уйти в минус), а срез уже
+    // накопленного traitCharBonus/pathCharBonus этим же циклом; Unnatural W —
+    // обычная прибавка. Флаг тот же, что раздаёт сама возможность (module/
+    // rules/sources.mjs — источник "dreadnought"), других мест, где решается
+    // «пилот ли это», нет.
+    if (hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)) {
+      const haveS = (traitCharBonus.s || 0) + (pathPassives.charBonus.s || 0);
+      const haveT = (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
+      const delta = sarcophagusCharDelta({ s: haveS, t: haveT });
+      traitCharBonus.s  = (traitCharBonus.s  || 0) + delta.s;
+      traitCharBonus.t  = (traitCharBonus.t  || 0) + delta.t;
+      traitCharBonus.wp = (traitCharBonus.wp || 0) + delta.wp;
+    }
+
     // ── Бонусы от надетой брони к характеристикам ───────────────────────────
     // Силовая броня → +S; Аспектная броня Аэльдари → +S и +W (Сила Воли).
     // Прибавляются к значению характеристики (total), пока броня надета.
@@ -402,6 +418,9 @@ export function prepareCharacterDerived(actor, system) {
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
+      // Саркофаг Дредноута (стр. 57, wdbc-drn): не нуждается в еде и воде
+      // (Голод/Жажда), но Сон капабилити не упоминает — тот дебафф остаётся.
+      if (hasRuleFlag(actor, "sarcophagus.noFoodWaterAir")) { eff.hunger = 0; eff.thirst = 0; }
       return eff;
     })()) : {};
     for (const [key, char] of Object.entries(chars)) {

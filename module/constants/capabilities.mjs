@@ -221,7 +221,8 @@ export const CAPABILITIES = {
   // пилотом; читатели — там, где книга их применяет.
   "sarcophagus.autoPassFear": {
     label: "Автоматически проходит тесты Страха, Подавления и Запугивания",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/combat/fear.mjs — _executeFearRoll (только тест Страха; Подавление/Запугивание идут другими путями, не подключено)"
   },
   "sarcophagus.immuneBleedingFatigue": {
     label: "Иммунен к Кровотечению и Усталости",
