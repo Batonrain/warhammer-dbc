@@ -8,9 +8,17 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
+import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { useCancerousHealing, syncCancerousHealingPenalty, cancerousHealingButtonHtml,
          reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
   from "../../module/apps/cancerous-healing.mjs";
+
+/** Ведёт диалог «Цель согласна» (promptTouch) до конца: жмёт «Коснуться». */
+async function acceptTouch(promise, { consent = true, ws = 0, mod = 0 } = {}) {
+  expect(captured.dialog).toBeTruthy();
+  await captured.press("ok", fakeForm({ "#ch-consent": consent, "#ch-ws": String(ws), "#ch-mod": String(mod) }));
+  return promise;
+}
 
 function fakeEffect(data, ownerEffects) {
   const fx = {
@@ -54,6 +62,7 @@ function fakeMutation() {
 describe("useCancerousHealing", () => {
   let caster, target, mutation;
   beforeEach(() => {
+    resetCaptured();
     caster = { name: "Целитель" };
     target = fakeActor({ value: 4, max: 10, conditions: { bleeding: true, bleedingLevel: 2, crippling: true } });
     mutation = fakeMutation();
@@ -66,8 +75,16 @@ describe("useCancerousHealing", () => {
     expect(target.system.wounds.ablative).toBe(0);
   });
 
+  it("отмена диалога — ничего не меняет", async () => {
+    const promise = useCancerousHealing(caster, mutation);
+    expect(captured.dialog).toBeTruthy();
+    captured.dismiss();
+    await promise;
+    expect(target.system.wounds.ablative).toBe(0);
+  });
+
   it("даёт недостающие Раны аблативом (и ablativeMax), лечит Кровотечение/Crippling, ставит штраф-эффект", async () => {
-    await useCancerousHealing(caster, mutation);
+    await acceptTouch(useCancerousHealing(caster, mutation), { consent: true });
     expect(target.system.wounds.ablative).toBe(6); // 10-4
     expect(target.system.wounds.ablativeMax).toBe(6);
     expect(target.getFlag("warhammer-dbc", "cancerousHealingAblative")).toBe(6);
@@ -84,12 +101,45 @@ describe("useCancerousHealing", () => {
   });
 
   it("повторное касание заменяет прошлую долю, не складывая её саму с собой", async () => {
-    await useCancerousHealing(caster, mutation); // доля 6
+    await acceptTouch(useCancerousHealing(caster, mutation)); // доля 6
     target.system.wounds.value = 7; // подлечился где-то ещё, missing 3
-    await useCancerousHealing(caster, mutation);
+    await acceptTouch(useCancerousHealing(caster, mutation));
     expect(target.system.wounds.ablative).toBe(3);
     expect(target.system.wounds.ablativeMax).toBe(3);
     expect(target.getFlag("warhammer-dbc", "cancerousHealingAblative")).toBe(3);
+  });
+});
+
+describe("useCancerousHealing: цель не согласна — безоружная атака", () => {
+  let caster, target, mutation;
+  beforeEach(() => {
+    resetCaptured();
+    caster = { name: "Целитель", system: { characteristics: { ws: { total: 45 } } } };
+    target = fakeActor({ value: 4, max: 10 });
+    mutation = fakeMutation();
+    globalThis.game.user.targets = [{ actor: target }];
+  });
+
+  it("успешная атака — эффект применяется, в чате отмечено «навязано»", async () => {
+    captured.dice = null;
+    captured.nextRoll = 30; // ≤ порога 45
+    const promise = useCancerousHealing(caster, mutation);
+    await captured.press("ok", fakeForm({ "#ch-consent": false, "#ch-ws": "45", "#ch-mod": "0" }));
+    await promise;
+
+    expect(target.system.wounds.ablative).toBe(6);
+    expect(captured.chat.some(c => c.content.includes("Раковое Исцеление") && c.content.includes("навязано"))).toBe(true);
+  });
+
+  it("провал атаки — эффект НЕ применяется", async () => {
+    captured.dice = null;
+    captured.nextRoll = 90; // > порога 45
+    const promise = useCancerousHealing(caster, mutation);
+    await captured.press("ok", fakeForm({ "#ch-consent": false, "#ch-ws": "45", "#ch-mod": "0" }));
+    await promise;
+
+    expect(target.system.wounds.ablative).toBe(0);
+    expect(target.getFlag("warhammer-dbc", "cancerousHealingAblative")).toBeUndefined();
   });
 });
 

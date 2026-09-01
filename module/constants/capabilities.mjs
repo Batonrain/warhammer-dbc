@@ -6158,9 +6158,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.cancerousHealing": {
-    label: "Полное действие: касание раненого (текущая цель game.user.targets) лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S (Значение, .totalFx — сверено с книгой) за каждую, живой ActiveEffect на цели, считает только СВОЮ долю пула",
+    label: "Полное действие: касание раненого (текущая цель game.user.targets) — диалог «Цель согласна», без согласия требует безоружной атаки (WS+модификатор); лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S (Значение, .totalFx — сверено с книгой) за каждую, считает только СВОЮ долю пула",
     source: "Дар Нургл (Cancerous Healing)",
-    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (кнопка на листе Мутации, useCancerousHealing/syncCancerousHealingPenalty — читает флаг cancerousHealingAblative, не весь system.wounds.ablative), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф и долю"
+    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (promptTouch/resolveUnarmedTouch/useCancerousHealing/syncCancerousHealingPenalty — читает флаг cancerousHealingAblative, не весь system.wounds.ablative), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф и долю"
   },
   "gift.nurgle.castOutOfDeath": {
     label: "Не может умереть от Критического Эффекта (эффект применяется в остальном); уничтоженные части тела регенерируют за 7ч до минимально функционального состояния",
