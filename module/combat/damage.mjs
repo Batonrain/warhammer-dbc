@@ -388,6 +388,13 @@ export async function applyDamageToActor(actor, damageData) {
 
   // ── Расчёт поглощения ─────────────────────────────────────────────────────
   const system    = actor.system;
+
+  // Sealed «полным комплектом» (стр. 228, wdbc-8b5): полный иммунитет к
+  // химическому урону по коже, пока не пробита ни одна из 6 закрывающих
+  // локаций (rules/character.mjs::sealedFullSuit). Проверяется раньше щита
+  // не нужно — если щит уже заблокировал попадание, сюда не дойдём вовсе.
+  if (damageType === "chemical" && system.sealedFullSuit) return;
+
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
 

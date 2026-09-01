@@ -145,14 +145,27 @@ export const ARMOR_PROPERTIES = {
   cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций.", auto: { frontArcNoProtect: true } },
   conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона.", auto: { noApVsType: "energy" } },
   flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий.", auto: { doubleApVsType: "blast" } },
-  gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном попадании в голову — бросок 1d10." },
+  // rating: X — порог 1d10 (см. desc), на X+ случайное попадание в голову
+  // переносится в Торс. Хранится в system.propRatings.gorget (armor.mjs) —
+  // тот же свободный реестр, что и у Protective. Само использование в бою —
+  // кнопка на карточке атаки (combat/attack.mjs::gorget/combat/attack-card.mjs,
+  // wdbc-8b5).
+  gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном (не Избирательном) попадании в голову можно бросить 1d10, и на X+ перенести попадание в Торс.", rating: true, auto: { gorget: true } },
   hard:       { label: "Hard / Жёсткая",          desc: "Нельзя снимать, не оставляя Усталость. Нельзя носить 2 жёстких на одной части." },
   heavy:      { label: "Heavy / Тяжёлая",         desc: "−10 к Stealth. Нельзя плавать.", auto: { skillMod: { stealth: -10 } } },
   open:       { label: "Open / Открытый",          desc: "Шлем. Нет визора. Избирательные атаки в лицо игнорируют AP.", auto: { noApEyeCalled: true } },
   primitive:  { label: "Primitive / Примитивная", desc: "Не получает бонус AP от примитивного оружия.", auto: { blocksPrimitiveDouble: true } },
-  protective: { label: "Protective / Защитная",   desc: "+X AP против урона от среды." },
+  // rating: X — +X AP против урона от среды (DAMAGE_TYPES.chemical уже есть в
+  // системе — читается как noApVsType/vsTypeBonus-подобная надбавка ниже, но
+  // ЗНАКОМ наоборот: не «−AP», а «+X AP» этому конкретному типу, поэтому свой
+  // отдельный auto-ключ propertyApBonusVsType, не noApVsType/doubleApVsType).
+  protective: { label: "Protective / Защитная",   desc: "+X AP против урона от среды (химия/радиация/осколки — DAMAGE_TYPES.chemical).", rating: true, auto: { apBonusVsType: "chemical" } },
   rods:       { label: "Rods / Стержни",           desc: "Не даёт AP против стрелковых атак и Избирательных попаданий в сочленения.", auto: { noApRanged: true, noApJointCalled: true } },
-  sealed:     { label: "Sealed / Закрытая",        desc: "Защита от химии на коже. Теряется при пробитии брони." },
+  // «Полный комплект» (все 6 локаций закрыты небронированной сквозной дырой)
+  // даёт полный иммунитет к химическому урону по коже, пока не пробита ни одна
+  // из закрывающих частей (стр. 228). Актор-уровневый флаг, не per-loc AP —
+  // см. rules/character.mjs::sealedFullSuit, combat/damage.mjs.
+  sealed:     { label: "Sealed / Закрытая",        desc: "Полный комплект даёт иммунитет к химическому урону, действующему на кожу (DAMAGE_TYPES.chemical). Теряется, как только пробита любая закрывающая часть." },
   stealthed:  { label: "Stealthed / Скрытная",    desc: "+10 к Stealth. Скрывает от тепловизора.", auto: { skillMod: { stealth: 10 } } },
   undersuit:  { label: "Undersuit / Подкладка",   desc: "Носится под другой бронёй." },
   soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact", noJointReduction: true } },

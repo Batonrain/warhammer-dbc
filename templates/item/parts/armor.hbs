@@ -115,6 +115,9 @@
       {{#each armorPropsActive as |p|}}
       <div class="wprop-chip" title="{{p.def.desc}}">
         <span class="wprop-name">{{p.def.label}}</span>
+        {{#if p.def.rating}}
+        <input type="number" class="aprop-rating" data-key="{{p.key}}" value="{{p.rating}}" min="0" title="Рейтинг X" style="width:36px;"/>
+        {{/if}}
         <button type="button" class="aprop-remove" data-action="apropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>
       {{/each}}
