@@ -4,10 +4,10 @@
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "Условие «не-тяжёлое оружие с модом Custom Grip на разгрузках» получает три разных бонуса (удобство/скорость перезарядки/надёжность/вес) — завязано на конкретный мод конкретного слота снаряжения, вне testMod.",
+    "notes": "Смоделировано (wdbc-1rno): +1 Надёжность (module/combat/weapon-mods.mjs::getModEffects) и ½ веса, окр.▼ (module/constants/rig.mjs), для не-тяжёлого стрелкового оружия с установленным модом Custom Grip («Персональный Хват»/Personal Grip) — детект в module/combat/fully-armed.mjs. НЕ смоделировано: −1 ОД к перезарядке (до ½) — system.reload свободная строка без числового движка экономии действий в системе.",
     "benefit": "Не-тяжёлое оружие с модом Custom Grip на разгрузках считается удобным; −1 ОД (до ½) к перезарядке, +1 надёжность и ½ веса такого оружия.",
     "source": "архетип",
-    "bookSource": "",
+    "bookSource": "DoomBC — Книга Аэльдари: Ответвления (архетип «Freelancer / Вольный Стрелок», Друкхари)",
     "hasRating": false,
     "rating": 0,
     "hasRating2": false,

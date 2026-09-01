@@ -18,6 +18,8 @@ import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
+import { determinationToFightReduction } from "../rules/determination-to-fight.mjs";
+import { justTheLightReduction } from "./just-the-light.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -451,7 +453,9 @@ export async function applyDamageToActor(actor, damageData) {
   // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от эффектов
   // (system.incomingDamageReduction, суммируется — см. _creature.mjs) —
   // отдельно от AP/T.b, пробитием не уменьшается.
-  const incomingReduction = Number(system.incomingDamageReduction) || 0;
+  const incomingReduction = (Number(system.incomingDamageReduction) || 0)
+    + determinationToFightReduction(actor)
+    + justTheLightReduction(actor);
 
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше

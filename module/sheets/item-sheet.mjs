@@ -1130,6 +1130,11 @@ export class WarhammerItemSheet
         .map(k => ({ key: k, def: WEAPON_PROPERTIES[k] }))
         .filter(p => p.def);
       context.modRemovePropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !remKeys.has(d.key));
+
+      // Подстройка под персонажа (wdbc-1rno, Custom Grip): список всех
+      // акторов мира — модификация может путешествовать с оружием на другого
+      // владельца, а "подстроена под" должно пережить эту передачу.
+      context.modFittedToChoices = (game.actors ?? []).map(a => ({ id: a.id, name: a.name }));
     }
 
     // ── Фракция: вышестоящая, показанная фишкой ─────────────────────────────

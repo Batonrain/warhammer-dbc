@@ -53,6 +53,13 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
         hipFireSemiMod:       new NumberField({ initial: 0, nullable: false, label: "От бедра: короткая очередь" }),
         hipFireFullMod:       new NumberField({ initial: 0, nullable: false, label: "От бедра: длинная очередь" }),
         hipFireSuppressionMod: new NumberField({ initial: 0, nullable: false, label: "От бедра: подавление" }),
+        // Подстройка под конкретного персонажа (wdbc-1rno, Custom Grip):
+        // fittedToId — id актора, под которого подстроена модификация;
+        // fittedBonus — ± к Атаке (attackMod) для него, зеркальный штраф всем
+        // остальным. Пусто по умолчанию — до подстройки бонус не действует
+        // ни для кого (модификация просто установлена, ещё не подогнана).
+        fittedToId:     new StringField({ initial: "", label: "Подстроена под" }),
+        fittedBonus:    new NumberField({ initial: 0, nullable: false, label: "Бонус подстройки (±)" }),
         addProps:        props("Добавляет свойства"),
         removeProps:     props("Снимает свойства"),
         mechAddProps:    props("Добавляет свойства (механикум)"),

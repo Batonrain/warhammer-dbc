@@ -129,6 +129,7 @@ const TYPES = {
         balanceMod: 0, weightPct: 0,
         grantsGrip: "", gripRangeMult: 1,
         hipFireSemiMod: 0, hipFireFullMod: 0, hipFireSuppressionMod: 0,
+        fittedToId: "", fittedBonus: 0,
         addProps: [], removeProps: [], mechAddProps: [], mechRemoveProps: []
       },
       drukhari: false

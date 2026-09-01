@@ -4,6 +4,8 @@
 //  Модификация — Item типа "weaponMod" с system.installedOn = id оружия.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { fullyArmedReliabilityBonus } from "./fully-armed.mjs";
+
 /** Все установленные на данное оружие модификации (среди предметов актора). */
 export function getInstalledMods(actor, weapon) {
   if (!actor || !weapon) return [];
@@ -35,6 +37,12 @@ export function getModEffects(actor, weapon) {
   for (const mod of getInstalledMods(actor, weapon)) {
     const e = mod.system.effects || {};
     fx.attackMod      += e.attackMod      || 0;
+    // Подстройка под конкретного персонажа (Custom Grip и т.п.): бонус только
+    // для актора, под которого модификация подстроена, зеркальный штраф всем
+    // прочим. Пустой fittedToId — ещё не подстроена, бонус не действует.
+    if (e.fittedToId) {
+      fx.attackMod += (e.fittedToId === actor.id ? 1 : -1) * (Number(e.fittedBonus) || 0);
+    }
     fx.damageMod      += e.damageMod      || 0;
     fx.penMod         += e.penMod         || 0;
     fx.rangeMod       += e.rangeMod       || 0;
@@ -88,6 +96,12 @@ export function getModEffects(actor, weapon) {
     for (const p of (wb.addProps || [])) fx.addProps.push(p);
     fx.names.push(talent.name);
   }
+
+  // Fully Armed / Во Всеоружии (Черта, wdbc-1rno) — +1 Надёжность для
+  // не-тяжёлого стрелкового оружия с установленным Custom Grip (см.
+  // module/combat/fully-armed.mjs; вес — отдельно, в module/constants/rig.mjs).
+  fx.reliabilityMod += fullyArmedReliabilityBonus(actor, weapon);
+
   return fx;
 }
 

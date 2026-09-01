@@ -128,6 +128,25 @@ describe("resetActionEconomy", () => {
     expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
   });
 
+  // Snapshot/Выстрел Навскидку (wdbc-1rno, movement-actions.mjs,
+  // markMoveDegreeThisTurn): категория «сколько подвигался» тоже начинается
+  // заново с каждым Ходом этого актора, тем же тактом, что и movedThisTurn.
+  it("снимает флаг «категория движения в этом Ходу» (Snapshot — movement-actions.mjs)", async () => {
+    const actor = actorFor();
+    await actor.setFlag("warhammer-dbc", "moveDegreeThisTurn", "full");
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBeUndefined();
+  });
+
+  // Just the Light/Лишь Свет (wdbc-1rno, combat/just-the-light.mjs): щит
+  // живёт «до начала следующего Хода» — тот же приём, что running/exposedAggressive.
+  it("снимает флаг щита Лишь Свет (Just the Light — combat/just-the-light.mjs)", async () => {
+    const actor = actorFor();
+    await actor.setFlag("warhammer-dbc", "justTheLightActive", true);
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "justTheLightActive")).toBeUndefined();
+  });
+
   it("Орда/техника — ничего не делает", async () => {
     const actor = actorFor({ type: "horde", actionPoints: { value: 0, max: 2 } });
     await resetActionEconomy(actor);
