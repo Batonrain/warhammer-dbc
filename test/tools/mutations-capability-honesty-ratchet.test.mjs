@@ -150,6 +150,15 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // (+½Cor(окр.▲) соц., formula, исключения — подпись галочки), Progenitor
     // (+30 соц. + +30 встречные психосил/психоатак, обе — с прямыми
     // потомками, подпись галочки), Spellwise (переброс Пси-чутья, kind:"reroll").
-    expect(stubOnly.length).toBeLessThanOrEqual(117);
+    // Третий проход (по просьбе пользователя, «Доделай» -> «Активные
+    // способности через kind:"script"»): Mist Transformation/Трансформация
+    // Тумана и Spatial Instability/Пространственная Нестабильность — ручная
+    // кнопка «▶ Запустить» клонирует Incorporeal(+Flyer) из пака Черт;
+    // частота/длительность/побочные эффекты НЕ автоматизированы (см.
+    // capabilities.mjs). Не проверено живьём в Foundry — мир не был запущен
+    // на момент правки, только синтаксис (AsyncFunction-парсинг тем же
+    // конструктором, что executeItemCode) и структура/паттерн (тот же приём
+    // поиска по пaку, что apps/homeworlds.mjs::buildTraits).
+    expect(stubOnly.length).toBeLessThanOrEqual(115);
   });
 });
