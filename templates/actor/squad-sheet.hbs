@@ -297,7 +297,8 @@
         </div>
         {{/if}}
         <div class="sq-actions">
-          <button type="button" class="sq-btn sq-btn-roll sq-short-roll" data-action="shortRoll"><i class="fas fa-dice-d10"></i> Отдать Короткую Команду</button>
+          <button type="button" class="sq-btn sq-btn-roll sq-short-roll" data-action="shortRoll"
+                  {{#if shortApGate.disabled}}disabled{{/if}} title="{{shortApGate.title}}"><i class="fas fa-dice-d10"></i> Отдать Короткую Команду</button>
           {{#if shortActive}}<button type="button" class="sq-btn sq-short-off" data-action="shortOff"><i class="fas fa-power-off"></i> Снять</button>{{/if}}
         </div>
         <ul class="sq-limits">
@@ -331,7 +332,8 @@
           {{/each}}
         </div>
         <div class="sq-actions">
-          <button type="button" class="sq-btn sq-btn-roll sq-detail-roll" data-action="detailRoll"><i class="fas fa-dice-d10"></i> Отдать Детальную Команду</button>
+          <button type="button" class="sq-btn sq-btn-roll sq-detail-roll" data-action="detailRoll"
+                  {{#if detailApGate.disabled}}disabled{{/if}} title="{{detailApGate.title}}"><i class="fas fa-dice-d10"></i> Отдать Детальную Команду</button>
           {{#if detailActive}}<button type="button" class="sq-btn sq-detail-off" data-action="detailOff"><i class="fas fa-power-off"></i> Снять</button>{{/if}}
         </div>
       </div>

@@ -167,6 +167,103 @@ describe("_executeCommand: Чумной Пастырь (wdbc-w8ws)", () => {
   });
 });
 
+describe("_executeCommand: экономика действий Команд (wdbc-w8ws)", () => {
+  afterEach(() => { globalThis.game.combat = undefined; });
+
+  function commanderWithAp(ap = 2, over = {}) {
+    const cmd = commanderPers(over);
+    cmd.system.actionPoints = { value: ap, max: 2 };
+    cmd.update = async data => {
+      for (const [path, v] of Object.entries(data)) {
+        const parts = path.split(".");
+        let obj = cmd;
+        for (let i = 0; i < parts.length - 1; i++) obj = (obj[parts[i]] ??= {});
+        obj[parts.at(-1)] = v;
+      }
+    };
+    return cmd;
+  }
+
+  it("Короткая Команда списывает 1 ОД (Полудействие)", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderWithAp(2);
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50, { shortKey: "inspire" });
+    expect(cmdDoc.system.actionPoints.value).toBe(1);
+  });
+
+  it("Детальная Команда списывает 2 ОД (Полное действие)", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderWithAp(2);
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "detail", "commander", 50, {});
+    expect(cmdDoc.system.actionPoints.value).toBe(0);
+  });
+
+  it("не хватает ОД — предупреждает, бросок не происходит вовсе", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderWithAp(0);
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50, { shortKey: "inspire" });
+    expect(captured.chat).toHaveLength(0);
+    expect(cmdDoc.system.actionPoints.value).toBe(0);
+  });
+
+  it("Командное Присутствие всегда свободно — ОД не проверяется и не списывается", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderWithAp(0);
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "presence", "commander", 50, {});
+    expect(cmdDoc.system.actionPoints.value).toBe(0);
+    expect(captured.chat.length).toBeGreaterThan(0);
+  });
+
+  it("вне активного Encounter — ОД не проверяются вовсе (game.combat не started)", async () => {
+    const cmdDoc = commanderWithAp(0);
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50, { shortKey: "inspire" });
+    expect(captured.chat.length).toBeGreaterThan(0);
+  });
+
+  it("Чумной Пастырь: заражённый Командир + все заражённые подчинённые — Короткая Команда бесплатна", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderWithAp(0, { infected: true });
+    const nurglite = memberDoc({ uuid: "Actor.n1", infected: true });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.n1": nurglite });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m1", uuid: "Actor.n1", name: nurglite.name, type: "character" }]
+    });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50, { shortKey: "inspire" });
+    expect(captured.chat.length).toBeGreaterThan(0); // бросок случился, несмотря на 0 ОД
+  });
+
+  it("Чумной Пастырь: Детальная Команда становится Полудействием (1 ОД, не 2)", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderWithAp(1, { infected: true });
+    const nurglite = memberDoc({ uuid: "Actor.n2", infected: true });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.n2": nurglite });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m2", uuid: "Actor.n2", name: nurglite.name, type: "character" }]
+    });
+    captured.nextRoll = 10;
+    await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "detail", "commander", 50, {});
+    expect(cmdDoc.system.actionPoints.value).toBe(0); // 1 ОД, не 2 — хватило
+  });
+});
+
 describe("_prepareContext: Чумной Пастырь — Короткая/Детальная Команда дешевле при заражении (wdbc-w8ws)", () => {
   it("командир и все подчинённые заражены — плагueShepherdFreeCommand true", async () => {
     const cmdDoc = commanderPers({ infected: true });
@@ -218,5 +315,51 @@ describe("_prepareContext: Чумной Пастырь — Короткая/Де
     });
     const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
     expect(ctx.plagueShepherdFreeCommand).toBe(false);
+  });
+
+  afterEach(() => { globalThis.game.combat = undefined; });
+
+  it("гейт кнопок отражает нехватку ОД у активного Командира", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderPers();
+    cmdDoc.system.actionPoints = { value: 0, max: 2 };
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.shortApGate.disabled).toBe(true);
+    expect(ctx.detailApGate.disabled).toBe(true);
+  });
+
+  it("гейт кнопок открыт, когда ОД хватает", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderPers();
+    cmdDoc.system.actionPoints = { value: 2, max: 2 };
+    resolveAs({ "Actor.cmd": cmdDoc });
+    const actor = squadActor({ posts: { commander: { uuid: "Actor.cmd" } } });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.shortApGate.disabled).toBe(false);
+    expect(ctx.detailApGate.disabled).toBe(false);
+  });
+
+  it("Чумной Пастырь (все заражены) — Детальная Команда проходит гейт даже с 1 ОД", async () => {
+    globalThis.game.combat = { started: true };
+    const cmdDoc = commanderPers({ infected: true });
+    cmdDoc.system.actionPoints = { value: 1, max: 2 };
+    const m1 = memberDoc({ uuid: "Actor.m7", infected: true });
+    resolveAs({ "Actor.cmd": cmdDoc, "Actor.m7": m1 });
+    const actor = squadActor({
+      posts: { commander: { uuid: "Actor.cmd" } },
+      members: [{ id: "m7", uuid: "Actor.m7", name: m1.name, type: "character" }]
+    });
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.detailApGate.disabled).toBe(false); // 1 ОД хватает на срезанное Полудействие
+  });
+
+  it("нет активного Командира вовсе — гейт не падает, кнопка открыта (нечего проверять)", async () => {
+    globalThis.game.combat = { started: true };
+    const actor = squadActor();
+    const ctx = await WarhammerSquadSheet.prototype._prepareContext.call(sheetLike(actor), {});
+    expect(ctx.shortApGate.disabled).toBe(false);
+    expect(ctx.detailApGate.disabled).toBe(false);
   });
 });
