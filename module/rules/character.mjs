@@ -535,6 +535,15 @@ export function prepareCharacterDerived(actor, system) {
     // чуть выше: поле не объявлено в схеме, но prepareDerivedData бесплатно
     // добавляет производные свойства поверх схемных.
     if (system.wounds) {
+      // Аблативный пул (wdbc-smy7) живёт только пока жив его источник:
+      // ablativeMax приходит ActiveEffect'ом записи Конструктора и исчезает
+      // вместе с ней (гейт по Ярости, снятая Мутация, истёкший эффект), а
+      // накопленное system.wounds.ablative в хранимых данных остаётся. Без
+      // клампа такой осиротевший пул поглощал бы урон вечно: rules/wounds.mjs
+      // списывает его обратно только при ablativeMax > 0. Тот же приём, что у
+      // sanity.value выше.
+      const abMax = Number(system.wounds.ablativeMax) || 0;
+      system.wounds.ablative = Math.max(0, Math.min(abMax, Number(system.wounds.ablative) || 0));
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
