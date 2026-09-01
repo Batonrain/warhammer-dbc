@@ -91,6 +91,9 @@ export async function resetActionEconomy(actor) {
     upd["system.reactions.defenseValue"] = defenseMaxBase + defenseBonus;
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
+  // Локус Неизбежности (wdbc-smc): штраф −10 живёт до начала СВОЕГО следующего
+  // Хода — снимается здесь же, тем же приёмом, что exposedAggressive/running.
+  if (actor.getFlag("warhammer-dbc", "inevitabilityPenalty")) upd["flags.warhammer-dbc.-=inevitabilityPenalty"] = null;
   // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
   // прошлого раунда» начинается заново с каждым Ходом этого актора.
   if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;

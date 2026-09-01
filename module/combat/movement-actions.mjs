@@ -37,6 +37,13 @@ import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
+
+// Локус Стремительности (стр. 29, wdbc-smc): бонусное полудействие, которое
+// можно потратить ТОЛЬКО на Движение (не на атаку/что-либо ещё) — раз в
+// Раунд, тот же троттлинг, что у technique.baseFullAttack (game-session.mjs).
+const BONUS_HALF_MOVE_CAPABILITY = "action.bonusHalfMove";
 
 /**
  * Достижимость SPD×N вокруг токена актора — честная подсветка клеток
@@ -109,12 +116,20 @@ async function _postCard(actor, content) {
 
 export async function declareHalfMove(actor) {
   if (!actor) return;
-  if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  const useBonus = hasRuleFlag(actor, BONUS_HALF_MOVE_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, BONUS_HALF_MOVE_CAPABILITY);
+  if (useBonus) {
+    await markRoundCapabilityUsed(actor, BONUS_HALF_MOVE_CAPABILITY);
+  } else if (!await spendActionPoints(actor, 1)) {
+    return ui.notifications.warn("⚠️ Не хватает ОД.");
+  }
   await markMovedThisTurn(actor);
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полудвижение</div>
-    <div class="roll-threshold">Полудействие (1 ОД). Перемещение до SPD×1.</div>
+    <div class="roll-threshold">${useBonus
+      ? "Бонусное полудействие (Локус Стремительности, 0 ОД)."
+      : "Полудействие (1 ОД)."} Перемещение до SPD×1.</div>
   </div>`);
 }
 
