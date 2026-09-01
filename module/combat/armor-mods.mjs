@@ -84,7 +84,10 @@ export function getArmorModEffects(actor, armor) {
     // maxAgilityMod сюда не относится: ключа эффекта у него нет, и миграция
     // мод с ним не помечает (LEGACY_ONLY_KEYS).
     const e = mod.getFlag("warhammer-dbc", "migratedEffect") ? {} : (mod.system.effects || {});
-    fx.apAll  += e.apAll  || 0;
+    // wdbc-bxw6: аблативная модификация («Аблативная», стр. 166) отдаёт свой
+    // ЖИВОЙ остаток заряда вместо статичного apAll — на 0 заряда бездействует,
+    // хотя предмет остаётся установленным (см. rules/ablative-ap.mjs).
+    fx.apAll  += mod.system.ablative ? (Number(mod.system.ablativeCharge) || 0) : (e.apAll || 0);
     fx.apHead += e.apHead || 0;
     fx.apBody += e.apBody || 0;
     fx.apArms += e.apArms || 0;
@@ -420,6 +423,24 @@ export async function promptDisabledArmourForkTest(actor) {
   });
   if (!choice) return; // закрыли без выбора — не пропускаем тест насильно, кнопка на листе останется
   await useDisabledArmourForkTest(actor, { skillKey: choice });
+}
+
+/**
+ * Все установленные и работающие (getInstalledArmorMods) аблативные моды со
+ * счётчиком > 0, по всем надетым доспехам актора разом — apAll действует на
+ * ВСЕ зоны сразу, поэтому счётчик один на предмет и списывается с ЛЮБОГО
+ * попадания по владельцу, а не по локации конкретного попадания
+ * (module/rules/ablative-ap.mjs, combat/damage.mjs::applyDamageToActor).
+ */
+export function activeAblativeArmorMods(actor) {
+  const mods = [];
+  for (const armor of actor?.items ?? []) {
+    if (armor.type !== "armor" || !armor.system?.equipped) continue;
+    for (const mod of getInstalledArmorMods(actor, armor)) {
+      if (mod.system?.ablative && (Number(mod.system?.ablativeCharge) || 0) > 0) mods.push(mod);
+    }
+  }
+  return mods;
 }
 
 /** AP-надбавка модификаций по локации (ключ поля брони). */

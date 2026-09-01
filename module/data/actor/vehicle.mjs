@@ -35,7 +35,15 @@ export class VehicleData extends foundry.abstract.TypeDataModel {
         front: num(0, "Лоб"), side: num(0, "Борт"), rear: num(0, "Корма")
       }, { label: "Броня" }),
       structure: new SchemaField({
-        value: num(0, "Текущая"), max: num(0, "Максимум"), critical: num(0, "Критические")
+        value: num(0, "Текущая"), max: num(0, "Максимум"), critical: num(0, "Критические"),
+        // wdbc-bxw6: Аблативная Структура (Минный Плуг — +20 против мин) —
+        // отдельный от обычной Структуры пул, теряет ровно 1 заряд с каждого
+        // ЗАСЧИТАННОГО попадания (см. module/rules/ablative-ap.mjs,
+        // combat/vehicle.mjs). Какие попадания засчитываются «от мин» — вне
+        // автоматики (в конвейере урона нет детектора мин), решает GM через
+        // damageData.fromMine.
+        ablative:    num(0, "Аблативная Структура (текущая)"),
+        ablativeMax: num(0, "Аблативная Структура (максимум)")
       }, { label: "Структура" }),
       ammoReloads:  num(10, "Боекомплект"),
       openTopped:   new BooleanField({ initial: false, label: "Открытый верх" }),

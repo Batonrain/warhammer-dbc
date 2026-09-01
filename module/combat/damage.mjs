@@ -18,6 +18,8 @@ import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
+import { activeAblativeArmorMods } from "./armor-mods.mjs";
+import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -390,6 +392,10 @@ export async function applyDamageToActor(actor, damageData) {
   const system    = actor.system;
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
+  // wdbc-bxw6: аблативный AP-щит (Роба Чемпиона и т.п., system.ablativeApShield)
+  // — плоская добавка к поглощению ЭТОГО попадания, читается ДО того, как то
+  // же попадание списывает с неё заряд (см. decrement ниже).
+  const ablativeShieldBefore = Number(system.ablativeApShield?.value) || 0;
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
@@ -413,7 +419,7 @@ export async function applyDamageToActor(actor, damageData) {
         ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
-    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP;
+    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore;
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;
@@ -445,8 +451,9 @@ export async function applyDamageToActor(actor, damageData) {
     if (lance && armorAP > 20) armorAP = 20;
     // Эффективный AP брони после пробития (мин. 0)
     effArmorAP = Math.max(0, armorAP - (penetration || 0));
-    // Итоговое поглощение = эффективный AP + T.b (всегда)
-    totalAbsorption = effArmorAP + tb;
+    // Итоговое поглощение = эффективный AP + T.b (всегда) + аблативный AP-щит
+    // (не подчиняется Пробитию/Копью — отдельный слой, не физическая броня).
+    totalAbsorption = effArmorAP + tb + ablativeShieldBefore;
   }
   // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от эффектов
   // (system.incomingDamageReduction, суммируется — см. _creature.mjs) —
@@ -461,6 +468,19 @@ export async function applyDamageToActor(actor, damageData) {
   // локации скомпрометирована. warpSoak не считается: варп-оружие обходит
   // броню целиком, а не проламывает её физически.
   if (rawNet > 0 && !warpSoak) await breachArmorAtLocation(actor, armorKey);
+
+  // wdbc-bxw6: аблативные AP-моды брони и аблативный AP-щит теряют ровно 1
+  // заряд с ЭТОГО попадания — независимо от нанесённого урона (rules/ablative-ap.mjs).
+  const ablativeMods = activeAblativeArmorMods(actor);
+  if (ablativeMods.length) {
+    await actor.updateEmbeddedDocuments("Item", ablativeMods.map(m => ({
+      _id: m.id, "system.ablativeCharge": ablativeApAfterHit(m.system.ablativeCharge)
+    })));
+  }
+  if (ablativeShieldBefore > 0) {
+    await actor.update({ "system.ablativeApShield.value": ablativeApAfterHit(ablativeShieldBefore) });
+  }
+
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 
@@ -518,11 +538,15 @@ export async function applyDamageToActor(actor, damageData) {
   const reductionNote = incomingReduction > 0
     ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${incomingReduction}</b></div>`
     : "";
+  const ablativeShieldNote = ablativeShieldBefore > 0
+    ? `<div class="dmg-tb-note">Аблативный AP-щит: +${ablativeShieldBefore} (остаток после попадания: ${ablativeApAfterHit(ablativeShieldBefore)})</div>`
+    : "";
 
   const armorBreakdown = warpSoak
     ? `<div class="dmg-absorption-detail">
         ${rollIcon("warp","#c98bff")}Варп-Оружие: игнор брони/T.b — поглощение = W.b <b>${totalAbsorption}</b>
         ${reductionNote}
+        ${ablativeShieldNote}
       </div>`
     : `<div class="dmg-absorption-detail">
         AP брони: <b>${armorAP}</b>
@@ -536,6 +560,7 @@ export async function applyDamageToActor(actor, damageData) {
           : ""}
         ${propNotes.length ? `<div class="dmg-tb-note">${propNotes.join(" · ")}</div>` : ""}
         ${reductionNote}
+        ${ablativeShieldNote}
       </div>`;
 
   const woundsLine = netDamage > 0
