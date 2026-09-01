@@ -8,9 +8,10 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { suppressionTestMod, rollSuppressionTest, rollSuppressionRecovery,
          postSuppressionRecoveryPrompt } from "../../module/combat/suppression.mjs";
+import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
 function actor({ wp = 40, pinned = false } = {}) {
   const a = {
@@ -96,6 +97,55 @@ describe("rollSuppressionRecovery", () => {
     const { success, threshold } = await rollSuppressionRecovery(a, { bonus: 30 });
     expect(threshold).toBe(70);
     expect(success).toBe(true);
+  });
+});
+
+describe("rollSuppressionTest: возможность sarcophagus.autoPassFear (wdbc-drn)", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("пилот Саркофага Дредноута автоматически проходит тест Подавления", async () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "sarcophagus.autoPassFear" }] }
+    ]);
+    captured.nextRoll = 90; // гарантированный провал без возможности
+    const a = actor({ wp: 40 });
+    const { success } = await rollSuppressionTest(a, { mod: 0 });
+    expect(success).toBe(true);
+    expect(a.system.conditions.pinned).toBe(false);
+  });
+
+  it("без возможности — тот же бросок проваливается как обычно", async () => {
+    clearRuleSources();
+    captured.nextRoll = 90;
+    const a = actor({ wp: 40 });
+    const { success } = await rollSuppressionTest(a, { mod: 0 });
+    expect(success).toBe(false);
+    expect(a.system.conditions.pinned).toBe(true);
+  });
+});
+
+describe("rollSuppressionRecovery: возможность sarcophagus.autoPassFear (wdbc-drn)", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("пилот автоматически преодолевает Подавление без успешного броска", async () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "sarcophagus.autoPassFear" }] }
+    ]);
+    captured.nextRoll = 90;
+    const a = actor({ wp: 40, pinned: true });
+    const { success } = await rollSuppressionRecovery(a, { bonus: 0 });
+    expect(success).toBe(true);
+    expect(a.system.conditions.pinned).toBe(false);
   });
 });
 

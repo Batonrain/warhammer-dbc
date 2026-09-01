@@ -222,7 +222,7 @@ export const CAPABILITIES = {
   "sarcophagus.autoPassFear": {
     label: "Автоматически проходит тесты Страха, Подавления и Запугивания",
     source: "Саркофаг Дредноута (стр. 57)",
-    reader: "module/combat/fear.mjs — _executeFearRoll (только тест Страха; Подавление/Запугивание идут другими путями, не подключено)"
+    reader: "module/combat/fear.mjs — _executeFearRoll (тест Страха) + module/combat/suppression.mjs — rollSuppressionTest/rollSuppressionRecovery (тест Подавления). Запугивание как отдельный тест для персонажей (не Орд) в системе не реализовано — нечего гейтить."
   },
   "sarcophagus.immuneBleedingFatigue": {
     label: "Иммунен к Кровотечению и Усталости",
