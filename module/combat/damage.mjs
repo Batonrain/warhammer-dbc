@@ -264,6 +264,58 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
   return { blocked, overloaded };
 }
 
+/**
+ * Защитные Руны (Runes of Protection X, wdbc-tejb): тест W+0+(бPR×5) на
+ * каждое попадание извне — автоматический, тем же приёмом, что _rollActiveShield
+ * выше: исход всегда ≥0 (провал всё равно даёт +бPR AP), поэтому «пробовать
+ * или нет» по сути никогда не бывает «нет», спрашивать игрока незачем. Успех
+ * → +(бPR+Успехи+4) AP этой локации, провал → +бPR AP. бPR — БАЗОВЫЙ Психо-
+ * рейтинг (system.psyker.rating), не текущий/эффективный (currentRating) —
+ * книга явно пишет «бPR», не «тPR»/«эPR» (см. module/rules/psyker.mjs).
+ *
+ * НЕ покрыто (сознательно, доп. случаи книги — оценить отдельно, если
+ * понадобится): Выжигание Души («исключение» книги — этот урон бьёт мимо
+ * applyDamageToActor совсем, минуя броню, hooks.mjs::_executeSoulBurn),
+ * «считается чародейским силовым щитом» для способов его обходить
+ * (Sanctified и другие анти-варп-щит эффекты здесь не проверяются), и
+ * стр. 20 книги — модификаторы бPR ПО КОНКРЕТНОЙ Рунной Броне в зависимости
+ * от свойств ВХОДЯЩЕЙ атаки (+1 бPR за Accurate/Blast/Concussive/Felling/
+ * Extreme/Flame/Force/Grav/Maximal/Piercing/Precise/Power Field/Proven/
+ * Tearing, до +3 суммарно; +2 бPR флэт за Dmg 2d10+/психосилу/техночудо;
+ * +3 бPR за Lance/Melta/Mighty каждое) — не читается вообще, здесь всегда
+ * голый system.psyker.rating. «Рунная Броня» (packs-src/armor) прямо в
+ * тексте предмета несёт свой персональный «+2 бPR к Runes of Protection» —
+ * тоже не подключён.
+ */
+async function _rollRunesOfProtection(actor) {
+  const bPR      = Number(actor.system.psyker?.rating) || 0;
+  const wpTotal  = Number(actor.system.characteristics?.wp?.total) || 0;
+  const threshold = wpTotal + bPR * 5;
+  const roll = await new Roll("1d100").evaluate();
+  const rv   = roll.total;
+  const success = rv <= threshold;
+  const deg  = success ? Math.floor((threshold - rv) / 10) + 1 : 0;
+  const apBonus = success ? bPR + deg + 4 : bPR;
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("shield","#8fd0ff")}Защитные Руны — ${esc(actor.name)}</div>
+        <div class="roll-threshold">W <b>${wpTotal}</b>${bPR ? ` + бPR×5 (бPR <b>${bPR}</b>)` : ""} → Порог <b>${threshold}</b></div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        <div class="roll-outcome">${success
+          ? `<span class="roll-success">Успех (${deg} ст.) — +${apBonus} AP (бPR ${bPR} + Успехи ${deg} + 4)</span>`
+          : `<span class="roll-failure">Провал — +${apBonus} AP (бPR)</span>`}</div>
+      </div>`,
+    rolls: [roll],
+    sound: CONFIG.sounds.dice
+  }, rollMode));
+
+  return apBonus;
+}
+
 // ─── Применить урон к актору ──────────────────────────────────────────────────
 export async function applyDamageToActor(actor, damageData) {
   // «Крайне миролюбив» (wdbc-gzuf, Серый Человек) — флаг «атакован в этом
@@ -340,6 +392,7 @@ export async function applyDamageToActor(actor, damageData) {
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
 
   let tb, armorAP, effArmorAP, totalAbsorption;
+  let runesBonus = 0;
 
   if (warpSoak) {
     // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b.
@@ -380,6 +433,13 @@ export async function applyDamageToActor(actor, damageData) {
       flags: absorption.propFlags?.[armorKey],
       wornAP: absorption.wornOnly?.[armorKey]
     });
+    // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
+    // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
+    // (пропускает, если у брони этой локации нет свойства).
+    if (absorption.propFlags?.[armorKey]?.runesOfProtection) {
+      runesBonus = await _rollRunesOfProtection(actor);
+      armorAP += runesBonus;
+    }
     // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
     // поглощения, ДО вычета пробития (стр. 168).
     if (lance && armorAP > 20) armorAP = 20;
@@ -452,6 +512,7 @@ export async function applyDamageToActor(actor, damageData) {
     if (!pfNote.noEyeCalled && hitLocation === "Глаз (Голова)")
       propNotes.push(pfNote.isPowerArmor ? "Силовой шлем: 4 AP на глаза" : "Глаз: AP шлема проигнорирован");
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
+    if (runesBonus > 0) propNotes.push(`Защитные Руны: +${runesBonus} AP (см. бросок выше)`);
   }
 
   const reductionNote = incomingReduction > 0
@@ -539,6 +600,38 @@ export async function applyDamageToActor(actor, damageData) {
   }, rollMode);
 
   await ChatMessage.create(messageData);
+}
+
+/**
+ * Моносеть (Monofilament X, wdbc-tejb): после провала теста на освобождение
+ * цель получает (X×3)+Провалы R урона с Pen X — ЧЕРЕЗ обычное поглощение
+ * брони (в отличие от Bane/Vibro книга не называет этот урон непоглощаемым),
+ * плюс −1 AP брони цели ВО ВСЕХ частях тела (тот же накопитель, что у
+ * Corrosive/armorCorrosion, просто сразу по всем локациям одним update), и
+ * до урона — бросок 1d5: ≤X означает попадание в Сочленение/Шею, иначе Торс
+ * (тот же дефолт локации, что у промаха/безадресного урона в движке — книга
+ * не называет исход при "не Сочленение"). Постит СВОЮ карточку через
+ * applyDamageToActor — вызывающая сторона (hooks.mjs, _applyWeaponPropEffect)
+ * не строит для этого удара отдельный dmgNote с числом урона.
+ */
+export async function applyMonofilamentHit(actor, { rating, damage, weaponName = "" }) {
+  const corrosion = actor.system.armorCorrosion || {};
+  const armorUpdate = {};
+  for (const key of Object.keys(corrosion)) {
+    armorUpdate[`system.armorCorrosion.${key}`] = (Number(corrosion[key]) || 0) + 1;
+  }
+  if (Object.keys(armorUpdate).length) await actor.update(armorUpdate);
+
+  const jointRoll = await new Roll("1d5").evaluate();
+  const isJoint = jointRoll.total <= rating;
+  const hitLocation = isJoint ? "Сочленение / Шея" : "Торс";
+
+  await applyDamageToActor(actor, {
+    rawDamage: damage, penetration: rating, damageType: "rending",
+    hitLocation, weaponName, melee: false
+  });
+
+  return { jointRoll, isJoint, hitLocation };
 }
 
 // ─── Диалог применения урона ──────────────────────────────────────────────────

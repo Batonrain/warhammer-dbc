@@ -127,6 +127,36 @@ describe("разметка диалога: стрелковое оружие", (
   });
 });
 
+describe("Импульсное: удвоение бонуса очереди, если стрелок не двигался в этом Ходу", () => {
+  const impulseWeapon = () =>
+    weaponFor({ rof_semi: 2, rof_full: 4, weaponProps: [{ key: "impulse", rating: 0, rating2: 0 }] });
+
+  it("нет flags.warhammer-dbc.movedThisTurn (не двигался) — бонус удвоен: +20/+10", () => {
+    showAttackDialog(attacker({ items: [impulseWeapon()] }), impulseWeapon());
+    const html = captured.dialog.content;
+    expect(html).toContain("Короткая очередь (+20, не двигался ×2, 2 выстр.)");
+    expect(html).toContain("Длинная очередь (+10, не двигался ×2, 4 выстр.)");
+  });
+
+  it("movedThisTurn стоит (двигался) — обычный бонус: +10/±0", () => {
+    const actor = attacker({ items: [impulseWeapon()] });
+    actor.getFlag = (scope, key) => (key === "movedThisTurn" ? true : undefined);
+    showAttackDialog(actor, impulseWeapon());
+    const html = captured.dialog.content;
+    expect(html).toContain("Короткая очередь (+10, 2 выстр.)");
+    expect(html).toContain("Длинная очередь (±0, 4 выстр.)");
+    expect(html).not.toContain("не двигался");
+  });
+
+  it("без Импульсного — движение стрелка ни на что не влияет", () => {
+    const weapon = weaponFor({ rof_semi: 2, rof_full: 4 });
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const html = captured.dialog.content;
+    expect(html).toContain("Короткая очередь (±0, 2 выстр.)");
+    expect(html).not.toContain("не двигался");
+  });
+});
+
 describe("разметка диалога: рукопашное оружие", () => {
   const sword = (system = {}, opts = {}) =>
     weaponFor({ weaponClass: "melee", damage: "1d10+3", rof_single: 0, ...system },

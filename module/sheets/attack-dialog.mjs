@@ -636,15 +636,19 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   } else {
     if (sys.rof_single > 0)
       rofModes.push({ value: "single", label: "Одиночный выстрел (+10)", bonus: 10 });
-    // Импульсное (стр. 73 Книги Аэльдари): +10 к очередям. Удвоение «если
-    // оружие не двигали с прошлого раунда» — не автоматизировано (нет
-    // трекинга движения по раундам), считается за ГМ вручную.
-    const impulseBonus = wp.impulse ? 10 : 0;
+    // Импульсное (стр. 73 Книги Аэльдари): +10 к очередям, вдвое (+20/+10),
+    // если сам стрелок не двигался в этом Ходу — flags.warhammer-dbc.
+    // movedThisTurn ставят Действия Движения и реальное перемещение токена
+    // (module/combat/movement-actions.mjs), снимает resetActionEconomy в
+    // начале следующего Хода (action-economy.mjs).
+    const impulseStationary = !!wp.impulse && !actor.getFlag?.("warhammer-dbc", "movedThisTurn");
+    const impulseBonus = wp.impulse ? (impulseStationary ? 20 : 10) : 0;
     const fmtMod = n => n === 0 ? "±0" : (n > 0 ? `+${n}` : `${n}`);
+    const impulseHint = impulseStationary ? ", не двигался ×2" : "";
     if (sys.rof_semi > 0)
-      rofModes.push({ value: "semi",   label: `Короткая очередь (${fmtMod(impulseBonus)}, ${sys.rof_semi} выстр.)`,  bonus: impulseBonus   });
+      rofModes.push({ value: "semi",   label: `Короткая очередь (${fmtMod(impulseBonus)}${impulseHint}, ${sys.rof_semi} выстр.)`,  bonus: impulseBonus   });
     if (sys.rof_full > 0)
-      rofModes.push({ value: "full",   label: `Длинная очередь (${fmtMod(impulseBonus - 10)}, ${sys.rof_full} выстр.)`,  bonus: impulseBonus - 10 });
+      rofModes.push({ value: "full",   label: `Длинная очередь (${fmtMod(impulseBonus - 10)}${impulseHint}, ${sys.rof_full} выстр.)`,  bonus: impulseBonus - 10 });
     if (sys.rof_semi > 0 || sys.rof_full > 0)
       rofModes.push({ value: "suppression", label: "Стрельба на подавление (−20)", bonus: -20 });
   }

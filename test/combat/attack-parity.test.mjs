@@ -246,6 +246,55 @@ describe("прицеливание", () => {
   });
 });
 
+describe("Импульсное (aeldari.json): 4-й натуральный выстрел очереди — в Сочленение/Шею", () => {
+  it("длинная очередь, 4 попадания — 4-е (не 1–3) идёт в Сочленение / Шея", async () => {
+    // deg 7 → ceil(7/2)=4, потолок rof_full=4 → 4 попадания без Storm/Twin-linked.
+    const weapon = weaponFor({ rof_full: 4, weaponProps: [{ key: "impulse", rating: 0, rating2: 0 }] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [15, 3, 3, 3, 3];   // атака (deg 7), 4×урон
+
+    await _executeAttackRoll(actor, weapon, "bs", 75, "full", null, {});
+
+    expect(hits().map(h => h.location)).toEqual(["Торс", "Торс", "Торс", "Сочленение / Шея"]);
+  });
+
+  it("без Импульсного — та же очередь без подмены локации", async () => {
+    const weapon = weaponFor({ rof_full: 4, weaponProps: [] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [15, 3, 3, 3, 3];
+
+    await _executeAttackRoll(actor, weapon, "bs", 75, "full", null, {});
+
+    expect(hits().map(h => h.location)).toEqual(["Торс", "Торс", "Торс", "Торс"]);
+  });
+
+  it("Шторм поверх Импульсного — порядок «натуральных» среди умноженных попаданий книгой не описан, подмена не включается", async () => {
+    // deg 3 → ceil(3/2)=2, потолок rof_full=2 → 2 «естественных», Шторм(2) удваивает до 4.
+    const weapon = weaponFor({
+      rof_full: 2,
+      weaponProps: [{ key: "impulse", rating: 0, rating2: 0 }, { key: "storm", rating: 2, rating2: 0 }]
+    });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [50, 3, 3, 3, 3];   // атака (deg 3), 4×урон (2 естественных ×2 Шторма)
+
+    await _executeAttackRoll(actor, weapon, "bs", 75, "full", null, {});
+
+    expect(hits().length).toBe(4);
+    expect(hits().map(h => h.location)).not.toContain("Сочленение / Шея");
+  });
+
+  it("цель — Техника: подмена не применяется (у машины нет Сочленений)", async () => {
+    const weapon = weaponFor({ rof_full: 4, weaponProps: [{ key: "impulse", rating: 0, rating2: 0 }] });
+    const actor  = actorFor({ items: [weapon] });
+    setTargets([{ type: "vehicle" }]);
+    captured.dice = [15, 3, 3, 3, 3];
+
+    await _executeAttackRoll(actor, weapon, "bs", 75, "full", null, {});
+
+    expect(hits().map(h => h.location)).not.toContain("Сочленение / Шея");
+  });
+});
+
 describe("щит", () => {
   it("Омывание — игнор щита — уходит в кнопку применения урона", async () => {
     const weapon = weaponFor({ weaponProps: [{ key: "flush", rating: 0, rating2: 0 }] });

@@ -30,7 +30,7 @@ export function aggregateArmorAuto(props) {
     noEnergy: false, noImpact: false, doubleBlast: false,
     noRanged: false, noJointCalled: false, noEyeCalled: false,
     blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-    frontArcNoProtect: false
+    frontArcNoProtect: false, runesOfProtection: false
   };
   for (const p of props) {
     const au = p.def.auto;
@@ -48,6 +48,9 @@ export function aggregateArmorAuto(props) {
     // приходит в resolveArmorAbsorptionAP параметром frontArcHit, здесь
     // только флаг «у этой локации вообще есть такое свойство».
     if (au.frontArcNoProtect) a.frontArcNoProtect = true;
+    // Runes of Protection (wdbc-tejb): тест на AP-бонус при попадании —
+    // читает damage.mjs::applyDamageToActor, сам бросок не здесь.
+    if (au.runesOfProtection) a.runesOfProtection = true;
   }
   return a;
 }
@@ -81,7 +84,8 @@ export function mergeArmorLocFlags(a, b) {
     blocksPrimitiveDouble:   a.blocksPrimitiveDouble || b.blocksPrimitiveDouble,
     noJointReduction:        a.noJointReduction || b.noJointReduction,
     isPowerArmor:            a.isPowerArmor || b.isPowerArmor,
-    frontArcNoProtect:       a.frontArcNoProtect || b.frontArcNoProtect
+    frontArcNoProtect:       a.frontArcNoProtect || b.frontArcNoProtect,
+    runesOfProtection:       a.runesOfProtection || b.runesOfProtection
   };
 }
 
@@ -89,7 +93,7 @@ const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
   blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-  frontArcNoProtect: false
+  frontArcNoProtect: false, runesOfProtection: false
 });
 
 export function emptyArmorLocFlags() {

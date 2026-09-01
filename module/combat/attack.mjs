@@ -57,7 +57,9 @@ export async function rollExtremeDamage(dmgRoll, { wp, damageType, hitLocation =
   let extremeLevel = 0, critEffect = null, exRoll = null;
   if (hasExtreme) {
     exRoll = await new Roll("1d5").evaluate();
-    extremeLevel = exRoll.total;
+    // Monofilament (X): «+2 Экстремальный урон ИЛИ Крит. эффект» — здесь
+    // extremeLevel сразу задаёт оба (getCriticalEffect читает его же).
+    extremeLevel = exRoll.total + (wp.extremeLevelBonus || 0);
     if (!targetIsVehicle) critEffect = getCriticalEffect(damageType, hitLocation, extremeLevel);
   }
   return { hasExtreme, extremeLevel, critEffect, exRoll };
@@ -240,9 +242,18 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Место конкретного попадания: у техники 1-е и 2-е — в часть, остальные в Корпус;
   // у существ — множественные (3+) идут в Торс.
-  const locForHit = (i) => locationForHit(i, {
-    label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart
-  });
+  // Импульсное (aeldari.json): каждый 4-й натуральный выстрел очереди попадает
+  // в Сочленение/Шею — даже неприцельно. "Сочленение / Шея" уже сквозная
+  // локация в движке (AP÷3 в armor-properties.mjs, crit-таблица "голова" в
+  // critical-tables.mjs) — переиспользуем её, не заводя новую метку. Storm/
+  // Twin-linked (wp.extraHits) домножают/добавляют попадания поверх
+  // естественного RoF, и книга не оговаривает порядок «естественных» среди
+  // уже умноженных — не гадаем, авто-подстановка ограничена оружием без
+  // extraHits (техника исключена: у неё locForHit целит в части машины).
+  const locForHit = (i) => {
+    if (wp.impulse && !targetIsVehicle && !wp.extraHits && (i + 1) % 4 === 0) return "Сочленение / Шея";
+    return locationForHit(i, { label: hitLocLabel, hitsCount, targetIsVehicle, vehiclePart: vehPart });
+  };
 
   // Попадания и расход патронов
   const { count: hitsCount, label: rofLabel } = hitCount({

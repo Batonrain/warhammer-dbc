@@ -57,6 +57,16 @@ describe("provalyDamage: урон «рейтинг×mult + add + Провалы�
     expect(html).toContain('data-wp-condition=""');
   });
 
+  it("Bane несёт vehicleFlatDamage — Технике X урона без теста (ветвится в hooks.mjs по actor.type)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "bane", rating: 3 }]), { hit: true });
+    expect(html).toContain('data-wp-vehicle-flat="1"');
+  });
+
+  it("свойство без vehicleFlatDamage — атрибут явно нулевой", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-vehicle-flat="0"');
+  });
+
   it("Vibro T-часть — mult:1, add:0: рейтинг реально попадает в разметку", () => {
     const html = buildTargetEffectButtons(props([{ key: "vibro", rating: 4 }]), { hit: true });
     expect(html).toContain('data-wp-provaly-mult="1"');
@@ -103,6 +113,22 @@ describe("Monofilament — Связана+Беспомощна (helpless) и у�
     expect(html).toContain("тест AG");
     expect(html).toContain('data-wp-provaly-mult="3"');
     expect(html).toContain('data-wp-rating="2"');
+  });
+
+  it("несёт armorPenDamage (урон через броню с Pen X, не минуя её — в отличие от Bane/Vibro)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "monofilament", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-armor-pen="1"');
+  });
+
+  it("несёт immunityAlias=snare (книга: «Считается Snare в расчёте иммунитетов»)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "monofilament", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-immunity-alias="snare"');
+  });
+
+  it("свойство без armorPenDamage/immunityAlias — атрибуты явно пустые/нулевые", () => {
+    const html = buildTargetEffectButtons(props([{ key: "bane", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-armor-pen="0"');
+    expect(html).toContain('data-wp-immunity-alias=""');
   });
 });
 

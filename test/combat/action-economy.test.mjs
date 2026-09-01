@@ -119,6 +119,15 @@ describe("resetActionEconomy", () => {
     expect(actor.getFlag("warhammer-dbc", "exposedAggressive")).toBeUndefined();
   });
 
+  // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
+  // прошлого раунда» начинается заново с каждым Ходом этого актора.
+  it("снимает флаг «двигался в этом Ходу» (Импульсное — movement-actions.mjs)", async () => {
+    const actor = actorFor();
+    await actor.setFlag("warhammer-dbc", "movedThisTurn", true);
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
+  });
+
   it("Орда/техника — ничего не делает", async () => {
     const actor = actorFor({ type: "horde", actionPoints: { value: 0, max: 2 } });
     await resetActionEconomy(actor);
