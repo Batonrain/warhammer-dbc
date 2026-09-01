@@ -300,6 +300,27 @@ export function critModsFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Доп. степени провала, если тест УЖЕ провален (wdbc-1rno: Sentient Cyst,
+ * «+3 Провала при провале социального теста») — эффект `failDegMod`, тот же
+ * принцип суммирования, что у `critRangeMod` выше (безусловно, не галочка),
+ * но применяется ПОСЛЕ броска (`rules/kind-outcome.mjs::resolveKindOutcome`),
+ * а не в модификаторах диалога — на успешный тест не влияет вовсе.
+ *
+ * @returns {number} сумма value всех подходящих failDegMod (может быть 0)
+ */
+export function failDegModFromRules(rules, ctx = {}) {
+  let extra = 0;
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "failDegMod") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      extra += Number(effect.value) || 0;
+    }
+  }
+  return extra;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -317,6 +338,7 @@ export function resolveTest(input = {}) {
     ctx, rules,
     mods: rollModsFromRules(rules, ctx),
     rerolls: rerollsFromRules(rules, ctx),
-    crit: critModsFromRules(rules, ctx)
+    crit: critModsFromRules(rules, ctx),
+    failDegExtra: failDegModFromRules(rules, ctx)
   };
 }

@@ -144,6 +144,7 @@ export const PREDICATES = {
 | `fearRating` | `value` | рейтинг страха, берётся максимум, не сумма |
 | `grantItem` | `uuid`, `qty` | выдать предмет при получении источника |
 | `critRangeMod` | `target`, `side`, `value` | шире диапазон Критического Успеха/Провала (стр. 25) на `value` натуральных чисел; `side`: `success`, `failure` или `both` |
+| `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
 `target` для бросков пишется с областью через двоеточие: `initiative`,
@@ -234,6 +235,20 @@ effects: [{ kind: "critRangeMod", target: "skill:medicae", side: "success", valu
 `rules/roll-outcome.mjs::criticalOutcome`. В отличие от `rollBonus` это не
 галочка для игрока — диапазон не выбирают, он просто шире, пока правило
 действует.
+
+Про `failDegMod` (wdbc-1rno, «Разумная Циста»: «провалив тест на социальные
+взаимодействия, персонаж получает ещё +3 Провала»): считается уже ПОСЛЕ броска,
+а не до него — модификатор к тесту (`rollBonus`) меняет число до сравнения с
+Порогом, `failDegMod` меняет степень провала уже посчитанного исхода, и только
+если сам тест провален (успешный тест `failDegMod` не трогает вовсе). Тоже не
+галочка, как и `critRangeMod` — суммируется безусловно, пока правило действует
+(книга не даёт игроку выбора «хочу ли я похуже провалиться»). Считается в
+`rules/resolve-test.mjs::failDegModFromRules`, применяется в
+`rules/kind-outcome.mjs::resolveKindOutcome`.
+
+```js
+effects: [{ kind: "failDegMod", target: "social", value: 3 }]
+```
 
 ## Возможности
 

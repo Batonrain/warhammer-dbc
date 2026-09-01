@@ -112,3 +112,42 @@ describe("resolveKindOutcome — crit", () => {
     expect(out.critLine).toContain("Критический Успех");
   });
 });
+
+describe("resolveKindOutcome — failDegMod (wdbc-1rno, Sentient Cyst)", () => {
+  const socialCtx = a => ({ actor: a, kind: "skill", skill: "charm" });
+
+  it("провал: доп. Провалы из failDegMod прибавляются к степени", async () => {
+    registerRuleSource("s", () => [{
+      id: "r", effects: [{ kind: "failDegMod", target: "social", value: 3 }]
+    }]);
+    // rv=60 против Порога 45: провал на 15 -> базовая степень 2 (floor(15/10)+1).
+    const out = await resolveKindOutcome(actor(), { kind: "base", baseEff: 45, rv: 60, ctx: socialCtx(actor()) });
+    expect(out.success).toBe(false);
+    expect(out.deg).toBe(5); // 2 + 3
+  });
+
+  it("успех: failDegMod не трогает степень вовсе", async () => {
+    registerRuleSource("s", () => [{
+      id: "r", effects: [{ kind: "failDegMod", target: "social", value: 3 }]
+    }]);
+    const out = await resolveKindOutcome(actor(), { kind: "base", baseEff: 45, rv: 30, ctx: socialCtx(actor()) });
+    expect(out.success).toBe(true);
+    expect(out.deg).toBe(2); // (45-30)/10+1, без +3
+  });
+
+  it("область не подходит (не социальный навык) — не применяется", async () => {
+    registerRuleSource("s", () => [{
+      id: "r", effects: [{ kind: "failDegMod", target: "social", value: 3 }]
+    }]);
+    const out = await resolveKindOutcome(actor(), { kind: "base", baseEff: 45, rv: 60, ctx: ctx(actor()) });
+    expect(out.deg).toBe(2); // без +3 — ctx() не социальный навык
+  });
+
+  it("степень не уходит ниже 1, даже при отрицательном failDegMod", async () => {
+    registerRuleSource("s", () => [{
+      id: "r", effects: [{ kind: "failDegMod", target: "social", value: -99 }]
+    }]);
+    const out = await resolveKindOutcome(actor(), { kind: "base", baseEff: 45, rv: 60, ctx: socialCtx(actor()) });
+    expect(out.deg).toBe(1);
+  });
+});

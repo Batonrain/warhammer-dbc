@@ -347,6 +347,7 @@ const KIND_LABELS = {
   fatigue: "Усталость",
   reroll: "Переброс",
   testMod: "Модификатор теста",
+  failDegMod: "Доп. Провалы при провале",
   capability: "Возможность",
   armour: "Очки Брони (локация)",
   equipment: "Снаряжение",
@@ -733,6 +734,12 @@ export function describeMechEntry(entry) {
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
       return `Модификатор теста: ${scope} — ${val}`;
     }
+    case "failDegMod": {
+      const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
+      if (!scope) return "Доп. Провалы при провале: (область не выбрана)";
+      const n = Number(entry.value) || 0;
+      return `Доп. Провалы при провале: ${scope} — ${n >= 0 ? "+" : ""}${n}`;
+    }
     case "reroll": {
       const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
       const scope = REROLL_SCOPE_LABEL(entry);
@@ -885,6 +892,10 @@ function isEntryComplete(e) {
       if (e.modValueMode === "halvePenalty") return !!e.modScope;
       if (e.modValueMode === "charBonus") return !!e.modCharBonus;
       if (e.modValueMode === "formula") return !!e.modScope && formulaOk(e.value);
+      return !!e.modScope && numOk(e.value);
+    case "failDegMod":
+      if (e.modScope === "char")  return !!e.rerollChar;
+      if (e.modScope === "skill") return !!e.skillKey;
       return !!e.modScope && numOk(e.value);
     case "capability":
       return e.capabilityMode === "aptOverride"
@@ -1393,11 +1404,13 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
-  if (entry.kind === "reroll" || entry.kind === "testMod" || entry.kind === "capability") {
+  if (entry.kind === "reroll" || entry.kind === "testMod" || entry.kind === "capability" || entry.kind === "failDegMod") {
     // Живой запрос, как terrainIgnore выше: правило собирается в момент броска
     // (rulesFromItemMechanics в module/rules/item-rules.mjs). Писать и
     // откатывать нечего — уйдёт предмет или выключат Локус, и переброс сам
-    // перестанет предлагаться.
+    // перестанет предлагаться. failDegMod (wdbc-1rno) — «Доп. Провалы при
+    // провале» (Sentient Cyst/Разумная Циста): тот же живой путь, не
+    // применяется молча (см. kind-outcome.mjs::resolveKindOutcome).
     return;
   }
 
@@ -2541,6 +2554,33 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-mod-valuemode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
       ${valueField}
       <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  // «Доп. Провалы при провале» (kind:"failDegMod", wdbc-1rno: Sentient Cyst
+  // «+3 Провала, когда персонаж проваливает тест») — та же область, что у
+  // testMod (переиспользует modScope/rerollChar/skillKey), но БЕЗ режима
+  // значения: только флэт-число, всегда безусловно суммируется на провале
+  // (не галочка — см. kind-outcome.mjs::resolveKindOutcome, тот же принцип,
+  // что у критDiapазона, а не у testMod).
+  if (ent.kind === "failDegMod") {
+    const scopeOpts = REROLL_SCOPES
+      .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+      Object.entries(CHARACTERISTICS).map(([k, c]) =>
+        `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+    let detail = "";
+    if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
+    else if (ent.modScope === "skill") {
+      detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
+          `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+    }
+    return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      ${detail}
+      <input type="number" class="mech-entry-value" value="${esc(ent.value)}" title="доп. Провалы (число, может быть отрицательным)"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
   }
 

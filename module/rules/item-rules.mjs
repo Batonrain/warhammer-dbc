@@ -25,6 +25,10 @@
 //              (wdbc-1rno) — mech-formula.mjs нотация, считается заново на
 //              каждый бросок от ctx.actor. charBonus нужен там, где числа
 //              в данных быть не может: «+Inf герольда» у каждого своё.
+//    failDegMod — «Доп. Провалы при провале» (wdbc-1rno): modScope, value,
+//              label. Считается ПОСЛЕ броска (kind-outcome.mjs), а не в
+//              галочках диалога — суммируется безусловно, только если тест
+//              уже провален.
 //    capability — «Возможность»: capabilityKey, label. Именованная способность,
 //              которую читает hasRuleFlag() (module/rules/flags.mjs). Ею
 //              выражается всё, что не число и не переброс: снятие штрафа,
@@ -127,6 +131,17 @@ function ruleFromEntry(item, entry) {
       ? { kind: "rollBonus", target, formula: String(entry.value ?? "0") }
       : { kind: "rollBonus", target, value: Number(entry.value) || 0 };
     return { id, label: entry.label || item.name, when: {}, effects: [effect] };
+  }
+
+  if (entry?.kind === "failDegMod") {
+    // «Доп. Провалы при провале» (wdbc-1rno: Sentient Cyst «+3 Провала при
+    // провале социального теста») — та же область, что у testMod (переиспользует
+    // scopeTarget), но эффект failDegMod считается ПОСЛЕ броска
+    // (resolve-test.mjs::failDegModFromRules, kind-outcome.mjs), не в
+    // модификаторах диалога. Только флэт-число, не галочка — см. шапку файла.
+    const target = scopeTarget(entry.modScope, entry, id, "Доп. Провалы при провале");
+    if (target === null) return null;
+    return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
   }
 
   if (entry?.kind === "capability") {

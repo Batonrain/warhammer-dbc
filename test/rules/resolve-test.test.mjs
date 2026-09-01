@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules } from "../../module/rules/resolve-test.mjs";
+import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules, failDegModFromRules } from "../../module/rules/resolve-test.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 /** Снимок настоящих источников: тесты подменяют реестр и возвращают как было. */
@@ -209,6 +209,34 @@ describe("critModsFromRules", () => {
     registerRuleSource("s", () => [rule("success", 5, "skill:medicae")]);
     const { crit } = resolveTest({ actor: actor(), skill: "medicae" });
     expect(crit).toEqual({ successExtra: 5, failExtra: 0 });
+  });
+});
+
+describe("failDegModFromRules (wdbc-1rno, Sentient Cyst)", () => {
+  const rule = (value, target = "all") =>
+    ({ id: "r", label: "Правило", effects: [{ kind: "failDegMod", target, value }] });
+
+  it("значение суммируется по подходящей области", () => {
+    expect(failDegModFromRules([rule(3, "social")], buildTestContext({ skill: "charm" }))).toBe(3);
+  });
+
+  it("область не подходит — не суммируется", () => {
+    expect(failDegModFromRules([rule(3, "social")], buildTestContext({ skill: "medicae" }))).toBe(0);
+  });
+
+  it("несколько правил суммируются", () => {
+    const rules = [rule(3, "social"), { ...rule(2, "social"), id: "r2" }];
+    expect(failDegModFromRules(rules, buildTestContext({ skill: "charm" }))).toBe(5);
+  });
+
+  it("пустой список правил — 0, не ошибка", () => {
+    expect(failDegModFromRules([], buildTestContext({ skill: "charm" }))).toBe(0);
+  });
+
+  it("resolveTest отдаёт failDegExtra вместе с mods/rerolls/crit", () => {
+    registerRuleSource("s", () => [rule(3, "social")]);
+    const { failDegExtra } = resolveTest({ actor: actor(), skill: "charm" });
+    expect(failDegExtra).toBe(3);
   });
 });
 

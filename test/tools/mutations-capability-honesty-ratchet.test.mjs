@@ -140,6 +140,11 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // эту механику галочек. Khorne/Nurgle получили по 3 testMod-записи
     // (базовый/культистский тир социальных + доп. Навык/штраф), Majestic
     // Horns — одну.
-    expect(stubOnly.length).toBeLessThanOrEqual(122);
+    // Sentient Cyst/Разумная Циста -> новый вид записи kind:"failDegMod"
+    // (module/rules/effects.mjs, resolve-test.mjs::failDegModFromRules,
+    // kind-outcome.mjs::resolveKindOutcome, docs/rules-format.md) — «+3
+    // Провала при провале» книги считается ПОСЛЕ броска, не в галочках
+    // диалога (в отличие от testMod), суммируется безусловно на провале.
+    expect(stubOnly.length).toBeLessThanOrEqual(121);
   });
 });

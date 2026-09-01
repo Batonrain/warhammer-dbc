@@ -19,6 +19,7 @@ export const EFFECT_KINDS = {
   fearRating:  ["value"],             // берётся максимум, не сумма
   grantItem:   ["uuid"],              // выдать предмет; `qty` необязателен
   critRangeMod:["target", "side", "value"], // шире диапазон Крит. Успеха/Провала
+  failDegMod:  ["target", "value"],   // доп. степени провала, если тест провален (wdbc-1rno)
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md
 };
 

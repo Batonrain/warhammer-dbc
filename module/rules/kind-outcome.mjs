@@ -54,10 +54,14 @@ export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ct
     combinedLine = `<div class="roll-threshold">🔗 Комбинированный: второй Предел <b>${otherEff}</b> (${esc(otherLabel)})${unresolved} → итоговый Порог <b>${eff}</b></div>`;
   }
 
-  const { success, deg: baseDeg } = testOutcome(rv, eff, { autoSuccess });
-  const critRange = resolveTest(ctx).crit;
-  const crit = criticalOutcome(rv, critRange);
+  const { success, deg: rawDeg } = testOutcome(rv, eff, { autoSuccess });
+  const resolved = resolveTest(ctx);
+  const crit = criticalOutcome(rv, resolved.crit);
   const critLine = critLineHtml(crit);
+  // failDegMod (wdbc-1rno: Sentient Cyst «+3 Провала при провале») — только
+  // на провале, успешный тест не трогает; не может увести степень ниже 1
+  // (та же граница, что testOutcome держит для success выше).
+  const baseDeg = success ? rawDeg : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
 
   let extendedLine = "";
   if (kind === "extended" && extended) {

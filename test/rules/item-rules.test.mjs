@@ -67,6 +67,15 @@ describe("rulesFromItemMechanics: сборка правил", () => {
     const rules = rulesFromItemMechanics([item("Чёрные Глаза", [testMod])]);
     expect(rules[0].effects[0]).toEqual({ kind: "rollBonus", target: "skill:awareness", formula: "ceil(cor/2)" });
   });
+
+  // failDegMod (wdbc-1rno, Sentient Cyst) — тот же scopeTarget, что testMod,
+  // но эффект своего вида kind:"failDegMod" (не rollBonus): применяется после
+  // броска, не в галочках диалога, см. resolve-test.mjs/kind-outcome.mjs.
+  it("failDegMod кладёт effect kind:failDegMod с областью и значением", () => {
+    const entry = { id: "e1", kind: "failDegMod", modScope: "social", value: 3, label: "Разумная Циста" };
+    const rules = rulesFromItemMechanics([item("Разумная Циста", [entry])]);
+    expect(rules[0].effects[0]).toEqual({ kind: "failDegMod", target: "social", value: 3 });
+  });
 });
 
 describe("rulesFromItemMechanics: что НЕ должно давать правил", () => {
