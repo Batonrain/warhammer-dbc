@@ -1,0 +1,34 @@
+{
+  "name": "Слито с рукой / Fused Limb",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "i0yML1SKgQAz2uIn",
+  "system": {
+    "description": "Срослось с рукой персонажа (Мутация «Рука Смерти»): +10 к тестам WS/BS.",
+    "reminder": "🦾 Слито с рукой: +10 WS/BS",
+    "category": "melee",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "fusedLimb",
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации» — Hand of Death / Рука Смерти)"
+  },
+  "_id": "R9oL8R86vLWBau4R",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!R9oL8R86vLWBau4R"
+}
