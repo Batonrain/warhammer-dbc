@@ -11,7 +11,7 @@ import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
-import { applyWoundLoss } from "../rules/wounds.mjs";
+import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -117,6 +117,24 @@ export async function applyCripplingTrigger(actor, rating, hitLocation) {
       <div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
     </div>`
   });
+}
+
+/**
+ * Саркофаг Дредноута: аблативные Раны против варп-оружия восстанавливаются
+ * ПОЛНОСТЬЮ к концу боя (стр. 57, wdbc-drn) — вызывается из hooks.mjs на
+ * "deleteCombat", тем же приёмом, что clearAvatarOfSlaughterMarks/
+ * clearSongOfSwiftnessBuffs (module/combat/avatar-of-slaughter.mjs,
+ * song-of-swiftness.mjs). Пишет только тех, у кого max > 0 и есть что
+ * восполнять — не дёргает документ впустую.
+ */
+export async function refillSarcophagusWarpWounds(combat) {
+  for (const c of combat?.combatants ?? []) {
+    const actor = c.actor;
+    const ww = actor?.system?.sarcophagusWarpWounds;
+    if (!ww || (Number(ww.max) || 0) <= 0) continue;
+    if ((Number(ww.value) || 0) >= ww.max) continue;
+    await actor.update({ "system.sarcophagusWarpWounds.value": ww.max });
+  }
 }
 
 const HAYWIRE_TABLE = [
@@ -456,11 +474,23 @@ export async function applyDamageToActor(actor, damageData) {
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
   // Черта молчит до полного восстановления.
-  const rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
+  let rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
   // Пробитие (wdbc-k0ff): непоглощённый урон дошёл до цели — броня этой
   // локации скомпрометирована. warpSoak не считается: варп-оружие обходит
   // броню целиком, а не проламывает её физически.
   if (rawNet > 0 && !warpSoak) await breachArmorAtLocation(actor, armorKey);
+  // Саркофаг Дредноута: аблативные Раны ПРОТИВ ВАРП-ОРУЖИЯ (стр. 57,
+  // wdbc-drn) — отдельный от общего пула (system.wounds.ablative, wdbc-smy7)
+  // пул, поглощающий ТОЛЬКО warpSoak-урон, до обычных Ран и до Аблативного
+  // Бронирования скакуна ниже. Восполняется до максимума в конце боя
+  // (module/hooks.mjs).
+  if (warpSoak && rawNet > 0) {
+    const { ablative, absorbed, remaining } = ablativeAbsorb(system.sarcophagusWarpWounds?.value, rawNet);
+    if (absorbed > 0) {
+      await actor.update({ "system.sarcophagusWarpWounds.value": ablative });
+      rawNet = remaining;
+    }
+  }
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 

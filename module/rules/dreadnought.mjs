@@ -72,6 +72,20 @@ export function sarcophagusWarpWounds(wpBonus) {
   return Math.max(0, Number(wpBonus) || 0);
 }
 
+/**
+ * «Беспомощен, когда не подключён к машине» (стр. 57) — не то же самое, что
+ * isDreadnoughtPilot: та возможность гаснет ровно в момент отключения (флаг
+ * раздаёт живая ссылка станции), поэтому спросить ею «а вообще он вживлён в
+ * саркофаг» нельзя — ответ всегда «да, пока подключён». Нужен отдельный
+ * персистентный факт (`interred` — хирургическое заключение в саркофаг,
+ * необратимое и не привязанное к конкретной машине, см. schema персонажа,
+ * `system.sarcophagusInterred`), а «подключён ли СЕЙЧАС» передаётся отдельным
+ * параметром вызывающим кодом (module/rules/character.mjs через hasRuleFlag).
+ */
+export function sarcophagusHelplessNow(interred, isPilotNow) {
+  return !!interred && !isPilotNow;
+}
+
 /** Возможности, которые даёт саркофаг. Имена — из constants/capabilities.mjs. */
 export function sarcophagusFlags() {
   return [

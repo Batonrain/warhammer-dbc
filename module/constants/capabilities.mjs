@@ -234,11 +234,13 @@ export const CAPABILITIES = {
   },
   "sarcophagus.helpless": {
     label: "Без конечностей: Беспомощен, когда не подключён к машине",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/rules/character.mjs::sarcophagusHelplessNow (system.sarcophagusHelplessNow) + module/sheets/tabs/dreadnought-panel.mjs (предупреждение на листе) — состояние system.conditions.helpless не форсируется кодом (ни одно состояние в системе так не работает), ГМ накладывает вручную по этому предупреждению; system.sarcophagusInterred — персистентный маркер хирургического заключения, ставится один раз на панели"
   },
   "sarcophagus.noFoodWaterAir": {
     label: "Не нуждается в воде, еде и воздухе",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/rules/character.mjs — вкл vitalMods (Голод/Жажда обнуляются; своей механики «воздуха» в системе нет вовсе, нечего гейтить)"
   },
   "sarcophagus.autoWakeFromStun": {
     label: "Электрошок в конце Хода снимает Оглушение (кроме Галлюцинаций)",

@@ -34,7 +34,8 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
-import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG } from "./dreadnought.mjs";
+import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
+         SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -563,11 +564,40 @@ export function prepareCharacterDerived(actor, system) {
       // sanity.value выше.
       const abMax = Number(system.wounds.ablativeMax) || 0;
       system.wounds.ablative = Math.max(0, Math.min(abMax, Number(system.wounds.ablative) || 0));
+      // Саркофаг Дредноута: максимум Ран −5 (стр. 57, wdbc-drn) — производное
+      // поле, а НЕ перезапись system.wounds.max (это редактируемая база
+      // персонажа — вычитание из неё же на каждый рендер дало бы спираль
+      // вниз). module/rules/wounds.mjs и module/rules/wound-tier.mjs читают
+      // effectiveMax, если оно есть, иначе .max — тот же приём, что tier/
+      // tierLabel/tierLost ниже.
+      system.wounds.effectiveMax = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
+        ? Math.max(0, (Number(system.wounds.max) || 0) + SARCOPHAGUS.woundsMax)
+        : (Number(system.wounds.max) || 0);
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
       system.wounds.tierLost = wLvl.lost;
     }
+
+    // ── Саркофаг Дредноута: аблативные Раны против варп-оружия (wdbc-drn) ────
+    // Максимум = W.b, пересчитывается каждый рендер, пока актор пилот — тем
+    // же приёмом, что sanity.max выше. Расходуется module/combat/damage.mjs
+    // (гейт warpSoak), восполняется до максимума в конце боя (module/hooks.mjs).
+    if (system.sarcophagusWarpWounds) {
+      system.sarcophagusWarpWounds.max = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
+        ? sarcophagusWarpWounds(chars.wp?.bonus ?? 0) : 0;
+      system.sarcophagusWarpWounds.value = Math.max(0,
+        Math.min(system.sarcophagusWarpWounds.max, Number(system.sarcophagusWarpWounds.value) || 0));
+    }
+
+    // Саркофаг Дредноута: «Беспомощен, когда не подключён к машине» (wdbc-drn).
+    // Не форсируем system.conditions.helpless сами — ни одно состояние в этой
+    // системе не переключается кодом автоматически (ГМ решает вручную, см.
+    // [[doombc-helpless-condition]]), а насильно СНИМАТЬ его при подключении
+    // было бы неверно: беспомощность могла быть наложена по другой причине.
+    // Вместо этого — честный флаг для панели листа, чтобы ГМ не забыл.
+    system.sarcophagusHelplessNow = sarcophagusHelplessNow(
+      system.sarcophagusInterred, hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG));
 
     // ── Броня ─────────────────────────────────────────────────────────────
     const armorFromItems = {
