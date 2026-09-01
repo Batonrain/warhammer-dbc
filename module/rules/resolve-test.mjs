@@ -113,6 +113,11 @@ function effectAppliesTo(target, ctx) {
   // Нестабильность — свой вид теста, а не тест Воли: демон бросает его по W, но
   // «+10 к тестам Воли» и «+Inf на Нестабильность» — разные правила книги.
   if (scope === "instability") return ctx.kind === "instability";
+  // Встречный тест демона против Экзорцизма/Чистой Демонологии (Локус Цепей,
+  // wdbc-smc, daemon-sheet.mjs::_rollVsExorcism) — узкий вид теста, а не любой
+  // "opposed": книга даёт бонус именно этому конкретному тесту, не всем
+  // встречным тестам подряд.
+  if (scope === "vsexorcism") return ctx.kind === "vsExorcism";
   if (scope === "social") return isSocialSkill(ctx.skill);
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
