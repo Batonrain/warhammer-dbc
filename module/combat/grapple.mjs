@@ -24,6 +24,7 @@ import { _showContestDialog } from "./techniques.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 
 const NS = "warhammer-dbc";
 const PARTNER_FLAG = "grapplePartnerUuid";
@@ -143,6 +144,46 @@ async function _doBite(actor) {
   });
 }
 
+// Оружие со свойством Crunch (стр. 168): «Когда удерживаете цель в Борьбе,
+// можете как свободное действие нанести автоматическое попадание (S.b÷2)» —
+// wdbc-1d5u. Реестр auto.crunch уже был заведён (module/constants/
+// weapon-properties.mjs), но нигде не читался.
+export function crunchWeapon(item) {
+  if (item?.type !== "weapon") return false;
+  return !!aggregateAuto(resolveWeaponProps(item)).crunch;
+}
+
+/** Хруст — автоматическое попадание S.b÷2 (окр. вверх) партнёру, свободное действие. */
+async function _doCrunch(actor) {
+  const weapon = actor.items.find(crunchWeapon);
+  if (!weapon) {
+    ui.notifications.warn(`${actor.name}: нет оружия со свойством Crunch — Хруст доступен только персонажам с таким оружием.`);
+    return;
+  }
+  const partner = grapplePartner(actor);
+  if (!partner) {
+    ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
+    return;
+  }
+  const sb  = Number(actor.system?.characteristics?.s?.bonus) || 0;
+  const dmg = Math.ceil(sb / 2);
+  const { applyDamageToActor } = await import("./damage.mjs");
+  await applyDamageToActor(partner, {
+    rawDamage: dmg, penetration: 0, damageType: weapon.system?.damageType || "impact",
+    hitLocation: "Торс", melee: true,
+    attackerName: actor.name, attackerUuid: actor.uuid, weaponName: weapon.name
+  });
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">${rollIcon("sword","#e08a3a")}Борьба: Хруст (${esc(weapon.name)})</div>
+      <div class="roll-outcome">${esc(actor.name)} автоматически наносит ${esc(partner.name)}: <b>${dmg}</b> Dmg (S.b÷2, окр. вверх).</div>
+      <div class="roll-threshold" style="font-size:0.85em;">Свободное действие. Доступно только пока цель удержана Захватом.</div>
+    </div>`
+  }, rollMode));
+}
+
 /** Метнуть или Замахнуться — полное действие (полудействие двумя руками). */
 async function _doThrow(actor) {
   const partner = grapplePartner(actor);
@@ -164,6 +205,7 @@ export function showGrappleDialog(actor) {
     return;
   }
   const partner = grapplePartner(actor);
+  const hasCrunch = actor.items.some(crunchWeapon);
 
   const btn = (key, label, extra = "") =>
     `<button type="button" class="wh-grapple-action" data-action="${key}" style="width:100%;text-align:left;margin:2px 0;">${label}</button>${extra}`;
@@ -178,6 +220,7 @@ export function showGrappleDialog(actor) {
       ${btn("overpower", "Пересилить")}
       ${btn("throw", "Метнуть или Замахнуться")}
       ${btn("bite", "Укусы (свободное действие)")}
+      ${hasCrunch ? btn("crunch", "Хруст (свободное действие, S.b÷2 авто-урона)") : ""}
       <b style="font-size:0.85em;display:block;margin-top:6px;">Действия Цели</b>
       ${btn("breakFree", "Вырваться")}
       ${btn("twistFree", "Выкрутиться")}
@@ -200,6 +243,7 @@ export function showGrappleDialog(actor) {
         if (key === "squeeze") await _doSqueeze(actor);
         else if (key === "throw") await _doThrow(actor);
         else if (key === "bite") await _doBite(actor);
+        else if (key === "crunch") await _doCrunch(actor);
         else if (key === "release") await endGrapple(actor);
         else if (ALL_TESTS[key]) await _showContestDialog(actor, ALL_TESTS[key]);
         dialog.close();
