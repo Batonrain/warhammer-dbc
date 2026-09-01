@@ -8,7 +8,7 @@
 import { FEAR_RATINGS, SHOCK_TABLE, TRAUMA_TABLE, lookupTable } from "../constants/fear-tables.mjs";
 import { _degWord, esc }                               from "../helpers/utils.mjs";
 import { rollIcon }                                from "../constants/roll-icons.mjs";
-import { ruleFlagLabels }                          from "../rules/flags.mjs";
+import { ruleFlagLabels, hasRuleFlag }             from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
@@ -27,7 +27,19 @@ export const FAITH_FLAG = "fear.faithInThePast";
  */
 export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, properties = {}, opts = {}) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
-  const r  = FEAR_RATINGS[ratingKey] || FEAR_RATINGS[1];
+  // Стальное Сердце (Мутация, wdbc-tsz6): персонаж считает ВСЕ рейтинги
+  // Страха на 1 меньше настоящего — не выдача Страха себе (для этого уже
+  // есть Трейт Fear(X)), а обратное направление: снижение того, как чужой
+  // Страх действует НА персонажа. Рейтинг ушёл в 0 или ниже — Страх
+  // полностью игнорируется (автоуспех), тот же принцип, что у автопасса по
+  // Infamy ниже. 4 god-гейтнутые субмутации (доп. −1 против конкретных типов
+  // целей) не реализованы — _executeFearRoll не получает категорию источника
+  // Страха вовсе, только числовой рейтинг; потребовало бы протащить новый
+  // параметр через весь вызывающий путь (hooks.mjs/disorders.mjs).
+  const steelHeart = hasRuleFlag(actor, "mutation.heartOfSteel");
+  const effectiveKey = steelHeart ? Number(ratingKey) - 1 : Number(ratingKey);
+  const steelHeartIgnored = steelHeart && effectiveKey <= 0;
+  const r  = FEAR_RATINGS[effectiveKey] || FEAR_RATINGS[1];
   const ratingMod = type === "important" ? r.important : r.normal;
   // Вид теста/Кубик/Крит из диалога (rules/test-kind-widget.mjs) — только у
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
@@ -37,7 +49,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // Страха забыл — тот же класс пробела, что у психотеста (wdbc-lfho).
   const fatigue = fatiguePenalty(actor, "wp");
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + fatigue;
-  const autoPass = infamy >= r.infamy;
+  const autoPass = steelHeartIgnored || infamy >= r.infamy;
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
