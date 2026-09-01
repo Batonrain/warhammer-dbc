@@ -1969,6 +1969,13 @@ export class WarhammerItemSheet
     mechField(".mech-mod-valuemode", (e, v) => { e.modValueMode = v; });
     mechField(".mech-mod-char",      (e, v) => { e.modCharBonus = v; });
     mechField(".mech-mod-char-mult", (e, v) => { e.modCharBonusMultiplier = Math.max(1, Number(v) || 1); });
+    // Значение «Модификатора теста» (kind:"testMod") — число (mech-entry-value)
+    // ИЛИ формула mech-formula.mjs (mech-mod-formula, wdbc-1rno: Black Eyes
+    // «½Cor(окр.▲)»), тот же приём хранения строкой, что у .mech-char-value.
+    // Раньше .mech-entry-value не имел своего листенера вовсе — правка того
+    // же поля в UI молча не сохранялась (найдено попутно, чинится тут же).
+    mechField(".mech-entry-value", (e, v) => { e.value = Number(v) || 0; });
+    mechField(".mech-mod-formula", (e, v) => { e.value = v; });
     mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
     mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
     // Цена в пуле (wdbc-1dc8) — смена пула показывает/прячет поле числа,

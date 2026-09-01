@@ -122,6 +122,12 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // (mech-when.mjs, PREDICATES.wearsSealedArmour — читает существующее
     // ARMOR_PROPERTIES.sealed) — «без гермодоспеха» книги теперь честно
     // проверяется, а не игнорируется.
-    expect(stubOnly.length).toBeLessThanOrEqual(126);
+    // Black Eyes/Чёрные Глаза -> testMod skillKey:awareness modValueMode:
+    // "formula" value:"ceil(cor/2)" (+½Cor(окр.▲), тот же навык, что Cyclops)
+    // — testMod впервые читает живую формулу mech-formula.mjs, не только
+    // голое число (новый modValueMode:"formula" в item-rules.mjs/resolve-
+    // test.mjs/mechanics.mjs, wdbc-1rno), считается заново на каждый бросок
+    // от ctx.actor, не застывает при получении предмета.
+    expect(stubOnly.length).toBeLessThanOrEqual(125);
   });
 });

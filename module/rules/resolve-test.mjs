@@ -22,6 +22,7 @@ import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { itemHasName, sizeOf } from "./predicates.mjs";
+import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -141,9 +142,19 @@ function effectAppliesTo(target, ctx) {
  * Неизвестный источник не превращается молча в ноль, а жалуется: правило,
  * тихо давшее «+0», ищется днями.
  *
+ * `formula` (wdbc-1rno, modValueMode:"formula" у kind:"testMod") — та же
+ * mech-formula.mjs нотация, что у полей «Значение»/«Рейтинг» Конструктора
+ * («ceil(cor/2)» — Black Eyes: «+½Cor(окр.▲) на тесты зрения»), но считается
+ * заново на КАЖДЫЙ бросок от ctx.actor — testMod живой запрос, а не разовая
+ * выдача (в отличие от kind:"trait"/"characteristic", где формула застывает
+ * числом один раз при получении предмета). Safe-вариант — недопустимая
+ * формула тут не должна ронять бросок, тот же принцип, что и у остального
+ * конвейера теста.
+ *
  * @returns {?number} null, если источник значения не распознан
  */
 function effectValue(effect, ctx, ruleId) {
+  if (effect.formula != null) return mechFormulaTotalSafe(effect.formula, mechRollData(ctx?.actor));
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
   const { targetCharBonus, selfCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;

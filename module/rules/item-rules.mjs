@@ -20,8 +20,10 @@
 //  Виды записи, которые сюда доехали:
 //    reroll  — «Переброс»: rerollScope, rerollChar / skillKey,
 //              rerollMode (keepBest|keepWorst), label.
-//    testMod — «Модификатор теста»: modScope, modValueMode (flat|charBonus),
-//              value / modCharBonus, label. Второй режим нужен там, где числа
+//    testMod — «Модификатор теста»: modScope, modValueMode (flat|formula|
+//              charBonus|halvePenalty), value / modCharBonus, label. formula
+//              (wdbc-1rno) — mech-formula.mjs нотация, считается заново на
+//              каждый бросок от ctx.actor. charBonus нужен там, где числа
 //              в данных быть не может: «+Inf герольда» у каждого своё.
 //    capability — «Возможность»: capabilityKey, label. Именованная способность,
 //              которую читает hasRuleFlag() (module/rules/flags.mjs). Ею
@@ -117,6 +119,12 @@ function ruleFromEntry(item, entry) {
           selfCharBonus: entry.modCharBonus || "inf",
           ...(Number(entry.modCharBonusMultiplier) > 1 ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})
         } }
+      // formula (wdbc-1rno) — та же mech-formula.mjs нотация, что у «Значение»/
+      // «Рейтинг» Конструктора («ceil(cor/2)»), но testMod живой запрос — строка
+      // едет как есть, effectValue() (resolve-test.mjs) считает от ctx.actor
+      // заново на каждый бросок, не один раз при получении предмета.
+      : entry.modValueMode === "formula"
+      ? { kind: "rollBonus", target, formula: String(entry.value ?? "0") }
       : { kind: "rollBonus", target, value: Number(entry.value) || 0 };
     return { id, label: entry.label || item.name, when: {}, effects: [effect] };
   }

@@ -728,6 +728,8 @@ export function describeMechEntry(entry) {
         ? `+${mult}Бонус ${bonusOf}`
         : entry.modValueMode === "halvePenalty"
         ? "½ штрафа (вкл. необученность)"
+        : entry.modValueMode === "formula"
+        ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
       return `Модификатор теста: ${scope} — ${val}`;
     }
@@ -882,6 +884,7 @@ function isEntryComplete(e) {
       if (e.modScope === "skill") return !!e.skillKey;
       if (e.modValueMode === "halvePenalty") return !!e.modScope;
       if (e.modValueMode === "charBonus") return !!e.modCharBonus;
+      if (e.modValueMode === "formula") return !!e.modScope && formulaOk(e.value);
       return !!e.modScope && numOk(e.value);
     case "capability":
       return e.capabilityMode === "aptOverride"
@@ -2507,7 +2510,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "testMod") {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
+    const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>
@@ -2527,6 +2530,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
         + `<input type="number" class="mech-mod-char-mult" min="1" title="множитель бонуса (1 — как есть)"
                   value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
       : ent.modValueMode === "halvePenalty" ? ""
+      : ent.modValueMode === "formula"
+      ? `<input type="text" class="mech-mod-formula" value="${esc(ent.value ?? "")}"
+                placeholder="напр. ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}"
+                data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`
       : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>

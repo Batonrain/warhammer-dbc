@@ -349,3 +349,40 @@ describe("значение эффекта от цели", () => {
     expect(rollModsFromRules([rule], ctx)[0].value).toBe(3);
   });
 });
+
+describe("значение эффекта: formula (kind:testMod, modValueMode:formula, wdbc-1rno)", () => {
+  const actorWithCor = corruptionBonus => ({ system: { characteristics: {}, corruptionBonus } });
+  const halfCor = {
+    id: "r", label: "Чёрные Глаза",
+    effects: [{ kind: "rollBonus", target: "skill:awareness", formula: "ceil(cor/2)" }]
+  };
+
+  it("формула считается от Cor.b актора (округление вверх)", () => {
+    const ctx = buildTestContext({ skill: "awareness", actor: actorWithCor(5) });
+    expect(rollModsFromRules([halfCor], ctx)).toEqual([
+      { ruleId: "r", label: "Чёрные Глаза", value: 3, halvePenalty: false }
+    ]);
+  });
+
+  it("другой актор — другое число: считается на каждый бросок, не застывает", () => {
+    const ctx = buildTestContext({ skill: "awareness", actor: actorWithCor(8) });
+    expect(rollModsFromRules([halfCor], ctx)[0].value).toBe(4);
+  });
+
+  it("нет актора — safe-вариант отдаёт 0, не бросает", () => {
+    const ctx = buildTestContext({ skill: "awareness" });
+    expect(rollModsFromRules([halfCor], ctx)[0].value).toBe(0);
+  });
+
+  it("недопустимая формула — safe-вариант отдаёт 0, а не роняет бросок", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "skill:awareness", formula: "alert(1)" }] };
+    const ctx  = buildTestContext({ skill: "awareness", actor: actorWithCor(5) });
+    expect(rollModsFromRules([rule], ctx)[0].value).toBe(0);
+  });
+
+  it("голое число как формула — работает тем же путём, что flat", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "skill:awareness", formula: "-5" }] };
+    const ctx  = buildTestContext({ skill: "awareness", actor: actorWithCor(5) });
+    expect(rollModsFromRules([rule], ctx)[0].value).toBe(-5);
+  });
+});
