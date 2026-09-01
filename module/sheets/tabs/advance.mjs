@@ -12,6 +12,7 @@ import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 import { cultureCat, resolveCultureFx } from "../../constants/legions.mjs";
 import { isFriendlySpecialty } from "../../rules/friendly-specialties.mjs";
+import { resolveAptitudeOverride } from "../../rules/aptitude-overrides.mjs";
 import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -43,8 +44,12 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
   const apts  = charAptitudeSet(actor.system.aptitudes);
   const steps = CHAR_IMP_STEPS[improvement] ?? 0;
   const floor = CHAR_IMP_STEPS[grantedImp ?? actor.system.characteristics?.[charKey]?.grantedImp] ?? 0;
+  // Расовый/субрасовый override (wdbc-zk69) перебивает и Склонности, и
+  // Покровительство — той же приоритетной ступенью, что у cultureCat легиона
+  // для Навыков/Талантов (у характеристик культуры легиона не бывает вовсе).
+  const cultCat = resolveAptitudeOverride(actor, "characteristic", charKey);
   let sum = 0;
-  for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts, { actor });
+  for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts, cultCat, { actor });
   return sum;
 }
 
@@ -61,10 +66,13 @@ export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, sp
   let sum = 0;
   // Общие знания и Ремесло всегда Дружественные — это перебивает и Склонности,
   // и культуру легиона (стр. 58, 61). То же самое — специализация, отмеченная
-  // как Дружественная на Родном мире (Исследовательская станция).
+  // как Дружественная на Родном мире (Исследовательская станция), и расовый/
+  // субрасовый override (Африэль/Эльданар/Серый Человек, wdbc-zk69) — тот
+  // встаёт ПЕРЕД культурой легиона, см. resolveAptitudeOverride.
   const cat = def?.alwaysAlly ? "ally"
     : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
-    : cultureCat("skill", def?.label || def?.name || "", "", cultFxOf(actor));
+    : resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group)
+      ?? cultureCat("skill", def?.label || def?.name || "", "", cultFxOf(actor));
   // Ключ для Бога Навыка (patronage.mjs, skillGodOf) — у группового ключ группы
   // (forbiddenLore и т.п.), у обычного — его собственный (dodge и т.п.).
   const opts = { actor, skillKey: group || skillKey, specialty };

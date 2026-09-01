@@ -30,6 +30,12 @@
 //              приёма, аура, деление Ужасов, игнор шаблонов Linger. Имя —
 //              договор между записью и тем местом кода, что её читает; список
 //              занятых имён держится в module/constants/capabilities.mjs.
+//              Второй режим той же записи (wdbc-zk69, capabilityMode:"aptOverride"):
+//              capabilityAptScope ("skill"|"talent"|"characteristic") +
+//              capabilityAptMatch + capabilityAptAlign ("ally"|"enemy") —
+//              Навык/Талант/Характеристика всегда Дружественный/Враждебный
+//              независимо от Покровительства, читает
+//              module/rules/aptitude-overrides.mjs.
 //  Области у обоих общие (scopeTarget) и совпадают с `target` из
 //  docs/rules-format.md: одна область обязана значить одно и то же везде.
 //  Остальные виды из Локусов (подмена характеристики, снятие штрафа, авто-успех,
@@ -116,6 +122,24 @@ function ruleFromEntry(item, entry) {
   }
 
   if (entry?.kind === "capability") {
+    // Расширение той же записи «Возможность» (wdbc-zk69): вместо именованного
+    // булева флага — «Навык/Талант/Характеристика Х всегда Дружественный/
+    // Враждебный, независимо от Покровительства» (Африэль/Эльданар/Серый
+    // Человек). Режим переключает сам автор (capabilityMode в Конструкторе,
+    // module/apps/mechanics.mjs) — по нему, не по заполненности полей: иначе
+    // переключение назад на обычную Возможность оставляло бы «висячий» старый
+    // aptScope и запись продолжала бы читаться как override.
+    if (entry.capabilityMode === "aptOverride") {
+      const aptScope = String(entry.capabilityAptScope || "").trim();
+      const match = String(entry.capabilityAptMatch || "").trim();
+      if (!aptScope || !match) {
+        console.error(`Warhammer DBC | запись «Возможность» (${id}): override склонности не заполнен (scope/match)`);
+        return null;
+      }
+      const align = entry.capabilityAptAlign === "enemy" ? "enemy" : "ally";
+      return { id, label: entry.label || item.name, when: {},
+               effects: [{ kind: "grantAptitudeOverride", scope: aptScope, match, align }] };
+    }
     const key = String(entry.capabilityKey || "").trim();
     if (!key) {
       console.error(`Warhammer DBC | запись «Возможность» (${id}): не задано имя возможности`);

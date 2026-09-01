@@ -19,6 +19,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { charAptitudeSet, skillCostXP, talentCostXP } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
 import { isFriendlySpecialty } from "../rules/friendly-specialties.mjs";
+import { resolveAptitudeOverride } from "../rules/aptitude-overrides.mjs";
 import { rankLabel } from "../rules/duplicate-grants.mjs";
 
 /** Культура легиона персонажа — она двигает категорию цены (стр. 58, 61). */
@@ -38,7 +39,8 @@ function skillCat(actor, def, entryChar = "", group = "", specialty = "") {
   // отмеченная как Дружественная на Родном мире (Исследовательская станция).
   const cat = def.alwaysAlly ? "ally"
     : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
-    : cultureCat("skill", def.label || "", "", cultFxOf(actor));
+    : resolveAptitudeOverride(actor, "skill", def.label || "", group)
+      ?? cultureCat("skill", def.label || "", "", cultFxOf(actor));
   return { apts, itemApts, cat };
 }
 
@@ -59,7 +61,8 @@ export function skillStepsCost(actor, skillKey, steps = [], { group = false, ent
 export function talentCost(actor, talent) {
   const apts = charAptitudeSet(actor.system?.aptitudes);
   const sys = talent?.system ?? {};
-  const cat = cultureCat("talent", talent?.name || "", sys.specialization || "", cultFxOf(actor));
+  const cat = resolveAptitudeOverride(actor, "talent", talent?.name || "", sys.specialization || "")
+    ?? cultureCat("talent", talent?.name || "", sys.specialization || "", cultFxOf(actor));
   return talentCostXP(sys.tier, sys.aptitudes || [], apts, cat,
     { name: talent?.name, patron: actor.system?.patronGod, actor });
 }

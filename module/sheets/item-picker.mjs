@@ -10,6 +10,7 @@ import { talentCostXP, charAptitudeSet, ALIGN_LABEL,
          raceAllyTalent, dynamicAptKind, CHAR_APTITUDES,
          resolveTalentAptitudes, resolveCharCat, resolveSkillCat, resolveTalentCat } from "../constants/advancement.mjs";
 import { cultureCat, resolveCultureFx } from "../constants/legions.mjs";
+import { resolveAptitudeOverride } from "../rules/aptitude-overrides.mjs";
 import { checkRequirement } from "../constants/talent-requirements.mjs";
 import { createOrRankTalent } from "../rules/duplicate-grants.mjs";
 import { DREADNOUGHT_PILOT_FLAG } from "../rules/dreadnought.mjs";
@@ -56,11 +57,15 @@ function cultFxOf(actor) {
 
 /**
  * Категория таланта для расчёта цены: раса может делать талант всегда
- * Дружественным (Total Recall у Астартес), иначе решает культура легиона.
+ * Дружественным (Total Recall у Астартес — статичный список RACE_ALLY_TALENTS)
+ * или субраса — Дружественным/Враждебным через Конструктор Механики
+ * (Африэль/Эльданар/Серый Человек, wdbc-zk69, resolveAptitudeOverride), иначе
+ * решает культура легиона.
  */
 export function talentCategory(actor, name, folder = "") {
   if (raceAllyTalent(actor?.system?.race, name)) return "ally";
-  return cultureCat("talent", name, folder, cultFxOf(actor));
+  return resolveAptitudeOverride(actor, "talent", name, folder)
+    ?? cultureCat("talent", name, folder, cultFxOf(actor));
 }
 
 /**

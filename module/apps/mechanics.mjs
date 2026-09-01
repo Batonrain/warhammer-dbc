@@ -359,6 +359,8 @@ const KIND_LABELS = {
 // вкладки МЕХАНИКА уже уровень 1, поэтому подгрупп-в-подгруппах допускается 4.
 const MAX_GROUP_DEPTH = 5;
 const WEIGHT_SCOPE_LABELS = { all: "Общее", carry: "Ношение", lift: "Подъём", push: "Толкание" };
+// Область override склонности (capability, capabilityMode:"aptOverride", wdbc-zk69).
+const CAPABILITY_APT_SCOPE_LABELS = { skill: "Навык", talent: "Талант", characteristic: "Характеристика" };
 // Области «Переброса» (kind:"reroll"). Совпадают с областями `target` в
 // docs/rules-format.md: одна и та же область обязана значить одно и то же и в
 // «+10 к тестам Ловкости», и в «перебросить тест Ловкости».
@@ -559,6 +561,13 @@ export function blankMechEntry(kind = "characteristic") {
     // (module/combat/capability-cost.mjs — pool не адрес хранения, три
     // термина делят одно и то же поле актора, см. заголовок файла).
     capabilityCostPool: "", capabilityCostAmount: 1,
+    // capability, второй режим (wdbc-zk69): «Навык/Талант/Характеристика
+    // всегда Дружественный/Враждебный, независимо от Покровительства»
+    // (Африэль/Эльданар/Серый Человек). capabilityMode переключает автор —
+    // читается им, а не заполненностью полей (module/rules/item-rules.mjs),
+    // иначе переключение назад на "flag" оставляло бы «висячий» override.
+    capabilityMode: "flag", capabilityAptScope: "skill",
+    capabilityAptMatch: "", capabilityAptAlign: "ally",
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
     // equipment
@@ -688,6 +697,12 @@ export function describeMechEntry(entry) {
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
     }
     case "capability": {
+      if (entry.capabilityMode === "aptOverride") {
+        if (!entry.capabilityAptMatch) return "Возможность (override склонности): (не задано совпадение)";
+        const scopeLabel = CAPABILITY_APT_SCOPE_LABELS[entry.capabilityAptScope] || entry.capabilityAptScope;
+        const alignLabel = entry.capabilityAptAlign === "enemy" ? "Враждебный" : "Дружественный";
+        return `${scopeLabel} «${entry.capabilityAptMatch}» — ${alignLabel} независимо от Покровительства`;
+      }
       if (!entry.capabilityKey) return "Возможность: (не выбрана)";
       const costLabel = entry.capabilityCostPool
         ? ` — цена: ${capabilityCostLabel({ pool: entry.capabilityCostPool, amount: entry.capabilityCostAmount })}`
@@ -859,7 +874,9 @@ function isEntryComplete(e) {
       if (e.modValueMode === "charBonus") return !!e.modCharBonus;
       return !!e.modScope && numOk(e.value);
     case "capability":
-      return !!e.capabilityKey;
+      return e.capabilityMode === "aptOverride"
+        ? !!e.capabilityAptScope && !!String(e.capabilityAptMatch || "").trim()
+        : !!e.capabilityKey;
     case "equipment":
       if (!numOk(e.equipQty) || Number(e.equipQty) <= 0) return false;
       return e.equipMode === "choice" ? !!e.equipCategoryPack : !!e.equipSourceUuid;
@@ -2414,6 +2431,33 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "capability") {
+    // Два режима (wdbc-zk69): обычная именованная Возможность (флаг) или
+    // override склонности «Навык/Талант/Характеристика Х всегда Дружественный/
+    // Враждебный». Смена режима сохраняет запись и даёт листу перерисоваться
+    // (тот же приём, что у .mech-fatigue-action ниже по файлу, item-sheet.mjs).
+    const mode = ent.capabilityMode === "aptOverride" ? "aptOverride" : "flag";
+    const modeOpts = [["flag", "Возможность (именованный флаг)"],
+                       ["aptOverride", "Дружественный/Враждебный Навык/Талант/Характеристика"]]
+      .map(([v, l]) => optHtml(v, l, mode === v)).join("");
+    const modeSelect = `<select class="mech-capability-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>`;
+
+    if (mode === "aptOverride") {
+      const scopeOpts = Object.entries(CAPABILITY_APT_SCOPE_LABELS)
+        .map(([v, l]) => optHtml(v, l, (ent.capabilityAptScope || "skill") === v)).join("");
+      const alignOpts = [["ally", "Дружественный"], ["enemy", "Враждебный"]]
+        .map(([v, l]) => optHtml(v, l, (ent.capabilityAptAlign || "ally") === v)).join("");
+      const matchHint = ent.capabilityAptScope === "characteristic"
+        ? "ключ характеристики, точно: ws, bs, s, t, ag, int, per, wp, fel"
+        : "имя из компендиума (подстрока, как «Hatred (X)» ловится по «Hatred») или «группа:Имя» для целой ветки";
+      return `${modeSelect}
+        <select class="mech-capability-apt-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+        <input type="text" class="mech-capability-apt-match" placeholder="совпадение" title="${esc(matchHint)}"
+               value="${esc(ent.capabilityAptMatch || "")}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+        <select class="mech-capability-apt-align" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${alignOpts}</select>
+        <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
+               data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+    }
+
     const opts = CAPABILITY_OPTIONS
       .map(([k, l]) => `<option value="${esc(k)}" ${ent.capabilityKey === k ? "selected" : ""}>${esc(l)}</option>`).join("");
     // Цена в пуле (wdbc-1dc8): пусто — бесплатно (как раньше), иначе на листе
@@ -2426,7 +2470,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const amountHtml = ent.capabilityCostPool ? `
       <input type="number" class="mech-capability-cost-amount" min="1" value="${esc(ent.capabilityCostAmount ?? 1)}"
              title="Сколько списывать за использование" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
-    return `<select class="mech-capability-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+    return `${modeSelect}
+      <select class="mech-capability-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— возможность —</option>${opts}</select>
       <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
