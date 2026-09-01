@@ -169,6 +169,19 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // Два kind:"script": переключатель (1 час туда/обратно предполагается
     // отыгранным) + аварийный разрыв (мгновенно, +1d10 непогл. R Dmg через
     // rules/wounds.mjs::woundLossUpdates, тот же путь, что боевой урон).
-    expect(stubOnly.length).toBeLessThanOrEqual(114);
+    // Icon of Blasphemy/Икона Богохульства (по прямой просьбе пользователя —
+    // «у токенов есть дальность видения и сектор обзора, можем использовать?»)
+    // -> новый модуль rules/vision-target.mjs (isTokenInSight/tokensThatCanSee,
+    // TokenDocument.sight.range/angle+rotation, геометрия без стен/тьмы —
+    // canvas.visibility.testVisibility недоступен вне живого canvas) + новая
+    // AND-группа kind:"script": находит токены-Имперцев (rules/factions.mjs)
+    // в пределах видимости актора, гоняет W-тест на каждого (паттерн
+    // combat/pacifism.mjs::rollPacifismTest — 1d100 vs wp.total), провал ->
+    // system.inRage. Канал Пси-чутья/Ноосканирования и «атакует только
+    // чемпиона» остаются на честной capability-заглушке (см. label выше) —
+    // не смоделированы. Throttle scriptThrottleUnit:"battle" (вне активного
+    // боя не гейтит вовсе — приближение «раз за бой ИЛИ сцену»). Не проверено
+    // живьём в Foundry (мир не запущен), только синтаксис/структура.
+    expect(stubOnly.length).toBeLessThanOrEqual(113);
   });
 });
