@@ -22,6 +22,7 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { WEAPON_PROPERTIES,
@@ -1389,6 +1390,15 @@ export class WarhammerItemSheet
       if (!Array.isArray(sys.rig.magLocks)) sys.rig.magLocks = [];
       context.rigComfort   = RIG_COMFORT;
       context.rigSlotSizes = RIG_SLOT_SIZES;
+
+      // Запас воздуха Void (wdbc-jtqf, стр. 228) — только у брони с этим свойством.
+      if (hasVoidSupply(this.item)) {
+        context.voidAir = {
+          remaining: voidAirRemainingDisplay(this.item),
+          sealed: this.item.getFlag?.("warhammer-dbc", "voidAirStartedAt") != null,
+          breached: !!sys.breached
+        };
+      }
     }
 
     // ── Силовой щит ───────────────────────────────────────────────────────────
@@ -1791,6 +1801,16 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfDeath(actor, this.item);
+    });
+
+    // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
+    on(".void-seal-btn", "click", async ev => {
+      ev.preventDefault();
+      await sealVoidArmour(this.item);
+    });
+    on(".void-refill-btn", "click", async ev => {
+      ev.preventDefault();
+      await refillVoidArmour(this.item);
     });
 
     // ── МЕХАНИКА (единый Конструктор: Характеристика/Черта/Талант/Навык/Код,
