@@ -108,6 +108,20 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // (все 11 свойств TERRAIN_PROPS) - book-текст «Персонаж игнорирует штрафы
     // от трудного ландшафта» отдельным предложением. Capability остаётся на
     // хождении по поверхности жидкостей.
-    expect(stubOnly.length).toBeLessThanOrEqual(129);
+    // Продолжение (углублённый разбор пропущенных находок по просьбе
+    // пользователя): Cyclops/Циклоп -> testMod skillKey:awareness (−5,
+    // «Бдительность» — единственный подходящий Навык + прецедент Eyes of
+    // Chaos). Polymath/Полимат -> testMod modScope:skill skillKey:trade
+    // (+10, book-текст прямо называет «Навыки группы Trade») — testMod
+    // ловит групповой Навык через ctx.group той же строкой «skill:<ключ>»,
+    // что и одиночный (resolve-test.mjs::effectAppliesTo, подтверждено
+    // существующим тестом test/rules/resolve-test.test.mjs) — НЕ архитектурный
+    // пробел, как считалось раньше. Miasma/Миазмы -> testMod skillKey:survival
+    // (+40, тот же навык, что уже использует Witch-Seeker для выслеживания)
+    // под НОВЫМ шестым гейтом when.requireSealedArmour/negateSealedArmour
+    // (mech-when.mjs, PREDICATES.wearsSealedArmour — читает существующее
+    // ARMOR_PROPERTIES.sealed) — «без гермодоспеха» книги теперь честно
+    // проверяется, а не игнорируется.
+    expect(stubOnly.length).toBeLessThanOrEqual(126);
   });
 });

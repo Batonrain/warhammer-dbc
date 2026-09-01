@@ -950,6 +950,7 @@ function describeMechWhen(when, item = null) {
     parts.push(`Тир Ран ${when?.negateWoundTier ? "≠" : "="} ${names.join(" или ")}`);
   }
   if (when?.requireRage) parts.push(`Ярость ${when?.negateRage ? "≠" : "="} да`);
+  if (when?.requireSealedArmour) parts.push(`Герметичная броня ${when?.negateSealedArmour ? "≠" : "="} да`);
   return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
@@ -2928,6 +2929,22 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </label>
   </div>`;
 
+  // «Когда Герметичная броня» (wdbc-1rno) — шестой независимый гейт: тот же
+  // тумблер-паттерн, что у Ярости, по PREDICATES.wearsSealedArmour (надета ли
+  // броня со свойством Sealed/Закрытая). «Без гермодоспеха» книги — это «не» +
+  // галочка.
+  const sealedArmourHtml = `<div class="grant-entry-when grant-entry-when-sealed">
+    <span class="grant-when-label">Когда Герметичная броня</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-sealed-negate" ${d} ${w.negateSealedArmour ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <label class="grant-when-sealed-row">
+      <input type="checkbox" class="grant-when-sealed" ${d} ${w.requireSealedArmour ? "checked" : ""} ${dis}/>
+      <span>надета броня со свойством Sealed</span>
+    </label>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -2936,7 +2953,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${sealedArmourHtml}`;
 }
 
 /**

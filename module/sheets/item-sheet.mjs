@@ -2305,6 +2305,24 @@ export class WarhammerItemSheet
       e.when.negateRage = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда Герметичная броня» (entry.when.requireSealedArmour/
+    // negateSealedArmour, wdbc-1rno) — шестой гейт, тот же паттерн, что у Ярости.
+    on(".grant-when-sealed", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.requireSealedArmour = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    on(".grant-when-sealed-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateSealedArmour = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);
