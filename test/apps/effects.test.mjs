@@ -125,6 +125,26 @@ describe("isItemActive: Руническая Вязь", () => {
   });
 });
 
+// Мутация/Дар подавлена Чистой Формой (rules/mutation-suppression.mjs, wdbc-1rno).
+describe("isItemActive: Мутация/Дар (подавление Чистой Формой)", () => {
+  const mutation = (suppressed) => ({
+    id: "m1", type: "mutation", system: {},
+    getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "suppressed") ? suppressed : undefined
+  });
+
+  it("флаг suppressed не выставлен — активна", () => {
+    expect(isItemActive(mutation(undefined))).toBe(true);
+  });
+
+  it("suppressed:false — активна", () => {
+    expect(isItemActive(mutation(false))).toBe(true);
+  });
+
+  it("suppressed:true — не активна", () => {
+    expect(isItemActive(mutation(true))).toBe(false);
+  });
+});
+
 // У ActiveEffect картинка называется img: поле icon Foundry объединила с ним в
 // v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
 // ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией

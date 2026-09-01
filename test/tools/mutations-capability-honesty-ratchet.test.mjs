@@ -159,6 +159,16 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // на момент правки, только синтаксис (AsyncFunction-парсинг тем же
     // конструктором, что executeItemCode) и структура/паттерн (тот же приём
     // поиска по пaку, что apps/homeworlds.mjs::buildTraits).
-    expect(stubOnly.length).toBeLessThanOrEqual(115);
+    // Pure Form/Чистая Форма (по прямой просьбе пользователя — «давай
+    // сделаем», «не удаление, а отключение») -> новый примитив
+    // rules/mutation-suppression.mjs: flags.warhammer-dbc.suppressed на
+    // type:"mutation", isItemActive() (apps/effects.mjs) знает про него,
+    // setMutationsSuppressed() переиспользует уже существующий toggle-
+    // конвейер apps/toggle-abilities.mjs::syncToggleChild (эффекты/свойства
+    // оружия/выданные Черты-Таланты/выданные предметы) — НЕ изобретён заново.
+    // Два kind:"script": переключатель (1 час туда/обратно предполагается
+    // отыгранным) + аварийный разрыв (мгновенно, +1d10 непогл. R Dmg через
+    // rules/wounds.mjs::woundLossUpdates, тот же путь, что боевой урон).
+    expect(stubOnly.length).toBeLessThanOrEqual(114);
   });
 });

@@ -223,7 +223,8 @@ import { TERRAIN_PROPS }                      from "../regions/difficult-terrain
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
-import { isItemActive }                       from "./effects.mjs";
+import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
+import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
 import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
@@ -2084,6 +2085,21 @@ export async function syncGrantedAbilities(sourceItem) {
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
 }
 
+/**
+ * Подавляет/возвращает ВСЕ Мутации/Дары актора, кроме источника (Pure Form) —
+ * тонкая обёртка над rules/mutation-suppression.mjs, передающая ей свои же
+ * локальные функции пересинхронизации (dependency injection, см. шапку того
+ * модуля — так исключён цикл item-script → mutation-suppression → mechanics
+ * → item-script). Экспортирована сюда же, откуда её достаёт
+ * runMechScriptEntry, чтобы дать script-контексту kind:"script" (wdbc-1rno,
+ * Pure Form/Чистая Форма).
+ */
+export async function setMutationsSuppressed(sourceItem, suppressed) {
+  return _setMutationsSuppressed(sourceItem, suppressed, {
+    syncItemEffectsDisabled, syncWeaponPropItemEffects, syncGrantedAbilities, syncGrantedEquipment
+  });
+}
+
 // ── Живая пересборка эффектов ───────────────────────────────────────────────
 //
 // Долговечные записи — не разовое действие «получил предмет → применили», а
@@ -3204,7 +3220,10 @@ export async function runMechScriptEntry(item, groupId, entryId) {
     return ui.notifications.warn(`«${entry.label || item.name}» пока недоступна (${SCRIPT_THROTTLE_LABELS[unit] || unit}).`);
   }
   try {
-    await executeItemCode(item, code, null);
+    // setMutationsSuppressed (wdbc-1rno) — доступна ЛЮБОЙ ручной кнопке
+    // «▶ Запустить», не только Pure Form: обычным записям она просто не
+    // нужна, лишний параметр в области видимости их кода не касается.
+    await executeItemCode(item, code, null, { setMutationsSuppressed });
   } catch (e) {
     console.error(`Warhammer DBC | Ошибка скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
     return ui.notifications.error(`Скрипт «${entry.label || item.name}»: ${e.message}`);

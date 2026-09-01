@@ -23,18 +23,38 @@
 //  Ничего не песочница — контекст (actor/item/token) передаётся как есть.
 // ════════════════════════════════════════════════════════════════════════
 
+import { woundLossUpdates } from "../rules/wounds.mjs";
+
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
-/** Общий исполнитель произвольного JS предмета — используется отовсюду. */
-export async function executeItemCode(item, code, event) {
+/**
+ * Общий исполнитель произвольного JS предмета — используется отовсюду.
+ *
+ * `woundLossUpdates` (wdbc-1rno) — та же единая арифметика потери Ран, что
+ * весь остальной урон в игре (rules/wounds.mjs, никаких Foundry-зависимостей
+ * у самого модуля нет — безопасно тянуть напрямую сюда, в отличие от
+ * setMutationsSuppressed ниже). Даёт скриптам применять непоглощаемый урон
+ * (Pure Form/Чистая Форма: «рывком... 1d10 непогл. R Dmg») тем же путём,
+ * что боевой урон, а не изобретать свою арифметику Ран заново в JSON.
+ *
+ * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
+ * конкретного вызывающего (например, runMechScriptEntry добавляет
+ * setMutationsSuppressed для Pure Form) — сам этот файл их не импортирует и
+ * не знает, что это, чтобы не тянуть зависимость на apps/mechanics.mjs (тот
+ * уже импортирует executeItemCode отсюда — обратный import создал бы цикл).
+ * Старые вызовы без `extra` работают как раньше — ключи просто не
+ * появляются в области видимости кода.
+ */
+export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
   const token = actor?.getActiveTokens?.(true)[0] ?? null;
   const speaker = ChatMessage.getSpeaker({ actor, token });
+  const extraNames = Object.keys(extra);
   const fn = new AsyncFunction(
-    "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
+    "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event", "woundLossUpdates", ...extraNames,
     code
   );
-  await fn(item, actor, token, speaker, game, ui, ChatMessage, event ?? null);
+  await fn(item, actor, token, speaker, game, ui, ChatMessage, event ?? null, woundLossUpdates, ...extraNames.map(k => extra[k]));
 }
 
 /**

@@ -75,6 +75,13 @@ export function isItemActive(item) {
         .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
       return activeRunicWeaveId(siblings) === item.id;
     }
+    // Мутация/Дар Бога подавлена Чистой Формой (rules/mutation-suppression.mjs,
+    // wdbc-1rno: «1 час концентрации подавляет все мутации, теряя их эффекты»)
+    // — flags.warhammer-dbc.suppressed, тот же общий рубильник, что у прочих
+    // «выключаемых» типов выше, просто источник переключения другой (не
+    // toggleParentId, а сама Чистая Форма извне).
+    case "mutation":
+      return !item.getFlag("warhammer-dbc", "suppressed");
     default: return true;
   }
 }
