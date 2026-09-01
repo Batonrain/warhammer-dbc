@@ -50,6 +50,7 @@ import { rangeBandKey, rangeBandBoundaries }   from "../rules/tactical-map.mjs";
 import { getTerrainInfoForToken }             from "../regions/difficult-terrain.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { hasDeathDance, deathDanceNextCost, markDeathDanceUsed } from "../combat/death-dance.mjs";
+import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -950,6 +951,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     m.value  = 0;
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
+  }
+  // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
+  // тесты использования. wProps хранит текст рейтинга (не число, см. aspect
+  // в constants/weapon-properties.mjs — rating:true, ratingText:true).
+  // Галочка, не auto: R3-модификация оружия снимает штраф для не-Асуриан/
+  // Иннари, а отдельного реестра «установленных модификаций» под этот
+  // конкретный случай в системе нет (weaponMod — свободные предметы ГМа) —
+  // проще снять галочку руками, чем заводить новый распознаваемый эффект.
+  const aspectText = wProps.find(p => p.key === "aspect")?.rating;
+  if (aspectText) {
+    const hasPath = actorHasAspectPath(actor.system, aspectText);
+    commonMods.push({
+      label: `Аспект: нет Пути «${aspectText}»`, value: -30,
+      autoCheck: !hasPath,
+      note: hasPath ? "Путь есть — снимите галочку" : "снимите галочку, если на оружии стоит модификация R3"
+    });
   }
   // Зенитное (wdbc-z56a, стр. 166): «игнорирует все штрафы на попадание за
   // скорость цели, вроде –20 за Бег» — гасит именно эту строку, не отдельный
