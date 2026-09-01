@@ -25,7 +25,14 @@ export function isHandOfDeathItem(item) {
   return item?.type === "mutation" && itemHasName(item, NAME);
 }
 
-/** Оружие сейчас несёт метку сращивания ОТ этого источника (мутации). */
-export function isFusedByHandOfDeath(weaponItem, mutationItemId) {
-  return weaponItem?.type === "weapon" && weaponItem.getFlag?.(FLAG, "handOfDeathSource") === mutationItemId;
+/**
+ * Оружие сейчас несёт метку сращивания. Без mutationItemId — просто «слито
+ * ли оно ХОТЬ С КАКОЙ-ТО Рукой Смерти» (для hands.mjs/attack-dialog.mjs/
+ * weapon.mjs, которым не важен id конкретной Мутации, только сам факт); с
+ * mutationItemId — метка именно ОТ ЭТОГО источника (unfuse/cleanup).
+ */
+export function isFusedByHandOfDeath(weaponItem, mutationItemId = null) {
+  if (weaponItem?.type !== "weapon") return false;
+  const source = weaponItem.getFlag?.(FLAG, "handOfDeathSource");
+  return mutationItemId ? source === mutationItemId : !!source;
 }
