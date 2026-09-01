@@ -43,7 +43,7 @@
   font-size: 0.72em; color: color-mix(in srgb, var(--gc) 70%, #b8a99a); font-style: italic; opacity: 0.85;
 }
 
-/* ── Селектор Бога-покровителя (вкладка ЗАПИСИ) ─────────── */
+/* ── Селектор Бога-покровителя (вкладка РАЗВИТИЕ) ─────────── */
 .warhammer-dbc .chaos-patron-panel .chaos-patron-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 9px; padding: 4px 2px 2px;
 }

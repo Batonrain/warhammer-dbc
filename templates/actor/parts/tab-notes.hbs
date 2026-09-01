@@ -52,36 +52,9 @@
   </div>
   {{/if}}
 
-  {{#if showPatronPicker}}
-  <div class="notes-section-panel chaos-patron-panel">
-    <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>
-    <div class="chaos-patron-grid">
-      {{#each chaosPatrons as |p|}}
-      <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.label}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
-        <input type="radio" name="system.patronGod" value="{{p.key}}" {{#if p.selected}}checked{{/if}}/>
-        <span class="chaos-patron-sigil" style="-webkit-mask:url('{{p.sigil}}') center/contain no-repeat;mask:url('{{p.sigil}}') center/contain no-repeat"></span>
-        <span class="chaos-patron-name">{{p.label}}</span>
-        <span class="chaos-patron-favor">
-          <span class="chaos-patron-favor-val" title="Благосклонность — {{p.label}}">{{p.favor}}</span>
-          <button type="button" class="stat-add-btn patron-favor-add" data-action="statAdd" data-stat="patronFavor" data-god="{{p.key}}" title="Добавить Благосклонность — {{p.label}}">＋</button>
-        </span>
-      </label>
-      {{/each}}
-    </div>
-    <div class="chaos-patron-note">Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438).</div>
-    {{#if usesPatronStereotype}}
-    <div class="patron-stereotype-row" title="Стереотип определяет союзную и 2 враждебные Характеристики для цены их Продвижения (корбук 24) — режим цены задан в Настройках листа/мира.">
-      <label>Стереотип Покровительства</label>
-      <select name="system.patronStereotype" class="patron-stereotype-select">
-        <option value="">— не выбран —</option>
-        {{#each patronStereotypes as |s|}}
-        <option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-    {{/if}}
-  </div>
-  {{/if}}
+  {{!-- Блок «ПОКРОВИТЕЛЬ ХАОСА» переехал на вкладку РАЗВИТИЕ (tab-advance.hbs) —
+        он определяет и Очки Бесчестия, и цену Продвижения по Покровительству,
+        то есть логически принадлежит туда же, где считаются остальные цены. --}}
   {{#if showWorldOrigin}}
   <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Мир-Корабль</label> <select name="system.world" class="origin-select">{{{worldOptions}}}</select> </div>

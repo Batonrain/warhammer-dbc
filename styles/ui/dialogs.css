@@ -473,77 +473,92 @@
 
 /* ── Мастер создания: сетка бросков характеристик (база + 2d10) ── */
 /* ══ Мастер: Генерация характеристик (наборы + раскладка перетаскиванием) ══ */
-.wh-wizard-form .wiz-gen { margin-top: 6px; }
-.wh-wizard-form .wiz-gen-lbl {
+/* :is(.wh-wizard-form, .wh-char-wizard) — оба класса нужны разом: старый
+   монолитный мастер (creation.mjs) рендерит эту разметку внутри РЕАЛЬНОГО
+   <form class="wh-wizard-form"> (обычный Dialog, HTML вставляется как есть),
+   а новый 5-этапный CharacterWizard (ApplicationV2, character-wizard.hbs) —
+   ТОЖЕ пишет <form class="wh-wizard-form wh-char-wizard"> в шаблоне, но сам
+   тег <form> до DOM не доживает: HandlebarsApplicationMixin для part{root:
+   true} без options.form кладёт в .window-content только ДЕТЕЙ этого корневого
+   элемента, не сам тег. Раньше все .wiz-* правила были голым «.wh-wizard-form
+   …» и молча не матчили НИЧЕГО в новом мастере — тесты этого не ловят (JSDOM
+   без Foundry-рендера), поймано только живым getComputedStyle() в браузере.
+   .wh-char-wizard — класс на самом окне (.application), он переживает
+   и остаётся предком всей разметки шага. */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-gen { margin-top: 6px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-gen-lbl {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   font-size: 0.8em; font-weight: 600; margin: 8px 0 4px; opacity: .9;
 }
-.wh-wizard-form .wiz-mini-btn {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-mini-btn {
   width: auto; flex: 0 0 auto; padding: 1px 8px; font-size: .82em; cursor: pointer;
   border: 1px solid var(--wh-border, #1f6f4a); border-radius: 3px;
   background: rgba(0,0,0,.25); color: var(--wh-text, #b8ffd8);
 }
-.wh-wizard-form .wiz-mini-btn:hover { border-color: #4dffa6; color: #4dffa6; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-mini-btn:hover { border-color: #4dffa6; color: #4dffa6; }
 
 /* Два набора бросков */
-.wh-wizard-form .wiz-sets { display: flex; gap: 8px; }
-.wh-wizard-form .wiz-set {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-sets { display: flex; gap: 8px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set {
   flex: 1 1 0; cursor: pointer; padding: 5px 7px; border-radius: 4px;
   border: 1px solid var(--wh-border, #1f6f4a); background: rgba(0,0,0,.2); transition: all .1s;
 }
-.wh-wizard-form .wiz-set:hover { border-color: #4dffa6; }
-.wh-wizard-form .wiz-set.active {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set:hover { border-color: #4dffa6; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set.active {
   border-color: #4dffa6; background: rgba(77,255,166,.1);
   box-shadow: 0 0 8px rgba(77,255,166,.3) inset;
 }
-.wh-wizard-form .wiz-set-head { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-.wh-wizard-form .wiz-set-name { font-size: .78em; font-weight: 700; }
-.wh-wizard-form .wiz-set-sum { font-size: .74em; opacity: .7; margin-left: auto; }
-.wh-wizard-form .wiz-set-reroll {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-head { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-name { font-size: .78em; font-weight: 700; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-sum { font-size: .74em; opacity: .7; margin-left: auto; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-reroll {
   cursor: pointer; font-size: .9em; padding: 0 5px; border-radius: 3px;
   border: 1px solid var(--wh-border, #1f6f4a); color: #7fe0a8;
 }
-.wh-wizard-form .wiz-set-reroll:hover { color: #4dffa6; border-color: #4dffa6; }
-.wh-wizard-form .wiz-set-vals { display: flex; flex-wrap: wrap; gap: 3px 6px; }
-.wh-wizard-form .wiz-set-vals span { font-size: .92em; font-weight: 600; color: #b8ffd8; }
-.wh-wizard-form .wiz-set:not(.active) .wiz-set-vals span { opacity: .55; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-reroll:hover { color: #4dffa6; border-color: #4dffa6; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-vals { display: flex; flex-wrap: wrap; gap: 3px 6px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set-vals span {
+  font-size: .92em; font-weight: 600; color: #b8ffd8;
+  padding: 0 5px; border: 1px solid #2f9e6a; border-radius: 3px; background: rgba(77,255,166,.06);
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-set:not(.active) .wiz-set-vals span { opacity: .55; }
 
 /* Пул фишек-значений */
-.wh-wizard-form .wiz-chips {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-chips {
   display: flex; flex-wrap: wrap; gap: 5px; min-height: 30px; padding: 5px 6px;
   border: 1px dashed var(--wh-border, #1f6f4a); border-radius: 4px; background: rgba(0,0,0,.12);
 }
-.wh-wizard-form .wiz-chip {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-chip {
   cursor: grab; user-select: none; min-width: 26px; text-align: center;
   padding: 3px 8px; font-size: 1em; font-weight: 700; border-radius: 4px;
   border: 1px solid #2f9e6a; background: rgba(77,255,166,.12); color: #d6ffe9;
 }
-.wh-wizard-form .wiz-chip:hover { border-color: #4dffa6; }
-.wh-wizard-form .wiz-chip.armed {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-chip:hover { border-color: #4dffa6; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-chip.armed {
   background: #4dffa6; color: #04120b; box-shadow: 0 0 8px rgba(77,255,166,.6);
 }
-.wh-wizard-form .wiz-chips-empty { font-size: .8em; opacity: .5; font-style: italic; align-self: center; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-chips-empty { font-size: .8em; opacity: .5; font-style: italic; align-self: center; }
 
 /* Слоты характеристик */
-.wh-wizard-form .wiz-slots {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slots {
   display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-top: 8px;
 }
-.wh-wizard-form .wiz-slot {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot {
   display: flex; flex-direction: column; align-items: center; gap: 1px;
   padding: 4px 1px 3px; border-radius: 4px; cursor: pointer;
   border: 1px solid var(--wh-border, #1f6f4a); background: rgba(0,0,0,.18);
 }
-.wh-wizard-form .wiz-slot.empty { border-style: dashed; }
-.wh-wizard-form .wiz-slot.filled { background: rgba(77,255,166,.06); }
-.wh-wizard-form .wiz-slot .ws-abbr { font-size: .62em; letter-spacing: .02em; opacity: .8; text-transform: uppercase; }
-.wh-wizard-form .wiz-slot .ws-chip {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot.empty { border-style: dashed; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot.filled { background: rgba(77,255,166,.06); }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot .ws-abbr { font-size: .62em; letter-spacing: .02em; opacity: .8; text-transform: uppercase; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot .ws-chip {
   min-width: 24px; text-align: center; padding: 1px 4px; font-size: 1em; font-weight: 700;
   border-radius: 3px; color: #d6ffe9;
 }
-.wh-wizard-form .wiz-slot.filled .ws-chip { cursor: grab; background: rgba(77,255,166,.18); border: 1px solid #2f9e6a; }
-.wh-wizard-form .wiz-slot.empty .ws-chip { opacity: .35; }
-.wh-wizard-form .wiz-slot .ws-total { font-size: 1.1em; font-weight: 700; color: #4dffa6; line-height: 1.1; }
-.wh-wizard-form .wiz-slot .ws-base { font-size: .58em; opacity: .55; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot.filled .ws-chip { cursor: grab; background: rgba(77,255,166,.18); border: 1px solid #2f9e6a; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot.empty .ws-chip { opacity: .35; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot .ws-total { font-size: 1.1em; font-weight: 700; color: #4dffa6; line-height: 1.1; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-slot .ws-base { font-size: .58em; opacity: .55; }
 
 /* ══ Прицеливание по клику (стрельба по токену) ══════════════════════════ */
 /* Перекрестие вместо курсора над канвасом. Одной строкой намеренно: перенос
@@ -802,16 +817,16 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-talent-choices .wtc-mini { flex: 1 1 40%; }
 
 /* ══ Мастер: блок легиона Астартес (геносемя + отдельная культура) ═══════ */
-.wh-wizard-form .wiz-legion {
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-legion {
   margin: 6px 0; padding: 6px 8px; border-radius: 5px;
   border: 1px solid rgba(184,120,60,.4); background: rgba(60,30,10,.18);
 }
-.warhammer-dbc.wh-holo .wh-wizard-form .wiz-legion {
+.warhammer-dbc.wh-holo :is(.wh-wizard-form, .wh-char-wizard) .wiz-legion {
   border-color: rgba(77,255,166,.3); background: rgba(6,32,22,.35);
 }
-.wh-wizard-form .wiz-legion .atk-dlg-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
-.wh-wizard-form .wiz-legion label { flex: 0 0 auto; min-width: 118px; font-size: .82em; }
-.wh-wizard-form .wiz-legion select { flex: 1 1 auto; min-width: 0; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-legion .atk-dlg-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-legion label { flex: 0 0 auto; min-width: 118px; font-size: .82em; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-legion select { flex: 1 1 auto; min-width: 0; }
 
 /* ══ Пикер добавления Талантов/Черт (группировка по типам корбука) ═══════ */
 .wh-item-picker-dialog .window-content { padding: 0; }

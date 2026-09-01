@@ -443,7 +443,22 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       archNote: !entries.length
         ? "Для этой расы архетип не выбирается (Экзодиты используют Пути; для Иннари без Прошлого список пуст)."
         : "",
-      talentFixedNames: fixed.map(e => this._talentNameOf(e)),
+      // Раса/Культура/Субраса/Архетип нередко называют один и тот же Талант
+      // (геносемя Астартес — характерный пример: race+cultFx оба перечисляют
+      // Sound Constitution). _createTalentsFromList на «Далее» и так создаёт
+      // его лишь ОДИН раз (повтор в общем списке — просто описка источника,
+      // rules/duplicate-grants.mjs), но без схлопывания превью честно
+      // показывало те же 4 одинаковые строки подряд — выглядело как баг.
+      // Схлопываем ТОЛЬКО отображение (то, что реально пойдёт на актора,
+      // остаётся в `fixed` как есть — та функция сама разберётся с дублями).
+      talentFixedNames: (() => {
+        const counts = new Map();
+        for (const e of fixed) {
+          const label = this._talentNameOf(e);
+          counts.set(label, (counts.get(label) || 0) + 1);
+        }
+        return [...counts].map(([label, n]) => n > 1 ? `${label} ×${n}` : label);
+      })(),
       talentChoiceRows: choices.map((c, i) => this._talentChoiceRow(c, i)),
       // Покупка Техночудес/Психосил уже устроена в самой Механике архетипа
       // (kind:"equipment", equipCategoryPack:"psychic-powers"/"tech-powers",
