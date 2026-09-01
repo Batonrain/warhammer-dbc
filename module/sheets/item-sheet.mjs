@@ -2170,6 +2170,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.scriptThrottleMax = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    // Триггер по исходу теста (wdbc-1rno) — переключение показывает/прячет
+    // область (modScope), поэтому сохраняем и даём листу перерисоваться, тот
+    // же каскад, что у .mech-fatigue-action/.mech-reroll-scope.
+    on(".mech-script-trigger", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptTrigger = ev.currentTarget.value; saveMech(arr); }
+    });
     on(".mech-script-run", "click", async ev => {
       ev.preventDefault();
       await runMechScriptEntry(this.item, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

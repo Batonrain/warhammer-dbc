@@ -29,6 +29,11 @@
 //              label. Считается ПОСЛЕ броска (kind-outcome.mjs), а не в
 //              галочках диалога — суммируется безусловно, только если тест
 //              уже провален.
+//    script (только с scriptTrigger заполненным, wdbc-1rno) — modScope,
+//              scriptTrigger (critSuccess|critFailure), itemId/entryId
+//              (адрес самой записи, не код). Пустой scriptTrigger правила
+//              не даёт вовсе — запись остаётся только ручной кнопкой
+//              «▶ Запустить» на листе предмета.
 //    capability — «Возможность»: capabilityKey, label. Именованная способность,
 //              которую читает hasRuleFlag() (module/rules/flags.mjs). Ею
 //              выражается всё, что не число и не переброс: снятие штрафа,
@@ -142,6 +147,20 @@ function ruleFromEntry(item, entry) {
     const target = scopeTarget(entry.modScope, entry, id, "Доп. Провалы при провале");
     if (target === null) return null;
     return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
+  }
+
+  if (entry?.kind === "script" && entry.scriptTrigger) {
+    // Автозапуск скрипта по исходу теста (wdbc-1rno) — «Полимат»: «Крит на
+    // тесте Крафта — 1d5 Усталости + доп. тест немедленно». Ручной режим
+    // (scriptTrigger:"") правил не даёт вовсе — только кнопка «▶ Запустить»
+    // на листе предмета, как раньше; здесь ветка только для заполненного
+    // триггера. Сам JS не резолвится тут — эффект несёт только АДРЕС записи
+    // (itemId/entryId), исполнение (executeItemCode, throttle) происходит в
+    // kind-outcome.mjs после того, как известен реальный исход броска.
+    const target = scopeTarget(entry.modScope, entry, id, "Скрипт по исходу");
+    if (target === null) return null;
+    return { id, label: entry.label || item.name, when: {},
+      effects: [{ kind: "scriptTrigger", target, side: entry.scriptTrigger, itemId: item.id, entryId: entry.id }] };
   }
 
   if (entry?.kind === "capability") {

@@ -18,6 +18,11 @@ import { extendedTestKey, applyGain } from "./extended-test.mjs";
 import { critLineHtml } from "./test-kind-widget.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 import { esc } from "../helpers/utils.mjs";
+// Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno) — переиспользует
+// тот же поиск записи и throttle, что кнопка «▶ Запустить» на листе предмета
+// (apps/mechanics.mjs), и тот же исполнитель кода (apps/item-script.mjs).
+import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed } from "../apps/mechanics.mjs";
+import { executeItemCode } from "../apps/item-script.mjs";
 
 /**
  * @param {object} actor документ актора (нужен для resolveTest и банка Расширенного)
@@ -36,6 +41,37 @@ import { esc } from "../helpers/utils.mjs";
  *   critLine:string, kindLabel:?string, combinedLine:string, extendedLine:string,
  *   opposedLine:string}>}
  */
+/**
+ * Запускает scriptTrigger-правила (wdbc-1rno), чей side совпадает с реальным
+ * исходом (crit.success/crit.failure) — область (modScope) уже отобрана
+ * в resolve-test.mjs::scriptTriggersFromRules, здесь только сверка стороны и
+ * сам запуск. Ошибка одного скрипта не должна ронять весь бросок — тот же
+ * принцип, что у ручной кнопки «▶ Запустить» (apps/mechanics.mjs::runMechScriptEntry).
+ */
+async function runScriptTriggers(actor, triggers, crit) {
+  for (const t of triggers ?? []) {
+    const matches = (t.side === "critSuccess" && crit.success) || (t.side === "critFailure" && crit.failure);
+    if (!matches) continue;
+    // .find, не Collection.get: actor.items здесь трактуется как обычный
+    // перебираемый список — тот же приём, что у rules/predicates.mjs
+    // (wearsPowerArmour и т.п.), а не Foundry-специфичный Map-метод.
+    const item = (actor?.items ?? []).find(i => i.id === t.itemId);
+    if (!item) continue;
+    const entry = findMechEntryById(getItemMechanics(item), t.entryId);
+    if (!entry || entry.kind !== "script") continue;
+    const code = (entry.code || "").trim();
+    if (!code) continue;
+    if (!scriptRunReady(item, entry)) continue;
+    try {
+      await executeItemCode(item, code, null);
+    } catch (e) {
+      console.error(`Warhammer DBC | Ошибка авто-скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
+      continue;
+    }
+    if (entry.scriptThrottleUnit) await markScriptRunUsed(item, entry);
+  }
+}
+
 export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ctx, combined, extended, opposed, autoSuccess = false }) {
   const kindLabel = kind !== "base" ? TEST_KINDS[kind] : null;
 
@@ -62,6 +98,9 @@ export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ct
   // на провале, успешный тест не трогает; не может увести степень ниже 1
   // (та же граница, что testOutcome держит для success выше).
   const baseDeg = success ? rawDeg : Math.max(1, rawDeg + (resolved.failDegExtra || 0));
+  // Автозапуск kind:"script" по Крит.Успеху/Провалу (wdbc-1rno: «Полимат»,
+  // «Библиотека Акаши») — после того, как crit уже посчитан для ЭТОГО броска.
+  await runScriptTriggers(actor, resolved.scriptTriggers, crit);
 
   let extendedLine = "";
   if (kind === "extended" && extended) {

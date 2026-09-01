@@ -145,6 +145,7 @@ export const PREDICATES = {
 | `grantItem` | `uuid`, `qty` | выдать предмет при получении источника |
 | `critRangeMod` | `target`, `side`, `value` | шире диапазон Критического Успеха/Провала (стр. 25) на `value` натуральных чисел; `side`: `success`, `failure` или `both` |
 | `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
+| `scriptTrigger` | `target`, `side`, `itemId`, `entryId` | автозапуск записи `kind:"script"` по исходу теста; `side`: `critSuccess` или `critFailure` |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
 `target` для бросков пишется с областью через двоеточие: `initiative`,
@@ -249,6 +250,37 @@ effects: [{ kind: "critRangeMod", target: "skill:medicae", side: "success", valu
 ```js
 effects: [{ kind: "failDegMod", target: "social", value: 3 }]
 ```
+
+Про `scriptTrigger` (wdbc-1rno, «Полимат»: «когда он выбрасывает Критический
+Успех на таком тесте, он получает 1d5 Усталости... и сразу же делает ещё один
+тест») — некоторые последствия Крита нельзя выразить одним числом (получить
+Усталость, начать новый тест, что угодно ещё) и годится только произвольный
+JS, а не декларативная запись. `scriptTrigger` НЕ несёт сам код: код живёт на
+записи `kind:"script"` того же предмета (поле `code`, `scriptTrigger:
+"critSuccess"|"critFailure"`, область — `modScope` тот же, что у `testMod`),
+а эффект несёт только АДРЕС этой записи (`itemId`/`entryId`) — чистые данные,
+без ссылки на живой документ, тот же принцип, что у `grantItem`/`uuid`.
+Отбор подходящих по области — `rules/resolve-test.mjs::scriptTriggersFromRules`
+(та же `effectAppliesTo`, что у прочих `target`); сверка стороны (реальный
+`crit.success`/`crit.failure` известен только после броска) и сам запуск —
+`rules/kind-outcome.mjs::resolveKindOutcome` (переиспользует
+`apps/mechanics.mjs::scriptRunReady`/`markScriptRunUsed` — тот же throttle,
+что у ручной кнопки «▶ Запустить», и `apps/item-script.mjs::executeItemCode`
+— тот же исполнитель):
+
+```js
+// на предмете, entry.id совпадает с scriptTrigger.entryId:
+{ kind: "script", scriptTrigger: "critSuccess", modScope: "skill", skillKey: "trade",
+  code: `await actor.update({"system.fatigue.value": actor.system.fatigue.value + (await new Roll("1d5").evaluate()).total});` }
+
+// эффект правила, построенный из этой записи (item-rules.mjs):
+effects: [{ kind: "scriptTrigger", target: "skill:trade", side: "critSuccess", itemId: "...", entryId: "..." }]
+```
+
+Ручной режим (`scriptTrigger: ""`, по умолчанию) правил вообще не даёт — та
+же запись `kind:"script"` остаётся доступна только кнопкой «▶ Запустить» на
+листе предмета, как раньше; оба режима не исключают друг друга буквально
+(поле одно), но семантически это разные способы вызвать один и тот же код.
 
 ## Возможности
 

@@ -76,6 +76,25 @@ describe("rulesFromItemMechanics: сборка правил", () => {
     const rules = rulesFromItemMechanics([item("Разумная Циста", [entry])]);
     expect(rules[0].effects[0]).toEqual({ kind: "failDegMod", target: "social", value: 3 });
   });
+
+  // script с scriptTrigger (wdbc-1rno, «Полимат») — эффект несёт только
+  // АДРЕС записи (itemId/entryId), не сам код: исполнение — kind-outcome.mjs.
+  it("script с scriptTrigger кладёт effect kind:scriptTrigger с адресом записи", () => {
+    const entry = {
+      id: "e1", kind: "script", scriptTrigger: "critSuccess", modScope: "skill", skillKey: "trade",
+      code: 'await actor.update({});', label: "Крит на Крафте"
+    };
+    const rules = rulesFromItemMechanics([item("Полимат", [entry])]);
+    expect(rules[0].effects[0]).toEqual({
+      kind: "scriptTrigger", target: "skill:trade", side: "critSuccess", itemId: "Полимат", entryId: "e1"
+    });
+  });
+
+  it("script БЕЗ scriptTrigger (ручной режим) правил не даёт вовсе", () => {
+    const entry = { id: "e1", kind: "script", scriptTrigger: "", code: 'await actor.update({});' };
+    const rules = rulesFromItemMechanics([item("Обычный код", [entry])]);
+    expect(rules).toEqual([]);
+  });
 });
 
 describe("rulesFromItemMechanics: что НЕ должно давать правил", () => {

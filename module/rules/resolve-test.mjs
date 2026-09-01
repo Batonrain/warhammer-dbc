@@ -321,6 +321,30 @@ export function failDegModFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Скрипты Механики (kind:"script"), назначенные срабатывать автоматически по
+ * исходу ЭТОГО теста (wdbc-1rno: «Полимат» — Крит на тесте Крафта, «Библиотека
+ * Акаши» — Крит на тесте Знания). Здесь только ОТБОР подходящих (область +
+ * side ещё не сверен с реальным success/crit — тот известен только после
+ * броска) — сам запуск делает `rules/kind-outcome.mjs::resolveKindOutcome`,
+ * у которого есть live `actor`/`item` для `executeItemCode`; здесь их нет
+ * (список правил не хранит документы, только itemId/entryId — тот же
+ * принцип, что у `grantItem` (`uuid`), эффекты остаются чистыми данными).
+ *
+ * @returns {{itemId:string, entryId:string, side:string, ruleId:string}[]}
+ */
+export function scriptTriggersFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "scriptTrigger") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      out.push({ itemId: effect.itemId, entryId: effect.entryId, side: effect.side, ruleId: rule.id });
+    }
+  }
+  return out;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -339,6 +363,7 @@ export function resolveTest(input = {}) {
     mods: rollModsFromRules(rules, ctx),
     rerolls: rerollsFromRules(rules, ctx),
     crit: critModsFromRules(rules, ctx),
-    failDegExtra: failDegModFromRules(rules, ctx)
+    failDegExtra: failDegModFromRules(rules, ctx),
+    scriptTriggers: scriptTriggersFromRules(rules, ctx)
   };
 }

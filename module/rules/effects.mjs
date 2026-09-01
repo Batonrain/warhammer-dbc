@@ -20,6 +20,7 @@ export const EFFECT_KINDS = {
   grantItem:   ["uuid"],              // выдать предмет; `qty` необязателен
   critRangeMod:["target", "side", "value"], // шире диапазон Крит. Успеха/Провала
   failDegMod:  ["target", "value"],   // доп. степени провала, если тест провален (wdbc-1rno)
+  scriptTrigger: ["target", "side", "itemId", "entryId"], // автозапуск kind:"script" по исходу (wdbc-1rno)
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md
 };
 

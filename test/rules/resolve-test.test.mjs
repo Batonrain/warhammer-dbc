@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules, failDegModFromRules } from "../../module/rules/resolve-test.mjs";
+import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules, failDegModFromRules, scriptTriggersFromRules } from "../../module/rules/resolve-test.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 /** Снимок настоящих источников: тесты подменяют реестр и возвращают как было. */
@@ -237,6 +237,40 @@ describe("failDegModFromRules (wdbc-1rno, Sentient Cyst)", () => {
     registerRuleSource("s", () => [rule(3, "social")]);
     const { failDegExtra } = resolveTest({ actor: actor(), skill: "charm" });
     expect(failDegExtra).toBe(3);
+  });
+});
+
+describe("scriptTriggersFromRules (wdbc-1rno, Полимат/Библиотека Акаши)", () => {
+  const rule = (side, target = "all", over = {}) => ({
+    id: "r", label: "Правило",
+    effects: [{ kind: "scriptTrigger", target, side, itemId: "it1", entryId: "e1", ...over }]
+  });
+
+  it("подходящая область отдаёт itemId/entryId/side/ruleId", () => {
+    expect(scriptTriggersFromRules([rule("critSuccess", "skill:trade")], buildTestContext({ skill: "trade" })))
+      .toEqual([{ itemId: "it1", entryId: "e1", side: "critSuccess", ruleId: "r" }]);
+  });
+
+  it("область не подходит — пустой список", () => {
+    expect(scriptTriggersFromRules([rule("critSuccess", "skill:trade")], buildTestContext({ skill: "medicae" })))
+      .toEqual([]);
+  });
+
+  it("несколько правил — несколько триггеров, порядок сохранён", () => {
+    const rules = [
+      rule("critSuccess", "all", { itemId: "it1" }),
+      { ...rule("critFailure", "all", { itemId: "it2" }), id: "r2" }
+    ];
+    expect(scriptTriggersFromRules(rules, buildTestContext({ skill: "medicae" }))).toEqual([
+      { itemId: "it1", entryId: "e1", side: "critSuccess", ruleId: "r" },
+      { itemId: "it2", entryId: "e1", side: "critFailure", ruleId: "r2" }
+    ]);
+  });
+
+  it("resolveTest отдаёт scriptTriggers вместе с mods/rerolls/crit/failDegExtra", () => {
+    registerRuleSource("s", () => [rule("critSuccess", "skill:trade")]);
+    const { scriptTriggers } = resolveTest({ actor: actor(), skill: "trade" });
+    expect(scriptTriggers).toEqual([{ itemId: "it1", entryId: "e1", side: "critSuccess", ruleId: "r" }]);
   });
 });
 

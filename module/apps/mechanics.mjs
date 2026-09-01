@@ -319,8 +319,13 @@ const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
 // scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
 const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day"]);
 
-/** Готова ли кнопка «▶ Запустить» записи (учитывает scriptThrottleMax > 1 — счётчик, не единичный gate). */
-function scriptRunReady(item, entry) {
+/**
+ * Готова ли запись к запуску (учитывает scriptThrottleMax > 1 — счётчик, не
+ * единичный gate). Экспортирована (wdbc-1rno): тот же throttle нужен и
+ * кнопке «▶ Запустить», и автозапуску по исходу теста
+ * (rules/kind-outcome.mjs) — гейт один на оба пути, не дублируется.
+ */
+export function scriptRunReady(item, entry) {
   const unit = entry.scriptThrottleUnit || "";
   if (!unit) return true;
   const max = Number(entry.scriptThrottleMax) || 1;
@@ -329,8 +334,8 @@ function scriptRunReady(item, entry) {
   return isThrottleReady(item, flag, unit);
 }
 
-/** Отмечает «▶ Запустить» использованной — счётчиком или единичным gate, см. scriptRunReady. */
-async function markScriptRunUsed(item, entry) {
+/** Отмечает запись использованной — счётчиком или единичным gate, см. scriptRunReady. Экспортирована по той же причине. */
+export async function markScriptRunUsed(item, entry) {
   const unit = entry.scriptThrottleUnit || "";
   if (!unit) return;
   const max = Number(entry.scriptThrottleMax) || 1;
@@ -478,6 +483,26 @@ export function findMechEntry(groups, groupId, entryId) {
   return g ? (g.entries || []).find(e => e.id === entryId) || null : null;
 }
 
+/**
+ * Поиск записи ПО ОДНОМУ entryId, без groupId — на любую глубину вложенности
+ * подгрупп. Id уникальны (randomID()), см. findMechGroup(). Нужен
+ * kind-outcome.mjs::resolveKindOutcome (wdbc-1rno): эффект scriptTrigger
+ * несёт только entryId (чистые данные, без ссылки на группу — тот же
+ * принцип, что у grantItem/uuid), группу для него никто не отслеживал.
+ */
+export function findMechEntryById(groups, entryId) {
+  for (const g of groups || []) {
+    for (const e of g.entries || []) {
+      if (e.id === entryId) return e;
+      if (e.kind === "group" && e.group) {
+        const found = findMechEntryById([e.group], entryId);
+        if (found) return found;
+      }
+    }
+  }
+  return null;
+}
+
 // ── Кэш компендиумов «Снаряжения» — для дропдауна kind:"equipment" режима
 // «Непосредственно предмет» (buildEntryFieldsHtml — синхронная сборка HTML,
 // pack.getIndex() асинхронный, поэтому читаем заранее построенный кэш, тот
@@ -614,6 +639,12 @@ export function blankMechEntry(kind = "characteristic") {
     // scriptThrottleMax > 1 — счётчик «до N раз» вместо единичного gate
     // (round/battle/scene/session; "day" считает только 1, см. mechanics.mjs).
     scriptThrottleUnit: "", scriptThrottleMax: 1,
+    // script — «Триггер» (wdbc-1rno): "" = только кнопкой «▶ Запустить»
+    // (как раньше), "critSuccess"/"critFailure" — автозапуск сразу после
+    // подходящего по modScope теста (kind-outcome.mjs), не дожидаясь клика.
+    // modScope/rerollChar/skillKey переиспользуются как область — те же поля,
+    // что у testMod/failDegMod.
+    scriptTrigger: "",
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -820,8 +851,13 @@ export function describeMechEntry(entry) {
       const rating = entry.weaponPropHasRating ? ` (${entry.weaponPropValue ?? "?"})` : "";
       return `Оружие: добавить «${entry.weaponPropLabel}»${rating}`;
     }
-    case "script":
-      return entry.label ? `Код: ${entry.label}` : (entry.code?.trim() ? "Код (без названия)" : "Код: (пусто)");
+    case "script": {
+      const base = entry.label ? `Код: ${entry.label}` : (entry.code?.trim() ? "Код (без названия)" : "Код: (пусто)");
+      if (!entry.scriptTrigger) return base;
+      const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
+      const triggerLabel = entry.scriptTrigger === "critFailure" ? "Критический Провал" : "Критический Успех";
+      return `${base} — авто на ${triggerLabel}${scope ? ` (${scope})` : " (область не выбрана)"}`;
+    }
     case "group": {
       const g = entry.group;
       const entries = g?.entries || [];
@@ -921,7 +957,11 @@ function isEntryComplete(e) {
       if (e.weaponPropAction === "replace") return !!e.weaponPropNewKey;
       return true;
     case "script":
-      return !!(e.code && e.code.trim());
+      if (!(e.code && e.code.trim())) return false;
+      if (!e.scriptTrigger) return true;
+      if (e.modScope === "char")  return !!e.rerollChar;
+      if (e.modScope === "skill") return !!e.skillKey;
+      return !!e.modScope;
     case "group":
       return !!(e.group?.entries || []).some(isEntryComplete);
     default:
@@ -2786,9 +2826,36 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const maxInput = (unit && COUNTABLE_THROTTLE_UNITS.has(unit))
       ? `<input type="number" class="mech-script-throttle-max" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.scriptThrottleMax ?? 1)}" min="1" title="До скольки раз (1 = единожды)" ${dis}/>`
       : "";
+    // Триггер по исходу (wdbc-1rno) — автозапуск сразу после теста, а не
+    // только кнопкой. При выборе критерия область (modScope) обязательна —
+    // тот же выбор скоупа, что у testMod/failDegMod (переиспользует классы,
+    // те же листенеры item-sheet.mjs подхватывают без правок).
+    const triggerOpts = [
+      ["", "вручную (кнопка ▶)"],
+      ["critSuccess", "авто: Критический Успех"],
+      ["critFailure", "авто: Критический Провал"]
+    ].map(([v, l]) => optHtml(v, l, (ent.scriptTrigger || "") === v)).join("");
+    let triggerScopeHtml = "";
+    if (ent.scriptTrigger) {
+      const scopeOpts = REROLL_SCOPES
+        .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+      const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+        Object.entries(CHARACTERISTICS).map(([k, c]) =>
+          `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+      let detail = "";
+      if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
+      else if (ent.modScope === "skill") {
+        detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+          <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
+            `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+      }
+      triggerScopeHtml = `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>${detail}`;
+    }
     return `<input type="text" class="mech-script-label" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.label || "")}" placeholder="Название (для себя)" ${dis}/>
       <select class="mech-script-throttle" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Частота кнопки «▶ Запустить»" ${dis}>${throttleOpts}</select>
       ${maxInput}
+      <select class="mech-script-trigger" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Автозапуск по исходу теста" ${dis}>${triggerOpts}</select>
+      ${triggerScopeHtml}
       <textarea class="mech-script-code" data-group-id="${groupId}" data-entry-id="${ent.id}" spellcheck="false" placeholder="// произвольный JS — item, actor, token, speaker, game, ui, ChatMessage, event" ${dis}>${esc(ent.code || "")}</textarea>`;
   }
 
