@@ -6,8 +6,10 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon } from "../../module/combat/grapple.mjs";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef } from "../../module/combat/grapple.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
+import { actorFor } from "../support/combat-fixtures.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -158,5 +160,49 @@ describe("crunchWeapon", () => {
 
   it("оружие без system/weaponProps вовсе — нет, не падает", () => {
     expect(crunchWeapon({ type: "weapon", name: "Голые руки" })).toBe(false);
+  });
+});
+
+// wdbc-vkwe (продолжение): «...+20 на приём Захват и все тесты в Борьбе» —
+// приём читается в attack-dialog.mjs (resolveSelection), а 5 РОЛЕВЫХ тестов
+// раздела (Заломить/Пересилить/Вырваться/Выкрутиться/Перехватить Контроль,
+// см. ALL_TESTS в grapple.mjs) — здесь, через tentacleTechDef перед вызовом
+// _showContestDialog. Сжать/Хруст/Метнуть/Укусы броска не делают вовсе (см.
+// шапку файла) — бонусу там нечего усиливать, поэтому в дело не идут.
+describe("tentacleTechDef", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("без мутации — techDef возвращается как есть", () => {
+    const techDef = { label: "Заломить", defaultChar: "s" };
+    expect(tentacleTechDef(actorFor({}), techDef)).toBe(techDef);
+  });
+
+  it("с mutation.tentacle — добавляет +20 и подпись «Щупальце»", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const techDef = { label: "Заломить", defaultChar: "s" };
+    const result = tentacleTechDef(actorFor({}), techDef);
+    expect(result.extraBonus).toBe(20);
+    expect(result.extraBonusLabel).toBe("Щупальце");
+    expect(result.label).toBe("Заломить"); // остальные поля techDef сохранены
+  });
+
+  it("складывается с уже существующим extraBonus, а не перезаписывает его", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const result = tentacleTechDef(actorFor({}), { extraBonus: 5 });
+    expect(result.extraBonus).toBe(25);
+  });
+
+  it("не мутирует исходный techDef", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const techDef = { label: "Пересилить" };
+    tentacleTechDef(actorFor({}), techDef);
+    expect(techDef.extraBonus).toBeUndefined();
   });
 });

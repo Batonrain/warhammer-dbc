@@ -25,6 +25,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const NS = "warhammer-dbc";
 const PARTNER_FLAG = "grapplePartnerUuid";
@@ -108,6 +109,18 @@ const TARGET_TESTS = {
 };
 
 const ALL_TESTS = { ...ATTACKER_TESTS, ...TARGET_TESTS };
+
+// Мутация Tentacle/Щупальце (wdbc-vkwe): «+20 на приём Захват и все тесты в
+// Борьбе». Приём Захват читается отдельно, в module/sheets/attack-dialog.mjs
+// (resolveSelection) — здесь только 5 РОЛЕВЫХ тестов раздела (Заломить/
+// Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, см. ALL_TESTS выше).
+// Сжать/Хруст/Метнуть/Укусы броска не делают вовсе (см. шапку файла) —
+// бонусу там нечего усиливать.
+export function tentacleTechDef(actor, techDef) {
+  return hasRuleFlag(actor, "mutation.tentacle")
+    ? { ...techDef, extraBonus: (techDef.extraBonus ?? 0) + 20, extraBonusLabel: "Щупальце" }
+    : techDef;
+}
 
 /** Сжать — без броска, накопительный штраф −10 за полудействие (стр. 12). */
 async function _doSqueeze(actor) {
@@ -245,7 +258,7 @@ export function showGrappleDialog(actor) {
         else if (key === "bite") await _doBite(actor);
         else if (key === "crunch") await _doCrunch(actor);
         else if (key === "release") await endGrapple(actor);
-        else if (ALL_TESTS[key]) await _showContestDialog(actor, ALL_TESTS[key]);
+        else if (ALL_TESTS[key]) await _showContestDialog(actor, tentacleTechDef(actor, ALL_TESTS[key]));
         dialog.close();
       }));
     }
