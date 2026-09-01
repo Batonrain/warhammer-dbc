@@ -22,6 +22,8 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
+import { vampiricPanelHtml, useSatisfyVampiric, useVampiricTest } from "../apps/vampiric-dependency.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1048,6 +1050,10 @@ export class WarhammerItemSheet
     // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // ── «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние
+      // утоления по игровому времени, пусто у остальных Мутаций ──────────────
+      context.addictionHtml = addictionPanelHtml(this.item);
+      context.vampiricHtml  = vampiricPanelHtml(this.item);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1801,6 +1807,23 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfDeath(actor, this.item);
+    });
+
+    // ── Мутация «Зависимость»: кнопка «Утолить» (wdbc-1rno) ─────────────────
+    on(".addiction-satisfy-btn", "click", async ev => {
+      ev.preventDefault();
+      await useSatisfyAddiction(this.item);
+    });
+
+    // ── Мутация «Вампирическая Зависимость»: «Утолить»/«Тест на голод» ──────
+    on(".vampiric-satisfy-btn", "click", async ev => {
+      ev.preventDefault();
+      await useSatisfyVampiric(this.item);
+    });
+    on(".vampiric-test-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useVampiricTest(actor, this.item);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
