@@ -1593,7 +1593,10 @@ export class WarhammerCharacterSheet
     activateMinionPanelListeners(html);
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
-    activateSocialListeners(html, this.actor, { editable: this.isEditable });
+    activateSocialListeners(html, this.actor, {
+      editable: this.isEditable,
+      resolveOtherTargetActor: () => this._resolveOtherTargetActor()
+    });
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),
