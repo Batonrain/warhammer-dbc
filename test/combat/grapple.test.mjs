@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus } from "../../module/combat/grapple.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 
@@ -169,6 +169,33 @@ describe("crunchWeapon", () => {
 // см. ALL_TESTS в grapple.mjs) — здесь, через tentacleTechDef перед вызовом
 // _showContestDialog. Сжать/Хруст/Метнуть/Укусы броска не делают вовсе (см.
 // шапку файла) — бонусу там нечего усиливать, поэтому в дело не идут.
+// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doBite
+// (Укус: единственное из четырёх «безролловых» действий Борьбы, которое на
+// деле идёт полным тестом WS/BS через attack-dialog.mjs — тоже «тест в
+// Борьбе» по тексту мутации). _doBite сам не экспортирован и не тестируется
+// изолированно здесь: showGrappleDialog рендерит кастомные кнопки внутри
+// DialogV2.wait и зовёт dialog.close() у результата рендера — этого пути
+// текущая заглушка (test/support/foundry-stub.mjs) не поддерживает вовсе
+// (не только для этой правки — showGrappleDialog не был протестирован и до
+// неё). Проверяется чистая логика бонуса, которую читают оба потребителя.
+describe("tentacleBonus", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("без мутации — 0", () => {
+    expect(tentacleBonus(actorFor({}))).toBe(0);
+  });
+
+  it("с mutation.tentacle — 20", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    expect(tentacleBonus(actorFor({}))).toBe(20);
+  });
+});
+
 describe("tentacleTechDef", () => {
   const DEFAULT_SOURCES = getRuleSources();
   afterEach(() => {

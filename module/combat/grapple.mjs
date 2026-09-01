@@ -114,11 +114,21 @@ const ALL_TESTS = { ...ATTACKER_TESTS, ...TARGET_TESTS };
 // Борьбе». Приём Захват читается отдельно, в module/sheets/attack-dialog.mjs
 // (resolveSelection) — здесь только 5 РОЛЕВЫХ тестов раздела (Заломить/
 // Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, см. ALL_TESTS выше).
-// Сжать/Хруст/Метнуть/Укусы броска не делают вовсе (см. шапку файла) —
-// бонусу там нечего усиливать.
+// Укус — тоже настоящий тест (WS/BS через attack-dialog.mjs), но получает
+// бонус отдельно, через presetModifier — см. _doBite ниже. Сжать и Хруст
+// броска не делают вовсе (первое — накопительный штраф без теста, второе —
+// автоматическое попадание по книге), бонусу там нечего усиливать. Метнуть/
+// Замахнуться сейчас вообще не реализовано роллом (только текст в чат) —
+// отдельный, более старый пробел, не про эту мутацию.
+/** +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. */
+export function tentacleBonus(actor) {
+  return hasRuleFlag(actor, "mutation.tentacle") ? 20 : 0;
+}
+
 export function tentacleTechDef(actor, techDef) {
-  return hasRuleFlag(actor, "mutation.tentacle")
-    ? { ...techDef, extraBonus: (techDef.extraBonus ?? 0) + 20, extraBonusLabel: "Щупальце" }
+  const bonus = tentacleBonus(actor);
+  return bonus
+    ? { ...techDef, extraBonus: (techDef.extraBonus ?? 0) + bonus, extraBonusLabel: "Щупальце" }
     : techDef;
 }
 
@@ -150,10 +160,19 @@ async function _doBite(actor) {
     ui.notifications.warn(`${actor.name}: не найдено оружие «Укус» в снаряжении — Укус доступен только персонажам, способным кусаться.`);
     return;
   }
+  // Укус — единственное из четырёх «безролловых» действий Борьбы (см. шапку
+  // файла), которое на деле идёт полным тестом WS/BS через attack-dialog.mjs
+  // — а не автоматическим попаданием, как Хруст. Значит, это тоже «тест в
+  // Борьбе» из текста мутации Tentacle (wdbc-vkwe) — тот же +20, что и у
+  // остальных пяти, только через presetModifier диалога атаки (виден и
+  // редактируем игроком, как и любой другой её пресет вроде Контратаки).
   const { showAttackDialog } = await import("../sheets/attack-dialog.mjs");
+  const bonus = tentacleBonus(actor);
   return showAttackDialog(actor, biteWeapon, {
     techniqueLabel: "Укус (Борьба)",
+    modifier: bonus,
     chatNote: "🤼 Борьба: автоматический Укус — свободное действие, попадает в торс, если не выбрана Избирательная атака."
+      + (bonus ? ` Щупальце: +${bonus} учтено в Доп. мод.` : "")
   });
 }
 
