@@ -10,6 +10,25 @@ import { _toggleShield, _rollShieldActivation, _repairShield } from "../../comba
 import { on } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
 
+const ARMOR_LOCS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
+
+/**
+ * Hard / Жёсткая (стр. 228, wdbc-8b5): «нельзя носить два жёстких элемента
+ * брони на одной части тела». Проверяется по базовому AP предмета (head/body/…
+ * > 0, без модов/качества — правило про сам элемент комплекта, не про
+ * итоговое число), не по флагам поглощения (armor-properties.mjs) — та схема
+ * читается только в бою, на попадание, а не при экипировке.
+ */
+function _conflictingHardArmor(actor, item) {
+  const s = item.system;
+  const myLocs = ARMOR_LOCS.filter(k => (s[k] || 0) > 0);
+  if (!myLocs.length) return null;
+  return (actor.items ?? []).find(other =>
+    other.id !== item.id && other.type === "armor" && other.system.equipped
+    && (other.system.properties || []).includes("hard")
+    && myLocs.some(k => (other.system[k] || 0) > 0));
+}
+
 /**
  * Экипировка. Надевание оружия/щита (не брони — она рук не занимает)
  * блокируется, если рук не хватает (wdbc-3xqh) — только на ПРИРОСТ занятости,
@@ -21,6 +40,17 @@ export async function equipItem(item, equipped) {
     const { free, max } = handsOccupied(item.parent, { exclude: item.id });
     ui.notifications?.warn(`${item.name}: не хватает рук (свободно ${free} из ${max}) — сначала снимите что-то с рук.`);
     return;
+  }
+  // Hard (wdbc-8b5): блокируем только НОВОЕ надевание — существующие
+  // «нелегальные» связки на старых листах не трогаем (тот же принцип, что
+  // и у занятости рук выше).
+  if (equipped && item.type === "armor" && item.parent
+      && (item.system.properties || []).includes("hard")) {
+    const conflict = _conflictingHardArmor(item.parent, item);
+    if (conflict) {
+      ui.notifications?.warn(`${item.name}: нельзя носить два жёстких элемента брони на одной части тела (конфликт с «${conflict.name}»).`);
+      return;
+    }
   }
   await item.update({ "system.equipped": equipped });
   await syncItemEffectsDisabled(item, equipped);

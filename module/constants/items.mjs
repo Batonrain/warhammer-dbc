@@ -151,6 +151,11 @@ export const ARMOR_PROPERTIES = {
   // кнопка на карточке атаки (combat/attack.mjs::gorget/combat/attack-card.mjs,
   // wdbc-8b5).
   gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном (не Избирательном) попадании в голову можно бросить 1d10, и на X+ перенести попадание в Торс.", rating: true, auto: { gorget: true } },
+  // «Нельзя носить 2 жёстких на одной части» — валидация НЕ через auto (это
+  // не про попадание, это про экипировку), а в sheets/tabs/gear.mjs::equipItem
+  // (_conflictingHardArmor), wdbc-8b5. «Сон/отдых не снимает последний
+  // уровень Усталости» — не автоматизировано (нет общей точки входа «отдых» —
+  // Усталость снимается вручную).
   hard:       { label: "Hard / Жёсткая",          desc: "Нельзя снимать, не оставляя Усталость. Нельзя носить 2 жёстких на одной части." },
   heavy:      { label: "Heavy / Тяжёлая",         desc: "−10 к Stealth. Нельзя плавать.", auto: { skillMod: { stealth: -10 } } },
   open:       { label: "Open / Открытый",          desc: "Шлем. Нет визора. Избирательные атаки в лицо игнорируют AP.", auto: { noApEyeCalled: true } },
@@ -167,6 +172,10 @@ export const ARMOR_PROPERTIES = {
   // см. rules/character.mjs::sealedFullSuit, combat/damage.mjs.
   sealed:     { label: "Sealed / Закрытая",        desc: "Полный комплект даёт иммунитет к химическому урону, действующему на кожу (DAMAGE_TYPES.chemical). Теряется, как только пробита любая закрывающая часть." },
   stealthed:  { label: "Stealthed / Скрытная",    desc: "+10 к Stealth. Скрывает от тепловизора.", auto: { skillMod: { stealth: 10 } } },
+  // Проверено по первоисточнику (wdbc-8b5, 01.09.2026): в книге у Undersuit
+  // НЕТ явного механического правила (ни «нельзя надеть два не-Undersuit», ни
+  // ограничения по слоям) — только флейвор «можно незаметно носить под другой
+  // бронёй». Оставлено без auto сознательно, не как пробел.
   undersuit:  { label: "Undersuit / Подкладка",   desc: "Носится под другой бронёй." },
   soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact", noJointReduction: true } },
   void:       { label: "Void / Пустотная",         desc: "Защита от вакуума, жара, газов, радиации. 6 часов воздуха." },
