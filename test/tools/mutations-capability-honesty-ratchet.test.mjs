@@ -145,6 +145,11 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // kind-outcome.mjs::resolveKindOutcome, docs/rules-format.md) — «+3
     // Провала при провале» книги считается ПОСЛЕ броска, не в галочках
     // диалога (в отличие от testMod), суммируется безусловно на провале.
-    expect(stubOnly.length).toBeLessThanOrEqual(121);
+    // Второй проход по оставшимся 121 (по просьбе пользователя, «давай»):
+    // Witch-Seeker (+30 Survival, выслеживание псайкеров), Enchanting Voice
+    // (+½Cor(окр.▲) соц., formula, исключения — подпись галочки), Progenitor
+    // (+30 соц. + +30 встречные психосил/психоатак, обе — с прямыми
+    // потомками, подпись галочки), Spellwise (переброс Пси-чутья, kind:"reroll").
+    expect(stubOnly.length).toBeLessThanOrEqual(117);
   });
 });
