@@ -341,7 +341,7 @@ async function markScriptRunUsed(item, entry) {
 const KIND_LABELS = {
   corruption: "Порча", wounds: "Раны", cohesion: "Слаженность отряда",
   characteristic: "Характеристика", trait: "Черта", talent: "Талант", skill: "Навык",
-  weight: "Вес", rollmod: "Модификатор броска", poolMax: "Очки Судьбы или Бесчестья",
+  weight: "Вес", rollmod: "Модификатор броска", poolMax: "Максимум пула (Судьба/Аблативные Раны)",
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
@@ -790,9 +790,10 @@ export function describeMechEntry(entry) {
       return `Модификатор броска: ${name}${label}${spec} ${sign}${entry.value ?? ""}`;
     }
     case "poolMax": {
-      if (entry.value === "" || entry.value == null) return "Очки Судьбы или Бесчестья: (не задано)";
+      const label = entry.poolTarget === "ablativeWounds" ? "Аблативные Раны" : "Очки Судьбы или Бесчестья";
+      if (entry.value === "" || entry.value == null) return `${label}: (не задано)`;
       const sign = Number(entry.value) >= 0 ? "+" : "";
-      return `Очки Судьбы или Бесчестья: ${sign}${entry.value} (максимум)`;
+      return `${label}: ${sign}${entry.value} (максимум)`;
     }
     case "weaponProp": {
       if (!entry.weaponPropKey) return "Оружие: Свойство (перетащите свойство)";
@@ -2075,7 +2076,7 @@ function mechEffectData(entry, sourceItem, actor = null) {
     changes.push({ key, type: entry.op, value: num(entry.movementValue),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "poolMax") {
-    const key = "system.fate.max";
+    const key = entry.poolTarget === "ablativeWounds" ? "system.wounds.ablativeMax" : "system.fate.max";
     changes.push({ key, type: "add", value: num(entry.value),
                    phase: expectedPhase(key), priority: 0 });
   } else if (entry.kind === "armour") {
@@ -2672,7 +2673,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "poolMax") {
-    return `<input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+    const targetOpts = [["fate", "Судьба/Бесчестье"], ["ablativeWounds", "Аблативные Раны (wdbc-smy7)"]]
+      .map(([v, l]) => optHtml(v, l, (ent.poolTarget || "fate") === v)).join("");
+    return `<select class="mech-poolmax-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${targetOpts}</select>
+      <input type="text" class="mech-poolmax-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. -1, 2 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
 
   if (ent.kind === "aura") {

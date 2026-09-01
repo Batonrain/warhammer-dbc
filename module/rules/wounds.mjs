@@ -30,23 +30,43 @@ export function woundLossAfter(currentWounds, currentCritical, amount) {
 }
 
 /**
+ * Аблативные Раны (wdbc-smy7, напр. Дар Нургла «Абсурдно Толстый»: «+10
+ * аблативных Ран») — отдельный пул, поглощающий урон ДО обычных Ран, как
+ * временный «щит из жира». Чистый расчёт: сколько урона поглотил аблативный
+ * пул и сколько осталось для обычных Ран.
+ *
+ * @param {number} currentAblative
+ * @param {number} amount
+ * @returns {{ablative:number, absorbed:number, remaining:number}}
+ */
+export function ablativeAbsorb(currentAblative, amount) {
+  const pool = Math.max(0, Number(currentAblative) || 0);
+  const dmg  = Math.max(0, Number(amount) || 0);
+  const absorbed = Math.min(pool, dmg);
+  return { ablative: pool - absorbed, absorbed, remaining: dmg - absorbed };
+}
+
+/**
  * То же понижение Ран, но в виде updates-объекта — для мест, которые собирают
  * ОДИН общий actor.update() из нескольких кусков (эффекты препарата,
  * Поглощение Болью, цена психосилы в Ранах, откат Электростимуляторов).
  * При фактическом уроне сбрасывает firstAidUsed: новый урон → снова можно
- * оказать Первую Помощь (гейт в tabs/healing.mjs).
+ * оказать Первую Помощь (гейт в tabs/healing.mjs). Аблативный пул (wdbc-smy7),
+ * если он есть, поглощает урон ПЕРВЫМ — обычные Раны получают только остаток.
  *
  * @param {object} system  actor.system
  * @param {number} amount  сколько Ран потеряно
  * @returns {Record<string, number|boolean>} кусок для actor.update()
  */
 export function woundLossUpdates(system, amount) {
+  const { ablative, remaining } = ablativeAbsorb(system?.wounds?.ablative, amount);
   const { value, critical } = woundLossAfter(
-    system?.wounds?.value, system?.wounds?.critical, amount);
+    system?.wounds?.value, system?.wounds?.critical, remaining);
   const updates = {
     "system.wounds.value":    value,
     "system.wounds.critical": critical
   };
+  if ((system?.wounds?.ablativeMax || 0) > 0) updates["system.wounds.ablative"] = ablative;
   if ((Number(amount) || 0) > 0) updates["system.wounds.firstAidUsed"] = false;
   return updates;
 }
@@ -54,36 +74,44 @@ export function woundLossUpdates(system, amount) {
 /**
  * Применяет потерю Ран к актору: считает woundLossAfter() и сам пишет
  * actor.update(), если что-то реально меняется. amount <= 0 — update не
- * шлётся вовсе (нет смысла дёргать документ впустую).
+ * шлётся вовсе (нет смысла дёргать документ впустую). Аблативный пул
+ * (wdbc-smy7), если он есть, поглощает урон ПЕРВЫМ, ДО обычных Ран.
  *
  * @param {Actor} actor
  * @param {number} amount  сколько Ран потеряно (уже посчитанный, непоглощённый урон)
  * @returns {Promise<{applied:boolean, currentWounds:number, currentCritical:number,
- *   newWounds:number, newCritical:number, maxWounds:number, overflow:boolean, gotCritical:boolean}>}
+ *   newWounds:number, newCritical:number, maxWounds:number, overflow:boolean, gotCritical:boolean,
+ *   ablativeAbsorbed:number}>}
  */
 export async function applyWoundLoss(actor, amount) {
   const currentWounds   = Number(actor.system?.wounds?.value)    || 0;
   const currentCritical = Number(actor.system?.wounds?.critical) || 0;
   const maxWounds        = Number(actor.system?.wounds?.max)      || 0;
+  const ablativeMax      = Number(actor.system?.wounds?.ablativeMax) || 0;
 
+  const { ablative: newAblative, absorbed: ablativeAbsorbed, remaining } =
+    ablativeAbsorb(actor.system?.wounds?.ablative, amount);
   const { value: newWounds, critical: newCritical, overflow } =
-    woundLossAfter(currentWounds, currentCritical, amount);
+    woundLossAfter(currentWounds, currentCritical, remaining);
 
-  const applied = newWounds !== currentWounds || newCritical !== currentCritical;
+  const ablativeChanged = ablativeMax > 0 && newAblative !== (Number(actor.system?.wounds?.ablative) || 0);
+  const applied = newWounds !== currentWounds || newCritical !== currentCritical || ablativeChanged;
   if (applied) {
-    await actor.update({
+    const upd = {
       "system.wounds.value":    newWounds,
       "system.wounds.critical": newCritical,
       // Новый урон → снова можно оказать Первую Помощь (гейт в
       // tabs/healing.mjs). applied ⇔ amount > 0: при нулевом уроне
       // woundLossAfter ничего не меняет и сюда не попадаем.
       "system.wounds.firstAidUsed": false
-    });
+    };
+    if (ablativeMax > 0) upd["system.wounds.ablative"] = newAblative;
+    await actor.update(upd);
   }
 
   return {
     applied, currentWounds, currentCritical, newWounds, newCritical, maxWounds,
-    overflow, gotCritical: overflow
+    overflow, gotCritical: overflow, ablativeAbsorbed
   };
 }
 

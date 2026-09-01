@@ -223,6 +223,10 @@ const DEVIATIONS = {
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,
+    // Аблативные Раны (wdbc-smy7, напр. Дар Нургла «Абсурдно Толстый») —
+    // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
+    "wounds.ablative": 0,
+    "wounds.ablativeMax": 0,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

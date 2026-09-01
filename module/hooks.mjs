@@ -42,6 +42,7 @@ import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
+import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
@@ -1383,6 +1384,8 @@ function _attachFateContextMenu(message, html) {
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
       await processConditionTurnStart(nextCombatant.actor);
+      // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
+      await processAblativeWoundsTurnStart(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

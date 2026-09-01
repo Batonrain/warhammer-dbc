@@ -197,7 +197,14 @@ export function creatureSchema({ granted = false } = {}) {
       value:        num(0, "Текущие"),
       max:          num(0, "Максимум"),
       critical:     num(0, "Критические"),
-      firstAidUsed: bool(false, "Первая помощь оказана")
+      firstAidUsed: bool(false, "Первая помощь оказана"),
+      // Аблативные Раны (wdbc-smy7) — отдельный пул ПЕРЕД обычными Ранами
+      // (напр. Дар Нургла «Абсурдно Толстый»: +10 аблативных, регенерация
+      // 1/Ход). ablativeMax — цель kind:"poolMax" Конструктора
+      // (poolTarget:"ablativeWounds"), ablative — текущее значение,
+      // расходуется поглощением урона (module/rules/wounds.mjs).
+      ablative:     num(0, "Аблативные (текущие)"),
+      ablativeMax:  num(0, "Аблативные (максимум)")
     }, { label: "Раны" }),
     fate:      pool("Судьба"),
     deadMight: pool("Мощь мёртвых"),
