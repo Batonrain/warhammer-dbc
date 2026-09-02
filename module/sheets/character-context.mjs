@@ -77,6 +77,7 @@ import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beast
 import { hasConjureWraith }                      from "../combat/conjure-wraith.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
+         effectiveActionPointsMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
@@ -138,7 +139,7 @@ export function characterContext(actor) {
   if (hasActionEconomy(actor)) {
     const defenseMax = effectiveDefenseReactionMax(actor);
     context.actionEconomy = {
-      ap:        { value: system.actionPoints?.value ?? 0, max: system.actionPoints?.max ?? 0 },
+      ap:        { value: system.actionPoints?.value ?? 0, max: effectiveActionPointsMax(actor) },
       reactions: { value: system.reactions?.value ?? 0, max: system.reactions?.max ?? 0 },
       // Доп. Реакции «только на Избегание» видны лишь пока есть что показать —
       // вне Защитной Стойки (или без надбавки от будущего Таланта) их 0,

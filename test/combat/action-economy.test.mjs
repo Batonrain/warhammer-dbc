@@ -14,6 +14,7 @@ import {
   applyTurnEndStanceEffects, apCostForActionType,
   canSpendActionPoints, spendActionPoints,
   canSpendReaction, spendReaction, effectiveDefenseReactionMax,
+  effectiveActionPointsMax,
   postTurnStartCard, apSpendGate, reactionSpendGate
 } from "../../module/combat/action-economy.mjs";
 
@@ -101,6 +102,22 @@ describe("resetActionEconomy", () => {
     const actor = actorFor({ actionPoints: { value: 0, max }, conditions: { pinned } });
     await resetActionEconomy(actor);
     expect(actor.system.actionPoints.value).toBe(expected);
+  });
+
+  // Determination To Fight/Решительность Сражаться (wdbc-1rno): +1 ОД при
+  // отрицательных Ранах — тот же динамический бонус, что Стойка у Реакций.
+  it("Determination To Fight + отрицательные Раны — восполняет ОД с учётом +1", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, wounds: { tier: "dying" } });
+    actor.items = [{ type: "talent", name: "Determination To Fight / Решительность Сражаться" }];
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(3);
+  });
+
+  it("Подавленный побеждает даже с бонусом Determination To Fight — min(1, ...)", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, wounds: { tier: "dying" }, conditions: { pinned: true } });
+    actor.items = [{ type: "talent", name: "Determination To Fight / Решительность Сражаться" }];
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(1);
   });
 
   it.each([
@@ -234,6 +251,24 @@ describe("effectiveDefenseReactionMax", () => {
   it("Защитная Стойка — 1, без неё — 0 (без надбавок Талантов)", () => {
     expect(effectiveDefenseReactionMax(actorFor({ meleeStance: "defensive" }))).toBe(1);
     expect(effectiveDefenseReactionMax(actorFor({ meleeStance: "standard" }))).toBe(0);
+  });
+});
+
+describe("effectiveActionPointsMax", () => {
+  it("без Determination To Fight/отрицательных Ран — статичный max как есть", () => {
+    expect(effectiveActionPointsMax(actorFor({ actionPoints: { value: 2, max: 2 } }))).toBe(2);
+  });
+
+  it("Determination To Fight + отрицательные Раны — +1", () => {
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, wounds: { tier: "dying" } });
+    actor.items = [{ type: "talent", name: "Determination To Fight / Решительность Сражаться" }];
+    expect(effectiveActionPointsMax(actor)).toBe(3);
+  });
+
+  it("Талант есть, но Раны не отрицательные — без бонуса", () => {
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, wounds: { tier: "heavy" } });
+    actor.items = [{ type: "talent", name: "Determination To Fight / Решительность Сражаться" }];
+    expect(effectiveActionPointsMax(actor)).toBe(2);
   });
 });
 

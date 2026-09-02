@@ -19,6 +19,7 @@ import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
+import { determinationToFightParryBonus } from "../rules/determination-to-fight.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -276,8 +277,11 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const fatigue       = fatiguePenalty(actor, "ws");
   const armourPenalty = disabledArmourPenalty(actor, { skillKey: "parry" });
   const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "parry" });
+  // Determination To Fight/Решительность Сражаться (wdbc-1rno): +30 при
+  // отрицательных Ранах + прошлый раунд в Защитной Стойке.
+  const dtfBonus = determinationToFightParryBonus(actor);
 
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty;
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty + dtfBonus;
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
@@ -316,6 +320,7 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
+  if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
   if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
 
   let outcomeHtml;

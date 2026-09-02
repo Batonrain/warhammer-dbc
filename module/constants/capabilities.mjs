@@ -894,9 +894,9 @@ export const CAPABILITIES = {
   },
   // ── Экзодиты — Воин Троп (DoomBC — Аэльдари: Ответвления, Архетипы Экзодитов)
   "exodite.pathWarrior.determinationToFight": {
-    label: "При отрицательных ранах персонаж снижает получаемый урон на W.b (после поглощения, мин.1) — смоделировано (module/rules/determination-to-fight.mjs, читает module/combat/damage.mjs::applyDamageToActor). «+1 ОД» и «лимит атак до 2» — не смоделированы: то же условное состояние, но actionPoints.max сейчас только статичный ActiveEffect, не пересчитывается по текущим Ранам; «лимита атак» в системе вообще нет (нечего поднимать). Пункт «если прошлый раунд в Защитной Стойке» (доп. −WS.b урона, +30 Парирование) — тоже не смоделирован, нужна история Стойки МЕЖДУ раундами, которой актор не хранит.",
+    label: "При отрицательных ранах персонаж снижает получаемый урон на WP.b (после поглощения, мин.1) и получает +1 ОД — смоделировано (module/rules/determination-to-fight.mjs, читают module/combat/damage.mjs::applyDamageToActor и module/combat/action-economy.mjs::resetActionEconomy/effectiveActionPointsMax). При отрицательных ранах + прошлый раунд в Защитной Стойке — доп. снижение на WS.b (мин.1, тот же читатель урона) и +30 к тестам Парирования (module/combat/defense.mjs::_performParry) — тоже смоделировано (снимок Стойки на смену Раунда, hooks.mjs::updateCombat). «Лимит атак до 2» — не смоделирован: базовое правило «одна Атака за Ход» (стр. 32) в системе нигде не проверяется вовсе, не только для этого Таланта — заводить счётчик атак и включать проверку для ВСЕХ акторов системы это отдельная, гораздо более рискованная правка (меняет наблюдаемое поведение боя всем акторам, не только владельцу этого Таланта).",
     source: "Determination To Fight / Решительность Сражаться",
-    reader: "module/rules/determination-to-fight.mjs, module/combat/damage.mjs::applyDamageToActor"
+    reader: "module/rules/determination-to-fight.mjs, module/combat/damage.mjs::applyDamageToActor, module/combat/defense.mjs::_performParry, module/combat/action-economy.mjs::resetActionEconomy"
   },
   "exodite.pathWarrior.eternalGuardian": {
     label: "Unnatural WS архетипа меняется на +4, +1 очко судьбы. Против фракции, которую персонаж ранее побеждал: +2 Dmg и +1 Pen (или +3/+2 при Hatred…",

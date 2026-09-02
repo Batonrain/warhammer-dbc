@@ -21,7 +21,7 @@ import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
 import { activeAblativeArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
-import { determinationToFightReduction } from "../rules/determination-to-fight.mjs";
+import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
@@ -507,6 +507,7 @@ export async function applyDamageToActor(actor, damageData) {
   // отдельно от AP/T.b, пробитием не уменьшается.
   const incomingReduction = (Number(system.incomingDamageReduction) || 0)
     + determinationToFightReduction(actor)
+    + determinationToFightWsReduction(actor)
     + justTheLightReduction(actor);
 
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает

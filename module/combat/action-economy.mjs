@@ -28,6 +28,7 @@
 import { MELEE_STANCES } from "../constants/combat.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -64,6 +65,17 @@ export function effectiveDefenseReactionMax(actor) {
 }
 
 /**
+ * Максимум ОД ДЛЯ ЭТОГО Хода: хранимая надбавка (ActiveEffect) + динамический
+ * бонус текущего состояния (Determination To Fight/Решительность Сражаться,
+ * wdbc-1rno: +1 ОД при отрицательных Ранах) — тот же приём, что
+ * effectiveDefenseReactionMax у Стойки, не запекается в хранимое поле.
+ * Подавленный (стр. 33, min 1) применяется ПОВЕРХ этого — см. resetActionEconomy.
+ */
+export function effectiveActionPointsMax(actor) {
+  return (Number(actor.system?.actionPoints?.max) || 0) + determinationToFightApBonus(actor);
+}
+
+/**
  * Восполнить ОД/Реакции актора до максимума — вызывается в начале ЕГО Хода
  * (hooks.mjs, updateCombat). Сама надбавка defenseMax от Стойки считается
  * заново каждый раз, а не копится в хранимом поле (см. заголовок файла).
@@ -75,8 +87,8 @@ export async function resetActionEconomy(actor) {
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
   const apMax          = sys.conditions?.pinned
-    ? Math.min(1, Number(sys.actionPoints?.max) || 0)
-    : (Number(sys.actionPoints?.max) || 0);
+    ? Math.min(1, effectiveActionPointsMax(actor))
+    : effectiveActionPointsMax(actor);
   const reactMax       = Number(sys.reactions?.max) || 0;
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);

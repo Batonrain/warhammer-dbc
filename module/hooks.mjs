@@ -28,6 +28,7 @@ import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { processLastActorCombatStart } from "./combat/last-actor.mjs";
 import { processMiddleOfTheHuntRoundStart } from "./combat/middle-of-the-hunt.mjs";
+import { snapshotStanceForRoundStart } from "./rules/determination-to-fight.mjs";
 import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
 import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
@@ -1469,6 +1470,11 @@ function _attachFateContextMenu(message, html) {
     // The Middle of the Hunt/Середина Охоты (wdbc-1rno): +10 Инициативы
     // владельцу Таланта на раундах 3-4 — та же смена Раунда, ГМ пишет.
     await processMiddleOfTheHuntRoundStart(combat);
+    // Determination To Fight/Решительность Сражаться (wdbc-1rno): снимок
+    // Стойки каждого комбатанта на смену Раунда — читает determination-to-
+    // fight.mjs::determinationToFightWsReduction/ParryBonus до следующей
+    // смены Раунда.
+    await snapshotStanceForRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
