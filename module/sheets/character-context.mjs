@@ -68,6 +68,7 @@ import { hasSkillfulTorture }                    from "../apps/skillful-torture.
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
+import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
@@ -382,6 +383,8 @@ export function characterContext(actor) {
   context.hasDreadWail = hasDreadWail(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
+  // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.
+  context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопки Певцов Кости на вкладке БОЙ (wdbc-sk8s) — только владельцам соответствующего Таланта.
   context.hasBoneSong = hasBoneSong(actor);
   context.hasPreservation = hasPreservation(actor);
