@@ -241,6 +241,38 @@ describe("hasSize и targetHasSize", () => {
   });
 });
 
+describe("hexMarkedPreyAllyBonus", () => {
+  const predicate = PREDICATES.hexMarkedPreyAllyBonus;
+  const marked = (god) => ({
+    items: [], system: {},
+    getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "hexMarkedPrey") ? { shamanUuid: "Actor.shaman1", god } : undefined
+  });
+  const unmarked = { items: [], system: {}, getFlag: () => undefined };
+
+  it("зверолюд-союзник, цель помечена, value не задан (базовый +15) — true независимо от god", () => {
+    expect(predicate(actor({ race: "beastman" }), { targetActor: marked("khorne") }, true)).toBe(true);
+    expect(predicate(actor({ race: "beastman" }), { targetActor: marked("tzeentch") }, true)).toBe(true);
+  });
+
+  it("цель не помечена — false", () => {
+    expect(predicate(actor({ race: "beastman" }), { targetActor: unmarked }, true)).toBe(false);
+  });
+
+  it("не зверолюд — false, даже под меткой", () => {
+    expect(predicate(actor({ race: "human" }), { targetActor: marked("khorne") }, true)).toBe(false);
+  });
+
+  it("value строкой (god-ответвление, wdbc-w8z4) — true только при совпадении god метки", () => {
+    expect(predicate(actor({ race: "beastman" }), { targetActor: marked("khorne") }, "khorne")).toBe(true);
+    expect(predicate(actor({ race: "beastman" }), { targetActor: marked("nurgle") }, "khorne")).toBe(false);
+  });
+
+  it("value строкой без метки/не-зверолюда — false, как и базовая форма", () => {
+    expect(predicate(actor({ race: "beastman" }), { targetActor: unmarked }, "khorne")).toBe(false);
+    expect(predicate(actor({ race: "human" }), { targetActor: marked("khorne") }, "khorne")).toBe(false);
+  });
+});
+
 describe("общее требование к предикатам", () => {
   const value = {
     race: ["human"], subrace: ["navigator"], geneSeedLegion: ["VIII"], psyRatingMin: 1,
@@ -258,7 +290,9 @@ describe("общее требование к предикатам", () => {
     // актора, значение из `when` не участвует.
     avatarOfSlaughterOffTarget: undefined,
     // Метка Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — читает флаг ЦЕЛИ
-    // (ctx.targetActor), значение из `when` не участвует.
+    // (ctx.targetActor); значение из `when` — необязательный фильтр по god
+    // (wdbc-w8z4, см. describe("hexMarkedPreyAllyBonus") выше), undefined
+    // здесь достаточно для базовой сигнатуры «строго boolean».
     hexMarkedPreyAllyBonus: undefined
   };
 

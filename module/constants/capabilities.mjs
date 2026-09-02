@@ -641,11 +641,11 @@ export const CAPABILITIES = {
   },
   "mark.beastmanShaman.hexMarkedPrey.khorneVariant": {
     label: "Кхорн: атаки союзников по цели получают Proven(3); крит с R-уроном дополнительно вызывает кровотечение",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; Proven(3)/доп. кровотечение на попаданиях — не смоделированы."
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/rules/library/beastman-shaman.mjs::BEASTMAN_SHAMAN_RULES (правило \"beastmanShaman.hexMarkedPrey.khorneProven\", grantWeaponProp, wdbc-w8z4) — РЕАЛЬНО: Proven(3) сам доливается в Особые Свойства атак союзников-зверолюдей по цели. Доп. кровотечение на крите с R-уроном — не смоделировано."
   },
   "mark.beastmanShaman.hexMarkedPrey.nurgleVariant": {
     label: "Нургл: атаки союзников по цели получают Toxic(1); выживший при непоглощённом уроне провал T+10 в конце боя = Гниль Нургла",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; Toxic(1)/тест на Гниль Нургла — не смоделированы."
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/rules/library/beastman-shaman.mjs::BEASTMAN_SHAMAN_RULES (правило \"beastmanShaman.hexMarkedPrey.nurgleToxic\", grantWeaponProp, wdbc-w8z4) — РЕАЛЬНО: Toxic(1) сам доливается в Особые Свойства атак союзников-зверолюдей по цели. Тест на Гниль Нургла в конце боя — не смоделирован."
   },
   "mark.beastmanShaman.hexMarkedPrey.slaaneshVariant": {
     label: "Слаанеш: цель не может добровольно удаляться от шамана дальше 20 м, штраф −10 Dodge/Parry против его атак; урон шамана цели восстанавливает ему 1d3 Раны",

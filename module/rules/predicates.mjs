@@ -208,10 +208,20 @@ export const PREDICATES = {
   // выше, где метка на самом акторе). «Зверолюди-союзники» — раса
   // effectiveRace(actor.system)==="beastman" (rules/race.mjs): чистое поле
   // актора, доступное предикату без canvas/disposition.
-  hexMarkedPreyAllyBonus: (actor, ctx) => {
+  //
+  // `value` (wdbc-w8z4, god-ответвления): необязательный фильтр по
+  // Покровительству, под которым была наложена метка (mark.god). Общий
+  // безусловный бонус пишет `when: { hexMarkedPreyAllyBonus: true }` —
+  // булево/пустое значение god не фильтрует, ведёт себя как раньше. God-
+  // специфичное правило (Кхорн: Proven(3), Нургл: Toxic(1) на попаданиях
+  // союзников, rules/library/beastman-shaman.mjs) пишет god строкой:
+  // `when: { hexMarkedPreyAllyBonus: "khorne" } }`.
+  hexMarkedPreyAllyBonus: (actor, ctx, value) => {
     const mark = ctx?.targetActor?.getFlag?.("warhammer-dbc", "hexMarkedPrey");
     if (!mark) return false;
-    return raceMatches(actor?.system, "beastman");
+    if (!raceMatches(actor?.system, "beastman")) return false;
+    if (typeof value === "string" && value) return mark.god === value;
+    return true;
   }
 };
 
