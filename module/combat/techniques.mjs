@@ -14,18 +14,26 @@ export async function _showContestDialog(actor, techDef) {
   const stanceKey      = actor.system.meleeStance || "standard";
   const stanceWsBonus  = techDef.stanceWs ? (MELEE_STANCES[stanceKey]?.wsBonus ?? 0) : 0;
 
+  // Плоский бонус источника, не зависящего от Стойки/характеристики — напр.
+  // Мутация Tentacle/Щупальце даёт +20 на все тесты Борьбы (module/combat/
+  // grapple.mjs::tentacleTechDef), независимо от того, какой характеристикой
+  // их сдают.
+  const extraBonus = techDef.extraBonus ?? 0;
+
   // Определяем характеристику по умолчанию. techDef.defaultChar — явное
   // указание (действия Борьбы, стр. 12: Athletics(S) или Acrobatics(A) —
   // ни то, ни другое не WS/Повалить-Напролом, поэтому нужна отдельная ручка,
   // а не растягивать isKnock ещё сильнее).
   const defaultChar = techDef.defaultChar || (isKnock ? "s" : "ws");
   const baseVal     = (actor.system.characteristics[defaultChar]?.total ?? 0)
-                     + (defaultChar === "ws" ? stanceWsBonus : 0);
+                     + (defaultChar === "ws" ? stanceWsBonus : 0)
+                     + extraBonus;
 
   // Строим опции для выбора характеристики
   const charOptions = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
     let val = actor.system.characteristics[key]?.total ?? 0;
     if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
+    val += extraBonus;
     return `<option value="${key}" ${key === defaultChar ? "selected" : ""}>
       ${meta.abbr} — ${meta.label} (${val})
     </option>`;
@@ -34,6 +42,12 @@ export async function _showContestDialog(actor, techDef) {
   const stanceBonusNote = stanceWsBonus
     ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
          ${rollIcon("sword")}Стойка: ${MELEE_STANCES[stanceKey].label} (${stanceWsBonus >= 0 ? "+" : ""}${stanceWsBonus}), уже в WS выше
+       </div>`
+    : "";
+
+  const extraBonusNote = extraBonus
+    ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
+         ${rollIcon("sword")}${techDef.extraBonusLabel ?? "Бонус"}: ${extraBonus >= 0 ? "+" : ""}${extraBonus}, уже учтён выше
        </div>`
     : "";
 
@@ -54,6 +68,7 @@ export async function _showContestDialog(actor, techDef) {
           ${techDef.note}
         </div>
         ${stanceBonusNote}
+        ${extraBonusNote}
 
         <div class="atk-dlg-row">
           <label>Характеристика:</label>
@@ -135,6 +150,7 @@ export async function _showContestDialog(actor, techDef) {
         const key = ev.currentTarget.value;
         let val = actor.system.characteristics[key]?.total ?? 0;
         if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
+        val += extraBonus;
         html.find("#contest-self").val(val);
         _updateTotal(html);
       });
