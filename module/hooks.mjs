@@ -30,6 +30,7 @@ import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { resolveTrancesForCombat }       from "./apps/armour-history-trance.mjs";
+import { resolveExpiredImperatives }     from "./rules/imperative.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
@@ -1380,6 +1381,9 @@ function _attachFateContextMenu(message, html) {
     // держит инициативу сразу за кастером каждый Раунд, пока не истекут
     // F.b — та же смена Раунда, ГМ пишет.
     await processSpiritTalkRoundStart(combat);
+    // Императив (wdbc-yu32): снимает истёкшие носители у комбатантов этого
+    // боя (module/rules/imperative.mjs) — тот же такт смены Раунда.
+    await resolveExpiredImperatives(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —

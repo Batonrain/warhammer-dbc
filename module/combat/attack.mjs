@@ -28,6 +28,7 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
+import { evasionImperativeBonus }                     from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 
 /**
@@ -557,7 +558,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // различает — тот же весовой штраф −20 «Стрельба в рукопашную» уже
         // применяется одинаково ко всем, так что и бонус цели считаем так же
         // единообразно, без отдельной схемы «Тип оружия»).
-        dodgeMod: techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0),
+        // Императив (wdbc-yu32): плоский бонус/штраф активного Императива
+        // цели к тесту Избегания — суммируется с базовым модификатором, не
+        // заменяет его (у Карабина/рукопашной стрельбы своя причина бонуса).
+        dodgeMod: (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor),
         parryMod: techOpts.targetParryMod ?? 0,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на

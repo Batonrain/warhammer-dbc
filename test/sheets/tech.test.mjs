@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import {
   activateTechListeners,
   activateTechMiracle,
@@ -199,6 +199,86 @@ describe("activateTechMiracle", () => {
     expect(captured.chat[0].content).toContain("Железо");
     expect(captured.chat[0].content).toContain("Порог: <b>60</b>");
     expect(captured.chat[0].content).toContain("Активировано");
+  });
+});
+
+// activateTechMiracle доходит до DialogV2.wait через несколько await'ов (Roll
+// активации, infoguardInteractionSection) — макротик (setTimeout 0) надёжно
+// дожидается очереди микрозадач, один await Promise.resolve() не гарантирует
+// этого (см. test/combat/mount-roll.test.mjs).
+const flush = () => new Promise(r => setTimeout(r, 0));
+
+/** Минимальный актор-цель Императива: только то, что читает module/rules/imperative.mjs. */
+function imperativeTarget(name = "Цель") {
+  const items = [];
+  items.get = id => items.find(i => i.id === id) ?? null;
+  let nextId = 1;
+  return {
+    name, items,
+    createEmbeddedDocuments: async (_type, docs) => {
+      const created = docs.map(d => {
+        const clone = structuredClone(d);
+        return { id: `carrier-${nextId++}`, ...clone, getFlag: (s, k) => clone.flags?.[s]?.[k] };
+      });
+      items.push(...created);
+      return created;
+    },
+    deleteEmbeddedDocuments: async (_type, ids) => {
+      for (const id of ids) {
+        const idx = items.findIndex(i => i.id === id);
+        if (idx >= 0) items.splice(idx, 1);
+      }
+    }
+  };
+}
+
+describe("activateTechMiracle: Императив (wdbc-yu32)", () => {
+  beforeEach(() => {
+    globalThis.game.user = { targets: [] };
+  });
+
+  it("цели не выбраны — предупреждение в карточке, носитель не создаётся", async () => {
+    const a = actor();
+    const miracle = item({ name: "Evasion Imperative / Императив Избегания", system: { miracleType: "imperative", cognitionCost: 0, energyCost: 0, testSkill: "techUse" } });
+    captured.nextRoll = 10;
+
+    await activateTechMiracle(a, miracle);
+
+    expect(captured.chat[0].content).toContain("цели не выбраны");
+  });
+
+  it("успех + выбранные цели + подтверждение диалога — накладывает Императив на всех целей", async () => {
+    const target = imperativeTarget("Цель 1");
+    globalThis.game.user = { targets: [{ actor: target }] };
+    const a = actor();
+    const miracle = item({ name: "Evasion Imperative / Императив Избегания", system: { miracleType: "imperative", cognitionCost: 0, energyCost: 0, testSkill: "techUse" } });
+    captured.nextRoll = 10;
+
+    const promise = activateTechMiracle(a, miracle);
+    await flush(); // несколько await'ов (Roll.evaluate, infoguard) до открытия диалога
+    await captured.press("apply", fakeForm({ '[name="bonus"]': "30" }));
+    await promise;
+
+    expect(target.items).toHaveLength(1);
+    expect(target.items[0].type).toBe("trait");
+    expect(target.items[0].getFlag("warhammer-dbc", "imperativeBonuses")).toEqual({ evasionBonus: 30, coverApDelta: -8, coverApFloorRatio: 0.5, coverApCeilRatio: undefined });
+    expect(captured.chat[0].content).toContain("Императив Избегания: +30 на Избегания → Цель 1");
+  });
+
+  it("отмена диалога — Императив не накладывается", async () => {
+    const target = imperativeTarget("Цель 1");
+    target.createEmbeddedDocuments = async () => { throw new Error("не должен вызываться при отмене"); };
+    globalThis.game.user = { targets: [{ actor: target }] };
+    const a = actor();
+    const miracle = item({ name: "Fortress Imperative / Императив Крепости", system: { miracleType: "imperative", cognitionCost: 0, energyCost: 0, testSkill: "techUse" } });
+    captured.nextRoll = 10;
+
+    const promise = activateTechMiracle(a, miracle);
+    await flush();
+    captured.dismiss();
+    await promise;
+
+    expect(captured.chat[0].content).toContain("наложение отменено");
   });
 });
 

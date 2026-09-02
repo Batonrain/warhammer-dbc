@@ -24,6 +24,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { spdMeters, recoilRemaining, spendRecoil } from "./recoil-pool.mjs";
 import { coverApForToken } from "./cover.mjs";
 import { spendPoolForRecoil } from "./evasion-pool.mjs";
+import { coverApImperativeAdjust } from "./imperative-bonuses.mjs";
 
 /** Цена входа в Отскок из банка Успехов (Voltagheist Blast, wdbc-16ss). */
 export const POOL_RECOIL_COST = 2;
@@ -61,7 +62,10 @@ export async function showRecoilDialog(actor) {
   const spd = spdMeters(actor);
   const defaultMeters = Math.min(spd || 1, Number.isFinite(remaining) ? remaining : (spd || 1));
   const token = tokenFor(actor);
-  const suggestedAp = token ? coverApForToken(token) : 0;
+  // Императив Крепости/Избегания (wdbc-yu32) может усилить/ослабить AP
+  // укрытия для ЭТОГО актора — клапан «не более чем вдвое/×2» считается от
+  // базового AP зоны, не от уже применённого. Поле всё равно редактируемое.
+  const suggestedAp = token ? coverApImperativeAdjust(actor, coverApForToken(token)) : 0;
 
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title: `Отскок — ${actor.name}` },
