@@ -125,6 +125,37 @@ describe("isItemActive: Руническая Вязь", () => {
   });
 });
 
+const tech = (extra = {}) => ({ type: "techPower", system: { miracleType: "imperative", sustained: false, compiled: false, extraTypes: [], ...extra } });
+
+describe("isItemActive: Техночудо (wdbc-yu32)", () => {
+  it("Процесс (sustained) — активно независимо от типа чуда", () => {
+    expect(isItemActive(tech({ sustained: true }))).toBe(true);
+  });
+
+  it("Пассивное — активно всегда", () => {
+    expect(isItemActive(tech({ miracleType: "passive", sustained: false }))).toBe(true);
+  });
+
+  it("Императив/Компенсатор/Манипула/Анима/Доктрина без Процесса — неактивно (не про удерживаемое состояние источника, см. разбор в тикете)", () => {
+    for (const miracleType of ["imperative", "compensator", "manipula", "anima", "doctrine"]) {
+      expect(isItemActive(tech({ miracleType }))).toBe(false);
+    }
+  });
+
+  it("Славословие без компиляции — неактивно", () => {
+    expect(isItemActive(tech({ miracleType: "slavoslovie", compiled: false }))).toBe(false);
+  });
+
+  it("Славословие скомпилировано — активно (книга: держится как Процесс, пока не использовано)", () => {
+    expect(isItemActive(tech({ miracleType: "slavoslovie", compiled: true }))).toBe(true);
+  });
+
+  it("Славословие как дополнительный тип (extraTypes) — тоже учитывается", () => {
+    const item = tech({ miracleType: "imperative", extraTypes: [{ type: "slavoslovie", x: 1 }], compiled: true });
+    expect(isItemActive(item)).toBe(true);
+  });
+});
+
 // У ActiveEffect картинка называется img: поле icon Foundry объединила с ним в
 // v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
 // ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией
