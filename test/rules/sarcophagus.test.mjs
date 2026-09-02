@@ -4,7 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  SARCOPHAGUS, sarcophagusCharDelta, sarcophagusFlags, sarcophagusWarpWounds
+  SARCOPHAGUS, sarcophagusCharDelta, sarcophagusFlags, sarcophagusWarpWounds,
+  sarcophagusHelplessNow
 } from "../../module/rules/dreadnought.mjs";
 
 describe("числовые правки пилота", () => {
@@ -47,6 +48,19 @@ describe("аблативные Раны против варп-оружия", () 
 
   it("отрицательный бонус Воли не даёт отрицательных Ран", () => {
     expect(sarcophagusWarpWounds(-2)).toBe(0);
+  });
+});
+
+describe("sarcophagusHelplessNow: Беспомощен, когда не подключён к машине (wdbc-drn)", () => {
+  it("вживлён и не подключён — Беспомощен", () => {
+    expect(sarcophagusHelplessNow(true, false)).toBe(true);
+  });
+  it("вживлён и подключён — не форсируется", () => {
+    expect(sarcophagusHelplessNow(true, true)).toBe(false);
+  });
+  it("не вживлён вовсе — не форсируется независимо от подключения", () => {
+    expect(sarcophagusHelplessNow(false, false)).toBe(false);
+    expect(sarcophagusHelplessNow(false, true)).toBe(false);
   });
 });
 

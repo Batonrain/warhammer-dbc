@@ -51,6 +51,33 @@ describe("_executeFearRoll: Усталость в пороге теста Стр
   });
 });
 
+describe("_executeFearRoll: возможность sarcophagus.autoPassFear (wdbc-drn)", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("пилот Саркофага Дредноута автоматически проходит тест Страха без Infamy", async () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "sarcophagus.autoPassFear" }] }
+    ]);
+    captured.nextRoll = 99; // гарантированный провал без возможности — авто-успех обязан её перебить
+    await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 1, "important", 0, 0);
+    const msg = captured.chat.at(-1);
+    expect(msg.content).toContain("выстоял");
+  });
+
+  it("без возможности — тот же бросок проваливается как обычно", async () => {
+    clearRuleSources();
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 1, "important", 0, 0);
+    const msg = captured.chat.at(-1);
+    expect(msg.content).not.toContain("выстоял");
+  });
+});
+
 describe("_executeFearRoll: Стальное Сердце — все рейтинги Страха на 1 меньше (wdbc-tsz6)", () => {
   const saved = getRuleSources();
   afterEach(() => {

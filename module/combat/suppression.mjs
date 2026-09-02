@@ -10,6 +10,7 @@
 
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -25,7 +26,9 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } =
   const threshold = wpTotal + mod;
   const roll      = await new Roll("1d100").evaluate();
   const rv        = roll.total;
-  const success   = rv <= threshold;
+  // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
+  // Подавления независимо от броска.
+  const success   = rv <= threshold || hasRuleFlag(actor, "sarcophagus.autoPassFear");
   const rollMode  = game.settings.get("core", "rollMode");
 
   if (!success) await actor.update({ "system.conditions.pinned": true });
@@ -82,7 +85,10 @@ export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const threshold = wpTotal + bonus;
   const roll      = await new Roll("1d100").evaluate();
   const rv        = roll.total;
-  const success   = rv <= threshold;
+  // Саркофаг Дредноута (стр. 57, wdbc-drn): та же возможность, что и на самом
+  // тесте Подавления выше — практически недостижимо (auto-pass не даёт
+  // Подавлению вообще наступить), но на случай ручного наложения ГМом.
+  const success   = rv <= threshold || hasRuleFlag(actor, "sarcophagus.autoPassFear");
   const rollMode  = game.settings.get("core", "rollMode");
 
   if (success) await actor.update({ "system.conditions.pinned": false });

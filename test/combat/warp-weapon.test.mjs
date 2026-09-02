@@ -13,12 +13,13 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { applyDamageToActor } from "../../module/combat/damage.mjs";
+import { applyDamageToActor, refillSarcophagusWarpWounds } from "../../module/combat/damage.mjs";
 
 /** Подставной Персонаж: броня, Стойкость, W.b и опционально активный щит. */
 function characterActor({
   armorAP = 0, toughnessBonus = 0, wpBonus = 0, wounds = 20,
-  shield = null, aegisOfGnelle = false, apVsWarpFull = false
+  shield = null, aegisOfGnelle = false, apVsWarpFull = false,
+  sarcophagusWarpWounds = null
 } = {}) {
   const updates = [];
   const items = shield ? [{
@@ -50,13 +51,16 @@ function characterActor({
     system: {
       absorption: { body: armorAP + toughnessBonus, toughnessBonus, propFlags: {} },
       characteristics: { wp: { bonus: wpBonus } },
-      wounds: { value: wounds, critical: 0, max: wounds }
+      wounds: { value: wounds, critical: 0, max: wounds },
+      ...(sarcophagusWarpWounds ? { sarcophagusWarpWounds } : {})
     },
     items: Object.assign([...items], { contents: items }),
     async update(data) {
       updates.push(data);
       if (data["system.wounds.value"]    !== undefined) this.system.wounds.value    = data["system.wounds.value"];
       if (data["system.wounds.critical"] !== undefined) this.system.wounds.critical = data["system.wounds.critical"];
+      if (data["system.sarcophagusWarpWounds.value"] !== undefined)
+        this.system.sarcophagusWarpWounds.value = data["system.sarcophagusWarpWounds.value"];
     }
   };
 }
@@ -160,5 +164,74 @@ describe("Модификация брони «armor.apVsWarpFull» (wdbc-sg57): 
     });
     await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
     expect(actor.system.wounds.value).toBe(18); // целиком (13), не половина (8) — та же защита, что и без Вязи
+  });
+});
+
+describe("Саркофаг Дредноута: аблативные Раны ПРОТИВ ВАРП-ОРУЖИЯ (стр. 57, wdbc-drn)", () => {
+  it("пул поглощает варп-урон ДО обычных Ран", async () => {
+    // W.b 3 + пул 4 → поглощение по W.b (3) как обычно, ОСТАТОК (12) идёт в пул.
+    const actor = characterActor({
+      armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20,
+      sarcophagusWarpWounds: { value: 4, max: 4 }
+    });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    // Без пула ушло бы 12 обычных Ран (20→8, см. тест выше) — с пулом пул
+    // берёт на себя 4, обычным Ранам достаётся только 12 − 4 = 8.
+    expect(actor.system.sarcophagusWarpWounds.value).toBe(0);
+    expect(actor.system.wounds.value).toBe(20 - 8);
+  });
+
+  it("пула хватает целиком — обычные Раны не трогаются вовсе", async () => {
+    const actor = characterActor({
+      armorAP: 0, toughnessBonus: 0, wpBonus: 0, wounds: 20,
+      sarcophagusWarpWounds: { value: 20, max: 20 }
+    });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.sarcophagusWarpWounds.value).toBe(5); // 20 − 15
+    expect(actor.system.wounds.value).toBe(20); // не тронуты
+  });
+
+  it("пустой пул (value 0) — как без Саркофага (контроль)", async () => {
+    const actor = characterActor({
+      armorAP: 0, toughnessBonus: 0, wpBonus: 3, wounds: 20,
+      sarcophagusWarpWounds: { value: 0, max: 4 }
+    });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: true, ignoreShield: true }));
+    expect(actor.system.wounds.value).toBe(20 - (15 - 3)); // W.b=3, как обычно
+  });
+
+  it("без warpSoak пул не расходуется вовсе (только против варп-оружия)", async () => {
+    const actor = characterActor({
+      armorAP: 10, toughnessBonus: 5, wpBonus: 3, wounds: 20,
+      sarcophagusWarpWounds: { value: 4, max: 4 }
+    });
+    await applyDamageToActor(actor, damage({ rawDamage: 15, warpSoak: false }));
+    expect(actor.system.sarcophagusWarpWounds.value).toBe(4); // не тронут
+    expect(actor.system.wounds.value).toBe(20); // AP+T.b поглотили всё, как в контроле выше
+  });
+});
+
+describe("refillSarcophagusWarpWounds: полное восполнение к концу боя (wdbc-drn)", () => {
+  it("восполняет истощённый пул до максимума", async () => {
+    const actor = characterActor({ sarcophagusWarpWounds: { value: 1, max: 4 } });
+    await refillSarcophagusWarpWounds({ combatants: [{ actor }] });
+    expect(actor.system.sarcophagusWarpWounds.value).toBe(4);
+  });
+
+  it("уже полный пул — документ не дёргается", async () => {
+    const actor = characterActor({ sarcophagusWarpWounds: { value: 4, max: 4 } });
+    await refillSarcophagusWarpWounds({ combatants: [{ actor }] });
+    expect(actor.updates).toHaveLength(0);
+  });
+
+  it("нет пула (не пилот) — пропускается без ошибки", async () => {
+    const actor = characterActor();
+    await refillSarcophagusWarpWounds({ combatants: [{ actor }] });
+    expect(actor.updates).toHaveLength(0);
+  });
+
+  it("пустой/отсутствующий combat не роняет вызов", async () => {
+    await expect(refillSarcophagusWarpWounds(null)).resolves.toBeUndefined();
+    await expect(refillSarcophagusWarpWounds({ combatants: [] })).resolves.toBeUndefined();
   });
 });

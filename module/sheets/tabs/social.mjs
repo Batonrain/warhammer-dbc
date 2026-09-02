@@ -14,6 +14,7 @@ import { RELATION_SKILLS, RELATION_STEPS, relationLabel, relationStep,
          emptyRelationMods } from "../../constants/relations.mjs";
 import { SOCIAL_SKILL_KEYS, socialEffectsOf, socialReasons } from "../../rules/social.mjs";
 import { commandContext, activateCommandListeners } from "./command.mjs";
+import { activateIntimidateListeners } from "../../combat/intimidate.mjs";
 import { rootEl } from "../v2-helpers.mjs";
 
 /** Акторы, к которым вообще бывают Отношения. */
@@ -191,6 +192,10 @@ export function socialContext(actor, actors = []) {
     socialAssignments: assignments(actor, actors),
     socialRelations: relationRows(actor),
     relationSkillCols: RELATION_SKILLS,
+    // Запугивание как встречная проверка (module/combat/intimidate.mjs,
+    // wdbc-drn) — своя мини-панель ниже Навыков, кнопка берёт цель из
+    // нацеленных/выделенных токенов сцены.
+    intimidateTotal: system.skills?.intimidate?.total ?? -20,
     // Командование вне Отряда — своя панель со своим модулем (tabs/command.mjs):
     // список подчинённых, Присутствие и Команды живут не в Отряде, а здесь.
     ...commandContext(actor)
@@ -252,12 +257,14 @@ export async function setRelationField(actor, idx, field, value) {
  *
  * Принимает и корневой DOM-узел, и jQuery-обёртку — как и остальные вкладки.
  */
-export function activateSocialListeners(root, actor, { editable = true } = {}) {
+export function activateSocialListeners(root, actor, { editable = true, resolveOtherTargetActor } = {}) {
   const el = rootEl(root);
   if (!el?.querySelector) return;
 
   // Панель «Под моим Присутствием» — свой модуль, свои слушатели.
   activateCommandListeners(el, actor, { editable });
+  // Запугивание — своя мини-панель, свои слушатели (module/combat/intimidate.mjs).
+  activateIntimidateListeners(el, actor, { editable, resolveOtherTargetActor });
 
   // Переходы: предмет актора и другой актор по uuid.
   el.querySelectorAll(".social-open-item").forEach(node =>

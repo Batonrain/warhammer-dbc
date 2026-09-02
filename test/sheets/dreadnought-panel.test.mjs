@@ -138,3 +138,45 @@ describe("dreadnoughtPanelContext: пилот показан верно", () => 
     expect(ctx.sanity.hibernation).toEqual({ active: true });
   });
 });
+
+describe("dreadnoughtPanelContext: sarcophagus (стр. 57, wdbc-drn)", () => {
+  it("ауспекс/яд — константы книги, эффективный максимум Ран приходит как есть", () => {
+    const hero = pilot("Actor.hero", {}, [], { wounds: { value: 20, max: 25, effectiveMax: 20 } });
+    const ctx = dreadnoughtPanelContext(hero, [hero, dread("Actor.hero")]);
+    expect(ctx.sarcophagus.auspexRange).toBe(450);
+    expect(ctx.sarcophagus.poisonBonus).toBe(30);
+    expect(ctx.sarcophagus.woundsEffectiveMax).toBe(20);
+  });
+
+  it("effectiveMax отсутствует — откат на обычный max", () => {
+    const hero = pilot("Actor.hero", {}, [], { wounds: { value: 20, max: 25 } });
+    const ctx = dreadnoughtPanelContext(hero, [hero, dread("Actor.hero")]);
+    expect(ctx.sarcophagus.woundsEffectiveMax).toBe(25);
+  });
+
+  it("лечение доступно, только пока Раны ниже эффективного максимума", () => {
+    const full = pilot("Actor.hero", {}, [], { wounds: { value: 20, max: 25, effectiveMax: 20 } });
+    expect(dreadnoughtPanelContext(full, [full, dread("Actor.hero")]).sarcophagus.healAvailable).toBe(false);
+    const hurt = pilot("Actor.hero", {}, [], { wounds: { value: 19, max: 25, effectiveMax: 20 } });
+    expect(dreadnoughtPanelContext(hurt, [hurt, dread("Actor.hero")]).sarcophagus.healAvailable).toBe(true);
+  });
+
+  it("без максимума аблативных против варп-оружия — блока нет", () => {
+    const hero = pilot("Actor.hero", {}, [], { sarcophagusWarpWounds: { value: 0, max: 0 } });
+    const ctx = dreadnoughtPanelContext(hero, [hero, dread("Actor.hero")]);
+    expect(ctx.sarcophagus.warpWounds).toBeNull();
+  });
+
+  it("с максимумом — значение/максимум доходят до контекста", () => {
+    const hero = pilot("Actor.hero", {}, [], { sarcophagusWarpWounds: { value: 3, max: 4 } });
+    const ctx = dreadnoughtPanelContext(hero, [hero, dread("Actor.hero")]);
+    expect(ctx.sarcophagus.warpWounds).toEqual({ value: 3, max: 4 });
+  });
+
+  it("interred/helplessNow доходят до контекста как есть", () => {
+    const hero = pilot("Actor.hero", {}, [], { sarcophagusInterred: true, sarcophagusHelplessNow: false });
+    const ctx = dreadnoughtPanelContext(hero, [hero, dread("Actor.hero")]);
+    expect(ctx.sarcophagus.interred).toBe(true);
+    expect(ctx.sarcophagus.helplessNow).toBe(false);
+  });
+});

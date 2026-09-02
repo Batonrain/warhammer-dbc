@@ -223,6 +223,39 @@
       {{/if}}
     </div>
   </div>
+
+  {{!-- Прочие числовые пункты Саркофага (стр. 57, wdbc-drn), не связанные со
+        Здравомыслием — dreadnought-panel.mjs::sarcophagus. --}}
+  <div class="sanity-panel">
+    <div class="sanity-head">
+      <span class="sanity-title">САРКОФАГ</span>
+      <span class="sanity-info" title="Аблативные Раны против варп-оружия восполняются полностью к концу боя. Лечение — 1 Рана каждые 10 минут игрового времени, тикать вручную.">ⓘ</span>
+    </div>
+    <div class="armor-tb-note">
+      Ауспекс саркофага: <b>{{sarcophagus.auspexRange}} м</b> · +{{sarcophagus.poisonBonus}} против ядов ·
+      эффективный максимум Ран: <b>{{sarcophagus.woundsEffectiveMax}}</b>
+    </div>
+    {{#if sarcophagus.warpWounds}}
+    <div class="armor-tb-note">
+      Аблативные против варп-оружия: <b>{{sarcophagus.warpWounds.value}}</b> / {{sarcophagus.warpWounds.max}}
+    </div>
+    {{/if}}
+    <div class="sanity-recoveries">
+      <button type="button" class="sanity-recover-btn{{#unless sarcophagus.healAvailable}} sanity-recover-btn-inert{{/unless}}"
+              data-action="sarcophagusHealTick"
+              title="1 Рана каждые 10 минут игрового времени (стр. 57) — тикать нужно вручную, таймера в системе нет.">
+        Лечение саркофага (+1 Рана)</button>
+    </div>
+    <label class="helmet-toggle" title="Хирургическое заключение в Саркофаг — необратимый факт биографии, не снимается автоматически при отключении от конкретного Дредноута.">
+      <input type="checkbox" name="system.sarcophagusInterred" {{checked sarcophagus.interred}}/>
+      <span class="helmet-toggle-label">Заключён в Саркофаг (без конечностей)</span>
+    </label>
+    {{#if sarcophagus.helplessNow}}
+    <div class="armor-tb-note" style="color:#ff8a8a;" title="Заключён в Саркофаг, но не подключён ни к одному Дредноуту — по правилу (стр. 57) Беспомощен. Наложите состояние вручную.">
+      ⚠️ Отключён от машины — по правилу Беспомощен
+    </div>
+    {{/if}}
+  </div>
   {{/if}}
 
   {{!-- СТОЙКА — то же постоянное состояние (system.meleeStance), что читает
