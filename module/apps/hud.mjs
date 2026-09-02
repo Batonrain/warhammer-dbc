@@ -50,14 +50,17 @@ function unarmedKey(item) {
   return Object.keys(UNARMED_SOURCE_IDS).find(k => UNARMED_SOURCE_IDS[k] === srcId) ?? null;
 }
 
-// Лоток «Безоружный бой»: ЛЮБОЙ надетый предмет с нулевой занятостью руки
-// (rules/hands.mjs, weaponHandsRequired) — не только Кулак/Пинок/Удар головой,
-// но и любая интегральная атака без хвата (Кислотный Плевок, Вопль, Дары
-// Одержимого-выдохи и т.п.) и обычное оружие со свойством Independent/Wrist.
+// Лоток «Безоружный бой»: интегральные атаки (часть тела/машины — Кулак,
+// Пинок, Удар головой, Кислотный Плевок, Вопль, Дары Одержимого-выдохи и
+// т.п.) с нулевой занятостью руки (rules/hands.mjs, weaponHandsRequired).
+// Обычное снаряжение с Independent/Wrist (Болтшторм-перчатка и т.п.) сюда
+// НЕ попадает — оно остаётся в слоте руки (handWeaponIds ниже) со своим
+// магазином/перезарядкой; в лотке ему было бы не место среди рукопашных
+// ударов, а слот терять нельзя (wdbc, ревью pr-reviewer перед пушем).
 // Кулак/Пинок/Удар головой — стабильно первыми, дальше — по sort предмета.
 function zeroHandItems(actor) {
   return equippedWeapons(actor)
-    .filter(w => weaponHandsRequired(w, actor) === 0)
+    .filter(w => isIntegralAttack(w) && weaponHandsRequired(w, actor) === 0)
     .sort((a, b) => {
       const ra = UNARMED_RANK[unarmedKey(a)] ?? 99;
       const rb = UNARMED_RANK[unarmedKey(b)] ?? 99;
@@ -135,11 +138,15 @@ function equippedWeapons(actor) {
 // надетое), чтобы у нового персонажа HUD не пустовал.
 function handWeaponIds(actor) {
   const eq = equippedWeapons(actor);
-  // Любой предмет с нулевой занятостью руки (rules/hands.mjs) — интегральная
-  // атака без хвата или обычное Independent-оружие — в слоты Л/П не
-  // назначается вообще: он всегда доступен из отдельного лотка «Безоружный
-  // бой» (zeroHandItems) и не должен вытеснять из слота настоящее оружие.
-  const real = eq.filter(w => weaponHandsRequired(w, actor) > 0);
+  // Интегральные атаки (кулак/пинок/головой/природные) в слоты Л/П не
+  // назначаются вообще — они всегда доступны из отдельного лотка «Безоружный
+  // бой» (zeroHandItems) и не должны вытеснять из слота настоящее оружие.
+  // Обычное снаряжение с нулевой занятостью руки (Independent/Wrist —
+  // Болтшторм-перчатка и т.п.) в слот, наоборот, ДОЛЖНО попадать: иначе у
+  // него в HUD пропадают магазин, перезарядка и кнопка ОГОНЬ (регрессия,
+  // поймана pr-reviewer перед пушем) — это настоящее оружие, просто не
+  // занимающее руку физически, а не часть тела.
+  const real = eq.filter(w => !isIntegralAttack(w));
   const byHand = h => real.find(w => getHeldHand(w) === h) ?? null;
 
   let mainId = byHand("right")?.id ?? null;
@@ -195,11 +202,11 @@ export function hudData(actor) {
     return { ...p, ap, apOnly, tb, color: armorColor(ap) };
   });
 
-  // Две руки: правая (основная) и левая (вторая). 0-хватные предметы сюда не
+  // Две руки: правая (основная) и левая (вторая). Интегральные атаки сюда не
   // попадают вовсе (см. handWeaponIds) — их count не должен решать, нужен ли
   // видимый слот левой руки.
   const { mainId, offId } = handWeaponIds(actor);
-  const heldWeaponCount = equippedWeapons(actor).filter(w => weaponHandsRequired(w, actor) > 0).length;
+  const heldWeaponCount = equippedWeapons(actor).filter(w => !isIntegralAttack(w)).length;
   const zeroHand = zeroHandItems(actor).map(w => ({ id: w.id, name: w.name, icon: zeroHandIcon(w) }));
   const weaponView = (id, slotKey, label) => {
     const w = id ? actor.items.get(id) : null;
