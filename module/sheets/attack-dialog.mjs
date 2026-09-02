@@ -54,6 +54,7 @@ import { getTerrainInfoForToken }             from "../regions/difficult-terrain
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { hasDeathDance, deathDanceNextCost, markDeathDanceUsed } from "../combat/death-dance.mjs";
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
+import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -666,7 +667,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // тот же приём, что stanceWs/FULL_ATTACK_CAPABILITY выше в этом файле.
     // «...и все тесты в Борьбе» (module/combat/grapple.mjs, Сжать/Метнуть)
     // НЕ подключено — отдельная точка входа (_showContestDialog), не эта.
-    const maneuverCapBonus = (isMelee && maneuverKey === "grapple" && hasRuleFlag(actor, "mutation.tentacle")) ? 20 : 0;
+    // Субмутация 9 «Изменчивое» (wdbc-2ynk): пока щупальце временно в форме
+    // руки — бонусу нечем помогать приёму Захват.
+    const maneuverCapBonus = (isMelee && maneuverKey === "grapple"
+      && hasRuleFlag(actor, "mutation.tentacle") && !tentacleBonusSuppressed(actor)) ? 20 : 0;
     const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus : 0;
 
     const pIdx = sel.profIdx ?? profIdx;

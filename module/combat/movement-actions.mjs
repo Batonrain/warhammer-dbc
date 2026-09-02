@@ -40,6 +40,7 @@ import { showReachableCells } from "./reachable-cells.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { spendRecoil, recoilRemaining } from "./recoil-pool.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
 
 /**
  * Достижимость SPD×N вокруг токена актора — честная подсветка клеток
@@ -279,6 +280,16 @@ export function showClimbDialog(actor) {
   const acro = skillTotal(actor, "acrobatics");
   const spd  = Number(actor.system.movement?.halfMove) || 0;
 
+  // Бонусы источников со scopeTarget «climbing» (wdbc-egll) — испольщик
+  // жмёт "Тест!", а не отдельная галочка: тот же неопросный приём, что и у
+  // Усталости в этом же диалоге ниже (не общий диалог Навыка с чекбоксами).
+  // Предзаполнено в «Доп. мод», редактируемо — источник виден подписью.
+  const climbMods  = resolveTest({ actor, kind: "skill", skill: "athletics", climbing: true }).mods;
+  const climbBonus = climbMods.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+  const climbNote  = climbMods.length
+    ? `<div style="font-size:0.82em;color:#8fd0ff;">${climbMods.map(m => `${sgn(m.value)} ${esc(m.label)}`).join(", ")}</div>`
+    : "";
+
   new Dialog({
     title: "Карабканье",
     content: `
@@ -291,7 +302,8 @@ export function showClimbDialog(actor) {
         </div>
         <div class="atk-dlg-row"><label>Athletics (S):</label><input id="cl-ath" type="number" value="${ath}"/></div>
         <div class="atk-dlg-row"><label>Acrobatics (A):</label><input id="cl-acro" type="number" value="${acro}"/></div>
-        <div class="atk-dlg-row"><label>Доп. мод:</label><input id="cl-mod" type="number" value="0"/></div>
+        <div class="atk-dlg-row"><label>Доп. мод:</label><input id="cl-mod" type="number" value="${climbBonus}"/></div>
+        ${climbNote}
         <div class="atk-range-info" style="font-size:0.82em;">
           Дистанция: SPD/2 (${(spd / 2).toFixed(1)}) + Успехи, м. Провал — падение (стр. 29).
         </div>

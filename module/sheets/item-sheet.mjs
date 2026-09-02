@@ -31,6 +31,7 @@ import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.m
 import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
 import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
 import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
+import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tentacle-hand-form.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1058,6 +1059,8 @@ export class WarhammerItemSheet
     // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
+      context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
       // «Икона Богохульства» (wdbc-zbc0) — пусто у остальных Мутаций.
@@ -1840,6 +1843,13 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfDeath(actor, this.item);
+    });
+
+    // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────
+    on(".tentacle-hand-form-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await toggleTentacleHandForm(actor, this.item);
     });
 
     // ── Мутация «Иллюзия Нормальности»: обнаружение/раскрытие (wdbc-zbc0) ───

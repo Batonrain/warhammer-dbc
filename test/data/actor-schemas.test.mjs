@@ -200,6 +200,10 @@ const DEVIATIONS = {
     "conditions.lostEyesCount": 0,
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
+    // Собственный вес тела (Записи → Вес, wdbc-oxdn) — нужен для Метания/
+    // Дубины (стр. 27-28, module/rules/improvised-weapon.mjs), в template.json
+    // поля не было вовсе (Возраст был, Вес — нет).
+    "bio.weight": 0,
     // Вызов/Challenge (X), wdbc-2xku — заведено гораздо позже template.json.
     "conditions.challenged": false,
     // «В Шоке» (стр. 53, wdbc-zepq) — снимается тестом выхода из Шока

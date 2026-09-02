@@ -456,6 +456,26 @@ export const CAPABILITIES = {
     source: "Ultanesh Technique / Техника Ультанеша",
     reader: ""
   },
+  // Именованный флаг «нельзя обезоружить» (wdbc-egll) — общий для любого
+  // источника с таким текстом. Актёрский уровень (не «этот конкретный
+  // предмет в этой конкретной руке») — тот же компромисс детализации, что и у
+  // остальных Возможностей без per-limb модели в системе. У Tentacle/Extra
+  // Arm — безопасно грантить безусловно (постоянный эффект руки с этой
+  // субмутацией, ничего не включает и не выключает). У gift.khorne.
+  // livingWeapon иммунитет условный («до конца боя/сцены» после активации) —
+  // подключён ЧЕРЕЗ activatable/active (module/data/item/mutation.mjs,
+  // wdbc-egll: тот же тумблер, что у armorMod/armor в isItemActive(),
+  // module/apps/effects.mjs), не безусловным грантом: весь предмет (в т.ч.
+  // capabilityKey gift.khorne.livingWeapon самой Способности) гейтится
+  // system.active, включает кнопка на листе (МУТАЦИИ И ДАРЫ БОГОВ,
+  // mutgiftToggleActive). Полудействие+1 Бесчестия на активацию и авто-
+  // выключение по концу боя/сцены — на столе, вручную (тот же уровень
+  // автоматизации, что у Стойки/Базы).
+  "combat.cannotBeDisarmed": {
+    label: "Приём Обезоружить проходит с предупреждением у цели, но не снимает оружие — актёрский уровень, не привязано к конкретному предмету/руке",
+    source: "Мутация: Tentacle, субмутация 4-5 «С Присосками» (Общие мутации); субмутация 7 «Опутанная Корнями» (Extra Arm); gift.khorne.livingWeapon, пока активирован — все три подключены (wdbc-egll)",
+    reader: "module/constants/combat.mjs MELEE_CONTESTS.disarm (targetImmunityFlag) — module/combat/techniques.mjs::_showContestDialog"
+  },
   "reroll.pathTest.sceneOnce": {
     label: "Раз за сцену/битву переброс теста своего Пути; повторный провал считается успехом с 1 успехом",
     source: "Understanding the Path / Понимание Пути",
@@ -2702,8 +2722,8 @@ export const CAPABILITIES = {
     source: "Crushing Blow / Крушащий Удар", reader: ""
   },
   "meleeCore.core.disarm": {
-    label: "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: любое). Персонаж и цель проходят WS+0 vs WS+0.",
-    source: "Disarm / Обезоружить", reader: ""
+    label: "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: любое). Персонаж и цель проходят WS+0 vs WS+0. Заведён Состязанием MELEE_CONTESTS.disarm (wdbc-egll) — сам встречный тест бросается, +10 с кнутом/кистенём и что конкретно роняет/забирает цель на 5+ Успехов остаются на стол (тот же уровень автоматизации, что у Финта/Давления/Напролома). Талант в коде НЕ гейтит доступность кнопки — тот же принцип, что у остальных Состязаний (character-context.mjs)",
+    source: "Disarm / Обезоружить", reader: "module/constants/combat.mjs MELEE_CONTESTS.disarm — module/combat/techniques.mjs::_showContestDialog"
   },
   "meleeCore.core.doubleTeam": {
     label: "Персонаж получает ещё +10 на попадание в ближнем бою за численное превосходство 2 к 1 или выше.",
@@ -6239,6 +6259,21 @@ export const CAPABILITIES = {
     source: "Дар Кхорн (Knight of Khorne)",
     reader: ""
   },
+  "gift.khorne.livingWeapon": {
+    label: "Полудействие+1 Бесчестия: до конца боя оружие/импровизированное оружие в руке нельзя выбить, +10 WS, Баланс до 0, Pen до Cor.b, теряет Primitive/получает Reinforced (импровизированное: без штрафа −20, +1 кубик, ×2 S.b). Disarm-часть подключена под combat.cannotBeDisarmed (wdbc-egll), гейтится system.activatable/active (isItemActive) — кнопка на листе включает/выключает предмет целиком, полудействие/1 Бесчестие на вход и конец боя/сцены на выход — вручную. +10 WS/Баланс/Pen/Reinforced-Primitive — ещё не заведены (нужен профиль оружия в руке, отдельная работа).",
+    source: "Дар Кхорн (Living Weapon)",
+    reader: "module/data/item/mutation.mjs (activatable/active) + module/apps/effects.mjs::isItemActive case \"mutation\" — только capabilityKey combat.cannotBeDisarmed, остальное ещё не читается"
+  },
+  "gift.khorne.priestOfBloodshed": {
+    label: "Раз за Раунд: в 8м от чемпиона Кровотечение/смерть в бою другого персонажа даёт 1 Очко Бесчестия (сгорает в конце следующего Хода)",
+    source: "Дар Кхорн (Priest of Bloodshed)",
+    reader: ""
+  },
+  "gift.khorne.purityOfBattle": {
+    label: "Полное действие (даже в Ярости)+1 Бесчестия: сферическая волна Cor.b м снимает боевые наркотики/психосилы/техночудеса со всех в радиусе, эффекты нельзя наложить повторно до конца боя",
+    source: "Дар Кхорн (Purity of Battle)",
+    reader: ""
+  },
   "gift.khorne.purityOfWrath": {
     label: "В Ярости: иммунитет к ядам/радиации/болезням и к Crippling/Piercing/Haywire/Shocking/Snare — иммунитет к 5 свойствам оружия реализован через weaponPropertyImmunityInRage.* (гейт по system.inRage), см. те записи; иммунитет к ядам/радиации/болезням (не свойства оружия, отдельная категория) остаётся неавтоматизированным",
     source: "Дар Кхорн (Purity of Wrath)",
@@ -6843,9 +6878,14 @@ export const CAPABILITIES = {
     reader: "packs-src/mutations/Общие_мутации/Synesthesia..., kind:\"testMod\"; module/rules/library/synesthesia.mjs"
   },
   "mutation.tentacle": {
-    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 10 субмутаций не автоматизированы (wdbc-vkwe)",
+    label: "+20 на приём Захват, на 5 тестов Борьбы (Заломить/Пересилить/Вырваться/Выкрутиться/Перехватить Контроль) и на Укус (тоже настоящий тест WS/BS); Сжать/Хруст броска не делают вовсе (первое — штраф без теста, второе — автопопадание по книге); Метнуть/Замахнуться не реализовано роллом вообще (отдельный пробел); растяжение до 4м/узкие места — флейвор. Из 8 строк таблицы (не 10 — «d10» даёт диапазоны 2-3/4-5, реальных строк 8, см. doombc-submutations) субмутации 2-3 (Natural Armour 3) и 8 (+10 S, Unnatural S+2) заведены Механикой самого предмета (packs-src); 1 (растяжение до 15м + подъём союзника) получила флаг-заглушку про запас (mutation.tentacle.longReach, wdbc-nc8q) — числового бонуса нет, действие целиком за ГМом; 4-5 «С Присосками» (wdbc-egll) — «нельзя выбить/вырвать» через переиспользуемую capability combat.cannotBeDisarmed (см. эту запись отдельно), «+30 Карабканье» через новый scopeTarget «climbing» (item-rules.mjs/resolve-test.mjs), подхватывается module/combat/movement-actions.mjs::showClimbDialog — тот же scope пригоден и для идентичных бонусов Wings/Крылья и Tail/Хвост, их субмутации им пока не заведены; 9 «Изменчивое» (wdbc-2ynk) — форма руки/щупальца переключается кнопкой на листе предмета (не через capabilityKey — своя пара флаг+UI, module/apps/tentacle-hand-form.mjs), цена спишет module/combat/capability-cost.mjs, бонус +20 на приём Захват гасится, пока предмет в форме руки; 10 (Отделяемое, wdbc-1f5j) реализована напрямую в grapple.mjs (асимметричный выход из Захвата + информационный таймер регенерации 3ч через rules/cooldown.mjs) — без записи в этом реестре, читает item.system.submutation.label напрямую, не hasRuleFlag. Субмутации 6 (Ловкое) и 7 (Токсичное) частично: безоружная атака щупальцем выдаётся отдельным предметом kind:\"integralAttack\" (Flexible Tentacle/Toxic Tentacle, packs-src/weapons/Интегральные_атаки), when.submutations гейтит по броску; charm/interrogate +20 субмутации 6 механизированы полностью (wdbc-1j2h). Заломить (grapple.mjs) с wdbc-tj0p умеет наносить реальный урон (ignoreArmour), но Corrosive/Toxic щупальца к нему не подключены — нет способа отличить программно «использовал именно щупальце» от «использовал обычную руку» в общем приёме Борьбы. Все 8 строк таблицы теперь так или иначе заведены.",
     source: "Мутация: Tentacle (Общие мутации)",
-    reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\")"
+    reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\", гасится tentacleBonusSuppressed при субмутации 9 в форме руки); module/combat/grapple.mjs — tentacleTechDef (+20 на 5 тестов Борьбы), _doBite (+20 на Укус), detachableTentacle/isDetachedGrapple (субмутация 10); субмутация 4-5 — combat.cannotBeDisarmed + scopeTarget climbing (см. отдельные записи)"
+  },
+  "mutation.tentacle.longReach": {
+    label: "Субмутация 1 «Длинное» — щупальце растягивается до 15 м и полным действием может поднять персонажа на свою длину, если тот найдёт за что зацепиться; чисто ситуативное действие ГМа, числового эффекта нет — флаг заведён про запас для будущего читателя",
+    source: "Мутация: Tentacle, субмутация 1 (Общие мутации)",
+    reader: ""
   },
   "mutation.vampiricDependency": {
     label: "Воздержание от подпитки >1 месяц — тест T+0 (−10/мес) или 1 Порча; 10 субмутаций определяют способ/эффект утоления, не автоматизированы (нет bd)",

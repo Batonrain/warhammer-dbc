@@ -1063,8 +1063,10 @@ export function buildGetData(actor) {
       name:     i.name,
       subName:  sub.name || "",
       godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
-      benefit:  i.system.benefit || i.system.description || "",
-      subText:  sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : ""
+      benefit:    i.system.benefit || i.system.description || "",
+      subText:    sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : "",
+      activatable: !!i.system.activatable,
+      active:      !!i.system.active
     };
   });
 

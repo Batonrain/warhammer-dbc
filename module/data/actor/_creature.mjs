@@ -377,6 +377,12 @@ export function creatureSchema({ granted = false } = {}) {
     bio: new SchemaField({
       gender:     str("", "Пол"),
       age:        num(0, "Возраст"),
+      // Собственный вес тела (кг), БЕЗ снаряжения — оно уже отдельно в
+      // system.encumbrance.current. Нужен для Метания/Дубины (стр. 27-28,
+      // module/combat/improvised-weapon.mjs): полный вес актора как снаряда
+      // = это поле + encumbrance.current, а опора при Метании сравнивается
+      // именно с этим (голым весом тела бросающего), не с полным.
+      weight:     num(0, "Вес"),
       height:     str("", "Рост"),
       build:      str("", "Телосложение"),
       hair:       str("", "Волосы"),
