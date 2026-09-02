@@ -27,6 +27,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
+import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 
 const NS = "warhammer-dbc";
 const PARTNER_FLAG = "grapplePartnerUuid";
@@ -121,9 +122,13 @@ const ALL_TESTS = { ...ATTACKER_TESTS, ...TARGET_TESTS };
 // автоматическое попадание по книге), бонусу там нечего усиливать. Метнуть/
 // Замахнуться сейчас вообще не реализовано роллом (только текст в чат) —
 // отдельный, более старый пробел, не про эту мутацию.
-/** +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. */
+/**
+ * +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. Субмутация
+ * 9 «Изменчивое» (wdbc-2ynk): пока предмет временно в форме руки, бонусу
+ * нечем помогать ни приёму Захват, ни этим тестам, ни Укусу.
+ */
 export function tentacleBonus(actor) {
-  return hasRuleFlag(actor, "mutation.tentacle") ? 20 : 0;
+  return (hasRuleFlag(actor, "mutation.tentacle") && !tentacleBonusSuppressed(actor)) ? 20 : 0;
 }
 
 export function tentacleTechDef(actor, techDef) {

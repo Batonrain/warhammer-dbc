@@ -194,6 +194,31 @@ describe("tentacleBonus", () => {
       effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
     expect(tentacleBonus(actorFor({}))).toBe(20);
   });
+
+  // Субмутация 9 «Изменчивое» (wdbc-2ynk): пока предмет-Щупальце временно в
+  // форме руки — бонусу нечем помогать ни приёму Захват, ни этим тестам, ни
+  // Укусу (все три читают один и тот же tentacleBonus).
+  it("с mutation.tentacle, но предмет-Щупальце в форме руки — 0", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const tentacleItem = {
+      type: "mutation", name: "Tentacle / Щупальце",
+      system: { submutation: { label: "9" } },
+      flags: { "warhammer-dbc": { tentacleHandForm: true } }
+    };
+    expect(tentacleBonus(actorFor({ items: [tentacleItem] }))).toBe(0);
+  });
+
+  it("с mutation.tentacle, предмет-Щупальце ещё в форме щупальца — 20", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const tentacleItem = {
+      type: "mutation", name: "Tentacle / Щупальце",
+      system: { submutation: { label: "9" } },
+      flags: { "warhammer-dbc": {} }
+    };
+    expect(tentacleBonus(actorFor({ items: [tentacleItem] }))).toBe(20);
+  });
 });
 
 describe("tentacleTechDef", () => {
@@ -231,6 +256,18 @@ describe("tentacleTechDef", () => {
     const techDef = { label: "Пересилить" };
     tentacleTechDef(actorFor({}), techDef);
     expect(techDef.extraBonus).toBeUndefined();
+  });
+
+  it("субмутация 9 в форме руки (wdbc-2ynk) — techDef возвращается как есть", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const tentacleItem = {
+      type: "mutation", name: "Tentacle / Щупальце",
+      system: { submutation: { label: "9" } },
+      flags: { "warhammer-dbc": { tentacleHandForm: true } }
+    };
+    const techDef = { label: "Заломить", defaultChar: "s" };
+    expect(tentacleTechDef(actorFor({ items: [tentacleItem] }), techDef)).toBe(techDef);
   });
 });
 
