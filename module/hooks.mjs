@@ -44,6 +44,7 @@ import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -98,6 +99,20 @@ export function registerHooks() {
         }
         await _performDodge(actor, extraMod,
           ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
+      });
+    });
+
+    // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
+    // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
+    // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
+    html.querySelectorAll(".wh-herd-spirits-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Ритуалист не найден."); return; }
+        const successes = parseInt(el.dataset.successes) || 0;
+        await showHerdSpiritsAllocationDialog(actor, successes, { ritualistUuid: actor.uuid });
       });
     });
 

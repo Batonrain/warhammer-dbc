@@ -617,83 +617,83 @@ export const CAPABILITIES = {
   //    «Мёртвое Могущество» Иннари выше в этом файле.
   "aura.beastmanShaman.primalHowl.base": {
     label: "Полное Действие раз в бой: союзники-зверолюди/мутанты в радиусе Cor.b×10 м получают +10 S/+10 T до начала следующего Хода персонажа, враги считают персонажа источником Fear (+1)",
-    source: "Primal Howl / Первобытный Вой", reader: ""
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): раз/бой, радиус Cor.b×10 м, Fear врагам (метка). Бонус +10 S/+10 T союзникам НЕ смоделирован (нет инфраструктуры временных бонусов характеристик, см. шапку файла)."
   },
   "aura.beastmanShaman.primalHowl.khorneVariant": {
     label: "Кхорн: бонус к T заменяется на +10 WS, рукопашный урон союзников +4, союзники без Frenzy входят в Ярость (с Frenzy — за Свободное Действие)",
-    source: "Primal Howl / Первобытный Вой", reader: ""
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): союзники без Frenzy входят в Ярость (system.inRage). WS-бонус вместо T и +4 Dmg — не смоделированы."
   },
   "aura.beastmanShaman.primalHowl.nurgleVariant": {
     label: "Нургл: вместо бонуса к S — +1d10 аблативных ран, переброс проваленных тестов сопротивления движению",
-    source: "Primal Howl / Первобытный Вой", reader: ""
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): +1d10 Аблативных Ран каждому союзнику в радиусе (реально пишет system.wounds.ablative/ablativeMax). Переброс тестов сопротивления движению — не смоделирован."
   },
   "aura.beastmanShaman.primalHowl.slaaneshVariant": {
     label: "Слаанеш: вместо обычных бонусов — +10 A до конца следующего Хода и снятие 1 Усталости; враги, провалившие тест на Страх, получают 1 Усталость",
-    source: "Primal Howl / Первобытный Вой", reader: ""
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): −1 Усталость каждому союзнику в радиусе (реально пишет system.fatigue.value). +10 A и Усталость проваливших Страх врагов — не смоделированы."
   },
   "aura.beastmanShaman.primalHowl.tzeentchVariant": {
     label: "Тзинч: вместо обычных бонусов — +10 P союзникам; враги получают неизбегаемое попадание Hallucinogenic(1); варп-феномены до конца следующего хода получают +20",
-    source: "Primal Howl / Первобытный Вой", reader: ""
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): только текст в карточке чата, ни одно из чисел (+10 P/Hallucinogenic/феномен +20) не пишет реальные поля."
   },
   "mark.beastmanShaman.hexMarkedPrey.base": {
     label: "Полудействие, Соревновательный тест W+0 vs W+10: цель получает Метку Проклятого до конца боя, союзники-зверолюди получают +15 на атаки против неё",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): Соревновательный тест W+0 vs W+10 по таргету (game.user.targets), метка — флаг актора (HEX_MARK_FLAG). +15 союзникам на атаки по цели — не смоделировано (нет привязки к движку атаки)."
   },
   "mark.beastmanShaman.hexMarkedPrey.khorneVariant": {
     label: "Кхорн: атаки союзников по цели получают Proven(3); крит с R-уроном дополнительно вызывает кровотечение",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; Proven(3)/доп. кровотечение на попаданиях — не смоделированы."
   },
   "mark.beastmanShaman.hexMarkedPrey.nurgleVariant": {
     label: "Нургл: атаки союзников по цели получают Toxic(1); выживший при непоглощённом уроне провал T+10 в конце боя = Гниль Нургла",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; Toxic(1)/тест на Гниль Нургла — не смоделированы."
   },
   "mark.beastmanShaman.hexMarkedPrey.slaaneshVariant": {
     label: "Слаанеш: цель не может добровольно удаляться от шамана дальше 20 м, штраф −10 Dodge/Parry против его атак; урон шамана цели восстанавливает ему 1d3 Раны",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; штраф Dodge/Parry и лечение шамана уроном по цели — не смоделированы."
   },
   "mark.beastmanShaman.hexMarkedPrey.tzeentchVariant": {
     label: "Тзинч: выбранная характеристика цели (S/T/A/I/W) −10 на время метки; провал цели по ней даёт шаману +5 к следующей манифестации психосилы",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: ""
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; штраф −10 к характеристике цели и бонус к манифестации — не смоделированы."
   },
   "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.base": {
     label: "Полудействие: 1d5+1 непоглощаемого R Dmg себе в руку → +2 эPR до конца следующего Хода, ближний бой получает Tainted на тот же срок",
-    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): реально наносит 1d5+1 непоглощаемого урона (rules/wounds.mjs::applyWoundLoss). +2 эPR/Tainted до конца следующего Хода — не смоделированы."
   },
   "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.khorneVariant": {
     label: "Кхорн: вместо эPR — бонус к Dmg = непоглощённый урон ×2; урон можно взять максимальным (6) без броска",
-    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется по-прежнему; бонус к Dmg=урон×2 — только текст в карточке."
   },
   "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.nurgleVariant": {
     label: "Нургл: эPR-бонус −1, но в начале следующего хода восстанавливает бPR Ран и центрирует на себе 1d10+T.b C(Tx), Pen 0, Blast(T.b), Toxic(1)",
-    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется; регенерация бPR Ран и шаблон Toxic — не смоделированы, текст в карточке."
   },
   "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.slaaneshVariant": {
     label: "Слаанеш: эPR-бонус −1, но +10 A, +2 Реакции и атака за Реакцию (штраф −15, вне лимита, только утончённым оружием/Bl 2)",
-    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется; +10 A/+2 Реакции/атака за Реакцию — не смоделированы."
   },
   "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.tzeentchVariant": {
     label: "Тзинч: дополнительно +20 к манифестации следующей психосилы; во время ритуала — ускорение и +20 к самому ритуалу",
-    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: ""
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется; бонус к манифестации психосилы — не смоделирован."
   },
   "aura.beastmanShaman.warpTaintedAura.base": {
     label: "Полудействие раз в час: аура 20 м до начала следующего Хода — не-еретики проваливший W−10 получают 1 Cor, союзники в ауре +20 к Сопротивлению (пока нет метки)",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): раз/час (worldTime), радиус 20 м, реальный тест W−10 каждому врагу, провал → +1 Порча (system.corruption.value). +20 Сопротивления союзникам — не смоделирован."
   },
   "aura.beastmanShaman.warpTaintedAura.khorneVariant": {
     label: "Кхорн: провалившие тест враги немедленно проходят тест на Fear(4)",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются как в базовом эффекте; Fear(4) провалившим — только текст в карточке."
   },
   "aura.beastmanShaman.warpTaintedAura.nurgleVariant": {
     label: "Нургл: провалившие враги Задыхаются (−30 на Удушение) в ауре; герметичная броня — попадание Corrosive(Cor.b)",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; Задыхание/Corrosive — не смоделированы."
   },
   "aura.beastmanShaman.warpTaintedAura.slaaneshVariant": {
     label: "Слаанеш: провалившие враги очарованы — не атакуют шамана/стадо на Провалы Раунда, пока не атакованы первыми",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; очарование врагов — не смоделировано."
   },
   "aura.beastmanShaman.warpTaintedAura.tzeentchVariant": {
     label: "Тзинч: провалившие враги смещаются на PR метров по горизонтали; внутри препятствия — 1d5 непоглощаемого X урона в торс и выталкивание",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: ""
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; смещение целей на PR метров — не смоделировано (нет геометрии в этой функции)."
   },
   "rune.beastmanShaman.boneRuneEtching.base": {
     label: "Создаёт руну (1 час, тест Schol.Lore(Occult)−20 + Trade−20, 1 Очко Бесчестия) с одной известной психосилой; в бою — Свободное Действие/Реакция, манифестация с Успехами = бPR на момент создания; лимит Cor.b рун",
@@ -721,7 +721,7 @@ export const CAPABILITIES = {
   },
   "trigger.beastmanShaman.ritualBloodletting.onKillBuff": {
     label: "Убив живое существо с душой — Свободное Действие: персонаж и союзники-зверолюди в радиусе F м получают +5 ко всем тестам и иммунитет к Страху/Подавлению до начала следующего Хода (×2, если жертва была особо важной; не складывается)",
-    source: "Ritual Bloodletting / Ритуал Кровопускания", reader: ""
+    source: "Ritual Bloodletting / Ритуал Кровопускания", reader: "module/combat/beastman-shaman.mjs — applyRitualBloodletting(): реальный радиус F.b и список союзников в чат, бонус (5/10 за важную жертву) — информационный флаг актора, не интегрирован в производные тесты (тот же уровень, что «Мёртвое Могущество» Иннари выше)."
   },
   "psyfocus.beastmanShaman.symbolOfPower.hornFocusAndPainBoost": {
     label: "Рог как Good.Q пси-фокус (10 мин на изготовление) + врождённый Comm.Q пси-фокус; при манифестации может добровольно получить 1d5+2 R Dmg Pen∞ за +2 эPR, тогда манифестация всегда вызывает варп-феномен +10; Natural Weapons → Deadly Natural Weapons + отдельный трейт рогов Deadly Natural Weapons (бPR, Рога) со свойством Tainted, пока есть покровительство",

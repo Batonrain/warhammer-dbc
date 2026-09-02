@@ -260,6 +260,23 @@
     {{#if hasSongOfSwiftness}}
     <button type="button" class="technique-btn song-of-swiftness-btn" style="margin-top:6px;" title="Песня Стремительности — одна техника или вся в радиусе 10 м, +SPD/Манёвренность до конца боя"><span class="tech-name">🏃 Песня Стремительности</span></button>
     {{/if}}
+    {{!-- Шаман Зверолюдей (wdbc-xxb7, module/combat/beastman-shaman.mjs) —
+          god-ответвление читается живьём по system.patronGod при клике. --}}
+    {{#if hasPrimalHowl}}
+    <button type="button" class="technique-btn primal-howl-btn" style="margin-top:6px;" title="Первобытный Вой — раз за бой, союзники-зверолюди/враги в радиусе Cor.b×10 м"><span class="tech-name">🐺 Первобытный Вой</span></button>
+    {{/if}}
+    {{#if hasWarpTaintedAura}}
+    <button type="button" class="technique-btn warp-tainted-aura-btn" style="margin-top:6px;" title="Аура Скверны — раз в час, радиус 20 м, тест W−10 врагам"><span class="tech-name">☠️ Аура Скверны</span></button>
+    {{/if}}
+    {{#if hasRiteOfSelfSacrifice}}
+    <button type="button" class="technique-btn rite-of-self-sacrifice-btn" style="margin-top:6px;" title="Ритуал Самопожертвования — Полудействие, 1d5+1 непоглощаемого урона себе за +2 эPR"><span class="tech-name">🩸 Самопожертвование</span></button>
+    {{/if}}
+    {{#if hasHexMarkedPrey}}
+    <button type="button" class="technique-btn hex-marked-prey-btn" style="margin-top:6px;" title="Проклятая Метка — наведите таргет (T), Соревновательный тест W+0 vs W+10"><span class="tech-name">🎯 Проклятая Метка</span></button>
+    {{/if}}
+    {{#if hasRitualBloodletting}}
+    <button type="button" class="technique-btn ritual-bloodletting-btn" style="margin-top:6px;" title="Ритуал Кровопускания — Свободное Действие после убийства, +5 к тестам и иммунитет Страху/Подавлению союзникам-зверолюдям в радиусе F.b"><span class="tech-name">🗡️ Кровопускание</span></button>
+    {{/if}}
   </div></div>{{!-- /стойка --}}
 
   {{!-- ═══ СИЛОВОЕ ПОЛЕ — отдельная строка под основной сеткой ═══ --}}

@@ -22,6 +22,7 @@
 import { newRitualState, ritualThreshold, castRitual } from "../apps/ritual-cast.mjs";
 import { RITUAL_TYPES_MAP, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY, SUMMON_FORMS,
          ritualPathOptions, buildRitualSkills } from "../constants/rituals.mjs";
+import { isHerdSpiritsRitual } from "../apps/herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
@@ -110,7 +111,12 @@ export async function showRitualCastDialog(actor, item) {
   // (module/apps/demon-summon.mjs). Только для type:"summon" (см. заголовок
   // castRitual) появляется токен — у Владычества/Связывания/Врат демон
   // просто уходит в −Inf модификатор и подпись карточки.
-  const demonBlock = d0.isSummonLike ? `
+  // Призыв Духов Стада (wdbc-xxb7) — не именованный демон с Inf-модификатором,
+  // а бюджет успехов на Минотавров/Троллей/Великанов; поле «Демон» тут не
+  // подходит вовсе (module/apps/herd-spirits-summon.mjs, кнопка в карточке
+  // после броска — распределение известно только по итогу успехов).
+  const isHerdSpirits = isHerdSpiritsRitual(item);
+  const demonBlock = (d0.isSummonLike && !isHerdSpirits) ? `
     <div class="wv-block">
       <div class="wv-block-title">Демон</div>
       <div class="wv-rit-row">
@@ -122,7 +128,11 @@ export async function showRitualCastDialog(actor, item) {
         <input type="number" id="rit-demon-inf" class="wv-rit-xs" value="0" min="0"/>
         ${base.type === "summon" ? `<span class="wv-hint">При успехе ГМ разместит токен на сцене.</span>` : ""}
       </div>
-    </div>` : "";
+    </div>` : (isHerdSpirits ? `
+    <div class="wv-block">
+      <div class="wv-block-title">Духи Стада</div>
+      <span class="wv-hint">При успехе число духов определят успехи броска — распределение (Минотавр/Тролль/Великан) ГМ проведёт отдельным диалогом из карточки в чате.</span>
+    </div>` : "");
 
   const curseBlock = d0.isCurse ? `
     <div class="wv-block">
