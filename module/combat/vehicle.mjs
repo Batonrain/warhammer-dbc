@@ -14,6 +14,7 @@ import { ablativeDamage }  from "../rules/mount.mjs";
 import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
   from "../rules/dreadnought.mjs";
 import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
+import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { resolveAttackerToken, tokenDistance } from "./facing.mjs";
 import { apCostForActionType, canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
 
@@ -324,7 +325,11 @@ export async function applyDamageToVehicle(actor, damageData) {
   const {
     rawDamage, penetration = 0, damageType = "impact",
     side = "side", flame = false, sanctified = false, warpSoak = false,
-    attackerName = "", weaponName = ""
+    attackerName = "", weaponName = "",
+    // wdbc-bxw6: попадание засчитано как «от мины» (Минный Плуг: +20
+    // аблативной Структуры против мин) — детектора мин в конвейере урона
+    // нет, флаг ставит вызывающая сторона по решению GM.
+    fromMine = false
   } = damageData;
 
   const tf = actor.system.derived?.traitFlags || {};
@@ -367,7 +372,11 @@ export async function applyDamageToVehicle(actor, damageData) {
   // вовсе" — Sanctified/Warp Weapon (Force не доезжает отдельным флагом до
   // этого конвейера, приближение по двум из трёх свойств, задокументировано).
   const daemonicVulnerable = sanctified || warpSoak;
-  const ap = (tf.daemonicAbsorb && !daemonicVulnerable) ? apCeramite + tf.daemonicAbsorb : apCeramite;
+  // Аблативная Структура (Минный Плуг, wdbc-bxw6): бонус AP против мин,
+  // той же природы, что мод «Аблативная» — теряет 1 заряд с ЛЮБОГО
+  // засчитанного попадания «от мины», а не по очкам поглощённого урона.
+  const mineAblative = fromMine ? (Number(actor.system.structure?.ablative) || 0) : 0;
+  const ap = ((tf.daemonicAbsorb && !daemonicVulnerable) ? apCeramite + tf.daemonicAbsorb : apCeramite) + mineAblative;
   const effAP   = Math.max(0, ap - (Number(penetration) || 0));
   const rawNet  = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
   // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой
@@ -385,6 +394,11 @@ export async function applyDamageToVehicle(actor, damageData) {
     woundLossAfter(curVal, curCrit, net);
   if (net > 0) {
     await actor.update({ "system.structure.value": newVal, "system.structure.critical": newCrit });
+  }
+  // wdbc-bxw6: аблативная Структура теряет заряд с ЭТОГО попадания
+  // независимо от нанесённого урона (rules/ablative-ap.mjs).
+  if (mineAblative > 0) {
+    await actor.update({ "system.structure.ablative": ablativeApAfterHit(mineAblative) });
   }
 
   // ── Пилот Дредноута (Книга Машин, стр. 57) ───────────────────────────────
@@ -443,6 +457,7 @@ export async function applyDamageToVehicle(actor, damageData) {
         <div class="dmg-absorption-detail">
           AP ${ARMOUR_SIDES[side] || side}: <b>${ap}</b>${penetration > 0 ? ` − Проб. <b>${penetration}</b> = <b>${effAP}</b>` : ""} = Поглощение <b>${effAP}</b>
           <div class="dmg-tb-note">У техники нет T.b — поглощает только броня.</div>
+          ${mineAblative > 0 ? `<div class="dmg-tb-note">Аблативная Структура (против мин): +${mineAblative} (остаток после попадания: ${ablativeApAfterHit(mineAblative)})</div>` : ""}
         </div>
         <div class="roll-damage-section">
           <div class="roll-section-head">Итог</div>
