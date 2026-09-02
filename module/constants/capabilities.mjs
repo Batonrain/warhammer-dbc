@@ -6768,7 +6768,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.tentacle": {
-    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 10 субмутаций не автоматизированы (wdbc-vkwe)",
+    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 8 субмутаций не автоматизированы (wdbc-vkwe). Субмутации 6 (Ловкое) и 7 (Токсичное) частично: безоружная атака щупальцем выдаётся отдельным предметом kind:\"integralAttack\" (Flexible Tentacle/Toxic Tentacle, packs-src/weapons/Интегральные_атаки), when.submutations гейтит по броску — но урон в самих приёмах Борьбы (Заломить/Пересилить/Хруст) по-прежнему не несёт эти свойства, там нет точки крепежа (wdbc-tj0p); charm/interrogate +20 сабмутации 6 механизированы полностью (wdbc-1j2h)",
     source: "Мутация: Tentacle (Общие мутации)",
     reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\")"
   },

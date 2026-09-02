@@ -42,7 +42,15 @@ function namesOf(pack) {
   return nameIndex.get(pack);
 }
 
-/** Все ссылки sourceUuid/sourceName Механики по всем пакам-библиотекам. */
+/**
+ * Все ссылки sourceUuid/sourceName Механики по всем пакам-библиотекам, плюс
+ * тот же паттерн у kind:"integralAttack"/"equipment" — там пара полей
+ * называется equipSourceUuid/equipSourceName (module/apps/mechanics.mjs,
+ * buildIntegralAttackData), но подвержена ровно той же болезни (переименовали
+ * предмет-источник — sourceName в записи Механики молча устарел), а отдельной
+ * проверки под неё раньше не было. Нормализуем оба вида ссылок в одну форму
+ * {uuid, name}, чтобы обе проверки ниже работали над обоими полями разом.
+ */
 function allMechanicsRefs() {
   const refs = [];
   for (const pack of LIBRARY_PACKS) {
@@ -51,7 +59,8 @@ function allMechanicsRefs() {
       if (!Array.isArray(mechanics)) continue;
       for (const group of mechanics) {
         for (const entry of group.entries ?? []) {
-          if (entry.sourceUuid) refs.push({ file, docName: doc.name, entry });
+          if (entry.sourceUuid) refs.push({ file, docName: doc.name, uuid: entry.sourceUuid, name: entry.sourceName });
+          if (entry.equipSourceUuid) refs.push({ file, docName: doc.name, uuid: entry.equipSourceUuid, name: entry.equipSourceName });
         }
       }
     }
@@ -66,28 +75,28 @@ describe("sourceName Механики не отстаёт от переимен�
     expect(refs.length).toBeGreaterThan(1000);
   });
 
-  it("каждый sourceUuid резолвится в документ своего пака", () => {
+  it("каждый sourceUuid/equipSourceUuid резолвится в документ своего пака", () => {
     const broken = [];
-    for (const { file, docName, entry } of refs) {
-      const m = entry.sourceUuid.match(SOURCE_UUID_RE);
-      if (!m) { broken.push(`${file} (${docName}): нераспознанный формат sourceUuid "${entry.sourceUuid}"`); continue; }
+    for (const { file, docName, uuid } of refs) {
+      const m = uuid.match(SOURCE_UUID_RE);
+      if (!m) { broken.push(`${file} (${docName}): нераспознанный формат sourceUuid "${uuid}"`); continue; }
       const [, pack, id] = m;
       if (!namesOf(pack).has(id))
-        broken.push(`${file} (${docName}): ${entry.sourceUuid} не найден в packs-src/${pack}`);
+        broken.push(`${file} (${docName}): ${uuid} не найден в packs-src/${pack}`);
     }
     expect(broken).toEqual([]);
   });
 
-  it("sourceName совпадает с текущим именем документа-источника", () => {
+  it("sourceName/equipSourceName совпадает с текущим именем документа-источника", () => {
     const stale = [];
-    for (const { file, docName, entry } of refs) {
-      const m = entry.sourceUuid.match(SOURCE_UUID_RE);
+    for (const { file, docName, uuid, name } of refs) {
+      const m = uuid.match(SOURCE_UUID_RE);
       if (!m) continue; // формат — предыдущая проверка
       const [, pack, id] = m;
       const currentName = namesOf(pack).get(id);
       if (currentName === undefined) continue; // отсутствие — предыдущая проверка
-      if (entry.sourceName !== currentName)
-        stale.push(`${file} (${docName}): sourceName="${entry.sourceName}" ≠ актуальное "${currentName}" (${entry.sourceUuid})`);
+      if (name !== currentName)
+        stale.push(`${file} (${docName}): sourceName="${name}" ≠ актуальное "${currentName}" (${uuid})`);
     }
     expect(stale).toEqual([]);
   });
