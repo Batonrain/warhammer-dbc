@@ -6652,7 +6652,7 @@ export const CAPABILITIES = {
   "mutation.illusionOfNormality": {
     label: "Игнорируется наблюдателями как мутант, оружие/броня не привлекают внимания; активная поддерживаемая иллюзия, засекается Пси-чутьём (+5 за каждую прочую мутацию), псайкеры видят сквозь неё тестом W+0 (раз за бой/сцену)",
     source: "Мутация: Illusion of Normality (Общие мутации)",
-    reader: ""
+    reader: "module/apps/illusion-of-normality.mjs illusionOfNormalityHtml()/attemptNoticeIllusion()/attemptSeeThroughIllusion()"
   },
 
   // ── Общие мутации, партия 4 (wdbc-1rno, ревизия по запросу координатора) —

@@ -22,6 +22,8 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion }
+  from "../apps/illusion-of-normality.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1048,6 +1050,8 @@ export class WarhammerItemSheet
     // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
+      context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1801,6 +1805,18 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfDeath(actor, this.item);
+    });
+
+    // ── Мутация «Иллюзия Нормальности»: обнаружение/раскрытие (wdbc-zbc0) ───
+    on(".illusion-notice-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await attemptNoticeIllusion(this.item, actor);
+    });
+    on(".illusion-see-through-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await attemptSeeThroughIllusion(this.item, actor);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
