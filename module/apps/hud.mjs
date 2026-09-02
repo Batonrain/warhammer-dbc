@@ -446,7 +446,7 @@ function wire(el, actor) {
   el.querySelectorAll("[data-melee-gun]").forEach(b => b.addEventListener("click", () => {
     const w = actor.items.get(b.dataset.meleeGun);
     if (!own || !w) return;
-    beginTargeting(actor, w, () => actor.sheet._showAttackDialogNoWeapon?.(gunMeleeStrike(w)), `${w.name} (в упор)`);
+    beginTargeting(actor, w, () => actor.sheet._showAttackDialogNoWeapon?.(gunMeleeStrike(w)), `${w.name} (в упор)`, { forceMelee: true });
   }));
 
   // Безоружные удары (кулак/пинок/головой) — перекрестие → обычный диалог
