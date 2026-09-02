@@ -28,15 +28,16 @@ function bonesinger({ hasTalent = true, felBonus = 4, wpBonus = 3 } = {}) {
 }
 
 /** Носитель предметов — тот же приём, что vehicle() в song-of-swiftness.test.mjs. */
-function owner({ name = "Носитель" } = {}) {
+function owner({ name = "Носитель", ablativeMax = 0, ablative = 0 } = {}) {
   const items = [];
   items.get = id => items.find(i => i.id === id) ?? null;
   const actor = {
     name, items,
+    system: { wounds: { ablativeMax, ablative } },
     createEmbeddedDocuments: async (_type, docs) => {
       const created = docs.map(d => ({
         id: `item-${nextId++}`, ...structuredClone(d), parent: actor,
-        getFlag: () => undefined, setFlag: async () => {}, unsetFlag: async () => {}
+        getFlag: (scope, key) => (d.flags?.[scope]?.[key]), setFlag: async () => {}, unsetFlag: async () => {}
       }));
       items.push(...created);
       captured.created.push(...docs);
@@ -46,6 +47,12 @@ function owner({ name = "Носитель" } = {}) {
       for (const id of ids) {
         const idx = items.findIndex(i => i.id === id);
         if (idx >= 0) items.splice(idx, 1);
+      }
+    },
+    update: async patch => {
+      for (const [path, value] of Object.entries(patch)) {
+        const key = path.replace(/^system\.wounds\./, "");
+        actor.system.wounds[key] = value;
       }
     }
   };
@@ -138,6 +145,47 @@ describe("applyReformationSong — Броня", () => {
     await clearReformationSongBuffs({ combatants: [{ actor: target }] });
     expect(target.items.filter(i => i.type === "armorMod")).toHaveLength(0);
   });
+
+  it("Разрушение ставит флаг глушения чужих модов на этой броне и создаёт свой мод с флагом reformationSongMod", async () => {
+    const caster = bonesinger();
+    const target = owner();
+    const armor = makeItem("armor", {}, target);
+    await applyReformationSong(caster, [{ item: armor, mode: "destroy" }]);
+
+    expect(armor.getFlag("warhammer-dbc", "reformationSongSuppressMods")).toBe(true);
+    const mod = target.items.find(i => i.type === "armorMod");
+    expect(mod.getFlag("warhammer-dbc", "reformationSongMod")).toBe(true);
+  });
+
+  it("Разрушение нивелирует Аблативные Раны актора, если пул был", async () => {
+    const caster = bonesinger();
+    const target = owner({ ablativeMax: 10, ablative: 7 });
+    const armor = makeItem("armor", {}, target);
+    await applyReformationSong(caster, [{ item: armor, mode: "destroy" }]);
+    expect(target.system.wounds.ablativeMax).toBe(0);
+    expect(target.system.wounds.ablative).toBe(0);
+  });
+
+  it("Разрушение без Аблативного пула не трогает system.wounds", async () => {
+    const caster = bonesinger();
+    const target = owner({ ablativeMax: 0 });
+    const armor = makeItem("armor", {}, target);
+    await applyReformationSong(caster, [{ item: armor, mode: "destroy" }]);
+    expect(target.system.wounds.ablativeMax).toBe(0);
+  });
+
+  it("deleteCombat снимает глушение модов и возвращает Аблативный потолок", async () => {
+    const caster = bonesinger();
+    const target = owner({ ablativeMax: 8 });
+    const armor = makeItem("armor", {}, target);
+    await applyReformationSong(caster, [{ item: armor, mode: "destroy" }]);
+    expect(armor.getFlag("warhammer-dbc", "reformationSongSuppressMods")).toBe(true);
+    expect(target.system.wounds.ablativeMax).toBe(0);
+
+    await clearReformationSongBuffs({ combatants: [{ actor: target }] });
+    expect(armor.getFlag("warhammer-dbc", "reformationSongSuppressMods")).toBeUndefined();
+    expect(target.system.wounds.ablativeMax).toBe(8);
+  });
 });
 
 describe("applyReformationSong — Оружие", () => {
@@ -172,13 +220,41 @@ describe("applyReformationSong — Оружие", () => {
     expect(plainWeapon.system.destroyed).toBe(true);
   });
 
-  it("Разрушение стрелкового не трогает destroyed/weaponProps (заклинивание не моделируется)", async () => {
+  it("Разрушение стрелкового заклинивает (реальное состояние), не трогает destroyed/weaponProps", async () => {
     const caster = bonesinger();
     const target = owner();
     const ranged = makeItem("weapon", { weaponClass: "las", weaponProps: [], destroyed: false }, target);
     await applyReformationSong(caster, [{ item: ranged, mode: "destroy" }]);
+    expect(ranged.system.jammed).toBe(true);
     expect(ranged.system.destroyed).toBe(false);
     expect(ranged.system.weaponProps).toEqual([]);
+  });
+
+  it("Разрушение стрелкового вне боя не ставит блокировку расклинивания (jamLockedRound=0)", async () => {
+    const caster = bonesinger();
+    const target = owner();
+    const ranged = makeItem("weapon", { weaponClass: "las", weaponProps: [] }, target);
+    globalThis.game.combat = undefined;
+    await applyReformationSong(caster, [{ item: ranged, mode: "destroy" }]);
+    expect(ranged.system.jamLockedRound).toBe(0);
+  });
+
+  it("Разрушение стрелкового в бою блокирует Расклин до конца текущего Раунда", async () => {
+    const caster = bonesinger();
+    const target = owner();
+    const ranged = makeItem("weapon", { weaponClass: "las", weaponProps: [] }, target);
+    globalThis.game.combat = { round: 2 };
+    await applyReformationSong(caster, [{ item: ranged, mode: "destroy" }]);
+    expect(ranged.system.jamLockedRound).toBe(3);
+  });
+
+  it("Восстановление расклинивает (реальное состояние снимается)", async () => {
+    const caster = bonesinger();
+    const target = owner();
+    const weapon = makeItem("weapon", { weaponClass: "melee", weaponProps: [], jammed: true, jamLockedRound: 5 }, target);
+    await applyReformationSong(caster, [{ item: weapon, mode: "restore" }]);
+    expect(weapon.system.jammed).toBe(false);
+    expect(weapon.system.jamLockedRound).toBe(0);
   });
 
   it("deleteCombat возвращает временно снятый/добавленный Reinforced", async () => {

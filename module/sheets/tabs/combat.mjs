@@ -34,6 +34,7 @@ import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
 import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
+import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun,
@@ -181,6 +182,10 @@ export function activateCombatListeners(root, actor) {
   // бронёй на этой же вкладке (character-context.mjs hasWeaponPropWounds).
   on(root, ".wh-sheet-corrosion-repair-btn", "click", ev => {
     repairArmorCorrosion(actor, ev.currentTarget.dataset.loc);
+  });
+  on(root, ".wh-sheet-clear-jam-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) clearWeaponJam(item);
   });
   on(root, ".wh-sheet-piercing-extract-btn", "click", ev => {
     extractPiercingWound(actor, ev.currentTarget.dataset.loc);

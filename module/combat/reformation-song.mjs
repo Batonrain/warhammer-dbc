@@ -10,23 +10,28 @@
 //  эффект на всех) — здесь наоборот: до F.b РАЗНЫХ предметов, каждый со
 //  своим режимом. Свой диалог — module/apps/reformation-song-dialog.mjs.
 //
-//  «Психокостяная природа» предмета и «иммунное снаряжение (сложный
-//  принцип работы или мистическая/божественная природа)» — не проверяются
-//  автоматически (в схеме предметов нет флага «психокость»/«иммунно»),
-//  решение оставлено игроку/ГМу при отметке чекбоксов в диалоге, тем же
-//  приёмом, что и непроверяемая дальность W м у сиблингов
-//  (bone-song/preservation/song-of-swiftness).
+//  «Психокостяная природа» предмета и «иммунное снаряжение (сложный принцип
+//  работы или мистическая/божественная природа)» — реальные флаги схемы
+//  (weapon/armor/gear .mjs: wraithbone/wraithboneImmune), не текстовая
+//  договорённость: apps/reformation-song-dialog.mjs фильтрует кандидатов по
+//  ним. Засеяны true только там, где книга/название предмета однозначны
+//  (см. комментарий у поля в data/item/weapon.mjs) — на новом/самодельном
+//  предмете их выставляет тот, кто его завёл, читается как есть.
 //
-//  По категориям автоматизировано ЧАСТИЧНО — заклинивание оружия не
-//  отслеживается движком нигде в проекте (grep подтверждён, wdbc-vwfk):
-//  реален только Reinforced (реальное свойство в weaponProps) и новый флаг
-//  destroyed (тот же паттерн, что armor.mjs::breached — чистая метка
-//  состояния без даунстрим-автоматизации). Аблативные раны/«доп. AP от
-//  талантов» при Разрушении брони — тоже не смоделированы (нет реестра
-//  «источников доп. AP», тот же вывод, что doombc-armor-properties-
-//  automation про «нет инфраструктуры утраченного AP»); в чат идёт явное
-//  напоминание ГМу. Качество Снаряжения — единственная категория, где
-//  двигается РЕАЛЬНЫЙ движок (module/constants/quality.mjs).
+//  Заклинивание оружия (wdbc-vwfk) впервые в проекте стало РЕАЛЬНЫМ
+//  состоянием (weapon.system.jammed) — combat/attack.mjs пишет его при
+//  срабатывании существующего jamThreshold(), UI блокирует «Атака» тем же
+//  приёмом, что magEmpty, снимается кнопкой «Расклинить»
+//  (combat/weapon-properties.mjs::clearWeaponJam, доступной всегда — тот же
+//  паттерн «без теста/времени», что у Ремонта Разъедания в damage.mjs).
+//  «Не расклинивается 1 раунд» от Разрушения — jamLockedRound.
+//
+//  «Доп. AP от других модов/талантов» и аблативные раны при Разрушении
+//  брони — тоже реальны: getInstalledArmorMods (combat/armor-mods.mjs)
+//  глушит на этой броне все моды, кроме собственных модов Reformation Song,
+//  пока стоит флаг reformationSongSuppressMods; актёрский пул Аблативных
+//  Ран (system.wounds.ablativeMax/ablative) обнуляется на то же «до конца
+//  боя». Оба откатываются в clearReformationSongBuffs.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
@@ -73,16 +78,17 @@ async function spendAndCount(actor) {
 async function applyToArmor(item, mode, felBonus) {
   const owner = item.parent;
   const half = Math.ceil(felBonus / 2);
+  const rsFlags = { "warhammer-dbc": { reformationSongMod: true } };
 
   if (mode === "restore") {
     const created = await owner.createEmbeddedDocuments("Item", [
       {
-        name: "Reformation Song — Восстановление", type: "armorMod", img: MOD_ICON,
+        name: "Reformation Song — Восстановление", type: "armorMod", img: MOD_ICON, flags: rsFlags,
         system: { installedOn: item.id, category: "armor", modGroup: "reinforcement",
           activatable: false, active: true, effects: { apAll: felBonus } }
       },
       {
-        name: "Reformation Song — Аблативный слой", type: "armorMod", img: MOD_ICON,
+        name: "Reformation Song — Аблативный слой", type: "armorMod", img: MOD_ICON, flags: rsFlags,
         system: { installedOn: item.id, category: "armor", modGroup: "reinforcement",
           activatable: false, active: true, effects: { apAll: half } }
       }
@@ -93,14 +99,31 @@ async function applyToArmor(item, mode, felBonus) {
 
   const created = await owner.createEmbeddedDocuments("Item", [
     {
-      name: "Reformation Song — Разрушение", type: "armorMod", img: MOD_ICON,
+      name: "Reformation Song — Разрушение", type: "armorMod", img: MOD_ICON, flags: rsFlags,
       system: { installedOn: item.id, category: "armor", modGroup: "reinforcement",
         activatable: false, active: true, effects: { apAll: -felBonus } }
     }
   ]);
-  await item.setFlag("warhammer-dbc", REVERT_FLAG, { kind: "armorMod", modIds: created.map(c => c.id) });
-  return `<div>${esc(item.name)} (Броня, ${esc(owner.name)}): <b>Разрушение</b> — −${felBonus} AP всем зонам (не уничтожается), до конца боя.
-    <div style="font-size:0.85em;opacity:.8;">Аблативные раны и доп. AP от других модов/талантов на эту броню — не отслеживаются автоматически, снимите вручную, если применимо.</div></div>`;
+  // «Доп. AP от других модов/талантов на эту броню» — глушим ВСЕ чужие моды
+  // ИМЕННО ЭТОЙ брони: флаг стоит на самой броне (item), не на акторе —
+  // combat/armor-mods.mjs::getInstalledArmorMods читает его так же, кроме
+  // только что созданного мода «Разрушение» — тот отмечен reformationSongMod
+  // и не глушится собственной проверкой.
+  await item.setFlag("warhammer-dbc", "reformationSongSuppressMods", true);
+
+  // «Аблативные раны нивелируются» — актёрский пул (не привязан к конкретной
+  // броне), обнуляем целиком, пока не 0 уже; восстанавливаем по концу боя.
+  const ablativeMax = Number(owner.system?.wounds?.ablativeMax) || 0;
+  let ablativeNote = "";
+  const revert = { kind: "armorMod", modIds: created.map(c => c.id), unsuppressMods: true };
+  if (ablativeMax > 0) {
+    revert.originalAblativeMax = ablativeMax;
+    await owner.update({ "system.wounds.ablativeMax": 0, "system.wounds.ablative": 0 });
+    ablativeNote = `, Аблативные Раны (${ablativeMax}) нивелированы`;
+  }
+  await item.setFlag("warhammer-dbc", REVERT_FLAG, revert);
+
+  return `<div>${esc(item.name)} (Броня, ${esc(owner.name)}): <b>Разрушение</b> — −${felBonus} AP всем зонам (не уничтожается), доп. AP от других модов на этой броне нивелированы${ablativeNote}, до конца боя.</div>`;
 }
 
 // ─── Оружие ──────────────────────────────────────────────────────────────
@@ -109,12 +132,13 @@ async function applyToWeapon(item, mode, felBonus) {
   const isMelee = MELEE_CLASSES.has(item.system?.weaponClass);
   const props = Array.isArray(item.system?.weaponProps) ? item.system.weaponProps : [];
   const hasReinforced = props.some(p => p?.key === "reinforced");
-  const jamNote = `<div style="font-size:0.85em;opacity:.8;">Заклинивание не отслеживается движком нигде в проекте — статус ведите вручную в чате.</div>`;
 
   if (mode === "restore") {
     const updates = {};
     const wasDestroyed = !!item.system?.destroyed;
     if (wasDestroyed) updates["system.destroyed"] = false;
+    const wasJammed = !!item.system?.jammed;
+    if (wasJammed) { updates["system.jammed"] = false; updates["system.jamLockedRound"] = 0; }
     let addedReinforced = false;
     if (!hasReinforced) {
       updates["system.weaponProps"] = [...props, { key: "reinforced" }];
@@ -122,11 +146,15 @@ async function applyToWeapon(item, mode, felBonus) {
     }
     if (Object.keys(updates).length) await item.update(updates);
     if (addedReinforced) await item.setFlag("warhammer-dbc", REVERT_FLAG, { kind: "weaponReinforcedAdded" });
-    return `<div>${esc(item.name)} (Оружие): <b>Восстановление</b> — расклинено${wasDestroyed ? ", восстановлено из уничтоженного" : ""}${addedReinforced ? ", +Reinforced до конца боя" : " (Reinforced уже было)"}.${jamNote}</div>`;
+    return `<div>${esc(item.name)} (Оружие): <b>Восстановление</b> — ${wasJammed ? "расклинено" : "заклинивания не было"}${wasDestroyed ? ", восстановлено из уничтоженного" : ""}${addedReinforced ? ", +Reinforced до конца боя" : " (Reinforced уже было)"}.</div>`;
   }
 
   if (!isMelee) {
-    return `<div>${esc(item.name)} (Оружие, стрелковое): <b>Разрушение</b> — заклинивает и не расклинивается 1 раунд.${jamNote}</div>`;
+    // «Не расклинивается 1 раунд» — только пока идёт бой (canClearJam сам
+    // не блокирует ничего вне боя, раунд посчитать не от чего).
+    const lockedRound = game.combat ? game.combat.round + 1 : 0;
+    await item.update({ "system.jammed": true, "system.jamLockedRound": lockedRound });
+    return `<div>${esc(item.name)} (Оружие, стрелковое): <b>Разрушение</b> — заклинило${lockedRound ? ", не расклинивается 1 раунд" : ""}.</div>`;
   }
   if (hasReinforced) {
     const idx = props.findIndex(p => p?.key === "reinforced");
@@ -193,12 +221,12 @@ export async function applyReformationSong(actor, picks) {
 }
 
 /**
- * Снимает эффекты «до конца боя» (моды AP брони, временный Reinforced,
- * временное качество Снаряжения) со всех актёров боя — звать в
- * module/hooks.mjs::deleteCombat, тем же тактом, что и
- * clearSongOfSwiftnessBuffs. Постоянные изменения (destroyed у оружия при
- * Разрушении без Reinforced) сознательно НЕ трогает — они не были «до
- * конца боя» и в книге не восстанавливаются.
+ * Снимает эффекты «до конца боя» (моды AP брони + глушение чужих модов на
+ * ней, аблативный пул актора, временный Reinforced, временное качество
+ * Снаряжения) со всех актёров боя — звать в module/hooks.mjs::deleteCombat,
+ * тем же тактом, что и clearSongOfSwiftnessBuffs. Постоянные изменения
+ * (destroyed/jammed у оружия — заклинивание и «уничтожено» книгой не
+ * привязаны к «до конца боя») сознательно НЕ трогает.
  */
 export async function clearReformationSongBuffs(combat) {
   for (const c of combat?.combatants ?? []) {
@@ -211,6 +239,10 @@ export async function clearReformationSongBuffs(combat) {
       if (revert.kind === "armorMod") {
         const ids = (revert.modIds || []).filter(id => actor.items.get(id));
         if (ids.length) await actor.deleteEmbeddedDocuments("Item", ids);
+        if (revert.unsuppressMods) await item.unsetFlag("warhammer-dbc", "reformationSongSuppressMods");
+        if (revert.originalAblativeMax != null) {
+          await actor.update({ "system.wounds.ablativeMax": revert.originalAblativeMax });
+        }
       } else if (revert.kind === "weaponReinforcedAdded") {
         const props = (item.system?.weaponProps || []).filter(p => p?.key !== "reinforced");
         await item.update({ "system.weaponProps": props });

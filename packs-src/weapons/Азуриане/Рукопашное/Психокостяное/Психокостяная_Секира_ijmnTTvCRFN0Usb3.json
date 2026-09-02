@@ -94,7 +94,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Топор"
+    "meleeCategory": "Топор",
+    "wraithbone": true
   },
   "_id": "ijmnTTvCRFN0Usb3",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
@@ -339,7 +340,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!ijmnTTvCRFN0Usb3"

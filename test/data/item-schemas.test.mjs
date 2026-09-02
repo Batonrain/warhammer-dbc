@@ -71,7 +71,7 @@ const TYPES = {
       folderPath: [],
       // Инфограждение (module/apps/infoguard.mjs) — Успехи встречного теста.
       infoguard: 0,
-      malfunctioning: false
+      malfunctioning: false, wraithbone: false, wraithboneImmune: false
     }
   },
   tool: {
@@ -359,7 +359,8 @@ const TYPES = {
       // поля (`s.shieldAP != null` в sheet-helpers.mjs и isHandShield),
       // и умолчание 0 сделало бы щитом всё оружие подряд.
       shieldAP: null, shieldZones: "", shieldForm: "",
-      destroyed: false
+      destroyed: false, jammed: false, jamLockedRound: 0,
+      wraithbone: false, wraithboneImmune: false
     }
   },
   ammo: {
@@ -396,7 +397,8 @@ const TYPES = {
       special: "",
       weightless: false,
       active: true,
-      breached: false
+      breached: false,
+      wraithbone: false, wraithboneImmune: false
     }
   },
   // ── Силы (wdbc-ff4.1.4) ────────────────────────────────────────────────────

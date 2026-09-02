@@ -63,7 +63,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кнут"
+    "meleeCategory": "Кнут",
+    "wraithbone": true
   },
   "_id": "xLZwJTOQDG7s75ZS",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-whip.svg",
@@ -307,7 +308,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!xLZwJTOQDG7s75ZS"

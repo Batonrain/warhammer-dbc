@@ -18,6 +18,7 @@ import { implantMech }                               from "../constants/implant-
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet, resolveSkillCat } from "../constants/advancement.mjs";
 import { isFriendlySpecialty }                       from "../rules/friendly-specialties.mjs";
+import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
@@ -555,7 +556,12 @@ export function buildGetData(actor) {
       hasMods,
       modNames:        modFx.names.join(", "),
       attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,
-      compatAmmo, magLow, magEmpty
+      compatAmmo, magLow, magEmpty,
+      // Заклинило (wdbc-vwfk) — блокирует «Атака» тем же приёмом, что magEmpty;
+      // «Расклинить» показывается только пока canClearJam не лжив (см.
+      // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
+      jammed:       !melee && !!s.jammed,
+      canClearJam:  !melee && !!s.jammed && canClearJam(i)
     };
   };
 

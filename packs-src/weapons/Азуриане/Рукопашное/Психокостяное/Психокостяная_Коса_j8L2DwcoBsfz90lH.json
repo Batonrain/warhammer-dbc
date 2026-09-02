@@ -87,7 +87,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Крюк"
+    "meleeCategory": "Крюк",
+    "wraithbone": true
   },
   "_id": "j8L2DwcoBsfz90lH",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",
@@ -332,7 +333,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!j8L2DwcoBsfz90lH"

@@ -72,7 +72,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Меч"
+    "meleeCategory": "Меч",
+    "wraithbone": true
   },
   "_id": "IjG6qA3e78iqYm0Z",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
@@ -316,7 +317,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!IjG6qA3e78iqYm0Z"

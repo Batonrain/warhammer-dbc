@@ -63,7 +63,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Нож"
+    "meleeCategory": "Нож",
+    "wraithbone": true
   },
   "_id": "J1T1ygRfCHP3dvMH",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
@@ -307,7 +308,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!J1T1ygRfCHP3dvMH"

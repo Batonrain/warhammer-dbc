@@ -6,6 +6,10 @@
 //  Разрушение. Не переиспользует module/apps/wraithbone-song-dialog.mjs —
 //  тот бинарный (одна техника/область, один эффект на всех), здесь
 //  наоборот много разных целей со своим режимом на каждую.
+//
+//  Кандидаты фильтруются РЕАЛЬНЫМИ флагами схемы item.system.wraithbone/
+//  wraithboneImmune (не текстовой договорённостью) — см. комментарий у
+//  этих полей в module/data/item/weapon.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
@@ -31,12 +35,13 @@ export async function showReformationSongDialog(actor) {
     const tActor = tokenDoc.actor;
     for (const item of tActor.items ?? []) {
       if (!TARGET_TYPES.has(item.type)) continue;
+      if (!item.system?.wraithbone || item.system?.wraithboneImmune) continue;
       rows.push({ actorName: tActor.name, item });
     }
   }
 
   if (!rows.length) {
-    ui.notifications?.warn(`Нет предметов Оружия/Брони/Снаряжения в радиусе ${radius} м (W).`);
+    ui.notifications?.warn(`Нет психокостяных предметов Оружия/Брони/Снаряжения (не отмеченных иммунными) в радиусе ${radius} м (W.b).`);
     return null;
   }
 
@@ -52,7 +57,7 @@ export async function showReformationSongDialog(actor) {
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">
       <div class="atk-dlg-header"><span class="atk-weapon-name">Reformation Song / Песня Изменений</span></div>
-      <div style="font-size:0.82em;color:#8a8a8a;margin-bottom:6px;">До ${maxTargets} предметов (F.b) в радиусе ${radius} м (W.b). «Психокостяная» природа предмета и иммунное снаряжение (сложный механизм/мистическая или божественная природа) не проверяются автоматически — отмечайте только подходящие, решение за столом.</div>
+      <div style="font-size:0.82em;color:#8a8a8a;margin-bottom:6px;">До ${maxTargets} предметов (F.b) в радиусе ${radius} м (W.b). Список уже отфильтрован по флагу «Психокостяное» и без пометки «Иммунно» — если нужного предмета нет в списке, отметьте ему system.wraithbone на листе (F12/правка данных).</div>
       <div class="rs-rows" style="max-height:360px;overflow-y:auto;">${rowsHtml}</div>
       <div class="rs-count" style="margin-top:6px;font-size:0.85em;">Выбрано: <span class="rs-count-n">0</span> / ${maxTargets}</div>
     </div>`;

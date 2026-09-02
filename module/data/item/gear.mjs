@@ -65,7 +65,14 @@ export class GearData extends foundry.abstract.TypeDataModel {
       // твоего следующего Хода», тем же идиоматическим допущением, что и
       // прочие «до начала следующего Хода» эффекты этого файла (Грозный
       // Вопль/Поклон Публике в hooks.mjs), без отдельного счётчика раунда.
-      malfunctioning: new BooleanField({ initial: false, label: "Не работает" })
+      malfunctioning: new BooleanField({ initial: false, label: "Не работает" }),
+      // Психокостяное / иммунно к Reformation Song (wdbc-vwfk) — та же пара
+      // полей, что weapon.mjs::wraithbone/wraithboneImmune. В каталоге
+      // Снаряжения не нашлось ни одного однозначно психокостяного предмета
+      // (только оружие/броня) — оба поля заведены для полноты фильтра
+      // диалога и будущего авторинга, засеянных значений true пока нет.
+      wraithbone:       new BooleanField({ initial: false, label: "Психокостяное" }),
+      wraithboneImmune: new BooleanField({ initial: false, label: "Иммунно к Reformation Song" })
     };
   }
 }
