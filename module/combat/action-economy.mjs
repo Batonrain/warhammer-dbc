@@ -94,6 +94,9 @@ export async function resetActionEconomy(actor) {
   // Just the Light/Лишь Свет (wdbc-1rno, combat/just-the-light.mjs): щит
   // живёт «до начала следующего Хода» — тот же такт, что running/exposedAggressive.
   if (actor.getFlag("warhammer-dbc", "justTheLightActive")) upd["flags.warhammer-dbc.-=justTheLightActive"] = null;
+  // Локус Неизбежности (wdbc-smc): штраф −10 живёт до начала СВОЕГО следующего
+  // Хода — снимается здесь же, тем же приёмом, что exposedAggressive/running.
+  if (actor.getFlag("warhammer-dbc", "inevitabilityPenalty")) upd["flags.warhammer-dbc.-=inevitabilityPenalty"] = null;
   // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
   // прошлого раунда» начинается заново с каждым Ходом этого актора.
   if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;

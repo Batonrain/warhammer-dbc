@@ -257,11 +257,15 @@ export const CAPABILITIES = {
   "penalty.calledShot.head.reduce20": {
     label: "Избирательная атака в голову: штраф меньше на 20",
     source: "Локус Подношения (стр. 31)",
-    reader: ""
+    reader: "module/sheets/attack-dialog.mjs — headPenalty в списке целей Избирательной атаки"
   },
   "calledShot.notMental": {
     label: "Избирательные атаки не считаются ментальными",
     source: "Локус Подношения (стр. 31)",
+    // Нечего гейтить (сверено wdbc-smc, 31.08.2026): в системе вообще нет
+    // правила «Ментальное действие блокируется в Ярости/опьянении», которое
+    // эта возможность должна была бы снимать — grep по frenzy.mjs/
+    // attack-dialog.mjs пуст. Появится базовое правило — тогда и читатель.
     reader: ""
   },
 
@@ -276,12 +280,12 @@ export const CAPABILITIES = {
   "autoHit.melee.oncePerRound": {
     label: "Раз в Раунд рукопашная атака попадает автоматически с 1 Успехом (штраф −10 до след. Хода)",
     source: "Локус Неизбежности (стр. 30)",
-    reader: ""
+    reader: "module/sheets/attack-dialog.mjs — showAttackDialog (галочка «Локус Неизбежности»), module/combat/attack.mjs (opts.fixedSuccessDeg), module/rules/sources.mjs (daemonInevitability — штраф −10), module/combat/action-economy.mjs (снятие штрафа). Не подключено к showAttackDialogNoWeapon (безоружная атака без диалога — принудительное применение без выбора игрока для штрафной способности сочли неверным по умолчанию)"
   },
   "action.bonusHalfMove": {
     label: "Бонусное полудействие, только на Движение",
     source: "Локус Стремительности (стр. 29)",
-    reader: ""
+    reader: "module/combat/movement-actions.mjs — declareHalfMove (раз в Раунд, 0 ОД вместо 1)"
   },
   "technique.baseFullAttack": {
     label: "Раз в Раунд любая рукопашная атака считается имеющей базу Полная Атака",
@@ -293,17 +297,21 @@ export const CAPABILITIES = {
   "aura.touchedByFates": {
     label: "За Очко Бесчестия даёт демонам ниже рангом Трейт Touched by the Fates (1)",
     source: "Локус Фанатизма (стр. 28)",
-    reader: ""
+    reader: "module/rules/daemon-locus.mjs (demonsInHeraldLocus/applyTouchedByFates), module/sheets/actor-sheet.mjs — onCapabilitySpend (кнопка «Потратить» панели ВОЗМОЖНОСТИ СЕЙЧАС)"
   },
   "horror.splitsIntoThree": {
     label: "Ужасы при смерти делятся на 3, а не на 2",
     source: "Локус Трансмогрификации (стр. 32)",
+    // Нечего гейтить (сверено wdbc-smc, 31.08.2026): базовой механики «Ужасы
+    // при смерти делятся на 2» в коде нет вовсе — grep по horde-sheet.mjs/
+    // horde-damage.mjs пуст. Этот Локус меняет параметр несуществующего
+    // правила; сперва нужна сама базовая механика деления Орды на смерти.
     reader: ""
   },
   "ignore.lingerTemplates": {
     label: "Игнорирует шаблоны со свойством Linger",
     source: "Локус Упорства (стр. 30)",
-    reader: ""   // Трудный Ландшафт закрыт записью terrainIgnore; шаблоны Linger — нет
+    reader: "module/regions/linger-zone.mjs — #onTrigger/_drift (иммунитет к попаданиям и дрейфу зоны)"
   },
 
   // ── Арсенал: блочные обходы Melee/Weapon Training ───────────────────────

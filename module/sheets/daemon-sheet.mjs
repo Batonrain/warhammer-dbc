@@ -17,6 +17,7 @@ import { onMinionCreate } from "../apps/minion-creator.mjs";
 // Действия листа демона; всё общее — от листа персонажа: ApplicationV2 склеивает
 // DEFAULT_OPTIONS по цепочке классов, поэтому его карта действий здесь в силе.
 function onInstability() { return this._rollInstability(); }
+function onVsExorcism()  { return this._rollVsExorcism(); }
 function onInfamy()      { return this._rollInfamy(); }
 function onAvatar()      { return this._pickAvatar(); }
 
@@ -31,6 +32,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       // Навигация по вкладкам — своя разметка, общий обработчик.
       tab: onTab,
       daemonInstability: whenEditable(onInstability),
+      daemonVsExorcism:  whenEditable(onVsExorcism),
       daemonInfamy:      whenEditable(onInfamy),
       daemonAvatar:      whenEditable(onAvatar),
       // Кнопка «В Орду» стоит в своей шапке, поэтому и действие объявлено
@@ -231,6 +233,87 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
           <div class="roll-outcome">${success
             ? `<span class="roll-success">Удержался — ${deg} ст.</span>`
             : `<span class="roll-failure">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`}</div>
+          ${outcome.extendedLine}
+          ${outcome.opposedLine}
+        </div>`,
+      rolls: [roll], sound: CONFIG.sounds.dice
+    }, rollMode));
+  }
+
+  /**
+   * Диалог перед встречным тестом против Экзорцизма/Чистой Демонологии
+   * (Локус Цепей, wdbc-smc) — тот же виджет Вида теста, что у Нестабильности,
+   * но по умолчанию сразу открыт на "Встречный": книга формулирует исход
+   * («демон должен набрать больше Успехов, чем Ритуалист») как обычный
+   * встречный тест (module/rules/test-kind.mjs), не особый случай.
+   */
+  async _showVsExorcismDialog() {
+    const wp = this.actor.system.characteristics?.wp?.total ?? 0;
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Против Экзорцизма / Чистой Демонологии" },
+      classes: ["wh-roll-dialog-window"],
+      position: { width: 340 },
+      content: `
+        <div class="wh-skill-roll-form">
+          <div class="roll-dlg-header"><span>Против Экзорцизма / Чистой Демонологии</span></div>
+          <div class="roll-dlg-row"><label>Сила Воли:</label><span>${wp}</span></div>
+          ${testKindHtml({ defaultKind: "opposed", label: "Против Экзорцизма" })}
+          <div id="auto-outcome-note" class="roll-dlg-note"></div>
+        </div>`,
+      buttons: [
+        {
+          action: "roll", icon: "fas fa-dice-d10", label: "Бросок", default: true,
+          callback: (event, button) => readTestKind(sel => button.form.querySelector(sel)?.value ?? null, { label: "Против Экзорцизма" })
+        },
+        { action: "cancel", label: "Отмена", callback: () => false }
+      ],
+      render: (event, dialog) => wireTestKindLive(dialog.element, {
+        actor: this.actor, label: "Против Экзорцизма",
+        getBaseEff: () => wp + (parseInt(dialog.element.querySelector("#test-difficulty")?.value) || 0)
+      }),
+      rejectClose: false
+    });
+  }
+
+  // Встречный тест демона против Экзорцизма (стр. 393-425, ритуал типа
+  // "exorcism": «Демон в Хосте должен пройти тест на W+0 и набрать больше
+  // Успехов, чем Ритуалист, иначе его немедленно изгоняет») и против Чистой
+  // Демонологии (Локус Цепей группирует оба в одну книжную фразу). Идёт через
+  // общий конвейер правил (kind:"vsExorcism") тем же приёмом, что Нестабильность
+  // выше, — иначе бонус Локуса Цепей до броска бы не доехал.
+  async _rollVsExorcism() {
+    const tk = await this._showVsExorcismDialog();
+    if (!tk) return;
+
+    const wp = this.actor.system.characteristics?.wp?.total ?? 0;
+    const ctx = { actor: this.actor, kind: "vsExorcism" };
+    const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
+    const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
+    const threshold = wp + bonus + tk.difficulty;
+
+    const rr = rerolls[0] || null;
+    const { roll, rv, rolls: rolled, rerollNote } = await rollD100WithReroll(rr);
+
+    const outcome = await resolveKindOutcome(this.actor, {
+      kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
+    });
+    const { success, deg } = outcome;
+    const rollMode = game.settings.get("core", "rollMode");
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: `
+        <div class="wh-roll-result wh-daemon-card">
+          <div class="roll-header">🕯️ Против Экзорцизма / Чистой Демонологии${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
+          <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")})` : ""
+          }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b></div>
+          ${outcome.combinedLine}
+          <div class="roll-dice">Бросок: <b>${rv}</b></div>
+          ${rerollNote}
+          ${outcome.critLine}
+          <div class="roll-outcome">${success
+            ? `<span class="roll-success">Устоял — ${deg} ст.</span>`
+            : `<span class="roll-failure">Провален — ${deg} ст.</span>`}</div>
           ${outcome.extendedLine}
           ${outcome.opposedLine}
         </div>`,

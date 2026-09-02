@@ -33,6 +33,12 @@ import { applyDamageToActor } from "../combat/damage.mjs";
 import { SCATTER_ROSE } from "../combat/scatter.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { triggerBlastAnimation } from "../integrations/autoanimations.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+
+// Локус Упорства (стр. 30, wdbc-smc): актор с этой Возможностью полностью
+// игнорирует шаблоны со свойством Linger — не задевается ни немедленным
+// попаданием (TOKEN_ENTER/TOKEN_TURN_START), ни дрейфом зоны.
+const IGNORE_LINGER_CAPABILITY = "ignore.lingerTemplates";
 
 // Foundry v14: системные (не модульные) типы RegionBehavior регистрируются
 // БЕЗ префикса пакета — "lingerZone", не "warhammer-dbc.lingerZone" (тот
@@ -79,6 +85,7 @@ export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
     const { token } = event.data;
     const actor = token.actor;
     if (!actor) return;
+    if (hasRuleFlag(actor, IGNORE_LINGER_CAPABILITY)) return;
 
     const round = event.data.round ?? combat.round;
     const turn  = event.data.turn  ?? combat.turn;
@@ -124,7 +131,7 @@ export class LingerZoneBehaviorType extends foundry.data.regionBehaviors.RegionB
     for (const t of tokensInRegion(region)) before.set(t.id, t); // объединение «было ∪ стало» — путь дрейфа
     const driftedHits = [];
     for (const token of before.values()) {
-      if (!token.actor) continue;
+      if (!token.actor || hasRuleFlag(token.actor, IGNORE_LINGER_CAPABILITY)) continue;
       await applyDamageToActor(token.actor, this.damageData);
       driftedHits.push(token);
     }
