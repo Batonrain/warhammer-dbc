@@ -108,7 +108,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Глефа"
+    "meleeCategory": "Глефа",
+    "wraithbone": true
   },
   "_id": "Zcomgx1OYyMfTQHE",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
@@ -353,7 +354,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!Zcomgx1OYyMfTQHE"

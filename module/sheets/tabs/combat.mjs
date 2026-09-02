@@ -32,8 +32,11 @@ import { preservationAvailable, applyPreservationSingle, applyPreservationArea }
 import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftnessArea } from "../../combat/song-of-swiftness.mjs";
 import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs";
 import { conjureWraithAvailable, applyConjureWraith } from "../../combat/conjure-wraith.mjs";
+import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
+import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
+import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
 import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
@@ -162,6 +165,12 @@ export function activateCombatListeners(root, actor) {
       title: "Песня Стремительности", applySingle: applySongOfSwiftnessSingle, applyArea: applySongOfSwiftnessArea
     });
   });
+  on(root, ".reformation-song-btn", "click", async () => {
+    if (!reformationSongAvailable(actor)) {
+      return ui.notifications.warn("Reformation Song / Песня Изменений уже использована максимум раз в этой сессии.");
+    }
+    await showReformationSongDialog(actor);
+  });
 
   // ── Вызвать Психокость (wdbc-sk8s, module/combat/conjure-wraith.mjs) ────
   on(root, ".conjure-wraith-item-btn", "click", async () => {
@@ -199,6 +208,10 @@ export function activateCombatListeners(root, actor) {
   // бронёй на этой же вкладке (character-context.mjs hasWeaponPropWounds).
   on(root, ".wh-sheet-corrosion-repair-btn", "click", ev => {
     repairArmorCorrosion(actor, ev.currentTarget.dataset.loc);
+  });
+  on(root, ".wh-sheet-clear-jam-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) clearWeaponJam(item);
   });
   on(root, ".wh-sheet-piercing-extract-btn", "click", ev => {
     extractPiercingWound(actor, ev.currentTarget.dataset.loc);

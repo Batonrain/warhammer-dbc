@@ -634,7 +634,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfReformation.restoreOrDestroy": {
     label: "До F.b психокостяных вещей получают Восстановление или Разрушение (оружие/броня/снаряжение), до 3 раз за сессию",
-    source: "Reformation Song / Песня Изменений", reader: ""
+    source: "Reformation Song / Песня Изменений",
+    reader: "module/combat/reformation-song.mjs (wdbc-vwfk) — applyReformationSong, per-target пикер в apps/reformation-song-dialog.mjs (фильтр по item.system.wraithbone/wraithboneImmune), кнопка в sheets/tabs/combat.mjs. Полностью автоматизировано: AP брони (armorMod ±F.b/+½F.b до конца боя), глушение чужих модов/талантов на разрушенной броне (armor-mods.mjs::getInstalledArmorMods + reformationSongSuppressMods) и обнуление актёрского пула Аблативных Ран на то же «до конца боя», Reinforced оружия (до конца боя), заклинивание оружия (weapon.jammed/jamLockedRound — впервые в проекте реальное состояние, не разовая строка в чате; combat/attack.mjs пишет его при обычном срабатывании jamThreshold, снимается weapon-properties.mjs::clearWeaponJam), качество Снаряжения (шаг ±1 до конца боя), флаги weapon.destroyed/gear.malfunctioning (тот же паттерн, что armor.breached). Осталось решением за столом только само наполнение флагов wraithbone/wraithboneImmune для новых/самодельных предметов — готовой UI-галочки нет (тот же прецедент, что item.system.drukhari)."
   },
   "wraithbone.reshapeForCraft.halfSuccessesBack": {
     label: "Разрушает свой психокостяной предмет ради ½ успехов крафта на новый",

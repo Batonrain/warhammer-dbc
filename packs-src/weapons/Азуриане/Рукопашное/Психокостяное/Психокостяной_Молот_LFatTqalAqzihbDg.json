@@ -80,7 +80,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Молот"
+    "meleeCategory": "Молот",
+    "wraithbone": true
   },
   "_id": "LFatTqalAqzihbDg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",
@@ -325,7 +326,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!LFatTqalAqzihbDg"
