@@ -6,8 +6,10 @@
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon } from "../../module/combat/grapple.mjs";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, detachableTentacle, isDetachedGrapple } from "../../module/combat/grapple.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
+import { actorFor } from "../support/combat-fixtures.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -158,5 +160,131 @@ describe("crunchWeapon", () => {
 
   it("оружие без system/weaponProps вовсе — нет, не падает", () => {
     expect(crunchWeapon({ type: "weapon", name: "Голые руки" })).toBe(false);
+  });
+});
+
+// wdbc-vkwe (продолжение): «...+20 на приём Захват и все тесты в Борьбе» —
+// приём читается в attack-dialog.mjs (resolveSelection), а 5 РОЛЕВЫХ тестов
+// раздела (Заломить/Пересилить/Вырваться/Выкрутиться/Перехватить Контроль,
+// см. ALL_TESTS в grapple.mjs) — здесь, через tentacleTechDef перед вызовом
+// _showContestDialog. Сжать/Хруст/Метнуть/Укусы броска не делают вовсе (см.
+// шапку файла) — бонусу там нечего усиливать, поэтому в дело не идут.
+// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doBite
+// (Укус: единственное из четырёх «безролловых» действий Борьбы, которое на
+// деле идёт полным тестом WS/BS через attack-dialog.mjs — тоже «тест в
+// Борьбе» по тексту мутации). _doBite сам не экспортирован и не тестируется
+// изолированно здесь: showGrappleDialog рендерит кастомные кнопки внутри
+// DialogV2.wait и зовёт dialog.close() у результата рендера — этого пути
+// текущая заглушка (test/support/foundry-stub.mjs) не поддерживает вовсе
+// (не только для этой правки — showGrappleDialog не был протестирован и до
+// неё). Проверяется чистая логика бонуса, которую читают оба потребителя.
+describe("tentacleBonus", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("без мутации — 0", () => {
+    expect(tentacleBonus(actorFor({}))).toBe(0);
+  });
+
+  it("с mutation.tentacle — 20", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    expect(tentacleBonus(actorFor({}))).toBe(20);
+  });
+});
+
+describe("tentacleTechDef", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("без мутации — techDef возвращается как есть", () => {
+    const techDef = { label: "Заломить", defaultChar: "s" };
+    expect(tentacleTechDef(actorFor({}), techDef)).toBe(techDef);
+  });
+
+  it("с mutation.tentacle — добавляет +20 и подпись «Щупальце»", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const techDef = { label: "Заломить", defaultChar: "s" };
+    const result = tentacleTechDef(actorFor({}), techDef);
+    expect(result.extraBonus).toBe(20);
+    expect(result.extraBonusLabel).toBe("Щупальце");
+    expect(result.label).toBe("Заломить"); // остальные поля techDef сохранены
+  });
+
+  it("складывается с уже существующим extraBonus, а не перезаписывает его", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const result = tentacleTechDef(actorFor({}), { extraBonus: 5 });
+    expect(result.extraBonus).toBe(25);
+  });
+
+  it("не мутирует исходный techDef", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const techDef = { label: "Пересилить" };
+    tentacleTechDef(actorFor({}), techDef);
+    expect(techDef.extraBonus).toBeUndefined();
+  });
+});
+
+// wdbc-1f5j: субмутация 10 «Отделяемое» (стр. 440) — единственная из шести
+// оставшихся необработанных строк Щупальца, что трогает сам движок Захвата
+// (асимметричный выход Атакующего), а не просто числовой бонус. Мутация
+// ищется по двуязычному имени, как isBiteWeapon, плюс выпавшая
+// system.submutation.label==="10" — та же строка, что читает Механика
+// (rules/mech-when.mjs, when.submutations) для gate записей типа
+// tentacle-armour/tentacle-mighty-* выше в паке.
+describe("detachableTentacle", () => {
+  const tentacle = (label) => ({ type: "mutation", name: "Tentacle / Щупальце", system: { submutation: { label } } });
+
+  it("субмутация 10 выпала — находит мутацию", () => {
+    expect(detachableTentacle(actorFor({ items: [tentacle("10")] }))).toBeTruthy();
+  });
+
+  it("выпала другая субмутация — не находит", () => {
+    expect(detachableTentacle(actorFor({ items: [tentacle("2-3")] }))).toBeNull();
+  });
+
+  it("субмутация ещё не брошена (label пуст) — не находит", () => {
+    expect(detachableTentacle(actorFor({ items: [tentacle("")] }))).toBeNull();
+  });
+
+  it("нет мутации Щупальце вовсе — не находит", () => {
+    expect(detachableTentacle(actorFor({}))).toBeNull();
+  });
+
+  it("другая мутация с той же выпавшей меткой — имя не совпадает, не находит", () => {
+    const actor = actorFor({ items: [{ type: "mutation", name: "Пожиратель", system: { submutation: { label: "10" } } }] });
+    expect(detachableTentacle(actor)).toBeNull();
+  });
+});
+
+// Асимметрия endGrapple после Отсоединить: Цель ещё связана, а её партнёр
+// (владелец щупальца) уже нет — состояние ВЫЧИСЛЯЕТСЯ, отдельного флага нет
+// (см. комментарий у isDetachedGrapple в grapple.mjs).
+describe("isDetachedGrapple", () => {
+  const grappling = (v) => ({ system: { conditions: { grappling: v } } });
+
+  it("оба ещё в Захвате — не расщеплён", () => {
+    expect(isDetachedGrapple(grappling(true), grappling(true))).toBe(false);
+  });
+
+  it("актор в Захвате, партнёр уже вышел — расщеплён", () => {
+    expect(isDetachedGrapple(grappling(true), grappling(false))).toBe(true);
+  });
+
+  it("актор сам не в Захвате — не расщеплён", () => {
+    expect(isDetachedGrapple(grappling(false), grappling(true))).toBe(false);
+  });
+
+  it("партнёр не найден (null) — не расщеплён, отследить нечем", () => {
+    expect(isDetachedGrapple(grappling(true), null)).toBe(false);
   });
 });
