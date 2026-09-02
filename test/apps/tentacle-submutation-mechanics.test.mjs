@@ -47,8 +47,8 @@ describe("Tentacle/Щупальце: Механика субмутаций 1, 2-
     expect(offenders).toEqual([]);
   });
 
-  it("нашлись ровно 4 записи Механики, гейтованные субмутацией (capability-флаг + броня + характеристика + трейт)", () => {
-    expect(withSub).toHaveLength(4);
+  it("нашлись ровно 10 записей Механики, гейтованных субмутацией (1: capability-флаг; 2-3: броня; 8: характеристика+трейт; 4-5: capability+testMod, wdbc-egll; 6: integralAttack+2×testMod; 7: integralAttack, wdbc-tj0p/wdbc-1j2h)", () => {
+    expect(withSub).toHaveLength(10);
   });
 
   it("1 (Длинное) даёт только capability-флаг без числового эффекта", () => {
