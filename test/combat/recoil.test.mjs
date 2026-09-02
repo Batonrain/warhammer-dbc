@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { _performDodge } from "../../module/combat/defense.mjs";
-import { recoilButtonHtml, performRecoil, performPoolRecoil, POOL_RECOIL_COST } from "../../module/combat/recoil.mjs";
+import { recoilButtonHtml, performRecoil, performPoolRecoil, POOL_RECOIL_COST, showRecoilDialog } from "../../module/combat/recoil.mjs";
 import { recoilRemaining } from "../../module/combat/recoil-pool.mjs";
 import { addEvasionSurplus, getEvasionPool } from "../../module/combat/evasion-pool.mjs";
 
@@ -180,5 +180,127 @@ describe("performPoolRecoil: банк Успехов → Отскок (wdbc-16ss
 
     expect(getEvasionPool(d, ATTACKER)).toBeNull(); // 2 Усп. списаны безвозвратно
     expect(recoilRemaining(d)).toBe(4); // метры не тронуты — диалог отменён до этого шага
+  });
+});
+
+// wdbc-zik7: «Отскок из рукопашной считается как Вольт» (п.6, стр. 12) —
+// showRecoilDialog добавляет чекбокс «Вольт», только если у актора СЕЙЧАС
+// есть враг личного масштаба в Базовом/Глубоком контакте (то же обнаружение,
+// что у Свободной Атаки, module/combat/free-attack.mjs::enemyContactTokenDocs);
+// performRecoil при volt=true ставит тот же flags.warhammer-dbc.disengageActive,
+// что и «Выход из Боя» (declareDisengage, movement-actions.mjs).
+
+const HOSTILE = -1, FRIENDLY = 1;
+let _zik7TokenSeq = 0;
+
+/** Токен-заглушка: та же форма, что tokenFor(actor) в recoil.mjs ждёт от placeable. */
+function zik7Token(actor, { x = 0, y = 0, width = 1, height = 1, disposition = FRIENDLY } = {}) {
+  const id = `zik7-t${++_zik7TokenSeq}`;
+  return { actor, document: { id, x, y, width, height, disposition, actor } };
+}
+
+/** Форма диалога Отскока — те же селекторы, что showRecoilDialog реально читает. */
+function recoilForm({ meters = 3, intoCover = false, coverAp = 0, volt } = {}) {
+  const fields = {
+    '[name="meters"]': String(meters), '[name="intoCover"]': intoCover, '[name="coverAp"]': String(coverAp)
+  };
+  if (volt !== undefined) fields['[name="volt"]'] = volt;
+  return fakeForm(fields);
+}
+
+describe("showRecoilDialog: чекбокс Вольта (wdbc-zik7, п.6) только при рукопашном контакте", () => {
+  beforeEach(() => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+    globalThis.canvas = { grid: { size: 1 }, tokens: { placeables: [] } };
+  });
+
+  it("нет токена на сцене — чекбокс не предлагается, volt=false", async () => {
+    const d = defender();
+    const promise = showRecoilDialog(d);
+    expect(captured.dialog.content).not.toContain('name="volt"');
+    await captured.press("recoil", recoilForm());
+    expect((await promise).volt).toBe(false);
+  });
+
+  it("токен есть, враг не в контакте — чекбокс не предлагается", async () => {
+    const d = defender();
+    canvas.tokens.placeables = [
+      zik7Token(d, { x: 0, y: 0, disposition: FRIENDLY }),
+      zik7Token(defender(), { x: 10, y: 10, disposition: HOSTILE })
+    ];
+    const promise = showRecoilDialog(d);
+    expect(captured.dialog.content).not.toContain('name="volt"');
+    await captured.press("recoil", recoilForm());
+    expect((await promise).volt).toBe(false);
+  });
+
+  it("союзник вплотную (не враг) — чекбокс не предлагается", async () => {
+    const d = defender();
+    canvas.tokens.placeables = [
+      zik7Token(d, { x: 0, y: 0, disposition: FRIENDLY }),
+      zik7Token(defender(), { x: 1, y: 0, disposition: FRIENDLY })
+    ];
+    const promise = showRecoilDialog(d);
+    expect(captured.dialog.content).not.toContain('name="volt"');
+    await captured.press("recoil", recoilForm());
+    expect((await promise).volt).toBe(false);
+  });
+
+  it("враг личного масштаба вплотную — чекбокс предложен; не отмечен → volt=false", async () => {
+    const d = defender();
+    canvas.tokens.placeables = [
+      zik7Token(d, { x: 0, y: 0, disposition: FRIENDLY }),
+      zik7Token(defender(), { x: 1, y: 0, disposition: HOSTILE })
+    ];
+    const promise = showRecoilDialog(d);
+    expect(captured.dialog.content).toContain('name="volt"');
+    expect(captured.dialog.content).toContain("п.6");
+    await captured.press("recoil", recoilForm({ volt: false }));
+    expect((await promise).volt).toBe(false);
+  });
+
+  it("враг вплотную, чекбокс отмечен — volt=true", async () => {
+    const d = defender();
+    canvas.tokens.placeables = [
+      zik7Token(d, { x: 0, y: 0, disposition: FRIENDLY }),
+      zik7Token(defender(), { x: 1, y: 0, disposition: HOSTILE })
+    ];
+    const promise = showRecoilDialog(d);
+    await captured.press("recoil", recoilForm({ volt: true }));
+    expect((await promise).volt).toBe(true);
+  });
+});
+
+describe("performRecoil: volt (wdbc-zik7) ставит disengageActive и заметку п.6 в карточке", () => {
+  beforeEach(() => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+  });
+
+  it("volt не передан (по умолчанию false) — флаг не ставится, заметки нет", async () => {
+    const d = defender();
+    await performRecoil(d, { meters: 3, intoCover: false, coverAp: 0 });
+    expect(d.getFlag("warhammer-dbc", "disengageActive")).toBeUndefined();
+    expect(card()).not.toContain("Засчитан как Вольт");
+  });
+
+  it("volt=true — ставит flags.warhammer-dbc.disengageActive, постит заметку п.6", async () => {
+    const d = defender();
+    await performRecoil(d, { meters: 3, intoCover: false, coverAp: 0, volt: true });
+    expect(d.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
+    expect(card()).toContain("Засчитан как Вольт");
+    expect(card()).toContain("Свободную Атаку");
+  });
+
+  it("volt=true вместе с intoCover — оба разовых флага независимы", async () => {
+    const d = defender();
+    await performRecoil(d, { meters: 2, intoCover: true, coverAp: 6, volt: true });
+    expect(d.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
+    expect(d.getFlag("warhammer-dbc", "recoilCoverBonus")).toBe(6);
+  });
+
+  it("пул Отскока списывается как обычно независимо от volt", async () => {
+    const d = defender();
+    await performRecoil(d, { meters: 3, intoCover: false, coverAp: 0, volt: true });
+    expect(recoilRemaining(d)).toBe(1);
   });
 });
