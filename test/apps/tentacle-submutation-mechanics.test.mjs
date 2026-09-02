@@ -11,6 +11,11 @@
 // СУБМУТАЦИИ самого предмета — иначе правка текста benefit без обновления
 // Механики (или наоборот) молча выключит запись навсегда, и тест этого не
 // заметит никаким другим путём.
+//
+// wdbc-nc8q: субмутация 1 (Длинное) добавила четвёртую запись — capability-
+// флаг mutation.tentacle.longReach без числового эффекта (растяжение до 15м
+// + подъём союзника — ситуативное действие ГМа, не число, см.
+// module/constants/capabilities.mjs).
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -28,9 +33,10 @@ const submutations = parseSubmutations(tentacle.system.benefit);
 const mechEntries = tentacle.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const withSub = mechEntries.filter(e => (e.when?.submutations ?? []).length);
 
-describe("Tentacle/Щупальце: Механика субмутаций 2-3 и 8 — данные согласованы", () => {
-  it("в таблице СУБМУТАЦИИ реально есть строки 2-3 (Бронированное) и 8 (Могучее)", () => {
+describe("Tentacle/Щупальце: Механика субмутаций 1, 2-3 и 8 — данные согласованы", () => {
+  it("в таблице СУБМУТАЦИИ реально есть строки 1 (Длинное), 2-3 (Бронированное) и 8 (Могучее)", () => {
     const labels = submutations.entries.map(e => e.label);
+    expect(labels).toContain("1");
     expect(labels).toContain("2-3");
     expect(labels).toContain("8");
   });
@@ -41,8 +47,14 @@ describe("Tentacle/Щупальце: Механика субмутаций 2-3 �
     expect(offenders).toEqual([]);
   });
 
-  it("нашлись ровно 3 записи Механики, гейтованные субмутацией (броня + характеристика + трейт)", () => {
-    expect(withSub).toHaveLength(3);
+  it("нашлись ровно 4 записи Механики, гейтованные субмутацией (capability-флаг + броня + характеристика + трейт)", () => {
+    expect(withSub).toHaveLength(4);
+  });
+
+  it("1 (Длинное) даёт только capability-флаг без числового эффекта", () => {
+    const e = withSub.find(x => x.when.submutations.includes("1"));
+    expect(e.kind).toBe("capability");
+    expect(e.capabilityKey).toBe("mutation.tentacle.longReach");
   });
 
   it("2-3 (Бронированное) даёт Трейт Natural Armour с рейтингом 3", () => {
