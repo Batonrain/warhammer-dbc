@@ -7,11 +7,12 @@
 // (isMelee-гейт) — ниже в этом файле.
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { _performDodge } from "../../module/combat/defense.mjs";
-import { recoilButtonHtml, performRecoil } from "../../module/combat/recoil.mjs";
+import { recoilButtonHtml, performRecoil, performPoolRecoil, POOL_RECOIL_COST } from "../../module/combat/recoil.mjs";
 import { recoilRemaining } from "../../module/combat/recoil-pool.mjs";
+import { addEvasionSurplus, getEvasionPool } from "../../module/combat/evasion-pool.mjs";
 
 function defender(overrides = {}) {
   const a = actorFor(overrides);
@@ -31,6 +32,8 @@ function defender(overrides = {}) {
 }
 
 const card = () => captured.chat.at(-1)?.content ?? "";
+const flush = () => new Promise(r => setTimeout(r, 0));
+const ATTACKER = "Actor.attacker-1";
 
 beforeEach(() => {
   resetCaptured();
@@ -110,5 +113,72 @@ describe("performRecoil: списание пула, разовый флаг Ук
     await performRecoil(d, { meters: 99, intoCover: false, coverAp: 0 });
     expect(card()).toContain("Отскочил на 4м");
     expect(recoilRemaining(d)).toBe(0);
+  });
+});
+
+describe("performPoolRecoil: банк Успехов → Отскок (wdbc-16ss, Voltagheist Blast)", () => {
+  beforeEach(() => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+  });
+
+  it("успехов хватает и дистанция есть — списывает cost, открывает диалог, тратит метры", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 3, 0);
+
+    const promise = performPoolRecoil(d, ATTACKER);
+    await flush();
+    expect(captured.dialog).toBeTruthy(); // Успехи уже списаны, диалог открылся
+
+    await captured.press("recoil", fakeForm({
+      '[name="meters"]': "2", '[name="intoCover"]': false, '[name="coverAp"]': "0"
+    }));
+    await promise;
+
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 1 }); // 3 − 2 (cost)
+    expect(card()).toContain("Отскочил на 2м");
+    expect(recoilRemaining(d)).toBe(2); // 4 (halfMove) − 2 (метры)
+  });
+
+  it("в банке недостаточно Успехов — предупреждение в чате, диалог не открывается, дистанция не тронута", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 1, 0); // меньше POOL_RECOIL_COST
+
+    await performPoolRecoil(d, ATTACKER);
+
+    expect(captured.dialog).toBeNull();
+    expect(card()).toContain("недостаточно Успехов");
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 1 });
+    expect(recoilRemaining(d)).toBe(4);
+  });
+
+  it("банка вовсе нет — тот же путь недостаточности, без ошибки", async () => {
+    const d = defender();
+    await performPoolRecoil(d, ATTACKER);
+    expect(card()).toContain("недостаточно Успехов");
+  });
+
+  it("дистанция Отскока в этом Раунде уже исчерпана — предупреждение, банк не тратится", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 5, 0);
+    await performRecoil(d, { meters: 4, intoCover: false, coverAp: 0 }); // исчерпать весь пул (halfMove=4)
+    resetCaptured();
+
+    await performPoolRecoil(d, ATTACKER);
+
+    expect(captured.dialog).toBeNull();
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 5 }); // не тронут
+  });
+
+  it("cost списан ДО диалога — отмена диалога Успехи не возвращает (как у Контратаки)", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, POOL_RECOIL_COST, 0);
+
+    const promise = performPoolRecoil(d, ATTACKER);
+    await flush();
+    captured.dismiss();
+    await promise;
+
+    expect(getEvasionPool(d, ATTACKER)).toBeNull(); // 2 Усп. списаны безвозвратно
+    expect(recoilRemaining(d)).toBe(4); // метры не тронуты — диалог отменён до этого шага
   });
 });

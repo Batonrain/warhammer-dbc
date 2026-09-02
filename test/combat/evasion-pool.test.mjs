@@ -9,7 +9,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
-  addEvasionSurplus, getEvasionPool, poolHitCost, poolAffordableHits, performPoolSpend
+  addEvasionSurplus, getEvasionPool, poolHitCost, poolAffordableHits, performPoolSpend,
+  spendPoolForRecoil
 } from "../../module/combat/evasion-pool.mjs";
 
 function defender(overrides = {}) {
@@ -87,6 +88,45 @@ describe("addEvasionSurplus / getEvasionPool: банк на Ход атакую�
     const d = defender();
     await addEvasionSurplus(d, ATTACKER, 3, -10);
     globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-2" } };
+    expect(getEvasionPool(d, ATTACKER)).toBeNull();
+  });
+});
+
+describe("spendPoolForRecoil: банк → пропуск в Отскок (wdbc-16ss, Voltagheist Blast)", () => {
+  beforeEach(() => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+  });
+
+  it("хватает — списывает cost, остаток читается обратно", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 5, 0);
+
+    const ok = await spendPoolForRecoil(d, ATTACKER, 2);
+
+    expect(ok).toBe(true);
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 3 });
+  });
+
+  it("не хватает даже на cost — ничего не списывает", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 1, 0);
+
+    const ok = await spendPoolForRecoil(d, ATTACKER, 2);
+
+    expect(ok).toBe(false);
+    expect(getEvasionPool(d, ATTACKER)).toMatchObject({ successes: 1 });
+  });
+
+  it("пул пуст/не существует — false, без ошибки", async () => {
+    const d = defender();
+    expect(await spendPoolForRecoil(d, ATTACKER, 2)).toBe(false);
+  });
+
+  it("свой cost (не 2) — работает как параметр", async () => {
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 3, 0);
+
+    expect(await spendPoolForRecoil(d, ATTACKER, 3)).toBe(true);
     expect(getEvasionPool(d, ATTACKER)).toBeNull();
   });
 });

@@ -23,6 +23,10 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { spdMeters, recoilRemaining, spendRecoil } from "./recoil-pool.mjs";
 import { coverApForToken } from "./cover.mjs";
+import { spendPoolForRecoil } from "./evasion-pool.mjs";
+
+/** Цена входа в Отскок из банка Успехов (Voltagheist Blast, wdbc-16ss). */
+export const POOL_RECOIL_COST = 2;
 
 /**
  * Кнопка «Отскочить», приклеиваемая к карточке успешного Уклонения от
@@ -123,4 +127,34 @@ export async function performRecoil(actor, { meters, intoCover, coverAp } = {}) 
         <div class="roll-defense-note">Потрачено ${spent}м из дистанции Отскока${remLabel}.</div>
       </div>`
   }, rollMode));
+}
+
+/**
+ * Voltagheist Blast (wdbc-16ss): открывает Отскок за счёт банка Успехов
+ * Уклонения (module/combat/evasion-pool.mjs) вместо свежего Уклонения от
+ * ЭТОЙ атаки — зовётся из клика по wh-pool-recoil-btn (кнопка приклеена рядом
+ * с обычным «Пул Избегания» на карточке атаки, см. attack-card.mjs::
+ * defenseSection). Стоимость (POOL_RECOIL_COST Успехов) списывается ДО показа
+ * диалога метров: отмена диалога Успехи не возвращает — тот же компромисс,
+ * что у Контратаки (hooks.mjs) и прочих трат-до-подтверждения кнопок.
+ */
+export async function performPoolRecoil(actor, attackerUuid) {
+  const rollMode = game.settings.get("core", "rollMode");
+  if (recoilRemaining(actor) <= 0) {
+    ui.notifications?.warn("⚠️ Дистанция Отскока в этом Раунде исчерпана.");
+    return;
+  }
+  const spent = await spendPoolForRecoil(actor, attackerUuid, POOL_RECOIL_COST);
+  if (!spent) {
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-outcome"><span class="roll-failure">${rollIcon("ban","#ff6b6b")}В банке недостаточно Успехов на Отскок (нужно ${POOL_RECOIL_COST}) или он устарел.</span></div>
+      </div>`
+    }, rollMode));
+    return;
+  }
+  const choice = await showRecoilDialog(actor);
+  if (!choice) return;
+  await performRecoil(actor, choice);
 }

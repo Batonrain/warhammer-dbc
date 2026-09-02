@@ -99,6 +99,22 @@ async function spendFromPool(defender, attackerUuid, amount) {
 }
 
 /**
+ * Voltagheist Blast (wdbc-16ss, Элитный архетип Электрожрец, стр. — домашнее
+ * правило): «цели могут потратить 2 оставшихся Успеха Уклонения на Отскок» —
+ * та же валюта, что и остальной банк, но не на негацию попаданий (см.
+ * performPoolSpend ниже), а как разовый пропуск в showRecoilDialog/
+ * performRecoil (module/combat/recoil.mjs, см. performPoolRecoil там).
+ * Списывает cost Успехов и возвращает true, если получилось; false — банк
+ * пуст/устарел/не хватает на cost, вызывающая сторона ничего не тратит.
+ */
+export async function spendPoolForRecoil(defender, attackerUuid, cost = 2) {
+  const entry = getEvasionPool(defender, attackerUuid);
+  if (!entry || entry.successes < cost) return false;
+  await spendFromPool(defender, attackerUuid, cost);
+  return true;
+}
+
+/**
  * Клик по кнопке «Потратить пул»: тратит остаток на попадания ЭТОЙ атаки (не
  * больше hitsCount) и постит карточку исхода. Если попадания остаются —
  * добавляет свежие кнопки Уклонения/Парирования/Виража на ОСТАТОК (не на
