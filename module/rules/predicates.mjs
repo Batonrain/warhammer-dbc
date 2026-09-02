@@ -60,7 +60,7 @@ function hasNamed(actor, names) {
 export function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
-  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0);
+  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0) + (Number(sys.sizeModNoSpd) || 0);
 }
 
 // Силовая/аспектная броня — то же множество, что POWER_ARMOR_TYPES в
