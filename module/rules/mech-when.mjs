@@ -74,7 +74,26 @@
 // Не заполнено (requireSealedArmour:false) — условия нет вовсе, тот же
 // принцип, что у остальных гейтов.
 
+// ── Покровитель (when.patronGod/when.negatePatronGod) ───────────────────────
+// Шестой независимый гейт (wdbc-xxb7): список ключей WARP_GODS
+// (khorne/nurgle/slaanesh/tzeentch/undivided), между вариантами ИЛИ — та же
+// форма списка, что у Тира Ран. Источник — actor.system.patronGod, ЕДИНОЕ
+// поле «Покровительство», которым уже пользуется вся система (см.
+// constants/patronage.mjs); отдельного поля «Метка» на акторе нет — книжное
+// различие Метка/простое Покровительство (стр. 103, Шаман Зверолюдей: «особо
+// известные шаманы, Inf 70+, получают такие же бонусы при простом
+// Покровительстве») этим гейтом не моделируется, оба читаются как одно и то
+// же system.patronGod. Пустой patronGod у актора не считается «Неделимый» —
+// сравнивается как есть (пустая строка не входит в список вариантов, если
+// "undivided" явно не выбран). Нет актора (предпросмотр) — условие пройдено,
+// тот же принцип, что у остальных гейтов.
+
 import { itemHasName, PREDICATES } from "./predicates.mjs";
+
+/** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
+export function whenPatronGod(when) {
+  return (when?.patronGod || []).filter(Boolean);
+}
 
 /** Заполненные варианты (легион задан) из entry.when.conditions. */
 export function whenConditions(when) {
@@ -120,7 +139,9 @@ export function entryWhenOk(actor, entry, item = null) {
   const tiers = whenWoundTier(entry?.when);
   const requireRage = !!entry?.when?.requireRage;
   const requireSealedArmour = !!entry?.when?.requireSealedArmour;
-  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage && !requireSealedArmour) return true;
+  const patronGods = whenPatronGod(entry?.when);
+  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
+      && !requireSealedArmour && !patronGods.length) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -174,5 +195,12 @@ export function entryWhenOk(actor, entry, item = null) {
     sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
   }
 
-  return geneOk && subOk && talentOk && tierOk && rageOk && sealedOk;
+  let patronOk = true;
+  if (patronGods.length && actor) {
+    const god = actor.system?.patronGod || "";
+    const matches = patronGods.includes(god);
+    patronOk = entry.when.negatePatronGod ? !matches : matches;
+  }
+
+  return geneOk && subOk && talentOk && tierOk && rageOk && sealedOk && patronOk;
 }

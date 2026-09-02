@@ -28,6 +28,14 @@ import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mj
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
 import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
+import {
+  primalHowlAvailable, applyPrimalHowl,
+  warpTaintedAuraAvailable, applyWarpTaintedAura,
+  riteOfSelfSacrificeAvailable, applyRiteOfSelfSacrifice,
+  hexMarkedPreyAvailable, applyHexMarkedPrey,
+  boneRuneEtchingAvailable, showBoneRuneEtchingText,
+  ritualBloodlettingAvailable, applyRitualBloodletting
+} from "../../combat/beastman-shaman.mjs";
 import { preservationAvailable, applyPreservationSingle, applyPreservationArea } from "../../combat/preservation.mjs";
 import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftnessArea } from "../../combat/song-of-swiftness.mjs";
 import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs";
@@ -185,6 +193,39 @@ export function activateCombatListeners(root, actor) {
       return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
     }
     await applyConjureWraith(actor, "weapon");
+  });
+
+  // ── Шаман Зверолюдей (wdbc-xxb7, module/combat/beastman-shaman.mjs) ─────
+  on(root, ".primal-howl-btn", "click", async () => {
+    if (!primalHowlAvailable(actor)) return ui.notifications.warn("Первобытный Вой уже использован в этом бою.");
+    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
+    await applyPrimalHowl(actor, token);
+  });
+  on(root, ".warp-tainted-aura-btn", "click", async () => {
+    if (!warpTaintedAuraAvailable(actor)) return ui.notifications.warn("Аура Скверны уже использована в этот час.");
+    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
+    await applyWarpTaintedAura(actor, token);
+  });
+  on(root, ".rite-of-self-sacrifice-btn", "click", async () => {
+    if (!riteOfSelfSacrificeAvailable(actor)) return;
+    await applyRiteOfSelfSacrifice(actor);
+  });
+  on(root, ".hex-marked-prey-btn", "click", async () => {
+    if (!hexMarkedPreyAvailable(actor)) return;
+    const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    await applyHexMarkedPrey(actor, target);
+  });
+  on(root, ".bone-rune-etching-btn", "click", async () => {
+    if (!boneRuneEtchingAvailable(actor)) return;
+    await showBoneRuneEtchingText(actor);
+  });
+  on(root, ".ritual-bloodletting-btn", "click", async () => {
+    if (!ritualBloodlettingAvailable(actor)) return;
+    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
+    await applyRitualBloodletting(actor, token);
   });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────

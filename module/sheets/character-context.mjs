@@ -74,6 +74,7 @@ import { hasPreservation }                       from "../combat/preservation.mj
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
 import { hasConjureWraith }                      from "../combat/conjure-wraith.mjs";
 import { hasReformationSong }                    from "../combat/reformation-song.mjs";
+import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beastman-shaman.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
@@ -397,6 +398,15 @@ export function characterContext(actor) {
   context.hasSongOfSwiftness = hasSongOfSwiftness(actor);
   context.hasConjureWraith = hasConjureWraith(actor);
   context.hasReformationSong = hasReformationSong(actor);
+  // Кнопки Шамана Зверолюдей на вкладке БОЙ (wdbc-xxb7) — только владельцам
+  // соответствующего Таланта/Черты; god-ответвление читается живьём по
+  // system.patronGod при клике, не здесь.
+  context.hasPrimalHowl = hasBeastmanShamanTalent(actor, "Primal Howl / Первобытный Вой");
+  context.hasWarpTaintedAura = hasBeastmanShamanTalent(actor, "Warp-Tainted Aura / Аура Скверны");
+  context.hasRiteOfSelfSacrifice = hasBeastmanShamanTalent(actor, "Rite of Self-Sacrifice / Ритуал Самопожертвования");
+  context.hasHexMarkedPrey = hasBeastmanShamanTalent(actor, "Hex-Marked Prey / Проклятая Метка");
+  context.hasBoneRuneEtching = hasBeastmanShamanTalent(actor, "Bone-Rune Etching / Костяная Рунопись");
+  context.hasRitualBloodletting = hasBeastmanShamanTrait(actor, "Ritual Bloodletting / Ритуал Кровопускания");
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");

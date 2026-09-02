@@ -7,6 +7,7 @@
 
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
+import { raceMatches } from "./race.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -217,6 +218,30 @@ export const PREDICATES = {
     const mark = actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark");
     if (!mark?.berserkerUuid) return false;
     return ctx?.targetActor?.uuid !== mark.berserkerUuid;
+  },
+
+  // Hex-Marked Prey/Проклятая Метка (Талант, Шаман Зверолюдей, wdbc-xxb7):
+  // «Пока метка активна, все зверолюди-союзники получают +15 на атаки
+  // против этой цели.» Метка живёт на ЦЕЛИ (module/combat/
+  // beastman-shaman.mjs::applyHexMarkedPrey), поэтому cross-actor чтение —
+  // ctx.targetActor, не сам actor (в отличие от avatarOfSlaughterOffTarget
+  // выше, где метка на самом акторе). «Зверолюди-союзники» — раса
+  // effectiveRace(actor.system)==="beastman" (rules/race.mjs): чистое поле
+  // актора, доступное предикату без canvas/disposition.
+  //
+  // `value` (wdbc-w8z4, god-ответвления): необязательный фильтр по
+  // Покровительству, под которым была наложена метка (mark.god). Общий
+  // безусловный бонус пишет `when: { hexMarkedPreyAllyBonus: true }` —
+  // булево/пустое значение god не фильтрует, ведёт себя как раньше. God-
+  // специфичное правило (Кхорн: Proven(3), Нургл: Toxic(1) на попаданиях
+  // союзников, rules/library/beastman-shaman.mjs) пишет god строкой:
+  // `when: { hexMarkedPreyAllyBonus: "khorne" } }`.
+  hexMarkedPreyAllyBonus: (actor, ctx, value) => {
+    const mark = ctx?.targetActor?.getFlag?.("warhammer-dbc", "hexMarkedPrey");
+    if (!mark) return false;
+    if (!raceMatches(actor?.system, "beastman")) return false;
+    if (typeof value === "string" && value) return mark.god === value;
+    return true;
   }
 };
 

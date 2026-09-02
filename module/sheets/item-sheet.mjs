@@ -2389,6 +2389,28 @@ export class WarhammerItemSheet
       e.when.negateSealedArmour = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда Покровитель» (entry.when.patronGod/negatePatronGod, wdbc-xxb7) ─
+    // Седьмой независимый гейт — см. mech-when.mjs. Ключ берётся из
+    // data-god-key, тот же приём, что у Тира Ран выше.
+    on(".grant-when-patron", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      const gods = new Set(e.when.patronGod || []);
+      const key = ev.currentTarget.dataset.godKey;
+      if (ev.currentTarget.checked) gods.add(key); else gods.delete(key);
+      e.when.patronGod = [...gods];
+      saveMech(arr);
+    });
+    on(".grant-when-patron-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negatePatronGod = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);

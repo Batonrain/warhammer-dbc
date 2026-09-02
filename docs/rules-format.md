@@ -146,6 +146,7 @@ export const PREDICATES = {
 | `critRangeMod` | `target`, `side`, `value` | шире диапазон Критического Успеха/Провала (стр. 25) на `value` натуральных чисел; `side`: `success`, `failure` или `both` |
 | `failDegMod` | `target`, `value` | доп. степени провала (`value`, может быть отрицательным), суммируются, только если тест УЖЕ провален |
 | `scriptTrigger` | `target`, `side`, `itemId`, `entryId` | автозапуск записи `kind:"script"` по исходу теста; `side`: `critSuccess` или `critFailure` |
+| `grantWeaponProp` | `target`, `propKey`, `rating`, `rating2` | доп. Особое Свойство Оружия на эту атаку, см. ниже |
 | `script` | `code` | аварийный выход, см. предупреждение ниже |
 
 `target` для бросков пишется с областью через двоеточие: `initiative`,
@@ -281,6 +282,48 @@ effects: [{ kind: "scriptTrigger", target: "skill:trade", side: "critSuccess", i
 же запись `kind:"script"` остаётся доступна только кнопкой «▶ Запустить» на
 листе предмета, как раньше; оба режима не исключают друг друга буквально
 (поле одно), но семантически это разные способы вызвать один и тот же код.
+
+## Особое Свойство Оружия от правила (`grantWeaponProp`)
+
+Движок сборки Особых Свойств Оружия (`combat/weapon-properties.mjs::resolveWeaponPropsList`/
+`aggregateAuto`, собирающий их в `combat/attack.mjs`/`sheets/attack-dialog.mjs`) до
+wdbc-w8z4 читал только состояние атакующего/оружия/боеприпаса
+(`system.weaponProps` + хват/боеприпас/условные свойства боеприпаса,
+`combat/attack-weapon.mjs::mergeExtraProps`). Не было пути для правила вроде
+«цель помечена → атаки союзников по ней получают Proven(3)» — Особое Свойство
+нельзя было выдать из-за состояния **цели**, только числовой модификатор
+(`rollBonus`).
+
+`grantWeaponProp` закрывает этот пробел тем же путём, что `rollBonus`:
+
+```js
+effects: [{ kind: "grantWeaponProp", target: "attack", propKey: "toxic", rating: 1 }]
+```
+
+`propKey` — ключ из `constants/weapon-properties.mjs::WEAPON_PROPERTIES` (тот же
+словарь, что и `system.weaponProps[].key` у оружия). Неизвестный ключ — ошибка в
+консоль, запись не идёт в атаку, как и опечатка в `kind`/`when`. `rating`/`rating2`
+необязательны (по умолчанию 0) — Свойства без рейтинга (Piercing, Flame и т.п.)
+их не используют.
+
+В отличие от `rollBonus` эффект **не превращается в галочку диалога**: он
+доливается в список Особых Свойств безусловно, как только правило прошло отбор
+по `when` (тот же принцип, что у `critRangeMod` — «не выбирают, оно просто есть,
+пока правило действует», а не число, которое может случайно задвоиться с чем-то
+ещё). Собирается `rules/resolve-test.mjs::weaponPropsFromRules`, доезжает до
+`resolveTest(...).weaponProps`; `sheets/attack-dialog.mjs` доливает результат в
+свой список Особых Свойств через `combat/attack-weapon.mjs::mergeExtraProps`
+(параметр `ruleProps`, тот же мёрж «больший рейтинг побеждает», что у боеприпаса)
+ДО расчёта `aggregateAuto` — иначе порог/урон/памятки в диалоге не увидели бы
+свойство вовсе. Тем же параметром `ruleProps` итог доезжает через `opts` диалога
+до `combat/attack.mjs::_executeAttackRoll`, который и правда исполняет бросок:
+диалог для атаки нужен, чтобы прочитать `ctx.targetActor` (сама функция броска
+цели не знает, см. комментарий у `ruleProps` в `attack.mjs`).
+
+Область (`target`) — та же, что у `rollBonus`: `attack`, `weapon:melee`,
+`weapon:ranged`, `weapon:<класс>`. Условие обычно читает `ctx.targetActor`
+(`targetHasTrait` и подобные, cross-actor метка вроде Hex-Marked Prey/Проклятая
+Метка), но `when` может быть и про самого актора — общего требования нет.
 
 ## Возможности
 

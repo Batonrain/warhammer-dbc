@@ -21,8 +21,9 @@ describe("каркас module/rules", () => {
     // woundTier (Уровень Ранения, rules/wound-tier.mjs), avatarOfSlaughterOffTarget
     // (метка Аватара Резни, wdbc-sk8s), geneSeedLegion/psyRatingMin (папки
     // пикера Талантов, wdbc-sauo), inRage (гейт Ярости entry.when, wdbc-wyr3)
-    // и wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(20);
+    // wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno)
+    // и hexMarkedPreyAllyBonus (метка Проклятой Метки, wdbc-xxb7).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(21);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

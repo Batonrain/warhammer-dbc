@@ -115,6 +115,7 @@ import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG, postPacifismGateCard } fro
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
+import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
 
 // ─── Инициализация ────────────────────────────────────────────────────────────
 
@@ -1375,6 +1376,13 @@ Hooks.on("createItem", (item) => {
 });
 Hooks.on("deleteItem", (item) => {
   if (game.user.isGM && item.type === "armor" && item.system?.largeBase && item.parent) syncTokenBaseSize(item.parent);
+});
+// Символ Власти (wdbc-xxb7) — одноразовая перестройка Черт при получении
+// (Natural Weapons → Deadly Natural Weapons, снятие Stepchildren of the
+// Gods) — module/combat/beastman-shaman.mjs::applySymbolOfPowerGrant,
+// сама функция идемпотентна флагом (может сработать на каждом клиенте).
+Hooks.on("createItem", (item) => {
+  if (item.type === "trait" && item.parent && hasSymbolOfPower(item.parent)) applySymbolOfPowerGrant(item.parent);
 });
 Hooks.on("updateItem", (item, changes) => {
   if (!game.user.isGM || item.type !== "armor" || !item.parent) return;
