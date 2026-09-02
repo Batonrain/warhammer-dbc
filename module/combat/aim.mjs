@@ -7,7 +7,7 @@
 // Вся возня с канвасом и мышью здесь; боёвке про неё знать незачем — она
 // получает уже назначенную цель через game.user.targets.
 import { esc } from "../helpers/utils.mjs";
-import { showWeaponRangeRings, clearRangeRings } from "./range-rings.mjs";
+import { showWeaponRangeRings, showMeleeReachRing, clearRangeRings } from "./range-rings.mjs";
 import { clearReachableCells } from "./reachable-cells.mjs";
 
 const AIMING = "wh-aiming";
@@ -50,16 +50,27 @@ export function endTargeting() {
  * @param {Item}     weapon  из чего (для подписи-подсказки)
  * @param {Function} onPick  колбэк(token) с выбранной целью
  * @param {string}   label   подпись, если оружия нет
+ * @param {{forceMelee?: boolean}} [opts]  forceMelee — оружие дальнобойное,
+ *   но бьём им как рукопашным (приклад/пистолет в упор, apps/hud.mjs
+ *   data-melee-gun): показать кольцо досягаемости, а не полосы дальности.
  */
-export function beginTargeting(actor, weapon, onPick, label = "") {
+export function beginTargeting(actor, weapon, onPick, label = "", { forceMelee = false } = {}) {
   if (!canvas?.ready) { ui.notifications?.warn("Сцена не готова."); return; }
   endTargeting();   // второй раз — начинаем заново, а не копим слушателей
 
-  // Кольца полос дальности вокруг стрелка — только для дальнобойного оружия
-  // (у ближнего/безоружного system.range нет или 0, кольца не рисуются).
+  // Рукопашная — одно кольцо «кто рядом» (та же isMelee-логика, что и у
+  // самого броска, см. combat/attack.mjs:100); дальнобойная — полосы
+  // дальности, и только если у оружия задан Rng.
   const attackerToken = actor?.getActiveTokens?.(true)?.[0] ?? null;
-  const rng = Number(weapon?.system?.range) || 0;
-  if (attackerToken && rng > 0) showWeaponRangeRings(attackerToken, rng);
+  const isMelee = forceMelee || weapon?.system?.weaponClass === "melee";
+  if (attackerToken) {
+    if (isMelee) {
+      showMeleeReachRing(attackerToken);
+    } else {
+      const rng = Number(weapon?.system?.range) || 0;
+      if (rng > 0) showWeaponRangeRings(attackerToken, rng);
+    }
+  }
 
   document.body.classList.add(AIMING);
 
