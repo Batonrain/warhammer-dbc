@@ -39,6 +39,7 @@ import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
+import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
@@ -1315,6 +1316,9 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+    // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
+    // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
+    await clearReformationSongBuffs(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
@@ -1386,6 +1390,10 @@ function _attachFateContextMenu(message, html) {
       await processConditionTurnStart(nextCombatant.actor);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
+      // работает на раунд» от Разрушения — снимается в начале следующего
+      // Хода владельца, тем же тактом, что и Грозный Вопль выше.
+      await clearExpiredGearMalfunction(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

@@ -127,7 +127,13 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       // sheets/sheet-helpers.mjs), и 0 сделал бы щитом всё оружие подряд.
       shieldAP:     new NumberField({ initial: null, nullable: true, label: "AP щита" }),
       shieldZones:  new StringField({ initial: "", label: "Прикрываемые зоны" }),
-      shieldForm:   new StringField({ initial: "", label: "Форма щита" })
+      shieldForm:   new StringField({ initial: "", label: "Форма щита" }),
+      // Уничтожено (wdbc-vwfk, Reformation Song/Песня Изменений: рукопашное
+      // без Reinforced при «Разрушении» уничтожается). Тот же приём, что
+      // armor.mjs::breached — чистая метка состояния, снимается только
+      // вручную/чтением этого поля; чинить/переигрывать последствия
+      // (нельзя атаковать уничтоженным оружием и т.п.) решает читатель.
+      destroyed:    new BooleanField({ initial: false, label: "Уничтожено" })
     };
   }
 }

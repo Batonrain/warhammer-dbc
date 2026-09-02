@@ -618,7 +618,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfReformation.restoreOrDestroy": {
     label: "До F.b психокостяных вещей получают Восстановление или Разрушение (оружие/броня/снаряжение), до 3 раз за сессию",
-    source: "Reformation Song / Песня Изменений", reader: ""
+    source: "Reformation Song / Песня Изменений",
+    reader: "module/combat/reformation-song.mjs (wdbc-vwfk) — applyReformationSong, per-target пикер в apps/reformation-song-dialog.mjs, кнопка в sheets/tabs/combat.mjs. Реально автоматизировано: AP брони (armorMod ±F.b/+½F.b, до конца боя), Reinforced оружия (до конца боя), качество Снаряжения (шаг ±1, до конца боя), новые флаги weapon.destroyed/gear.malfunctioning (тот же паттерн, что armor.breached). НЕ смоделировано: заклинивание оружия (нет состояния нигде в проекте), «доп. AP от талантов»/аблативные раны при Разрушении брони (нет реестра источников), «психокостяная природа»/«иммунное снаряжение» предмета (решение за столом при выборе целей в диалоге)."
   },
   "wraithbone.reshapeForCraft.halfSuccessesBack": {
     label: "Разрушает свой психокостяной предмет ради ½ успехов крафта на новый",

@@ -70,7 +70,8 @@ const TYPES = {
       // объявлено, чтобы правка предмета в игре его не стирала.
       folderPath: [],
       // Инфограждение (module/apps/infoguard.mjs) — Успехи встречного теста.
-      infoguard: 0
+      infoguard: 0,
+      malfunctioning: false
     }
   },
   tool: {
@@ -357,7 +358,8 @@ const TYPES = {
       // shieldAP именно null, а не 0: сама «щитовость» определяется наличием
       // поля (`s.shieldAP != null` в sheet-helpers.mjs и isHandShield),
       // и умолчание 0 сделало бы щитом всё оружие подряд.
-      shieldAP: null, shieldZones: "", shieldForm: ""
+      shieldAP: null, shieldZones: "", shieldForm: "",
+      destroyed: false
     }
   },
   ammo: {

@@ -30,6 +30,8 @@ import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../..
 import { preservationAvailable, applyPreservationSingle, applyPreservationArea } from "../../combat/preservation.mjs";
 import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftnessArea } from "../../combat/song-of-swiftness.mjs";
 import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs";
+import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
+import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
@@ -149,6 +151,12 @@ export function activateCombatListeners(root, actor) {
     await showWraithboneSongDialog(actor, {
       title: "Песня Стремительности", applySingle: applySongOfSwiftnessSingle, applyArea: applySongOfSwiftnessArea
     });
+  });
+  on(root, ".reformation-song-btn", "click", async () => {
+    if (!reformationSongAvailable(actor)) {
+      return ui.notifications.warn("Reformation Song / Песня Изменений уже использована максимум раз в этой сессии.");
+    }
+    await showReformationSongDialog(actor);
   });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
