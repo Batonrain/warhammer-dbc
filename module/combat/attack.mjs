@@ -26,6 +26,7 @@ import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
+import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -295,7 +296,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Тратим патроны
   let ammoWarning = "";
-  if (!isMelee && rofMode !== "melee") {
+  // Рука Смерти (wdbc-hftn, стр. 46): сросшееся дальнобойное генерирует
+  // боеприпасы из метаболизма носителя — вместо нового класса расходуемого
+  // ресурса (которого в системе нет вовсе) магазин просто не расходуется.
+  const infiniteAmmo = isFusedByHandOfDeath(item);
+  if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
     ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
     if (ammoSpent > 0 && !opts.skipAmmo) {

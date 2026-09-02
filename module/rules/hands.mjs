@@ -18,6 +18,7 @@ import { parseGrips, RANGED_GRIPS } from "../constants/combat.mjs";
 import { resolveWeaponProps, aggregateAuto } from "../combat/weapon-properties.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
+import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -34,6 +35,10 @@ const RANGED_CLASS_HANDS = { pistol: 1, thrown: 1, basic: 2, heavy: 2, launcher:
 
 /** Текущий хват рукопашного оружия: выбранный в диалоге атаки/HUD, иначе первый из профиля. */
 export function currentMeleeGrip(item) {
+  // Рука Смерти (wdbc-hftn, стр. 46): срослось с рукой — всегда Стандартный
+  // Хват "1р", даже если раньше был другой (Об/Бл/Кл/Мх/Хв) или предмет
+  // изначально двуручный. Игнорирует сохранённый hudGrip намеренно.
+  if (isFusedByHandOfDeath(item)) return "1р";
   const flagged = item.getFlag?.(NS, "hudGrip");
   if (flagged) return flagged;
   return parseGrips(item.system?.grips)[0] || "1р";
@@ -69,6 +74,11 @@ export function weaponHandsRequired(item, actor = item?.parent) {
   if (!item || item.type !== "weapon") return 0;
   const sys = item.system || {};
   if (isHandShield(item)) return 1;
+  // Рука Смерти: сросшееся оружие работает одной рукой, даже если профиль
+  // требовал двух (стр. 46) — гейт до ветвления мелейное/дальнобойное, оба
+  // случая читают sys.grips/RANGED_CLASS_HANDS ниже, которых это правило не
+  // касается.
+  if (isFusedByHandOfDeath(item)) return 1;
   if (sys.weaponClass === "melee") return MELEE_GRIP_HANDS[currentMeleeGrip(item)] ?? 1;
   const auto = aggregateAuto(resolveWeaponProps(item));
   if (auto.independent || auto.wrist) return 0;

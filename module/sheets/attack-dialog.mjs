@@ -38,6 +38,7 @@ import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-trai
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
+import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
@@ -225,14 +226,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // ОДИН, а пилюли Хвата рисуются только при >1 варианте (gripBlockHtml ниже).
   const classDefaultGrip = ["pistol", "thrown"].includes(sys.weaponClass) ? "1р" : "2р";
   const baseGrips = (ownGrips.length || !extraGrips.length) ? ownGrips : [classDefaultGrip];
-  const gripList  = [...new Set([...baseGrips, ...extraGrips])];
+  // Рука Смерти (wdbc-hftn, стр. 46): сросшееся оружие — всегда «1р», никаких
+  // альтернативных хватов (Об/Бл/Кл/Мх/Хв) и никакого «2р» даже у профильно
+  // двуручного/тяжёлого — единственный пункт списка, пилюли Хвата не рисуются.
+  const gripList  = isFusedByHandOfDeath(item) ? ["1р"] : [...new Set([...baseGrips, ...extraGrips])];
   const primGrip  = gripList[0] || "";
   // S.b — нужен только для гейта Отдачи (стр. 166): персонаж с S.b меньше
   // рейтинга свойства не может выбрать "1р", должен стрелять "2р".
   const sBonus    = actor.system.characteristics?.s?.bonus ?? 0;
-  const gripKey   = techniqueOpts.gripKey
+  // Рука Смерти форсирует "1р" безусловно — игнорирует и techniqueOpts, и
+  // сохранённый hudGrip (тот же выбор, что currentMeleeGrip в hands.mjs).
+  const gripKey   = isFusedByHandOfDeath(item) ? primGrip
+                 : (techniqueOpts.gripKey
                  ?? item.getFlag?.("warhammer-dbc", "hudGrip")
-                 ?? primGrip;
+                 ?? primGrip);
   // Double Grip (wdbc-mu6v, стр. 62): держа пистолет "2р", Прицеливание
   // +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10 сверх обычного.
   // Вычисляется один раз от СТАРТОВОГО Хвата (как qTestMod/legionFit ниже) —
@@ -505,9 +512,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // целиком у винтовки/длинной винтовки (weaponClass "basic") — своей
   // категории у «длинной винтовки» в схеме нет, обе лежат в "basic".
   const recoilSuppressed = !isMelee && sys.weaponClass === "basic" && hasRecoilSuppressor(actor);
+  // Рука Смерти форсирует "1р" безусловно (стр. 46) — Отдача её не блокирует,
+  // тот же принцип, что и подавители Отдачи, гейт снят наравне с ними.
+  const handOfDeathFused = isFusedByHandOfDeath(item);
   function computeRangedGripOptions() {
     return gripList.map(key => {
-      const recoilBlocked = key === "1р" && !recoilSuppressed
+      const recoilBlocked = key === "1р" && !recoilSuppressed && !handOfDeathFused
         && wp.recoilRating > 0 && sBonus < wp.recoilRating;
       return {
         key, label: RANGED_GRIPS[key]?.label || key,

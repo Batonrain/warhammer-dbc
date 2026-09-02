@@ -40,7 +40,7 @@ export function actorFor({ items = [], ...system } = {}) {
 /** Оружие. Умеет `update()` — атака списывает патроны и метит Перезарядку. */
 export function weaponFor(system = {}, { id = "weapon-1", name = "Болтер", flags = {} } = {}) {
   const item = {
-    id, name,
+    id, name, type: "weapon",
     system: {
       weaponClass: "basic", weaponType: "", damage: "1d10+5", damageType: "X",
       penetration: 4, rof_single: 1, rof_semi: 2, rof_full: 0,

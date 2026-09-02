@@ -23,12 +23,16 @@
 //     долговечная запись — откатывается сам, когда Мутацию снимают с актора
 //     (embedded-эффект живёт на ней же).
 //
-//  НЕ реализовано (см. bd wdbc-hftn, close_reason): «одной рукой, даже если
-//  требовало две» и «в рукопашной только Стандартный Хват» — система хватов
-//  (module/rules/hands.mjs, module/constants/combat.mjs GRIPS) не даёт точки
-//  входа «для ЭТОГО конкретного предмета правило другое», не переделывать
-//  ради одной Мутации; «боеприпасы из метаболизма» — расходуемый ресурс,
-//  которого в системе нет вовсе (см. bd wdbc-jtqf, тот же класс пробела).
+//  «Одной рукой, даже если требовало две» + «в рукопашной только Стандартный
+//  Хват» — читается через isFusedByHandOfDeath(item) (без mutationItemId,
+//  просто «слито ли»): module/rules/hands.mjs форсирует 1 руку/хват "1р" и
+//  для рукопашного, и для дальнобойного слитого оружия; module/sheets/
+//  attack-dialog.mjs форсирует gripList в один пункт "1р" (пилюли Хвата не
+//  рисуются при единственном варианте — как у прочих однозначных случаев).
+//  «Боеприпасы из метаболизма» — не отдельный расходуемый ресурс (которого
+//  в системе действительно нет, тот же пробел, что wdbc-jtqf), а по решению
+//  владельца проще: слитое дальнобойное вовсе не тратит патроны из магазина
+//  (module/combat/attack.mjs, тем же isFusedByHandOfDeath).
 // ════════════════════════════════════════════════════════════════════════
 
 import { isHandOfDeathItem } from "../rules/hand-of-death.mjs";
@@ -68,9 +72,14 @@ async function fuseWeapon(weapon, mutationItem) {
   props.push({ key: "fusedLimb", rating: 0, rating2: 0 });
   props.push({ key: "reinforced", rating: 0, rating2: 0 });
   const balance = Number(weapon.system?.balance) || 0;
+  // Боеприпасы из метаболизма (магазин слитого оружия не тратится, см.
+  // module/combat/attack.mjs) — топим до полного один раз, чтобы бейдж
+  // «Магазин: X/max» в диалоге атаки не застрял на предфузионном остатке.
+  const magMax = Number(weapon.system?.magazineMax) || 0;
   await weapon.update({
     "system.weaponProps": props,
     "system.balance": Math.max(0, balance),
+    ...(magMax > 0 ? { "system.magazineCur": magMax } : {}),
     [`flags.${FLAG}.handOfDeathSource`]: mutationItem.id,
     [`flags.${FLAG}.handOfDeathOrigBalance`]: balance
   });
