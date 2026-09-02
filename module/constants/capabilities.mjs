@@ -6768,7 +6768,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.tentacle": {
-    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 8 субмутаций не автоматизированы (wdbc-vkwe). Субмутации 6 (Ловкое) и 7 (Токсичное) частично: безоружная атака щупальцем выдаётся отдельным предметом kind:\"integralAttack\" (Flexible Tentacle/Toxic Tentacle, packs-src/weapons/Интегральные_атаки), when.submutations гейтит по броску — но урон в самих приёмах Борьбы (Заломить/Пересилить/Хруст) по-прежнему не несёт эти свойства, там нет точки крепежа (wdbc-tj0p); charm/interrogate +20 сабмутации 6 механизированы полностью (wdbc-1j2h)",
+    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 8 строк субмутаций (не 10 — «d10» даёт диапазоны 2-3/4-5, реальных строк 8, см. doombc-submutations), 6 не автоматизированы (wdbc-vkwe). Субмутации 6 (Ловкое) и 7 (Токсичное) частично: безоружная атака щупальцем выдаётся отдельным предметом kind:\"integralAttack\" (Flexible Tentacle/Toxic Tentacle, packs-src/weapons/Интегральные_атаки), when.submutations гейтит по броску; charm/interrogate +20 субмутации 6 механизированы полностью (wdbc-1j2h). Заломить (grapple.mjs) с wdbc-tj0p умеет наносить реальный урон (ignoreArmour), но Corrosive/Toxic щупальца к нему не подключены — нет способа отличить программно «использовал именно щупальце» от «использовал обычную руку» в общем приёме Борьбы",
     source: "Мутация: Tentacle (Общие мутации)",
     reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\")"
   },
