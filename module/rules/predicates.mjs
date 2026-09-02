@@ -75,6 +75,21 @@ function wearsPowerArmour(actor) {
 }
 
 /**
+ * Носит ли актор хоть один надетый предмет брони со свойством «Sealed /
+ * Закрытая» (ARMOR_PROPERTIES.sealed, constants/items.mjs — «Защита от химии
+ * на коже»). Свойства брони хранятся как плоский массив строк-ключей
+ * (system.properties, в отличие от оружия — без рейтинга, см.
+ * combat/armor-properties.mjs::resolveArmorProps), здесь читаются напрямую
+ * без импорта того модуля — тот уже завязан на combat/, а предикаты обязаны
+ * жить без Foundry (см. комментарий у wearsPowerArmour выше).
+ */
+function wearsSealedArmour(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "armor" && i?.system?.equipped &&
+    (i?.system?.properties ?? []).includes("sealed"));
+}
+
+/**
  * Сус-ан Мембрана — орган Геносемени Гвардии Ворона/Призраков Смерти
  * (wdbc-l07y, дубль был в rules/death-save.mjs и apps/sus-an-heal.mjs).
  * Русская половина в паке несёт книжный номер («12. Сус-ан Мембрана /
@@ -129,6 +144,11 @@ export const PREDICATES = {
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
   // Ярости (wdbc-wyr3).
   inRage: (actor) => !!actor?.system?.inRage,
+
+  // Носит ли надетую броню со свойством «Sealed / Закрытая» — шестой гейт
+  // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
+  // wdbc-1rno: «без гермодоспеха» у Миазм и подобных).
+  wearsSealedArmour,
 
   // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
   // heavy/dying, тот же ключ, что подписан в блоке РАНЫ на листе. Список — «в

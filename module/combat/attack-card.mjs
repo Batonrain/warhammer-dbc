@@ -13,6 +13,7 @@
 
 import { _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { isCompressibleLocation } from "../rules/compression.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -203,11 +204,18 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   неизрасходованных Успехов с ДРУГИХ атак этого же противника в этом Ходу
  *   (стр. 12), уже посчитанный вызывающей стороной (module/combat/attack.mjs
  *   — она одна касается документов Foundry, этот модуль их не читает).
+ * @param {string} [hitLocLabel]  метка HIT_LOCATIONS этой атаки (constants/
+ *   combat.mjs) — кнопка Сжатия (rules/compression.mjs) показывается, только
+ *   если это конечность/голова, не Торс. Доступность самой мутации у
+ *   ЗАЩИЩАЮЩЕГОСЯ актора (тот на момент рендера карточки ещё не выбран)
+ *   проверяется позже, в combat/defense.mjs::_performCompression — не здесь,
+ *   этот модуль документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null }) {
+                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
+  const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
   // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
   // атаку — кнопки несут их число, чтобы Уклонение/Парирование/Вираж снимали
   // по одному попаданию за степень успеха, а не всю атаку разом (стр. 12).
@@ -246,6 +254,12 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
         ${targetIsVehicle
           ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
                title="Техника: Operate − Размер×10">Вираж</button>`
+          : ""}
+        ${canCompress
+          ? `<button class="wh-compress-btn" type="button" data-location="${hitLocLabel}" data-attacker-uuid="${attackerUuid}"
+               title="Мутация Compression/Сжатие: вместо Уклонения — Реакцией втянуть ${hitLocLabel} в торс, нивелируя ЭТО попадание">
+               Сжатие (${hitLocLabel})
+             </button>`
           : ""}
         ${poolBtn}
       </div>
@@ -449,7 +463,7 @@ export function attackCard({
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : ""}
-        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool }) : ""}
+        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, hitLocLabel }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, itemUuid, hordeHits })}

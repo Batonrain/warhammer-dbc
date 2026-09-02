@@ -121,6 +121,27 @@ describe("карточка атаки", () => {
     expect(card()).not.toContain("Вираж");
   });
 
+  // Сжатие (мутация Compression, wdbc-1rno) — кнопка рядом с Уклонением/
+  // Парированием, только если попадание НЕ в Торс. Доступность самой
+  // мутации у защищающегося актора проверяется позже, в defense.mjs —
+  // здесь только видимость кнопки по месту попадания (см. шапку файла:
+  // модуль ничего не знает про Foundry-документы/акторов).
+  it("Сжатие: место попадания — конечность/голова — кнопка есть, несёт локацию", () => {
+    const html = card({ hitLocLabel: "Голова" });
+    expect(html).toContain("wh-compress-btn");
+    expect(html).toContain('data-location="Голова"');
+    expect(html).toContain("Сжатие (Голова)");
+  });
+
+  it("Сжатие: попадание в Торс — кнопки нет", () => {
+    expect(card({ hitLocLabel: "Торс" })).not.toContain("wh-compress-btn");
+  });
+
+  it("Сжатие: цель — техника — кнопки нет, даже если бы локация совпала", () => {
+    const html = card({ hitLocLabel: "Голова", defense: { targetIsVehicle: true } });
+    expect(html).not.toContain("wh-compress-btn");
+  });
+
   it("сдвиг места попадания даёт кнопки ±A.b и гасит текущую", () => {
     const html = card({ locShift: { max: 2, current: -1 } });
     expect(html).toContain("Сдвинуть место попадания (±2, A.b) — только Стрелок");

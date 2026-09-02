@@ -22,6 +22,7 @@ import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
 import { fatiguePenalty, marchPenalty, activateConditionsListeners, addCondition } from "./tabs/conditions.mjs";
+import { addictionPenalty } from "../rules/addiction.mjs";
 import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
 import { inventoryOverloadPenalty } from "../rules/encumbrance.mjs";
 import { painChatMsg } from "./tabs/pain.mjs";
@@ -850,6 +851,11 @@ export class WarhammerCharacterSheet
 
   _getFatiguePenalty(charKey) {
     return fatiguePenalty(this.actor, charKey);
+  }
+
+  /** Мутация «Зависимость» (wdbc-1rno): −10, только тестам Навыков — см. rules/addiction.mjs. */
+  _getAddictionPenalty() {
+    return addictionPenalty(this.actor, game.time?.worldTime ?? 0);
   }
 
   /** Марш/Бег/Форсированный марш (стр. 29): штраф на Восприятие, пока активен. */
@@ -1831,7 +1837,7 @@ export class WarhammerCharacterSheet
     };
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", extraPenalty = () => 0) {
     const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
@@ -1976,7 +1982,8 @@ export class WarhammerCharacterSheet
               + this._getMarchPenalty(charKey)
               + this._getHelmetlessBonus(charKey)
               + disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill })
-              + inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+              + inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill })
+              + extraPenalty();
           }
         });
 
@@ -2052,7 +2059,8 @@ export class WarhammerCharacterSheet
   // ── Бросок навыка ─────────────────────────────────────────────────────────
 
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
-    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
+    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext,
+      "base", () => this._getAddictionPenalty());
     if (!result) return;
     const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
              assistCount = 0, reroll = null } = result;
@@ -2067,9 +2075,12 @@ export class WarhammerCharacterSheet
     const armourPenalty = disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
     // Перевес общего инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник.
     const overloadPenalty = inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+    // Мутация «Зависимость» (wdbc-1rno): −10, но только тестам Навыков — этот
+    // путь и есть тест Навыка (_rollCharacteristic её не зовёт вовсе).
+    const addictionPen = this._getAddictionPenalty();
 
     // Мод препаратов уже входит в target (через char.total → итог навыка)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty + overloadPenalty;
+    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty + overloadPenalty + addictionPen;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
@@ -2099,6 +2110,7 @@ export class WarhammerCharacterSheet
             ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
             ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
             ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
+            ${addictionPen !== 0 ? ` ${addictionPen} (🩸 Зависимость)` : ""}
             ${overloadPenalty !== 0 ? ` ${overloadPenalty} (◈ Перевес инвентаря)` : ""}
             ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
             → Порог: <b>${baseEff}</b>

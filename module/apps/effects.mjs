@@ -75,6 +75,18 @@ export function isItemActive(item) {
         .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
       return activeRunicWeaveId(siblings) === item.id;
     }
+    // Мутация/Дар Бога подавлена Чистой Формой (rules/mutation-suppression.mjs,
+    // wdbc-1rno: «1 час концентрации подавляет все мутации, теряя их эффекты»)
+    // — flags.warhammer-dbc.suppressed, тот же общий рубильник, что у прочих
+    // «выключаемых» типов выше, просто источник переключения другой (не
+    // toggleParentId, а сама Чистая Форма извне). `?.` — item-rules.mjs::
+    // rulesFromItemMechanics вызывает isActive() на КАЖДОМ типе предмета
+    // актора без разбора (в т.ч. лёгкие тестовые моки чужих наборов правил,
+    // напр. test/rules/weapon-training.test.mjs, у которых нет getFlag) —
+    // без страховки любой не-mutation-специфичный мок с type:"mutation"
+    // ронял бы весь сбор правил TypeError'ом, а не только про суть теста.
+    case "mutation":
+      return !item.getFlag?.("warhammer-dbc", "suppressed");
     default: return true;
   }
 }

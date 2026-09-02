@@ -22,6 +22,8 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
+import { vampiricPanelHtml, useSatisfyVampiric, useVampiricTest } from "../apps/vampiric-dependency.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1048,6 +1050,10 @@ export class WarhammerItemSheet
     // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // ── «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние
+      // утоления по игровому времени, пусто у остальных Мутаций ──────────────
+      context.addictionHtml = addictionPanelHtml(this.item);
+      context.vampiricHtml  = vampiricPanelHtml(this.item);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1803,6 +1809,23 @@ export class WarhammerItemSheet
       if (actor) await useHandOfDeath(actor, this.item);
     });
 
+    // ── Мутация «Зависимость»: кнопка «Утолить» (wdbc-1rno) ─────────────────
+    on(".addiction-satisfy-btn", "click", async ev => {
+      ev.preventDefault();
+      await useSatisfyAddiction(this.item);
+    });
+
+    // ── Мутация «Вампирическая Зависимость»: «Утолить»/«Тест на голод» ──────
+    on(".vampiric-satisfy-btn", "click", async ev => {
+      ev.preventDefault();
+      await useSatisfyVampiric(this.item);
+    });
+    on(".vampiric-test-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useVampiricTest(actor, this.item);
+    });
+
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
     on(".void-seal-btn", "click", async ev => {
       ev.preventDefault();
@@ -1969,6 +1992,13 @@ export class WarhammerItemSheet
     mechField(".mech-mod-valuemode", (e, v) => { e.modValueMode = v; });
     mechField(".mech-mod-char",      (e, v) => { e.modCharBonus = v; });
     mechField(".mech-mod-char-mult", (e, v) => { e.modCharBonusMultiplier = Math.max(1, Number(v) || 1); });
+    // Значение «Модификатора теста» (kind:"testMod") — число (mech-entry-value)
+    // ИЛИ формула mech-formula.mjs (mech-mod-formula, wdbc-1rno: Black Eyes
+    // «½Cor(окр.▲)»), тот же приём хранения строкой, что у .mech-char-value.
+    // Раньше .mech-entry-value не имел своего листенера вовсе — правка того
+    // же поля в UI молча не сохранялась (найдено попутно, чинится тут же).
+    mechField(".mech-entry-value", (e, v) => { e.value = Number(v) || 0; });
+    mechField(".mech-mod-formula", (e, v) => { e.value = v; });
     mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
     mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
     // Цена в пуле (wdbc-1dc8) — смена пула показывает/прячет поле числа,
@@ -2163,6 +2193,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.scriptThrottleMax = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    // Триггер по исходу теста (wdbc-1rno) — переключение показывает/прячет
+    // область (modScope), поэтому сохраняем и даём листу перерисоваться, тот
+    // же каскад, что у .mech-fatigue-action/.mech-reroll-scope.
+    on(".mech-script-trigger", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptTrigger = ev.currentTarget.value; saveMech(arr); }
+    });
     on(".mech-script-run", "click", async ev => {
       ev.preventDefault();
       await runMechScriptEntry(this.item, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -2303,6 +2341,24 @@ export class WarhammerItemSheet
       if (!e) return;
       e.when = e.when || { negate: false, conditions: [] };
       e.when.negateRage = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда Герметичная броня» (entry.when.requireSealedArmour/
+    // negateSealedArmour, wdbc-1rno) — шестой гейт, тот же паттерн, что у Ярости.
+    on(".grant-when-sealed", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.requireSealedArmour = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    on(".grant-when-sealed-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateSealedArmour = !!ev.currentTarget.checked;
       saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
