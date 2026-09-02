@@ -811,7 +811,7 @@
         "rof_single": false,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "1d10+9",
+        "damage": "1d10+2",
         "damageType": "rending",
         "penetration": 2,
         "quality": "common",
@@ -1461,6 +1461,61 @@
                   "wounds.max": "+7",
                   "wounds.value": "+7"
                 }
+              }
+            ]
+          },
+          {
+            "key": "natural",
+            "label": "Естественное оружие",
+            "mode": "one",
+            "default": "claws",
+            "options": [
+              {
+                "key": "claws",
+                "label": "Когти",
+                "hint": "Как на листе."
+              },
+              {
+                "key": "pincer",
+                "label": "Клешня",
+                "hint": "Заменяет «Когти».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Claws / Когти"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.RmHeiiVvFnYLayJM"
+                ]
+              },
+              {
+                "key": "bladeHand",
+                "label": "Рука-Клинок",
+                "hint": "Заменяет «Когти».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Claws / Когти"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.F5PfzU98QuK3uXE2"
+                ]
+              },
+              {
+                "key": "tentacles",
+                "label": "Щупальца",
+                "hint": "Заменяет «Когти».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Claws / Когти"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.rqDMhDxZ9Y7Pe9zN"
+                ]
               }
             ]
           }

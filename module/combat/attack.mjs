@@ -252,6 +252,28 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     hitLocLabel = vehPart;
   }
 
+  // Горжет (стр. 228, wdbc-8b5): случайное (не Избирательное) попадание в
+  // голову можно попытаться перевести в Торс — кнопка на карточке бросает
+  // 1d10 и, на X+ рейтинга свойства Gorget надетого шлема цели, шлёт сюда же
+  // opts.gorgetRoll через переигровку этой же карточки (тот же приём, что и
+  // opts.locationShift выше). Читает цель заново из game.user.targets на
+  // момент клика — тот же риск/точность, что у locationShift.
+  let gorget = null;
+  if (!targetIsVehicle && !aimTarget?.value && hitLocLabel === "Голова") {
+    const gorgetTargetToken = [...(game.user?.targets ?? [])][0] ?? null;
+    const gorgetDefender = gorgetTargetToken?.actor ?? gorgetTargetToken?.document?.actor ?? null;
+    const rating = Number(gorgetDefender?.system?.absorption?.propFlags?.head?.gorgetRating) || 0;
+    if (rating > 0) {
+      gorget = { rating, outcome: null };
+      if (opts.gorgetRoll) {
+        const roll = Number(opts.gorgetRoll) || 0;
+        const success = roll >= rating;
+        gorget.outcome = { roll, success };
+        if (success) hitLocLabel = "Торс";
+      }
+    }
+  }
+
   // Место конкретного попадания: у техники 1-е и 2-е — в часть, остальные в Корпус;
   // у существ — множественные (3+) идут в Торс.
   // Импульсное (aeldari.json): каждый 4-й натуральный выстрел очереди попадает
@@ -527,6 +549,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
+      gorget,
       isMelee, dtLabel, damageType: ammoDmgType || effDmgType, pen,
       assassinStrike: isMelee && assassinStrikeAvailable(actor),
       sbEff, sbHalf, taintedAdd, vehicleSide: opts.vehicleSide || "",

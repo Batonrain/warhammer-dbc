@@ -1410,10 +1410,14 @@ export class WarhammerItemSheet
     // ── Броня ─────────────────────────────────────────────────────────────────
     if (this.item.type === "armor") {
       const activeProps = context.system.properties || [];
+      const propRatings = context.system.propRatings || {};
       // Как у оружия: активные свойства — чипами, остальные — в выпадающем «добавить».
+      // rating — только у Gorget/Protective (ARMOR_PROPERTIES[key].rating),
+      // хранится не рядом с ключом (как у оружия weaponProps[].rating), а в
+      // отдельном свободном реестре system.propRatings (data/item/armor.mjs).
       context.armorPropsActive = activeProps
         .filter(key => ARMOR_PROPERTIES[key])
-        .map(key => ({ key, def: ARMOR_PROPERTIES[key] }));
+        .map(key => ({ key, def: ARMOR_PROPERTIES[key], rating: propRatings[key] ?? 0 }));
       context.armorPropsAvailable = Object.entries(ARMOR_PROPERTIES)
         .filter(([key]) => !activeProps.includes(key))
         .map(([key, def]) => ({ key, label: def.label }));
@@ -2931,6 +2935,24 @@ export class WarhammerItemSheet
         props.push(key);
         await this.item.update({ "system.properties": props });
       }
+    });
+    // Рейтинг X особенности брони (Gorget/Protective, wdbc-8b5) — отдельный
+    // свободный реестр system.propRatings, а не поле рядом с ключом свойства
+    // (у брони, в отличие от оружия, properties[] — плоский массив строк).
+    on(".aprop-rating", "change", async ev => {
+      const key = ev.currentTarget.dataset.key;
+      const val = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+      const propRatings = { ...(this.item.system.propRatings || {}) };
+      propRatings[key] = val;
+      await this.item.update({ "system.propRatings": propRatings });
+    });
+    // Текстовый рейтинг (Aspect — «Варп-Пауки» и т.п., wdbc-8b5/wdbc-28ld).
+    on(".aprop-rating-text", "change", async ev => {
+      const key = ev.currentTarget.dataset.key;
+      const val = ev.currentTarget.value.trim();
+      const propRatings = { ...(this.item.system.propRatings || {}) };
+      propRatings[key] = val;
+      await this.item.update({ "system.propRatings": propRatings });
     });
 
     // ── Типы боеприпасов ──────────────────────────────────────────────────────

@@ -87,6 +87,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
 import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
+import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -1844,6 +1845,38 @@ export class WarhammerCharacterSheet
     };
   }
 
+  /**
+   * Aspect (wdbc-8b5/wdbc-28ld, стр. 228): «−20 на ВСЕ тесты, пока носишь
+   * броню без соответствующего Пути». Тот же общий диалог (_showSkillRollDialog
+   * обслуживает и Навыки, и Характеристики — единственная точка входа
+   * «любой тест», см. _rollCharacteristic ниже), поэтому не гейтится по
+   * context.kind, в отличие от _armorSkillModsHtml (та — только Навыки).
+   * R3-модификация брони снимает штраф не-Асуриан/Иннари — та же оговорка,
+   * что у оружейного Aspect (attack-dialog.mjs): галочка, снимается вручную.
+   */
+  _armorAspectModHtml() {
+    const groups = [];
+    for (const it of this.actor.items) {
+      if (it.type !== "armor" || !it.system.equipped) continue;
+      if (!(it.system.properties || []).includes("aspect")) continue;
+      const ratingText = it.system.propRatings?.aspect;
+      if (!ratingText) continue;
+      if (actorHasAspectPath(this.actor.system, ratingText)) continue;
+      groups.push({ item: it, ratingText });
+    }
+    if (!groups.length) return { html: "", mods: [] };
+    const mods = groups.map(g => ({ value: -20, label: g.item.name }));
+    const rows = groups.map((g, i) => `<label class="attack-mod-check armor-roll-mod">
+        <input type="checkbox" class="armor-aspect-mod" data-idx="${i}" data-value="-20"/>
+        <span>${esc(g.item.name)}: нет Пути «${esc(g.ratingText)}» <b>(-20)</b></span></label>`).join("");
+    return {
+      mods,
+      html: `<div class="atk-dlg-modifiers armor-mods">
+        <div class="atk-mods-title">Броня (Aspect)</div>
+        <div class="atk-mods-list">${rows}</div></div>`
+    };
+  }
+
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
     // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
     // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
@@ -1858,6 +1891,7 @@ export class WarhammerCharacterSheet
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
     const am = this._armorSkillModsHtml(rollCtx);
+    const aa = this._armorAspectModHtml();
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
@@ -1893,7 +1927,7 @@ export class WarhammerCharacterSheet
     const modifierSumOf = formEl => {
       let modifier = parseInt(formEl.querySelector("#skill-modifier")?.value) || 0;
       let halve = false;
-      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked", ".armor-mod:checked"]) {
+      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked", ".armor-mod:checked", ".armor-aspect-mod:checked"]) {
         for (const cb of formEl.querySelectorAll(sel)) {
           modifier += parseInt(cb.dataset.value) || 0;
           if (cb.dataset.halve === "1") halve = true;
@@ -1934,6 +1968,7 @@ export class WarhammerCharacterSheet
             ${im.html}
             ${rl.html}
             ${am.html}
+            ${aa.html}
             ${rr.html}
             ${diceModeHtml()}
             <div id="auto-outcome-note" class="roll-dlg-note"></div>
@@ -2008,7 +2043,7 @@ export class WarhammerCharacterSheet
         });
         root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
-        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod").forEach(cb =>
+        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod, .armor-aspect-mod").forEach(cb =>
           cb.addEventListener("change", updateAutoOutcomeNote));
 
         // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────

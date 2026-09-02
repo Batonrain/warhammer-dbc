@@ -2,12 +2,14 @@
 //
 // module/constants/aeldari-paths.mjs — Пути Азуриан (заменяют Мировоззрение):
 // каталог путей/градаций, HTML-опции селектов и суммарные пассивные
-// авто-бонусы по достигнутым градациям (computePathPassives).
+// авто-бонусы по достигнутым градациям (computePathPassives), плюс
+// сопоставление текста рейтинга Aspect (wdbc-8b5/wdbc-28ld) с ключом Пути.
 
 import { describe, it, expect } from "vitest";
 import {
   AZURIANE_PATHS, PATH_GRADES, PATH_GRADE_ORDER, PATH_GROUPS,
-  buildPathSelectOptions, buildGradeSelectOptions, computePathPassives
+  buildPathSelectOptions, buildGradeSelectOptions, computePathPassives,
+  findAspectPathKey, actorHasAspectPath
 } from "../../module/constants/aeldari-paths.mjs";
 
 describe("AZURIANE_PATHS: структурная целостность", () => {
@@ -112,5 +114,51 @@ describe("computePathPassives", () => {
 
   it("путь без auto ни на одной градации (например «Путь Игрока») — не добавляет ничего", () => {
     expect(computePathPassives([{ key: "player", grade: "lost" }])).toEqual({ charBonus: {}, corLimit: 0 });
+  });
+});
+
+describe("findAspectPathKey", () => {
+  it("находит Путь по короткому имени в скобках label", () => {
+    expect(findAspectPathKey("Варп-Пауки")).toBe("warpspider");
+  });
+
+  it("нечувствителен к регистру", () => {
+    expect(findAspectPathKey("варп-пауки")).toBe("warpspider");
+  });
+
+  it("находит остальные Пути Воина по короткому имени", () => {
+    expect(findAspectPathKey("Воющие Баньши")).toBe("banshee");
+    expect(findAspectPathKey("Жалящие Скорпионы")).toBe("scorpion");
+  });
+
+  it("пустой/пробельный текст — null", () => {
+    expect(findAspectPathKey("")).toBeNull();
+    expect(findAspectPathKey("   ")).toBeNull();
+    expect(findAspectPathKey(undefined)).toBeNull();
+  });
+
+  it("нераспознанный текст — null", () => {
+    expect(findAspectPathKey("Несуществующая Группа")).toBeNull();
+  });
+});
+
+describe("actorHasAspectPath", () => {
+  it("текст не распознан — считается «есть» (не штрафуем на плохих данных)", () => {
+    expect(actorHasAspectPath({ paths: [] }, "Несуществующая Группа")).toBe(true);
+  });
+
+  it("персонаж с нужным Путём — есть", () => {
+    const system = { paths: [{ key: "warpspider", grade: "novice" }] };
+    expect(actorHasAspectPath(system, "Варп-Пауки")).toBe(true);
+  });
+
+  it("персонаж без нужного Пути — нет", () => {
+    const system = { paths: [{ key: "banshee", grade: "novice" }] };
+    expect(actorHasAspectPath(system, "Варп-Пауки")).toBe(false);
+  });
+
+  it("у персонажа вообще нет Путей — нет", () => {
+    expect(actorHasAspectPath({ paths: [] }, "Варп-Пауки")).toBe(false);
+    expect(actorHasAspectPath({}, "Варп-Пауки")).toBe(false);
   });
 });
