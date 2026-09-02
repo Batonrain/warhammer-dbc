@@ -45,6 +45,8 @@ import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
+import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -99,6 +101,20 @@ export function registerHooks() {
         }
         await _performDodge(actor, extraMod,
           ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
+      });
+    });
+
+    // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
+    // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
+    // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
+    html.querySelectorAll(".wh-herd-spirits-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Ритуалист не найден."); return; }
+        const successes = parseInt(el.dataset.successes) || 0;
+        await showHerdSpiritsAllocationDialog(actor, successes, { ritualistUuid: actor.uuid });
       });
     });
 
@@ -1329,6 +1345,8 @@ function _attachFateContextMenu(message, html) {
     // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
     // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
     await clearReformationSongBuffs(combat);
+    // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
+    await clearHexMarkedPreyMarks(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
@@ -1394,6 +1412,9 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
+      // следующего Хода ШАМАНА» (не получателя), тем же тактом.
+      await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).

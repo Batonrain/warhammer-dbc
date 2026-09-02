@@ -26,6 +26,7 @@ import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
 import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
 import { defaultSpawnDemonFn } from "./demon-summon.mjs";
+import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
@@ -221,6 +222,15 @@ export async function castRitual(R, actor, {
   const demonHtml = (success && R.demonName)
     ? `<div class="roll-threshold" style="font-size:0.85em;">Демон: <b>${esc(R.demonName)}</b>${R.type === "summon" ? " — токен размещён на сцене." : ""}</div>`
     : "";
+  // Призыв Духов Стада (wdbc-xxb7) — бюджет успехов на Минотавров/Троллей/
+  // Великанов распределяет ГМ в отдельном диалоге (Бестиарий игроку скрыт),
+  // не сразу здесь: кнопка в карточке, обработчик — module/hooks.mjs.
+  const herdHtml = (success && isHerdSpiritsRitual(item))
+    ? `<div class="roll-threshold" style="font-size:0.85em;">
+        <button type="button" class="wh-herd-spirits-btn" data-actor-uuid="${actor.uuid}"
+          data-successes="${deg}">🐂 Распределить Духов Стада (${deg} усп.)</button>
+      </div>`
+    : "";
 
   const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
@@ -235,6 +245,7 @@ export async function castRitual(R, actor, {
         ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`
         : `<span class="roll-failure">Ритуал провален — ${Math.abs(deg)} Провал(ов)</span>`}</div>
       ${demonHtml}
+      ${herdHtml}
       ${failHtml}
       ${condHtml}
       <details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>

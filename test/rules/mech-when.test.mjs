@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier } from "../../module/rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod } from "../../module/rules/mech-when.mjs";
 
 const actorWithItems = (items = [], geneSeed = {}) => ({
   system: { geneSeed, bio: { age: 0 } },
   items
 });
 
-const actorWith = ({ wounds = {}, inRage = false } = {}) => ({
-  system: { geneSeed: {}, bio: { age: 0 }, wounds: { tier: "healthy", ...wounds }, inRage },
+const actorWith = ({ wounds = {}, inRage = false, patronGod = "" } = {}) => ({
+  system: { geneSeed: {}, bio: { age: 0 }, wounds: { tier: "healthy", ...wounds }, inRage, patronGod },
   items: []
 });
 
@@ -152,6 +152,51 @@ describe("entryWhenOk: Тир Ран и Ярость складываются с
     const entry = { when: { woundTier: ["healthy", "light"], requireRage: true } };
     expect(entryWhenOk(actorWith({ wounds: { tier: "healthy" }, inRage: false }), entry)).toBe(false);
     expect(entryWhenOk(actorWith({ wounds: { tier: "healthy" }, inRage: true }), entry)).toBe(true);
+  });
+});
+
+describe("entryWhenOk: Покровитель (wdbc-xxb7)", () => {
+  const khorneOrNurgle = { when: { patronGod: ["khorne", "nurgle"] } };
+
+  it("подходящий Покровитель — true", () => {
+    expect(entryWhenOk(actorWith({ patronGod: "khorne" }), khorneOrNurgle)).toBe(true);
+    expect(entryWhenOk(actorWith({ patronGod: "nurgle" }), khorneOrNurgle)).toBe(true);
+  });
+
+  it("другой Покровитель — false", () => {
+    expect(entryWhenOk(actorWith({ patronGod: "tzeentch" }), khorneOrNurgle)).toBe(false);
+  });
+
+  it("без Покровителя вовсе — false (пустая строка не входит в список)", () => {
+    expect(entryWhenOk(actorWith({ patronGod: "" }), khorneOrNurgle)).toBe(false);
+  });
+
+  it("«Неделимый» — свой отдельный ключ, не синоним пустой строки", () => {
+    const undividedOnly = { when: { patronGod: ["undivided"] } };
+    expect(entryWhenOk(actorWith({ patronGod: "undivided" }), undividedOnly)).toBe(true);
+    expect(entryWhenOk(actorWith({ patronGod: "" }), undividedOnly)).toBe(false);
+  });
+
+  it("negatePatronGod переворачивает результат", () => {
+    const negated = { when: { patronGod: ["khorne"], negatePatronGod: true } };
+    expect(entryWhenOk(actorWith({ patronGod: "khorne" }), negated)).toBe(false);
+    expect(entryWhenOk(actorWith({ patronGod: "nurgle" }), negated)).toBe(true);
+  });
+
+  it("нет актора (превью) — условие пройдено", () => {
+    expect(entryWhenOk(null, khorneOrNurgle)).toBe(true);
+  });
+
+  it("whenPatronGod: пустой список без patronGod", () => {
+    expect(whenPatronGod({})).toEqual([]);
+  });
+});
+
+describe("entryWhenOk: Покровитель складывается с остальными гейтами через И", () => {
+  it("Покровитель подходит, Ярость — нет: итог false", () => {
+    const entry = { when: { patronGod: ["khorne"], requireRage: true } };
+    expect(entryWhenOk(actorWith({ patronGod: "khorne", inRage: false }), entry)).toBe(false);
+    expect(entryWhenOk(actorWith({ patronGod: "khorne", inRage: true }), entry)).toBe(true);
   });
 });
 

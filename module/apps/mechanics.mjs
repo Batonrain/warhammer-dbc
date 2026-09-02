@@ -232,7 +232,7 @@ import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs"
 import { CAPABILITY_COST_POOLS, capabilityCostLabel } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
@@ -953,6 +953,11 @@ function describeMechWhen(when, item = null) {
     parts.push(`Тир Ран ${when?.negateWoundTier ? "≠" : "="} ${names.join(" или ")}`);
   }
   if (when?.requireRage) parts.push(`Ярость ${when?.negateRage ? "≠" : "="} да`);
+  const gods = whenPatronGod(when);
+  if (gods.length) {
+    const names = gods.map(k => WARP_GODS_MAP[k]?.label || k);
+    parts.push(`Покровитель ${when?.negatePatronGod ? "≠" : "="} ${names.join(" или ")}`);
+  }
   return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
@@ -2931,6 +2936,23 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </label>
   </div>`;
 
+  // «Когда Покровитель» (wdbc-xxb7) — шестой независимый гейт: список ключей
+  // WARP_GODS (khorne/nurgle/slaanesh/tzeentch/undivided), между вариантами
+  // ИЛИ — та же форма, что у Тира Ран. Источник — actor.system.patronGod.
+  const patronChosen = new Set(w.patronGod || []);
+  const patronBoxes = WARP_GODS.map(g => `<label class="grant-when-patron-row">
+    <input type="checkbox" class="grant-when-patron" ${d} data-god-key="${g.key}" ${patronChosen.has(g.key) ? "checked" : ""} ${dis}/>
+    <span>${esc(g.label)}</span>
+  </label>`).join("");
+  const patronHtml = `<div class="grant-entry-when grant-entry-when-patron">
+    <span class="grant-when-label">Когда Покровитель</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-patron-negate" ${d} ${w.negatePatronGod ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <div class="grant-when-patron-list">${patronBoxes}</div>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -2939,7 +2961,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}`;
 }
 
 /**

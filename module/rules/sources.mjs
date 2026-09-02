@@ -17,6 +17,7 @@ import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
 import { adjutantRerollRules } from "./adjutant.mjs";
 import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
+import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 
 const SOURCES = new Map();
 
@@ -92,6 +93,11 @@ registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemAc
 // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget), не
 // требует cross-actor обхода — регистрируется так же, как "core".
 registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
+
+// Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — то же статичное when по
+// предикату (rules/predicates.mjs::hexMarkedPreyAllyBonus), которое само
+// читает cross-actor метку через ctx.targetActor.
+registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
 
 registerRuleSource("adjutant", a => {
   if (typeof game === "undefined") return [];

@@ -65,7 +65,26 @@
 // Бронзовый Мирмидон/Красный Ангел (Трейт только пока в Ярости). Не
 // заполнено (requireRage:false) — условия нет вовсе, не «вне Ярости».
 
+// ── Покровитель (when.patronGod/when.negatePatronGod) ───────────────────────
+// Шестой независимый гейт (wdbc-xxb7): список ключей WARP_GODS
+// (khorne/nurgle/slaanesh/tzeentch/undivided), между вариантами ИЛИ — та же
+// форма списка, что у Тира Ран. Источник — actor.system.patronGod, ЕДИНОЕ
+// поле «Покровительство», которым уже пользуется вся система (см.
+// constants/patronage.mjs); отдельного поля «Метка» на акторе нет — книжное
+// различие Метка/простое Покровительство (стр. 103, Шаман Зверолюдей: «особо
+// известные шаманы, Inf 70+, получают такие же бонусы при простом
+// Покровительстве») этим гейтом не моделируется, оба читаются как одно и то
+// же system.patronGod. Пустой patronGod у актора не считается «Неделимый» —
+// сравнивается как есть (пустая строка не входит в список вариантов, если
+// "undivided" явно не выбран). Нет актора (предпросмотр) — условие пройдено,
+// тот же принцип, что у остальных гейтов.
+
 import { itemHasName, PREDICATES } from "./predicates.mjs";
+
+/** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
+export function whenPatronGod(when) {
+  return (when?.patronGod || []).filter(Boolean);
+}
 
 /** Заполненные варианты (легион задан) из entry.when.conditions. */
 export function whenConditions(when) {
@@ -110,7 +129,8 @@ export function entryWhenOk(actor, entry, item = null) {
   const talentSpec = whenTalentSpec(entry?.when);
   const tiers = whenWoundTier(entry?.when);
   const requireRage = !!entry?.when?.requireRage;
-  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage) return true;
+  const patronGods = whenPatronGod(entry?.when);
+  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage && !patronGods.length) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -158,5 +178,12 @@ export function entryWhenOk(actor, entry, item = null) {
     rageOk = entry.when.negateRage ? !inRage : inRage;
   }
 
-  return geneOk && subOk && talentOk && tierOk && rageOk;
+  let patronOk = true;
+  if (patronGods.length && actor) {
+    const god = actor.system?.patronGod || "";
+    const matches = patronGods.includes(god);
+    patronOk = entry.when.negatePatronGod ? !matches : matches;
+  }
+
+  return geneOk && subOk && talentOk && tierOk && rageOk && patronOk;
 }
