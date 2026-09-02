@@ -579,7 +579,6 @@ export function buildGetData(actor) {
   // с выпадашкой целей для инлайн-установки прямо из окна снаряжения.
   const weaponItems = allItems.filter(i => i.type === "weapon");
   const armorItems  = allItems.filter(i => i.type === "armor");
-  const weaponIds   = new Set(weaponItems.map(w => w.id));
   const armorIds    = new Set(armorItems.map(a => a.id));
 
   // Интегральные атаки (Кулак, Кислотный Плевок, Пинок Дредноута и т.п.) —
@@ -587,6 +586,13 @@ export function buildGetData(actor) {
   // (combatMeleeWeapons/combatRangedWeapons выше, уже включают их — equipped
   // всегда true), сюда — ни строкой в списке, ни целью для установки мода.
   const gearWeaponItems = weaponItems.filter(i => !i.getFlag?.("warhammer-dbc", "integralAttack"));
+  // weaponIds — носители МОДОВ оружия (gearWeaponModsFree ниже): именно
+  // gearWeaponItems, не все weaponItems. Иначе мод, установленный на
+  // интегральную атаку, считался бы «носитель есть» (integralAttack всё ещё
+  // в weaponItems) и не попадал бы в список свободных — а строки самого
+  // носителя в таблице Снаряжения уже нет (gearWeaponItems выше), значит мод
+  // пропадал бы с листа насовсем, снять его было бы нельзя.
+  const weaponIds   = new Set(gearWeaponItems.map(w => w.id));
 
   const weaponModView = (i) => {
     const cat = i.system.category || "ranged";
