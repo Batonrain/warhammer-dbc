@@ -38,6 +38,7 @@ import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
 import { resolveTrancesForCombat }       from "./apps/armour-history-trance.mjs";
+import { resolveExpiredImperatives }     from "./rules/imperative.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
 import { triggerBlastAnimation } from "./integrations/autoanimations.mjs";
@@ -1464,6 +1465,9 @@ function _attachFateContextMenu(message, html) {
     // держит инициативу сразу за кастером каждый Раунд, пока не истекут
     // F.b — та же смена Раунда, ГМ пишет.
     await processSpiritTalkRoundStart(combat);
+    // Императив (wdbc-yu32): снимает истёкшие носители у комбатантов этого
+    // боя (module/rules/imperative.mjs) — тот же такт смены Раунда.
+    await resolveExpiredImperatives(combat);
     // Аблативный AP-щит (wdbc-bxw6, Роба Чемпиона): угасает на 1d5+1 в
     // начале каждого нового Раунда — тот же триггер, что счётчики Орд выше.
     await decayAblativeApShieldOnNewRound(combat);

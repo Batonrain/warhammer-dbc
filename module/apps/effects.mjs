@@ -48,7 +48,17 @@ export function isItemActive(item) {
       return host ? !!host.system?.equipped : true;
     }
     case "psychicPower": return !!sys.isSustained;
-    case "techPower": return !!sys.sustained || sys.miracleType === "passive";
+    case "techPower": {
+      if (sys.sustained || sys.miracleType === "passive") return true;
+      // Славословие (X): по книге скомпилированное Славословие «считается как
+      // Процесс с Ценой ½X Когниции, пока его не используют» — т.е. активно
+      // ровно пока держится компиляция, тем же смыслом, что sustained у
+      // остальных техночудес (см. wdbc-yu32). Компенсатор/Манипула/Анима/
+      // Доктрина/Императив тут ни при чём — они не про удерживаемое
+      // состояние предмета-источника (см. разбор в тикете).
+      const isSlavo = sys.miracleType === "slavoslovie" || (sys.extraTypes || []).some(e => e.type === "slavoslovie");
+      return isSlavo && !!sys.compiled;
+    }
     case "navigatorPower": return !!sys.isSustained;
     case "implant":
       return !!item.getFlag("warhammer-dbc", "installed") && !item.getFlag("warhammer-dbc", "disabled");

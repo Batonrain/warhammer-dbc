@@ -16,6 +16,8 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
+import { findTechImperative } from "../../constants/tech-imperatives.mjs";
+import { applyImperative } from "../../rules/imperative.mjs";
 import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant } from "../../rules/psalm-unseen-fortress.mjs";
 import { hasElectrovigour } from "../../rules/electrovigour.mjs";
 import { pickReroll } from "../../rules/reroll-pick.mjs";
@@ -224,6 +226,48 @@ export async function activateTechMiracle(actor, item) {
   // Vox Warding) — module/apps/infoguard.mjs.
   const infoguardSection = await infoguardInteractionSection(actor, item, { success });
 
+  // ── Императив (wdbc-yu32): раздача временного баффа целям, взятым из
+  // Foundry-таргета (game.user.targets) — тот же приём, что у Bone Song/
+  // Песни Стремительности (combat/bone-song.mjs, combat/song-of-swiftness.mjs).
+  // Бонус остаётся редактируемым числом (диалог), «до конца следующего Хода
+  // или до замены» гейтит module/rules/imperative.mjs.
+  let imperativeSection = "";
+  const imperativeConfig = success ? findTechImperative(item) : null;
+  if (imperativeConfig) {
+    const targets = [...(game.user.targets ?? [])].map(t => t.actor).filter(Boolean);
+    if (!targets.length) {
+      imperativeSection = `<div class="roll-threshold" style="font-size:0.85em;">${rollIcon("warn","#ffb84d")}Императив: цели не выбраны — наведите Foundry-таргет на согласных целей и активируйте снова.</div>`;
+    } else {
+      const raw = await foundry.applications.api.DialogV2.wait({
+        window: { title: imperativeConfig.label },
+        content: `<label>Бонус/штраф на Избегания: <input type="number" name="bonus" value="${imperativeConfig.evasionBonus}" autofocus/></label>
+          <p style="font-size:0.85em;opacity:.8;">${esc(imperativeConfig.evasionRecoilNote)}</p>`,
+        buttons: [
+          { action: "apply", label: "Наложить", default: true,
+            callback: (_ev, button) => button.form.querySelector('[name="bonus"]')?.value },
+          { action: "cancel", label: "Отмена", callback: () => null }
+        ],
+        rejectClose: false
+      });
+      if (raw === null || raw === undefined) {
+        imperativeSection = `<div class="roll-threshold" style="font-size:0.85em;">Императив: наложение отменено.</div>`;
+      } else {
+        const chosen = Number(raw) || 0;
+        const bonuses = {
+          evasionBonus: chosen,
+          coverApDelta: imperativeConfig.coverApDelta,
+          coverApFloorRatio: imperativeConfig.coverApFloorRatio,
+          coverApCeilRatio: imperativeConfig.coverApCeilRatio
+        };
+        for (const targetActor of targets) {
+          await applyImperative(targetActor, { sourceItem: item, casterActor: actor, label: imperativeConfig.label, bonuses });
+        }
+        imperativeSection = `<div class="roll-threshold">${rollIcon("bolt","#ffd24d")}${esc(imperativeConfig.label)}: ${chosen >= 0 ? "+" : ""}${chosen} на Избегания → ${targets.map(t => esc(t.name)).join(", ")}. До конца следующего Хода или до замены.</div>
+          <div class="roll-threshold" style="font-size:0.85em;opacity:.8;">${esc(imperativeConfig.evasionRecoilNote)}</div>`;
+      }
+    }
+  }
+
   const rollMode = game.settings.get("core", "rollMode");
   const techDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -248,6 +292,7 @@ export async function activateTechMiracle(actor, item) {
           ${psalmSection}
           ${attackPropsSection}
           ${infoguardSection}
+          ${imperativeSection}
           ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}
           <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${techDice}</details>
         </div>`,

@@ -13,6 +13,7 @@ import { _performDodge } from "../../module/combat/defense.mjs";
 import { recoilButtonHtml, performRecoil, performPoolRecoil, POOL_RECOIL_COST, showRecoilDialog } from "../../module/combat/recoil.mjs";
 import { recoilRemaining } from "../../module/combat/recoil-pool.mjs";
 import { addEvasionSurplus, getEvasionPool } from "../../module/combat/evasion-pool.mjs";
+import { COVER_TYPE } from "../../module/regions/cover.mjs";
 
 function defender(overrides = {}) {
   const a = actorFor(overrides);
@@ -180,6 +181,38 @@ describe("performPoolRecoil: банк Успехов → Отскок (wdbc-16ss
 
     expect(getEvasionPool(d, ATTACKER)).toBeNull(); // 2 Усп. списаны безвозвратно
     expect(recoilRemaining(d)).toBe(4); // метры не тронуты — диалог отменён до этого шага
+  });
+});
+
+describe("showRecoilDialog: подсказанный AP Укрытия учитывает Императив цели (wdbc-yu32)", () => {
+  function coverToken(actorUuid, coverAp) {
+    const region = { behaviors: [{ type: COVER_TYPE, disabled: false, system: { coverAp } }] };
+    return { actor: { uuid: actorUuid }, document: { regions: new Set([region]) } };
+  }
+
+  beforeEach(() => { globalThis.canvas.tokens = { placeables: [] }; });
+
+  it("нет активного Императива — подсказка = сырой AP зоны", async () => {
+    const d = defender();
+    globalThis.canvas.tokens.placeables = [coverToken(d.uuid, 6)];
+
+    const promise = showRecoilDialog(d);
+    await flush();
+    expect(captured.dialog.content).toContain('value="6"');
+    captured.dismiss();
+    await promise;
+  });
+
+  it("Императив Крепости активен у цели — +8 к подсказанному AP, клапан ×2 от базового", async () => {
+    const d = defender();
+    d.items.push({ getFlag: (s, k) => (k === "imperativeCarrier" ? true : k === "imperativeBonuses" ? { coverApDelta: 8, coverApCeilRatio: 2 } : undefined) });
+    globalThis.canvas.tokens.placeables = [coverToken(d.uuid, 4)];
+
+    const promise = showRecoilDialog(d);
+    await flush();
+    expect(captured.dialog.content).toContain('value="8"'); // 4+8=12, клапан 4×2=8
+    captured.dismiss();
+    await promise;
   });
 });
 
