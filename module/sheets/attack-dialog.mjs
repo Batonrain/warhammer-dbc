@@ -367,6 +367,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
     : "";
 
+  // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
+  // АТАКУЮЩЕМ (module/combat/bow-to-audience.mjs), не на цели — бонус/штраф
+  // действует только пока бьёт именно отметивший, до начала его следующего
+  // Хода (снимается hooks.mjs::updateCombat, тот же такт, что Dread Wail).
+  const bowMark = actor.getFlag?.("warhammer-dbc", "bowToAudienceMark");
+  const bowMarked = !!(bowMark?.targetIds?.includes(attackCtx.targetActor?.id));
+  const bowMarkedMod = bowMarked ? (Number(bowMark.bonus) || 0) : 0;
+  const bowMarkedBadge = bowMarkedMod
+    ? `<span class="atk-training-warn" title="Поклон Публике: цель отмечена, действует до конца этого эффекта">🎭 Поклон Публике (+${bowMarkedMod})</span>`
+    : "";
+
   // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
   // автоматически и удваивает урон до Поглощения; прочая стрельба — только
   // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
@@ -386,7 +397,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -635,8 +646,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
     // Избегания ЦЕЛИ против ЭТОЙ атаки — Приём и Стойка складываются (стр.
     // 14-15): например Взмах (−10 Уклонение) + Агрессивная (−10 Уклонение).
-    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0);
-    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0);
+    // Поклон Публике (wdbc-1rno): «равный штраф на их физические Избегания» —
+    // тот же bowMarkedMod, что уже прибавлен атакующему в wpAttackMod выше
+    // (замыкание, bowMark читается один раз на актора-атакующего).
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod;
+    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod;
 
     // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
     const blocked = isMelee && stanceKey === "defensive" && stDef.noAttackWithoutShield && !hasShieldEquipped;
@@ -721,7 +735,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -1395,6 +1409,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
+      { label: "Поклон Публике",     value: bowMarkedMod },
       { label: "Шаг за шагом",       value: stepByStepMod },
       { label: "База",               value: sel.baseBon },
       { label: "Приём",              value: sel.maneuverBon },

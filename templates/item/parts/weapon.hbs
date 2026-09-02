@@ -486,6 +486,17 @@
     <label class="wr-label" title="Изменение Надёжности (+/−)">Надёжн. +</label>
     <input type="number" name="system.effects.reliabilityMod" value="{{system.effects.reliabilityMod}}" class="wr-input-xs"/>
   </div>
+  <div class="weapon-row">
+    <label class="wr-label" title="Модификация подстроена под конкретного персонажа (напр. Custom Grip): бонус — ему, зеркальный штраф всем остальным">Подстроена под</label>
+    <select name="system.effects.fittedToId" class="wr-select">
+      <option value="" {{#if (eq system.effects.fittedToId "")}}selected{{/if}}>— не подстроена —</option>
+      {{#each modFittedToChoices as |a|}}
+      <option value="{{a.id}}" {{#if (eq @root.system.effects.fittedToId a.id)}}selected{{/if}}>{{a.name}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Бонус ±</label>
+    <input type="number" name="system.effects.fittedBonus" value="{{system.effects.fittedBonus}}" class="wr-input-xs"/>
+  </div>
 </div>
 
 <div class="item-section">

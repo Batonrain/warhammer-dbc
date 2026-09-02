@@ -64,6 +64,25 @@ export async function markMovedThisTurn(actor) {
   await actor.setFlag("warhammer-dbc", "movedThisTurn", true);
 }
 
+/**
+ * Категория «сколько подвигался в этом Ходу» — грубее movedThisTurn (тот
+ * только boolean), нужна Snapshot/Выстрелу Навскидку (wdbc-1rno,
+ * dodge.core.snapshot: «подвигался не больше полудвижения»). "half" —
+ * Полудвижение/Выход из Боя (оба SPD×1, одна физическая дистанция несмотря
+ * на разную стоимость ОД); "full" — Полное Движение/Бег/Натиск (SPD×2 и
+ * больше). Монотонно: однажды поставленное "full" не откатывается назад на
+ * "half" в рамках Хода (declareHalfMove после declareFullMove — тот же Ход,
+ * дистанция уже была больше половины). Сырое перемещение токена мышью
+ * (initMovedFlagTracking ниже) категорию НЕ ставит — как считать её оттуда,
+ * не решено, задокументировано как пробел в capabilities.mjs.
+ */
+export async function markMoveDegreeThisTurn(actor, degree) {
+  if (!actor) return;
+  const current = actor.getFlag("warhammer-dbc", "moveDegreeThisTurn");
+  if (current === "full" || current === degree) return;
+  await actor.setFlag("warhammer-dbc", "moveDegreeThisTurn", degree);
+}
+
 // Полёт (стр. 30) доступен только актору с Чертой Flyer/Hoverer (module/rules/
 // mount.mjs держит тот же список для скакунов/байков — здесь та же проверка,
 // но по Чертам самого актора, а не его скакуна).
@@ -111,6 +130,7 @@ export async function declareHalfMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полудвижение</div>
@@ -122,6 +142,7 @@ export async function declareFullMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
@@ -134,6 +155,7 @@ export async function declareCharge(actor) {
   if (!actor) return;
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
@@ -163,6 +185,7 @@ export async function declareDisengage(actor) {
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
@@ -175,6 +198,7 @@ export async function declareRun(actor) {
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.run);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
