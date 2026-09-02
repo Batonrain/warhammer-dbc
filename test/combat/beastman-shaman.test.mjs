@@ -11,27 +11,62 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import {
-  activeGodBranch, primalHowlAvailable, applyPrimalHowl,
+  activeGodBranch, primalHowlAvailable, applyPrimalHowl, clearBeastmanShamanTempEffects,
   warpTaintedAuraAvailable, applyWarpTaintedAura,
   riteOfSelfSacrificeAvailable, applyRiteOfSelfSacrifice,
-  hexMarkedPreyAvailable, applyHexMarkedPrey, HEX_MARK_FLAG,
-  ritualBloodlettingAvailable, applyRitualBloodletting
+  hexMarkedPreyAvailable, applyHexMarkedPrey, HEX_MARK_FLAG, clearHexMarkedPreyMarks,
+  boneRuneEtchingAvailable, showBoneRuneEtchingText,
+  ritualBloodlettingAvailable, applyRitualBloodletting,
+  hasSymbolOfPower, applySymbolOfPowerGrant
 } from "../../module/combat/beastman-shaman.mjs";
+
+let _uuidSeq = 0;
 
 function mutableActor({ name = "Шаман", items = [], patronGod = "", extra = {} } = {}) {
   const flags = {};
+  const effects = [];
   const data = {
-    name, items,
+    name, items, uuid: `Actor.${name}-${_uuidSeq++}`, img: "icons/svg/upgrade.svg",
     system: {
       patronGod, corruptionBonus: 3,
       characteristics: { wp: { total: 40 }, fel: { bonus: 3 } },
       wounds: { value: 10, critical: 0, max: 14, ablative: 0, ablativeMax: 0 },
       fatigue: { value: 0 }, corruption: { value: 0 },
+      conditions: {},
       psyker: { rating: 4 }, inRage: false,
       ...extra
     },
+    effects: { contents: effects },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; return value; },
+    unsetFlag: async (scope, key) => { delete flags[`${scope}.${key}`]; },
+    createEmbeddedDocuments: async (type, docs) => {
+      if (type === "ActiveEffect") {
+        const created = docs.map((d, i) => ({
+          id: `fx${effects.length + i}`, name: d.name, img: d.img,
+          system: d.system, flags: d.flags,
+          getFlag: (scope, key) => d.flags?.[scope]?.[key]
+        }));
+        effects.push(...created);
+        return created;
+      }
+      if (type === "Item") {
+        const created = docs.map((d, i) => ({ id: `it${data.items.length + i}`, ...d }));
+        data.items.push(...created);
+        return created;
+      }
+      return [];
+    },
+    deleteEmbeddedDocuments: async (type, ids) => {
+      if (type === "ActiveEffect") {
+        for (const id of ids) {
+          const idx = effects.findIndex(fx => fx.id === id);
+          if (idx >= 0) effects.splice(idx, 1);
+        }
+      } else if (type === "Item") {
+        data.items = data.items.filter(i => !ids.includes(i.id));
+      }
+    },
     update: async patch => {
       for (const [path, value] of Object.entries(patch)) {
         const parts = path.split(".");
@@ -91,6 +126,23 @@ describe("Primal Howl", () => {
 
     await applyPrimalHowl(a, casterT);
     expect(ally.system.inRage).toBe(true);
+    // Реальный временный ActiveEffect (не информационный флаг) — S/WS.
+    const fx = ally.effects.contents.find(f => f.name.includes("Первобытный Вой"));
+    expect(fx).toBeDefined();
+    const keys = fx.system.changes.map(c => c.key);
+    expect(keys).toContain("system.characteristics.s.totalFx");
+    expect(keys).toContain("system.characteristics.ws.totalFx");
+    expect(fx.flags["warhammer-dbc"].beastmanShamanTemp).toBe(a.uuid);
+  });
+
+  it("персонаж получает временный Fear(+1) как реальный ActiveEffect", async () => {
+    globalThis.game.combat = { id: "c1" };
+    const a = shamanWithTalent("Primal Howl / Первобытный Вой");
+    const casterT = token("c", a, 1);
+    casterT.parent = scene([casterT]);
+    await applyPrimalHowl(a, casterT);
+    const fx = a.effects.contents.find(f => f.name.includes("Fear"));
+    expect(fx?.system.changes).toEqual([expect.objectContaining({ key: "system.fearRating", type: "add", value: 1 })]);
   });
 
   it("Нургл: союзники получают аблативные раны", async () => {
@@ -132,6 +184,37 @@ describe("Primal Howl", () => {
   });
 });
 
+describe("clearBeastmanShamanTempEffects", () => {
+  it("снимает эффекты, выданные ИМЕННО этим шаманом, не трогая чужие", async () => {
+    globalThis.game.combat = { id: "c1" };
+    const shaman = shamanWithTalent("Primal Howl / Первобытный Вой");
+    const other = mutableActor({ name: "Другой шаман" });
+    const ally = mutableActor({ name: "Союзник" });
+    const casterT = token("c", shaman, 1);
+    casterT.parent = scene([casterT, token("t1", ally, 1)]);
+
+    await applyPrimalHowl(shaman, casterT);
+    expect(ally.effects.contents.length).toBeGreaterThan(0);
+    // Чужой эффект (другой источник) не должен быть снят.
+    await ally.createEmbeddedDocuments("ActiveEffect", [{
+      name: "Чужой эффект", img: "", system: { changes: [] },
+      flags: { "warhammer-dbc": { beastmanShamanTemp: other.uuid } }
+    }]);
+    const before = ally.effects.contents.length;
+
+    const combat = { combatants: [{ actor: shaman }, { actor: ally }] };
+    await clearBeastmanShamanTempEffects(combat, shaman);
+
+    expect(ally.effects.contents.length).toBe(before - 1);
+    expect(ally.effects.contents.every(fx => fx.flags["warhammer-dbc"].beastmanShamanTemp !== shaman.uuid)).toBe(true);
+    expect(ally.effects.contents.some(fx => fx.flags["warhammer-dbc"].beastmanShamanTemp === other.uuid)).toBe(true);
+  });
+
+  it("безопасно звать без боя/шамана", async () => {
+    await expect(clearBeastmanShamanTempEffects(null, null)).resolves.toBeUndefined();
+  });
+});
+
 describe("Warp-Tainted Aura", () => {
   it("недоступна без Таланта", () => {
     expect(warpTaintedAuraAvailable(mutableActor())).toBe(false);
@@ -160,6 +243,18 @@ describe("Warp-Tainted Aura", () => {
     captured.nextRoll = 90; // провал против низкого порога (10-10=0)
     await applyWarpTaintedAura(a, casterT);
     expect(enemy.system.corruption.value).toBe(1);
+  });
+
+  it("Нургл: провалившие враги получают реальное Состояние «Удушье»", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = shamanWithTalent("Warp-Tainted Aura / Аура Скверны", { patronGod: "nurgle" });
+    const casterT = token("c", a, 1);
+    const enemy = mutableActor({ name: "Враг", extra: { characteristics: { wp: { total: 10 } } } });
+    casterT.parent = scene([casterT, token("t1", enemy, -1)]);
+
+    captured.nextRoll = 90;
+    await applyWarpTaintedAura(a, casterT);
+    expect(enemy.system.conditions.suffocating).toBe(true);
   });
 
   it("успешные враги не получают Порчу", async () => {
@@ -207,13 +302,13 @@ describe("Hex-Marked Prey", () => {
     expect(a.getFlag("warhammer-dbc", HEX_MARK_FLAG)).toBeUndefined();
   });
 
-  it("успех шамана против провала цели — метка накладывается", async () => {
+  it("успех шамана против провала цели — метка накладывается НА ЦЕЛЬ", async () => {
     const a = shamanWithTalent("Hex-Marked Prey / Проклятая Метка", { patronGod: "tzeentch" });
     const target = mutableActor({ name: "Жертва" });
     captured.dice = [10, 90]; // шаман 10 (успех vs 40), цель 90 (провал vs 50)
     await applyHexMarkedPrey(a, target);
-    const mark = a.getFlag("warhammer-dbc", HEX_MARK_FLAG);
-    expect(mark).toMatchObject({ targetName: "Жертва", god: "tzeentch" });
+    const mark = target.getFlag("warhammer-dbc", HEX_MARK_FLAG);
+    expect(mark).toMatchObject({ shamanUuid: a.uuid, god: "tzeentch" });
   });
 
   it("провал шамана — метка не накладывается", async () => {
@@ -221,7 +316,18 @@ describe("Hex-Marked Prey", () => {
     const target = mutableActor({ name: "Жертва" });
     captured.dice = [95, 10]; // шаман проваливает, цель проходит
     await applyHexMarkedPrey(a, target);
-    expect(a.getFlag("warhammer-dbc", HEX_MARK_FLAG)).toBeUndefined();
+    expect(target.getFlag("warhammer-dbc", HEX_MARK_FLAG)).toBeUndefined();
+  });
+
+  it("clearHexMarkedPreyMarks снимает метку со всех комбатантов боя", async () => {
+    const a = shamanWithTalent("Hex-Marked Prey / Проклятая Метка");
+    const target = mutableActor({ name: "Жертва" });
+    captured.dice = [10, 90];
+    await applyHexMarkedPrey(a, target);
+    expect(target.getFlag("warhammer-dbc", HEX_MARK_FLAG)).toBeDefined();
+
+    await clearHexMarkedPreyMarks({ combatants: [{ actor: a }, { actor: target }] });
+    expect(target.getFlag("warhammer-dbc", HEX_MARK_FLAG)).toBeUndefined();
   });
 });
 
@@ -244,5 +350,72 @@ describe("Ritual Bloodletting", () => {
     casterT.parent = scene([casterT]);
     await applyRitualBloodletting(a, casterT, { importantKill: true });
     expect(a.getFlag("warhammer-dbc", "ritualBloodletting")).toMatchObject({ bonus: 10 });
+  });
+});
+
+describe("Bone-Rune Etching", () => {
+  it("недоступна без Таланта", () => {
+    expect(boneRuneEtchingAvailable(mutableActor())).toBe(false);
+  });
+  it("доступна с Талантом, не требует троттлинга/боя", () => {
+    expect(boneRuneEtchingAvailable(shamanWithTalent("Bone-Rune Etching / Костяная Рунопись"))).toBe(true);
+  });
+  it("showBoneRuneEtchingText не бросает без god-ветки", async () => {
+    const a = shamanWithTalent("Bone-Rune Etching / Костяная Рунопись");
+    await expect(showBoneRuneEtchingText(a)).resolves.toBeUndefined();
+  });
+});
+
+function traitPack(entries) {
+  return {
+    getIndex: async () => entries,
+    getDocument: async id => {
+      const e = entries.find(x => x._id === id);
+      return e ? { ...e, toObject: () => ({ ...e }) } : null;
+    }
+  };
+}
+
+describe("Symbol of Power — applySymbolOfPowerGrant", () => {
+  it("hasSymbolOfPower определяет владение Чертой", () => {
+    expect(hasSymbolOfPower(shamanWithTrait("Symbol of Power / Символ Власти"))).toBe(true);
+    expect(hasSymbolOfPower(mutableActor())).toBe(false);
+  });
+
+  it("заменяет Natural Weapons на Deadly Natural Weapons и добавляет трейт рогов", async () => {
+    globalThis.game.packs = new Map([
+      ["warhammer-dbc.traits", traitPack([
+        { _id: "d1", name: "Deadly Natural Weapons / Смертельное Естественное Оружие", system: { hasRating: false, rating: 0 } }
+      ])]
+    ]);
+    const a = shamanWithTrait("Symbol of Power / Символ Власти", { extra: { psyker: { rating: 5 } } });
+    a.items = [
+      { id: "nw1", type: "trait", name: "Natural Weapons / Естественное Оружие" },
+      ...a.items
+    ];
+
+    await applySymbolOfPowerGrant(a);
+
+    expect(a.items.some(i => i.id === "nw1")).toBe(false); // Natural Weapons снят
+    const horns = a.items.find(i => i.name?.includes("(Рога)"));
+    expect(horns?.system?.rating).toBe(5);
+  });
+
+  it("снимает Stepchildren of the Gods", async () => {
+    globalThis.game.packs = new Map();
+    const a = shamanWithTrait("Symbol of Power / Символ Власти");
+    a.items = [{ id: "sc1", type: "trait", name: "Stepchildren of the Gods / Пасынки Богов" }, ...a.items];
+    await applySymbolOfPowerGrant(a);
+    expect(a.items.some(i => i.id === "sc1")).toBe(false);
+  });
+
+  it("идемпотентна — повторный вызов ничего не делает второй раз", async () => {
+    globalThis.game.packs = new Map();
+    const a = shamanWithTrait("Symbol of Power / Символ Власти");
+    a.items = [{ id: "sc1", type: "trait", name: "Stepchildren of the Gods / Пасынки Богов" }, ...a.items];
+    await applySymbolOfPowerGrant(a);
+    a.items.push({ id: "sc1", type: "trait", name: "Stepchildren of the Gods / Пасынки Богов" }); // будто снова появился
+    await applySymbolOfPowerGrant(a);
+    expect(a.items.some(i => i.id === "sc1")).toBe(true); // второй вызов не тронул — флаг уже стоял
   });
 });

@@ -617,27 +617,27 @@ export const CAPABILITIES = {
   //    «Мёртвое Могущество» Иннари выше в этом файле.
   "aura.beastmanShaman.primalHowl.base": {
     label: "Полное Действие раз в бой: союзники-зверолюди/мутанты в радиусе Cor.b×10 м получают +10 S/+10 T до начала следующего Хода персонажа, враги считают персонажа источником Fear (+1)",
-    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): раз/бой, радиус Cor.b×10 м, Fear врагам (метка). Бонус +10 S/+10 T союзникам НЕ смоделирован (нет инфраструктуры временных бонусов характеристик, см. шапку файла)."
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): раз/бой, радиус Cor.b×10 м. РЕАЛЬНО: временный ActiveEffect Fear(+1) на шамана и +10 S/+10 T каждому союзнику (system.characteristics.*.totalFx, снимается по границе Хода шамана, clearBeastmanShamanTempEffects). НЕ смоделировано: сам факт «враг считает персонажа источником Fear» как условие для его собственных тестов."
   },
   "aura.beastmanShaman.primalHowl.khorneVariant": {
     label: "Кхорн: бонус к T заменяется на +10 WS, рукопашный урон союзников +4, союзники без Frenzy входят в Ярость (с Frenzy — за Свободное Действие)",
-    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): союзники без Frenzy входят в Ярость (system.inRage). WS-бонус вместо T и +4 Dmg — не смоделированы."
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 S/+10 WS (замена T→WS) каждому союзнику, союзники без Frenzy входят в Ярость (system.inRage). +4 Dmg рукопашным атакам — нет безопасного ключа эффекта для урона, не смоделировано."
   },
   "aura.beastmanShaman.primalHowl.nurgleVariant": {
     label: "Нургл: вместо бонуса к S — +1d10 аблативных ран, переброс проваленных тестов сопротивления движению",
-    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): +1d10 Аблативных Ран каждому союзнику в радиусе (реально пишет system.wounds.ablative/ablativeMax). Переброс тестов сопротивления движению — не смоделирован."
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 T (замена S→T) + реальные +1d10 Аблативных Ран (system.wounds.ablative/ablativeMax) каждому союзнику. Переброс тестов сопротивления движению — не смоделирован."
   },
   "aura.beastmanShaman.primalHowl.slaaneshVariant": {
     label: "Слаанеш: вместо обычных бонусов — +10 A до конца следующего Хода и снятие 1 Усталости; враги, провалившие тест на Страх, получают 1 Усталость",
-    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): −1 Усталость каждому союзнику в радиусе (реально пишет system.fatigue.value). +10 A и Усталость проваливших Страх врагов — не смоделированы."
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 A (вместо S/T) + реальное −1 Усталость (system.fatigue.value) каждому союзнику. Усталость проваливших Страх врагов — не смоделирована (тест на Страх не запускается)."
   },
   "aura.beastmanShaman.primalHowl.tzeentchVariant": {
     label: "Тзинч: вместо обычных бонусов — +10 P союзникам; враги получают неизбегаемое попадание Hallucinogenic(1); варп-феномены до конца следующего хода получают +20",
-    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): только текст в карточке чата, ни одно из чисел (+10 P/Hallucinogenic/феномен +20) не пишет реальные поля."
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 P (вместо S/T) каждому союзнику; Hallucinogenic(1) врагам — кнопка, переиспользующая настоящий движок Особых Свойств Оружия (combat/weapon-properties.mjs::buildTargetEffectButtons), тест и наложение состояния идут по нему, не по копии. +20 к варп-феноменам — не смоделировано."
   },
   "mark.beastmanShaman.hexMarkedPrey.base": {
     label: "Полудействие, Соревновательный тест W+0 vs W+10: цель получает Метку Проклятого до конца боя, союзники-зверолюди получают +15 на атаки против неё",
-    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): Соревновательный тест W+0 vs W+10 по таргету (game.user.targets), метка — флаг актора (HEX_MARK_FLAG). +15 союзникам на атаки по цели — не смоделировано (нет привязки к движку атаки)."
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey() (тест/флаг метки на цели) + rules/library/beastman-shaman.mjs::BEASTMAN_SHAMAN_RULES (правило \"beastmanShaman.hexMarkedPrey.allyBonus\", предикат rules/predicates.mjs::hexMarkedPreyAllyBonus) — РЕАЛЬНО: +15 к тесту Атаки любого зверолюда-союзника (effectiveRace(actor.system)===\"beastman\") по помеченной цели, тот же общий реестр правил, что Avatar of Slaughter. Проверять disposition/конкретную \"союзность\" не может — predicates.mjs не видит canvas, гейтит по расе."
   },
   "mark.beastmanShaman.hexMarkedPrey.khorneVariant": {
     label: "Кхорн: атаки союзников по цели получают Proven(3); крит с R-уроном дополнительно вызывает кровотечение",
@@ -685,7 +685,7 @@ export const CAPABILITIES = {
   },
   "aura.beastmanShaman.warpTaintedAura.nurgleVariant": {
     label: "Нургл: провалившие враги Задыхаются (−30 на Удушение) в ауре; герметичная броня — попадание Corrosive(Cor.b)",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; Задыхание/Corrosive — не смоделированы."
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; провалившие РЕАЛЬНО получают Состояние «Удушье» (system.conditions.suffocating, тот же CONDITIONS_DEF/токен-статус, что обычное книжное Удушье). Corrosive от герметичной брони — не смоделирован (нужен контекст реального попадания/брони)."
   },
   "aura.beastmanShaman.warpTaintedAura.slaaneshVariant": {
     label: "Слаанеш: провалившие враги очарованы — не атакуют шамана/стадо на Провалы Раунда, пока не атакованы первыми",
@@ -725,7 +725,7 @@ export const CAPABILITIES = {
   },
   "psyfocus.beastmanShaman.symbolOfPower.hornFocusAndPainBoost": {
     label: "Рог как Good.Q пси-фокус (10 мин на изготовление) + врождённый Comm.Q пси-фокус; при манифестации может добровольно получить 1d5+2 R Dmg Pen∞ за +2 эPR, тогда манифестация всегда вызывает варп-феномен +10; Natural Weapons → Deadly Natural Weapons + отдельный трейт рогов Deadly Natural Weapons (бPR, Рога) со свойством Tainted, пока есть покровительство",
-    source: "Symbol of Power / Символ Власти", reader: ""
+    source: "Symbol of Power / Символ Власти", reader: "module/combat/beastman-shaman.mjs — applySymbolOfPowerGrant(): РЕАЛЬНО заменяет Natural Weapons на Deadly Natural Weapons и добавляет отдельный трейт рогов Deadly Natural Weapons (рейтинг = бPR персонажа на момент получения, не отслеживает рост ПР дальше). НЕ смоделировано: психо-фокус из рога/врождённый Comm.Q фокус, добровольная боль за +2 эPR, авто-феномен +10, свойство Tainted на рога, покровительство-условная проверка."
   },
   "skill.beastmanShaman.symbolOfPower.aversionAndCyberneticsExemption": {
     label: "Навыки Lore/Trade не считаются враждебными от Aversion to Order (обычные правила цены), нет штрафов от кибернетики/имплантов",
@@ -733,7 +733,7 @@ export const CAPABILITIES = {
   },
   "trait.beastmanShaman.symbolOfPower.loseStepchildrenOfTheGods": {
     label: "Персонаж лишается трейта Stepchildren of the Gods",
-    source: "Symbol of Power / Символ Власти", reader: ""
+    source: "Symbol of Power / Символ Власти", reader: "module/combat/beastman-shaman.mjs — applySymbolOfPowerGrant() (Hooks.on(\"createItem\") в warhammer-dbc.mjs): РЕАЛЬНО снимает Stepchildren of the Gods при получении Symbol of Power, тот же безопасный приём удаления по имени, что race-def removesTraits (apps/races.mjs)."
   },
 
   // ── Таланты Певцов Кости (DoomBC — Аэльдари, стр. 11) — Фаза 2,

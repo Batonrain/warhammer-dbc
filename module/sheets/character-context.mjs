@@ -386,6 +386,7 @@ export function characterContext(actor) {
   context.hasWarpTaintedAura = hasBeastmanShamanTalent(actor, "Warp-Tainted Aura / Аура Скверны");
   context.hasRiteOfSelfSacrifice = hasBeastmanShamanTalent(actor, "Rite of Self-Sacrifice / Ритуал Самопожертвования");
   context.hasHexMarkedPrey = hasBeastmanShamanTalent(actor, "Hex-Marked Prey / Проклятая Метка");
+  context.hasBoneRuneEtching = hasBeastmanShamanTalent(actor, "Bone-Rune Etching / Костяная Рунопись");
   context.hasRitualBloodletting = hasBeastmanShamanTrait(actor, "Ritual Bloodletting / Ритуал Кровопускания");
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");

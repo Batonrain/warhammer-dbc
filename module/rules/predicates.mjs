@@ -7,6 +7,7 @@
 
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
+import { raceMatches } from "./race.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -197,6 +198,20 @@ export const PREDICATES = {
     const mark = actor?.getFlag?.("warhammer-dbc", "avatarOfSlaughterMark");
     if (!mark?.berserkerUuid) return false;
     return ctx?.targetActor?.uuid !== mark.berserkerUuid;
+  },
+
+  // Hex-Marked Prey/Проклятая Метка (Талант, Шаман Зверолюдей, wdbc-xxb7):
+  // «Пока метка активна, все зверолюди-союзники получают +15 на атаки
+  // против этой цели.» Метка живёт на ЦЕЛИ (module/combat/
+  // beastman-shaman.mjs::applyHexMarkedPrey), поэтому cross-actor чтение —
+  // ctx.targetActor, не сам actor (в отличие от avatarOfSlaughterOffTarget
+  // выше, где метка на самом акторе). «Зверолюди-союзники» — раса
+  // effectiveRace(actor.system)==="beastman" (rules/race.mjs): чистое поле
+  // актора, доступное предикату без canvas/disposition.
+  hexMarkedPreyAllyBonus: (actor, ctx) => {
+    const mark = ctx?.targetActor?.getFlag?.("warhammer-dbc", "hexMarkedPrey");
+    if (!mark) return false;
+    return raceMatches(actor?.system, "beastman");
   }
 };
 

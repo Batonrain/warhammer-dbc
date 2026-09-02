@@ -32,6 +32,7 @@ import {
   warpTaintedAuraAvailable, applyWarpTaintedAura,
   riteOfSelfSacrificeAvailable, applyRiteOfSelfSacrifice,
   hexMarkedPreyAvailable, applyHexMarkedPrey,
+  boneRuneEtchingAvailable, showBoneRuneEtchingText,
   ritualBloodlettingAvailable, applyRitualBloodletting
 } from "../../combat/beastman-shaman.mjs";
 import { preservationAvailable, applyPreservationSingle, applyPreservationArea } from "../../combat/preservation.mjs";
@@ -179,6 +180,10 @@ export function activateCombatListeners(root, actor) {
     if (!hexMarkedPreyAvailable(actor)) return;
     const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
     await applyHexMarkedPrey(actor, target);
+  });
+  on(root, ".bone-rune-etching-btn", "click", async () => {
+    if (!boneRuneEtchingAvailable(actor)) return;
+    await showBoneRuneEtchingText(actor);
   });
   on(root, ".ritual-bloodletting-btn", "click", async () => {
     if (!ritualBloodlettingAvailable(actor)) return;

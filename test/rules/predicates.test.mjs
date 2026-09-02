@@ -256,7 +256,10 @@ describe("общее требование к предикатам", () => {
     hasFaction: "chaos", targetHasFaction: "chaos",
     // Метка Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — читает флаг самого
     // актора, значение из `when` не участвует.
-    avatarOfSlaughterOffTarget: undefined
+    avatarOfSlaughterOffTarget: undefined,
+    // Метка Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — читает флаг ЦЕЛИ
+    // (ctx.targetActor), значение из `when` не участвует.
+    hexMarkedPreyAllyBonus: undefined
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {

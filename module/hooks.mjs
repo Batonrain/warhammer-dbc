@@ -45,6 +45,7 @@ import { processConditionTurnStart, processConditionTurnEnd } from "./combat/con
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
+import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -1330,6 +1331,8 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+    // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
+    await clearHexMarkedPreyMarks(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
@@ -1395,6 +1398,9 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
+      // следующего Хода ШАМАНА» (не получателя), тем же тактом.
+      await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
