@@ -26,6 +26,9 @@
       },
       {
         "key": "independent"
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,
