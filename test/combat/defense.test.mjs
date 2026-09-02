@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
-import { _performParry, _performDodge, COUNTER_ATTACK_CAPABILITY } from "../../module/combat/defense.mjs";
+import { _performParry, _performDodge, _performSprayCancel, COUNTER_ATTACK_CAPABILITY } from "../../module/combat/defense.mjs";
 import { getEvasionPool } from "../../module/combat/evasion-pool.mjs";
 
 const DEFAULT_SOURCES = getRuleSources();
@@ -290,5 +290,50 @@ describe("_performDodge/_performParry: банк излишка Успехов в
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Остаётся 1 неизрасходованный Успех");
     expect(getEvasionPool(actor, "Actor.attacker-1")).toMatchObject({ successes: 1 });
+  });
+});
+
+// Распыление/Spray (wdbc-p06s, стр. 166-170): отдельный от Уклонения тест —
+// Acrobatics(A)+0, без Реакции. Ag 35 (actorFor), untrained −20 → Порог 15,
+// те же числа, что у _performDodge (одна и та же характеристика).
+describe("_performSprayCancel: тест на отмену Распыления (wdbc-p06s)", () => {
+  it("Успех — попадание отменено, предложена кнопка Отскока", async () => {
+    captured.dice = [10]; // Порог 15, rv=10 → 1 степень, успех
+    const actor = attacker();
+
+    await _performSprayCancel(actor);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Тест на отмену (Распыление, Acrobatics A+0)");
+    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).toContain("Успех");
+    expect(card).toContain("Попадание отменено");
+    expect(card).toContain("wh-recoil-btn");
+  });
+
+  it("Провал — попадание проходит, кнопки Отскока нет", async () => {
+    captured.dice = [96];
+    const actor = attacker();
+
+    await _performSprayCancel(actor);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Провал");
+    expect(card).toContain("Попадание проходит");
+    expect(card).not.toContain("wh-recoil-btn");
+  });
+
+  // Реакция здесь не тратится (RAW: «без Реакции») — выключенная силовая
+  // броня поэтому даёт обычный −10 физическому действию (charKey), а не −40
+  // Реакции (skillKey Dodge/Parry, см. armor-mods.mjs::REACTION_SKILLS).
+  it("выключенная силовая броня — −10 (физическое действие), не −40 (Реакция)", async () => {
+    const armor = { type: "armor", system: { equipped: true, armorType: "power", active: false, weight: 10 } };
+    const actor = attacker({ items: [armor], encumbrance: { carry: 1000, lift: 2000, push: 4000 } });
+
+    await _performSprayCancel(actor);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("броня выключена -10");
+    expect(card).not.toContain("-40");
   });
 });

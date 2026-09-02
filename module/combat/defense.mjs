@@ -136,6 +136,69 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   await ChatMessage.create(messageData);
 }
 
+// Распыление/Spray (wdbc-p06s, свойство оружия «Дальнобойное», стр. 166-170):
+// «Атака по каплевидному шаблону; попадает автоматически по всем на пути,
+// цель отменяет попадание броском A+0 (без Реакции), при успехе — Отскок как
+// при Уклонении, если её база полностью накрыта». Это НЕ Уклонение — другой
+// Навык (Acrobatics, не Dodge), не тратит Реакцию (spendReaction здесь
+// сознательно не зовётся) и не встречный тест. Геометрию накрытия Базы
+// шаблоном код не отслеживает (тот же honest-compromise, что у blastRecoilNote
+// в attack-card.mjs) — Отскок предлагается кнопкой на любом успехе, без гейта
+// кодом; читающий карточку сам решает по столу, обязателен ли он здесь.
+export async function _performSprayCancel(actor) {
+  const agTotal   = actor.system.characteristics.ag?.total ?? 0;
+  const acroSkill = actor.system.skills?.acrobatics;
+  const rankBonus = SKILL_RANKS[acroSkill?.rank ?? "untrained"]?.bonus ?? -20;
+  const cloneBonus = actor.system.cloneField?.bonus ?? 0;
+  const fatigue    = fatiguePenalty(actor, "ag");
+  // charKey (не skillKey) — REACTION_SKILLS в armor-mods.mjs/encumbrance.mjs
+  // знает только Dodge/Parry (−40 на физическую Реакцию, стр. 233); этот тест
+  // Реакцию не тратит, поэтому берёт обычный физический штраф характеристики.
+  const armourPenalty   = disabledArmourPenalty(actor, { charKey: "ag" });
+  const overloadPenalty = inventoryOverloadPenalty(actor, { charKey: "ag" });
+  const threshold = agTotal + rankBonus + cloneBonus + fatigue + armourPenalty + overloadPenalty;
+
+  const roll = await new Roll("1d100").evaluate();
+  const rv     = roll.total;
+  const passed = rv <= threshold;
+  const deg    = passed
+    ? Math.floor((threshold - rv) / 10) + 1
+    : Math.floor((rv - threshold) / 10) + 1;
+  const rollMode = game.settings.get("core", "rollMode");
+
+  const modParts = [];
+  if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
+  if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
+  if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
+  if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
+  if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
+
+  const outcomeHtml = passed
+    ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}! Попадание отменено (если шаблон не накрывает Базу целиком — иначе годится только Отскок ниже, стр. 12).</span>`
+    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Попадание проходит.</span>`;
+
+  const recoilSection = passed ? recoilButtonHtml(actor) : "";
+
+  const messageData = ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
+        <div class="roll-header">${rollIcon("run")}Тест на отмену (Распыление, Acrobatics A+0) — ${esc(actor.name)}</div>
+        <div class="roll-threshold">
+          Ag: <b>${agTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
+          → Порог: <b>${threshold}</b>
+        </div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        <div class="roll-outcome">${outcomeHtml}</div>
+        ${recoilSection}
+      </div>`,
+    rolls: [roll],
+    sound: CONFIG.sounds.dice
+  }, rollMode);
+
+  await ChatMessage.create(messageData);
+}
+
 export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;

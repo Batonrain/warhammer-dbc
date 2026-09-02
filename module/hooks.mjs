@@ -1,4 +1,4 @@
-import { _performDodge, _performParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performDodge, _performParry, _performSprayCancel, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
@@ -121,6 +121,19 @@ export function registerHooks() {
         const choice = await showRecoilDialog(actor);
         if (!choice) return;
         await performRecoil(actor, choice);
+      });
+    });
+
+    // Тест на отмену попадания Распыления (wdbc-p06s, свойство Spray, стр.
+    // 166-170) — по образцу wh-dodge-btn: актор берётся с выбранного на
+    // сцене токена защищающегося, а не из карточки (шаблон может отметить
+    // несколько токенов, кнопка одна на всех — жмётся по разу за токен).
+    html.querySelectorAll(".wh-spray-cancel-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        await _performSprayCancel(actor);
       });
     });
 

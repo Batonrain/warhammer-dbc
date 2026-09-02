@@ -126,6 +126,19 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
           ? "Разместить Гравитонную зону (тает 1м/ход, Ландшафт−30) и отметить цели"
           : "Разместить шаблон и отметить цели"}
     </button>` : "";
+  // Тест на отмену попадания Распыления (wdbc-p06s, стр. 166-170): в отличие
+  // от обычной атаки, Spray попадает автоматически по всем на пути шаблона —
+  // Уклонение/Парирование выше (defenseSection) относится к ПЕРВОНАЧАЛЬНОЙ
+  // цели атакующего броска, а не к каждому токену, отмеченному этим шаблоном
+  // (templateBtn выше). Кнопка — на каждого отмеченного отдельно: выбрать его
+  // токен на сцене и кликнуть, до того как жать «Применить урон» этому токену.
+  const sprayCancelBtn = (!isMelee && wp.spray) ? `
+    <div class="roll-defense-section">
+      <button class="wh-spray-cancel-btn" type="button">
+        ${rollIcon("run")} Тест на отмену (Распыление, Acrobatics A+0) — выберите токен цели
+      </button>
+      <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
+    </div>` : "";
   // Дым (wdbc-wlwf) — отдельная кнопка: не накрывает целей, не зависит от
   // Взрывного/Распыления (может быть у оружия без них).
   const smokeBtn = (wp.smokeRating > 0) ? `
@@ -185,6 +198,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
   return `
   <div class="roll-apply-dmg-section">
     ${templateBtn}
+    ${sprayCancelBtn}
     ${smokeBtn}
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
     ${buttons}

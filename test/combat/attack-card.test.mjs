@@ -133,6 +133,29 @@ describe("карточка атаки", () => {
       .not.toContain("Уклонение допустимо только Отскоком");
   });
 
+  // wdbc-p06s: Распыление попадает автоматически по всем в шаблоне —
+  // defenseSection (Уклонение/Парирование) относится только к первоначальной
+  // цели атакующего броска, кнопка отмены живёт в applyDamageSection рядом
+  // с шаблоном/уроном, по разу на каждый отмеченный шаблоном токен.
+  it("Распыление стрелковой атаки — кнопка теста на отмену", () => {
+    const html = card({ isMelee: false, wp: { spray: true } });
+    expect(html).toContain("wh-spray-cancel-btn");
+    expect(html).toContain("Тест на отмену (Распыление, Acrobatics A+0)");
+  });
+
+  it("без Распыления, в рукопашной или на промахе — кнопки теста на отмену нет", () => {
+    expect(card({ isMelee: false, wp: {} })).not.toContain("wh-spray-cancel-btn");
+    expect(card({ isMelee: true, wp: { spray: true } })).not.toContain("wh-spray-cancel-btn");
+    expect(card({ isMelee: false, wp: { spray: true }, hit: false, hits: [], hitsCount: 0 }))
+      .not.toContain("wh-spray-cancel-btn");
+  });
+
+  it("Взрывное (без Распыления) не получает кнопку теста на отмену — только текстовое напоминание", () => {
+    const html = card({ isMelee: false, wp: { blastRating: 3 } });
+    expect(html).not.toContain("wh-spray-cancel-btn");
+    expect(html).toContain("Уклонение допустимо только Отскоком");
+  });
+
   it("по технике предлагается Вираж", () => {
     expect(card({ defense: { targetIsVehicle: true } })).toContain("Вираж");
     expect(card()).not.toContain("Вираж");
