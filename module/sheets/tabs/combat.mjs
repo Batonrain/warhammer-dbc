@@ -40,6 +40,7 @@ import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
 import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
+import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
@@ -252,6 +253,10 @@ export function activateCombatListeners(root, actor) {
   // game.user.targets (та же логика, что Bone Song, wdbc-sk8s) — гейт кнопки
   // сам проверяет их наличие и ОД.
   on(root, ".bow-to-audience-btn", "click", () => triggerBowToAudience(actor));
+
+  // Spirit Talk/Духовный Разговор (wdbc-q30d): цель — единственная наведённая
+  // Техника, гейт сам проверяет бой/ОД/кулдаун сессии (combat/spirit-talk.mjs).
+  on(root, ".spirit-talk-btn", "click", () => triggerSpiritTalk(actor));
 
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»

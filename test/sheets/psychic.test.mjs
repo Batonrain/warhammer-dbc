@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
+import { setPsychicVessel } from "../../module/rules/psychic-vessel.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import {
   activateNavigatorPower,
@@ -29,11 +30,15 @@ function item({ name = "Взор Варпа", type = "psychicPower", system = {}
 function actor({ race = "human", items = [], fatigue = 0, system = {} } = {}) {
   const list = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
+  const flags = {};
   const a = {
     id: "actor-1",
     name: "Псайкер",
     items: list,
     updates: [],
+    getFlag: (scope, key) => flags[`${scope}.${key}`],
+    setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; },
+    unsetFlag: async (scope, key) => { delete flags[`${scope}.${key}`]; },
     system: {
       race,
       fatigue: { value: fatigue },
@@ -137,6 +142,51 @@ describe("psychic manifestation", () => {
     expect(captured.rolls).toEqual(["1d100"]);
     expect(captured.chat[0].content).toContain("Порог: <b>55</b>");
     expect(captured.chat[0].content).toContain("Манифестация удалась");
+  });
+
+  // Путь «Псайбер-Фамильяр» (rules/psychic-vessel.mjs, wdbc-q30d): раньше
+  // заметка была всегда одним и тем же текстом-напоминанием, теперь называет
+  // текущего носителя по имени, если он назначен (Spirit Talk на время
+  // захвата или связанный фамильяр).
+  it("Путь «Псайбер-Фамильяр»: назначенный носитель называется по имени в заметке", async () => {
+    const a = actor();
+    await setPsychicVessel(a, { uuid: "Actor.v1", name: "Захваченный Призрачный Страж" });
+    const power = item({ system: { testChar: "wp", powerType: "utility" } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "familiar", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).toContain("Захваченный Призрачный Страж");
+  });
+
+  it("Путь «Псайбер-Фамильяр» без назначенного носителя — общая заметка без имени", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility" } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "familiar", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).toContain("Дальность считается от фамильяра");
+  });
+
+  it("другой Путь (не familiar) — носитель в заметку не подмешивается", async () => {
+    const a = actor();
+    await setPsychicVessel(a, { uuid: "Actor.v1", name: "Захваченный Страж" });
+    const power = item({ system: { testChar: "wp", powerType: "utility" } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).not.toContain("Захваченный Страж");
   });
 
   // Раньше урон психосилы бросался в обход движка свойств оружия: Рвущее не

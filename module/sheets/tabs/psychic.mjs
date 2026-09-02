@@ -24,6 +24,7 @@ import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
+import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -337,6 +338,10 @@ export async function executePsychotest(actor, item, opts) {
     runeNote = "Руна: Усиленный режим недоступен — использован Обычный.";
   }
   const MODE     = PSY_MODES[opts.mode] || PSY_MODES.normal;
+  // Путь «Псайбер-Фамильяр» — если сейчас назначен носитель (rules/
+  // psychic-vessel.mjs: Spirit Talk на время захвата, либо связанный
+  // фамильяр), заметка называет его по имени вместо общей формулировки.
+  const vessel   = PATH === PSY_PATHS.familiar ? getPsychicVessel(actor) : null;
   const cast     = resolvePsyCastAttr(actor, sys);
   const charVal  = cast.val;
   const charAbbr = cast.abbr;
@@ -646,7 +651,7 @@ export async function executePsychotest(actor, item, opts) {
             → Порог: <b>${threshold}</b>
           </div>
           ${variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : ""}
-          ${PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}</div>` : ""}
+          ${PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : ""}
           ${runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : ""}
           ${focusNote}
           <div class="roll-dice">Психотест: <b>${rv}</b></div>
