@@ -6292,11 +6292,6 @@ export const CAPABILITIES = {
     source: "Дар Слаанеш (Hermaphrodite)",
     reader: ""
   },
-  "gift.slaanesh.idolOfVanity": {
-    label: "Раз в Раунд: +5 к тесту за видящего подчинённого/Миньона (+10 за орду) ценой −10 всем тестам этого подчинённого/Миньона/орды до след. Хода чемпиона; засекается пси-чутьём",
-    source: "Дар Слаанеш (Idol of Vanity)",
-    reader: ""
-  },
   "gift.slaanesh.immortalBeauty": {
     label: "Тяжело/критически ранен или потерял часть тела — Трейт Regeneration(1); легко ранен — косметическое заживление без восстановления Ран — гейт по тиру Ран не поддержан entry.when (см. wdbc-wyr3/predicates.mjs woundTier)",
     source: "Дар Слаанеш (Immortal Beauty)",
@@ -6315,11 +6310,6 @@ export const CAPABILITIES = {
   "gift.slaanesh.lordOfSloth": {
     label: "Иммунитет к пост-эффектам/зависимостям от наркотиков; никаких негативных эффектов от еды (включая яды в пище); не набирает вес от обжорства",
     source: "Дар Слаанеш (Lord of Sloth)",
-    reader: ""
-  },
-  "gift.slaanesh.narcissus": {
-    label: "Первый раз за Ход видя своё отражение: W+30 — Успех даёт 1 Очко Бесчестия (сгорает к след. Ходу), Провал — Ступор 1 Раунд; полудействие рассмотреть себя в бликах — Awareness+10",
-    source: "Дар Слаанеш (Narcissus)",
     reader: ""
   },
   "gift.slaanesh.nobleBearing": {
