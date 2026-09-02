@@ -1417,6 +1417,24 @@ function _attachFateContextMenu(message, html) {
       await recalcAllAdvanceCosts(actor);
     }
   });
+  // ── Пересчёт цены Продвижения у ВСЕХ персонажей при смене МИРОВОЙ системы
+  // цены (Настройки мира → «Система цен Продвижения», patronage.mjs,
+  // advancePricingMode). Хук выше ловит только смену полей АКТОРА
+  // (patronGod/patronStereotype/pricingModeOverride через actor.update) — смена
+  // мировой настройки идёт через Setting-документ, а не через актора, и без
+  // этого хука уже купленные Таланты/Навыки/Характеристики молча остаются со
+  // старой ценой (wdbc: «Full Fire» у Нургл-персонажа продолжал стоить как
+  // Враждебный после переключения мира на Покровительство, пока какое-то
+  // другое поле того же актора не дёрнёт recalc). userId-гвард — тот же приём,
+  // что и выше: настройка мировая, применить пересчёт должен только тот, кто
+  // её сменил, а не каждый подключённый клиент разом.
+  Hooks.on("updateSetting", async (setting, changes, options, userId) => {
+    if (setting.key !== "warhammer-dbc.advancePricingMode") return;
+    if (game.user.id !== userId) return;
+    for (const actor of game.actors) {
+      if (actor.type === "character") await recalcAllAdvanceCosts(actor);
+    }
+  });
   // Хук стреляет у всех, кто в игре, — авто-диалог теста-развилки (S+0/
   // Athletics(S)+10, стр. 233) должен всплыть только у того, кто саму броню
   // отключил (userId), иначе окно выбора получат все клиенты разом.
