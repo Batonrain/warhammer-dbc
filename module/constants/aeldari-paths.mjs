@@ -504,3 +504,30 @@ export function computePathPassives(paths) {
   }
   return { charBonus, corLimit };
 }
+
+/**
+ * Свойство Aspect оружия/брони (wdbc-8b5/wdbc-28ld, стр. 168/228): рейтинг —
+ * не число, а текст группы/Пути в скобках («Кьюанснанар (Варп-Пауки)» → на
+ * предмете хранится просто «Варп-Пауки»). Сопоставляем подстрокой по label
+ * (регистронезависимо) — предмет хранит короткое имя, у Пути в реестре label
+ * — полный вид с родным названием. Пустой/нераспознанный текст → null (не
+ * штрафуем на неполных/ошибочных данных, читающая сторона сама решает, что
+ * делать с null).
+ */
+export function findAspectPathKey(ratingText) {
+  const needle = String(ratingText || "").trim().toLowerCase();
+  if (!needle) return null;
+  const found = Object.entries(AZURIANE_PATHS).find(([, p]) => p.label.toLowerCase().includes(needle));
+  return found ? found[0] : null;
+}
+
+/**
+ * Есть ли у персонажа (system.paths — [{key,grade}]) Путь, сопоставленный
+ * тексту рейтинга Aspect. Нераспознанный текст (findAspectPathKey → null) —
+ * считается «есть» (не штрафуем на данных, которые не смогли разобрать).
+ */
+export function actorHasAspectPath(system, ratingText) {
+  const key = findAspectPathKey(ratingText);
+  if (!key) return true;
+  return (system?.paths || []).some(p => p?.key === key);
+}

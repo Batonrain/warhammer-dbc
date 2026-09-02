@@ -287,6 +287,28 @@ function locShiftSection({ max, current = 0 }, actorName) {
     </div>`;
 }
 
+/**
+ * Кнопка Горжета (стр. 228, wdbc-8b5): случайное попадание в голову можно
+ * попытаться перевести в Торс броском 1d10 против рейтинга X свойства.
+ * Правит эту же карточку (см. hooks.mjs) — тем же приёмом, что locShift выше.
+ */
+function gorgetSection({ rating, outcome }) {
+  if (outcome) {
+    return `
+    <div class="roll-defense-section roll-gorget">
+      <div class="roll-defense-title">🩹 Горжет: 1d10=<b>${outcome.roll}</b> против ${rating}+ — ${
+        outcome.success ? "<b>успех</b>, попадание перенесено в Торс" : "<b>провал</b>, остаётся Голова"}</div>
+    </div>`;
+  }
+  return `
+    <div class="roll-defense-section roll-gorget">
+      <div class="roll-defense-title">Горжет: случайное попадание в голову можно перенести в Торс — только защищающийся</div>
+      <div class="roll-defense-btns">
+        <button type="button" class="wh-gorget-btn" data-rating="${rating}">🩹 Бросить 1d10 (${rating}+ → Торс)</button>
+      </div>
+    </div>`;
+}
+
 /** Заряженный боеприпас, остаток магазина и расход за этот выстрел. */
 function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0,
                      special = "", condLabels = [], warning = "" }) {
@@ -310,6 +332,7 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object}   d.wp            свёрнутые свойства оружия (aggregateAuto)
  * @param {object[]} d.hits          попадания с уже посчитанным местом: { total, loc, ... }
  * @param {object}   [d.locShift]    { max, current } — кнопки сдвига места, либо null
+ * @param {object}   [d.gorget]      { rating, outcome } — кнопка Горжета (wdbc-8b5), либо null
  * @param {object}   [d.ammo]        блок боеприпасов (только стрелковое), либо null
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
@@ -327,7 +350,7 @@ export function attackCard({
   // сработало. Не путать с «Критическим Эффектом» ниже (свойство Extreme).
   critLine = "",
   hitsCount = 0, hits = [],
-  hitLocLabel = "", locRoll = 0, locShift = null,
+  hitLocLabel = "", locRoll = 0, locShift = null, gorget = null,
   isMelee = false, dtLabel = "", damageType = "", pen = 0,
   sbEff = 0, sbHalf = false, taintedAdd = 0, vehicleSide = "",
   ammo = null, band = null, suppression = null,
@@ -431,6 +454,7 @@ export function attackCard({
           : ""}
         ${notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : ""}
         ${locShift ? locShiftSection(locShift, actorName) : ""}
+        ${gorget ? gorgetSection(gorget) : ""}
         ${notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : ""}
         ${notes.blastScatter ? `
     <div class="roll-allout-note">

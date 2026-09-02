@@ -557,8 +557,18 @@ export function prepareCharacterDerived(actor, system) {
       leftLeg: 0, rightLeg: 0
     };
 
-    // Бонусы AP против типов урона от модов брони (всегда складываются)
-    const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0 };
+    // Бонусы AP против типов урона от модов брони (всегда складываются) —
+    // chemical добавлен для Protective (wdbc-8b5, «+X AP против урона от
+    // среды», DAMAGE_TYPES.chemical), суммируется ниже вместе с остальными.
+    const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0, chemical: 0 };
+    // «Полный комплект» Sealed (стр. 228, wdbc-8b5): иммунитет к химическому
+    // урону, пока не пробита ни одна из 6 закрывающих локаций. По локации —
+    // true, если её покрывает (ap[k]>0) хотя бы один надетый непробитый
+    // Sealed-предмет; итог — AND по всем шести (нет непокрытой/пробитой
+    // локации), считается после цикла ниже.
+    const sealedCoverage = {
+      head: false, body: false, leftArm: false, rightArm: false, leftLeg: false, rightLeg: false
+    };
     // Флаги свойств брони (Conductive/Flak/Soft/Rods/Open/Primitive) по
     // локациям — OR всех надетых предметов, чьё AP в этой локации > 0 (тот же
     // уровень точности, что и у armorVsType выше: не отслеживаем, какой именно
@@ -586,10 +596,28 @@ export function prepareCharacterDerived(actor, system) {
       // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
       // isPowerArmor — не свойство из properties[], а сам armorType предмета:
       // силовой шлем даёт 4 AP на глаза даже при Избирательном в Глаз (стр. 34).
-      const propAuto = aggregateArmorAuto(resolveArmorProps(item));
+      const propAuto = aggregateArmorAuto(resolveArmorProps(item), s.propRatings);
       propAuto.isPowerArmor = s.armorType === "power";
       for (const k of Object.keys(ap)) {
         if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
+      }
+      // Protective (wdbc-8b5): +X AP против DAMAGE_TYPES.chemical, суммируется
+      // с остальными vsType-бонусами ниже (та же неточность по локации, что и
+      // у остальных armorVsType — см. комментарий у объявления armorVsType).
+      for (const [t, x] of Object.entries(propAuto.apBonusByType)) {
+        armorVsType[t] = (armorVsType[t] || 0) + x;
+      }
+      // Sealed «полным комплектом» (wdbc-8b5): локация закрыта непробитым
+      // Sealed-предметом — считаем это ниже AND'ом по всем 6 локациям.
+      // Wraithbone Regeneration в руках псайкера (aeldari.json) не теряет
+      // Sealed при пробитии — та же оговорка, что у Void (rules/void-air.mjs).
+      // system.isPsyker — актора, который сейчас в prepareDerivedData (не
+      // item.parent.system: тот же документ, но ещё не факт, что уже
+      // проставлен во встроенном предмете на подставных тестовых акторах).
+      const armorIgnoresBreach = s.breached
+        && (s.properties || []).includes("wraithboneRegen") && !!system.isPsyker;
+      if ((s.properties || []).includes("sealed") && (!s.breached || armorIgnoresBreach)) {
+        for (const k of Object.keys(ap)) { if (ap[k] > 0) sealedCoverage[k] = true; }
       }
 
       // Качество брони: Best.Q даёт +1 AP всем частям (сочленения +2 — напоминание).
@@ -670,6 +698,10 @@ export function prepareCharacterDerived(actor, system) {
     // Минус коррозия: она разъедает носимое, и разность armorAP − wornOnly
     // (естественная броня для правила Глаза) не должна плыть от Corrosive.
     const wornOnly = Object.fromEntries(Object.keys(armorAP).map(k => [k, Math.max(0, best(k) - corroded(k))]));
+
+    // Sealed «полным комплектом» (стр. 228, wdbc-8b5): читает damage.mjs при
+    // урона типа chemical — иммунитет, пока закрыты все 6 локаций.
+    system.sealedFullSuit = Object.values(sealedCoverage).every(Boolean);
 
     system.absorption = {
       head:           armorAP.head     + tb,

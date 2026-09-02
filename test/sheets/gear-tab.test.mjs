@@ -105,6 +105,49 @@ describe("gear tab helpers", () => {
     });
   });
 
+  it("Hard (wdbc-8b5): нельзя надеть второй жёсткий элемент на ту же часть тела", async () => {
+    const helmet = item({ id: "helm-1", name: "Шлем", system: { equipped: true, head: 3, properties: ["hard"] } });
+    helmet.type = "armor";
+    const newHelmet = item({ id: "helm-2", name: "Другой шлем", system: { equipped: false, head: 4, properties: ["hard"] } });
+    newHelmet.type = "armor";
+    const owner = actor([helmet, newHelmet]);
+    helmet.parent = owner;
+    newHelmet.parent = owner;
+
+    await equipItem(newHelmet, true);
+
+    expect(newHelmet.updates).toEqual([]);
+    expect(newHelmet.system.equipped).toBe(false);
+  });
+
+  it("Hard (wdbc-8b5): жёсткая броня на РАЗНЫХ частях тела надевается свободно", async () => {
+    const helmet = item({ id: "helm-1", name: "Шлем", system: { equipped: true, head: 3, properties: ["hard"] } });
+    helmet.type = "armor";
+    const cuirass = item({ id: "body-1", name: "Кираса", system: { equipped: false, body: 5, properties: ["hard"] } });
+    cuirass.type = "armor";
+    const owner = actor([helmet, cuirass]);
+    helmet.parent = owner;
+    cuirass.parent = owner;
+
+    await equipItem(cuirass, true);
+
+    expect(cuirass.updates[0]).toEqual({ "system.equipped": true });
+  });
+
+  it("Hard (wdbc-8b5): не жёсткая броня на той же части тела не конфликтует", async () => {
+    const helmet = item({ id: "helm-1", name: "Шлем", system: { equipped: true, head: 3, properties: ["hard"] } });
+    helmet.type = "armor";
+    const liner = item({ id: "liner-1", name: "Подшлемник", system: { equipped: false, head: 1, properties: [] } });
+    liner.type = "armor";
+    const owner = actor([helmet, liner]);
+    helmet.parent = owner;
+    liner.parent = owner;
+
+    await equipItem(liner, true);
+
+    expect(liner.updates[0]).toEqual({ "system.equipped": true });
+  });
+
   it("setShieldHand записывает руку щита (единый флаг heldHand, module/rules/hands.mjs)", async () => {
     const shield = item();
 
