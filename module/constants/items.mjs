@@ -145,20 +145,49 @@ export const ARMOR_PROPERTIES = {
   cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций.", auto: { frontArcNoProtect: true } },
   conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона.", auto: { noApVsType: "energy" } },
   flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий.", auto: { doubleApVsType: "blast" } },
-  gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном попадании в голову — бросок 1d10." },
+  // rating: X — порог 1d10 (см. desc), на X+ случайное попадание в голову
+  // переносится в Торс. Хранится в system.propRatings.gorget (armor.mjs) —
+  // тот же свободный реестр, что и у Protective. Само использование в бою —
+  // кнопка на карточке атаки (combat/attack.mjs::gorget/combat/attack-card.mjs,
+  // wdbc-8b5).
+  gorget:     { label: "Gorget / Горжет",          desc: "Защищает шею. При случайном (не Избирательном) попадании в голову можно бросить 1d10, и на X+ перенести попадание в Торс.", rating: true, auto: { gorget: true } },
+  // «Нельзя носить 2 жёстких на одной части» — валидация НЕ через auto (это
+  // не про попадание, это про экипировку), а в sheets/tabs/gear.mjs::equipItem
+  // (_conflictingHardArmor), wdbc-8b5. «Сон/отдых не снимает последний
+  // уровень Усталости» — не автоматизировано (нет общей точки входа «отдых» —
+  // Усталость снимается вручную).
   hard:       { label: "Hard / Жёсткая",          desc: "Нельзя снимать, не оставляя Усталость. Нельзя носить 2 жёстких на одной части." },
   heavy:      { label: "Heavy / Тяжёлая",         desc: "−10 к Stealth. Нельзя плавать.", auto: { skillMod: { stealth: -10 } } },
   open:       { label: "Open / Открытый",          desc: "Шлем. Нет визора. Избирательные атаки в лицо игнорируют AP.", auto: { noApEyeCalled: true } },
   primitive:  { label: "Primitive / Примитивная", desc: "Не получает бонус AP от примитивного оружия.", auto: { blocksPrimitiveDouble: true } },
-  protective: { label: "Protective / Защитная",   desc: "+X AP против урона от среды." },
+  // rating: X — +X AP против урона от среды (DAMAGE_TYPES.chemical уже есть в
+  // системе — читается как noApVsType/vsTypeBonus-подобная надбавка ниже, но
+  // ЗНАКОМ наоборот: не «−AP», а «+X AP» этому конкретному типу, поэтому свой
+  // отдельный auto-ключ propertyApBonusVsType, не noApVsType/doubleApVsType).
+  protective: { label: "Protective / Защитная",   desc: "+X AP против урона от среды (химия/радиация/осколки — DAMAGE_TYPES.chemical).", rating: true, auto: { apBonusVsType: "chemical" } },
   rods:       { label: "Rods / Стержни",           desc: "Не даёт AP против стрелковых атак и Избирательных попаданий в сочленения.", auto: { noApRanged: true, noApJointCalled: true } },
-  sealed:     { label: "Sealed / Закрытая",        desc: "Защита от химии на коже. Теряется при пробитии брони." },
+  // «Полный комплект» (все 6 локаций закрыты небронированной сквозной дырой)
+  // даёт полный иммунитет к химическому урону по коже, пока не пробита ни одна
+  // из закрывающих частей (стр. 228). Актор-уровневый флаг, не per-loc AP —
+  // см. rules/character.mjs::sealedFullSuit, combat/damage.mjs.
+  sealed:     { label: "Sealed / Закрытая",        desc: "Полный комплект даёт иммунитет к химическому урону, действующему на кожу (DAMAGE_TYPES.chemical). Теряется, как только пробита любая закрывающая часть." },
   stealthed:  { label: "Stealthed / Скрытная",    desc: "+10 к Stealth. Скрывает от тепловизора.", auto: { skillMod: { stealth: 10 } } },
+  // Проверено по первоисточнику (wdbc-8b5, 01.09.2026): в книге у Undersuit
+  // НЕТ явного механического правила (ни «нельзя надеть два не-Undersuit», ни
+  // ограничения по слоям) — только флейвор «можно незаметно носить под другой
+  // бронёй». Оставлено без auto сознательно, не как пробел.
   undersuit:  { label: "Undersuit / Подкладка",   desc: "Носится под другой бронёй." },
   soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact", noJointReduction: true } },
   void:       { label: "Void / Пустотная",         desc: "Защита от вакуума, жара, газов, радиации. 6 часов воздуха." },
   // ── Эльдарские (Азуриане) ──
-  aspect:     { label: "Aspect / Аспект",          desc: "Броня аспекта. Без соответствующего Пути — штраф −20 на все тесты, пока носишь броню. Не-Асуриане/Иннари: модификация R3 убирает штраф." },
+  // rating: текст Пути/группы (напр. «Варп-Пауки»), как у оружейного aspect —
+  // хранится в system.propRatings.aspect (та же строка, что и у Gorget/
+  // Protective, но текстом, не числом). Штраф −20 на ВСЕ тесты, пока не
+  // соответствует Пути — sheets/actor-sheet.mjs::_armorAspectModHtml
+  // (wdbc-8b5/wdbc-28ld), тот же общий диалог Навыка/Характеристики
+  // (_showSkillRollDialog), что уже даёт Heavy/Stealthed. Матчинг текста
+  // рейтинга с AZURIANE_PATHS — constants/aeldari-paths.mjs::findAspectPathKey.
+  aspect:     { label: "Aspect / Аспект",          desc: "Броня аспекта. Без соответствующего Пути — штраф −20 на все тесты, пока носишь броню. Не-Асуриане/Иннари: модификация R3 убирает штраф.", rating: true, ratingText: true },
   // «+бPR×5 на тесты против 9 состояний» убрано (30/31.08.2026): в
   // первоисточнике (aeldari.json, рядом с Wraithbone Regeneration) этой
   // фразы нет — только тест на AP-бонус и «считается чародейским силовым
@@ -168,6 +197,17 @@ export const ARMOR_PROPERTIES = {
     desc: "При попадании извне (не от урона эффектов вроде отравления; исключение — Выжигание Души) носитель может пройти тест W+0+(бPR×5): успех → +(бPR+Успехи+4) AP, провал → +бPR AP. Считается чародейским силовым щитом в расчёте эффектов и способов его обхода, не мешает работать другим силовым щитам.",
     auto: { runesOfProtection: true }
   },
+  // wdbc-8b5, 01.09.2026: «не теряет Sealed/Void при пробитии, пока носит
+  // псайкер» — реализовано (rules/void-air.mjs::wraithboneRegenIgnoresBreach,
+  // читается и Sealed'ом в rules/character.mjs). «Восстанавливает AP раз в
+  // 3 раунда рядом с Певцом Кости» — НЕ реализовано: требует и geometry
+  // (радиус 30м — инфраструктура токен-дистанций есть, wdbc-void-shields), и
+  // throttle «раз в 3 раунда» (примитив есть, wdbc-f4jt), но также понятия
+  // «утраченный AP брони, который можно восстановить», которого в системе
+  // сейчас в общем виде НЕТ (armorCorrosion — только Corrosive, не общий урон
+  // по AP; после-боевая деградация из history.zones — ручная запись ГМа, не
+  // хранимый «текущий недостающий AP»). Нужно архитектурное решение, что
+  // именно «восстанавливает» это свойство, прежде чем кодить.
   wraithboneRegen: { label: "Wraithbone Regeneration / Регенерация Психокости", desc: "В руках псайкера броня самовосстанавливается; не теряет Sealed/Void при пробитии. Рядом с Певцом Кости (Следующий+) восстанавливает AP раз в 3 раунда." },
   special:    { label: "Special / Особое",         desc: "Особые правила — см. описание предмета." }
 };

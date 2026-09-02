@@ -11,17 +11,19 @@ import { describe, it, expect } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
-function armorItem({ id, head = 0, body = 0, properties = [], equipped = true, stacks = false } = {}) {
+function armorItem({ id, head = 0, body = 0, leftArm = 0, rightArm = 0, leftLeg = 0, rightLeg = 0,
+                      properties = [], equipped = true, stacks = false,
+                      propRatings = {}, breached = false } = {}) {
   return {
     id, name: `Броня ${id}`, type: "armor",
-    system: { head, body, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
-              properties, equipped, stacks, quality: "common" },
+    system: { head, body, leftArm, rightArm, leftLeg, rightLeg,
+              properties, equipped, stacks, quality: "common", propRatings, breached },
     getFlag: () => undefined
   };
 }
 
-function characterWith(items = []) {
-  const system = new ACTOR_DATA_MODELS.character({}).toObject();
+function characterWith(items = [], systemOverrides = {}) {
+  const system = { ...new ACTOR_DATA_MODELS.character({}).toObject(), ...systemOverrides };
   const list = [...items];
   list.get = id => list.find(i => i.id === id) ?? null;
   const actor = { type: "character", name: "Подставной", system, items: list, getFlag: () => undefined };
@@ -76,15 +78,72 @@ describe("system.absorption.propFlags", () => {
     expect(system.absorption.propFlags.body.noEnergy).toBe(false);
   });
 
-  it("свойство без auto-директивы (gorget) не поднимает флаги", () => {
+  it("свойство без auto-директивы (undersuit) не поднимает флаги", () => {
     const system = characterWith([
-      armorItem({ id: "a1", head: 3, properties: ["gorget"] })
+      armorItem({ id: "a1", head: 3, properties: ["undersuit"] })
     ]);
     expect(system.absorption.propFlags.head).toEqual({
       noEnergy: false, noImpact: false, doubleBlast: false,
       noRanged: false, noJointCalled: false, noEyeCalled: false,
       blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-      frontArcNoProtect: false, runesOfProtection: false
+      frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0
     });
+  });
+
+  it("Gorget без рейтинга в propRatings — gorgetRating остаётся 0 (wdbc-8b5)", () => {
+    const system = characterWith([
+      armorItem({ id: "a1", head: 3, properties: ["gorget"] })
+    ]);
+    expect(system.absorption.propFlags.head.gorgetRating).toBe(0);
+  });
+
+  it("Gorget с рейтингом в propRatings — gorgetRating доходит до propFlags.head (wdbc-8b5)", () => {
+    const system = characterWith([
+      armorItem({ id: "a1", head: 3, properties: ["gorget"], propRatings: { gorget: 8 } })
+    ]);
+    expect(system.absorption.propFlags.head.gorgetRating).toBe(8);
+    expect(system.absorption.propFlags.body.gorgetRating).toBe(0);
+  });
+
+  it("Protective с рейтингом — armorVsType.chemical суммирует X (wdbc-8b5)", () => {
+    const system = characterWith([
+      armorItem({ id: "a1", body: 4, properties: ["protective"], propRatings: { protective: 3 } })
+    ]);
+    expect(system.absorption.vsType.chemical).toBe(3);
+  });
+
+  it("Sealed на всех 6 локациях и непробитая — sealedFullSuit true (wdbc-8b5)", () => {
+    const full = { head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, rightLeg: 1, properties: ["sealed"] };
+    const system = characterWith([armorItem({ id: "a1", ...full })]);
+    expect(system.sealedFullSuit).toBe(true);
+  });
+
+  it("Sealed только на части локаций — sealedFullSuit false (wdbc-8b5)", () => {
+    const system = characterWith([
+      armorItem({ id: "a1", head: 1, body: 1, properties: ["sealed"] })
+    ]);
+    expect(system.sealedFullSuit).toBe(false);
+  });
+
+  it("Sealed на всех локациях, но одна пробита — sealedFullSuit false (wdbc-8b5)", () => {
+    const system = characterWith([
+      armorItem({ id: "a1", head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, properties: ["sealed"] }),
+      armorItem({ id: "a2", rightLeg: 1, properties: ["sealed"], breached: true })
+    ]);
+    expect(system.sealedFullSuit).toBe(false);
+  });
+
+  it("Sealed+Wraithbone Regeneration в руках псайкера — пробитая часть всё равно считается закрытой (wdbc-8b5)", () => {
+    const full = { head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, rightLeg: 1,
+                    properties: ["sealed", "wraithboneRegen"], breached: true };
+    const system = characterWith([armorItem({ id: "a1", ...full })], { isPsyker: true });
+    expect(system.sealedFullSuit).toBe(true);
+  });
+
+  it("Sealed+Wraithbone Regeneration без псайкера-носителя — пробитая часть теряет Sealed как обычно (wdbc-8b5)", () => {
+    const full = { head: 1, body: 1, leftArm: 1, rightArm: 1, leftLeg: 1, rightLeg: 1,
+                    properties: ["sealed", "wraithboneRegen"], breached: true };
+    const system = characterWith([armorItem({ id: "a1", ...full })]);
+    expect(system.sealedFullSuit).toBe(false);
   });
 });

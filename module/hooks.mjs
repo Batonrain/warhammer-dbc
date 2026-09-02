@@ -267,6 +267,29 @@ export function registerHooks() {
       });
     });
 
+    // Горжет (стр. 228, wdbc-8b5): защищающийся (владелец цели — выбранный
+    // токен, или ГМ) может попытаться перенести случайное попадание в голову
+    // в Торс броском 1d10. Правит ЭТУ ЖЕ карточку (updateMessageId), как и
+    // сдвиг места попадания выше — тем же rv через opts.forcedRoll, только
+    // добавляет opts.gorgetRoll (сам бросок 1d10 уже сделан здесь).
+    html.querySelectorAll(".wh-gorget-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const defActor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа (носителя Горжета) на сцене!");
+        if (!defActor) return;
+        const atk = message.flags?.["warhammer-dbc"]?.attack;
+        if (!atk) return;
+        const atkActor = game.actors?.get(atk.actorId);
+        const atkItem  = atkActor?.items?.get(atk.itemId);
+        if (!atkActor || !atkItem) return;
+        el.disabled = true;
+        const roll = await new Roll("1d10").evaluate();
+        await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold, atk.rofMode, atk.aimTarget,
+          { ...(atk.opts || {}), forcedRoll: atk.rv, skipAmmo: true, gorgetRoll: roll.total, updateMessageId: message.id });
+      });
+    });
+
     // Бесплатный переброс Теста Страха (Демон) — одна попытка на тест,
     // поэтому сразу дизейблим кнопку по клику (новая карточка сама
     // повторную кнопку уже не предложит — opts.free в fear.mjs).
