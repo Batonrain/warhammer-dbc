@@ -36,6 +36,13 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       // сколько вязей может нести слоями и переключать свободным действием
       // вместо физического «изнутри/снаружи». 0 — обычная модификация, не держатель.
       runicWeaveSlots: new NumberField({ initial: 0, integer: true, nullable: false, label: "Слотов под Вязи" }),
+      // wdbc-bxw6: «отламывающийся слой» (напр. мод «Аблативная», стр. 166) —
+      // ablativeCharge замещает effects.apAll как ЖИВОЕ текущее значение, пока
+      // ablative:true (getArmorModEffects, combat/armor-mods.mjs); теряет 1 за
+      // каждое попадание владельца (module/rules/ablative-ap.mjs,
+      // combat/damage.mjs), на 0 — модификация бездействует (не удаляется).
+      ablative:       new BooleanField({ initial: false, label: "Аблативная (истощается)" }),
+      ablativeCharge: new NumberField({ initial: 0, integer: true, nullable: false, label: "Аблативный заряд (текущий)" }),
       effects: new SchemaField({
         apAll:         ap("AP: все зоны"),
         apHead:        ap("AP: голова"),
