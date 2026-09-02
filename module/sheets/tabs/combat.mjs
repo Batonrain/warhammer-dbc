@@ -46,6 +46,7 @@ import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } fro
 import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
+import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun, declareHalfStep,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
@@ -274,6 +275,10 @@ export function activateCombatListeners(root, actor) {
     if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
     await grantRecoilBonus(actor, 1);
   });
+
+  // Spirit Talk/Духовный Разговор (wdbc-q30d): цель — единственная наведённая
+  // Техника, гейт сам проверяет бой/ОД/кулдаун сессии (combat/spirit-talk.mjs).
+  on(root, ".spirit-talk-btn", "click", () => triggerSpiritTalk(actor));
 
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»

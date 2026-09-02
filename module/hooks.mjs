@@ -22,6 +22,7 @@ import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPr
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
+import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -1340,6 +1341,10 @@ function _attachFateContextMenu(message, html) {
         await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
     }
     await resolvePendingSusAnHeals(combat);
+    // Spirit Talk/Духовный Разговор (wdbc-q30d): захваченный конструкт
+    // держит инициативу сразу за кастером каждый Раунд, пока не истекут
+    // F.b — та же смена Раунда, ГМ пишет.
+    await processSpiritTalkRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —

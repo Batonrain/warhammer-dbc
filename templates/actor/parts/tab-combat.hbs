@@ -121,6 +121,9 @@
             <span class="ae-pool-value">{{actionEconomy.reactions.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.reactions.max}}</span>
             <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" {{#if aeSpendGate.reaction.disabled}}disabled{{/if}} title="{{#if aeSpendGate.reaction.title}}{{aeSpendGate.reaction.title}}{{else}}Списать 1 Реакцию вручную{{/if}}">−1</button>
           </div>
+          {{#if spiritTalkGate}}
+          <button type="button" class="spirit-talk-btn" {{#if spiritTalkGate.disabled}}disabled{{/if}} title="{{spiritTalkGate.title}}">👻 Духовный Разговор (2 ОД)</button>
+          {{/if}}
           {{#if actionEconomy.defense}}
           <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
             <span class="ae-pool-label">Реакции (Избегание)</span>

@@ -78,6 +78,7 @@ import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
+import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -160,6 +161,9 @@ export function characterContext(actor) {
       run:  apSpendGate(actor, 2)
     };
     context.aeSpendGate = { ap1: apSpendGate(actor, 1), ap2: apSpendGate(actor, 2), reaction: reactionSpendGate(actor) };
+    // Spirit Talk/Духовный Разговор (wdbc-q30d): гейт зависит от game.user.
+    // targets (единственная Техника)/ОД/боя/кулдауна сессии (spirit-talk.mjs).
+    if (hasSpiritTalk(actor)) context.spiritTalkGate = spiritTalkGate(actor);
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.
