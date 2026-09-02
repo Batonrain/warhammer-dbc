@@ -35,6 +35,7 @@ import { itemHasName, sizeOf } from "../rules/predicates.mjs";
 import { resolveWeaponProps, aggregateAuto } from "./weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
+import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
 import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -134,9 +135,13 @@ const ALL_TESTS = { ...ATTACKER_TESTS, ...TARGET_TESTS };
 // _doCrunch), бонус закладывается прямо в порог. Сжать и Хруст броска не
 // делают вовсе (первое — накопительный штраф без теста, второе —
 // автоматическое попадание по книге), бонусу там нечего усиливать.
-/** +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. */
+/**
+ * +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. Субмутация
+ * 9 «Изменчивое» (wdbc-2ynk): пока предмет временно в форме руки, бонусу
+ * нечем помогать ни приёму Захват, ни этим тестам, ни Укусу.
+ */
 export function tentacleBonus(actor) {
-  return hasRuleFlag(actor, "mutation.tentacle") ? 20 : 0;
+  return (hasRuleFlag(actor, "mutation.tentacle") && !tentacleBonusSuppressed(actor)) ? 20 : 0;
 }
 
 export function tentacleTechDef(actor, techDef) {
