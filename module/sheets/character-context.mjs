@@ -29,7 +29,7 @@ import { buildMasqueOptions, getMasque }         from "../constants/harlequin-ma
 import { BODY_TYPES }                            from "../constants/body-map.mjs";
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
-import { actorCanFly, narrativeSpeed }           from "../combat/movement-actions.mjs";
+import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movement-actions.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
@@ -77,6 +77,7 @@ import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beast
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
+import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -142,7 +143,11 @@ export function characterContext(actor) {
         ? { value: system.reactions?.defenseValue ?? 0, max: defenseMax }
         : null,
       encounterActive: isEncounterActive(),
-      exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive")
+      exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive"),
+      // Отскок (стр. 12, wdbc-9wvm): дистанция за Раунд, тот же честный
+      // «∞ вне боя» принцип, что у остальной экономики действий —
+      // recoilRemaining/recoilLimit сами отдают Infinity вне Encounter.
+      recoil: { value: recoilRemaining(actor), max: recoilLimit(actor) }
     };
     // Гейт кнопок ДО клика (wdbc-qjnk): движение (Полушаг/Шаг/Бег — Натиск
     // ОД на объявлении не тратит, см. apSpendGate) и ручная трата ae-spend-btn
@@ -161,6 +166,8 @@ export function characterContext(actor) {
   // 30) видна только с Чертой Flyer/Hoverer — та же проверка, что и в самой
   // кнопке Token HUD/меню, продублирована здесь только ради видимости кнопки.
   context.movementCanFly = actorCanFly(actor);
+  // Полушаг (wdbc-9wvm) — та же видимость «только с Талантом», что у Полёта.
+  context.movementCanHalfStep = actorHasHalfStep(actor);
 
   // Откуда число (wdbc-zbiz): мод-бейдж Полушага (= SPD×1) — тот же приём,
   // что charTotalTooltip у характеристик; breakdown строит documents/actor.mjs.

@@ -14,6 +14,7 @@ import { equippedMeleeWeapon } from "./equipped-melee.mjs";
 import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
+import { recoilButtonHtml } from "./recoil.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -36,7 +37,7 @@ export async function _noReactionCard(actor, label) {
   }, rollMode));
 }
 
-export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "") {
+export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false) {
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
@@ -108,10 +109,16 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
     ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
     : "";
 
+  // Отскок (стр. 12, wdbc-9wvm): вместо нивеляции — только от СТРЕЛКОВОЙ
+  // атаки (isMelee=false) и только при успешном Уклонении. Рукопашный
+  // Отскок = Вольт (п.6 правила) — отдельная точка входа, не эта кнопка
+  // (см. заголовок module/combat/recoil.mjs).
+  const recoilSection = (passed && !isMelee) ? recoilButtonHtml(actor) : "";
+
     const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
-      <div class="wh-roll-result">
+      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
         <div class="roll-header">${rollIcon("run")}Уклонение — ${esc(actor.name)}</div>
         <div class="roll-threshold">
           Ag: <b>${agTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
@@ -120,6 +127,7 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${outcomeHtml}</div>
         ${leftoverNote}
+        ${recoilSection}
       </div>`,
     rolls: [roll],
     sound: CONFIG.sounds.dice

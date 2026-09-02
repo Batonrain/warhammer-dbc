@@ -107,7 +107,7 @@ async function spendFromPool(defender, attackerUuid, amount) {
  */
 export async function performPoolSpend(defender, {
   attackerUuid, hitsCount = 1, dodgeMod = 0, parryMod = 0, targetIsVehicle = false,
-  flexible = false, forcedDefenceReroll = ""
+  flexible = false, forcedDefenceReroll = "", isMelee = false
 } = {}) {
   const entry = getEvasionPool(defender, attackerUuid);
   const rollMode = game.settings.get("core", "rollMode");
@@ -134,7 +134,7 @@ export async function performPoolSpend(defender, {
   const continueHtml = remaining > 0
     ? `<div class="roll-defense-note">Успехов из пула не хватило на все попадания — можно разыграть Реакцией обычное Избегание на оставшиеся ${remaining} ${_hitWord(remaining)}:</div>
        ${defenseSection({ dodgeMod, parryMod, targetIsVehicle, forcedDefenceReroll },
-                         { wp: { flexible }, attackerUuid, hitsCount: remaining })}`
+                         { wp: { flexible }, attackerUuid, hitsCount: remaining, isMelee })}`
     : "";
 
   await ChatMessage.create(ChatMessage.applyRollMode({

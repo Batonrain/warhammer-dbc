@@ -37,6 +37,8 @@ import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
+import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
+import { spendRecoil, recoilRemaining } from "./recoil-pool.mjs";
 
 /**
  * Достижимость SPD×N вокруг токена актора — честная подсветка клеток
@@ -74,6 +76,12 @@ export function actorCanFly(actor) {
   return (actor?.items ?? []).some(item =>
     FLIGHT_TRAIT_ITEM_TYPES.has(item?.type)
     && FLIGHT_TRAIT_NAMES.some(name => itemHasName(item, name)));
+}
+
+// Half-Step/Полушаг (Талант, стр. 12, wdbc-9wvm): доступен только с этим
+// Талантом — та же проверка присутствия по имени, что у actorCanFly выше.
+export function actorHasHalfStep(actor) {
+  return (actor?.items ?? []).some(item => item?.type === "talent" && itemHasName(item, "Half-Step"));
 }
 
 /** Итог Навыка (с учётом Тренировки) — умолчание на саму характеристику,
@@ -180,6 +188,58 @@ export async function declareRun(actor) {
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
     <div class="roll-threshold">Полное действие (2 ОД). Перемещение до SPD×6.</div>
     <div class="roll-threshold" style="font-size:0.85em;">До начала следующего Хода: нельзя Реакции, вся Стрельба по персонажу −20, вся Рукопашная по нему +20.</div>
+  </div>`);
+}
+
+const HALF_STEP_FLAG = "movement.halfStep";
+
+/**
+ * Half-Step/Полушаг (стр. 12, wdbc-9wvm): раз в Ход Свободным действием —
+ * движение до ½SPD, но пройденная дистанция отнимается от дистанции Отскока
+ * в этот Раунд (module/combat/recoil-pool.mjs). Игрок объявляет дистанцию
+ * сам (карта вне проекта, см. заголовок recoil.mjs) — не больше ½SPD и не
+ * больше остатка пула Отскока; вне боя пул бесконечен, поэтому запрос всегда
+ * проходит как есть.
+ */
+export async function declareHalfStep(actor) {
+  if (!actor) return;
+  if (!actorHasHalfStep(actor)) return ui.notifications.warn("⚠️ Нужен Талант Half-Step/Полушаг.");
+  if (!isThrottleReady(actor, HALF_STEP_FLAG, "round")) {
+    return ui.notifications.warn("⚠️ Полушаг уже использован в этом Ходу.");
+  }
+  const half = Number(actor.system.movement?.halfMove) || 0;
+  const maxMeters = Math.min(half / 2, recoilRemaining(actor));
+  if (maxMeters <= 0) {
+    return ui.notifications.warn("⚠️ Нет остатка дистанции Отскока в этом Раунде — Полушагом двигаться нечем.");
+  }
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Полушаг — ${actor.name}` },
+    classes: ["wh-roll-dialog-window"],
+    position: { width: 300 },
+    content: `
+      <div class="wh-skill-roll-form">
+        <div class="roll-dlg-row"><label>Дистанция (м, до ${maxMeters}):</label>
+          <input type="number" name="meters" value="${maxMeters}" min="0" max="${maxMeters}" step="1">
+        </div>
+      </div>`,
+    buttons: [
+      {
+        action: "go", icon: "fas fa-shoe-prints", label: "Полушаг!", default: true,
+        callback: (event, button) => Math.max(0, parseInt(button.form.querySelector('[name="meters"]')?.value) || 0)
+      },
+      { action: "cancel", label: "Отмена", callback: () => null }
+    ],
+    rejectClose: false
+  });
+  if (result == null) return;
+
+  const spent = await spendRecoil(actor, Math.min(result, maxMeters));
+  await markThrottleUsed(actor, HALF_STEP_FLAG, "round");
+  await markMovedThisTurn(actor);
+  _showReachRing(actor, spent);
+  await _postCard(actor, `<div class="wh-roll-result">
+    <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полушаг</div>
+    <div class="roll-threshold">Свободное действие. Перемещение на ${spent}м — списано из дистанции Отскока этого Раунда.</div>
   </div>`);
 }
 
@@ -677,6 +737,9 @@ export function showMovementMenu(actor) {
     buttons.charge   = { label: "Натиск", callback: () => declareCharge(actor) };
     buttons.run      = { label: "Бег (2 ОД)", callback: () => declareRun(actor) };
     buttons.disengage = { label: "Выход из Боя (2 ОД)", callback: () => declareDisengage(actor) };
+    if (actorHasHalfStep(actor)) {
+      buttons.halfstep = { label: "Полушаг (Талант, Своб. действие)", callback: () => declareHalfStep(actor) };
+    }
   }
   buttons.climb = { label: "Карабканье", callback: () => showClimbDialog(actor) };
   buttons.jump  = { label: "Прыжок", callback: () => showJumpDialog(actor) };

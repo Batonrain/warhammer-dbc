@@ -55,3 +55,26 @@ function _segmentHitsRegion(region, from, to, elevation) {
   }
   return false;
 }
+
+/**
+ * AP укрытия зоны, в которой СЕЙЧАС стоит токен (wdbc-9wvm, «Отскок в
+ * Укрытие», стр. 12) — без проверки линии огня: в отличие от
+ * coverBonusForShot (штраф атакующему ДО Уклонения, нужна геометрия
+ * стрелок→цель), здесь игрок уже объявил «отскочил в эту зону» сам —
+ * остаётся только прочитать её AP. Наибольший, если зон несколько.
+ * @param {Token} targetToken
+ * @returns {number}
+ */
+export function coverApForToken(targetToken) {
+  const regions = targetToken?.document?.regions;
+  if (!regions || !regions.size) return 0;
+  let best = 0;
+  for (const region of regions) {
+    for (const behavior of region.behaviors ?? []) {
+      if (behavior.type !== COVER_TYPE || behavior.disabled) continue;
+      const ap = Number(behavior.system?.coverAp) || 0;
+      if (ap > best) best = ap;
+    }
+  }
+  return best;
+}

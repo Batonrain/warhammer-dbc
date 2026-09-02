@@ -94,6 +94,11 @@ export async function resetActionEconomy(actor) {
   // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
   // прошлого раунда» начинается заново с каждым Ходом этого актора.
   if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;
+  // Отскок (wdbc-9wvm, recoil-pool.mjs): дистанция за Раунд суммарно по всем
+  // Отскокам — тот же такт сброса, что и остальная экономика действий (см.
+  // заголовок recoil-pool.mjs). Инлайн, а не вызов resetRecoilPool() —
+  // держит один update на весь сброс (см. комментарий выше).
+  if (actor.getFlag("warhammer-dbc", "recoilPool"))         upd["flags.warhammer-dbc.-=recoilPool"] = null;
   if (Object.keys(upd).length) await actor.update(upd);
 }
 
