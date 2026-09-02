@@ -6,9 +6,10 @@
 // игрок сам. Проверяется чистая механика тика, без Foundry-хука updateCombat.
 
 import "../support/foundry-stub.mjs";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "../../module/combat/condition-ticks.mjs";
+import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
 function makeActor(overrides = {}) {
   const updates = [];
@@ -130,6 +131,67 @@ describe("processConditionTurnEnd: Кровотечение", () => {
     const actor = makeActor();
     await processConditionTurnEnd(actor);
     expect(captured.chat).toHaveLength(0);
+  });
+});
+
+describe("processConditionTurnEnd: возможности Саркофага Дредноута (wdbc-drn)", () => {
+  const saved = getRuleSources();
+  const grant = flag => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: flag }] }
+    ]);
+  };
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("immuneBleedingFatigue — Кровотечение не наносит вреда и не бросает кубы", async () => {
+    grant("sarcophagus.immuneBleedingFatigue");
+    const actor = makeActor({ conditions: { bleeding: true, haemorrhagingLevel: 3 } });
+    await processConditionTurnEnd(actor);
+
+    expect(actor.updates).toHaveLength(0);
+    expect(captured.rolls).toHaveLength(0); // не брошен даже 1d10
+    expect(captured.chat[0].content).toContain("иммунитет саркофага");
+  });
+
+  it("без возможности Кровотечение работает как обычно", async () => {
+    clearRuleSources();
+    const actor = makeActor({ conditions: { bleeding: true, haemorrhagingLevel: 0 } });
+    captured.dice = [3];
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.conditions.haemorrhagingLevel).toBe(1);
+  });
+
+  it("autoWakeFromStun — снимает Оглушение целиком в конце Хода", async () => {
+    grant("sarcophagus.autoWakeFromStun");
+    const actor = makeActor({ conditions: { stunned: true, stunnedRounds: 5 } });
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.conditions.stunned).toBe(false);
+    expect(actor.system.conditions.stunnedRounds).toBe(0);
+    expect(captured.chat[0].content).toContain("Электрошок саркофага снял Оглушение");
+  });
+
+  it("autoWakeFromStun не снимает Оглушение, вызванное Галлюцинациями", async () => {
+    grant("sarcophagus.autoWakeFromStun");
+    const actor = makeActor({ conditions: { stunned: true, stunnedRounds: 2, hallucinogenic: true } });
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.conditions.stunned).toBe(true);
+    expect(captured.chat).toHaveLength(0);
+  });
+
+  it("без возможности Оглушение остаётся до конца Хода", async () => {
+    clearRuleSources();
+    const actor = makeActor({ conditions: { stunned: true, stunnedRounds: 2 } });
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.conditions.stunned).toBe(true);
+    expect(actor.updates).toHaveLength(0);
   });
 });
 

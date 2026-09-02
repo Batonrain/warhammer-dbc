@@ -8,6 +8,7 @@ import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
 import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { fatigueGraceForActor } from "../../rules/fatigue-grace.mjs";
+import { hasRuleFlag } from "../../rules/flags.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
 
 function fatigueThreshold(actor) {
@@ -22,7 +23,17 @@ function actorHomeworldKey(actor) {
 }
 
 export function fatiguePenalty(actor, charKey) {
+  // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от
+  // Усталости» — полный иммунитет, не отсрочка порога (в отличие от grace
+  // ниже, которая лишь отодвигает начало штрафа). mutation.feelsNoPain —
+  // живой запрос capability-грантера предмета, тот же приём, что и
+  // sarcophagus.* флаги.
+  if (hasRuleFlag(actor, "mutation.feelsNoPain")) return 0;
   const fatigueExempt = ["t", "inf", "cog", "pf"];
+  // Desiccated / Иссушенный (wdbc-1rno): «Усталость накладывает на персонажа
+  // штраф −20 вместо обычного −10» — тот же ранний выход, что и у Feels No
+  // Pain выше, но удвоение, а не иммунитет.
+  const desiccatedPenalty = hasRuleFlag(actor, "mutation.desiccated") ? -20 : -10;
   // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
   const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(actor)];
   const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor.system.characteristics?.t?.bonus ?? 0) : 0;
@@ -33,7 +44,7 @@ export function fatiguePenalty(actor, charKey) {
   const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
   if ((actor.system.fatigue?.value ?? 0) < 1 + grace) return 0;
   if (fatigueExempt.includes((charKey ?? "").toLowerCase())) return 0;
-  return -10;
+  return desiccatedPenalty;
 }
 
 /**
@@ -50,6 +61,11 @@ export function marchPenalty(actor, charKey) {
 }
 
 export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
+  // Саркофаг Дредноута (стр. 57): иммунитет к Усталости — не отсрочка порога
+  // (как grace выше) и не смягчение штрафа (как feelsNoPain в fatiguePenalty),
+  // а полный запрет её накопления: тело пилота в саркофаге физически не
+  // устаёт, откуда бы Усталость ни пришла (Марш, Горение, снаряжение).
+  if (hasRuleFlag(actor, "sarcophagus.immuneBleedingFatigue")) return;
   const system = actor.system;
   const { tb, threshold } = fatigueThreshold(actor);
   const current = system.fatigue?.value ?? 0;

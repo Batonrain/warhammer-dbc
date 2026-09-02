@@ -221,6 +221,18 @@ export function electrostimulatorBoost(pilotWpBonus) {
   return { amount: 10 + 2 * wp, delayMinutes: 2 * wp };
 }
 
+/**
+ * Узнаём «Матрицу Осирис» (стр. 58) среди снаряжения Дредноута: снимает
+ * запрет sarcophagus.noPsychicPowers (пилот может манифестировать и
+ * поддерживать психосилы). Штраф −3 к тПР, которым книга платит за это, —
+ * отдельный числовой эффект самого предмета, не читатель этой возможности,
+ * и здесь не считается.
+ */
+const OSIRIS_MATRIX_MATCH = /Osiris Matrix|Матрица Осирис/i;
+export function hasOsirisMatrix(vehicleItems) {
+  return (vehicleItems || []).some(i => i?.type === "vehicleGear" && OSIRIS_MATRIX_MATCH.test(i.name));
+}
+
 /** Узнаём Талант «Ферум Инфернус» (стр. 58) среди предметов пилота. */
 const FERUM_INFERNUS_MATCH = /Ferum Infernus|Ферум Инфернус/i;
 export function hasFerumInfernus(items) {

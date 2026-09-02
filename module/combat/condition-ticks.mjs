@@ -21,6 +21,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "../rules/wounds.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
 // system.conditions.<key> (bool) + system.conditions.<field> (число).
@@ -83,7 +84,13 @@ export async function processConditionTurnEnd(actor) {
   if (!conds) return;
   const lines = [];
 
-  if (conds.bleeding) {
+  // Саркофаг Дредноута (стр. 57): иммунитет к Кровотечению — тело пилота
+  // физически неспособно истечь кровью, поэтому сама проверка (и риск
+  // случайной смерти на плохом броске) не имеет смысла, а не просто смягчена.
+  const immuneBleeding = hasRuleFlag(actor, "sarcophagus.immuneBleedingFatigue");
+  if (conds.bleeding && immuneBleeding) {
+    lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: иммунитет саркофага — урон не применяется</div>`);
+  } else if (conds.bleeding) {
     const roll = await new Roll("1d10").evaluate();
     const level = Number(conds.haemorrhagingLevel) || 0;
     const eff = roll.total - level;
@@ -96,6 +103,15 @@ export async function processConditionTurnEnd(actor) {
     } else {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
     }
+  }
+
+  // Саркофаг Дредноута (стр. 57): электрошок в конце Хода снимает Оглушение
+  // целиком (не декремент stunnedRounds, как в processConditionTurnStart) —
+  // кроме Галлюцинаций: если Оглушение вызвано ими (conds.hallucinogenic),
+  // электрошок по мозгу их не лечит.
+  if (conds.stunned && !conds.hallucinogenic && hasRuleFlag(actor, "sarcophagus.autoWakeFromStun")) {
+    await actor.update({ "system.conditions.stunned": false, "system.conditions.stunnedRounds": 0 });
+    lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
   }
 
   if (conds.burning) {
