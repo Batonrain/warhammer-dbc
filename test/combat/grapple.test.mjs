@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, swingProfile, throwProfile } from "../../module/combat/grapple.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 
@@ -234,5 +234,111 @@ describe("tentacleTechDef", () => {
     const techDef = { label: "Пересилить" };
     tentacleTechDef(actorFor({}), techDef);
     expect(techDef.extraBonus).toBeUndefined();
+  });
+});
+
+// wdbc-oxdn (переработка после уточнения правил Метания/Дубины, стр. 27-28):
+// swingProfile/throwProfile — чистая годность/классификация тира по весу
+// партнёра относительно бросающего, module/rules/improvised-weapon.mjs.
+// Сами _doSwing/_doThrow (реальные броски/чат) не экспортированы и не
+// тестируются изолированно здесь — тот же путь через DialogV2.wait, что и у
+// _doBite (см. комментарий у tentacleBonus выше).
+describe("swingProfile", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("партнёр ≤¼ Ношения и Размер не больше — годен, WS−20", () => {
+    const wielder = actorFor({ encumbrance: { carry: 100 } });
+    const partner = actorFor({ bio: { weight: 20 } });
+    const p = swingProfile(wielder, partner);
+    expect(p.ok).toBe(true);
+    expect(p.wsBonus).toBe(-20);
+    expect(p.tentacleBonus).toBe(0);
+    expect(p.diceCount).toBe(1);
+  });
+
+  it("партнёр тяжелее ¼ Ношения — не годен", () => {
+    const wielder = actorFor({ encumbrance: { carry: 100 } });
+    const partner = actorFor({ bio: { weight: 26 } });
+    expect(swingProfile(wielder, partner).ok).toBe(false);
+  });
+
+  it("Размер партнёра больше владельца — не годен, даже если лёгкий", () => {
+    const wielder = actorFor({ encumbrance: { carry: 100 }, size: 0 });
+    const partner = actorFor({ bio: { weight: 10 }, size: 1 });
+    expect(swingProfile(wielder, partner).ok).toBe(false);
+  });
+
+  it("Размер партнёра больше 0 — доп. кости урона (+1d10 за каждый)", () => {
+    const wielder = actorFor({ encumbrance: { carry: 100 }, size: 2 });
+    const partner = actorFor({ bio: { weight: 10 }, size: 2 });
+    expect(swingProfile(wielder, partner).diceCount).toBe(3); // 1 база + 2 за Размер
+  });
+
+  it("с mutation.tentacle — WS−20+20=0, tentacleBonus 20", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const wielder = actorFor({ encumbrance: { carry: 100 } });
+    const partner = actorFor({ bio: { weight: 10 } });
+    const p = swingProfile(wielder, partner);
+    expect(p.wsBonus).toBe(0);
+    expect(p.tentacleBonus).toBe(20);
+  });
+});
+
+describe("throwProfile", () => {
+  const DEFAULT_SOURCES = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("лёгкий тир (≤¼ Ношения) — BS, дальность S.b×3", () => {
+    const thrower = actorFor({ encumbrance: { carry: 100 } }); // S.b по умолчанию 4
+    const partner = actorFor({ bio: { weight: 25 } });
+    const p = throwProfile(thrower, partner);
+    expect(p.tier).toBe("light");
+    expect(p.testChar).toBe("bs");
+    expect(p.testLabel).toBe("BS");
+    expect(p.testBonus).toBe(0);
+    expect(p.rangeM).toBe(12); // 4×3
+  });
+
+  it("средний тир (¼-½ Ношения) — Athletics(S)+0, без штрафа", () => {
+    const thrower = actorFor({ encumbrance: { carry: 100 } });
+    const partner = actorFor({ bio: { weight: 40 } });
+    const p = throwProfile(thrower, partner);
+    expect(p.tier).toBe("medium");
+    expect(p.testChar).toBe("s");
+    expect(p.testBonus).toBe(0);
+    expect(p.athleticsPenalty).toBe(0);
+  });
+
+  it("тяжёлый тир (½-полного Ношения) — Athletics(S)−30", () => {
+    const thrower = actorFor({ encumbrance: { carry: 100 } });
+    const partner = actorFor({ bio: { weight: 90 } });
+    const p = throwProfile(thrower, partner);
+    expect(p.tier).toBe("heavy");
+    expect(p.testBonus).toBe(-30);
+    expect(p.athleticsPenalty).toBe(-30);
+  });
+
+  it("партнёр тяжелее полного Ношения — null, метать нельзя", () => {
+    const thrower = actorFor({ encumbrance: { carry: 100 } });
+    const partner = actorFor({ bio: { weight: 150 } });
+    expect(throwProfile(thrower, partner)).toBeNull();
+  });
+
+  it("с mutation.tentacle — +20 добавляется к testBonus любого тира", () => {
+    registerRuleSource("test", () => [{ id: "tentacle", label: "Щупальце",
+      effects: [{ kind: "grantFlag", target: "mutation.tentacle" }] }]);
+    const thrower = actorFor({ encumbrance: { carry: 100 } });
+    const light = throwProfile(thrower, actorFor({ bio: { weight: 25 } }));
+    const heavy = throwProfile(thrower, actorFor({ bio: { weight: 90 } }));
+    expect(light.testBonus).toBe(20);
+    expect(heavy.testBonus).toBe(-10); // -30 + 20
   });
 });
