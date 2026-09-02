@@ -77,8 +77,10 @@ export function actorCanFly(actor) {
 }
 
 /** Итог Навыка (с учётом Тренировки) — умолчание на саму характеристику,
- *  если записи Навыка на акторе нет вовсе. */
-function skillTotal(actor, key) {
+ *  если записи Навыка на акторе нет вовсе. Экспортирована — тем же приёмом
+ *  пользуется module/combat/assassin-strike.mjs (wdbc-qpcg), чтобы не
+ *  дублировать формулу. */
+export function skillTotal(actor, key) {
   const sk = actor.system.skills?.[key];
   if (sk?.total != null) return sk.total;
   const charKey = SKILLS_DEF[key]?.char;

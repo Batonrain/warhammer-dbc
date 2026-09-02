@@ -26,6 +26,7 @@ import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
+import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -507,6 +508,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
       isMelee, dtLabel, damageType: ammoDmgType || effDmgType, pen,
+      assassinStrike: isMelee && assassinStrikeAvailable(actor),
       sbEff, sbHalf, taintedAdd, vehicleSide: opts.vehicleSide || "",
       ammo: isMelee ? null : {
         name:   loadedAmmo?.name || "",

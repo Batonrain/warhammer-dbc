@@ -2517,7 +2517,8 @@ export const CAPABILITIES = {
   // ── Рукопашные
   "meleeCore.core.assassinStrike": {
     label: "Раз в Раунд после рукопашной атаки (успешной или нет) персонаж может пройти Acrobatics+0 и совершить Полудвижение как свободное действие,",
-    source: "Assassin Strike / Удар Ассасина", reader: ""
+    source: "Assassin Strike / Удар Ассасина",
+    reader: "module/combat/assassin-strike.mjs + кнопка в module/combat/attack-card.mjs (wdbc-qpcg)"
   },
   "meleeCore.core.bayonetCharge": {
     label: "Приём (База: любая; Оружие: штык). Персонаж делает базовую рукопашную атаку со штрафом −10.",

@@ -315,6 +315,10 @@ export function attackCard({
   hitsCount = 0, hits = [],
   hitLocLabel = "", locRoll = 0, locShift = null,
   isMelee = false, dtLabel = "", damageType = "", pen = 0,
+  // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
+  // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
+  // владение Талантом + не потрачен в этом Раунде), карточка только рисует.
+  assassinStrike = false,
   sbEff = 0, sbHalf = false, taintedAdd = 0, vehicleSide = "",
   ammo = null, band = null, suppression = null,
   corVal = 0, corEffects = [],
@@ -411,6 +415,11 @@ export function attackCard({
         </div>
         ${critLine}
         <div class="roll-outcome">${outcomeHtml}</div>
+        ${isMelee && assassinStrike ? `
+    <button class="wh-assassin-strike-btn" type="button" data-attacker-uuid="${attackerUuid}"
+      title="Раз в Раунд после рукопашной атаки (успешной или нет): Acrobatics+0 → Полудвижение свободным действием, не вызывает Свободную Атаку при выходе из рукопашной">
+      🗡️ Удар Ассасина — Acrobatics+0
+    </button>` : ""}
         ${notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : ""}
         ${hit && hitsCount > 0
           ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
