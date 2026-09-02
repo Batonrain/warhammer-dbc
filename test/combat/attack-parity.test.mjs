@@ -76,6 +76,17 @@ describe("стрельба", () => {
     expect(weapon.system.magazineCur).toBe(23);
   });
 
+  it("Рука Смерти (wdbc-hftn): слитое оружие не тратит патроны — метаболизм вместо магазина", async () => {
+    const weapon = weaponFor({}, { flags: { "warhammer-dbc.handOfDeathSource": "mut1" } });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [23, 6];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+
+    expect(hits()).toEqual([{ index: 1, damage: 11, location: "Торс" }]);
+    expect(weapon.system.magazineCur).toBe(24);    // не тронут
+  });
+
   it("короткая очередь: попадание за каждый нечётный Успех, но не больше RoF", async () => {
     // deg 5 → ceil(5/2) = 3 попадания, потолок rof_semi = 2.
     const weapon = weaponFor({ rof_semi: 2 });

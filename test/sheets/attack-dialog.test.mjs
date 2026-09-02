@@ -197,6 +197,19 @@ describe("разметка диалога: рукопашное оружие", (
     expect(captured.dialog.content).toContain("Хват: Обратный (Об) · WS -10");
   });
 
+  it("Рука Смерти (wdbc-hftn): двуручное слитое оружие форсирует Стандартный Хват (1р), пилюли не рисуются", () => {
+    // Профиль двуручный и hudGrip намеренно оставлен на «Об» с прошлого
+    // выбора — слияние должно перекрыть ОБА источника, не только профиль.
+    const weapon = sword({ grips: "2р (Об)" },
+                         { flags: { "warhammer-dbc.hudGrip": "Об", "warhammer-dbc.handOfDeathSource": "mut1" } });
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const html = captured.dialog.content;
+
+    expect(dialogThreshold()).toBe(55);        // WS 45 + База «Стандартная» 10, «1р» без штрафа
+    expect(html).not.toContain('id="atk-grip-pills"');   // единственный вариант — пилюли не рисуются
+    expect(html).not.toContain("Обратный (Об)");
+  });
+
   it("цепное оружие можно погасить, стрелковое — нет", () => {
     const chain = sword({ weaponType: "chain" });
     showAttackDialog(attacker({ items: [chain] }), chain);
