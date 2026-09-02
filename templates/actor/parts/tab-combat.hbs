@@ -81,6 +81,9 @@
           {{#if movementCanFly}}
           <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).">Полёт</button>
           {{/if}}
+          {{#if movementCanHalfStep}}
+          <button type="button" class="wh-move-btn" data-move-action="halfstep" title="Полушаг (стр. 12, Талант Half-Step): раз в Ход Свободным действием, до ½SPD — дистанция списывается с Отскока этого Раунда.">Полушаг (Талант)</button>
+          {{/if}}
         </div>
         <div class="movement-col">
           <div class="movement-col-note" title="Неспешный темп по свободному ландшафту при текущем SPD ({{system.movement.halfMove}}) — стр. 29, таблица «Движение в нарративном времени». Марши ниже умножают эту базу.">
@@ -122,6 +125,13 @@
           <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
             <span class="ae-pool-label">Реакции (Избегание)</span>
             <span class="ae-pool-value">{{actionEconomy.defense.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.defense.max}}</span>
+          </div>
+          {{/if}}
+          {{#if actionEconomy.encounterActive}}
+          <div class="ae-pool" title="Отскок (стр. 12): SPD м за Раунд суммарно по всем Отскокам вместо нивеляции Уклонения от стрелковой атаки">
+            <span class="ae-pool-label">Отскок</span>
+            <span class="ae-pool-value">{{actionEconomy.recoil.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.recoil.max}}</span>
+            <button type="button" class="ae-recoil-bonus-btn" {{#if aeSpendGate.ap1.disabled}}disabled{{/if}} title="Списать 1 непотраченное ОД → +SPD м к пределу Отскока в этом Раунде (стр. 12)">−1 ОД → +SPD</button>
           </div>
           {{/if}}
           <div class="ae-pool ae-pool-status">

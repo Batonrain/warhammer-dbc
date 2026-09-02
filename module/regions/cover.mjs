@@ -26,6 +26,16 @@ export class CoverBehaviorType extends foundry.data.regionBehaviors.RegionBehavi
         required: true, integer: true, initial: 0, nullable: false,
         label: "Модификатор атаки",
         hint: "К порогу теста атаки по цели в этом Укрытии (обычно отрицательный — ГМ ставит по книжной таблице Укрытий, стр. 30-31)."
+      }),
+      // AP укрытия (стр. 12, «Отскок» — wdbc-9wvm): отдельное от coverMod
+      // число — та же зона Укрытия одновременно штрафует ПОРОГ атаки по цели
+      // (coverMod) и даёт цели доп. AP при поглощении урона, если попадание
+      // всё же прошло (см. combat/cover.mjs::coverApForToken,
+      // combat/damage.mjs — потребитель флага recoilCoverBonus).
+      coverAp: new fields.NumberField({
+        required: true, integer: true, initial: 0, min: 0, nullable: false,
+        label: "AP укрытия",
+        hint: "Доп. AP поглощения цели, стоящей в этом Укрытии, при Отскоке в него (стр. 12) — книжная цифра по типу Укрытия, стр. 30-31."
       })
     };
   }
