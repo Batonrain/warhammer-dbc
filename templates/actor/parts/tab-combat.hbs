@@ -112,6 +112,12 @@
             <span class="ae-pool-value">{{actionEconomy.ap.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.ap.max}}</span>
             <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="1" {{#if aeSpendGate.ap1.disabled}}disabled{{/if}} title="{{#if aeSpendGate.ap1.title}}{{aeSpendGate.ap1.title}}{{else}}Списать 1 ОД (Полудействие){{/if}}">−1</button>
             <button type="button" class="ae-spend-btn" data-ae-spend="ap" data-ae-cost="2" {{#if aeSpendGate.ap2.disabled}}disabled{{/if}} title="{{#if aeSpendGate.ap2.title}}{{aeSpendGate.ap2.title}}{{else}}Списать 2 ОД (Полное действие){{/if}}">−2</button>
+            {{#if deadlyEffectivenessGate}}
+            <button type="button" class="deadly-effectiveness-btn" {{#if deadlyEffectivenessGate.disabled}}disabled{{/if}} title="{{deadlyEffectivenessGate.title}}">⚔️ Смерт. Эфф. +2</button>
+            {{/if}}
+            {{#if bowToAudienceGate}}
+            <button type="button" class="bow-to-audience-btn" {{#if bowToAudienceGate.disabled}}disabled{{/if}} title="{{bowToAudienceGate.title}}">🎭 Поклон Публике (3 ОД)</button>
+            {{/if}}
           </div>
           <div class="ae-pool" title="Реакции (стр. 12): тратятся Уклонением/Парированием и подобными действиями вне своего Хода">
             <span class="ae-pool-label">Реакции</span>
@@ -250,6 +256,9 @@
     {{/if}}
     {{#if hasResplendentRaiment}}
     <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
+    {{/if}}
+    {{#if hasAdrenalineRush}}
+    <button type="button" class="technique-btn adrenaline-rush-btn" style="margin-top:6px;" title="Прилив Адреналина — раз за бой/сцену, тратит 1 Очко Бесчестия, восстанавливает Реакции (дистанция отскока — вручную)"><span class="tech-name">⚡ Прилив Адреналина</span></button>
     {{/if}}
     {{#if hasBoneSong}}
     <button type="button" class="technique-btn bone-song-btn" style="margin-top:6px;" title="Костяная Песня — одна техника или вся в радиусе 10 м, восстанавливает Структуру"><span class="tech-name">🦴 Костяная Песня</span></button>

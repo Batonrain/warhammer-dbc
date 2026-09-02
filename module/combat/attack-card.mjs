@@ -205,7 +205,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   — она одна касается документов Foundry, этот модуль их не читает).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null }) {
+                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null, burst = false, attackerIsHorde = false }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
@@ -231,7 +231,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -239,7 +239,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -323,6 +323,8 @@ export function attackCard({
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
   weaponRange = 0, burst = false, attackerUuid = "", itemUuid = "", hordeHits = null,
+  // One Against A Hundred (wdbc-u0by): защищающийся против атаки Орды.
+  attackerIsHorde = false,
   // Остаток пула неизрасходованных Успехов защиты с ДРУГИХ атак этого же
   // противника в этом Ходу (стр. 12) — null, если пула нет или он пуст.
   pool = null,
@@ -449,7 +451,7 @@ export function attackCard({
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : ""}
-        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool }) : ""}
+        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, burst, attackerIsHorde }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, itemUuid, hordeHits })}

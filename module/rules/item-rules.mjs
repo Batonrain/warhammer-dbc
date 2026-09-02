@@ -115,7 +115,10 @@ function ruleFromEntry(item, entry) {
       : entry.modValueMode === "charBonus"
       ? { kind: "rollBonus", target, valueFrom: {
           selfCharBonus: entry.modCharBonus || "inf",
-          ...(Number(entry.modCharBonusMultiplier) > 1 ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})
+          // "> 1" пропускал бы дробные множители вроде 0.5 («½Cor.b», wdbc-1rno) —
+          // условие теперь "!== 1", 1 по-прежнему опускается (то же значение, что default).
+          ...(Number(entry.modCharBonusMultiplier) && Number(entry.modCharBonusMultiplier) !== 1
+            ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})
         } }
       : { kind: "rollBonus", target, value: Number(entry.value) || 0 };
     return { id, label: entry.label || item.name, when: {}, effects: [effect] };

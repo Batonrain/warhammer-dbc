@@ -34,7 +34,7 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
-import { sanityMax, madnessLevels } from "./dreadnought.mjs";
+import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG } from "./dreadnought.mjs";
 import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -152,6 +152,11 @@ export function prepareCharacterDerived(actor, system) {
     let hasBlackCarapaceBackup = false;
     let traitFearRating = 0;
     let traitSizeMod = 0;
+    // Размер, который НЕ идёт в SPD (wdbc-w8ws, Absurdly Fat/Абсурдно Толстый:
+    // «Размер +1, при этом не влияя на SPD») — отдельный аккумулятор от
+    // traitSizeMod выше, который наоборот всегда сдвигает движение (см.
+    // калькуляцию size/calcMovement ниже). Входит только в sizeTotal.
+    let traitSizeModNoSpd = 0;
     let traitInitMod = 0;
     let traitSpeedMod = 0;
     // Навыки, у которых Черта/Талант/Имплант ополовинивает штрафы (Конструктор
@@ -360,6 +365,22 @@ export function prepareCharacterDerived(actor, system) {
     const pathPassives = computePathPassives(system.paths);
     system.pathCharBonus = pathPassives.charBonus;
 
+    // ── Саркофаг Дредноута: рейтинги Сверхъестественного (стр. 57, wdbc-drn) ──
+    // «Уменьшает рейтинг Unnatural S на 4, T на 2» — не плоский модификатор
+    // (пилот без Сверхъестественной Силы не должен уйти в минус), а срез уже
+    // накопленного traitCharBonus/pathCharBonus этим же циклом; Unnatural W —
+    // обычная прибавка. Флаг тот же, что раздаёт сама возможность (module/
+    // rules/sources.mjs — источник "dreadnought"), других мест, где решается
+    // «пилот ли это», нет.
+    if (hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)) {
+      const haveS = (traitCharBonus.s || 0) + (pathPassives.charBonus.s || 0);
+      const haveT = (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
+      const delta = sarcophagusCharDelta({ s: haveS, t: haveT });
+      traitCharBonus.s  = (traitCharBonus.s  || 0) + delta.s;
+      traitCharBonus.t  = (traitCharBonus.t  || 0) + delta.t;
+      traitCharBonus.wp = (traitCharBonus.wp || 0) + delta.wp;
+    }
+
     // ── Бонусы от надетой брони к характеристикам ───────────────────────────
     // Силовая броня → +S; Аспектная броня Аэльдари → +S и +W (Сила Воли).
     // Прибавляются к значению характеристики (total), пока броня надета.
@@ -402,6 +423,9 @@ export function prepareCharacterDerived(actor, system) {
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
+      // Саркофаг Дредноута (стр. 57, wdbc-drn): не нуждается в еде и воде
+      // (Голод/Жажда), но Сон капабилити не упоминает — тот дебафф остаётся.
+      if (hasRuleFlag(actor, "sarcophagus.noFoodWaterAir")) { eff.hunger = 0; eff.thirst = 0; }
       return eff;
     })()) : {};
     for (const [key, char] of Object.entries(chars)) {
@@ -535,15 +559,6 @@ export function prepareCharacterDerived(actor, system) {
     // чуть выше: поле не объявлено в схеме, но prepareDerivedData бесплатно
     // добавляет производные свойства поверх схемных.
     if (system.wounds) {
-      // Аблативный пул (wdbc-smy7) живёт только пока жив его источник:
-      // ablativeMax приходит ActiveEffect'ом записи Конструктора и исчезает
-      // вместе с ней (гейт по Ярости, снятая Мутация, истёкший эффект), а
-      // накопленное system.wounds.ablative в хранимых данных остаётся. Без
-      // клампа такой осиротевший пул поглощал бы урон вечно: rules/wounds.mjs
-      // списывает его обратно только при ablativeMax > 0. Тот же приём, что у
-      // sanity.value выше.
-      const abMax = Number(system.wounds.ablativeMax) || 0;
-      system.wounds.ablative = Math.max(0, Math.min(abMax, Number(system.wounds.ablative) || 0));
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
@@ -864,9 +879,15 @@ export function prepareCharacterDerived(actor, system) {
     // бы без него, при этом бейдж «Размер» на листе показывал бы верное число
     // (было найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес).
     traitSizeMod += Number(system.sizeMod) || 0;
+    // system.sizeModNoSpd — ActiveEffect-ключ Конструктора (kind:"characteristic",
+    // charKey:"sizeNoSpd", см. apps/mechanics.mjs) для источников Размера, что
+    // намеренно НЕ двигают SPD. Складывается с тем, что уже мог записать
+    // легаси-эффект тем же ключом (тот же приём, что traitSizeMod/sizeMod выше).
+    traitSizeModNoSpd += Number(system.sizeModNoSpd) || 0;
     const size    = (system.size ?? 0) + traitSizeMod;
-    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер
-    system.sizeTotal = size;                  // итоговый Размер (база + Черты)
+    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер (двигает SPD)
+    system.sizeModNoSpd = traitSizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
+    system.sizeTotal = size + traitSizeModNoSpd; // итоговый Размер (база + оба вклада)
     const stance  = system.meleeStance || "standard";
 
     let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);

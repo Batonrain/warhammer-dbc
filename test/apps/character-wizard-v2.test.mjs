@@ -10,6 +10,9 @@ import "../support/foundry-stub.mjs";
 import { listenerHtml } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { CharacterWizard } from "../../module/apps/character-wizard.mjs";
+import { openCompendiumBrowser } from "../../module/apps/compendium-browser.mjs";
+
+vi.mock("../../module/apps/compendium-browser.mjs", () => ({ openCompendiumBrowser: vi.fn() }));
 
 describeV2Sheet(CharacterWizard, {
   sheet: "module/apps/character-wizard.mjs",
@@ -43,6 +46,51 @@ function appLike(actor, nodes = {}) {
   app._divinationChoiceContext = () => null;
   return app;
 }
+
+// _confirmGear: дедуп текстового снаряжения Этапа 5 с тем, что уже выдано
+// (обычно Механикой Расы/Архетипа на более раннем Этапе — wdbc-sai,
+// doombc-gear-dual-path-bugs). _gearLayout переопределён напрямую на объекте
+// (тот же приём, что appLike() уже делает для _homeworldChoiceContext) — не
+// тянем resolveCreation/реальные Расы через актора, это отдельный контракт.
+function gearApp({ actorItems = [], gearText, packs = new Map() }) {
+  globalThis.game.packs = packs;
+  const created = [];
+  const actor = {
+    id: "a1", name: "Тест", items: actorItems,
+    createEmbeddedDocuments: async (type, docs) => { created.push(...docs); return docs; }
+  };
+  const app = appLike(actor);
+  app._gearDone = false;
+  app._gearLayout = () => ({ layout: [{ fixed: gearText }], choiceDefs: [], isAstartes: false });
+  app._matchStandardSystemsCount = () => null;
+  app._matchLegionCategoryGear = () => null;
+  app._matchGearBudget = () => null;
+  app._matchLeadingCount = () => 1;
+  app._guessGearPack = () => "gear";
+  app._grantStartingAmmo = async () => {};
+  return { app, actor, created };
+}
+
+describe("_confirmGear: дедуп с уже выданным Механикой (wdbc-sai)", () => {
+  it("предмет уже на акторе (билингвально), точного пак-совпадения нет — Обозреватель НЕ открывается, ничего не создаётся заново", async () => {
+    openCompendiumBrowser.mockClear();
+    const { app, created } = gearApp({
+      actorItems: [{ name: "Custom Weapon / Особое Оружие" }],
+      gearText: "Custom Weapon"
+    });
+    await CharacterWizard.prototype._confirmGear.call(app);
+    expect(openCompendiumBrowser).not.toHaveBeenCalled();
+    expect(created).toHaveLength(0);
+  });
+
+  it("предмета на акторе нет — Обозреватель открывается как раньше (ручной подбор)", async () => {
+    openCompendiumBrowser.mockClear();
+    openCompendiumBrowser.mockResolvedValueOnce(null); // игрок закрыл диалог — просто не создаём, поведение не проверяем
+    const { app } = gearApp({ actorItems: [], gearText: "Custom Weapon" });
+    await CharacterWizard.prototype._confirmGear.call(app);
+    expect(openCompendiumBrowser).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("_prepareContext", () => {
   it("сигнализирует отсутствие актора", async () => {

@@ -72,6 +72,33 @@ describe("значение от собственного Пси-Рейтинга
   });
 });
 
+describe("значение от бонуса Порчи (wdbc-1rno — «½Cor.b (окр.▲)» Enchanting Voice/Black Eyes и др.)", () => {
+  const rule = (multiplier) => ({ id: "r", label: "Чарующий Голос", when: {}, effects: [
+    { kind: "rollBonus", target: "all", valueFrom: { selfCharBonus: "cor", multiplier } }
+  ] });
+
+  it("½Cor.b округляется ВВЕРХ (книга всегда «окр.▲»)", () => {
+    // corruptionBonus = floor(65/10) = 6; половина 6 = 3 (уже целое — но
+    // проверяем нечётный случай отдельно ниже).
+    const actor = { system: { corruptionBonus: 6 } };
+    expect(rollModsFromRules([rule(0.5)], { kind: "skill", actor })[0].value).toBe(3);
+  });
+
+  it("нечётный Cor.b: 5×0.5=2.5 округляется до 3, не до 2", () => {
+    const actor = { system: { corruptionBonus: 5 } };
+    expect(rollModsFromRules([rule(0.5)], { kind: "skill", actor })[0].value).toBe(3);
+  });
+
+  it("множитель по умолчанию (1) не меняет значение", () => {
+    const actor = { system: { corruptionBonus: 4 } };
+    expect(rollModsFromRules([rule(undefined)], { kind: "skill", actor })[0].value).toBe(4);
+  });
+
+  it("нет актора или corruptionBonus — ноль, без падения посреди броска", () => {
+    expect(rollModsFromRules([rule(0.5)], { kind: "skill" })[0].value).toBe(0);
+  });
+});
+
 describe("запись Конструктора «Модификатор теста»", () => {
   it("плоское число превращается в rollBonus нужной области", () => {
     const rules = rulesFromItemMechanics([item("Локус Цепей", [testMod()])]);

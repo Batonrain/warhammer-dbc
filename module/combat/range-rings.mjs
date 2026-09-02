@@ -89,13 +89,23 @@ function _draw(token, rings, { timeout = null } = {}) {
 export function showWeaponRangeRings(token, rng) {
   if (!(Number(rng) > 0)) return;
   const b = rangeBandBoundaries(Number(rng));
-  _draw(token, [
+  const candidates = [
     { r: b.pointBlank, color: 0xff5555 },
     { r: b.short,      color: 0xffaa33 },
     { r: b.combat,     color: 0x7bd858 },
     { r: b.long,       color: 0xffaa33 },
     { r: b.extreme,    color: 0xff5555 }
-  ]);
+  ];
+  // У короткоствольного оружия соседние границы совпадают (полоса вырождена
+  // упором, см. rangeBandBoundaries) — не дублировать одно и то же кольцо.
+  const rings = [];
+  let lastR = 0;
+  for (const ring of candidates) {
+    if (ring.r <= lastR) continue;
+    rings.push(ring);
+    lastR = ring.r;
+  }
+  _draw(token, rings);
 }
 
 /**

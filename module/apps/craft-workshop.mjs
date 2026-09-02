@@ -24,6 +24,7 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
+import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, darkMuseAssistBonus } from "../rules/craft-advantage.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
@@ -54,6 +55,18 @@ function _newProject() {
     // Кубик смены (Преимущество/Помеха, стр. 26) — Сложность у Крафта уже
     // есть своя («Модификатор ГМа»), второй дропдаун не заводим.
     diceMode: "normal",
+    // Медленная Смена (Талант, wdbc-u0by) — «+4ч смены → +30 и Преимущество»,
+    // выбор игрока за смену; галочка видна только владельцу Таланта
+    // (module/rules/craft-advantage.mjs).
+    slowShift: false,
+    // Именованный ассистент (wdbc-1rno) — ОДИН актор для проверки Талантов/
+    // Даров, зависящих от личности ассистента (Journeyman/Подмастерье,
+    // Dark Muse/Тёмная Муза, module/rules/craft-advantage.mjs). Отдельно от
+    // assistants (просто счётчик для +10/успех за штуку) — не заменяет его,
+    // а дополняет: этот ассистент физически один из assistants, но именно
+    // ЕГО инвентарь Талантов/Даров теперь реально проверяется, а не берётся
+    // на слово стола.
+    assistantId: "",
     researchKind: "blueprint",
     // Биолаборатория: чан, цель, выбранный имплант и счётчик циклов.
     vatKey: "common", bioTarget: "common", bioSkill: "medicae",
@@ -214,6 +227,17 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
       gmMod: proj.gmMod, assistants: proj.assistants, improve: proj.improve, monotony: proj.monotony,
       diceMode: proj.diceMode || "normal",
+      // Медленная Смена/Киберпроповедник (wdbc-u0by) — галочка видна только
+      // владельцу Таланта; Киберпроповедник ничего не спрашивает — применяется
+      // сам, как только категория «Бионика» и Талант у крафтера есть.
+      hasSlowShiftTalent: hasSlowShiftTalent(R.crafter),
+      slowShift: proj.slowShift,
+      cyberpreacherActive: cyberpreacherApplies(R.crafter, proj.categoryKey),
+      hasAssistants: (Number(proj.assistants) || 0) > 0,
+      // Именованный ассистент (wdbc-1rno) — та же выборка акторов, что и у
+      // крафтера, минус сам крафтер (не ассистирует себе).
+      assistantChoices: _crafterChoices().filter(a => a.id !== proj.crafterId),
+      assistantId: proj.assistantId || "",
       baseBankVal: R.baseBank, machineNote: R.machineNote, machineSize: R.machineSize, notCraftable: R.notCraftable,
 
       testRows, limit,
@@ -269,6 +293,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     on("[name=improve]", "change", e => upd(e.currentTarget, p => p.improve = e.target.checked));
     on("[name=monotony]", "change", e => upd(e.currentTarget, p => p.monotony = e.target.checked));
     on("[name=dicemode]", "change", e => upd(e.currentTarget, p => p.diceMode = e.target.value));
+    on("[name=slowshift]", "change", e => upd(e.currentTarget, p => p.slowShift = e.target.checked));
+    on("[name=assistant-actor]", "change", e => upd(e.currentTarget, p => p.assistantId = e.target.value));
 
     // Биолаборатория
     on("[name=vat]", "change", e => upd(e.currentTarget, p => p.vatKey = e.target.value));
@@ -347,15 +373,32 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     if (R.combined.limit == null) { ui.notifications?.warn("Выберите навык(и) для теста."); return; }
 
     const mono = proj.monotony ? -30 : 0;
-    // Каждый ассистент даёт +1 Успех И +10 к проверке крафта.
+    // Именованный ассистент (wdbc-1rno) — ОДИН актор из assistants, чей
+    // инвентарь Талантов/Даров теперь реально проверяется (Journeyman/
+    // Подмастерье, Dark Muse/Тёмная Муза), а не берётся на слово стола.
+    const assistantActor = proj.assistantId ? game.actors?.get(proj.assistantId) ?? null : null;
+    // Каждый ассистент даёт +1 Успех И +10 к проверке крафта — КРОМЕ
+    // именованного ассистента с Тёмной Музой: тот даёт +30 (Мастерская —
+    // всегда тест Крафта/Исследования, книжное «в тесте крафта») ВМЕСТО
+    // обычных +10 за себя, остальные ассистенты (если есть) — как обычно.
     const assist = Math.max(0, Number(proj.assistants || 0));
-    const assistBonus = assist * 10;
-    const limit = R.combined.limit + mono + assistBonus;
+    const darkMuseBonus = assist > 0 ? darkMuseAssistBonus(assistantActor) : 0;
+    const assistBonus = darkMuseBonus > 0 ? Math.max(0, assist - 1) * 10 + darkMuseBonus : assist * 10;
+    // Медленная Смена (Талант, wdbc-u0by): +30 при выбранной галочке — тот
+    // же принцип, что monotony/assist, «+4ч» на честном слове стола.
+    const slowBonus = slowShiftBonus(crafter, proj.slowShift);
+    // Polymath / Полимат (wdbc-1rno): +10 безусловно на Крафт И Исследования.
+    const polyBonus = polymathBonus(crafter);
+    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
-    // Кубик смены (Преимущество/Помеха) — тот же приём, что и везде.
-    const diceMode = diceModeFor(proj.diceMode);
+    // Кубик смены (Преимущество/Помеха) — тот же приём, что и везде, но с
+    // учётом Киберпроповедника/Медленной Смены/Подмастерья (wdbc-u0by/
+    // wdbc-1rno, craft-advantage.mjs) — Подмастерье теперь проверяется по
+    // настоящему инвентарю именованного ассистента, не по галочке.
+    const effMode = effectiveDiceMode(proj.diceMode, crafter, proj.categoryKey, proj.slowShift, assistantActor);
+    const diceMode = diceModeFor(effMode);
     const rollCount = diceMode ? diceMode.rolls : 1;
     const rolls = [];
     for (let i = 0; i < rollCount; i++) rolls.push(await new Roll("1d100").evaluate());
@@ -363,7 +406,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const roll = rolls[picked.index];
     const rv = picked.value, dos = degreesOfSuccess(rv, limit);
     const diceNote = diceMode
-      ? `<div class="wh-craft-roll-line">${proj.diceMode === "advantage" ? "Преимущество" : "Помеха"}: отброшено ${picked.dropped.join(", ")}</div>`
+      ? `<div class="wh-craft-roll-line">${effMode === "advantage" ? "Преимущество" : "Помеха"}${effMode !== proj.diceMode ? " (Талант)" : ""}: отброшено ${picked.dropped.join(", ")}</div>`
       : "";
     const critLine = critLineHtml(criticalOutcome(rv, resolveTest({ actor: crafter, kind: "skill" }).crit));
 
@@ -389,7 +432,8 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           <div class="wh-craft-roll-line ${dos > 0 ? "ok" : "fail"}">Комбинированный тест: <b>${rv}</b> vs Предел ${limit} → ${dos > 0 ? `+${dos} успеха` : `${dos} (провал)`}</div>
           ${diceNote}
           ${critLine}
-          ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха</div>` : ""}
+          ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха${darkMuseBonus ? ` (вкл. Тёмную Музу +${darkMuseBonus})` : ""}</div>` : ""}
+          ${polyBonus ? `<div class="wh-craft-roll-line ok">Полимат: +${polyBonus} к тесту</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,

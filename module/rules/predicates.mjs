@@ -38,14 +38,17 @@ export function itemHasName(item, wanted) {
  * Список означает «и», а не «или»: правило с двумя вариантами записывается
  * двумя правилами, а вот требование двух Талантов сразу иначе не выразить.
  *
- * Типы «talent» и «trait» намеренно не разделяются — так же ведёт себя
- * разборщик требований талантов (constants/talent-requirements.mjs), и правило
- * не должно молча не сработать из-за того, что содержимое записано Чертой.
+ * Типы «talent», «trait» и «mutation» намеренно не разделяются — так же
+ * ведёт себя разборщик требований талантов (constants/talent-requirements.mjs),
+ * и правило не должно молча не сработать из-за того, что содержимое записано
+ * Чертой. «mutation» добавлен для targetHasTrait (wdbc-1rno) — Дары Богов
+ * записаны тем же типом предмета, что и общие Мутации (system.god), находки
+ * вида «противник ПРОТИВ персонажа с Мутацией/Даром X» иначе не матчились бы.
  */
 function hasNamed(actor, names) {
   const items = [...(actor?.items ?? [])];
   return list(names).every(name => items.some(
-    i => (i?.type === "talent" || i?.type === "trait") && itemHasName(i, name)));
+    i => (i?.type === "talent" || i?.type === "trait" || i?.type === "mutation") && itemHasName(i, name)));
 }
 
 /**
@@ -60,7 +63,7 @@ function hasNamed(actor, names) {
 export function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
-  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0);
+  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0) + (Number(sys.sizeModNoSpd) || 0);
 }
 
 // Силовая/аспектная броня — то же множество, что POWER_ARMOR_TYPES в

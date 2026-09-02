@@ -1832,7 +1832,13 @@ export class WarhammerCharacterSheet
   }
 
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
-    const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
+    // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
+    // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
+    // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
+    // rules/predicates.mjs — уже существовал, но был мёртв за пределами
+    // атак) не могли сработать. Тот же приём: первый выбранный таргет сцены.
+    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
@@ -2079,7 +2085,8 @@ export class WarhammerCharacterSheet
 
     const outcome = await resolveKindOutcome(this.actor, {
       kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill }
+      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
+             targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null }
     });
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
     const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);

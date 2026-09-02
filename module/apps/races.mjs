@@ -17,6 +17,7 @@ import { raceDef, subraceEntries } from "./race-library.mjs";
 import { clearGrantedBy } from "./origin-shared.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
+import { needsAptitudeChoice, promptSubraceAptitudeChoice, applySubraceAptitudeChoice } from "./subrace-choice.mjs";
 
 const FLAG  = "warhammer-dbc";
 const GRANT = "originGrant";
@@ -201,6 +202,16 @@ export async function applySubrace(actor, key) {
     // успевают стартовать с одинаковым пустым флагом mechanicsApplied).
     const [created] = await actor.createEmbeddedDocuments("Item", [data], { [SKIP_MECHANICS_HOOK]: true });
     if (created) await applyItemMechanics(created);
+
+    // Африэль/Эльданар (wdbc-iu53) — выбор Дружественных Характеристик/
+    // Навыков при получении субрасы, тот же принцип «диалог сразу после
+    // выдачи», что и Родной мир/Предсказание. Пропустить (крестик/Esc) не
+    // ломает субрасу — override просто не применяется, доступно повторить
+    // позже правкой Механики предмета вручную.
+    if (created && needsAptitudeChoice(key)) {
+      const picks = await promptSubraceAptitudeChoice(key, def.label || key);
+      if (picks) await applySubraceAptitudeChoice(created, picks);
+    }
   }
 
   // Субрасы друкхари отменяют часть расовых Черт. Имена в `removesTraits` и на

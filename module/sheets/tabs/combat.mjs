@@ -26,6 +26,7 @@ import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
+import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
 import { preservationAvailable, applyPreservationSingle, applyPreservationArea } from "../../combat/preservation.mjs";
 import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftnessArea } from "../../combat/song-of-swiftness.mjs";
@@ -33,6 +34,8 @@ import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs"
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
+import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
+import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
@@ -125,6 +128,14 @@ export function activateCombatListeners(root, actor) {
     await showResplendentRaimentDialog(actor);
   });
 
+  // ── Прилив Адреналина (wdbc-ks1r, module/combat/adrenaline-rush.mjs) ────
+  on(root, ".adrenaline-rush-btn", "click", async () => {
+    if (!adrenalineRushAvailable(actor)) {
+      return ui.notifications.warn("Прилив Адреналина уже использован в этом бою/сцене.");
+    }
+    await applyAdrenalineRush(actor);
+  });
+
   // ── Певцы Кости (wdbc-sk8s, module/combat/{bone-song,preservation,song-of-swiftness}.mjs) ──
   on(root, ".bone-song-btn", "click", async () => {
     if (!boneSongAvailable(actor)) {
@@ -201,6 +212,18 @@ export function activateCombatListeners(root, actor) {
     }
   });
   on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
+
+  // Deadly Effectiveness/Смертоносная Эффективность (wdbc-1rno): игрок сам
+  // подтверждает клик «убил после Финта в этом Раунде» — система только
+  // считает «раз в Раунд» и +2 ОД (combat/deadly-effectiveness.mjs).
+  on(root, ".deadly-effectiveness-btn", "click", async () => {
+    if (!await triggerDeadlyEffectiveness(actor)) ui.notifications.warn("⚠️ Уже использовано в этом Раунде.");
+  });
+
+  // Bow to the Audience/Поклон Публике (wdbc-1rno): цели берутся из
+  // game.user.targets (та же логика, что Bone Song, wdbc-sk8s) — гейт кнопки
+  // сам проверяет их наличие и ОД.
+  on(root, ".bow-to-audience-btn", "click", () => triggerBowToAudience(actor));
 
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»

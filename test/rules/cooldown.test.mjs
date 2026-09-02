@@ -201,8 +201,8 @@ describe("isThrottleReady / markThrottleUsed — диспетчер «Часто
     };
   }
 
-  it("THROTTLE_UNITS перечисляет ровно 5 единиц", () => {
-    expect(THROTTLE_UNITS).toEqual(["round", "battle", "scene", "session", "day"]);
+  it("THROTTLE_UNITS перечисляет ровно 6 единиц", () => {
+    expect(THROTTLE_UNITS).toEqual(["round", "battle", "scene", "session", "day", "month"]);
   });
 
   it("round: делегирует в isCapabilityAvailable/markCapabilityUsed", async () => {
@@ -240,6 +240,15 @@ describe("isThrottleReady / markThrottleUsed — диспетчер «Часто
     expect(isThrottleReady(doc, "flag", "day")).toBe(false);
     globalThis.game.time = { worldTime: 100000 + 86400 + 1 };
     expect(isThrottleReady(doc, "flag", "day")).toBe(true);
+  });
+
+  it("month: делегирует в isWorldTimeCooldownReady/markWorldTimeCooldownUsed с интервалом в 30 суток (wdbc-1rno)", async () => {
+    globalThis.game.time = { worldTime: 100000 };
+    const doc = docWithFlags();
+    await markThrottleUsed(doc, "flag", "month");
+    expect(isThrottleReady(doc, "flag", "month")).toBe(false);
+    globalThis.game.time = { worldTime: 100000 + 30 * 86400 + 1 };
+    expect(isThrottleReady(doc, "flag", "month")).toBe(true);
   });
 
   it("неизвестная/пустая единица — всегда готово, markThrottleUsed ничего не пишет", async () => {
@@ -337,5 +346,23 @@ describe("throttleCount / isThrottleCountAvailable / incrementThrottleCount — 
     // isThrottleReady/markThrottleUsed для "day" — интервал между использованиями,
     // читает СОВСЕМ другой флаг (не usageLimits.<key>) — счётчик его не трогает.
     expect(isThrottleReady(doc, "flag", "day")).toBe(true);
+  });
+
+  it("month: живое сравнение по номеру условного 30-суточного месяца (wdbc-1rno, Vampiric Dependency/Warp Eater) — смена месяца обнуляет", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const doc = docWithFlags();
+    await incrementThrottleCount(doc, "flag", "month", 2);
+    await incrementThrottleCount(doc, "flag", "month", 2);
+    expect(throttleCount(doc, "flag", "month")).toBe(2);
+    expect(isThrottleCountAvailable(doc, "flag", "month", 2)).toBe(false);
+
+    // Тот же месяц (частично прошло) — счётчик не сбрасывается.
+    globalThis.game.time = { worldTime: 10 * 86400 };
+    expect(throttleCount(doc, "flag", "month")).toBe(2);
+
+    // Наступил новый месяц — счётчик обнуляется.
+    globalThis.game.time = { worldTime: 30 * 86400 + 10 };
+    expect(throttleCount(doc, "flag", "month")).toBe(0);
+    expect(isThrottleCountAvailable(doc, "flag", "month", 2)).toBe(true);
   });
 });

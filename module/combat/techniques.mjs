@@ -2,6 +2,9 @@ import { CHARACTERISTICS }                  from "../constants/characteristics.m
 import { _degWord }                         from "../helpers/utils.mjs";
 import { rollIcon }                         from "../constants/roll-icons.mjs";
 import { MELEE_STANCES }                    from "../constants/combat.mjs";
+import { ruleRerollsHtml }                  from "../rules/roll-mods.mjs";
+import { pickReroll }                       from "../rules/reroll-pick.mjs";
+import { testOutcome }                      from "../rules/roll-outcome.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -36,6 +39,15 @@ export async function _showContestDialog(actor, techDef) {
          ${rollIcon("sword")}Стойка: ${MELEE_STANCES[stanceKey].label} (${stanceWsBonus >= 0 ? "+" : ""}${stanceWsBonus}), уже в WS выше
        </div>`
     : "";
+
+  // Опциональные перебросы правил (wdbc-u0by, Truth-Seer/Defiance) — этот
+  // диалог раньше вообще не читал реестр правил (та же дыра, что была у
+  // Парирования до фикса, module/combat/defense.mjs). Список считается по
+  // характеристике ПО УМОЛЧАНИЮ при открытии — тот же компромисс, что у
+  // общего диалога теста Навыка (mods не пересчитываются реактивно при
+  // смене дропдауна): честное самоподтверждение игрока всё равно решает,
+  // применять ли галочку, форма Состязания не проверяет роль/условие сама.
+  const rr = ruleRerollsHtml(actor, { kind: "skill", char: defaultChar });
 
   new Dialog({
     title: techDef.label,
@@ -74,6 +86,7 @@ export async function _showContestDialog(actor, techDef) {
           <label>Итоговый порог:</label>
           <span id="contest-total-display">${baseVal}</span>
         </div>
+        ${rr.html}
       </form>`,
     buttons: {
       roll: {
@@ -85,17 +98,27 @@ export async function _showContestDialog(actor, techDef) {
           const mod      = parseInt(html.find("#contest-mod").val())  || 0;
           const eff      = selfVal + mod;
 
-          const roll     = await new Roll("1d100").evaluate();
-          const rv       = roll.total;
-          const hit      = rv <= eff;
-          const deg      = hit
-            ? Math.floor((eff - rv) / 10) + 1
-            : Math.floor((rv - eff) / 10) + 1;
+          // Опциональный переброс правил (wdbc-u0by) — тот же приём чтения,
+          // что actor-sheet.mjs::_showSkillRollDialog (.rule-reroll-opt:checked).
+          const rerollEl = html.find(".rule-reroll-opt:checked");
+          const rerollIdx = parseInt(rerollEl?.data?.("idx") ?? "-1");
+          const useReroll = rerollIdx >= 0;
+          const mode = rerollEl?.data?.("mode") || "keepBest";
+          const rolled = [];
+          for (let i = 0; i < (useReroll ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+          const picked = pickReroll(rolled.map(r => r.total), mode);
+          const roll   = rolled[picked.index];
+          const rv     = picked.value;
+          const { success: hit, deg } = testOutcome(rv, eff);
           const rollMode = game.settings.get("core", "rollMode");
           const outcome  = hit
             ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
             : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
           const modStr   = mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : "";
+          const rerollLabel = rr.rerolls?.[rerollIdx]?.label;
+          const rerollNote = picked.dropped.length
+            ? `<div class="roll-defense-note">${rerollLabel || "Переброс"}: отброшено ${picked.dropped.join(", ")}</div>`
+            : "";
 
                     const messageData = ChatMessage.applyRollMode({
             speaker: ChatMessage.getSpeaker({ actor }),
@@ -112,6 +135,7 @@ export async function _showContestDialog(actor, techDef) {
                   → Порог: <b>${eff}</b>
                 </div>
                 <div class="roll-dice">Бросок: <b>${rv}</b></div>
+                ${rerollNote}
                 <div class="roll-outcome">${outcome}</div>
                 ${hit
                   ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">

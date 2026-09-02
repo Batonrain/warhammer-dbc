@@ -157,6 +157,17 @@ function effectValue(effect, ctx, ruleId) {
     const pr = Number(ctx?.actor?.system?.psyker?.currentRating) || 0;
     return pr * multiplier || 0;
   }
+  // "cor" — тоже не Характеристика: Порча (system.corruptionBonus, wdbc-1rno)
+  // не входит в characteristics{}. Книга почти всегда даёт «½Cor.b (окр.▲)»
+  // (Enchanting Voice, Black Eyes и др.) — не то же самое, что multiplier у
+  // остальных источников (там всегда целые множители вроде ×2), поэтому
+  // здесь multiplier может быть дробным и результат ВСЕГДА округляется вверх
+  // (Math.ceil), как требует книга; multiplier=1 (по умолчанию) не меняет
+  // округление благодаря Math.ceil на целом числе.
+  if (selfCharBonus === "cor") {
+    const cb = Number(ctx?.actor?.system?.corruptionBonus) || 0;
+    return Math.ceil(cb * multiplier) || 0;
+  }
   if (selfCharBonus) {
     const bonus = ctx?.actor?.system?.characteristics?.[selfCharBonus]?.bonus ?? 0;
     return bonus * multiplier || 0;

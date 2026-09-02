@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { ITEM_TYPES } from "./items.mjs";
+import { fullyArmedWeight } from "../combat/fully-armed.mjs";
 
 // Что можно разместить на разгрузке (броня носится, не стоуится; моды — часть оружия/брони).
 export const STOWABLE_TYPES = ["weapon", "ammo", "gear", "tool", "drug", "forcefield"];
@@ -162,7 +163,10 @@ export function rigManagerData(actor) {
 
   const locOf = (id) => stow[id];
 
-  const wt = (i) => Number(i.system?.weight) || 0;
+  // Fully Armed / Во Всеоружии (wdbc-1rno): не-тяжёлое стрелковое оружие с
+  // Custom Grip весит вдвое меньше в расчёте Разгрузки — только для актора,
+  // владеющего самой Чертой (module/combat/fully-armed.mjs).
+  const wt = (i) => fullyArmedWeight(actor, i, Number(i.system?.weight) || 0);
   const wsum = (arr) => Math.round(arr.reduce((a, i) => a + wt(i), 0) * 100) / 100;
 
   const rigViews = rigs.map(rig => {

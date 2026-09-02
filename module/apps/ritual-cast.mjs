@@ -27,6 +27,8 @@ import { veilIcon } from "../constants/veil-icons.mjs";
 import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
 import { defaultSpawnDemonFn } from "./demon-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { hasDominator } from "../rules/dominator.mjs";
+import { pickReroll } from "../rules/reroll-pick.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -204,11 +206,20 @@ export async function castRitual(R, actor, {
     if (!proceed) return null;
   }
   const threshold = d.threshold;
-  const roll = await new Roll("1d100").evaluate();
+  // Dominator / Покоритель (wdbc-u0by): «Преимущество на тесты Демонического
+  // Владычества» — безусловно для R.type==="dominion", авто (кнопка «Провести
+  // ритуал» катает сразу, без отдельного шага под переброс).
+  const advantage = R.type === "dominion" && hasDominator(actor);
+  const rolled = [];
+  for (let i = 0; i < (advantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  const picked = pickReroll(rolled.map(r => r.total), "keepBest");
+  const roll = rolled[picked.index];
   const rv = roll.total;
   const deg = ritualDegrees(rv, threshold);
   const success = deg > 0;
   const allRolls = [roll];
+  const dominatorNote = picked.dropped.length
+    ? ` · Покоритель: Преимущество, отброшено ${picked.dropped.join(", ")}` : "";
   const typeLabel = RITUAL_TYPES_MAP[R.type]?.label || R.type;
   const breakdown = d.rows.map(r => `${r.label}: ${r.signed}`).join(" · ");
 
@@ -229,7 +240,7 @@ export async function castRitual(R, actor, {
     content: `<div class="wh-roll-result wh-ritual-card">
       <div class="roll-header">${veilIcon("ritual")} Ритуал: ${esc(R.name || typeLabel)}</div>
       <div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>
-      <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}</div>
+      <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}${dominatorNote ? esc(dominatorNote) : ""}</div>
       <div class="roll-dice">Бросок: <b>${rv}</b></div>
       <div class="roll-outcome">${success
         ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`

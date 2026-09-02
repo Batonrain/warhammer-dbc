@@ -24,6 +24,7 @@
 import { matchesFilters, normalizePick } from "./compendium-filters.mjs";
 import { budgetLabel, budgetReady, budgetFits, budgetState, BUDGET_XP } from "../rules/pick-budget.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { disciplineDescByFolderName } from "../constants/disciplines.mjs";
 
 const TAB_DEFS = [
   { key: "all",       label: "Все" },
@@ -339,16 +340,21 @@ function renderItemsHtml(items, multi) {
   }).join("");
 }
 
-function renderNodeHtml(node, multi) {
+export function renderNodeHtml(node, multi) {
   let html = renderItemsHtml(node.items || [], multi);
-  html += (node.folders || []).map(f => `
+  html += (node.folders || []).map(f => {
+    // Сводка дисциплины психосил тултипом на заголовке папки (wdbc-pwx) —
+    // тихо пусто для папок вне PSY_DISCIPLINES или без книжного текста.
+    const discDesc = disciplineDescByFolderName(f.name);
+    return `
     <div class="cbrowse-folder pick-collapsed">
-      <div class="cbrowse-folder-head">
+      <div class="cbrowse-folder-head"${discDesc ? ` title="${esc(discDesc)}"` : ""}>
         <span class="pick-caret">▸</span>${esc(f.name)}
         <span class="pick-count">${countNode(f)}</span>
       </div>
       <div class="cbrowse-folder-body">${renderNodeHtml(f, multi)}</div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
   return html;
 }
 

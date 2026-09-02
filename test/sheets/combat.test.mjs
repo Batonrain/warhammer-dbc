@@ -42,7 +42,7 @@ function actorWith(item) {
 beforeEach(() => {
   showAttackDialog.mockClear();
   beginTargeting.mockClear();
-  globalThis.game = { user: { targets: new Set() } };
+  globalThis.game = { ...globalThis.game, user: { targets: new Set() } };
   globalThis.canvas = { ready: true };
 });
 

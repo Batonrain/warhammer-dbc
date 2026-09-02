@@ -2,6 +2,7 @@
 // «Переброс» (Локусы Герольдов); дальше тем же путём поедут остальные.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -82,6 +83,89 @@ describe("rulesFromItemMechanics: что НЕ должно давать прав
     expect(rulesFromItemMechanics([{ id: "a", name: "a", flags: {} }])).toEqual([]);
     expect(rulesFromItemMechanics([])).toEqual([]);
     expect(rulesFromItemMechanics(undefined)).toEqual([]);
+  });
+});
+
+// wdbc-u0by: «Преимущество» книги (стр. 25 — «бросить 2 раза, взять лучший»)
+// = kind:"reroll"+keepBest. Проверяются РЕАЛЬНЫЕ pack-файлы (не синтетика
+// выше) — три находки, где скоуп выражается без потери смысла книги
+// существующими видами Конструктора (остальные из 16 найденных either
+// требуют новой архитектуры — межакторный грант у Journeyman, привязка к
+// нестандартному тестовому конвейеру у Крафта/Ритуалов, — либо условие,
+// которое `reroll`/`when` не умеет сузить: враг-Орда/burst-огонь/«как
+// свободное действие»/пока цель не знает о расе и т.п. — оставлены
+// capability-заглушками с честной причиной в capabilities.mjs).
+describe("wdbc-u0by: реальные pack-файлы «Преимущество» → reroll", () => {
+  const readMechanics = path => {
+    const data = JSON.parse(readFileSync(path, "utf8"));
+    return data.flags["warhammer-dbc"].mechanics;
+  };
+  const asItem = (name, mechanics) => ({ id: name, name, flags: { [SYSTEM]: { mechanics } } });
+
+  it("Fast And Swift / Быстрый И Проворный — Преимущество на Stealth", () => {
+    const mechanics = readMechanics("packs-src/talents/Азуриани/Fast_And_Swift___Быстрый_И_Проворный_25aXMVI2JipSNQLC.json");
+    const rules = rulesFromItemMechanics([asItem("Fast And Swift", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "skill:stealth", mode: "keepBest" });
+  });
+
+  it("Data Acquisition / Получение Данных — Преимущество на Awareness", () => {
+    const mechanics = readMechanics("packs-src/traits/Data_Acquisition___Получение_Данных_SbegSSBYvV0d2LFC.json");
+    const rules = rulesFromItemMechanics([asItem("Data Acquisition", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "skill:awareness", mode: "keepBest" });
+  });
+
+  it("Battle Sage / Мудрец Битвы — Преимущество на Common Lore (War), скоуп без специализации (документированный компромисс)", () => {
+    const mechanics = readMechanics("packs-src/talents/Элитные_архетипы/Виткис/Battle_Sage___Мудрец_Битвы_7HZcZyigkPuJDzTN.json");
+    const rules = rulesFromItemMechanics([asItem("Battle Sage", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "skill:commonlore", mode: "keepBest" });
+  });
+
+  it("Take Everything / Забирай Всё — Преимущество на Awareness И Commerce (решение пользователя: поиск+оценка)", () => {
+    const mechanics = readMechanics("packs-src/traits/Take_Everything___Забирай_Вс__tmc7Vu21z6v63Rtd.json");
+    const rules = rulesFromItemMechanics([asItem("Take Everything", mechanics)]);
+    expect(rules).toHaveLength(2);
+    const targets = rules.map(r => r.effects[0].target).sort();
+    expect(targets).toEqual(["skill:awareness", "skill:commerce"]);
+  });
+
+  it("Sentry / Часовой — опциональный переброс на ЛЮБОЙ тест Awareness (честное самоподтверждение, wdbc-u0by)", () => {
+    const mechanics = readMechanics("packs-src/talents/Внимательность/Sentry___Часовой_lT9AL69ChvRqqKFS.json");
+    const rules = rulesFromItemMechanics([asItem("Sentry", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].label).toBe("Часовой (своб. действие)");
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "skill:awareness", mode: "keepBest" });
+  });
+
+  it("Thumper / Громыхатель — опциональный переброс на ЛЮБОЙ тест Т (честное самоподтверждение, wdbc-u0by)", () => {
+    const mechanics = readMechanics("packs-src/talents/Стойкость/Thumper___Громыхатель_Ju4TfiB2tCSxSx6T.json");
+    const rules = rulesFromItemMechanics([asItem("Thumper", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "char:t", mode: "keepBest" });
+  });
+
+  it("Lying Speech Of A Liar — опциональный переброс на ЛЮБОЙ соц. тест (честное самоподтверждение, wdbc-u0by)", () => {
+    const mechanics = readMechanics("packs-src/traits/Lying_Speech_Of_A_Liar___Лживые_Речи_Лже_dLVeOXKGeRJIooVZ.json");
+    const rules = rulesFromItemMechanics([asItem("Lying Speech", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "social", mode: "keepBest" });
+  });
+
+  it("Defiance / Неповиновение — опциональный переброс на ЛЮБОЙ тест (scope:\"opposed\" оказался мёртвой областью — effectAppliesTo её нигде не матчит, — честно заменено на \"all\", wdbc-u0by)", () => {
+    const mechanics = readMechanics("packs-src/talents/Пси_стойкость/Defiance___Неповиновение_HY6YCo2KkCztt329.json");
+    const rules = rulesFromItemMechanics([asItem("Defiance", mechanics)]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toMatchObject({ kind: "rollMode", target: "all", mode: "keepBest" });
+  });
+
+  it("Truth-Seer / Правдовидец — опциональный переброс на тесты WS (диалог Состязаний, wdbc-u0by), плюс прежние capability-записи целы", () => {
+    const mechanics = readMechanics("packs-src/mutations/Дары_Богов/Кхорн/Truth_Seer___Правдовидец_OEpvkX6R2nc5y3RZ.json");
+    expect(mechanics.length).toBeGreaterThan(1); // прежняя группа + новая
+    const rules = rulesFromItemMechanics([asItem("Truth-Seer", mechanics)]);
+    const rerollRule = rules.find(r => r.effects[0]?.kind === "rollMode");
+    expect(rerollRule.effects[0]).toMatchObject({ target: "char:ws", mode: "keepBest" });
   });
 });
 

@@ -306,7 +306,8 @@ const SCRIPT_THROTTLE_OPTIONS = [
   { value: "battle",  label: "Раз за бой" },
   { value: "scene",   label: "Раз за сцену" },
   { value: "session", label: "Раз за сессию" },
-  { value: "day",     label: "Раз в сутки" }
+  { value: "day",     label: "Раз в сутки" },
+  { value: "month",   label: "Раз в месяц" }
 ];
 const SCRIPT_THROTTLE_LABELS = Object.fromEntries(SCRIPT_THROTTLE_OPTIONS.map(o => [o.value, o.label]));
 /** Ключ флага перезарядки кнопки «▶ Запустить» конкретной записи kind:"script". */
@@ -317,7 +318,7 @@ const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
 // интервал МЕЖДУ использованиями, не лимит НА сутки; здесь "day" — свой
 // смысл, номер календарных суток, см. cooldown.mjs::liveValue). При
 // scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
-const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day"]);
+const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day", "month"]);
 
 /** Готова ли кнопка «▶ Запустить» записи (учитывает scriptThrottleMax > 1 — счётчик, не единичный gate). */
 function scriptRunReady(item, entry) {
@@ -443,6 +444,12 @@ export function characteristicEffectKey(entry) {
   // производное число (documents/actor.mjs). "Итог"/"Бонус" тут ни при чём,
   // charKey:"initiative" целится напрямую в system.initiative.
   if (entry.charKey === "initiative") return "system.initiative";
+  // Размер (wdbc-w8ws) — тот же приём: плоское число, не Бонус/Итог.
+  // "sizeNoSpd" — та же цель Размера, но заведомо НЕ двигающая SPD
+  // (Absurdly Fat/Абсурдно Толстый: «+1 Размер, не влияя на SPD»,
+  // rules/character.mjs держит её отдельным аккумулятором от sizeMod).
+  if (entry.charKey === "size") return "system.sizeMod";
+  if (entry.charKey === "sizeNoSpd") return "system.sizeModNoSpd";
   const field = (entry.field || "total") === "bonus" ? "bonusFx" : "totalFx";
   return `system.characteristics.${entry.charKey}.${field}`;
 }
@@ -652,6 +659,11 @@ export function describeMechEntry(entry) {
         const sign = OP_SIGN[entry.op] ?? entry.op;
         return `Инициатива: ${sign} ${entry.value ?? ""}`;
       }
+      if (entry.charKey === "size" || entry.charKey === "sizeNoSpd") {
+        const sign = OP_SIGN[entry.op] ?? entry.op;
+        const noSpd = entry.charKey === "sizeNoSpd" ? " (без влияния на SPD)" : "";
+        return `Размер: ${sign} ${entry.value ?? ""}${noSpd}`;
+      }
       const abbr = CHARACTERISTICS[entry.charKey]?.abbr ?? entry.charKey;
       const fieldLabel = entry.field === "bonus" ? "бонус" : "значение";
       const sign = OP_SIGN[entry.op] ?? entry.op;
@@ -721,11 +733,13 @@ export function describeMechEntry(entry) {
     case "testMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
       if (!scope) return "Модификатор теста: (область не выбрана)";
-      const mult = Number(entry.modCharBonusMultiplier) > 1 ? `${Number(entry.modCharBonusMultiplier)}×` : "";
+      const multVal = Number(entry.modCharBonusMultiplier) || 1;
+      const mult = multVal !== 1 ? `${multVal}×` : "";
       const bonusOf = entry.modCharBonus === "pr" ? "Пси-Рейтинг"
+        : entry.modCharBonus === "cor" ? "Порча (Cor.b)"
         : (CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus);
       const val = entry.modValueMode === "charBonus"
-        ? `+${mult}Бонус ${bonusOf}`
+        ? `+${mult}Бонус ${bonusOf}${entry.modCharBonus === "cor" ? " (окр.▲)" : ""}`
         : entry.modValueMode === "halvePenalty"
         ? "½ штрафа (вкл. необученность)"
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
@@ -2360,17 +2374,21 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "characteristic") {
-    // Инициатива (wdbc-v9a7) — псевдо-характеристика в конце списка: не из
-    // CHARACTERISTICS (тех ровно 10, Инициатива не входит), у неё нет
-    // Бонуса/Итога — плоское число, поэтому поле "field" для неё скрыто.
-    const isInitiative = ent.charKey === "initiative";
+    // Инициатива (wdbc-v9a7) / Размер (wdbc-w8ws) — псевдо-характеристики в
+    // конце списка: не из CHARACTERISTICS (тех ровно 10), у них нет
+    // Бонуса/Итога — плоское число, поэтому поле "field" для них скрыто.
+    // "Размер (без SPD)" — тот же Размер, но целится в отдельный ключ
+    // (system.sizeModNoSpd), который rules/character.mjs не пускает в SPD.
+    const isFlatPseudo = ent.charKey === "initiative" || ent.charKey === "size" || ent.charKey === "sizeNoSpd";
     const charOpts = Object.entries(CHARACTERISTICS).map(([k, m]) => optHtml(k, `${m.abbr} — ${m.label}`, ent.charKey === k)).join("")
-      + optHtml("initiative", "Иниц. — Инициатива", isInitiative);
+      + optHtml("initiative", "Иниц. — Инициатива", ent.charKey === "initiative")
+      + optHtml("size", "Разм. — Размер", ent.charKey === "size")
+      + optHtml("sizeNoSpd", "Разм. — Размер (без SPD)", ent.charKey === "sizeNoSpd");
     const fieldOpts = [["total", "Итоговое значение"], ["bonus", "Бонус (÷10)"]]
       .map(([v, l]) => optHtml(v, l, (ent.field || "total") === v)).join("");
     const opOpts = OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-char-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>
-      ${isInitiative ? "" : `<select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>`}
+      ${isFlatPseudo ? "" : `<select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>`}
       <select class="mech-char-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-char-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
@@ -2522,8 +2540,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // Психосилы, wdbc-jw81): без этих двух полей запись из пака показывалась
     // бы неверно и затиралась первым же кликом по селекту.
     const valueField = ent.modValueMode === "charBonus"
-      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"]])
-        + `<input type="number" class="mech-mod-char-mult" min="1" title="множитель бонуса (1 — как есть)"
+      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"], ["cor", "Порча (Cor.b)"]])
+        + `<input type="number" class="mech-mod-char-mult" min="0.1" step="0.1" title="множитель бонуса (1 — как есть; 0.5 — «½Cor.b», книга всегда округляет вверх)"
                   value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
       : ent.modValueMode === "halvePenalty" ? ""
       : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"

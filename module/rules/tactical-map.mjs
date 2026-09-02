@@ -125,11 +125,15 @@ export function rangeBandKey(distM, rng) {
  */
 export function rangeBandBoundaries(effRng) {
   const rng = Number(effRng) || 0;
-  return {
-    pointBlank: 3,
-    short: Math.ceil(rng / 2),
-    combat: rng,
-    long: rng * 2,
-    extreme: rng * 3
-  };
+  const pointBlank = 3;
+  if (rng <= 0) return { pointBlank, short: 0, combat: 0, long: 0, extreme: 0 };
+  // У короткоствольного оружия (Rng ≤ 6) полосы «короткая»/«боевая» вырождаются
+  // — фиксированный упор в 0,5–3 м их поглощает. Границы держим монотонными
+  // (clamp снизу предыдущей), иначе кольца/подсказка рисовали бы полосу «назад»
+  // (напр. Rng 3 без clamp: короткая до 2 м — раньше конца упора в 3 м).
+  const short   = Math.max(Math.ceil(rng / 2), pointBlank);
+  const combat  = Math.max(rng,                short);
+  const long    = Math.max(rng * 2,            combat);
+  const extreme = Math.max(rng * 3,            long);
+  return { pointBlank, short, combat, long, extreme };
 }

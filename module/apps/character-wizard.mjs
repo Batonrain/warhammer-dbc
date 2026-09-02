@@ -1368,12 +1368,16 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         if (this._matchGearBudget(r)) { gearBudgetIdx.push(i); return; }
         if (/(?<![A-Za-zА-Яа-яЁё])люб/i.test(r) || /модификац|доз|магазин|\bR\d\b\s*$/i.test(r)) return; // абстрактное — вручную, как раньше
         const k = norm(clean(r));
+        // Предмет уже есть (на акторе — обычно выдан Механикой Расы/Архетипа
+        // на более раннем Этапе, см. doombc-gear-dual-path-bugs — или уже
+        // поставлен в очередь этим же проходом) — не плодим вторую копию И
+        // не открываем Обозреватель повторным вопросом. Проверяется ДО
+        // поиска по пак-индексу (раньше это было только в ветке точного
+        // совпадения — ручной подбор ниже её просто не достигал, потому что
+        // выходил из forEach раньше строкой !ref, wdbc-sai).
+        if (k && (onActor.has(k) || grantedKeys.has(k))) { done[i] = true; return; }
         const ref = k ? index.get(k) : null;
         if (!ref) { manualIdx.push(i); return; }
-        // Предмет уже есть (на акторе или уже поставлен в очередь этим же
-        // проходом) — не плодим вторую копию, но строку помечаем «сделано»:
-        // формально она удовлетворена, и Обозреватель по ней не откроется.
-        if (onActor.has(k) || grantedKeys.has(k)) { done[i] = true; return; }
         grantedKeys.add(k);
         toCreate.push({ i, ref, count: this._matchLeadingCount(r) });
       });

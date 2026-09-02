@@ -1,4 +1,5 @@
 import { _performDodge, _performParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
@@ -21,6 +22,10 @@ import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPr
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
+import { processLastActorCombatStart } from "./combat/last-actor.mjs";
+import { processMiddleOfTheHuntRoundStart } from "./combat/middle-of-the-hunt.mjs";
+import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
+import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -37,6 +42,7 @@ import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from "./combat/action-economy.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
+import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
@@ -87,6 +93,8 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        const burst = ev.currentTarget.dataset.burst === "1";
+        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
         if (!await confirmHordeDefense(actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
@@ -97,7 +105,7 @@ export function registerHooks() {
           if (handled !== null) return;
         }
         await _performDodge(actor, extraMod,
-          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
+          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid, burst, attackerIsHorde);
       });
     });
 
@@ -109,9 +117,11 @@ export function registerHooks() {
         if (!actor) return;
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
+        const burst = ev.currentTarget.dataset.burst === "1";
+        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         await _performParry(actor, extraMod,
-          ev.currentTarget.dataset.attackerUuid || "", hitsCount);
+          ev.currentTarget.dataset.attackerUuid || "", hitsCount, burst, attackerIsHorde);
       });
     });
 
@@ -411,6 +421,21 @@ export function registerHooks() {
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Раковое Исцеление (wdbc-w8ws): кнопка появляется в чат-карточке
+    // безоружной атаки ТОЛЬКО при попадании (attack-dialog.mjs::
+    // showAttackDialogNoWeapon, techDef.hitSectionHtml) — эффект не
+    // накладывается автоматически сразу по попаданию, у цели должно быть
+    // окно кликнуть Уклонение/Парирование первой (см. докстринг apps/
+    // cancerous-healing.mjs). Клик может прийти с другого клиента (тот же
+    // приём, что у wh-apply-dmg-btn) — резолвит актора/цель заново по uuid.
+    html.querySelectorAll(`.${CH_APPLY_BTN_CLASS}`).forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await applyCancerousHealingFromButton(ds.casterUuid, ds.targetUuid);
       });
     });
 
@@ -1293,6 +1318,9 @@ function _attachFateContextMenu(message, html) {
         await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
     }
     await resolvePendingSusAnHeals(combat);
+    // The Middle of the Hunt/Середина Охоты (wdbc-1rno): +10 Инициативы
+    // владельцу Таланта на раундах 3-4 — та же смена Раунда, ГМ пишет.
+    await processMiddleOfTheHuntRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
@@ -1352,6 +1380,11 @@ function _attachFateContextMenu(message, html) {
   // Encounter — спрашиваем ровно раз, в момент старта боя («Begin Combat»).
   Hooks.on("combatStart", async (combat) => {
     await processWitchsEdgeCombatStart(combat);
+    // Last Actor/Последний Актёр (wdbc-1rno): «бросает трижды на
+    // инициативу» — 2 доп. Combatant при старте боя, только GM пишет
+    // разделяемое состояние боя (тот же принцип, что и у остальных
+    // updateCombat/combatStart обработчиков выше).
+    if (game.user.isGM) await processLastActorCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -1368,6 +1401,14 @@ function _attachFateContextMenu(message, html) {
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);
+        // Snapshot/Выстрел Навскидку (wdbc-1rno): +1 ОД в конце Хода, если
+        // не подвигался больше Полудвижения — тот же такт, читает
+        // movement-actions.mjs::moveDegreeThisTurn (сбрасывается позже, на
+        // СЛЕДУЮЩЕМ Ходу этого же actor, resetActionEconomy).
+        await processSnapshotTurnEnd(prevActor);
+        // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
+        // следующего Хода, если весь этот Ход ушёл на движение.
+        await processJustTheLightTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
@@ -1380,6 +1421,9 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Поклон Публике (wdbc-1rno): метка «до начала следующего Хода
+      // атакующего» — тот же такт, что усилитель Грозного Вопля.
+      await clearBowToAudienceMark(nextCombatant.actor);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).

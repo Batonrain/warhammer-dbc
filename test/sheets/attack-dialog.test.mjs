@@ -197,6 +197,19 @@ describe("разметка диалога: рукопашное оружие", (
     expect(captured.dialog.content).toContain("Хват: Обратный (Об) · WS -10");
   });
 
+  it("Рука Смерти (wdbc-hftn): двуручное слитое оружие форсирует Стандартный Хват (1р), пилюли не рисуются", () => {
+    // Профиль двуручный и hudGrip намеренно оставлен на «Об» с прошлого
+    // выбора — слияние должно перекрыть ОБА источника, не только профиль.
+    const weapon = sword({ grips: "2р (Об)" },
+                         { flags: { "warhammer-dbc.hudGrip": "Об", "warhammer-dbc.handOfDeathSource": "mut1" } });
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const html = captured.dialog.content;
+
+    expect(dialogThreshold()).toBe(55);        // WS 45 + База «Стандартная» 10, «1р» без штрафа
+    expect(html).not.toContain('id="atk-grip-pills"');   // единственный вариант — пилюли не рисуются
+    expect(html).not.toContain("Обратный (Об)");
+  });
+
   it("цепное оружие можно погасить, стрелковое — нет", () => {
     const chain = sword({ weaponType: "chain" });
     showAttackDialog(attacker({ items: [chain] }), chain);
@@ -1288,6 +1301,30 @@ describe("приём без оружия", () => {
     const card = captured.chat.at(-1).content;
     expect(card).toContain('data-damage="6"');
     expect(card).toContain("Применить урон: 6 → Торс");
+  });
+
+  // wdbc-w8ws (Раковое Исцеление): доп. секция вызывающего кода при попадании
+  // (не полагается на defButtons/unarmedDmgSection — своя произвольная кнопка).
+  describe("techDef.hitSectionHtml", () => {
+    const touch = { label: "Касание", wsBonus: 0, hitSectionHtml: "<button class=\"ch-apply-touch-btn\">Применить</button>" };
+
+    it("попадание — секция вставлена в карточку", async () => {
+      captured.dice = [30];
+      await showAttackDialogNoWeapon(attacker(), touch);
+      expect(captured.chat.at(-1).content).toContain("ch-apply-touch-btn");
+    });
+
+    it("промах — секции нет вовсе, хотя techDef её задаёт", async () => {
+      captured.dice = [96];
+      await showAttackDialogNoWeapon(attacker(), touch);
+      expect(captured.chat.at(-1).content).not.toContain("ch-apply-touch-btn");
+    });
+
+    it("techDef без hitSectionHtml — не роняет, секции просто нет", async () => {
+      captured.dice = [30, 3]; // второй куб — урон Пинка (techDef.damage)
+      await showAttackDialogNoWeapon(attacker(), kick);
+      expect(captured.chat.at(-1).content).not.toContain("ch-apply-touch-btn");
+    });
   });
 });
 

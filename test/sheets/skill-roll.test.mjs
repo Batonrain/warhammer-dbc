@@ -80,6 +80,51 @@ describe("сложение галочек в диалоге броска", () =>
       for (const [key, fn] of saved) registerRuleSource(key, fn);
     }
   });
+
+  // wdbc-1rno: обычный тест Навыка раньше вообще не нёс targetActor — правила
+  // вида «противник ПРОТИВ персонажа» (targetHasTrait, module/rules/
+  // predicates.mjs — уже существовал, но был мёртв за пределами атак,
+  // attack-dialog.mjs) не могли сработать. Теперь _showSkillRollDialog берёт
+  // первый выбранный таргет сцены (game.user.targets), тем же приёмом.
+  it("targetHasTrait доходит до галочки диалога, когда есть выбранный таргет", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "x", label: "Синэстезия: цель", when: { targetHasTrait: "Synesthesia" },
+        effects: [{ kind: "rollBonus", target: "skill:scrutiny", value: -20 }] }
+    ]);
+    const targetActor = { items: [{ type: "mutation", name: "Synesthesia" }] };
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: targetActor }]) };
+    try {
+      sheet({})._showSkillRollDialog("Проницательность", 45, "per", false, { skill: "scrutiny" });
+      expect(captured.dialog.content).toContain('data-value="-20"');
+    } finally {
+      globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("без выбранного таргета та же галочка не появляется", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "x", label: "Синэстезия: цель", when: { targetHasTrait: "Synesthesia" },
+        effects: [{ kind: "rollBonus", target: "skill:scrutiny", value: -20 }] }
+    ]);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    try {
+      sheet({})._showSkillRollDialog("Проницательность", 45, "per", false, { skill: "scrutiny" });
+      expect(captured.dialog.content).not.toContain("Синэстезия: цель");
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
 });
 
 describe("строка 10 сверки: снятый шлем Астартес", () => {

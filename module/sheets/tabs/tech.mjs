@@ -16,6 +16,9 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
+import { hasElectrovigour } from "../../rules/electrovigour.mjs";
+import { pickReroll } from "../../rules/reroll-pick.mjs";
+import { testOutcome } from "../../rules/roll-outcome.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -94,14 +97,20 @@ export async function activateTechMiracle(actor, item) {
     const compBonus = actor.system.techCompBonus || 0;
     const tTot   = actor.system.characteristics?.t?.total ?? 0;
     const compTh = tTot - 10 * compX + compBonus;
-    const cRoll  = await new Roll("1d100").evaluate();
-    allRolls.push(cRoll);
-    const cSucc  = cRoll.total <= compTh;
-    const cDeg   = Math.floor(Math.abs(cRoll.total - compTh) / 10) + 1;
+    // Electrovigour (wdbc-u0by): «Преимущество на тесты Т на Техночудеса с
+    // типом Компенсатор» — безусловно, авто (кнопка активации без диалога).
+    const electro = hasElectrovigour(actor);
+    const cRolled = [];
+    for (let i = 0; i < (electro ? 2 : 1); i++) cRolled.push(await new Roll("1d100").evaluate());
+    allRolls.push(...cRolled);
+    const cPicked = pickReroll(cRolled.map(r => r.total), "keepBest");
+    const cRoll  = cRolled[cPicked.index];
+    const { success: cSucc, deg: cDeg } = testOutcome(cRoll.total, compTh);
     const reduce = cSucc ? Math.min(enCost, cDeg) : 0;
     const enBefore = enCost;
     enCost = Math.max(0, enCost - reduce);
-    compLine = `Компенсатор (X${compX}): T−${10 * compX}${compBonus ? ` +${compBonus}` : ""} → Порог ${compTh}, бросок ${cRoll.total} → `
+    const electroNote = cPicked.dropped.length ? `, Электрорвение: Преимущество, отброшено ${cPicked.dropped.join(", ")}` : "";
+    compLine = `Компенсатор (X${compX}): T−${10 * compX}${compBonus ? ` +${compBonus}` : ""} → Порог ${compTh}${electroNote}, бросок ${cRoll.total} → `
       + (cSucc ? `−${reduce} ⚡ (${enBefore}→${enCost})` : `Провал, цена ${enCost} ⚡`);
   }
 

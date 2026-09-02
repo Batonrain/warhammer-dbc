@@ -292,3 +292,135 @@ describe("_performDodge/_performParry: банк излишка Успехов в
     expect(getEvasionPool(actor, "Actor.attacker-1")).toMatchObject({ successes: 1 });
   });
 });
+
+// Dancing Among The Fire / Танец Среди Огня (wdbc-u0by): Преимущество на
+// Уклонение/Парирование против Короткой/Длинной Очереди (burst) — только
+// с Талантом И против Очереди сразу, roll×2 + keepBest.
+const dancer = () => ({ type: "talent", name: "Dancing Among The Fire / Танец Среди Огня", system: {} });
+
+describe("_performDodge: Танец Среди Огня (wdbc-u0by)", () => {
+  it("Талант + burst — два броска, лучший (меньший) взят", async () => {
+    const actor = attacker({ items: [dancer()] });
+    captured.dice = [80, 20];
+
+    await _performDodge(actor, 0, "", 1, "", true);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Танец Среди Огня: Преимущество, отброшено 80");
+    expect(card).toContain("<b>20</b>");
+  });
+
+  it("Талант, но не burst — один бросок как раньше", async () => {
+    const actor = attacker({ items: [dancer()] });
+    captured.nextRoll = 10;
+
+    await _performDodge(actor, 0, "", 1, "", false);
+
+    expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
+  });
+
+  it("burst, но нет Таланта — один бросок", async () => {
+    const actor = attacker();
+    captured.nextRoll = 10;
+
+    await _performDodge(actor, 0, "", 1, "", true);
+
+    expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
+  });
+
+  it("навязанный переброс (forcedReroll) приоритетнее собственного Преимущества", async () => {
+    const actor = attacker({ items: [dancer()] });
+    captured.dice = [80, 20];
+
+    await _performDodge(actor, 0, "keepWorst", 1, "", true);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("навязанный переброс, отброшено 20");
+    expect(card).not.toContain("Танец Среди Огня");
+  });
+});
+
+describe("_performParry: Танец Среди Огня (wdbc-u0by)", () => {
+  it("Талант + burst — два броска, лучший взят", async () => {
+    const sword = equippedMelee();
+    const actor = attacker({ items: [sword, dancer()] });
+    captured.dice = [80, 20];
+
+    await _performParry(actor, 0, "", 1, true);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Танец Среди Огня: Преимущество, отброшено 80");
+    expect(card).toContain("<b>20</b>");
+  });
+
+  it("без burst — один бросок как раньше", async () => {
+    const sword = equippedMelee();
+    const actor = attacker({ items: [sword, dancer()] });
+    captured.nextRoll = 10;
+
+    await _performParry(actor, 0, "", 1, false);
+
+    expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
+  });
+});
+
+// One Against A Hundred / Один Против Сотни (wdbc-u0by): Преимущество на
+// Уклонение/Парирование, когда атакующий — Орда (actor.type === "horde") —
+// только с Талантом И против Орды сразу, roll×2 + keepBest. Низшие Миньоны
+// не смоделированы (нет поля «тир» на акторе миньона).
+const bladeHost = () => ({ type: "talent", name: "One Against A Hundred / Один Против Сотни", system: {} });
+
+describe("_performDodge: Один Против Сотни (wdbc-u0by)", () => {
+  it("Талант + атакующий Орда — два броска, лучший взят", async () => {
+    const actor = attacker({ items: [bladeHost()] });
+    captured.dice = [80, 20];
+
+    await _performDodge(actor, 0, "", 1, "", false, true);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Один Против Сотни: Преимущество, отброшено 80");
+    expect(card).toContain("<b>20</b>");
+  });
+
+  it("Талант, но атакующий не Орда — один бросок", async () => {
+    const actor = attacker({ items: [bladeHost()] });
+    captured.nextRoll = 10;
+
+    await _performDodge(actor, 0, "", 1, "", false, false);
+
+    expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
+  });
+
+  it("атакующий Орда, но нет Таланта — один бросок", async () => {
+    const actor = attacker();
+    captured.nextRoll = 10;
+
+    await _performDodge(actor, 0, "", 1, "", false, true);
+
+    expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
+  });
+});
+
+describe("_performParry: Один Против Сотни (wdbc-u0by)", () => {
+  it("Талант + атакующий Орда — два броска, лучший взят", async () => {
+    const sword = equippedMelee();
+    const actor = attacker({ items: [sword, bladeHost()] });
+    captured.dice = [80, 20];
+
+    await _performParry(actor, 0, "", 1, false, true);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Один Против Сотни: Преимущество, отброшено 80");
+    expect(card).toContain("<b>20</b>");
+  });
+
+  it("атакующий не Орда — один бросок как раньше", async () => {
+    const sword = equippedMelee();
+    const actor = attacker({ items: [sword, bladeHost()] });
+    captured.nextRoll = 10;
+
+    await _performParry(actor, 0, "", 1, false, false);
+
+    expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
+  });
+});

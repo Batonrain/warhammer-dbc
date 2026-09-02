@@ -38,12 +38,14 @@ import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-trai
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
+import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
+import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../combat/action-economy.mjs";
 import { measureTokens, meleeContactCount, hasHighGround } from "../combat/tactical-map.mjs";
 import { rangeBandKey, rangeBandBoundaries }   from "../rules/tactical-map.mjs";
@@ -225,14 +227,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // ОДИН, а пилюли Хвата рисуются только при >1 варианте (gripBlockHtml ниже).
   const classDefaultGrip = ["pistol", "thrown"].includes(sys.weaponClass) ? "1р" : "2р";
   const baseGrips = (ownGrips.length || !extraGrips.length) ? ownGrips : [classDefaultGrip];
-  const gripList  = [...new Set([...baseGrips, ...extraGrips])];
+  // Рука Смерти (wdbc-hftn, стр. 46): сросшееся оружие — всегда «1р», никаких
+  // альтернативных хватов (Об/Бл/Кл/Мх/Хв) и никакого «2р» даже у профильно
+  // двуручного/тяжёлого — единственный пункт списка, пилюли Хвата не рисуются.
+  const gripList  = isFusedByHandOfDeath(item) ? ["1р"] : [...new Set([...baseGrips, ...extraGrips])];
   const primGrip  = gripList[0] || "";
   // S.b — нужен только для гейта Отдачи (стр. 166): персонаж с S.b меньше
   // рейтинга свойства не может выбрать "1р", должен стрелять "2р".
   const sBonus    = actor.system.characteristics?.s?.bonus ?? 0;
-  const gripKey   = techniqueOpts.gripKey
+  // Рука Смерти форсирует "1р" безусловно — игнорирует и techniqueOpts, и
+  // сохранённый hudGrip (тот же выбор, что currentMeleeGrip в hands.mjs).
+  const gripKey   = isFusedByHandOfDeath(item) ? primGrip
+                 : (techniqueOpts.gripKey
                  ?? item.getFlag?.("warhammer-dbc", "hudGrip")
-                 ?? primGrip;
+                 ?? primGrip);
   // Double Grip (wdbc-mu6v, стр. 62): держа пистолет "2р", Прицеливание
   // +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10 сверх обычного.
   // Вычисляется один раз от СТАРТОВОГО Хвата (как qTestMod/legionFit ниже) —
@@ -337,6 +345,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const forcedDefenceReroll = (resolvedAttack.rerolls || [])
     .find(r => r.who === "target")?.mode || "";
 
+  // Один Против Сотни (wdbc-u0by): авто-обнаружение, не чекбокс — цель Орда
+  // проверяется программно (game.user.targets), самоотчёт тут не нужен.
+  const oneVsHundred = oneAgainstAHundredAdvantage(actor, attackCtx.targetActor?.type === "horde");
+  const oneVsHundredHtml = oneVsHundred
+    ? `<div class="roll-defense-note">⚔️ Один Против Сотни: Преимущество на атаку (цель — Орда)</div>`
+    : "";
+
   // Стойка цели (стр. 15, Защитная/Прикрывающая) меняет ЧУЖИЕ атаки против
   // неё — читается с targetActor, а не с атакующего, и складывается прямо в
   // wpAttackMod (тот же слот, что Легион/Арсенал ниже).
@@ -367,6 +382,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
     : "";
 
+  // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
+  // АТАКУЮЩЕМ (module/combat/bow-to-audience.mjs), не на цели — бонус/штраф
+  // действует только пока бьёт именно отметивший, до начала его следующего
+  // Хода (снимается hooks.mjs::updateCombat, тот же такт, что Dread Wail).
+  const bowMark = actor.getFlag?.("warhammer-dbc", "bowToAudienceMark");
+  const bowMarked = !!(bowMark?.targetIds?.includes(attackCtx.targetActor?.id));
+  const bowMarkedMod = bowMarked ? (Number(bowMark.bonus) || 0) : 0;
+  const bowMarkedBadge = bowMarkedMod
+    ? `<span class="atk-training-warn" title="Поклон Публике: цель отмечена, действует до конца этого эффекта">🎭 Поклон Публике (+${bowMarkedMod})</span>`
+    : "";
+
   // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
   // автоматически и удваивает урон до Поглощения; прочая стрельба — только
   // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
@@ -386,7 +412,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -505,9 +531,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // целиком у винтовки/длинной винтовки (weaponClass "basic") — своей
   // категории у «длинной винтовки» в схеме нет, обе лежат в "basic".
   const recoilSuppressed = !isMelee && sys.weaponClass === "basic" && hasRecoilSuppressor(actor);
+  // Рука Смерти форсирует "1р" безусловно (стр. 46) — Отдача её не блокирует,
+  // тот же принцип, что и подавители Отдачи, гейт снят наравне с ними.
+  const handOfDeathFused = isFusedByHandOfDeath(item);
   function computeRangedGripOptions() {
     return gripList.map(key => {
-      const recoilBlocked = key === "1р" && !recoilSuppressed
+      const recoilBlocked = key === "1р" && !recoilSuppressed && !handOfDeathFused
         && wp.recoilRating > 0 && sBonus < wp.recoilRating;
       return {
         key, label: RANGED_GRIPS[key]?.label || key,
@@ -635,8 +664,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
     // Избегания ЦЕЛИ против ЭТОЙ атаки — Приём и Стойка складываются (стр.
     // 14-15): например Взмах (−10 Уклонение) + Агрессивная (−10 Уклонение).
-    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0);
-    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0);
+    // Поклон Публике (wdbc-1rno): «равный штраф на их физические Избегания» —
+    // тот же bowMarkedMod, что уже прибавлен атакующему в wpAttackMod выше
+    // (замыкание, bowMark читается один раз на актора-атакующего).
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod;
+    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod;
 
     // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
     const blocked = isMelee && stanceKey === "defensive" && stDef.noAttackWithoutShield && !hasShieldEquipped;
@@ -721,7 +753,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -806,12 +838,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Точное (Precise): −20 к штрафу Избирательных по сочленениям и глазам
   const csMod = wp.calledShotMod || 0;
+  // Локус Подношения (стр. 31, wdbc-smc): штраф Избирательной в голову меньше на 20.
+  const headPenalty = -20 + (hasRuleFlag(actor, "penalty.calledShot.head.reduce20") ? 20 : 0);
+  const headPenaltyLabel = headPenalty === 0 ? "0" : `−${-headPenalty}`;
   let aimTargets = [
     { value: "",       label: "— Без прицела —",      penalty:   0 },
     { value: "torso",  label: "Торс (−10)",            penalty: -10 },
     { value: "leg",    label: "Нога (−15)",             penalty: -15 },
     { value: "arm",    label: "Рука (−20)",             penalty: -20 },
-    { value: "head",   label: "Голова (−20)",           penalty: -20 },
+    { value: "head",   label: `Голова (${headPenaltyLabel})`, penalty: headPenalty },
     { value: "joint",  label: "Сочленение/Шея",         penalty: -40, precise: true },
     { value: "eye",    label: "Глаз",                   penalty: -50, precise: true }
   ];
@@ -872,17 +907,26 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const rngAdd  = ammoSys?.rangeMod ?? 0;
     const effRng  = Math.round(rng * rngMult) + rngAdd;
     const bounds  = rangeBandBoundaries(effRng);
+    // У короткоствольного оружия (Rng ≤ 6) «короткая»/«боевая» вырождены упором
+    // (см. rangeBandBoundaries) — их границы совпадают, строку не показываем,
+    // иначе игрок увидит бессмысленное "Короткая: 3–3м".
+    const zones = [
+      { cls: "atr-pb", label: "В упор",   mod: "+30", lo: 0.5,            hi: bounds.pointBlank },
+      { cls: "atr-sh", label: "Короткая", mod: "+10", lo: bounds.pointBlank, hi: bounds.short },
+      { cls: "atr-cb", label: "Боевая",   mod: "±0",  lo: bounds.short,      hi: bounds.combat },
+      { cls: "atr-lg", label: "Дальняя",  mod: "−10", lo: bounds.combat,     hi: bounds.long },
+      { cls: "atr-ex", label: "Экстрем.", mod: "−30", lo: bounds.long,       hi: bounds.extreme }
+    ].filter(z => z.hi > z.lo);
+    const zonesHtml = zones
+      .map(z => `<span class="atr-zone ${z.cls}">${z.label}: ${z.lo}–${z.hi}м → <b>${z.mod}</b></span>`)
+      .join("\n          ");
     rangeInfoHtml = `
       <div class="atk-range-info">
         <div class="atk-range-title">
           📏 Дистанции (Rng = ${rng}м${rngMult !== 1 ? ` ×${rngMult}` : ""}${rngAdd !== 0 ? ` ${rngAdd >= 0 ? "+" : ""}${rngAdd}м` : ""} = ${effRng}м)
         </div>
         <div class="atk-range-grid">
-          <span class="atr-zone atr-pb">В упор: 0,5–${bounds.pointBlank}м → <b>+30</b></span>
-          <span class="atr-zone atr-sh">Короткая: ${bounds.pointBlank}–${bounds.short}м → <b>+10</b></span>
-          <span class="atr-zone atr-cb">Боевая: ${bounds.short}–${bounds.combat}м → <b>±0</b></span>
-          <span class="atr-zone atr-lg">Дальняя: ${bounds.combat}–${bounds.long}м → <b>−10</b></span>
-          <span class="atr-zone atr-ex">Экстрем.: ${bounds.long}–${bounds.extreme}м → <b>−30</b></span>
+          ${zonesHtml}
         </div>
         <div class="atk-range-note" style="font-size:0.82em;opacity:0.8;">В ближнем бою — дистанция в упор, но модификатор ±0.</div>
       </div>`;
@@ -1344,6 +1388,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ${ammoCondHtml}
       ${ruleMods.html}
       ${ruleRerolls.html}
+      ${oneVsHundredHtml}
       ${diceModeHtml()}
 
       <details class="av-adv">
@@ -1395,6 +1440,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
+      { label: "Поклон Публике",     value: bowMarkedMod },
       { label: "Шаг за шагом",       value: stepByStepMod },
       { label: "База",               value: sel.baseBon },
       { label: "Приём",              value: sel.maneuverBon },
@@ -1487,9 +1533,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
           // Экономика действий (стр. 12, wdbc-niv7): рукопашная атака тратит
           // ОД по actionType выбранной Базы (MELEE_BASES) — Натиск/Полная
-          // Атака и т.п. уже несут это поле. Стрелковые режимы (rofModes)
-          // пока не несут своего actionType (нерешённая часть wdbc-niv7,
-          // не связанная с Движением) — для них ОД сознательно не тратятся.
+          // Атака и т.п. уже несут это поле. Стрелковые режимы (стр. 32,
+          // раздел «Стрельба»): Одиночный Выстрел/Короткая/Длинная/Широкая
+          // Очередь — все Полудействие; Стрельба на Подавление — Полное
+          // действие (Караул в этом диалоге не выбирается).
           // Запрещённый Приём (Cheap Shot, стр. 166, wdbc-hmcx): вместо ОД
           // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
           // "standard" (resolveSelection), здесь остаётся только сменить
@@ -1500,7 +1547,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               return false;
             }
           } else {
-            const apCost = isMelee ? apCostForActionType(sel.bDef.actionType) : 0;
+            const apCost = isMelee
+              ? apCostForActionType(sel.bDef.actionType)
+              : apCostForActionType(f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
             if (!await spendActionPoints(actor, apCost)) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
@@ -1556,7 +1605,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               // combat/attack.mjs. crit — расширение диапазона Критического
               // Успеха/Провала тем же правилом (kind:"critRangeMod"); сам
               // натуральный диапазон 1-5/96-100 применяется уже в attack.mjs.
-              reroll: f.reroll,
+              reroll: f.reroll || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined),
               crit: resolvedAttack.crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
@@ -1821,6 +1870,15 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     } catch (e) { console.error("Безоружный урон:", e); }
   }
 
+  // Доп. секция при попадании (wdbc-w8ws, Раковое Исцеление и подобные
+  // безоружные касания с эффектом сверх урона) — сырой HTML от вызывающего
+  // кода, обычно кнопка с data-*-uuid, обрабатываемая своим делегированным
+  // слушателем в hooks.mjs (тот же приём, что у wh-apply-dmg-btn: клик может
+  // прийти от другого клиента, после того как цель отыграет Уклонение/
+  // Парирование выше). НЕ вызывается автоматически из этой функции — она
+  // решает только «было ли попадание», прикладной эффект остаётся за кнопкой.
+  const hitExtraSection = (hit && techDef.hitSectionHtml) ? techDef.hitSectionHtml : "";
+
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: actor }),
     content: `
@@ -1843,6 +1901,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         ${helplessNote}
         ${unarmedDmgSection}
         ${defButtons}
+        ${hitExtraSection}
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
   }, rollMode));

@@ -68,12 +68,15 @@ import { hasSkillfulTorture }                    from "../apps/skillful-torture.
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
+import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
+import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
+import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -152,6 +155,12 @@ export function characterContext(actor) {
       run:  apSpendGate(actor, 2)
     };
     context.aeSpendGate = { ap1: apSpendGate(actor, 1), ap2: apSpendGate(actor, 2), reaction: reactionSpendGate(actor) };
+    // Deadly Effectiveness/Смертоносная Эффективность (wdbc-1rno): кнопка
+    // видна только владельцу Таланта, гейт — cooldown.mjs "раз в Раунд".
+    if (hasDeadlyEffectiveness(actor)) context.deadlyEffectivenessGate = deadlyEffectivenessGate(actor);
+    // Bow to the Audience/Поклон Публике (wdbc-1rno): та же видимость только
+    // владельцу Таланта, гейт зависит от game.user.targets/ОД (bow-to-audience.mjs).
+    if (hasBowToAudience(actor)) context.bowToAudienceGate = bowToAudienceGate(actor);
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.
@@ -374,6 +383,8 @@ export function characterContext(actor) {
   context.hasDreadWail = hasDreadWail(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
+  // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.
+  context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопки Певцов Кости на вкладке БОЙ (wdbc-sk8s) — только владельцам соответствующего Таланта.
   context.hasBoneSong = hasBoneSong(actor);
   context.hasPreservation = hasPreservation(actor);

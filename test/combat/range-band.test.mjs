@@ -73,6 +73,15 @@ describe("rangeBandBoundaries: границы полос в метрах (общ
     expect(rangeBandBoundaries(0)).toEqual({ pointBlank: 3, short: 0, combat: 0, long: 0, extreme: 0 });
     expect(rangeBandBoundaries(undefined)).toEqual({ pointBlank: 3, short: 0, combat: 0, long: 0, extreme: 0 });
   });
+
+  it("короткоствольное оружие (Rng ≤ 6): вырожденные короткая/боевая не уходят НАЗАД, границы монотонны", () => {
+    // Rng 3: наивный расчёт (без clamp) дал бы short=2 < pointBlank=3 —
+    // кольцо/подсказка «Короткая» рисовались бы ближе упора, т.е. задом
+    // наперёд. С clamp короткая/боевая схлопываются в упор (3–3, 3–3).
+    expect(rangeBandBoundaries(3)).toEqual({ pointBlank: 3, short: 3, combat: 3, long: 6, extreme: 9 });
+    // Rng 4: короткая вырождена (2 < 3 → clamp до 3), боевая уже реальна (4 > 3).
+    expect(rangeBandBoundaries(4)).toEqual({ pointBlank: 3, short: 3, combat: 4, long: 8, extreme: 12 });
+  });
 });
 
 describe("hasHighGround: «Положение выше» по elevation", () => {

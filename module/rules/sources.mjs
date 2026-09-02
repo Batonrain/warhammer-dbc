@@ -17,6 +17,7 @@ import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
 import { adjutantRerollRules } from "./adjutant.mjs";
 import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
+import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 
 const SOURCES = new Map();
 
@@ -93,6 +94,11 @@ registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemAc
 // требует cross-actor обхода — регистрируется так же, как "core".
 registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
 
+// Synesthesia/Синэстезия (wdbc-1rno) — та же схема: статичное правило читает
+// цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
+// Навыка, не только атаках), не источник-владелец Мутации.
+registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
+
 registerRuleSource("adjutant", a => {
   if (typeof game === "undefined") return [];
   return adjutantRerollRules(a, game.actors ?? []);
@@ -124,6 +130,11 @@ registerRuleSource("dreadnought", (a) => {
     id: "dreadnought.sarcophagus.mind", label: "Саркофаг: защита сознания", when: {},
     effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.mindControlBonus,
                 label: "Саркофаг: против контроля сознания" }]
+  });
+  rules.push({
+    id: "dreadnought.sarcophagus.poison", label: "Саркофаг: сопротивление ядам", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.poisonBonus,
+                label: "Саркофаг: против ядов" }]
   });
 
   // Возможности книги: иммунитеты, автоуспехи и запреты. Читателей у части из
