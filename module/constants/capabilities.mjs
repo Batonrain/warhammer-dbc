@@ -746,7 +746,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.conjure.itemOrWeapon": {
     label: "Создаёт психокостяной предмет/оружие (без Reinforced), до F.b раз за сессию",
-    source: "Conjure Wraith / Вызвать Психокость", reader: ""
+    source: "Conjure Wraith / Вызвать Психокость",
+    reader: "module/combat/conjure-wraith.mjs (wdbc-sk8s) — applyConjureWraith; кнопки в sheets/tabs/combat.mjs, пикер openCompendiumBrowser (gear/tools, maxAvailability −1, ИЛИ папка «Психокостяное» весь пул weapons без фильтра). «R» = Редкость/Доступность (подтверждено пользователем) — «до R−1» читается фиксированным порогом −1. «Обычное» оружие (не именное) — книжный эпитет, не автоматизируемый фильтр, тот же честный компромисс, что LOS у Resplendent Raiment."
   },
   "wraithbone.songOfShield.techniqueOrArea": {
     label: "Песнь Защиты: неперегружаемый щит-дефлектор технике (1 цель или область), до F.b раз за сессию",
