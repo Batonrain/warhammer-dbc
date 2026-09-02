@@ -373,7 +373,10 @@ const REROLL_SCOPES = [
   ["initiative", "Инициатива"],
   ["social",     "социальные навыки"],
   ["shield",     "тесты на щиты"],
-  ["opposed",    "встречные тесты"]
+  ["opposed",    "встречные тесты"],
+  // Тесты Морали (Страх/выход из Шока/Паника от Горения/Подавление/встречные
+  // Запугивание и Пытки) — wdbc-zepq, Lord of the Exodites.
+  ["morale",     "тесты Морали"]
 ];
 const REROLL_SCOPE_LABEL = (e) => {
   switch (e.rerollScope) {

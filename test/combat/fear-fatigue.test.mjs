@@ -20,7 +20,8 @@ function makeActor({ fatigue = 0, wp = 40 } = {}) {
       fatigue: { value: fatigue, max: 0 },
       fate: { value: 0 }
     },
-    getFlag: () => undefined
+    getFlag: () => undefined,
+    update: async () => {}
   };
 }
 

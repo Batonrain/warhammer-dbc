@@ -62,8 +62,11 @@ const mechanicsOf = (item) => {
 function scopeTarget(rawScope, entry, ruleId, what) {
   const scope = String(rawScope || "all");
   // shield — тесты на щиты (Локус Преломления), opposed — встречные тесты
-  // (вторая половина Локуса Цепей и перебросы, навязанные цели).
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed"].includes(scope)) return scope;
+  // (вторая половина Локуса Цепей и перебросы, навязанные цели). morale —
+  // тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/встречные
+  // Запугивание и Пытки, core.json «Мораль и Потеря Командования»), см.
+  // resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord of the Exodites.
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

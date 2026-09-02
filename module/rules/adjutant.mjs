@@ -37,14 +37,14 @@ function hasAdjutant(actor) {
 }
 
 /** Все Отряды (squad), где commanderActor занимает пост Командира. */
-function squadsCommandedBy(commanderActor, allActors) {
+export function squadsCommandedBy(commanderActor, allActors) {
   const uuid = commanderActor?.uuid;
   if (!uuid) return [];
   return (allActors ?? []).filter(a => a?.type === "squad" && a.system?.posts?.commander?.uuid === uuid);
 }
 
 /** Все подчинённые (любой пост/членство) во ВСЕХ Отрядах commanderActor, кроме него самого. */
-function subordinatesOf(commanderActor, allActors) {
+export function subordinatesOf(commanderActor, allActors) {
   const myUuid = commanderActor?.uuid;
   const out = [];
   const seen = new Set();

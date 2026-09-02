@@ -212,6 +212,32 @@ describe("critModsFromRules", () => {
   });
 });
 
+describe("область Морали (wdbc-zepq)", () => {
+  const rule = (value = 30) => ({
+    id: "r", label: "Правило", effects: [{ kind: "rollBonus", target: "morale", value }]
+  });
+
+  it("«morale» попадает только в тест с ctx.morale=true", () => {
+    expect(rollModsFromRules([rule()], buildTestContext({ kind: "skill", char: "wp", morale: true }))).toHaveLength(1);
+    expect(rollModsFromRules([rule()], buildTestContext({ kind: "skill", char: "wp" }))).toHaveLength(0);
+  });
+
+  it("morale:true само по себе не подхватывает обычный char:wp — области разные", () => {
+    const wpRule = { id: "r", effects: [{ kind: "rollBonus", target: "char:wp", value: 10 }] };
+    expect(rollModsFromRules([wpRule], buildTestContext({ char: "wp", morale: true }))).toHaveLength(1);
+    // (char:wp и так подхватывает любой тест характеристики wp, morale тут не мешает)
+  });
+
+  it("переброс с областью morale собирается rerollsFromRules так же, как остальные области", () => {
+    const rerollRule = { id: "r", effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, label: "Владыка" }] };
+    const { rerolls } = resolveTest({ actor: actor(), morale: true });
+    expect(rerolls).toEqual([]); // без источника правил — пусто
+    registerRuleSource("s", () => [rerollRule]);
+    const withRule = resolveTest({ actor: actor(), morale: true });
+    expect(withRule.rerolls).toEqual([{ ruleId: "r", label: "Владыка", mode: "keepBest", rolls: 2, who: "self" }]);
+  });
+});
+
 describe("область атаки", () => {
   const rule = (target, value = 10) => ({
     id: "r", label: "Правило", effects: [{ kind: "rollBonus", target, value }]
