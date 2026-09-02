@@ -2936,11 +2936,11 @@ export const CAPABILITIES = {
   },
   "elite..voltageistBlast": {
     label: "Совершая Натиск с Техночудом Voltageist Shield в Процессах, может в конце своего Хода потратить 3⚙,",
-    source: "Voltageist Blast / Вольтагейст Взрыв", reader: ""
+    source: "Voltagheist Blast / Вольтагейст Взрыв", reader: ""
   },
   "elite..voltageistBubble": {
     label: "Имея в Процессах Техночудо Voltageist Shield, может выбрать получить иммунитет к эффектам вакуума и газов,",
-    source: "Voltageist Bubble / Вольтагейст Пузырь", reader: ""
+    source: "Voltagheist Bubble / Вольтагейст Пузырь", reader: ""
   },
   // ── Азуриани — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.azuriani.fullShelter": {
