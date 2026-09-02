@@ -316,7 +316,7 @@ body.wh-hud-on #chat-notifications { display: none !important; }
 }
 .wh-hud-unarmed:hover { color: #4dffa6; border-color: #4dffa6; background: rgba(77,255,166,.12); }
 
-.wh-hud-unarmed-grp { display: inline-flex; gap: 2px; }
+.wh-hud-unarmed-grp { display: inline-flex; flex-wrap: wrap; gap: 2px; max-width: 220px; }
 .wh-hud-unarmed-grp .wh-hud-unarmed { padding: 3px 8px; }
 
 /* Разделитель между выбором оружия и действиями в нижнем ряду */
