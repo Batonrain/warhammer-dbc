@@ -139,6 +139,12 @@ export async function _showContestDialog(actor, techDef) {
           }, rollMode);
 
           await ChatMessage.create(messageData);
+
+          // Опциональный колбэк на успех (техника несёт реальный эффект,
+          // не только прозу-заметку — сейчас только «Заломить», grapple.mjs).
+          // Необязателен: у Повалить/Напролом/Финта/Давления его нет, они не
+          // меняют поведение.
+          if (hit && techDef.onSuccess) await techDef.onSuccess(actor, { deg });
         }
       },
       cancel: { label: "Отмена" }
