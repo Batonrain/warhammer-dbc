@@ -23,6 +23,9 @@
     "weaponProps": [
       {
         "key": "twinLinked"
+      },
+      {
+        "key": "independent"
       }
     ],
     "needsRecharge": false,

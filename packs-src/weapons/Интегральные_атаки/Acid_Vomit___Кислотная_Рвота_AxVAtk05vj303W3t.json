@@ -28,6 +28,9 @@
       {
         "key": "toxic",
         "rating": 3
+      },
+      {
+        "key": "independent"
       }
     ],
     "needsRecharge": false,

@@ -28,6 +28,9 @@
         "key": "spray"
       },
       {
+        "key": "independent"
+      },
+      {
         "key": "linger",
         "rating": 3
       }
