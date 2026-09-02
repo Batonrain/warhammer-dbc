@@ -410,6 +410,14 @@ export function registerHooks() {
           if (!actor) return ui.notifications.warn("⚠️ Орда, прикрывшая цель, не найдена.");
           return applyDamageToActor(actor, damageData);
         }
+        // Партнёр по Борьбе (Метнуть/Замахнуться, module/combat/grapple.mjs) —
+        // цель фиксирована UUID'ом на самой кнопке, не выбором токена.
+        if (ds.forceTarget) {
+          const target = await fromUuid(ds.forceTarget);
+          const actor = target?.actor ?? target ?? null;
+          if (!actor) return ui.notifications.warn("⚠️ Партнёр по Борьбе не найден (сцена сменилась?).");
+          return applyDamageToActor(actor, damageData);
+        }
         await showApplyDamageDialog(damageData);
       });
     });

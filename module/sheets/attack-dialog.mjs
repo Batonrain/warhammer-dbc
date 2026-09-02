@@ -1754,26 +1754,38 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 }
 
 export async function showAttackDialogNoWeapon(actor, techDef) {
-  const ws       = actor.system.characteristics.ws?.total ?? 0;
+  // Дальнобойный режим (Борьба: Метнуть, module/combat/grapple.mjs) — BS
+  // вместо WS, без Стойки/Базы/Локуса Сокрушения (чисто рукопашные понятия).
+  const ranged   = !!techDef.ranged;
+  const charKey  = ranged ? "bs" : "ws";
+  const charVal  = actor.system.characteristics[charKey]?.total ?? 0;
   const stance   = actor.system.meleeStance || "standard";
-  const stBon    = MELEE_STANCES[stance]?.wsBonus ?? 0;
+  const stBon    = ranged ? 0 : (MELEE_STANCES[stance]?.wsBonus ?? 0);
   // База (стр. 13) — та же логика, что в showAttackDialog: складывается с
   // бонусом Приёма, а не заменяет его. Локус Сокрушения подменяет её на
   // «Полная Атака», пока не потрачена в текущем Раунде (см. FULL_ATTACK_CAPABILITY
   // выше) — здесь бросок безусловный (нет кнопки/отмены), поэтому расходуется
   // сразу, вместе с чтением.
-  const fullAttackForced = hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
+  const fullAttackForced = !ranged && hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
     && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
   if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
   const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
-  const baseBon  = MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0;
-  const fatigue  = fatiguePenalty(actor, "ws");
-  // WS уже включает мод препаратов (см. prepareDerivedData)
-  const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
+  const baseBon  = ranged ? 0 : (MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0);
+  const fatigue  = fatiguePenalty(actor, charKey);
+  const techBonus = ranged ? (techDef.bsBonus ?? techDef.wsBonus ?? 0) : (techDef.wsBonus ?? 0);
+  // WS/BS уже включает мод препаратов (см. prepareDerivedData)
+  const final    = charVal + techBonus + baseBon + stBon + fatigue;
+
+  // Партнёр по Борьбе (module/combat/grapple.mjs::_doThrow) — цель урона
+  // фиксирована заранее, не зависит от того, кого игрок навёл прицелом в
+  // Foundry (в отличие от обычной атаки/Укуса). Иначе — обычный выбор через
+  // текущую цель, как у остальных вызовов (Кулак/Пинок/Удар оружием в упор).
+  const liveTargetActor = techDef.forceTargetActor
+    ?? ([...(game.user?.targets ?? [])][0]?.actor ?? null);
 
   // Беспомощная цель, рукопашная (в т.ч. безоружная) — авто-успех и ×2 урона,
   // как и в showAttackDialog (см. helplessAutoMelee там же).
-  const targetHelpless = !!([...(game.user?.targets ?? [])][0]?.actor)?.system?.conditions?.helpless;
+  const targetHelpless = !!liveTargetActor?.system?.conditions?.helpless;
 
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
@@ -1808,14 +1820,21 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
       allRolls.push(dmgRoll);
       const dmgTotal = targetHelpless ? dmgRoll.total * 2 : dmgRoll.total;
       const dtLabel = DAMAGE_TYPES[techDef.damageType] || techDef.damageType || "Ударный";
+      // Партнёр по Борьбе — не «текущая цель» Foundry, поэтому кнопка несёт
+      // его UUID явно (тот же приём, что data-force-horde в attack-card.mjs)
+      // и применяет урон без диалога выбора токена, см. hooks.mjs.
+      const forceTargetAttr = techDef.forceTargetActor
+        ? ` data-force-target="${techDef.forceTargetActor.uuid}"` : "";
+      const dmgTargetLabel = techDef.forceTargetActor
+        ? `${esc(techDef.forceTargetActor.name)} (Торс)` : "Торс";
       unarmedDmgSection = `
         <div class="roll-damage-section">
           <div class="roll-damage-label">Урон (${dtLabel}, Проб. ${techDef.pen || 0}): <b>${dmgTotal}</b>${techDef.props ? ` · ${techDef.props}` : ""}</div>
           <button class="wh-apply-dmg-btn" type="button"
             data-damage="${dmgTotal}" data-penetration="${techDef.pen || 0}"
             data-damage-type="${techDef.damageType || "impact"}" data-hit-location="Торс"
-            data-primitive="1" data-weapon-name="${techDef.label}" data-attacker="${actor.name}">
-            Применить урон: ${dmgTotal} → Торс
+            data-primitive="1" data-weapon-name="${techDef.label}" data-attacker="${actor.name}"${forceTargetAttr}>
+            Применить урон: ${dmgTotal} → ${dmgTargetLabel}
           </button>
         </div>`;
     } catch (e) { console.error("Безоружный урон:", e); }
@@ -1831,10 +1850,10 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         </div>
         <div class="roll-header">${rollIcon("sword")}${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}</div>
         <div class="roll-threshold">
-          WS: <b>${ws}</b>
-          база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}
+          ${ranged ? "BS" : "WS"}: <b>${charVal}</b>
+          ${!ranged ? ` база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}` : ""}
           ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
-          ${techDef.wsBonus !== 0 ? ` ${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : ""}
+          ${techBonus !== 0 ? ` ${techBonus >= 0 ? "+" : ""}${techBonus}` : ""}
           ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}
           → Порог: <b>${final}</b>
         </div>

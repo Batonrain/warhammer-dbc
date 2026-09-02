@@ -167,17 +167,20 @@ describe("crunchWeapon", () => {
 // приём читается в attack-dialog.mjs (resolveSelection), а 5 РОЛЕВЫХ тестов
 // раздела (Заломить/Пересилить/Вырваться/Выкрутиться/Перехватить Контроль,
 // см. ALL_TESTS в grapple.mjs) — здесь, через tentacleTechDef перед вызовом
-// _showContestDialog. Сжать/Хруст/Метнуть/Укусы броска не делают вовсе (см.
-// шапку файла) — бонусу там нечего усиливать, поэтому в дело не идут.
-// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doBite
-// (Укус: единственное из четырёх «безролловых» действий Борьбы, которое на
-// деле идёт полным тестом WS/BS через attack-dialog.mjs — тоже «тест в
-// Борьбе» по тексту мутации). _doBite сам не экспортирован и не тестируется
-// изолированно здесь: showGrappleDialog рендерит кастомные кнопки внутри
-// DialogV2.wait и зовёт dialog.close() у результата рендера — этого пути
-// текущая заглушка (test/support/foundry-stub.mjs) не поддерживает вовсе
-// (не только для этой правки — showGrappleDialog не был протестирован и до
-// неё). Проверяется чистая логика бонуса, которую читают оба потребителя.
+// _showContestDialog. Сжать/Хруст броска не делают вовсе (см. шапку файла) —
+// бонусу там нечего усиливать, поэтому в дело не идут.
+// tentacleBonus — общий расчёт под tentacleTechDef (5 контестов) И _doBite/
+// _doThrow (wdbc-oxdn: Укус/Метнуть/Замахнуться — три «безролловых» на вид
+// действия Борьбы, которые на деле идут полным тестом WS/BS через
+// attack-dialog.mjs — тоже «тесты в Борьбе» по тексту мутации, просто со
+// своим бонусом techDef.wsBonus/bsBonus вместо tentacleTechDef/extraBonus).
+// _doBite/_doThrow сами не экспортированы и не тестируются изолированно
+// здесь: showGrappleDialog рендерит кастомные кнопки внутри DialogV2.wait и
+// зовёт dialog.close() у результата рендера — этого пути текущая заглушка
+// (test/support/foundry-stub.mjs) не поддерживает вовсе (не только для этой
+// правки — showGrappleDialog не был протестирован и до неё). Проверяется
+// чистая логика бонуса здесь и приём techDef.ranged/forceTargetActor,
+// который _doThrow задействует, в test/sheets/attack-dialog.test.mjs.
 describe("tentacleBonus", () => {
   const DEFAULT_SOURCES = getRuleSources();
   afterEach(() => {

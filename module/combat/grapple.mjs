@@ -114,12 +114,13 @@ const ALL_TESTS = { ...ATTACKER_TESTS, ...TARGET_TESTS };
 // Борьбе». Приём Захват читается отдельно, в module/sheets/attack-dialog.mjs
 // (resolveSelection) — здесь только 5 РОЛЕВЫХ тестов раздела (Заломить/
 // Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, см. ALL_TESTS выше).
-// Укус — тоже настоящий тест (WS/BS через attack-dialog.mjs), но получает
-// бонус отдельно, через presetModifier — см. _doBite ниже. Сжать и Хруст
-// броска не делают вовсе (первое — накопительный штраф без теста, второе —
-// автоматическое попадание по книге), бонусу там нечего усиливать. Метнуть/
-// Замахнуться сейчас вообще не реализовано роллом (только текст в чат) —
-// отдельный, более старый пробел, не про эту мутацию.
+// Укус, Метнуть и Замахнуться — тоже настоящие тесты (WS/BS через
+// attack-dialog.mjs), но получают бонус отдельно: Укус — через
+// techniqueOpts.modifier (showAttackDialog, у него есть Item-оружие), Метнуть/
+// Замахнуться — через techDef.wsBonus/bsBonus (showAttackDialogNoWeapon,
+// партнёр не Item) — см. _doBite/_doThrow ниже. Сжать и Хруст броска не
+// делают вовсе (первое — накопительный штраф без теста, второе —
+// автоматическое попадание по книге), бонусу там нечего усиливать.
 /** +20, если у актора есть Щупальце (mutation.tentacle) — иначе 0. */
 export function tentacleBonus(actor) {
   return hasRuleFlag(actor, "mutation.tentacle") ? 20 : 0;
@@ -216,18 +217,46 @@ async function _doCrunch(actor) {
   }, rollMode));
 }
 
-/** Метнуть или Замахнуться — полное действие (полудействие двумя руками). */
-async function _doThrow(actor) {
+// Метнуть/Замахнуться (стр. 12): одно действие, два способа его разрешить —
+// текст сам отсылает к «Дубине»/«Метанию» (стр. 27-28), обычным правилам
+// импровизированного оружия, а не к отдельному встречному тесту Борьбы (в
+// отличие от Заломить/Пересилить/Вырваться/Выкрутиться/Перехватить Контроль,
+// у которых своя Athletics(S)/Acrobatics(A) — здесь урон один и тот же для
+// обоих способов, различается только характеристика/дальность самого теста):
+//   Замахнуться — рукопашный удар партнёром как дубиной: WS, как у любого
+//     другого рукопашного оружия в этой системе (не Athletics — иначе
+//     наложилось бы на Заломить/Пересилить, см. п.5 wdbc-oxdn).
+//   Метнуть — дальнобойный бросок партнёра: BS+0, дальность до S.b×3 м.
+// Оба идут через showAttackDialogNoWeapon (тот же приём, что Кулак/Пинок/
+// Удар оружием в упор, apps/hud.mjs::gunMeleeStrike) — партнёр не Item,
+// полноценного showAttackDialog для него нет. Цель урона — сам партнёр
+// (techDef.forceTargetActor), а не то, что игрок навёл прицелом Foundry: тот
+// же принцип, что у Хруста (_doCrunch выше), просто с настоящим тестом
+// вместо автоматического попадания.
+const THROW_DAMAGE = "1d5+S.b";
+
+/** Метнуть (ranged=true, BS) или Замахнуться (ranged=false, WS) партнёром. */
+async function _doThrow(actor, ranged) {
   const partner = grapplePartner(actor);
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword","#e08a3a")}Борьба: Метнуть или Замахнуться</div>
-      <div class="roll-outcome">${esc(actor.name)} пытается метнуть ${partner ? esc(partner.name) : "цель"}, или использовать её как импровизированное оружие.</div>
-      <div class="roll-threshold" style="font-size:0.85em;">Полное действие (полудействие, если цель держат двумя руками). Разрешается как Метание/Импровизированное оружие (стр. 27-28 — «Дубина»/«Метание»): Dmg 1d5+S.b I(Cr) при замахе, дальность до S.b×3 м при броске BS+0.</div>
-    </div>`
-  }, rollMode));
+  if (!partner) {
+    ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
+    return;
+  }
+  const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
+  const bonus = tentacleBonus(actor);
+  const label = ranged ? "Метнуть" : "Замахнуться";
+  const techDef = {
+    label, ranged,
+    headerSuffix: ranged ? `Борьба — Метание, дальность до ${sb * 3} м` : "Борьба — удар захваченным партнёром",
+    wsBonus: bonus, bsBonus: bonus,
+    damage: THROW_DAMAGE, damageType: "impact", pen: 0,
+    props: "Primitive",
+    forceTargetActor: partner,
+    chatNote: `🤼 Борьба: ${label} — ${esc(partner.name)} используется как импровизированное оружие (стр. 27-28).`
+      + (bonus ? ` Щупальце: +${bonus} учтено.` : "")
+  };
+  const { showAttackDialogNoWeapon } = await import("../sheets/attack-dialog.mjs");
+  return showAttackDialogNoWeapon(actor, techDef);
 }
 
 /** Диалог «Борьба» — вызывается кнопкой из блока Состязаний вкладки БОЙ. */
@@ -250,7 +279,8 @@ export function showGrappleDialog(actor) {
       ${btn("squeeze", "Сжать (полудействие, без броска)")}
       ${btn("wrench", "Заломить")}
       ${btn("overpower", "Пересилить")}
-      ${btn("throw", "Метнуть или Замахнуться")}
+      ${btn("throwRanged", "Метнуть (дальний, BS+0)")}
+      ${btn("throwMelee", "Замахнуться (ближний, WS)")}
       ${btn("bite", "Укусы (свободное действие)")}
       ${hasCrunch ? btn("crunch", "Хруст (свободное действие, S.b÷2 авто-урона)") : ""}
       <b style="font-size:0.85em;display:block;margin-top:6px;">Действия Цели</b>
@@ -273,7 +303,8 @@ export function showGrappleDialog(actor) {
       form.querySelectorAll(".wh-grapple-action").forEach(b => b.addEventListener("click", async () => {
         const key = b.dataset.action;
         if (key === "squeeze") await _doSqueeze(actor);
-        else if (key === "throw") await _doThrow(actor);
+        else if (key === "throwRanged") await _doThrow(actor, true);
+        else if (key === "throwMelee") await _doThrow(actor, false);
         else if (key === "bite") await _doBite(actor);
         else if (key === "crunch") await _doCrunch(actor);
         else if (key === "release") await endGrapple(actor);
