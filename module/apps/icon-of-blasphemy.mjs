@@ -4,14 +4,10 @@
 //  бой/сцену свободным действием мутант проявляет вокруг себя иллюзию на
 //  1 Раунд. См. module/rules/icon-of-blasphemy.mjs про то, чем это ОТЛИЧАЕТСЯ
 //  от Illusion of Normality (свой кулдаун на самом мутанте, не на
-//  наблюдателе; два РАЗНЫХ теста для двух групп свидетелей).
-//
-//  Кто есть кто среди текущих Foundry-целей (game.user.targets) — выбор ГМа
-//  на момент активации, диалогом с чекбоксом на каждой цели («засёк
-//  Пси-чутьём/Ноосферой» — иначе считается обычным «увидел»): надёжного
-//  автоопределения психайкера/Механикум по данным актора в системе нет,
-//  придумывать его не стали (тот же принцип, что «LOS нигде не
-//  автоматизирован» по всему проекту).
+//  наблюдателе; два РАЗНЫХ теста для двух групп свидетелей) и про то, как
+//  автоматически определяется группа каждой цели (classifyWitness —
+//  Лоялист/не-Лоялист, Пси-чутьё/Ноосфера по Черте Psyker или Боевым Латам
+//  Скитарии).
 //
 //  Последствия:
 //   • «Видел» (Ярость) — провал W+0 у цели включает system.inRage (простой
@@ -22,9 +18,11 @@
 //   • «Засёк Пси-чутьём/Ноосферой» (принуждение к атаке) — провал W+0 НЕ
 //     включает Ярость, само принуждение атаковать следующий Ход — тоже
 //     только флейвор-строка (нет движка принудительных целей).
+//   • Не-Лоялист среди целей — иллюзия на него/неё не действует вовсе,
+//     строка в карточке без броска.
 // ════════════════════════════════════════════════════════════════════════
 
-import { isIconOfBlasphemyItem } from "../rules/icon-of-blasphemy.mjs";
+import { isIconOfBlasphemyItem, classifyWitness } from "../rules/icon-of-blasphemy.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -39,47 +37,19 @@ function currentTargetActors() {
   return [...(game.user?.targets ?? [])].map(t => t.actor).filter(Boolean);
 }
 
-/** Диалог: список текущих целей с чекбоксом «засёк Пси-чутьём/Ноосферой». Возвращает Map(actor→psychic) или null. */
-async function promptWitnessGroups(targets) {
-  const rows = targets.map((actor, i) => `
-    <div class="form-group">
-      <label>
-        <input type="checkbox" name="psychic-${i}"/>
-        ${esc(actor.name)} — засёк Пси-чутьём/Ноосферным Сканированием
-      </label>
-    </div>`).join("");
-  const content = `<form class="hw-choice-form">
-    <p>По умолчанию цель просто «увидела» проявление (тест на Ярость).
-       Отметьте тех, кто засёк его именно Пси-чутьём/Ноосферным Сканированием
-       (тест на принуждение атаковать, без Ярости).</p>
-    ${rows}
-  </form>`;
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Икона Богохульства: кто и как заметил" },
-    classes: ["warhammer-dbc", "wh-holo", "hw-choice-dialog"],
-    content,
-    rejectClose: false,
-    buttons: [
-      {
-        action: "ok", label: "Проявить", icon: "fas fa-burst", default: true,
-        callback: (event, button) => targets.map((actor, i) =>
-          ({ actor, psychic: !!button.form.elements[`psychic-${i}`]?.checked }))
-      },
-      { action: "cancel", label: "Отмена", callback: () => null }
-    ]
-  });
-}
-
 /**
- * Ядро уже РЕШЁННОГО проявления — тест W+0 на каждую цель группы, Ярость/
- * флейвор-принуждение, одна сводная чат-карточка. Отделено от диалога
- * (activateIconOfBlasphemy ниже) тем же приёмом, что applyHandOfDeathFusion/
- * useHandOfDeath (apps/hand-of-death.mjs) — тестируется без стаба DialogV2.
- * groups — [{actor, psychic}], actor — мутант (для спикера карточки).
+ * Тест W+0 на каждую цель (группа — classifyWitness), Ярость/флейвор-
+ * принуждение, одна сводная чат-карточка. actor — мутант (спикер карточки).
  */
-export async function resolveIconOfBlasphemy(actor, groups) {
+export async function resolveIconOfBlasphemy(actor, targets) {
   const rows = [];
-  for (const { actor: target, psychic } of groups) {
+  for (const target of targets) {
+    const group = classifyWitness(target);
+    if (!group) {
+      rows.push(`<div class="roll-threshold">— <b>${esc(target.name)}</b> — не Лоялист, иллюзия на него/неё не действует</div>`);
+      continue;
+    }
+    const psychic = group === "psychic";
     const wp = target.system.characteristics?.wp?.total ?? 0;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, wp);
@@ -104,7 +74,7 @@ export async function resolveIconOfBlasphemy(actor, groups) {
   }, game.settings.get("core", "rollMode")));
 }
 
-/** Кнопка на листе предмета: гейт кулдауна/целей, диалог выбора групп, делегирует resolveIconOfBlasphemy. */
+/** Кнопка на листе предмета: гейт кулдауна/целей, авто-классификация, делегирует resolveIconOfBlasphemy. */
 export async function activateIconOfBlasphemy(item, actor) {
   if (!isIconOfBlasphemyItem(item) || !actor) return;
   if (isRuleUsageUsed(actor, FLAG))
@@ -114,16 +84,13 @@ export async function activateIconOfBlasphemy(item, actor) {
   if (!targets.length)
     return ui.notifications?.warn("Выберите Foundry-целями токены, что увидели проявление.");
 
-  const groups = await promptWitnessGroups(targets);
-  if (!groups) return;
-
   // Сама активация расходуется в любом случае, как только иллюзия
   // проявлена — исходы тестов целей на это не влияют.
   await markRuleUsageUsed(actor, FLAG);
-  await resolveIconOfBlasphemy(actor, groups);
+  await resolveIconOfBlasphemy(actor, targets);
 }
 
-/** Кнопка на листе предмета — пусто, если это не «Икона Богохульства» или нет актора. */
+/** Панель на листе предмета — пусто, если это не «Икона Богохульства» или нет актора. */
 export function iconOfBlasphemyButtonHtml(item, actor) {
   if (!isIconOfBlasphemyItem(item) || !actor) return "";
   const ready = !isRuleUsageUsed(actor, FLAG);
