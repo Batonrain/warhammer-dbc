@@ -225,11 +225,13 @@ export const CAPABILITIES = {
   },
   "sarcophagus.immuneBleedingFatigue": {
     label: "Иммунен к Кровотечению и Усталости",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/sheets/tabs/conditions.mjs::addFatigue (полный иммунитет к Усталости из любого источника) + module/combat/condition-ticks.mjs::processConditionTurnEnd (Кровотечение не наносит вреда)"
   },
   "sarcophagus.noPsychicPowers": {
     label: "Не может манифестировать и поддерживать психосилы",
-    source: "Саркофаг Дредноута (стр. 57); снимается Матрицей Осирис", reader: ""
+    source: "Саркофаг Дредноута (стр. 57); снимается Матрицей Осирис",
+    reader: "module/sheets/tabs/psychic.mjs::showManifestDialog (манифестация) + module/sheets/tabs/psychic.mjs::activatePsychicListeners (чекбокс поддержания) — блок снят, если на Дредноуте стоит module/rules/dreadnought.mjs::hasOsirisMatrix"
   },
   "sarcophagus.helpless": {
     label: "Без конечностей: Беспомощен, когда не подключён к машине",
@@ -241,11 +243,13 @@ export const CAPABILITIES = {
   },
   "sarcophagus.autoWakeFromStun": {
     label: "Электрошок в конце Хода снимает Оглушение (кроме Галлюцинаций)",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd (снимает Оглушение целиком в конце Хода, кроме вызванного Галлюцинациями)"
   },
   "sarcophagus.autoSenses": {
     label: "Видит только авточувствами саркофага; лишён обоняния и вкуса",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "нечего гейтить: своей механики бонусов нюха/вкуса в системе нет вовсе (Taster/Дегустатор и Heightened Senses (Обоняние/Вкус) сами — текст без mechanics-хука)"
   },
 
   // ── Штрафы ────────────────────────────────────────────────────────────────

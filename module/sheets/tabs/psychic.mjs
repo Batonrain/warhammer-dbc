@@ -7,6 +7,7 @@ import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
@@ -46,7 +47,23 @@ export function resolvePsyCastAttr(actor, sys) {
   };
 }
 
+/**
+ * Саркофаг Дредноута (стр. 57): «не может манифестировать и поддерживать
+ * психосилы», пока на его Дредноуте не стоит Матрица Осирис (стр. 58) —
+ * она снимает запрет ценой −3 к тПР пилота (сам штраф — эффект предмета,
+ * не этой возможности, здесь не считается).
+ */
+export function sarcophagusBlocksPsychicPowers(actor) {
+  if (!hasRuleFlag(actor, "sarcophagus.noPsychicPowers")) return false;
+  const dread = dreadnoughtOf(actor?.uuid, game.actors ?? []);
+  return !hasOsirisMatrix(dread?.items ?? []);
+}
+
 export function showManifestDialog(actor, item) {
+  if (sarcophagusBlocksPsychicPowers(actor)) {
+    ui.notifications.warn("Саркофаг Дредноута: манифестация психосил заблокирована (нужна Матрица Осирис).");
+    return;
+  }
   const sys      = item.system;
   const psy      = actor.system.psyker || {};
   const isEldar  = hasRuleFlag(actor, "psyker.ancientMastery");
@@ -800,7 +817,14 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
   });
   html.find(".psy-sustain-cb").change(async ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
-    if (item) { await item.update({ "system.isSustained": ev.currentTarget.checked }); await syncItemEffectsDisabled(item); }
+    if (!item) return;
+    const turningOn = ev.currentTarget.checked;
+    if (turningOn && sarcophagusBlocksPsychicPowers(actor)) {
+      ev.currentTarget.checked = false;
+      ui.notifications.warn("Саркофаг Дредноута: поддержание психосил заблокировано (нужна Матрица Осирис).");
+      return;
+    }
+    await item.update({ "system.isSustained": turningOn }); await syncItemEffectsDisabled(item);
   });
   html.find(".psy-manifest-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
