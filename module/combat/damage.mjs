@@ -397,7 +397,8 @@ export async function applyDamageToActor(actor, damageData) {
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
     haywireRating = 0,   // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
-    throughShot = false  // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
+    throughShot = false, // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
+    ignoreArmour = false // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -457,22 +458,35 @@ export async function applyDamageToActor(actor, damageData) {
       tb -= Math.min(felling, Math.max(0, unnaturalT));
       tb  = Math.max(0, tb);
     }
-    // AP брони — может быть уменьшен пробитием. Свойства брони этой локации
-    // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
-    // сбор флагов по локациям в documents/actor.mjs.
-    armorAP = resolveArmorAbsorptionAP({
-      baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
-      vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
-      damageType, melee, hitLocation, primitive, frontArcHit,
-      flags: absorption.propFlags?.[armorKey],
-      wornAP: absorption.wornOnly?.[armorKey]
-    });
-    // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
-    // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
-    // (пропускает, если у брони этой локации нет свойства).
-    if (absorption.propFlags?.[armorKey]?.runesOfProtection) {
-      runesBonus = await _rollRunesOfProtection(actor);
-      armorAP += runesBonus;
+    if (ignoreArmour) {
+      // Заломить (стр. 12): урон "игнорирующий броню" — AP этой локации не
+      // считается вовсе (свойства брони/Руны/Копьё сюда тоже не примешиваются,
+      // им нечего модифицировать), T.b поглощает как обычно.
+      armorAP = 0;
+      effArmorAP = 0;
+    } else {
+      // AP брони — может быть уменьшен пробитием. Свойства брони этой локации
+      // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
+      // сбор флагов по локациям в documents/actor.mjs.
+      armorAP = resolveArmorAbsorptionAP({
+        baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
+        vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
+        damageType, melee, hitLocation, primitive, frontArcHit,
+        flags: absorption.propFlags?.[armorKey],
+        wornAP: absorption.wornOnly?.[armorKey]
+      });
+      // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
+      // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
+      // (пропускает, если у брони этой локации нет свойства).
+      if (absorption.propFlags?.[armorKey]?.runesOfProtection) {
+        runesBonus = await _rollRunesOfProtection(actor);
+        armorAP += runesBonus;
+      }
+      // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
+      // поглощения, ДО вычета пробития (стр. 168).
+      if (lance && armorAP > 20) armorAP = 20;
+      // Эффективный AP брони после пробития (мин. 0)
+      effArmorAP = Math.max(0, armorAP - (penetration || 0));
     }
     // Отскок в Укрытие (wdbc-9wvm, стр. 12): игрок объявил Отскок в зону
     // Укрытия при защите (module/combat/recoil.mjs::performRecoil) — доп. AP
@@ -570,6 +584,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
+  if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");
   if (!warpSoak) {
     const pfNote = absorption.propFlags?.[armorKey] || {};
     if (pfNote.noEnergy && damageType === "energy")  propNotes.push("Проводящая: без AP от Энергии");
