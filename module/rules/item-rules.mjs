@@ -62,8 +62,11 @@ const mechanicsOf = (item) => {
 function scopeTarget(rawScope, entry, ruleId, what) {
   const scope = String(rawScope || "all");
   // shield — тесты на щиты (Локус Преломления), opposed — встречные тесты
-  // (вторая половина Локуса Цепей и перебросы, навязанные цели).
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed"].includes(scope)) return scope;
+  // (вторая половина Локуса Цепей и перебросы, навязанные цели). climbing —
+  // только тесты Карабканья (module/combat/movement-actions.mjs::showClimbDialog),
+  // отдельно от «skill:athletics», чтобы не задваиваться с тестами Борьбы,
+  // тоже идущими по Athletics(S) (wdbc-egll).
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "climbing"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

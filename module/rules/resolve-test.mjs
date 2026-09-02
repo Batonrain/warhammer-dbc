@@ -114,6 +114,11 @@ function effectAppliesTo(target, ctx) {
   // «+10 к тестам Воли» и «+Inf на Нестабильность» — разные правила книги.
   if (scope === "instability") return ctx.kind === "instability";
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Карабканье (wdbc-egll) — свой ctx-флаг, не через ctx.skill: тест
+  // Карабканья идёт по тому же Athletics(S), что и тесты Борьбы
+  // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
+  // разные правила книги под одинаковым навыком.
+  if (scope === "climbing") return ctx.climbing === true;
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
