@@ -624,7 +624,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.conjure.itemOrWeapon": {
     label: "Создаёт психокостяной предмет/оружие (без Reinforced), до F.b раз за сессию",
-    source: "Conjure Wraith / Вызвать Психокость", reader: ""
+    source: "Conjure Wraith / Вызвать Психокость",
+    reader: "module/combat/conjure-wraith.mjs (wdbc-sk8s) — applyConjureWraith; кнопки в sheets/tabs/combat.mjs, пикер openCompendiumBrowser (gear/tools, maxAvailability −1, ИЛИ папка «Психокостяное» весь пул weapons без фильтра). «R» = Редкость/Доступность (подтверждено пользователем) — «до R−1» читается фиксированным порогом −1. «Обычное» оружие (не именное) — книжный эпитет, не автоматизируемый фильтр, тот же честный компромисс, что LOS у Resplendent Raiment."
   },
   "wraithbone.songOfShield.techniqueOrArea": {
     label: "Песнь Защиты: неперегружаемый щит-дефлектор технике (1 цель или область), до F.b раз за сессию",
@@ -6087,7 +6088,7 @@ export const CAPABILITIES = {
   "gift.khorne.eternalWarrior": {
     label: "Умирая в Ярости — раз за сессию бесплатное Чудесное Спасение/Божественная Защита (без траты Бесчестия/Порчи), либо за Очко Бесчестия при дальней стрелковой смерти",
     source: "Дар Кхорн (Eternal Warrior)",
-    reader: ""
+    reader: "module/combat/eternal-warrior.mjs (wdbc-sk8s) — eternalWarriorEligible/eternalWarriorFreeSaveAvailable/markEternalWarriorUsed; module/sheets/tabs/death.mjs::_resolveFateSave(eternalWarrior). «Дистанция Натиска до убийцы» не отслеживается движком — путь FLAT (1 Очко Бесчестия) подтверждается самим игроком флажком в диалоге, не автоопределением."
   },
   "gift.khorne.eyeOfChallenge": {
     label: "+1 Бесчестия: выделить 4 сильнейших воинов в поле зрения, узнать WS/S/Parry/Берсерк-Таланты одного — не бросить вызов за минуту = 2d10+8 урона в W",
