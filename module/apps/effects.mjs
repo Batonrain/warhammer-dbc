@@ -75,6 +75,15 @@ export function isItemActive(item) {
         .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
       return activeRunicWeaveId(siblings) === item.id;
     }
+    // Мутация/Дар (wdbc-egll) — по умолчанию действует всегда, как Талант/
+    // Черта (activatable:false у подавляющего большинства). Часть даёт
+    // эффект только «активированным» книжным действием на время (Живое
+    // Оружие — полудействие+1 Бесчестия, до конца боя/сцены) — у таких
+    // activatable:true, и тогда решает ручной тумблер system.active (тот же
+    // паттерн, что у armorMod/weaponMod выше, без требования носителя).
+    case "mutation":
+      if (sys.activatable) return !!sys.active;
+      return true;
     default: return true;
   }
 }

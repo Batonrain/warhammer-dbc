@@ -31,7 +31,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          resolvePsyCastAttr, rollPsyWpTest, rollPsyniscience, showManifestDialog,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
-import { activateGearListeners } from "./tabs/gear.mjs";
+import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
@@ -551,6 +551,16 @@ function onMutgiftRoll(event) {
   return rollMutationOrGift(this.actor);
 }
 
+// Вкл./выкл. у Мутации/Дара с activatable:true (wdbc-egll, напр. Живое
+// Оружие — полудействие+1 Бесчестия, до конца боя/сцены). Переиспользует
+// тот же тумблер, что и включаемые системы брони (module/sheets/tabs/
+// gear.mjs::toggleGearModActive) — реализация не завязана на тип предмета,
+// только на общее поле system.active + isItemActive().
+async function onMutgiftToggleActive(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
+}
+
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
 // только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
 // создания персонажа)
@@ -637,6 +647,7 @@ export class WarhammerCharacterSheet
       talentAdd: whenEditable(onTalentAdd),
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
+      mutgiftToggleActive: whenEditable(onMutgiftToggleActive),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),

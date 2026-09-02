@@ -373,7 +373,8 @@ const REROLL_SCOPES = [
   ["initiative", "Инициатива"],
   ["social",     "социальные навыки"],
   ["shield",     "тесты на щиты"],
-  ["opposed",    "встречные тесты"]
+  ["opposed",    "встречные тесты"],
+  ["climbing",   "Карабканье"]
 ];
 const REROLL_SCOPE_LABEL = (e) => {
   switch (e.rerollScope) {

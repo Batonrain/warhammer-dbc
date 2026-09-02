@@ -1,7 +1,8 @@
 import { CHARACTERISTICS }                  from "../constants/characteristics.mjs";
-import { _degWord }                         from "../helpers/utils.mjs";
+import { esc, _degWord }                    from "../helpers/utils.mjs";
 import { rollIcon }                         from "../constants/roll-icons.mjs";
 import { MELEE_STANCES }                    from "../constants/combat.mjs";
+import { hasRuleFlag, ruleFlagLabels }      from "../rules/flags.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -51,6 +52,19 @@ export async function _showContestDialog(actor, techDef) {
        </div>`
     : "";
 
+  // Иммунитет цели (wdbc-egll, напр. mutation.tentacle.suckerGrip у Щупальца
+  // 4-5) — предупреждение, не блокировка: тот же принцип «галочка, не тихий
+  // запрет», что и у прочих модификаторов (resolve-test.mjs). Бросок можно
+  // всё равно сделать (цель может смениться, или стол решит иначе).
+  const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  const immune = techDef.targetImmunityFlag && target && hasRuleFlag(target, techDef.targetImmunityFlag);
+  const immuneLabels = immune ? ruleFlagLabels(target, techDef.targetImmunityFlag).join(", ") : "";
+  const immunityNote = immune
+    ? `<div style="font-size:0.85em;color:#e08a3a;margin-bottom:6px;">
+         ⚠️ ${esc(target.name)}: нельзя обезоружить${immuneLabels ? ` (${esc(immuneLabels)})` : ""} — бросок пройдёт, но эффект списывается вручную
+       </div>`
+    : "";
+
   new Dialog({
     title: techDef.label,
     content: `
@@ -69,6 +83,7 @@ export async function _showContestDialog(actor, techDef) {
         </div>
         ${stanceBonusNote}
         ${extraBonusNote}
+        ${immunityNote}
 
         <div class="atk-dlg-row">
           <label>Характеристика:</label>
@@ -131,6 +146,11 @@ export async function _showContestDialog(actor, techDef) {
                 ${hit
                   ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
                        ${rollIcon("spark","#8fd0ff")}${techDef.note}
+                     </div>`
+                  : ""}
+                ${hit && immune
+                  ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">
+                       ⚠️ ${esc(target.name)}: нельзя обезоружить${immuneLabels ? ` (${esc(immuneLabels)})` : ""} — эффект Приёма не применяется
                      </div>`
                   : ""}
               </div>`,
