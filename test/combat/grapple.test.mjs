@@ -7,7 +7,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus } from "../../module/combat/grapple.mjs";
+import { applyGrappleOnHit, grapplePartner, endGrapple, isBiteWeapon, crunchWeapon, tentacleTechDef, tentacleBonus, detachableTentacle, isDetachedGrapple } from "../../module/combat/grapple.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { actorFor } from "../support/combat-fixtures.mjs";
 
@@ -231,5 +231,60 @@ describe("tentacleTechDef", () => {
     const techDef = { label: "Пересилить" };
     tentacleTechDef(actorFor({}), techDef);
     expect(techDef.extraBonus).toBeUndefined();
+  });
+});
+
+// wdbc-1f5j: субмутация 10 «Отделяемое» (стр. 440) — единственная из шести
+// оставшихся необработанных строк Щупальца, что трогает сам движок Захвата
+// (асимметричный выход Атакующего), а не просто числовой бонус. Мутация
+// ищется по двуязычному имени, как isBiteWeapon, плюс выпавшая
+// system.submutation.label==="10" — та же строка, что читает Механика
+// (rules/mech-when.mjs, when.submutations) для gate записей типа
+// tentacle-armour/tentacle-mighty-* выше в паке.
+describe("detachableTentacle", () => {
+  const tentacle = (label) => ({ type: "mutation", name: "Tentacle / Щупальце", system: { submutation: { label } } });
+
+  it("субмутация 10 выпала — находит мутацию", () => {
+    expect(detachableTentacle(actorFor({ items: [tentacle("10")] }))).toBeTruthy();
+  });
+
+  it("выпала другая субмутация — не находит", () => {
+    expect(detachableTentacle(actorFor({ items: [tentacle("2-3")] }))).toBeNull();
+  });
+
+  it("субмутация ещё не брошена (label пуст) — не находит", () => {
+    expect(detachableTentacle(actorFor({ items: [tentacle("")] }))).toBeNull();
+  });
+
+  it("нет мутации Щупальце вовсе — не находит", () => {
+    expect(detachableTentacle(actorFor({}))).toBeNull();
+  });
+
+  it("другая мутация с той же выпавшей меткой — имя не совпадает, не находит", () => {
+    const actor = actorFor({ items: [{ type: "mutation", name: "Пожиратель", system: { submutation: { label: "10" } } }] });
+    expect(detachableTentacle(actor)).toBeNull();
+  });
+});
+
+// Асимметрия endGrapple после Отсоединить: Цель ещё связана, а её партнёр
+// (владелец щупальца) уже нет — состояние ВЫЧИСЛЯЕТСЯ, отдельного флага нет
+// (см. комментарий у isDetachedGrapple в grapple.mjs).
+describe("isDetachedGrapple", () => {
+  const grappling = (v) => ({ system: { conditions: { grappling: v } } });
+
+  it("оба ещё в Захвате — не расщеплён", () => {
+    expect(isDetachedGrapple(grappling(true), grappling(true))).toBe(false);
+  });
+
+  it("актор в Захвате, партнёр уже вышел — расщеплён", () => {
+    expect(isDetachedGrapple(grappling(true), grappling(false))).toBe(true);
+  });
+
+  it("актор сам не в Захвате — не расщеплён", () => {
+    expect(isDetachedGrapple(grappling(false), grappling(true))).toBe(false);
+  });
+
+  it("партнёр не найден (null) — не расщеплён, отследить нечем", () => {
+    expect(isDetachedGrapple(grappling(true), null)).toBe(false);
   });
 });
