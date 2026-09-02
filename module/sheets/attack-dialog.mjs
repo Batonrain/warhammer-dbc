@@ -57,6 +57,12 @@ import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 // в showAttackDialog/showAttackDialogNoWeapon ниже.
 const FULL_ATTACK_CAPABILITY = "technique.baseFullAttack";
 
+// Локус Неизбежности (стр. 30, wdbc-smc): раз в Раунд рукопашная атака может
+// попасть автоматически с 1 Успехом (вместо броска) — штраф −10 до начала
+// следующего Хода ставится флагом, читает module/rules/sources.mjs
+// (daemonInevitability), снимает action-economy.mjs::resetActionEconomy.
+const AUTO_HIT_CAPABILITY = "autoHit.melee.oncePerRound";
+
 /**
  * Всё, что игрок отметил в окне, — одним чтением формы.
  *
@@ -151,6 +157,7 @@ function readAttackForm(form, ammoConds) {
     ruleMods, halvePenalty,
     allOut,
     extraBonus: allOut ? 20 : 0,
+    autoHit: on("#atk-autohit"),
     shortRange: on("#atk-shortrange"),
     // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
     // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
@@ -437,6 +444,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const fullAttackForced = isMelee
     && hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
     && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
+
+  // Локус Неизбежности: галочка предлагается, только если ещё не потрачена
+  // в этом Раунде — сама трата решается игроком (галочка), не молча.
+  const autoHitAvailable = isMelee
+    && hasRuleFlag(actor, AUTO_HIT_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, AUTO_HIT_CAPABILITY);
   // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
   // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
   // протекать не должна). Игрок волен сменить её в окне, как обычно.
@@ -821,12 +834,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Точное (Precise): −20 к штрафу Избирательных по сочленениям и глазам
   const csMod = wp.calledShotMod || 0;
+  // Локус Подношения (стр. 31, wdbc-smc): штраф Избирательной в голову меньше на 20.
+  const headPenalty = -20 + (hasRuleFlag(actor, "penalty.calledShot.head.reduce20") ? 20 : 0);
+  const headPenaltyLabel = headPenalty === 0 ? "0" : `−${-headPenalty}`;
   let aimTargets = [
     { value: "",       label: "— Без прицела —",      penalty:   0 },
     { value: "torso",  label: "Торс (−10)",            penalty: -10 },
     { value: "leg",    label: "Нога (−15)",             penalty: -15 },
     { value: "arm",    label: "Рука (−20)",             penalty: -20 },
-    { value: "head",   label: "Голова (−20)",           penalty: -20 },
+    { value: "head",   label: `Голова (${headPenaltyLabel})`, penalty: headPenalty },
     { value: "joint",  label: "Сочленение/Шея",         penalty: -40, precise: true },
     { value: "eye",    label: "Глаз",                   penalty: -50, precise: true }
   ];
@@ -1393,6 +1409,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             <!-- Быстрая/Молниеносная Атака переехали в Приём (стр. 14, требуют
                  соответствующий Талант) — см. MELEE_MANEUVERS.swift/lightning. -->
             <label class="attack-mod-check"><input type="checkbox" id="atk-allout"/><span>Атака всем телом (+20, теряет Уклонение)</span></label>
+            ${autoHitAvailable ? `<label class="attack-mod-check"><input type="checkbox" id="atk-autohit"/><span>Локус Неизбежности: авто-попадание (1 Успех, −10 до след. Хода)</span></label>` : ""}
           </div>
         </div>
       </details>
@@ -1552,6 +1569,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           // закрытая атака способность не расходует (см. meleeBaseKey выше).
           if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
 
+          // Локус Неизбежности — тем же приёмом: тратится реальным броском,
+          // не открытием окна. Штраф −10 ставится сразу же (до начала
+          // следующего Хода актора, снимает action-economy.mjs).
+          const autoHitUsed = autoHitAvailable && f.autoHit;
+          if (autoHitUsed) {
+            await markRoundCapabilityUsed(actor, AUTO_HIT_CAPABILITY);
+            await actor.setFlag("warhammer-dbc", "inevitabilityPenalty", true);
+          }
+
           // Приём выбран в этом же окне — свежий techniqueOpts под конкретный
           // выбор (targetDodgeMod/targetParryMod/chatNote и т.п. зависят от него).
           const finalTechniqueOpts = isMelee ? {
@@ -1576,6 +1602,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             aimTargets.find(t => t.value === f.aimVal),
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
+              fixedSuccessDeg: autoHitUsed ? 1 : undefined,
               // Быстрая/Молниеносная — теперь Приём (стр. 14), а не отдельная
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",

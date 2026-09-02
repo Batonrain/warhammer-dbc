@@ -58,6 +58,7 @@ import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
+import { applyTouchedByFates } from "../rules/daemon-locus.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
@@ -126,8 +127,19 @@ function onInfamySpend(event, target) { return this._ipSpend(target.dataset.abil
 // Цена не сериализуется в DOM — пересчитывается свежей ruleFlagCost на клик,
 // тем же путём, что и context.activeCapabilities (sheet-helpers.mjs), чтобы
 // не разъехаться со списком, отрисованным на момент рендера.
-function onCapabilitySpend(event, target) {
-  const cost = ruleFlagCost(this.actor, target.dataset.key, { kind: "skill" });
+async function onCapabilitySpend(event, target) {
+  const key = target.dataset.key;
+  const cost = ruleFlagCost(this.actor, key, { kind: "skill" });
+  // Локус Фанатизма (wdbc-smc): в отличие от остальных ценовых возможностей
+  // (которые списывают цену и постят только флейвор-карточку), эта реально
+  // что-то делает — cross-actor выдача Трейта демонам в радиусе Локуса.
+  // Цена списывается, только если эффект нашёл хотя бы одну цель (иначе
+  // список пуст, и applyTouchedByFates сама предупредила игрока — списывать
+  // Очко Бесчестия «в пустоту» не должно).
+  if (key === "aura.touchedByFates") {
+    const applied = await applyTouchedByFates(this.actor);
+    if (!applied) return false;
+  }
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
 }
 

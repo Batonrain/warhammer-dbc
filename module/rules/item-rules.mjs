@@ -72,9 +72,13 @@ const mechanicsOf = (item) => {
  */
 function scopeTarget(rawScope, entry, ruleId, what) {
   const scope = String(rawScope || "all");
-  // shield — тесты на щиты (Локус Преломления), opposed — встречные тесты
-  // (вторая половина Локуса Цепей и перебросы, навязанные цели).
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed"].includes(scope)) return scope;
+  // shield — тесты на щиты (Локус Преломления), opposed — общие встречные
+  // тесты (перебросы, навязанные цели). vsExorcism — УЖЕ узнан вид теста,
+  // не общий "opposed": Локус Цепей (wdbc-smc) даёт бонус конкретно на
+  // встречный тест демона против Экзорцизма/Чистой Демонологии
+  // (daemon-sheet.mjs::_rollVsExorcism, kind:"vsExorcism") — обычный
+  // "opposed" сработал бы на ЛЮБОМ встречном тесте, что книга не говорит.
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "vsExorcism"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
