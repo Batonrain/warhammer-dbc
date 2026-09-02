@@ -49,7 +49,9 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // Страха забыл — тот же класс пробела, что у психотеста (wdbc-lfho).
   const fatigue = fatiguePenalty(actor, "wp");
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + fatigue;
-  const autoPass = steelHeartIgnored || infamy >= r.infamy;
+  // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
+  // автоматически проходит тесты Страха независимо от Infamy.
+  const autoPass = steelHeartIgnored || infamy >= r.infamy || hasRuleFlag(actor, "sarcophagus.autoPassFear");
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);

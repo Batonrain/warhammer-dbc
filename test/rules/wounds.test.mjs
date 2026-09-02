@@ -103,6 +103,24 @@ describe("applyWoundLoss: применение к актору", () => {
     const result = await applyWoundLoss(a, 5);
     expect(result).toMatchObject({ currentWounds: 0, newWounds: 0, newCritical: 5, gotCritical: true });
   });
+
+  it("Саркофаг Дредноута: effectiveMax (wdbc-drn) идёт вместо max, когда есть", async () => {
+    // maxWounds сам по себе не участвует в арифметике потери (та считается от
+    // текущих Ран) — но именно его возвращает applyWoundLoss для
+    // woundDeathThreshold(maxWounds) у вызывающего кода (hooks.mjs,
+    // condition-ticks.mjs), поэтому важно, что тут effectiveMax, а не max.
+    const a = { system: { wounds: { value: 8, critical: 0, max: 25, effectiveMax: 20 } },
+                updates: [], async update(data) { this.updates.push(data); } };
+    const result = await applyWoundLoss(a, 3);
+    expect(result.maxWounds).toBe(20);
+  });
+
+  it("без effectiveMax — как раньше, берётся обычный max", async () => {
+    const a = { system: { wounds: { value: 8, critical: 0, max: 25 } },
+                updates: [], async update(data) { this.updates.push(data); } };
+    const result = await applyWoundLoss(a, 30);
+    expect(result.maxWounds).toBe(25);
+  });
 });
 
 describe("ablativeAbsorb: чистый расчёт поглощения (wdbc-smy7)", () => {

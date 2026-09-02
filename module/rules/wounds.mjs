@@ -92,7 +92,9 @@ export function woundLossUpdates(system, amount) {
 export async function applyWoundLoss(actor, amount) {
   const currentWounds   = Number(actor.system?.wounds?.value)    || 0;
   const currentCritical = Number(actor.system?.wounds?.critical) || 0;
-  const maxWounds        = Number(actor.system?.wounds?.max)      || 0;
+  // effectiveMax (module/rules/character.mjs, wdbc-drn) — производный максимум
+  // Саркофага Дредноута (−5, стр. 57), когда он есть; иначе обычный max.
+  const maxWounds        = Number(actor.system?.wounds?.effectiveMax ?? actor.system?.wounds?.max) || 0;
   const ablativeMax      = Number(actor.system?.wounds?.ablativeMax) || 0;
 
   const { ablative: newAblative, absorbed: ablativeAbsorbed, remaining } =

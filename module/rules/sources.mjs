@@ -125,6 +125,11 @@ registerRuleSource("dreadnought", (a) => {
     effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.mindControlBonus,
                 label: "Саркофаг: против контроля сознания" }]
   });
+  rules.push({
+    id: "dreadnought.sarcophagus.poison", label: "Саркофаг: сопротивление ядам", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.poisonBonus,
+                label: "Саркофаг: против ядов" }]
+  });
 
   // Возможности книги: иммунитеты, автоуспехи и запреты. Читателей у части из
   // них пока нет — они помечены «вручную» в панели на листе.

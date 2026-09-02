@@ -66,3 +66,17 @@ describe("woundLevel: безопасность к отсутствию данн�
     expect(woundLevel({})).toMatchObject({ key: "light", displayKey: "healthy", lost: 0, tb: 0, crit: 0 });
   });
 });
+
+describe("woundLevel: effectiveMax Саркофага Дредноута (wdbc-drn) идёт вместо max", () => {
+  it("effectiveMax ниже max — lost считается от него", () => {
+    const sysWithEff = { wounds: { value: 20, max: 25, effectiveMax: 20, critical: 0 },
+                          characteristics: { t: { bonus: 3 } } };
+    expect(woundLevel(sysWithEff)).toMatchObject({ lost: 0, displayKey: "healthy" });
+  });
+
+  it("без effectiveMax — как раньше, от обычного max", () => {
+    const sysNoEff = { wounds: { value: 20, max: 25, critical: 0 },
+                        characteristics: { t: { bonus: 3 } } };
+    expect(woundLevel(sysNoEff).lost).toBe(5);
+  });
+});

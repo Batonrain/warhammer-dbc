@@ -46,6 +46,7 @@ import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
+import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
@@ -1392,6 +1393,9 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+    // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
+    // восполняются к концу боя (стр. 57, wdbc-drn).
+    await refillSarcophagusWarpWounds(combat);
   });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
