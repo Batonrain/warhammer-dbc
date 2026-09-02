@@ -74,12 +74,84 @@ export async function endGrapple(actor) {
   }
 }
 
+/**
+ * Заломить (стр. 12) — успех даёт выбор: 1d5+S.b I(Cr) Dmg (игнорирует
+ * броню) и/или 1 Усталости партнёру. «И/или» из книги — оба чекбокса
+ * независимы, можно снять оба (пропустить эффект, взять только чистый успех
+ * теста) или отметить один/оба сразу. Вызывается _showContestDialog
+ * (techniques.mjs) как techDef.onSuccess только при выигранном тесте.
+ */
+async function _resolveWrenchSuccess(actor) {
+  const partner = grapplePartner(actor);
+  if (!partner) {
+    ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?) — эффект Заломить некому применить.`);
+    return;
+  }
+  const sb = Number(actor.system?.characteristics?.s?.bonus) || 0;
+  const content = `
+    <form style="padding:4px 6px;">
+      <label class="atk-dlg-row" style="display:flex;gap:6px;align-items:center;margin:4px 0;">
+        <input type="checkbox" name="dmg" checked/> Нанести урон 1d5+S.b (S.b ${sb}) I(Cr), игнорирует броню
+      </label>
+      <label class="atk-dlg-row" style="display:flex;gap:6px;align-items:center;margin:4px 0;">
+        <input type="checkbox" name="fat"/> Нанести 1 Усталость
+      </label>
+    </form>`;
+  const choice = await foundry.applications.api.DialogV2.wait({
+    window: { title: `Заломить — эффект (${partner.name})` },
+    classes: ["warhammer-dbc", "wh-holo"],
+    content,
+    rejectClose: false,
+    buttons: [
+      { action: "apply", label: "Применить", default: true,
+        callback: (_e, button) => ({
+          dmg: !!button.form.querySelector('input[name="dmg"]')?.checked,
+          fat: !!button.form.querySelector('input[name="fat"]')?.checked
+        }) },
+      { action: "skip", label: "Пропустить", callback: () => null }
+    ]
+  });
+  if (!choice || (!choice.dmg && !choice.fat)) return;
+
+  const rollMode = game.settings.get("core", "rollMode");
+  if (choice.dmg) {
+    const roll = await new Roll("1d5").evaluate();
+    const dmg = roll.total + sb;
+    const { applyDamageToActor } = await import("./damage.mjs");
+    await applyDamageToActor(partner, {
+      rawDamage: dmg, penetration: 0, damageType: "impact", ignoreArmour: true,
+      hitLocation: "Торс", melee: true,
+      attackerName: actor.name, attackerUuid: actor.uuid, weaponName: "Заломить"
+    });
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("sword","#e08a3a")}Заломить: урон ${esc(partner.name)}</div>
+        <div class="roll-dice">1d5: <b>${roll.total}</b> + S.b <b>${sb}</b> = <b>${dmg}</b> I(Cr), броня проигнорирована</div>
+      </div>`,
+      rolls: [roll], sound: CONFIG.sounds.dice
+    }, rollMode));
+  }
+  if (choice.fat) {
+    const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
+    await addFatigue(partner, 1);
+    await ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("sword","#e08a3a")}Заломить: Усталость</div>
+        <div class="roll-outcome">${esc(partner.name)} получает 1 Усталость.</div>
+      </div>`
+    }, rollMode));
+  }
+}
+
 // ── Действия Атакующего (стр. 12) ────────────────────────────────────────────
 const ATTACKER_TESTS = {
   wrench: {
     label: "Заломить", defaultChar: "s",
     note: "Полудействие. Athletics(S)+0 vs Athletics(S)+0 партнёра. Победа: на выбор — 1d5+S.b I(Cr) Dmg (игнорирует броню) и/или 1 Усталость цели.",
-    chatNote: "🤼 Борьба: Заломить"
+    chatNote: "🤼 Борьба: Заломить",
+    onSuccess: _resolveWrenchSuccess
   },
   overpower: {
     label: "Пересилить", defaultChar: "s",
