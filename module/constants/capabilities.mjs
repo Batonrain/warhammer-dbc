@@ -425,9 +425,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "actionPoint.bonusPerTurn.stacking3": {
-    label: "+1 ОД в начале своего хода (до 3 взятий); на 3-м взятии — доп. действие с типом Атака за раунд",
+    label: "+1 ОД за взятие (до 3, стакается копиями предмета) — смоделировано ActiveEffect на system.actionPoints.max. «На 3-м взятии — доп. действие с типом Атака за раунд»: в системе нет счётчика «атак за Ход» вовсе (проверено, wdbc-niv7) — доп. ОД от 3 копий уже практически позволяет лишнюю атаку через обычный расход ОД, отдельного примитива «доп. атака вне лимита» заводить не на чем.",
     source: "Eldar Agility / Эльдарская Ловкость",
-    reader: ""
+    reader: "packs-src/talents/Азуриани/Eldar_Agility..., ActiveEffect system.actionPoints.max"
   },
   "stealth.advantage.plusSuccesses": {
     label: "Преимущество на Stealth; +½A.b (окр.▲) успехов на соревновательные тесты со Stealth",
@@ -702,8 +702,8 @@ export const CAPABILITIES = {
     source: "Conductor of Death / Проводник Смерти", reader: ""
   },
   "actionPoint.bonusOnFeintKill.extraMeleeAttack": {
-    label: "Убийство после финта в том же раунде: раз в раунд +2 ОД и доп. рукопашная атака вне лимита",
-    source: "Deadly Effectiveness / Смертоносная Эффективность", reader: ""
+    label: "Убийство после финта в том же раунде: раз в раунд +2 ОД (доп. рукопашная атака вне лимита не нужна — в системе нет счётчика атак за Ход, тот же вывод, что для Eldar Agility) — смоделировано КНОПКОЙ на вкладке БОЙ (wdbc-1rno, module/combat/deadly-effectiveness.mjs, module/rules/cooldown.mjs unit «round»). НЕ детектируется автоматически: в системе нет ни понятия «убийство»/смерть актора, ни отметки «применил Финт в этом раунде» — игрок сам подтверждает клик, система считает только «раз в Раунд» и сам +2 ОД (тот же честный компромисс, что у Категории C).",
+    source: "Deadly Effectiveness / Смертоносная Эффективность", reader: "module/combat/deadly-effectiveness.mjs"
   },
   "deadMight.gainAtCombatStart.willpowerScaling": {
     label: "В начале боя получает +W.b Мёртвого Могущества",
@@ -723,8 +723,9 @@ export const CAPABILITIES = {
   },
   // ── Экзодиты — Воин Троп (DoomBC — Аэльдари: Ответвления, Архетипы Экзодитов)
   "exodite.pathWarrior.determinationToFight": {
-    label: "При отрицательных ранах персонаж снижает получаемый урон на W.b (после поглощения, мин.1), +1 ОД и лимит атак до 2.",
-    source: "Determination To Fight / Решительность Сражаться", reader: ""
+    label: "При отрицательных ранах персонаж снижает получаемый урон на W.b (после поглощения, мин.1) — смоделировано (module/rules/determination-to-fight.mjs, читает module/combat/damage.mjs::applyDamageToActor). «+1 ОД» и «лимит атак до 2» — не смоделированы: то же условное состояние, но actionPoints.max сейчас только статичный ActiveEffect, не пересчитывается по текущим Ранам; «лимита атак» в системе вообще нет (нечего поднимать). Пункт «если прошлый раунд в Защитной Стойке» (доп. −WS.b урона, +30 Парирование) — тоже не смоделирован, нужна история Стойки МЕЖДУ раундами, которой актор не хранит.",
+    source: "Determination To Fight / Решительность Сражаться",
+    reader: "module/rules/determination-to-fight.mjs, module/combat/damage.mjs::applyDamageToActor"
   },
   "exodite.pathWarrior.eternalGuardian": {
     label: "Unnatural WS архетипа меняется на +4, +1 очко судьбы. Против фракции, которую персонаж ранее побеждал: +2 Dmg и +1 Pen (или +3/+2 при Hatred…",
@@ -858,8 +859,8 @@ export const CAPABILITIES = {
     source: "The Epitome of Aristocracy / Воплощение Аристократии", reader: ""
   },
   "exodite.forestLord.theMiddleOfTheHunt": {
-    label: "В начале 3-го и 4-го раундов персонаж получает дополнительный ход (инициатива 10) только с ОД,",
-    source: "The Middle of the Hunt / Середина Охоты", reader: ""
+    label: "В начале 3-го и 4-го раундов персонаж поднимает свою Инициативу на 10 — смоделировано (wdbc-1rno, module/combat/middle-of-the-hunt.mjs, hooks.mjs::updateCombat). Старая метка ошибочно описывала это как «доп. Ход» — книжный текст проще: плоский +10 к уже брошенной Инициативе, не лишний Combatant. Выбор до F.b союзников для +2 их Инициативе — НЕ смоделирован, нужен диалог выбора.",
+    source: "The Middle of the Hunt / Середина Охоты", reader: "module/combat/middle-of-the-hunt.mjs"
   },
   "exodite.forestLord.weaponsOfTheNobleOnes": {
     label: "Черта Лесного Владыки. Используя копьё как основное оружие, перед боем может обратиться к Духу Курноуса (запрещает другое рукопашное оружие)…",
@@ -867,8 +868,8 @@ export const CAPABILITIES = {
   },
   // ── Арлекины — Солитер (DoomBC — Аэльдари: Ответвления)
   "harlequin.solitaire.bowToTheAudience": {
-    label: "За 3 ОД персонаж проходит Awareness(P)−20 против до P.b видимых противников, умножает успехи на три и получает на один ход бонус на все физи…",
-    source: "Bow to the Audience / Поклон Публике", reader: ""
+    label: "За 3 ОД персонаж проходит Awareness(P)−20 против до P.b видимых противников, умножает степень успеха на три и до начала своего следующего Хода получает этот бонус на все физические действия против них, накладывая равный штраф на их физические Избегания — смоделировано кнопкой на вкладке БОЙ (wdbc-1rno, module/combat/bow-to-audience.mjs). Метка живёт на АТАКУЮЩЕМ (кто прошёл тест), не на цели — точнее книжного текста: бонус/штраф действуют только когда бьёт именно отметивший, читается module/sheets/attack-dialog.mjs по attackCtx.targetActor. Цели — до P.b из game.user.targets (тот же приём, что Bone Song). «На один Ход» прочитано как «до начала следующего Хода атакующего» (тот же такт, что усилитель Dread Wail) — не буквально «до конца текущего Хода», расхождение честно задокументировано.",
+    source: "Bow to the Audience / Поклон Публике", reader: "module/combat/bow-to-audience.mjs"
   },
   "harlequin.solitaire.damnedActor": {
     label: "Черта Солитера (Аребенниан). Полный иммунитет к Выжиганию Души и психосилам демонов/псайкеров с Cor>20.",
@@ -879,12 +880,12 @@ export const CAPABILITIES = {
     source: "Inevitable / Неизбежный", reader: ""
   },
   "harlequin.solitaire.justTheLight": {
-    label: "Если персонаж потратил весь прошлый ход на движение (или совершил хотя бы одно движение и сжёг остальные ОД),",
-    source: "Just the Light / Лишь Свет", reader: ""
+    label: "Если персонаж потратил весь прошлый Ход на движение (или совершил хотя бы одно движение и сжёг остальные ОД), получает щит-дефлектор A.b×3 до начала следующего Хода — смоделировано (wdbc-1rno, module/combat/just-the-light.mjs, hooks.mjs::updateCombat конец Хода + action-economy.mjs сброс на старте следующего Хода, читается той же точкой incomingDamageReduction, что и Determination To Fight). НЕ смоделировано: «складывается с технологическими, но не колдовскими щитами» — incomingDamageReduction плоское число без разметки природы источника, ограничение на честном слове ГМ (тот же принцип, что Категория C).",
+    source: "Just the Light / Лишь Свет", reader: "module/combat/just-the-light.mjs"
   },
   "harlequin.solitaire.lastActor": {
-    label: "Черта Солитера. Персонаж имеет A.b реакций и 4 ОД, бросает трижды на инициативу (три хода в раунде).",
-    source: "Last Actor / Последний Актёр", reader: ""
+    label: "Черта Солитера. «Бросает трижды на инициативу (три хода в раунде)» — смоделировано (wdbc-1rno, module/combat/last-actor.mjs+extra-turn.mjs: 2 доп. Combatant при старте боя, hooks.mjs::combatStart). Остальные 7 пунктов (A.b реакций и 4 ОД, Парирование Flexible/любого размера, безлимитный контроль в рукопашной, авто-контратака/избегание, бонус от разницы A, урон = разница инициатив, любые рукопашные таланты на любые атаки) — не смоделированы, каждый требует своей точки в конвейере.",
+    source: "Last Actor / Последний Актёр", reader: "module/combat/last-actor.mjs, module/combat/extra-turn.mjs"
   },
   "harlequin.solitaire.massacre": {
     label: "Успешно попав рукопашной атакой, персонаж может пройти Trade (Dance)(A)−20 и нанести ещё одну одиночную атаку; повторяет до провала,",
@@ -2297,8 +2298,8 @@ export const CAPABILITIES = {
     source: "Slip Away / Ускользнуть", reader: ""
   },
   "dodge.core.snapshot": {
-    label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода он получает одно ОД как Задержкой,",
-    source: "Snapshot / Выстрел Навскидку", reader: ""
+    label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода получает +1 ОД — смоделировано (wdbc-1rno, module/combat/snapshot.mjs, hooks.mjs::updateCombat, читает movement-actions.mjs::moveDegreeThisTurn). НЕ смоделировано: ОД можно потратить только на выстрел по брошенному предмету и игнорируя ограничение атак Задержкой — в системе нет ни earmarked-подмножества ОД, ни кодового понятия «атака Задержкой» вообще, заводить оба под одну находку не оправдано; бонусное ОД тратится как обычное.",
+    source: "Snapshot / Выстрел Навскидку", reader: "module/combat/snapshot.mjs"
   },
   "dodge.core.speedAwareness": {
     label: "Персонаж может совершать Избегания после Бега, но получает −5 на эти Избегания за каждые полные P.b метров, которые он пробежал.",
@@ -4812,8 +4813,8 @@ export const CAPABILITIES = {
     source: "From Beyond / Не От Мира Сего", reader: ""
   },
   "trait.fullyArmed": {
-    label: "Не-тяжёлое оружие с модом Custom Grip на разгрузках считается удобным; −1 ОД (до ½) к перезарядке, +1 надёжность и ½ веса такого оружия.",
-    source: "Fully Armed / Во Всеоружии", reader: ""
+    label: "Не-тяжёлое стрелковое оружие с модом Custom Grip считается удобным: +1 надёжность и ½ веса (окр.▼) такого оружия в расчёте Разгрузки. Смоделировано (wdbc-1rno): module/combat/fully-armed.mjs (детект Черты+мода по имени «Персональный Хват»), подключено в module/combat/weapon-mods.mjs::getModEffects (Надёжность) и module/constants/rig.mjs (вес). Прежняя пометка «мод Custom Grip не заведён нигде в системе» была ошибочной — мод существовал под русским переводом «Персональный Хват» (packs-src/weapon-mods/Стрелковое/Прочие/Personal_Grip и .../Рукопашное/Разное/Personal_Grip__Melee), найден по книжному тексту, а не по литеральной строке «Custom Grip». НЕ смоделировано: −1 ОД (до ½) к перезарядке — system.reload свободная строка («1»/«полн.»/«2 полн.»), в системе нет числового движка экономии действий, который бы её читал (тот же честный пробел у Rapid Reload с идентичной формулировкой, capabilities.mjs «Время перезарядки... вдвое»).",
+    source: "Fully Armed / Во Всеоружии", reader: "module/combat/fully-armed.mjs"
   },
   "trait.geneticDecay": {
     label: "Падение макс. возраста.",
