@@ -29,6 +29,7 @@ import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
+import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tentacle-hand-form.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1066,6 +1067,8 @@ export class WarhammerItemSheet
       context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
       // «Икона Богохульства» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.iconOfBlasphemyHtml = iconOfBlasphemyButtonHtml(this.item, this.item.parent);
+      // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
+      context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1881,6 +1884,13 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await activateIconOfBlasphemy(this.item, actor);
+    });
+
+    // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────
+    on(".tentacle-hand-form-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await toggleTentacleHandForm(actor, this.item);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
