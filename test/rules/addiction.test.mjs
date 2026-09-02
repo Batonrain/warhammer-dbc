@@ -1,15 +1,17 @@
 // test/rules/addiction.test.mjs
 //
-// Зависимость (мутация «Addiction», wdbc-5inv) — module/rules/addiction.mjs.
+// Зависимость (мутация «Addiction», wdbc-5inv/wdbc-1rno) — module/rules/addiction.mjs.
 // Штраф −10 к тестам Навыков читается через общий конвейер (resolve-test.mjs,
 // scope "anySkill"), здесь проверяются только сами примитивы: поиск
-// предметов-носителей, счёт суток, статус-строка, «Удовлетворить».
+// предметов-носителей (по capabilityKey — addictionItems, и по имени —
+// isAddictionItem, нужен apps/addiction.mjs для кнопки на листе Мутации), счёт
+// суток, статус-строка, «Удовлетворить».
 
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
 import {
-  ADDICTION_CAPABILITY, addictionItems, addictionDaysSince, isAddictionUnsatisfied,
+  ADDICTION_CAPABILITY, isAddictionItem, addictionItems, addictionDaysSince, isAddictionUnsatisfied,
   addictionStatusLabel, addictionSubstanceLabel, addictionPenaltyRules,
   satisfyAddiction, setAddictionSubstance
 } from "../../module/rules/addiction.mjs";
@@ -20,9 +22,9 @@ const SECONDS_PER_DAY = 86400;
 // update() мутирует те же вложенные объекты item.system.*, как это делает
 // настоящий Item после document-update — тесты читают item.system.* сразу
 // после await satisfyAddiction(item)/setAddictionSubstance(item, …).
-function makeItem({ lastSatisfied = null, substance = "", submutationName = "" } = {}) {
+function makeItem({ lastSatisfied = null, substance = "", submutationName = "", name = "Addiction / Зависимость" } = {}) {
   const item = {
-    id: "addictItem1", type: "mutation",
+    id: "addictItem1", type: "mutation", name,
     system: { dependency: { substance, lastSatisfied }, submutation: { name: submutationName } },
     flags: { "warhammer-dbc": { mechanics: [{
       id: "grp1", operator: "AND",
@@ -39,6 +41,25 @@ function makeItem({ lastSatisfied = null, substance = "", submutationName = "" }
   };
   return item;
 }
+
+describe("isAddictionItem", () => {
+  it("совпадает по двуязычному имени, регистронезависимо", () => {
+    expect(isAddictionItem(makeItem({ name: "Addiction / Зависимость" }))).toBe(true);
+    expect(isAddictionItem(makeItem({ name: "addiction / зависимость" }))).toBe(true);
+  });
+  it("совпадает по одной английской половине", () => {
+    expect(isAddictionItem(makeItem({ name: "Addiction" }))).toBe(true);
+  });
+  it("другой тип предмета — false", () => {
+    expect(isAddictionItem({ ...makeItem({}), type: "trait" })).toBe(false);
+  });
+  it("другое имя — false", () => {
+    expect(isAddictionItem(makeItem({ name: "Vampiric Dependency / Вампирическая Зависимость" }))).toBe(false);
+  });
+  it("нет предмета — false", () => {
+    expect(isAddictionItem(null)).toBe(false);
+  });
+});
 
 describe("addictionItems", () => {
   it("находит мутацию по capabilityKey mutation.addiction", () => {

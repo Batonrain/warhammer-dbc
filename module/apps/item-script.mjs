@@ -23,18 +23,52 @@
 //  Ничего не песочница — контекст (actor/item/token) передаётся как есть.
 // ════════════════════════════════════════════════════════════════════════
 
+import { woundLossUpdates } from "../rules/wounds.mjs";
+import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
+import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
+
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
-/** Общий исполнитель произвольного JS предмета — используется отовсюду. */
-export async function executeItemCode(item, code, event) {
+/**
+ * Общий исполнитель произвольного JS предмета — используется отовсюду.
+ *
+ * Стандартные помощники (wdbc-1rno), все — чистые модули rules/ без своих
+ * Foundry-зависимостей, безопасно тянуть напрямую (в отличие от `extra` ниже):
+ *  - `woundLossUpdates` (rules/wounds.mjs) — единая арифметика потери Ран,
+ *    та же, что у боевого урона (Pure Form: «...1d10 непогл. R Dmg»).
+ *  - `isTokenInSight`/`tokensThatCanSee` (rules/vision-target.mjs) —
+ *    дальность+сектор обзора токена (Икона Богохульства: «Имперцы видящие»),
+ *    геометрическое приближение без стен, см. шапку модуля.
+ *  - `actorFactionKeys`/`anySameOrDescendant`/`getFactionIndex`
+ *    (rules/factions.mjs) — фильтр по фракции («Имперцы» = потомки ключа
+ *    "imperium" в дереве Фракций).
+ *
+ * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
+ * конкретного вызывающего (например, runMechScriptEntry добавляет
+ * setMutationsSuppressed для Pure Form) — сам этот файл их не импортирует и
+ * не знает, что это, чтобы не тянуть зависимость на apps/mechanics.mjs (тот
+ * уже импортирует executeItemCode отсюда — обратный import создал бы цикл).
+ * Старые вызовы без `extra` работают как раньше — ключи просто не
+ * появляются в области видимости кода.
+ */
+export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
   const token = actor?.getActiveTokens?.(true)[0] ?? null;
   const speaker = ChatMessage.getSpeaker({ actor, token });
+  const extraNames = Object.keys(extra);
   const fn = new AsyncFunction(
     "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
+    "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
+    "actorFactionKeys", "anySameOrDescendant", "getFactionIndex",
+    ...extraNames,
     code
   );
-  await fn(item, actor, token, speaker, game, ui, ChatMessage, event ?? null);
+  await fn(
+    item, actor, token, speaker, game, ui, ChatMessage, event ?? null,
+    woundLossUpdates, isTokenInSight, tokensThatCanSee,
+    actorFactionKeys, anySameOrDescendant, getFactionIndex,
+    ...extraNames.map(k => extra[k])
+  );
 }
 
 /**

@@ -34,6 +34,22 @@ describe("область «Нестабильность»", () => {
   });
 });
 
+describe("область «vsExorcism» (Локус Цепей, wdbc-smc)", () => {
+  const rule = { id: "r", label: "Локус Цепей: против Экзорцизма/Демонологии", when: {}, effects: [
+    { kind: "rollBonus", target: "vsExorcism", value: 4 }
+  ] };
+
+  it("модификатор доходит до встречного теста против Экзорцизма/Демонологии", () => {
+    expect(rollModsFromRules([rule], { kind: "vsExorcism" }))
+      .toEqual([{ ruleId: "r", label: "Локус Цепей: против Экзорцизма/Демонологии", value: 4, halvePenalty: false }]);
+  });
+
+  it("не примазывается ни к обычному Встречному тесту (kind:\"opposed\"), ни к Нестабильности", () => {
+    expect(rollModsFromRules([rule], { kind: "opposed" })).toEqual([]);
+    expect(rollModsFromRules([rule], { kind: "instability" })).toEqual([]);
+  });
+});
+
 describe("значение от своей характеристики", () => {
   const rule = { id: "r", label: "Цепи", when: {}, effects: [
     { kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "inf" } }
@@ -111,6 +127,15 @@ describe("запись Конструктора «Модификатор тес�
     ])]);
     expect(rules[0].effects).toEqual([
       { kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "inf" } }
+    ]);
+  });
+
+  it("vsExorcism (Локус Цепей, wdbc-smc) — фиксированная область, не char/skill", () => {
+    const rules = rulesFromItemMechanics([item("Локус Цепей", [
+      testMod({ modScope: "vsExorcism", modValueMode: "charBonus", modCharBonus: "inf" })
+    ])]);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "vsExorcism", valueFrom: { selfCharBonus: "inf" } }
     ]);
   });
 

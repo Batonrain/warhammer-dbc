@@ -158,3 +158,17 @@ registerRuleSource("dreadnought", (a) => {
   }
   return rules;
 });
+
+// Локус Неизбежности (стр. 30, wdbc-smc): после авто-попадания рукопашной
+// (autoHit.melee.oncePerRound, module/sheets/attack-dialog.mjs) актор несёт
+// −10 на все тесты до начала своего следующего Хода. Флаг ставит диалог
+// атаки в момент применения, снимает resetActionEconomy (action-economy.mjs)
+// тем же приёмом, что exposedAggressive/running/movedThisTurn — переносить
+// в постоянное хранимое поле схемы не нужно, живёт как временный флаг.
+registerRuleSource("daemonInevitability", a => {
+  if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];
+  return [{
+    id: "daemon.inevitabilityPenalty", label: "Локус Неизбежности: штраф после авто-попадания", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: -10, label: "Локус Неизбежности: штраф после авто-попадания" }]
+  }];
+});

@@ -64,6 +64,15 @@
 // (PREDICATES.inRage) — «Горящая Голова» (Fear 2 только в Ярости),
 // Бронзовый Мирмидон/Красный Ангел (Трейт только пока в Ярости). Не
 // заполнено (requireRage:false) — условия нет вовсе, не «вне Ярости».
+//
+// ── Герметичная броня (when.requireSealedArmour/when.negateSealedArmour) ────
+// Шестой независимый гейт (wdbc-1rno): тот же тумблер-паттерн, что у Ярости,
+// но по PREDICATES.wearsSealedArmour — надета ли броня со свойством «Sealed /
+// Закрытая» (ARMOR_PROPERTIES.sealed, constants/items.mjs). Книга часто пишет
+// «без гермодоспеха» (Миазмы и подобные) — это requireSealedArmour:true +
+// negateSealedArmour:true (гейт проходит, когда СНАРЯЖЕНИЯ со свойством НЕТ).
+// Не заполнено (requireSealedArmour:false) — условия нет вовсе, тот же
+// принцип, что у остальных гейтов.
 
 // ── Покровитель (when.patronGod/when.negatePatronGod) ───────────────────────
 // Шестой независимый гейт (wdbc-xxb7): список ключей WARP_GODS
@@ -130,7 +139,9 @@ export function entryWhenOk(actor, entry, item = null) {
   const tiers = whenWoundTier(entry?.when);
   const requireRage = !!entry?.when?.requireRage;
   const patronGods = whenPatronGod(entry?.when);
-  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage && !patronGods.length) return true;
+  const requireSealedArmour = !!entry?.when?.requireSealedArmour;
+  if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
+      && !patronGods.length && !requireSealedArmour) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -185,5 +196,11 @@ export function entryWhenOk(actor, entry, item = null) {
     patronOk = entry.when.negatePatronGod ? !matches : matches;
   }
 
-  return geneOk && subOk && talentOk && tierOk && rageOk && patronOk;
+  let sealedOk = true;
+  if (requireSealedArmour && actor) {
+    const sealed = PREDICATES.wearsSealedArmour(actor);
+    sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
+  }
+
+  return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk;
 }

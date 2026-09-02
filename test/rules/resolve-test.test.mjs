@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules, weaponPropsFromRules } from "../../module/rules/resolve-test.mjs";
+import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules, weaponPropsFromRules, failDegModFromRules, scriptTriggersFromRules } from "../../module/rules/resolve-test.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 /** Снимок настоящих источников: тесты подменяют реестр и возвращают как было. */
@@ -304,6 +304,68 @@ describe("область Морали (wdbc-zepq)", () => {
   });
 });
 
+describe("failDegModFromRules (wdbc-1rno, Sentient Cyst)", () => {
+  const rule = (value, target = "all") =>
+    ({ id: "r", label: "Правило", effects: [{ kind: "failDegMod", target, value }] });
+
+  it("значение суммируется по подходящей области", () => {
+    expect(failDegModFromRules([rule(3, "social")], buildTestContext({ skill: "charm" }))).toBe(3);
+  });
+
+  it("область не подходит — не суммируется", () => {
+    expect(failDegModFromRules([rule(3, "social")], buildTestContext({ skill: "medicae" }))).toBe(0);
+  });
+
+  it("несколько правил суммируются", () => {
+    const rules = [rule(3, "social"), { ...rule(2, "social"), id: "r2" }];
+    expect(failDegModFromRules(rules, buildTestContext({ skill: "charm" }))).toBe(5);
+  });
+
+  it("пустой список правил — 0, не ошибка", () => {
+    expect(failDegModFromRules([], buildTestContext({ skill: "charm" }))).toBe(0);
+  });
+
+  it("resolveTest отдаёт failDegExtra вместе с mods/rerolls/crit", () => {
+    registerRuleSource("s", () => [rule(3, "social")]);
+    const { failDegExtra } = resolveTest({ actor: actor(), skill: "charm" });
+    expect(failDegExtra).toBe(3);
+  });
+});
+
+describe("scriptTriggersFromRules (wdbc-1rno, Полимат/Библиотека Акаши)", () => {
+  const rule = (side, target = "all", over = {}) => ({
+    id: "r", label: "Правило",
+    effects: [{ kind: "scriptTrigger", target, side, itemId: "it1", entryId: "e1", ...over }]
+  });
+
+  it("подходящая область отдаёт itemId/entryId/side/ruleId", () => {
+    expect(scriptTriggersFromRules([rule("critSuccess", "skill:trade")], buildTestContext({ skill: "trade" })))
+      .toEqual([{ itemId: "it1", entryId: "e1", side: "critSuccess", ruleId: "r" }]);
+  });
+
+  it("область не подходит — пустой список", () => {
+    expect(scriptTriggersFromRules([rule("critSuccess", "skill:trade")], buildTestContext({ skill: "medicae" })))
+      .toEqual([]);
+  });
+
+  it("несколько правил — несколько триггеров, порядок сохранён", () => {
+    const rules = [
+      rule("critSuccess", "all", { itemId: "it1" }),
+      { ...rule("critFailure", "all", { itemId: "it2" }), id: "r2" }
+    ];
+    expect(scriptTriggersFromRules(rules, buildTestContext({ skill: "medicae" }))).toEqual([
+      { itemId: "it1", entryId: "e1", side: "critSuccess", ruleId: "r" },
+      { itemId: "it2", entryId: "e1", side: "critFailure", ruleId: "r2" }
+    ]);
+  });
+
+  it("resolveTest отдаёт scriptTriggers вместе с mods/rerolls/crit/failDegExtra", () => {
+    registerRuleSource("s", () => [rule("critSuccess", "skill:trade")]);
+    const { scriptTriggers } = resolveTest({ actor: actor(), skill: "trade" });
+    expect(scriptTriggers).toEqual([{ itemId: "it1", entryId: "e1", side: "critSuccess", ruleId: "r" }]);
+  });
+});
+
 describe("область атаки", () => {
   const rule = (target, value = 10) => ({
     id: "r", label: "Правило", effects: [{ kind: "rollBonus", target, value }]
@@ -439,5 +501,42 @@ describe("значение эффекта от цели", () => {
     const rule = { id: "r", effects: [{ kind: "rollBonus", target: "attack", value: 99, valueFrom: { targetCharBonus: "ag" } }] };
     const ctx  = buildTestContext({ kind: "attack", isMelee: true, targetActor: target(3) });
     expect(rollModsFromRules([rule], ctx)[0].value).toBe(3);
+  });
+});
+
+describe("значение эффекта: formula (kind:testMod, modValueMode:formula, wdbc-1rno)", () => {
+  const actorWithCor = corruptionBonus => ({ system: { characteristics: {}, corruptionBonus } });
+  const halfCor = {
+    id: "r", label: "Чёрные Глаза",
+    effects: [{ kind: "rollBonus", target: "skill:awareness", formula: "ceil(cor/2)" }]
+  };
+
+  it("формула считается от Cor.b актора (округление вверх)", () => {
+    const ctx = buildTestContext({ skill: "awareness", actor: actorWithCor(5) });
+    expect(rollModsFromRules([halfCor], ctx)).toEqual([
+      { ruleId: "r", label: "Чёрные Глаза", value: 3, halvePenalty: false }
+    ]);
+  });
+
+  it("другой актор — другое число: считается на каждый бросок, не застывает", () => {
+    const ctx = buildTestContext({ skill: "awareness", actor: actorWithCor(8) });
+    expect(rollModsFromRules([halfCor], ctx)[0].value).toBe(4);
+  });
+
+  it("нет актора — safe-вариант отдаёт 0, не бросает", () => {
+    const ctx = buildTestContext({ skill: "awareness" });
+    expect(rollModsFromRules([halfCor], ctx)[0].value).toBe(0);
+  });
+
+  it("недопустимая формула — safe-вариант отдаёт 0, а не роняет бросок", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "skill:awareness", formula: "alert(1)" }] };
+    const ctx  = buildTestContext({ skill: "awareness", actor: actorWithCor(5) });
+    expect(rollModsFromRules([rule], ctx)[0].value).toBe(0);
+  });
+
+  it("голое число как формула — работает тем же путём, что flat", () => {
+    const rule = { id: "r", effects: [{ kind: "rollBonus", target: "skill:awareness", formula: "-5" }] };
+    const ctx  = buildTestContext({ skill: "awareness", actor: actorWithCor(5) });
+    expect(rollModsFromRules([rule], ctx)[0].value).toBe(-5);
   });
 });

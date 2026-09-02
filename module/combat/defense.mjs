@@ -18,10 +18,16 @@ import { recoilButtonHtml } from "./recoil.mjs";
 import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
 export const COUNTER_ATTACK_CAPABILITY = "technique.counterAttack";
+
+// Сжатие (мутация Compression) — capabilityKey уже зарегистрирован
+// constants/capabilities.mjs; здесь читается через hasRuleFlag, как и
+// COUNTER_ATTACK_CAPABILITY выше.
+export const COMPRESSION_CAPABILITY = "mutation.compression";
 
 // Уклонение/Парирование — Реакция (стр. 12): вне активного Encounter
 // spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
@@ -382,4 +388,98 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
   }, rollMode));
+}
+
+/**
+ * Сжатие (мутация Compression, wdbc-1rno, стр. текста мутации) — реактивная
+ * АЛЬТЕРНАТИВА Уклонению/Парированию для ОДНОГО попадания в конечность/
+ * голову: тратит Реакцию (тот же гейт, что Уклонение/Парирование), БЕЗ
+ * броска, всегда нивелирует ровно это попадание — книга не даёт теста,
+ * просто «может втянуть эту часть тела». `location` — метка HIT_LOCATIONS
+ * (constants/combat.mjs: «Голова»/«П. Рука»/«Л. Рука»/«П. Нога»/«Л. Нога»),
+ * читается из карточки атаки (attack-card.mjs::defenseSection передаёт её
+ * кнопке через data-атрибут, сама карточка Foundry-документов не касается —
+ * доступность способности проверяется здесь, не на этапе рендера).
+ *
+ * Не смоделировано намеренно — см. шапку rules/compression.mjs: зрение при
+ * втянутой Голове, мобильность при втянутых Ногах, выпуск удерживаемого
+ * оружия из втягиваемой Руки — только чат-заметки, без числа/автоснятия.
+ */
+export async function _performCompression(actor, location, attackerUuid = "") {
+  const rollMode = game.settings.get("core", "rollMode");
+  if (!hasRuleFlag(actor, COMPRESSION_CAPABILITY)) {
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `
+        <div class="wh-roll-result">
+          <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
+          <div class="roll-outcome">
+            <span class="roll-failure">${rollIcon("ban","#ff6b6b")}У цели нет мутации «Сжатие» (Compression).</span>
+          </div>
+        </div>`
+    }, rollMode));
+  }
+  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Сжатие");
+
+  const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];
+  const updated = retractPart(current, location);
+  await actor.update({ "flags.warhammer-dbc.compressedParts": updated });
+
+  const notes = [];
+  if (location === "Голова") notes.push("лишается зрения (но не слуха), пока голова не разложена обратно");
+  if (location === "П. Нога" || location === "Л. Нога")
+    notes.push("мобильность снижена, пока нога не разложена обратно (величина — на усмотрение ГМа)");
+  if (location === "П. Рука" || location === "Л. Рука")
+    notes.push("оружие/инструмент в этой руке пришлось выпустить (снимите/переместите вручную)");
+  if (allLimbsCompressed(updated))
+    notes.push("все конечности втянуты — помещается в пространства, слишком малые для обычных людей/космодесантников");
+
+  // Кнопки «Разложить», по одной на каждую СЕЙЧАС втянутую часть (не только
+  // ту, что втянута этим кликом — прошлые попадания могли втянуть другие).
+  // data-actor-uuid на корне карточки — тот же приём, что уже несёт
+  // _performParry для кнопки Контратаки (не полагаться на «выбранный
+  // токен», карточка может открыться спустя ходы после самого Сжатия).
+  const extendBtns = updated.map(loc => `
+      <button class="wh-extend-btn" type="button" data-location="${loc}"
+        title="Полудействие: разложить эту часть тела обратно (экономика действий не отслеживается — отыгрывается вручную)">
+        Разложить ${loc}
+      </button>`).join("");
+
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
+        <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
+        <div class="roll-outcome">
+          <span class="roll-success">Втягивает ${location} в торс (вместе с бронёй/снаряжением на ней) — попадание нивелировано.</span>
+        </div>
+        ${notes.length ? `<div class="roll-defense-note">${notes.join("; ")}.</div>` : ""}
+        <div class="roll-defense-section">${extendBtns}</div>
+      </div>`,
+    sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+/**
+ * Разложить одну втянутую часть тела обратно (за полудействие, книга) —
+ * кнопка «Разложить» в карточке самого Сжатия выше (data-actor-uuid на
+ * корне карточки, тот же приём, что у Контратаки после Парирования).
+ * Экономика полудействия НЕ отслеживается системой — тот же принцип, что у
+ * Pure Form/Mist Transformation, отыгрывается вручную.
+ */
+export async function _performExtendBodyPart(actor, location) {
+  const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];
+  if (!current.includes(location)) return;
+  const updated = extendPart(current, location);
+  await actor.update({ "flags.warhammer-dbc.compressedParts": updated });
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
+        <div class="roll-outcome">
+          <span class="roll-success">Раскладывает ${location} обратно (полудействие).</span>
+        </div>
+      </div>`
+  }, game.settings.get("core", "rollMode")));
 }

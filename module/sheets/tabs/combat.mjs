@@ -229,6 +229,20 @@ export function activateCombatListeners(root, actor) {
     await applyConjureWraith(actor, "weapon");
   });
 
+  // ── Вызвать Психокость (wdbc-sk8s, module/combat/conjure-wraith.mjs) ────
+  on(root, ".conjure-wraith-item-btn", "click", async () => {
+    if (!conjureWraithAvailable(actor)) {
+      return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
+    }
+    await applyConjureWraith(actor, "item");
+  });
+  on(root, ".conjure-wraith-weapon-btn", "click", async () => {
+    if (!conjureWraithAvailable(actor)) {
+      return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
+    }
+    await applyConjureWraith(actor, "weapon");
+  });
+
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
   on(root, ".technique-btn", "click", ev => {
     const techDef = MELEE_CONTESTS[ev.currentTarget.dataset.technique];

@@ -205,7 +205,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // d100 — рвётся из attack-dialog.mjs (opts.forceHit), а не проверяется тут
   // заново, потому что «в упор/в рукопашной» — ситуативная галочка игрока,
   // не хранимое состояние на акторе.
-  const { success: hit, deg } = testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
+  // Локус Неизбежности (стр. 30, wdbc-smc): «попадает автоматически с 1
+  // Успехом» — не «минимум 1» (как opts.forceHit/testOutcome ниже), а РОВНО
+  // 1, независимо от броска. d100 всё равно катается (нужен ChatMessage) и
+  // проверяется на Критический Провал/Успех (criticalOutcome ниже читает rv
+  // сам), но исход и степень отсюда не берутся вовсе.
+  const { success: hit, deg } = opts.fixedSuccessDeg != null
+    ? { success: true, deg: opts.fixedSuccessDeg }
+    : testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
   // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от

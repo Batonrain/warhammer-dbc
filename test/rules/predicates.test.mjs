@@ -110,6 +110,27 @@ describe("woundTier", () => {
   });
 });
 
+describe("wearsSealedArmour (wdbc-1rno)", () => {
+  const wearsSealedArmour = PREDICATES.wearsSealedArmour;
+  const armour = (properties, equipped = true) => ({ type: "armor", system: { equipped, properties } });
+
+  it("надета броня со свойством sealed — true", () => {
+    expect(wearsSealedArmour(actor({ items: [armour(["sealed", "heavy"])] }))).toBe(true);
+  });
+
+  it("надета броня без sealed — false", () => {
+    expect(wearsSealedArmour(actor({ items: [armour(["heavy"])] }))).toBe(false);
+  });
+
+  it("sealed-броня есть, но не надета — false", () => {
+    expect(wearsSealedArmour(actor({ items: [armour(["sealed"], false)] }))).toBe(false);
+  });
+
+  it("нет брони вовсе — false", () => {
+    expect(wearsSealedArmour(actor())).toBe(false);
+  });
+});
+
 describe("charMin", () => {
   const charMin = PREDICATES.charMin;
 
@@ -281,6 +302,9 @@ describe("общее требование к предикатам", () => {
     // В Ярости (wdbc-wyr3) — читает actor.system.inRage, значение из `when`
     // не участвует (тот же случай, что avatarOfSlaughterOffTarget ниже).
     inRage: undefined,
+    // Герметичная броня (wdbc-1rno) — читает actor.items, значение из `when`
+    // не участвует, тот же случай, что inRage выше.
+    wearsSealedArmour: undefined,
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,

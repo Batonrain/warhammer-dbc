@@ -5,7 +5,9 @@
 {{!--   • «Рука Смерти» (wdbc-hftn) — выбор своего оружия для слияния;        --}}
 {{!--   • «Иллюзия Нормальности» (wdbc-zbc0) — обнаружение/раскрытие;         --}}
 {{!--   • «Икона Богохульства» (wdbc-zbc0) — раз за бой/сцену проявление;     --}}
-{{!--   • «Щупальце», субмутация 9 (wdbc-2ynk) — форма руки.                 --}}
+{{!--   • «Щупальце», субмутация 9 (wdbc-2ynk) — форма руки;                 --}}
+{{!--   • «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние    --}}
+{{!--     утоления по игровому времени, кнопка «Утолить».                     --}}
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 {{#if (eq item.type "mutation")}}
 
@@ -57,6 +59,20 @@
 <div class="item-section">
   <div class="item-section-title">ЩУПАЛЬЦЕ: ФОРМА</div>
   {{{tentacleHandFormHtml}}}
+</div>
+{{/if}}
+
+{{#if addictionHtml}}
+<div class="item-section">
+  <div class="item-section-title">ЗАВИСИМОСТЬ</div>
+  {{{addictionHtml}}}
+</div>
+{{/if}}
+
+{{#if vampiricHtml}}
+<div class="item-section">
+  <div class="item-section-title">ВАМПИРИЧЕСКАЯ ЗАВИСИМОСТЬ</div>
+  {{{vampiricHtml}}}
 </div>
 {{/if}}
 {{/if}}{{!-- /mutation --}}
