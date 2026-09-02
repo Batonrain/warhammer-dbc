@@ -1,4 +1,5 @@
 import { _performDodge, _performParry, _performCompression, _performExtendBodyPart, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
@@ -469,6 +470,21 @@ export function registerHooks() {
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Раковое Исцеление (wdbc-w8ws): кнопка появляется в чат-карточке
+    // безоружной атаки ТОЛЬКО при попадании (attack-dialog.mjs::
+    // showAttackDialogNoWeapon, techDef.hitSectionHtml) — эффект не
+    // накладывается автоматически сразу по попаданию, у цели должно быть
+    // окно кликнуть Уклонение/Парирование первой (см. докстринг apps/
+    // cancerous-healing.mjs). Клик может прийти с другого клиента (тот же
+    // приём, что у wh-apply-dmg-btn) — резолвит актора/цель заново по uuid.
+    html.querySelectorAll(`.${CH_APPLY_BTN_CLASS}`).forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await applyCancerousHealingFromButton(ds.casterUuid, ds.targetUuid);
       });
     });
 

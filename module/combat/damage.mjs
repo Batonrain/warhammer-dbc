@@ -350,7 +350,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (Number(damageData.magDiceBonus) > 0) {
     const sizeTotal = actor.system?.sizeTotal != null
       ? Number(actor.system.sizeTotal) || 0
-      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0);
+      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0) + (Number(actor.system?.sizeModNoSpd) || 0);
     if (sizeTotal < 2 && hasRuleFlag(actor, "horde.singleTargetImmune")) {
       damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
     }

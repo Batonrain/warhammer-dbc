@@ -1289,6 +1289,30 @@ describe("приём без оружия", () => {
     expect(card).toContain('data-damage="6"');
     expect(card).toContain("Применить урон: 6 → Торс");
   });
+
+  // wdbc-w8ws (Раковое Исцеление): доп. секция вызывающего кода при попадании
+  // (не полагается на defButtons/unarmedDmgSection — своя произвольная кнопка).
+  describe("techDef.hitSectionHtml", () => {
+    const touch = { label: "Касание", wsBonus: 0, hitSectionHtml: "<button class=\"ch-apply-touch-btn\">Применить</button>" };
+
+    it("попадание — секция вставлена в карточку", async () => {
+      captured.dice = [30];
+      await showAttackDialogNoWeapon(attacker(), touch);
+      expect(captured.chat.at(-1).content).toContain("ch-apply-touch-btn");
+    });
+
+    it("промах — секции нет вовсе, хотя techDef её задаёт", async () => {
+      captured.dice = [96];
+      await showAttackDialogNoWeapon(attacker(), touch);
+      expect(captured.chat.at(-1).content).not.toContain("ch-apply-touch-btn");
+    });
+
+    it("techDef без hitSectionHtml — не роняет, секции просто нет", async () => {
+      captured.dice = [30, 3]; // второй куб — урон Пинка (techDef.damage)
+      await showAttackDialogNoWeapon(attacker(), kick);
+      expect(captured.chat.at(-1).content).not.toContain("ch-apply-touch-btn");
+    });
+  });
 });
 
 // Локус Сокрушения (стр. 31, module/constants/capabilities.mjs —

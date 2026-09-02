@@ -74,4 +74,33 @@ describe("Размер от эффекта доходит до Движения"
     expect(system.sizeTotal).toBe(2); // 1 (легаси) + 1 (эффект)
     expect(system.movement.halfMove).toBe(5); // Ag.b 3 + Размер 2
   });
+
+  // wdbc-w8ws (Absurdly Fat/Абсурдно Толстый: «+1 Размер, не влияя на SPD») —
+  // kind:"characteristic"/charKey:"sizeNoSpd" целится в отдельное
+  // system.sizeModNoSpd, которое НЕ входит в size, уходящий в calcMovement.
+  it("system.sizeModNoSpd поднимает sizeTotal, но не трогает Движение", () => {
+    const system = characterWith({});
+    system.sizeModNoSpd = 1;
+    WarhammerActor.prototype.prepareDerivedData.call({
+      type: "character", name: "Подставной", system,
+      items: Object.assign([], { get: () => null }), getFlag: () => undefined
+    });
+
+    expect(system.sizeTotal).toBe(1);
+    expect(system.movement.halfMove).toBe(3); // Ag.b 3, без изменений
+    expect(system.movement.move).toBe(6);
+  });
+
+  it("sizeMod (двигает SPD) и sizeModNoSpd (не двигает) складываются в sizeTotal независимо", () => {
+    const system = characterWith({});
+    system.sizeMod = 1;
+    system.sizeModNoSpd = 2;
+    WarhammerActor.prototype.prepareDerivedData.call({
+      type: "character", name: "Подставной", system,
+      items: Object.assign([], { get: () => null }), getFlag: () => undefined
+    });
+
+    expect(system.sizeTotal).toBe(3);              // 1 + 2
+    expect(system.movement.halfMove).toBe(4);       // Ag.b 3 + только sizeMod 1
+  });
 });

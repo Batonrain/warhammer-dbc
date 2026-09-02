@@ -22,7 +22,7 @@ export const ROUND_DAMAGE_FLAG = "hordeRoundDamage";
 function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
-  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0);
+  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0) + (Number(sys.sizeModNoSpd) || 0);
 }
 
 /** Есть ли у актора Талант или Черта с таким именем (имена двуязычные). */

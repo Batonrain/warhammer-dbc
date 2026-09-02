@@ -6156,9 +6156,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.absurdlyFat": {
-    label: "+10 аблативных Ран и авторегенерация 1/Ход механизированы (kind:\"poolMax\"/ablativeWounds). Размер +1 без влияния на SPD — не механизировано: в системе нет Конструктор-кайнда для бонуса к Размеру",
+    label: "+10 аблативных Ран и авторегенерация 1/Ход (kind:\"poolMax\"/ablativeWounds); Размер +1 без влияния на SPD — kind:\"characteristic\"/charKey:\"sizeNoSpd\" (wdbc-w8ws)",
     source: "Дар Нургл (Absurdly Fat)",
-    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart)"
+    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart), module/apps/mechanics.mjs (characteristicEffectKey charKey:\"sizeNoSpd\" → system.sizeModNoSpd), module/rules/character.mjs (traitSizeModNoSpd, не идёт в calcMovement)"
   },
   "gift.nurgle.blackPhysician": {
     label: "Полное действие+1R себе: заражает до 3 трупов в 2м, оживают зомби (Раны×2, теряют Навыки/Таланты кроме оружейных), контроль до Cor.b зомби",
@@ -6171,9 +6171,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.cancerousHealing": {
-    label: "Полное действие: касание раненого лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим (−2 A/−2 S за каждую) — тоже упирается в wdbc-smy7",
+    label: "Полное действие: касание раненого (текущая цель game.user.targets) — диалог «Цель согласна»; без согласия — полноценная безоружная атака (showAttackDialogNoWeapon: WS/база/стойка/усталость, Уклонение/Парирование цели), эффект по кнопке в чат-карточке ПОСЛЕ подтверждённого попадания, не автоматически. Лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S (Значение, .totalFx — сверено с книгой) за каждую, считает только СВОЮ долю пула",
     source: "Дар Нургл (Cancerous Healing)",
-    reader: ""
+    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (promptConsent/applyCancerousHealingEffect/applyCancerousHealingFromButton/useCancerousHealing/syncCancerousHealingPenalty — читает флаг cancerousHealingAblative, не весь system.wounds.ablative), module/sheets/attack-dialog.mjs (showAttackDialogNoWeapon, techDef.hitSectionHtml), module/hooks.mjs (делегированный клик .ch-apply-touch-btn), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф и долю"
   },
   "gift.nurgle.castOutOfDeath": {
     label: "Не может умереть от Критического Эффекта (эффект применяется в остальном); уничтоженные части тела регенерируют за 7ч до минимально функционального состояния",
@@ -6241,9 +6241,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.plagueShepherd": {
-    label: "Команда/Брифинг: подчинённые-Нурглиты с покровительством дополнительно получают Успехи аблативных Ран; если сам и все подчинённые заражены — Короткая Команда свободным действием, Детальная — полудействием",
+    label: "Команда/Брифинг: подчинённые с patronGod:\"nurgle\" (кому вообще доходят Команды) дополнительно получают Успехи аблативных Ран, не складывая с прошлой командой. Сам+все подчинённые заражены → Короткая/Детальная Команда РЕАЛЬНО списывают меньше ОД (module/combat/action-economy.mjs): Полудействие→Свободное, Полное→Полудействие; попутно Короткая/Детальная Команда вообще стали списывать ОД у отдающего (раньше не списывали ни у кого)",
     source: "Дар Нургл (Plague Shepherd)",
-    reader: ""
+    reader: "module/rules/plague-shepherd.mjs (plagueShepherdGrant/plagueShepherdFreeCommandActive/isInfected), module/sheets/squad-sheet.mjs (_commandApCost/_commandReachableMemberDocs, _executeCommand списывает spendActionPoints ДО броска, context.shortApGate/detailApGate/plagueShepherdFreeCommand в _prepareContext), templates/actor/squad-sheet.hbs (гейт кнопок + заголовки панелей)"
   },
   "gift.nurgle.prophetOfGallerpox": {
     label: "Полное действие: заражает большую жизнеобеспечивающую машину Гэллерпоксом (одержание Чумоносом), не-Нурглиты в радиусе действия машины −30 к тестам против ядов/болезней; удалённое вкл/выкл машины в пределах 7км полным действием",

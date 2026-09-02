@@ -152,6 +152,11 @@ export function prepareCharacterDerived(actor, system) {
     let hasBlackCarapaceBackup = false;
     let traitFearRating = 0;
     let traitSizeMod = 0;
+    // Размер, который НЕ идёт в SPD (wdbc-w8ws, Absurdly Fat/Абсурдно Толстый:
+    // «Размер +1, при этом не влияя на SPD») — отдельный аккумулятор от
+    // traitSizeMod выше, который наоборот всегда сдвигает движение (см.
+    // калькуляцию size/calcMovement ниже). Входит только в sizeTotal.
+    let traitSizeModNoSpd = 0;
     let traitInitMod = 0;
     let traitSpeedMod = 0;
     // Навыки, у которых Черта/Талант/Имплант ополовинивает штрафы (Конструктор
@@ -896,9 +901,15 @@ export function prepareCharacterDerived(actor, system) {
     // бы без него, при этом бейдж «Размер» на листе показывал бы верное число
     // (было найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес).
     traitSizeMod += Number(system.sizeMod) || 0;
+    // system.sizeModNoSpd — ActiveEffect-ключ Конструктора (kind:"characteristic",
+    // charKey:"sizeNoSpd", см. apps/mechanics.mjs) для источников Размера, что
+    // намеренно НЕ двигают SPD. Складывается с тем, что уже мог записать
+    // легаси-эффект тем же ключом (тот же приём, что traitSizeMod/sizeMod выше).
+    traitSizeModNoSpd += Number(system.sizeModNoSpd) || 0;
     const size    = (system.size ?? 0) + traitSizeMod;
-    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер
-    system.sizeTotal = size;                  // итоговый Размер (база + Черты)
+    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер (двигает SPD)
+    system.sizeModNoSpd = traitSizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
+    system.sizeTotal = size + traitSizeModNoSpd; // итоговый Размер (база + оба вклада)
     const stance  = system.meleeStance || "standard";
 
     let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);

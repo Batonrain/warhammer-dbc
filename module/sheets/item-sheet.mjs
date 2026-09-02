@@ -24,6 +24,8 @@ import { tranceButtonHtml, useTrance }               from "../apps/armour-histor
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
 import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
 import { vampiricPanelHtml, useSatisfyVampiric, useVampiricTest } from "../apps/vampiric-dependency.mjs";
+import { cancerousHealingButtonHtml, useCancerousHealing } from "../apps/cancerous-healing.mjs";
+import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1047,13 +1049,16 @@ export class WarhammerItemSheet
       context.diseaseGodOptions = DISEASE_GODS;
     }
 
-    // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
+    // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
+    // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
       // ── «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние
       // утоления по игровому времени, пусто у остальных Мутаций ──────────────
       context.addictionHtml = addictionPanelHtml(this.item);
       context.vampiricHtml  = vampiricPanelHtml(this.item);
+      context.cancerousHealingHtml = cancerousHealingButtonHtml(this.item, this.item.parent);
+      context.flayedHtml = flayedButtonHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1833,6 +1838,20 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useVampiricTest(actor, this.item);
+    });
+
+    // ── Мутация «Раковое Исцеление»: касание текущей цели (wdbc-w8ws) ───────
+    on(".cancerous-healing-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useCancerousHealing(actor, this.item);
+    });
+
+    // ── Мутация «Освежёванный»: содрать кожу с текущей цели (wdbc-w8ws) ─────
+    on(".flayed-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useFlayed(actor, this.item);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
