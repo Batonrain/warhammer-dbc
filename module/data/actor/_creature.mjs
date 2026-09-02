@@ -25,6 +25,10 @@ const CONDITION_FLAGS = [
   "bleeding", "haemorrhaging", "stunned", "fatigued", "poisoned", "prone",
   "helpless", "unconscious", "blinded", "deafened", "burning", "radiation",
   "hallucinogenic", "pinned", "crippling", "addicted",
+  // Состояние «в Шоке» (стр. 53, «Оправиться от Шока») — раньше таблица Шока
+  // была разовым эффектом без сохраняемого состояния; тест выхода из Шока
+  // (module/combat/fear.mjs::rollShockRecovery) читает и снимает этот флаг.
+  "shocked",
   // Стр. 30-31 (Раны и Урон, «Статусы») — Ступор и Удушье не имели своих
   // полей; Гангрена и Потеря Конечностей (по частям тела) — тоже.
   "dazed", "suffocating", "gangrene",

@@ -3,6 +3,7 @@ import { captured, fakeHtml, fakeForm, resetCaptured } from "../support/foundry-
 import { openFearDialog, openTraumaDialog, rollTrauma, createDisorderItem,
          rollDisorderTest, suppressMental } from "../../module/sheets/tabs/disorders.mjs";
 import { createTraumaItem } from "../../module/combat/fear.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 /**
  * fakeHtml + доступ по индексу [0] с querySelectorAll — то, что читает
@@ -16,6 +17,13 @@ function fakeHtmlWithRuleMods(fields, ruleModCheckboxes = []) {
   return base;
 }
 
+/** Как fakeHtmlWithRuleMods, но для радиокнопки переброса ruleRerollsHtml. */
+function fakeHtmlWithReroll(fields, rerollOpt = null) {
+  const base = fakeHtml(fields);
+  base[0] = { querySelector: sel => (sel === ".rule-reroll-opt:checked" ? rerollOpt : null) };
+  return base;
+}
+
 function actor({ items = [], wp = 40 } = {}) {
   return {
     name: "Подставной",
@@ -25,7 +33,8 @@ function actor({ items = [], wp = 40 } = {}) {
     createEmbeddedDocuments: async (type, docs) => {
       captured.created.push(...docs);
       return docs.map(d => ({ ...d, sheet: { render: () => {} } }));
-    }
+    },
+    update: async () => {}
   };
 }
 
@@ -68,6 +77,32 @@ describe("mental disorders", () => {
 
     // W 40, ratingMod(normal, "3") -20 + mod = -5(ручной) + (-20+5)(галочки) = -20 → всего -40.
     expect(captured.chat[0].content).toContain("W: <b>40</b> -40 → Порог: <b>0</b>");
+  });
+
+  // wdbc-zepq: раньше openFearDialog звал только ruleRollModsHtml — перебросы
+  // из реестра правил (Lord of the Exodites и т.п.) в диалоге не показывались
+  // и не применялись вовсе, даже если у актора было активное правило.
+  it("openFearDialog: доступный переброс области morale реально бросает 2 кубика", async () => {
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "x", label: "Аура Владыки", effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2 }] }
+    ]);
+    try {
+      openFearDialog(actor({ wp: 40 }));
+      expect(captured.dialog.content).toContain("rule-reroll");
+      expect(captured.dialog.content).toContain("Аура Владыки");
+
+      captured.dice = [90, 10];
+      await captured.dialog.buttons.roll.callback(fakeHtmlWithReroll({
+        "#fear-rating": "1", "#fear-type": "normal", "#fear-infamy": "0", "#fear-mod": "0"
+      }, { dataset: { idx: "0", mode: "keepBest", rolls: "2" } }));
+
+      expect(captured.rolls.filter(r => r === "1d100")).toHaveLength(2);
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
   });
 
   it("rollTrauma запускает тест Ментальной Травмы", async () => {

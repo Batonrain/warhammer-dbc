@@ -66,6 +66,8 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { isMoraleOpposedSkill } from "../rules/resolve-test.mjs";
+import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
          wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
@@ -1915,6 +1917,8 @@ export class WarhammerCharacterSheet
 
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", extraPenalty = () => 0) {
     const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
+    // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
+    if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
@@ -2168,8 +2172,14 @@ export class WarhammerCharacterSheet
 
     const outcome = await resolveKindOutcome(this.actor, {
       kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill }
+      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
+             morale: isMoraleOpposedSkill(rollContext?.skill) }
     });
+    if (isMoraleOpposedSkill(rollContext?.skill)) {
+      await applyLordOfExoditesFailPenalty(this.actor, {
+        dof: outcome.success ? 0 : outcome.deg, usedReroll: !!reroll
+      });
+    }
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
     const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
     const outcomeHtml = outcome.success

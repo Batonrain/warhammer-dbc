@@ -14,6 +14,8 @@ import { resolveKindOutcome }                      from "../rules/kind-outcome.m
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
 import { fatiguePenalty }                          from "../sheets/tabs/conditions.mjs";
 import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
+import { rollMoraleTest }                          from "../rules/morale-test.mjs";
+import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
@@ -58,7 +60,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
 
   const outcome = await resolveKindOutcome(actor, {
     kind: tk.kind || "base", baseEff, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed,
-    ctx: { actor, kind: "skill", char: "wp" }, autoSuccess: autoPass
+    ctx: { actor, kind: "skill", char: "wp", morale: true }, autoSuccess: autoPass
   });
   const { eff, success, deg } = outcome;
   const dof      = success ? 0 : deg;
@@ -78,8 +80,12 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
         <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${infamy ? ` −${infamy}` : ""} = ${total}):</div>
         <div class="roll-threshold">${row?.text ?? "—"}</div>
         ${critPillsHtml(shockPills, actor.uuid)}</div>`;
+      // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
+      // выхода из Шока в начале Хода (rollShockRecovery ниже).
+      await actor.update({ "system.conditions.shocked": true });
     }
   }
+  await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll: !!reroll });
   // 5+ степеней провала Страха → Ментальная Травма (в конце сцены)
   if (!success && dof >= 5) {
     shockHtml += `<div class="roll-threshold" style="margin-top:4px;color:#9a0000;font-weight:bold;">5+ степеней провала — в конце сцены пройдите тест Ментальной Травмы (кнопка «Травма»).</div>`;
@@ -157,6 +163,57 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
     difficulty: tk.difficulty || 0
   });
+}
+
+/**
+ * Напоминание в начале Хода Шокированного персонажа (стр. 53) — тест выхода
+ * из Шока катается по кнопке (не автоматически), тем же приёмом, что
+ * напоминание Подавления (module/combat/suppression.mjs::
+ * postSuppressionRecoveryPrompt). Провал НЕ отнимает эффекты Командования
+ * (книга это отдельно оговаривает), поэтому в отличие от исходного теста
+ * Страха здесь нет параметра «важный»/Infamy — только W+0.
+ */
+export async function postShockRecoveryPrompt(actor) {
+  const rollMode = game.settings.get("core", "rollMode");
+  const messageData = ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("target","#8fd0ff")}${esc(actor.name)} в Шоке — начало Хода</div>
+        <div class="roll-threshold">Тест W+0 на выход из Шока.</div>
+        <div class="roll-defense-btns">
+          <button class="wh-shock-recovery-btn" type="button" data-actor-uuid="${actor.uuid}">Тест</button>
+        </div>
+      </div>`,
+    sound: null
+  }, rollMode);
+  await ChatMessage.create(messageData);
+}
+
+/** Тест выхода из Шока (стр. 53): W+0, тест Морали. Успех снимает conditions.shocked. */
+export async function rollShockRecovery(actor) {
+  const wp = actor.system.characteristics.wp?.total ?? 0;
+  const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  if (success) await actor.update({ "system.conditions.shocked": false });
+  await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("target","#8fd0ff")}Выход из Шока — ${esc(actor.name)}</div>
+        <div class="roll-threshold">WP: <b>${wp}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
+        <div class="roll-outcome">${success
+          ? `<span class="roll-success">Успех — Шок снят</span>`
+          : `<span class="roll-failure">Провал — всё ещё в Шоке</span>`}</div>
+      </div>`,
+    rolls: [roll],
+    sound: CONFIG.sounds.dice
+  }, rollMode));
+  return { success, rv, eff };
 }
 
 /**

@@ -211,6 +211,10 @@ const DEVIATIONS = {
     "bio.weight": 0,
     // Вызов/Challenge (X), wdbc-2xku — заведено гораздо позже template.json.
     "conditions.challenged": false,
+    // «В Шоке» (стр. 53, wdbc-zepq) — снимается тестом выхода из Шока
+    // (module/combat/fear.mjs::rollShockRecovery), заведено гораздо позже
+    // template.json.
+    "conditions.shocked": false,
     // Экономика действий (стр. 12, wdbc-qleg/wdbc-fkdd): ОД — новое поле,
     // Реакции раньше были свободным текстовым полем-памяткой (умолчание ""),
     // теперь структурный пул — см. module/combat/action-economy.mjs.

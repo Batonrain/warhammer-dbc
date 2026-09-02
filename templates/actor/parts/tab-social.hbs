@@ -205,6 +205,10 @@
               title="Полное действие. Успехи тратятся на эффекты">
         Детальная{{#if detailActive}} {{detailSuccesses}}{{/if}}</button>
       <button type="button" class="cmd-clear" title="Снять всё отданное — конец боя или потеря Командования">Сбросить</button>
+      {{#if exoditeLord}}
+      <button type="button" class="cmd-lord-clear" title="Полное действие: вывести до F.b выделенных союзников из Страха/Шока/Подавления">Вывести из состояний</button>
+      <button type="button" class="cmd-lord-rally" title="Command(F)−10: восстановить 1 очко Судьбы всем эльдарам своего Отряда, включая себя">Судьба Отряду</button>
+      {{/if}}
     </div>
 
     <div class="cmd-presence-row">

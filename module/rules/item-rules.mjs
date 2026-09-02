@@ -78,7 +78,10 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // встречный тест демона против Экзорцизма/Чистой Демонологии
   // (daemon-sheet.mjs::_rollVsExorcism, kind:"vsExorcism") — обычный
   // "opposed" сработал бы на ЛЮБОМ встречном тесте, что книга не говорит.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "vsExorcism"].includes(scope)) return scope;
+  // morale — тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/
+  // встречные Запугивание и Пытки, core.json «Мораль и Потеря Командования»),
+  // см. resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord of the Exodites.
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "vsExorcism", "morale"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
