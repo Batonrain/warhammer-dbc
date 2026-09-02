@@ -10,6 +10,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/tools/scope-readonly-agents.py",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "permissions": {
