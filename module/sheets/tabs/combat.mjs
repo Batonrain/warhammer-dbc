@@ -41,6 +41,7 @@ import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftn
 import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs";
 import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
 import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
+import { conjureWraithAvailable, applyConjureWraith } from "../../combat/conjure-wraith.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
@@ -210,6 +211,20 @@ export function activateCombatListeners(root, actor) {
     const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
     if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
     await applyRitualBloodletting(actor, token);
+  });
+
+  // ── Вызвать Психокость (wdbc-sk8s, module/combat/conjure-wraith.mjs) ────
+  on(root, ".conjure-wraith-item-btn", "click", async () => {
+    if (!conjureWraithAvailable(actor)) {
+      return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
+    }
+    await applyConjureWraith(actor, "item");
+  });
+  on(root, ".conjure-wraith-weapon-btn", "click", async () => {
+    if (!conjureWraithAvailable(actor)) {
+      return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
+    }
+    await applyConjureWraith(actor, "weapon");
   });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
