@@ -216,7 +216,10 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "woundTier": ["heavy", "dying"]
+                "woundTier": [
+                  "heavy",
+                  "dying"
+                ]
               }
             }
           ]
