@@ -1356,7 +1356,7 @@ async function resolveEntrySpecChoice(entry) {
  * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
  * applyGroupEntries) — если задан, повторно диалог/коллектор не зовём.
  */
-async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
+export async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
   // Подгруппа — не запись, а узел И/ИЛИ: отыгрываются её листья, отметку
   // получают тоже они.
   if (entry.kind === "group") {
