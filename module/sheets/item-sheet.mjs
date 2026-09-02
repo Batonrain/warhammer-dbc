@@ -22,8 +22,9 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
-import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion }
+import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
+import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1052,6 +1053,8 @@ export class WarhammerItemSheet
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
+      // «Икона Богохульства» (wdbc-zbc0) — пусто у остальных Мутаций.
+      context.iconOfBlasphemyHtml = iconOfBlasphemyButtonHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1817,6 +1820,16 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await attemptSeeThroughIllusion(this.item, actor);
+    });
+    on(".illusion-maintain-cb", "change", async ev => {
+      await setIllusionMaintained(this.item, ev.currentTarget.checked);
+    });
+
+    // ── Мутация «Икона Богохульства»: раз за бой/сцену проявление (wdbc-zbc0) ──
+    on(".icon-of-blasphemy-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await activateIconOfBlasphemy(this.item, actor);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────

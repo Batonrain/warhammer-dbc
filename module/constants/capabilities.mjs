@@ -6583,7 +6583,7 @@ export const CAPABILITIES = {
   "mutation.iconOfBlasphemy": {
     label: "Раз за бой/сцену, свободное действие: иллюзия на 1 Раунд — Имперцы видящие проходят W+0 или впадают в Ярость (атакуя только чемпиона); засекшие пси-чутьём/ноосканированием — W+0 или обязаны атаковать его следующий Ход",
     source: "Мутация: Icon of Blasphemy (Общие мутации)",
-    reader: ""
+    reader: "module/apps/icon-of-blasphemy.mjs iconOfBlasphemyButtonHtml()/activateIconOfBlasphemy()"
   },
   "mutation.sentientCyst": {
     label: "Провал теста социального взаимодействия — доп. +3 Провала (циста вмешивается в речь)",

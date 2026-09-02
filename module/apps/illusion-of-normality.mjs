@@ -25,6 +25,13 @@
 //  свойство мутанта — через готовый scene-scope кулдаун rules/cooldown.mjs
 //  (isRuleUsageUsed/markRuleUsageUsed), составным именем флага на пару
 //  наблюдатель↔мутант.
+//
+//  «Активно поддерживаемая» (книга): персонаж может ПЕРЕСТАТЬ поддерживать
+//  иллюзию — простой тумблер flags.warhammer-dbc.illusionMaintained на самой
+//  Мутации, тем же приёмом, что techActive у энергосистем (sheets/tabs/
+//  tech.mjs). По умолчанию (флага ещё нет) иллюзия поддерживается — так
+//  ведёт себя способность у только что полученной Мутации. Выключенная
+//  иллюзия — нечего замечать: кнопка «заметить» гейтится этим же флагом.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
@@ -35,10 +42,22 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 
 const NAME = "Illusion of Normality";
 const CAPABILITY_KEY = "mutation.illusionOfNormality";
+const MAINTAIN_FLAG = "illusionMaintained";
 
 /** Это предмет-Мутация «Иллюзия Нормальности»? */
 export function isIllusionOfNormalityItem(item) {
   return item?.type === "mutation" && itemHasName(item, NAME);
+}
+
+/** Поддерживается ли иллюзия сейчас — по умолчанию (флага ещё нет) да. */
+export function isIllusionMaintained(item) {
+  return item?.getFlag?.("warhammer-dbc", MAINTAIN_FLAG) !== false;
+}
+
+/** Тумблер на листе предмета — персонаж сам решает, поддерживать иллюзию или нет. */
+export async function setIllusionMaintained(item, maintained) {
+  if (!isIllusionOfNormalityItem(item)) return;
+  await item.setFlag("warhammer-dbc", MAINTAIN_FLAG, !!maintained);
 }
 
 /** Актор текущей Foundry-цели (game.user.targets) — наблюдатель, или null. */
@@ -79,6 +98,8 @@ async function postTestCard({ actor, headerIcon, header, thresholdLine, roll, rv
  */
 export async function attemptNoticeIllusion(item, actor) {
   if (!isIllusionOfNormalityItem(item) || !actor) return;
+  if (!isIllusionMaintained(item))
+    return ui.notifications?.warn("Иллюзия сейчас не поддерживается — мутации персонажа видны как обычно.");
   const observer = currentObserver();
   if (!observer) return ui.notifications?.warn("Выберите Foundry-целью токен наблюдателя.");
 
@@ -137,6 +158,19 @@ export async function attemptSeeThroughIllusion(item, actor) {
 /** Панель на листе предмета — пусто, если это не «Иллюзия Нормальности» или нет актора. */
 export function illusionOfNormalityHtml(item, actor) {
   if (!isIllusionOfNormalityItem(item) || !actor) return "";
+  const maintained = isIllusionMaintained(item);
+  const maintainToggle = `<label class="illusion-maintain-toggle">
+      <input type="checkbox" class="illusion-maintain-cb" data-item-id="${item.id}" ${maintained ? "checked" : ""}/>
+      Активно поддерживается
+    </label>`;
+
+  if (!maintained) {
+    return `<div class="illusion-of-normality-panel">
+      ${maintainToggle}
+      <div class="illusion-of-normality-status">Иллюзия сейчас не поддерживается — мутации персонажа видны как обычно, обнаруживать нечего.</div>
+    </div>`;
+  }
+
   const observer = currentObserver();
   let status;
   if (!observer) {
@@ -148,6 +182,7 @@ export function illusionOfNormalityHtml(item, actor) {
       (noticed ? `, попытка увидеть сквозь ${usedUp ? "потрачена" : "доступна"}` : "");
   }
   return `<div class="illusion-of-normality-panel">
+    ${maintainToggle}
     <div class="illusion-of-normality-status">${status}</div>
     <button type="button" class="illusion-notice-btn" data-item-id="${item.id}">
       ${rollIcon("target", "#8fd0ff")}Наблюдатель пытается заметить (Психонаука)

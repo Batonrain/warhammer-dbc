@@ -14,7 +14,8 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   isIllusionOfNormalityItem, illusionOfNormalityHtml,
-  attemptNoticeIllusion, attemptSeeThroughIllusion
+  attemptNoticeIllusion, attemptSeeThroughIllusion,
+  isIllusionMaintained, setIllusionMaintained
 } from "../../module/apps/illusion-of-normality.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed } from "../../module/rules/cooldown.mjs";
 import { noticeFlagKey, seeThroughFlagKey } from "../../module/rules/illusion-detection.mjs";
@@ -31,7 +32,14 @@ function actorWithFlags({ id, name = "Актор", items = [], skills = {}, char
   };
 }
 
-const mutationItem = ({ id, name = "Мутация" } = {}) => ({ id, type: "mutation", name });
+function mutationItem({ id, name = "Мутация" } = {}) {
+  const store = {};
+  return {
+    id, type: "mutation", name,
+    getFlag: (scope, key) => store[`${scope}.${key}`],
+    setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; }
+  };
+}
 const illusionItem = (id = "illusion-1") =>
   mutationItem({ id, name: "Illusion of Normality / Иллюзия Нормальности" });
 
@@ -196,5 +204,57 @@ describe("illusionOfNormalityHtml", () => {
     const html = illusionOfNormalityHtml(item, mutant);
     expect(html).toContain("заметил(а) иллюзию");
     expect(html).toContain("попытка увидеть сквозь доступна");
+  });
+
+  it("иллюзия не поддерживается — кнопок обнаружения нет, только тумблер и статус", async () => {
+    const item = illusionItem();
+    const mutant = actorWithFlags({ id: "mutant-1" });
+    const observer = actorWithFlags({ id: "observer-1" });
+    setTarget(observer);
+    await setIllusionMaintained(item, false);
+    const html = illusionOfNormalityHtml(item, mutant);
+    expect(html).toContain("illusion-maintain-toggle");
+    expect(html).toContain("не поддерживается");
+    expect(html).not.toContain("illusion-notice-btn");
+  });
+});
+
+describe("isIllusionMaintained / setIllusionMaintained", () => {
+  it("по умолчанию (флага ещё нет) иллюзия поддерживается", () => {
+    expect(isIllusionMaintained(illusionItem())).toBe(true);
+  });
+
+  it("setIllusionMaintained(false) — дальше isIllusionMaintained тоже false", async () => {
+    const item = illusionItem();
+    await setIllusionMaintained(item, false);
+    expect(isIllusionMaintained(item)).toBe(false);
+  });
+
+  it("setIllusionMaintained(true) после false — снова поддерживается", async () => {
+    const item = illusionItem();
+    await setIllusionMaintained(item, false);
+    await setIllusionMaintained(item, true);
+    expect(isIllusionMaintained(item)).toBe(true);
+  });
+
+  it("не «Иллюзия Нормальности» — тумблер не пишется", async () => {
+    const item = mutationItem({ name: "Прочее" });
+    await setIllusionMaintained(item, false);
+    expect(item.getFlag("warhammer-dbc", "illusionMaintained")).toBeUndefined();
+  });
+});
+
+describe("attemptNoticeIllusion — иллюзия не поддерживается", () => {
+  it("предупреждает и не бросает, даже если цель выбрана", async () => {
+    const item = illusionItem();
+    const mutant = actorWithFlags({ id: "mutant-1", items: [item] });
+    const observer = actorWithFlags({ id: "observer-1" });
+    setTarget(observer);
+    await setIllusionMaintained(item, false);
+
+    await attemptNoticeIllusion(item, mutant);
+
+    expect(captured.warnings.length).toBe(1);
+    expect(captured.chat).toEqual([]);
   });
 });
