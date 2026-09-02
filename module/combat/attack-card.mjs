@@ -212,7 +212,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   этот модуль документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null, hitLocLabel = "" }) {
+                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null, hitLocLabel = "", isMelee = false }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
@@ -222,12 +222,19 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
   const hitsNote = hitsCount > 1
     ? `<div class="roll-defense-note">Эта атака даёт ${hitsCount} попаданий — Успех защиты снимает их по одному за степень.</div>`
     : "";
+  // Стр. 12 (wdbc-9wvm): от атак, ПОЛНОСТЬЮ накрывающих Базу цели (Взрывное/
+  // Распыление), Уклонение допустимо только Отскоком, не обычной нивеляцией —
+  // проект не отслеживает геометрию Базы/шаблона (см. aoe-target.mjs), решает
+  // стол: только текстовое напоминание, кнопка Уклонения не гейтится кодом.
+  const blastRecoilNote = (!isMelee && !cannotDodge && (wp.blastRating > 0 || wp.spray))
+    ? `<div class="roll-defense-note">💥 Если шаблон полностью накрывает Базу цели — Уклонение допустимо только Отскоком (стр. 12), не нивеляцией.</div>`
+    : "";
   const poolBtn = pool && pool.hits > 0
     ? `<button class="wh-pool-spend-btn" type="button"
          data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
          data-dodge-mod="${dodgeMod}" data-parry-mod="${parryMod}"
          data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
-         data-force-reroll="${forcedDefenceReroll}">
+         data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}">
          💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
        </button>`
     : "";
@@ -239,7 +246,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -266,6 +273,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
       ${note && (dodgeMod !== 0 || parryMod !== 0 || cannotDodge)
         ? `<div class="roll-defense-note">${note}</div>` : ""}
       ${hitsNote}
+      ${blastRecoilNote}
     </div>`;
 }
 
@@ -487,7 +495,7 @@ export function attackCard({
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : ""}
-        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, hitLocLabel }) : ""}
+        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, hitLocLabel, isMelee }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, itemUuid, hordeHits })}

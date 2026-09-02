@@ -116,6 +116,23 @@ describe("карточка атаки", () => {
     expect(html).toContain("Обманный манёвр");
   });
 
+  it("кнопка Уклонения несёт data-melee — Отскок (wdbc-9wvm) только от стрелковой", () => {
+    expect(card({ isMelee: false })).toContain('data-melee="0"');
+    expect(card({ isMelee: true })).toContain('data-melee="1"');
+  });
+
+  it("Взрывное/Распыление стрелковой атаки — напоминание про обязательный Отскок при полном накрытии Базы", () => {
+    expect(card({ isMelee: false, wp: { blastRating: 3 } })).toContain("Уклонение допустимо только Отскоком");
+    expect(card({ isMelee: false, wp: { spray: true } })).toContain("Уклонение допустимо только Отскоком");
+  });
+
+  it("напоминания про Отскок нет в рукопашной, без Взрывного/Распыления и когда Уклонение уже недоступно", () => {
+    expect(card({ isMelee: true, wp: { blastRating: 3 } })).not.toContain("Уклонение допустимо только Отскоком");
+    expect(card({ isMelee: false, wp: {} })).not.toContain("Уклонение допустимо только Отскоком");
+    expect(card({ isMelee: false, wp: { blastRating: 3 }, defense: { dodgeMod: -999 } }))
+      .not.toContain("Уклонение допустимо только Отскоком");
+  });
+
   it("по технике предлагается Вираж", () => {
     expect(card({ defense: { targetIsVehicle: true } })).toContain("Вираж");
     expect(card()).not.toContain("Вираж");

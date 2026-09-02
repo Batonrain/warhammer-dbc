@@ -426,6 +426,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
+  let coverBonus = 0;
 
   if (warpSoak) {
     // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b.
@@ -472,6 +473,15 @@ export async function applyDamageToActor(actor, damageData) {
     if (absorption.propFlags?.[armorKey]?.runesOfProtection) {
       runesBonus = await _rollRunesOfProtection(actor);
       armorAP += runesBonus;
+    }
+    // Отскок в Укрытие (wdbc-9wvm, стр. 12): игрок объявил Отскок в зону
+    // Укрытия при защите (module/combat/recoil.mjs::performRecoil) — доп. AP
+    // этой зоны разово применяется к СЛЕДУЮЩЕМУ попаданию, которое пришло по
+    // цели, и тратится сразу же (флаг снят), а не копится на весь бой.
+    coverBonus = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
+    if (coverBonus > 0) {
+      armorAP += coverBonus;
+      await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
     }
     // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
     // поглощения, ДО вычета пробития (стр. 168).
@@ -574,6 +584,7 @@ export async function applyDamageToActor(actor, damageData) {
       propNotes.push(pfNote.isPowerArmor ? "Силовой шлем: 4 AP на глаза" : "Глаз: AP шлема проигнорирован");
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
     if (runesBonus > 0) propNotes.push(`Защитные Руны: +${runesBonus} AP (см. бросок выше)`);
+    if (coverBonus > 0) propNotes.push(`Отскок в Укрытие: +${coverBonus} AP`);
   }
 
   const reductionNote = incomingReduction > 0

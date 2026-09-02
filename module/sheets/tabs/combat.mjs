@@ -49,8 +49,9 @@ import { spendActionPoints, spendReaction, resetActionEconomy } from "../../comb
 import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
 import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
 import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
+import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
 import {
-  declareHalfMove, declareFullMove, declareCharge, declareRun,
+  declareHalfMove, declareFullMove, declareCharge, declareRun, declareHalfStep,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
   showMarchDialog
 } from "../../combat/movement-actions.mjs";
@@ -299,12 +300,21 @@ export function activateCombatListeners(root, actor) {
   // Техника, гейт сам проверяет бой/ОД/кулдаун сессии (combat/spirit-talk.mjs).
   on(root, ".spirit-talk-btn", "click", () => triggerSpiritTalk(actor));
 
+  // Отскок (стр. 12, wdbc-9wvm, п.7): непотраченное ОД повышает предел
+  // Отскока в текущем Раунде на SPD м — тот же паттерн «−1 ОД за клик», что
+  // у ae-spend-btn выше, только с побочным эффектом grantRecoilBonus вместо
+  // простого списания.
+  on(root, ".ae-recoil-bonus-btn", "click", async () => {
+    if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+    await grantRecoilBonus(actor, 1);
+  });
+
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»
   // (module/combat/movement-actions.mjs).
   const MOVE_ACTIONS = {
     halfmove: declareHalfMove, fullmove: declareFullMove,
-    charge: declareCharge,     run: declareRun,
+    charge: declareCharge,     run: declareRun,     halfstep: declareHalfStep,
     climb: showClimbDialog, jump: showJumpDialog, swim: showSwimDialog,
     fall: showFallDialog,   fly: showFlightDialog,
     "march-accelerated": a => showMarchDialog(a, "accelerated"),

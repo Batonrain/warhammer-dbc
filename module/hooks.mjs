@@ -1,6 +1,7 @@
 import { _performDodge, _performParry, _performCompression, _performExtendBodyPart, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
+import { showRecoilDialog, performRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
@@ -110,7 +111,25 @@ export function registerHooks() {
           if (handled !== null) return;
         }
         await _performDodge(actor, extraMod,
-          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
+          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid,
+          ev.currentTarget.dataset.melee === "1");
+      });
+    });
+
+    // Отскок (стр. 12, wdbc-9wvm): кнопка приклеена к карточке успешного
+    // Уклонения от стрелковой атаки (defense.mjs::_performDodge) — актор
+    // берётся по uuid из data-actor-uuid (тот же приём, что у контратаки:
+    // отскакивает тот, кто уклонился, а не выбранный сейчас токен).
+    html.querySelectorAll(".wh-recoil-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actorUuid = ev.currentTarget.dataset.actorUuid
+          || ev.currentTarget.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = actorUuid ? (await fromUuid(actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Уклонившийся персонаж карточки не найден.");
+        const choice = await showRecoilDialog(actor);
+        if (!choice) return;
+        await performRecoil(actor, choice);
       });
     });
 
@@ -248,7 +267,8 @@ export function registerHooks() {
           parryMod: parseInt(el.dataset.parryMod || "0"),
           targetIsVehicle: el.dataset.targetVehicle === "1",
           flexible: el.dataset.flexible === "1",
-          forcedDefenceReroll: el.dataset.forceReroll || ""
+          forcedDefenceReroll: el.dataset.forceReroll || "",
+          isMelee: el.dataset.melee === "1"
         });
       });
     });
