@@ -23,6 +23,12 @@
     "weaponProps": [
       {
         "key": "twinLinked"
+      },
+      {
+        "key": "independent"
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,

@@ -23,6 +23,12 @@
     "weaponProps": [
       {
         "key": "warpWeapon"
+      },
+      {
+        "key": "independent"
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,

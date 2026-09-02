@@ -347,18 +347,6 @@
   padding: 3px 6px;
 }
 .warhammer-dbc .gear-modsub-name { font-weight: bold; color: var(--wh-text-dark); }
-/* Интегральная атака: часть тела или машины, снять её нельзя — метка объясняет
-   игроку, почему галочка «Экип.» в этой строке недоступна. */
-.warhammer-dbc .gear-integral-badge {
-  font-size: 0.8em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--wh-text-mid, #6a5a48);
-  border: 1px solid var(--wh-text-mid, #6a5a48);
-  border-radius: 3px;
-  padding: 0 3px;
-  opacity: 0.75;
-}
 .warhammer-dbc .gear-modsub-group {
   font-size: 0.85em;
   color: var(--wh-text-mid, #6a5a48);

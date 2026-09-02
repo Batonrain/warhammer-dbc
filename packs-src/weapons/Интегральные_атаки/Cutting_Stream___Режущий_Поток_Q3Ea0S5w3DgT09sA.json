@@ -26,6 +26,12 @@
       },
       {
         "key": "shocking"
+      },
+      {
+        "key": "independent"
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,
