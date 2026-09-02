@@ -44,7 +44,17 @@ export class MutationData extends foundry.abstract.TypeDataModel {
         roll:  new NumberField({ initial: 0, integer: true, label: "Бросок d10" }),
         shift: new NumberField({ initial: 0, integer: true, label: "Сдвиг (⅓Inf.b)" }),
         total: new NumberField({ initial: 0, integer: true, label: "Итог броска" })
-      }, { label: "Субмутация" })
+      }, { label: "Субмутация" }),
+      // Трекер периодической Зависимости (мутация «Addiction», стр. 440-452;
+      // wdbc-5inv) — момент последнего утоления по game.time.worldTime и
+      // текст объекта зависимости (авто из submutation.name, если строка её
+      // называет однозначно; иначе вписывается вручную — см. rules/addiction.mjs).
+      // Поле есть у всех Мутаций (как submutation выше), используется только
+      // теми, кто несёт capabilityKey "mutation.addiction".
+      dependency: new SchemaField({
+        substance:     new StringField({ initial: "", label: "Объект зависимости" }),
+        lastSatisfied: new NumberField({ initial: null, nullable: true, integer: true, label: "Последнее утоление (worldTime)" })
+      }, { label: "Зависимость" })
     };
   }
 

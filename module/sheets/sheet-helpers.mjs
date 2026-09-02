@@ -42,6 +42,8 @@ import { condIconHTML, CONDITION_ICONS }            from "../constants/condition
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
+import { addictionItems, isAddictionUnsatisfied, addictionStatusLabel,
+         addictionSubstanceLabel }                    from "../rules/addiction.mjs";
 import { raceMatches }                               from "../rules/race.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
@@ -827,6 +829,19 @@ export function buildGetData(actor) {
           pen: st.pen, scope: v.scope,
           pips: [1, 2, 3].map(n => ({ on: n <= val })),
           alert: val > 0, crit: val >= VITAL_MAX_STAGE
+        };
+      }),
+      // Зависимость (мутация «Addiction», wdbc-5inv) — одна строка на каждый
+      // предмет-носитель (обычно один). Пусто, если мутации нет вовсе — блок
+      // на листе тогда не рисуется (см. tab-effects.hbs).
+      dependencies: addictionItems(actor).map(item => {
+        const worldTime = game.time?.worldTime ?? 0;
+        const unsatisfied = isAddictionUnsatisfied(item, worldTime);
+        return {
+          itemId: item.id,
+          substance: addictionSubstanceLabel(item) || "(не определено)",
+          status: addictionStatusLabel(item, worldTime),
+          unsatisfied
         };
       })
     };

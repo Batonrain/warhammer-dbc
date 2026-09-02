@@ -66,6 +66,26 @@
         {{/each}}
       </div>
 
+      {{!-- Зависимость (мутация «Addiction», wdbc-5inv) — своей строкой под
+            ЖИЗНЕОБЕСПЕЧЕНИЕМ, только если мутация есть у актора. --}}
+      {{#if body.dependencies.length}}
+      <div class="bc-life bc-dep">
+        <div class="bc-life-cap">ЗАВИСИМОСТЬ</div>
+        {{#each body.dependencies as |d|}}
+        <div class="bc-dep-row {{#if d.unsatisfied}}is-alert{{/if}}">
+          <span class="bc-life-ic">💉</span>
+          <div class="bc-life-mid">
+            <input type="text" class="bc-dep-substance" data-dep-substance="{{d.itemId}}" value="{{d.substance}}" placeholder="объект зависимости"/>
+            <div class="bc-dep-status">{{#if d.unsatisfied}}<span class="bc-life-pen">−10 Навыки</span>{{/if}} <span>{{d.status}}</span></div>
+          </div>
+          <div class="bc-life-ctl">
+            <button type="button" class="bc-life-btn bc-life-ok" data-dep-satisfy="{{d.itemId}}" title="Удовлетворить — сбросить таймер">✓</button>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+
       {{!-- Безумие / Порча — переехали сюда с вкладки ПОКАЗАТЕЛИ, рядом друг с
             другом (в две колонки). Весь функционал (кнопки бросков, +/−,
             полосы) сохранён без изменений, просто другое место на листе. На

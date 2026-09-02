@@ -18,6 +18,7 @@ import { adjutantRerollRules } from "./adjutant.mjs";
 import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
+import { addictionPenaltyRules } from "./addiction.mjs";
 
 const SOURCES = new Map();
 
@@ -103,6 +104,11 @@ registerRuleSource("adjutant", a => {
   if (typeof game === "undefined") return [];
   return adjutantRerollRules(a, game.actors ?? []);
 });
+
+// Зависимость (wdbc-5inv) — штраф −10 к тестам Навыков, пока не утолена.
+// Считается по времени (game.time.worldTime), не по when: правило действует
+// каждый бросок, пока предмет не даст isAddictionUnsatisfied === false.
+registerRuleSource("addiction", a => addictionPenaltyRules(a));
 
 // Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
 // экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не

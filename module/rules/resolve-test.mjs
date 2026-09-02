@@ -133,6 +133,10 @@ function effectAppliesTo(target, ctx) {
   // сам проставляет ctx.morale=true там, где RAW называет тест тестом Морали.
   if (scope === "morale") return ctx.morale === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Любой тест НАВЫКА (обычного или группового), но не Характеристики — тест
+  // характеристики не несёт ни ctx.skill, ни ctx.group (см. коммент выше).
+  // Пока единственный потребитель — Зависимость (rules/addiction.mjs).
+  if (scope === "anyskill") return !!(ctx.skill || ctx.group);
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
