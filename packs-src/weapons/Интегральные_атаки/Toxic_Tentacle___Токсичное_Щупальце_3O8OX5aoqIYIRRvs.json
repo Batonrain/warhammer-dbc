@@ -21,9 +21,17 @@
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
-      { "key": "primitive" },
-      { "key": "corrosive", "rating": 1 },
-      { "key": "toxic", "rating": 1 }
+      {
+        "key": "primitive"
+      },
+      {
+        "key": "corrosive",
+        "rating": 1
+      },
+      {
+        "key": "toxic",
+        "rating": 1
+      }
     ],
     "needsRecharge": false,
     "legacyWeapon": false,

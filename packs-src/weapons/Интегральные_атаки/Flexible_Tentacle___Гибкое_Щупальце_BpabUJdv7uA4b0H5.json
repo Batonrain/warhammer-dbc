@@ -21,8 +21,12 @@
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
-      { "key": "primitive" },
-      { "key": "flexible" }
+      {
+        "key": "primitive"
+      },
+      {
+        "key": "flexible"
+      }
     ],
     "needsRecharge": false,
     "legacyWeapon": false,
