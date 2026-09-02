@@ -6725,7 +6725,7 @@ export const CAPABILITIES = {
   "mutation.iconOfBlasphemy": {
     label: "Раз за бой/сцену, свободное действие: иллюзия на 1 Раунд — Имперцы видящие проходят W+0 или впадают в Ярость (атакуя только чемпиона); засекшие пси-чутьём/ноосканированием — W+0 или обязаны атаковать его следующий Ход",
     source: "Мутация: Icon of Blasphemy (Общие мутации)",
-    reader: ""
+    reader: "module/apps/icon-of-blasphemy.mjs iconOfBlasphemyButtonHtml()/activateIconOfBlasphemy()"
   },
   "mutation.sentientCyst": {
     label: "Провал теста социального взаимодействия — доп. +3 Провала (циста вмешивается в речь)",
@@ -6794,7 +6794,7 @@ export const CAPABILITIES = {
   "mutation.illusionOfNormality": {
     label: "Игнорируется наблюдателями как мутант, оружие/броня не привлекают внимания; активная поддерживаемая иллюзия, засекается Пси-чутьём (+5 за каждую прочую мутацию), псайкеры видят сквозь неё тестом W+0 (раз за бой/сцену)",
     source: "Мутация: Illusion of Normality (Общие мутации)",
-    reader: ""
+    reader: "module/apps/illusion-of-normality.mjs illusionOfNormalityHtml()/attemptNoticeIllusion()/attemptSeeThroughIllusion()"
   },
 
   // ── Общие мутации, партия 4 (wdbc-1rno, ревизия по запросу координатора) —

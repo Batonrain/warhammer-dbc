@@ -1,6 +1,9 @@
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
-{{!--  МУТАЦИЯ — только «Рука Смерти» (wdbc-hftn): выбор своего оружия для     --}}
-{{!--  слияния, у остальных Мутаций пусто (isHandOfDeathItem проверяет имя).  --}}
+{{!--  МУТАЦИЯ — блоки ниже показываются только у конкретных Мутаций по имени --}}
+{{!--  (isHandOfDeathItem/isIllusionOfNormalityItem), у остальных пусто:      --}}
+{{!--   • «Рука Смерти» (wdbc-hftn) — выбор своего оружия для слияния;        --}}
+{{!--   • «Иллюзия Нормальности» (wdbc-zbc0) — обнаружение/раскрытие;         --}}
+{{!--   • «Икона Богохульства» (wdbc-zbc0) — раз за бой/сцену проявление.     --}}
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 {{#if (eq item.type "mutation")}}
 
@@ -17,6 +20,20 @@
 <div class="item-section">
   <div class="item-section-title">РУКА СМЕРТИ</div>
   {{{handOfDeathHtml}}}
+</div>
+{{/if}}
+
+{{#if illusionOfNormalityHtml}}
+<div class="item-section">
+  <div class="item-section-title">ИЛЛЮЗИЯ НОРМАЛЬНОСТИ</div>
+  {{{illusionOfNormalityHtml}}}
+</div>
+{{/if}}
+
+{{#if iconOfBlasphemyHtml}}
+<div class="item-section">
+  <div class="item-section-title">ИКОНА БОГОХУЛЬСТВА</div>
+  {{{iconOfBlasphemyHtml}}}
 </div>
 {{/if}}
 {{/if}}{{!-- /mutation --}}
