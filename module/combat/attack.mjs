@@ -120,6 +120,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     gripProps2h: sys.gripProps2h || [],
     ammoProps:   loadedAmmo?.system?.properties || [],
     condProps:   opts.ammoCondProps || [],
+    // Свойства от правила (wdbc-w8z4): уже отобраны диалогом атаки по `when`
+    // (см. attack-dialog.mjs, resolveTest(...).weaponProps) — здесь только долив.
+    ruleProps:   opts.ruleProps || [],
     removeProps: loadedAmmo?.system?.removeProps || []
   });
   // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на Encounter

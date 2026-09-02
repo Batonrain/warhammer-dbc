@@ -102,6 +102,20 @@ describe("mergeExtraProps", () => {
     expect(mergeExtraProps([], { gripKey: "1р", gripProps2h })).toEqual([]);
   });
 
+  it("свойство от правила (wdbc-w8z4) добавляется, а совпавшее берёт больший рейтинг", () => {
+    const entries = mergeExtraProps(
+      [{ key: "proven", rating: 1, rating2: 0 }],
+      { ruleProps: [{ key: "proven", rating: 3 }, { key: "toxic", rating: 1 }] }
+    );
+    expect(entries.find(e => e.key === "proven").rating).toBe(3);
+    expect(entries.find(e => e.key === "toxic").rating).toBe(1);
+  });
+
+  it("больший рейтинг остаётся за оружием, если правило слабее", () => {
+    const entries = mergeExtraProps([{ key: "proven", rating: 5, rating2: 0 }], { ruleProps: [{ key: "proven", rating: 3 }] });
+    expect(entries.find(e => e.key === "proven").rating).toBe(5);
+  });
+
   it("исходный список не портится", () => {
     const own = [{ key: "balanced", rating: 0, rating2: 0 }];
     mergeExtraProps(own, { ammoProps: [{ key: "toxic", rating: 2 }] });
