@@ -56,7 +56,23 @@ export class GearData extends foundry.abstract.TypeDataModel {
       // В template.json объявлено не было, но лежит у 20 предметов пака — след
       // раскладки по папкам компендиума при импорте. Кодом не читается;
       // объявлено, чтобы правка предмета в игре его не стирала.
-      folderPath:   new ArrayField(new StringField(), { label: "Путь папки при импорте" })
+      folderPath:   new ArrayField(new StringField(), { label: "Путь папки при импорте" }),
+      // Не работает (wdbc-vwfk, Reformation Song/Песня Изменений: «Разрушение»
+      // блокирует работу на раунд). Чистая метка состояния — тот же приём,
+      // что armor.mjs::breached/weapon.mjs::destroyed; снимается движком
+      // (module/combat/reformation-song.mjs::clearExpiredGearMalfunction) в
+      // начале следующего Хода владельца — «раунд» здесь читается как «до
+      // твоего следующего Хода», тем же идиоматическим допущением, что и
+      // прочие «до начала следующего Хода» эффекты этого файла (Грозный
+      // Вопль/Поклон Публике в hooks.mjs), без отдельного счётчика раунда.
+      malfunctioning: new BooleanField({ initial: false, label: "Не работает" }),
+      // Психокостяное / иммунно к Reformation Song (wdbc-vwfk) — та же пара
+      // полей, что weapon.mjs::wraithbone/wraithboneImmune. В каталоге
+      // Снаряжения не нашлось ни одного однозначно психокостяного предмета
+      // (только оружие/броня) — оба поля заведены для полноты фильтра
+      // диалога и будущего авторинга, засеянных значений true пока нет.
+      wraithbone:       new BooleanField({ initial: false, label: "Психокостяное" }),
+      wraithboneImmune: new BooleanField({ initial: false, label: "Иммунно к Reformation Song" })
     };
   }
 }

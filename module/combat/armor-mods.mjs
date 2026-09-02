@@ -37,10 +37,21 @@ function helmetIsOff(actor) {
   catch (e) { return true; }
 }
 
-/** Все модификации, установленные на данную броню. */
+/**
+ * Все модификации, установленные на данную броню.
+ *
+ * wdbc-vwfk (Reformation Song/Разрушение — «доп. AP от других модов/
+ * талантов на эту броню до конца боя нивелируются»): если у брони стоит
+ * флаг reformationSongSuppressMods, все ЧУЖИЕ моды глушатся — остаются
+ * только собственные моды Reformation Song (отмечены флагом
+ * reformationSongMod на самом моде, см. combat/reformation-song.mjs),
+ * иначе глушился бы и только что созданный мод «Разрушение» вместе со
+ * всеми остальными. Флаг снимается clearReformationSongBuffs по концу боя.
+ */
 export function getInstalledArmorMods(actor, armor) {
   if (!actor || !armor) return [];
   const helmetOff = helmetIsOff(actor);
+  const suppressed = !!armor.getFlag?.("warhammer-dbc", "reformationSongSuppressMods");
   return actor.items.filter(i =>
     i.type === "armorMod" && i.system.installedOn === armor.id &&
     // Системы силовой брони действуют только на силовую/аспектную броню
@@ -48,7 +59,8 @@ export function getInstalledArmorMods(actor, armor) {
     // Включаемые системы дают бонусы только когда активны
     !(i.system.activatable && !i.system.active) &&
     // Со снятым шлемом всё, что стоит в шлеме, не работает — кроме вокс-линка
-    !(helmetOff && isHelmetMod(i))
+    !(helmetOff && isHelmetMod(i)) &&
+    (!suppressed || i.getFlag?.("warhammer-dbc", "reformationSongMod"))
   );
 }
 

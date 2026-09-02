@@ -211,6 +211,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const jamAt    = jamThreshold(wp);
   const jammed   = !isMelee && jamAt !== null && rv >= jamAt;
   if (jammed) {
+    // wdbc-vwfk: раньше заклинивание было только строкой в чате, без
+    // последствий — теперь пишет реальное состояние предмета (weaponClass
+    // проверен isMelee выше), которое блокирует кнопку «Атака» на листе
+    // (sheet-helpers.mjs::weaponView) до «Расклинить»
+    // (weapon-properties.mjs::clearWeaponJam).
+    await item.update({ "system.jammed": true });
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({

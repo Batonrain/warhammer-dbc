@@ -113,7 +113,8 @@
           "awkward": "veryAwkward"
         }
       ]
-    }
+    },
+    "wraithbone": true
   },
   "_id": "pSIKkmQONKTLFxqg",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
@@ -132,7 +133,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1781969751815,
-    "modifiedTime": 1782752979796,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
   "_key": "!items!pSIKkmQONKTLFxqg"
