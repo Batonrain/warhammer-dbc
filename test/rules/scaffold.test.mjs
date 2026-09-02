@@ -20,8 +20,9 @@ describe("каркас module/rules", () => {
     // targetHasSize (гейт Размера), targetKeepsNimbleInArmour (Чёрный Панцирь),
     // woundTier (Уровень Ранения, rules/wound-tier.mjs), avatarOfSlaughterOffTarget
     // (метка Аватара Резни, wdbc-sk8s), geneSeedLegion/psyRatingMin (папки
-    // пикера Талантов, wdbc-sauo) и inRage (гейт Ярости entry.when, wdbc-wyr3).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(19);
+    // пикера Талантов, wdbc-sauo), inRage (гейт Ярости entry.when, wdbc-wyr3)
+    // и wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(20);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

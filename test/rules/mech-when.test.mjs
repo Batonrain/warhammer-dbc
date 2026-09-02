@@ -147,6 +147,36 @@ describe("entryWhenOk: Ярость", () => {
   });
 });
 
+describe("entryWhenOk: Герметичная броня (wdbc-1rno)", () => {
+  const requireSealed = { when: { requireSealedArmour: true } };
+  const armourItem = (properties, equipped = true) => ({
+    type: "armor", system: { equipped, properties }
+  });
+
+  it("нет надетой Sealed-брони — false", () => {
+    expect(entryWhenOk(actorWithItems([armourItem(["heavy"])]), requireSealed)).toBe(false);
+  });
+
+  it("надета Sealed-броня — true", () => {
+    expect(entryWhenOk(actorWithItems([armourItem(["sealed", "heavy"])]), requireSealed)).toBe(true);
+  });
+
+  it("Sealed-броня есть, но НЕ надета — false (equipped:false не считается)", () => {
+    expect(entryWhenOk(actorWithItems([armourItem(["sealed"], false)]), requireSealed)).toBe(false);
+  });
+
+  it("negateSealedArmour переворачивает результат: «без гермодоспеха»", () => {
+    const negated = { when: { requireSealedArmour: true, negateSealedArmour: true } };
+    expect(entryWhenOk(actorWithItems([armourItem(["sealed"])]), negated)).toBe(false);
+    expect(entryWhenOk(actorWithItems([armourItem(["heavy"])]), negated)).toBe(true);
+    expect(entryWhenOk(actorWithItems([]), negated)).toBe(true);
+  });
+
+  it("нет актора (превью) — условие пройдено", () => {
+    expect(entryWhenOk(null, requireSealed)).toBe(true);
+  });
+});
+
 describe("entryWhenOk: Тир Ран и Ярость складываются с остальными гейтами через И", () => {
   it("Тир Ран подходит, Ярость — нет: итог false", () => {
     const entry = { when: { woundTier: ["healthy", "light"], requireRage: true } };

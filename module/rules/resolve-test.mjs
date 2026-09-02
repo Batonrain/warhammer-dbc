@@ -22,6 +22,7 @@ import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { itemHasName, sizeOf } from "./predicates.mjs";
+import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -141,9 +142,19 @@ function effectAppliesTo(target, ctx) {
  * Неизвестный источник не превращается молча в ноль, а жалуется: правило,
  * тихо давшее «+0», ищется днями.
  *
+ * `formula` (wdbc-1rno, modValueMode:"formula" у kind:"testMod") — та же
+ * mech-formula.mjs нотация, что у полей «Значение»/«Рейтинг» Конструктора
+ * («ceil(cor/2)» — Black Eyes: «+½Cor(окр.▲) на тесты зрения»), но считается
+ * заново на КАЖДЫЙ бросок от ctx.actor — testMod живой запрос, а не разовая
+ * выдача (в отличие от kind:"trait"/"characteristic", где формула застывает
+ * числом один раз при получении предмета). Safe-вариант — недопустимая
+ * формула тут не должна ронять бросок, тот же принцип, что и у остального
+ * конвейера теста.
+ *
  * @returns {?number} null, если источник значения не распознан
  */
 function effectValue(effect, ctx, ruleId) {
+  if (effect.formula != null) return mechFormulaTotalSafe(effect.formula, mechRollData(ctx?.actor));
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
   const { targetCharBonus, selfCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
@@ -289,6 +300,51 @@ export function critModsFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Доп. степени провала, если тест УЖЕ провален (wdbc-1rno: Sentient Cyst,
+ * «+3 Провала при провале социального теста») — эффект `failDegMod`, тот же
+ * принцип суммирования, что у `critRangeMod` выше (безусловно, не галочка),
+ * но применяется ПОСЛЕ броска (`rules/kind-outcome.mjs::resolveKindOutcome`),
+ * а не в модификаторах диалога — на успешный тест не влияет вовсе.
+ *
+ * @returns {number} сумма value всех подходящих failDegMod (может быть 0)
+ */
+export function failDegModFromRules(rules, ctx = {}) {
+  let extra = 0;
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "failDegMod") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      extra += Number(effect.value) || 0;
+    }
+  }
+  return extra;
+}
+
+/**
+ * Скрипты Механики (kind:"script"), назначенные срабатывать автоматически по
+ * исходу ЭТОГО теста (wdbc-1rno: «Полимат» — Крит на тесте Крафта, «Библиотека
+ * Акаши» — Крит на тесте Знания). Здесь только ОТБОР подходящих (область +
+ * side ещё не сверен с реальным success/crit — тот известен только после
+ * броска) — сам запуск делает `rules/kind-outcome.mjs::resolveKindOutcome`,
+ * у которого есть live `actor`/`item` для `executeItemCode`; здесь их нет
+ * (список правил не хранит документы, только itemId/entryId — тот же
+ * принцип, что у `grantItem` (`uuid`), эффекты остаются чистыми данными).
+ *
+ * @returns {{itemId:string, entryId:string, side:string, ruleId:string}[]}
+ */
+export function scriptTriggersFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "scriptTrigger") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      out.push({ itemId: effect.itemId, entryId: effect.entryId, side: effect.side, ruleId: rule.id });
+    }
+  }
+  return out;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -306,6 +362,8 @@ export function resolveTest(input = {}) {
     ctx, rules,
     mods: rollModsFromRules(rules, ctx),
     rerolls: rerollsFromRules(rules, ctx),
-    crit: critModsFromRules(rules, ctx)
+    crit: critModsFromRules(rules, ctx),
+    failDegExtra: failDegModFromRules(rules, ctx),
+    scriptTriggers: scriptTriggersFromRules(rules, ctx)
   };
 }
