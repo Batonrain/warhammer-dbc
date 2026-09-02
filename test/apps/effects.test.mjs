@@ -125,6 +125,26 @@ describe("isItemActive: Руническая Вязь", () => {
   });
 });
 
+// wdbc-egll: у подавляющего большинства Мутаций/Даров своего «активна ли»
+// нет вовсе (эффект действует, пока предмет на акторе) — activatable:true
+// включает его именно для тех немногих, где книга сама говорит «до конца
+// боя/сцены» (Живое Оружие и подобные).
+describe("isItemActive: Мутация/Дар с activatable", () => {
+  const mut = (extra = {}) => ({ id: "m", type: "mutation", system: { ...extra } });
+
+  it("activatable не заведён — активна всегда, как Талант/Черта", () => {
+    expect(isItemActive(mut())).toBe(true);
+  });
+
+  it("activatable:true, active:false — не активна", () => {
+    expect(isItemActive(mut({ activatable: true, active: false }))).toBe(false);
+  });
+
+  it("activatable:true, active:true — активна", () => {
+    expect(isItemActive(mut({ activatable: true, active: true }))).toBe(true);
+  });
+});
+
 // У ActiveEffect картинка называется img: поле icon Foundry объединила с ним в
 // v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
 // ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией
