@@ -1843,6 +1843,15 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     } catch (e) { console.error("Безоружный урон:", e); }
   }
 
+  // Доп. секция при попадании (wdbc-w8ws, Раковое Исцеление и подобные
+  // безоружные касания с эффектом сверх урона) — сырой HTML от вызывающего
+  // кода, обычно кнопка с data-*-uuid, обрабатываемая своим делегированным
+  // слушателем в hooks.mjs (тот же приём, что у wh-apply-dmg-btn: клик может
+  // прийти от другого клиента, после того как цель отыграет Уклонение/
+  // Парирование выше). НЕ вызывается автоматически из этой функции — она
+  // решает только «было ли попадание», прикладной эффект остаётся за кнопкой.
+  const hitExtraSection = (hit && techDef.hitSectionHtml) ? techDef.hitSectionHtml : "";
+
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: actor }),
     content: `
@@ -1865,6 +1874,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         ${helplessNote}
         ${unarmedDmgSection}
         ${defButtons}
+        ${hitExtraSection}
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
   }, rollMode));

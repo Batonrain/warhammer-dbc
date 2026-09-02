@@ -25,6 +25,12 @@ import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
+import { cancerousHealingButtonHtml, useCancerousHealing } from "../apps/cancerous-healing.mjs";
+import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
+import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.mjs";
+import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
+import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
+import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1048,13 +1054,30 @@ export class WarhammerItemSheet
       context.diseaseGodOptions = DISEASE_GODS;
     }
 
-    // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
+    // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
+    // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
       // «Икона Богохульства» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.iconOfBlasphemyHtml = iconOfBlasphemyButtonHtml(this.item, this.item.parent);
+      context.cancerousHealingHtml = cancerousHealingButtonHtml(this.item, this.item.parent);
+      context.flayedHtml = flayedButtonHtml(this.item, this.item.parent);
+    }
+
+    // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) — каждая
+    // *ButtonHtml сама проверяет isXItem по имени, пусто у остальных предметов
+    // того же типа, поэтому безопасно считать без условия по типу здесь.
+    if (this.item.type === "psychicPower") {
+      context.daemonbloodHtml = daemonbloodButtonHtml(this.item, this.item.parent);
+    }
+
+    // ── Талант «King's Plate»: поглощение Роя (wdbc-173l) ────────────────────
+    if (this.item.type === "talent") {
+      context.kingsPlateHtml = kingsPlateButtonHtml(this.item, this.item.parent);
+      context.bloodShieldHtml = bloodShieldButtonHtml(this.item, this.item.parent);
+      context.eternalWarHtml = eternalWarButtonHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1830,6 +1853,58 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await activateIconOfBlasphemy(this.item, actor);
+    });
+
+    // ── Мутация «Раковое Исцеление»: касание текущей цели (wdbc-w8ws) ───────
+    on(".cancerous-healing-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useCancerousHealing(actor, this.item);
+    });
+
+    // ── Мутация «Освежёванный»: содрать кожу с текущей цели (wdbc-w8ws) ─────
+    on(".flayed-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useFlayed(actor, this.item);
+    });
+
+    // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) ────────────────
+    on(".daemonblood-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useDaemonblood(actor, this.item);
+    });
+
+    // ── Талант «King's Plate»: поглощение Роя (wdbc-173l) ────────────────────
+    on(".kings-plate-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useKingsPlate(actor, this.item);
+    });
+
+    // ── Талант «Blood Shield»: убийство рукопашной демон-оружием (wdbc-173l) ─
+    on(".blood-shield-kill-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodShieldKill(actor, this.item);
+    });
+    on(".blood-shield-lose-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodShieldLose(actor, this.item);
+    });
+
+    // ── Талант «The Eternal War»: дуэль с Кровожадом/ХС (wdbc-173l) ─────────
+    on(".eternal-war-start-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useEternalWarStart(actor, this.item);
+    });
+    on(".eternal-war-end-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useEternalWarEnd(actor, this.item);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────

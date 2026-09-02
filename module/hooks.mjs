@@ -1,4 +1,5 @@
 import { _performDodge, _performParry, _performSprayCancel, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
@@ -29,6 +30,7 @@ import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
+import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
 import { resolveTrancesForCombat }       from "./apps/armour-history-trance.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
 import { blastCircleShape, sprayConeShape, placeAttackTemplate, targetTokens, pxPerMeter } from "./combat/templates.mjs";
@@ -476,6 +478,21 @@ export function registerHooks() {
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Раковое Исцеление (wdbc-w8ws): кнопка появляется в чат-карточке
+    // безоружной атаки ТОЛЬКО при попадании (attack-dialog.mjs::
+    // showAttackDialogNoWeapon, techDef.hitSectionHtml) — эффект не
+    // накладывается автоматически сразу по попаданию, у цели должно быть
+    // окно кликнуть Уклонение/Парирование первой (см. докстринг apps/
+    // cancerous-healing.mjs). Клик может прийти с другого клиента (тот же
+    // приём, что у wh-apply-dmg-btn) — резолвит актора/цель заново по uuid.
+    html.querySelectorAll(`.${CH_APPLY_BTN_CLASS}`).forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await applyCancerousHealingFromButton(ds.casterUuid, ds.targetUuid);
       });
     });
 
@@ -1380,6 +1397,9 @@ function _attachFateContextMenu(message, html) {
     // держит инициативу сразу за кастером каждый Раунд, пока не истекут
     // F.b — та же смена Раунда, ГМ пишет.
     await processSpiritTalkRoundStart(combat);
+    // Аблативный AP-щит (wdbc-bxw6, Роба Чемпиона): угасает на 1d5+1 в
+    // начале каждого нового Раунда — тот же триггер, что счётчики Орд выше.
+    await decayAblativeApShieldOnNewRound(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —

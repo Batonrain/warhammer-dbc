@@ -5,7 +5,7 @@
   "folder": "3S2DLJENpK7spDrg",
   "system": {
     "description": "Отламывающийся слой: +5 AP, −1 за каждое попадание; на +0 AP модификация теряется.",
-    "notes": "",
+    "notes": "wdbc-bxw6: живой заряд — system.ablativeCharge (сейчас 5), не effects.apAll (тот остаётся как объявленный максимум/для отображения). getArmorModEffects (combat/armor-mods.mjs) берёт apAll из ablativeCharge, пока ablative:true. Теряет 1 за каждое попадание владельца (любая локация — apAll действует на все зоны разом), см. module/rules/ablative-ap.mjs, combat/damage.mjs. На 0 — мод бездействует, но не удаляется (чинится заменой/переустановкой вручную).",
     "category": "armor",
     "modGroup": "reinforcement",
     "requirement": "Жёсткая броня. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -15,6 +15,8 @@
     "quality": "common",
     "activatable": false,
     "active": false,
+    "ablative": true,
+    "ablativeCharge": 5,
     "effects": {
       "apAll": 5,
       "apHead": 0,

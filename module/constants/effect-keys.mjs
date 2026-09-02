@@ -54,6 +54,7 @@ Object.assign(EFFECT_KEY_LABELS, {
   "system.corruptionBonus": "Cor.b (бонус Порчи, Unnatural)",
   "system.fearRating":  "Рейтинг Страха",
   "system.sizeMod":     "Размер (модификатор)",
+  "system.sizeModNoSpd": "Размер (модификатор, без влияния на SPD)",
   "system.initiative":  "Инициатива",
   "system.speed":       "Скорость",
   "system.incomingDamageReduction": "Снижение входящего урона",
@@ -96,6 +97,10 @@ const INITIAL_PHASE_KEYS = [
                                      // складывает его в traitSizeMod ДО calcMovement);
                                      // "final" ложился поверх посчитанного SPD и не
                                      // успевал в движение, хотя бейдж на листе был верный
+  "system.sizeModNoSpd",             // Размер БЕЗ влияния на SPD (wdbc-w8ws, Absurdly Fat) —
+                                     // хранимое поле того же семейства, что sizeMod выше,
+                                     // но rules/character.mjs сознательно не пускает его
+                                     // в size, который уходит в calcMovement
   "system.incomingDamageReduction",  // плоское снижение урона (combat/damage.mjs читает
                                       // ХРАНИМОЕ поле напрямую, не производное)
   "system.actionPoints.max",         // база экономики действий — ХРАНИМОЕ поле,

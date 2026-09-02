@@ -143,6 +143,8 @@ const TYPES = {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
       activatable: false, active: false, runicWeaveSlots: 0,
+      // wdbc-bxw6: «отламывающийся слой» (аблативная модификация брони).
+      ablative: false, ablativeCharge: 0,
       effects: {
         apAll: 0, apHead: 0, apBody: 0, apArms: 0, apLegs: 0,
         apVsEnergy: 0, apVsImpact: 0, apVsRending: 0, apVsBlast: 0,

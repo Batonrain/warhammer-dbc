@@ -6,7 +6,8 @@
 // книгой (просто клампило в 0, Критические не наступали никогда).
 
 import { describe, it, expect } from "vitest";
-import { woundLossAfter, woundLossUpdates, applyWoundLoss, woundDeathThreshold, ablativeAbsorb } from "../../module/rules/wounds.mjs";
+import { woundLossAfter, woundLossUpdates, applyWoundLoss, woundDeathThreshold, ablativeAbsorb,
+         replaceAblativeContribution, shrinkAblativeContributionToFit } from "../../module/rules/wounds.mjs";
 
 function actor({ value = 10, critical = 0, max = 10, ablative = 0, ablativeMax = 0 } = {}) {
   const updates = [];
@@ -148,6 +149,15 @@ describe("woundLossUpdates: аблативный пул поглощает ур�
       "system.wounds.firstAidUsed": false
     });
   });
+
+  it("динамический источник без ablativeMax (wdbc-w8ws, напр. Раковое Исцеление) — пул всё равно поглощает и пишется", () => {
+    expect(woundLossUpdates({ wounds: { value: 8, critical: 0, ablative: 5, ablativeMax: 0 } }, 3)).toEqual({
+      "system.wounds.value": 8,
+      "system.wounds.critical": 0,
+      "system.wounds.ablative": 2,
+      "system.wounds.firstAidUsed": false
+    });
+  });
 });
 
 describe("applyWoundLoss: аблативный пул поглощает урон первым", () => {
@@ -172,11 +182,54 @@ describe("applyWoundLoss: аблативный пул поглощает уро�
     expect(result.ablativeAbsorbed).toBe(0);
     expect(a.updates[0]).not.toHaveProperty("system.wounds.ablative");
   });
+
+  it("динамический источник без ablativeMax (wdbc-w8ws) — пул поглощает и update реально пишет его", async () => {
+    const a = actor({ value: 8, critical: 0, ablative: 5, ablativeMax: 0 });
+    const result = await applyWoundLoss(a, 3);
+    expect(result.ablativeAbsorbed).toBe(3);
+    expect(a.system.wounds.ablative).toBe(2);
+    expect(a.updates[0]).toHaveProperty("system.wounds.ablative", 2);
+  });
 });
 
 describe("woundDeathThreshold: порог гибели по Критическим", () => {
   it("Макс Ран + 7", () => {
     expect(woundDeathThreshold(10)).toBe(17);
     expect(woundDeathThreshold(0)).toBe(7);
+  });
+});
+
+describe("replaceAblativeContribution: доля одного динамического источника (wdbc-w8ws)", () => {
+  it("с нуля — доля просто ставится, ablative и ablativeMax двигаются вместе", () => {
+    const system = { wounds: { ablative: 0, ablativeMax: 0 } };
+    expect(replaceAblativeContribution(system, 0, 6)).toEqual({ ablative: 6, ablativeMax: 6, contribution: 6 });
+  });
+
+  it("заменяет ТОЛЬКО свою прошлую долю, не трогая посторонний аблатив (напр. Absurdly Fat)", () => {
+    // Пул 8: 5 от этого источника (прошлый раз) + 3 постороннего.
+    const system = { wounds: { ablative: 8, ablativeMax: 8 } };
+    expect(replaceAblativeContribution(system, 5, 2)).toEqual({ ablative: 5, ablativeMax: 5, contribution: 2 });
+  });
+
+  it("нулевая новая доля снимает прошлый вклад целиком", () => {
+    const system = { wounds: { ablative: 8, ablativeMax: 8 } };
+    expect(replaceAblativeContribution(system, 5, 0)).toEqual({ ablative: 3, ablativeMax: 3, contribution: 0 });
+  });
+});
+
+describe("shrinkAblativeContributionToFit: доля не больше, чем реально осталось в пуле", () => {
+  it("пул не уменьшился ниже доли — сжимать нечего", () => {
+    const system = { wounds: { ablative: 6, ablativeMax: 10 } };
+    expect(shrinkAblativeContributionToFit(system, 5)).toBeNull();
+  });
+
+  it("пул просел ниже доли (поглощение урона) — доля и ablativeMax сжимаются вместе", () => {
+    // Было: доля 6, ablativeMax 10 (4 постороннего). Урон съел пул до 3.
+    const system = { wounds: { ablative: 3, ablativeMax: 10 } };
+    expect(shrinkAblativeContributionToFit(system, 6)).toEqual({ ablativeMax: 7, contribution: 3 });
+  });
+
+  it("нулевая прошлая доля — нечего сжимать", () => {
+    expect(shrinkAblativeContributionToFit({ wounds: { ablative: 0, ablativeMax: 0 } }, 0)).toBeNull();
   });
 });
