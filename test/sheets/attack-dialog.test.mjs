@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, fakeForm, checkbox } from "../support/foundry-stub.mjs";
-import { actorFor, weaponFor, ammoFor, setTargets, char } from "../support/combat-fixtures.mjs";
+import { actorFor, weaponFor, ammoFor, setTargets, char, traitFor } from "../support/combat-fixtures.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { showAttackDialog, showAttackDialogNoWeapon } from "../../module/sheets/attack-dialog.mjs";
 
@@ -612,6 +612,43 @@ describe("правила реестра в диалоге", () => {
 
     await pressRoll(p, {}, { ".rule-mod:checked": [checkbox(15)] });
     expect(thresholdInCard()).toBe(60);
+  });
+
+  // wdbc-w8z4: движок сборки Особых Свойств Оружия (attack.mjs/weapon-properties.mjs)
+  // раньше читал только оружие/хват/боеприпас — не было пути для «атака получает
+  // доп. свойство из-за состояния ЦЕЛИ» (напр. Hex-Marked Prey: цель помечена →
+  // Proven(3)/Toxic(1) на атаках союзников по ней). grantWeaponProp — общий
+  // эффект реестра правил для этого, читает ctx.targetActor тем же путём, что
+  // rollBonus/targetHasTrait.
+  it("grantWeaponProp безусловно доливает свойство в _entries — видно в блоке «Свойства оружия»", () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [{ id: "r", label: "Проверочное правило",
+      effects: [{ kind: "grantWeaponProp", target: "attack", propKey: "proven", rating: 3 }] }]);
+
+    const weapon = weaponFor();
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(captured.dialog.content).toContain("Проверенное (3)");
+  });
+
+  it("cross-actor: свойство приходит, только когда у выделенной цели есть нужная Черта/метка", () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [{
+      id: "hexMarkedPrey", label: "Проклятая Метка",
+      when: { targetHasTrait: "Hex-Marked Prey" },
+      effects: [{ kind: "grantWeaponProp", target: "attack", propKey: "toxic", rating: 1 }]
+    }]);
+    const weapon = weaponFor();
+
+    // Без цели — правило не отбирается (targetHasTrait не проходит).
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    expect(captured.dialog.content).not.toContain("Токсичное (1)");
+
+    // Цель помечена (Черта на ней) — правило проходит отбор, свойство доливается.
+    const markedTarget = actorFor({ items: [traitFor("Hex-Marked Prey")] });
+    setTargets([markedTarget]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    expect(captured.dialog.content).toContain("Токсичное (1)");
   });
 });
 

@@ -22,6 +22,7 @@ import { gatherRules, selectRules } from "./collect.mjs";
 import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { itemHasName, sizeOf } from "./predicates.mjs";
+import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -289,6 +290,47 @@ export function critModsFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Особые Свойства Оружия, которые эта атака получает не от самого оружия, а от
+ * правила (wdbc-w8z4): цель помечена, у актора есть Дар/Талант, и т.п. — то же
+ * cross-actor чтение флага цели через `ctx.targetActor`, что уже делает
+ * `rollBonus` (Проворный/Avatar of Slaughter/Hex-Marked Prey), только вместо
+ * числа к порогу добавляется запись `{key, rating, rating2}` для движка сборки
+ * wProps (combat/weapon-properties.mjs::resolveWeaponPropsList/aggregateAuto).
+ *
+ * В отличие от `rollBonus` эффект не превращается в галочку диалога: Особое
+ * Свойство — это факт об атаке при выполненном условии, а не число, которое
+ * может задвоиться с чем-то ещё (тот же принцип, что у `critRangeMod` — «не
+ * выбирают, оно просто есть, пока действует правило»). Порядок отбора тот же:
+ * `when` уже прошло на фазе 3, здесь только форма выдачи.
+ *
+ * Неизвестный `propKey` (опечатка в данных) — ошибка в консоль, запись не
+ * идёт в результат: молча пропавшее свойство оружия ищется днями, как и
+ * неизвестный `kind`/источник значения выше.
+ *
+ * @returns {{ruleId:string, label:string, key:string, rating:number, rating2:number}[]}
+ */
+export function weaponPropsFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "grantWeaponProp") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+
+      const key = String(effect.propKey ?? "").trim();
+      if (!key || !Object.hasOwn(WEAPON_PROPERTIES, key)) {
+        console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: неизвестное Особое Свойство Оружия «${effect.propKey}»`);
+        continue;
+      }
+      out.push({
+        ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id,
+        key, rating: Number(effect.rating) || 0, rating2: Number(effect.rating2) || 0
+      });
+    }
+  }
+  return out;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -306,6 +348,7 @@ export function resolveTest(input = {}) {
     ctx, rules,
     mods: rollModsFromRules(rules, ctx),
     rerolls: rerollsFromRules(rules, ctx),
-    crit: critModsFromRules(rules, ctx)
+    crit: critModsFromRules(rules, ctx),
+    weaponProps: weaponPropsFromRules(rules, ctx)
   };
 }

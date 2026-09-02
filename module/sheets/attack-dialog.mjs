@@ -26,6 +26,7 @@ import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpe
 import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
+import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRecoilSuppressor } from "../combat/armor-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
@@ -183,7 +184,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
   profIdx = Number.isFinite(Number(profIdx)) ? Number(profIdx) : -1;
 
-  // ── Особые свойства оружия (+ модификации + боеприпас) ───────────────────
+  // ── Правила из реестра (module/rules/) ───────────────────────────────────
+  //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
+  //   область эффекта «attack» или «weapon:<класс>». Актор цели нужен
+  //   правилам, чей отбор зависит от того, по кому бьют (targetHasTrait).
+  //   Считается ЗДЕСЬ, раньше свойств оружия ниже: grantWeaponProp-эффекты
+  //   (wdbc-w8z4 — доп. Особое Свойство от метки на цели/Дара и т.п.) обязаны
+  //   попасть в _entries ДО resolveWeaponPropsList/aggregateAuto, иначе wp
+  //   (урон/порог/памятки) не увидит их вовсе.
+  const attackCtx = {
+    kind: "attack",
+    weaponClass: sys.weaponClass,
+    isMelee,
+    char: charKey,
+    targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
+  };
+  const resolvedAttack = resolveTest({ actor, ...attackCtx });
+
+  // ── Особые свойства оружия (+ модификации + боеприпас + правило) ─────────
   const modFx       = getModEffects(actor, item);
   let _entries      = mergeWeaponPropEntries(item, modFx);
   // Свойства заряженного боеприпаса (стр. 203) — чтобы порог и памятки в
@@ -201,6 +219,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         rating2: typeof p === "string" ? 0 : (p.rating2 || 0) });
     }
   }
+  // Свойства от правила (wdbc-w8z4): уже отобраны по `when` конвейером теста
+  // выше — не галочка, применяются так же безусловно, как ammo/gripProps.
+  _entries = mergeExtraProps(_entries, { ruleProps: resolvedAttack.weaponProps });
   const wProps      = resolveWeaponPropsList(_entries);
   const wp           = aggregateAuto(wProps);
 
@@ -268,18 +289,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     isGrenade: sys.weaponType === "grenade"
   });
 
-  // ── Правила из реестра (module/rules/) ───────────────────────────────────
-  //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
-  //   область эффекта «attack» или «weapon:<класс>». Актор цели нужен
-  //   правилам, чей отбор зависит от того, по кому бьют (targetHasTrait).
-  const attackCtx = {
-    kind: "attack",
-    weaponClass: sys.weaponClass,
-    isMelee,
-    char: charKey,
-    targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
-  };
-
   // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───
   // сцены. Меряется один раз при открытии окна (позиции не двигаются, пока
   // диалог открыт) — подсказка и автоподстановка, всё остаётся правимо рукой.
@@ -325,8 +334,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         { traits: mountTraits(attackerMount), linked: !!actor.system.mount?.linked }).hands
     : 0;
 
-  // Один обход правил актора на диалог: mods/rerolls/crit из одного результата.
-  const resolvedAttack = resolveTest({ actor, ...attackCtx });
+  // Один обход правил актора на диалог: mods/rerolls/crit/weaponProps из
+  // одного результата, посчитанного выше (до сборки _entries/wp).
   const ruleMods = ruleRollModsHtml(actor, attackCtx, resolvedAttack);
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -1575,6 +1584,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
               ammoCondLabels: f.ammoSel.map(c => c.label),
+              // Свойства оружия от правила (wdbc-w8z4) — уже отобраны по `when`
+              // выше (resolvedAttack), attack.mjs только доливает их в _entries.
+              ruleProps: resolvedAttack.weaponProps,
               aimingLabel: (f.aiming !== "none" && !wp.noAim)
                 ? (f.aiming === "half" ? `Полу-прицеливание (+${f.aimBonus})` : `Полное прицеливание (+${f.aimBonus})`)
                 : "",
