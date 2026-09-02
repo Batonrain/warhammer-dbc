@@ -23,6 +23,7 @@ import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { processLastActorCombatStart } from "./combat/last-actor.mjs";
 import { processMiddleOfTheHuntRoundStart } from "./combat/middle-of-the-hunt.mjs";
+import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
 import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
@@ -1301,6 +1302,10 @@ function _attachFateContextMenu(message, html) {
     // The Middle of the Hunt/Середина Охоты (wdbc-1rno): +10 Инициативы
     // владельцу Таланта на раундах 3-4 — та же смена Раунда, ГМ пишет.
     await processMiddleOfTheHuntRoundStart(combat);
+    // Spirit Talk/Духовный Разговор (wdbc-q30d): захваченный конструкт
+    // держит инициативу сразу за кастером каждый Раунд, пока не истекут
+    // F.b — та же смена Раунда, ГМ пишет.
+    await processSpiritTalkRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
