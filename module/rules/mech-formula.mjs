@@ -21,24 +21,34 @@
 //
 // Чистая функция, Foundry не нужен — проверяется test/rules/mech-formula.test.mjs.
 
-const KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf", "cor"];
+const KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf", "cor", "pr"];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
 // Автор, привыкший писать «Cor.b» в формулах урона, здесь получал бы молчаливую
 // ошибку — поэтому «X.b» принимается наравне с короткими ключами KEYS и
 // сводится к ним ДО подстановки значений: «Cor.b» ≡ «cor», «A.b» ≡ «ag».
+// «pr» не входит в эту нотацию (не бонус характеристики, у него нет своего
+// «.b») — просто ещё один короткий ключ KEYS, подставляется как есть.
 const DOTB_ALIASES = { a: "ag", i: "int", p: "per", w: "wp", f: "fel" };
 const DOTB_RE = /(?<![a-z])(ws|bs|ag|int|per|wp|fel|inf|cor|s|t|a|i|p|w|f)\.b(?![a-z0-9])/g;
 const FUNC_NAMES = ["ceil", "floor", "round", "abs"];
 const SAFE_REST = /^[\d.\s()+\-*/,]*$/;
 
-/** Короткие алиасы книжной нотации «X.b» — бонусы характеристик + Cor.b. */
+/**
+ * Короткие алиасы книжной нотации «X.b» — бонусы характеристик + Cor.b, плюс
+ * «pr» — текущий Пси-Рейтинг (system.psyker.rating, wdbc-173l: психосилы вроде
+ * Godkin/Muscle Mass дают «+3×PR»/«PR» аблативных Ран). Не бонус характеристики
+ * и не завязан на DOTB_RE — просто ещё один короткий ключ KEYS.
+ */
 export function mechRollData(actor) {
   const c = actor?.system?.characteristics || {};
   const bonus = k => Number(c[k]?.bonus) || 0;
-  const data = { cor: Number(actor?.system?.corruptionBonus) || 0 };
-  for (const k of KEYS) if (k !== "cor") data[k] = bonus(k);
+  const data = {
+    cor: Number(actor?.system?.corruptionBonus) || 0,
+    pr: Number(actor?.system?.psyker?.rating) || 0
+  };
+  for (const k of KEYS) if (k !== "cor" && k !== "pr") data[k] = bonus(k);
   return data;
 }
 

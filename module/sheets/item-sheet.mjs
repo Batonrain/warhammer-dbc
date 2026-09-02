@@ -24,6 +24,10 @@ import { tranceButtonHtml, useTrance }               from "../apps/armour-histor
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
 import { cancerousHealingButtonHtml, useCancerousHealing } from "../apps/cancerous-healing.mjs";
 import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
+import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.mjs";
+import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
+import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
+import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1055,6 +1059,20 @@ export class WarhammerItemSheet
       context.flayedHtml = flayedButtonHtml(this.item, this.item.parent);
     }
 
+    // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) — каждая
+    // *ButtonHtml сама проверяет isXItem по имени, пусто у остальных предметов
+    // того же типа, поэтому безопасно считать без условия по типу здесь.
+    if (this.item.type === "psychicPower") {
+      context.daemonbloodHtml = daemonbloodButtonHtml(this.item, this.item.parent);
+    }
+
+    // ── Талант «King's Plate»: поглощение Роя (wdbc-173l) ────────────────────
+    if (this.item.type === "talent") {
+      context.kingsPlateHtml = kingsPlateButtonHtml(this.item, this.item.parent);
+      context.bloodShieldHtml = bloodShieldButtonHtml(this.item, this.item.parent);
+      context.eternalWarHtml = eternalWarButtonHtml(this.item, this.item.parent);
+    }
+
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
     // Строки «Авто:» здесь больше нет: числовое (un/val/ap) переехало в сам
     // предмет и видно на вкладке ЭФФЕКТЫ, где его и правят (wdbc-cy2). Чип
@@ -1820,6 +1838,44 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useFlayed(actor, this.item);
+    });
+
+    // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) ────────────────
+    on(".daemonblood-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useDaemonblood(actor, this.item);
+    });
+
+    // ── Талант «King's Plate»: поглощение Роя (wdbc-173l) ────────────────────
+    on(".kings-plate-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useKingsPlate(actor, this.item);
+    });
+
+    // ── Талант «Blood Shield»: убийство рукопашной демон-оружием (wdbc-173l) ─
+    on(".blood-shield-kill-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodShieldKill(actor, this.item);
+    });
+    on(".blood-shield-lose-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodShieldLose(actor, this.item);
+    });
+
+    // ── Талант «The Eternal War»: дуэль с Кровожадом/ХС (wdbc-173l) ─────────
+    on(".eternal-war-start-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useEternalWarStart(actor, this.item);
+    });
+    on(".eternal-war-end-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useEternalWarEnd(actor, this.item);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────

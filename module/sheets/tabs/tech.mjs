@@ -16,6 +16,7 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
+import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant } from "../../rules/psalm-unseen-fortress.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -122,6 +123,21 @@ export async function activateTechMiracle(actor, item) {
   const resUpd = {};
   if (cogCost > 0)            resUpd["system.cognition.value"] = Math.max(0, (cog.value || 0) - cogCost);
   if (enCost  > 0 && success) resUpd["system.energy.value"]    = Math.max(0, (en.value  || 0) - enCost);
+
+  // Псалом Незримой Крепости (wdbc-173l): +2 аблативные Раны за Успех этой
+  // активации — переоформляет прошлый Купол, не складывает между активациями
+  // (module/rules/psalm-unseen-fortress.mjs).
+  let psalmSection = "";
+  const FLAG = "warhammer-dbc", PSALM_FLAG = "psalmUnseenFortressAblative";
+  if (success && isPsalmUnseenFortressItem(item)) {
+    const prevContribution = Number(actor.getFlag(FLAG, PSALM_FLAG)) || 0;
+    const result = psalmUnseenFortressGrant(actor.system, prevContribution, deg);
+    resUpd["system.wounds.ablative"] = result.ablative;
+    resUpd["system.wounds.ablativeMax"] = result.ablativeMax;
+    resUpd[`flags.${FLAG}.${PSALM_FLAG}`] = result.contribution;
+    psalmSection = `<div class="roll-threshold">Купол Рефрактора: <b>${result.contribution}</b> аблативных Ран (2×${deg} Успех${deg === 1 ? "" : "а"})</div>`;
+  }
+
   if (Object.keys(resUpd).length) await actor.update(resUpd);
 
   // Славословие: при успехе компиляция расходуется (одноразово)
@@ -220,6 +236,7 @@ export async function activateTechMiracle(actor, item) {
               : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`}
           </div>
           ${dmgSection}
+          ${psalmSection}
           ${attackPropsSection}
           ${infoguardSection}
           ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}

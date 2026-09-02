@@ -52,6 +52,11 @@ import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconc
   from "./module/apps/cancerous-healing.mjs";
 import { reconcileFlayedToFit } from "./module/apps/flayed.mjs";
 import { reconcilePlagueShepherdToFit } from "./module/rules/plague-shepherd.mjs";
+import { reconcileDaemonbloodToFit } from "./module/apps/daemonblood.mjs";
+import { reconcileKingsPlateToFit } from "./module/apps/kings-plate.mjs";
+import { reconcileBloodShieldToFit } from "./module/apps/blood-shield.mjs";
+import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
+import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
@@ -1625,6 +1630,11 @@ Hooks.on("updateActor", async (actor, changed, options, userId) => {
   await reconcileCancerousHealingToFit(actor);
   await reconcileFlayedToFit(actor);
   await reconcilePlagueShepherdToFit(actor);
+  await reconcileDaemonbloodToFit(actor);
+  await reconcileKingsPlateToFit(actor);
+  await reconcileBloodShieldToFit(actor);
+  await reconcileEternalWarToFit(actor);
+  await reconcilePsalmUnseenFortressToFit(actor);
   if (actor.effects?.some(e => e.getFlag?.("warhammer-dbc", "cancerousHealingPenalty")))
     await syncCancerousHealingPenalty(actor);
 });

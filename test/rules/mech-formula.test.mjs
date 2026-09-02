@@ -10,7 +10,7 @@
 import { describe, it, expect } from "vitest";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../../module/rules/mech-formula.mjs";
 
-const rd = { ws: 3, bs: 4, s: 5, t: 6, ag: 7, int: 8, per: 9, wp: 10, fel: 11, inf: 2, cor: 9 };
+const rd = { ws: 3, bs: 4, s: 5, t: 6, ag: 7, int: 8, per: 9, wp: 10, fel: 11, inf: 2, cor: 9, pr: 7 };
 
 describe("mechRollData", () => {
   it("бонусы характеристик + Cor.b короткими ключами книги", () => {
@@ -20,12 +20,17 @@ describe("mechRollData", () => {
         corruptionBonus: 5
       }
     };
-    expect(mechRollData(actor)).toMatchObject({ ag: 4, s: 3, cor: 5 });
+    expect(mechRollData(actor)).toMatchObject({ ag: 4, s: 3, cor: 5, pr: 0 });
   });
 
   it("нет актора/полей — нули, не падает", () => {
-    expect(mechRollData(null)).toMatchObject({ ws: 0, cor: 0 });
-    expect(mechRollData({})).toMatchObject({ ws: 0, cor: 0 });
+    expect(mechRollData(null)).toMatchObject({ ws: 0, cor: 0, pr: 0 });
+    expect(mechRollData({})).toMatchObject({ ws: 0, cor: 0, pr: 0 });
+  });
+
+  it("pr — Пси-Рейтинг (system.psyker.rating, wdbc-173l: Godkin/Muscle Mass)", () => {
+    const actor = { system: { psyker: { rating: 7 } } };
+    expect(mechRollData(actor)).toMatchObject({ pr: 7 });
   });
 });
 
@@ -81,5 +86,10 @@ describe("mechFormulaTotal", () => {
   it("голое число с точкой сохраняет дробь — 0.5 кг Веса это 0.5, не 0", () => {
     expect(mechFormulaTotal("0.5", rd)).toBe(0.5);
     expect(mechFormulaTotal("-1.5", rd)).toBe(-1.5);
+  });
+
+  it("pr — «+3×PR аблативных Ран» (Godkin) и «PR» (Muscle Mass)", () => {
+    expect(mechFormulaTotal("pr*3", rd)).toBe(21);
+    expect(mechFormulaTotal("pr", rd)).toBe(7);
   });
 });
