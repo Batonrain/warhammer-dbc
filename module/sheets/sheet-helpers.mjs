@@ -585,8 +585,20 @@ export function buildGetData(actor) {
   // с выпадашкой целей для инлайн-установки прямо из окна снаряжения.
   const weaponItems = allItems.filter(i => i.type === "weapon");
   const armorItems  = allItems.filter(i => i.type === "armor");
-  const weaponIds   = new Set(weaponItems.map(w => w.id));
   const armorIds    = new Set(armorItems.map(a => a.id));
+
+  // Интегральные атаки (Кулак, Кислотный Плевок, Пинок Дредноута и т.п.) —
+  // часть тела/машины, а не Снаряжение: живут только на вкладке БОЙ
+  // (combatMeleeWeapons/combatRangedWeapons выше, уже включают их — equipped
+  // всегда true), сюда — ни строкой в списке, ни целью для установки мода.
+  const gearWeaponItems = weaponItems.filter(i => !i.getFlag?.("warhammer-dbc", "integralAttack"));
+  // weaponIds — носители МОДОВ оружия (gearWeaponModsFree ниже): именно
+  // gearWeaponItems, не все weaponItems. Иначе мод, установленный на
+  // интегральную атаку, считался бы «носитель есть» (integralAttack всё ещё
+  // в weaponItems) и не попадал бы в список свободных — а строки самого
+  // носителя в таблице Снаряжения уже нет (gearWeaponItems выше), значит мод
+  // пропадал бы с листа насовсем, снять его было бы нельзя.
+  const weaponIds   = new Set(gearWeaponItems.map(w => w.id));
 
   const weaponModView = (i) => {
     const cat = i.system.category || "ranged";
@@ -618,18 +630,13 @@ export function buildGetData(actor) {
 
   // Цели установки (мемоизируем один раз): моды оружия → любое оружие;
   // моды брони → любая броня, а системы силовой брони — только «Силовая».
-  const weaponTargets = weaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
+  const weaponTargets = gearWeaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
   const armorTargetsAll   = armorItems.map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
   const armorTargetsPower = armorItems.filter(a => a.system.armorType === "power")
     .map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
 
-  context.gearWeapons = weaponItems.map(i => ({
+  context.gearWeapons = gearWeaponItems.map(i => ({
     id: i.id, name: i.name, equipped: i.system.equipped ?? false,
-    // Интегральная атака (Кислотный Плевок, Пинок Дредноута) — часть тела или
-    // машины: галочку «надето» шаблон делает недоступной, потому что снять её
-    // всё равно не дадут хуки (warhammer-dbc.mjs), а мёртвый на вид переключатель
-    // выглядел бы поломкой листа.
-    integralAttack: !!i.getFlag?.("warhammer-dbc", "integralAttack"),
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,

@@ -36,8 +36,17 @@ describe("weaponHandsRequired — рукопашное (GRIPS)", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "П" } }))).toBe(0);
     expect(weaponHandsRequired(weapon({ system: { grips: "Л" } }))).toBe(0);
   });
-  it("специальный хват (Об/Бл/Кл/Мх/Хв) без явного 1р/2р — 1 рука по умолчанию", () => {
+  it("специальный хват (Об/Бл/Кл/Мх) без явного 1р/2р — 1 рука по умолчанию", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "Об" } }))).toBe(1);
+  });
+  it("части тела (Хв/Зуб/Кист/Щуп) — 0 рук: не удерживаемое снаряжение, а хвост/зуб/кулак/щупальце", () => {
+    expect(weaponHandsRequired(weapon({ system: { grips: "Хв" } }))).toBe(0);
+    expect(weaponHandsRequired(weapon({ system: { grips: "Зуб" } }))).toBe(0);
+    expect(weaponHandsRequired(weapon({ system: { grips: "Кист" } }))).toBe(0);
+    expect(weaponHandsRequired(weapon({ system: { grips: "Щуп" } }))).toBe(0);
+  });
+  it("5 Даров Одержимого (Клинок/Когти/Коса/Хлыст) — «1р» по-прежнему съедает 1 руку, не 0", () => {
+    expect(weaponHandsRequired(weapon({ system: { grips: "1р" } }))).toBe(1);
   });
   it("выбранный в диалоге атаки хват (hudGrip) перекрывает список профиля", () => {
     const w = weapon({ id: "w1", system: { grips: "1р (2р)" } });

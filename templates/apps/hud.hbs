@@ -102,9 +102,9 @@
                  data-tooltip="{{#if h.fireGate.title}}{{h.fireGate.title}}{{else}}Выбрать цель и {{#if h.isMelee}}ударить{{else}}стрелять{{/if}}{{/if}}">
                 <i class="fas fa-crosshairs"></i> {{#if h.isMelee}}УДАР{{else}}ОГОНЬ{{/if}}
               </a>
-              {{#unless h.isMelee}}
+              {{#if h.canButtStrike}}
               <a class="wh-hud-melee-gun" data-melee-gun="{{h.id}}" data-tooltip="Удар оружием в упор / приклад"><i class="fas fa-gavel"></i></a>
-              {{/unless}}
+              {{/if}}
             </div>
             {{/if}}
           </div>
@@ -116,11 +116,11 @@
         {{/if}}
 
         <div class="wh-hud-footrow">
-          {{!-- Безоружный бой --}}
-          <div class="wh-hud-unarmed-grp" data-tooltip="Безоружный бой — выбрать цель">
-            <a class="wh-hud-unarmed" data-unarmed="fist" title="Удар кулаком"><i class="fas fa-hand-fist"></i></a>
-            <a class="wh-hud-unarmed" data-unarmed="kick" title="Пинок"><i class="fas fa-shoe-prints"></i></a>
-            <a class="wh-hud-unarmed" data-unarmed="headbutt" title="Удар головой"><i class="fas fa-user"></i></a>
+          {{!-- Безоружный бой + любое надетое с нулевой занятостью руки --}}
+          <div class="wh-hud-unarmed-grp" data-tooltip="Безоружный бой и оружие без хвата — выбрать цель">
+            {{#each zeroHand as |z|}}
+            <a class="wh-hud-unarmed" data-unarmed="{{z.id}}" title="{{z.name}}"><i class="fas {{z.icon}}"></i></a>
+            {{/each}}
           </div>
           {{#if shield}}
           <a class="wh-hud-shield {{#if shield.active}}on{{/if}}" data-shield="{{shield.id}}"

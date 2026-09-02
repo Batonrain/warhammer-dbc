@@ -24,6 +24,12 @@
       {
         "key": "blast",
         "rating": 3
+      },
+      {
+        "key": "independent"
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,

@@ -51,8 +51,8 @@
           {{#if gearWeapons.length}}
             {{#each gearWeapons as |w|}}
             <tr class="item-row gear-host-row {{#if w.mods.length}}has-mods{{/if}}" data-item-id="{{w.id}}">
-              <td class="gear-equip-cell"><input type="checkbox" class="weapon-equip-cb" data-item-id="{{w.id}}" {{#if w.equipped}}checked{{/if}} {{#if w.integralAttack}}disabled title="Интегральная атака — снять нельзя"{{/if}}/></td>
-              <td class="item-name-cell">{{w.name}}{{#if w.integralAttack}} <span class="gear-integral-badge" title="Интегральная атака: часть тела или машины. Есть, пока работает то, что её даёт.">врождённая</span>{{/if}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}</td>
+              <td class="gear-equip-cell"><input type="checkbox" class="weapon-equip-cb" data-item-id="{{w.id}}" {{#if w.equipped}}checked{{/if}}/></td>
+              <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}</td>
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
               <td>{{w.magazineCur}}/{{w.magazineMax}}</td><td>{{w.weight}}</td>
