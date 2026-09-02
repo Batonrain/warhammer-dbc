@@ -139,6 +139,11 @@ function effectAppliesTo(target, ctx) {
   // сам проставляет ctx.morale=true там, где RAW называет тест тестом Морали.
   if (scope === "morale") return ctx.morale === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Карабканье (wdbc-egll) — свой ctx-флаг, не через ctx.skill: тест
+  // Карабканья идёт по тому же Athletics(S), что и тесты Борьбы
+  // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
+  // разные правила книги под одинаковым навыком.
+  if (scope === "climbing") return ctx.climbing === true;
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;

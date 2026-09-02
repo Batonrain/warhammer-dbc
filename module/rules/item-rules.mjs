@@ -88,7 +88,10 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   // morale — тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/
   // встречные Запугивание и Пытки, core.json «Мораль и Потеря Командования»),
   // см. resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord of the Exodites.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "vsExorcism", "morale"].includes(scope)) return scope;
+  // climbing — только тесты Карабканья (module/combat/movement-actions.mjs::
+  // showClimbDialog), отдельно от «skill:athletics», чтобы не задваиваться с
+  // тестами Борьбы, тоже идущими по Athletics(S) (wdbc-egll).
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "vsExorcism", "morale", "climbing"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;

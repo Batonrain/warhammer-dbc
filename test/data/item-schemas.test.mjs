@@ -303,6 +303,10 @@ const TYPES = {
       // В template.json объявлено не было, но лежит у трёх мутаций пака и
       // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
       requirement: "",
+      // Включаемая на время способность (wdbc-egll) — тот же тумблер, что у
+      // armorMod (module/apps/effects.mjs::isItemActive), для Мутаций/Даров
+      // с эффектом «до конца боя/сцены» вместо постоянного (Живое Оружие).
+      activatable: false, active: false,
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0

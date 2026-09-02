@@ -85,8 +85,17 @@ export function isItemActive(item) {
     // напр. test/rules/weapon-training.test.mjs, у которых нет getFlag) —
     // без страховки любой не-mutation-специфичный мок с type:"mutation"
     // ронял бы весь сбор правил TypeError'ом, а не только про суть теста.
+    // Поверх подавления — activatable/active (wdbc-egll): по умолчанию
+    // действует всегда, как Талант/Черта (activatable:false у подавляющего
+    // большинства). Часть даёт эффект только «активированным» книжным
+    // действием на время (Живое Оружие — полудействие+1 Бесчестия, до конца
+    // боя/сцены) — у таких activatable:true, и тогда решает ручной тумблер
+    // system.active (тот же паттерн, что у armorMod/weaponMod выше, без
+    // требования носителя).
     case "mutation":
-      return !item.getFlag?.("warhammer-dbc", "suppressed");
+      if (item.getFlag?.("warhammer-dbc", "suppressed")) return false;
+      if (sys.activatable) return !!sys.active;
+      return true;
     default: return true;
   }
 }
