@@ -24,32 +24,47 @@
 //  и держит его инициативу чуть ниже инициативы персонажа-кастера — «ходит
 //  сразу после» на каждом раунде до истечения F.b.
 //
+//  Дальность W м (WP+0 персонажа, метров) — той же геометрией, что
+//  измеряет стрельбу/рукопашную (combat/tactical-map.mjs::measureTokens,
+//  edgeM — от края Базы до края Базы), а не отдельной формулой. Предел
+//  размера «не больше призрачного лорда» — Призрачный Лорд/Wraithlord,
+//  Размер 2 (Книга Эльдар: Техника, «ПРИЗРАЧНЫЕ КОНСТРУКТЫ» → «Призрачный
+//  Лорд», stat-блок техники), Талант недоступен на Size > 2.
+//
+//  Манифестация психосил через захваченный конструкт — rules/psychic-
+//  vessel.mjs: общий примитив «через кого сейчас манифестирует псайкер»,
+//  которым также размечен Путь Силы Псайбер-Фамильяра (constants/
+//  psyker.mjs, PSY_PATHS.familiar). Захват назначает конструкт носителем,
+//  снятие захвата (истёк F.b или кастер выбыл из боя) его снимает.
+//
 //  НЕ смоделировано (см. capabilities.mjs):
 //  1. «Имеет характеристики (кроме S/T/A), таланты и навыки персонажа» —
 //     module/data/actor/vehicle.mjs вообще не несёт схему characteristics
-//     (у Техники их нет ни у кого, только chassis.strength/spd/структура) —
-//     заводить временный оверлей характеристик персонажа поверх актора
+//     (у Техники их нет ни у кого, только chassis.strength/spd/структура,
+//     подтверждено книжным stat-блоком Призрачного Стража/Лорда — та же
+//     AP/Структура/Размер форма, что у прочей техники, а не характеристики)
+//     — заводить временный оверлей характеристик персонажа поверх актора
 //     Техники и переучивать весь конвейер тестов/атак читать его для одной
 //     находки не оправдано (тот же принцип, что Категория D wdbc-1rno).
 //     Игровой эффект остаётся на столе.
-//  2. Дальность W м и предел размера «не больше призрачного лорда» —
-//     не проверяются движком, тем же решением, что и остальные Певцы Кости
-//     (apps/wraithbone-song-dialog.mjs явно не мерит W м).
-//  3. Встречный тест W+0/F+10 vs W+0: у Техники нет характеристики Воли в
+//  2. Встречный тест W+0/F+10 vs W+0: у Техники нет характеристики Воли в
 //     схеме — сторону цели не прочитать. Автоматизирована только сторона
 //     персонажа (лучшее из WP+0/Fel+10), исход стол сравнивает вручную и
 //     подтверждает диалогом (тот же приём, что Deadly Effectiveness — игрок
 //     сам подтверждает клик).
-//  4. «Не может исполнять песни, но может манифестировать психосилы через
-//     конструкт» — нет точки интеграции с манифестацией психосил на чужом
-//     акторе; не гейтится отдельно.
+//  3. Дальность самой манифестации психосилы через носителя не измеряется —
+//     эта механика (sheets/tabs/psychic.mjs) вообще не мерит дистанцию даже
+//     для собственной позиции кастера, только текстовая подсказка sys.range;
+//     rules/psychic-vessel.mjs даёт лишь ИМЯ носителя в заметке.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { hasActionEconomy, isEncounterActive, spendActionPoints, apCostForActionType } from "./action-economy.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
+import { measureTokens } from "./tactical-map.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { setPsychicVessel, clearPsychicVessel } from "../rules/psychic-vessel.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -57,6 +72,9 @@ const COOLDOWN_FLAG = "spiritTalk";
 const MAX_USES = 3; // «До 3 раз за сессию» — фиксированное число, не F.b.
 const POSSESSION_FLAG = "spiritTalkPossession"; // на Combatant цели
 const ROUND_SYNC_FLAG = "spiritTalkSyncedRound"; // идемпотентность раундового хука
+// Призрачный Лорд/Wraithlord, Размер 2 (Книга Эльдар: Техника) — предел «не
+// больше призрачного лорда» книжного текста находки.
+const WRAITHLORD_SIZE = 2;
 
 export function hasSpiritTalk(actor) {
   return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Spirit Talk"));
@@ -67,6 +85,24 @@ export function spiritTalkDuration(actor) {
   return Math.max(0, Number(actor?.system?.characteristics?.fel?.bonus) || 0);
 }
 
+/** Радиус W м — WP+0 (raw), тем же обозначением книги, что у прочих Певцов Кости. */
+export function spiritTalkRadius(actor) {
+  return Math.max(0, Number(actor?.system?.characteristics?.wp?.total) || 0);
+}
+
+/**
+ * Дистанция цель-кастер (edgeM, от края Базы до края Базы — combat/
+ * tactical-map.mjs::measureTokens, та же геометрия, что у стрельбы), или
+ * null, если хотя бы одного токена нет на сцене — измерить нечем, гейт
+ * тогда не блокирует по дальности (fail-open, тот же принцип, что у
+ * остальных мест, где measureTokens может не найти токен).
+ */
+function distanceToTarget(actor, targetToken) {
+  const casterToken = actor?.getActiveTokens?.(true, true)?.[0] ?? null;
+  if (!casterToken || !targetToken) return null;
+  return measureTokens(casterToken, targetToken)?.edgeM ?? null;
+}
+
 /** {disabled, title} для кнопки — гейт виден ДО клика (тот же приём, что bowToAudienceGate). */
 export function spiritTalkGate(actor) {
   const duration = spiritTalkDuration(actor);
@@ -75,11 +111,19 @@ export function spiritTalkGate(actor) {
   if (duration <= 0) return { disabled: true, title: "F.b = 0 — длительность захвата нулевая" };
   if (!game.combat) return { disabled: true, title: "Требует активного боя — конструкт должен встать в очередь ходов" };
   if (targets.length !== 1) return { disabled: true, title: "Наведите ровно один таргет (T) на психокостяной конструкт" };
-  if (targets[0].actor?.type !== "vehicle") return { disabled: true, title: "Цель должна быть Техникой (психокостяной конструкт)" };
+  const targetActor = targets[0].actor;
+  if (targetActor?.type !== "vehicle") return { disabled: true, title: "Цель должна быть Техникой (психокостяной конструкт)" };
+  const size = Number(targetActor.system?.size) || 0;
+  if (size > WRAITHLORD_SIZE)
+    return { disabled: true, title: `Конструкт крупнее призрачного лорда (Размер ${size} > ${WRAITHLORD_SIZE}) — вне действия Таланта` };
+  const radius = spiritTalkRadius(actor);
+  const distance = distanceToTarget(actor, targets[0]);
+  if (distance !== null && distance > radius)
+    return { disabled: true, title: `Вне радиуса: WP=${radius} м, до цели ${distance} м` };
   if (ap < 2) return { disabled: true, title: `Не хватает ОД: нужно 2 (Полное действие), есть ${ap}` };
   if (!isThrottleCountAvailable(actor, COOLDOWN_FLAG, "session", MAX_USES))
     return { disabled: true, title: `Уже использовано ${MAX_USES} раз(а) за сессию` };
-  return { disabled: false, title: `Захват контроля на F.b=${duration} раунд(а/ов), 2 ОД, до ${MAX_USES} раз за сессию` };
+  return { disabled: false, title: `Захват контроля на F.b=${duration} раунд(а/ов), радиус WP=${radius} м, 2 ОД, до ${MAX_USES} раз за сессию` };
 }
 
 /** Первый (обычный) Combatant этого актора в бою — не доп.-Ходовой другой находки. */
@@ -125,10 +169,18 @@ export async function applySpiritTalkPossession(combat, casterActor, targetActor
   return targetCombatant;
 }
 
-/** Снимает захват: убирает метку, удаляет Combatant, если его завёл сам этот модуль. */
-async function _revokePossession(combat, combatant, possession) {
+/**
+ * Снимает захват: убирает метку, снимает носителя манифестации с кастера
+ * (rules/psychic-vessel.mjs — только если он ещё указывает именно на эту
+ * цель, чтобы не затереть более новый захват/фамильяра того же кастера),
+ * удаляет Combatant, если его завёл сам этот модуль.
+ */
+async function _revokePossession(combat, combatant, possession, casterActor) {
   await combatant.unsetFlag("warhammer-dbc", POSSESSION_FLAG);
   await combatant.unsetFlag("warhammer-dbc", ROUND_SYNC_FLAG);
+  if (casterActor?.getFlag?.("warhammer-dbc", "psychicVessel")?.uuid === combatant.actor?.uuid) {
+    await clearPsychicVessel(casterActor);
+  }
   if (possession?.added) await combat.deleteEmbeddedDocuments("Combatant", [combatant.id]);
 }
 
@@ -146,14 +198,11 @@ export async function processSpiritTalkRoundStart(combat) {
     if (!possession) continue;
     if (combatant.getFlag?.("warhammer-dbc", ROUND_SYNC_FLAG) === combat.round) continue;
 
-    if ((Number(combat.round) || 1) > possession.expiresRound) {
-      await _revokePossession(combat, combatant, possession);
-      continue;
-    }
     const casterCombatant = findCombatant(combat, possession.casterActorId)
       ?? [...(combat.combatants ?? [])].find(c => c?.id === possession.casterCombatantId);
-    if (!casterCombatant) {
-      await _revokePossession(combat, combatant, possession);
+
+    if ((Number(combat.round) || 1) > possession.expiresRound || !casterCombatant) {
+      await _revokePossession(combat, combatant, possession, casterCombatant?.actor ?? null);
       continue;
     }
     await _syncInitiativeAfterCaster(combatant, casterCombatant);
@@ -237,6 +286,11 @@ export async function triggerSpiritTalk(actor) {
     ui.notifications?.warn("⚠️ Не удалось встроить конструкт в очередь ходов (у персонажа нет Combatant в этом бою?).");
     return { success: true, hostile, roll: rollInfo, applied: false };
   }
+  // Носитель манифестации (rules/psychic-vessel.mjs) — «может манифестировать
+  // психосилы... через конструкт»: перезаписывает предыдущего носителя того
+  // же кастера (более свежий захват старше). Снимается _revokePossession
+  // выше при истечении/выбытии кастера.
+  await setPsychicVessel(actor, targetActor);
 
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),

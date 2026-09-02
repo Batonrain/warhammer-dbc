@@ -9,12 +9,14 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
-  hasSpiritTalk, spiritTalkDuration, spiritTalkGate,
+  hasSpiritTalk, spiritTalkDuration, spiritTalkRadius, spiritTalkGate,
   applySpiritTalkPossession, processSpiritTalkRoundStart, triggerSpiritTalk
 } from "../../module/combat/spirit-talk.mjs";
+import { getPsychicVessel, setPsychicVessel } from "../../module/rules/psychic-vessel.mjs";
 
 function actorWith({
-  names = [], ap = 3, felBonus = 3, felTotal = 30, wpTotal = 40, id = "caster-1", type = "character"
+  names = [], ap = 3, felBonus = 3, felTotal = 30, wpTotal = 40, id = "caster-1", type = "character",
+  tokenX = 0, tokenY = 0
 } = {}) {
   const flags = {};
   return {
@@ -27,7 +29,7 @@ function actorWith({
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; },
     unsetFlag: async (scope, key) => { delete flags[`${scope}.${key}`]; },
-    getActiveTokens: () => [{ document: { id: `token-${id}`, disposition: 1 } }]
+    getActiveTokens: () => [{ document: { id: `token-${id}`, disposition: 1, x: tokenX, y: tokenY, width: 1, height: 1 } }]
   };
 }
 // actorWith не даёт рабочий update() (actionPoints списываются реально только
@@ -39,16 +41,16 @@ function actorForTrigger(opts = {}) {
   return a;
 }
 
-function vehicleTarget({ id = "vehicle-1", disposition = -1, name = `Конструкт-${id}` } = {}) {
-  const actor = { id, name, uuid: `Actor.${id}`, type: "vehicle" };
-  return { actor, document: { id: `token-${id}`, disposition } };
+function vehicleTarget({ id = "vehicle-1", disposition = -1, name = `Конструкт-${id}`, size = 0, x = 0, y = 0 } = {}) {
+  const actor = { id, name, uuid: `Actor.${id}`, type: "vehicle", system: { size } };
+  return { actor, document: { id: `token-${id}`, disposition, x, y, width: 1, height: 1 } };
 }
 
-/** Подставной Combatant — тот же приём, что middle-of-the-hunt.test.mjs. */
-function combatant({ id, actorId, initiative = null } = {}) {
+/** Подставной Combatant — тот же приём, что middle-of-the-hunt.test.mjs. actor — опционально, для проверок носителя манифестации. */
+function combatant({ id, actorId, initiative = null, actor = undefined } = {}) {
   const flags = {};
   const c = {
-    id, actorId, initiative,
+    id, actorId, initiative, actor,
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; },
     unsetFlag: async (scope, key) => { delete flags[`${scope}.${key}`]; },
@@ -140,6 +142,39 @@ describe("spiritTalkGate", () => {
     globalThis.game.combat = fakeCombat();
     setTargets(vehicleTarget());
     expect(spiritTalkGate(actorWith({})).disabled).toBe(false);
+  });
+  it("конструкт крупнее призрачного лорда (Size 3) — disabled", () => {
+    globalThis.game.combat = fakeCombat();
+    setTargets(vehicleTarget({ size: 3 }));
+    const gate = spiritTalkGate(actorWith({}));
+    expect(gate.disabled).toBe(true);
+    expect(gate.title).toMatch(/крупнее призрачного лорда/);
+  });
+  it("конструкт ровно Size 2 (Призрачный Лорд) — проходит", () => {
+    globalThis.game.combat = fakeCombat();
+    setTargets(vehicleTarget({ size: 2 }));
+    expect(spiritTalkGate(actorWith({})).disabled).toBe(false);
+  });
+  it("цель дальше радиуса WP м — disabled", () => {
+    globalThis.game.combat = fakeCombat();
+    setTargets(vehicleTarget({ x: 1500, y: 0 })); // 15 клеток → edgeM ≈ 14
+    const gate = spiritTalkGate(actorWith({ wpTotal: 10 })); // радиус 10 м
+    expect(gate.disabled).toBe(true);
+    expect(gate.title).toMatch(/Вне радиуса/);
+  });
+  it("цель в пределах радиуса WP м — проходит", () => {
+    globalThis.game.combat = fakeCombat();
+    setTargets(vehicleTarget({ x: 100, y: 0 })); // 1 клетка → edgeM = 0
+    expect(spiritTalkGate(actorWith({ wpTotal: 10 })).disabled).toBe(false);
+  });
+});
+
+describe("spiritTalkRadius", () => {
+  it("WP+0 персонажа, метров", () => {
+    expect(spiritTalkRadius(actorWith({ wpTotal: 35 }))).toBe(35);
+  });
+  it("отрицательного не бывает", () => {
+    expect(spiritTalkRadius(actorWith({ wpTotal: -5 }))).toBe(0);
   });
 });
 
@@ -235,6 +270,34 @@ describe("processSpiritTalkRoundStart", () => {
   it("нет combat — не падает", async () => {
     await expect(processSpiritTalkRoundStart(null)).resolves.toBeUndefined();
   });
+
+  it("истёк F.b — снимает носителя манифестации (rules/psychic-vessel.mjs) с кастера", async () => {
+    const casterActor = actorWith({ id: "c1" });
+    const targetActor = { uuid: "Actor.v1", name: "Конструкт" };
+    await setPsychicVessel(casterActor, targetActor);
+
+    const caster = combatant({ id: "cc1", actorId: "c1", initiative: 40, actor: casterActor });
+    const target = combatant({ id: "tc1", actorId: "v1", initiative: 39.99, actor: targetActor });
+    await target.setFlag("warhammer-dbc", "spiritTalkPossession", { casterCombatantId: "cc1", casterActorId: "c1", expiresRound: 2, added: true });
+    const combat = fakeCombat({ round: 3, existing: [caster, target] });
+
+    await processSpiritTalkRoundStart(combat);
+    expect(getPsychicVessel(casterActor)).toBeNull();
+  });
+
+  it("снятие захвата НЕ трогает носителя, если кастер уже назначил ДРУГОГО (более новый захват/фамильяр)", async () => {
+    const casterActor = actorWith({ id: "c1" });
+    const targetActor = { uuid: "Actor.v1", name: "Старый конструкт" };
+    await setPsychicVessel(casterActor, { uuid: "Actor.other", name: "Новый носитель" });
+
+    const caster = combatant({ id: "cc1", actorId: "c1", initiative: 40, actor: casterActor });
+    const target = combatant({ id: "tc1", actorId: "v1", initiative: 39.99, actor: targetActor });
+    await target.setFlag("warhammer-dbc", "spiritTalkPossession", { casterCombatantId: "cc1", casterActorId: "c1", expiresRound: 2, added: true });
+    const combat = fakeCombat({ round: 3, existing: [caster, target] });
+
+    await processSpiritTalkRoundStart(combat);
+    expect(getPsychicVessel(casterActor)).toEqual({ uuid: "Actor.other", name: "Новый носитель" });
+  });
 });
 
 describe("triggerSpiritTalk", () => {
@@ -264,6 +327,7 @@ describe("triggerSpiritTalk", () => {
     expect(actor.system.actionPoints.value).toBe(1);
     expect(globalThis.game.combat.combatants).toHaveLength(2);
     expect(captured.rolls).toHaveLength(0); // союзник — без встречного теста
+    expect(getPsychicVessel(actor)?.uuid).toBe("Actor.vehicle-1"); // носитель манифестации назначен
   });
 
   it("враждебная цель, стол подтверждает победу — захват применяется", async () => {
@@ -281,6 +345,7 @@ describe("triggerSpiritTalk", () => {
     // WP+0=40 vs Fel+10=40 — равны, useChar остаётся "wp" (строгое >).
     expect(result.roll.threshold).toBe(40);
     expect(globalThis.game.combat.combatants).toHaveLength(2);
+    expect(getPsychicVessel(actor)?.uuid).toBe("Actor.vehicle-1");
   });
 
   it("враждебная цель, стол НЕ подтверждает — захват не применяется, ОД всё равно потрачены", async () => {
@@ -295,6 +360,7 @@ describe("triggerSpiritTalk", () => {
     expect(result).toEqual({ success: false, hostile: true, roll: expect.any(Object) });
     expect(actor.system.actionPoints.value).toBe(1); // 2 ОД потрачены — действие израсходовано
     expect(globalThis.game.combat.combatants).toHaveLength(1); // Combatant цели не создан
+    expect(getPsychicVessel(actor)).toBeNull(); // носитель не назначается без успешного захвата
   });
 
   it("Fel+10 выгоднее WP+0 — берёт Fel", async () => {
