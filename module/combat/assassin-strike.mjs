@@ -1,0 +1,88 @@
+// module/combat/assassin-strike.mjs
+// ════════════════════════════════════════════════════════════════════════
+//  Assassin Strike / Удар Ассасина (wdbc-qpcg, packs-src/talents/Рукопашные/
+//  Assassin_Strike___Удар_Ассасина_…json): «Раз в Раунд после рукопашной
+//  атаки (успешной или нет) персонаж может пройти Acrobatics+0 и совершить
+//  Полудвижение как свободное действие, не вызывая свободные атаки, если
+//  покидает им рукопашную».
+//
+//  Кнопка — на карточке атаки (attack-card.mjs), показывается при
+//  isMelee=true и владении Талантом, throttle "round" (тот же приём —
+//  isRoundCapabilityAvailable/markRoundCapabilityUsed, — что уже использует
+//  Свободная Атака, module/combat/free-attack.mjs). Независимо от исхода
+//  самой атаки — гейт по hit/miss не добавляется намеренно (правило прямо
+//  говорит «успешной или нет»).
+//
+//  При успехе теста: Полудвижение как свободное действие (markMovedThisTurn
+//  БЕЗ spendActionPoints — ОД не тратятся) + flags.warhammer-dbc.
+//  disengageActive = true, тот же разовый флаг, что ставит «Выход из Боя»
+//  (module/combat/movement-actions.mjs::declareDisengage) — гасит первую же
+//  Свободную Атаку по этому токену (module/combat/free-attack.mjs::
+//  processTokenMove), если Полудвижением персонаж покидает рукопашную.
+//
+//  НЕ подключено здесь: удвоение «длины» Таланта Малеарием
+//  (module/combat/recoil-item-bonuses.mjs::malaeriusActive, из PR #319,
+//  ещё не в main на момент этого тикета) — у Полудвижения нет отдельной
+//  «длины» помимо actor.system.movement.halfMove, удвоение уже покрывается
+//  общей формулой SPD, отдельный консьюмер не нужен.
+// ════════════════════════════════════════════════════════════════════════
+
+import { itemHasName } from "../rules/predicates.mjs";
+import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
+import { skillTotal, markMovedThisTurn } from "./movement-actions.mjs";
+import { degreesOfSuccess } from "../constants/craft.mjs";
+import { esc, _degWord } from "../helpers/utils.mjs";
+
+/** Ключ флага троттлинга «раз в Раунд» (module/rules/cooldown.mjs). */
+export const ASSASSIN_STRIKE_CAPABILITY = "assassinStrike";
+
+/** Владеет ли актор Талантом Assassin Strike / Удар Ассасина. */
+export function hasAssassinStrike(actor) {
+  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Assassin Strike"));
+}
+
+/** Показывать ли кнопку на карточке: Талант есть И раунд ещё не потрачен. */
+export function assassinStrikeAvailable(actor) {
+  return hasAssassinStrike(actor) && isRoundCapabilityAvailable(actor, ASSASSIN_STRIKE_CAPABILITY);
+}
+
+/**
+ * Клик по кнопке в чате — тест Acrobatics+0, при успехе даёт свободное
+ * Полудвижение (без ОД) и ставит disengageActive.
+ */
+export async function resolveAssassinStrikeClick(actorUuid) {
+  const actor = await fromUuid(actorUuid).catch(() => null);
+  if (!actor) return ui.notifications.warn("⚠️ Актор не найден.");
+  if (!actor.isOwner) return ui.notifications.warn("⚠️ Нет прав на этого актора.");
+  if (!isRoundCapabilityAvailable(actor, ASSASSIN_STRIKE_CAPABILITY)) {
+    return ui.notifications.warn(`⚠️ ${actor.name}: Удар Ассасина уже потрачен в этом Раунде.`);
+  }
+  await markRoundCapabilityUsed(actor, ASSASSIN_STRIKE_CAPABILITY);
+
+  const threshold = skillTotal(actor, "acrobatics");
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const success = rv <= threshold;
+  const dof = Math.abs(degreesOfSuccess(rv, threshold));
+
+  if (success) {
+    await markMovedThisTurn(actor);
+    await actor.setFlag("warhammer-dbc", "disengageActive", true);
+  }
+
+  const messageData = ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">🗡️ Удар Ассасина — ${esc(actor.name)}</div>
+        <div class="roll-threshold">Acrobatics+0: <b>${threshold}</b></div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        <div class="roll-outcome">${success
+          ? `<span class="roll-success">Успех — Полудвижение свободным действием (без ОД), не вызывает Свободную Атаку при выходе из рукопашной</span>`
+          : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Полудвижение недоступно</span>`}</div>
+      </div>`,
+    rolls: [roll], sound: CONFIG.sounds.dice
+  }, game.settings.get("core", "rollMode"));
+  await ChatMessage.create(messageData);
+  return success;
+}

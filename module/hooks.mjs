@@ -19,6 +19,7 @@ import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } f
 import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
+import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
@@ -680,6 +681,14 @@ export function registerHooks() {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
         await resolveFreeAttackClick(ds.reactorUuid, ds.moverUuid);
+      });
+    });
+
+    // Удар Ассасина (wdbc-qpcg) — раз в Раунд после рукопашной атаки: Acrobatics+0 → Полудвижение свободным действием
+    html.querySelectorAll(".wh-assassin-strike-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        await resolveAssassinStrikeClick(ev.currentTarget.dataset.attackerUuid);
       });
     });
 
