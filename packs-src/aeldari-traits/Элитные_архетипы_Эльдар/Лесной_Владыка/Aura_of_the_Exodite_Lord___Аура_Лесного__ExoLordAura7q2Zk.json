@@ -1,15 +1,15 @@
 {
-  "name": "Lord of the Exodites / Повелитель Экзодитов",
+  "name": "Aura of the Exodite Lord / Аура Лесного Владыки",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
     "description": "",
-    "notes": "Реализовано (wdbc-zepq, 02.09.2026): аура выдаёт союзникам служебный предмет Aura of the Exodite Lord (module/regions/auras.mjs::sweepAurasOnScene), несущий +30/переброс на тесты Морали; сам Владыка получает собственный переброс той же Механикой на этом предмете. Групповое снятие Страха/Шока/Подавления, восстановление Судьбы Отряду и переключатель +30↔−20 по исходу — код в module/combat/lord-of-exodites.mjs, автоуспех перед Командованием — module/sheets/tabs/command.mjs::rollCommand(declaredSuccesses).",
-    "benefit": "Персонаж создаёт ауру радиусом F.b×2, внутри которой союзники получают +30 к тестам Морали и раз в раунд могут перебрасывать провалы Морали. За Полное действие может вывести до F.b эльдар из Страха, Шока и/или Подавления. До броска на командование может объявить автоуспех с числом успехов, равным его Unnatural F. Сражаясь на передовой против сильнейшего противника, может тестом Command(F)−10 восстановить по 1 очку судьбы всем эльдарам под командованием. Получает переброс на тесты Морали, но провал на +2 и более отнимает очко судьбы и превращает бонус союзников в штраф −20.",
-    "source": "Элитный архетип: Лесной Владыка",
+    "notes": "Служебный предмет — не выдаётся напрямую, только через ауру Lord of the Exodites (grant, module/regions/auras.mjs). Значение testMod (+30) точечно переключается на −20 module/combat/lord-of-exodites.mjs::applyLordOfExoditesFailPenalty при провале владельцем Черты собственного теста Морали на 2+ степени с переброском (часть 5 Черты) — обычным путём не редактировать без синхронизации с этим кодом.",
+    "benefit": "+30 к тестам Морали, раз в Раунд переброс тестов Морали — пока действует аура Lord of the Exodites / Повелитель Экзодитов.",
+    "source": "Элитный архетип: Лесной Владыка (служебный предмет ауры)",
     "bookSource": "Книга Аэльдари: Ответвления",
     "hasRating": false,
-    "rating": 1,
+    "rating": 0,
     "hasRating2": false,
     "rating2": 0,
     "effects": {
@@ -24,7 +24,7 @@
       "initMod": 0
     }
   },
-  "_id": "RHDKeAXBb29wY5OG",
+  "_id": "ExoLordAura7q2Zk",
   "effects": [],
   "folder": "aeaMUHNO38GIsUXh",
   "sort": 0,
@@ -35,12 +35,12 @@
     "warhammer-dbc": {
       "mechanics": [
         {
-          "id": "eLordSelfAuraGrp1",
+          "id": "eLordAuraModGrp1",
           "operator": "AND",
           "entries": [
             {
-              "id": "exo-lord-aura",
-              "kind": "aura",
+              "id": "exo-lord-aura-mod",
+              "kind": "testMod",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -49,10 +49,10 @@
               "charKey": "s",
               "field": "total",
               "op": "add",
-              "value": 1,
-              "sourceUuid": "Compendium.warhammer-dbc.aeldari-traits.Item.ExoLordAura7q2Zk",
-              "sourceName": "Aura of the Exodite Lord / Аура Лесного Владыки",
-              "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+              "value": 30,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
               "sourceHasRating": false,
               "rating": "",
               "specialization": "",
@@ -76,7 +76,7 @@
               "rerollScope": "all",
               "rerollChar": "ag",
               "rerollMode": "keepBest",
-              "modScope": "all",
+              "modScope": "morale",
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
@@ -102,9 +102,6 @@
               "loyaltyMinionType": "",
               "loyaltyOp": "add",
               "loyaltyValue": 1,
-              "auraRadius": "f.b*2",
-              "auraAffects": "allies",
-              "auraIncludesSelf": false,
               "weaponPropAction": "add",
               "weaponPropKey": "",
               "weaponPropLabel": "",
@@ -118,18 +115,18 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "",
+              "label": "Lord of the Exodites",
               "code": "",
               "when": { "negate": false, "conditions": [] }
             }
           ]
         },
         {
-          "id": "eLordSelfRrlGrp1",
+          "id": "eLordAuraRrlGrp1",
           "operator": "AND",
           "entries": [
             {
-              "id": "exo-lord-self-reroll",
+              "id": "exo-lord-aura-reroll",
               "kind": "reroll",
               "group": null,
               "corruptionValue": "1",
@@ -225,5 +222,5 @@
     "modifiedTime": null,
     "lastModifiedBy": null
   },
-  "_key": "!items!RHDKeAXBb29wY5OG"
+  "_key": "!items!ExoLordAura7q2Zk"
 }

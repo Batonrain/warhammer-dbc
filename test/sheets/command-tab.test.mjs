@@ -221,6 +221,30 @@ describe("броски Команд без Отряда", () => {
     await rollCommand(commander(), "presence");
     expect(captured.chat.map(c => c.content).join("")).toContain("не сведена в Отряд");
   });
+
+  // Lord of the Exodites (wdbc-zepq, часть 3): автоуспех с заявленным числом
+  // успехов — бросок вообще не нужен, исход считается сразу.
+  describe("declaredSuccesses (Lord of the Exodites)", () => {
+    it("пропускает бросок, засчитывает успех с заявленным числом Успехов", async () => {
+      const boss = commander({ command: 45 });
+      const res = await rollCommand(boss, "presence", { declaredSuccesses: 2 });
+      expect(res).toMatchObject({ ok: true, successes: 2 });
+      expect(captured.chat.at(-1).content).toContain("Автоуспех");
+    });
+
+    it("без declaredSuccesses (0) бросок идёт как обычно", async () => {
+      const boss = commander({ command: 45 });
+      captured.nextRoll = 95; // провал
+      const res = await rollCommand(boss, "presence", { declaredSuccesses: 0 });
+      expect(res.ok).toBe(false);
+    });
+
+    it("применяет эффекты успеха (Присутствие) так же, как обычный успешный бросок", async () => {
+      const boss = commander();
+      await rollCommand(boss, "presence", { benefit: "morale", declaredSuccesses: 1 });
+      expect(boss.system.command.presence).toMatchObject({ active: true, benefit: "morale" });
+    });
+  });
 });
 
 describe("эффекты Детальной Команды", () => {

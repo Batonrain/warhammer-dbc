@@ -35,6 +35,18 @@ function isSocialSkill(skill) {
   return SKILLS_DEF?.[String(skill ?? "")]?.apt2 === "social";
 }
 
+/**
+ * Встречные Запугивание/Пытки — тесты Морали по книге (core.json, «Мораль и
+ * Потеря Командования», стр. 51). Диалог Навыка на листе не знает заранее,
+ * встречным ли будет тест (Вид теста игрок выбирает уже В диалоге, после того
+ * как ctx для галочек уже собран) — поэтому область "morale" включается для
+ * ЛЮБОГО броска этими двумя навыками, не только фактически встречного: не
+ * различить дешевле, чем разойтись с буквой книги в частом (боевом) случае.
+ */
+export function isMoraleOpposedSkill(skill) {
+  return skill === "intimidate" || skill === "interrogate";
+}
+
 /** Хук вне Foundry не существует: в тестах конвейер работает без него. */
 function callHook(name, ...args) {
   if (typeof Hooks === "undefined") return;
@@ -113,6 +125,12 @@ function effectAppliesTo(target, ctx) {
   // Нестабильность — свой вид теста, а не тест Воли: демон бросает его по W, но
   // «+10 к тестам Воли» и «+Inf на Нестабильность» — разные правила книги.
   if (scope === "instability") return ctx.kind === "instability";
+  // Тесты Морали (core.json, «Мораль и Потеря Командования», стр. 51): Страх,
+  // выход из Шока, Паника от Горения, Подавление, встречные Запугивание/Пытки.
+  // Разные тесты идут разными путями (навык, характеристика, вообще без
+  // диалога) — общего ctx.kind/ctx.skill на них нет, поэтому вызывающий код
+  // сам проставляет ctx.morale=true там, где RAW называет тест тестом Морали.
+  if (scope === "morale") return ctx.morale === true;
   if (scope === "social") return isSocialSkill(ctx.skill);
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);

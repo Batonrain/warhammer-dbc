@@ -8,7 +8,7 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
-import { processConditionTurnStart, processConditionTurnEnd } from "../../module/combat/condition-ticks.mjs";
+import { processConditionTurnStart, processConditionTurnEnd, rollBurningPanicTest } from "../../module/combat/condition-ticks.mjs";
 
 function makeActor(overrides = {}) {
   const updates = [];
@@ -81,11 +81,46 @@ describe("processConditionTurnStart: декремент длительности
     expect(captured.chat).toHaveLength(0);
   });
 
-  it("Кровотечение/Горение не тикают тут — это дело processConditionTurnEnd", async () => {
-    const actor = makeActor({ conditions: { bleeding: true, burning: true } });
+  it("Кровотечение не тикает тут — это дело processConditionTurnEnd", async () => {
+    const actor = makeActor({ conditions: { bleeding: true } });
     await processConditionTurnStart(actor);
     expect(actor.updates).toHaveLength(0);
     expect(captured.chat).toHaveLength(0);
+  });
+
+  it("Горение запускает Панику от Горения (wdbc-zepq) — успех ничего не меняет", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    actor.system.characteristics.wp = { bonus: 0, total: 40 };
+    actor.system.actionPoints = { value: 2, max: 2 };
+    captured.dice = [30]; // 30 <= 40 → успех
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.actionPoints.value).toBe(2);
+    expect(captured.chat[0].content).toContain("Паника от Горения");
+    expect(captured.chat[0].content).toContain("держит себя в руках");
+  });
+
+  it("Горение: провал теста Паники обнуляет ОД (Ход потерян)", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    actor.system.characteristics.wp = { bonus: 0, total: 20 };
+    actor.system.actionPoints = { value: 2, max: 2 };
+    captured.dice = [50]; // 50 > 20 → провал
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.actionPoints.value).toBe(0);
+    expect(captured.chat[0].content).toContain("Ход потерян в панике");
+  });
+});
+
+describe("rollBurningPanicTest", () => {
+  it("тест Морали: провал не отнимает ничего сверх ОД без Lord of the Exodites", async () => {
+    const actor = makeActor();
+    actor.system.characteristics.wp = { bonus: 0, total: 10 };
+    actor.system.actionPoints = { value: 3, max: 3 };
+    captured.dice = [90];
+    const { success } = await rollBurningPanicTest(actor);
+    expect(success).toBe(false);
+    expect(actor.system.actionPoints.value).toBe(0);
   });
 });
 

@@ -1,7 +1,7 @@
 import { _performDodge, _performParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -671,6 +671,16 @@ export function registerHooks() {
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Подавленный персонаж не найден.");
         await rollSuppressionRecovery(actor, { bonus: parseInt(ds.bonus || "0") });
+      });
+    });
+    html.querySelectorAll(".wh-shock-recovery-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Шокированный персонаж не найден.");
+        ev.currentTarget.disabled = true;
+        await rollShockRecovery(actor);
       });
     });
 

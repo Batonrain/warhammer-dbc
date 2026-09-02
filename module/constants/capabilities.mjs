@@ -834,8 +834,11 @@ export const CAPABILITIES = {
     source: "Chosen Victim / Выбранная Жертва", reader: ""
   },
   "exodite.forestLord.lordOfTheExodites": {
-    label: "Черта Лесного Владыки. Создаёт ауру радиусом F.b×5: союзники получают +30 на Мораль/Страх/Шок/Подавление и раз в раунд перебрасывают их;",
-    source: "Lord of the Exodites / Повелитель Экзодитов", reader: ""
+    label: "Черта Лесного Владыки. Аура F.b×2: союзники +30 к тестам Морали и переброс. Полное действие: выводит до F.b союзников из Страха/Шока/Подавления.",
+    source: "Lord of the Exodites / Повелитель Экзодитов",
+    reader: "packs-src/aeldari-traits/…/Lord_of_the_Exodites (mechanics: aura+reroll), " +
+      "module/combat/lord-of-exodites.mjs (clearMoraleConditions/rallyExoditeSquad/applyLordOfExoditesFailPenalty), " +
+      "module/sheets/tabs/command.mjs::rollCommand (declaredSuccesses)"
   },
   "exodite.forestLord.rightToChoose": {
     label: "Персонаж может менять местами эффекты талантов The Beginning of the Hunt, The Middle of the Hunt и The End of the Hunt (например,",
