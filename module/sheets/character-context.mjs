@@ -80,6 +80,8 @@ import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
+import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
+import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -165,6 +167,12 @@ export function characterContext(actor) {
     // Spirit Talk/Духовный Разговор (wdbc-q30d): гейт зависит от game.user.
     // targets (единственная Техника)/ОД/боя/кулдауна сессии (spirit-talk.mjs).
     if (hasSpiritTalk(actor)) context.spiritTalkGate = spiritTalkGate(actor);
+    // Deadly Effectiveness/Смертоносная Эффективность (wdbc-1rno): кнопка
+    // видна только владельцу Таланта, гейт — cooldown.mjs "раз в Раунд".
+    if (hasDeadlyEffectiveness(actor)) context.deadlyEffectivenessGate = deadlyEffectivenessGate(actor);
+    // Bow to the Audience/Поклон Публике (wdbc-1rno): та же видимость только
+    // владельцу Таланта, гейт зависит от game.user.targets/ОД (bow-to-audience.mjs).
+    if (hasBowToAudience(actor)) context.bowToAudienceGate = bowToAudienceGate(actor);
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.

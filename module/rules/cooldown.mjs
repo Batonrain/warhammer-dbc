@@ -41,21 +41,23 @@
 //  задумано, у них сброс автоматический, а не по кнопке.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
+import { SECONDS_PER_DAY, SECONDS_PER_MONTH } from "../constants/imperial-calendar.mjs";
 
 const usageKey = flag => String(flag ?? "").replace(/\./g, "-");
 
 /**
  * Текущее живое значение единицы, или undefined — если отследить нечем.
- * "day" — только для СЧЁТЧИКА (throttleCount ниже, wdbc-sk8s): целый номер
- * игровых суток от эпохи worldTime=0 (Math.floor(worldTime / SECONDS_PER_DAY)),
+ * "day"/"month" — только для СЧЁТЧИКА (throttleCount ниже, wdbc-sk8s/
+ * wdbc-1rno): целый номер игровых суток/условных 30-суточных месяцев от
+ * эпохи worldTime=0 (Math.floor(worldTime / SECONDS_PER_{DAY,MONTH})),
  * НЕ то же самое, что worldTime-семья isThrottleReady/markThrottleUsed выше
  * (та считает интервал МЕЖДУ использованиями от сохранённого момента, а не
- * лимит НА календарные сутки) — те две "day" не путать, они живут в разных
- * плоскостях флага (см. throttleCount/incrementThrottleCount).
+ * лимит НА календарные сутки/месяцы) — эти пары не путать, они живут в
+ * разных плоскостях флага (см. throttleCount/incrementThrottleCount).
  */
 function liveValue(unit) {
-  if (unit === "day") return Math.floor((Number(game.time?.worldTime) || 0) / SECONDS_PER_DAY);
+  if (unit === "day")   return Math.floor((Number(game.time?.worldTime) || 0) / SECONDS_PER_DAY);
+  if (unit === "month") return Math.floor((Number(game.time?.worldTime) || 0) / SECONDS_PER_MONTH);
   if (!game.combat) return undefined;
   if (unit === "round")  return game.combat.round;
   if (unit === "battle") return game.combat.id;
@@ -137,13 +139,14 @@ export async function markWorldTimeCooldownUsed(doc, flag) {
  * worldTime с фиксированным интервалом в сутки (та же величина, что у
  * apps/sus-an-heal.mjs).
  */
-export const THROTTLE_UNITS = ["round", "battle", "scene", "session", "day"];
+export const THROTTLE_UNITS = ["round", "battle", "scene", "session", "day", "month"];
 
 /** Готова ли троттлящаяся запись документа (актор/предмет) к запуску сейчас. */
 export function isThrottleReady(doc, flag, unit) {
   if (unit === "round" || unit === "battle") return isCapabilityAvailable(doc, flag, unit);
   if (unit === "scene" || unit === "session") return !isRuleUsageUsed(doc, flag);
   if (unit === "day") return isWorldTimeCooldownReady(doc, flag, SECONDS_PER_DAY);
+  if (unit === "month") return isWorldTimeCooldownReady(doc, flag, SECONDS_PER_MONTH);
   return true;
 }
 
@@ -151,7 +154,7 @@ export function isThrottleReady(doc, flag, unit) {
 export async function markThrottleUsed(doc, flag, unit) {
   if (unit === "round" || unit === "battle") return markCapabilityUsed(doc, flag, unit);
   if (unit === "scene" || unit === "session") return markRuleUsageUsed(doc, flag, unit);
-  if (unit === "day") return markWorldTimeCooldownUsed(doc, flag);
+  if (unit === "day" || unit === "month") return markWorldTimeCooldownUsed(doc, flag);
 }
 
 /**
@@ -171,11 +174,11 @@ export async function markThrottleUsed(doc, flag, unit) {
  * ОДИН режим при авторинге, не оба сразу).
  */
 
-/** Сколько раз уже потрачено в ТЕКУЩЕМ unit — 0, если раунд/бой/сутки сменились или счётчика нет. */
+/** Сколько раз уже потрачено в ТЕКУЩЕМ unit — 0, если раунд/бой/сутки/месяц сменились или счётчика нет. */
 export function throttleCount(doc, flag, unit) {
   const entry = doc?.getFlag?.("warhammer-dbc", `usageLimits.${usageKey(flag)}`);
   if (!entry) return 0;
-  if (unit === "round" || unit === "battle" || unit === "day") {
+  if (unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
     const current = liveValue(unit);
     if (current === undefined) return 0;
     return entry[unit] === current ? (Number(entry.count) || 0) : 0;
@@ -183,7 +186,7 @@ export function throttleCount(doc, flag, unit) {
   return Number(entry.count) || 0;
 }
 
-/** Есть ли ещё запас счётчика (unit ∈ round/battle/day/scene/session) до max. */
+/** Есть ли ещё запас счётчика (unit ∈ round/battle/day/month/scene/session) до max. */
 export function isThrottleCountAvailable(doc, flag, unit, max) {
   return throttleCount(doc, flag, unit) < (Number(max) || 0);
 }
@@ -194,7 +197,7 @@ export async function incrementThrottleCount(doc, flag, unit, max) {
   const used = throttleCount(doc, flag, unit);
   if (used >= (Number(max) || 0)) return;
   const patch = { scope: unit, count: used + 1 };
-  if (unit === "round" || unit === "battle" || unit === "day") {
+  if (unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
     const current = liveValue(unit);
     if (current === undefined) return;
     patch[unit] = current;

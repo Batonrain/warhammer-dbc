@@ -542,6 +542,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,
       burst: rofMode === "semi" || rofMode === "full",
+      // One Against A Hundred (wdbc-u0by): Преимущество защищающемуся против
+      // атаки Орды — только буквальный actor.type "horde" честно детектируем
+      // (Низшие Миньоны такого поля не хранят нигде на акторе, см. bd).
+      attackerIsHorde: actor.type === "horde",
       attackerUuid: actor.uuid || "",
       // itemUuid — только для кнопки шаблона зоны поражения (Automated
       // Animations читает его в module/hooks.mjs, см. triggerBlastAnimation).

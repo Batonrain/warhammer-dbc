@@ -148,6 +148,21 @@ describe("runMechScriptEntry: scriptThrottleMax > 1 — счётчик «до N 
     expect(item.getFlag("test", "count")).toBe(3);
   });
 
+  it("month, max=2: счётчик по условным 30-суточным месяцам (wdbc-1rno, Vampiric Dependency/Warp Eater)", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const item = itemWithScript({ id: "e1", kind: "script", scriptThrottleUnit: "month", scriptThrottleMax: 2,
+      code: 'await item.setFlag("test","count",(item.getFlag("test","count")||0)+1);' });
+    await runMechScriptEntry(item, "g1", "e1");
+    await runMechScriptEntry(item, "g1", "e1");
+    await runMechScriptEntry(item, "g1", "e1"); // третий в тот же месяц — блокируется
+    expect(item.getFlag("test", "count")).toBe(2);
+    expect(captured.warnings.length).toBe(1);
+
+    globalThis.game.time = { worldTime: 30 * 86400 + 10 }; // новый месяц
+    await runMechScriptEntry(item, "g1", "e1");
+    expect(item.getFlag("test", "count")).toBe(3);
+  });
+
   it("max=1 (умолчание) — ведёт себя как единичный gate, а не счётчик", async () => {
     const item = itemWithScript({ id: "e1", kind: "script", scriptThrottleUnit: "session",
       code: 'await item.setFlag("test","count",(item.getFlag("test","count")||0)+1);' });

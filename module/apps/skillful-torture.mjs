@@ -34,6 +34,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { raceMatches } from "../rules/race.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const FLAG = "skillfulTorture";
 
@@ -119,6 +120,11 @@ export async function showSkillfulTortureDialog(torturer) {
   if (!target) return ui.notifications.warn("Наведите таргет (T) на Беспомощную жертву.");
   if (!target.system?.conditions?.helpless) {
     return ui.notifications.warn(`«${target.name}» не отмечен(а) как Беспомощный — пытка требует беспомощную жертву.`);
+  }
+  // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «иммунен к пыткам, что
+  // полагаются на боль» — Искусная Пытка книжно и есть пытка болью.
+  if (hasRuleFlag(target, "mutation.feelsNoPain")) {
+    return ui.notifications.warn(`«${target.name}» не чувствует боли — пытка на неё не действует.`);
   }
 
   const torturerThreshold = interrogateIntTotal(torturer) - 20;

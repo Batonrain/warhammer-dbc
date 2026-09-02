@@ -1845,7 +1845,13 @@ export class WarhammerCharacterSheet
   }
 
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
-    const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
+    // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
+    // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
+    // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
+    // rules/predicates.mjs — уже существовал, но был мёртв за пределами
+    // атак) не могли сработать. Тот же приём: первый выбранный таргет сцены.
+    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
     if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
     const hw = this._homeworldModsHtml(rollCtx);
@@ -2095,7 +2101,8 @@ export class WarhammerCharacterSheet
     const outcome = await resolveKindOutcome(this.actor, {
       kind, baseEff, rv, combined, extended, opposed,
       ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
-             morale: isMoraleOpposedSkill(rollContext?.skill) }
+             morale: isMoraleOpposedSkill(rollContext?.skill),
+             targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null }
     });
     if (isMoraleOpposedSkill(rollContext?.skill)) {
       await applyLordOfExoditesFailPenalty(this.actor, {

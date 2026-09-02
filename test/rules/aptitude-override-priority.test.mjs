@@ -61,16 +61,23 @@ describe("приоритет override над cultureCat легиона", () => {
     expect(talentCategory(actorWithLegion("IV"), "Double Team")).toBe("ally");
   });
 
-  it("duplicate-refund.skillStepsCost: override перебивает базовую цену возврата опыта", () => {
-    // skillKey ищется внутри (SKILLS_DEF.charm.label — "Обаяние", кириллица),
-    // поэтому здесь cultureCat легиона за англ. «Charm» не цепляется вовсе —
-    // базовая цена решается обычными Склонностями (0 совпадений → enemy).
-    // Проверяем именно то, что важно для приоритета: override встаёт ВЫШЕ
-    // любой из этих веток, а не конкретно культуры легиона.
+  it("duplicate-refund.skillStepsCost: override перебивает враждебную культуру легиона I на Charm", () => {
+    // skillKey ищется внутри (SKILLS_DEF.charm.en — "Charm", wdbc-ko14) — с
+    // фикса cultureCat легиона за англ. «Charm» цепляется штатно (CULT.I.hS),
+    // enemy здесь идёт от культуры, не от обычных Склонностей (apts=[]
+    // тоже дал бы enemy — до фикса это совпадение маскировало баг).
     const cost = (a) => skillStepsCost(a, "charm", [0]);
     expect(cost(actorWithLegion("I"))).toBe(SKILL_COST.enemy[0]);
     overrideRule("skill", "Обаяние", "ally");
     expect(cost(actorWithLegion("I"))).toBe(SKILL_COST.ally[0]);
+  });
+
+  it("wdbc-ko14: cultureCat теперь реально матчит Навыки легиона — Scrutiny у Легиона I дружественнен по культуре, не по Склонностям", () => {
+    // Контроль бага: до фикса SKILLS_DEF.scrutiny.label = "Проницательность"
+    // (кириллица) никогда не совпадал с CULT.I.fS=["Scrutiny"], и пустые
+    // Склонности (apts=[]) давали enemy вместо книжного ally.
+    const def = { label: "Проницательность", en: "Scrutiny", char: "per" };
+    expect(skillCumCost(actorWithLegion("I"), def, "knows")).toBe(SKILL_COST.ally[0]);
   });
 
   it("duplicate-refund.talentCost: та же приоритетная цепочка на возврате опыта", () => {

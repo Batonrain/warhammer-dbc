@@ -48,6 +48,8 @@ import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
 import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
 import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
+import { triggerDeadlyEffectiveness } from "../../combat/deadly-effectiveness.mjs";
+import { triggerBowToAudience } from "../../combat/bow-to-audience.mjs";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun, declareHalfStep,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
@@ -294,6 +296,18 @@ export function activateCombatListeners(root, actor) {
   // Spirit Talk/Духовный Разговор (wdbc-q30d): цель — единственная наведённая
   // Техника, гейт сам проверяет бой/ОД/кулдаун сессии (combat/spirit-talk.mjs).
   on(root, ".spirit-talk-btn", "click", () => triggerSpiritTalk(actor));
+
+  // Deadly Effectiveness/Смертоносная Эффективность (wdbc-1rno): игрок сам
+  // подтверждает клик «убил после Финта в этом Раунде» — система только
+  // считает «раз в Раунд» и +2 ОД (combat/deadly-effectiveness.mjs).
+  on(root, ".deadly-effectiveness-btn", "click", async () => {
+    if (!await triggerDeadlyEffectiveness(actor)) ui.notifications.warn("⚠️ Уже использовано в этом Раунде.");
+  });
+
+  // Bow to the Audience/Поклон Публике (wdbc-1rno): цели берутся из
+  // game.user.targets (та же логика, что Bone Song, wdbc-sk8s) — гейт кнопки
+  // сам проверяет их наличие и ОД.
+  on(root, ".bow-to-audience-btn", "click", () => triggerBowToAudience(actor));
 
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»

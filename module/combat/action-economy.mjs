@@ -91,6 +91,9 @@ export async function resetActionEconomy(actor) {
     upd["system.reactions.defenseValue"] = defenseMaxBase + defenseBonus;
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
+  // Just the Light/Лишь Свет (wdbc-1rno, combat/just-the-light.mjs): щит
+  // живёт «до начала следующего Хода» — тот же такт, что running/exposedAggressive.
+  if (actor.getFlag("warhammer-dbc", "justTheLightActive")) upd["flags.warhammer-dbc.-=justTheLightActive"] = null;
   // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
   // прошлого раунда» начинается заново с каждым Ходом этого актора.
   if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;
@@ -99,6 +102,10 @@ export async function resetActionEconomy(actor) {
   // заголовок recoil-pool.mjs). Инлайн, а не вызов resetRecoilPool() —
   // держит один update на весь сброс (см. комментарий выше).
   if (actor.getFlag("warhammer-dbc", "recoilPool"))         upd["flags.warhammer-dbc.-=recoilPool"] = null;
+  // Snapshot/Выстрел Навскидку (wdbc-1rno) читает эту категорию на выходе
+  // из Хода (processSnapshotTurnEnd, до сброса ниже) — сбрасывается здесь
+  // тем же тактом, что и movedThisTurn, следующий Ход начинается заново.
+  if (actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")) upd["flags.warhammer-dbc.-=moveDegreeThisTurn"] = null;
   if (Object.keys(upd).length) await actor.update(upd);
 }
 

@@ -15,6 +15,9 @@ import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
+import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
+import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -37,7 +40,7 @@ export async function _noReactionCard(actor, label) {
   }, rollMode));
 }
 
-export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false) {
+export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false, burst = false, attackerIsHorde = false) {
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
@@ -59,16 +62,22 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
-  // ХУДШИЙ из двух — то есть больший на d100.
+  // ХУДШИЙ из двух — то есть больший на d100. Танец Среди Огня и Один Против
+  // Сотни (wdbc-u0by) — собственное Преимущество защищающегося (против
+  // Очереди / против атаки Орды), тот же приём (roll×2 + pickReroll), но mode
+  // "keepBest" — forcedReroll, если задан, приоритетнее (внешнее навязывание
+  // сильнее своего Преимущества).
+  const dancerAdvantage = danceOfFireAdvantage(actor, burst);
+  const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
   const rolled = [];
-  for (let i = 0; i < (forcedReroll ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  for (let i = 0; i < (forcedReroll || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked = pickReroll(rolled.map(r => r.total), forcedReroll || "keepBest");
   const roll   = rolled[picked.index];
   const rv     = picked.value;
-  const passed = rv <= threshold;
-  const deg      = passed
-    ? Math.floor((threshold - rv) / 10) + 1
-    : Math.floor((rv - threshold) / 10) + 1;
+  // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
+  // раньше дублировалась вручную здесь же).
+  const { success: passed, deg } = testOutcome(rv, threshold);
   const rollMode = game.settings.get("core", "rollMode");
 
   // Стр. 12: при Успехе персонаж уклоняется от атаки и попадание становится
@@ -93,7 +102,11 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
   if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
-  if (picked.dropped.length) modParts.push(`навязанный переброс, отброшено ${picked.dropped.join(", ")}`);
+  if (picked.dropped.length) {
+    modParts.push(forcedReroll
+      ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
+      : `${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
+  }
 
   let outcomeHtml;
   if (!passed) {
@@ -199,7 +212,7 @@ export async function _performSprayCancel(actor) {
   await ChatMessage.create(messageData);
 }
 
-export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1) {
+export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -260,12 +273,19 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
 
   const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty;
 
-  const roll     = await new Roll("1d100").evaluate();
-  const rv       = roll.total;
-  const passed   = rv <= threshold;
-  const deg      = passed
-    ? Math.floor((threshold - rv) / 10) + 1
-    : Math.floor((rv - threshold) / 10) + 1;
+  // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
+  // Парирование против Очереди / против атаки Орды, тот же приём
+  // roll×2 + pickReroll, что у Уклонения выше.
+  const dancerAdvantage = danceOfFireAdvantage(actor, burst);
+  const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
+  const rolled = [];
+  for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
+  const roll     = rolled[picked.index];
+  const rv       = picked.value;
+  // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
+  const { success: passed, deg } = testOutcome(rv, threshold);
   const rollMode = game.settings.get("core", "rollMode");
 
   // Стр. 12: при Успехе персонаж отбивает или блокирует атаку и попадание
@@ -290,6 +310,7 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
+  if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
 
   let outcomeHtml;
   if (!passed) {

@@ -40,7 +40,8 @@ function skillCat(actor, def, entryChar = "", group = "", specialty = "") {
   const cat = def.alwaysAlly ? "ally"
     : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
     : resolveAptitudeOverride(actor, "skill", def.label || "", group)
-      ?? cultureCat("skill", def.label || "", "", cultFxOf(actor));
+      // cultureCat матчит по-английски — см. тот же фикс в sheets/tabs/advance.mjs (wdbc-ko14).
+      ?? cultureCat("skill", def.en || def.label || "", "", cultFxOf(actor));
   return { apts, itemApts, cat };
 }
 

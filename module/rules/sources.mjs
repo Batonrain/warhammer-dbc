@@ -19,6 +19,7 @@ import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
+import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 
 const SOURCES = new Map();
 
@@ -99,6 +100,10 @@ registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
 // предикату (rules/predicates.mjs::hexMarkedPreyAllyBonus), которое само
 // читает cross-actor метку через ctx.targetActor.
 registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
+// Synesthesia/Синэстезия (wdbc-1rno) — та же схема: статичное правило читает
+// цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
+// Навыка, не только атаках), не источник-владелец Мутации.
+registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 
 registerRuleSource("adjutant", a => {
   if (typeof game === "undefined") return [];
@@ -136,6 +141,11 @@ registerRuleSource("dreadnought", (a) => {
     id: "dreadnought.sarcophagus.mind", label: "Саркофаг: защита сознания", when: {},
     effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.mindControlBonus,
                 label: "Саркофаг: против контроля сознания" }]
+  });
+  rules.push({
+    id: "dreadnought.sarcophagus.poison", label: "Саркофаг: сопротивление ядам", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.poisonBonus,
+                label: "Саркофаг: против ядов" }]
   });
 
   // Возможности книги: иммунитеты, автоуспехи и запреты. Читателей у части из

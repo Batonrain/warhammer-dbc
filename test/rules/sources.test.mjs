@@ -27,7 +27,7 @@ describe("источник homeworld", () => {
   // а расчёт продолжал их учитывать.
   it("подсистема «Происхождения» выключена — источник пуст", () => {
     HOMEWORLD_BY_KEY.__test = { rules: [RULE] };
-    globalThis.game = { settings: { get: () => false } };
+    globalThis.game = { ...globalThis.game, settings: { get: () => false } };
     expect(source("homeworld")(actorWith("__test"))).toEqual([]);
   });
 });

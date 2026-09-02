@@ -316,7 +316,8 @@ const SCRIPT_THROTTLE_OPTIONS = [
   { value: "battle",  label: "Раз за бой" },
   { value: "scene",   label: "Раз за сцену" },
   { value: "session", label: "Раз за сессию" },
-  { value: "day",     label: "Раз в сутки" }
+  { value: "day",     label: "Раз в сутки" },
+  { value: "month",   label: "Раз в месяц" }
 ];
 const SCRIPT_THROTTLE_LABELS = Object.fromEntries(SCRIPT_THROTTLE_OPTIONS.map(o => [o.value, o.label]));
 /** Ключ флага перезарядки кнопки «▶ Запустить» конкретной записи kind:"script". */
@@ -327,7 +328,7 @@ const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
 // интервал МЕЖДУ использованиями, не лимит НА сутки; здесь "day" — свой
 // смысл, номер календарных суток, см. cooldown.mjs::liveValue). При
 // scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
-const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day"]);
+const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day", "month"]);
 
 /** Цена записи kind:"script" в форме, которую понимает capability-cost.mjs — null, если бесплатно. */
 function scriptCostOf(entry) {
@@ -790,11 +791,13 @@ export function describeMechEntry(entry) {
     case "testMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
       if (!scope) return "Модификатор теста: (область не выбрана)";
-      const mult = Number(entry.modCharBonusMultiplier) > 1 ? `${Number(entry.modCharBonusMultiplier)}×` : "";
+      const multVal = Number(entry.modCharBonusMultiplier) || 1;
+      const mult = multVal !== 1 ? `${multVal}×` : "";
       const bonusOf = entry.modCharBonus === "pr" ? "Пси-Рейтинг"
+        : entry.modCharBonus === "cor" ? "Порча (Cor.b)"
         : (CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus);
       const val = entry.modValueMode === "charBonus"
-        ? `+${mult}Бонус ${bonusOf}`
+        ? `+${mult}Бонус ${bonusOf}${entry.modCharBonus === "cor" ? " (окр.▲)" : ""}`
         : entry.modValueMode === "halvePenalty"
         ? "½ штрафа (вкл. необученность)"
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
@@ -2605,8 +2608,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // Психосилы, wdbc-jw81): без этих двух полей запись из пака показывалась
     // бы неверно и затиралась первым же кликом по селекту.
     const valueField = ent.modValueMode === "charBonus"
-      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"]])
-        + `<input type="number" class="mech-mod-char-mult" min="1" title="множитель бонуса (1 — как есть)"
+      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"], ["cor", "Порча (Cor.b)"]])
+        + `<input type="number" class="mech-mod-char-mult" min="0.1" step="0.1" title="множитель бонуса (1 — как есть; 0.5 — «½Cor.b», книга всегда округляет вверх)"
                   value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
       : ent.modValueMode === "halvePenalty" ? ""
       : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
