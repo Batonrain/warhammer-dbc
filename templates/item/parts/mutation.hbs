@@ -1,6 +1,7 @@
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
-{{!--  МУТАЦИЯ — только «Рука Смерти» (wdbc-hftn): выбор своего оружия для     --}}
-{{!--  слияния, у остальных Мутаций пусто (isHandOfDeathItem проверяет имя).  --}}
+{{!--  МУТАЦИЯ — «Рука Смерти» (wdbc-hftn) и «Щупальце»/субмутация 9         --}}
+{{!--  (wdbc-2ynk) — выбор своего оружия/форма руки, у остальных Мутаций     --}}
+{{!--  пусто (isHandOfDeathItem/isTentacleShiftItem проверяют имя+строку).   --}}
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 {{#if (eq item.type "mutation")}}
 
@@ -17,6 +18,13 @@
 <div class="item-section">
   <div class="item-section-title">РУКА СМЕРТИ</div>
   {{{handOfDeathHtml}}}
+</div>
+{{/if}}
+
+{{#if tentacleHandFormHtml}}
+<div class="item-section">
+  <div class="item-section-title">ЩУПАЛЬЦЕ: ФОРМА</div>
+  {{{tentacleHandFormHtml}}}
 </div>
 {{/if}}
 {{/if}}{{!-- /mutation --}}

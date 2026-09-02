@@ -6768,9 +6768,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.tentacle": {
-    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 10 субмутаций не автоматизированы (wdbc-vkwe)",
+    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 10 субмутаций не автоматизированы (wdbc-vkwe). Субмутация 9 «Изменчивое» (wdbc-2ynk) — исключение: форма руки/щупальца переключается кнопкой на листе предмета (не через capabilityKey — своя пара флаг+UI, module/apps/tentacle-hand-form.mjs), цена спишет module/combat/capability-cost.mjs, бонус +20 гасится, пока предмет в форме руки",
     source: "Мутация: Tentacle (Общие мутации)",
-    reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\")"
+    reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\", гасится tentacleBonusSuppressed при субмутации 9 в форме руки)"
   },
   "mutation.vampiricDependency": {
     label: "Воздержание от подпитки >1 месяц — тест T+0 (−10/мес) или 1 Порча; 10 субмутаций определяют способ/эффект утоления, не автоматизированы (нет bd)",
