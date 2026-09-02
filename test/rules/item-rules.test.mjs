@@ -94,6 +94,58 @@ describe("rulesFromItemMechanics: вложенные подгруппы", () => 
   });
 });
 
+// wdbc-suwp: kind:"script" с ценой ИЛИ частотой всплывает на панели актора
+// «ВОЗМОЖНОСТИ СЕЙЧАС» как effect kind:"scriptAbility" — не сам эффект теста
+// (там нечего резолвить), а координаты (itemId/groupId/entryId) для кнопки
+// «▶ Запустить» (module/apps/mechanics.mjs::runMechScriptEntry).
+describe("rulesFromItemMechanics: kind:\"script\" → scriptAbility", () => {
+  const script = (over = {}) => ({ id: "e1", kind: "script", code: "1;", ...over });
+
+  it("частота без цены — правило есть, groupId проставлен", () => {
+    const rules = rulesFromItemMechanics([item("Дар", [script({ scriptThrottleUnit: "battle" })])]);
+    expect(rules).toEqual([{
+      id: "item.Дар.e1", label: "Дар", when: {},
+      effects: [{ kind: "scriptAbility", itemId: "Дар", groupId: "g1", entryId: "e1" }]
+    }]);
+  });
+
+  it("цена без частоты — тоже правило (не только троттлинг делает запись способностью)", () => {
+    const rules = rulesFromItemMechanics(
+      [item("Дар", [script({ capabilityCostPool: "infamy", capabilityCostAmount: 1 })])]);
+    expect(rules).toHaveLength(1);
+  });
+
+  it("ни цены, ни частоты — правила нет: кнопка и так видна на листе своего предмета", () => {
+    expect(rulesFromItemMechanics([item("Дар", [script()])])).toEqual([]);
+  });
+
+  it("пустой код — правила нет, даже если частота задана", () => {
+    expect(rulesFromItemMechanics(
+      [item("Дар", [script({ code: "", scriptThrottleUnit: "battle" })])])).toEqual([]);
+  });
+
+  it("подпись записи важнее имени предмета, как у остальных видов", () => {
+    const rules = rulesFromItemMechanics(
+      [item("Дар", [script({ scriptThrottleUnit: "battle", label: "Кровавый Клинок" })])]);
+    expect(rules[0].label).toBe("Кровавый Клинок");
+  });
+
+  it("ИЛИ-ветки пропускаются — как и у остальных видов записи", () => {
+    const or = { id: "x", name: "x", flags: { [SYSTEM]: {
+      mechanics: [{ id: "g", operator: "OR", entries: [script({ scriptThrottleUnit: "battle" })] } ] } } };
+    expect(rulesFromItemMechanics([or])).toEqual([]);
+  });
+
+  it("вложенная И-подгруппа несёт свой собственный groupId, не родительский", () => {
+    const nested = item("Дар", [
+      { id: "sub", kind: "group",
+        group: { id: "g2", operator: "AND", entries: [script({ scriptThrottleUnit: "battle" })] } }
+    ]);
+    const rules = rulesFromItemMechanics([nested]);
+    expect(rules[0].effects[0].groupId).toBe("g2");
+  });
+});
+
 // entry.when — тот же гейт по Геносемени, что у разовой выдачи/долговечных
 // записей (module/apps/mechanics.mjs), но здесь он должен закрывать и «живой
 // запрос» — Оолитическая Почка на XIV легион даёт testMod «против болезней»,

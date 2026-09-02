@@ -65,7 +65,14 @@
         <td class="cap-auto-cell">{{#if c.auto}}<span title="Система учитывает сама">авто</span>{{else}}<span class="cap-manual" title="Читателя в расчёте нет — применяет ГМ">вручную</span>{{/if}}</td>
         <td>{{c.sources}}</td>
         <td class="cap-spend-cell">
-          {{#if c.cost}}
+          {{#if c.isScript}}
+          <button type="button" class="cap-script-run-btn" data-action="capabilityScriptRun"
+                  data-item-id="{{c.itemId}}" data-group-id="{{c.groupId}}" data-entry-id="{{c.entryId}}"
+                  {{#unless c.scriptReady}}disabled{{/unless}}
+                  title="{{#if c.scriptStatus}}{{c.scriptStatus}}{{else}}Выполнить код записи{{/if}}">
+            ▶ Запустить{{#if c.costLabel}} (− {{c.costLabel}}){{/if}}
+          </button>
+          {{else if c.cost}}
           <button type="button" class="cap-spend-btn" data-action="capabilitySpend" data-key="{{c.key}}" data-label="{{c.label}}"
                   {{#if c.spendGate.disabled}}disabled{{/if}}
                   title="{{#if c.spendGate.title}}{{c.spendGate.title}}{{else}}Списать {{c.costLabel}}{{/if}}">
@@ -76,7 +83,7 @@
       </tr>
       {{/each}}
     </tbody> </table>
-    <div class="gene-seed-hint">Список собирается из записей Конструктора вида «Возможность» на активных предметах: включённые Локусы Герольда и всё прочее того же рода. «Вручную» значит, что расчёт эту возможность пока не читает. Кнопка списания видна только у записей с ценой (wdbc-1dc8).</div>
+    <div class="gene-seed-hint">Список собирается из записей Конструктора вида «Возможность» (кнопка списания у записей с ценой, wdbc-1dc8) и «Код» с ценой/частотой (кнопка «▶ Запустить», wdbc-suwp) на активных предметах: включённые Локусы Герольда и всё прочее того же рода. «Вручную» значит, что расчёт эту возможность пока не читает.</div>
   </div>
   {{/if}}
 

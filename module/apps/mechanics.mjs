@@ -39,7 +39,8 @@
 //      sourceImg/sourceHasRating (драг-н-дроп) + rating (Черта) или
 //      specialization (Талант).
 //    skill: skillScope:"plain"|"group", skillKey, specKey/specialty, rank.
-//    script: { label, code, scriptThrottleUnit, scriptThrottleMax } —
+//    script: { label, code, scriptThrottleUnit, scriptThrottleMax,
+//               capabilityCostPool, capabilityCostAmount } —
 //      свободный JS. Два независимых пути исполнения: (1) applyMechEntry —
 //      автоматически, РОВНО ОДИН РАЗ при получении предмета (как и всё
 //      остальное в этом файле); (2) кнопка «▶ Запустить» (runMechScriptEntry,
@@ -54,6 +55,15 @@
 //      использованиями из единичного gate выше). Оба пути зовут
 //      executeItemCode() из item-script.mjs (тот же контекст: item, actor,
 //      token, speaker, game, ui, ChatMessage, event).
+//      capabilityCostPool/Amount (wdbc-suwp) — те же поля, что уже несёт
+//      kind:"capability" (wdbc-1dc8): непусто — кнопка «▶ Запустить» ТАКЖЕ
+//      гейтится доступностью пула (module/combat/capability-cost.mjs) и
+//      списывает цену ПОСЛЕ успешного исполнения кода (провал, как и у
+//      троттлинга, ничего не списывает). Записи с заданной ценой ИЛИ
+//      частотой дополнительно всплывают на панели актора «ВОЗМОЖНОСТИ
+//      СЕЙЧАС» (module/rules/item-rules.mjs::ruleFromEntry, effect
+//      kind:"scriptAbility") — не только внутри листа своего предмета,
+//      как раньше.
 //    weight: { weightScope:"all"|"carry"|"lift"|"push",
 //               weightMode:"kg"|"index", weightValue }
 //      → тоже ActiveEffect НА ПРЕДМЕТЕ. "kg" бьёт по готовому результату
@@ -229,7 +239,7 @@ import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
 import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
-import { CAPABILITY_COST_POOLS, capabilityCostLabel } from "../combat/capability-cost.mjs";
+import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier } from "../rules/mech-when.mjs";
@@ -319,14 +329,59 @@ const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
 // scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
 const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day"]);
 
-/** Готова ли кнопка «▶ Запустить» записи (учитывает scriptThrottleMax > 1 — счётчик, не единичный gate). */
+/** Цена записи kind:"script" в форме, которую понимает capability-cost.mjs — null, если бесплатно. */
+function scriptCostOf(entry) {
+  return entry.capabilityCostPool
+    ? { pool: entry.capabilityCostPool, amount: Math.max(1, Number(entry.capabilityCostAmount) || 1) }
+    : null;
+}
+
+/**
+ * Готова ли кнопка «▶ Запустить» записи — троттлинг (учитывает
+ * scriptThrottleMax > 1 — счётчик, не единичный gate) И, если задана,
+ * доступность пула цены (wdbc-suwp: без актора-владельца платная запись
+ * недоступна — списывать цену не с чего).
+ */
 function scriptRunReady(item, entry) {
   const unit = entry.scriptThrottleUnit || "";
-  if (!unit) return true;
+  if (unit) {
+    const max = Number(entry.scriptThrottleMax) || 1;
+    const flag = scriptThrottleFlag(entry.id);
+    const throttleOk = (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit))
+      ? isThrottleCountAvailable(item, flag, unit, max)
+      : isThrottleReady(item, flag, unit);
+    if (!throttleOk) return false;
+  }
+  const cost = scriptCostOf(entry);
+  if (cost) {
+    if (!item.actor) return false;
+    if (capabilityCostGate(item.actor, cost).disabled) return false;
+  }
+  return true;
+}
+
+/** Человекочитаемый статус кнопки «▶ Запустить» — общая часть для листа предмета и панели актора «ВОЗМОЖНОСТИ СЕЙЧАС». */
+function scriptRunStatus(item, entry) {
+  const unit = entry.scriptThrottleUnit || "";
   const max = Number(entry.scriptThrottleMax) || 1;
-  const flag = scriptThrottleFlag(entry.id);
-  if (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit)) return isThrottleCountAvailable(item, flag, unit, max);
-  return isThrottleReady(item, flag, unit);
+  const cost = scriptCostOf(entry);
+  const parts = [];
+  if (unit) {
+    if (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit)) {
+      const used = throttleCount(item, scriptThrottleFlag(entry.id), unit);
+      parts.push(`${used}/${max} (${SCRIPT_THROTTLE_LABELS[unit] || unit})`);
+    } else if (!isThrottleReady(item, scriptThrottleFlag(entry.id), unit)) {
+      parts.push(`занято (${SCRIPT_THROTTLE_LABELS[unit] || unit})`);
+    }
+  }
+  if (cost) {
+    if (!item.actor) parts.push("нет актора-владельца — цену списать не с чего");
+    else {
+      const gate = capabilityCostGate(item.actor, cost);
+      parts.push(gate.disabled ? gate.title : `цена: ${capabilityCostLabel(cost)}`);
+    }
+  }
+  return { ready: scriptRunReady(item, entry), cost, label: parts.join("; ") };
 }
 
 /** Отмечает «▶ Запустить» использованной — счётчиком или единичным gate, см. scriptRunReady. */
@@ -811,8 +866,13 @@ export function describeMechEntry(entry) {
       const rating = entry.weaponPropHasRating ? ` (${entry.weaponPropValue ?? "?"})` : "";
       return `Оружие: добавить «${entry.weaponPropLabel}»${rating}`;
     }
-    case "script":
-      return entry.label ? `Код: ${entry.label}` : (entry.code?.trim() ? "Код (без названия)" : "Код: (пусто)");
+    case "script": {
+      const base = entry.label ? `Код: ${entry.label}` : (entry.code?.trim() ? "Код (без названия)" : "Код: (пусто)");
+      const costLabel = entry.capabilityCostPool
+        ? ` — цена: ${capabilityCostLabel({ pool: entry.capabilityCostPool, amount: entry.capabilityCostAmount })}`
+        : "";
+      return base + costLabel;
+    }
     case "group": {
       const g = entry.group;
       const entries = g?.entries || [];
@@ -2738,9 +2798,22 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const maxInput = (unit && COUNTABLE_THROTTLE_UNITS.has(unit))
       ? `<input type="number" class="mech-script-throttle-max" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.scriptThrottleMax ?? 1)}" min="1" title="До скольки раз (1 = единожды)" ${dis}/>`
       : "";
+    // Цена в пуле (wdbc-suwp) — те же поля/классы, что у kind:"capability"
+    // (wdbc-1dc8): mechField(".mech-capability-cost-pool"/...-amount) в
+    // item-sheet.mjs уже пишет в entry.capabilityCostPool/Amount независимо
+    // от kind, переиспользуем без новой JS-разводки. Непусто — «▶ Запустить»
+    // ДОПОЛНИТЕЛЬНО гейтится доступностью пула (scriptRunReady) и списывает
+    // цену при успехе (runMechScriptEntry).
+    const poolOpts = [["", "— без цены —"], ...Object.entries(CAPABILITY_COST_POOLS).map(([k, p]) => [k, p.label])]
+      .map(([v, l]) => `<option value="${esc(v)}" ${(ent.capabilityCostPool || "") === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const costAmountHtml = ent.capabilityCostPool ? `
+      <input type="number" class="mech-capability-cost-amount" min="1" value="${esc(ent.capabilityCostAmount ?? 1)}"
+             title="Сколько списывать за использование" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
     return `<input type="text" class="mech-script-label" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.label || "")}" placeholder="Название (для себя)" ${dis}/>
       <select class="mech-script-throttle" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Частота кнопки «▶ Запустить»" ${dis}>${throttleOpts}</select>
       ${maxInput}
+      <select class="mech-capability-cost-pool" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+              title="Цена в пуле: списывается при успешном «▶ Запустить»">${poolOpts}</select>${costAmountHtml}
       <textarea class="mech-script-code" data-group-id="${groupId}" data-entry-id="${ent.id}" spellcheck="false" placeholder="// произвольный JS — item, actor, token, speaker, game, ui, ChatMessage, event" ${dis}>${esc(ent.code || "")}</textarea>`;
   }
 
@@ -2949,22 +3022,12 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
  */
 function buildScriptRunHtml(groupId, ent, canEdit, item) {
   if (!item) return "";
-  const unit = ent.scriptThrottleUnit || "";
-  const max = Number(ent.scriptThrottleMax) || 1;
-  const ready = !unit || scriptRunReady(item, ent);
   const hasCode = !!(ent.code && ent.code.trim());
-  let statusLabel = "";
-  if (hasCode && unit) {
-    if (max > 1 && COUNTABLE_THROTTLE_UNITS.has(unit)) {
-      const used = throttleCount(item, scriptThrottleFlag(ent.id), unit);
-      statusLabel = `— ${used}/${max} (${SCRIPT_THROTTLE_LABELS[unit] || unit})`;
-    } else if (!ready) {
-      statusLabel = `— занято (${SCRIPT_THROTTLE_LABELS[unit] || unit})`;
-    }
-  }
+  const status = scriptRunStatus(item, ent);
+  const statusLabel = hasCode && status.label ? `— ${status.label}` : "";
   return `<div class="grant-entry-script-run">
     <button type="button" class="mech-script-run" data-group-id="${groupId}" data-entry-id="${ent.id}"
-      ${(!canEdit || !hasCode || !ready) ? "disabled" : ""} title="Выполнить код записи">▶ Запустить</button>
+      ${(!canEdit || !hasCode || !status.ready) ? "disabled" : ""} title="Выполнить код записи">▶ Запустить</button>
     <span class="mech-script-run-status">${esc(statusLabel)}</span>
   </div>`;
 }
@@ -3060,7 +3123,10 @@ function collectBrokenFormulas(entries) {
  *
  * Провал кода НЕ тратит попытку — сперва выполняем, только потом (при
  * успехе) отмечаем использованной, тем же порядком, что и remaining-семья
- * в module/rules/cooldown.mjs у остальных троттлингов.
+ * в module/rules/cooldown.mjs у остальных троттлингов. Цена в пуле
+ * (wdbc-suwp, capabilityCostPool/Amount) — тот же порядок: гейт проверяется
+ * ДО запуска (как троттлинг), а списание идёт ПОСЛЕ успешного выполнения
+ * (как отметка троттлинга) — провальный код цену не ест.
  */
 export async function runMechScriptEntry(item, groupId, entryId) {
   if (!item) return;
@@ -3072,6 +3138,12 @@ export async function runMechScriptEntry(item, groupId, entryId) {
   if (unit && !scriptRunReady(item, entry)) {
     return ui.notifications.warn(`«${entry.label || item.name}» пока недоступна (${SCRIPT_THROTTLE_LABELS[unit] || unit}).`);
   }
+  const cost = scriptCostOf(entry);
+  if (cost) {
+    if (!item.actor) return ui.notifications.warn(`«${entry.label || item.name}»: нет актора-владельца, цену списать не с чего.`);
+    const gate = capabilityCostGate(item.actor, cost);
+    if (gate.disabled) return ui.notifications.warn(`⚠️ ${gate.title}`);
+  }
   try {
     await executeItemCode(item, code, null);
   } catch (e) {
@@ -3079,6 +3151,31 @@ export async function runMechScriptEntry(item, groupId, entryId) {
     return ui.notifications.error(`Скрипт «${entry.label || item.name}»: ${e.message}`);
   }
   if (unit) await markScriptRunUsed(item, entry);
+  if (cost) await spendCapabilityCost(item.actor, cost, entry.label || item.name);
+}
+
+/**
+ * Строка для панели актора «ВОЗМОЖНОСТИ СЕЙЧАС» (wdbc-suwp) — kind:"script"
+ * записи с ценой ИЛИ частотой всплывают там же, где уже живут kind:"capability"
+ * (не только внутри листа своего предмета, как раньше). Источник списка —
+ * module/rules/item-rules.mjs::ruleFromEntry (effect kind:"scriptAbility"),
+ * этот хелпер лишь превращает координаты (item/groupId/entryId) в готовые для
+ * шаблона поля, той же логикой, что buildScriptRunHtml на листе предмета.
+ * null, если запись не найдена/не script — источник данных мог устареть
+ * между рендерами (предмет сняли, запись удалили в Конструкторе).
+ */
+export function scriptAbilityRow(item, groupId, entryId) {
+  if (!item) return null;
+  const entry = findMechEntry(getItemMechanics(item), groupId, entryId);
+  if (!entry || entry.kind !== "script") return null;
+  const status = scriptRunStatus(item, entry);
+  return {
+    label: entry.label || item.name,
+    hasCode: !!(entry.code && entry.code.trim()),
+    ready: status.ready,
+    statusLabel: status.label,
+    costLabel: status.cost ? capabilityCostLabel(status.cost) : ""
+  };
 }
 
 /**
