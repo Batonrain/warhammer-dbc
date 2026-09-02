@@ -59,6 +59,7 @@ import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { applyTouchedByFates } from "../rules/daemon-locus.mjs";
+import { runMechScriptEntry } from "../apps/mechanics.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
@@ -143,6 +144,15 @@ async function onCapabilitySpend(event, target) {
     if (!applied) return false;
   }
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
+}
+
+// kind:"script" запись с ценой/частотой (wdbc-suwp) — та же панель, кнопка
+// «▶ Запустить» вместо «Потратить»: гейт (троттлинг+цена) и списание живут
+// внутри runMechScriptEntry (module/apps/mechanics.mjs), эта функция лишь
+// находит сам предмет по id, полученному из data-атрибута строки.
+function onCapabilityScriptRun(event, target) {
+  const item = this.actor.items.get(target.dataset.itemId);
+  return runMechScriptEntry(item, target.dataset.groupId, target.dataset.entryId);
 }
 
 // ── Свёртки: состояние ОКНА, а не актора — без ре-рендера ──
@@ -651,6 +661,7 @@ export class WarhammerCharacterSheet
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
       capabilitySpend: whenEditable(onCapabilitySpend),
+      capabilityScriptRun: whenEditable(onCapabilityScriptRun),
       // «Перезапустить мастера создания» больше не data-action: кнопка-меню
       // Механикум (_attachFrameListeners) зовёт this.openCreationWizard()
       // напрямую, минуя карту действий.

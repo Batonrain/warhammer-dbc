@@ -521,12 +521,14 @@
 /* Панель «Возможности сейчас»: пометка, считает ли систему сама. */
 .warhammer-dbc .cap-auto-cell { text-align: center; font-size: 0.8em; opacity: 0.75; }
 .warhammer-dbc .cap-manual { color: #e0b062; }
-/* Кнопка списания цены (wdbc-1dc8) — тот же вид/гейт, что .ae-spend-btn. */
+/* Кнопка списания цены (wdbc-1dc8) — тот же вид/гейт, что .ae-spend-btn.
+   .cap-script-run-btn — «▶ Запустить» у kind:"script" с ценой/частотой
+   (wdbc-suwp), тот же вид, другое действие (выполняет код, не только списывает). */
 .warhammer-dbc .cap-spend-cell { text-align: right; white-space: nowrap; }
-.warhammer-dbc .cap-spend-btn {
+.warhammer-dbc .cap-spend-btn, .warhammer-dbc .cap-script-run-btn {
   padding: 1px 6px; font-size: 0.82em; cursor: pointer;
   background: var(--wh-input-bg); border: 1px solid var(--wh-border); border-radius: 3px;
   color: var(--wh-text, inherit);
 }
-.warhammer-dbc .cap-spend-btn:hover { background: var(--wh-accent, #2a6f4c); color: #fff; }
-.warhammer-dbc .cap-spend-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--wh-input-bg); color: var(--wh-text, inherit); }
+.warhammer-dbc .cap-spend-btn:hover, .warhammer-dbc .cap-script-run-btn:hover { background: var(--wh-accent, #2a6f4c); color: #fff; }
+.warhammer-dbc .cap-spend-btn:disabled, .warhammer-dbc .cap-script-run-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--wh-input-bg); color: var(--wh-text, inherit); }

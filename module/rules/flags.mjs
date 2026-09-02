@@ -69,3 +69,20 @@ export function ruleFlagCost(actor, flag, ctx = {}) {
   }
   return null;
 }
+
+/**
+ * Активные kind:"script" способности актора с ценой/частотой (wdbc-suwp) —
+ * координаты (itemId/groupId/entryId/label) для панели «ВОЗМОЖНОСТИ СЕЙЧАС»,
+ * тот же источник (collectRules → module/rules/item-rules.mjs), что у
+ * ruleFlags выше, просто другой effect.kind. Пустой список — у актора нет
+ * ни одной такой записи, панели нечего показывать (не ошибка).
+ */
+export function scriptAbilities(actor, ctx = {}) {
+  const out = [];
+  for (const rule of collectRules(actor, ctx)) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind === "scriptAbility") out.push({ ruleId: rule.id, ruleLabel: rule.label, ...effect });
+    }
+  }
+  return out;
+}
