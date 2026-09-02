@@ -582,6 +582,12 @@ export function buildGetData(actor) {
   const weaponIds   = new Set(weaponItems.map(w => w.id));
   const armorIds    = new Set(armorItems.map(a => a.id));
 
+  // Интегральные атаки (Кулак, Кислотный Плевок, Пинок Дредноута и т.п.) —
+  // часть тела/машины, а не Снаряжение: живут только на вкладке БОЙ
+  // (combatMeleeWeapons/combatRangedWeapons выше, уже включают их — equipped
+  // всегда true), сюда — ни строкой в списке, ни целью для установки мода.
+  const gearWeaponItems = weaponItems.filter(i => !i.getFlag?.("warhammer-dbc", "integralAttack"));
+
   const weaponModView = (i) => {
     const cat = i.system.category || "ranged";
     return {
@@ -612,18 +618,13 @@ export function buildGetData(actor) {
 
   // Цели установки (мемоизируем один раз): моды оружия → любое оружие;
   // моды брони → любая броня, а системы силовой брони — только «Силовая».
-  const weaponTargets = weaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
+  const weaponTargets = gearWeaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
   const armorTargetsAll   = armorItems.map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
   const armorTargetsPower = armorItems.filter(a => a.system.armorType === "power")
     .map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
 
-  context.gearWeapons = weaponItems.map(i => ({
+  context.gearWeapons = gearWeaponItems.map(i => ({
     id: i.id, name: i.name, equipped: i.system.equipped ?? false,
-    // Интегральная атака (Кислотный Плевок, Пинок Дредноута) — часть тела или
-    // машины: галочку «надето» шаблон делает недоступной, потому что снять её
-    // всё равно не дадут хуки (warhammer-dbc.mjs), а мёртвый на вид переключатель
-    // выглядел бы поломкой листа.
-    integralAttack: !!i.getFlag?.("warhammer-dbc", "integralAttack"),
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,
