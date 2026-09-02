@@ -21,6 +21,7 @@ import { vehicleHitLocation }                        from "../constants/vehicle.
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
+import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
@@ -495,9 +496,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
   const evasionPoolEntry = hit && defenderActor
     ? getEvasionPool(defenderActor, actor.uuid || "") : null;
+  // canRecoil (wdbc-16ss, Voltagheist Blast): банк можно пустить в Отскок
+  // вместо негации, но только от СТРЕЛКОВОЙ атаки (тот же !isMelee-гейт, что
+  // у обычной кнопки Отскока, см. recoil.mjs) и пока в этом Раунде ещё есть
+  // остаток дистанции — иначе диалог открывать не на что.
   const evasionPool = evasionPoolEntry
     ? { successes: evasionPoolEntry.successes,
-        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount) }
+        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount),
+        canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0 }
     : null;
 
   // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/

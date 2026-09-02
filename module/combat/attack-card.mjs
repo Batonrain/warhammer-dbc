@@ -244,6 +244,14 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
          💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
        </button>`
     : "";
+  // Пул → Отскок (wdbc-16ss, Voltagheist Blast): та же банковая валюта, но
+  // покупает открытие диалога Отскока (module/combat/recoil.mjs), а не
+  // негацию попаданий ЭТОЙ атаки — независимая кнопка рядом с poolBtn.
+  const poolRecoilBtn = pool && pool.canRecoil
+    ? `<button class="wh-pool-recoil-btn" type="button" data-attacker-uuid="${attackerUuid}">
+         🏃 Пул (${pool.successes} Усп.): Отскочить за 2 Усп.
+       </button>`
+    : "";
   return `
     <div class="roll-defense-section">
       <div class="roll-section-head">Защита цели <span class="roll-head-hint">— выберите токен защищающегося</span></div>
@@ -269,6 +277,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                title="Техника: Operate − Размер×10">Вираж</button>`
           : ""}
         ${poolBtn}
+        ${poolRecoilBtn}
       </div>
       ${note && (dodgeMod !== 0 || parryMod !== 0 || cannotDodge)
         ? `<div class="roll-defense-note">${note}</div>` : ""}

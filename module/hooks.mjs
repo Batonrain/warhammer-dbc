@@ -1,6 +1,6 @@
 import { _performDodge, _performParry, _performSprayCancel, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
-import { showRecoilDialog, performRecoil } from "./combat/recoil.mjs";
+import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
@@ -246,6 +246,19 @@ export function registerHooks() {
           forcedDefenceReroll: el.dataset.forceReroll || "",
           isMelee: el.dataset.melee === "1"
         });
+      });
+    });
+
+    // Пул Избегания → Отскок (wdbc-16ss, Voltagheist Blast): те же банковые
+    // Успехи, что снимают попадания (poolBtn выше), здесь вместо этого
+    // покупают открытие диалога Отскока — defender берётся по выбранному
+    // токену (тот же приём, что у wh-pool-spend-btn), а не по карточке.
+    html.querySelectorAll(".wh-pool-recoil-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        await performPoolRecoil(actor, ev.currentTarget.dataset.attackerUuid || "");
       });
     });
 
