@@ -46,17 +46,26 @@ import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
+import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../combat/action-economy.mjs";
 import { measureTokens, meleeContactCount, hasHighGround } from "../combat/tactical-map.mjs";
 import { rangeBandKey, rangeBandBoundaries }   from "../rules/tactical-map.mjs";
 import { getTerrainInfoForToken }             from "../regions/difficult-terrain.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { hasDeathDance, deathDanceNextCost, markDeathDanceUsed } from "../combat/death-dance.mjs";
+import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
+import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
 // в showAttackDialog/showAttackDialogNoWeapon ниже.
 const FULL_ATTACK_CAPABILITY = "technique.baseFullAttack";
+
+// Локус Неизбежности (стр. 30, wdbc-smc): раз в Раунд рукопашная атака может
+// попасть автоматически с 1 Успехом (вместо броска) — штраф −10 до начала
+// следующего Хода ставится флагом, читает module/rules/sources.mjs
+// (daemonInevitability), снимает action-economy.mjs::resetActionEconomy.
+const AUTO_HIT_CAPABILITY = "autoHit.melee.oncePerRound";
 
 /**
  * Всё, что игрок отметил в окне, — одним чтением формы.
@@ -152,6 +161,7 @@ function readAttackForm(form, ammoConds) {
     ruleMods, halvePenalty,
     allOut,
     extraBonus: allOut ? 20 : 0,
+    autoHit: on("#atk-autohit"),
     shortRange: on("#atk-shortrange"),
     // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
     // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
@@ -353,6 +363,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const forcedDefenceReroll = (resolvedAttack.rerolls || [])
     .find(r => r.who === "target")?.mode || "";
 
+  // Один Против Сотни (wdbc-u0by): авто-обнаружение, не чекбокс — цель Орда
+  // проверяется программно (game.user.targets), самоотчёт тут не нужен.
+  const oneVsHundred = oneAgainstAHundredAdvantage(actor, attackCtx.targetActor?.type === "horde");
+  const oneVsHundredHtml = oneVsHundred
+    ? `<div class="roll-defense-note">⚔️ Один Против Сотни: Преимущество на атаку (цель — Орда)</div>`
+    : "";
+
   // Стойка цели (стр. 15, Защитная/Прикрывающая) меняет ЧУЖИЕ атаки против
   // неё — читается с targetActor, а не с атакующего, и складывается прямо в
   // wpAttackMod (тот же слот, что Легион/Арсенал ниже).
@@ -383,6 +400,17 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
     : "";
 
+  // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
+  // АТАКУЮЩЕМ (module/combat/bow-to-audience.mjs), не на цели — бонус/штраф
+  // действует только пока бьёт именно отметивший, до начала его следующего
+  // Хода (снимается hooks.mjs::updateCombat, тот же такт, что Dread Wail).
+  const bowMark = actor.getFlag?.("warhammer-dbc", "bowToAudienceMark");
+  const bowMarked = !!(bowMark?.targetIds?.includes(attackCtx.targetActor?.id));
+  const bowMarkedMod = bowMarked ? (Number(bowMark.bonus) || 0) : 0;
+  const bowMarkedBadge = bowMarkedMod
+    ? `<span class="atk-training-warn" title="Поклон Публике: цель отмечена, действует до конца этого эффекта">🎭 Поклон Публике (+${bowMarkedMod})</span>`
+    : "";
+
   // Беспомощная цель: рукопашная (и выстрел в упор/в рукопашной, стр. ...) бьёт
   // автоматически и удваивает урон до Поглощения; прочая стрельба — только
   // +30. Рукопашный случай безусловен (badge), стрелковый «в упор/в рукопашной»
@@ -402,7 +430,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -441,6 +469,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const fullAttackForced = isMelee
     && hasRuleFlag(actor, FULL_ATTACK_CAPABILITY)
     && isRoundCapabilityAvailable(actor, FULL_ATTACK_CAPABILITY);
+
+  // Локус Неизбежности: галочка предлагается, только если ещё не потрачена
+  // в этом Раунде — сама трата решается игроком (галочка), не молча.
+  const autoHitAvailable = isMelee
+    && hasRuleFlag(actor, AUTO_HIT_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, AUTO_HIT_CAPABILITY);
   // forceBase — нейтральная стартовая База вместо персистентной (Контратака,
   // стр. 12: это атака со штрафом −10, персистентная «Полная Атака» +30 сюда
   // протекать не должна). Игрок волен сменить её в окне, как обычно.
@@ -646,7 +680,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // тот же приём, что stanceWs/FULL_ATTACK_CAPABILITY выше в этом файле.
     // «...и все тесты в Борьбе» (module/combat/grapple.mjs, Сжать/Метнуть)
     // НЕ подключено — отдельная точка входа (_showContestDialog), не эта.
-    const maneuverCapBonus = (isMelee && maneuverKey === "grapple" && hasRuleFlag(actor, "mutation.tentacle")) ? 20 : 0;
+    // Субмутация 9 «Изменчивое» (wdbc-2ynk): пока щупальце временно в форме
+    // руки — бонусу нечем помогать приёму Захват.
+    const maneuverCapBonus = (isMelee && maneuverKey === "grapple"
+      && hasRuleFlag(actor, "mutation.tentacle") && !tentacleBonusSuppressed(actor)) ? 20 : 0;
     const maneuverBon = isMelee ? (mDef.wsBonus ?? 0) + maneuverCapBonus : 0;
 
     const pIdx = sel.profIdx ?? profIdx;
@@ -654,8 +691,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
     // Избегания ЦЕЛИ против ЭТОЙ атаки — Приём и Стойка складываются (стр.
     // 14-15): например Взмах (−10 Уклонение) + Агрессивная (−10 Уклонение).
-    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0);
-    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0);
+    // Поклон Публике (wdbc-1rno): «равный штраф на их физические Избегания» —
+    // тот же bowMarkedMod, что уже прибавлен атакующему в wpAttackMod выше
+    // (замыкание, bowMark читается один раз на актора-атакующего).
+    const targetDodgeMod = (mDef.targetDodgeMod ?? 0) + (stDef.targetDodgeMod ?? 0) - bowMarkedMod;
+    const targetParryMod = (mDef.targetParryMod ?? 0) + (stDef.targetParryMod ?? 0) - bowMarkedMod;
 
     // Защитная Стойка без щита (стр. 15) — персонаж не может атаковать вовсе.
     const blocked = isMelee && stanceKey === "defensive" && stDef.noAttackWithoutShield && !hasShieldEquipped;
@@ -740,7 +780,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -825,12 +865,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Точное (Precise): −20 к штрафу Избирательных по сочленениям и глазам
   const csMod = wp.calledShotMod || 0;
+  // Локус Подношения (стр. 31, wdbc-smc): штраф Избирательной в голову меньше на 20.
+  const headPenalty = -20 + (hasRuleFlag(actor, "penalty.calledShot.head.reduce20") ? 20 : 0);
+  const headPenaltyLabel = headPenalty === 0 ? "0" : `−${-headPenalty}`;
   let aimTargets = [
     { value: "",       label: "— Без прицела —",      penalty:   0 },
     { value: "torso",  label: "Торс (−10)",            penalty: -10 },
     { value: "leg",    label: "Нога (−15)",             penalty: -15 },
     { value: "arm",    label: "Рука (−20)",             penalty: -20 },
-    { value: "head",   label: "Голова (−20)",           penalty: -20 },
+    { value: "head",   label: `Голова (${headPenaltyLabel})`, penalty: headPenalty },
     { value: "joint",  label: "Сочленение/Шея",         penalty: -40, precise: true },
     { value: "eye",    label: "Глаз",                   penalty: -50, precise: true }
   ];
@@ -891,17 +934,26 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const rngAdd  = ammoSys?.rangeMod ?? 0;
     const effRng  = Math.round(rng * rngMult) + rngAdd;
     const bounds  = rangeBandBoundaries(effRng);
+    // У короткоствольного оружия (Rng ≤ 6) «короткая»/«боевая» вырождены упором
+    // (см. rangeBandBoundaries) — их границы совпадают, строку не показываем,
+    // иначе игрок увидит бессмысленное "Короткая: 3–3м".
+    const zones = [
+      { cls: "atr-pb", label: "В упор",   mod: "+30", lo: 0.5,            hi: bounds.pointBlank },
+      { cls: "atr-sh", label: "Короткая", mod: "+10", lo: bounds.pointBlank, hi: bounds.short },
+      { cls: "atr-cb", label: "Боевая",   mod: "±0",  lo: bounds.short,      hi: bounds.combat },
+      { cls: "atr-lg", label: "Дальняя",  mod: "−10", lo: bounds.combat,     hi: bounds.long },
+      { cls: "atr-ex", label: "Экстрем.", mod: "−30", lo: bounds.long,       hi: bounds.extreme }
+    ].filter(z => z.hi > z.lo);
+    const zonesHtml = zones
+      .map(z => `<span class="atr-zone ${z.cls}">${z.label}: ${z.lo}–${z.hi}м → <b>${z.mod}</b></span>`)
+      .join("\n          ");
     rangeInfoHtml = `
       <div class="atk-range-info">
         <div class="atk-range-title">
           📏 Дистанции (Rng = ${rng}м${rngMult !== 1 ? ` ×${rngMult}` : ""}${rngAdd !== 0 ? ` ${rngAdd >= 0 ? "+" : ""}${rngAdd}м` : ""} = ${effRng}м)
         </div>
         <div class="atk-range-grid">
-          <span class="atr-zone atr-pb">В упор: 0,5–${bounds.pointBlank}м → <b>+30</b></span>
-          <span class="atr-zone atr-sh">Короткая: ${bounds.pointBlank}–${bounds.short}м → <b>+10</b></span>
-          <span class="atr-zone atr-cb">Боевая: ${bounds.short}–${bounds.combat}м → <b>±0</b></span>
-          <span class="atr-zone atr-lg">Дальняя: ${bounds.combat}–${bounds.long}м → <b>−10</b></span>
-          <span class="atr-zone atr-ex">Экстрем.: ${bounds.long}–${bounds.extreme}м → <b>−30</b></span>
+          ${zonesHtml}
         </div>
         <div class="atk-range-note" style="font-size:0.82em;opacity:0.8;">В ближнем бою — дистанция в упор, но модификатор ±0.</div>
       </div>`;
@@ -969,6 +1021,22 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     m.value  = 0;
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
+  }
+  // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
+  // тесты использования. wProps хранит текст рейтинга (не число, см. aspect
+  // в constants/weapon-properties.mjs — rating:true, ratingText:true).
+  // Галочка, не auto: R3-модификация оружия снимает штраф для не-Асуриан/
+  // Иннари, а отдельного реестра «установленных модификаций» под этот
+  // конкретный случай в системе нет (weaponMod — свободные предметы ГМа) —
+  // проще снять галочку руками, чем заводить новый распознаваемый эффект.
+  const aspectText = wProps.find(p => p.key === "aspect")?.rating;
+  if (aspectText) {
+    const hasPath = actorHasAspectPath(actor.system, aspectText);
+    commonMods.push({
+      label: `Аспект: нет Пути «${aspectText}»`, value: -30,
+      autoCheck: !hasPath,
+      note: hasPath ? "Путь есть — снимите галочку" : "снимите галочку, если на оружии стоит модификация R3"
+    });
   }
   // Зенитное (wdbc-z56a, стр. 166): «игнорирует все штрафы на попадание за
   // скорость цели, вроде –20 за Бег» — гасит именно эту строку, не отдельный
@@ -1363,6 +1431,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       ${ammoCondHtml}
       ${ruleMods.html}
       ${ruleRerolls.html}
+      ${oneVsHundredHtml}
       ${diceModeHtml()}
 
       <details class="av-adv">
@@ -1381,6 +1450,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             <!-- Быстрая/Молниеносная Атака переехали в Приём (стр. 14, требуют
                  соответствующий Талант) — см. MELEE_MANEUVERS.swift/lightning. -->
             <label class="attack-mod-check"><input type="checkbox" id="atk-allout"/><span>Атака всем телом (+20, теряет Уклонение)</span></label>
+            ${autoHitAvailable ? `<label class="attack-mod-check"><input type="checkbox" id="atk-autohit"/><span>Локус Неизбежности: авто-попадание (1 Успех, −10 до след. Хода)</span></label>` : ""}
           </div>
         </div>
       </details>
@@ -1414,6 +1484,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель раскрыта",      value: exposedMod },
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
+      { label: "Поклон Публике",     value: bowMarkedMod },
       { label: "Шаг за шагом",       value: stepByStepMod },
       { label: "База",               value: sel.baseBon },
       { label: "Приём",              value: sel.maneuverBon },
@@ -1506,9 +1577,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
           // Экономика действий (стр. 12, wdbc-niv7): рукопашная атака тратит
           // ОД по actionType выбранной Базы (MELEE_BASES) — Натиск/Полная
-          // Атака и т.п. уже несут это поле. Стрелковые режимы (rofModes)
-          // пока не несут своего actionType (нерешённая часть wdbc-niv7,
-          // не связанная с Движением) — для них ОД сознательно не тратятся.
+          // Атака и т.п. уже несут это поле. Стрелковые режимы (стр. 32,
+          // раздел «Стрельба»): Одиночный Выстрел/Короткая/Длинная/Широкая
+          // Очередь — все Полудействие; Стрельба на Подавление — Полное
+          // действие (Караул в этом диалоге не выбирается).
           // Запрещённый Приём (Cheap Shot, стр. 166, wdbc-hmcx): вместо ОД
           // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
           // "standard" (resolveSelection), здесь остаётся только сменить
@@ -1519,7 +1591,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               return false;
             }
           } else {
-            const apCost = isMelee ? apCostForActionType(sel.bDef.actionType) : 0;
+            const apCost = isMelee
+              ? apCostForActionType(sel.bDef.actionType)
+              : apCostForActionType(f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
             if (!await spendActionPoints(actor, apCost)) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
@@ -1538,6 +1612,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
           // Локус Сокрушения тратится реальным броском — отменённая или
           // закрытая атака способность не расходует (см. meleeBaseKey выше).
           if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
+
+          // Локус Неизбежности — тем же приёмом: тратится реальным броском,
+          // не открытием окна. Штраф −10 ставится сразу же (до начала
+          // следующего Хода актора, снимает action-economy.mjs).
+          const autoHitUsed = autoHitAvailable && f.autoHit;
+          if (autoHitUsed) {
+            await markRoundCapabilityUsed(actor, AUTO_HIT_CAPABILITY);
+            await actor.setFlag("warhammer-dbc", "inevitabilityPenalty", true);
+          }
 
           // Приём выбран в этом же окне — свежий techniqueOpts под конкретный
           // выбор (targetDodgeMod/targetParryMod/chatNote и т.п. зависят от него).
@@ -1563,6 +1646,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             aimTargets.find(t => t.value === f.aimVal),
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
+              fixedSuccessDeg: autoHitUsed ? 1 : undefined,
               // Быстрая/Молниеносная — теперь Приём (стр. 14), а не отдельная
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
@@ -1575,7 +1659,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               // combat/attack.mjs. crit — расширение диапазона Критического
               // Успеха/Провала тем же правилом (kind:"critRangeMod"); сам
               // натуральный диапазон 1-5/96-100 применяется уже в attack.mjs.
-              reroll: f.reroll,
+              reroll: f.reroll || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined),
               crit: resolvedAttack.crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,
@@ -1843,6 +1927,15 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
     } catch (e) { console.error("Безоружный урон:", e); }
   }
 
+  // Доп. секция при попадании (wdbc-w8ws, Раковое Исцеление и подобные
+  // безоружные касания с эффектом сверх урона) — сырой HTML от вызывающего
+  // кода, обычно кнопка с data-*-uuid, обрабатываемая своим делегированным
+  // слушателем в hooks.mjs (тот же приём, что у wh-apply-dmg-btn: клик может
+  // прийти от другого клиента, после того как цель отыграет Уклонение/
+  // Парирование выше). НЕ вызывается автоматически из этой функции — она
+  // решает только «было ли попадание», прикладной эффект остаётся за кнопкой.
+  const hitExtraSection = (hit && techDef.hitSectionHtml) ? techDef.hitSectionHtml : "";
+
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: actor }),
     content: `
@@ -1865,6 +1958,7 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
         ${helplessNote}
         ${unarmedDmgSection}
         ${defButtons}
+        ${hitExtraSection}
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
   }, rollMode));

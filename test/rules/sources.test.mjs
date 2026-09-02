@@ -27,7 +27,23 @@ describe("источник homeworld", () => {
   // а расчёт продолжал их учитывать.
   it("подсистема «Происхождения» выключена — источник пуст", () => {
     HOMEWORLD_BY_KEY.__test = { rules: [RULE] };
-    globalThis.game = { settings: { get: () => false } };
+    globalThis.game = { ...globalThis.game, settings: { get: () => false } };
     expect(source("homeworld")(actorWith("__test"))).toEqual([]);
+  });
+});
+
+describe("источник daemonInevitability (Локус Неизбежности, wdbc-smc)", () => {
+  const actorWithFlag = value => ({ getFlag: (ns, key) => (key === "inevitabilityPenalty" ? value : undefined) });
+
+  it("флаг не стоит — источник пуст", () => {
+    expect(source("daemonInevitability")(actorWithFlag(undefined))).toEqual([]);
+  });
+
+  it("флаг стоит — штраф −10 target:all", () => {
+    const rules = source("daemonInevitability")(actorWithFlag(true));
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "all", value: -10, label: "Локус Неизбежности: штраф после авто-попадания" }
+    ]);
   });
 });

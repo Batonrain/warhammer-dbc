@@ -2,6 +2,7 @@
 
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
+import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
@@ -42,6 +43,8 @@ import { condIconHTML, CONDITION_ICONS }            from "../constants/condition
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
+import { addictionItems, isAddictionUnsatisfied, addictionStatusLabel,
+         addictionSubstanceLabel }                    from "../rules/addiction.mjs";
 import { raceMatches }                               from "../rules/race.mjs";
 import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
@@ -124,36 +127,39 @@ for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
 // ── Навык ─────────────────────────────────────────────────────────────────────
 
 /**
- * Краткая подсказка к Навыку для тултипа наведения на вкладке ПОКАЗАТЕЛИ.
+ * Подсказка к Навыку для тултипа наведения на вкладке ПОКАЗАТЕЛИ.
  *
- * Прозы «что за Навык и когда его применяют» по каждому Навыку в системе
- * нет: в packs-src/books/core.json описания идут одним HTML-блоком на всю
- * страницу книги, и абзацы описания перемешаны со строками сводной таблицы
- * (см. doombc-book-text-extraction) — программно растащить их по Навыкам
- * значило бы рисковать приписать чужое описание не тому Навыку. Пока такой
- * чистый источник не заведён отдельной работой, подсказка собирается из
- * того, что система УЖЕ проверенно знает про Навык: его базовая
- * Характеристика и Склонность — та же пара, что решает цену покупки на
- * вкладке РАЗВИТИЕ (aptitudeCat ниже).
+ * Механическая шапка (Бросок/Основа/Склонность) — то, что система УЖЕ
+ * проверенно знает про Навык: та же пара Характеристика+Склонность, что
+ * решает цену покупки на вкладке РАЗВИТИЕ (aptitudeCat ниже). Ниже неё —
+ * краткое книжное описание из SKILL_DESCRIPTIONS (Основная книга, стр.
+ * 57-61, «ОПИСАНИЯ НАВЫКОВ»), собранное вручную по заголовкам отдельно на
+ * каждый Навык — см. комментарий в constants/skill-descriptions.mjs, откуда
+ * оно берётся, и почему автоматический разбор книжного HTML для этого не
+ * годился (doombc-book-text-extraction).
  *
  * `rollLabel` — то, что раньше несло атрибут `title` («Бросок: …»): оба текста
  * сведены в один data-tooltip, чтобы не показывать на одном элементе сразу
  * два всплывающих окна — нативное по title и своё, Foundry-шное (см. вывод
  * ниже, откуда взят сам паттерн data-tooltip: horde-sheet.hbs, tab-social.hbs).
+ * data-tooltip рендерится Foundry как sanitized HTML (TooltipManager,
+ * foundry.utils.cleanHTML), поэтому `<br>` для переноса строки допустим.
  */
-function skillTip(def, rollLabel) {
+function skillTip(key, def, rollLabel) {
   if (!def) return "";
   const ch   = CHARACTERISTICS[def.char];
   const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
-  return `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
+  const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
+  const desc = SKILL_DESCRIPTIONS[key];
+  return desc ? `${head}<br><br>${desc}` : head;
 }
 
 export function buildSkillDisplay(key, system) {
   const def = SKILLS_DEF[key];
   const sk  = system.skills?.[key] || {};
   return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained",
-    tip: skillTip(def, def.label) };
+    tip: skillTip(key, def, def.label) };
 }
 
 // ── Данные щитов ──────────────────────────────────────────────────────────────
@@ -434,7 +440,7 @@ export function buildGetData(actor) {
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
-        tip:        skillTip(def, `${def.label}: ${entry.specialty}`)
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`)
       }))
     });
   }
@@ -579,8 +585,20 @@ export function buildGetData(actor) {
   // с выпадашкой целей для инлайн-установки прямо из окна снаряжения.
   const weaponItems = allItems.filter(i => i.type === "weapon");
   const armorItems  = allItems.filter(i => i.type === "armor");
-  const weaponIds   = new Set(weaponItems.map(w => w.id));
   const armorIds    = new Set(armorItems.map(a => a.id));
+
+  // Интегральные атаки (Кулак, Кислотный Плевок, Пинок Дредноута и т.п.) —
+  // часть тела/машины, а не Снаряжение: живут только на вкладке БОЙ
+  // (combatMeleeWeapons/combatRangedWeapons выше, уже включают их — equipped
+  // всегда true), сюда — ни строкой в списке, ни целью для установки мода.
+  const gearWeaponItems = weaponItems.filter(i => !i.getFlag?.("warhammer-dbc", "integralAttack"));
+  // weaponIds — носители МОДОВ оружия (gearWeaponModsFree ниже): именно
+  // gearWeaponItems, не все weaponItems. Иначе мод, установленный на
+  // интегральную атаку, считался бы «носитель есть» (integralAttack всё ещё
+  // в weaponItems) и не попадал бы в список свободных — а строки самого
+  // носителя в таблице Снаряжения уже нет (gearWeaponItems выше), значит мод
+  // пропадал бы с листа насовсем, снять его было бы нельзя.
+  const weaponIds   = new Set(gearWeaponItems.map(w => w.id));
 
   const weaponModView = (i) => {
     const cat = i.system.category || "ranged";
@@ -612,18 +630,13 @@ export function buildGetData(actor) {
 
   // Цели установки (мемоизируем один раз): моды оружия → любое оружие;
   // моды брони → любая броня, а системы силовой брони — только «Силовая».
-  const weaponTargets = weaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
+  const weaponTargets = gearWeaponItems.map(w => ({ id: w.id, name: w.name, equipped: w.system.equipped ?? false }));
   const armorTargetsAll   = armorItems.map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
   const armorTargetsPower = armorItems.filter(a => a.system.armorType === "power")
     .map(a => ({ id: a.id, name: a.name, equipped: a.system.equipped ?? false }));
 
-  context.gearWeapons = weaponItems.map(i => ({
+  context.gearWeapons = gearWeaponItems.map(i => ({
     id: i.id, name: i.name, equipped: i.system.equipped ?? false,
-    // Интегральная атака (Кислотный Плевок, Пинок Дредноута) — часть тела или
-    // машины: галочку «надето» шаблон делает недоступной, потому что снять её
-    // всё равно не дадут хуки (warhammer-dbc.mjs), а мёртвый на вид переключатель
-    // выглядел бы поломкой листа.
-    integralAttack: !!i.getFlag?.("warhammer-dbc", "integralAttack"),
     weaponClass: WEAPON_CLASSES[i.system.weaponClass] ?? i.system.weaponClass,
     weaponType:  i.system.weaponType,
     damage:      i.system.damage,
@@ -827,6 +840,19 @@ export function buildGetData(actor) {
           pen: st.pen, scope: v.scope,
           pips: [1, 2, 3].map(n => ({ on: n <= val })),
           alert: val > 0, crit: val >= VITAL_MAX_STAGE
+        };
+      }),
+      // Зависимость (мутация «Addiction», wdbc-5inv) — одна строка на каждый
+      // предмет-носитель (обычно один). Пусто, если мутации нет вовсе — блок
+      // на листе тогда не рисуется (см. tab-effects.hbs).
+      dependencies: addictionItems(actor).map(item => {
+        const worldTime = game.time?.worldTime ?? 0;
+        const unsatisfied = isAddictionUnsatisfied(item, worldTime);
+        return {
+          itemId: item.id,
+          substance: addictionSubstanceLabel(item) || "(не определено)",
+          status: addictionStatusLabel(item, worldTime),
+          unsatisfied
         };
       })
     };
@@ -1044,8 +1070,10 @@ export function buildGetData(actor) {
       name:     i.name,
       subName:  sub.name || "",
       godLabel: i.system.god ? (GOD_LABEL[i.system.god] || i.system.god) : "",
-      benefit:  i.system.benefit || i.system.description || "",
-      subText:  sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : ""
+      benefit:    i.system.benefit || i.system.description || "",
+      subText:    sub.name ? `${sub.label} — ${sub.name}: ${sub.text}` : "",
+      activatable: !!i.system.activatable,
+      active:      !!i.system.active
     };
   });
 

@@ -95,3 +95,36 @@ describe("hudData: гейт кнопки ОГОНЬ/УДАР (wdbc-jpls, тот 
     expect(hand.fireGate.disabled).toBe(false);
   });
 });
+
+describe("hudData: наручное/наплечное оружие (Independent/Wrist) — регрессия pr-reviewer перед пушем wdbc-mzno", () => {
+  it("Болтшторм-перчатка (wrist, 0 занятости руки) остаётся в слоте руки с магазином, не в лотке «Безоружный бой»", () => {
+    const gauntlet = {
+      id: "gauntlet1", name: "Болтшторм Перчатка", type: "weapon",
+      system: {
+        weaponClass: "pistol", equipped: true,
+        magazineCur: 48, magazineMax: 48,
+        weaponProps: [{ key: "wrist" }]
+      },
+      getFlag: (scope, key) => (key === "weaponHand" ? "right" : undefined)
+    };
+    const actor = hudActor({ items: [gauntlet] });
+    const data = hudData(actor);
+    const main = data.hands.find(h => h.slot === "main");
+    expect(main.empty).toBe(false);
+    expect(main.id).toBe("gauntlet1");
+    expect(main.clipMax).toBe(48);
+    expect(data.zeroHand.find(z => z.id === "gauntlet1")).toBeUndefined();
+  });
+
+  it("интегральная атака с нулевым хватом (например, укус) — в лотке «Безоружный бой», не в слоте руки", () => {
+    const bite = {
+      id: "bite1", name: "Укус", type: "weapon",
+      system: { weaponClass: "melee", equipped: true, grips: "Зуб", weaponProps: [] },
+      getFlag: (scope, key) => (key === "integralAttack" ? true : undefined)
+    };
+    const actor = hudActor({ items: [bite] });
+    const data = hudData(actor);
+    expect(data.hands.find(h => h.slot === "main").empty).toBe(true);
+    expect(data.zeroHand.map(z => z.id)).toContain("bite1");
+  });
+});

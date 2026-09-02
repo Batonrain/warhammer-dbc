@@ -14,7 +14,8 @@
 
 import { isDreadnoughtPilot, dreadnoughtOf, sanityRecoveryTalentsOf,
          hasElectrostimulators, electrostimulatorBoost,
-         hasFerumInfernus, ferumInfernusThreshold, ferumInfernusActive } from "../../rules/dreadnought.mjs";
+         hasFerumInfernus, ferumInfernusThreshold, ferumInfernusActive,
+         SARCOPHAGUS } from "../../rules/dreadnought.mjs";
 
 /**
  * Короткие метки сработавших порогов для чипов панели — полное описание
@@ -59,6 +60,19 @@ export function dreadnoughtPanelContext(actor, actors = []) {
     active: ferumInfernusActive(value, infTotal)
   } : null;
 
+  // Раны/Аблативные против варп-оружия — уже посчитаны в prepareDerivedData
+  // (module/rules/character.mjs, wdbc-drn): effectiveMax/sarcophagusWarpWounds
+  // не зависят от мира, только warpWounds.available (нечего лечить/восполнять)
+  // проверяется здесь же, для галочки в шаблоне.
+  const w = actor.system?.wounds ?? {};
+  const woundsValue = Number(w.value) || 0;
+  const effectiveMax = Number(w.effectiveMax ?? w.max) || 0;
+  const warpWoundsRaw = actor.system?.sarcophagusWarpWounds ?? {};
+  const warpWounds = (Number(warpWoundsRaw.max) || 0) > 0 ? {
+    value: Number(warpWoundsRaw.value) || 0,
+    max: Number(warpWoundsRaw.max) || 0
+  } : null;
+
   return {
     sanityAvailable: true,
     sanity: {
@@ -77,6 +91,19 @@ export function dreadnoughtPanelContext(actor, actors = []) {
       // Гибернация (стр. 57) — основной способ восстановить Здравомыслие:
       // раз в полную неделю в ней 1d10, пока флаг стоит (тикает кнопка листа).
       hibernation: { active: !!actor.system?.hibernation?.active }
+    },
+    // Прочие числовые пункты Саркофага (стр. 57, wdbc-drn), не связанные со
+    // Здравомыслием — отдельный блок, чтобы не раздувать sanity выше не по теме.
+    sarcophagus: {
+      auspexRange: SARCOPHAGUS.auspexRange,
+      poisonBonus: SARCOPHAGUS.poisonBonus,
+      woundsEffectiveMax: effectiveMax,
+      // Кнопка лечения (1 Рана/10 мин, стр. 57) видна, только если реально
+      // есть что лечить — тикать вручную, тот же принцип, что Ферум Инфернус.
+      healAvailable: woundsValue < effectiveMax,
+      warpWounds,
+      interred: !!actor.system?.sarcophagusInterred,
+      helplessNow: !!actor.system?.sarcophagusHelplessNow
     }
   };
 }

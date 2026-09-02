@@ -19,7 +19,7 @@ export class MutationData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, NumberField, ObjectField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ObjectField, SchemaField, BooleanField } = foundry.data.fields;
     return {
       description: new HTMLField({ initial: "", label: "Описание" }),
       notes:       new HTMLField({ initial: "", label: "Заметки" }),
@@ -28,6 +28,14 @@ export class MutationData extends foundry.abstract.TypeDataModel {
       bookSource:  new StringField({ initial: "", label: "Книга-источник" }),
       roll:        new StringField({ initial: "", label: "Бросок по таблице" }),
       god:         new StringField({ initial: "", label: "Бог" }),
+      // Включаемая на время способность (wdbc-egll) — тот же паттерн, что у
+      // armorMod (module/data/item/armor-mod.mjs): большинство Мутаций/Даров
+      // действуют постоянно, пока предмет на акторе (isItemActive не завёл им
+      // отдельного case), но у части книжный текст — «полудействие/реакция,
+      // до конца боя/сцены/раунда» (Живое Оружие и подобные). activatable:false
+      // по умолчанию — остальные ~180 уже мехнизированных Мутаций не трогает.
+      activatable: new BooleanField({ initial: false, label: "Включаемая" }),
+      active:      new BooleanField({ initial: false, label: "Включена" }),
       // В template.json объявлено не было, но лежит у трёх мутаций пака и
       // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
       requirement: new StringField({ initial: "", label: "Требование" }),
@@ -44,7 +52,17 @@ export class MutationData extends foundry.abstract.TypeDataModel {
         roll:  new NumberField({ initial: 0, integer: true, label: "Бросок d10" }),
         shift: new NumberField({ initial: 0, integer: true, label: "Сдвиг (⅓Inf.b)" }),
         total: new NumberField({ initial: 0, integer: true, label: "Итог броска" })
-      }, { label: "Субмутация" })
+      }, { label: "Субмутация" }),
+      // Трекер периодической Зависимости (мутация «Addiction», стр. 440-452;
+      // wdbc-5inv) — момент последнего утоления по game.time.worldTime и
+      // текст объекта зависимости (авто из submutation.name, если строка её
+      // называет однозначно; иначе вписывается вручную — см. rules/addiction.mjs).
+      // Поле есть у всех Мутаций (как submutation выше), используется только
+      // теми, кто несёт capabilityKey "mutation.addiction".
+      dependency: new SchemaField({
+        substance:     new StringField({ initial: "", label: "Объект зависимости" }),
+        lastSatisfied: new NumberField({ initial: null, nullable: true, integer: true, label: "Последнее утоление (worldTime)" })
+      }, { label: "Зависимость" })
     };
   }
 

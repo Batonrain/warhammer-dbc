@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, fakeForm, listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
 import { activateConditionsListeners, addFatigue, removeCondition, removeFatigue,
          fatigueSleep, setConditionLevel, fatiguePenalty,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
+import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
 function makeActor(options = {}) {
   const updates = [];
@@ -62,6 +63,44 @@ describe("fatiguePenalty", () => {
   it("Стойкость от Усталости не страдает в любом случае", () => {
     expect(fatiguePenalty(makeActor({ fatigue: 9 }), "t")).toBe(0);
   });
+
+  // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от
+  // Усталости» — полный иммунитет через живой capability-грант mutation.feelsNoPain.
+  it("mutation.feelsNoPain — штраф не применяется вообще, при любой Усталости", () => {
+    const a = makeActor({ fatigue: 9 });
+    a.items = [{
+      id: "mut1", name: "Feels No Pain / Не Чувствует Боли", type: "mutation",
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "mutation.feelsNoPain", label: "" }
+      ] }] } }
+    }];
+    expect(fatiguePenalty(a, "ws")).toBe(0);
+  });
+
+  // Desiccated / Иссушенный (wdbc-1rno): «Усталость накладывает штраф −20
+  // вместо обычного −10» — то же самое ранее срабатывание, что и у Feels No
+  // Pain, но удваивает штраф вместо иммунитета.
+  it("mutation.desiccated — штраф −20 вместо −10", () => {
+    const a = makeActor({ fatigue: 1 });
+    a.items = [{
+      id: "mut2", name: "Desiccated / Иссушенный", type: "mutation",
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "mutation.desiccated", label: "" }
+      ] }] } }
+    }];
+    expect(fatiguePenalty(a, "ws")).toBe(-20);
+  });
+
+  it("без Усталости даже с Desiccated — штрафа всё равно нет", () => {
+    const a = makeActor({ fatigue: 0 });
+    a.items = [{
+      id: "mut2", name: "Desiccated / Иссушенный", type: "mutation",
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "mutation.desiccated", label: "" }
+      ] }] } }
+    }];
+    expect(fatiguePenalty(a, "ws")).toBe(0);
+  });
 });
 
 describe("fatigue controls", () => {
@@ -96,6 +135,34 @@ describe("fatigue controls", () => {
       "system.fatigue.value": 6,
       "system.fatigue.max": 7,
       "system.conditions.unconscious": false
+    });
+  });
+
+  describe("sarcophagus.immuneBleedingFatigue (wdbc-drn)", () => {
+    const saved = getRuleSources();
+    afterEach(() => {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    });
+
+    it("пилот Саркофага не набирает Усталость ни от какого источника", async () => {
+      clearRuleSources();
+      registerRuleSource("test", () => [
+        { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "sarcophagus.immuneBleedingFatigue" }] }
+      ]);
+      const a = makeActor({ fatigue: 0, tBonus: 4, wpBonus: 3 });
+      await addFatigue(a, 1);
+
+      expect(a.updates).toHaveLength(0);
+      expect(a.system.fatigue.value).toBe(0);
+    });
+
+    it("без возможности — Усталость набирается как обычно", async () => {
+      clearRuleSources();
+      const a = makeActor({ fatigue: 0, tBonus: 4, wpBonus: 3 });
+      await addFatigue(a, 1);
+
+      expect(a.updates[0]).toMatchObject({ "system.fatigue.value": 1 });
     });
   });
 

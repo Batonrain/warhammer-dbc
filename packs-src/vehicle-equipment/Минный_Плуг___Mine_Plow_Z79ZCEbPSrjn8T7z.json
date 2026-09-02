@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "system": {
     "description": "Вынесенный вперёд плуг вспахивает землю перед машиной, подрывая мины. Мины, через которые машина проезжает, наносят попадание по лобовой броне, а не днищу. Даёт +20 аблативной Структуры против мин. Также даёт те же эффекты, что и Бульдозерный Отвал.",
-    "notes": "",
+    "notes": "wdbc-bxw6: пул system.structure.ablative/.ablativeMax (актор Техники, data/actor/vehicle.mjs) — механика −1 заряда за попадание уже реализована (combat/vehicle.mjs::applyDamageToVehicle, флаг damageData.fromMine). Само снаряжение Техники без автоматики (VehicleGearData) — пока плуг активен, выставлять structure.ablativeMax=20/structure.ablative=20 вручную (как и все прочие эффекты vehicleGear); детектора «это была мина» в конвейере урона нет — fromMine ставит GM при применении урона.",
     "availability": 2,
     "quality": "common",
     "active": true

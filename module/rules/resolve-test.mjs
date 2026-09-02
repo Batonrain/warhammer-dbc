@@ -23,6 +23,7 @@ import { isKnownEffectKind } from "./effects.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { itemHasName, sizeOf } from "./predicates.mjs";
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
+import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
 
 /**
  * Социальный ли навык. Своего перечня здесь нет намеренно: признак уже лежит
@@ -132,7 +133,21 @@ function effectAppliesTo(target, ctx) {
   // диалога) — общего ctx.kind/ctx.skill на них нет, поэтому вызывающий код
   // сам проставляет ctx.morale=true там, где RAW называет тест тестом Морали.
   if (scope === "morale") return ctx.morale === true;
+  // Встречный тест демона против Экзорцизма/Чистой Демонологии (Локус Цепей,
+  // wdbc-smc, daemon-sheet.mjs::_rollVsExorcism) — узкий вид теста, а не любой
+  // "opposed": книга даёт бонус именно этому конкретному тесту, не всем
+  // встречным тестам подряд.
+  if (scope === "vsexorcism") return ctx.kind === "vsExorcism";
   if (scope === "social") return isSocialSkill(ctx.skill);
+  // Любой тест НАВЫКА (обычного или группового), но не Характеристики — тест
+  // характеристики не несёт ни ctx.skill, ни ctx.group (см. коммент выше).
+  // Пока единственный потребитель — Зависимость (rules/addiction.mjs).
+  if (scope === "anyskill") return !!(ctx.skill || ctx.group);
+  // Карабканье (wdbc-egll) — свой ctx-флаг, не через ctx.skill: тест
+  // Карабканья идёт по тому же Athletics(S), что и тесты Борьбы
+  // (module/combat/grapple.mjs), и «skill:athletics» подхватил бы оба —
+  // разные правила книги под одинаковым навыком.
+  if (scope === "climbing") return ctx.climbing === true;
   if (ctx.kind === "attack") return attackScopeApplies(scope, ctx);
   if (ctx.kind === "power")  return powerScopeApplies(scope, ctx);
   if (ctx.skill) return scope === `skill:${String(ctx.skill).toLowerCase()}`;
@@ -160,9 +175,19 @@ function effectAppliesTo(target, ctx) {
  * Неизвестный источник не превращается молча в ноль, а жалуется: правило,
  * тихо давшее «+0», ищется днями.
  *
+ * `formula` (wdbc-1rno, modValueMode:"formula" у kind:"testMod") — та же
+ * mech-formula.mjs нотация, что у полей «Значение»/«Рейтинг» Конструктора
+ * («ceil(cor/2)» — Black Eyes: «+½Cor(окр.▲) на тесты зрения»), но считается
+ * заново на КАЖДЫЙ бросок от ctx.actor — testMod живой запрос, а не разовая
+ * выдача (в отличие от kind:"trait"/"characteristic", где формула застывает
+ * числом один раз при получении предмета). Safe-вариант — недопустимая
+ * формула тут не должна ронять бросок, тот же принцип, что и у остального
+ * конвейера теста.
+ *
  * @returns {?number} null, если источник значения не распознан
  */
 function effectValue(effect, ctx, ruleId) {
+  if (effect.formula != null) return mechFormulaTotalSafe(effect.formula, mechRollData(ctx?.actor));
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
   const { targetCharBonus, selfCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
@@ -175,6 +200,17 @@ function effectValue(effect, ctx, ruleId) {
   if (selfCharBonus === "pr") {
     const pr = Number(ctx?.actor?.system?.psyker?.currentRating) || 0;
     return pr * multiplier || 0;
+  }
+  // "cor" — тоже не Характеристика: Порча (system.corruptionBonus, wdbc-1rno)
+  // не входит в characteristics{}. Книга почти всегда даёт «½Cor.b (окр.▲)»
+  // (Enchanting Voice, Black Eyes и др.) — не то же самое, что multiplier у
+  // остальных источников (там всегда целые множители вроде ×2), поэтому
+  // здесь multiplier может быть дробным и результат ВСЕГДА округляется вверх
+  // (Math.ceil), как требует книга; multiplier=1 (по умолчанию) не меняет
+  // округление благодаря Math.ceil на целом числе.
+  if (selfCharBonus === "cor") {
+    const cb = Number(ctx?.actor?.system?.corruptionBonus) || 0;
+    return Math.ceil(cb * multiplier) || 0;
   }
   if (selfCharBonus) {
     const bonus = ctx?.actor?.system?.characteristics?.[selfCharBonus]?.bonus ?? 0;
@@ -349,6 +385,51 @@ export function weaponPropsFromRules(rules, ctx = {}) {
 }
 
 /**
+ * Доп. степени провала, если тест УЖЕ провален (wdbc-1rno: Sentient Cyst,
+ * «+3 Провала при провале социального теста») — эффект `failDegMod`, тот же
+ * принцип суммирования, что у `critRangeMod` выше (безусловно, не галочка),
+ * но применяется ПОСЛЕ броска (`rules/kind-outcome.mjs::resolveKindOutcome`),
+ * а не в модификаторах диалога — на успешный тест не влияет вовсе.
+ *
+ * @returns {number} сумма value всех подходящих failDegMod (может быть 0)
+ */
+export function failDegModFromRules(rules, ctx = {}) {
+  let extra = 0;
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "failDegMod") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      extra += Number(effect.value) || 0;
+    }
+  }
+  return extra;
+}
+
+/**
+ * Скрипты Механики (kind:"script"), назначенные срабатывать автоматически по
+ * исходу ЭТОГО теста (wdbc-1rno: «Полимат» — Крит на тесте Крафта, «Библиотека
+ * Акаши» — Крит на тесте Знания). Здесь только ОТБОР подходящих (область +
+ * side ещё не сверен с реальным success/crit — тот известен только после
+ * броска) — сам запуск делает `rules/kind-outcome.mjs::resolveKindOutcome`,
+ * у которого есть live `actor`/`item` для `executeItemCode`; здесь их нет
+ * (список правил не хранит документы, только itemId/entryId — тот же
+ * принцип, что у `grantItem` (`uuid`), эффекты остаются чистыми данными).
+ *
+ * @returns {{itemId:string, entryId:string, side:string, ruleId:string}[]}
+ */
+export function scriptTriggersFromRules(rules, ctx = {}) {
+  const out = [];
+  for (const rule of rules ?? []) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "scriptTrigger") continue;
+      if (!effectAppliesTo(effect.target, ctx)) continue;
+      out.push({ itemId: effect.itemId, entryId: effect.entryId, side: effect.side, ruleId: rule.id });
+    }
+  }
+  return out;
+}
+
+/**
  * Фазы 1–3 целиком: контекст, сбор, отбор.
  *
  * Хук «dbc.collectRules» получает контекст и изменяемый список правил до
@@ -367,6 +448,8 @@ export function resolveTest(input = {}) {
     mods: rollModsFromRules(rules, ctx),
     rerolls: rerollsFromRules(rules, ctx),
     crit: critModsFromRules(rules, ctx),
-    weaponProps: weaponPropsFromRules(rules, ctx)
+    weaponProps: weaponPropsFromRules(rules, ctx),
+    failDegExtra: failDegModFromRules(rules, ctx),
+    scriptTriggers: scriptTriggersFromRules(rules, ctx)
   };
 }

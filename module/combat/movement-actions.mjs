@@ -39,6 +39,15 @@ import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { spendRecoil, recoilRemaining } from "./recoil-pool.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
+import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
+
+// Локус Стремительности (стр. 29, wdbc-smc): бонусное полудействие, которое
+// можно потратить ТОЛЬКО на Движение (не на атаку/что-либо ещё) — раз в
+// Раунд, тот же троттлинг, что у technique.baseFullAttack (game-session.mjs).
+const BONUS_HALF_MOVE_CAPABILITY = "action.bonusHalfMove";
 
 /**
  * Достижимость SPD×N вокруг токена актора — честная подсветка клеток
@@ -64,6 +73,25 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 export async function markMovedThisTurn(actor) {
   if (!actor || actor.getFlag("warhammer-dbc", "movedThisTurn")) return;
   await actor.setFlag("warhammer-dbc", "movedThisTurn", true);
+}
+
+/**
+ * Категория «сколько подвигался в этом Ходу» — грубее movedThisTurn (тот
+ * только boolean), нужна Snapshot/Выстрелу Навскидку (wdbc-1rno,
+ * dodge.core.snapshot: «подвигался не больше полудвижения»). "half" —
+ * Полудвижение/Выход из Боя (оба SPD×1, одна физическая дистанция несмотря
+ * на разную стоимость ОД); "full" — Полное Движение/Бег/Натиск (SPD×2 и
+ * больше). Монотонно: однажды поставленное "full" не откатывается назад на
+ * "half" в рамках Хода (declareHalfMove после declareFullMove — тот же Ход,
+ * дистанция уже была больше половины). Сырое перемещение токена мышью
+ * (initMovedFlagTracking ниже) категорию НЕ ставит — как считать её оттуда,
+ * не решено, задокументировано как пробел в capabilities.mjs.
+ */
+export async function markMoveDegreeThisTurn(actor, degree) {
+  if (!actor) return;
+  const current = actor.getFlag("warhammer-dbc", "moveDegreeThisTurn");
+  if (current === "full" || current === degree) return;
+  await actor.setFlag("warhammer-dbc", "moveDegreeThisTurn", degree);
 }
 
 // Полёт (стр. 30) доступен только актору с Чертой Flyer/Hoverer (module/rules/
@@ -95,13 +123,11 @@ export function skillTotal(actor, key) {
   return actor.system.characteristics?.[charKey]?.total ?? 0;
 }
 
-/** 1d100 против порога — тот же приём вычисления Успехов/Провалов, что и
- *  _resolveDifficultTerrain в movement-terrain.mjs. */
+/** 1d100 против порога — степень считает общее ядро module/rules/roll-outcome.mjs (wdbc-5dvx). */
 async function _d100(threshold) {
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const passed = rv <= threshold;
-  const deg = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
+  const { success: passed, deg } = testOutcome(rv, threshold);
   return { roll, rv, passed, deg };
 }
 
@@ -119,12 +145,21 @@ async function _postCard(actor, content) {
 
 export async function declareHalfMove(actor) {
   if (!actor) return;
-  if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  const useBonus = hasRuleFlag(actor, BONUS_HALF_MOVE_CAPABILITY)
+    && isRoundCapabilityAvailable(actor, BONUS_HALF_MOVE_CAPABILITY);
+  if (useBonus) {
+    await markRoundCapabilityUsed(actor, BONUS_HALF_MOVE_CAPABILITY);
+  } else if (!await spendActionPoints(actor, 1)) {
+    return ui.notifications.warn("⚠️ Не хватает ОД.");
+  }
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полудвижение</div>
-    <div class="roll-threshold">Полудействие (1 ОД). Перемещение до SPD×1.</div>
+    <div class="roll-threshold">${useBonus
+      ? "Бонусное полудействие (Локус Стремительности, 0 ОД)."
+      : "Полудействие (1 ОД)."} Перемещение до SPD×1.</div>
   </div>`);
 }
 
@@ -132,6 +167,7 @@ export async function declareFullMove(actor) {
   if (!actor) return;
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.move);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}${esc(actor.name)} — Полное Движение</div>
@@ -144,6 +180,7 @@ export async function declareCharge(actor) {
   if (!actor) return;
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.charge);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("sword","#ff9d4d")}${esc(actor.name)} — Натиск</div>
@@ -173,6 +210,7 @@ export async function declareDisengage(actor) {
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "half");
   _showReachRing(actor, actor.system.movement?.halfMove);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Выход из Боя</div>
@@ -185,6 +223,7 @@ export async function declareRun(actor) {
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);
+  await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.run);
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#4dffa6")}${esc(actor.name)} — Бег</div>
@@ -256,6 +295,16 @@ export function showClimbDialog(actor) {
   const acro = skillTotal(actor, "acrobatics");
   const spd  = Number(actor.system.movement?.halfMove) || 0;
 
+  // Бонусы источников со scopeTarget «climbing» (wdbc-egll) — испольщик
+  // жмёт "Тест!", а не отдельная галочка: тот же неопросный приём, что и у
+  // Усталости в этом же диалоге ниже (не общий диалог Навыка с чекбоксами).
+  // Предзаполнено в «Доп. мод», редактируемо — источник виден подписью.
+  const climbMods  = resolveTest({ actor, kind: "skill", skill: "athletics", climbing: true }).mods;
+  const climbBonus = climbMods.reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+  const climbNote  = climbMods.length
+    ? `<div style="font-size:0.82em;color:#8fd0ff;">${climbMods.map(m => `${sgn(m.value)} ${esc(m.label)}`).join(", ")}</div>`
+    : "";
+
   new Dialog({
     title: "Карабканье",
     content: `
@@ -268,7 +317,8 @@ export function showClimbDialog(actor) {
         </div>
         <div class="atk-dlg-row"><label>Athletics (S):</label><input id="cl-ath" type="number" value="${ath}"/></div>
         <div class="atk-dlg-row"><label>Acrobatics (A):</label><input id="cl-acro" type="number" value="${acro}"/></div>
-        <div class="atk-dlg-row"><label>Доп. мод:</label><input id="cl-mod" type="number" value="0"/></div>
+        <div class="atk-dlg-row"><label>Доп. мод:</label><input id="cl-mod" type="number" value="${climbBonus}"/></div>
+        ${climbNote}
         <div class="atk-range-info" style="font-size:0.82em;">
           Дистанция: SPD/2 (${(spd / 2).toFixed(1)}) + Успехи, м. Провал — падение (стр. 29).
         </div>

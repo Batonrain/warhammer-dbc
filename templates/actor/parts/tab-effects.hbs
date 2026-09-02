@@ -66,6 +66,26 @@
         {{/each}}
       </div>
 
+      {{!-- Зависимость (мутация «Addiction», wdbc-5inv) — своей строкой под
+            ЖИЗНЕОБЕСПЕЧЕНИЕМ, только если мутация есть у актора. --}}
+      {{#if body.dependencies.length}}
+      <div class="bc-life bc-dep">
+        <div class="bc-life-cap">ЗАВИСИМОСТЬ</div>
+        {{#each body.dependencies as |d|}}
+        <div class="bc-dep-row {{#if d.unsatisfied}}is-alert{{/if}}">
+          <span class="bc-life-ic">💉</span>
+          <div class="bc-life-mid">
+            <input type="text" class="bc-dep-substance" data-dep-substance="{{d.itemId}}" value="{{d.substance}}" placeholder="объект зависимости"/>
+            <div class="bc-dep-status">{{#if d.unsatisfied}}<span class="bc-life-pen">−10 Навыки</span>{{/if}} <span>{{d.status}}</span></div>
+          </div>
+          <div class="bc-life-ctl">
+            <button type="button" class="bc-life-btn bc-life-ok" data-dep-satisfy="{{d.itemId}}" title="Удовлетворить — сбросить таймер">✓</button>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+
       {{!-- Безумие / Порча — переехали сюда с вкладки ПОКАЗАТЕЛИ, рядом друг с
             другом (в две колонки). Весь функционал (кнопки бросков, +/−,
             полосы) сохранён без изменений, просто другое место на листе. На
@@ -216,7 +236,7 @@
       <button type="button" class="mutgift-add-btn" data-action="mutgiftAdd" title="Выбрать мутацию или Дар из общего пула">＋</button> </div>
     <table class="items-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th>Название</th> <th class="col-narrow">Тип</th> </tr> </thead> <tbody> {{#if mutationsAndGifts.length}}
         {{#each mutationsAndGifts as |m|}}
-        <tr class="item-row" data-item-id="{{m.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{m.name}}{{#if m.subName}} <span class="godgift-sub">({{m.subName}})</span>{{/if}}</td> <td class="godgift-god">{{#if m.godLabel}}{{m.godLabel}}{{else}}Мутация{{/if}}</td> </tr>
+        <tr class="item-row" data-item-id="{{m.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{m.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{m.name}}{{#if m.subName}} <span class="godgift-sub">({{m.subName}})</span>{{/if}}{{#if m.activatable}} <button type="button" class="mutgift-active-toggle gear-modsub-power {{#if m.active}}is-on{{/if}}" data-action="mutgiftToggleActive" data-item-id="{{m.id}}" title="Включить/выключить способность (бонусы учитываются только во включённом состоянии)">{{#if m.active}}ВКЛ{{else}}выкл{{/if}}</button>{{/if}}</td> <td class="godgift-god">{{#if m.godLabel}}{{m.godLabel}}{{else}}Мутация{{/if}}</td> </tr>
         <tr class="ability-detail-row" data-item-id="{{m.id}}" style="display:none;"> <td colspan="3">{{#if m.subText}}<div class="ability-detail-text godgift-subtext">{{m.subText}}</div>{{/if}}<div class="ability-detail-text">{{#if m.benefit}}{{m.benefit}}{{else}}—{{/if}}</div></td> </tr> {{/each}}
       {{else}}
         <tr class="items-empty"> <td colspan="3"><em>Нет мутаций и Даров</em></td> </tr> {{/if}}

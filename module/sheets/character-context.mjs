@@ -74,11 +74,15 @@ import { hasPreservation }                       from "../combat/preservation.mj
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
 import { hasReformationSong }                    from "../combat/reformation-song.mjs";
 import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beastman-shaman.mjs";
+import { hasConjureWraith }                      from "../combat/conjure-wraith.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
+         effectiveActionPointsMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
 import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
 import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
+import { hasDeadlyEffectiveness, deadlyEffectivenessGate } from "../combat/deadly-effectiveness.mjs";
+import { hasBowToAudience, bowToAudienceGate } from "../combat/bow-to-audience.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -135,7 +139,7 @@ export function characterContext(actor) {
   if (hasActionEconomy(actor)) {
     const defenseMax = effectiveDefenseReactionMax(actor);
     context.actionEconomy = {
-      ap:        { value: system.actionPoints?.value ?? 0, max: system.actionPoints?.max ?? 0 },
+      ap:        { value: system.actionPoints?.value ?? 0, max: effectiveActionPointsMax(actor) },
       reactions: { value: system.reactions?.value ?? 0, max: system.reactions?.max ?? 0 },
       // Доп. Реакции «только на Избегание» видны лишь пока есть что показать —
       // вне Защитной Стойки (или без надбавки от будущего Таланта) их 0,
@@ -164,6 +168,12 @@ export function characterContext(actor) {
     // Spirit Talk/Духовный Разговор (wdbc-q30d): гейт зависит от game.user.
     // targets (единственная Техника)/ОД/боя/кулдауна сессии (spirit-talk.mjs).
     if (hasSpiritTalk(actor)) context.spiritTalkGate = spiritTalkGate(actor);
+    // Deadly Effectiveness/Смертоносная Эффективность (wdbc-1rno): кнопка
+    // видна только владельцу Таланта, гейт — cooldown.mjs "раз в Раунд".
+    if (hasDeadlyEffectiveness(actor)) context.deadlyEffectivenessGate = deadlyEffectivenessGate(actor);
+    // Bow to the Audience/Поклон Публике (wdbc-1rno): та же видимость только
+    // владельцу Таланта, гейт зависит от game.user.targets/ОД (bow-to-audience.mjs).
+    if (hasBowToAudience(actor)) context.bowToAudienceGate = bowToAudienceGate(actor);
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.
@@ -404,6 +414,7 @@ export function characterContext(actor) {
   context.hasHexMarkedPrey = hasBeastmanShamanTalent(actor, "Hex-Marked Prey / Проклятая Метка");
   context.hasBoneRuneEtching = hasBeastmanShamanTalent(actor, "Bone-Rune Etching / Костяная Рунопись");
   context.hasRitualBloodletting = hasBeastmanShamanTrait(actor, "Ritual Bloodletting / Ритуал Кровопускания");
+  context.hasConjureWraith = hasConjureWraith(actor);
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");

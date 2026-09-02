@@ -233,7 +233,8 @@ import { TERRAIN_PROPS }                      from "../regions/difficult-terrain
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
 import { AVAILABILITY }                       from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
-import { isItemActive }                       from "./effects.mjs";
+import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
+import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
 import { expectedPhase, AP_LOCATIONS }        from "../constants/effect-keys.mjs";
 import { raceEntries, raceDef }               from "./race-library.mjs";
 import { ELITE_ARCHETYPES }                   from "../constants/elite-archetypes.mjs";
@@ -316,7 +317,8 @@ const SCRIPT_THROTTLE_OPTIONS = [
   { value: "battle",  label: "Раз за бой" },
   { value: "scene",   label: "Раз за сцену" },
   { value: "session", label: "Раз за сессию" },
-  { value: "day",     label: "Раз в сутки" }
+  { value: "day",     label: "Раз в сутки" },
+  { value: "month",   label: "Раз в месяц" }
 ];
 const SCRIPT_THROTTLE_LABELS = Object.fromEntries(SCRIPT_THROTTLE_OPTIONS.map(o => [o.value, o.label]));
 /** Ключ флага перезарядки кнопки «▶ Запустить» конкретной записи kind:"script". */
@@ -327,7 +329,7 @@ const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
 // интервал МЕЖДУ использованиями, не лимит НА сутки; здесь "day" — свой
 // смысл, номер календарных суток, см. cooldown.mjs::liveValue). При
 // scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
-const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day"]);
+const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day", "month"]);
 
 /** Цена записи kind:"script" в форме, которую понимает capability-cost.mjs — null, если бесплатно. */
 function scriptCostOf(entry) {
@@ -340,9 +342,11 @@ function scriptCostOf(entry) {
  * Готова ли кнопка «▶ Запустить» записи — троттлинг (учитывает
  * scriptThrottleMax > 1 — счётчик, не единичный gate) И, если задана,
  * доступность пула цены (wdbc-suwp: без актора-владельца платная запись
- * недоступна — списывать цену не с чего).
+ * недоступна — списывать цену не с чего). Экспортирована (wdbc-1rno): тот
+ * же throttle нужен и кнопке «▶ Запустить», и автозапуску по исходу теста
+ * (rules/kind-outcome.mjs) — гейт один на оба пути, не дублируется.
  */
-function scriptRunReady(item, entry) {
+export function scriptRunReady(item, entry) {
   const unit = entry.scriptThrottleUnit || "";
   if (unit) {
     const max = Number(entry.scriptThrottleMax) || 1;
@@ -384,8 +388,8 @@ function scriptRunStatus(item, entry) {
   return { ready: scriptRunReady(item, entry), cost, label: parts.join("; ") };
 }
 
-/** Отмечает «▶ Запустить» использованной — счётчиком или единичным gate, см. scriptRunReady. */
-async function markScriptRunUsed(item, entry) {
+/** Отмечает запись использованной — счётчиком или единичным gate, см. scriptRunReady. Экспортирована по той же причине. */
+export async function markScriptRunUsed(item, entry) {
   const unit = entry.scriptThrottleUnit || "";
   if (!unit) return;
   const max = Number(entry.scriptThrottleMax) || 1;
@@ -402,6 +406,7 @@ const KIND_LABELS = {
   fatigue: "Усталость",
   reroll: "Переброс",
   testMod: "Модификатор теста",
+  failDegMod: "Доп. Провалы при провале",
   capability: "Возможность",
   armour: "Очки Брони (локация)",
   equipment: "Снаряжение",
@@ -431,7 +436,8 @@ const REROLL_SCOPES = [
   ["opposed",    "встречные тесты"],
   // Тесты Морали (Страх/выход из Шока/Паника от Горения/Подавление/встречные
   // Запугивание и Пытки) — wdbc-zepq, Lord of the Exodites.
-  ["morale",     "тесты Морали"]
+  ["morale",     "тесты Морали"],
+  ["climbing",   "Карабканье"]
 ];
 const REROLL_SCOPE_LABEL = (e) => {
   switch (e.rerollScope) {
@@ -501,6 +507,12 @@ export function characteristicEffectKey(entry) {
   // производное число (documents/actor.mjs). "Итог"/"Бонус" тут ни при чём,
   // charKey:"initiative" целится напрямую в system.initiative.
   if (entry.charKey === "initiative") return "system.initiative";
+  // Размер (wdbc-w8ws) — тот же приём: плоское число, не Бонус/Итог.
+  // "sizeNoSpd" — та же цель Размера, но заведомо НЕ двигающая SPD
+  // (Absurdly Fat/Абсурдно Толстый: «+1 Размер, не влияя на SPD»,
+  // rules/character.mjs держит её отдельным аккумулятором от sizeMod).
+  if (entry.charKey === "size") return "system.sizeMod";
+  if (entry.charKey === "sizeNoSpd") return "system.sizeModNoSpd";
   const field = (entry.field || "total") === "bonus" ? "bonusFx" : "totalFx";
   return `system.characteristics.${entry.charKey}.${field}`;
 }
@@ -533,6 +545,26 @@ export function findMechGroup(groups, groupId) {
 export function findMechEntry(groups, groupId, entryId) {
   const g = findMechGroup(groups, groupId);
   return g ? (g.entries || []).find(e => e.id === entryId) || null : null;
+}
+
+/**
+ * Поиск записи ПО ОДНОМУ entryId, без groupId — на любую глубину вложенности
+ * подгрупп. Id уникальны (randomID()), см. findMechGroup(). Нужен
+ * kind-outcome.mjs::resolveKindOutcome (wdbc-1rno): эффект scriptTrigger
+ * несёт только entryId (чистые данные, без ссылки на группу — тот же
+ * принцип, что у grantItem/uuid), группу для него никто не отслеживал.
+ */
+export function findMechEntryById(groups, entryId) {
+  for (const g of groups || []) {
+    for (const e of g.entries || []) {
+      if (e.id === entryId) return e;
+      if (e.kind === "group" && e.group) {
+        const found = findMechEntryById([e.group], entryId);
+        if (found) return found;
+      }
+    }
+  }
+  return null;
 }
 
 // ── Кэш компендиумов «Снаряжения» — для дропдауна kind:"equipment" режима
@@ -671,6 +703,12 @@ export function blankMechEntry(kind = "characteristic") {
     // scriptThrottleMax > 1 — счётчик «до N раз» вместо единичного gate
     // (round/battle/scene/session; "day" считает только 1, см. mechanics.mjs).
     scriptThrottleUnit: "", scriptThrottleMax: 1,
+    // script — «Триггер» (wdbc-1rno): "" = только кнопкой «▶ Запустить»
+    // (как раньше), "critSuccess"/"critFailure" — автозапуск сразу после
+    // подходящего по modScope теста (kind-outcome.mjs), не дожидаясь клика.
+    // modScope/rerollChar/skillKey переиспользуются как область — те же поля,
+    // что у testMod/failDegMod.
+    scriptTrigger: "",
     // when — необязательное условие по Геносемени, общее для ЛЮБОГО вида
     // записи (см. entryWhenOk ниже): пустой conditions = применяется всегда.
     // Несколько вариантов в conditions — ИЛИ («legion VII, ИЛИ legion X орден
@@ -709,6 +747,11 @@ export function describeMechEntry(entry) {
       if (entry.charKey === "initiative") {
         const sign = OP_SIGN[entry.op] ?? entry.op;
         return `Инициатива: ${sign} ${entry.value ?? ""}`;
+      }
+      if (entry.charKey === "size" || entry.charKey === "sizeNoSpd") {
+        const sign = OP_SIGN[entry.op] ?? entry.op;
+        const noSpd = entry.charKey === "sizeNoSpd" ? " (без влияния на SPD)" : "";
+        return `Размер: ${sign} ${entry.value ?? ""}${noSpd}`;
       }
       const abbr = CHARACTERISTICS[entry.charKey]?.abbr ?? entry.charKey;
       const fieldLabel = entry.field === "bonus" ? "бонус" : "значение";
@@ -779,15 +822,25 @@ export function describeMechEntry(entry) {
     case "testMod": {
       const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
       if (!scope) return "Модификатор теста: (область не выбрана)";
-      const mult = Number(entry.modCharBonusMultiplier) > 1 ? `${Number(entry.modCharBonusMultiplier)}×` : "";
+      const multVal = Number(entry.modCharBonusMultiplier) || 1;
+      const mult = multVal !== 1 ? `${multVal}×` : "";
       const bonusOf = entry.modCharBonus === "pr" ? "Пси-Рейтинг"
+        : entry.modCharBonus === "cor" ? "Порча (Cor.b)"
         : (CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus);
       const val = entry.modValueMode === "charBonus"
-        ? `+${mult}Бонус ${bonusOf}`
+        ? `+${mult}Бонус ${bonusOf}${entry.modCharBonus === "cor" ? " (окр.▲)" : ""}`
         : entry.modValueMode === "halvePenalty"
         ? "½ штрафа (вкл. необученность)"
+        : entry.modValueMode === "formula"
+        ? `формула: ${entry.value}`
         : `${Number(entry.value) >= 0 ? "+" : ""}${entry.value}`;
       return `Модификатор теста: ${scope} — ${val}`;
+    }
+    case "failDegMod": {
+      const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
+      if (!scope) return "Доп. Провалы при провале: (область не выбрана)";
+      const n = Number(entry.value) || 0;
+      return `Доп. Провалы при провале: ${scope} — ${n >= 0 ? "+" : ""}${n}`;
     }
     case "reroll": {
       const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
@@ -874,7 +927,13 @@ export function describeMechEntry(entry) {
       const costLabel = entry.capabilityCostPool
         ? ` — цена: ${capabilityCostLabel({ pool: entry.capabilityCostPool, amount: entry.capabilityCostAmount })}`
         : "";
-      return base + costLabel;
+      let withCost = base + costLabel;
+      if (entry.scriptTrigger) {
+        const scope = REROLL_SCOPE_LABEL({ ...entry, rerollScope: entry.modScope });
+        const triggerLabel = entry.scriptTrigger === "critFailure" ? "Критический Провал" : "Критический Успех";
+        withCost += ` — авто на ${triggerLabel}${scope ? ` (${scope})` : " (область не выбрана)"}`;
+      }
+      return withCost;
     }
     case "group": {
       const g = entry.group;
@@ -945,6 +1004,11 @@ function isEntryComplete(e) {
       if (e.modScope === "skill") return !!e.skillKey;
       if (e.modValueMode === "halvePenalty") return !!e.modScope;
       if (e.modValueMode === "charBonus") return !!e.modCharBonus;
+      if (e.modValueMode === "formula") return !!e.modScope && formulaOk(e.value);
+      return !!e.modScope && numOk(e.value);
+    case "failDegMod":
+      if (e.modScope === "char")  return !!e.rerollChar;
+      if (e.modScope === "skill") return !!e.skillKey;
       return !!e.modScope && numOk(e.value);
     case "capability":
       return e.capabilityMode === "aptOverride"
@@ -970,7 +1034,11 @@ function isEntryComplete(e) {
       if (e.weaponPropAction === "replace") return !!e.weaponPropNewKey;
       return true;
     case "script":
-      return !!(e.code && e.code.trim());
+      if (!(e.code && e.code.trim())) return false;
+      if (!e.scriptTrigger) return true;
+      if (e.modScope === "char")  return !!e.rerollChar;
+      if (e.modScope === "skill") return !!e.skillKey;
+      return !!e.modScope;
     case "group":
       return !!(e.group?.entries || []).some(isEntryComplete);
     default:
@@ -1018,6 +1086,7 @@ function describeMechWhen(when, item = null) {
     const names = gods.map(k => WARP_GODS_MAP[k]?.label || k);
     parts.push(`Покровитель ${when?.negatePatronGod ? "≠" : "="} ${names.join(" или ")}`);
   }
+  if (when?.requireSealedArmour) parts.push(`Герметичная броня ${when?.negateSealedArmour ? "≠" : "="} да`);
   return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
@@ -1345,7 +1414,7 @@ async function resolveEntrySpecChoice(entry) {
  * полученный ЗАРАНЕЕ через resolveDirectAsk (Promise.all соседей в
  * applyGroupEntries) — если задан, повторно диалог/коллектор не зовём.
  */
-async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
+export async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, applied = new Set(), preAsked = null) {
   // Подгруппа — не запись, а узел И/ИЛИ: отыгрываются её листья, отметку
   // получают тоже они.
   if (entry.kind === "group") {
@@ -1457,11 +1526,13 @@ async function applyMechEntry(actor, entry, sourceItem, fromChoice = false, appl
     return;
   }
 
-  if (entry.kind === "reroll" || entry.kind === "testMod" || entry.kind === "capability") {
+  if (entry.kind === "reroll" || entry.kind === "testMod" || entry.kind === "capability" || entry.kind === "failDegMod") {
     // Живой запрос, как terrainIgnore выше: правило собирается в момент броска
     // (rulesFromItemMechanics в module/rules/item-rules.mjs). Писать и
     // откатывать нечего — уйдёт предмет или выключат Локус, и переброс сам
-    // перестанет предлагаться.
+    // перестанет предлагаться. failDegMod (wdbc-1rno) — «Доп. Провалы при
+    // провале» (Sentient Cyst/Разумная Циста): тот же живой путь, не
+    // применяется молча (см. kind-outcome.mjs::resolveKindOutcome).
     return;
   }
 
@@ -2095,6 +2166,21 @@ export async function syncGrantedAbilities(sourceItem) {
   if (toCreate.length) await actor.createEmbeddedDocuments("Item", toCreate);
 }
 
+/**
+ * Подавляет/возвращает ВСЕ Мутации/Дары актора, кроме источника (Pure Form) —
+ * тонкая обёртка над rules/mutation-suppression.mjs, передающая ей свои же
+ * локальные функции пересинхронизации (dependency injection, см. шапку того
+ * модуля — так исключён цикл item-script → mutation-suppression → mechanics
+ * → item-script). Экспортирована сюда же, откуда её достаёт
+ * runMechScriptEntry, чтобы дать script-контексту kind:"script" (wdbc-1rno,
+ * Pure Form/Чистая Форма).
+ */
+export async function setMutationsSuppressed(sourceItem, suppressed) {
+  return _setMutationsSuppressed(sourceItem, suppressed, {
+    syncItemEffectsDisabled, syncWeaponPropItemEffects, syncGrantedAbilities, syncGrantedEquipment
+  });
+}
+
 // ── Живая пересборка эффектов ───────────────────────────────────────────────
 //
 // Долговечные записи — не разовое действие «получил предмет → применили», а
@@ -2428,17 +2514,21 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   }
 
   if (ent.kind === "characteristic") {
-    // Инициатива (wdbc-v9a7) — псевдо-характеристика в конце списка: не из
-    // CHARACTERISTICS (тех ровно 10, Инициатива не входит), у неё нет
-    // Бонуса/Итога — плоское число, поэтому поле "field" для неё скрыто.
-    const isInitiative = ent.charKey === "initiative";
+    // Инициатива (wdbc-v9a7) / Размер (wdbc-w8ws) — псевдо-характеристики в
+    // конце списка: не из CHARACTERISTICS (тех ровно 10), у них нет
+    // Бонуса/Итога — плоское число, поэтому поле "field" для них скрыто.
+    // "Размер (без SPD)" — тот же Размер, но целится в отдельный ключ
+    // (system.sizeModNoSpd), который rules/character.mjs не пускает в SPD.
+    const isFlatPseudo = ent.charKey === "initiative" || ent.charKey === "size" || ent.charKey === "sizeNoSpd";
     const charOpts = Object.entries(CHARACTERISTICS).map(([k, m]) => optHtml(k, `${m.abbr} — ${m.label}`, ent.charKey === k)).join("")
-      + optHtml("initiative", "Иниц. — Инициатива", isInitiative);
+      + optHtml("initiative", "Иниц. — Инициатива", ent.charKey === "initiative")
+      + optHtml("size", "Разм. — Размер", ent.charKey === "size")
+      + optHtml("sizeNoSpd", "Разм. — Размер (без SPD)", ent.charKey === "sizeNoSpd");
     const fieldOpts = [["total", "Итоговое значение"], ["bonus", "Бонус (÷10)"]]
       .map(([v, l]) => optHtml(v, l, (ent.field || "total") === v)).join("");
     const opOpts = OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
     return `<select class="mech-char-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>
-      ${isInitiative ? "" : `<select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>`}
+      ${isFlatPseudo ? "" : `<select class="mech-char-field" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${fieldOpts}</select>`}
       <select class="mech-char-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-char-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.value ?? "")}" placeholder="напр. 1 или ag*2" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
   }
@@ -2574,7 +2664,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "testMod") {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const modeOpts = [["flat", "число"], ["charBonus", "бонус характеристики"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
+    const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>
@@ -2590,10 +2680,14 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // Психосилы, wdbc-jw81): без этих двух полей запись из пака показывалась
     // бы неверно и затиралась первым же кликом по селекту.
     const valueField = ent.modValueMode === "charBonus"
-      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"]])
-        + `<input type="number" class="mech-mod-char-mult" min="1" title="множитель бонуса (1 — как есть)"
+      ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"], ["cor", "Порча (Cor.b)"]])
+        + `<input type="number" class="mech-mod-char-mult" min="0.1" step="0.1" title="множитель бонуса (1 — как есть; 0.5 — «½Cor.b», книга всегда округляет вверх)"
                   value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
       : ent.modValueMode === "halvePenalty" ? ""
+      : ent.modValueMode === "formula"
+      ? `<input type="text" class="mech-mod-formula" value="${esc(ent.value ?? "")}"
+                placeholder="напр. ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}"
+                data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`
       : `<input type="number" class="mech-entry-value" value="${esc(ent.value)}"
                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
@@ -2601,6 +2695,33 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <select class="mech-mod-valuemode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
       ${valueField}
       <input type="text" class="mech-reroll-label" placeholder="подпись в диалоге" value="${esc(ent.label || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
+  // «Доп. Провалы при провале» (kind:"failDegMod", wdbc-1rno: Sentient Cyst
+  // «+3 Провала, когда персонаж проваливает тест») — та же область, что у
+  // testMod (переиспользует modScope/rerollChar/skillKey), но БЕЗ режима
+  // значения: только флэт-число, всегда безусловно суммируется на провале
+  // (не галочка — см. kind-outcome.mjs::resolveKindOutcome, тот же принцип,
+  // что у критDiapазона, а не у testMod).
+  if (ent.kind === "failDegMod") {
+    const scopeOpts = REROLL_SCOPES
+      .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+      Object.entries(CHARACTERISTICS).map(([k, c]) =>
+        `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+    let detail = "";
+    if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
+    else if (ent.modScope === "skill") {
+      detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
+          `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+    }
+    return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
+      ${detail}
+      <input type="number" class="mech-entry-value" value="${esc(ent.value)}" title="доп. Провалы (число, может быть отрицательным)"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <input type="text" class="mech-reroll-label" placeholder="подпись" value="${esc(ent.label || "")}"
              data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
   }
 
@@ -2817,11 +2938,38 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const costAmountHtml = ent.capabilityCostPool ? `
       <input type="number" class="mech-capability-cost-amount" min="1" value="${esc(ent.capabilityCostAmount ?? 1)}"
              title="Сколько списывать за использование" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>` : "";
+    // Триггер по исходу (wdbc-1rno) — автозапуск сразу после теста, а не
+    // только кнопкой. При выборе критерия область (modScope) обязательна —
+    // тот же выбор скоупа, что у testMod/failDegMod (переиспользует классы,
+    // те же листенеры item-sheet.mjs подхватывают без правок).
+    const triggerOpts = [
+      ["", "вручную (кнопка ▶)"],
+      ["critSuccess", "авто: Критический Успех"],
+      ["critFailure", "авто: Критический Провал"]
+    ].map(([v, l]) => optHtml(v, l, (ent.scriptTrigger || "") === v)).join("");
+    let triggerScopeHtml = "";
+    if (ent.scriptTrigger) {
+      const scopeOpts = REROLL_SCOPES
+        .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
+      const charSel = (cls, val) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
+        Object.entries(CHARACTERISTICS).map(([k, c]) =>
+          `<option value="${k}" ${val === k ? "selected" : ""}>${esc(c.label || k)}</option>`).join("")}</select>`;
+      let detail = "";
+      if (ent.modScope === "char") detail = charSel("mech-reroll-char", ent.rerollChar);
+      else if (ent.modScope === "skill") {
+        detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+          <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
+            `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+      }
+      triggerScopeHtml = `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>${detail}`;
+    }
     return `<input type="text" class="mech-script-label" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.label || "")}" placeholder="Название (для себя)" ${dis}/>
       <select class="mech-script-throttle" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Частота кнопки «▶ Запустить»" ${dis}>${throttleOpts}</select>
       ${maxInput}
       <select class="mech-capability-cost-pool" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
               title="Цена в пуле: списывается при успешном «▶ Запустить»">${poolOpts}</select>${costAmountHtml}
+      <select class="mech-script-trigger" data-group-id="${groupId}" data-entry-id="${ent.id}" title="Автозапуск по исходу теста" ${dis}>${triggerOpts}</select>
+      ${triggerScopeHtml}
       <textarea class="mech-script-code" data-group-id="${groupId}" data-entry-id="${ent.id}" spellcheck="false" placeholder="// произвольный JS — item, actor, token, speaker, game, ui, ChatMessage, event" ${dis}>${esc(ent.code || "")}</textarea>`;
   }
 
@@ -3026,6 +3174,22 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <div class="grant-when-patron-list">${patronBoxes}</div>
   </div>`;
 
+  // «Когда Герметичная броня» (wdbc-1rno) — седьмой независимый гейт: тот же
+  // тумблер-паттерн, что у Ярости, по PREDICATES.wearsSealedArmour (надета ли
+  // броня со свойством Sealed/Закрытая). «Без гермодоспеха» книги — это «не» +
+  // галочка.
+  const sealedArmourHtml = `<div class="grant-entry-when grant-entry-when-sealed">
+    <span class="grant-when-label">Когда Герметичная броня</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-sealed-negate" ${d} ${w.negateSealedArmour ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <label class="grant-when-sealed-row">
+      <input type="checkbox" class="grant-when-sealed" ${d} ${w.requireSealedArmour ? "checked" : ""} ${dis}/>
+      <span>надета броня со свойством Sealed</span>
+    </label>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -3034,7 +3198,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}`;
 }
 
 /**
@@ -3170,7 +3334,10 @@ export async function runMechScriptEntry(item, groupId, entryId) {
     if (gate.disabled) return ui.notifications.warn(`⚠️ ${gate.title}`);
   }
   try {
-    await executeItemCode(item, code, null);
+    // setMutationsSuppressed (wdbc-1rno) — доступна ЛЮБОЙ ручной кнопке
+    // «▶ Запустить», не только Pure Form: обычным записям она просто не
+    // нужна, лишний параметр в области видимости их кода не касается.
+    await executeItemCode(item, code, null, { setMutationsSuppressed });
   } catch (e) {
     console.error(`Warhammer DBC | Ошибка скрипта Механики «${entry.label || entry.id}» предмета «${item.name}»:`, e);
     return ui.notifications.error(`Скрипт «${entry.label || item.name}»: ${e.message}`);

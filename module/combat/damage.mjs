@@ -11,13 +11,18 @@ import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
-import { applyWoundLoss } from "../rules/wounds.mjs";
+import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
+import { applyMechBlocksForActor } from "../apps/mech-blocks-apply.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
+import { activeAblativeArmorMods } from "./armor-mods.mjs";
+import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
+import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
+import { justTheLightReduction } from "./just-the-light.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -117,6 +122,24 @@ export async function applyCripplingTrigger(actor, rating, hitLocation) {
       <div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
     </div>`
   });
+}
+
+/**
+ * Саркофаг Дредноута: аблативные Раны против варп-оружия восстанавливаются
+ * ПОЛНОСТЬЮ к концу боя (стр. 57, wdbc-drn) — вызывается из hooks.mjs на
+ * "deleteCombat", тем же приёмом, что clearAvatarOfSlaughterMarks/
+ * clearSongOfSwiftnessBuffs (module/combat/avatar-of-slaughter.mjs,
+ * song-of-swiftness.mjs). Пишет только тех, у кого max > 0 и есть что
+ * восполнять — не дёргает документ впустую.
+ */
+export async function refillSarcophagusWarpWounds(combat) {
+  for (const c of combat?.combatants ?? []) {
+    const actor = c.actor;
+    const ww = actor?.system?.sarcophagusWarpWounds;
+    if (!ww || (Number(ww.max) || 0) <= 0) continue;
+    if ((Number(ww.value) || 0) >= ww.max) continue;
+    await actor.update({ "system.sarcophagusWarpWounds.value": ww.max });
+  }
 }
 
 const HAYWIRE_TABLE = [
@@ -348,7 +371,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (Number(damageData.magDiceBonus) > 0) {
     const sizeTotal = actor.system?.sizeTotal != null
       ? Number(actor.system.sizeTotal) || 0
-      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0);
+      : (Number(actor.system?.size) || 0) + (Number(actor.system?.sizeMod) || 0) + (Number(actor.system?.sizeModNoSpd) || 0);
     if (sizeTotal < 2 && hasRuleFlag(actor, "horde.singleTargetImmune")) {
       damageData = { ...damageData, rawDamage: Math.max(0, (Number(damageData.rawDamage) || 0) - Number(damageData.magDiceBonus)) };
     }
@@ -375,7 +398,8 @@ export async function applyDamageToActor(actor, damageData) {
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
     haywireRating = 0,   // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
-    throughShot = false  // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
+    throughShot = false, // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
+    ignoreArmour = false // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -388,8 +412,19 @@ export async function applyDamageToActor(actor, damageData) {
 
   // ── Расчёт поглощения ─────────────────────────────────────────────────────
   const system    = actor.system;
+
+  // Sealed «полным комплектом» (стр. 228, wdbc-8b5): полный иммунитет к
+  // химическому урону по коже, пока не пробита ни одна из 6 закрывающих
+  // локаций (rules/character.mjs::sealedFullSuit). Проверяется раньше щита
+  // не нужно — если щит уже заблокировал попадание, сюда не дойдём вовсе.
+  if (damageType === "chemical" && system.sealedFullSuit) return;
+
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
+  // wdbc-bxw6: аблативный AP-щит (Роба Чемпиона и т.п., system.ablativeApShield)
+  // — плоская добавка к поглощению ЭТОГО попадания, читается ДО того, как то
+  // же попадание списывает с неё заряд (см. decrement ниже).
+  const ablativeShieldBefore = Number(system.ablativeApShield?.value) || 0;
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
@@ -414,7 +449,7 @@ export async function applyDamageToActor(actor, damageData) {
         ? Math.floor(warpArmorAP / 2)
         : 0;
     effArmorAP = armorAP;
-    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP;
+    totalAbsorption = (system.characteristics?.wp?.bonus ?? 0) + armorAP + ablativeShieldBefore;
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;
@@ -424,58 +459,101 @@ export async function applyDamageToActor(actor, damageData) {
       tb -= Math.min(felling, Math.max(0, unnaturalT));
       tb  = Math.max(0, tb);
     }
-    // AP брони — может быть уменьшен пробитием. Свойства брони этой локации
-    // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
-    // сбор флагов по локациям в documents/actor.mjs.
-    armorAP = resolveArmorAbsorptionAP({
-      baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
-      vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
-      damageType, melee, hitLocation, primitive, frontArcHit,
-      flags: absorption.propFlags?.[armorKey],
-      wornAP: absorption.wornOnly?.[armorKey]
-    });
-    // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
-    // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
-    // (пропускает, если у брони этой локации нет свойства).
-    if (absorption.propFlags?.[armorKey]?.runesOfProtection) {
-      runesBonus = await _rollRunesOfProtection(actor);
-      armorAP += runesBonus;
+    if (ignoreArmour) {
+      // Заломить (стр. 12): урон "игнорирующий броню" — AP этой локации не
+      // считается вовсе (свойства брони/Руны/Копьё/Отскок в Укрытие сюда тоже
+      // не примешиваются, им нечего модифицировать), T.b поглощает как обычно.
+      armorAP = 0;
+      effArmorAP = 0;
+    } else {
+      // AP брони — может быть уменьшен пробитием. Свойства брони этой локации
+      // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
+      // сбор флагов по локациям в documents/actor.mjs.
+      armorAP = resolveArmorAbsorptionAP({
+        baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
+        vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
+        damageType, melee, hitLocation, primitive, frontArcHit,
+        flags: absorption.propFlags?.[armorKey],
+        wornAP: absorption.wornOnly?.[armorKey]
+      });
+      // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
+      // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
+      // (пропускает, если у брони этой локации нет свойства).
+      if (absorption.propFlags?.[armorKey]?.runesOfProtection) {
+        runesBonus = await _rollRunesOfProtection(actor);
+        armorAP += runesBonus;
+      }
+      // Отскок в Укрытие (wdbc-9wvm, стр. 12): игрок объявил Отскок в зону
+      // Укрытия при защите (module/combat/recoil.mjs::performRecoil) — доп. AP
+      // этой зоны разово применяется к СЛЕДУЮЩЕМУ попаданию, которое пришло по
+      // цели, и тратится сразу же (флаг снят), а не копится на весь бой.
+      coverBonus = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
+      if (coverBonus > 0) {
+        armorAP += coverBonus;
+        await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
+      }
+      // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
+      // поглощения, ДО вычета пробития (стр. 168).
+      if (lance && armorAP > 20) armorAP = 20;
+      // Эффективный AP брони после пробития (мин. 0)
+      effArmorAP = Math.max(0, armorAP - (penetration || 0));
     }
-    // Отскок в Укрытие (wdbc-9wvm, стр. 12): игрок объявил Отскок в зону
-    // Укрытия при защите (module/combat/recoil.mjs::performRecoil) — доп. AP
-    // этой зоны разово применяется к СЛЕДУЮЩЕМУ попаданию, которое пришло по
-    // цели, и тратится сразу же (флаг снят), а не копится на весь бой.
-    coverBonus = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
-    if (coverBonus > 0) {
-      armorAP += coverBonus;
-      await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
-    }
-    // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
-    // поглощения, ДО вычета пробития (стр. 168).
-    if (lance && armorAP > 20) armorAP = 20;
-    // Эффективный AP брони после пробития (мин. 0)
-    effArmorAP = Math.max(0, armorAP - (penetration || 0));
-    // Итоговое поглощение = эффективный AP + T.b (всегда)
-    totalAbsorption = effArmorAP + tb;
+    // Итоговое поглощение = эффективный AP + T.b (всегда) + аблативный AP-щит
+    // (не подчиняется Пробитию/Копью — отдельный слой, не физическая броня).
+    totalAbsorption = effArmorAP + tb + ablativeShieldBefore;
   }
   // Точка расширения (wdbc-ls9d): плоское снижение входящего урона от эффектов
   // (system.incomingDamageReduction, суммируется — см. _creature.mjs) —
   // отдельно от AP/T.b, пробитием не уменьшается.
-  const incomingReduction = Number(system.incomingDamageReduction) || 0;
+  const incomingReduction = (Number(system.incomingDamageReduction) || 0)
+    + determinationToFightReduction(actor)
+    + determinationToFightWsReduction(actor)
+    + justTheLightReduction(actor);
 
   // Непоглощённый урон. Аблативное Бронирование скакуна (стр. 478) срезает
   // его до 1, пока запас Ран полон, — первый же удар снимает слой, и дальше
   // Черта молчит до полного восстановления.
-  const rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
+  let rawNet = Math.max(0, rawDamage - totalAbsorption - incomingReduction);
   // Пробитие (wdbc-k0ff): непоглощённый урон дошёл до цели — броня этой
   // локации скомпрометирована. warpSoak не считается: варп-оружие обходит
   // броню целиком, а не проламывает её физически.
   if (rawNet > 0 && !warpSoak) await breachArmorAtLocation(actor, armorKey);
+
+  // wdbc-bxw6: аблативные AP-моды брони и аблативный AP-щит теряют ровно 1
+  // заряд с ЭТОГО попадания — независимо от нанесённого урона (rules/ablative-ap.mjs).
+  const ablativeMods = activeAblativeArmorMods(actor);
+  if (ablativeMods.length) {
+    await actor.updateEmbeddedDocuments("Item", ablativeMods.map(m => ({
+      _id: m.id, "system.ablativeCharge": ablativeApAfterHit(m.system.ablativeCharge)
+    })));
+  }
+  if (ablativeShieldBefore > 0) {
+    await actor.update({ "system.ablativeApShield.value": ablativeApAfterHit(ablativeShieldBefore) });
+  }
+
+  // Саркофаг Дредноута: аблативные Раны ПРОТИВ ВАРП-ОРУЖИЯ (стр. 57,
+  // wdbc-drn) — отдельный от общего пула (system.wounds.ablative, wdbc-smy7)
+  // пул, поглощающий ТОЛЬКО warpSoak-урон, до обычных Ран и до Аблативного
+  // Бронирования скакуна ниже. Восполняется до максимума в конце боя
+  // (module/hooks.mjs).
+  if (warpSoak && rawNet > 0) {
+    const { ablative, absorbed, remaining } = ablativeAbsorb(system.sarcophagusWarpWounds?.value, rawNet);
+    if (absorbed > 0) {
+      await actor.update({ "system.sarcophagusWarpWounds.value": ablative });
+      rawNet = remaining;
+    }
+  }
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 
-  const { currentWounds, newWounds, newCritical, gotCritical } =
+  const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
+
+  // Живая врезка Condition "onWoundsLoss" (doombc-req-condition-effect-plan) —
+  // блоки предметов актора, что реагируют на понижение Ран, независимо от
+  // источника (тот же единый applyWoundLoss, что закрыл wdbc-aleb). Только
+  // когда Раны РЕАЛЬНО поменялись — netDamage:0 не должен считаться событием.
+  if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
@@ -509,6 +587,7 @@ export async function applyDamageToActor(actor, damageData) {
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
+  if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");
   if (!warpSoak) {
     const pfNote = absorption.propFlags?.[armorKey] || {};
     if (pfNote.noEnergy && damageType === "energy")  propNotes.push("Проводящая: без AP от Энергии");
@@ -529,11 +608,15 @@ export async function applyDamageToActor(actor, damageData) {
   const reductionNote = incomingReduction > 0
     ? `<div class="dmg-tb-note">Доп. снижение входящего урона: <b>−${incomingReduction}</b></div>`
     : "";
+  const ablativeShieldNote = ablativeShieldBefore > 0
+    ? `<div class="dmg-tb-note">Аблативный AP-щит: +${ablativeShieldBefore} (остаток после попадания: ${ablativeApAfterHit(ablativeShieldBefore)})</div>`
+    : "";
 
   const armorBreakdown = warpSoak
     ? `<div class="dmg-absorption-detail">
         ${rollIcon("warp","#c98bff")}Варп-Оружие: игнор брони/T.b — поглощение = W.b <b>${totalAbsorption}</b>
         ${reductionNote}
+        ${ablativeShieldNote}
       </div>`
     : `<div class="dmg-absorption-detail">
         AP брони: <b>${armorAP}</b>
@@ -547,6 +630,7 @@ export async function applyDamageToActor(actor, damageData) {
           : ""}
         ${propNotes.length ? `<div class="dmg-tb-note">${propNotes.join(" · ")}</div>` : ""}
         ${reductionNote}
+        ${ablativeShieldNote}
       </div>`;
 
   const woundsLine = netDamage > 0

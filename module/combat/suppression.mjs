@@ -12,6 +12,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -24,7 +25,10 @@ export function suppressionTestMod(sys) {
  */
 export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const { eff: threshold, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod);
+  const { eff: threshold, bonus, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod);
+  // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
+  // Подавления независимо от броска.
+  const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
   const rollMode  = game.settings.get("core", "rollMode");
 
   if (!success) await actor.update({ "system.conditions.pinned": true });
@@ -82,7 +86,11 @@ export async function postSuppressionRecoveryPrompt(actor) {
  */
 export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const { eff: threshold, bonus: ruleBonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus);
+  const { eff: threshold, bonus: ruleBonus, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus);
+  // Саркофаг Дредноута (стр. 57, wdbc-drn): та же возможность, что и на самом
+  // тесте Подавления выше — практически недостижимо (auto-pass не даёт
+  // Подавлению вообще наступить), но на случай ручного наложения ГМом.
+  const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
   const rollMode  = game.settings.get("core", "rollMode");
 
   if (success) await actor.update({ "system.conditions.pinned": false });

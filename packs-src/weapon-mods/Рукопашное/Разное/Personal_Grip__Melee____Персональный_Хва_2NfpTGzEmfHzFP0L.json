@@ -5,7 +5,7 @@
   "folder": "0Wn4StGWfYU8mrae",
   "system": {
     "description": "Подгонка под руку: +5 на BS/WS для владельца (под кого подстроено), −5 для других. Заменяет Дуэльную Рукоятку, если была установлена ранее.",
-    "notes": "Асимметричный бонус (+5 владельцу/−5 прочим) — нет поля attackMod-per-actor в схеме, унести числом нельзя без искажения правила.",
+    "notes": "Смоделировано (wdbc-1rno): +5/−5 через system.effects.fittedToId/fittedBonus (module/combat/weapon-mods.mjs::getModEffects, сравнение с id актора, держащего оружие). ГМ/игрок указывает владельца на листе предмета после установки — пока не указан, эффекта нет ни для кого. НЕ смоделировано: автозамена Дуэльной Рукоятки при установке (module/rules/library — нет хука на создание weaponMod).",
     "category": "melee",
     "modGroup": "misc",
     "requirement": "Любое с рукояткой/древком (не щит, кулак, когти). Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
@@ -26,6 +26,8 @@
       "reliabilityMod": 0,
       "balanceMod": 0,
       "weightPct": 0,
+      "fittedToId": "",
+      "fittedBonus": 5,
       "addProps": [],
       "removeProps": []
     },

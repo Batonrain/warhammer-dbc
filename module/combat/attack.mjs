@@ -206,7 +206,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // d100 — рвётся из attack-dialog.mjs (opts.forceHit), а не проверяется тут
   // заново, потому что «в упор/в рукопашной» — ситуативная галочка игрока,
   // не хранимое состояние на акторе.
-  const { success: hit, deg } = testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
+  // Локус Неизбежности (стр. 30, wdbc-smc): «попадает автоматически с 1
+  // Успехом» — не «минимум 1» (как opts.forceHit/testOutcome ниже), а РОВНО
+  // 1, независимо от броска. d100 всё равно катается (нужен ChatMessage) и
+  // проверяется на Критический Провал/Успех (criticalOutcome ниже читает rv
+  // сам), но исход и степень отсюда не берутся вовсе.
+  const { success: hit, deg } = opts.fixedSuccessDeg != null
+    ? { success: true, deg: opts.fixedSuccessDeg }
+    : testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
   // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от
@@ -251,6 +258,28 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (targetIsVehicle) {
     vehPart = aimTarget?.vehiclePart || vehicleHitLocation(locRoll).label;
     hitLocLabel = vehPart;
+  }
+
+  // Горжет (стр. 228, wdbc-8b5): случайное (не Избирательное) попадание в
+  // голову можно попытаться перевести в Торс — кнопка на карточке бросает
+  // 1d10 и, на X+ рейтинга свойства Gorget надетого шлема цели, шлёт сюда же
+  // opts.gorgetRoll через переигровку этой же карточки (тот же приём, что и
+  // opts.locationShift выше). Читает цель заново из game.user.targets на
+  // момент клика — тот же риск/точность, что у locationShift.
+  let gorget = null;
+  if (!targetIsVehicle && !aimTarget?.value && hitLocLabel === "Голова") {
+    const gorgetTargetToken = [...(game.user?.targets ?? [])][0] ?? null;
+    const gorgetDefender = gorgetTargetToken?.actor ?? gorgetTargetToken?.document?.actor ?? null;
+    const rating = Number(gorgetDefender?.system?.absorption?.propFlags?.head?.gorgetRating) || 0;
+    if (rating > 0) {
+      gorget = { rating, outcome: null };
+      if (opts.gorgetRoll) {
+        const roll = Number(opts.gorgetRoll) || 0;
+        const success = roll >= rating;
+        gorget.outcome = { roll, success };
+        if (success) hitLocLabel = "Торс";
+      }
+    }
   }
 
   // Место конкретного попадания: у техники 1-е и 2-е — в часть, остальные в Корпус;
@@ -528,6 +557,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
+      gorget,
       isMelee, dtLabel, damageType: ammoDmgType || effDmgType, pen,
       assassinStrike: isMelee && assassinStrikeAvailable(actor),
       sbEff, sbHalf, taintedAdd, vehicleSide: opts.vehicleSide || "",
@@ -543,6 +573,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,
       burst: rofMode === "semi" || rofMode === "full",
+      // One Against A Hundred (wdbc-u0by): Преимущество защищающемуся против
+      // атаки Орды — только буквальный actor.type "horde" честно детектируем
+      // (Низшие Миньоны такого поля не хранят нигде на акторе, см. bd).
+      attackerIsHorde: actor.type === "horde",
       attackerUuid: actor.uuid || "",
       // itemUuid — только для кнопки шаблона зоны поражения (Automated
       // Animations читает его в module/hooks.mjs, см. triggerBlastAnimation).

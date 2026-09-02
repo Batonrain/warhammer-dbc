@@ -221,31 +221,38 @@ export const CAPABILITIES = {
   // пилотом; читатели — там, где книга их применяет.
   "sarcophagus.autoPassFear": {
     label: "Автоматически проходит тесты Страха, Подавления и Запугивания",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/combat/fear.mjs — _executeFearRoll (тест Страха) + module/combat/suppression.mjs — rollSuppressionTest/rollSuppressionRecovery (тест Подавления) + module/combat/intimidate.mjs — rollIntimidateContest (встречная проверка Запугивания: тест Морали цели). Все три из семи пунктов книги теперь подключены."
   },
   "sarcophagus.immuneBleedingFatigue": {
     label: "Иммунен к Кровотечению и Усталости",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/sheets/tabs/conditions.mjs::addFatigue (полный иммунитет к Усталости из любого источника) + module/combat/condition-ticks.mjs::processConditionTurnEnd (Кровотечение не наносит вреда)"
   },
   "sarcophagus.noPsychicPowers": {
     label: "Не может манифестировать и поддерживать психосилы",
-    source: "Саркофаг Дредноута (стр. 57); снимается Матрицей Осирис", reader: ""
+    source: "Саркофаг Дредноута (стр. 57); снимается Матрицей Осирис",
+    reader: "module/sheets/tabs/psychic.mjs::showManifestDialog (манифестация) + module/sheets/tabs/psychic.mjs::activatePsychicListeners (чекбокс поддержания) — блок снят, если на Дредноуте стоит module/rules/dreadnought.mjs::hasOsirisMatrix"
   },
   "sarcophagus.helpless": {
     label: "Без конечностей: Беспомощен, когда не подключён к машине",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/rules/character.mjs::sarcophagusHelplessNow (system.sarcophagusHelplessNow) + module/sheets/tabs/dreadnought-panel.mjs (предупреждение на листе) — состояние system.conditions.helpless не форсируется кодом (ни одно состояние в системе так не работает), ГМ накладывает вручную по этому предупреждению; system.sarcophagusInterred — персистентный маркер хирургического заключения, ставится один раз на панели"
   },
   "sarcophagus.noFoodWaterAir": {
     label: "Не нуждается в воде, еде и воздухе",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/rules/character.mjs — вкл vitalMods (Голод/Жажда обнуляются; своей механики «воздуха» в системе нет вовсе, нечего гейтить)"
   },
   "sarcophagus.autoWakeFromStun": {
     label: "Электрошок в конце Хода снимает Оглушение (кроме Галлюцинаций)",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/combat/condition-ticks.mjs::processConditionTurnEnd (снимает Оглушение целиком в конце Хода, кроме вызванного Галлюцинациями)"
   },
   "sarcophagus.autoSenses": {
     label: "Видит только авточувствами саркофага; лишён обоняния и вкуса",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "нечего гейтить: своей механики бонусов нюха/вкуса в системе нет вовсе (Taster/Дегустатор и Heightened Senses (Обоняние/Вкус) сами — текст без mechanics-хука)"
   },
 
   // ── Штрафы ────────────────────────────────────────────────────────────────
@@ -257,11 +264,15 @@ export const CAPABILITIES = {
   "penalty.calledShot.head.reduce20": {
     label: "Избирательная атака в голову: штраф меньше на 20",
     source: "Локус Подношения (стр. 31)",
-    reader: ""
+    reader: "module/sheets/attack-dialog.mjs — headPenalty в списке целей Избирательной атаки"
   },
   "calledShot.notMental": {
     label: "Избирательные атаки не считаются ментальными",
     source: "Локус Подношения (стр. 31)",
+    // Нечего гейтить (сверено wdbc-smc, 31.08.2026): в системе вообще нет
+    // правила «Ментальное действие блокируется в Ярости/опьянении», которое
+    // эта возможность должна была бы снимать — grep по frenzy.mjs/
+    // attack-dialog.mjs пуст. Появится базовое правило — тогда и читатель.
     reader: ""
   },
 
@@ -276,12 +287,12 @@ export const CAPABILITIES = {
   "autoHit.melee.oncePerRound": {
     label: "Раз в Раунд рукопашная атака попадает автоматически с 1 Успехом (штраф −10 до след. Хода)",
     source: "Локус Неизбежности (стр. 30)",
-    reader: ""
+    reader: "module/sheets/attack-dialog.mjs — showAttackDialog (галочка «Локус Неизбежности»), module/combat/attack.mjs (opts.fixedSuccessDeg), module/rules/sources.mjs (daemonInevitability — штраф −10), module/combat/action-economy.mjs (снятие штрафа). Не подключено к showAttackDialogNoWeapon (безоружная атака без диалога — принудительное применение без выбора игрока для штрафной способности сочли неверным по умолчанию)"
   },
   "action.bonusHalfMove": {
     label: "Бонусное полудействие, только на Движение",
     source: "Локус Стремительности (стр. 29)",
-    reader: ""
+    reader: "module/combat/movement-actions.mjs — declareHalfMove (раз в Раунд, 0 ОД вместо 1)"
   },
   "technique.baseFullAttack": {
     label: "Раз в Раунд любая рукопашная атака считается имеющей базу Полная Атака",
@@ -293,17 +304,21 @@ export const CAPABILITIES = {
   "aura.touchedByFates": {
     label: "За Очко Бесчестия даёт демонам ниже рангом Трейт Touched by the Fates (1)",
     source: "Локус Фанатизма (стр. 28)",
-    reader: ""
+    reader: "module/rules/daemon-locus.mjs (demonsInHeraldLocus/applyTouchedByFates), module/sheets/actor-sheet.mjs — onCapabilitySpend (кнопка «Потратить» панели ВОЗМОЖНОСТИ СЕЙЧАС)"
   },
   "horror.splitsIntoThree": {
     label: "Ужасы при смерти делятся на 3, а не на 2",
     source: "Локус Трансмогрификации (стр. 32)",
+    // Нечего гейтить (сверено wdbc-smc, 31.08.2026): базовой механики «Ужасы
+    // при смерти делятся на 2» в коде нет вовсе — grep по horde-sheet.mjs/
+    // horde-damage.mjs пуст. Этот Локус меняет параметр несуществующего
+    // правила; сперва нужна сама базовая механика деления Орды на смерти.
     reader: ""
   },
   "ignore.lingerTemplates": {
     label: "Игнорирует шаблоны со свойством Linger",
     source: "Локус Упорства (стр. 30)",
-    reader: ""   // Трудный Ландшафт закрыт записью terrainIgnore; шаблоны Linger — нет
+    reader: "module/regions/linger-zone.mjs — #onTrigger/_drift (иммунитет к попаданиям и дрейфу зоны)"
   },
 
   // ── Арсенал: блочные обходы Melee/Weapon Training ───────────────────────
@@ -396,9 +411,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "dodge.advantage.vsBurst": {
-    label: "Преимущество на физическое Избегание против Короткой/Длинной Очереди",
+    label: "Преимущество на Уклонение/Парирование против Короткой/Длинной Очереди механизировано (wdbc-u0by) — burst = rofMode semi/full, тот же признак, что уже использует Storm of Lead",
     source: "Dancing Among The Fire / Танец Среди Огня",
-    reader: ""
+    reader: "module/rules/dodge-advantage.mjs (danceOfFireAdvantage), module/combat/defense.mjs (_performDodge/_performParry)"
   },
   "maneuver.grantBrutalCharge.onCharge": {
     label: "Раз в бой после Натиска (до попаданий) можно получить Brutal Charge (+A.b); повторно — за очко судьбы",
@@ -421,14 +436,14 @@ export const CAPABILITIES = {
     reader: ""
   },
   "actionPoint.bonusPerTurn.stacking3": {
-    label: "+1 ОД в начале своего хода (до 3 взятий); на 3-м взятии — доп. действие с типом Атака за раунд",
+    label: "+1 ОД за взятие (до 3, стакается копиями предмета) — смоделировано ActiveEffect на system.actionPoints.max. «На 3-м взятии — доп. действие с типом Атака за раунд»: в системе нет счётчика «атак за Ход» вовсе (проверено, wdbc-niv7) — доп. ОД от 3 копий уже практически позволяет лишнюю атаку через обычный расход ОД, отдельного примитива «доп. атака вне лимита» заводить не на чем.",
     source: "Eldar Agility / Эльдарская Ловкость",
-    reader: ""
+    reader: "packs-src/talents/Азуриани/Eldar_Agility..., ActiveEffect system.actionPoints.max"
   },
   "stealth.advantage.plusSuccesses": {
-    label: "Преимущество на Stealth; +½A.b (окр.▲) успехов на соревновательные тесты со Stealth",
+    label: "Преимущество на Stealth механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). +½A.b успехов на соревновательные тесты со Stealth — не механизировано: числовой бонус к Успехам не выражается существующими видами записи Конструктора",
     source: "Fast And Swift / Быстрый И Проворный",
-    reader: ""
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
   "skillSwap.acrobatics.forWsS.disarmBladeBinding": {
     label: "Acrobatics(A)+0 вместо WS/S в тестах Disarm/Blade Binding",
@@ -449,6 +464,26 @@ export const CAPABILITIES = {
     label: "Acrobatics(A) вместо Parry(WS)/WS; после Парирования+Контратаки — цепочка тестов на разоружение",
     source: "Ultanesh Technique / Техника Ультанеша",
     reader: ""
+  },
+  // Именованный флаг «нельзя обезоружить» (wdbc-egll) — общий для любого
+  // источника с таким текстом. Актёрский уровень (не «этот конкретный
+  // предмет в этой конкретной руке») — тот же компромисс детализации, что и у
+  // остальных Возможностей без per-limb модели в системе. У Tentacle/Extra
+  // Arm — безопасно грантить безусловно (постоянный эффект руки с этой
+  // субмутацией, ничего не включает и не выключает). У gift.khorne.
+  // livingWeapon иммунитет условный («до конца боя/сцены» после активации) —
+  // подключён ЧЕРЕЗ activatable/active (module/data/item/mutation.mjs,
+  // wdbc-egll: тот же тумблер, что у armorMod/armor в isItemActive(),
+  // module/apps/effects.mjs), не безусловным грантом: весь предмет (в т.ч.
+  // capabilityKey gift.khorne.livingWeapon самой Способности) гейтится
+  // system.active, включает кнопка на листе (МУТАЦИИ И ДАРЫ БОГОВ,
+  // mutgiftToggleActive). Полудействие+1 Бесчестия на активацию и авто-
+  // выключение по концу боя/сцены — на столе, вручную (тот же уровень
+  // автоматизации, что у Стойки/Базы).
+  "combat.cannotBeDisarmed": {
+    label: "Приём Обезоружить проходит с предупреждением у цели, но не снимает оружие — актёрский уровень, не привязано к конкретному предмету/руке",
+    source: "Мутация: Tentacle, субмутация 4-5 «С Присосками» (Общие мутации); субмутация 7 «Опутанная Корнями» (Extra Arm); gift.khorne.livingWeapon, пока активирован — все три подключены (wdbc-egll)",
+    reader: "module/constants/combat.mjs MELEE_CONTESTS.disarm (targetImmunityFlag) — module/combat/techniques.mjs::_showContestDialog"
   },
   "reroll.pathTest.sceneOnce": {
     label: "Раз за сцену/битву переброс теста своего Пути; повторный провал считается успехом с 1 успехом",
@@ -746,7 +781,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.conjure.itemOrWeapon": {
     label: "Создаёт психокостяной предмет/оружие (без Reinforced), до F.b раз за сессию",
-    source: "Conjure Wraith / Вызвать Психокость", reader: ""
+    source: "Conjure Wraith / Вызвать Психокость",
+    reader: "module/combat/conjure-wraith.mjs (wdbc-sk8s) — applyConjureWraith; кнопки в sheets/tabs/combat.mjs, пикер openCompendiumBrowser (gear/tools, maxAvailability −1, ИЛИ папка «Психокостяное» весь пул weapons без фильтра). «R» = Редкость/Доступность (подтверждено пользователем) — «до R−1» читается фиксированным порогом −1. «Обычное» оружие (не именное) — книжный эпитет, не автоматизируемый фильтр, тот же честный компромисс, что LOS у Resplendent Raiment."
   },
   "wraithbone.songOfShield.techniqueOrArea": {
     label: "Песнь Защиты: неперегружаемый щит-дефлектор технике (1 цель или область), до F.b раз за сессию",
@@ -837,8 +873,8 @@ export const CAPABILITIES = {
     source: "Conductor of Death / Проводник Смерти", reader: ""
   },
   "actionPoint.bonusOnFeintKill.extraMeleeAttack": {
-    label: "Убийство после финта в том же раунде: раз в раунд +2 ОД и доп. рукопашная атака вне лимита",
-    source: "Deadly Effectiveness / Смертоносная Эффективность", reader: ""
+    label: "Убийство после финта в том же раунде: раз в раунд +2 ОД (доп. рукопашная атака вне лимита не нужна — в системе нет счётчика атак за Ход, тот же вывод, что для Eldar Agility) — смоделировано КНОПКОЙ на вкладке БОЙ (wdbc-1rno, module/combat/deadly-effectiveness.mjs, module/rules/cooldown.mjs unit «round»). НЕ детектируется автоматически: в системе нет ни понятия «убийство»/смерть актора, ни отметки «применил Финт в этом раунде» — игрок сам подтверждает клик, система считает только «раз в Раунд» и сам +2 ОД (тот же честный компромисс, что у Категории C).",
+    source: "Deadly Effectiveness / Смертоносная Эффективность", reader: "module/combat/deadly-effectiveness.mjs"
   },
   "deadMight.gainAtCombatStart.willpowerScaling": {
     label: "В начале боя получает +W.b Мёртвого Могущества",
@@ -849,8 +885,8 @@ export const CAPABILITIES = {
     source: "Devour the Soul / Пожрать Душу", reader: ""
   },
   "combat.advantageVsHorde.devastatingWsB": {
-    label: "Против Орды/Низших Миньонов — Преимущество на все тесты против них, атаки получают Devastating(WS.b); входящий урон от них ограничен 10/раунд",
-    source: "One Against A Hundred / Один Против Сотни", reader: ""
+    label: "Против Орды (actor.type===\"horde\") — Преимущество на атаку (диалог атаки, авто) и на Уклонение/Парирование (реестр правил, module/rules/one-against-a-hundred.mjs); Низшие Миньоны не распознаются (нет поля «тир» на акторе). Devastating(WS.b) по Орде и предел входящего урона 10/раунд — не смоделированы (другие механики, не Преимущество)",
+    source: "One Against A Hundred / Один Против Сотни", reader: "module/rules/one-against-a-hundred.mjs"
   },
   "damage.convertUnabsorbed.toWillpower": {
     label: "Раз в раунд может нанести непоглощённый урон в Волю (1d10+W.b) вместо обычного",
@@ -858,8 +894,9 @@ export const CAPABILITIES = {
   },
   // ── Экзодиты — Воин Троп (DoomBC — Аэльдари: Ответвления, Архетипы Экзодитов)
   "exodite.pathWarrior.determinationToFight": {
-    label: "При отрицательных ранах персонаж снижает получаемый урон на W.b (после поглощения, мин.1), +1 ОД и лимит атак до 2.",
-    source: "Determination To Fight / Решительность Сражаться", reader: ""
+    label: "При отрицательных ранах персонаж снижает получаемый урон на WP.b (после поглощения, мин.1) и получает +1 ОД — смоделировано (module/rules/determination-to-fight.mjs, читают module/combat/damage.mjs::applyDamageToActor и module/combat/action-economy.mjs::resetActionEconomy/effectiveActionPointsMax). При отрицательных ранах + прошлый раунд в Защитной Стойке — доп. снижение на WS.b (мин.1, тот же читатель урона) и +30 к тестам Парирования (module/combat/defense.mjs::_performParry) — тоже смоделировано (снимок Стойки на смену Раунда, hooks.mjs::updateCombat). «Лимит атак до 2» — не смоделирован: базовое правило «одна Атака за Ход» (стр. 32) в системе нигде не проверяется вовсе, не только для этого Таланта — заводить счётчик атак и включать проверку для ВСЕХ акторов системы это отдельная, гораздо более рискованная правка (меняет наблюдаемое поведение боя всем акторам, не только владельцу этого Таланта).",
+    source: "Determination To Fight / Решительность Сражаться",
+    reader: "module/rules/determination-to-fight.mjs, module/combat/damage.mjs::applyDamageToActor, module/combat/defense.mjs::_performParry, module/combat/action-economy.mjs::resetActionEconomy"
   },
   "exodite.pathWarrior.eternalGuardian": {
     label: "Unnatural WS архетипа меняется на +4, +1 очко судьбы. Против фракции, которую персонаж ранее побеждал: +2 Dmg и +1 Pen (или +3/+2 при Hatred…",
@@ -996,8 +1033,8 @@ export const CAPABILITIES = {
     source: "The Epitome of Aristocracy / Воплощение Аристократии", reader: ""
   },
   "exodite.forestLord.theMiddleOfTheHunt": {
-    label: "В начале 3-го и 4-го раундов персонаж получает дополнительный ход (инициатива 10) только с ОД,",
-    source: "The Middle of the Hunt / Середина Охоты", reader: ""
+    label: "В начале 3-го и 4-го раундов персонаж поднимает свою Инициативу на 10 — смоделировано (wdbc-1rno, module/combat/middle-of-the-hunt.mjs, hooks.mjs::updateCombat). Старая метка ошибочно описывала это как «доп. Ход» — книжный текст проще: плоский +10 к уже брошенной Инициативе, не лишний Combatant. Выбор до F.b союзников для +2 их Инициативе — НЕ смоделирован, нужен диалог выбора.",
+    source: "The Middle of the Hunt / Середина Охоты", reader: "module/combat/middle-of-the-hunt.mjs"
   },
   "exodite.forestLord.weaponsOfTheNobleOnes": {
     label: "Черта Лесного Владыки. Используя копьё как основное оружие, перед боем может обратиться к Духу Курноуса (запрещает другое рукопашное оружие)…",
@@ -1005,8 +1042,8 @@ export const CAPABILITIES = {
   },
   // ── Арлекины — Солитер (DoomBC — Аэльдари: Ответвления)
   "harlequin.solitaire.bowToTheAudience": {
-    label: "За 3 ОД персонаж проходит Awareness(P)−20 против до P.b видимых противников, умножает успехи на три и получает на один ход бонус на все физи…",
-    source: "Bow to the Audience / Поклон Публике", reader: ""
+    label: "За 3 ОД персонаж проходит Awareness(P)−20 против до P.b видимых противников, умножает степень успеха на три и до начала своего следующего Хода получает этот бонус на все физические действия против них, накладывая равный штраф на их физические Избегания — смоделировано кнопкой на вкладке БОЙ (wdbc-1rno, module/combat/bow-to-audience.mjs). Метка живёт на АТАКУЮЩЕМ (кто прошёл тест), не на цели — точнее книжного текста: бонус/штраф действуют только когда бьёт именно отметивший, читается module/sheets/attack-dialog.mjs по attackCtx.targetActor. Цели — до P.b из game.user.targets (тот же приём, что Bone Song). «На один Ход» прочитано как «до начала следующего Хода атакующего» (тот же такт, что усилитель Dread Wail) — не буквально «до конца текущего Хода», расхождение честно задокументировано.",
+    source: "Bow to the Audience / Поклон Публике", reader: "module/combat/bow-to-audience.mjs"
   },
   "harlequin.solitaire.damnedActor": {
     label: "Черта Солитера (Аребенниан). Полный иммунитет к Выжиганию Души и психосилам демонов/псайкеров с Cor>20.",
@@ -1017,12 +1054,12 @@ export const CAPABILITIES = {
     source: "Inevitable / Неизбежный", reader: ""
   },
   "harlequin.solitaire.justTheLight": {
-    label: "Если персонаж потратил весь прошлый ход на движение (или совершил хотя бы одно движение и сжёг остальные ОД),",
-    source: "Just the Light / Лишь Свет", reader: ""
+    label: "Если персонаж потратил весь прошлый Ход на движение (или совершил хотя бы одно движение и сжёг остальные ОД), получает щит-дефлектор A.b×3 до начала следующего Хода — смоделировано (wdbc-1rno, module/combat/just-the-light.mjs, hooks.mjs::updateCombat конец Хода + action-economy.mjs сброс на старте следующего Хода, читается той же точкой incomingDamageReduction, что и Determination To Fight). НЕ смоделировано: «складывается с технологическими, но не колдовскими щитами» — incomingDamageReduction плоское число без разметки природы источника, ограничение на честном слове ГМ (тот же принцип, что Категория C).",
+    source: "Just the Light / Лишь Свет", reader: "module/combat/just-the-light.mjs"
   },
   "harlequin.solitaire.lastActor": {
-    label: "Черта Солитера. Персонаж имеет A.b реакций и 4 ОД, бросает трижды на инициативу (три хода в раунде).",
-    source: "Last Actor / Последний Актёр", reader: ""
+    label: "Черта Солитера. «Бросает трижды на инициативу (три хода в раунде)» — смоделировано (wdbc-1rno, module/combat/last-actor.mjs+extra-turn.mjs: 2 доп. Combatant при старте боя, hooks.mjs::combatStart). Остальные 7 пунктов (A.b реакций и 4 ОД, Парирование Flexible/любого размера, безлимитный контроль в рукопашной, авто-контратака/избегание, бонус от разницы A, урон = разница инициатив, любые рукопашные таланты на любые атаки) — не смоделированы, каждый требует своей точки в конвейере.",
+    source: "Last Actor / Последний Актёр", reader: "module/combat/last-actor.mjs, module/combat/extra-turn.mjs"
   },
   "harlequin.solitaire.massacre": {
     label: "Успешно попав рукопашной атакой, персонаж может пройти Trade (Dance)(A)−20 и нанести ещё одну одиночную атаку; повторяет до провала,",
@@ -1365,8 +1402,9 @@ export const CAPABILITIES = {
     source: "Hecatoncheires / Гекатонхейр", reader: ""
   },
   "craft.core.journeyman": {
-    label: "Когда персонаж ассистирует в тесте Крафта, тот, кому он ассистирует, получает Преимущество на свой тест Крафта.",
-    source: "Journeyman / Подмастерье", reader: ""
+    label: "Преимущество крафтеру от ассистента-Подмастерья — ИСПРАВЛЕНО (wdbc-1rno): раньше был честный флаг без проверки, теперь Мастерская Крафта несёт assistantId (реальная ссылка на актора) — hasJourneyman(assistantActor) читает его настоящий инвентарь Талантов.",
+    source: "Journeyman / Подмастерье",
+    reader: "module/rules/craft-advantage.mjs (effectiveDiceMode/hasJourneyman), module/apps/craft-workshop.mjs::_rollShift"
   },
   "craft.core.juryRigging": {
     label: "Персонаж может починить поломку, обычно требующую до ½ смены, за одно полное действие, но уменьшает Качество предмета/машины на 1.",
@@ -1385,8 +1423,9 @@ export const CAPABILITIES = {
     source: "Safety Precautions / Техника Безопасности", reader: ""
   },
   "craft.core.slowShift": {
-    label: "Персонаж может увеличить время смены для Крафта на 4 часа, чтобы получить +30 и Преимущество на тест.",
-    source: "Slow Shift / Медленная Смена", reader: ""
+    label: "+30 и Преимущество за +4ч смены механизировано (wdbc-u0by) — галочка в Мастерской Крафта, видна владельцу Таланта. Сами +4ч на слово стола, время нигде не тикает",
+    source: "Slow Shift / Медленная Смена",
+    reader: "module/rules/craft-advantage.mjs (slowShiftBonus/effectiveDiceMode), module/apps/craft-workshop.mjs::_rollShift"
   },
   "craft.core.stableBuild": {
     label: "Персонаж может потратить ½ смены работы (без теста), чтобы убрать у предмета в процессе Улучшения обычные штрафы на работу с ним,",
@@ -1406,8 +1445,8 @@ export const CAPABILITIES = {
     source: "Divine Mask / Божественная Маска", reader: ""
   },
   "occultist.core.dominator": {
-    label: "Персонаж получает Преимущество на тесты Демонического Владычества.",
-    source: "Dominator / Покоритель", reader: ""
+    label: "Преимущество на тест Владычества (R.type===\"dominion\", roll×2+keepBest, module/rules/dominator.mjs) — авто, кнопка «Провести ритуал» без доп. диалога.",
+    source: "Dominator / Покоритель", reader: "module/apps/ritual-cast.mjs::castRitual"
   },
   "occultist.core.eruditeInfernal": {
     label: "Персонаж игнорирует штрафы за недостаточные знания о призываемом или покоряемом демоне в модификаторах Призыва.",
@@ -1471,8 +1510,9 @@ export const CAPABILITIES = {
     source: "Security Detail / Служба Безопасности", reader: ""
   },
   "awareness.core.sentry": {
-    label: "При тестах на Awareness, проводимых как свободное действие, персонаж получает Преимущество.",
-    source: "Sentry / Часовой", reader: ""
+    label: "Преимущество на Awareness механизировано (wdbc-u0by, kind:\"reroll\") — появляется опциональной радиокнопкой в ЛЮБОМ тесте Awareness (тот же честный принцип самоподтверждения, что у всех перебросов Локусов): условие «как свободное действие» не проверяется программно, решает игрок/стол",
+    source: "Sentry / Часовой",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
   "awareness.core.sixthSense": {
     label: "Получив попадание с типом Незримое, персонаж может потратить Очко Бесчестия, чтобы Избежать от него как обычно и до начала своего следующего…",
@@ -1721,8 +1761,9 @@ export const CAPABILITIES = {
     source: "Bastion of Iron Will / Бастион Железной Воли", reader: ""
   },
   "psyResist.core.defiance": {
-    label: "Персонаж получает Преимущество на все встречные тесты против психосил (кроме непрямых), выжигания души,",
-    source: "Defiance / Неповиновение", reader: ""
+    label: "Преимущество механизировано (wdbc-u0by, kind:\"reroll\", scope:\"all\") — опциональная радиокнопка на ЛЮБОМ тесте, шире книги (не сужено ни до встречных тестов, ни тем более до психосил/выжигания/одержимости от Ненавистных) — честное самоподтверждение игроком. Область \"opposed\" оказалась мёртвой (effectAppliesTo её не матчит нигде в конвейере, ctx.kind никогда не бывает \"opposed\" — «Вид: Встречный» это отдельный параметр исхода теста, не контекст правил), заменена на рабочую \"all\"",
+    source: "Defiance / Неповиновение",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
   "psyResist.core.divineProtection": {
     label: "Раз в Раунд, получая эффект психосилы, демонического дара, варп-оружия, выжигания души или иной полагающийся на Варп эффект,",
@@ -1794,8 +1835,8 @@ export const CAPABILITIES = {
     source: "Digital Revelation / Цифровое Откровение", reader: ""
   },
   "technomystic.core.electrovigour": {
-    label: "Персонаж получает Преимущество на тесты Т на Техночудеса с типом Компенсатор.",
-    source: "Electrovigour / Электрорвение", reader: ""
+    label: "Преимущество на тест Компенсатора (roll×2 + keepBest, module/rules/electrovigour.mjs) — авто, кнопка активации без диалога.",
+    source: "Electrovigour / Электрорвение", reader: "module/sheets/tabs/tech.mjs::activateTechMiracle"
   },
   "technomystic.core.glimpseOfOmniscience": {
     label: "Персонаж может потратить 1 Когницию, чтобы перебросить тест Ноосферного Сканирования.",
@@ -1863,8 +1904,9 @@ export const CAPABILITIES = {
     source: "Cybernetic Rebirth / Кибернетическое Перерождение", reader: ""
   },
   "mechanicum.core.cyberpreacher": {
-    label: "Персонаж получает Преимущество на тесты имплантации бионики/кибернетики и уменьшает вдвое время восстановления после такой операции (пациент…",
-    source: "Cyberpreacher / Киберпроповедник", reader: ""
+    label: "Преимущество на тесты категории «Бионика и Мехадендриты» механизировано (wdbc-u0by, автоматически, без галочки). Уменьшение вдвое времени восстановления после операции — не механизировано: пост-операционное восстановление не часть резолва Крафта",
+    source: "Cyberpreacher / Киберпроповедник",
+    reader: "module/rules/craft-advantage.mjs (cyberpreacherApplies/effectiveDiceMode), module/apps/craft-workshop.mjs::_rollShift"
   },
   "mechanicum.core.fleshIsWeak": {
     label: "Персонаж увеличивает рейтинг Трейта Machine на 1. Можно брать до ½I.b (окр.▲) раз.",
@@ -2436,8 +2478,8 @@ export const CAPABILITIES = {
     source: "Slip Away / Ускользнуть", reader: ""
   },
   "dodge.core.snapshot": {
-    label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода он получает одно ОД как Задержкой,",
-    source: "Snapshot / Выстрел Навскидку", reader: ""
+    label: "Если в свой Ход персонаж подвигался не больше полудвижения, в конце Хода получает +1 ОД — смоделировано (wdbc-1rno, module/combat/snapshot.mjs, hooks.mjs::updateCombat, читает movement-actions.mjs::moveDegreeThisTurn). НЕ смоделировано: ОД можно потратить только на выстрел по брошенному предмету и игнорируя ограничение атак Задержкой — в системе нет ни earmarked-подмножества ОД, ни кодового понятия «атака Задержкой» вообще, заводить оба под одну находку не оправдано; бонусное ОД тратится как обычное.",
+    source: "Snapshot / Выстрел Навскидку", reader: "module/combat/snapshot.mjs"
   },
   "dodge.core.speedAwareness": {
     label: "Персонаж может совершать Избегания после Бега, но получает −5 на эти Избегания за каждые полные P.b метров, которые он пробежал.",
@@ -2529,8 +2571,9 @@ export const CAPABILITIES = {
     source: "Stonewall / Стена", reader: ""
   },
   "resilience.core.thumper": {
-    label: "Персонаж получает Преимущество на все тесты Т против Оглушения ударными волнами (в т.ч.",
-    source: "Thumper / Громыхатель", reader: ""
+    label: "Преимущество на T механизировано (wdbc-u0by, kind:\"reroll\") — появляется опциональной радиокнопкой в ЛЮБОМ тесте Т (тот же честный принцип самоподтверждения, что у переброса Sentry выше): условие «именно против Оглушения ударной волной» не проверяется программно. Уменьшение вдвое штрафов от инфразвука и снижение штрафа расслышать сквозь шум — не механизировано",
+    source: "Thumper / Громыхатель",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
   "resilience.core.tireless": {
     label: "Персонаж не получает штраф −10 от Усталости на действия, не имеющие типа Ментальное.",
@@ -2688,8 +2731,8 @@ export const CAPABILITIES = {
     source: "Crushing Blow / Крушащий Удар", reader: ""
   },
   "meleeCore.core.disarm": {
-    label: "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: любое). Персонаж и цель проходят WS+0 vs WS+0.",
-    source: "Disarm / Обезоружить", reader: ""
+    label: "Приём (База: Стандартная/Натиск/Осторожная Атака; Оружие: любое). Персонаж и цель проходят WS+0 vs WS+0. Заведён Состязанием MELEE_CONTESTS.disarm (wdbc-egll) — сам встречный тест бросается, +10 с кнутом/кистенём и что конкретно роняет/забирает цель на 5+ Успехов остаются на стол (тот же уровень автоматизации, что у Финта/Давления/Напролома). Талант в коде НЕ гейтит доступность кнопки — тот же принцип, что у остальных Состязаний (character-context.mjs)",
+    source: "Disarm / Обезоружить", reader: "module/constants/combat.mjs MELEE_CONTESTS.disarm — module/combat/techniques.mjs::_showContestDialog"
   },
   "meleeCore.core.doubleTeam": {
     label: "Персонаж получает ещё +10 на попадание в ближнем бою за численное превосходство 2 к 1 или выше.",
@@ -2935,11 +2978,11 @@ export const CAPABILITIES = {
   },
   "elite..voltageistBlast": {
     label: "Совершая Натиск с Техночудом Voltageist Shield в Процессах, может в конце своего Хода потратить 3⚙,",
-    source: "Voltageist Blast / Вольтагейст Взрыв", reader: ""
+    source: "Voltagheist Blast / Вольтагейст Взрыв", reader: ""
   },
   "elite..voltageistBubble": {
     label: "Имея в Процессах Техночудо Voltageist Shield, может выбрать получить иммунитет к эффектам вакуума и газов,",
-    source: "Voltageist Bubble / Вольтагейст Пузырь", reader: ""
+    source: "Voltagheist Bubble / Вольтагейст Пузырь", reader: ""
   },
   // ── Азуриани — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.azuriani.fullShelter": {
@@ -2960,20 +3003,20 @@ export const CAPABILITIES = {
     source: "Bastion / Бастион", reader: ""
   },
   "elite.drednouty.coreMemories": {
-    label: "Увеличивает максимум Здравомыслия на 5. Можно брать до I.b раз.",
-    source: "Core Memories / Ядро Воспоминаний", reader: ""
+    label: "Увеличивает максимум Здравомыслия на 5. Можно брать до I.b раз. Смоделировано (module/rules/dreadnought.mjs::sanityMax) — считается автоматически в prepareDerivedData.",
+    source: "Core Memories / Ядро Воспоминаний", reader: "module/rules/dreadnought.mjs::sanityMax, module/rules/character.mjs"
   },
   "elite.drednouty.cruelty": {
-    label: "Убив цель рукопашной атакой или стрелковой атакой в конечность, может потратить 1 Очко Бесчестия: немедленно заканчивает свой Ход и пропуска…",
-    source: "Cruelty / Жестокость (Дредноут)", reader: ""
+    label: "Убив цель рукопашной атакой или стрелковой атакой в конечность, может потратить 1 Очко Бесчестия: немедленно заканчивает свой Ход и пропуска… Смоделирована только трата/бросок (кнопка панели ЗДРАВОМЫСЛИЕ: −1 Очко Бесчестия → +2d10 Здравомыслия) — условие (добита конечность) книга не проверяет автоматически, самоотчёт игрока.",
+    source: "Cruelty / Жестокость (Дредноут)", reader: "module/rules/dreadnought.mjs::SANITY_RECOVERY_TALENTS, module/sheets/actor-sheet.mjs::onSanityTalentRecover"
   },
   "elite.drednouty.endurance": {
-    label: "Когда пилот или Дредноут получает непоглощённый урон хотя бы 3 раза с конца своего предыдущего Хода,",
-    source: "Endurance / Превозмогание", reader: ""
+    label: "Когда пилот или Дредноут получает непоглощённый урон хотя бы 3 раза с конца своего предыдущего Хода, Смоделирована только трата/бросок (та же кнопка панели, что у Cruelty) — счётчик «3-й урон подряд» не отслеживается автоматически, самоотчёт игрока.",
+    source: "Endurance / Превозмогание", reader: "module/rules/dreadnought.mjs::SANITY_RECOVERY_TALENTS, module/sheets/actor-sheet.mjs::onSanityTalentRecover"
   },
   "elite.drednouty.ferumInfernus": {
-    label: "Если Здравомыслие ниже ½Inf +5, каждый час восстанавливает 1 Здравомыслия.",
-    source: "Ferum Infernus / Ферум Инфернус", reader: ""
+    label: "Если Здравомыслие ниже ½Inf +5, каждый час восстанавливает 1 Здравомыслия. Смоделировано (module/rules/dreadnought.mjs::ferumInfernusActive/Threshold) — порог и индикатор «активна» считаются автоматически, тик +1 в час — кнопка панели (часовой таймер не тикает сам, тот же случай, что Электростимуляторы/Препараты).",
+    source: "Ferum Infernus / Ферум Инфернус", reader: "module/rules/dreadnought.mjs::ferumInfernusActive, module/sheets/actor-sheet.mjs::onFerumInfernusTick"
   },
   "elite.drednouty.fistfulOfThunder": {
     label: "Попав по цели рукопашным орудием, может немедленно атаковать встроенным в него орудием ту же цель или другую в базовом контакте с ним и изна…",
@@ -2988,12 +3031,12 @@ export const CAPABILITIES = {
     source: "Payback / Расплата", reader: ""
   },
   "elite.drednouty.superiority": {
-    label: "Победив потенциально опасного противника (способного серьёзно навредить) с помощью нечестного преимущества,",
-    source: "Superiority / Превосходство", reader: ""
+    label: "Победив потенциально опасного противника (способного серьёзно навредить) с помощью нечестного преимущества, Смоделирована только трата/бросок (та же кнопка панели, что у Cruelty) — условие книга не проверяет автоматически, самоотчёт игрока.",
+    source: "Superiority / Превосходство", reader: "module/rules/dreadnought.mjs::SANITY_RECOVERY_TALENTS, module/sheets/actor-sheet.mjs::onSanityTalentRecover"
   },
   "elite.drednouty.triumph": {
-    label: "Убив рукопашной атакой или выстрелом в упор сильного противника (вражеского чемпиона, монстра или машину),",
-    source: "Triumph / Триумф", reader: ""
+    label: "Убив рукопашной атакой или выстрелом в упор сильного противника (вражеского чемпиона, монстра или машину), Смоделирована только трата/бросок (та же кнопка панели, что у Cruelty) — условие книга не проверяет автоматически, самоотчёт игрока.",
+    source: "Triumph / Триумф", reader: "module/rules/dreadnought.mjs::SANITY_RECOVERY_TALENTS, module/sheets/actor-sheet.mjs::onSanityTalentRecover"
   },
   "elite.drednouty.venerable": {
     label: "Использовав Избегание и всё равно получив попадание, может подставить под удар любую сторону,",
@@ -3588,8 +3631,9 @@ export const CAPABILITIES = {
   },
   // ── Элитные_архетипы\Виткис — Элитный Архетип/подсистема, книжно проверено в Фазе 1, ниже — Фаза 2 (все триггерные/активные, capability-документация) ──
   "elite.elitnyeArhetipy.vitkis.battleSage": {
-    label: "Мало кто из живущих может потягаться с Виткисом в его понимании войны. Получает Преимущество на все тесты на Common Lore (War).",
-    source: "Battle Sage / Мудрец Битвы", reader: ""
+    label: "Преимущество на Common Lore (War) механизировано (wdbc-u0by, kind:\"reroll\"/keepBest, skillKey:commonLore) — специализация в отборе не участвует (resolve-test.mjs, тот же компромисс, что у всех групповых записей): срабатывает на любой Common Lore, не только War",
+    source: "Battle Sage / Мудрец Битвы",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
   "elite.elitnyeArhetipy.vitkis.bloodFeud": {
     label: "Гнев и мудрость сочетаются в его душе, открывая разум к ещё большим тайнам битвы. Когда использует War Seer против Ненавистного врага,",
@@ -4888,8 +4932,9 @@ export const CAPABILITIES = {
     source: "Dark Sight / Ночное Зрение", reader: ""
   },
   "trait.dataAcquisition": {
-    label: "Преимущество на тесты Awareness. Коды командования для Боевых Лат Скитария не работают на него.",
-    source: "Data Acquisition / Получение Данных", reader: ""
+    label: "Преимущество на тесты Awareness механизировано (wdbc-u0by, kind:\"reroll\"/keepBest). Иммунитет к кодам командования Боевых Лат Скитария — не механизировано, нет такого понятия в коде вовсе",
+    source: "Data Acquisition / Получение Данных",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
   "trait.deadlyNaturalWeapons4": {
     label: "Естественное оружие (когти) теряет свойство Primitive.",
@@ -4952,8 +4997,8 @@ export const CAPABILITIES = {
     source: "From Beyond / Не От Мира Сего", reader: ""
   },
   "trait.fullyArmed": {
-    label: "Не-тяжёлое оружие с модом Custom Grip на разгрузках считается удобным; −1 ОД (до ½) к перезарядке, +1 надёжность и ½ веса такого оружия.",
-    source: "Fully Armed / Во Всеоружии", reader: ""
+    label: "Не-тяжёлое стрелковое оружие с модом Custom Grip считается удобным: +1 надёжность и ½ веса (окр.▼) такого оружия в расчёте Разгрузки. Смоделировано (wdbc-1rno): module/combat/fully-armed.mjs (детект Черты+мода по имени «Персональный Хват»), подключено в module/combat/weapon-mods.mjs::getModEffects (Надёжность) и module/constants/rig.mjs (вес). Прежняя пометка «мод Custom Grip не заведён нигде в системе» была ошибочной — мод существовал под русским переводом «Персональный Хват» (packs-src/weapon-mods/Стрелковое/Прочие/Personal_Grip и .../Рукопашное/Разное/Personal_Grip__Melee), найден по книжному тексту, а не по литеральной строке «Custom Grip». НЕ смоделировано: −1 ОД (до ½) к перезарядке — system.reload свободная строка («1»/«полн.»/«2 полн.»), в системе нет числового движка экономии действий, который бы её читал (тот же честный пробел у Rapid Reload с идентичной формулировкой, capabilities.mjs «Время перезарядки... вдвое»).",
+    source: "Fully Armed / Во Всеоружии", reader: "module/combat/fully-armed.mjs"
   },
   "trait.geneticDecay": {
     label: "Падение макс. возраста.",
@@ -5012,8 +5057,9 @@ export const CAPABILITIES = {
     source: "Lord of the Streams / Владыка Потоков", reader: ""
   },
   "trait.lyingSpeechOfALiar": {
-    label: "Преимущество на соц. тесты, пока собеседник не знает, что он эльдар (или относится нейтрально/положительно).",
-    source: "Lying Speech Of A Liar / Лживые Речи Лжеца", reader: ""
+    label: "Преимущество на соц. тесты механизировано (wdbc-u0by, kind:\"reroll\") — опциональная радиокнопка на ЛЮБОМ соц. тесте, честное самоподтверждение (resolveTest вообще не знает ПРОТИВ КОГО идёт соц. тест — персистентный флаг на цели физически не смог бы это гейтить, проверено). Обращение бросков Deceive и +1 успех при провале встречного Deceive/Scrutiny против него — не механизировано",
+    source: "Lying Speech Of A Liar / Лживые Речи Лжеца",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс в диалоге теста)"
   },
   "trait.malagraCortex": {
     label: "Утраивает Успехи во встречных тестах на сопротивление Техночудесам Ноотеургии и Аниматеургии, удваивает Успехи на сопротивление психосилам,",
@@ -5220,8 +5266,9 @@ export const CAPABILITIES = {
     source: "Sycophant / Подхалим", reader: ""
   },
   "trait.takeEverything": {
-    label: "Преимущество на все тесты поиска/оценки трофеев. Несёт предметы до своего веса Ношения независимо от разгрузки (всё считается на удобных раз…",
-    source: "Take Everything / Забирай Всё", reader: ""
+    label: "Преимущество на тесты поиска/оценки трофеев механизировано (wdbc-u0by, решение пользователя: Awareness+Commerce) — kind:\"reroll\"×2. Несёт предметы до своего веса Ношения независимо от разгрузки — не механизировано, нет точки входа в расчёт разгрузки под 'независимо от нормальных правил'",
+    source: "Take Everything / Забирай Всё",
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → rollMode-правило общего реестра)"
   },
   "trait.theBloodOfHeroes": {
     label: "Раз/битву за Свободное действие тест W+10: при успехе — Unnatural Characteristic (+1) на выбор до конца битвы.",
@@ -6187,7 +6234,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.khorne.countenanceOfKhorne": {
-    label: "+20/+30 социальные тесты с воинами/культистами Кхорна, +10 запугивание; демоны Кхорна ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход",
+    label: "+20/+30 социальные тесты (солдаты/воины ⇄ смертные последователи) и +10 Запугивание против прочих механизированы тремя записями kind:\"testMod\" на этом же предмете — читаются как галочки диалога броска (игрок сам решает, применимо ли к конкретной цели, тот же принцип, что и у любого другого testMod в системе). Capability покрывает ТОЛЬКО остаток: демоны Кхорна ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход (не действует на Кхорнитов, особая реакция у Слаанешитов) — не смоделированы",
     source: "Дар Кхорн (Countenance of Khorne)",
     reader: ""
   },
@@ -6199,7 +6246,7 @@ export const CAPABILITIES = {
   "gift.khorne.eternalWarrior": {
     label: "Умирая в Ярости — раз за сессию бесплатное Чудесное Спасение/Божественная Защита (без траты Бесчестия/Порчи), либо за Очко Бесчестия при дальней стрелковой смерти",
     source: "Дар Кхорн (Eternal Warrior)",
-    reader: ""
+    reader: "module/combat/eternal-warrior.mjs (wdbc-sk8s) — eternalWarriorEligible/eternalWarriorFreeSaveAvailable/markEternalWarriorUsed; module/sheets/tabs/death.mjs::_resolveFateSave(eternalWarrior). «Дистанция Натиска до убийцы» не отслеживается движком — путь FLAT (1 Очко Бесчестия) подтверждается самим игроком флажком в диалоге, не автоопределением."
   },
   "gift.khorne.eyeOfChallenge": {
     label: "+1 Бесчестия: выделить 4 сильнейших воинов в поле зрения, узнать WS/S/Parry/Берсерк-Таланты одного — не бросить вызов за минуту = 2d10+8 урона в W",
@@ -6219,6 +6266,21 @@ export const CAPABILITIES = {
   "gift.khorne.knightOfKhorne": {
     label: "Демонический скакун (Джаггернаут Кхорна) в услужении — призыв ритуалом, Демоническое Владычество, вселение в технику даёт +8 AP от стрельбы и доп. кубик урона в ближнем бою/Таране",
     source: "Дар Кхорн (Knight of Khorne)",
+    reader: ""
+  },
+  "gift.khorne.livingWeapon": {
+    label: "Полудействие+1 Бесчестия: до конца боя оружие/импровизированное оружие в руке нельзя выбить, +10 WS, Баланс до 0, Pen до Cor.b, теряет Primitive/получает Reinforced (импровизированное: без штрафа −20, +1 кубик, ×2 S.b). Disarm-часть подключена под combat.cannotBeDisarmed (wdbc-egll), гейтится system.activatable/active (isItemActive) — кнопка на листе включает/выключает предмет целиком, полудействие/1 Бесчестие на вход и конец боя/сцены на выход — вручную. +10 WS/Баланс/Pen/Reinforced-Primitive — ещё не заведены (нужен профиль оружия в руке, отдельная работа).",
+    source: "Дар Кхорн (Living Weapon)",
+    reader: "module/data/item/mutation.mjs (activatable/active) + module/apps/effects.mjs::isItemActive case \"mutation\" — только capabilityKey combat.cannotBeDisarmed, остальное ещё не читается"
+  },
+  "gift.khorne.priestOfBloodshed": {
+    label: "Раз за Раунд: в 8м от чемпиона Кровотечение/смерть в бою другого персонажа даёт 1 Очко Бесчестия (сгорает в конце следующего Хода)",
+    source: "Дар Кхорн (Priest of Bloodshed)",
+    reader: ""
+  },
+  "gift.khorne.purityOfBattle": {
+    label: "Полное действие (даже в Ярости)+1 Бесчестия: сферическая волна Cor.b м снимает боевые наркотики/психосилы/техночудеса со всех в радиусе, эффекты нельзя наложить повторно до конца боя",
+    source: "Дар Кхорн (Purity of Battle)",
     reader: ""
   },
   "gift.khorne.purityOfWrath": {
@@ -6242,19 +6304,19 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.khorne.truthSeer": {
-    label: "Автопобеда над обманом с Cor.b Успехами; иммунитет к галлюциногенам/Иллюзионизму, видит истинные формы/сквозь иллюзии; Преимущество на встречные тесты против Финта",
+    label: "Автопобеда над обманом с Cor.b Успехами; иммунитет к галлюциногенам/Иллюзионизму, видит истинные формы/сквозь иллюзии — статус см. остальные записи блока mechanics. Преимущество на встречные тесты против Финта механизировано (wdbc-u0by, kind:\"reroll\", char:ws) — опциональная радиокнопка в диалоге Состязаний (module/combat/techniques.mjs::_showContestDialog, раньше вообще не читал реестр правил). Диалог общий для ОБЕИХ сторон контеста (инициатора и обороняющегося) — роль не различается программно, честное самоподтверждение игрока решает, отмечать ли галочку (тот же принцип, что у остальных опциональных перебросов); заодно шире книги — сработает на любом тесте WS, не только Финте",
     source: "Дар Кхорн (Truth-Seer)",
-    reader: ""
+    reader: "module/rules/item-rules.mjs (kind:\"reroll\" → опциональный переброс), module/combat/techniques.mjs::_showContestDialog"
   },
   "gift.khorne.witchSeeker": {
-    label: "Awareness+0 (+30 если псайкер манифестировал в сцене) чует псайкеров по запаху; +30 Survival на их выслеживание; на 3+ Успехах опознаёт использованные ими психосилы",
+    label: "+30 Выживание (выслеживание псайкеров) механизировано отдельной записью kind:\"testMod\" на этом же предмете. Capability покрывает ТОЛЬКО остаток: Awareness+0 (+30 если псайкер манифестировал в сцене) чует псайкеров по запаху; на 3+ Успехах опознаёт использованные ими психосилы — не смоделированы",
     source: "Дар Кхорн (Witch-Seeker)",
     reader: ""
   },
   "gift.nurgle.absurdlyFat": {
-    label: "+10 аблативных Ран и авторегенерация 1/Ход механизированы (kind:\"poolMax\"/ablativeWounds). Размер +1 без влияния на SPD — не механизировано: в системе нет Конструктор-кайнда для бонуса к Размеру",
+    label: "+10 аблативных Ран и авторегенерация 1/Ход (kind:\"poolMax\"/ablativeWounds); Размер +1 без влияния на SPD — kind:\"characteristic\"/charKey:\"sizeNoSpd\" (wdbc-w8ws)",
     source: "Дар Нургл (Absurdly Fat)",
-    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart)"
+    reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart), module/apps/mechanics.mjs (characteristicEffectKey charKey:\"sizeNoSpd\" → system.sizeModNoSpd), module/rules/character.mjs (traitSizeModNoSpd, не идёт в calcMovement)"
   },
   "gift.nurgle.blackPhysician": {
     label: "Полное действие+1R себе: заражает до 3 трупов в 2м, оживают зомби (Раны×2, теряют Навыки/Таланты кроме оружейных), контроль до Cor.b зомби",
@@ -6267,9 +6329,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.cancerousHealing": {
-    label: "Полное действие: касание раненого лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим (−2 A/−2 S за каждую) — тоже упирается в wdbc-smy7",
+    label: "Полное действие: касание раненого (текущая цель game.user.targets) — диалог «Цель согласна»; без согласия — полноценная безоружная атака (showAttackDialogNoWeapon: WS/база/стойка/усталость, Уклонение/Парирование цели), эффект по кнопке в чат-карточке ПОСЛЕ подтверждённого попадания, не автоматически. Лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S (Значение, .totalFx — сверено с книгой) за каждую, считает только СВОЮ долю пула",
     source: "Дар Нургл (Cancerous Healing)",
-    reader: ""
+    reader: "module/rules/cancerous-healing.mjs, module/apps/cancerous-healing.mjs (promptConsent/applyCancerousHealingEffect/applyCancerousHealingFromButton/useCancerousHealing/syncCancerousHealingPenalty — читает флаг cancerousHealingAblative, не весь system.wounds.ablative), module/sheets/attack-dialog.mjs (showAttackDialogNoWeapon, techDef.hitSectionHtml), module/hooks.mjs (делегированный клик .ch-apply-touch-btn), хук updateActor в warhammer-dbc.mjs пересинхронизирует штраф и долю"
   },
   "gift.nurgle.castOutOfDeath": {
     label: "Не может умереть от Критического Эффекта (эффект применяется в остальном); уничтоженные части тела регенерируют за 7ч до минимально функционального состояния",
@@ -6277,7 +6339,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.countenanceOfNurgle": {
-    label: "+20/+30 социальные тесты с больными/культистами Нургла, −10 с элитой; демоны Нургла ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход",
+    label: "+20/+30 социальные тесты (больные/отбросы общества ⇄ смертные последователи) и −10 с элитой механизированы тремя записями kind:\"testMod\" на этом же предмете — читаются как галочки диалога броска (игрок сам решает, применимо ли к конкретной цели). Capability покрывает ТОЛЬКО остаток: демоны Нургла ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход (не действует на Нурглитов, особая реакция у Тзинчитов) — не смоделированы",
     source: "Дар Нургл (Countenance of Nurgle)",
     reader: ""
   },
@@ -6327,9 +6389,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.plagueShepherd": {
-    label: "Команда/Брифинг: подчинённые-Нурглиты с покровительством дополнительно получают Успехи аблативных Ран; если сам и все подчинённые заражены — Короткая Команда свободным действием, Детальная — полудействием",
+    label: "Команда/Брифинг: подчинённые с patronGod:\"nurgle\" (кому вообще доходят Команды) дополнительно получают Успехи аблативных Ран, не складывая с прошлой командой. Сам+все подчинённые заражены → Короткая/Детальная Команда РЕАЛЬНО списывают меньше ОД (module/combat/action-economy.mjs): Полудействие→Свободное, Полное→Полудействие; попутно Короткая/Детальная Команда вообще стали списывать ОД у отдающего (раньше не списывали ни у кого)",
     source: "Дар Нургл (Plague Shepherd)",
-    reader: ""
+    reader: "module/rules/plague-shepherd.mjs (plagueShepherdGrant/plagueShepherdFreeCommandActive/isInfected), module/sheets/squad-sheet.mjs (_commandApCost/_commandReachableMemberDocs, _executeCommand списывает spendActionPoints ДО броска, context.shortApGate/detailApGate/plagueShepherdFreeCommand в _prepareContext), templates/actor/squad-sheet.hbs (гейт кнопок + заголовки панелей)"
   },
   "gift.nurgle.prophetOfGallerpox": {
     label: "Полное действие: заражает большую жизнеобеспечивающую машину Гэллерпоксом (одержание Чумоносом), не-Нурглиты в радиусе действия машины −30 к тестам против ядов/болезней; удалённое вкл/выкл машины в пределах 7км полным действием",
@@ -6362,7 +6424,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.weepingRot": {
-    label: "Иммунитет к Горению и свойствам Crippling/Corrosive и к ядам через раны — иммунитет к Горению/Crippling/Corrosive реализован тремя записями (weaponPropertyImmunity.flame/.crippling/.corrosive, wdbc-plsf); нюанс «но снаряжение всё равно страдает от Corrosive» не автоматизирован (Corrosive считается по актору целиком, не отдельно предмет/носитель); иммунитет к ядам через раны — вне скоупа wdbc-plsf",
+    label: "Реализовано полностью (wdbc-1rno) четырьмя записями weaponPropertyImmunity.{flame,crippling,corrosive,toxic} (module/combat/weapon-properties.mjs::hasWeaponPropertyImmunity) — «яды через раны» = свойство Toxic, добавлено этой находкой. Сам ключ gift.nurgle.weepingRot остаётся пустой заглушкой-«зонтиком» без своего читателя — вся механика уже доставлена другими ключами, читать нечего. Нюанс «снаряжение всё равно страдает от Corrosive» не автоматизирован (считается по актору целиком, не отдельно предмет/носитель).",
     source: "Дар Нургл (Weeping Rot)",
     reader: ""
   },
@@ -6372,7 +6434,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.blackEyes": {
-    label: "+½Cor(окр.▲) на тесты зрения; при Cor 40+ ИК/УФ зрение; при Cor 60+ видит сквозь дым/тьму/колдовской морок без штрафов; при Cor 80+ Полу-Прицеливание свободным действием",
+    label: "+½Cor(окр.▲) Бдительность механизировано отдельной записью kind:\"testMod\" (modValueMode:formula, wdbc-1rno — впервые тестMod читает живую формулу mech-formula.mjs, а не только голое число) на этом же предмете, тот же навык, что Cyclops. Capability покрывает ТОЛЬКО остаток: при Cor 40+ ИК/УФ зрение; при Cor 60+ видит сквозь дым/тьму/колдовской морок без штрафов; при Cor 80+ Полу-Прицеливание свободным действием — пороговые бонусы не смоделированы",
     source: "Дар Слаанеш (Black Eyes)",
     reader: ""
   },
@@ -6382,7 +6444,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.countenanceOfSlaanesh": {
-    label: "+10/+30 социальные тесты (общие/с культистами Слаанеш); демоны Слаанеш ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход (Кхорниты впадают в Ярость вместо Шока)",
+    label: "Базовый +10 ко всем социальным тестам механизирован отдельной записью kind:\"testMod\" (modScope:social) на этом же предмете — capability покрывает ТОЛЬКО остаток: доп. +30 конкретно с последователями Слаанеш (нет распознавания цели), признание авторитета демонами Слаанеш ниже Герольда при Inf 30+, полудействие+1 Бесчестия на Страх 3 (Кхорниты впадают в Ярость вместо Шока) — не смоделированы",
     source: "Дар Слаанеш (Countenance of Slaanesh)",
     reader: ""
   },
@@ -6402,9 +6464,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.darkMuse": {
-    label: "Ассистирование даёт +20 вместо +10 (+30 для крафта, но результат крафта отклоняется от замысла автора)",
+    label: "Крафт-часть смоделирована (wdbc-1rno): именованный ассистент (assistantId) с этим Даром даёт +30 вместо +10 за себя (module/rules/craft-advantage.mjs::darkMuseAssistBonus, читает module/apps/craft-workshop.mjs::_rollShift) — «отклонение результата от замысла автора» не отражено численно, текстовая оговорка. Общее «+20 вместо +10» ВНЕ Крафта (обычный ассистент диалога Навыка, module/rules/assists.mjs) — НЕ смоделировано, отдельная точка интеграции.",
     source: "Дар Слаанеш (Dark Muse)",
-    reader: ""
+    reader: "module/rules/craft-advantage.mjs::darkMuseAssistBonus, module/apps/craft-workshop.mjs"
   },
   "gift.slaanesh.eaterOfPain": {
     label: "Разумное существо в Cor.b м получает Критический Эффект — 1d10+1 против результата даёт снятие 1d5 Усталости/1d5 Ран/1d10 урона в Характеристику; Пытка даёт то же за каждый Успех",
@@ -6417,9 +6479,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.enchantingVoice": {
-    label: "+½Cor(окр.▲) на тесты соц. взаимодействия (кроме встречных, кроме против Кхорнитов); отказ от бонуса до след. Хода даёт бесплатную Короткую/Детальную Команду (не на Кхорнитов)",
+    label: "+½Cor(окр.▲) социальные тесты механизировано отдельной записью kind:\"testMod\" (modValueMode:formula) на этом же предмете — «не встречные, не против Кхорнитов» оставлено подписью галочки (игрок сам решает, применимо ли, тот же принцип, что у остальных testMod). Capability покрывает ТОЛЬКО остаток: отказ от бонуса до след. Хода даёт бесплатную Короткую/Детальную Команду (не на Кхорнитов) — не смоделирован",
     source: "Дар Слаанеш (Enchanting Voice)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Слаанеш/Enchanting_Voice..., kind:\"testMod\""
   },
   "gift.slaanesh.everYouthful": {
     label: "Не стареет, иммунитет к старению/болезням/негативной Биомантии/мутагенным эффектам (кроме накопления Порчи)",
@@ -6432,12 +6494,12 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.hermaphrodite": {
-    label: "+30 на тесты соблазнения (в т.ч. обычно иммунных — оскоплённые Механикум, асексуальные Астартес, без бонуса на них); возвращает утраченное либидо/способность к соитию",
+    label: "+30 Обаяние механизировано отдельной записью kind:\"testMod\" (skillKey:charm) на этом же предмете — это capability покрывает ТОЛЬКО остаток: доступ к обычно иммунным целям (оскоплённые Механикум, асексуальные Астартес, без бонуса на них) и возврат утраченного либидо/способности к соитию, не смоделированы",
     source: "Дар Слаанеш (Hermaphrodite)",
     reader: ""
   },
   "gift.slaanesh.immortalBeauty": {
-    label: "Тяжело/критически ранен или потерял часть тела — Трейт Regeneration(1); легко ранен — косметическое заживление без восстановления Ран — гейт по тиру Ран не поддержан entry.when (см. wdbc-wyr3/predicates.mjs woundTier)",
+    label: "Тяжело/критически ранен — Трейт Regeneration(1) механизирован отдельной записью kind:\"trait\" под when.woundTier:[\"heavy\",\"dying\"] на этом же предмете (старая пометка «гейт не поддержан entry.when» устарела — wdbc-wyr3 закрыт, woundTier есть, см. Толстокожий/Thick_Skinned). Capability покрывает ТОЛЬКО остаток: тот же Трейт ещё и при потере части тела ВНЕ завязки на тир Ран (нет отдельного триггера «лишился конечности»); лёгкое ранение — чисто косметическое заживление без Ран, эффекта не требует",
     source: "Дар Слаанеш (Immortal Beauty)",
     reader: ""
   },
@@ -6457,12 +6519,12 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.nobleBearing": {
-    label: "Игнорирует штрафы Трудного Ландшафта, может (и обязан при грязной жидкости) ходить по поверхности жидкостей на телекинетических полях",
+    label: "Игнор штрафов Трудного Ландшафта механизирован отдельной записью kind:\"terrainIgnore\" (все 11 свойств) на этом же предмете — capability покрывает ТОЛЬКО остаток: может (и обязан при грязной жидкости) ходить по поверхности жидкостей на телекинетических полях — не смоделировано",
     source: "Дар Слаанеш (Noble Bearing)",
     reader: ""
   },
   "gift.slaanesh.progenitor": {
-    label: "+30 на соц. взаимодействия и встречные тесты психосил/психоатак против прямых потомков; репродуктивные способности (оплодотворение/зачатие/регенерация Прогеноидов) — вне числовых полей",
+    label: "+30 социальные и +30 встречные (психосилы/психоатаки) с прямыми потомками механизированы двумя записями kind:\"testMod\" на этом же предмете (галочки — игрок решает применимость по цели). Capability покрывает ТОЛЬКО остаток: репродуктивные способности (оплодотворение/зачатие/регенерация Прогеноидов), автопобеда в тестах Одержимости против потомка при возвышении в Демоничество — вне числовых полей",
     source: "Дар Слаанеш (Progenitor)",
     reader: ""
   },
@@ -6487,7 +6549,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.tzeentch.countenanceOfTzeentch": {
-    label: "+10/+30 Deceive/Scrutiny (общие/против союзников); демоны Тзинча ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход",
+    label: "Базовый +10 Обман/Проницательность механизирован двумя записями kind:\"testMod\" на этом же предмете — capability покрывает ТОЛЬКО остаток: доп. +30 против союзников (нет распознавания цели), признание авторитета демонами Тзинча ниже Герольда при Inf 30+, полудействие+1 Бесчестия на Страх 3 — не смоделированы",
     source: "Дар Тзинч (Countenance of Tzeentch)",
     reader: ""
   },
@@ -6572,7 +6634,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.tzeentch.spellwise": {
-    label: "Автоопознание наблюдаемых психосил/ритуалов; перебрасывает неудачные тесты пси-чутья, изучает Psyniscience без псайкерства; при Forbidden Lore(Psykers) выше атакующего псайкера — перебрасывает Избегания/встречные тесты против его психосил",
+    label: "Переброс тестов Пси-чутья (Psyniscience) механизирован отдельной записью kind:\"reroll\" на этом же предмете. Capability покрывает ТОЛЬКО остаток: автоопознание наблюдаемых психосил/ритуалов; изучает Psyniscience без псайкерства; при Forbidden Lore(Psykers) выше атакующего псайкера — перебрасывает Избегания/встречные тесты против его психосил — не смоделированы",
     source: "Дар Тзинч (Spellwise)",
     reader: ""
   },
@@ -6595,7 +6657,7 @@ export const CAPABILITIES = {
   // ── Общие мутации (wdbc-1rno) — активные/переключаемые способности,
   // заглушка данными, reader пуст сознательно ──
   "mutation.spatialInstability": {
-    label: "Раз в 12−Cor.b ч, свободное действие: Трейт Incorporeal на Cor.b Раундов или до возврата; 10 god-гейтнутых субмутаций не автоматизированы (см. текст)",
+    label: "Выдача Трейта Incorporeal механизирована отдельной записью kind:\"script\" (ручная кнопка «▶ Запустить» на листе предмета) на этом же предмете: клонирует Incorporeal из пака Черт, дедуп-проверка от повторной выдачи, длительность Cor.b Раундов теперь снимается АВТОМАТИЧЕСКИ (rules/temp-grant.mjs, снятие на смену Раунда текущего боя — hooks.mjs) — при клике вне боя Раундами мерить нечего, кнопка честно предупреждает и ничего не выдаёт. НЕ автоматизированы: частота «раз в 12−Cor.b ч» (throttle Конструктора не умеет формулу), добровольный возврат раньше срока (удалить Черту вручную), 10 god-гейтнутых субмутаций. wdbc-1rno — не проверено живьём в Foundry (мир не запущен на момент правки)",
     source: "Мутация: Spatial Instability (Общие мутации)",
     reader: ""
   },
@@ -6605,27 +6667,27 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.pureForm": {
-    label: "1 час концентрации подавляет все мутации (теряя их эффекты), ещё 1 час возвращает их; Оглушение/потеря сознания/добровольный возврат — рывок 1d10 непогл. R Dmg + мгновенный возврат всех мутаций",
+    label: "Полностью механизирована двумя записями kind:\"script\" на этом же предмете, поверх нового примитива rules/mutation-suppression.mjs (wdbc-1rno) — НЕ удаление, отключение: подавленные Мутации/Дары теряют эффекты (isItemActive() в apps/effects.mjs знает про flags.warhammer-dbc.suppressed), но остаются на листе и возвращаются в прежнем виде. Первая кнопка переключает подавление/безопасный возврат (1 час концентрации туда и обратно предполагается отыгранным, не отсчитывается системой), вторая — аварийный разрыв (мгновенный возврат + 1d10 непогл. R Dmg, rules/wounds.mjs::woundLossUpdates). Триггер разрыва (Оглушение/потеря сознания) не детектируется автоматически — кнопка жмётся по факту события. Искажение снаряжения, надетого в Чистой Форме — на усмотрение ГМа, не смоделировано",
     source: "Мутация: Pure Form (Общие мутации)",
     reader: ""
   },
   "mutation.compression": {
-    label: "Получив попадание в конечность/голову (доступно Уклонение) — тратит Реакцию вместо Уклонения, втягивает часть тела в торс (снимая попадание, втягивая броню/снаряжение); полудействие возвращает одну часть обратно; втянутая голова = слепота, втянутые ноги = мобильность вниз",
+    label: "Реактивная замена Уклонению механизирована (wdbc-1rno, module/rules/compression.mjs + combat/defense.mjs::_performCompression, кнопка «Сжатие» рядом с Уклонением/Парированием на карточке атаки, если место попадания — не Торс): без броска, тратит Реакцию, нивелирует ИМЕННО это попадание, помнит втянутые части (flags.warhammer-dbc.compressedParts), кнопка «Разложить» возвращает часть обратно. НЕ автоматизировано (честно, книга не даёт числа для первых двух и не даёт занять существующий счётчик-таймер для третьего — см. шапку rules/compression.mjs): слепота от втянутой Головы, снижение мобильности от втянутых Ног, автовыпуск удерживаемого оружия/инструмента из втягиваемой Руки — только чат-заметки. Не проверено живьём в Foundry (мир не запущен на момент правки)",
     source: "Мутация: Compression (Общие мутации)",
-    reader: ""
+    reader: "module/combat/defense.mjs — _performCompression/_performExtendBodyPart; module/hooks.mjs — кнопки «Сжатие»/«Разложить»"
   },
   "mutation.mistTransformation": {
-    label: "Cor.b раз/сутки (не чаще раза в 10−Cor.b Раундов), полудействие: превращение в облако дыма 5м (нематериален/неуязвим, Flyer(A.b×2)) на Cor.b минут, растворяет до Cor.b согласных союзников",
+    label: "Выдача Трейтов Incorporeal+Flyer(A.b×2) механизирована отдельной записью kind:\"script\" (ручная кнопка на листе предмета) на этом же предмете: клонирует обе Черты из пака, дедуп-проверка, длительность Cor.b минут теперь снимается АВТОМАТИЧЕСКИ (rules/temp-grant.mjs — worldTime-таймер, снятие на updateWorldTime/updateCombat, hooks.mjs). НЕ автоматизированы: частота «Cor.b раз/сутки, не чаще раза в 10−Cor.b Раундов» (throttle Конструктора не умеет формулу), радиус облака/неуязвимость/блокировка обзора, растворение до Cor.b союзников. wdbc-1rno — не проверено живьём в Foundry (мир не запущен на момент правки)",
     source: "Мутация: Mist Transformation (Общие мутации)",
     reader: ""
   },
   "mutation.iconOfBlasphemy": {
-    label: "Раз за бой/сцену, свободное действие: иллюзия на 1 Раунд — Имперцы видящие проходят W+0 или впадают в Ярость (атакуя только чемпиона); засекшие пси-чутьём/ноосканированием — W+0 или обязаны атаковать его следующий Ход",
+    label: "Визуальный канал (Имперцы, видящие проявление в пределах дальности+сектора обзора токена — геометрическое приближение без стен) механизирован отдельной записью kind:\"script\" (wdbc-1rno, throttle 1/бой): W+0 у каждого видящего, провал — system.inRage. Capability покрывает ТОЛЬКО остаток: канал «засекли Пси-чутьём/Ноосферным Сканированием» (нет надёжного способа опросить, у кого сейчас активна такая проверка) и «жертва Ярости считает чемпиона единственным врагом» (поведение ИИ цели, не состояние актора) — оба без числа, только чат-заметка/на усмотрение ГМа",
     source: "Мутация: Icon of Blasphemy (Общие мутации)",
     reader: "module/apps/icon-of-blasphemy.mjs iconOfBlasphemyButtonHtml()/activateIconOfBlasphemy()"
   },
   "mutation.sentientCyst": {
-    label: "Провал теста социального взаимодействия — доп. +3 Провала (циста вмешивается в речь)",
+    label: "+3 Провала при провале социального теста механизировано отдельной записью kind:\"failDegMod\" (wdbc-1rno, новый вид записи — считается ПОСЛЕ броска, не галочка) на этом же предмете. Capability покрывает ТОЛЬКО остаток: разум цисты перехватывает контроль на несколько мгновений при ослабевшей концентрации персонажа — по решению ГМа, без числа",
     source: "Мутация: Sentient Cyst (Общие мутации)",
     reader: ""
   },
@@ -6647,7 +6709,7 @@ export const CAPABILITIES = {
 
   // ── Общие мутации, партия 2 (wdbc-1rno) — заглушка данными, reader пуст сознательно ──
   "mutation.boneless": {
-    label: "+10 A, ½ I(Cr) Dmg до Поглощения, иммунитет к Критическим Эффектам переломов; без опоры в жёстком доспехе — Athletics+0 или Amorphous+Crawler (−20 S, −2 Unnatural S, +30 Карабканье); опционально Quadruped(1) с модифицированной бронёй — составной эффект, не кодируется частично",
+    label: "+10 A механизировано отдельной записью kind:\"characteristic\" на этом же предмете — capability покрывает ТОЛЬКО остаток: ½ I(Cr) Dmg (окр.▲) до Поглощения, иммунитет к Критическим Эффектам переломов; без опоры в жёстком доспехе — Athletics+0 или Amorphous+Crawler (−20 S, −2 Unnatural S, +30 Карабканье); опционально Quadruped(1) с модифицированной бронёй — не смоделированы",
     source: "Мутация: Boneless (Общие мутации)",
     reader: ""
   },
@@ -6662,24 +6724,24 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.feelsNoPain": {
-    label: "Не получает штраф −10 от Усталости, иммунен к пытке болью; риск пропустить опасные ранения/условия мимо внимания — не выданный Trait в паке (проверено grep, такой Черты нет)",
+    label: "Не получает штраф −10 от Усталости (module/sheets/tabs/conditions.mjs::fatiguePenalty), иммунен к Искусной Пытке (module/apps/skillful-torture.mjs — единственная реализованная в системе пытка болью). «Риск пропустить опасные ранения мимо внимания» — на усмотрение ГМа, не смоделировано (нет механики скрытых от игрока тестов).",
     source: "Мутация: Feels No Pain (Общие мутации)",
-    reader: ""
+    reader: "module/sheets/tabs/conditions.mjs::fatiguePenalty, module/apps/skillful-torture.mjs::showSkillfulTortureDialog"
   },
   "mutation.majesticHorns": {
-    label: "+20 социальные тесты с Хаоситами/Орками; 10 субмутаций (щиты/AP/природное оружие с формулой/god-гейтнутые бонусы) не автоматизированы — см. текст",
+    label: "+20 социальные тесты с Хаоситами/Орками механизировано отдельной записью kind:\"testMod\" на этом же предмете — галочка диалога броска, игрок сам решает, применимо ли к конкретной цели. Capability покрывает ТОЛЬКО остаток: 10 субмутаций (щиты/AP/природное оружие с формулой/god-гейтнутые бонусы) не автоматизированы — см. текст",
     source: "Мутация: Majestic Horns (Общие мутации)",
     reader: ""
   },
   "mutation.miasma": {
-    label: "Без гермодоспеха: штрафы на соц. взаимодействие/Stealth, +40 на выслеживание по запаху",
+    label: "+40 Выживание (выслеживание по запаху) без герметичной брони механизировано отдельной записью kind:\"testMod\" под новым гейтом when.requireSealedArmour+negateSealedArmour (wdbc-1rno, PREDICATES.wearsSealedArmour — ARMOR_PROPERTIES.sealed) на этом же предмете. Capability покрывает ТОЛЬКО остаток: штрафы на соц. взаимодействие/Stealth без гермодоспеха — книга не даёт конкретного числа («это может давать штрафы»), не смоделированы",
     source: "Мутация: Miasma (Общие мутации)",
     reader: ""
   },
   "mutation.polymath": {
-    label: "+10 на тесты Крафта и Исследований (группы Навыков, не одиночный Навык — вне поля одиночной Skill-выдачи Конструктора); Крит на такомтесте — 1d5 Усталости + доп. тест немедленно",
+    label: "+10 на тесты Крафта и Исследований — двумя путями: Мастерская Крафта (свой пакетный расчёт, не общий конвейер теста) берёт его напрямую (module/rules/craft-advantage.mjs::polymathBonus, читает module/apps/craft-workshop.mjs::_rollShift); обычный ручной бросок Навыка (Ремесло/Запретные Знания вне Мастерской) — отдельными записями kind:\"testMod\" (skillKey:trade/forbiddenLore) на этом же предмете. Крит на таком тесте — 1d5 Усталости + доп. тест немедленно — смоделирован ТОЛЬКО для ручного пути (по одной записи kind:\"script\" со scriptTrigger:critSuccess на каждую из двух групп, wdbc-1rno); Мастерская Крафта свой бросок такому крюку не подвергает — крит там не даёт доп. теста. Capability покрывает только нарративный остаток без чисел: определение дистанций/пропорций на глаз, точное воспроизведение чертежей по разобранному механизму",
     source: "Мутация: Polymath (Общие мутации)",
-    reader: ""
+    reader: "module/rules/craft-advantage.mjs::polymathBonus, module/apps/craft-workshop.mjs (Мастерская); packs-src testMod/script записи (ручной бросок Ремесла/Запретных Знаний)"
   },
   "mutation.soulSeer": {
     label: "Видит души/духов машин/демонов на 10м сквозь преграды, наслаивается на обычное зрение (мешает читать мимику/детали у ярких псайкеров)",
@@ -6696,9 +6758,27 @@ export const CAPABILITIES = {
 
   // ── Общие мутации, партия 4 (wdbc-1rno, ревизия по запросу координатора) —
   // заглушка данными, reader пуст сознательно ──
+  // wdbc-5inv: штраф −10 к тестам Навыков автоматизирован (rules/addiction.mjs,
+  // трекер утоления на вкладке ТЕЛО/Эффекты) — эта запись теперь только маркер
+  // «мутация есть», сам штраф читает предмет напрямую, не capability-реестр.
   "mutation.addiction": {
-    label: "Не удовлетворив зависимость за день — штраф −10 на все тесты Навыков (не Характеристик) до утоления; 13 субмутаций определяют предмет зависимости, не автоматизированы (нет bd)",
+    label: "Штраф −10 к тестам Навыков (не Характеристик), пока Зависимость не утолена — автоматизировано трекером на листе (system.dependency, rules/addiction.mjs; галочка «Зависимость» в общем конвейере теста, resolve-test.mjs scope anySkill). 13 субмутаций определяют предмет зависимости (еда/яд/кровь врага и т.п.) — сам акт утоления остаётся отыгрышем, не автоматизирован",
     source: "Мутация: Addiction (Общие мутации)",
+    reader: "module/rules/addiction.mjs (addictionPenaltyRules/rules/sources.mjs — общий конвейер теста), module/sheets/sheet-helpers.mjs+tabs/body.mjs (трекер и кнопка «Утолить» на вкладке ТЕЛО); apps/addiction.mjs — панель и кнопка «Утолить» на листе самой Мутации"
+  },
+  "mutation.addiction.xenosLore": {
+    label: "Субмутация 4 (Прах ксеноса): если ГМ решит, что персонаж незнаком с этим видом ксеносов — Навык Forbidden Lore (Xenos), конкретный вид ксеноса определяет ГМ каждый раз заново — не автоматизировано (переменная специализация)",
+    source: "Мутация: Addiction, субмутация 4 (Общие мутации)",
+    reader: ""
+  },
+  "mutation.addiction.radioactive": {
+    label: "Субмутация 11 (Радиоактивное): иммунитет к радиации, безопасная работа с раскалённым/радиоактивным, определение радиоактивных материалов на глаз",
+    source: "Мутация: Addiction, субмутация 11 (Общие мутации)",
+    reader: ""
+  },
+  "mutation.addiction.soulStone": {
+    label: "Субмутация 12 (Камень Душ): утоление восстанавливает 1d5 потраченных ОБ и держит зависимость утолённой год — событийное восстановление ресурса, не статичный бонус",
+    source: "Мутация: Addiction, субмутация 12 (Общие мутации)",
     reader: ""
   },
   "mutation.beastman": {
@@ -6727,17 +6807,17 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.cyclops": {
-    label: "−5 тесты зрения, автопровал измерения дистанции на глаз; доп. шанс Избегания от атак, способных опустить Раны до −7 и ниже (даже от внезапных, дважды при известной атаке); по решению ГМа W-тест на потерю полудействия от видений",
+    label: "−5 тесты зрения механизировано отдельной записью kind:\"testMod\" (skillKey:awareness) на этом же предмете — единственный подходящий навык в списке, косвенно подтверждён прецедентом Eyes of Chaos (тоже Awareness для глазного эффекта). Capability покрывает ТОЛЬКО остаток: автопровал измерения дистанции на глаз; доп. шанс Избегания от атак, способных опустить Раны до −7 и ниже (даже от внезапных, дважды при известной атаке); по решению ГМа W-тест на потерю полудействия от видений — не смоделированы",
     source: "Мутация: Cyclops (Общие мутации)",
     reader: ""
   },
   "mutation.desiccated": {
-    label: "−10 соц. взаимодействия и −5 ментальные действия в присутствии еды; штраф от Усталости −20 вместо −10",
+    label: "Штраф от Усталости −20 вместо −10 — смоделировано (module/sheets/tabs/conditions.mjs::fatiguePenalty). Соц./ментальный штраф «в присутствии еды» не смоделирован — «присутствие еды» не детектируется программно.",
     source: "Мутация: Desiccated (Общие мутации)",
-    reader: ""
+    reader: "module/sheets/tabs/conditions.mjs::fatiguePenalty"
   },
   "mutation.giftOfTongues": {
-    label: "Понимает любую речь/язык жестов душ-носителей, отвечает только оскорблениями на их языке; +20 на тесты спровоцировать нападение/вызов на дуэль",
+    label: "+20 все социальные тесты механизировано отдельной записью kind:\"testMod\" (modScope:social) на этом же предмете — book-текст: «получает +20 на все тесты социального взаимодействия» (без сужения до провокации, это лишь цель по тексту). Capability покрывает ТОЛЬКО остаток: понимает любую речь/язык жестов душ-носителей, отвечает только оскорблениями на их языке — не смоделировано",
     source: "Мутация: Gift of Tongues (Общие мутации)",
     reader: ""
   },
@@ -6802,19 +6882,24 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.synesthesia": {
-    label: "−20 Scrutiny против персонажа, −10 доп. на Избирательные атаки по нему, −20 его соц. взаимодействия/Командование, штраф Stealth по решению ГМа — ранее ошибочно классифицирована как чисто нарративная, реально несёт 3 фиксированных штрафа",
+    label: "−20 его соц. взаимодействия/Командование — kind:\"testMod\", modScope:\"social\". −20 Scrutiny ПРОТИВ персонажа — теперь тоже смоделировано (wdbc-1rno, module/rules/library/synesthesia.mjs, источник \"synesthesia\") — ctx.targetActor доехал до обычных тестов Навыка (module/sheets/actor-sheet.mjs::_showSkillRollDialog). −10 доп. на Избирательные атаки по персонажу — НЕ смоделировано: Избирательная атака выбирается в attack-dialog.mjs уже ПОСЛЕ отрисовки галочек правил (аим-дропдаун читается на кнопке «Бросок»), общий реестр туда не успевает — нужна отдельная точка внутри attack-dialog.mjs. Штраф Stealth — на усмотрение ГМа, книга не даёт числа.",
     source: "Мутация: Synesthesia (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Synesthesia..., kind:\"testMod\"; module/rules/library/synesthesia.mjs"
   },
   "mutation.tentacle": {
-    label: "+20 на тесты Борьбы (Сжать/Метнуть, module/combat/grapple.mjs) не подключено — своя точка входа, не приём; растяжение до 4м/узкие места — флейвор; 10 субмутаций не автоматизированы (wdbc-vkwe)",
+    label: "+20 на приём Захват, на 5 тестов Борьбы (Заломить/Пересилить/Вырваться/Выкрутиться/Перехватить Контроль) и на Укус (тоже настоящий тест WS/BS); Сжать/Хруст броска не делают вовсе (первое — штраф без теста, второе — автопопадание по книге); Метнуть/Замахнуться не реализовано роллом вообще (отдельный пробел); растяжение до 4м/узкие места — флейвор. Из 8 строк таблицы (не 10 — «d10» даёт диапазоны 2-3/4-5, реальных строк 8, см. doombc-submutations) субмутации 2-3 (Natural Armour 3) и 8 (+10 S, Unnatural S+2) заведены Механикой самого предмета (packs-src); 1 (растяжение до 15м + подъём союзника) получила флаг-заглушку про запас (mutation.tentacle.longReach, wdbc-nc8q) — числового бонуса нет, действие целиком за ГМом; 4-5 «С Присосками» (wdbc-egll) — «нельзя выбить/вырвать» через переиспользуемую capability combat.cannotBeDisarmed (см. эту запись отдельно), «+30 Карабканье» через новый scopeTarget «climbing» (item-rules.mjs/resolve-test.mjs), подхватывается module/combat/movement-actions.mjs::showClimbDialog — тот же scope пригоден и для идентичных бонусов Wings/Крылья и Tail/Хвост, их субмутации им пока не заведены; 9 «Изменчивое» (wdbc-2ynk) — форма руки/щупальца переключается кнопкой на листе предмета (не через capabilityKey — своя пара флаг+UI, module/apps/tentacle-hand-form.mjs), цена спишет module/combat/capability-cost.mjs, бонус +20 на приём Захват гасится, пока предмет в форме руки; 10 (Отделяемое, wdbc-1f5j) реализована напрямую в grapple.mjs (асимметричный выход из Захвата + информационный таймер регенерации 3ч через rules/cooldown.mjs) — без записи в этом реестре, читает item.system.submutation.label напрямую, не hasRuleFlag. Субмутации 6 (Ловкое) и 7 (Токсичное) частично: безоружная атака щупальцем выдаётся отдельным предметом kind:\"integralAttack\" (Flexible Tentacle/Toxic Tentacle, packs-src/weapons/Интегральные_атаки), when.submutations гейтит по броску; charm/interrogate +20 субмутации 6 механизированы полностью (wdbc-1j2h). Заломить (grapple.mjs) с wdbc-tj0p умеет наносить реальный урон (ignoreArmour), но Corrosive/Toxic щупальца к нему не подключены — нет способа отличить программно «использовал именно щупальце» от «использовал обычную руку» в общем приёме Борьбы. Все 8 строк таблицы теперь так или иначе заведены.",
     source: "Мутация: Tentacle (Общие мутации)",
-    reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\")"
+    reader: "module/sheets/attack-dialog.mjs — resolveSelection (+20 на приём Захват, maneuverKey===\"grapple\", гасится tentacleBonusSuppressed при субмутации 9 в форме руки); module/combat/grapple.mjs — tentacleTechDef (+20 на 5 тестов Борьбы), _doBite (+20 на Укус), detachableTentacle/isDetachedGrapple (субмутация 10); субмутация 4-5 — combat.cannotBeDisarmed + scopeTarget climbing (см. отдельные записи)"
+  },
+  "mutation.tentacle.longReach": {
+    label: "Субмутация 1 «Длинное» — щупальце растягивается до 15 м и полным действием может поднять персонажа на свою длину, если тот найдёт за что зацепиться; чисто ситуативное действие ГМа, числового эффекта нет — флаг заведён про запас для будущего читателя",
+    source: "Мутация: Tentacle, субмутация 1 (Общие мутации)",
+    reader: ""
   },
   "mutation.vampiricDependency": {
-    label: "Воздержание от подпитки >1 месяц — тест T+0 (−10/мес) или 1 Порча; 10 субмутаций определяют способ/эффект утоления, не автоматизированы (нет bd)",
+    label: "10 субмутаций определяют способ утоления и сопутствующий бонус (сердце/печень/кровь и т.п.) — сам акт утоления остаётся отыгрышем, не автоматизирован (нет bd)",
     source: "Мутация: Vampiric Dependency (Общие мутации)",
-    reader: ""
+    reader: "module/rules/vampiric-dependency.mjs — тест T+0 (−10 за предыдущий месяц воздержания), провал даёт 1 Порчи; apps/vampiric-dependency.mjs::useVampiricTest, кнопка «Утолить»"
   },
   "mutation.warpEater": {
     label: "Раз в месяц тест Cor+10 или 1 Порча, избегается 4 уникальными по субмутации эмоциональными триггерами в месяц — ранее ошибочно классифицирована как чисто нарративная",

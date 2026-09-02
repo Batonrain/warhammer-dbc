@@ -15,6 +15,13 @@
 //     стр. 58): хранит сумму до ручного отката.
 //   - `hibernation` — пилот Дредноута в Гибернации (там же, стр. 57): основной
 //     способ восстановить Здравомыслие, недельными бросками, пока флаг стоит.
+//   - `sarcophagusInterred` — хирургическое заключение в Саркофаг (стр. 57):
+//     необратимый факт «тело ампутировано под машину», не привязан к
+//     конкретному Дредноуту и переживает отключение/смену станции — в
+//     отличие от isDreadnoughtPilot (module/rules/dreadnought.mjs).
+//   - `sarcophagusWarpWounds` — аблативные Раны саркофага ПРОТИВ ВАРП-ОРУЖИЯ
+//     (стр. 57): отдельный от общего пула (system.wounds.ablative/ablativeMax,
+//     wdbc-smy7) — тот поглощает любой урон, этот только warpSoak-урон.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { creatureSchema, migrateReactionsString } from "./_creature.mjs";
@@ -98,7 +105,16 @@ export class CharacterData extends foundry.abstract.TypeDataModel {
       }, { label: "Электростимуляторы (Дредноут)" }),
       hibernation: new SchemaField({
         active: new BooleanField({ initial: false, label: "В Гибернации" })
-      }, { label: "Гибернация (Дредноут)" })
+      }, { label: "Гибернация (Дредноут)" }),
+      // Ставится один раз вручную (панель Дредноута) и не снимается сама —
+      // это факт биографии персонажа, а не текущее состояние.
+      sarcophagusInterred: new BooleanField({ initial: false, label: "Заключён в Саркофаг Дредноута" }),
+      // max пересчитывается каждый рендер от W.b, пока актор пилот (module/
+      // rules/character.mjs) — тем же приёмом, что sanity.max выше.
+      sarcophagusWarpWounds: new SchemaField({
+        value: num(0, "Аблативные против варп-оружия (текущие)"),
+        max:   num(0, "Аблативные против варп-оружия (максимум)")
+      }, { label: "Аблативные Раны — варп (Дредноут)" })
     };
   }
 }

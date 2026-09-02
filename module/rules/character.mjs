@@ -34,7 +34,8 @@ import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
-import { sanityMax, madnessLevels } from "./dreadnought.mjs";
+import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
+         SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
@@ -152,6 +153,11 @@ export function prepareCharacterDerived(actor, system) {
     let hasBlackCarapaceBackup = false;
     let traitFearRating = 0;
     let traitSizeMod = 0;
+    // Размер, который НЕ идёт в SPD (wdbc-w8ws, Absurdly Fat/Абсурдно Толстый:
+    // «Размер +1, при этом не влияя на SPD») — отдельный аккумулятор от
+    // traitSizeMod выше, который наоборот всегда сдвигает движение (см.
+    // калькуляцию size/calcMovement ниже). Входит только в sizeTotal.
+    let traitSizeModNoSpd = 0;
     let traitInitMod = 0;
     let traitSpeedMod = 0;
     // Навыки, у которых Черта/Талант/Имплант ополовинивает штрафы (Конструктор
@@ -360,6 +366,22 @@ export function prepareCharacterDerived(actor, system) {
     const pathPassives = computePathPassives(system.paths);
     system.pathCharBonus = pathPassives.charBonus;
 
+    // ── Саркофаг Дредноута: рейтинги Сверхъестественного (стр. 57, wdbc-drn) ──
+    // «Уменьшает рейтинг Unnatural S на 4, T на 2» — не плоский модификатор
+    // (пилот без Сверхъестественной Силы не должен уйти в минус), а срез уже
+    // накопленного traitCharBonus/pathCharBonus этим же циклом; Unnatural W —
+    // обычная прибавка. Флаг тот же, что раздаёт сама возможность (module/
+    // rules/sources.mjs — источник "dreadnought"), других мест, где решается
+    // «пилот ли это», нет.
+    if (hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)) {
+      const haveS = (traitCharBonus.s || 0) + (pathPassives.charBonus.s || 0);
+      const haveT = (traitCharBonus.t || 0) + (pathPassives.charBonus.t || 0);
+      const delta = sarcophagusCharDelta({ s: haveS, t: haveT });
+      traitCharBonus.s  = (traitCharBonus.s  || 0) + delta.s;
+      traitCharBonus.t  = (traitCharBonus.t  || 0) + delta.t;
+      traitCharBonus.wp = (traitCharBonus.wp || 0) + delta.wp;
+    }
+
     // ── Бонусы от надетой брони к характеристикам ───────────────────────────
     // Силовая броня → +S; Аспектная броня Аэльдари → +S и +W (Сила Воли).
     // Прибавляются к значению характеристики (total), пока броня надета.
@@ -402,6 +424,9 @@ export function prepareCharacterDerived(actor, system) {
       const eff = {};
       for (const key of Object.keys(VITAL_TIME_FIELD))
         eff[key] = vitalEffectiveStage(key, system.vitals[key], system.vitals[VITAL_TIME_FIELD[key]], worldTime, vitalCtx);
+      // Саркофаг Дредноута (стр. 57, wdbc-drn): не нуждается в еде и воде
+      // (Голод/Жажда), но Сон капабилити не упоминает — тот дебафф остаётся.
+      if (hasRuleFlag(actor, "sarcophagus.noFoodWaterAir")) { eff.hunger = 0; eff.thirst = 0; }
       return eff;
     })()) : {};
     for (const [key, char] of Object.entries(chars)) {
@@ -535,20 +560,47 @@ export function prepareCharacterDerived(actor, system) {
     // чуть выше: поле не объявлено в схеме, но prepareDerivedData бесплатно
     // добавляет производные свойства поверх схемных.
     if (system.wounds) {
-      // Аблативный пул (wdbc-smy7) живёт только пока жив его источник:
-      // ablativeMax приходит ActiveEffect'ом записи Конструктора и исчезает
-      // вместе с ней (гейт по Ярости, снятая Мутация, истёкший эффект), а
-      // накопленное system.wounds.ablative в хранимых данных остаётся. Без
-      // клампа такой осиротевший пул поглощал бы урон вечно: rules/wounds.mjs
-      // списывает его обратно только при ablativeMax > 0. Тот же приём, что у
-      // sanity.value выше.
-      const abMax = Number(system.wounds.ablativeMax) || 0;
-      system.wounds.ablative = Math.max(0, Math.min(abMax, Number(system.wounds.ablative) || 0));
+      // Саркофаг Дредноута: максимум Ран −5 (стр. 57, wdbc-drn) — производное
+      // поле, а НЕ перезапись system.wounds.max (это редактируемая база
+      // персонажа — вычитание из неё же на каждый рендер дало бы спираль
+      // вниз). module/rules/wounds.mjs и module/rules/wound-tier.mjs читают
+      // effectiveMax, если оно есть, иначе .max — тот же приём, что tier/
+      // tierLabel/tierLost ниже. Считается ДО woundLevel(system) — та читает
+      // effectiveMax в этом же проходе prepareDerivedData.
+      system.wounds.effectiveMax = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
+        ? Math.max(0, (Number(system.wounds.max) || 0) + SARCOPHAGUS.woundsMax)
+        : (Number(system.wounds.max) || 0);
       const wLvl = woundLevel(system);
       system.wounds.tier = wLvl.displayKey;
       system.wounds.tierLabel = wLvl.displayLabel;
       system.wounds.tierLost = wLvl.lost;
+      // Аблативный пул не переживает свой источник (wdbc-smy7): ablativeMax
+      // приходит ActiveEffect'ом kind:"poolMax" и может пропасть/просесть в
+      // любой момент, а накопленное .ablative само по себе не откатывается —
+      // клампим на производных, тем же приёмом, что sanity.value выше.
+      system.wounds.ablative = Math.max(0, Math.min(
+        Number(system.wounds.ablativeMax) || 0, Number(system.wounds.ablative) || 0));
     }
+
+    // ── Саркофаг Дредноута: аблативные Раны против варп-оружия (wdbc-drn) ────
+    // Максимум = W.b, пересчитывается каждый рендер, пока актор пилот — тем
+    // же приёмом, что sanity.max выше. Расходуется module/combat/damage.mjs
+    // (гейт warpSoak), восполняется до максимума в конце боя (module/hooks.mjs).
+    if (system.sarcophagusWarpWounds) {
+      system.sarcophagusWarpWounds.max = hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG)
+        ? sarcophagusWarpWounds(chars.wp?.bonus ?? 0) : 0;
+      system.sarcophagusWarpWounds.value = Math.max(0,
+        Math.min(system.sarcophagusWarpWounds.max, Number(system.sarcophagusWarpWounds.value) || 0));
+    }
+
+    // Саркофаг Дредноута: «Беспомощен, когда не подключён к машине» (wdbc-drn).
+    // Не форсируем system.conditions.helpless сами — ни одно состояние в этой
+    // системе не переключается кодом автоматически (ГМ решает вручную, см.
+    // [[doombc-helpless-condition]]), а насильно СНИМАТЬ его при подключении
+    // было бы неверно: беспомощность могла быть наложена по другой причине.
+    // Вместо этого — честный флаг для панели листа, чтобы ГМ не забыл.
+    system.sarcophagusHelplessNow = sarcophagusHelplessNow(
+      system.sarcophagusInterred, hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG));
 
     // ── Броня ─────────────────────────────────────────────────────────────
     const armorFromItems = {
@@ -557,8 +609,18 @@ export function prepareCharacterDerived(actor, system) {
       leftLeg: 0, rightLeg: 0
     };
 
-    // Бонусы AP против типов урона от модов брони (всегда складываются)
-    const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0 };
+    // Бонусы AP против типов урона от модов брони (всегда складываются) —
+    // chemical добавлен для Protective (wdbc-8b5, «+X AP против урона от
+    // среды», DAMAGE_TYPES.chemical), суммируется ниже вместе с остальными.
+    const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0, chemical: 0 };
+    // «Полный комплект» Sealed (стр. 228, wdbc-8b5): иммунитет к химическому
+    // урону, пока не пробита ни одна из 6 закрывающих локаций. По локации —
+    // true, если её покрывает (ap[k]>0) хотя бы один надетый непробитый
+    // Sealed-предмет; итог — AND по всем шести (нет непокрытой/пробитой
+    // локации), считается после цикла ниже.
+    const sealedCoverage = {
+      head: false, body: false, leftArm: false, rightArm: false, leftLeg: false, rightLeg: false
+    };
     // Флаги свойств брони (Conductive/Flak/Soft/Rods/Open/Primitive) по
     // локациям — OR всех надетых предметов, чьё AP в этой локации > 0 (тот же
     // уровень точности, что и у armorVsType выше: не отслеживаем, какой именно
@@ -586,10 +648,28 @@ export function prepareCharacterDerived(actor, system) {
       // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
       // isPowerArmor — не свойство из properties[], а сам armorType предмета:
       // силовой шлем даёт 4 AP на глаза даже при Избирательном в Глаз (стр. 34).
-      const propAuto = aggregateArmorAuto(resolveArmorProps(item));
+      const propAuto = aggregateArmorAuto(resolveArmorProps(item), s.propRatings);
       propAuto.isPowerArmor = s.armorType === "power";
       for (const k of Object.keys(ap)) {
         if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
+      }
+      // Protective (wdbc-8b5): +X AP против DAMAGE_TYPES.chemical, суммируется
+      // с остальными vsType-бонусами ниже (та же неточность по локации, что и
+      // у остальных armorVsType — см. комментарий у объявления armorVsType).
+      for (const [t, x] of Object.entries(propAuto.apBonusByType)) {
+        armorVsType[t] = (armorVsType[t] || 0) + x;
+      }
+      // Sealed «полным комплектом» (wdbc-8b5): локация закрыта непробитым
+      // Sealed-предметом — считаем это ниже AND'ом по всем 6 локациям.
+      // Wraithbone Regeneration в руках псайкера (aeldari.json) не теряет
+      // Sealed при пробитии — та же оговорка, что у Void (rules/void-air.mjs).
+      // system.isPsyker — актора, который сейчас в prepareDerivedData (не
+      // item.parent.system: тот же документ, но ещё не факт, что уже
+      // проставлен во встроенном предмете на подставных тестовых акторах).
+      const armorIgnoresBreach = s.breached
+        && (s.properties || []).includes("wraithboneRegen") && !!system.isPsyker;
+      if ((s.properties || []).includes("sealed") && (!s.breached || armorIgnoresBreach)) {
+        for (const k of Object.keys(ap)) { if (ap[k] > 0) sealedCoverage[k] = true; }
       }
 
       // Качество брони: Best.Q даёт +1 AP всем частям (сочленения +2 — напоминание).
@@ -670,6 +750,10 @@ export function prepareCharacterDerived(actor, system) {
     // Минус коррозия: она разъедает носимое, и разность armorAP − wornOnly
     // (естественная броня для правила Глаза) не должна плыть от Corrosive.
     const wornOnly = Object.fromEntries(Object.keys(armorAP).map(k => [k, Math.max(0, best(k) - corroded(k))]));
+
+    // Sealed «полным комплектом» (стр. 228, wdbc-8b5): читает damage.mjs при
+    // урона типа chemical — иммунитет, пока закрыты все 6 локаций.
+    system.sealedFullSuit = Object.values(sealedCoverage).every(Boolean);
 
     system.absorption = {
       head:           armorAP.head     + tb,
@@ -864,9 +948,15 @@ export function prepareCharacterDerived(actor, system) {
     // бы без него, при этом бейдж «Размер» на листе показывал бы верное число
     // (было найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес).
     traitSizeMod += Number(system.sizeMod) || 0;
+    // system.sizeModNoSpd — ActiveEffect-ключ Конструктора (kind:"characteristic",
+    // charKey:"sizeNoSpd", см. apps/mechanics.mjs) для источников Размера, что
+    // намеренно НЕ двигают SPD. Складывается с тем, что уже мог записать
+    // легаси-эффект тем же ключом (тот же приём, что traitSizeMod/sizeMod выше).
+    traitSizeModNoSpd += Number(system.sizeModNoSpd) || 0;
     const size    = (system.size ?? 0) + traitSizeMod;
-    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер
-    system.sizeTotal = size;                  // итоговый Размер (база + Черты)
+    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер (двигает SPD)
+    system.sizeModNoSpd = traitSizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
+    system.sizeTotal = size + traitSizeModNoSpd; // итоговый Размер (база + оба вклада)
     const stance  = system.meleeStance || "standard";
 
     let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);

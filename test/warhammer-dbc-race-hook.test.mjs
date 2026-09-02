@@ -28,6 +28,15 @@ vi.mock("../module/apps/item-script.mjs", async (importOriginal) => {
   return { ...actual, runAutoScripts: vi.fn(async item => { scriptCalls.push(item.id); }) };
 });
 
+// Новая блочная модель (doombc-req-condition-effect-plan) — тот же приём
+// наблюдения, что у applyItemMechanics выше: контракт «звали с onGrant»,
+// не что именно applyMechBlocks сделал.
+const blockCalls = [];
+vi.mock("../module/apps/mech-blocks-apply.mjs", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, applyMechBlocks: vi.fn(async (item, actor, event) => { blockCalls.push({ id: item.id, event }); }) };
+});
+
 const { handleStrayRaceItem, handleItemCreated } = await import("../warhammer-dbc.mjs");
 const { SKIP_MECHANICS_HOOK } = await import("../module/apps/races.mjs");
 
@@ -121,6 +130,30 @@ describe("handleItemCreated — общая ветка createItem, SKIP_MECHANICS
 
     expect(scriptCalls).toContain("carrier-1");
     expect(mechanicsCalls).toContain("carrier-1");
+  });
+
+  // Новая блочная модель живёт РЯДОМ со старой — applyMechBlocks зовётся тем
+  // же хуком, тем же гейтом SKIP_MECHANICS_HOOK, с событием onGrant.
+  it("без опции применяет и applyMechBlocks с событием onGrant", async () => {
+    blockCalls.length = 0;
+    globalThis.game.user = { id: "user-1" };
+    const actor = new Actor();
+    const item = carrierItem(actor, "carrier-1b");
+
+    await handleItemCreated(item, {}, "user-1");
+
+    expect(blockCalls).toContainEqual({ id: "carrier-1b", event: { kind: "onGrant" } });
+  });
+
+  it("с опцией SKIP_MECHANICS_HOOK НЕ зовёт applyMechBlocks — тот же гейт, что у applyItemMechanics", async () => {
+    blockCalls.length = 0;
+    globalThis.game.user = { id: "user-1" };
+    const actor = new Actor();
+    const item = carrierItem(actor, "carrier-2b");
+
+    await handleItemCreated(item, { [SKIP_MECHANICS_HOOK]: true }, "user-1");
+
+    expect(blockCalls.some(c => c.id === "carrier-2b")).toBe(false);
   });
 
   // Находка второго раунда ревью (wdbc-n1k): applyRace/applySubrace уже

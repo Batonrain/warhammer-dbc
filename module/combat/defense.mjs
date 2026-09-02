@@ -15,10 +15,20 @@ import { withWitchsEdge } from "./witchs-edge.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { recoilButtonHtml } from "./recoil.mjs";
+import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
+import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
+import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
+import { determinationToFightParryBonus } from "../rules/determination-to-fight.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
 export const COUNTER_ATTACK_CAPABILITY = "technique.counterAttack";
+
+// Сжатие (мутация Compression) — capabilityKey уже зарегистрирован
+// constants/capabilities.mjs; здесь читается через hasRuleFlag, как и
+// COUNTER_ATTACK_CAPABILITY выше.
+export const COMPRESSION_CAPABILITY = "mutation.compression";
 
 // Уклонение/Парирование — Реакция (стр. 12): вне активного Encounter
 // spendReaction ничего не считает и всегда отдаёт true, поэтому вне боя
@@ -37,7 +47,7 @@ export async function _noReactionCard(actor, label) {
   }, rollMode));
 }
 
-export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false) {
+export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false, burst = false, attackerIsHorde = false) {
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
@@ -59,16 +69,22 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
-  // ХУДШИЙ из двух — то есть больший на d100.
+  // ХУДШИЙ из двух — то есть больший на d100. Танец Среди Огня и Один Против
+  // Сотни (wdbc-u0by) — собственное Преимущество защищающегося (против
+  // Очереди / против атаки Орды), тот же приём (roll×2 + pickReroll), но mode
+  // "keepBest" — forcedReroll, если задан, приоритетнее (внешнее навязывание
+  // сильнее своего Преимущества).
+  const dancerAdvantage = danceOfFireAdvantage(actor, burst);
+  const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
   const rolled = [];
-  for (let i = 0; i < (forcedReroll ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  for (let i = 0; i < (forcedReroll || selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked = pickReroll(rolled.map(r => r.total), forcedReroll || "keepBest");
   const roll   = rolled[picked.index];
   const rv     = picked.value;
-  const passed = rv <= threshold;
-  const deg      = passed
-    ? Math.floor((threshold - rv) / 10) + 1
-    : Math.floor((rv - threshold) / 10) + 1;
+  // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
+  // раньше дублировалась вручную здесь же).
+  const { success: passed, deg } = testOutcome(rv, threshold);
   const rollMode = game.settings.get("core", "rollMode");
 
   // Стр. 12: при Успехе персонаж уклоняется от атаки и попадание становится
@@ -93,7 +109,11 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
   if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
-  if (picked.dropped.length) modParts.push(`навязанный переброс, отброшено ${picked.dropped.join(", ")}`);
+  if (picked.dropped.length) {
+    modParts.push(forcedReroll
+      ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
+      : `${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
+  }
 
   let outcomeHtml;
   if (!passed) {
@@ -199,7 +219,7 @@ export async function _performSprayCancel(actor) {
   await ChatMessage.create(messageData);
 }
 
-export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1) {
+export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -257,15 +277,25 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const fatigue       = fatiguePenalty(actor, "ws");
   const armourPenalty = disabledArmourPenalty(actor, { skillKey: "parry" });
   const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "parry" });
+  // Determination To Fight/Решительность Сражаться (wdbc-1rno): +30 при
+  // отрицательных Ранах + прошлый раунд в Защитной Стойке.
+  const dtfBonus = determinationToFightParryBonus(actor);
 
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty;
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty + dtfBonus;
 
-  const roll     = await new Roll("1d100").evaluate();
-  const rv       = roll.total;
-  const passed   = rv <= threshold;
-  const deg      = passed
-    ? Math.floor((threshold - rv) / 10) + 1
-    : Math.floor((rv - threshold) / 10) + 1;
+  // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
+  // Парирование против Очереди / против атаки Орды, тот же приём
+  // roll×2 + pickReroll, что у Уклонения выше.
+  const dancerAdvantage = danceOfFireAdvantage(actor, burst);
+  const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
+  const rolled = [];
+  for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
+  const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
+  const roll     = rolled[picked.index];
+  const rv       = picked.value;
+  // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
+  const { success: passed, deg } = testOutcome(rv, threshold);
   const rollMode = game.settings.get("core", "rollMode");
 
   // Стр. 12: при Успехе персонаж отбивает или блокирует атаку и попадание
@@ -290,6 +320,8 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
+  if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
+  if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
 
   let outcomeHtml;
   if (!passed) {
@@ -361,4 +393,98 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
       </div>`,
     rolls: allRolls, sound: CONFIG.sounds.dice
   }, rollMode));
+}
+
+/**
+ * Сжатие (мутация Compression, wdbc-1rno, стр. текста мутации) — реактивная
+ * АЛЬТЕРНАТИВА Уклонению/Парированию для ОДНОГО попадания в конечность/
+ * голову: тратит Реакцию (тот же гейт, что Уклонение/Парирование), БЕЗ
+ * броска, всегда нивелирует ровно это попадание — книга не даёт теста,
+ * просто «может втянуть эту часть тела». `location` — метка HIT_LOCATIONS
+ * (constants/combat.mjs: «Голова»/«П. Рука»/«Л. Рука»/«П. Нога»/«Л. Нога»),
+ * читается из карточки атаки (attack-card.mjs::defenseSection передаёт её
+ * кнопке через data-атрибут, сама карточка Foundry-документов не касается —
+ * доступность способности проверяется здесь, не на этапе рендера).
+ *
+ * Не смоделировано намеренно — см. шапку rules/compression.mjs: зрение при
+ * втянутой Голове, мобильность при втянутых Ногах, выпуск удерживаемого
+ * оружия из втягиваемой Руки — только чат-заметки, без числа/автоснятия.
+ */
+export async function _performCompression(actor, location, attackerUuid = "") {
+  const rollMode = game.settings.get("core", "rollMode");
+  if (!hasRuleFlag(actor, COMPRESSION_CAPABILITY)) {
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `
+        <div class="wh-roll-result">
+          <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
+          <div class="roll-outcome">
+            <span class="roll-failure">${rollIcon("ban","#ff6b6b")}У цели нет мутации «Сжатие» (Compression).</span>
+          </div>
+        </div>`
+    }, rollMode));
+  }
+  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Сжатие");
+
+  const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];
+  const updated = retractPart(current, location);
+  await actor.update({ "flags.warhammer-dbc.compressedParts": updated });
+
+  const notes = [];
+  if (location === "Голова") notes.push("лишается зрения (но не слуха), пока голова не разложена обратно");
+  if (location === "П. Нога" || location === "Л. Нога")
+    notes.push("мобильность снижена, пока нога не разложена обратно (величина — на усмотрение ГМа)");
+  if (location === "П. Рука" || location === "Л. Рука")
+    notes.push("оружие/инструмент в этой руке пришлось выпустить (снимите/переместите вручную)");
+  if (allLimbsCompressed(updated))
+    notes.push("все конечности втянуты — помещается в пространства, слишком малые для обычных людей/космодесантников");
+
+  // Кнопки «Разложить», по одной на каждую СЕЙЧАС втянутую часть (не только
+  // ту, что втянута этим кликом — прошлые попадания могли втянуть другие).
+  // data-actor-uuid на корне карточки — тот же приём, что уже несёт
+  // _performParry для кнопки Контратаки (не полагаться на «выбранный
+  // токен», карточка может открыться спустя ходы после самого Сжатия).
+  const extendBtns = updated.map(loc => `
+      <button class="wh-extend-btn" type="button" data-location="${loc}"
+        title="Полудействие: разложить эту часть тела обратно (экономика действий не отслеживается — отыгрывается вручную)">
+        Разложить ${loc}
+      </button>`).join("");
+
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
+        <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
+        <div class="roll-outcome">
+          <span class="roll-success">Втягивает ${location} в торс (вместе с бронёй/снаряжением на ней) — попадание нивелировано.</span>
+        </div>
+        ${notes.length ? `<div class="roll-defense-note">${notes.join("; ")}.</div>` : ""}
+        <div class="roll-defense-section">${extendBtns}</div>
+      </div>`,
+    sound: CONFIG.sounds.dice
+  }, rollMode));
+}
+
+/**
+ * Разложить одну втянутую часть тела обратно (за полудействие, книга) —
+ * кнопка «Разложить» в карточке самого Сжатия выше (data-actor-uuid на
+ * корне карточки, тот же приём, что у Контратаки после Парирования).
+ * Экономика полудействия НЕ отслеживается системой — тот же принцип, что у
+ * Pure Form/Mist Transformation, отыгрывается вручную.
+ */
+export async function _performExtendBodyPart(actor, location) {
+  const current = actor.getFlag("warhammer-dbc", "compressedParts") ?? [];
+  if (!current.includes(location)) return;
+  const updated = extendPart(current, location);
+  await actor.update({ "flags.warhammer-dbc.compressedParts": updated });
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
+        <div class="roll-outcome">
+          <span class="roll-success">Раскладывает ${location} обратно (полудействие).</span>
+        </div>
+      </div>`
+  }, game.settings.get("core", "rollMode")));
 }

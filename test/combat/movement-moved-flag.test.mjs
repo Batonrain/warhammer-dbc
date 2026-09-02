@@ -16,7 +16,7 @@ import { resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun, declareDisengage,
-  markMovedThisTurn
+  markMovedThisTurn, markMoveDegreeThisTurn
 } from "../../module/combat/movement-actions.mjs";
 
 /** Подставной актор с рабочими getFlag/setFlag/update (тот же приём, что у free-attack.test.mjs). */
@@ -94,5 +94,44 @@ describe("markMovedThisTurn", () => {
 
   it("без актора — не падает", async () => {
     await expect(markMovedThisTurn(null)).resolves.toBeUndefined();
+  });
+});
+
+describe("moveDegreeThisTurn (Snapshot/Выстрел Навскидку, wdbc-1rno)", () => {
+  it("Полудвижение и Выход из Боя — degree=half (одна физическая дистанция SPD×1)", async () => {
+    const a1 = fakeActor(); await declareHalfMove(a1);
+    expect(a1.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("half");
+    const a2 = fakeActor(); await declareDisengage(a2);
+    expect(a2.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("half");
+  });
+
+  it("Полное Движение/Натиск/Бег — degree=full", async () => {
+    const a1 = fakeActor(); await declareFullMove(a1);
+    expect(a1.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("full");
+    const a2 = fakeActor(); await declareCharge(a2);
+    expect(a2.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("full");
+    const a3 = fakeActor(); await declareRun(a3);
+    expect(a3.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("full");
+  });
+
+  it("markMoveDegreeThisTurn монотонна: full не откатывается на half в том же Ходу", async () => {
+    const actor = fakeActor();
+    await markMoveDegreeThisTurn(actor, "full");
+    await markMoveDegreeThisTurn(actor, "half");
+    expect(actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")).toBe("full");
+  });
+
+  it("markMoveDegreeThisTurn: half → half не переписывает флаг лишний раз", async () => {
+    const actor = fakeActor();
+    await markMoveDegreeThisTurn(actor, "half");
+    let calls = 0;
+    const originalSetFlag = actor.setFlag;
+    actor.setFlag = async (...args) => { calls++; return originalSetFlag(...args); };
+    await markMoveDegreeThisTurn(actor, "half");
+    expect(calls).toBe(0);
+  });
+
+  it("без актора — не падает", async () => {
+    await expect(markMoveDegreeThisTurn(null, "half")).resolves.toBeUndefined();
   });
 });

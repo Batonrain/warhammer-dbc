@@ -377,6 +377,40 @@ describe("проведение ритуала (castRitual)", () => {
     expect(captured.chat[0].content).not.toContain("токен размещён");
   });
 
+  // Dominator / Покоритель (wdbc-u0by): «Преимущество на тесты Демонического
+  // Владычества» — только type==="dominion" И есть Талант, roll×2 + keepBest,
+  // тот же приём, что у Уклонения/Парирования/OneAgainstAHundred/Electrovigour.
+  const dominator = () => ({ type: "talent", name: "Dominator / Покоритель", system: {} });
+
+  it("тип dominion + Талант Покоритель — два броска, лучший (меньший) взят", async () => {
+    const a = actor();
+    a.items = [dominator()];
+    captured.dice = [80, 20];
+    const res = await castRitual(baseR({ gmMod: 50, type: "dominion" }), a);
+
+    expect(res.roll).toBe(20);
+    expect(captured.chat[0].content).toContain("Покоритель: Преимущество, отброшено 80");
+  });
+
+  it("тип dominion, но нет Таланта — один бросок как раньше", async () => {
+    const a = actor();
+    captured.dice = [20];
+    const res = await castRitual(baseR({ gmMod: 50, type: "dominion" }), a);
+
+    expect(res.roll).toBe(20);
+    expect(captured.chat[0].content).not.toContain("Покоритель");
+  });
+
+  it("есть Талант, но тип не dominion — Преимущество не применяется", async () => {
+    const a = actor();
+    a.items = [dominator()];
+    captured.dice = [20];
+    const res = await castRitual(baseR({ gmMod: 50, type: "summon" }), a);
+
+    expect(res.roll).toBe(20);
+    expect(captured.chat[0].content).not.toContain("Покоритель");
+  });
+
   it("провал типа summon с demonName — spawnDemonFn не зовётся", async () => {
     captured.dice = [95, 40];
     const calls = [];

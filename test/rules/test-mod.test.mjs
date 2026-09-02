@@ -34,6 +34,22 @@ describe("область «Нестабильность»", () => {
   });
 });
 
+describe("область «vsExorcism» (Локус Цепей, wdbc-smc)", () => {
+  const rule = { id: "r", label: "Локус Цепей: против Экзорцизма/Демонологии", when: {}, effects: [
+    { kind: "rollBonus", target: "vsExorcism", value: 4 }
+  ] };
+
+  it("модификатор доходит до встречного теста против Экзорцизма/Демонологии", () => {
+    expect(rollModsFromRules([rule], { kind: "vsExorcism" }))
+      .toEqual([{ ruleId: "r", label: "Локус Цепей: против Экзорцизма/Демонологии", value: 4, halvePenalty: false }]);
+  });
+
+  it("не примазывается ни к обычному Встречному тесту (kind:\"opposed\"), ни к Нестабильности", () => {
+    expect(rollModsFromRules([rule], { kind: "opposed" })).toEqual([]);
+    expect(rollModsFromRules([rule], { kind: "instability" })).toEqual([]);
+  });
+});
+
 describe("значение от своей характеристики", () => {
   const rule = { id: "r", label: "Цепи", when: {}, effects: [
     { kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "inf" } }
@@ -72,6 +88,33 @@ describe("значение от собственного Пси-Рейтинга
   });
 });
 
+describe("значение от бонуса Порчи (wdbc-1rno — «½Cor.b (окр.▲)» Enchanting Voice/Black Eyes и др.)", () => {
+  const rule = (multiplier) => ({ id: "r", label: "Чарующий Голос", when: {}, effects: [
+    { kind: "rollBonus", target: "all", valueFrom: { selfCharBonus: "cor", multiplier } }
+  ] });
+
+  it("½Cor.b округляется ВВЕРХ (книга всегда «окр.▲»)", () => {
+    // corruptionBonus = floor(65/10) = 6; половина 6 = 3 (уже целое — но
+    // проверяем нечётный случай отдельно ниже).
+    const actor = { system: { corruptionBonus: 6 } };
+    expect(rollModsFromRules([rule(0.5)], { kind: "skill", actor })[0].value).toBe(3);
+  });
+
+  it("нечётный Cor.b: 5×0.5=2.5 округляется до 3, не до 2", () => {
+    const actor = { system: { corruptionBonus: 5 } };
+    expect(rollModsFromRules([rule(0.5)], { kind: "skill", actor })[0].value).toBe(3);
+  });
+
+  it("множитель по умолчанию (1) не меняет значение", () => {
+    const actor = { system: { corruptionBonus: 4 } };
+    expect(rollModsFromRules([rule(undefined)], { kind: "skill", actor })[0].value).toBe(4);
+  });
+
+  it("нет актора или corruptionBonus — ноль, без падения посреди броска", () => {
+    expect(rollModsFromRules([rule(0.5)], { kind: "skill" })[0].value).toBe(0);
+  });
+});
+
 describe("запись Конструктора «Модификатор теста»", () => {
   it("плоское число превращается в rollBonus нужной области", () => {
     const rules = rulesFromItemMechanics([item("Локус Цепей", [testMod()])]);
@@ -84,6 +127,15 @@ describe("запись Конструктора «Модификатор тес�
     ])]);
     expect(rules[0].effects).toEqual([
       { kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "inf" } }
+    ]);
+  });
+
+  it("vsExorcism (Локус Цепей, wdbc-smc) — фиксированная область, не char/skill", () => {
+    const rules = rulesFromItemMechanics([item("Локус Цепей", [
+      testMod({ modScope: "vsExorcism", modValueMode: "charBonus", modCharBonus: "inf" })
+    ])]);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "vsExorcism", valueFrom: { selfCharBonus: "inf" } }
     ]);
   });
 

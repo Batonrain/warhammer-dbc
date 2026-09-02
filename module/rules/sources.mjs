@@ -18,6 +18,8 @@ import { adjutantRerollRules } from "./adjutant.mjs";
 import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
+import { addictionPenaltyRules } from "./addiction.mjs";
+import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 
 const SOURCES = new Map();
 
@@ -98,11 +100,20 @@ registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
 // предикату (rules/predicates.mjs::hexMarkedPreyAllyBonus), которое само
 // читает cross-actor метку через ctx.targetActor.
 registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
+// Synesthesia/Синэстезия (wdbc-1rno) — та же схема: статичное правило читает
+// цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
+// Навыка, не только атаках), не источник-владелец Мутации.
+registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 
 registerRuleSource("adjutant", a => {
   if (typeof game === "undefined") return [];
   return adjutantRerollRules(a, game.actors ?? []);
 });
+
+// Зависимость (wdbc-5inv) — штраф −10 к тестам Навыков, пока не утолена.
+// Считается по времени (game.time.worldTime), не по when: правило действует
+// каждый бросок, пока предмет не даст isAddictionUnsatisfied === false.
+registerRuleSource("addiction", a => addictionPenaltyRules(a));
 
 // Пилот Дредноута (Книга Машин, стр. 57-58). Связь хранит сам Дредноут — место
 // экипажа с ролью `pilot` и uuid актора, — поэтому спрашивать приходится не
@@ -131,6 +142,11 @@ registerRuleSource("dreadnought", (a) => {
     effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.mindControlBonus,
                 label: "Саркофаг: против контроля сознания" }]
   });
+  rules.push({
+    id: "dreadnought.sarcophagus.poison", label: "Саркофаг: сопротивление ядам", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: SARCOPHAGUS.poisonBonus,
+                label: "Саркофаг: против ядов" }]
+  });
 
   // Возможности книги: иммунитеты, автоуспехи и запреты. Читателей у части из
   // них пока нет — они помечены «вручную» в панели на листе.
@@ -141,4 +157,18 @@ registerRuleSource("dreadnought", (a) => {
     });
   }
   return rules;
+});
+
+// Локус Неизбежности (стр. 30, wdbc-smc): после авто-попадания рукопашной
+// (autoHit.melee.oncePerRound, module/sheets/attack-dialog.mjs) актор несёт
+// −10 на все тесты до начала своего следующего Хода. Флаг ставит диалог
+// атаки в момент применения, снимает resetActionEconomy (action-economy.mjs)
+// тем же приёмом, что exposedAggressive/running/movedThisTurn — переносить
+// в постоянное хранимое поле схемы не нужно, живёт как временный флаг.
+registerRuleSource("daemonInevitability", a => {
+  if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];
+  return [{
+    id: "daemon.inevitabilityPenalty", label: "Локус Неизбежности: штраф после авто-попадания", when: {},
+    effects: [{ kind: "rollBonus", target: "all", value: -10, label: "Локус Неизбежности: штраф после авто-попадания" }]
+  }];
 });

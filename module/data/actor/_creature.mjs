@@ -210,6 +210,17 @@ export function creatureSchema({ granted = false } = {}) {
       ablative:     num(0, "Аблативные (текущие)"),
       ablativeMax:  num(0, "Аблативные (максимум)")
     }, { label: "Раны" }),
+    // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона: 1 тPR → 2 аблативных
+    // AP) — ОТДЕЛЬНЫЙ пул от аблативных Ран выше: не поглощение урона по
+    // очкам, а плоская добавка к AP при каждом попадании, которая теряет
+    // ровно 1 заряд за попадание (независимо от урона) и дополнительно тает
+    // в начале каждого нового Раунда (см. module/rules/ablative-ap.mjs,
+    // combat/damage.mjs). max — на что щит поднимается активацией, value —
+    // текущий остаток.
+    ablativeApShield: new SchemaField({
+      value: num(0, "Аблативный AP-щит (текущий)"),
+      max:   num(0, "Аблативный AP-щит (максимум)")
+    }, { label: "Аблативный AP-щит" }),
     fate:      pool("Судьба"),
     deadMight: pool("Мощь мёртвых"),
     fatigue:   pool("Усталость"),
@@ -366,6 +377,12 @@ export function creatureSchema({ granted = false } = {}) {
     bio: new SchemaField({
       gender:     str("", "Пол"),
       age:        num(0, "Возраст"),
+      // Собственный вес тела (кг), БЕЗ снаряжения — оно уже отдельно в
+      // system.encumbrance.current. Нужен для Метания/Дубины (стр. 27-28,
+      // module/combat/improvised-weapon.mjs): полный вес актора как снаряда
+      // = это поле + encumbrance.current, а опора при Метании сравнивается
+      // именно с этим (голым весом тела бросающего), не с полным.
+      weight:     num(0, "Вес"),
       height:     str("", "Рост"),
       build:      str("", "Телосложение"),
       hair:       str("", "Волосы"),

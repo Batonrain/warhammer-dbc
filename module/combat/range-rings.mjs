@@ -89,13 +89,42 @@ function _draw(token, rings, { timeout = null } = {}) {
 export function showWeaponRangeRings(token, rng) {
   if (!(Number(rng) > 0)) return;
   const b = rangeBandBoundaries(Number(rng));
-  _draw(token, [
+  const candidates = [
     { r: b.pointBlank, color: 0xff5555 },
     { r: b.short,      color: 0xffaa33 },
     { r: b.combat,     color: 0x7bd858 },
     { r: b.long,       color: 0xffaa33 },
     { r: b.extreme,    color: 0xff5555 }
-  ]);
+  ];
+  // У короткоствольного оружия соседние границы совпадают (полоса вырождена
+  // упором, см. rangeBandBoundaries) — не дублировать одно и то же кольцо.
+  const rings = [];
+  let lastR = 0;
+  for (const ring of candidates) {
+    if (ring.r <= lastR) continue;
+    rings.push(ring);
+    lastR = ring.r;
+  }
+  _draw(token, rings);
+}
+
+/**
+ * Одно кольцо досягаемости рукопашной атаки вокруг бойца — «кто рядом».
+ * У ближнего боя нет полос В упор/Короткая/Длинная/Предельная дальнобойного
+ * оружия (движок атаки их для isMelee и не считает, см. attack-dialog.mjs
+ * bandKey), поэтому showWeaponRangeRings тут не годится — она рисовала одно
+ * и то же превью banded-дальности и стрелку, и рукопашнику, из-за чего
+ * рукопашное оружие с любым ненулевым (в т.ч. случайным/унаследованным от
+ * копирования) system.range получало огромные концентрические круги вместо
+ * «дотянусь ли я до соседа». Радиус — клетка сетки сцены ×1.5 (накрывает и
+ * диагональных соседей, не только ортогональных), без привязки к
+ * system.range оружия: тот же принцип «без прикладывания линейки», что и у
+ * остального модуля.
+ * @param {Token} token
+ */
+export function showMeleeReachRing(token) {
+  const gridUnit = canvas?.scene?.grid?.distance ?? canvas?.grid?.distance ?? 1;
+  _draw(token, [{ r: gridUnit * 1.5, color: 0x7bd858, alpha: 0.75 }]);
 }
 
 /**

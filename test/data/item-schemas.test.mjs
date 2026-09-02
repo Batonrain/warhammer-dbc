@@ -130,6 +130,7 @@ const TYPES = {
         balanceMod: 0, weightPct: 0,
         grantsGrip: "", gripRangeMult: 1,
         hipFireSemiMod: 0, hipFireFullMod: 0, hipFireSuppressionMod: 0,
+        fittedToId: "", fittedBonus: 0,
         addProps: [], removeProps: [], mechAddProps: [], mechRemoveProps: []
       },
       drukhari: false
@@ -143,6 +144,8 @@ const TYPES = {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
       activatable: false, active: false, runicWeaveSlots: 0,
+      // wdbc-bxw6: «отламывающийся слой» (аблативная модификация брони).
+      ablative: false, ablativeCharge: 0,
       effects: {
         apAll: 0, apHead: 0, apBody: 0, apArms: 0, apLegs: 0,
         apVsEnergy: 0, apVsImpact: 0, apVsRending: 0, apVsBlast: 0,
@@ -300,13 +303,20 @@ const TYPES = {
       // В template.json объявлено не было, но лежит у трёх мутаций пака и
       // читается общим пикером Талантов, Черт и Мутаций — как у Черты.
       requirement: "",
+      // Включаемая на время способность (wdbc-egll) — тот же тумблер, что у
+      // armorMod (module/apps/effects.mjs::isItemActive), для Мутаций/Даров
+      // с эффектом «до конца боя/сцены» вместо постоянного (Живое Оружие).
+      activatable: false, active: false,
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         fearRating: 0, sizeMod: 0, initMod: 0, speedMod: 0
       },
       // Выпавшая субмутация (стр. 440): в template.json поля не было, в паке
       // его тоже нет — оно заполняется броском уже на листе персонажа.
-      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 }
+      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 },
+      // Трекер Зависимости (wdbc-5inv) — та же логика, что submutation выше:
+      // заполняется на листе (subst./"Удовлетворить"), в паке пусто у всех.
+      dependency: { substance: "", lastSatisfied: null }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },

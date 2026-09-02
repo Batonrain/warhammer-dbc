@@ -24,13 +24,19 @@ export function resolveArmorProps(item) {
 /**
  * Сворачивает auto.* директивы свойств ОДНОГО предмета брони в плоский набор
  * флагов, который actor.mjs распределяет по локациям (см. armorLocPropFlags).
+ *
+ * @param {object} [ratings]  item.system.propRatings этого же предмета — сюда
+ *   ходят свойства с рейтингом X (Gorget/Protective), у брони, в отличие от
+ *   оружия, рейтинг хранится не рядом с ключом свойства, а в отдельном
+ *   свободном реестре (см. data/item/armor.mjs).
  */
-export function aggregateArmorAuto(props) {
+export function aggregateArmorAuto(props, ratings = {}) {
   const a = {
     noEnergy: false, noImpact: false, doubleBlast: false,
     noRanged: false, noJointCalled: false, noEyeCalled: false,
     blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-    frontArcNoProtect: false, runesOfProtection: false
+    frontArcNoProtect: false, runesOfProtection: false,
+    gorgetRating: 0, apBonusByType: {}
   };
   for (const p of props) {
     const au = p.def.auto;
@@ -51,6 +57,18 @@ export function aggregateArmorAuto(props) {
     // Runes of Protection (wdbc-tejb): тест на AP-бонус при попадании —
     // читает damage.mjs::applyDamageToActor, сам бросок не здесь.
     if (au.runesOfProtection) a.runesOfProtection = true;
+    // Gorget (wdbc-8b5): рейтинг X — порог 1d10 кнопки на карточке атаки
+    // (combat/attack.mjs). Несколько предметов на одной локации (редкость) —
+    // берём лучший рейтинг, как и остальные числовые бонусы брони.
+    if (au.gorget) a.gorgetRating = Math.max(a.gorgetRating, Number(ratings[p.key]) || 0);
+    // Protective (wdbc-8b5): +X AP против конкретного damageType — та же
+    // точность/упрощение, что уже принята для armorVsType от модов брони
+    // (rules/character.mjs): не привязано к конкретной локации, суммируется
+    // по всем надетым предметам с этим свойством.
+    if (au.apBonusVsType) {
+      const t = au.apBonusVsType;
+      a.apBonusByType[t] = (a.apBonusByType[t] || 0) + (Number(ratings[p.key]) || 0);
+    }
   }
   return a;
 }
@@ -85,7 +103,8 @@ export function mergeArmorLocFlags(a, b) {
     noJointReduction:        a.noJointReduction || b.noJointReduction,
     isPowerArmor:            a.isPowerArmor || b.isPowerArmor,
     frontArcNoProtect:       a.frontArcNoProtect || b.frontArcNoProtect,
-    runesOfProtection:       a.runesOfProtection || b.runesOfProtection
+    runesOfProtection:       a.runesOfProtection || b.runesOfProtection,
+    gorgetRating:            Math.max(a.gorgetRating || 0, b.gorgetRating || 0)
   };
 }
 
@@ -93,7 +112,7 @@ const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
   blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-  frontArcNoProtect: false, runesOfProtection: false
+  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0
 });
 
 export function emptyArmorLocFlags() {

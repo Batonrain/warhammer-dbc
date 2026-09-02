@@ -30,6 +30,12 @@
       {
         "key": "linger",
         "rating": 4
+      },
+      {
+        "key": "independent"
+      },
+      {
+        "key": "recharge"
       }
     ],
     "needsRecharge": false,

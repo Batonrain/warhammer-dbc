@@ -15,7 +15,7 @@ import { GRIPS, parseGrips } from "../constants/combat.mjs";
 import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
-import { getHeldHand } from "../rules/hands.mjs";
+import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -30,22 +30,48 @@ const PSY_TARGETED = new Set(["attack", "psychicShoot", "psychicBlade", "touch",
 // просто быстрый доступ к ним же: клик ищет предмет по имени и открывает
 // обычный диалог атаки (профиль/Приём/Стойка/Хват выбираются уже в нём же —
 // в т.ч. усиленный профиль «Unarmed Warrior», если Талант куплен).
-const UNARMED_ITEM_NAMES = {
-  fist: "Fist / Удар кулаком",
-  kick: "Kick / Пинок",
-  headbutt: "Headbutt / Удар головой"
-};
-
-// _id исходников в packs-src/weapons/Интегральные_атаки — устойчивый
-// идентификатор вида удара: выданный предмет несёт его во флаге
-// equipSourceUuid (module/apps/mechanics.mjs, buildIntegralAttackData), и
-// переименование предмета игроком не убивает кнопку. Поиск по имени остаётся
-// фолбэком для предметов, выданных до появления этого флага.
+// _id исходников в packs-src/weapons/Интегральные_атаки — только для того,
+// чтобы Кулак/Пинок/Удар головой стабильно шли первыми в лотке 0-хватных атак
+// (zeroHandItems ниже) со своими узнаваемыми иконками; сама кнопка теперь
+// адресуется прямо по id предмета на акторе (data-unarmed="{{id}}"), без
+// поиска по имени/uuid.
 const UNARMED_SOURCE_IDS = {
   fist: "89mS3BzjUKrGFRdH",
   kick: "U2TAAlVnZpdRQscO",
   headbutt: "xP2os46ZgH3HqoGj"
 };
+const UNARMED_ICONS = { fist: "fa-hand-fist", kick: "fa-shoe-prints", headbutt: "fa-user" };
+const UNARMED_RANK = { fist: 0, kick: 1, headbutt: 2 };
+
+// Ключ (fist/kick/headbutt) предмета по его equipSourceUuid, если это один
+// из трёх «базовых» безоружных ударов — иначе null.
+function unarmedKey(item) {
+  const srcId = String(item.getFlag(SYSTEM, "equipSourceUuid") || "").split(".").pop();
+  return Object.keys(UNARMED_SOURCE_IDS).find(k => UNARMED_SOURCE_IDS[k] === srcId) ?? null;
+}
+
+// Лоток «Безоружный бой»: интегральные атаки (часть тела/машины — Кулак,
+// Пинок, Удар головой, Кислотный Плевок, Вопль, Дары Одержимого-выдохи и
+// т.п.) с нулевой занятостью руки (rules/hands.mjs, weaponHandsRequired).
+// Обычное снаряжение с Independent/Wrist (Болтшторм-перчатка и т.п.) сюда
+// НЕ попадает — оно остаётся в слоте руки (handWeaponIds ниже) со своим
+// магазином/перезарядкой; в лотке ему было бы не место среди рукопашных
+// ударов, а слот терять нельзя (wdbc, ревью pr-reviewer перед пушем).
+// Кулак/Пинок/Удар головой — стабильно первыми, дальше — по sort предмета.
+function zeroHandItems(actor) {
+  return equippedWeapons(actor)
+    .filter(w => isIntegralAttack(w) && weaponHandsRequired(w, actor) === 0)
+    .sort((a, b) => {
+      const ra = UNARMED_RANK[unarmedKey(a)] ?? 99;
+      const rb = UNARMED_RANK[unarmedKey(b)] ?? 99;
+      return ra - rb || (a.sort ?? 0) - (b.sort ?? 0);
+    });
+}
+function zeroHandIcon(item) {
+  const key = unarmedKey(item);
+  if (key) return UNARMED_ICONS[key];
+  return item.system?.weaponClass === "melee" ? "fa-hand-back-fist" : "fa-satellite-dish";
+}
 
 // Профиль удара стрелковым оружием в упор (импровизированная рукопашная, стр. 40):
 // пистолет — как Булава (1d5−3), винтовка/ручное — как Посох (1d10−3), тяжёлое —
@@ -112,21 +138,25 @@ function equippedWeapons(actor) {
 // надетое), чтобы у нового персонажа HUD не пустовал.
 function handWeaponIds(actor) {
   const eq = equippedWeapons(actor);
-  // Интегральные атаки (кулак/пинок/головой) надеты всегда — в руки не
-  // назначаются, иначе они занимали бы слоты раньше настоящего оружия.
+  // Интегральные атаки (кулак/пинок/головой/природные) в слоты Л/П не
+  // назначаются вообще — они всегда доступны из отдельного лотка «Безоружный
+  // бой» (zeroHandItems) и не должны вытеснять из слота настоящее оружие.
+  // Обычное снаряжение с нулевой занятостью руки (Independent/Wrist —
+  // Болтшторм-перчатка и т.п.) в слот, наоборот, ДОЛЖНО попадать: иначе у
+  // него в HUD пропадают магазин, перезарядка и кнопка ОГОНЬ (регрессия,
+  // поймана pr-reviewer перед пушем) — это настоящее оружие, просто не
+  // занимающее руку физически, а не часть тела.
   const real = eq.filter(w => !isIntegralAttack(w));
-  const byHand = h => real.find(w => getHeldHand(w) === h)
-                    ?? eq.find(w => getHeldHand(w) === h) ?? null;
+  const byHand = h => real.find(w => getHeldHand(w) === h) ?? null;
 
   let mainId = byHand("right")?.id ?? null;
   let offId  = byHand("left")?.id  ?? null;
 
   if (!mainId && !offId) {
-    const def = real.length ? real : eq;
-    mainId = def[0]?.id ?? null;
-    offId  = def.find(w => w.id !== mainId)?.id ?? null;
+    mainId = real[0]?.id ?? null;
+    offId  = real.find(w => w.id !== mainId)?.id ?? null;
   } else {
-    if (!mainId) mainId = real.find(w => w.id !== offId)?.id ?? eq.find(w => w.id !== offId)?.id ?? null;
+    if (!mainId) mainId = real.find(w => w.id !== offId)?.id ?? null;
     if (!offId)  offId  = real.find(w => w.id !== mainId)?.id ?? null;
   }
   if (offId && offId === mainId) offId = null;   // один ствол — не в обе руки
@@ -172,8 +202,12 @@ export function hudData(actor) {
     return { ...p, ap, apOnly, tb, color: armorColor(ap) };
   });
 
-  // Две руки: правая (основная) и левая (вторая).
+  // Две руки: правая (основная) и левая (вторая). Интегральные атаки сюда не
+  // попадают вовсе (см. handWeaponIds) — их count не должен решать, нужен ли
+  // видимый слот левой руки.
   const { mainId, offId } = handWeaponIds(actor);
+  const heldWeaponCount = equippedWeapons(actor).filter(w => !isIntegralAttack(w)).length;
+  const zeroHand = zeroHandItems(actor).map(w => ({ id: w.id, name: w.name, icon: zeroHandIcon(w) }));
   const weaponView = (id, slotKey, label) => {
     const w = id ? actor.items.get(id) : null;
     if (!w) return { slot: slotKey, label, empty: true };
@@ -213,9 +247,17 @@ export function hudData(actor) {
     // применяется только к рукопашной) — гейтить «ОГОНЬ» нечем, не гейтим.
     const fireGate = melee ? apSpendGate(actor, 1) : { disabled: false, title: "" };
 
+    // Удар оружием в упор/приклад (стр. 40, gunMeleeStrike выше) — только у
+    // «настоящего» стрелкового. Интегральным атакам (кислотный плевок, вопль,
+    // демонические дары и т.п.) кнопка не полагается по умолчанию: у них нет
+    // физического приклада — если он всё же нужен конкретному предмету
+    // (экзотическое оружие Дредноута и т.п.), включается точечно флагом
+    // flags.warhammer-dbc.allowGunMeleeStrike на самом предмете.
+    const canButtStrike = !melee && (!isIntegralAttack(w) || !!w.getFlag(SYSTEM, "allowGunMeleeStrike"));
+
     return {
       slot: slotKey, label, empty: false,
-      id: w.id, name: w.name, isMelee: melee,
+      id: w.id, name: w.name, isMelee: melee, canButtStrike,
       loaded: ammo?.name ?? "",
       clip: Number(g.magazineCur) || 0,
       clipMax: Number(g.magazineMax) || 0,
@@ -232,7 +274,7 @@ export function hudData(actor) {
     weaponView(offId,  "off",  "ЛЕВАЯ")
   ];
   // Левую руку не показываем пустой, если оружие всего одно (нечего в неё класть).
-  const showOff = !hands[1].empty || equippedWeapons(actor).length > 1;
+  const showOff = !hands[1].empty || heldWeaponCount > 1;
   if (!showOff) hands[1].hide = true;
 
   // Силовые поля: активное (для readout) + первое доступное для тумблера.
@@ -343,6 +385,7 @@ export function hudData(actor) {
     })(),
     lamps,
     hands, showOff,
+    zeroHand,
     hasWeapon: !!(mainId || offId),
     shield: shieldBtn ? {
       id: shieldBtn.id, name: shieldBtn.name,
@@ -446,22 +489,16 @@ function wire(el, actor) {
   el.querySelectorAll("[data-melee-gun]").forEach(b => b.addEventListener("click", () => {
     const w = actor.items.get(b.dataset.meleeGun);
     if (!own || !w) return;
-    beginTargeting(actor, w, () => actor.sheet._showAttackDialogNoWeapon?.(gunMeleeStrike(w)), `${w.name} (в упор)`);
+    beginTargeting(actor, w, () => actor.sheet._showAttackDialogNoWeapon?.(gunMeleeStrike(w)), `${w.name} (в упор)`, { forceMelee: true });
   }));
 
-  // Безоружные удары (кулак/пинок/головой) — перекрестие → обычный диалог
-  // атаки предмета-удара (integralAttack, надет всегда). Нет предмета —
-  // старому актору расу не переприменяли после этой правки, тихо ничего не
-  // делаем (тот же приём, что и у остальных HUD-кнопок без предмета/цели).
+  // Лоток «Безоружный бой» (zeroHandItems выше) — перекрестие → обычный
+  // диалог атаки предмета-удара. Кнопка адресует предмет напрямую по id
+  // (data-unarmed="{{id}}", проставлен в hudData), больше не ищет по
+  // имени/uuid — сам список уже отфильтрован по нулевой занятости руки.
   el.querySelectorAll("[data-unarmed]").forEach(b => b.addEventListener("click", () => {
     if (!own) return;
-    const kind = UNARMED_SOURCE_IDS[b.dataset.unarmed] ? b.dataset.unarmed : "fist";
-    const srcId = UNARMED_SOURCE_IDS[kind];
-    const name  = UNARMED_ITEM_NAMES[kind];
-    const item = actor.items.find(i => i.type === "weapon"
-        && isIntegralAttack(i)
-        && String(i.getFlag(SYSTEM, "equipSourceUuid") || "").endsWith(srcId))
-      ?? actor.items.find(i => i.type === "weapon" && i.name === name);
+    const item = actor.items.get(b.dataset.unarmed);
     if (!item) return;
     beginTargeting(actor, item, () => actor.sheet._showAttackDialog?.(item), item.name);
   }));

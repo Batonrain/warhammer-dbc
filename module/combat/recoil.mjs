@@ -13,10 +13,22 @@
 //  module/rules/aoe-target.mjs, module/combat/resplendent-raiment.mjs про
 //  тот же honest-compromise): диалог не проверяет геометрию, а просто
 //  спрашивает, куда персонаж отскочил, и списывает метры из пула.
-//  «Отскок из рукопашной = Вольт» (п.6 правила) в этом диалоге не
-//  предлагается — Отскок здесь всегда идёт от СТРЕЛКОВОЙ атаки (см. гейт
-//  !isMelee в _performDodge); рукопашный случай — отдельная точка входа,
-//  см. declareDisengage/disengageActive в movement-actions.mjs.
+//
+//  «Отскок из рукопашной считается как Вольт» (п.6 правила, wdbc-zik7):
+//  прочитано (после сверки с пользователем — п.6 идёт СРАЗУ после абзаца про
+//  Blast, полностью накрывающий Базу, и относится к тому же самому Отскоку
+//  выше, не заводит отдельный рукопашный триггер Уклонения) как «если этот
+//  же Отскок выносит персонажа из рукопашного контакта с соседним врагом,
+//  такой выход засчитывается КАК Вольт (module/combat/movement-actions.mjs::
+//  declareDisengage, тот же flags.warhammer-dbc.disengageActive) — но только
+//  если ни один враг, способный на Свободную Атаку, тоже не пытался
+//  Избегать этой же атаки (их попытка отвлекает их — Вольт тогда не нужен,
+//  обычные правила и так работают)». Соседство нескольких противников по
+//  карте код не отслеживает вовсе (тот же honest-compromise, что у geometry
+//  выше) — showRecoilDialog только детектит САМ ФАКТ рукопашного контакта
+//  через free-attack.mjs::enemyContactTokenDocs (как suggestedAp детектит
+//  Укрытие), а решение «пытался ли враг тоже Избегать» — ручной чекбокс,
+//  подтверждаемый игроком/ГМом за столом.
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
@@ -25,6 +37,7 @@ import { spdMeters, recoilRemaining, spendRecoil } from "./recoil-pool.mjs";
 import { coverApForToken } from "./cover.mjs";
 import { spendPoolForRecoil } from "./evasion-pool.mjs";
 import { coverApImperativeAdjust } from "./imperative-bonuses.mjs";
+import { enemyContactTokenDocs } from "./free-attack.mjs";
 
 /** Цена входа в Отскок из банка Успехов (Voltagheist Blast, wdbc-16ss). */
 export const POOL_RECOIL_COST = 2;
@@ -50,8 +63,21 @@ function tokenFor(actor) {
 }
 
 /**
- * Диалог выбора метров/Укрытия. Возвращает null при отмене.
- * @returns {Promise<{meters:number, intoCover:boolean, coverAp:number}|null>}
+ * Есть ли у актора СЕЙЧАС враг личного масштаба в Базовом/Глубоком контакте
+ * (module/combat/free-attack.mjs) — только для того, чтобы решить, предлагать
+ * ли чекбокс Вольта вообще: без токена на сцене (вне боя/тестами) контакт не
+ * определить, чекбокс просто не показывается, как и suggestedAp Укрытия выше.
+ */
+function actorInMeleeContact(actor) {
+  const token = tokenFor(actor);
+  if (!token) return false;
+  return enemyContactTokenDocs(token.document).length > 0;
+}
+
+/**
+ * Диалог выбора метров/Укрытия (+ Вольт, если сейчас рукопашный контакт).
+ * Возвращает null при отмене.
+ * @returns {Promise<{meters:number, intoCover:boolean, coverAp:number, volt:boolean}|null>}
  */
 export async function showRecoilDialog(actor) {
   const remaining = recoilRemaining(actor);
@@ -66,6 +92,13 @@ export async function showRecoilDialog(actor) {
   // укрытия для ЭТОГО актора — клапан «не более чем вдвое/×2» считается от
   // базового AP зоны, не от уже применённого. Поле всё равно редактируемое.
   const suggestedAp = token ? coverApImperativeAdjust(actor, coverApForToken(token)) : 0;
+  const meleeContact = actorInMeleeContact(actor);
+
+  const voltRow = meleeContact ? `
+        <div class="roll-dlg-row"><label>Вольт (никто из соседних врагов не пытался тоже Избегать):</label>
+          <input type="checkbox" name="volt">
+        </div>
+        <div class="roll-dlg-note">п.6, стр. 12: Отскок из рукопашной гасит Свободную Атаку соседних врагов (как «Выход из Боя»), только если ни один из них тоже не пытался Избегать этой же атаки.</div>` : "";
 
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title: `Отскок — ${actor.name}` },
@@ -84,6 +117,7 @@ export async function showRecoilDialog(actor) {
           <input type="number" name="coverAp" value="${suggestedAp}" min="0" step="1">
         </div>
         <div class="roll-dlg-note">Не в Укрытие — все попадания этой атаки промахиваются (вне предела атаки, стр. 12). В Укрытие — попадания проходят с доп. AP.</div>
+        ${voltRow}
       </div>`,
     buttons: [
       {
@@ -93,7 +127,8 @@ export async function showRecoilDialog(actor) {
           return {
             meters: Math.max(0, parseInt(form.querySelector('[name="meters"]')?.value) || 0),
             intoCover: !!form.querySelector('[name="intoCover"]')?.checked,
-            coverAp: Math.max(0, parseInt(form.querySelector('[name="coverAp"]')?.value) || 0)
+            coverAp: Math.max(0, parseInt(form.querySelector('[name="coverAp"]')?.value) || 0),
+            volt: meleeContact && !!form.querySelector('[name="volt"]')?.checked
           };
         }
       },
@@ -106,13 +141,18 @@ export async function showRecoilDialog(actor) {
 
 /**
  * Списывает дистанцию из пула, ставит разовый флаг AP Укрытия (если
- * применимо) и постит исход в чат. Зовётся из клика по wh-recoil-btn после
- * подтверждения showRecoilDialog.
+ * применимо), при volt — тот же flags.warhammer-dbc.disengageActive, что
+ * ставит «Выход из Боя» (declareDisengage, movement-actions.mjs), и постит
+ * исход в чат. Зовётся из клика по wh-recoil-btn после подтверждения
+ * showRecoilDialog.
  */
-export async function performRecoil(actor, { meters, intoCover, coverAp } = {}) {
+export async function performRecoil(actor, { meters, intoCover, coverAp, volt = false } = {}) {
   const spent = await spendRecoil(actor, meters);
   if (intoCover && coverAp > 0) {
     await actor.setFlag("warhammer-dbc", "recoilCoverBonus", coverAp);
+  }
+  if (volt) {
+    await actor.setFlag("warhammer-dbc", "disengageActive", true);
   }
   const remaining = recoilRemaining(actor);
   const remLabel = Number.isFinite(remaining) ? `, остаток ${remaining}м в этом Раунде` : "";
@@ -120,6 +160,8 @@ export async function performRecoil(actor, { meters, intoCover, coverAp } = {}) 
   const outcomeHtml = intoCover
     ? `<span class="roll-success">Отскочил на ${spent}м в Укрытие — попадания проходят, но со +${coverAp} AP (учтётся при следующем применении урона).</span>`
     : `<span class="roll-success">Отскочил на ${spent}м вне предела атаки — все попадания промахиваются.</span>`;
+  const voltNote = volt
+    ? `<div class="roll-defense-note">Засчитан как Вольт (п.6) — гасит Свободную Атаку соседних врагов на этот выход.</div>` : "";
 
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -129,6 +171,7 @@ export async function performRecoil(actor, { meters, intoCover, coverAp } = {}) 
         <div class="roll-header">${rollIcon("run")}Отскок — ${esc(actor.name)}</div>
         <div class="roll-outcome">${outcomeHtml}</div>
         <div class="roll-defense-note">Потрачено ${spent}м из дистанции Отскока${remLabel}.</div>
+        ${voltNote}
       </div>`
   }, rollMode));
 }

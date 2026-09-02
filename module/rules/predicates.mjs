@@ -39,14 +39,17 @@ export function itemHasName(item, wanted) {
  * Список означает «и», а не «или»: правило с двумя вариантами записывается
  * двумя правилами, а вот требование двух Талантов сразу иначе не выразить.
  *
- * Типы «talent» и «trait» намеренно не разделяются — так же ведёт себя
- * разборщик требований талантов (constants/talent-requirements.mjs), и правило
- * не должно молча не сработать из-за того, что содержимое записано Чертой.
+ * Типы «talent», «trait» и «mutation» намеренно не разделяются — так же
+ * ведёт себя разборщик требований талантов (constants/talent-requirements.mjs),
+ * и правило не должно молча не сработать из-за того, что содержимое записано
+ * Чертой. «mutation» добавлен для targetHasTrait (wdbc-1rno) — Дары Богов
+ * записаны тем же типом предмета, что и общие Мутации (system.god), находки
+ * вида «противник ПРОТИВ персонажа с Мутацией/Даром X» иначе не матчились бы.
  */
 function hasNamed(actor, names) {
   const items = [...(actor?.items ?? [])];
   return list(names).every(name => items.some(
-    i => (i?.type === "talent" || i?.type === "trait") && itemHasName(i, name)));
+    i => (i?.type === "talent" || i?.type === "trait" || i?.type === "mutation") && itemHasName(i, name)));
 }
 
 /**
@@ -61,7 +64,7 @@ function hasNamed(actor, names) {
 export function sizeOf(actor) {
   const sys = actor?.system ?? {};
   if (sys.sizeTotal != null) return Number(sys.sizeTotal) || 0;
-  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0);
+  return (Number(sys.size) || 0) + (Number(sys.sizeMod) || 0) + (Number(sys.sizeModNoSpd) || 0);
 }
 
 // Силовая/аспектная броня — то же множество, что POWER_ARMOR_TYPES в
@@ -73,6 +76,21 @@ const POWER_ARMOUR_TYPES = new Set(["power", "aspect"]);
 function wearsPowerArmour(actor) {
   return (actor?.items ?? []).some(i =>
     i?.type === "armor" && i?.system?.equipped && POWER_ARMOUR_TYPES.has(i?.system?.armorType));
+}
+
+/**
+ * Носит ли актор хоть один надетый предмет брони со свойством «Sealed /
+ * Закрытая» (ARMOR_PROPERTIES.sealed, constants/items.mjs — «Защита от химии
+ * на коже»). Свойства брони хранятся как плоский массив строк-ключей
+ * (system.properties, в отличие от оружия — без рейтинга, см.
+ * combat/armor-properties.mjs::resolveArmorProps), здесь читаются напрямую
+ * без импорта того модуля — тот уже завязан на combat/, а предикаты обязаны
+ * жить без Foundry (см. комментарий у wearsPowerArmour выше).
+ */
+function wearsSealedArmour(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "armor" && i?.system?.equipped &&
+    (i?.system?.properties ?? []).includes("sealed"));
 }
 
 /**
@@ -130,6 +148,11 @@ export const PREDICATES = {
   // для weaponPropertyImmunityInRage) — простой тумблер, не полная механика
   // Ярости (wdbc-wyr3).
   inRage: (actor) => !!actor?.system?.inRage,
+
+  // Носит ли надетую броню со свойством «Sealed / Закрытая» — шестой гейт
+  // Механики (when.requireSealedArmour/negateSealedArmour, mech-when.mjs,
+  // wdbc-1rno: «без гермодоспеха» у Миазм и подобных).
+  wearsSealedArmour,
 
   // Уровень Ранения (documents/actor.mjs, rules/wound-tier.mjs): healthy/light/
   // heavy/dying, тот же ключ, что подписан в блоке РАНЫ на листе. Список — «в

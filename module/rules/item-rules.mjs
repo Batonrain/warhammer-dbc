@@ -20,9 +20,20 @@
 //  Виды записи, которые сюда доехали:
 //    reroll  — «Переброс»: rerollScope, rerollChar / skillKey,
 //              rerollMode (keepBest|keepWorst), label.
-//    testMod — «Модификатор теста»: modScope, modValueMode (flat|charBonus),
-//              value / modCharBonus, label. Второй режим нужен там, где числа
+//    testMod — «Модификатор теста»: modScope, modValueMode (flat|formula|
+//              charBonus|halvePenalty), value / modCharBonus, label. formula
+//              (wdbc-1rno) — mech-formula.mjs нотация, считается заново на
+//              каждый бросок от ctx.actor. charBonus нужен там, где числа
 //              в данных быть не может: «+Inf герольда» у каждого своё.
+//    failDegMod — «Доп. Провалы при провале» (wdbc-1rno): modScope, value,
+//              label. Считается ПОСЛЕ броска (kind-outcome.mjs), а не в
+//              галочках диалога — суммируется безусловно, только если тест
+//              уже провален.
+//    script (только с scriptTrigger заполненным, wdbc-1rno) — modScope,
+//              scriptTrigger (critSuccess|critFailure), itemId/entryId
+//              (адрес самой записи, не код). Пустой scriptTrigger правила
+//              не даёт вовсе — запись остаётся только ручной кнопкой
+//              «▶ Запустить» на листе предмета.
 //    capability — «Возможность»: capabilityKey, label. Именованная способность,
 //              которую читает hasRuleFlag() (module/rules/flags.mjs). Ею
 //              выражается всё, что не число и не переброс: снятие штрафа,
@@ -68,12 +79,20 @@ const mechanicsOf = (item) => {
  */
 function scopeTarget(rawScope, entry, ruleId, what) {
   const scope = String(rawScope || "all");
-  // shield — тесты на щиты (Локус Преломления), opposed — встречные тесты
-  // (вторая половина Локуса Цепей и перебросы, навязанные цели). morale —
-  // тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/встречные
-  // Запугивание и Пытки, core.json «Мораль и Потеря Командования»), см.
-  // resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord of the Exodites.
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale"].includes(scope)) return scope;
+  // shield — тесты на щиты (Локус Преломления), opposed — общие встречные
+  // тесты (вторая половина Локуса Цепей и перебросы, навязанные цели).
+  // morale — тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/
+  // встречные Запугивание и Пытки, core.json «Мораль и Потеря
+  // Командования»), см. resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord
+  // of the Exodites. climbing — только тесты Карабканья
+  // (module/combat/movement-actions.mjs::showClimbDialog), отдельно от
+  // «skill:athletics», чтобы не задваиваться с тестами Борьбы, тоже идущими
+  // по Athletics(S) (wdbc-egll). vsExorcism — УЖЕ узнан вид теста, не общий
+  // "opposed": Локус Цепей (wdbc-smc) даёт бонус конкретно на встречный тест
+  // демона против Экзорцизма/Чистой Демонологии (daemon-sheet.mjs::
+  // _rollVsExorcism, kind:"vsExorcism") — обычный "opposed" сработал бы на
+  // ЛЮБОМ встречном тесте, что книга не говорит.
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale", "climbing", "vsExorcism"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
@@ -125,10 +144,44 @@ function ruleFromEntry(item, entry, groupId = null) {
       : entry.modValueMode === "charBonus"
       ? { kind: "rollBonus", target, valueFrom: {
           selfCharBonus: entry.modCharBonus || "inf",
-          ...(Number(entry.modCharBonusMultiplier) > 1 ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})
+          // "> 1" пропускал бы дробные множители вроде 0.5 («½Cor.b», wdbc-1rno) —
+          // условие теперь "!== 1", 1 по-прежнему опускается (то же значение, что default).
+          ...(Number(entry.modCharBonusMultiplier) && Number(entry.modCharBonusMultiplier) !== 1
+            ? { multiplier: Number(entry.modCharBonusMultiplier) } : {})
         } }
+      // formula (wdbc-1rno) — та же mech-formula.mjs нотация, что у «Значение»/
+      // «Рейтинг» Конструктора («ceil(cor/2)»), но testMod живой запрос — строка
+      // едет как есть, effectValue() (resolve-test.mjs) считает от ctx.actor
+      // заново на каждый бросок, не один раз при получении предмета.
+      : entry.modValueMode === "formula"
+      ? { kind: "rollBonus", target, formula: String(entry.value ?? "0") }
       : { kind: "rollBonus", target, value: Number(entry.value) || 0 };
     return { id, label: entry.label || item.name, when: {}, effects: [effect] };
+  }
+
+  if (entry?.kind === "failDegMod") {
+    // «Доп. Провалы при провале» (wdbc-1rno: Sentient Cyst «+3 Провала при
+    // провале социального теста») — та же область, что у testMod (переиспользует
+    // scopeTarget), но эффект failDegMod считается ПОСЛЕ броска
+    // (resolve-test.mjs::failDegModFromRules, kind-outcome.mjs), не в
+    // модификаторах диалога. Только флэт-число, не галочка — см. шапку файла.
+    const target = scopeTarget(entry.modScope, entry, id, "Доп. Провалы при провале");
+    if (target === null) return null;
+    return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
+  }
+
+  if (entry?.kind === "script" && entry.scriptTrigger) {
+    // Автозапуск скрипта по исходу теста (wdbc-1rno) — «Полимат»: «Крит на
+    // тесте Крафта — 1d5 Усталости + доп. тест немедленно». Ручной режим
+    // (scriptTrigger:"") правил не даёт вовсе — только кнопка «▶ Запустить»
+    // на листе предмета, как раньше; здесь ветка только для заполненного
+    // триггера. Сам JS не резолвится тут — эффект несёт только АДРЕС записи
+    // (itemId/entryId), исполнение (executeItemCode, throttle) происходит в
+    // kind-outcome.mjs после того, как известен реальный исход броска.
+    const target = scopeTarget(entry.modScope, entry, id, "Скрипт по исходу");
+    if (target === null) return null;
+    return { id, label: entry.label || item.name, when: {},
+      effects: [{ kind: "scriptTrigger", target, side: entry.scriptTrigger, itemId: item.id, entryId: entry.id }] };
   }
 
   if (entry?.kind === "capability") {

@@ -13,6 +13,7 @@
 
 import { _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { isCompressibleLocation } from "../rules/compression.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -217,11 +218,19 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   неизрасходованных Успехов с ДРУГИХ атак этого же противника в этом Ходу
  *   (стр. 12), уже посчитанный вызывающей стороной (module/combat/attack.mjs
  *   — она одна касается документов Foundry, этот модуль их не читает).
+ * @param {string} [hitLocLabel]  метка HIT_LOCATIONS этой атаки (constants/
+ *   combat.mjs) — кнопка Сжатия (rules/compression.mjs) показывается, только
+ *   если это конечность/голова, не Торс. Доступность самой мутации у
+ *   ЗАЩИЩАЮЩЕГОСЯ актора (тот на момент рендера карточки ещё не выбран)
+ *   проверяется позже, в combat/defense.mjs::_performCompression — не здесь,
+ *   этот модуль документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null, isMelee = false }) {
+                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
+                          isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
+  const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
   // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
   // атаку — кнопки несут их число, чтобы Уклонение/Парирование/Вираж снимали
   // по одному попаданию за степень успеха, а не всю атаку разом (стр. 12).
@@ -260,7 +269,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -268,13 +277,19 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
         ${targetIsVehicle
           ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
                title="Техника: Operate − Размер×10">Вираж</button>`
+          : ""}
+        ${canCompress
+          ? `<button class="wh-compress-btn" type="button" data-location="${hitLocLabel}" data-attacker-uuid="${attackerUuid}"
+               title="Мутация Compression/Сжатие: вместо Уклонения — Реакцией втянуть ${hitLocLabel} в торс, нивелируя ЭТО попадание">
+               Сжатие (${hitLocLabel})
+             </button>`
           : ""}
         ${poolBtn}
         ${poolRecoilBtn}
@@ -304,6 +319,28 @@ function locShiftSection({ max, current = 0 }, actorName) {
     </div>`;
 }
 
+/**
+ * Кнопка Горжета (стр. 228, wdbc-8b5): случайное попадание в голову можно
+ * попытаться перевести в Торс броском 1d10 против рейтинга X свойства.
+ * Правит эту же карточку (см. hooks.mjs) — тем же приёмом, что locShift выше.
+ */
+function gorgetSection({ rating, outcome }) {
+  if (outcome) {
+    return `
+    <div class="roll-defense-section roll-gorget">
+      <div class="roll-defense-title">🩹 Горжет: 1d10=<b>${outcome.roll}</b> против ${rating}+ — ${
+        outcome.success ? "<b>успех</b>, попадание перенесено в Торс" : "<b>провал</b>, остаётся Голова"}</div>
+    </div>`;
+  }
+  return `
+    <div class="roll-defense-section roll-gorget">
+      <div class="roll-defense-title">Горжет: случайное попадание в голову можно перенести в Торс — только защищающийся</div>
+      <div class="roll-defense-btns">
+        <button type="button" class="wh-gorget-btn" data-rating="${rating}">🩹 Бросить 1d10 (${rating}+ → Торс)</button>
+      </div>
+    </div>`;
+}
+
 /** Заряженный боеприпас, остаток магазина и расход за этот выстрел. */
 function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0,
                      special = "", condLabels = [], warning = "" }) {
@@ -327,6 +364,7 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object}   d.wp            свёрнутые свойства оружия (aggregateAuto)
  * @param {object[]} d.hits          попадания с уже посчитанным местом: { total, loc, ... }
  * @param {object}   [d.locShift]    { max, current } — кнопки сдвига места, либо null
+ * @param {object}   [d.gorget]      { rating, outcome } — кнопка Горжета (wdbc-8b5), либо null
  * @param {object}   [d.ammo]        блок боеприпасов (только стрелковое), либо null
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
@@ -344,7 +382,7 @@ export function attackCard({
   // сработало. Не путать с «Критическим Эффектом» ниже (свойство Extreme).
   critLine = "",
   hitsCount = 0, hits = [],
-  hitLocLabel = "", locRoll = 0, locShift = null,
+  hitLocLabel = "", locRoll = 0, locShift = null, gorget = null,
   isMelee = false, dtLabel = "", damageType = "", pen = 0,
   // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
@@ -358,6 +396,8 @@ export function attackCard({
   // Дождь», uuid — чтобы найти Таланты и Размер стрелка, hordeHits — раскладка
   // попаданий правилом «Прячась в Орде» (combat/horde-tokens.mjs).
   weaponRange = 0, burst = false, attackerUuid = "", itemUuid = "", hordeHits = null,
+  // One Against A Hundred (wdbc-u0by): защищающийся против атаки Орды.
+  attackerIsHorde = false,
   // Остаток пула неизрасходованных Успехов защиты с ДРУГИХ атак этого же
   // противника в этом Ходу (стр. 12) — null, если пула нет или он пуст.
   pool = null,
@@ -457,6 +497,7 @@ export function attackCard({
           : ""}
         ${notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : ""}
         ${locShift ? locShiftSection(locShift, actorName) : ""}
+        ${gorget ? gorgetSection(gorget) : ""}
         ${notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : ""}
         ${notes.blastScatter ? `
     <div class="roll-allout-note">
@@ -489,7 +530,7 @@ export function attackCard({
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : ""}
-        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee }) : ""}
+        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee, burst, attackerIsHorde, hitLocLabel }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, itemUuid, hordeHits })}

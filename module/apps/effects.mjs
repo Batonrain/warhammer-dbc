@@ -85,6 +85,30 @@ export function isItemActive(item) {
         .map(i => ({ id: i.id, wornPosition: i.system?.wornPosition || "" }));
       return activeRunicWeaveId(siblings) === item.id;
     }
+    // Мутация/Дар (wdbc-egll) — по умолчанию действует всегда, как Талант/
+    // Черта (activatable:false у подавляющего большинства). Часть даёт
+    // эффект только «активированным» книжным действием на время (Живое
+    // Оружие — полудействие+1 Бесчестия, до конца боя/сцены) — у таких
+    // activatable:true, и тогда решает ручной тумблер system.active (тот же
+    // паттерн, что у armorMod/weaponMod выше, без требования носителя).
+    //
+    // Кроме того, мутация/Дар Бога может быть подавлена Чистой Формой
+    // (rules/mutation-suppression.mjs, wdbc-1rno: «1 час концентрации
+    // подавляет все мутации, теряя их эффекты») — flags.warhammer-dbc.
+    // suppressed, тот же общий рубильник, что у прочих «выключаемых» типов
+    // выше, просто источник переключения другой (не toggleParentId, а сама
+    // Чистая Форма извне). Проверяется раньше activatable: подавленная
+    // мутация неактивна независимо от собственного тумблера. `?.` —
+    // item-rules.mjs::rulesFromItemMechanics вызывает isActive() на КАЖДОМ
+    // типе предмета актора без разбора (в т.ч. лёгкие тестовые моки чужих
+    // наборов правил, напр. test/rules/weapon-training.test.mjs, у которых
+    // нет getFlag) — без страховки любой не-mutation-специфичный мок с
+    // type:"mutation" ронял бы весь сбор правил TypeError'ом, а не только
+    // про суть теста.
+    case "mutation":
+      if (item.getFlag?.("warhammer-dbc", "suppressed")) return false;
+      if (sys.activatable) return !!sys.active;
+      return true;
     default: return true;
   }
 }

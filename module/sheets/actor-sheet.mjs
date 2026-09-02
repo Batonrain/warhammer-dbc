@@ -31,7 +31,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          resolvePsyCastAttr, rollPsyWpTest, rollPsyniscience, showManifestDialog,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
-import { activateGearListeners } from "./tabs/gear.mjs";
+import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
@@ -58,6 +58,7 @@ import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { runMechScriptEntry } from "../apps/mechanics.mjs";
+import { applyTouchedByFates } from "../rules/daemon-locus.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
@@ -87,6 +88,7 @@ import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
 import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
+import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -127,8 +129,19 @@ function onInfamySpend(event, target) { return this._ipSpend(target.dataset.abil
 // Цена не сериализуется в DOM — пересчитывается свежей ruleFlagCost на клик,
 // тем же путём, что и context.activeCapabilities (sheet-helpers.mjs), чтобы
 // не разъехаться со списком, отрисованным на момент рендера.
-function onCapabilitySpend(event, target) {
-  const cost = ruleFlagCost(this.actor, target.dataset.key, { kind: "skill" });
+async function onCapabilitySpend(event, target) {
+  const key = target.dataset.key;
+  const cost = ruleFlagCost(this.actor, key, { kind: "skill" });
+  // Локус Фанатизма (wdbc-smc): в отличие от остальных ценовых возможностей
+  // (которые списывают цену и постят только флейвор-карточку), эта реально
+  // что-то делает — cross-actor выдача Трейта демонам в радиусе Локуса.
+  // Цена списывается, только если эффект нашёл хотя бы одну цель (иначе
+  // список пуст, и applyTouchedByFates сама предупредила игрока — списывать
+  // Очко Бесчестия «в пустоту» не должно).
+  if (key === "aura.touchedByFates") {
+    const applied = await applyTouchedByFates(this.actor);
+    if (!applied) return false;
+  }
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
 }
 
@@ -462,6 +475,33 @@ async function onHibernationWeekTick(event) {
   }, rollMode));
 }
 
+/**
+ * Лечение Саркофага (стр. 57, wdbc-drn): 1 Рана каждые 10 минут игрового
+ * времени. Таймера в системе нет (тот же принцип, что Электростимуляторы/
+ * Ферум Инфернус выше) — кнопка просто лечит 1 Рану до effectiveMax
+ * (module/rules/character.mjs), тикать нужно вручную по факту прошедшего
+ * времени.
+ */
+async function onSarcophagusHealTick(event) {
+  event.preventDefault();
+  const w = this.actor.system.wounds ?? {};
+  const max = Number(w.effectiveMax ?? w.max) || 0;
+  const cur = Number(w.value) || 0;
+  if (cur >= max) return ui.notifications.info("Саркофаг: Раны уже на максимуме.");
+  const next = Math.min(max, cur + 1);
+  await this.actor.update({ "system.wounds.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Лечение Саркофага (10 мин)</div>
+        <div class="roll-outcome"><span class="roll-success">+1 Рана (${cur} → ${next})</span></div>
+      </div>`
+  }, rollMode));
+}
+
 // ── Инициатива ──
 // Бросок идёт в трекер, поэтому вне боя он невозможен: без комбатанта результат
 // некуда положить. initiativeMod уже учтён формулой через @initiativeMod
@@ -563,6 +603,16 @@ function onMutgiftRoll(event) {
   return rollMutationOrGift(this.actor);
 }
 
+// Вкл./выкл. у Мутации/Дара с activatable:true (wdbc-egll, напр. Живое
+// Оружие — полудействие+1 Бесчестия, до конца боя/сцены). Переиспользует
+// тот же тумблер, что и включаемые системы брони (module/sheets/tabs/
+// gear.mjs::toggleGearModActive) — реализация не завязана на тип предмета,
+// только на общее поле system.active + isItemActive().
+async function onMutgiftToggleActive(event, target) {
+  event.preventDefault(); event.stopPropagation();
+  await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
+}
+
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
 // только разбор текстовых списков колбэком createTraits — его зовёт и Мастер
 // создания персонажа)
@@ -639,6 +689,7 @@ export class WarhammerCharacterSheet
       hibernationEnter: whenEditable(onHibernationEnter),
       hibernationExit: whenEditable(onHibernationExit),
       hibernationWeekTick: whenEditable(onHibernationWeekTick),
+      sarcophagusHealTick: whenEditable(onSarcophagusHealTick),
       initiativeRoll: whenEditable(onInitiativeRoll),
       charRoll: whenEditable(onCharRoll),
       insanityMenu: whenEditable(onInsanityMenu),
@@ -650,6 +701,7 @@ export class WarhammerCharacterSheet
       talentAdd: whenEditable(onTalentAdd),
       mutgiftAdd: whenEditable(onMutgiftAdd),
       mutgiftRoll: whenEditable(onMutgiftRoll),
+      mutgiftToggleActive: whenEditable(onMutgiftToggleActive),
       ynnariApply:    whenEditable(onYnnariApply),
       harlequinApply: whenEditable(onHarlequinApply),
       racePick:     whenEditable(onRacePick),
@@ -1578,7 +1630,10 @@ export class WarhammerCharacterSheet
     activateMinionPanelListeners(html);
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
-    activateSocialListeners(html, this.actor, { editable: this.isEditable });
+    activateSocialListeners(html, this.actor, {
+      editable: this.isEditable,
+      resolveOtherTargetActor: () => this._resolveOtherTargetActor()
+    });
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),
@@ -1844,14 +1899,53 @@ export class WarhammerCharacterSheet
     };
   }
 
+  /**
+   * Aspect (wdbc-8b5/wdbc-28ld, стр. 228): «−20 на ВСЕ тесты, пока носишь
+   * броню без соответствующего Пути». Тот же общий диалог (_showSkillRollDialog
+   * обслуживает и Навыки, и Характеристики — единственная точка входа
+   * «любой тест», см. _rollCharacteristic ниже), поэтому не гейтится по
+   * context.kind, в отличие от _armorSkillModsHtml (та — только Навыки).
+   * R3-модификация брони снимает штраф не-Асуриан/Иннари — та же оговорка,
+   * что у оружейного Aspect (attack-dialog.mjs): галочка, снимается вручную.
+   */
+  _armorAspectModHtml() {
+    const groups = [];
+    for (const it of this.actor.items) {
+      if (it.type !== "armor" || !it.system.equipped) continue;
+      if (!(it.system.properties || []).includes("aspect")) continue;
+      const ratingText = it.system.propRatings?.aspect;
+      if (!ratingText) continue;
+      if (actorHasAspectPath(this.actor.system, ratingText)) continue;
+      groups.push({ item: it, ratingText });
+    }
+    if (!groups.length) return { html: "", mods: [] };
+    const mods = groups.map(g => ({ value: -20, label: g.item.name }));
+    const rows = groups.map((g, i) => `<label class="attack-mod-check armor-roll-mod">
+        <input type="checkbox" class="armor-aspect-mod" data-idx="${i}" data-value="-20"/>
+        <span>${esc(g.item.name)}: нет Пути «${esc(g.ratingText)}» <b>(-20)</b></span></label>`).join("");
+    return {
+      mods,
+      html: `<div class="atk-dlg-modifiers armor-mods">
+        <div class="atk-mods-title">Броня (Aspect)</div>
+        <div class="atk-mods-list">${rows}</div></div>`
+    };
+  }
+
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
-    const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
+    // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
+    // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
+    // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
+    // rules/predicates.mjs — уже существовал, но был мёртв за пределами
+    // атак) не могли сработать. Тот же приём: первый выбранный таргет сцены.
+    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
     if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
     const am = this._armorSkillModsHtml(rollCtx);
+    const aa = this._armorAspectModHtml();
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
     // блоком, а не галочкой среди модификаторов: их не с чем складывать.
     const rr = ruleRerollsHtml(this.actor, rollCtx);
@@ -1887,7 +1981,7 @@ export class WarhammerCharacterSheet
     const modifierSumOf = formEl => {
       let modifier = parseInt(formEl.querySelector("#skill-modifier")?.value) || 0;
       let halve = false;
-      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked", ".armor-mod:checked"]) {
+      for (const sel of [".hw-mod:checked", ".item-mod:checked", ".rule-mod:checked", ".armor-mod:checked", ".armor-aspect-mod:checked"]) {
         for (const cb of formEl.querySelectorAll(sel)) {
           modifier += parseInt(cb.dataset.value) || 0;
           if (cb.dataset.halve === "1") halve = true;
@@ -1928,6 +2022,7 @@ export class WarhammerCharacterSheet
             ${im.html}
             ${rl.html}
             ${am.html}
+            ${aa.html}
             ${rr.html}
             ${diceModeHtml()}
             <div id="auto-outcome-note" class="roll-dlg-note"></div>
@@ -2002,7 +2097,7 @@ export class WarhammerCharacterSheet
         });
         root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
-        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod").forEach(cb =>
+        root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod, .armor-aspect-mod").forEach(cb =>
           cb.addEventListener("change", updateAutoOutcomeNote));
 
         // ── Ассистенты: зона дропа, чипы, счётчик ──────────────────────────
@@ -2067,7 +2162,7 @@ export class WarhammerCharacterSheet
   // ── Бросок навыка ─────────────────────────────────────────────────────────
 
   async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
-    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext);
+    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext, "base");
     if (!result) return;
     const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
              assistCount = 0, reroll = null } = result;
@@ -2095,7 +2190,8 @@ export class WarhammerCharacterSheet
     const outcome = await resolveKindOutcome(this.actor, {
       kind, baseEff, rv, combined, extended, opposed,
       ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
-             morale: isMoraleOpposedSkill(rollContext?.skill) }
+             morale: isMoraleOpposedSkill(rollContext?.skill),
+             targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null }
     });
     if (isMoraleOpposedSkill(rollContext?.skill)) {
       await applyLordOfExoditesFailPenalty(this.actor, {

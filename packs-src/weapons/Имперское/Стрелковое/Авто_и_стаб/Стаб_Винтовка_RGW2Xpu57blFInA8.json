@@ -1,5 +1,5 @@
 {
-  "name": "Стаб Винтовка (револьвер)",
+  "name": "Стаб Винтовка",
   "type": "weapon",
   "folder": "k26nnNHjR0DQDnhj",
   "system": {
@@ -12,7 +12,7 @@
     "grips": "",
     "profileLabel": "",
     "profiles": [],
-    "reload": "2",
+    "reload": "1",
     "magazineCur": 5,
     "magazineMax": 5,
     "rof_single": 1,
@@ -31,12 +31,6 @@
     "weaponProps": [
       {
         "key": "accurate"
-      },
-      {
-        "key": "reliable"
-      },
-      {
-        "key": "revolver"
       }
     ],
     "needsRecharge": false,
@@ -65,10 +59,9 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    },
-    "rangeBands": []
+    }
   },
-  "_id": "fYQxO9aqnx0IZBp7",
+  "_id": "RGW2Xpu57blFInA8",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
   "effects": [],
   "sort": 0,
@@ -78,8 +71,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "b19e4a70-518c-4998-8803-ee4a5210743f",
-      "label": "Стаб Винтовка (револьвер)",
+      "id": "e6fa0c3a-c036-44c0-83b0-6a02775faa45",
+      "label": "Стаб Винтовка",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -306,9 +299,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1785247480179,
-    "modifiedTime": 1785247480179,
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!fYQxO9aqnx0IZBp7"
+  "_key": "!items!RGW2Xpu57blFInA8"
 }

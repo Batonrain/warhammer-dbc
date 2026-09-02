@@ -1,4 +1,5 @@
-import { _performDodge, _performParry, _performSprayCancel, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
@@ -9,6 +10,7 @@ import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
+import { applyMechBlocksForActor } from "./apps/mech-blocks-apply.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -24,11 +26,17 @@ import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
+import { processLastActorCombatStart } from "./combat/last-actor.mjs";
+import { processMiddleOfTheHuntRoundStart } from "./combat/middle-of-the-hunt.mjs";
+import { snapshotStanceForRoundStart } from "./rules/determination-to-fight.mjs";
+import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
+import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
+import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
 import { resolveTrancesForCombat }       from "./apps/armour-history-trance.mjs";
 import { resolveExpiredImperatives }     from "./rules/imperative.mjs";
 import { syncDisabledArmourOverloadTimer, promptDisabledArmourForkTest } from "./combat/armor-mods.mjs";
@@ -41,9 +49,12 @@ import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
 import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from "./combat/action-economy.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
+import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
+import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
+import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
@@ -94,6 +105,8 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        const burst = ev.currentTarget.dataset.burst === "1";
+        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
         if (!await confirmHordeDefense(actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
@@ -105,7 +118,7 @@ export function registerHooks() {
         }
         await _performDodge(actor, extraMod,
           ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid,
-          ev.currentTarget.dataset.melee === "1");
+          ev.currentTarget.dataset.melee === "1", burst, attackerIsHorde);
       });
     });
 
@@ -153,6 +166,35 @@ export function registerHooks() {
       });
     });
 
+    // Сжатие (мутация Compression, wdbc-1rno) — реактивная альтернатива
+    // Уклонению, не тест: втягивает часть тела в торс, нивелируя ЭТО
+    // попадание. Доступность мутации у выбранного актора проверяется внутри
+    // _performCompression (combat/defense.mjs), не здесь.
+    html.querySelectorAll(".wh-compress-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const location = ev.currentTarget.dataset.location || "";
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        await _performCompression(actor, location, attackerUuid);
+      });
+    });
+
+    // Разложить втянутую часть тела обратно (кнопка в карточке Сжатия выше)
+    // — актор из data-actor-uuid карточки, не из выбранного токена (тот же
+    // приём, что у Контратаки: карточка может открыться спустя ходы).
+    html.querySelectorAll(".wh-extend-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const cardUuid = el.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = cardUuid ? (await fromUuid(cardUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Персонаж карточки Сжатия не найден.");
+        await _performExtendBodyPart(actor, el.dataset.location || "");
+      });
+    });
+
     // Парирование
     html.querySelectorAll(".wh-parry-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -161,9 +203,11 @@ export function registerHooks() {
         if (!actor) return;
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
+        const burst = ev.currentTarget.dataset.burst === "1";
+        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         await _performParry(actor, extraMod,
-          ev.currentTarget.dataset.attackerUuid || "", hitsCount);
+          ev.currentTarget.dataset.attackerUuid || "", hitsCount, burst, attackerIsHorde);
       });
     });
 
@@ -333,6 +377,29 @@ export function registerHooks() {
       });
     });
 
+    // Горжет (стр. 228, wdbc-8b5): защищающийся (владелец цели — выбранный
+    // токен, или ГМ) может попытаться перенести случайное попадание в голову
+    // в Торс броском 1d10. Правит ЭТУ ЖЕ карточку (updateMessageId), как и
+    // сдвиг места попадания выше — тем же rv через opts.forcedRoll, только
+    // добавляет opts.gorgetRoll (сам бросок 1d10 уже сделан здесь).
+    html.querySelectorAll(".wh-gorget-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const defActor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа (носителя Горжета) на сцене!");
+        if (!defActor) return;
+        const atk = message.flags?.["warhammer-dbc"]?.attack;
+        if (!atk) return;
+        const atkActor = game.actors?.get(atk.actorId);
+        const atkItem  = atkActor?.items?.get(atk.itemId);
+        if (!atkActor || !atkItem) return;
+        el.disabled = true;
+        const roll = await new Roll("1d10").evaluate();
+        await _executeAttackRoll(atkActor, atkItem, atk.charKey, atk.threshold, atk.rofMode, atk.aimTarget,
+          { ...(atk.opts || {}), forcedRoll: atk.rv, skipAmmo: true, gorgetRoll: roll.total, updateMessageId: message.id });
+      });
+    });
+
     // Бесплатный переброс Теста Страха (Демон) — одна попытка на тест,
     // поэтому сразу дизейблим кнопку по клику (новая карточка сама
     // повторную кнопку уже не предложит — opts.free в fear.mjs).
@@ -477,6 +544,21 @@ export function registerHooks() {
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
+      });
+    });
+
+    // Раковое Исцеление (wdbc-w8ws): кнопка появляется в чат-карточке
+    // безоружной атаки ТОЛЬКО при попадании (attack-dialog.mjs::
+    // showAttackDialogNoWeapon, techDef.hitSectionHtml) — эффект не
+    // накладывается автоматически сразу по попаданию, у цели должно быть
+    // окно кликнуть Уклонение/Парирование первой (см. докстринг apps/
+    // cancerous-healing.mjs). Клик может прийти с другого клиента (тот же
+    // приём, что у wh-apply-dmg-btn) — резолвит актора/цель заново по uuid.
+    html.querySelectorAll(`.${CH_APPLY_BTN_CLASS}`).forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await applyCancerousHealingFromButton(ds.casterUuid, ds.targetUuid);
       });
     });
 
@@ -971,7 +1053,8 @@ async function _applyWeaponPropEffect(ds) {
     const dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
     const dmg = dmgRoll.total;
-    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
+    const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
+    if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
   } else if (!resisted && isProvaly && armorPen) {
     // Monofilament: та же формула рейтинг×mult+add+Провалы, но урон идёт
@@ -1063,8 +1146,9 @@ async function _executeSoulBurn(attacker, target) {
     const dRoll = await new Roll(`${net}d10`).evaluate(); allRolls.push(dRoll);
     const dmg   = dRoll.total;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
-    const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
+    const { applied: woundsChanged, currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
       await applyWoundLoss(target, dmg);
+    if (woundsChanged) await applyMechBlocksForActor(target, { kind: "onWoundsLoss" });
 
     const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
@@ -1384,6 +1468,17 @@ function _attachFateContextMenu(message, html) {
     // Императив (wdbc-yu32): снимает истёкшие носители у комбатантов этого
     // боя (module/rules/imperative.mjs) — тот же такт смены Раунда.
     await resolveExpiredImperatives(combat);
+    // Аблативный AP-щит (wdbc-bxw6, Роба Чемпиона): угасает на 1d5+1 в
+    // начале каждого нового Раунда — тот же триггер, что счётчики Орд выше.
+    await decayAblativeApShieldOnNewRound(combat);
+    // The Middle of the Hunt/Середина Охоты (wdbc-1rno): +10 Инициативы
+    // владельцу Таланта на раундах 3-4 — та же смена Раунда, ГМ пишет.
+    await processMiddleOfTheHuntRoundStart(combat);
+    // Determination To Fight/Решительность Сражаться (wdbc-1rno): снимок
+    // Стойки каждого комбатанта на смену Раунда — читает determination-to-
+    // fight.mjs::determinationToFightWsReduction/ParryBonus до следующей
+    // смены Раунда.
+    await snapshotStanceForRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
@@ -1411,6 +1506,30 @@ function _attachFateContextMenu(message, html) {
     await clearReformationSongBuffs(combat);
     // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
     await clearHexMarkedPreyMarks(combat);
+    // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
+    // восполняются к концу боя (стр. 57, wdbc-drn).
+    await refillSarcophagusWarpWounds(combat);
+  });
+
+  // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
+  // wdbc-1rno: «Cor.b минут»/«Cor.b Раундов» у активируемых Мутаций вроде
+  // Трансформации Тумана/Пространственной Нестабильности) — в отличие от
+  // Песни Стремительности выше это НЕ «до конца боя», а конкретный
+  // worldTime-момент или номер Раунда, поэтому снимается на updateWorldTime
+  // И на смену Раунда, не на конец боя. Сканирует только комбатантов —
+  // temp-grant вне боя (истечение по worldTime у актора не в бою) отловит
+  // updateWorldTime-хук ниже отдельно.
+  Hooks.on("updateCombat", async (combat, changed) => {
+    if (!game.user.isGM || changed?.round === undefined) return;
+    for (const combatant of combat.combatants ?? []) {
+      if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
+    }
+  });
+  Hooks.on("updateWorldTime", async () => {
+    if (!game.user.isGM) return;
+    for (const actor of game.actors ?? []) {
+      await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
+    }
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
@@ -1448,6 +1567,11 @@ function _attachFateContextMenu(message, html) {
   // Encounter — спрашиваем ровно раз, в момент старта боя («Begin Combat»).
   Hooks.on("combatStart", async (combat) => {
     await processWitchsEdgeCombatStart(combat);
+    // Last Actor/Последний Актёр (wdbc-1rno): «бросает трижды на
+    // инициативу» — 2 доп. Combatant при старте боя, только GM пишет
+    // разделяемое состояние боя (тот же принцип, что и у остальных
+    // updateCombat/combatStart обработчиков выше).
+    if (game.user.isGM) await processLastActorCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -1464,6 +1588,14 @@ function _attachFateContextMenu(message, html) {
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего
         // Хода», не в начале следующего.
         await processConditionTurnEnd(prevActor);
+        // Snapshot/Выстрел Навскидку (wdbc-1rno): +1 ОД в конце Хода, если
+        // не подвигался больше Полудвижения — тот же такт, читает
+        // movement-actions.mjs::moveDegreeThisTurn (сбрасывается позже, на
+        // СЛЕДУЮЩЕМ Ходу этого же actor, resetActionEconomy).
+        await processSnapshotTurnEnd(prevActor);
+        // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
+        // следующего Хода, если весь этот Ход ушёл на движение.
+        await processJustTheLightTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
@@ -1479,6 +1611,9 @@ function _attachFateContextMenu(message, html) {
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
       await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);
+      // Поклон Публике (wdbc-1rno): метка «до начала следующего Хода
+      // атакующего» — тот же такт, что усилитель Грозного Вопля.
+      await clearBowToAudienceMark(nextCombatant.actor);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
@@ -1518,6 +1653,24 @@ function _attachFateContextMenu(message, html) {
     if (!sys) return;
     if ("patronGod" in sys || "patronStereotype" in sys || "pricingModeOverride" in sys) {
       await recalcAllAdvanceCosts(actor);
+    }
+  });
+  // ── Пересчёт цены Продвижения у ВСЕХ персонажей при смене МИРОВОЙ системы
+  // цены (Настройки мира → «Система цен Продвижения», patronage.mjs,
+  // advancePricingMode). Хук выше ловит только смену полей АКТОРА
+  // (patronGod/patronStereotype/pricingModeOverride через actor.update) — смена
+  // мировой настройки идёт через Setting-документ, а не через актора, и без
+  // этого хука уже купленные Таланты/Навыки/Характеристики молча остаются со
+  // старой ценой (wdbc: «Full Fire» у Нургл-персонажа продолжал стоить как
+  // Враждебный после переключения мира на Покровительство, пока какое-то
+  // другое поле того же актора не дёрнёт recalc). userId-гвард — тот же приём,
+  // что и выше: настройка мировая, применить пересчёт должен только тот, кто
+  // её сменил, а не каждый подключённый клиент разом.
+  Hooks.on("updateSetting", async (setting, changes, options, userId) => {
+    if (setting.key !== "warhammer-dbc.advancePricingMode") return;
+    if (game.user.id !== userId) return;
+    for (const actor of game.actors) {
+      if (actor.type === "character") await recalcAllAdvanceCosts(actor);
     }
   });
   // Хук стреляет у всех, кто в игре, — авто-диалог теста-развилки (S+0/

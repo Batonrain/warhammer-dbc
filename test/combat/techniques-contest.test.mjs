@@ -47,3 +47,64 @@ describe("_showContestDialog — бонус Стойки", () => {
     expect(selfValue()).toBe(45);
   });
 });
+
+// wdbc-u0by (Truth-Seer/Defiance): диалог Состязаний раньше вообще не читал
+// реестр правил (та же дыра, что была у Парирования, module/combat/defense.mjs
+// до фикса) — опциональный переброс не мог появиться, даже если у актора был
+// Талант/Дар, дающий его. Область считается по характеристике ПО УМОЛЧАНИЮ
+// контеста (Финт/Давление — "ws").
+describe("_showContestDialog — опциональные перебросы правил (wdbc-u0by)", () => {
+  it("предмет с kind:reroll, скоуп char:ws — галочка появляется в разметке Финта", async () => {
+    const dancer = { type: "talent", name: "Truth-Seer", system: {},
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "e1", kind: "reroll", rerollScope: "char", rerollChar: "ws", rerollMode: "keepBest", rerollWho: "self", label: "Правдовидец" }
+      ] }] } } };
+    const actor = actorFor({ items: [dancer] });
+    await _showContestDialog(actor, MELEE_CONTESTS.feint);
+    expect(captured.dialog.content).toContain("rule-reroll-opt");
+    expect(captured.dialog.content).toContain("Правдовидец");
+  });
+
+  it("нет подходящего предмета — блока перебросов в разметке нет", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, MELEE_CONTESTS.feint);
+    expect(captured.dialog.content).not.toContain("rule-reroll-opt");
+  });
+});
+
+// wdbc-vkwe: плоский бонус источника, не завязанного на Стойку/характеристику
+// (Мутация Tentacle/Щупальце — +20 на тесты Борьбы, module/combat/
+// grapple.mjs::tentacleTechDef). Проверяется здесь, в общем механизме
+// _showContestDialog, а не только в grapple.mjs — им пользуются оба.
+describe("_showContestDialog — extraBonus (плоский бонус источника)", () => {
+  it("складывается с базой характеристики и виден в поле «Ваш бросок с»", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: 20, extraBonusLabel: "Щупальце" });
+    expect(selfValue()).toBe(60); // s 40 + 20
+  });
+
+  it("без extraBonus — поведение не меняется (0 по умолчанию)", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, MELEE_CONTESTS.knockdown);
+    expect(selfValue()).toBe(40);
+  });
+
+  it("складывается со Стойкой, если оба присутствуют", async () => {
+    const actor = actorFor({ meleeStance: "aggressive" });
+    await _showContestDialog(actor, { ...MELEE_CONTESTS.press, extraBonus: 20, extraBonusLabel: "Щупальце" });
+    expect(selfValue()).toBe(75); // ws 45 + 10 (Стойка) + 20 (extraBonus)
+  });
+
+  it("показывает подпись бонуса в разметке диалога, отдельно от подписи Стойки", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: 20, extraBonusLabel: "Щупальце" });
+    expect(captured.dialog.content).toContain("Щупальце: +20");
+  });
+
+  it("отрицательный extraBonus вычитается", async () => {
+    const actor = actorFor({});
+    await _showContestDialog(actor, { ...MELEE_CONTESTS.knockdown, extraBonus: -10, extraBonusLabel: "Штраф" });
+    expect(selfValue()).toBe(30); // s 40 - 10
+    expect(captured.dialog.content).toContain("Штраф: -10");
+  });
+});

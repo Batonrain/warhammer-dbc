@@ -11,6 +11,7 @@ import { syncGrantedEquipment } from "../../apps/mechanics.mjs";
 import { on } from "../../helpers/utils.mjs";
 import { showDeathSaveDialog, doResurrect } from "./death.mjs";
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
+import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -98,6 +99,19 @@ export function activateBodyListeners(root, actor, { openSurgeonWindow = openSur
   on(root, "[data-vital-reset]", "click", ev => {
     ev.preventDefault();
     satisfyVital(actor, ev.currentTarget.dataset.vitalReset);
+  });
+
+  // Зависимость (wdbc-5inv): «Удовлетворить» сбрасывает таймер, поле —
+  // редактируемый объект зависимости (авто-подстановка идёт из submutation
+  // только пока поле пустое, см. satisfyAddiction/rules/addiction.mjs).
+  on(root, "[data-dep-satisfy]", "click", ev => {
+    ev.preventDefault();
+    const item = actor.items.get(ev.currentTarget.dataset.depSatisfy);
+    if (item) satisfyAddiction(item);
+  });
+  on(root, "[data-dep-substance]", "change", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.depSubstance);
+    if (item) setAddictionSubstance(item, ev.currentTarget.value);
   });
 
   const figPanel = root.querySelector(".bc-figure-panel");

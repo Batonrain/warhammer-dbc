@@ -21,6 +21,7 @@ export function computeWoundHealing(system, amount) {
   if (heal > 0) {
     value = max > 0 ? Math.min(max, value + heal) : value + heal;
   }
+
   return {
     "system.wounds.value": value,
     "system.wounds.critical": critical

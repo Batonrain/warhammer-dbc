@@ -25,6 +25,15 @@ import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
+import { cancerousHealingButtonHtml, useCancerousHealing } from "../apps/cancerous-healing.mjs";
+import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
+import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.mjs";
+import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
+import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
+import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
+import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tentacle-hand-form.mjs";
+import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
+import { vampiricPanelHtml, useSatisfyVampiric, useVampiricTest } from "../apps/vampiric-dependency.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1048,13 +1057,36 @@ export class WarhammerItemSheet
       context.diseaseGodOptions = DISEASE_GODS;
     }
 
-    // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
+    // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
+    // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
+      context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
       // «Икона Богохульства» (wdbc-zbc0) — пусто у остальных Мутаций.
       context.iconOfBlasphemyHtml = iconOfBlasphemyButtonHtml(this.item, this.item.parent);
+      context.cancerousHealingHtml = cancerousHealingButtonHtml(this.item, this.item.parent);
+      context.flayedHtml = flayedButtonHtml(this.item, this.item.parent);
+      // ── «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние
+      // утоления по игровому времени, пусто у остальных Мутаций ──────────────
+      context.addictionHtml = addictionPanelHtml(this.item);
+      context.vampiricHtml  = vampiricPanelHtml(this.item);
+    }
+
+    // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) — каждая
+    // *ButtonHtml сама проверяет isXItem по имени, пусто у остальных предметов
+    // того же типа, поэтому безопасно считать без условия по типу здесь.
+    if (this.item.type === "psychicPower") {
+      context.daemonbloodHtml = daemonbloodButtonHtml(this.item, this.item.parent);
+    }
+
+    // ── Талант «King's Plate»: поглощение Роя (wdbc-173l) ────────────────────
+    if (this.item.type === "talent") {
+      context.kingsPlateHtml = kingsPlateButtonHtml(this.item, this.item.parent);
+      context.bloodShieldHtml = bloodShieldButtonHtml(this.item, this.item.parent);
+      context.eternalWarHtml = eternalWarButtonHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1137,6 +1169,11 @@ export class WarhammerItemSheet
         .map(k => ({ key: k, def: WEAPON_PROPERTIES[k] }))
         .filter(p => p.def);
       context.modRemovePropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !remKeys.has(d.key));
+
+      // Подстройка под персонажа (wdbc-1rno, Custom Grip): список всех
+      // акторов мира — модификация может путешествовать с оружием на другого
+      // владельца, а "подстроена под" должно пережить эту передачу.
+      context.modFittedToChoices = (game.actors ?? []).map(a => ({ id: a.id, name: a.name }));
     }
 
     // ── Фракция: вышестоящая, показанная фишкой ─────────────────────────────
@@ -1382,10 +1419,14 @@ export class WarhammerItemSheet
     // ── Броня ─────────────────────────────────────────────────────────────────
     if (this.item.type === "armor") {
       const activeProps = context.system.properties || [];
+      const propRatings = context.system.propRatings || {};
       // Как у оружия: активные свойства — чипами, остальные — в выпадающем «добавить».
+      // rating — только у Gorget/Protective (ARMOR_PROPERTIES[key].rating),
+      // хранится не рядом с ключом (как у оружия weaponProps[].rating), а в
+      // отдельном свободном реестре system.propRatings (data/item/armor.mjs).
       context.armorPropsActive = activeProps
         .filter(key => ARMOR_PROPERTIES[key])
-        .map(key => ({ key, def: ARMOR_PROPERTIES[key] }));
+        .map(key => ({ key, def: ARMOR_PROPERTIES[key], rating: propRatings[key] ?? 0 }));
       context.armorPropsAvailable = Object.entries(ARMOR_PROPERTIES)
         .filter(([key]) => !activeProps.includes(key))
         .map(([key, def]) => ({ key, label: def.label }));
@@ -1810,6 +1851,13 @@ export class WarhammerItemSheet
       if (actor) await useHandOfDeath(actor, this.item);
     });
 
+    // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────
+    on(".tentacle-hand-form-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await toggleTentacleHandForm(actor, this.item);
+    });
+
     // ── Мутация «Иллюзия Нормальности»: обнаружение/раскрытие (wdbc-zbc0) ───
     on(".illusion-notice-btn", "click", async ev => {
       ev.preventDefault();
@@ -1830,6 +1878,75 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await activateIconOfBlasphemy(this.item, actor);
+    });
+
+    // ── Мутация «Раковое Исцеление»: касание текущей цели (wdbc-w8ws) ───────
+    on(".cancerous-healing-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useCancerousHealing(actor, this.item);
+    });
+
+    // ── Мутация «Освежёванный»: содрать кожу с текущей цели (wdbc-w8ws) ─────
+    on(".flayed-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useFlayed(actor, this.item);
+    });
+
+    // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) ────────────────
+    on(".daemonblood-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useDaemonblood(actor, this.item);
+    });
+
+    // ── Талант «King's Plate»: поглощение Роя (wdbc-173l) ────────────────────
+    on(".kings-plate-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useKingsPlate(actor, this.item);
+    });
+
+    // ── Талант «Blood Shield»: убийство рукопашной демон-оружием (wdbc-173l) ─
+    on(".blood-shield-kill-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodShieldKill(actor, this.item);
+    });
+    on(".blood-shield-lose-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodShieldLose(actor, this.item);
+    });
+
+    // ── Талант «The Eternal War»: дуэль с Кровожадом/ХС (wdbc-173l) ─────────
+    on(".eternal-war-start-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useEternalWarStart(actor, this.item);
+    });
+    on(".eternal-war-end-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useEternalWarEnd(actor, this.item);
+    });
+
+    // ── Мутация «Зависимость»: кнопка «Утолить» (wdbc-1rno) ─────────────────
+    on(".addiction-satisfy-btn", "click", async ev => {
+      ev.preventDefault();
+      await useSatisfyAddiction(this.item);
+    });
+
+    // ── Мутация «Вампирическая Зависимость»: «Утолить»/«Тест на голод» ──────
+    on(".vampiric-satisfy-btn", "click", async ev => {
+      ev.preventDefault();
+      await useSatisfyVampiric(this.item);
+    });
+    on(".vampiric-test-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useVampiricTest(actor, this.item);
     });
 
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
@@ -1998,6 +2115,13 @@ export class WarhammerItemSheet
     mechField(".mech-mod-valuemode", (e, v) => { e.modValueMode = v; });
     mechField(".mech-mod-char",      (e, v) => { e.modCharBonus = v; });
     mechField(".mech-mod-char-mult", (e, v) => { e.modCharBonusMultiplier = Math.max(1, Number(v) || 1); });
+    // Значение «Модификатора теста» (kind:"testMod") — число (mech-entry-value)
+    // ИЛИ формула mech-formula.mjs (mech-mod-formula, wdbc-1rno: Black Eyes
+    // «½Cor(окр.▲)»), тот же приём хранения строкой, что у .mech-char-value.
+    // Раньше .mech-entry-value не имел своего листенера вовсе — правка того
+    // же поля в UI молча не сохранялась (найдено попутно, чинится тут же).
+    mechField(".mech-entry-value", (e, v) => { e.value = Number(v) || 0; });
+    mechField(".mech-mod-formula", (e, v) => { e.value = v; });
     mechField(".mech-reroll-who",    (e, v) => { e.rerollWho = v; });
     mechField(".mech-capability-key", (e, v) => { e.capabilityKey = v; });
     // Цена в пуле (wdbc-1dc8) — смена пула показывает/прячет поле числа,
@@ -2192,6 +2316,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.scriptThrottleMax = Math.max(1, parseInt(ev.currentTarget.value) || 1); saveMech(arr); }
     });
+    // Триггер по исходу теста (wdbc-1rno) — переключение показывает/прячет
+    // область (modScope), поэтому сохраняем и даём листу перерисоваться, тот
+    // же каскад, что у .mech-fatigue-action/.mech-reroll-scope.
+    on(".mech-script-trigger", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.scriptTrigger = ev.currentTarget.value; saveMech(arr); }
+    });
     on(".mech-script-run", "click", async ev => {
       ev.preventDefault();
       await runMechScriptEntry(this.item, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -2354,6 +2486,24 @@ export class WarhammerItemSheet
       if (!e) return;
       e.when = e.when || { negate: false, conditions: [] };
       e.when.negatePatronGod = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда Герметичная броня» (entry.when.requireSealedArmour/
+    // negateSealedArmour, wdbc-1rno) — седьмой гейт, тот же паттерн, что у Ярости.
+    on(".grant-when-sealed", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.requireSealedArmour = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    on(".grant-when-sealed-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateSealedArmour = !!ev.currentTarget.checked;
       saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
@@ -2851,6 +3001,24 @@ export class WarhammerItemSheet
         props.push(key);
         await this.item.update({ "system.properties": props });
       }
+    });
+    // Рейтинг X особенности брони (Gorget/Protective, wdbc-8b5) — отдельный
+    // свободный реестр system.propRatings, а не поле рядом с ключом свойства
+    // (у брони, в отличие от оружия, properties[] — плоский массив строк).
+    on(".aprop-rating", "change", async ev => {
+      const key = ev.currentTarget.dataset.key;
+      const val = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+      const propRatings = { ...(this.item.system.propRatings || {}) };
+      propRatings[key] = val;
+      await this.item.update({ "system.propRatings": propRatings });
+    });
+    // Текстовый рейтинг (Aspect — «Варп-Пауки» и т.п., wdbc-8b5/wdbc-28ld).
+    on(".aprop-rating-text", "change", async ev => {
+      const key = ev.currentTarget.dataset.key;
+      const val = ev.currentTarget.value.trim();
+      const propRatings = { ...(this.item.system.propRatings || {}) };
+      propRatings[key] = val;
+      await this.item.update({ "system.propRatings": propRatings });
     });
 
     // ── Типы боеприпасов ──────────────────────────────────────────────────────

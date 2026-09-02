@@ -67,6 +67,11 @@ const OWN_DEVIATIONS = {
     patronGod: "", sanity: { value: 0, max: 0 },
     electrostim: { active: false, amount: 0 },
     hibernation: { active: false },
+    // Заключение в Саркофаг и аблативные Раны против варп-оружия (стр. 57,
+    // wdbc-drn) — тот же случай, что sanity/electrostim/hibernation выше:
+    // механика Книги Машин появилась гораздо позже template.json.
+    sarcophagusInterred: false,
+    sarcophagusWarpWounds: { value: 0, max: 0 },
     // Стереотип Покровительства и своя система цены Продвижения — заведены
     // гораздо позже template.json (constants/patronage.mjs).
     patronStereotype: "", pricingModeOverride: "",
@@ -109,7 +114,10 @@ const DEVIATIONS = {
     // Тормоза Падения — лимит «раз за бой/сцену», заведён позже template.json (wdbc-y33b).
     "fallBreaksUsed": false,
     // Продвинутые Системы Управления — «уже двигалась в этот Раунд», заведён позже template.json (wdbc-y33b).
-    "movedThisTurn": false
+    "movedThisTurn": false,
+    // Аблативная Структура (Минный Плуг, wdbc-bxw6) — заведена гораздо позже template.json.
+    "structure.ablative": 0,
+    "structure.ablativeMax": 0
   },
   ship: {
     // Свободная заметка «Класс корпуса» дублировала выбор реального Корпуса
@@ -197,6 +205,10 @@ const DEVIATIONS = {
     "conditions.lostEyesCount": 0,
     // Стр. 12 («Борьба») — связаны Захватом, заведено гораздо позже template.json.
     "conditions.grappling": false,
+    // Собственный вес тела (Записи → Вес, wdbc-oxdn) — нужен для Метания/
+    // Дубины (стр. 27-28, module/rules/improvised-weapon.mjs), в template.json
+    // поля не было вовсе (Возраст был, Вес — нет).
+    "bio.weight": 0,
     // Вызов/Challenge (X), wdbc-2xku — заведено гораздо позже template.json.
     "conditions.challenged": false,
     // «В Шоке» (стр. 53, wdbc-zepq) — снимается тестом выхода из Шока
@@ -231,6 +243,10 @@ const DEVIATIONS = {
     // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
     "wounds.ablative": 0,
     "wounds.ablativeMax": 0,
+    // Аблативный AP-щит (wdbc-bxw6, напр. Роба Чемпиона) — отдельный от
+    // аблативных Ран пул, заведён гораздо позже template.json.
+    "ablativeApShield.value": 0,
+    "ablativeApShield.max": 0,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     ...OWN_DEVIATIONS[type]

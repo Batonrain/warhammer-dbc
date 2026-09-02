@@ -39,6 +39,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange } from "./module/apps/mechanics.mjs";
+import { applyMechBlocks, applyMechBlocksForActor } from "./module/apps/mech-blocks-apply.mjs";
 import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -48,6 +49,15 @@ import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellenc
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
 import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
 import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
+import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
+  from "./module/apps/cancerous-healing.mjs";
+import { reconcileFlayedToFit } from "./module/apps/flayed.mjs";
+import { reconcilePlagueShepherdToFit } from "./module/rules/plague-shepherd.mjs";
+import { reconcileDaemonbloodToFit } from "./module/apps/daemonblood.mjs";
+import { reconcileKingsPlateToFit } from "./module/apps/kings-plate.mjs";
+import { reconcileBloodShieldToFit } from "./module/apps/blood-shield.mjs";
+import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
+import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
@@ -1542,6 +1552,13 @@ export async function handleItemCreated(item, options, userId) {
   // ничего про эту гонку не доказывал.
   if (options?.[SKIP_MECHANICS_HOOK]) return;
   await applyItemMechanics(item);
+
+  // Новая блочная модель (doombc-req-condition-effect-plan) — живёт РЯДОМ со
+  // старым flags.mechanics, не вместо: предмет, ещё не переведённый на блоки,
+  // просто не несёт flags.mechBlocks, и applyMechBlocks тихо ничего не находит
+  // (getMechBlocks → []). Тот же SKIP_MECHANICS_HOOK-гейт выше, что и у
+  // applyItemMechanics — носитель Расы/Субраты уже получил её синхронно.
+  await applyMechBlocks(item, actor, { kind: "onGrant" });
 }
 
 Hooks.on("createItem", handleItemCreated);
@@ -1612,6 +1629,43 @@ Hooks.on("deleteItem", async (item, options, userId) => {
     const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
     if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });
   }
+});
+
+// Динамические источники аблативных Ран (wdbc-w8ws: Раковое Исцеление,
+// Освежёванный, Чумной Пастырь) держат СВОЮ долю общего пула флагом на
+// акторе-получателе и двигают её ablativeMax вместе с ablative — без этого
+// клэмп rules/character.mjs::prepareCharacterDerived («осиротевший пул без
+// источника должен затухать», #291) стёр бы грант на первом же такте
+// расчёта. Как только общий пул уменьшается по ЛЮБОЙ причине (поглощение
+// урона боевым уроном), каждая доля сжимается вслед за ним — иначе
+// ablativeMax источника завис бы на историческом пике и подпитывал бы
+// лишний пассивный реген (module/combat/ablative-wounds.mjs, +1/Ход).
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.system?.wounds?.ablative === undefined) return;
+  await reconcileCancerousHealingToFit(actor);
+  await reconcileFlayedToFit(actor);
+  await reconcilePlagueShepherdToFit(actor);
+  await reconcileDaemonbloodToFit(actor);
+  await reconcileKingsPlateToFit(actor);
+  await reconcileBloodShieldToFit(actor);
+  await reconcileEternalWarToFit(actor);
+  await reconcilePsalmUnseenFortressToFit(actor);
+  if (actor.effects?.some(e => e.getFlag?.("warhammer-dbc", "cancerousHealingPenalty")))
+    await syncCancerousHealingPenalty(actor);
+});
+
+// Раковое Исцеление (wdbc-w8ws): «если восстанавливает Раны лечением, лишние
+// аблативные Раны теряются» — доля цели пересчитывается от текущих
+// недостающих Ран при КАЖДОМ изменении её Ран/максимума (лечение, урон —
+// формула сама только сжимает, никогда не растит, см.
+// cancerousHealingShrinkAfterHeal). Отдельный хук от аблатив-реконсиляции
+// выше: этот следит за system.wounds.value/.max, не за .ablative.
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  const w = changed?.system?.wounds;
+  if (!w || (w.value === undefined && w.max === undefined)) return;
+  await reconcileCancerousHealingAfterHeal(actor);
 });
 
 // Откат перманентных правок характеристик/пулов, выданных шаблонами старого
@@ -1781,6 +1835,9 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
   if (options?.whSkipFateSave) return;
   if (typeof changes.system?.fate?.value !== "number") return;
   const spent = fateSpent(options?.whFatePrev, changes.system.fate.value);
+  // Живая врезка Condition "onResourceSpend" (doombc-req-condition-effect-plan)
+  // — независимо от Пламенной Веры ниже: факт траты, не факт «вернули ли».
+  if (spent) await applyMechBlocksForActor(doc, { kind: "onResourceSpend" });
   if (!spent || !hasRuleFlag(doc, FATE_SAVE_FLAG)) return;
 
   const rolls = [];

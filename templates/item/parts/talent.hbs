@@ -134,6 +134,27 @@
   <textarea name="system.benefit" class="item-textarea"
             placeholder="Что даёт талант...">{{system.benefit}}</textarea>
 </div>
+
+{{#if kingsPlateHtml}}
+<div class="item-section">
+  <div class="item-section-title">ЛАТЫ КОРОЛЯ</div>
+  {{{kingsPlateHtml}}}
+</div>
+{{/if}}
+
+{{#if bloodShieldHtml}}
+<div class="item-section">
+  <div class="item-section-title">КРОВАВЫЙ ЩИТ</div>
+  {{{bloodShieldHtml}}}
+</div>
+{{/if}}
+
+{{#if eternalWarHtml}}
+<div class="item-section">
+  <div class="item-section-title">ВЕЧНАЯ ВОЙНА</div>
+  {{{eternalWarHtml}}}
+</div>
+{{/if}}
 {{/if}}
 
 {{!-- Способность --}}

@@ -18,6 +18,10 @@ import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { findTechImperative } from "../../constants/tech-imperatives.mjs";
 import { applyImperative } from "../../rules/imperative.mjs";
+import { isPsalmUnseenFortressItem, psalmUnseenFortressGrant } from "../../rules/psalm-unseen-fortress.mjs";
+import { hasElectrovigour } from "../../rules/electrovigour.mjs";
+import { pickReroll } from "../../rules/reroll-pick.mjs";
+import { testOutcome } from "../../rules/roll-outcome.mjs";
 
 /** Активация Техночуда: Когниция + Энергия + тест Tech-Use (Ментальное) + урон. */
 export async function activateTechMiracle(actor, item) {
@@ -96,14 +100,20 @@ export async function activateTechMiracle(actor, item) {
     const compBonus = actor.system.techCompBonus || 0;
     const tTot   = actor.system.characteristics?.t?.total ?? 0;
     const compTh = tTot - 10 * compX + compBonus;
-    const cRoll  = await new Roll("1d100").evaluate();
-    allRolls.push(cRoll);
-    const cSucc  = cRoll.total <= compTh;
-    const cDeg   = Math.floor(Math.abs(cRoll.total - compTh) / 10) + 1;
+    // Electrovigour (wdbc-u0by): «Преимущество на тесты Т на Техночудеса с
+    // типом Компенсатор» — безусловно, авто (кнопка активации без диалога).
+    const electro = hasElectrovigour(actor);
+    const cRolled = [];
+    for (let i = 0; i < (electro ? 2 : 1); i++) cRolled.push(await new Roll("1d100").evaluate());
+    allRolls.push(...cRolled);
+    const cPicked = pickReroll(cRolled.map(r => r.total), "keepBest");
+    const cRoll  = cRolled[cPicked.index];
+    const { success: cSucc, deg: cDeg } = testOutcome(cRoll.total, compTh);
     const reduce = cSucc ? Math.min(enCost, cDeg) : 0;
     const enBefore = enCost;
     enCost = Math.max(0, enCost - reduce);
-    compLine = `Компенсатор (X${compX}): T−${10 * compX}${compBonus ? ` +${compBonus}` : ""} → Порог ${compTh}, бросок ${cRoll.total} → `
+    const electroNote = cPicked.dropped.length ? `, Электрорвение: Преимущество, отброшено ${cPicked.dropped.join(", ")}` : "";
+    compLine = `Компенсатор (X${compX}): T−${10 * compX}${compBonus ? ` +${compBonus}` : ""} → Порог ${compTh}${electroNote}, бросок ${cRoll.total} → `
       + (cSucc ? `−${reduce} ⚡ (${enBefore}→${enCost})` : `Провал, цена ${enCost} ⚡`);
   }
 
@@ -124,6 +134,21 @@ export async function activateTechMiracle(actor, item) {
   const resUpd = {};
   if (cogCost > 0)            resUpd["system.cognition.value"] = Math.max(0, (cog.value || 0) - cogCost);
   if (enCost  > 0 && success) resUpd["system.energy.value"]    = Math.max(0, (en.value  || 0) - enCost);
+
+  // Псалом Незримой Крепости (wdbc-173l): +2 аблативные Раны за Успех этой
+  // активации — переоформляет прошлый Купол, не складывает между активациями
+  // (module/rules/psalm-unseen-fortress.mjs).
+  let psalmSection = "";
+  const FLAG = "warhammer-dbc", PSALM_FLAG = "psalmUnseenFortressAblative";
+  if (success && isPsalmUnseenFortressItem(item)) {
+    const prevContribution = Number(actor.getFlag(FLAG, PSALM_FLAG)) || 0;
+    const result = psalmUnseenFortressGrant(actor.system, prevContribution, deg);
+    resUpd["system.wounds.ablative"] = result.ablative;
+    resUpd["system.wounds.ablativeMax"] = result.ablativeMax;
+    resUpd[`flags.${FLAG}.${PSALM_FLAG}`] = result.contribution;
+    psalmSection = `<div class="roll-threshold">Купол Рефрактора: <b>${result.contribution}</b> аблативных Ран (2×${deg} Успех${deg === 1 ? "" : "а"})</div>`;
+  }
+
   if (Object.keys(resUpd).length) await actor.update(resUpd);
 
   // Славословие: при успехе компиляция расходуется (одноразово)
@@ -264,6 +289,7 @@ export async function activateTechMiracle(actor, item) {
               : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`}
           </div>
           ${dmgSection}
+          ${psalmSection}
           ${attackPropsSection}
           ${infoguardSection}
           ${imperativeSection}

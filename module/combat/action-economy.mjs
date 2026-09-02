@@ -28,6 +28,7 @@
 import { MELEE_STANCES } from "../constants/combat.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -64,6 +65,17 @@ export function effectiveDefenseReactionMax(actor) {
 }
 
 /**
+ * Максимум ОД ДЛЯ ЭТОГО Хода: хранимая надбавка (ActiveEffect) + динамический
+ * бонус текущего состояния (Determination To Fight/Решительность Сражаться,
+ * wdbc-1rno: +1 ОД при отрицательных Ранах) — тот же приём, что
+ * effectiveDefenseReactionMax у Стойки, не запекается в хранимое поле.
+ * Подавленный (стр. 33, min 1) применяется ПОВЕРХ этого — см. resetActionEconomy.
+ */
+export function effectiveActionPointsMax(actor) {
+  return (Number(actor.system?.actionPoints?.max) || 0) + determinationToFightApBonus(actor);
+}
+
+/**
  * Восполнить ОД/Реакции актора до максимума — вызывается в начале ЕГО Хода
  * (hooks.mjs, updateCombat). Сама надбавка defenseMax от Стойки считается
  * заново каждый раз, а не копится в хранимом поле (см. заголовок файла).
@@ -75,8 +87,8 @@ export async function resetActionEconomy(actor) {
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
   const apMax          = sys.conditions?.pinned
-    ? Math.min(1, Number(sys.actionPoints?.max) || 0)
-    : (Number(sys.actionPoints?.max) || 0);
+    ? Math.min(1, effectiveActionPointsMax(actor))
+    : effectiveActionPointsMax(actor);
   const reactMax       = Number(sys.reactions?.max) || 0;
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);
@@ -91,6 +103,12 @@ export async function resetActionEconomy(actor) {
     upd["system.reactions.defenseValue"] = defenseMaxBase + defenseBonus;
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
+  // Just the Light/Лишь Свет (wdbc-1rno, combat/just-the-light.mjs): щит
+  // живёт «до начала следующего Хода» — тот же такт, что running/exposedAggressive.
+  if (actor.getFlag("warhammer-dbc", "justTheLightActive")) upd["flags.warhammer-dbc.-=justTheLightActive"] = null;
+  // Локус Неизбежности (wdbc-smc): штраф −10 живёт до начала СВОЕГО следующего
+  // Хода — снимается здесь же, тем же приёмом, что exposedAggressive/running.
+  if (actor.getFlag("warhammer-dbc", "inevitabilityPenalty")) upd["flags.warhammer-dbc.-=inevitabilityPenalty"] = null;
   // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
   // прошлого раунда» начинается заново с каждым Ходом этого актора.
   if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;
@@ -99,6 +117,10 @@ export async function resetActionEconomy(actor) {
   // заголовок recoil-pool.mjs). Инлайн, а не вызов resetRecoilPool() —
   // держит один update на весь сброс (см. комментарий выше).
   if (actor.getFlag("warhammer-dbc", "recoilPool"))         upd["flags.warhammer-dbc.-=recoilPool"] = null;
+  // Snapshot/Выстрел Навскидку (wdbc-1rno) читает эту категорию на выходе
+  // из Хода (processSnapshotTurnEnd, до сброса ниже) — сбрасывается здесь
+  // тем же тактом, что и movedThisTurn, следующий Ход начинается заново.
+  if (actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")) upd["flags.warhammer-dbc.-=moveDegreeThisTurn"] = null;
   if (Object.keys(upd).length) await actor.update(upd);
 }
 

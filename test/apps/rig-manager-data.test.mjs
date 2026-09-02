@@ -128,3 +128,45 @@ describe("rigManagerData — предмет, надетый на другой (w
     expect(data.unassigned.map(i => i.id)).toContain("visor1");
   });
 });
+
+// Fully Armed / Во Всеоружии (wdbc-1rno): не-тяжёлое стрелковое оружие с
+// Custom Grip весит вдвое меньше (окр.▼) в расчёте Разгрузки — только у
+// актора, владеющего самой Чертой. См. module/combat/fully-armed.mjs.
+describe("rigManagerData — вес оружия с Fully Armed (wdbc-1rno)", () => {
+  function pistolWithGrip(weight = 1.2) {
+    return { id: "gun1", name: "Пистолет", type: "weapon", system: { weaponClass: "pistol", weight } };
+  }
+  function customGripMod() {
+    return { id: "mod1", name: "Personal Grip / Персональный Хват", type: "weaponMod", system: { installedOn: "gun1" } };
+  }
+  function fullyArmedTrait() {
+    return { id: "trait1", name: "Fully Armed / Во Всеоружии", type: "trait", system: {} };
+  }
+
+  it("Черта + мод — вес оружия в слоте показан вдвое меньше", () => {
+    const belt = beltItem();
+    const gun = pistolWithGrip(1.2);
+    const a = actor([belt, gun, customGripMod(), fullyArmedTrait()], { gun1: "belt1:s:0:0" });
+
+    const data = rigManagerData(a);
+    expect(data.rigs[0].slots[0].item.weight).toBeCloseTo(0.6, 5);
+  });
+
+  it("нет Черты — вес оружия обычный, несмотря на мод", () => {
+    const belt = beltItem();
+    const gun = pistolWithGrip(1.2);
+    const a = actor([belt, gun, customGripMod()], { gun1: "belt1:s:0:0" });
+
+    const data = rigManagerData(a);
+    expect(data.rigs[0].slots[0].item.weight).toBe(1.2);
+  });
+
+  it("тяжёлое оружие с модом и Чертой — вес обычный", () => {
+    const belt = beltItem();
+    const gun = { id: "gun1", name: "Тяжёлый болтер", type: "weapon", system: { weaponClass: "heavy", weight: 20 } };
+    const a = actor([belt, gun, customGripMod(), fullyArmedTrait()], { gun1: "belt1:s:0:0" });
+
+    const data = rigManagerData(a);
+    expect(data.rigs[0].slots[0].item.weight).toBe(20);
+  });
+});

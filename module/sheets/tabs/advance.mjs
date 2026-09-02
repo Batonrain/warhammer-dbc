@@ -72,7 +72,10 @@ export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, sp
   const cat = def?.alwaysAlly ? "ally"
     : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
     : resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group)
-      ?? cultureCat("skill", def?.label || def?.name || "", "", cultFxOf(actor));
+      // cultureCat матчит по-английски (CULT.friendlySkills/hostileSkills в
+      // legions.mjs) — def?.label здесь русский и никогда бы не совпал
+      // (wdbc-ko14), def?.en заведён специально под это.
+      ?? cultureCat("skill", def?.en || def?.label || def?.name || "", "", cultFxOf(actor));
   // Ключ для Бога Навыка (patronage.mjs, skillGodOf) — у группового ключ группы
   // (forbiddenLore и т.п.), у обычного — его собственный (dodge и т.п.).
   const opts = { actor, skillKey: group || skillKey, specialty };

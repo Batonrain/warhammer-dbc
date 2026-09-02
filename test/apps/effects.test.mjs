@@ -156,6 +156,46 @@ describe("isItemActive: Техночудо (wdbc-yu32)", () => {
   });
 });
 
+// wdbc-egll: у подавляющего большинства Мутаций/Даров своего «активна ли»
+// нет вовсе (эффект действует, пока предмет на акторе) — activatable:true
+// включает его именно для тех немногих, где книга сама говорит «до конца
+// боя/сцены» (Живое Оружие и подобные).
+describe("isItemActive: Мутация/Дар с activatable", () => {
+  const mut = (extra = {}) => ({ id: "m", type: "mutation", system: { ...extra } });
+
+  it("activatable не заведён — активна всегда, как Талант/Черта", () => {
+    expect(isItemActive(mut())).toBe(true);
+  });
+
+  it("activatable:true, active:false — не активна", () => {
+    expect(isItemActive(mut({ activatable: true, active: false }))).toBe(false);
+  });
+
+  it("activatable:true, active:true — активна", () => {
+    expect(isItemActive(mut({ activatable: true, active: true }))).toBe(true);
+  });
+});
+
+// Мутация/Дар подавлена Чистой Формой (rules/mutation-suppression.mjs, wdbc-1rno).
+describe("isItemActive: Мутация/Дар (подавление Чистой Формой)", () => {
+  const mutation = (suppressed) => ({
+    id: "m1", type: "mutation", system: {},
+    getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "suppressed") ? suppressed : undefined
+  });
+
+  it("флаг suppressed не выставлен — активна", () => {
+    expect(isItemActive(mutation(undefined))).toBe(true);
+  });
+
+  it("suppressed:false — активна", () => {
+    expect(isItemActive(mutation(false))).toBe(true);
+  });
+
+  it("suppressed:true — не активна", () => {
+    expect(isItemActive(mutation(true))).toBe(false);
+  });
+});
+
 // У ActiveEffect картинка называется img: поле icon Foundry объединила с ним в
 // v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
 // ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией

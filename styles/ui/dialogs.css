@@ -594,6 +594,17 @@ body.wh-aiming #board, body.wh-aiming canvas {
 }
 @keyframes wh-aim-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
+/* Живая подсказка полосы дальности у курсора (combat/aim.mjs) — следует за
+   мышью, левая рамка красится в цвет полосы (совпадает с кольцами дальности
+   на канвасе, combat/range-rings.mjs). */
+#wh-aim-range-hint {
+  position: fixed; z-index: 200; pointer-events: none;
+  padding: 3px 10px; font-size: 12px; white-space: nowrap;
+  color: #e8d9b5; background: rgba(12, 10, 6, 0.92);
+  border: 1px solid #4a4a3a; border-left-width: 4px; border-radius: 3px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    Окно манифестации психосилы (wh-psy-dialog) — зелёный когитатор + варп-акцент
    ═══════════════════════════════════════════════════════════════════════ */

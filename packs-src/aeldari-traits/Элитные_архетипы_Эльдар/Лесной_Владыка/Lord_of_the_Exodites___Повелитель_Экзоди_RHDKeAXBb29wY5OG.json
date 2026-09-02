@@ -120,7 +120,10 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         },
@@ -207,7 +210,10 @@
               "weaponPropNewValue2": "0",
               "label": "Lord of the Exodites",
               "code": "",
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }
