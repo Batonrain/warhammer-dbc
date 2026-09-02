@@ -35,3 +35,7 @@ __pycache__/
 
 # Авто-снимок git status/diff для сессии «Гит» (Stop-хук .claude/tools/handoff.py)
 .handoff.md
+
+# Локальная отметка "pr-reviewer прошёл чисто на этом дереве" (worktree-local,
+# не история — git-scribe сверяет свежесть перед пушем, см. .claude/tools/state-hash.sh)
+/.agents/last-clean-review.json
