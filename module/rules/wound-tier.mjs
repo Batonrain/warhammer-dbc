@@ -18,7 +18,9 @@ export const TIER_LABELS = { healthy: "Здоров", light: "Легко ран�
 
 export function woundLevel(system) {
   const value = system.wounds?.value ?? 0;
-  const max = system.wounds?.max ?? 0;
+  // effectiveMax (module/rules/character.mjs, wdbc-drn) — Саркофаг Дредноута
+  // снижает максимум на 5 (стр. 57); ?? а не ||, чтобы честный 0 не терялся.
+  const max = system.wounds?.effectiveMax ?? system.wounds?.max ?? 0;
   const crit = system.wounds?.critical ?? 0;
   const tb = system.characteristics?.t?.bonus ?? 0;
   const lost = Math.max(0, max - value);

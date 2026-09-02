@@ -463,6 +463,33 @@ async function onHibernationWeekTick(event) {
   }, rollMode));
 }
 
+/**
+ * Лечение Саркофага (стр. 57, wdbc-drn): 1 Рана каждые 10 минут игрового
+ * времени. Таймера в системе нет (тот же принцип, что Электростимуляторы/
+ * Ферум Инфернус выше) — кнопка просто лечит 1 Рану до effectiveMax
+ * (module/rules/character.mjs), тикать нужно вручную по факту прошедшего
+ * времени.
+ */
+async function onSarcophagusHealTick(event) {
+  event.preventDefault();
+  const w = this.actor.system.wounds ?? {};
+  const max = Number(w.effectiveMax ?? w.max) || 0;
+  const cur = Number(w.value) || 0;
+  if (cur >= max) return ui.notifications.info("Саркофаг: Раны уже на максимуме.");
+  const next = Math.min(max, cur + 1);
+  await this.actor.update({ "system.wounds.value": next });
+
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">Лечение Саркофага (10 мин)</div>
+        <div class="roll-outcome"><span class="roll-success">+1 Рана (${cur} → ${next})</span></div>
+      </div>`
+  }, rollMode));
+}
+
 // ── Инициатива ──
 // Бросок идёт в трекер, поэтому вне боя он невозможен: без комбатанта результат
 // некуда положить. initiativeMod уже учтён формулой через @initiativeMod
@@ -650,6 +677,7 @@ export class WarhammerCharacterSheet
       hibernationEnter: whenEditable(onHibernationEnter),
       hibernationExit: whenEditable(onHibernationExit),
       hibernationWeekTick: whenEditable(onHibernationWeekTick),
+      sarcophagusHealTick: whenEditable(onSarcophagusHealTick),
       initiativeRoll: whenEditable(onInitiativeRoll),
       charRoll: whenEditable(onCharRoll),
       insanityMenu: whenEditable(onInsanityMenu),
@@ -1590,7 +1618,10 @@ export class WarhammerCharacterSheet
     activateMinionPanelListeners(html);
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
-    activateSocialListeners(html, this.actor, { editable: this.isEditable });
+    activateSocialListeners(html, this.actor, {
+      editable: this.isEditable,
+      resolveOtherTargetActor: () => this._resolveOtherTargetActor()
+    });
 
     activatePsychicListeners(html, this.actor, {
       rollSkill: (label, target, charKey, opts) => this._rollSkill(label, target, charKey, opts),

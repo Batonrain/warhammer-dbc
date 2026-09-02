@@ -72,6 +72,20 @@ export function sarcophagusWarpWounds(wpBonus) {
   return Math.max(0, Number(wpBonus) || 0);
 }
 
+/**
+ * «Беспомощен, когда не подключён к машине» (стр. 57) — не то же самое, что
+ * isDreadnoughtPilot: та возможность гаснет ровно в момент отключения (флаг
+ * раздаёт живая ссылка станции), поэтому спросить ею «а вообще он вживлён в
+ * саркофаг» нельзя — ответ всегда «да, пока подключён». Нужен отдельный
+ * персистентный факт (`interred` — хирургическое заключение в саркофаг,
+ * необратимое и не привязанное к конкретной машине, см. schema персонажа,
+ * `system.sarcophagusInterred`), а «подключён ли СЕЙЧАС» передаётся отдельным
+ * параметром вызывающим кодом (module/rules/character.mjs через hasRuleFlag).
+ */
+export function sarcophagusHelplessNow(interred, isPilotNow) {
+  return !!interred && !isPilotNow;
+}
+
 /** Возможности, которые даёт саркофаг. Имена — из constants/capabilities.mjs. */
 export function sarcophagusFlags() {
   return [
@@ -219,6 +233,18 @@ export function hasElectrostimulators(vehicleItems) {
 export function electrostimulatorBoost(pilotWpBonus) {
   const wp = Math.max(0, Number(pilotWpBonus) || 0);
   return { amount: 10 + 2 * wp, delayMinutes: 2 * wp };
+}
+
+/**
+ * Узнаём «Матрицу Осирис» (стр. 58) среди снаряжения Дредноута: снимает
+ * запрет sarcophagus.noPsychicPowers (пилот может манифестировать и
+ * поддерживать психосилы). Штраф −3 к тПР, которым книга платит за это, —
+ * отдельный числовой эффект самого предмета, не читатель этой возможности,
+ * и здесь не считается.
+ */
+const OSIRIS_MATRIX_MATCH = /Osiris Matrix|Матрица Осирис/i;
+export function hasOsirisMatrix(vehicleItems) {
+  return (vehicleItems || []).some(i => i?.type === "vehicleGear" && OSIRIS_MATRIX_MATCH.test(i.name));
 }
 
 /** Узнаём Талант «Ферум Инфернус» (стр. 58) среди предметов пилота. */

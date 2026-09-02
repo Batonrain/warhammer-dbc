@@ -67,6 +67,11 @@ const OWN_DEVIATIONS = {
     patronGod: "", sanity: { value: 0, max: 0 },
     electrostim: { active: false, amount: 0 },
     hibernation: { active: false },
+    // Заключение в Саркофаг и аблативные Раны против варп-оружия (стр. 57,
+    // wdbc-drn) — тот же случай, что sanity/electrostim/hibernation выше:
+    // механика Книги Машин появилась гораздо позже template.json.
+    sarcophagusInterred: false,
+    sarcophagusWarpWounds: { value: 0, max: 0 },
     // Стереотип Покровительства и своя система цены Продвижения — заведены
     // гораздо позже template.json (constants/patronage.mjs).
     patronStereotype: "", pricingModeOverride: "",

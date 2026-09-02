@@ -222,7 +222,7 @@ export const CAPABILITIES = {
   "sarcophagus.autoPassFear": {
     label: "Автоматически проходит тесты Страха, Подавления и Запугивания",
     source: "Саркофаг Дредноута (стр. 57)",
-    reader: "module/combat/fear.mjs — _executeFearRoll (только тест Страха; Подавление/Запугивание идут другими путями, не подключено)"
+    reader: "module/combat/fear.mjs — _executeFearRoll (тест Страха) + module/combat/suppression.mjs — rollSuppressionTest/rollSuppressionRecovery (тест Подавления) + module/combat/intimidate.mjs — rollIntimidateContest (встречная проверка Запугивания: тест Морали цели). Все три из семи пунктов книги теперь подключены."
   },
   "sarcophagus.immuneBleedingFatigue": {
     label: "Иммунен к Кровотечению и Усталости",
@@ -232,11 +232,12 @@ export const CAPABILITIES = {
   "sarcophagus.noPsychicPowers": {
     label: "Не может манифестировать и поддерживать психосилы",
     source: "Саркофаг Дредноута (стр. 57); снимается Матрицей Осирис",
-    reader: ""
+    reader: "module/sheets/tabs/psychic.mjs::showManifestDialog (манифестация) + module/sheets/tabs/psychic.mjs::activatePsychicListeners (чекбокс поддержания) — блок снят, если на Дредноуте стоит module/rules/dreadnought.mjs::hasOsirisMatrix"
   },
   "sarcophagus.helpless": {
     label: "Без конечностей: Беспомощен, когда не подключён к машине",
-    source: "Саркофаг Дредноута (стр. 57)", reader: ""
+    source: "Саркофаг Дредноута (стр. 57)",
+    reader: "module/rules/character.mjs::sarcophagusHelplessNow (system.sarcophagusHelplessNow) + module/sheets/tabs/dreadnought-panel.mjs (предупреждение на листе) — состояние system.conditions.helpless не форсируется кодом (ни одно состояние в системе так не работает), ГМ накладывает вручную по этому предупреждению; system.sarcophagusInterred — персистентный маркер хирургического заключения, ставится один раз на панели"
   },
   "sarcophagus.noFoodWaterAir": {
     label: "Не нуждается в воде, еде и воздухе",

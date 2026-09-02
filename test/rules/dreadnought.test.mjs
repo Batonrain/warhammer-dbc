@@ -8,7 +8,8 @@ import {
   pilotDamageThreshold,
   SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf,
   dailyWillTestOutcome, hasElectrostimulators, electrostimulatorBoost,
-  hasFerumInfernus, ferumInfernusThreshold, ferumInfernusActive
+  hasFerumInfernus, ferumInfernusThreshold, ferumInfernusActive,
+  hasOsirisMatrix
 } from "../../module/rules/dreadnought.mjs";
 
 const dread = (pilotUuid = "", over = {}) => ({
@@ -201,6 +202,20 @@ describe("Электростимуляторы: разовое восстано�
   });
   it("отрицательный бонус не уводит числа в минус", () => {
     expect(electrostimulatorBoost(-3)).toEqual({ amount: 10, delayMinutes: 0 });
+  });
+});
+
+describe("Матрица Осирис: снаряжение на Дредноуте (wdbc-drn)", () => {
+  it("узнаёт предмет по типу и имени из пака", () => {
+    expect(hasOsirisMatrix([{ type: "vehicleGear", name: "Матрица Осирис / Osiris Matrix" }])).toBe(true);
+  });
+  it("другое снаряжение или другой тип предмета не подходит", () => {
+    expect(hasOsirisMatrix([{ type: "vehicleGear", name: "Cyberleash / Киберпривязь" }])).toBe(false);
+    expect(hasOsirisMatrix([{ type: "gear", name: "Матрица Осирис / Osiris Matrix" }])).toBe(false);
+  });
+  it("без снаряжения или без списка — нет", () => {
+    expect(hasOsirisMatrix([])).toBe(false);
+    expect(hasOsirisMatrix(undefined)).toBe(false);
   });
 });
 
