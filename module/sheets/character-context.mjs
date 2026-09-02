@@ -71,6 +71,7 @@ import { hasResplendentRaiment }                 from "../combat/resplendent-rai
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
+import { hasConjureWraith }                      from "../combat/conjure-wraith.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
@@ -378,6 +379,7 @@ export function characterContext(actor) {
   context.hasBoneSong = hasBoneSong(actor);
   context.hasPreservation = hasPreservation(actor);
   context.hasSongOfSwiftness = hasSongOfSwiftness(actor);
+  context.hasConjureWraith = hasConjureWraith(actor);
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");
