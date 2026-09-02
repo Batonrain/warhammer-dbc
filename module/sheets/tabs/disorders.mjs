@@ -10,7 +10,7 @@ import { _executeFearRoll, _executeTraumaRoll } from "../../combat/fear.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
-import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
 import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
@@ -22,6 +22,13 @@ function checkedRuleMods(form) {
   let sum = 0;
   for (const cb of form?.querySelectorAll?.(".rule-mod:checked") ?? []) sum += parseInt(cb.dataset.value) || 0;
   return sum;
+}
+
+/** Выбранный именной переброс (радиокнопки ruleRerollsHtml) — общий приём с attack-dialog.mjs. */
+function namedReroll(form) {
+  const el = form?.querySelector?.(".rule-reroll-opt:checked");
+  const idx = parseInt(el?.dataset?.idx ?? "-1");
+  return idx >= 0 ? { mode: el.dataset.mode, rolls: parseInt(el.dataset.rolls) || 2 } : null;
 }
 
 /**
@@ -40,9 +47,13 @@ export function openFearDialog(actor) {
   const ratingOpts = Object.entries(FEAR_RATINGS).map(([key, rating]) =>
     `<option value="${key}">${rating.label} — важный W${rating.important >= 0 ? "+" : ""}${rating.important}, Infamy ${rating.infamy}+</option>`
   ).join("");
-  // Галочки правил (Конструктор, kind:"testMod", область char:wp) — та же
-  // область, что у Травмы ниже: Каталептический Узел и подобное сюда же.
-  const rm = ruleRollModsHtml(actor, { kind: "skill", char: "wp" });
+  // Галочки правил (Конструктор, kind:"testMod", область char:wp/morale) —
+  // та же область testMod, что у Травмы ниже: Каталептический Узел и
+  // подобное сюда же. morale:true подключает и переброс (Lord of the
+  // Exodites и т.п. — wdbc-zepq), которого раньше в этом диалоге не было.
+  const ctx = { kind: "skill", char: "wp", morale: true };
+  const rm = ruleRollModsHtml(actor, ctx);
+  const rr = ruleRerollsHtml(actor, ctx);
   new Dialog({
     title: "😱 Тест Страха",
     content: `
@@ -55,6 +66,7 @@ export function openFearDialog(actor) {
         <div class="atk-dlg-section">Свойства</div>
         <div class="atk-dlg-row"><label><input id="fear-prop-demon" type="checkbox"/> Демон</label></div>
         ${rm.html}
+        ${rr.html}
         ${testKindHtml({ defaultKind: "base", label: "Тест Страха" })}
         ${diceModeHtml()}
         <div id="auto-outcome-note" class="roll-dlg-note"></div>
@@ -73,7 +85,7 @@ export function openFearDialog(actor) {
           // Демон уже даёт бесплатный переброс при провале (см. fear.mjs).
           const properties = { demon: html.find("#fear-prop-demon").is(":checked") };
           const tk = readTestKind(val, { label: "Тест Страха" });
-          tk.reroll = mergeReroll(null, readDiceChoice(val));
+          tk.reroll = mergeReroll(namedReroll(html[0]), readDiceChoice(val));
           await _executeFearRoll(actor, ratingKey, type, infamy, mod, properties, { tk });
         }
       },

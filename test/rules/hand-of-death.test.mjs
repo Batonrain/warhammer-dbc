@@ -43,4 +43,14 @@ describe("isFusedByHandOfDeath", () => {
   it("не оружие — false, даже с меткой", () => {
     expect(isFusedByHandOfDeath({ type: "trait", getFlag: () => "mut1" }, "mut1")).toBe(false);
   });
+
+  describe("без mutationItemId — просто «слито ли хоть с какой-то Рукой Смерти»", () => {
+    it("метка есть — true, id мутации не важен", () => {
+      expect(isFusedByHandOfDeath(weapon("mut1"))).toBe(true);
+      expect(isFusedByHandOfDeath(weapon("mut2"))).toBe(true);
+    });
+    it("метки нет — false", () => {
+      expect(isFusedByHandOfDeath(weapon(undefined))).toBe(false);
+    });
+  });
 });

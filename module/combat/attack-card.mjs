@@ -126,6 +126,19 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
           ? "Разместить Гравитонную зону (тает 1м/ход, Ландшафт−30) и отметить цели"
           : "Разместить шаблон и отметить цели"}
     </button>` : "";
+  // Тест на отмену попадания Распыления (wdbc-p06s, стр. 166-170): в отличие
+  // от обычной атаки, Spray попадает автоматически по всем на пути шаблона —
+  // Уклонение/Парирование выше (defenseSection) относится к ПЕРВОНАЧАЛЬНОЙ
+  // цели атакующего броска, а не к каждому токену, отмеченному этим шаблоном
+  // (templateBtn выше). Кнопка — на каждого отмеченного отдельно: выбрать его
+  // токен на сцене и кликнуть, до того как жать «Применить урон» этому токену.
+  const sprayCancelBtn = (!isMelee && wp.spray) ? `
+    <div class="roll-defense-section">
+      <button class="wh-spray-cancel-btn" type="button">
+        ${rollIcon("run")} Тест на отмену (Распыление, Acrobatics A+0) — выберите токен цели
+      </button>
+      <div class="roll-defense-note">Свободное действие, Реакция не тратится. Если шаблон полностью накрывает Базу цели — годится только Отскок в исходе теста, не сама отмена (стр. 12).</div>
+    </div>` : "";
   // Дым (wdbc-wlwf) — отдельная кнопка: не накрывает целей, не зависит от
   // Взрывного/Распыления (может быть у оружия без них).
   const smokeBtn = (wp.smokeRating > 0) ? `
@@ -185,6 +198,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
   return `
   <div class="roll-apply-dmg-section">
     ${templateBtn}
+    ${sprayCancelBtn}
     ${smokeBtn}
     <div class="roll-section-head">Применить к цели <span class="roll-head-hint">— выберите токен</span></div>
     ${buttons}
@@ -205,7 +219,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   — она одна касается документов Foundry, этот модуль их не читает).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null }) {
+                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null, isMelee = false }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
@@ -214,12 +228,19 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
   const hitsNote = hitsCount > 1
     ? `<div class="roll-defense-note">Эта атака даёт ${hitsCount} попаданий — Успех защиты снимает их по одному за степень.</div>`
     : "";
+  // Стр. 12 (wdbc-9wvm): от атак, ПОЛНОСТЬЮ накрывающих Базу цели (Взрывное/
+  // Распыление), Уклонение допустимо только Отскоком, не обычной нивеляцией —
+  // проект не отслеживает геометрию Базы/шаблона (см. aoe-target.mjs), решает
+  // стол: только текстовое напоминание, кнопка Уклонения не гейтится кодом.
+  const blastRecoilNote = (!isMelee && !cannotDodge && (wp.blastRating > 0 || wp.spray))
+    ? `<div class="roll-defense-note">💥 Если шаблон полностью накрывает Базу цели — Уклонение допустимо только Отскоком (стр. 12), не нивеляцией.</div>`
+    : "";
   const poolBtn = pool && pool.hits > 0
     ? `<button class="wh-pool-spend-btn" type="button"
          data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
          data-dodge-mod="${dodgeMod}" data-parry-mod="${parryMod}"
          data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
-         data-force-reroll="${forcedDefenceReroll}">
+         data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}">
          💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
        </button>`
     : "";
@@ -231,7 +252,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -252,6 +273,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
       ${note && (dodgeMod !== 0 || parryMod !== 0 || cannotDodge)
         ? `<div class="roll-defense-note">${note}</div>` : ""}
       ${hitsNote}
+      ${blastRecoilNote}
     </div>`;
 }
 
@@ -458,7 +480,7 @@ export function attackCard({
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : ""}
-        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool }) : ""}
+        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee }) : ""}
         ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                                 vehicleSide, isMelee, burst, weaponRange,
                                                 attackerUuid, itemUuid, hordeHits })}

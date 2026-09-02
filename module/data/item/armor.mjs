@@ -96,7 +96,17 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       // armorType==="power". Это поле — ручной оверрайд для отдельных
       // предметов ВНЕ этого правила; самим правилом силовой брони уже не
       // используется ни одним предметом пака.
-      weightless:   new BooleanField({ initial: false, label: "Не учитывается в весе Ношения" })
+      weightless:   new BooleanField({ initial: false, label: "Не учитывается в весе Ношения" }),
+      // Психокостяное / иммунно к Reformation Song (wdbc-vwfk) — та же пара
+      // полей и та же логика заведения, что weapon.mjs::wraithbone/
+      // wraithboneImmune (см. комментарий там). Засеяно true только на
+      // Психокостяном Тканом Костюме — однозначно психокостяная броня по
+      // названию; остальные упоминания «психокост» во флейвор-тексте брони
+      // Азуриан (Варп-Паук, Горху, Провидца, Стража) описывают лишь ЧАСТЬ
+      // комплекта (напр. одни конечности) и сознательно не помечены — см.
+      // notes Reformation Song, требуют отдельного разбора по книге.
+      wraithbone:       new BooleanField({ initial: false, label: "Психокостяное" }),
+      wraithboneImmune: new BooleanField({ initial: false, label: "Иммунно к Reformation Song" })
     };
   }
 }

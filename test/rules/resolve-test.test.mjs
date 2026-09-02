@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules } from "../../module/rules/resolve-test.mjs";
+import { buildTestContext, resolveTest, rollModsFromRules, critModsFromRules, weaponPropsFromRules } from "../../module/rules/resolve-test.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 /** Снимок настоящих источников: тесты подменяют реестр и возвращают как было. */
@@ -175,6 +175,72 @@ describe("галочки из эффектов", () => {
   });
 });
 
+describe("weaponPropsFromRules: Особые Свойства Оружия от правила (wdbc-w8z4)", () => {
+  const rule = (effect, over = {}) => ({ id: "r", label: "Правило", effects: [effect], ...over });
+
+  it("grantWeaponProp в области attack даёт запись с ключом/рейтингом", () => {
+    const props = weaponPropsFromRules(
+      [rule({ kind: "grantWeaponProp", target: "attack", propKey: "proven", rating: 3 })],
+      buildTestContext({ kind: "attack", isMelee: true })
+    );
+    expect(props).toEqual([{ ruleId: "r", label: "Правило", key: "proven", rating: 3, rating2: 0 }]);
+  });
+
+  it("своя подпись эффекта важнее подписи правила — как у rollBonus", () => {
+    const props = weaponPropsFromRules(
+      [rule({ kind: "grantWeaponProp", target: "attack", propKey: "toxic", rating: 1, label: "Проклятая Метка" })],
+      buildTestContext({ kind: "attack", isMelee: true })
+    );
+    expect(props[0].label).toBe("Проклятая Метка");
+  });
+
+  it("область сопоставляется так же, как у rollBonus (weapon:melee/ranged)", () => {
+    const melee  = buildTestContext({ kind: "attack", weaponClass: "melee", isMelee: true, char: "ws" });
+    const ranged = buildTestContext({ kind: "attack", weaponClass: "pistol", isMelee: false, char: "bs" });
+    const rules  = [rule({ kind: "grantWeaponProp", target: "weapon:melee", propKey: "proven", rating: 2 })];
+    expect(weaponPropsFromRules(rules, melee)).toHaveLength(1);
+    expect(weaponPropsFromRules(rules, ranged)).toHaveLength(0);
+  });
+
+  it("другой вид эффекта не подхватывается — только grantWeaponProp", () => {
+    const props = weaponPropsFromRules([rule({ kind: "rollBonus", target: "attack", value: 10 })],
+      buildTestContext({ kind: "attack" }));
+    expect(props).toEqual([]);
+  });
+
+  it("неизвестный propKey — ошибка в консоль, запись не идёт в результат", () => {
+    const props = weaponPropsFromRules(
+      [rule({ kind: "grantWeaponProp", target: "attack", propKey: "nosuchprop" })],
+      buildTestContext({ kind: "attack" })
+    );
+    expect(props).toEqual([]);
+    expect(errors).toHaveBeenCalledOnce();
+  });
+
+  it("resolveTest отдаёт weaponProps вместе с mods/rerolls/crit", () => {
+    registerRuleSource("s", () => [
+      { id: "hexMarkedPrey.khorne", label: "Проклятая Метка: Кхорн", when: {},
+        effects: [{ kind: "grantWeaponProp", target: "attack", propKey: "proven", rating: 3 }] }
+    ]);
+    const { weaponProps } = resolveTest({ actor: actor(), kind: "attack" });
+    expect(weaponProps).toEqual([
+      { ruleId: "hexMarkedPrey.khorne", label: "Проклятая Метка: Кхорн", key: "proven", rating: 3, rating2: 0 }
+    ]);
+  });
+
+  it("cross-actor: правило читает метку на ctx.targetActor, тем же путём, что targetHasTrait", () => {
+    const markedTarget = { system: {}, items: [], getFlag: () => ({ god: "nurgle" }) };
+    const ctx = buildTestContext({ kind: "attack", isMelee: true, targetActor: markedTarget });
+    const rules = [{
+      id: "hexMarkedPrey.nurgle", label: "Проклятая Метка: Нургл", when: {},
+      effects: [{ kind: "grantWeaponProp", target: "attack", propKey: "toxic", rating: 1 }]
+    }];
+    expect(weaponPropsFromRules(rules, ctx)).toEqual([
+      { ruleId: "hexMarkedPrey.nurgle", label: "Проклятая Метка: Нургл", key: "toxic", rating: 1, rating2: 0 }
+    ]);
+  });
+});
+
 describe("critModsFromRules", () => {
   const rule = (side, value, target = "all") =>
     ({ id: "r", label: "Правило", effects: [{ kind: "critRangeMod", target, side, value }] });
@@ -209,6 +275,32 @@ describe("critModsFromRules", () => {
     registerRuleSource("s", () => [rule("success", 5, "skill:medicae")]);
     const { crit } = resolveTest({ actor: actor(), skill: "medicae" });
     expect(crit).toEqual({ successExtra: 5, failExtra: 0 });
+  });
+});
+
+describe("область Морали (wdbc-zepq)", () => {
+  const rule = (value = 30) => ({
+    id: "r", label: "Правило", effects: [{ kind: "rollBonus", target: "morale", value }]
+  });
+
+  it("«morale» попадает только в тест с ctx.morale=true", () => {
+    expect(rollModsFromRules([rule()], buildTestContext({ kind: "skill", char: "wp", morale: true }))).toHaveLength(1);
+    expect(rollModsFromRules([rule()], buildTestContext({ kind: "skill", char: "wp" }))).toHaveLength(0);
+  });
+
+  it("morale:true само по себе не подхватывает обычный char:wp — области разные", () => {
+    const wpRule = { id: "r", effects: [{ kind: "rollBonus", target: "char:wp", value: 10 }] };
+    expect(rollModsFromRules([wpRule], buildTestContext({ char: "wp", morale: true }))).toHaveLength(1);
+    // (char:wp и так подхватывает любой тест характеристики wp, morale тут не мешает)
+  });
+
+  it("переброс с областью morale собирается rerollsFromRules так же, как остальные области", () => {
+    const rerollRule = { id: "r", effects: [{ kind: "rollMode", target: "morale", mode: "keepBest", rolls: 2, label: "Владыка" }] };
+    const { rerolls } = resolveTest({ actor: actor(), morale: true });
+    expect(rerolls).toEqual([]); // без источника правил — пусто
+    registerRuleSource("s", () => [rerollRule]);
+    const withRule = resolveTest({ actor: actor(), morale: true });
+    expect(withRule.rerolls).toEqual([{ ruleId: "r", label: "Владыка", mode: "keepBest", rolls: 2, who: "self" }]);
   });
 });
 

@@ -580,5 +580,20 @@ export const ELITE_ARCHETYPES = [
     note: "Таблица Стадий Пакта (Стадия 0/1/2/3/4/5) — Макс. пациентов: 3/3/4/5/6/7; Аблативные Раны: 7/8/9/10/11/12; Сверхукрепление: нет/14/16/18/20/22; Regeneration: +1/+1/+2/+2/+3/+3; Бонус регенерации: нет/+10/+15/+20/+30/Авто; Инъекции: 7/7/9/11/12/14; Макс. Культивации: 3/3/4/5/6/7.",
     traits: ["Pact Protection / Защита Пакта (Мейстер)", "Savant of Life and Death / Савант Жизни и Смерти", "Life Virus / Вирус Жизни", "Cultivation / Культивация", "Deathless Oath / Несмертная Клятва"],
     talents: ["Maester Pact Stage 1 / Стадия Пакта 1 (Мейстер)", "Maester Pact Stage 2 / Стадия Пакта 2 (Мейстер)", "Maester Pact Stage 3 / Стадия Пакта 3 (Мейстер)", "Maester Pact Stage 4 / Стадия Пакта 4 (Мейстер)", "Maester Pact Stage 5 / Стадия Пакта 5 (Мейстер)"]
+  },
+
+  // ── Зверолюды ──
+  // wdbc-xxb7: 5 из 6 Дополнительных Талантов несут god-ответвления
+  // (Кхорн/Нургл/Слаанеш/Тзинч) прямо в тексте — читаются по Покровительству
+  // (system.patronGod), см. constants/patronage.mjs. Сам архетип патроном не
+  // ограничен (книга не требует Метки/Покровительства для становления).
+  {
+    name: "Beastman Shaman / Шаман Зверолюдей", god: "", race: "Зверолюд",
+    req: "W 40, I 35, Psyker, PR 4, Command+0, Schol.Lore (Occult)+0; 3000 xp",
+    charBonus: "+5 W, +5 F, +5 Cor",
+    freeTalents: "Peer (Племя), Resistance (Fear, Psychic Powers), Sacrifice",
+    gear: "",
+    traits: ["Ritual Bloodletting / Ритуал Кровопускания", "Symbol of Power / Символ Власти"],
+    talents: ["Primal Howl / Первобытный Вой", "Hex-Marked Prey / Проклятая Метка", "Rite of Self-Sacrifice / Ритуал Самопожертвования", "Warp-Tainted Aura / Аура Скверны", "Bone-Rune Etching / Костяная Рунопись", "Summon Herd Spirits / Призыв Духов Стада"]
   }
 ];

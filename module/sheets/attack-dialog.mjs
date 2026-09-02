@@ -26,6 +26,7 @@ import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpe
 import { _executeAttackRoll }                 from "../combat/attack.mjs";
 import { attackThreshold }                    from "../combat/attack-threshold.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
+import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRecoilSuppressor } from "../combat/armor-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
@@ -38,6 +39,7 @@ import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-trai
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
+import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
@@ -183,7 +185,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
   profIdx = Number.isFinite(Number(profIdx)) ? Number(profIdx) : -1;
 
-  // ── Особые свойства оружия (+ модификации + боеприпас) ───────────────────
+  // ── Правила из реестра (module/rules/) ───────────────────────────────────
+  //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
+  //   область эффекта «attack» или «weapon:<класс>». Актор цели нужен
+  //   правилам, чей отбор зависит от того, по кому бьют (targetHasTrait).
+  //   Считается ЗДЕСЬ, раньше свойств оружия ниже: grantWeaponProp-эффекты
+  //   (wdbc-w8z4 — доп. Особое Свойство от метки на цели/Дара и т.п.) обязаны
+  //   попасть в _entries ДО resolveWeaponPropsList/aggregateAuto, иначе wp
+  //   (урон/порог/памятки) не увидит их вовсе.
+  const attackCtx = {
+    kind: "attack",
+    weaponClass: sys.weaponClass,
+    isMelee,
+    char: charKey,
+    targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
+  };
+  const resolvedAttack = resolveTest({ actor, ...attackCtx });
+
+  // ── Особые свойства оружия (+ модификации + боеприпас + правило) ─────────
   const modFx       = getModEffects(actor, item);
   let _entries      = mergeWeaponPropEntries(item, modFx);
   // Свойства заряженного боеприпаса (стр. 203) — чтобы порог и памятки в
@@ -201,6 +220,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         rating2: typeof p === "string" ? 0 : (p.rating2 || 0) });
     }
   }
+  // Свойства от правила (wdbc-w8z4): уже отобраны по `when` конвейером теста
+  // выше — не галочка, применяются так же безусловно, как ammo/gripProps.
+  _entries = mergeExtraProps(_entries, { ruleProps: resolvedAttack.weaponProps });
   const wProps      = resolveWeaponPropsList(_entries);
   const wp           = aggregateAuto(wProps);
 
@@ -225,14 +247,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // ОДИН, а пилюли Хвата рисуются только при >1 варианте (gripBlockHtml ниже).
   const classDefaultGrip = ["pistol", "thrown"].includes(sys.weaponClass) ? "1р" : "2р";
   const baseGrips = (ownGrips.length || !extraGrips.length) ? ownGrips : [classDefaultGrip];
-  const gripList  = [...new Set([...baseGrips, ...extraGrips])];
+  // Рука Смерти (wdbc-hftn, стр. 46): сросшееся оружие — всегда «1р», никаких
+  // альтернативных хватов (Об/Бл/Кл/Мх/Хв) и никакого «2р» даже у профильно
+  // двуручного/тяжёлого — единственный пункт списка, пилюли Хвата не рисуются.
+  const gripList  = isFusedByHandOfDeath(item) ? ["1р"] : [...new Set([...baseGrips, ...extraGrips])];
   const primGrip  = gripList[0] || "";
   // S.b — нужен только для гейта Отдачи (стр. 166): персонаж с S.b меньше
   // рейтинга свойства не может выбрать "1р", должен стрелять "2р".
   const sBonus    = actor.system.characteristics?.s?.bonus ?? 0;
-  const gripKey   = techniqueOpts.gripKey
+  // Рука Смерти форсирует "1р" безусловно — игнорирует и techniqueOpts, и
+  // сохранённый hudGrip (тот же выбор, что currentMeleeGrip в hands.mjs).
+  const gripKey   = isFusedByHandOfDeath(item) ? primGrip
+                 : (techniqueOpts.gripKey
                  ?? item.getFlag?.("warhammer-dbc", "hudGrip")
-                 ?? primGrip;
+                 ?? primGrip);
   // Double Grip (wdbc-mu6v, стр. 62): держа пистолет "2р", Прицеливание
   // +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10 сверх обычного.
   // Вычисляется один раз от СТАРТОВОГО Хвата (как qTestMod/legionFit ниже) —
@@ -267,18 +295,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
     isGrenade: sys.weaponType === "grenade"
   });
-
-  // ── Правила из реестра (module/rules/) ───────────────────────────────────
-  //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,
-  //   область эффекта «attack» или «weapon:<класс>». Актор цели нужен
-  //   правилам, чей отбор зависит от того, по кому бьют (targetHasTrait).
-  const attackCtx = {
-    kind: "attack",
-    weaponClass: sys.weaponClass,
-    isMelee,
-    char: charKey,
-    targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null
-  };
 
   // ── Тактическая карта (wdbc-8k0i): дистанция/контакт/Укрытие по токенам ───
   // сцены. Меряется один раз при открытии окна (позиции не двигаются, пока
@@ -325,8 +341,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         { traits: mountTraits(attackerMount), linked: !!actor.system.mount?.linked }).hands
     : 0;
 
-  // Один обход правил актора на диалог: mods/rerolls/crit из одного результата.
-  const resolvedAttack = resolveTest({ actor, ...attackCtx });
+  // Один обход правил актора на диалог: mods/rerolls/crit/weaponProps из
+  // одного результата, посчитанного выше (до сборки _entries/wp).
   const ruleMods = ruleRollModsHtml(actor, attackCtx, resolvedAttack);
   // Перебросы от правил (Локус Буйства — «перебросить любой тест атаки»).
   // Отдельным блоком: складывать их не с чем, выбирается один.
@@ -505,9 +521,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // целиком у винтовки/длинной винтовки (weaponClass "basic") — своей
   // категории у «длинной винтовки» в схеме нет, обе лежат в "basic".
   const recoilSuppressed = !isMelee && sys.weaponClass === "basic" && hasRecoilSuppressor(actor);
+  // Рука Смерти форсирует "1р" безусловно (стр. 46) — Отдача её не блокирует,
+  // тот же принцип, что и подавители Отдачи, гейт снят наравне с ними.
+  const handOfDeathFused = isFusedByHandOfDeath(item);
   function computeRangedGripOptions() {
     return gripList.map(key => {
-      const recoilBlocked = key === "1р" && !recoilSuppressed
+      const recoilBlocked = key === "1р" && !recoilSuppressed && !handOfDeathFused
         && wp.recoilRating > 0 && sBonus < wp.recoilRating;
       return {
         key, label: RANGED_GRIPS[key]?.label || key,
@@ -1575,6 +1594,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
               ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
               ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
               ammoCondLabels: f.ammoSel.map(c => c.label),
+              // Свойства оружия от правила (wdbc-w8z4) — уже отобраны по `when`
+              // выше (resolvedAttack), attack.mjs только доливает их в _entries.
+              ruleProps: resolvedAttack.weaponProps,
               aimingLabel: (f.aiming !== "none" && !wp.noAim)
                 ? (f.aiming === "half" ? `Полу-прицеливание (+${f.aimBonus})` : `Полное прицеливание (+${f.aimBonus})`)
                 : "",

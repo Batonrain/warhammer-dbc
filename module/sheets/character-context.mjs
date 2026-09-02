@@ -29,7 +29,7 @@ import { buildMasqueOptions, getMasque }         from "../constants/harlequin-ma
 import { BODY_TYPES }                            from "../constants/body-map.mjs";
 import { isHaemonculus }                         from "../constants/haemonculus.mjs";
 import { HELMETLESS_EFFECTS, HELMETLESS_ACTION } from "../constants/power-armour-lore.mjs";
-import { actorCanFly, narrativeSpeed }           from "../combat/movement-actions.mjs";
+import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movement-actions.mjs";
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
@@ -68,12 +68,17 @@ import { hasSkillfulTorture }                    from "../apps/skillful-torture.
 import { hasAvatarOfSlaughter }                  from "../combat/avatar-of-slaughter.mjs";
 import { hasDreadWail }                          from "../combat/dread-wail.mjs";
 import { hasResplendentRaiment }                 from "../combat/resplendent-raiment.mjs";
+import { hasAdrenalineRush }                     from "../combat/adrenaline-rush.mjs";
 import { hasBoneSong }                           from "../combat/bone-song.mjs";
 import { hasPreservation }                       from "../combat/preservation.mjs";
 import { hasSongOfSwiftness }                    from "../combat/song-of-swiftness.mjs";
+import { hasReformationSong }                    from "../combat/reformation-song.mjs";
+import { hasBeastmanShamanTalent, hasBeastmanShamanTrait } from "../combat/beastman-shaman.mjs";
 import { MELEE_BASES, MELEE_CONTESTS, MELEE_STANCES } from "../constants/combat.mjs";
 import { hasActionEconomy, isEncounterActive, effectiveDefenseReactionMax,
          apSpendGate, reactionSpendGate }         from "../combat/action-economy.mjs";
+import { recoilRemaining, recoilLimit }           from "../combat/recoil-pool.mjs";
+import { hasSpiritTalk, spiritTalkGate } from "../combat/spirit-talk.mjs";
 
 // Метка характеристики с учётом мировоззрения: у Хаосита «Влияние» → «Бесчестие».
 export function charLabel(key, alignment) {
@@ -139,7 +144,11 @@ export function characterContext(actor) {
         ? { value: system.reactions?.defenseValue ?? 0, max: defenseMax }
         : null,
       encounterActive: isEncounterActive(),
-      exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive")
+      exposed: !!actor.getFlag("warhammer-dbc", "exposedAggressive"),
+      // Отскок (стр. 12, wdbc-9wvm): дистанция за Раунд, тот же честный
+      // «∞ вне боя» принцип, что у остальной экономики действий —
+      // recoilRemaining/recoilLimit сами отдают Infinity вне Encounter.
+      recoil: { value: recoilRemaining(actor), max: recoilLimit(actor) }
     };
     // Гейт кнопок ДО клика (wdbc-qjnk): движение (Полушаг/Шаг/Бег — Натиск
     // ОД на объявлении не тратит, см. apSpendGate) и ручная трата ae-spend-btn
@@ -152,12 +161,17 @@ export function characterContext(actor) {
       run:  apSpendGate(actor, 2)
     };
     context.aeSpendGate = { ap1: apSpendGate(actor, 1), ap2: apSpendGate(actor, 2), reaction: reactionSpendGate(actor) };
+    // Spirit Talk/Духовный Разговор (wdbc-q30d): гейт зависит от game.user.
+    // targets (единственная Техника)/ОД/боя/кулдауна сессии (spirit-talk.mjs).
+    if (hasSpiritTalk(actor)) context.spiritTalkGate = spiritTalkGate(actor);
   }
 
   // Кнопка «Полёт» на вкладке БОЙ (module/combat/movement-actions.mjs, стр.
   // 30) видна только с Чертой Flyer/Hoverer — та же проверка, что и в самой
   // кнопке Token HUD/меню, продублирована здесь только ради видимости кнопки.
   context.movementCanFly = actorCanFly(actor);
+  // Полушаг (wdbc-9wvm) — та же видимость «только с Талантом», что у Полёта.
+  context.movementCanHalfStep = actorHasHalfStep(actor);
 
   // Откуда число (wdbc-zbiz): мод-бейдж Полушага (= SPD×1) — тот же приём,
   // что charTotalTooltip у характеристик; breakdown строит documents/actor.mjs.
@@ -374,10 +388,22 @@ export function characterContext(actor) {
   context.hasDreadWail = hasDreadWail(actor);
   // Кнопка «Блистательные Одеяния» на вкладке БОЙ (wdbc-sk8s) — только владельцам Дара.
   context.hasResplendentRaiment = hasResplendentRaiment(actor);
+  // Кнопка «Прилив Адреналина» на вкладке БОЙ (wdbc-ks1r) — только владельцам Таланта.
+  context.hasAdrenalineRush = hasAdrenalineRush(actor);
   // Кнопки Певцов Кости на вкладке БОЙ (wdbc-sk8s) — только владельцам соответствующего Таланта.
   context.hasBoneSong = hasBoneSong(actor);
   context.hasPreservation = hasPreservation(actor);
   context.hasSongOfSwiftness = hasSongOfSwiftness(actor);
+  context.hasReformationSong = hasReformationSong(actor);
+  // Кнопки Шамана Зверолюдей на вкладке БОЙ (wdbc-xxb7) — только владельцам
+  // соответствующего Таланта/Черты; god-ответвление читается живьём по
+  // system.patronGod при клике, не здесь.
+  context.hasPrimalHowl = hasBeastmanShamanTalent(actor, "Primal Howl / Первобытный Вой");
+  context.hasWarpTaintedAura = hasBeastmanShamanTalent(actor, "Warp-Tainted Aura / Аура Скверны");
+  context.hasRiteOfSelfSacrifice = hasBeastmanShamanTalent(actor, "Rite of Self-Sacrifice / Ритуал Самопожертвования");
+  context.hasHexMarkedPrey = hasBeastmanShamanTalent(actor, "Hex-Marked Prey / Проклятая Метка");
+  context.hasBoneRuneEtching = hasBeastmanShamanTalent(actor, "Bone-Rune Etching / Костяная Рунопись");
+  context.hasRitualBloodletting = hasBeastmanShamanTrait(actor, "Ritual Bloodletting / Ритуал Кровопускания");
   context.showWorldOrigin = context.isAeldari && !context.isDrukhari;
   context.worldOptions   = buildWorldSelectOptions(system.world || "");
   context.bandOptions    = buildBandSelectOptions(system.band || "");

@@ -108,6 +108,34 @@ describe("щиты", () => {
   });
 });
 
+describe("Рука Смерти (wdbc-hftn, стр. 46) — всегда 1 рука/хват «1р»", () => {
+  it("мелейное двуручное, слитое — 1 рука вместо 2", async () => {
+    const w = weapon({ id: "hod1", system: { weaponClass: "melee", grips: "2р" } });
+    await w.setFlag("warhammer-dbc", "handOfDeathSource", "mut1");
+    expect(weaponHandsRequired(w)).toBe(1);
+    expect(currentMeleeGrip(w)).toBe("1р");
+  });
+  it("игнорирует сохранённый hudGrip (Об/Кл/…) на слитом оружии", async () => {
+    const w = weapon({ id: "hod2", system: { weaponClass: "melee", grips: "Об" } });
+    await w.setFlag("warhammer-dbc", "hudGrip", "Об");
+    await w.setFlag("warhammer-dbc", "handOfDeathSource", "mut1");
+    expect(currentMeleeGrip(w)).toBe("1р");
+    expect(weaponHandsRequired(w)).toBe(1);
+  });
+  it("дальнобойное двуручное (basic), слитое — 1 рука вместо 2, Отдача не мешает", async () => {
+    const w = weapon({ id: "hod3", system: {
+      weaponClass: "basic", grips: "2р",
+      weaponProps: [{ key: "recoil", rating: 8 }]
+    } });
+    await w.setFlag("warhammer-dbc", "handOfDeathSource", "mut1");
+    expect(weaponHandsRequired(w, actor([], {}, 0))).toBe(1);
+  });
+  it("не слитое оружие — правило не применяется", () => {
+    const w = weapon({ id: "hod4", system: { weaponClass: "melee", grips: "2р" } });
+    expect(weaponHandsRequired(w)).toBe(2);
+  });
+});
+
 describe("getHeldHand/setHeldHand — единый флаг поверх shieldHand/weaponHand", () => {
   it("новый флаг heldHand имеет приоритет", () => {
     const w = weapon({ id: "w2" });

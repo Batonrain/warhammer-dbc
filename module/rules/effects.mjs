@@ -19,6 +19,7 @@ export const EFFECT_KINDS = {
   fearRating:  ["value"],             // берётся максимум, не сумма
   grantItem:   ["uuid"],              // выдать предмет; `qty` необязателен
   critRangeMod:["target", "side", "value"], // шире диапазон Крит. Успеха/Провала
+  grantWeaponProp: ["target", "propKey"], // доп. Особое Свойство Оружия на эту атаку
   script:      ["code"]               // аварийный выход, см. docs/rules-format.md
 };
 

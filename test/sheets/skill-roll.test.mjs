@@ -82,6 +82,48 @@ describe("сложение галочек в диалоге броска", () =>
   });
 });
 
+// Lord of the Exodites (wdbc-zepq): встречные Запугивание/Пытки — тесты
+// Морали по книге. Диалог не знает заранее, встречным ли будет тест, поэтому
+// область "morale" включается для любого броска этими двумя навыками.
+describe("область Морали для Запугивания/Допроса (wdbc-zepq)", () => {
+  it("правило с областью morale видно в диалоге Запугивания, но не Медицины", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "x", label: "Аура Владыки", effects: [{ kind: "rollBonus", target: "morale", value: 30 }] }
+    ]);
+    try {
+      sheet({})._showSkillRollDialog("Запугивание", 40, "wp", false, { skill: "intimidate" });
+      expect(captured.dialog.content).toContain("Аура Владыки");
+
+      sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" });
+      expect(captured.dialog.content).not.toContain("Аура Владыки");
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("то же правило видно и для Допроса (interrogate)", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "x", label: "Аура Владыки", effects: [{ kind: "rollBonus", target: "morale", value: 30 }] }
+    ]);
+    try {
+      sheet({})._showSkillRollDialog("Допрос", 40, "int", false, { skill: "interrogate" });
+      expect(captured.dialog.content).toContain("Аура Владыки");
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+});
+
 describe("строка 10 сверки: снятый шлем Астартес", () => {
   it("+5 к тесту на основе Товарищества", () => {
     expect(sheet({ helmetlessActive: true })._getHelmetlessBonus("fel")).toBe(5);

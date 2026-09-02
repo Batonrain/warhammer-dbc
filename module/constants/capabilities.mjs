@@ -599,6 +599,143 @@ export const CAPABILITIES = {
     source: "Rune Strike / Рунный Удар", reader: ""
   },
 
+  // ── Шаман Зверолюдей (wdbc-xxb7, DoomBC — Психокеры-Жабы, стр. 102-104) —
+  //    книжный принцип: «Таланты Шамана Зверолюда чутка изменяются при
+  //    наличии Метки одного из богов» (Кхорн/Нургл/Слаанеш/Тзинч),
+  //    5 из 6 Талантов. Метка/простое Покровительство не различаются —
+  //    гейт when.patronGod (module/rules/mech-when.mjs, entryWhenOk) читает
+  //    ЕДИНОЕ actor.system.patronGod, ту же Покровительство, которым уже
+  //    пользуется вся система (constants/patronage.mjs) — отдельного поля
+  //    «Метка» на акторе нет, книжный порог Inf 70+ для «просто
+  //    Покровительства» тоже не смоделирован. Каждый Талант несёт в
+  //    Конструкторе одну kind:"capability" запись БЕЗ гейта (базовый эффект)
+  //    и по одной с when.patronGod на god-ответвление — так лист актора
+  //    показывает только реально доступную сейчас ветку, а не все четыре
+  //    сразу. Само срабатывание (кнопка/бросок/наложение состояния на цель)
+  //    не автоматизировано — общий паттерн проекта для триггерных
+  //    способностей вне статичных видов Конструктора, см. capability-стабы
+  //    «Мёртвое Могущество» Иннари выше в этом файле.
+  "aura.beastmanShaman.primalHowl.base": {
+    label: "Полное Действие раз в бой: союзники-зверолюди/мутанты в радиусе Cor.b×10 м получают +10 S/+10 T до начала следующего Хода персонажа, враги считают персонажа источником Fear (+1)",
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): раз/бой, радиус Cor.b×10 м. РЕАЛЬНО: временный ActiveEffect Fear(+1) на шамана и +10 S/+10 T каждому союзнику (system.characteristics.*.totalFx, снимается по границе Хода шамана, clearBeastmanShamanTempEffects). НЕ смоделировано: сам факт «враг считает персонажа источником Fear» как условие для его собственных тестов."
+  },
+  "aura.beastmanShaman.primalHowl.khorneVariant": {
+    label: "Кхорн: бонус к T заменяется на +10 WS, рукопашный урон союзников +4, союзники без Frenzy входят в Ярость (с Frenzy — за Свободное Действие)",
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 S/+10 WS (замена T→WS) каждому союзнику, союзники без Frenzy входят в Ярость (system.inRage). +4 Dmg рукопашным атакам — нет безопасного ключа эффекта для урона, не смоделировано."
+  },
+  "aura.beastmanShaman.primalHowl.nurgleVariant": {
+    label: "Нургл: вместо бонуса к S — +1d10 аблативных ран, переброс проваленных тестов сопротивления движению",
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 T (замена S→T) + реальные +1d10 Аблативных Ран (system.wounds.ablative/ablativeMax) каждому союзнику. Переброс тестов сопротивления движению — не смоделирован."
+  },
+  "aura.beastmanShaman.primalHowl.slaaneshVariant": {
+    label: "Слаанеш: вместо обычных бонусов — +10 A до конца следующего Хода и снятие 1 Усталости; враги, провалившие тест на Страх, получают 1 Усталость",
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 A (вместо S/T) + реальное −1 Усталость (system.fatigue.value) каждому союзнику. Усталость проваливших Страх врагов — не смоделирована (тест на Страх не запускается)."
+  },
+  "aura.beastmanShaman.primalHowl.tzeentchVariant": {
+    label: "Тзинч: вместо обычных бонусов — +10 P союзникам; враги получают неизбегаемое попадание Hallucinogenic(1); варп-феномены до конца следующего хода получают +20",
+    source: "Primal Howl / Первобытный Вой", reader: "module/combat/beastman-shaman.mjs — applyPrimalHowl(): РЕАЛЬНО — временный ActiveEffect +10 P (вместо S/T) каждому союзнику; Hallucinogenic(1) врагам — кнопка, переиспользующая настоящий движок Особых Свойств Оружия (combat/weapon-properties.mjs::buildTargetEffectButtons), тест и наложение состояния идут по нему, не по копии. +20 к варп-феноменам — не смоделировано."
+  },
+  "mark.beastmanShaman.hexMarkedPrey.base": {
+    label: "Полудействие, Соревновательный тест W+0 vs W+10: цель получает Метку Проклятого до конца боя, союзники-зверолюди получают +15 на атаки против неё",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey() (тест/флаг метки на цели) + rules/library/beastman-shaman.mjs::BEASTMAN_SHAMAN_RULES (правило \"beastmanShaman.hexMarkedPrey.allyBonus\", предикат rules/predicates.mjs::hexMarkedPreyAllyBonus) — РЕАЛЬНО: +15 к тесту Атаки любого зверолюда-союзника (effectiveRace(actor.system)===\"beastman\") по помеченной цели, тот же общий реестр правил, что Avatar of Slaughter. Проверять disposition/конкретную \"союзность\" не может — predicates.mjs не видит canvas, гейтит по расе."
+  },
+  "mark.beastmanShaman.hexMarkedPrey.khorneVariant": {
+    label: "Кхорн: атаки союзников по цели получают Proven(3); крит с R-уроном дополнительно вызывает кровотечение",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/rules/library/beastman-shaman.mjs::BEASTMAN_SHAMAN_RULES (правило \"beastmanShaman.hexMarkedPrey.khorneProven\", grantWeaponProp, wdbc-w8z4) — РЕАЛЬНО: Proven(3) сам доливается в Особые Свойства атак союзников-зверолюдей по цели. Доп. кровотечение на крите с R-уроном — не смоделировано."
+  },
+  "mark.beastmanShaman.hexMarkedPrey.nurgleVariant": {
+    label: "Нургл: атаки союзников по цели получают Toxic(1); выживший при непоглощённом уроне провал T+10 в конце боя = Гниль Нургла",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/rules/library/beastman-shaman.mjs::BEASTMAN_SHAMAN_RULES (правило \"beastmanShaman.hexMarkedPrey.nurgleToxic\", grantWeaponProp, wdbc-w8z4) — РЕАЛЬНО: Toxic(1) сам доливается в Особые Свойства атак союзников-зверолюдей по цели. Тест на Гниль Нургла в конце боя — не смоделирован."
+  },
+  "mark.beastmanShaman.hexMarkedPrey.slaaneshVariant": {
+    label: "Слаанеш: цель не может добровольно удаляться от шамана дальше 20 м, штраф −10 Dodge/Parry против его атак; урон шамана цели восстанавливает ему 1d3 Раны",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; штраф Dodge/Parry и лечение шамана уроном по цели — не смоделированы."
+  },
+  "mark.beastmanShaman.hexMarkedPrey.tzeentchVariant": {
+    label: "Тзинч: выбранная характеристика цели (S/T/A/I/W) −10 на время метки; провал цели по ней даёт шаману +5 к следующей манифестации психосилы",
+    source: "Hex-Marked Prey / Проклятая Метка", reader: "module/combat/beastman-shaman.mjs — applyHexMarkedPrey(): текст в карточке; штраф −10 к характеристике цели и бонус к манифестации — не смоделированы."
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.base": {
+    label: "Полудействие: 1d5+1 непоглощаемого R Dmg себе в руку → +2 эPR до конца следующего Хода, ближний бой получает Tainted на тот же срок",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): реально наносит 1d5+1 непоглощаемого урона (rules/wounds.mjs::applyWoundLoss). +2 эPR/Tainted до конца следующего Хода — не смоделированы."
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.khorneVariant": {
+    label: "Кхорн: вместо эPR — бонус к Dmg = непоглощённый урон ×2; урон можно взять максимальным (6) без броска",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется по-прежнему; бонус к Dmg=урон×2 — только текст в карточке."
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.nurgleVariant": {
+    label: "Нургл: эPR-бонус −1, но в начале следующего хода восстанавливает бPR Ран и центрирует на себе 1d10+T.b C(Tx), Pen 0, Blast(T.b), Toxic(1)",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется; регенерация бPR Ран и шаблон Toxic — не смоделированы, текст в карточке."
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.slaaneshVariant": {
+    label: "Слаанеш: эPR-бонус −1, но +10 A, +2 Реакции и атака за Реакцию (штраф −15, вне лимита, только утончённым оружием/Bl 2)",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется; +10 A/+2 Реакции/атака за Реакцию — не смоделированы."
+  },
+  "selfSacrifice.beastmanShaman.riteOfSelfSacrifice.tzeentchVariant": {
+    label: "Тзинч: дополнительно +20 к манифестации следующей психосилы; во время ритуала — ускорение и +20 к самому ритуалу",
+    source: "Rite of Self-Sacrifice / Ритуал Самопожертвования", reader: "module/combat/beastman-shaman.mjs — applyRiteOfSelfSacrifice(): самоурон применяется; бонус к манифестации психосилы — не смоделирован."
+  },
+  "aura.beastmanShaman.warpTaintedAura.base": {
+    label: "Полудействие раз в час: аура 20 м до начала следующего Хода — не-еретики проваливший W−10 получают 1 Cor, союзники в ауре +20 к Сопротивлению (пока нет метки)",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): раз/час (worldTime), радиус 20 м, реальный тест W−10 каждому врагу, провал → +1 Порча (system.corruption.value). +20 Сопротивления союзникам — не смоделирован."
+  },
+  "aura.beastmanShaman.warpTaintedAura.khorneVariant": {
+    label: "Кхорн: провалившие тест враги немедленно проходят тест на Fear(4)",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются как в базовом эффекте; Fear(4) провалившим — только текст в карточке."
+  },
+  "aura.beastmanShaman.warpTaintedAura.nurgleVariant": {
+    label: "Нургл: провалившие враги Задыхаются (−30 на Удушение) в ауре; герметичная броня — попадание Corrosive(Cor.b)",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; провалившие РЕАЛЬНО получают Состояние «Удушье» (system.conditions.suffocating, тот же CONDITIONS_DEF/токен-статус, что обычное книжное Удушье). Corrosive от герметичной брони — не смоделирован (нужен контекст реального попадания/брони)."
+  },
+  "aura.beastmanShaman.warpTaintedAura.slaaneshVariant": {
+    label: "Слаанеш: провалившие враги очарованы — не атакуют шамана/стадо на Провалы Раунда, пока не атакованы первыми",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; очарование врагов — не смоделировано."
+  },
+  "aura.beastmanShaman.warpTaintedAura.tzeentchVariant": {
+    label: "Тзинч: провалившие враги смещаются на PR метров по горизонтали; внутри препятствия — 1d5 непоглощаемого X урона в торс и выталкивание",
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): тест/Порча применяются; смещение целей на PR метров — не смоделировано (нет геометрии в этой функции)."
+  },
+  "rune.beastmanShaman.boneRuneEtching.base": {
+    label: "Создаёт руну (1 час, тест Schol.Lore(Occult)−20 + Trade−20, 1 Очко Бесчестия) с одной известной психосилой; в бою — Свободное Действие/Реакция, манифестация с Успехами = бPR на момент создания; лимит Cor.b рун",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.khorneVariant": {
+    label: "Кхорн: вместо психосилы — нуль-поле радиусом Cor.b×3 м на Cor.b раундов, не вредящее персонажу",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.nurgleVariant": {
+    label: "Нургл: психосила получает Toxic(2); шаблон/аура даёт Toxic(1) всем в нём; союзник от руны получает +PR аблативных ран",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.slaaneshVariant": {
+    label: "Слаанеш: после использования руну можно немедленно восстановить за Очко Бесчестия",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "rune.beastmanShaman.boneRuneEtching.tzeentchVariant": {
+    label: "Тзинч: при успешном создании — бросок на феномен (бонус PR×3, PR×2 на прорыв), запирается в руне и высвобождается на дистанции PR+W.b+Cor.b м",
+    source: "Bone-Rune Etching / Костяная Рунопись", reader: ""
+  },
+  "ritual.beastmanShaman.summonHerdSpirits.grantsRitual": {
+    label: "Открывает доступ к Ритуалу «Summon Herd Spirits / Призыв Духов Стада» (warhammer-dbc.rituals)",
+    source: "Summon Herd Spirits / Призыв Духов Стада", reader: ""
+  },
+  "trigger.beastmanShaman.ritualBloodletting.onKillBuff": {
+    label: "Убив живое существо с душой — Свободное Действие: персонаж и союзники-зверолюди в радиусе F м получают +5 ко всем тестам и иммунитет к Страху/Подавлению до начала следующего Хода (×2, если жертва была особо важной; не складывается)",
+    source: "Ritual Bloodletting / Ритуал Кровопускания", reader: "module/combat/beastman-shaman.mjs — applyRitualBloodletting(): реальный радиус F.b и список союзников в чат, бонус (5/10 за важную жертву) — информационный флаг актора, не интегрирован в производные тесты (тот же уровень, что «Мёртвое Могущество» Иннари выше)."
+  },
+  "psyfocus.beastmanShaman.symbolOfPower.hornFocusAndPainBoost": {
+    label: "Рог как Good.Q пси-фокус (10 мин на изготовление) + врождённый Comm.Q пси-фокус; при манифестации может добровольно получить 1d5+2 R Dmg Pen∞ за +2 эPR, тогда манифестация всегда вызывает варп-феномен +10; Natural Weapons → Deadly Natural Weapons + отдельный трейт рогов Deadly Natural Weapons (бPR, Рога) со свойством Tainted, пока есть покровительство",
+    source: "Symbol of Power / Символ Власти", reader: "module/combat/beastman-shaman.mjs — applySymbolOfPowerGrant(): РЕАЛЬНО заменяет Natural Weapons на Deadly Natural Weapons и добавляет отдельный трейт рогов Deadly Natural Weapons (рейтинг = бPR персонажа на момент получения, не отслеживает рост ПР дальше). НЕ смоделировано: психо-фокус из рога/врождённый Comm.Q фокус, добровольная боль за +2 эPR, авто-феномен +10, свойство Tainted на рога, покровительство-условная проверка."
+  },
+  "skill.beastmanShaman.symbolOfPower.aversionAndCyberneticsExemption": {
+    label: "Навыки Lore/Trade не считаются враждебными от Aversion to Order (обычные правила цены), нет штрафов от кибернетики/имплантов",
+    source: "Symbol of Power / Символ Власти", reader: ""
+  },
+  "trait.beastmanShaman.symbolOfPower.loseStepchildrenOfTheGods": {
+    label: "Персонаж лишается трейта Stepchildren of the Gods",
+    source: "Symbol of Power / Символ Власти", reader: "module/combat/beastman-shaman.mjs — applySymbolOfPowerGrant() (Hooks.on(\"createItem\") в warhammer-dbc.mjs): РЕАЛЬНО снимает Stepchildren of the Gods при получении Symbol of Power, тот же безопасный приём удаления по имени, что race-def removesTraits (apps/races.mjs)."
+  },
+
   // ── Таланты Певцов Кости (DoomBC — Аэльдари, стр. 11) — Фаза 2,
   //    book-verified 23.08.2026. Все — активные F.b-раз-за-сессию Полные
   //    Действия на психокостяную технику, не разовый бонус на взятие.
@@ -618,7 +755,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.songOfReformation.restoreOrDestroy": {
     label: "До F.b психокостяных вещей получают Восстановление или Разрушение (оружие/броня/снаряжение), до 3 раз за сессию",
-    source: "Reformation Song / Песня Изменений", reader: ""
+    source: "Reformation Song / Песня Изменений",
+    reader: "module/combat/reformation-song.mjs (wdbc-vwfk) — applyReformationSong, per-target пикер в apps/reformation-song-dialog.mjs (фильтр по item.system.wraithbone/wraithboneImmune), кнопка в sheets/tabs/combat.mjs. Полностью автоматизировано: AP брони (armorMod ±F.b/+½F.b до конца боя), глушение чужих модов/талантов на разрушенной броне (armor-mods.mjs::getInstalledArmorMods + reformationSongSuppressMods) и обнуление актёрского пула Аблативных Ран на то же «до конца боя», Reinforced оружия (до конца боя), заклинивание оружия (weapon.jammed/jamLockedRound — впервые в проекте реальное состояние, не разовая строка в чате; combat/attack.mjs пишет его при обычном срабатывании jamThreshold, снимается weapon-properties.mjs::clearWeaponJam), качество Снаряжения (шаг ±1 до конца боя), флаги weapon.destroyed/gear.malfunctioning (тот же паттерн, что armor.breached). Осталось решением за столом только само наполнение флагов wraithbone/wraithboneImmune для новых/самодельных предметов — готовой UI-галочки нет (тот же прецедент, что item.system.drukhari)."
   },
   "wraithbone.reshapeForCraft.halfSuccessesBack": {
     label: "Разрушает свой психокостяной предмет ради ½ успехов крафта на новый",
@@ -631,7 +769,8 @@ export const CAPABILITIES = {
   },
   "wraithbone.spiritTalk.possessConstruct": {
     label: "Захватывает контроль над психокостяным конструктом на F.b раундов (встречный тест на враждебном), до 3 раз за сессию",
-    source: "Spirit Talk / Духовный Разговор", reader: ""
+    source: "Spirit Talk / Духовный Разговор",
+    reader: "module/combat/spirit-talk.mjs (wdbc-q30d) — triggerSpiritTalk (кнопка на вкладке БОЙ, 2 ОД, до 3 раз за сессию), applySpiritTalkPossession/processSpiritTalkRoundStart встраивают Combatant цели в очередь ходов сразу за кастером на F.b раундов (та же инфраструктура extra-turn.mjs/паттерн раундового хука, что Last Actor/Middle of the Hunt, wdbc-1rno). Дальность W м (WP+0, measureTokens/edgeM — та же геометрия, что у стрельбы) и предел размера «не больше призрачного лорда» (Wraithlord Size 2, Книга Эльдар: Техника) — гейт блокирует кнопку. Манифестация психосил через захваченный конструкт — rules/psychic-vessel.mjs (общий примитив с Путём Силы Псайбер-Фамильяра, PSY_PATHS.familiar), заметка Пути называет носителя по имени. НЕ смоделировано: характеристики/таланты/навыки персонажа на самом конструкте (у Техники в схеме вообще нет characteristics — подтверждено книжным stat-блоком Призрачного Стража/Лорда, тот же AP/Структура/Размер формат, что у прочей техники — заводить временный оверлей ради одной находки не оправдано, эффект остаётся на столе); сторона цели встречного теста WP+0 (Техника не несёт характеристику Воли) — автоматизирована только сторона персонажа (WP+0/Fel+10 на выбор системы, лучшее), исход подтверждает стол диалогом (тот же приём, что Deadly Effectiveness); сама дальность манифестации психосилы через носителя (sheets/tabs/psychic.mjs вообще не мерит дистанцию даже для собственной позиции кастера)."
   },
   "wraithbone.summonStelthene": {
     label: "Может призывать Стелхене так же, как психокость",
@@ -834,8 +973,11 @@ export const CAPABILITIES = {
     source: "Chosen Victim / Выбранная Жертва", reader: ""
   },
   "exodite.forestLord.lordOfTheExodites": {
-    label: "Черта Лесного Владыки. Создаёт ауру радиусом F.b×5: союзники получают +30 на Мораль/Страх/Шок/Подавление и раз в раунд перебрасывают их;",
-    source: "Lord of the Exodites / Повелитель Экзодитов", reader: ""
+    label: "Черта Лесного Владыки. Аура F.b×2: союзники +30 к тестам Морали и переброс. Полное действие: выводит до F.b союзников из Страха/Шока/Подавления.",
+    source: "Lord of the Exodites / Повелитель Экзодитов",
+    reader: "packs-src/aeldari-traits/…/Lord_of_the_Exodites (mechanics: aura+reroll), " +
+      "module/combat/lord-of-exodites.mjs (clearMoraleConditions/rallyExoditeSquad/applyLordOfExoditesFailPenalty), " +
+      "module/sheets/tabs/command.mjs::rollCommand (declaredSuccesses)"
   },
   "exodite.forestLord.rightToChoose": {
     label: "Персонаж может менять местами эффекты талантов The Beginning of the Hunt, The Middle of the Hunt и The End of the Hunt (например,",
@@ -2214,7 +2356,8 @@ export const CAPABILITIES = {
   // ── Избегание
   "dodge.core.adrenalineRush": {
     label: "Один раз за бой или сцену персонаж может потратить Очко Бесчестия, чтобы восстановить все потраченные Реакции и потраченную дистанцию отскок…",
-    source: "Adrenaline Rush / Прилив Адреналина", reader: ""
+    source: "Adrenaline Rush / Прилив Адреналина",
+    reader: "module/combat/adrenaline-rush.mjs (wdbc-ks1r) — hasAdrenalineRush/adrenalineRushAvailable/applyAdrenalineRush восстанавливают Реакции; «дистанция отскока» не трекается движком, только строка в чат-карточке"
   },
   "dodge.core.bladeReader": {
     label: "Персонаж может перебрасывать встречные тесты против Финта; переброс (но не начальный бросок) делается через Scrutiny(WS). Не работает,",
@@ -6028,11 +6171,6 @@ export const CAPABILITIES = {
   },
   // ── Дары Богов Хаоса (wdbc-1rno) — активные/условные способности без
   // подходящего поля Конструктора, заглушка данными, reader пуст сознательно ──
-  "gift.khorne.avengersStride": {
-    label: "Раз в Раунд: получив урон от Ненавистного врага в радиусе полудвижения — телепорт-сближение + рукопашная атака без свободных атак",
-    source: "Дар Кхорн (Avenger's Stride)",
-    reader: ""
-  },
   "gift.khorne.bloodAnointed": {
     label: "Не перегружающийся щит-дефлектор 1-44 (1-88 в крови) от стрелковых атак/взрывов, если не стрелял и связан/шёл к врагу",
     source: "Дар Кхорн (Blood-Anointed)",
@@ -6046,16 +6184,6 @@ export const CAPABILITIES = {
   "gift.khorne.bronzeMyrmidon": {
     label: "Попадания в сочленения/визоры = попадания в конечности/голову (себе и скакуну/технике при верховой/пилотируемой) — редиректа попаданий в локацию в системе нет, гейтить нечем (Трейт Machine(+½Cor.b) в Ярости вынесен отдельной записью kind:trait/when.requireRage, wdbc-wyr3)",
     source: "Дар Кхорн (Bronze Myrmidon)",
-    reader: ""
-  },
-  "gift.khorne.challengeOfHonour": {
-    label: "Свободное действие+1 Бесчестия: вызов на дуэль — вмешательство третьих лиц блокируется тестом W-30, щит 1-88 от посторонних атак",
-    source: "Дар Кхорн (Challenge of Honour)",
-    reader: ""
-  },
-  "gift.khorne.charioteer": {
-    label: "Полное действие+1 Бесчестия: встречный тест Cor+20 захватывает боевую технику, сливаясь с ней (WS/BS/A/I/P/W, все Навыки пилотирования +30)",
-    source: "Дар Кхорн (Charioteer)",
     reader: ""
   },
   "gift.khorne.countenanceOfKhorne": {
@@ -6083,11 +6211,6 @@ export const CAPABILITIES = {
     source: "Дар Кхорн (Father of Battle)",
     reader: ""
   },
-  "gift.khorne.fontOfBlood": {
-    label: "Полное действие+1 Бесчестия, стоя в боевой крови: телепорт в другую видимую лужу крови, выход в контакте с врагом = Натиск",
-    source: "Дар Кхорн (Font of Blood)",
-    reader: ""
-  },
   "gift.khorne.handOfKhorne": {
     label: "Основная рука: +8 AP, ×2 S.b в атаках ею, +2 Размера при парировании этой рукой; стрелковые атаки этой рукой автопровальны — см. также ОТЛОЖЕНО в памяти (слишком составной/локальный для текущих полей)",
     source: "Дар Кхорн (Hand of Khorne)",
@@ -6096,21 +6219,6 @@ export const CAPABILITIES = {
   "gift.khorne.knightOfKhorne": {
     label: "Демонический скакун (Джаггернаут Кхорна) в услужении — призыв ритуалом, Демоническое Владычество, вселение в технику даёт +8 AP от стрельбы и доп. кубик урона в ближнем бою/Таране",
     source: "Дар Кхорн (Knight of Khorne)",
-    reader: ""
-  },
-  "gift.khorne.livingWeapon": {
-    label: "Полудействие+1 Бесчестия: до конца боя оружие/импровизированное оружие в руке нельзя выбить, +10 WS, Баланс до 0, Pen до Cor.b, теряет Primitive/получает Reinforced (импровизированное: без штрафа −20, +1 кубик, ×2 S.b)",
-    source: "Дар Кхорн (Living Weapon)",
-    reader: ""
-  },
-  "gift.khorne.priestOfBloodshed": {
-    label: "Раз за Раунд: в 8м от чемпиона Кровотечение/смерть в бою другого персонажа даёт 1 Очко Бесчестия (сгорает в конце следующего Хода)",
-    source: "Дар Кхорн (Priest of Bloodshed)",
-    reader: ""
-  },
-  "gift.khorne.purityOfBattle": {
-    label: "Полное действие (даже в Ярости)+1 Бесчестия: сферическая волна Cor.b м снимает боевые наркотики/психосилы/техночудеса со всех в радиусе, эффекты нельзя наложить повторно до конца боя",
-    source: "Дар Кхорн (Purity of Battle)",
     reader: ""
   },
   "gift.khorne.purityOfWrath": {
@@ -6171,16 +6279,6 @@ export const CAPABILITIES = {
   "gift.nurgle.countenanceOfNurgle": {
     label: "+20/+30 социальные тесты с больными/культистами Нургла, −10 с элитой; демоны Нургла ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход",
     source: "Дар Нургл (Countenance of Nurgle)",
-    reader: ""
-  },
-  "gift.nurgle.destructiveSwarm": {
-    label: "Раз за бой, свободное действие: атака (рукопашная/стрелковая 30м) 1d10 E Toxic(½Cor.b), игнорирует негерметичную броню; альтернативно −30 по себе от размытия силуэта; повторные использования наносят себе растущий урон",
-    source: "Дар Нургл (Destructive Swarm)",
-    reader: ""
-  },
-  "gift.nurgle.devourerOfSuffering": {
-    label: "Полудействие: касание страдающего от Критического Эффекта подавляет его до конца боя/сцены, восстанавливает 1 ранее потраченное Очко Бесчестия",
-    source: "Дар Нургл (Devourer of Suffering)",
     reader: ""
   },
   "gift.nurgle.fatalism": {
@@ -6338,11 +6436,6 @@ export const CAPABILITIES = {
     source: "Дар Слаанеш (Hermaphrodite)",
     reader: ""
   },
-  "gift.slaanesh.idolOfVanity": {
-    label: "Раз в Раунд: +5 к тесту за видящего подчинённого/Миньона (+10 за орду) ценой −10 всем тестам этого подчинённого/Миньона/орды до след. Хода чемпиона; засекается пси-чутьём",
-    source: "Дар Слаанеш (Idol of Vanity)",
-    reader: ""
-  },
   "gift.slaanesh.immortalBeauty": {
     label: "Тяжело/критически ранен или потерял часть тела — Трейт Regeneration(1); легко ранен — косметическое заживление без восстановления Ран — гейт по тиру Ран не поддержан entry.when (см. wdbc-wyr3/predicates.mjs woundTier)",
     source: "Дар Слаанеш (Immortal Beauty)",
@@ -6361,11 +6454,6 @@ export const CAPABILITIES = {
   "gift.slaanesh.lordOfSloth": {
     label: "Иммунитет к пост-эффектам/зависимостям от наркотиков; никаких негативных эффектов от еды (включая яды в пище); не набирает вес от обжорства",
     source: "Дар Слаанеш (Lord of Sloth)",
-    reader: ""
-  },
-  "gift.slaanesh.narcissus": {
-    label: "Первый раз за Ход видя своё отражение: W+30 — Успех даёт 1 Очко Бесчестия (сгорает к след. Ходу), Провал — Ступор 1 Раунд; полудействие рассмотреть себя в бликах — Awareness+10",
-    source: "Дар Слаанеш (Narcissus)",
     reader: ""
   },
   "gift.slaanesh.nobleBearing": {
@@ -6398,11 +6486,6 @@ export const CAPABILITIES = {
     source: "Дар Тзинч (Akashic Library)",
     reader: ""
   },
-  "gift.tzeentch.cauldronOfFlesh": {
-    label: "Полное действие+1 Бесчестия: труп (≤1ч) в текучую массу с Ранами=½макс.Ран умершего (поглощает другие трупы); полудействие тратит Раны массы на лечение/регенерацию частей тела союзников в 2м (5 Ран за часть), даёт им перм. −5 (макс −Cor.b×5) на встречные тесты/атаки против чемпиона",
-    source: "Дар Тзинч (Cauldron of Flesh)",
-    reader: ""
-  },
   "gift.tzeentch.countenanceOfTzeentch": {
     label: "+10/+30 Deceive/Scrutiny (общие/против союзников); демоны Тзинча ниже Герольда признают авторитет при Inf 30+; +1 Бесчестия: Страх 3 на ход",
     source: "Дар Тзинч (Countenance of Tzeentch)",
@@ -6428,29 +6511,9 @@ export const CAPABILITIES = {
     source: "Дар Тзинч (False Witness)",
     reader: ""
   },
-  "gift.tzeentch.flameOfSouls": {
-    label: "Раз в Раунд: убийство чемпионом/Миньоном/подчинённым — 1 Очко Бесчестия (3 за незамеченную цель, сгорает к след. Ходу); трата доп. очков увеличивает урон одного попадания на 1d10",
-    source: "Дар Тзинч (Flame of Souls)",
-    reader: ""
-  },
-  "gift.tzeentch.gatekeeper": {
-    label: "Феномен/Прорыв/Отвращение Варпа в Cor м — автознание результата; Реакция: переброс 1d100 вместо начального; доп. 1d100 за каждое потраченное Очко Бесчестия, выбор любого результата",
-    source: "Дар Тзинч (Gatekeeper)",
-    reader: ""
-  },
-  "gift.tzeentch.geniusOfLoki": {
-    label: "9 минут медитации: вселяет демона Тзинча в местность (радиус Cor×5м), раз в Ход тот делает участок 9м Трудным Ландшафтом или Страхом 3",
-    source: "Дар Тзинч (Genius of Loki)",
-    reader: ""
-  },
   "gift.tzeentch.hiddenThreat": {
     label: "+1 Бесчестия: следующая атака получает тип Незримое, тесты пси-чутья/ноосканирования на засечение получают −50",
     source: "Дар Тзинч (Hidden Threat)",
-    reader: ""
-  },
-  "gift.tzeentch.hyperanalich": {
-    label: "Раз в Ход, свободное действие: тест Logic+0 vs Deceive+0 — до конца боя цель теряет Укрытие, Финт против неё свободным действием (раз в Ход), перебрасывает Избегания/встречные тесты",
-    source: "Дар Тзинч (Hyperanalich)",
     reader: ""
   },
   // «Infernal Armiger» физически лежит 4 файлами в packs-src/mutations/Дары_Богов/Тзинч/,
@@ -6493,19 +6556,9 @@ export const CAPABILITIES = {
     source: "Дар Тзинч (Mutable Soul)",
     reader: ""
   },
-  "gift.tzeentch.nineThousandFaces": {
-    label: "Полное действие: облик другого известного персонажа той же расы; +1 Бесчестия — облик другой расы (со сменой Размера), снаряжение не меняется",
-    source: "Дар Тзинч (Nine Thousand Faces)",
-    reader: ""
-  },
   "gift.tzeentch.omniglot": {
     label: "Понимает все языки (устные и письменные) и автоматически расшифровывает любые коды/шифры — не даёт говорить/писать на них",
     source: "Дар Тзинч (Omniglot)",
-    reader: ""
-  },
-  "gift.tzeentch.pathchanger": {
-    label: "Полное действие+1 Бесчестия: касание (может требовать атаки) перебрасывает известную мутацию цели как обычный бросок (замена дара не выпадает), Оглушение на 1 Раунд; 3 Бесчестия — бросок как от провала",
-    source: "Дар Тзинч (Pathchanger)",
     reader: ""
   },
   "gift.tzeentch.perfectSorcerer": {
@@ -6533,11 +6586,6 @@ export const CAPABILITIES = {
     source: "Дар Тзинч (The Unnameable)",
     reader: ""
   },
-  "gift.tzeentch.thiefOfFate": {
-    label: "Чувствует трату Очков Бесчестия/Судьбы в радиусе Cor м; Реакция: тест Inf+0 отменяет эффект траты + восстанавливает своё Очко Бесчестия (провал — тест W+0 или потеря своего Очка Бесчестия)",
-    source: "Дар Тзинч (Thief of Fate)",
-    reader: ""
-  },
   "gift.tzeentch.wishGranter": {
     label: "+1 Бесчестия: автоманифестация любой психосилы (даже незнакомой) на эPR9/9 Успехов, исполняющей чужое высказанное желание буквально; если помогает загадавшему больше, чем чемпиону — 2d10+9 урона в W",
     source: "Дар Тзинч (Wish Granter)",
@@ -6551,11 +6599,6 @@ export const CAPABILITIES = {
     source: "Мутация: Spatial Instability (Общие мутации)",
     reader: ""
   },
-  "mutation.eyesOfChaos": {
-    label: "Awareness+0 раз в Ход при мистическом событии — видит потоки психической энергии, Избегает Незримых психоатак; Forbidden Lore(Psykers)+0 для интерпретации; 10 субмутаций не автоматизированы",
-    source: "Мутация: Eyes of Chaos (Общие мутации)",
-    reader: ""
-  },
   "mutation.janus": {
     label: "Полудействие: доп. глаза/рот перемещаются в любую точку тела (обзор назад/за угол, независимая речь)",
     source: "Мутация: Janus (Общие мутации)",
@@ -6564,11 +6607,6 @@ export const CAPABILITIES = {
   "mutation.pureForm": {
     label: "1 час концентрации подавляет все мутации (теряя их эффекты), ещё 1 час возвращает их; Оглушение/потеря сознания/добровольный возврат — рывок 1d10 непогл. R Dmg + мгновенный возврат всех мутаций",
     source: "Мутация: Pure Form (Общие мутации)",
-    reader: ""
-  },
-  "mutation.twins": {
-    label: "Раз в Раунд, свободное действие: переключение между двумя независимыми телами (раздельные Раны/снаряжение, второе тело чистое)",
-    source: "Мутация: Twins (Общие мутации)",
     reader: ""
   },
   "mutation.compression": {
@@ -6584,7 +6622,7 @@ export const CAPABILITIES = {
   "mutation.iconOfBlasphemy": {
     label: "Раз за бой/сцену, свободное действие: иллюзия на 1 Раунд — Имперцы видящие проходят W+0 или впадают в Ярость (атакуя только чемпиона); засекшие пси-чутьём/ноосканированием — W+0 или обязаны атаковать его следующий Ход",
     source: "Мутация: Icon of Blasphemy (Общие мутации)",
-    reader: ""
+    reader: "module/apps/icon-of-blasphemy.mjs iconOfBlasphemyButtonHtml()/activateIconOfBlasphemy()"
   },
   "mutation.sentientCyst": {
     label: "Провал теста социального взаимодействия — доп. +3 Провала (циста вмешивается в речь)",
@@ -6653,7 +6691,7 @@ export const CAPABILITIES = {
   "mutation.illusionOfNormality": {
     label: "Игнорируется наблюдателями как мутант, оружие/броня не привлекают внимания; активная поддерживаемая иллюзия, засекается Пси-чутьём (+5 за каждую прочую мутацию), псайкеры видят сквозь неё тестом W+0 (раз за бой/сцену)",
     source: "Мутация: Illusion of Normality (Общие мутации)",
-    reader: ""
+    reader: "module/apps/illusion-of-normality.mjs illusionOfNormalityHtml()/attemptNoticeIllusion()/attemptSeeThroughIllusion()"
   },
 
   // ── Общие мутации, партия 4 (wdbc-1rno, ревизия по запросу координатора) —

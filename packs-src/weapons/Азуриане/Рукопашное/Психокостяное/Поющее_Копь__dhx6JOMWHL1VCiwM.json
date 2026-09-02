@@ -85,7 +85,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Копьё"
+    "meleeCategory": "Копьё",
+    "wraithbone": true
   },
   "_id": "dhx6JOMWHL1VCiwM",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
@@ -330,7 +331,7 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1788338813438,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
   "_key": "!items!dhx6JOMWHL1VCiwM"

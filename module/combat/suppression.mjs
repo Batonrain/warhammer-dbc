@@ -10,6 +10,8 @@
 
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { rollMoraleTest } from "../rules/morale-test.mjs";
+import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -22,21 +24,22 @@ export function suppressionTestMod(sys) {
  */
 export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const threshold = wpTotal + mod;
-  const roll      = await new Roll("1d100").evaluate();
-  const rv        = roll.total;
-  const success   = rv <= threshold;
+  const { eff: threshold, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod);
   const rollMode  = game.settings.get("core", "rollMode");
 
   if (!success) await actor.update({ "system.conditions.pinned": true });
+  await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
+  const modLine = mod !== 0 || bonus !== 0
+    ? ` ${mod >= 0 ? "+" : ""}${mod}${bonus ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""}` : "";
   const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("target","#ff9a4d")}Тест Подавления${sourceLabel ? ` — ${esc(sourceLabel)}` : ""} → ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wpTotal}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог: <b>${threshold}</b></div>
+        <div class="roll-threshold">WP: <b>${wpTotal}</b>${modLine} → Порог: <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех — сохраняет самообладание</span>`
           : `<span class="roll-failure">Провал — Подавлен (📌)</span>`}</div>
@@ -79,21 +82,22 @@ export async function postSuppressionRecoveryPrompt(actor) {
  */
 export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const threshold = wpTotal + bonus;
-  const roll      = await new Roll("1d100").evaluate();
-  const rv        = roll.total;
-  const success   = rv <= threshold;
+  const { eff: threshold, bonus: ruleBonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus);
   const rollMode  = game.settings.get("core", "rollMode");
 
   if (success) await actor.update({ "system.conditions.pinned": false });
+  await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
+  const bonusLine = bonus !== 0 || ruleBonus !== 0
+    ? ` ${bonus >= 0 ? "+" : ""}${bonus}${ruleBonus ? ` ${ruleBonus >= 0 ? "+" : ""}${ruleBonus}` : ""}` : "";
   const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("target","#4dffa6")}Преодоление Подавления → ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wpTotal}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${threshold}</b></div>
+        <div class="roll-threshold">WP: <b>${wpTotal}</b>${bonusLine} → Порог: <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех — Подавление снято</span>`
           : `<span class="roll-failure">Провал — всё ещё Подавлен</span>`}</div>

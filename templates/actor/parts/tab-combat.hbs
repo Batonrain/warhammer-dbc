@@ -81,6 +81,9 @@
           {{#if movementCanFly}}
           <button type="button" class="wh-move-btn" data-move-action="fly" title="Высота полёта и потеря управления (стр. 30).">Полёт</button>
           {{/if}}
+          {{#if movementCanHalfStep}}
+          <button type="button" class="wh-move-btn" data-move-action="halfstep" title="Полушаг (стр. 12, Талант Half-Step): раз в Ход Свободным действием, до ½SPD — дистанция списывается с Отскока этого Раунда.">Полушаг (Талант)</button>
+          {{/if}}
         </div>
         <div class="movement-col">
           <div class="movement-col-note" title="Неспешный темп по свободному ландшафту при текущем SPD ({{system.movement.halfMove}}) — стр. 29, таблица «Движение в нарративном времени». Марши ниже умножают эту базу.">
@@ -118,10 +121,20 @@
             <span class="ae-pool-value">{{actionEconomy.reactions.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.reactions.max}}</span>
             <button type="button" class="ae-spend-btn" data-ae-spend="reaction" data-ae-cost="1" {{#if aeSpendGate.reaction.disabled}}disabled{{/if}} title="{{#if aeSpendGate.reaction.title}}{{aeSpendGate.reaction.title}}{{else}}Списать 1 Реакцию вручную{{/if}}">−1</button>
           </div>
+          {{#if spiritTalkGate}}
+          <button type="button" class="spirit-talk-btn" {{#if spiritTalkGate.disabled}}disabled{{/if}} title="{{spiritTalkGate.title}}">👻 Духовный Разговор (2 ОД)</button>
+          {{/if}}
           {{#if actionEconomy.defense}}
           <div class="ae-pool" title="Доп. Реакции только на Избегание (Защитная Стойка, стр. 15) — тратятся раньше универсальных">
             <span class="ae-pool-label">Реакции (Избегание)</span>
             <span class="ae-pool-value">{{actionEconomy.defense.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.defense.max}}</span>
+          </div>
+          {{/if}}
+          {{#if actionEconomy.encounterActive}}
+          <div class="ae-pool" title="Отскок (стр. 12): SPD м за Раунд суммарно по всем Отскокам вместо нивеляции Уклонения от стрелковой атаки">
+            <span class="ae-pool-label">Отскок</span>
+            <span class="ae-pool-value">{{actionEconomy.recoil.value}}</span><span class="ae-pool-sep">/</span><span class="ae-pool-max">{{actionEconomy.recoil.max}}</span>
+            <button type="button" class="ae-recoil-bonus-btn" {{#if aeSpendGate.ap1.disabled}}disabled{{/if}} title="Списать 1 непотраченное ОД → +SPD м к пределу Отскока в этом Раунде (стр. 12)">−1 ОД → +SPD</button>
           </div>
           {{/if}}
           <div class="ae-pool ae-pool-status">
@@ -251,6 +264,9 @@
     {{#if hasResplendentRaiment}}
     <button type="button" class="technique-btn resplendent-raiment-btn" style="margin-top:6px;" title="Блистательные Одеяния — раз за бой/сцену, тратит 1 Очко Бесчестия"><span class="tech-name">👑 Блистательные Одеяния</span></button>
     {{/if}}
+    {{#if hasAdrenalineRush}}
+    <button type="button" class="technique-btn adrenaline-rush-btn" style="margin-top:6px;" title="Прилив Адреналина — раз за бой/сцену, тратит 1 Очко Бесчестия, восстанавливает Реакции (дистанция отскока — вручную)"><span class="tech-name">⚡ Прилив Адреналина</span></button>
+    {{/if}}
     {{#if hasBoneSong}}
     <button type="button" class="technique-btn bone-song-btn" style="margin-top:6px;" title="Костяная Песня — одна техника или вся в радиусе 10 м, восстанавливает Структуру"><span class="tech-name">🦴 Костяная Песня</span></button>
     {{/if}}
@@ -259,6 +275,29 @@
     {{/if}}
     {{#if hasSongOfSwiftness}}
     <button type="button" class="technique-btn song-of-swiftness-btn" style="margin-top:6px;" title="Песня Стремительности — одна техника или вся в радиусе 10 м, +SPD/Манёвренность до конца боя"><span class="tech-name">🏃 Песня Стремительности</span></button>
+    {{/if}}
+    {{#if hasReformationSong}}
+    <button type="button" class="technique-btn reformation-song-btn" style="margin-top:6px;" title="Reformation Song / Песня Изменений — до F.b психокостяных вещей в радиусе W.b м, Восстановление или Разрушение на каждую"><span class="tech-name">🎼 Песня Изменений</span></button>
+    {{/if}}
+    {{!-- Шаман Зверолюдей (wdbc-xxb7, module/combat/beastman-shaman.mjs) —
+          god-ответвление читается живьём по system.patronGod при клике. --}}
+    {{#if hasPrimalHowl}}
+    <button type="button" class="technique-btn primal-howl-btn" style="margin-top:6px;" title="Первобытный Вой — раз за бой, союзники-зверолюди/враги в радиусе Cor.b×10 м"><span class="tech-name">🐺 Первобытный Вой</span></button>
+    {{/if}}
+    {{#if hasWarpTaintedAura}}
+    <button type="button" class="technique-btn warp-tainted-aura-btn" style="margin-top:6px;" title="Аура Скверны — раз в час, радиус 20 м, тест W−10 врагам"><span class="tech-name">☠️ Аура Скверны</span></button>
+    {{/if}}
+    {{#if hasRiteOfSelfSacrifice}}
+    <button type="button" class="technique-btn rite-of-self-sacrifice-btn" style="margin-top:6px;" title="Ритуал Самопожертвования — Полудействие, 1d5+1 непоглощаемого урона себе за +2 эPR"><span class="tech-name">🩸 Самопожертвование</span></button>
+    {{/if}}
+    {{#if hasHexMarkedPrey}}
+    <button type="button" class="technique-btn hex-marked-prey-btn" style="margin-top:6px;" title="Проклятая Метка — наведите таргет (T), Соревновательный тест W+0 vs W+10"><span class="tech-name">🎯 Проклятая Метка</span></button>
+    {{/if}}
+    {{#if hasBoneRuneEtching}}
+    <button type="button" class="technique-btn bone-rune-etching-btn" style="margin-top:6px;" title="Костяная Рунопись — полный текст (базовый эффект + активная god-ветка) в чат"><span class="tech-name">🦴 Костяная Рунопись</span></button>
+    {{/if}}
+    {{#if hasRitualBloodletting}}
+    <button type="button" class="technique-btn ritual-bloodletting-btn" style="margin-top:6px;" title="Ритуал Кровопускания — Свободное Действие после убийства, +5 к тестам и иммунитет Страху/Подавлению союзникам-зверолюдям в радиусе F.b"><span class="tech-name">🗡️ Кровопускание</span></button>
     {{/if}}
   </div></div>{{!-- /стойка --}}
 
@@ -408,7 +447,7 @@
       {{#each combatRangedWeapons as |w|}}
       <div class="ranged-weapon-card" data-item-id="{{w.id}}"> <div class="rwc-main-row"> <span class="rwc-name">{{w.name}}{{#if w.hasMods}} <span class="weapon-mod-badge" title="Модификации: {{w.modNames}}"></span>{{/if}}</span> <span class="rwc-stat-inline" title="Класс">{{w.weaponClass}}</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="Дальность">{{w.range}}м</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="СКС">{{w.rof}}</span> <span class="rwc-divider">·</span> <span class="rwc-stat-inline" title="Урон">{{w.damage}}</span> <span class="rwc-stat-inline rwc-dmgtype" title="Тип урона">{{w.damageType}}</span> {{#if w.penetration}}
           <span class="rwc-divider">·</span> <span class="rwc-stat-label-inline">Проб.</span> <span class="rwc-stat-inline">{{w.penetration}}</span> {{/if}}
-          <span class="rwc-spacer"></span> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'left')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="left" title="Оружие в левой руке (для HUD)">Л</button> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'right')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="right" title="Оружие в правой руке (для HUD)">П</button> <span class="rwc-threshold-badge">{{w.attackThreshold}}</span> <button type="button" class="weapon-attack-notarget rwc-notarget-btn" data-item-id="{{w.id}}" title="Бросок без цели (тестовый — без авто-расчёта по защите цели)">Без цели</button> <button type="button" class="weapon-attack-roll rwc-atk-btn" data-item-id="{{w.id}}" title="Атака: {{w.name}}" {{#if w.magEmpty}}disabled{{/if}}>Атака</button> </div> <div class="rwc-ammo-row"> {{#if w.compatAmmo.length}}
+          <span class="rwc-spacer"></span> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'left')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="left" title="Оружие в левой руке (для HUD)">Л</button> <button type="button" class="weapon-hand-btn {{#if (eq w.hand 'right')}}is-on{{/if}}" data-item-id="{{w.id}}" data-hand="right" title="Оружие в правой руке (для HUD)">П</button> <span class="rwc-threshold-badge">{{w.attackThreshold}}</span> <button type="button" class="weapon-attack-notarget rwc-notarget-btn" data-item-id="{{w.id}}" title="Бросок без цели (тестовый — без авто-расчёта по защите цели)">Без цели</button> <button type="button" class="weapon-attack-roll rwc-atk-btn" data-item-id="{{w.id}}" title="Атака: {{w.name}}" {{#if (or w.magEmpty w.jammed)}}disabled{{/if}}>Атака</button> {{#if w.jammed}}<button type="button" class="wh-sheet-clear-jam-btn" data-item-id="{{w.id}}" title="Расклинить (доступно всегда, за столом — полудействие)" {{#unless w.canClearJam}}disabled{{/unless}}>🔧 Заклинило — Расклинить</button>{{/if}} </div> <div class="rwc-ammo-row"> {{#if w.compatAmmo.length}}
             <select class="weapon-ammo-select rwc-ammo-select" data-item-id="{{w.id}}"> <option value="">— стандартные —</option> {{#each w.compatAmmo as |ammo|}}
               <option value="{{ammo.id}}" {{#if ammo.loaded}}selected{{/if}}
                       {{#if (eq ammo.quantity 0)}}disabled{{/if}}> {{ammo.name}}{{#if ammo.modStr}} [{{ammo.modStr}}]{{/if}}

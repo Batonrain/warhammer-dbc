@@ -23,6 +23,7 @@ import { healPsychDamage } from "../../combat/horde-psych.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { degreesOfSuccess } from "../../constants/craft.mjs";
+import { hasLordOfExodites, unnaturalFHint, clearMoraleConditions, rallyExoditeSquad } from "../../combat/lord-of-exodites.mjs";
 
 /** Кого можно взять под своё Присутствие. Шире состава Отряда: миньоны тоже. */
 export const FOLLOWER_TYPES =
@@ -98,7 +99,10 @@ export function commandContext(actor) {
     detailActive:    !!cmd.detailCommand?.active,
     detailSuccesses: Number(cmd.detailCommand?.successes) || 0,
     // Орды в подчинении: у них тест Командования лечит психологический урон.
-    commandedHordes: rows.filter(r => r.isHorde && !r.missing)
+    commandedHordes: rows.filter(r => r.isHorde && !r.missing),
+    // Lord of the Exodites (wdbc-zepq) — доп. кнопки владельцу Черты.
+    exoditeLord: hasLordOfExodites(actor),
+    exoditeGroupLimit: Number(actor.system?.characteristics?.fel?.bonus) || 0
   };
 }
 
@@ -199,17 +203,21 @@ export async function takeSelectedTokens(actor) {
  *
  * @param {Actor}  actor
  * @param {"presence"|"short"|"detail"} kind
- * @param {object} [opts] { mod, benefit, shortKey }
+ * @param {object} [opts] { mod, benefit, shortKey, declaredSuccesses }
+ *   declaredSuccesses — Lord of the Exodites (wdbc-zepq, часть 3): «до броска
+ *   объявить автоуспех с числом успехов = Unnatural F» — бросок пропускается,
+ *   тест сразу засчитан успешным с этим числом Успехов.
  */
-export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey = "" } = {}) {
+export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey = "", declaredSuccesses = 0 } = {}) {
   const cmd = actor.system?.command ?? {};
   const base = Number(actor.system?.skills?.command?.total) || 0;
   const threshold = base + (Number(mod) || 0);
+  const declared = Number(declaredSuccesses) || 0;
 
-  const roll = await new Roll("1d100").evaluate();
-  const rv = roll.total;
-  const ok = rv <= threshold;
-  const sux = ok ? degreesOfSuccess(rv, threshold) : 0;
+  const roll = declared > 0 ? null : await new Roll("1d100").evaluate();
+  const rv = declared > 0 ? null : roll.total;
+  const ok = declared > 0 || rv <= threshold;
+  const sux = declared > 0 ? declared : (ok ? degreesOfSuccess(rv, threshold) : 0);
 
   let effect = "", update = {};
 
@@ -256,14 +264,14 @@ export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey
       <div class="roll-header">${rollIcon("crown", "#4dffa6")}${esc(title)} — ${esc(actor.name)}</div>
       <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог <b>${threshold}</b>
         <span class="cmd-chat-hint">— без Слаженности и Риска: группа не сведена в Отряд</span></div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
+      <div class="roll-dice">${declared > 0 ? `Автоуспех (Unnatural F) — бросок не нужен` : `Бросок: <b>${rv}</b>`}</div>
       <div class="roll-outcome">${ok
         ? `<span class="roll-success">Успех — ${sux} ${_degWord(sux)}</span>`
         : `<span class="roll-failure">Провал</span>`}</div>
       ${effect}
       ${ok ? notReachedBy(actor, kind, benefit || cmd.presence?.benefit || "extreme") : ""}
     </div>`,
-    rolls: [roll],
+    rolls: roll ? [roll] : [],
     sound: CONFIG.sounds.dice
   }, game.settings.get("core", "rollMode")));
 
@@ -370,6 +378,13 @@ async function commandDialog(actor, kind) {
         `<option value="${c.key}" ${c.key === (cmd.shortCommand?.key || "inspire") ? "selected" : ""}>${esc(c.label)} (×${c.mult})</option>`).join("")
     : "";
 
+  // Lord of the Exodites (wdbc-zepq, часть 3): автоуспех с числом успехов =
+  // Unnatural F, объявляется до броска — доступно только владельцу Черты.
+  const exoditeLord = hasLordOfExodites(actor);
+  const autoSuccessHtml = exoditeLord ? `
+      <div class="atk-dlg-row"><label><input id="cmd-auto-success" type="checkbox"/> Автоуспех (Unnatural F):</label>
+        <input id="cmd-auto-successes" type="number" min="0" value="${unnaturalFHint(actor)}" style="width:4em;"/></div>` : "";
+
   const picked = await foundry.applications.api.DialogV2.prompt({
     window: { title: `${title} — ${actor.name}` },
     classes: ["warhammer-dbc", "wh-holo"],
@@ -378,19 +393,22 @@ async function commandDialog(actor, kind) {
       <div class="atk-dlg-row"><label>Command(F):</label><span><b>${base}</b></span></div>
       ${options ? `<div class="atk-dlg-row"><label>Вариант:</label><select id="cmd-key">${options}</select></div>` : ""}
       <div class="atk-dlg-row"><label>Модификатор:</label><input id="cmd-mod" type="number" value="0"/></div>
+      ${autoSuccessHtml}
     </div>`,
     ok: {
       label: "Бросок!", icon: "fas fa-dice-d10",
       callback: (event, button) => ({
         mod: parseInt(button.form.querySelector("#cmd-mod")?.value) || 0,
-        key: button.form.querySelector("#cmd-key")?.value || ""
+        key: button.form.querySelector("#cmd-key")?.value || "",
+        declaredSuccesses: button.form.querySelector("#cmd-auto-success")?.checked
+          ? (parseInt(button.form.querySelector("#cmd-auto-successes")?.value) || 0) : 0
       })
     }
   }).catch(() => null);
   if (!picked) return;
 
   return rollCommand(actor, kind, {
-    mod: picked.mod,
+    mod: picked.mod, declaredSuccesses: picked.declaredSuccesses,
     benefit:  kind === "presence" ? picked.key : "",
     shortKey: kind === "short"    ? picked.key : ""
   });
@@ -432,6 +450,19 @@ export function activateCommandListeners(root, actor, { editable = true } = {}) 
     node.addEventListener("click", () => clearCommands(actor)));
   el.querySelectorAll(".cmd-take-tokens").forEach(node =>
     node.addEventListener("click", () => takeSelectedTokens(actor)));
+  // Lord of the Exodites (wdbc-zepq): выбор целей — выделенные на сцене
+  // токены, ограничение F.b — предупреждение, не запрет (см. clearMoraleConditions).
+  el.querySelectorAll(".cmd-lord-clear").forEach(node =>
+    node.addEventListener("click", () => {
+      const limit = Number(actor.system?.characteristics?.fel?.bonus) || 0;
+      const tokens = (canvas?.tokens?.controlled ?? []).map(t => t.actor).filter(a => a && a !== actor);
+      if (!tokens.length) return ui.notifications?.warn("⚠️ Выделите на сцене токены союзников.");
+      if (limit && tokens.length > limit)
+        ui.notifications?.warn(`⚠️ Выделено больше F.b (${limit}) — способность позволяет до ${limit}, остальные не получат эффекта по книге.`);
+      clearMoraleConditions(actor, tokens.slice(0, limit || tokens.length));
+    }));
+  el.querySelectorAll(".cmd-lord-rally").forEach(node =>
+    node.addEventListener("click", () => rallyExoditeSquad(actor)));
   el.querySelectorAll(".cmd-follower-note").forEach(node =>
     node.addEventListener("change", ev => setFollowerNote(
       actor, Number(node.dataset.index), ev.currentTarget.value)));

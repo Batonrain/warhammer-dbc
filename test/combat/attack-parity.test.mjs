@@ -76,6 +76,17 @@ describe("стрельба", () => {
     expect(weapon.system.magazineCur).toBe(23);
   });
 
+  it("Рука Смерти (wdbc-hftn): слитое оружие не тратит патроны — метаболизм вместо магазина", async () => {
+    const weapon = weaponFor({}, { flags: { "warhammer-dbc.handOfDeathSource": "mut1" } });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [23, 6];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+
+    expect(hits()).toEqual([{ index: 1, damage: 11, location: "Торс" }]);
+    expect(weapon.system.magazineCur).toBe(24);    // не тронут
+  });
+
   it("короткая очередь: попадание за каждый нечётный Успех, но не больше RoF", async () => {
     // deg 5 → ceil(5/2) = 3 попадания, потолок rof_semi = 2.
     const weapon = weaponFor({ rof_semi: 2 });
@@ -91,7 +102,7 @@ describe("стрельба", () => {
     expect(weapon.system.magazineCur).toBe(22);   // очередь тратит 2 патрона
   });
 
-  it("заклинивание: ненадёжное оружие на высоком броске не доходит до урона", async () => {
+  it("заклинивание: ненадёжное оружие на высоком броске не доходит до урона и пишет реальное состояние (wdbc-vwfk)", async () => {
     const weapon = weaponFor({ weaponProps: [{ key: "unreliable", rating: 0, rating2: 0 }] });
     const actor  = actorFor({ items: [weapon] });
     captured.dice = [95];
@@ -100,6 +111,19 @@ describe("стрельба", () => {
 
     expect(card()).toContain("Оружие заклинило!");
     expect(hits()).toEqual([]);
+    // wdbc-vwfk: раньше заклинивание было только строкой в чате — теперь
+    // реальное состояние предмета (снимается weapon-properties.mjs::clearWeaponJam).
+    expect(weapon.system.jammed).toBe(true);
+  });
+
+  it("успешный выстрел ненадёжного оружия ниже порога заклинивания не ставит jammed", async () => {
+    const weapon = weaponFor({ weaponProps: [{ key: "unreliable", rating: 0, rating2: 0 }] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [23, 6];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+
+    expect(weapon.system.jammed).toBe(false);
   });
 
   it("подавление: попаданий не бросает, а подсказывает их число ГМ-у", async () => {

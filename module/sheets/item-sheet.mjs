@@ -22,6 +22,9 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
+  from "../apps/illusion-of-normality.mjs";
+import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
 import { hasVoidSupply, voidAirRemainingDisplay, sealVoidArmour, refillVoidArmour } from "../rules/void-air.mjs";
 import { SHIELD_NATURES, SHIELD_TYPES,
          SHIELD_STATUS }                             from "../constants/shields.mjs";
@@ -1048,6 +1051,10 @@ export class WarhammerItemSheet
     // ── Мутация: кнопка «Рука Смерти» (wdbc-hftn) — пусто у остальных Мутаций ───
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
+      context.illusionOfNormalityHtml = illusionOfNormalityHtml(this.item, this.item.parent);
+      // «Икона Богохульства» (wdbc-zbc0) — пусто у остальных Мутаций.
+      context.iconOfBlasphemyHtml = iconOfBlasphemyButtonHtml(this.item, this.item.parent);
     }
 
     // ── Имплант: роспись механик (Качество + памятка) ────────────────────────────
@@ -1803,6 +1810,28 @@ export class WarhammerItemSheet
       if (actor) await useHandOfDeath(actor, this.item);
     });
 
+    // ── Мутация «Иллюзия Нормальности»: обнаружение/раскрытие (wdbc-zbc0) ───
+    on(".illusion-notice-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await attemptNoticeIllusion(this.item, actor);
+    });
+    on(".illusion-see-through-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await attemptSeeThroughIllusion(this.item, actor);
+    });
+    on(".illusion-maintain-cb", "change", async ev => {
+      await setIllusionMaintained(this.item, ev.currentTarget.checked);
+    });
+
+    // ── Мутация «Икона Богохульства»: раз за бой/сцену проявление (wdbc-zbc0) ──
+    on(".icon-of-blasphemy-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await activateIconOfBlasphemy(this.item, actor);
+    });
+
     // ── Запас воздуха Void (wdbc-jtqf) ────────────────────────────────────────
     on(".void-seal-btn", "click", async ev => {
       ev.preventDefault();
@@ -2303,6 +2332,28 @@ export class WarhammerItemSheet
       if (!e) return;
       e.when = e.when || { negate: false, conditions: [] };
       e.when.negateRage = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда Покровитель» (entry.when.patronGod/negatePatronGod, wdbc-xxb7) ─
+    // Шестой независимый гейт — см. mech-when.mjs. Ключ берётся из
+    // data-god-key, тот же приём, что у Тира Ран выше.
+    on(".grant-when-patron", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      const gods = new Set(e.when.patronGod || []);
+      const key = ev.currentTarget.dataset.godKey;
+      if (ev.currentTarget.checked) gods.add(key); else gods.delete(key);
+      e.when.patronGod = [...gods];
+      saveMech(arr);
+    });
+    on(".grant-when-patron-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negatePatronGod = !!ev.currentTarget.checked;
       saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──

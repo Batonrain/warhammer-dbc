@@ -35,8 +35,10 @@ function propEntry(p) {
 }
 
 /**
- * Долить к свойствам оружия то, что даёт эта конкретная атака: хват, боеприпас и
- * отмеченные игроком условные свойства боеприпаса.
+ * Долить к свойствам оружия то, что даёт эта конкретная атака: хват, боеприпас,
+ * отмеченные игроком условные свойства боеприпаса и Свойства от правила
+ * (wdbc-w8z4, rules/resolve-test.mjs::weaponPropsFromRules — цель помечена, у
+ * актора есть подходящий Дар/Талант и т.п.).
  *
  * При совпадении ключа остаётся больший рейтинг. Строковый рейтинг — формула
  * кубика («1d5» у Взрыва) — в сравнении не участвует: числа с формулой не
@@ -45,7 +47,8 @@ function propEntry(p) {
  * Исходный список не изменяется.
  */
 export function mergeExtraProps(entries, { gripProps = [], gripKey = "", gripProps2h = [],
-                                           ammoProps = [], condProps = [], removeProps = [] } = {}) {
+                                           ammoProps = [], condProps = [], ruleProps = [],
+                                           removeProps = [] } = {}) {
   // Боеприпас может и отнимать свойство (Инферно Тзинча гасит Tearing).
   // Снимаем до долива: своё свойство боеприпаса важнее того, что он погасил.
   const dropped = new Set(removeProps.map(k => String(k)));
@@ -55,8 +58,10 @@ export function mergeExtraProps(entries, { gripProps = [], gripKey = "", gripPro
   // Хват может добавлять свойства (Бл → Precise, Хв → Cheap Shot; стр. 39).
   for (const key of gripProps) if (!has(key)) result.push({ key, rating: 0, rating2: 0 });
 
-  // Боеприпас (стр. 203): постоянные свойства плюс отмеченные игроком условные.
-  const fromAmmo = [...ammoProps, ...condProps];
+  // Боеприпас (стр. 203): постоянные свойства плюс отмеченные игроком условные,
+  // плюс то, что даёт правило (тот же максимизирующий мёрж — совпавшая с
+  // оружием запись не должна ронять больший рейтинг оружия).
+  const fromAmmo = [...ammoProps, ...condProps, ...ruleProps];
   for (const p of fromAmmo) {
     const { key, rating, rating2 } = propEntry(p);
     if (!key) continue;

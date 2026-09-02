@@ -27,6 +27,7 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
+import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -121,6 +122,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     gripProps2h: sys.gripProps2h || [],
     ammoProps:   loadedAmmo?.system?.properties || [],
     condProps:   opts.ammoCondProps || [],
+    // Свойства от правила (wdbc-w8z4): уже отобраны диалогом атаки по `when`
+    // (см. attack-dialog.mjs, resolveTest(...).weaponProps) — здесь только долив.
+    ruleProps:   opts.ruleProps || [],
     removeProps: loadedAmmo?.system?.removeProps || []
   });
   // Колдовское Лезвие (стр. 74 Книги Аэльдари): выбор бонуса на Encounter
@@ -211,6 +215,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const jamAt    = jamThreshold(wp);
   const jammed   = !isMelee && jamAt !== null && rv >= jamAt;
   if (jammed) {
+    // wdbc-vwfk: раньше заклинивание было только строкой в чате, без
+    // последствий — теперь пишет реальное состояние предмета (weaponClass
+    // проверен isMelee выше), которое блокирует кнопку «Атака» на листе
+    // (sheet-helpers.mjs::weaponView) до «Расклинить»
+    // (weapon-properties.mjs::clearWeaponJam).
+    await item.update({ "system.jammed": true });
     const jamData = ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: jamCard({
@@ -296,7 +306,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Тратим патроны
   let ammoWarning = "";
-  if (!isMelee && rofMode !== "melee") {
+  // Рука Смерти (wdbc-hftn, стр. 46): сросшееся дальнобойное генерирует
+  // боеприпасы из метаболизма носителя — вместо нового класса расходуемого
+  // ресурса (которого в системе нет вовсе) магазин просто не расходуется.
+  const infiniteAmmo = isFusedByHandOfDeath(item);
+  if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
     ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
     if (ammoSpent > 0 && !opts.skipAmmo) {

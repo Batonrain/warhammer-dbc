@@ -36,6 +36,13 @@
 //              Навык/Талант/Характеристика всегда Дружественный/Враждебный
 //              независимо от Покровительства, читает
 //              module/rules/aptitude-overrides.mjs.
+//    script  — «Код» с ценой ИЛИ частотой (wdbc-suwp): не эффект для теста,
+//              а координаты (itemId/groupId/entryId) для панели актора
+//              «ВОЗМОЖНОСТИ СЕЙЧАС» — там kind:"capability" (кнопка
+//              «Потратить») и kind:"script" (кнопка «▶ Запустить»,
+//              module/apps/mechanics.mjs::runMechScriptEntry) стоят рядом.
+//              Записи без цены/частоты сюда не едут — их кнопка и так видна
+//              на листе своего предмета, панель актора не про них.
 //  Области у обоих общие (scopeTarget) и совпадают с `target` из
 //  docs/rules-format.md: одна область обязана значить одно и то же везде.
 //  Остальные виды из Локусов (подмена характеристики, снятие штрафа, авто-успех,
@@ -62,8 +69,11 @@ const mechanicsOf = (item) => {
 function scopeTarget(rawScope, entry, ruleId, what) {
   const scope = String(rawScope || "all");
   // shield — тесты на щиты (Локус Преломления), opposed — встречные тесты
-  // (вторая половина Локуса Цепей и перебросы, навязанные цели).
-  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed"].includes(scope)) return scope;
+  // (вторая половина Локуса Цепей и перебросы, навязанные цели). morale —
+  // тесты Морали по книге (Страх/Шок/Паника от Горения/Подавление/встречные
+  // Запугивание и Пытки, core.json «Мораль и Потеря Командования»), см.
+  // resolve-test.mjs::effectAppliesTo — wdbc-zepq, Lord of the Exodites.
+  if (["all", "attack", "initiative", "social", "instability", "shield", "opposed", "morale"].includes(scope)) return scope;
   if (scope === "char") {
     const key = String(entry.rerollChar || "").trim();
     if (key) return `char:${key.toLowerCase()}`;
@@ -77,7 +87,7 @@ function scopeTarget(rawScope, entry, ruleId, what) {
 }
 
 /** Запись → правило. Неизвестный вид молча пропускается: он не про броски. */
-function ruleFromEntry(item, entry) {
+function ruleFromEntry(item, entry, groupId = null) {
   const id = `item.${item.name}.${entry?.id}`;
 
   if (entry?.kind === "reroll") {
@@ -162,6 +172,24 @@ function ruleFromEntry(item, entry) {
              effects: [{ kind: "grantFlag", target: key, ...(cost ? { cost } : {}) }] };
   }
 
+  if (entry?.kind === "script") {
+    // Активная способность с ценой/частотой (wdbc-suwp) — всплывает на
+    // панели актора «ВОЗМОЖНОСТИ СЕЙЧАС» рядом с kind:"capability" (той же
+    // sheet-helpers.mjs строкой, кнопка там зовёт runMechScriptEntry вместо
+    // spendCapabilityCost). Записи БЕЗ цены и БЕЗ частоты сюда намеренно не
+    // едут — кнопка «▶ Запустить» у них и так всегда видна внутри листа
+    // своего предмета (module/apps/mechanics.mjs), не всякий одноразовый
+    // служебный script — заявленная игроку способность.
+    if (!String(entry.code || "").trim()) return null;
+    const unit = entry.scriptThrottleUnit || "";
+    const cost = entry.capabilityCostPool
+      ? { pool: entry.capabilityCostPool, amount: Math.max(1, Number(entry.capabilityCostAmount) || 1) }
+      : null;
+    if (!unit && !cost) return null;
+    return { id, label: entry.label || item.name, when: {},
+             effects: [{ kind: "scriptAbility", itemId: item.id, groupId, entryId: entry.id }] };
+  }
+
   return null;
 }
 
@@ -182,21 +210,24 @@ function ruleFromEntry(item, entry) {
  */
 export function rulesFromItemMechanics(items, isActive = () => true, actor = null) {
   const out = [];
-  const walk = (item, entries, operator) => {
+  // groupId — только для kind:"script" (runMechScriptEntry(item, groupId,
+  // entryId) требует его для поиска записи); reroll/testMod/capability его
+  // не используют, поэтому раньше walk() его не отслеживал вовсе.
+  const walk = (item, entries, operator, groupId) => {
     if (operator === "OR") return;
     for (const entry of entries || []) {
       if (entry?.kind === "group" && entry.group) {
-        walk(item, entry.group.entries, entry.group.operator);
+        walk(item, entry.group.entries, entry.group.operator, entry.group.id);
         continue;
       }
       if (!entryWhenOk(actor, entry, item)) continue;
-      const rule = ruleFromEntry(item, entry);
+      const rule = ruleFromEntry(item, entry, groupId);
       if (rule) out.push(rule);
     }
   };
   for (const item of items || []) {
     if (!isActive(item)) continue;
-    for (const group of mechanicsOf(item)) walk(item, group.entries, group.operator);
+    for (const group of mechanicsOf(item)) walk(item, group.entries, group.operator, group.id);
   }
   return out;
 }

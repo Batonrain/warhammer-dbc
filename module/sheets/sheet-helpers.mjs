@@ -18,6 +18,7 @@ import { implantMech }                               from "../constants/implant-
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet, resolveSkillCat } from "../constants/advancement.mjs";
 import { isFriendlySpecialty }                       from "../rules/friendly-specialties.mjs";
+import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
@@ -46,9 +47,10 @@ import { ritualsContext }                            from "./tabs/rituals.mjs";
 import { mergeAbilityItems, mergeAbilityEffects,
          abilityLabel }                              from "../rules/merge-abilities.mjs";
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
-import { ruleFlags, ruleFlagLabels, ruleFlagCost }   from "../rules/flags.mjs";
+import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities } from "../rules/flags.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
 import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
+import { scriptAbilityRow }                          from "../apps/mechanics.mjs";
 import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mjs";
 import { measureTokens }                             from "../combat/tactical-map.mjs";
 
@@ -555,7 +557,12 @@ export function buildGetData(actor) {
       hasMods,
       modNames:        modFx.names.join(", "),
       attackThreshold: (system.characteristics[ck]?.total ?? 0) + (s.attackBonus || 0) + baseBon + stBon + (modFx.attackMod || 0) + qTestMod,
-      compatAmmo, magLow, magEmpty
+      compatAmmo, magLow, magEmpty,
+      // Заклинило (wdbc-vwfk) — блокирует «Атака» тем же приёмом, что magEmpty;
+      // «Расклинить» показывается только пока canClearJam не лжив (см.
+      // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
+      jammed:       !melee && !!s.jammed,
+      canClearJam:  !melee && !!s.jammed && canClearJam(i)
     };
   };
 
@@ -954,7 +961,7 @@ export function buildGetData(actor) {
   // вспоминать, какой Локус включён.
   {
     const flags = ruleFlags(actor, { kind: "skill" });
-    context.activeCapabilities = [...flags]
+    const capabilityRows = [...flags]
       .map(key => {
         // Цена в пуле (wdbc-1dc8) — не у каждой записи; когда задана, на
         // строке появляется кнопка «Потратить» (тот же гейт ДО клика, что
@@ -971,7 +978,33 @@ export function buildGetData(actor) {
           costLabel: cost ? capabilityCostLabel(cost) : "",
           spendGate: cost ? capabilityCostGate(actor, cost) : null
         };
+      });
+    // kind:"script" записи с ценой/частотой (wdbc-suwp) — та же панель, но
+    // кнопка «▶ Запустить» (запускает код) вместо «Потратить» (просто
+    // списывает пул): раньше такая запись была видна только внутри листа
+    // СВОЕГО предмета (Дара/Мутации), игроку приходилось помнить, у какого
+    // именно предмета она лежит. scriptAbilityRow пересчитывает готовность
+    // живьём на каждый рендер (троттлинг/пул могли смениться после прошлого
+    // открытия листа) — та же логика, что уже строит кнопку на листе предмета.
+    const scriptRows = scriptAbilities(actor, { kind: "skill" })
+      .map(sa => {
+        const item = actor.items.get(sa.itemId);
+        const row = scriptAbilityRow(item, sa.groupId, sa.entryId);
+        if (!row) return null; // предмет сняли/запись удалили между рендерами
+        return {
+          key: `script-${sa.itemId}-${sa.entryId}`,
+          label: row.label,
+          sources: item?.name || sa.ruleLabel || "",
+          auto: true,
+          isScript: true,
+          itemId: sa.itemId, groupId: sa.groupId, entryId: sa.entryId,
+          scriptReady: row.ready,
+          scriptStatus: row.statusLabel,
+          costLabel: row.costLabel
+        };
       })
+      .filter(Boolean);
+    context.activeCapabilities = [...capabilityRows, ...scriptRows]
       .sort((a, b) => a.label.localeCompare(b.label, "ru"));
   }
 

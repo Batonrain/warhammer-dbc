@@ -57,6 +57,7 @@ import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
+import { runMechScriptEntry } from "../apps/mechanics.mjs";
 import { promptStatAdd } from "../apps/stat-log.mjs";
 import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
@@ -64,6 +65,8 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { isMoraleOpposedSkill } from "../rules/resolve-test.mjs";
+import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
          wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
@@ -127,6 +130,15 @@ function onInfamySpend(event, target) { return this._ipSpend(target.dataset.abil
 function onCapabilitySpend(event, target) {
   const cost = ruleFlagCost(this.actor, target.dataset.key, { kind: "skill" });
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
+}
+
+// kind:"script" запись с ценой/частотой (wdbc-suwp) — та же панель, кнопка
+// «▶ Запустить» вместо «Потратить»: гейт (троттлинг+цена) и списание живут
+// внутри runMechScriptEntry (module/apps/mechanics.mjs), эта функция лишь
+// находит сам предмет по id, полученному из data-атрибута строки.
+function onCapabilityScriptRun(event, target) {
+  const item = this.actor.items.get(target.dataset.itemId);
+  return runMechScriptEntry(item, target.dataset.groupId, target.dataset.entryId);
 }
 
 // ── Свёртки: состояние ОКНА, а не актора — без ре-рендера ──
@@ -608,6 +620,7 @@ export class WarhammerCharacterSheet
       infamyRestore: whenEditable(onInfamyRestore),
       infamySpend: whenEditable(onInfamySpend),
       capabilitySpend: whenEditable(onCapabilitySpend),
+      capabilityScriptRun: whenEditable(onCapabilityScriptRun),
       // «Перезапустить мастера создания» больше не data-action: кнопка-меню
       // Механикум (_attachFrameListeners) зовёт this.openCreationWizard()
       // напрямую, минуя карту действий.
@@ -1833,6 +1846,8 @@ export class WarhammerCharacterSheet
 
   _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
     const rollCtx = { kind: "skill", char: defaultChar, ...(rollContext || {}) };
+    // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
+    if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
@@ -2079,8 +2094,14 @@ export class WarhammerCharacterSheet
 
     const outcome = await resolveKindOutcome(this.actor, {
       kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill }
+      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
+             morale: isMoraleOpposedSkill(rollContext?.skill) }
     });
+    if (isMoraleOpposedSkill(rollContext?.skill)) {
+      await applyLordOfExoditesFailPenalty(this.actor, {
+        dof: outcome.success ? 0 : outcome.deg, usedReroll: !!reroll
+      });
+    }
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
     const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
     const outcomeHtml = outcome.success

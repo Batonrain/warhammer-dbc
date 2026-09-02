@@ -11,16 +11,20 @@
 //  длительности (Оглушение/Ослепление/Удушье) тикают «в начале своего Хода»
 //  (processTurnStart, для актора, чей Ход начинается).
 //
-//  Сознательно НЕ реализовано (игровое СОБЫТИЕ, не расчёт — тот же принцип
-//  разделения, что у disabledArmourOverloadTier/wdbc-rdd): Горящий персонаж
-//  в НАЧАЛЕ своего Хода обязан пройти тест W+0 или пропускает весь Ход в
-//  панике — это решение экономики действий/UI, не число для тика.
+//  Паника от Горения (стр. «Раны и Урон», «Огонь») — тест W+0 в начале Хода
+//  Горящего персонажа, тест Морали; провал пропускает весь Ход (обнуление ОД,
+//  тот же приём, что «Подавленный в укрытии» в action-economy.mjs). Раньше
+//  здесь было сознательное решение это НЕ реализовывать (игровое событие, не
+//  число для тика) — отменено по прямому запросу пользователя, wdbc-zepq.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "../rules/wounds.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { rollMoraleTest } from "../rules/morale-test.mjs";
+import { postShockRecoveryPrompt } from "./fear.mjs";
+import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
 // system.conditions.<key> (bool) + system.conditions.<field> (число).
@@ -42,12 +46,48 @@ async function postConditionCard(actor, lines) {
 }
 
 /**
- * Начало Хода актора: декремент счётчиков длительности, снятие состояния
- * на нуле. Зовётся из hooks.mjs::updateCombat рядом с resetActionEconomy.
+ * Тест Паники от Горения (W+0, тест Морали) — в начале Хода Горящего
+ * персонажа. Провал: персонаж проводит Ход, паникуя и воя — обнуляем ОД
+ * (тот же принцип, что «Подавленный в укрытии» — action-economy.mjs), Реакции
+ * не трогаем (Уклонение/Парирование — не действия ЕГО хода).
+ */
+export async function rollBurningPanicTest(actor) {
+  const wp = actor.system.characteristics.wp?.total ?? 0;
+  const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  if (!success) await actor.update({ "system.actionPoints.value": 0 });
+  await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
+
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `
+      <div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Паника от Горения — ${esc(actor.name)}</div>
+        <div class="roll-threshold">WP: <b>${wp}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-dice">Бросок: <b>${rv}</b></div>
+        ${rerollNote}
+        <div class="roll-outcome">${success
+          ? `<span class="roll-success">Успех — держит себя в руках</span>`
+          : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`}</div>
+      </div>`,
+    rolls: [roll],
+    sound: CONFIG.sounds.dice
+  }, game.settings.get("core", "rollMode")));
+  return { success, rv, eff };
+}
+
+/**
+ * Начало Хода актора: Паника от Горения (если Горит), декремент счётчиков
+ * длительности, снятие состояния на нуле. Зовётся из hooks.mjs::updateCombat
+ * рядом с resetActionEconomy (после него — панике нужно обнулить уже
+ * восстановленные ОД, а не значение до сброса).
  */
 export async function processConditionTurnStart(actor) {
   const conds = actor?.system?.conditions;
   if (!conds) return;
+  if (conds.burning) await rollBurningPanicTest(actor);
+  // Выход из Шока (стр. 53) — по кнопке, не автоматически (тот же приём, что
+  // напоминание Подавления в конце Хода — suppression.mjs).
+  if (conds.shocked) await postShockRecoveryPrompt(actor);
   const updates = {};
   const lines = [];
   for (const { key, field, label } of ROUND_CONDITIONS) {

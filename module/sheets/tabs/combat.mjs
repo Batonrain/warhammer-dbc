@@ -26,15 +26,29 @@ import { dreadWailAvailable } from "../../combat/dread-wail.mjs";
 import { showDreadWailDialog } from "../../apps/dread-wail-dialog.mjs";
 import { resplendentRaimentAvailable } from "../../combat/resplendent-raiment.mjs";
 import { showResplendentRaimentDialog } from "../../apps/resplendent-raiment-dialog.mjs";
+import { adrenalineRushAvailable, applyAdrenalineRush } from "../../combat/adrenaline-rush.mjs";
 import { boneSongAvailable, applyBoneSongSingle, applyBoneSongArea } from "../../combat/bone-song.mjs";
+import {
+  primalHowlAvailable, applyPrimalHowl,
+  warpTaintedAuraAvailable, applyWarpTaintedAura,
+  riteOfSelfSacrificeAvailable, applyRiteOfSelfSacrifice,
+  hexMarkedPreyAvailable, applyHexMarkedPrey,
+  boneRuneEtchingAvailable, showBoneRuneEtchingText,
+  ritualBloodlettingAvailable, applyRitualBloodletting
+} from "../../combat/beastman-shaman.mjs";
 import { preservationAvailable, applyPreservationSingle, applyPreservationArea } from "../../combat/preservation.mjs";
 import { songOfSwiftnessAvailable, applySongOfSwiftnessSingle, applySongOfSwiftnessArea } from "../../combat/song-of-swiftness.mjs";
 import { showWraithboneSongDialog } from "../../apps/wraithbone-song-dialog.mjs";
+import { reformationSongAvailable } from "../../combat/reformation-song.mjs";
+import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
+import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
+import { grantRecoilBonus } from "../../combat/recoil-pool.mjs";
+import { triggerSpiritTalk } from "../../combat/spirit-talk.mjs";
 import {
-  declareHalfMove, declareFullMove, declareCharge, declareRun,
+  declareHalfMove, declareFullMove, declareCharge, declareRun, declareHalfStep,
   showClimbDialog, showJumpDialog, showSwimDialog, showFallDialog, showFlightDialog,
   showMarchDialog
 } from "../../combat/movement-actions.mjs";
@@ -125,6 +139,14 @@ export function activateCombatListeners(root, actor) {
     await showResplendentRaimentDialog(actor);
   });
 
+  // ── Прилив Адреналина (wdbc-ks1r, module/combat/adrenaline-rush.mjs) ────
+  on(root, ".adrenaline-rush-btn", "click", async () => {
+    if (!adrenalineRushAvailable(actor)) {
+      return ui.notifications.warn("Прилив Адреналина уже использован в этом бою/сцене.");
+    }
+    await applyAdrenalineRush(actor);
+  });
+
   // ── Певцы Кости (wdbc-sk8s, module/combat/{bone-song,preservation,song-of-swiftness}.mjs) ──
   on(root, ".bone-song-btn", "click", async () => {
     if (!boneSongAvailable(actor)) {
@@ -150,6 +172,45 @@ export function activateCombatListeners(root, actor) {
       title: "Песня Стремительности", applySingle: applySongOfSwiftnessSingle, applyArea: applySongOfSwiftnessArea
     });
   });
+  on(root, ".reformation-song-btn", "click", async () => {
+    if (!reformationSongAvailable(actor)) {
+      return ui.notifications.warn("Reformation Song / Песня Изменений уже использована максимум раз в этой сессии.");
+    }
+    await showReformationSongDialog(actor);
+  });
+
+  // ── Шаман Зверолюдей (wdbc-xxb7, module/combat/beastman-shaman.mjs) ─────
+  on(root, ".primal-howl-btn", "click", async () => {
+    if (!primalHowlAvailable(actor)) return ui.notifications.warn("Первобытный Вой уже использован в этом бою.");
+    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
+    await applyPrimalHowl(actor, token);
+  });
+  on(root, ".warp-tainted-aura-btn", "click", async () => {
+    if (!warpTaintedAuraAvailable(actor)) return ui.notifications.warn("Аура Скверны уже использована в этот час.");
+    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
+    await applyWarpTaintedAura(actor, token);
+  });
+  on(root, ".rite-of-self-sacrifice-btn", "click", async () => {
+    if (!riteOfSelfSacrificeAvailable(actor)) return;
+    await applyRiteOfSelfSacrifice(actor);
+  });
+  on(root, ".hex-marked-prey-btn", "click", async () => {
+    if (!hexMarkedPreyAvailable(actor)) return;
+    const target = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    await applyHexMarkedPrey(actor, target);
+  });
+  on(root, ".bone-rune-etching-btn", "click", async () => {
+    if (!boneRuneEtchingAvailable(actor)) return;
+    await showBoneRuneEtchingText(actor);
+  });
+  on(root, ".ritual-bloodletting-btn", "click", async () => {
+    if (!ritualBloodlettingAvailable(actor)) return;
+    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
+    await applyRitualBloodletting(actor, token);
+  });
 
   // ── Состязания (Повалить/Финт/Давление/Напролом) ─────────────────────────
   on(root, ".technique-btn", "click", ev => {
@@ -173,6 +234,10 @@ export function activateCombatListeners(root, actor) {
   // бронёй на этой же вкладке (character-context.mjs hasWeaponPropWounds).
   on(root, ".wh-sheet-corrosion-repair-btn", "click", ev => {
     repairArmorCorrosion(actor, ev.currentTarget.dataset.loc);
+  });
+  on(root, ".wh-sheet-clear-jam-btn", "click", ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) clearWeaponJam(item);
   });
   on(root, ".wh-sheet-piercing-extract-btn", "click", ev => {
     extractPiercingWound(actor, ev.currentTarget.dataset.loc);
@@ -202,12 +267,25 @@ export function activateCombatListeners(root, actor) {
   });
   on(root, ".ae-reset-btn", "click", () => resetActionEconomy(actor));
 
+  // Отскок (стр. 12, wdbc-9wvm, п.7): непотраченное ОД повышает предел
+  // Отскока в текущем Раунде на SPD м — тот же паттерн «−1 ОД за клик», что
+  // у ae-spend-btn выше, только с побочным эффектом grantRecoilBonus вместо
+  // простого списания.
+  on(root, ".ae-recoil-bonus-btn", "click", async () => {
+    if (!await spendActionPoints(actor, 1)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+    await grantRecoilBonus(actor, 1);
+  });
+
+  // Spirit Talk/Духовный Разговор (wdbc-q30d): цель — единственная наведённая
+  // Техника, гейт сам проверяет бой/ОД/кулдаун сессии (combat/spirit-talk.mjs).
+  on(root, ".spirit-talk-btn", "click", () => triggerSpiritTalk(actor));
+
   // ── Движение (стр. 28-32): боевые типы + отдельные механики + марши ─────
   // Та же панель кнопок, что открывает Token HUD-кнопка «Движение»
   // (module/combat/movement-actions.mjs).
   const MOVE_ACTIONS = {
     halfmove: declareHalfMove, fullmove: declareFullMove,
-    charge: declareCharge,     run: declareRun,
+    charge: declareCharge,     run: declareRun,     halfstep: declareHalfStep,
     climb: showClimbDialog, jump: showJumpDialog, swim: showSwimDialog,
     fall: showFallDialog,   fly: showFlightDialog,
     "march-accelerated": a => showMarchDialog(a, "accelerated"),

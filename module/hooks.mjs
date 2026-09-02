@@ -1,7 +1,8 @@
-import { _performDodge, _performParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performDodge, _performParry, _performSprayCancel, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
+import { showRecoilDialog, performRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
-import { _executeFearRoll, FAITH_FLAG } from "./combat/fear.mjs";
+import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed,
          isRoundCapabilityAvailable, markRoundCapabilityUsed } from "./apps/game-session.mjs";
 import { fatePoolLabel }                 from "./rules/fate-save.mjs";
@@ -22,6 +23,7 @@ import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
+import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -40,11 +42,14 @@ import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
+import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
+import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
@@ -98,7 +103,52 @@ export function registerHooks() {
           if (handled !== null) return;
         }
         await _performDodge(actor, extraMod,
-          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid);
+          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid,
+          ev.currentTarget.dataset.melee === "1");
+      });
+    });
+
+    // Отскок (стр. 12, wdbc-9wvm): кнопка приклеена к карточке успешного
+    // Уклонения от стрелковой атаки (defense.mjs::_performDodge) — актор
+    // берётся по uuid из data-actor-uuid (тот же приём, что у контратаки:
+    // отскакивает тот, кто уклонился, а не выбранный сейчас токен).
+    html.querySelectorAll(".wh-recoil-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actorUuid = ev.currentTarget.dataset.actorUuid
+          || ev.currentTarget.closest(".wh-roll-result")?.dataset.actorUuid;
+        const actor = actorUuid ? (await fromUuid(actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Уклонившийся персонаж карточки не найден.");
+        const choice = await showRecoilDialog(actor);
+        if (!choice) return;
+        await performRecoil(actor, choice);
+      });
+    });
+
+    // Тест на отмену попадания Распыления (wdbc-p06s, свойство Spray, стр.
+    // 166-170) — по образцу wh-dodge-btn: актор берётся с выбранного на
+    // сцене токена защищающегося, а не из карточки (шаблон может отметить
+    // несколько токенов, кнопка одна на всех — жмётся по разу за токен).
+    html.querySelectorAll(".wh-spray-cancel-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        await _performSprayCancel(actor);
+      });
+    });
+
+    // Призыв Духов Стада (wdbc-xxb7) — кнопка карточки успешного проведения
+    // Ритуала «Summon Herd Spirits» (module/apps/ritual-cast.mjs); сам диалог
+    // распределения (module/apps/herd-spirits-summon.mjs) GM-only внутри себя.
+    html.querySelectorAll(".wh-herd-spirits-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Ритуалист не найден."); return; }
+        const successes = parseInt(el.dataset.successes) || 0;
+        await showHerdSpiritsAllocationDialog(actor, successes, { ritualistUuid: actor.uuid });
       });
     });
 
@@ -193,7 +243,8 @@ export function registerHooks() {
           parryMod: parseInt(el.dataset.parryMod || "0"),
           targetIsVehicle: el.dataset.targetVehicle === "1",
           flexible: el.dataset.flexible === "1",
-          forcedDefenceReroll: el.dataset.forceReroll || ""
+          forcedDefenceReroll: el.dataset.forceReroll || "",
+          isMelee: el.dataset.melee === "1"
         });
       });
     });
@@ -672,6 +723,16 @@ export function registerHooks() {
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Подавленный персонаж не найден.");
         await rollSuppressionRecovery(actor, { bonus: parseInt(ds.bonus || "0") });
+      });
+    });
+    html.querySelectorAll(".wh-shock-recovery-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
+        if (!actor) return ui.notifications.warn("⚠️ Шокированный персонаж не найден.");
+        ev.currentTarget.disabled = true;
+        await rollShockRecovery(actor);
       });
     });
 
@@ -1302,6 +1363,10 @@ function _attachFateContextMenu(message, html) {
         await actor.unsetFlag("warhammer-dbc", ROUND_DAMAGE_FLAG);
     }
     await resolvePendingSusAnHeals(combat);
+    // Spirit Talk/Духовный Разговор (wdbc-q30d): захваченный конструкт
+    // держит инициативу сразу за кастером каждый Раунд, пока не истекут
+    // F.b — та же смена Раунда, ГМ пишет.
+    await processSpiritTalkRoundStart(combat);
   });
 
   // Бой кончился раньше, чем подошёл отложенный Раунд Сус-ан Мембраны —
@@ -1324,6 +1389,11 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+    // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
+    // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
+    await clearReformationSongBuffs(combat);
+    // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
+    await clearHexMarkedPreyMarks(combat);
   });
 
   // Зоны «Остаётся» (Linger, module/regions/linger-zone.mjs) — И срок жизни
@@ -1389,12 +1459,19 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
+      // следующего Хода ШАМАНА» (не получателя), тем же тактом.
+      await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);
       // Декремент счётчиков длительности (Оглушение/Ослепление/Удушье,
       // wdbc-j3yf) — «в начале своего Хода», отдельно от Кровотечения/
       // Горения выше (у тех книга явно говорит «в конце»).
       await processConditionTurnStart(nextCombatant.actor);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
+      // работает на раунд» от Разрушения — снимается в начале следующего
+      // Хода владельца, тем же тактом, что и Грозный Вопль выше.
+      await clearExpiredGearMalfunction(nextCombatant.actor);
     }
     if (nextCombatant) _lastTurnCombatant.set(combat.id, nextCombatant.id);
   });

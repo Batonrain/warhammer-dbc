@@ -197,6 +197,33 @@ export function jamThreshold(auto) {
   return 81;                  // Очень ненадёжное и хуже — 81+
 }
 
+/**
+ * Можно ли прямо сейчас «Расклинить» это оружие (wdbc-vwfk) — заблокировано,
+ * только пока идёт бой И текущий Раунд ≤ jamLockedRound (ставит Reformation
+ * Song/Разрушение на стрелковом — «не расклинивается 1 раунд»). Вне боя
+ * блокировки нет: раунд посчитать не от чего, тем же допущением, что и
+ * round/battle-троттлинг в rules/cooldown.mjs::liveValue.
+ */
+export function canClearJam(item) {
+  const lockedUntil = Number(item?.system?.jamLockedRound) || 0;
+  if (!lockedUntil) return true;
+  if (!game.combat) return true;
+  return game.combat.round > lockedUntil;
+}
+
+/**
+ * «Расклинить» — то же допущение, что combat/damage.mjs::repairArmorCorrosion:
+ * доступно всегда без проверки теста/времени (полудействие/действие по
+ * книге — за столом), кнопка на листе сама скрыта, пока canClearJam лжив.
+ */
+export async function clearWeaponJam(item) {
+  if (!item?.system?.jammed) return;
+  if (!canClearJam(item)) {
+    return ui.notifications?.warn(`${item.name}: заклинивание пока не расклинить — заблокировано до конца этого Раунда.`);
+  }
+  await item.update({ "system.jammed": false, "system.jamLockedRound": 0 });
+}
+
 // ─── Отображение в чате ───────────────────────────────────────────────────────
 
 /** Подставляет рейтинги X/Y в текст напоминания. */

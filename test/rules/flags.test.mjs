@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { hasRuleFlag, ruleFlags, ruleFlagCost } from "../../module/rules/flags.mjs";
+import { hasRuleFlag, ruleFlags, ruleFlagCost, scriptAbilities } from "../../module/rules/flags.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
 const actor = (over = {}) => ({
@@ -89,6 +89,34 @@ describe("флаги-возможности", () => {
 
     it("возможности, которой у актора нет вовсе — null", () => {
       expect(ruleFlagCost(actor(), "нет.такой.возможности")).toBeNull();
+    });
+  });
+
+  // wdbc-suwp: kind:"script" с ценой/частотой отдаёт effect kind:"scriptAbility"
+  // (module/rules/item-rules.mjs) — scriptAbilities собирает их тем же путём,
+  // что ruleFlags собирает grantFlag.
+  describe("scriptAbilities", () => {
+    const saved = getRuleSources();
+
+    afterEach(() => {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    });
+
+    it("собирает координаты script-способностей актора", () => {
+      clearRuleSources();
+      registerRuleSource("test", () => [{
+        id: "item.Дар.e1", label: "Дар",
+        when: {},
+        effects: [{ kind: "scriptAbility", itemId: "i1", groupId: "g1", entryId: "e1" }]
+      }]);
+      expect(scriptAbilities(actor())).toEqual([
+        { ruleId: "item.Дар.e1", ruleLabel: "Дар", kind: "scriptAbility", itemId: "i1", groupId: "g1", entryId: "e1" }
+      ]);
+    });
+
+    it("нет способностей — пустой список, не ошибка", () => {
+      expect(scriptAbilities(actor())).toEqual([]);
     });
   });
 });
