@@ -32,17 +32,21 @@
   "ownership": {
     "default": 0
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "14.365",
+    "coreVersion": "14.367",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": null,
-    "modifiedTime": null,
-    "lastModifiedBy": null
+    "createdTime": 1788391704655,
+    "modifiedTime": 1788391704655,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
   "_key": "!items!L37LMJ2hdsQhiIJA"
 }
