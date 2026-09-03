@@ -22,9 +22,14 @@ export function parseDirtyPaths(porcelain) {
     .map((line) => line.slice(3).split(" -> ").pop());
 }
 
-/** Незакоммиченные (в т.ч. неотслеживаемые) пути под packs-src. */
-export function uncommittedPacksSrc(srcRoot) {
-  const out = execFileSync("git", ["status", "--porcelain", "--", srcRoot], {
+/**
+ * Незакоммиченные (в т.ч. неотслеживаемые) пути под packs-src. `roots` — один
+ * путь или несколько (сужение до конкретных паков, см. --pack в
+ * tools/unpack.mjs) — сторож видит только их, не весь packs-src.
+ */
+export function uncommittedPacksSrc(roots) {
+  const paths = Array.isArray(roots) ? roots : [roots];
+  const out = execFileSync("git", ["status", "--porcelain", "--", ...paths], {
     cwd: ROOT,
     encoding: "utf8"
   });
