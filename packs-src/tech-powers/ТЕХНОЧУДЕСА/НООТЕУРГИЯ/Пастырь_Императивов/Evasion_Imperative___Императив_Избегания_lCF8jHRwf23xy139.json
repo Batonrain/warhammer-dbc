@@ -9,7 +9,12 @@
     "discipline": "nootheurgy",
     "subtype": "Пастырь Императивов",
     "miracleType": "imperative",
-    "extraTypes": [{ "type": "slavoslovie", "x": 1 }],
+    "extraTypes": [
+      {
+        "type": "slavoslovie",
+        "x": 1
+      }
+    ],
     "iron": "",
     "cost": 200,
     "rating": 1,
