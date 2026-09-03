@@ -65,6 +65,8 @@ import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./comba
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
+import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
+import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -83,6 +85,12 @@ export function registerHooks() {
   // Диалог выбора версии при создании актора В МИРЕ (см. apps/actor-setup.mjs).
   registerActorSetupHook();
 
+  // ── Делегированный тест (wdbc-uez7) — реестр «kind → открыть диалог» ─────
+  // Лечение — первый потребитель: клик по кнопке карточки открывает Лечение
+  // у исполнителя с уже нацеленным пациентом (delegate-test.mjs::openDelegatedTest).
+  registerDelegatedTestOpener("healing", (executorActor, effectTargetActor) =>
+    showHealingDialog(executorActor, { forcedPatient: effectTargetActor }));
+
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
 
@@ -93,6 +101,19 @@ export function registerHooks() {
       pill.addEventListener("dragstart", ev => {
         ev.dataTransfer.setData("text/plain", pill.dataset.payload);
         ev.dataTransfer.effectAllowed = "copy";
+      });
+    });
+
+    // Делегированный тест (wdbc-uez7) — карточка запроса, отправленная
+    // requestDelegatedTest (module/rules/delegate-test.mjs): кнопка несёт
+    // весь payload в data-payload, никакого поиска по actorId не нужно.
+    html.querySelectorAll(".delegated-test-open").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        let payload;
+        try { payload = JSON.parse(ev.currentTarget.dataset.payload || "{}"); }
+        catch { return ui.notifications?.warn("Испорченная карточка запроса теста."); }
+        await openDelegatedTest(payload);
       });
     });
 

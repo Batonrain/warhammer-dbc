@@ -18,6 +18,7 @@ import { _showContestDialog } from "../../combat/techniques.mjs";
 import { showGrappleDialog } from "../../combat/grapple.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
+import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
 import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
@@ -87,6 +88,10 @@ export function activateCombatListeners(root, actor) {
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
   on(root, ".wounds-heal-btn", "click", () => showHealingDialog(actor));
+  // Делегирование (wdbc-uez7): актор с этой кнопки — ЦЕЛЬ эффекта (пациент),
+  // не исполнитель — тот выбирается уже в самом пикере.
+  on(root, ".wounds-request-heal-btn", "click", () =>
+    showDelegateTestPicker(actor, { title: "Попросить лечение", kind: "healing", label: "Лечение", buttonLabel: "Открыть Лечение" }));
 
   // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
   on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));
