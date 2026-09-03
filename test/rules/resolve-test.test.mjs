@@ -304,6 +304,41 @@ describe("область Морали (wdbc-zepq)", () => {
   });
 });
 
+describe("область :recipient (wdbc-uez7, делегированный тест)", () => {
+  const recipientRule = (target = "skill:medicae:recipient", value = 10) =>
+    ({ id: "r", label: "Стойкий к боли", effects: [{ kind: "rollBonus", target, value }] });
+
+  it("без ctx.asRecipient суффиксное правило не подхватывается", () => {
+    expect(rollModsFromRules([recipientRule()], buildTestContext({ skill: "medicae" }))).toHaveLength(0);
+  });
+
+  it("с ctx.asRecipient и тем же ctx.skill — подхватывается", () => {
+    const mods = rollModsFromRules([recipientRule()], buildTestContext({ skill: "medicae", asRecipient: true }));
+    expect(mods).toEqual([{ ruleId: "r", label: "Стойкий к боли", value: 10, halvePenalty: false }]);
+  });
+
+  it("asRecipient=true не подхватывает обычное (без суффикса) правило того же скоупа", () => {
+    const plain = { id: "r2", effects: [{ kind: "rollBonus", target: "skill:medicae", value: 99 }] };
+    expect(rollModsFromRules([plain], buildTestContext({ skill: "medicae", asRecipient: true }))).toHaveLength(0);
+  });
+
+  it("asRecipient=true не подхватывает область «all» без суффикса", () => {
+    const allRule = { id: "r3", effects: [{ kind: "rollBonus", target: "all", value: 5 }] };
+    expect(rollModsFromRules([allRule], buildTestContext({ skill: "medicae", asRecipient: true }))).toHaveLength(0);
+  });
+
+  it("суффикс уважает остальную грамматику скоупа — другой навык не подхватывается", () => {
+    const mods = rollModsFromRules([recipientRule("skill:techuse:recipient")], buildTestContext({ skill: "medicae", asRecipient: true }));
+    expect(mods).toHaveLength(0);
+  });
+
+  it("resolveTest({asRecipient:true}) собирает мод. получателя целиком", () => {
+    registerRuleSource("s", () => [recipientRule()]);
+    const { mods } = resolveTest({ actor: actor(), skill: "medicae", asRecipient: true });
+    expect(mods).toEqual([{ ruleId: "r", label: "Стойкий к боли", value: 10, halvePenalty: false }]);
+  });
+});
+
 describe("failDegModFromRules (wdbc-1rno, Sentient Cyst)", () => {
   const rule = (value, target = "all") =>
     ({ id: "r", label: "Правило", effects: [{ kind: "failDegMod", target, value }] });

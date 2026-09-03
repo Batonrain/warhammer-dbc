@@ -13,6 +13,7 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { fatigueGraceForActor } from "../rules/fatigue-grace.mjs";
+import { resolveTest } from "../rules/resolve-test.mjs";
 import { esc, relayItemUpdate } from "../helpers/utils.mjs";
 
 // Копия fatiguePenalty (module/sheets/tabs/conditions.mjs) без импорта самого
@@ -128,20 +129,47 @@ export async function infoguardInteractionSection(actor, item, { success } = {})
   return "";
 }
 
-/** Наложение Инфограждения: ½ смены, тест Tech-Use+0, Успехи ÷2 (окр.▲). */
-export async function rollInfoguard(item) {
-  const actor = item?.actor;
-  if (!actor) return;
+/**
+ * Мод. от Талантов/Черт ВЛАДЕЛЬЦА предмета к тесту Инфограждения над ним
+ * (wdbc-uez7, делегированный тест — та же общая схема, что healing.mjs::
+ * patientHealingMod) — эффекты с target:"skill:techUse:recipient". Сейчас в
+ * паках нет ни одной такой записи (Инфограждение по книге — фиксированный
+ * Tech-Use+0), но подключение готово на будущее и не меняет число, когда
+ * подходящих правил нет.
+ */
+function ownerInfoguardMod(ownerActor) {
+  if (!ownerActor) return { total: 0, lines: [] };
+  const { mods } = resolveTest({ actor: ownerActor, kind: "skill", skill: "techUse", asRecipient: true });
+  const total = mods.reduce((s, m) => s + (Number(m.value) || 0), 0);
+  const lines = mods.map(m => `${esc(m.label)} (${esc(ownerActor.name)}): ${m.value >= 0 ? "+" : ""}${m.value}`);
+  return { total, lines };
+}
+
+/**
+ * Наложение Инфограждения: ½ смены, тест Tech-Use+0, Успехи ÷2 (окр.▲).
+ * executorActor (wdbc-uez7, делегированный тест) — специалист, которого
+ * попросили наложить Инфограждение на чужое снаряжение: бросает СВОИМ Tech-Use
+ * и Усталостью, а не владельца предмета; запись всё равно ложится на сам
+ * item (relayItemUpdate уже умеет писать чужой предмет через ГМ-релей, если у
+ * исполнителя нет прав). Без executorActor — как раньше, владелец сам себе
+ * накладывает.
+ */
+export async function rollInfoguard(item, { executorActor = null } = {}) {
+  const ownerActor = item?.actor;
+  if (!ownerActor) return;
   if (!supportsInfoguard(item)) {
     ui.notifications?.warn(`${item.name}: Инфограждение недоступно — предмет Примитивный, Мистический или Импланты/бионика.`);
     return;
   }
+  const actor = executorActor ?? ownerActor;
+  const delegating = actor !== ownerActor;
 
   const def   = SKILLS_DEF.techUse;
   const sk    = actor.system.skills?.techUse;
   const base  = sk?.total ?? -20;
   const fatigue = fatiguePenalty(actor, def?.char ?? "int");
-  const eff   = base + fatigue;
+  const ownerMod = delegating ? ownerInfoguardMod(ownerActor) : { total: 0, lines: [] };
+  const eff   = base + fatigue + ownerMod.total;
 
   const roll    = await new Roll("1d100").evaluate();
   const rv      = roll.total;
@@ -157,7 +185,8 @@ export async function rollInfoguard(item) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Инфограждение: ${esc(item.name)}</div>
+          <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Инфограждение: ${esc(item.name)}${delegating ? ` — за ${esc(ownerActor.name)}` : ""}</div>
+          ${ownerMod.lines.length ? `<div class="roll-threshold">${ownerMod.lines.join("<br/>")}</div>` : ""}
           <div class="roll-threshold">Tech-Use+0${fatigue !== 0 ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b> (без бонуса инструментов, кроме Комби-Инструмента в Топоре Омниссии; Unnatural I не учитывается)</div>
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">

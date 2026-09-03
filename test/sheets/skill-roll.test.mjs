@@ -6,7 +6,7 @@
 // модуля, а диалог броска — это DialogV2, кнопку которого тест жмёт через
 // captured.press. Сам расчёт порога заглушку не задействует.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, sheetOf, fakeForm, checkbox } from "../support/foundry-stub.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
@@ -397,5 +397,202 @@ describe("регрессия: тест Характеристики теперь
     await promise;
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
     expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>10</b>");
+  });
+});
+
+// wdbc-uez7: та же кнопка «Делегировать», что теперь есть у любого обычного
+// теста (Навык/Характеристика) — исполнитель бросает СВОИМ листом (this.actor
+// в _showSkillRollDialog/_rollSkill/_rollCharacteristic — уже сам executor,
+// см. hooks.mjs::registerDelegatedTestOpener("genericTest", ...)), а
+// Таланты/Черты effectTargetActor с областью ":recipient" поднимают/снижают
+// Порог — не иначе, чем у Лечения (healing.mjs::patientHealingMod).
+function effectTarget(name, { items = [] } = {}) {
+  const updates = [];
+  const flags = {};
+  return {
+    id: `${name}-stub`, name, items,
+    system: { characteristics: {} },
+    update: async data => { updates.push(data); return data; },
+    getFlag: (ns, key) => flags[`${ns}.${key}`],
+    setFlag: async (ns, key, value) => { flags[`${ns}.${key}`] = value; return value; },
+    updates
+  };
+}
+
+describe("делегированный тест (wdbc-uez7): _showSkillRollDialog с effectTargetActor", () => {
+  it("без effectTargetActor — поведение не меняется: нет заметки, «Цель» — как раньше", () => {
+    sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" });
+    expect(captured.dialog.content).not.toContain("📨 За");
+    expect(captured.dialog.content).toContain('value="45"');
+  });
+
+  it("с effectTargetActor — заметка «За …», Порог поднимается модификатором цели (:recipient)", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } = await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "pain-tol", label: "Высокий болевой порог",
+        effects: [{ kind: "rollBonus", target: "skill:medicae:recipient", value: 10 }] }
+    ]);
+    try {
+      const patient = effectTarget("Пациент");
+      sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" }, "base", { effectTargetActor: patient });
+      expect(captured.dialog.content).toContain("📨 За <b>Пациент</b>");
+      expect(captured.dialog.content).toContain("Высокий болевой порог");
+      expect(captured.dialog.content).toContain('value="55"'); // 45 + 10
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("effectTargetActor === this.actor (та же цель) не считается делегированием — заметки нет", () => {
+    const s = sheet({});
+    s._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" }, "base", { effectTargetActor: s.actor });
+    expect(captured.dialog.content).not.toContain("📨 За");
+  });
+
+  it("кнопка «Делегировать» есть, когда effectTargetActor не задан; исчезает, когда это УЖЕ делегированный вызов", () => {
+    sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" });
+    expect(captured.dialog.buttons.some(b => b.action === "delegate")).toBe(true);
+
+    const patient = effectTarget("Пациент");
+    sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" }, "base", { effectTargetActor: patient });
+    expect(captured.dialog.buttons.some(b => b.action === "delegate")).toBe(false);
+  });
+});
+
+describe("делегированный тест (wdbc-uez7): _rollSkill/_rollCharacteristic маршрутизируют последствия на effectTargetActor", () => {
+  it("_rollSkill: Банк Расширенного теста пишется на effectTargetActor, не на исполнителя; карточка называет цель", async () => {
+    const patient = effectTarget("Пациент");
+    const s = sheet({});
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" }, { effectTargetActor: patient });
+    captured.nextRoll = 10; // eff=45, 10<=45 успех
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "extended",
+      "#extended-goal": "5", "#extended-label": "Медицина"
+    }));
+    await promise;
+
+    // Банк Расширенного — на пациенте (effectTargetActor), не на исполнителе.
+    expect(await patient.getFlag("warhammer-dbc", "extendedTests.медицина")).toBeTruthy();
+    expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+
+  it("_rollCharacteristic: то же самое — исход применяется к effectTargetActor, карточка называет цель", async () => {
+    const patient = effectTarget("Пациент");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Воля", "WP", 45, "wp", true, { effectTargetActor: patient });
+    captured.nextRoll = 10;
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+});
+
+// wdbc-j814: авто-встречный тест — соперник берётся из game.user.targets,
+// галочка #opposed-auto заменяет ручной ввод Порога/Броска соперника.
+describe("авто-встречный тест (wdbc-j814)", () => {
+  const realFromUuid = globalThis.fromUuid;
+  const realUsers = globalThis.game.users;
+
+  afterEach(() => {
+    globalThis.fromUuid = realFromUuid;
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    globalThis.game.users = realUsers;
+  });
+
+  /** Соперник-NPC: без testUserPermission — activeOwnerOf всегда вернёт null. */
+  function npcOpponent(name, { skills = {}, characteristics = {} } = {}) {
+    const opp = { id: `${name}-stub`, uuid: `Actor.${name}-stub`, name,
+      system: { skills, characteristics } };
+    globalThis.fromUuid = async uuid => (uuid === opp.uuid ? opp : null);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: opp }]) };
+    return opp;
+  }
+
+  /** Соперник-игрок: testUserPermission совпадает с активным пользователем в game.users. */
+  function playerOpponent(name) {
+    const owner = { id: "u1", name: "ИгрокСоперника", active: true };
+    globalThis.game.users = Object.assign([owner], { players: [owner] });
+    const opp = { id: `${name}-stub`, uuid: `Actor.${name}-stub`, name,
+      system: { skills: {}, characteristics: {} },
+      testUserPermission: (u, level) => level === "OWNER" && u.id === owner.id };
+    globalThis.fromUuid = async uuid => (uuid === opp.uuid ? opp : null);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: opp }]) };
+    return { opp, owner };
+  }
+
+  it("NPC без активного владельца: галочка сразу даёт готовый результат — одно сообщение, opposedLine заполнена", async () => {
+    npcOpponent("Драго", { skills: { intimidate: { total: 40 } } });
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
+    // Очередь кубов: первый d100 — мой бросок (rollD100WithReroll), второй —
+    // соперника (_resolveOpposedAuto), в этом порядке их и зовёт _rollSkill.
+    captured.dice = [20, 60]; // мой 20<=45 успех, его 60>40 провал
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+
+    expect(captured.chat).toHaveLength(1);
+    const content = captured.chat[0].content;
+    expect(content).toContain("Вы побеждаете");
+    expect(content).not.toContain("Ждём встречный бросок");
+  });
+
+  it("мутация: неверный resolveOpposed/skillTotal должен уронить проверку margin/победителя", async () => {
+    npcOpponent("Драго", { skills: { intimidate: { total: 999 } } }); // заведомо гарантированный проигрыш инициатора
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
+    captured.dice = [20, 21]; // мой 20<=45 успех, но соперник при пороге 999 громит степенью
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+    // Соперник (Порог 999, почти гарантированный высокий Успех) должен
+    // побеждать — если резолвер сломан (например, всегда "mine"), тест падает.
+    expect(captured.chat[0].content).toContain("Соперник побеждает");
+  });
+
+  it("соперник с активным владельцем: моё сообщение без opposedLine, но с «Ждём…», плюс отдельный делегированный запрос с моими цифрами", async () => {
+    playerOpponent("Ксерксот");
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
+    captured.nextRoll = 20;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+
+    expect(captured.chat).toHaveLength(2);
+    expect(captured.chat[0].content).toContain("Ждём встречный бросок");
+    expect(captured.chat[0].content).not.toContain("Побеждает");
+
+    const requestCard = captured.chat[1];
+    expect(requestCard.flags?.["warhammer-dbc"]?.delegatedTest?.kind).toBe("opposedResponse");
+    const payload = requestCard.flags["warhammer-dbc"].delegatedTest;
+    expect(payload.initiatorSide).toMatchObject({ threshold: 45, roll: 20 });
+  });
+
+  it("кнопка «Делегировать» отсутствует, когда opposedRequest задан (ответ соперника не делегируется дальше)", () => {
+    const s = sheet({});
+    s._showSkillRollDialog("Запугивание", 45, "wp", false, { skill: "intimidate" }, "base", {
+      opposedRequest: { initiatorName: "Иван", initiatorSide: { threshold: 40, roll: 30, success: true, deg: 1 }, safe: false }
+    });
+    expect(captured.dialog.buttons.some(b => b.action === "delegate")).toBe(false);
+  });
+
+  it("ответ соперника (opposedRequest): публикует карточку сравнения с готовым победителем", async () => {
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 50, "wp", { skill: "intimidate" }, {
+      opposedRequest: { initiatorName: "Иван", initiatorSide: { threshold: 40, roll: 35, success: true, deg: 1 }, safe: false }
+    });
+    captured.nextRoll = 5; // 5 <= 50 — большой успех, должен побеждать
+    await captured.press("roll", fakeForm({ "#skill-target": "50", "#skill-modifier": "0", "#test-kind": "base" }));
+    await promise;
+    const content = captured.chat.at(-1)?.content ?? "";
+    expect(content).toContain("⚔");
+    expect(content).toContain("Иван");
   });
 });

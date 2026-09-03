@@ -109,6 +109,9 @@ export function testKindHtml({
         <label>Бросок соперника:</label>
         <input id="opposed-roll" type="number"/>
       </div>
+      <div class="roll-dlg-row roll-dlg-subrow" id="opposed-auto-row" hidden>
+        <label><input type="checkbox" id="opposed-auto"/> <span id="opposed-auto-label"></span></label>
+      </div>
       <div class="roll-dlg-note">Оставьте пустым, если сравнивать вручную.</div>
     </div>`;
 }
@@ -138,6 +141,32 @@ export function diceModeHtml() {
       <label class="dice-mode-opt-label"><input type="radio" name="dice-mode" class="dice-mode-opt" value="disadvantage"/> Помеха</label>
     </span>
   </div>`;
+}
+
+/**
+ * Публичная карточка сравнения Встречного теста (wdbc-j814) — публикуется
+ * клиентом СОПЕРНИКА сразу после его собственного броска (см.
+ * module/sheets/actor-sheet.mjs::_rollSkill/_rollCharacteristic, параметр
+ * opposedRequest): к этому моменту он знает обе стороны — свою (только что
+ * бросил) и инициатора (пришла вместе с запросом, module/rules/
+ * delegate-test.mjs::requestDelegatedTest). Не зависит от Foundry — то же
+ * место, что и critLineHtml.
+ * @param {{label:string, mineName:string, mine:{threshold:number,roll:number},
+ *   theirsName:string, theirs:{threshold:number,roll:number},
+ *   result:{winner:"mine"|"theirs"|null, margin:number}}} p
+ */
+export function opposedComparisonHtml({ label, mineName, mine, theirsName, theirs, result }) {
+  const winnerName = result.winner === "mine" ? mineName : result.winner === "theirs" ? theirsName : null;
+  const winnerHtml = winnerName
+    ? `Побеждает <b>${esc(winnerName)}</b>, margin <b>${result.margin}</b>`
+    : "Ничья — решает ГМ";
+  return `
+    <div class="wh-roll-result">
+      <div class="roll-header">⚔ Встречный тест: ${esc(label)}</div>
+      <div class="roll-threshold">${esc(mineName)}: Порог <b>${mine.threshold}</b>, бросок <b>${mine.roll}</b></div>
+      <div class="roll-threshold">${esc(theirsName)}: Порог <b>${theirs.threshold}</b>, бросок <b>${theirs.roll}</b></div>
+      <div class="roll-outcome">${winnerHtml}</div>
+    </div>`;
 }
 
 /** Строка Критического Успеха/Провала для карточки в чате. Пустая строка, если не сработало. */

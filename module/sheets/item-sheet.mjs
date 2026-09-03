@@ -1,6 +1,7 @@
 import { armourHistoryContext, rollArmourTable, rollArmourEntry,
          rollArmourZones, setArmourEntry, clearArmourHistory } from "../apps/armour-history.mjs";
 import { infoguardContext, rollInfoguard }                    from "../apps/infoguard.mjs";
+import { showDelegateTestPicker }                              from "../rules/delegate-test.mjs";
 import { submutationContext, rollSubmutation,
          pickSubmutation, clearSubmutation }                   from "../apps/submutations.mjs";
 import { legacyContext, rollAscension, breakLegacy, setHistory, rollHistory,
@@ -288,6 +289,16 @@ function onReqDropClear(event, target) {
 
 // ── Особенность комплекта силовой брони ──
 function onInfoguardRoll() { return rollInfoguard(this.item); }
+// Делегирование (wdbc-uez7): цель эффекта — владелец ЭТОГО предмета (this.item.actor),
+// не тот, кто открыл лист предмета — пикер сам предложит выбрать исполнителя.
+function onInfoguardDelegate() {
+  const item = this.item;
+  return showDelegateTestPicker(item.actor, {
+    title: `Делегировать Инфограждение: ${item.name}`, kind: "infoguard",
+    label: `Инфограждение: ${item.name}`, buttonLabel: "Наложить Инфограждение",
+    extra: { itemId: item.id }
+  });
+}
 
 function onPaRollTable() { return rollArmourTable(this.item); }
 function onPaRollZones() { return rollArmourZones(this.item); }
@@ -537,6 +548,7 @@ export class WarhammerItemSheet
       reqEntryRemove: onReqEntryRemove,
       reqDropClear: onReqDropClear,
       infoguardRoll: whenEditable(onInfoguardRoll),
+      infoguardDelegate: whenEditable(onInfoguardDelegate),
       paRollTable: onPaRollTable,
       paRollEntry: onPaRollEntry,
       paRollZones: onPaRollZones,

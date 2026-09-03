@@ -4,9 +4,12 @@
 // Пришивание конечностей, Кома, Лечение болезней. Бионика/Кибернетика
 // (открывает Хирургеон) не покрыта — заглушка Hooks.once не хранит колбэк.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { applyHealing, comaWakeRemaining } from "../../module/sheets/tabs/healing.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
+
+const DEFAULT_SOURCES = getRuleSources();
 
 function applyPaths(target, data) {
   for (const [path, value] of Object.entries(data)) {
@@ -190,6 +193,44 @@ describe("applyHealing: coma (Кома, Medicae−40, раз в 10−T.b дне�
     expect(captured.rolls).toEqual(["1d100"]);
     expect(patient.getFlag("warhammer-dbc", "comaTestAt")).toBe(game.time.worldTime);
     expect(captured.chat[0].content).toContain("Провал");
+  });
+});
+
+describe("applyHealing: мод. Талантов ПАЦИЕНТА к тесту Лечения (wdbc-uez7, делегированный тест)", () => {
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+  });
+
+  it("Талант пациента с target:'skill:medicae:recipient' поднимает порог доктора и подписан как «пациент»", async () => {
+    registerRuleSource("test-patient-mod", () => [
+      { id: "pain-tol", label: "Высокий болевой порог",
+        effects: [{ kind: "rollBonus", target: "skill:medicae:recipient", value: 10 }] }
+    ]);
+    const medic = person({ medicae: 40 });
+    const patient = person({ t: 40 });
+    captured.nextRoll = 10; // eff = 40(медик) + 10(мод. пациента) - 40(кома) = 10
+
+    await applyHealing(medic, patient, { mode: "coma", mod: 0 });
+
+    expect(captured.chat[0].content).toContain("порог <b>10</b>");
+    expect(captured.chat[0].content).toContain("Высокий болевой порог");
+    expect(captured.chat[0].content).toContain("(пациент)");
+  });
+
+  it("тот же Талант БЕЗ суффикса :recipient (свои тесты пациента) не подмешивается в тест доктора", () => {
+    registerRuleSource("test-patient-mod", () => [
+      { id: "self-only", label: "Своя Медика",
+        effects: [{ kind: "rollBonus", target: "skill:medicae", value: 10 }] }
+    ]);
+    const medic = person({ medicae: 40 });
+    const patient = person({ t: 40 });
+    captured.nextRoll = 10; // без подмешивания eff = 40 - 40 = 0 → 10 > 0 провал
+
+    return applyHealing(medic, patient, { mode: "coma", mod: 0 }).then(() => {
+      expect(captured.chat[0].content).toContain("порог <b>0</b>");
+      expect(captured.chat[0].content).toContain("Провал");
+    });
   });
 });
 

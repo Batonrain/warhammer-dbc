@@ -5,6 +5,7 @@
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { resolveTest } from "../../rules/resolve-test.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
@@ -13,6 +14,7 @@ import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
 import { addFatigue } from "./conditions.mjs";
 import { worldTimeRemaining } from "../../rules/cooldown.mjs";
+import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -35,6 +37,29 @@ function medicSkill(medic) {
 }
 
 /**
+ * Модификатор от Талантов/Черт ПАЦИЕНТА к тесту Лечения над ним (wdbc-uez7,
+ * делегированный тест — «Высокий болевой порог» и т.п.) — эффекты с
+ * `target:"skill:medicae:recipient"` (resolve-test.mjs::effectAppliesTo).
+ * Отдельно от Медики самого медика (его собственный бонус уже целиком в
+ * `medic.system.skills.medicae.total` — постоянные бонусы от снаряжения и
+ * Талантов туда уже включены пайплайном производных полей; ситуативных
+ * записей с этой областью в паках пока нет, поэтому диалог не показывает под
+ * них отдельных галочек, только этот, уже автоматический разбор).
+ */
+function patientHealingMod(patient) {
+  if (!patient) return { total: 0, lines: [] };
+  const { mods } = resolveTest({ actor: patient, kind: "skill", skill: "medicae", asRecipient: true });
+  const total = mods.reduce((s, m) => s + (Number(m.value) || 0), 0);
+  const lines = mods.map(m => `${esc(m.label)} (пациент): ${m.value >= 0 ? "+" : ""}${m.value}`);
+  return { total, lines };
+}
+
+/** Итоговый Порог теста Медики: медик + автоматический мод. от пациента + свой довесок режима. */
+function medicaeEff(medic, patient, extra = 0) {
+  return medicSkill(medic) + patientHealingMod(patient).total + extra;
+}
+
+/**
  * Раз в 10−T.b дней (стр. 232) — секунд до следующей попытки вывести из
  * комы (0 — доступна прямо сейчас). worldTime-троттлинг из
  * module/rules/cooldown.mjs (wdbc-f4jt): дни ≥ 10−T.b дают interval ≤ 0,
@@ -45,9 +70,14 @@ export function comaWakeRemaining(testAt, worldTime, tb) {
   return worldTimeRemaining(testAt, worldTime, days * SECONDS_PER_DAY);
 }
 
-/** Диалог лечения: себя или выбранной цели (тест Медики/Стойкости). */
-export function showHealingDialog(medic) {
-  const tgt = [...(game.user.targets ?? [])][0]?.actor || null;
+/**
+ * Диалог лечения: себя, выбранной цели (таргет-рамка) или пациента,
+ * присланного делегированным запросом (wdbc-uez7 — «Плечо: попросить
+ * лечение»/module/rules/delegate-test.mjs). forcedPatient старше таргета —
+ * открывший диалог по кнопке из чата уже знает, за кого его попросили.
+ */
+export function showHealingDialog(medic, { forcedPatient = null } = {}) {
+  const tgt = forcedPatient || [...(game.user.targets ?? [])][0]?.actor || null;
   const hasTgt = !!tgt && tgt.id !== medic.id;
   const refHtml = `
     <details class="heal-reference" style="margin-top:6px;font-size:0.82em;">
@@ -194,6 +224,21 @@ export function showHealingDialog(medic) {
           }
         }
       },
+      // Та же кнопка, что теперь у любого теста (wdbc-uez7,
+      // actor-sheet.mjs::_showSkillRollDialog) — рядом с «Выполнить», не
+      // отдельным путём: делегирует ТЕКУЩЕГО выбранного в форме пациента,
+      // а не обязательно того, с кем диалог открыли изначально.
+      {
+        action: "delegate", label: "📨 Делегировать", icon: "fas fa-paper-plane",
+        callback: async (event, button) => {
+          const patient = patientOf(button.form);
+          if (!patient) {
+            ui.notifications.warn("Нет выбранной цели — наведите таргет (T) на токен пациента.");
+            return;
+          }
+          await showDelegateTestPicker(patient, { title: "Делегировать Лечение", kind: "healing", label: "Лечение", buttonLabel: "Открыть Лечение" });
+        }
+      },
       { action: "cancel", label: "Отмена" }
     ],
     render: (event, dialog) => {
@@ -255,11 +300,13 @@ async function applyAmputate(medic, patient, { mod, limb }) {
   const def = LIMB_TYPES[limb];
   if (!def) { ui.notifications.warn("Выберите часть тела для ампутации."); return; }
 
-  const eff = medicSkill(medic) + mod - 10;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod - 10);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const success = roll.total <= eff;
   const lines = [
+    ...pMod.lines,
     `${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
@@ -276,7 +323,7 @@ async function applyAmputate(medic, patient, { mod, limb }) {
     updates["system.conditions.bleedingLevel"] = bleedLvl + 1;
     lines.push(`${rollIcon("blood","#ff6b6b")}Провал → <b>Кровотечение</b> (уровень ${bleedLvl + 1}).`);
 
-    const stumpEff = medicSkill(medic) + mod - 10;
+    const stumpEff = medicaeEff(medic, patient, mod - 10);
     const stumpRoll = await new Roll("1d100").evaluate();
     rolls.push(stumpRoll);
     const stumpOk = stumpRoll.total <= stumpEff;
@@ -307,11 +354,13 @@ async function applyReattach(medic, patient, { mod, limb }) {
     return;
   }
 
-  const eff = medicSkill(medic) + mod - 30;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod - 30);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const success = roll.total <= eff;
   const lines = [
+    ...pMod.lines,
     `${rollIcon("wrench","#8fd0ff")}<b>Пришивание конечности</b> (${def.label}): Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
@@ -343,10 +392,12 @@ async function applyComaWake(medic, patient, { mod }) {
     return;
   }
 
-  const eff = medicSkill(medic) + mod - 40;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod - 40);
   const roll = await new Roll("1d100").evaluate();
   const success = roll.total <= eff;
   const lines = [
+    ...pMod.lines,
     `${rollIcon("spark","#4dffa6")}<b>Вывод из комы</b>: Медика−40${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех — пациент приходит в себя</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
   try { await patient.setFlag(NS, "comaTestAt", game.time.worldTime); } catch {}
@@ -356,13 +407,15 @@ async function applyComaWake(medic, patient, { mod }) {
 /** Лечение болезней (стр. 232): по умолчанию постельный режим, тест Medicae. */
 async function applyDiseaseCure(medic, patient, { mod, diseaseCare, diseaseId }) {
   const careMod = DISEASE_CARE_MOD[diseaseCare] ?? 0;
-  const eff = medicSkill(medic) + mod + careMod;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod + careMod);
   const roll = await new Roll("1d100").evaluate();
   const success = roll.total <= eff;
   const careLabel = { bedRest: "постельный режим", rest: "просто отдых", none: "ни то ни другое" }[diseaseCare] ?? "постельный режим";
   const disease = diseaseId ? patient.items?.get(diseaseId) : null;
 
   const lines = [
+    ...pMod.lines,
     disease ? `Болезнь: <b>${esc(disease.name)}</b>` : null,
     `${rollIcon("skull","#9fd08a")}<b>Лечение болезни</b> (${careLabel}): Медика${careMod ? `${careMod >= 0 ? "+" : ""}${careMod}` : ""}${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`,
     disease?.system?.cure ? `<span style="font-size:0.85em;">Лечение по тексту болезни: ${esc(disease.system.cure)}</span>` : null
@@ -387,11 +440,13 @@ export function runBionicInstall(medic, patient, { mod }) {
 }
 
 async function resolveBionicTest(medic, patient, { mod }) {
-  const eff = medicSkill(medic) + mod - 30;
+  const pMod = patientHealingMod(patient);
+  const eff = medicaeEff(medic, patient, mod - 30);
   const roll = await new Roll("1d100").evaluate();
   const rolls = [roll];
   const success = roll.total <= eff;
   const lines = [
+    ...pMod.lines,
     `${rollIcon("gear","#c98bff")}<b>Установка бионики/кибернетики</b>: Медика−30${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
@@ -428,12 +483,15 @@ export async function applyHealing(medic, patient, opts) {
   const tb = lvl.tb;
   // Физиология Астартес — возможность от правил, а не раса пациента.
   const isAstartes = hasRuleFlag(patient, "healing.astartes");
+  const pMod = patientHealingMod(patient);
   const rolls = [];
-  const lines = [];
+  const lines = [...pMod.lines];
   let heal = 0;
   const lblOf = { light: "Лёгкое", heavy: "Тяжёлое", critical: "Критическое" };
   const half = (n, up) => up ? Math.ceil(n / 2) : Math.floor(n / 2);
-  const medSkill = () => medicSkill(medic);
+  // Включает автоматический мод. пациента (patientHealingMod) — в отличие от
+  // «сырой» medicSkill(medic), это уже итоговый Порог со стороны медика.
+  const medSkill = () => medicSkill(medic) + pMod.total;
 
   if (mode === "firstAid") {
     if (patient.system.wounds?.firstAidUsed) {
