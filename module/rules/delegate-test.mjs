@@ -50,14 +50,22 @@ export function myLikelyActor() {
  * нацеленного на effectTargetActor. Без активного игрока-владельца у
  * исполнителя — предупреждение и false: автоброска за NPC силами ГМа здесь
  * нет (отдельный путь, wdbc-j814 п.1, ещё не реализован).
+ *
+ * `extra` (wdbc-uez7, раскатка на обычные тесты Навыка/Характеристики) —
+ * плоский объект ПРИМИТИВОВ (не документов), который openDelegatedTest
+ * отдаёт opener'у как есть: для Лечения он не нужен (весь контекст — это сам
+ * пациент), а для обычного теста именно тут едут skillKey/charKey/label —
+ * без них исполнитель не знает, какой диалог открывать. Приходится через
+ * ChatMessage (JSON), поэтому НИКАКИХ документов/функций внутри — только
+ * строки/числа/booleans.
  */
-export async function requestDelegatedTest({ requesterActor, executorActor, effectTargetActor, kind, label, buttonLabel }) {
+export async function requestDelegatedTest({ requesterActor, executorActor, effectTargetActor, kind, label, buttonLabel, extra = {} }) {
   const owner = activeOwnerOf(executorActor);
   if (!owner) {
     ui.notifications?.warn(`У «${executorActor?.name ?? "исполнителя"}» нет активного игрока-владельца — попросите ГМа выполнить тест вручную.`);
     return false;
   }
-  const payload = { kind, targetActorUuid: effectTargetActor.uuid, requesterActorUuid: requesterActor?.uuid ?? null };
+  const payload = { kind, targetActorUuid: effectTargetActor.uuid, requesterActorUuid: requesterActor?.uuid ?? null, ...extra };
   const content = `
     <div class="wh-roll-result delegated-test-card">
       <div class="roll-header">📨 Запрос теста${label ? `: ${esc(label)}` : ""}</div>
@@ -76,7 +84,9 @@ export async function requestDelegatedTest({ requesterActor, executorActor, effe
 /** Реестр «kind → как открыть диалог теста» — заполняется в hooks.mjs при инициализации. */
 const OPENERS = new Map();
 
-/** @param {(executorActor:object, effectTargetActor:object) => void|Promise<void>} openFn */
+/** @param {(executorActor:object, effectTargetActor:object, payload:object) => void|Promise<void>} openFn
+ *  payload — весь пришедший объект (kind/targetActorUuid/requesterActorUuid + extra) — opener читает
+ *  из него то, что сам туда положил через requestDelegatedTest's extra. */
 export function registerDelegatedTestOpener(kind, openFn) {
   OPENERS.set(kind, openFn);
 }
@@ -89,7 +99,7 @@ export async function openDelegatedTest(payload) {
   if (!effectTargetActor) return ui.notifications?.warn("Цель запрошенного теста не найдена (удалена?).");
   const executorActor = myLikelyActor();
   if (!executorActor) return ui.notifications?.warn("Нет назначенного персонажа/выбранного токена — откройте диалог вручную со своего листа и укажите цель сами.");
-  await opener(executorActor, effectTargetActor);
+  await opener(executorActor, effectTargetActor, payload);
 }
 
 /**
@@ -98,7 +108,7 @@ export async function openDelegatedTest(payload) {
  * просто обычный, не делегированный тест). Пусто — предупреждение вместо
  * пустого диалога.
  */
-export async function showDelegateTestPicker(effectTargetActor, { title = "Запросить тест", kind = "healing", label, buttonLabel } = {}) {
+export async function showDelegateTestPicker(effectTargetActor, { title = "Запросить тест", kind = "healing", label, buttonLabel, extra = {} } = {}) {
   const candidates = (game.actors ?? []).filter(a => a.id !== effectTargetActor?.id && a.hasPlayerOwner && activeOwnerOf(a));
   if (!candidates.length) {
     ui.notifications?.warn("Нет других акторов с активным игроком-владельцем, кому можно поручить тест.");
@@ -122,7 +132,7 @@ export async function showDelegateTestPicker(effectTargetActor, { title = "За�
           const executorActor = uuid ? await fromUuid(uuid).catch(() => null) : null;
           if (!executorActor) return;
           await requestDelegatedTest({
-            requesterActor: effectTargetActor, executorActor, effectTargetActor, kind, label, buttonLabel
+            requesterActor: effectTargetActor, executorActor, effectTargetActor, kind, label, buttonLabel, extra
           });
         }
       },

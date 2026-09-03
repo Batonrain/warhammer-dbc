@@ -87,6 +87,25 @@ describe("requestDelegatedTest — три роли не путаются мес�
     expect(msg.content).toContain("Пациент"); // карточка называет ЦЕЛЬ эффекта — за кого просят сделать тест
   });
 
+  it("extra (skillKey/charKey и т.п. для обычного теста, wdbc-uez7) попадает в payload наравне с kind/targetActorUuid", async () => {
+    const doc = user("doc-user");
+    game.users = { players: [doc], filter: () => [] };
+    const patient = actor("Пациент");
+    const doctor = actor("Доктор", { owners: ["doc-user"] });
+
+    await requestDelegatedTest({
+      requesterActor: patient, executorActor: doctor, effectTargetActor: patient,
+      kind: "genericTest", extra: { testKind: "skill", skillKey: "stealth", label: "Скрытность" }
+    });
+
+    expect(captured.chat[0].flags["warhammer-dbc"].delegatedTest).toEqual({
+      kind: "genericTest",
+      targetActorUuid: patient.uuid,
+      requesterActorUuid: patient.uuid,
+      testKind: "skill", skillKey: "stealth", label: "Скрытность"
+    });
+  });
+
   it("ГМ-пользователи тоже получают шёпот (видимость запроса за столом)", async () => {
     const doc = user("doc-user");
     const gm = user("gm-user", { isGM: true });
@@ -141,6 +160,21 @@ describe("openDelegatedTest — диспетчеризация по kind", () =>
 
     expect(seen.executorActor).toBe(doctor);
     expect(seen.effectTargetActor).toBe(patient);
+  });
+
+  it("opener получает третьим параметром весь payload — включая extra-поля (skillKey и т.п.)", async () => {
+    const patient = actor("Пациент");
+    const doctor = actor("Доктор");
+    globalThis.fromUuid = async () => patient;
+    game.user = { character: doctor };
+
+    let seenPayload = null;
+    registerDelegatedTestOpener("test-kind-4", (executorActor, effectTargetActor, payload) => {
+      seenPayload = payload;
+    });
+    await openDelegatedTest({ kind: "test-kind-4", targetActorUuid: "Actor.pat", skillKey: "stealth", label: "Скрытность" });
+
+    expect(seenPayload).toEqual({ kind: "test-kind-4", targetActorUuid: "Actor.pat", skillKey: "stealth", label: "Скрытность" });
   });
 });
 

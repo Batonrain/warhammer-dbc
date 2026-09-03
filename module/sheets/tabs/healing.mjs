@@ -14,6 +14,7 @@ import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
 import { addFatigue } from "./conditions.mjs";
 import { worldTimeRemaining } from "../../rules/cooldown.mjs";
+import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -221,6 +222,21 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
           } else {
             await applyHealing(medic, patient, opts);
           }
+        }
+      },
+      // Та же кнопка, что теперь у любого теста (wdbc-uez7,
+      // actor-sheet.mjs::_showSkillRollDialog) — рядом с «Выполнить», не
+      // отдельным путём: делегирует ТЕКУЩЕГО выбранного в форме пациента,
+      // а не обязательно того, с кем диалог открыли изначально.
+      {
+        action: "delegate", label: "📨 Делегировать", icon: "fas fa-paper-plane",
+        callback: async (event, button) => {
+          const patient = patientOf(button.form);
+          if (!patient) {
+            ui.notifications.warn("Нет выбранной цели — наведите таргет (T) на токен пациента.");
+            return;
+          }
+          await showDelegateTestPicker(patient, { title: "Делегировать Лечение", kind: "healing", label: "Лечение", buttonLabel: "Открыть Лечение" });
         }
       },
       { action: "cancel", label: "Отмена" }

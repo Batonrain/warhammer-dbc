@@ -67,6 +67,8 @@ import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mj
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
+import { CHARACTERISTICS } from "./constants/characteristics.mjs";
+import { SKILLS_DEF } from "./constants/skills.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -90,6 +92,33 @@ export function registerHooks() {
   // у исполнителя с уже нацеленным пациентом (delegate-test.mjs::openDelegatedTest).
   registerDelegatedTestOpener("healing", (executorActor, effectTargetActor) =>
     showHealingDialog(executorActor, { forcedPatient: effectTargetActor }));
+
+  // Обычный тест Навыка/Характеристики (wdbc-uez7, кнопка «Делегировать» в
+  // самом диалоге броска, actor-sheet.mjs::_showSkillRollDialog) — payload
+  // несёт только примитивы (JSON через чат), поэтому executorActor.sheet
+  // достаётся здесь, а не хранится заранее. actor.sheet — та же ActorSheet,
+  // что открывает лист, лениво создаётся Foundry без рендера окна; но не
+  // у ВСЕХ типов актора (Отряд/Техника/Корабль/Демон/Орда/Формирование/
+  // Звёздная система — свои классы листов) есть _rollSkill/_rollCharacteristic
+  // этого класса, отсюда явная проверка вместо слепого вызова.
+  registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
+    const sheet = executorActor.sheet;
+    const { testKind, skillKey, charKey, label, hideCharSelect } = payload;
+    if (testKind === "characteristic") {
+      if (typeof sheet?._rollCharacteristic !== "function") {
+        return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
+      }
+      const meta = CHARACTERISTICS[charKey];
+      const total = executorActor.system.characteristics?.[charKey]?.total ?? 0;
+      return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect, { effectTargetActor });
+    }
+    if (typeof sheet?._rollSkill !== "function") {
+      return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
+    }
+    const def = SKILLS_DEF[skillKey];
+    const total = executorActor.system.skills?.[skillKey]?.total ?? -20;
+    return sheet._rollSkill(label, total, def?.char ?? charKey ?? "ag", { skill: skillKey }, { effectTargetActor });
+  });
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {

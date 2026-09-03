@@ -66,8 +66,9 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
-import { isMoraleOpposedSkill } from "../rules/resolve-test.mjs";
+import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
+import { showDelegateTestPicker } from "../rules/delegate-test.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
          wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
@@ -1931,13 +1932,29 @@ export class WarhammerCharacterSheet
     };
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null } = {}) {
     // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
     // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
     // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
     // rules/predicates.mjs — уже существовал, но был мёртв за пределами
     // атак) не могли сработать. Тот же приём: первый выбранный таргет сцены.
     const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+
+    // Делегированный тест (wdbc-uez7): effectTargetActor задан и отличается
+    // от бросающего — this.actor тут ИСПОЛНИТЕЛЬ (его лист/модификаторы уже
+    // во всём остальном диалоге), а effectTargetActor — тот, за кого просили
+    // (его Таланты/Черты с областью ":recipient" поднимают/снижают Порог,
+    // тот же механизм, что healing.mjs::patientHealingMod). Не делегированный
+    // вызов effectTargetActor не передаёт вовсе — считаем, что тест «для себя».
+    const delegating = !!effectTargetActor && effectTargetActor.id !== this.actor.id;
+    const recipientMods = delegating
+      ? resolveTest({ actor: effectTargetActor, kind: "skill", skill: rollContext?.skill, char: defaultChar, asRecipient: true }).mods
+      : [];
+    const recipientTotal = recipientMods.reduce((s, m) => s + (Number(m.value) || 0), 0);
+    const recipientNote = recipientMods.length
+      ? `<div class="roll-dlg-note">${recipientMods.map(m => `${esc(m.label)} (${esc(effectTargetActor.name)}): ${m.value >= 0 ? "+" : ""}${m.value}`).join("<br/>")}</div>`
+      : "";
+    baseTotal += recipientTotal;
     const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
     if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
@@ -1999,6 +2016,8 @@ export class WarhammerCharacterSheet
       content: `
           <div class="wh-skill-roll-form">
             <div class="roll-dlg-header"><span>${label}</span></div>
+            ${delegating ? `<div class="roll-dlg-note">📨 За <b>${esc(effectTargetActor.name)}</b> — бросаете листом <b>${esc(this.actor.name)}</b>.</div>` : ""}
+            ${recipientNote}
             ${testKindHtml({ defaultKind, label, combinedSecondHtml, defaultCombinedTarget: defaultCharTotal })}
             ${hideCharSelect ? "" : `<div class="roll-dlg-row">
               <label>Бросок с:</label>
@@ -2055,6 +2074,26 @@ export class WarhammerCharacterSheet
             };
           }
         },
+        // Делегирование (wdbc-uez7) — альтернатива «Бросок», не второй шаг
+        // после него: запрос уходит СРАЗУ из этого колбэка, сам диалог просто
+        // закрывается (false), ничего не бросая на этом клиенте. Не показан,
+        // если этот диалог УЖЕ открыт делегированием (delegating) — цепочку
+        // «делегировать делегированное» не поддерживаем.
+        ...(delegating ? [] : [{
+          action: "delegate", icon: "fas fa-paper-plane", label: "📨 Делегировать",
+          callback: async () => {
+            await showDelegateTestPicker(this.actor, {
+              title: `Делегировать: ${label}`, kind: "genericTest", label,
+              buttonLabel: "Открыть тест",
+              extra: {
+                testKind: rollContext?.skill ? "skill" : "characteristic",
+                skillKey: rollContext?.skill ?? null, charKey: defaultChar,
+                label, hideCharSelect
+              }
+            });
+            return false;
+          }
+        }]),
         // Без callback DialogV2 вернул бы строку "cancel" вместо null — она
         // непустая, проходит проверку `if (!result) return` у вызывающих
         // (_rollSkill/_rollCharacteristic), и деструктуризация полей из строки
@@ -2161,11 +2200,15 @@ export class WarhammerCharacterSheet
 
   // ── Бросок навыка ─────────────────────────────────────────────────────────
 
-  async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
-    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext, "base");
+  async _rollSkill(label, baseTotal, defaultChar, rollContext = null, { effectTargetActor = null } = {}) {
+    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext, "base", { effectTargetActor });
     if (!result) return;
     const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
              assistCount = 0, reroll = null } = result;
+    // Делегированный тест (wdbc-uez7): эффект/последствия — на effectTargetActor
+    // (тот, за кого просили), сам бросок и его штрафы за состояние тела/снаряжения
+    // (Усталость/Марш/Броня/Перевес) — на this.actor (кто физически бросает).
+    const effectActor = effectTargetActor ?? this.actor;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     const marchPen = this._getMarchPenalty(defaultChar);
@@ -2187,9 +2230,9 @@ export class WarhammerCharacterSheet
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
 
-    const outcome = await resolveKindOutcome(this.actor, {
+    const outcome = await resolveKindOutcome(effectActor, {
       kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
+      ctx: { actor: effectActor, kind: "skill", char: charKey, skill: rollContext?.skill,
              morale: isMoraleOpposedSkill(rollContext?.skill),
              targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null }
     });
@@ -2209,7 +2252,7 @@ export class WarhammerCharacterSheet
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}</div>
+          <div class="roll-header">${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
           <div class="roll-threshold">
             ${charAbbr}: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
@@ -2248,11 +2291,12 @@ export class WarhammerCharacterSheet
 
   // ── Бросок характеристики ─────────────────────────────────────────────────
 
-  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
-    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect);
+  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null } = {}) {
+    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect, null, "base", { effectTargetActor });
     if (!result) return;
     const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
              assistCount = 0, reroll = null } = result;
+    const effectActor = effectTargetActor ?? this.actor;
 
     const fatiguePenalty = this._getFatiguePenalty(charKey);
     const marchPen = this._getMarchPenalty(charKey);
@@ -2271,9 +2315,9 @@ export class WarhammerCharacterSheet
     const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
     const rollMode = game.settings.get("core", "rollMode");
 
-    const outcome = await resolveKindOutcome(this.actor, {
+    const outcome = await resolveKindOutcome(effectActor, {
       kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey }
+      ctx: { actor: effectActor, kind: "skill", char: charKey }
     });
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
     const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
@@ -2286,7 +2330,7 @@ export class WarhammerCharacterSheet
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${abbr} — ${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}</div>
+          <div class="roll-header">${abbr} — ${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
           <div class="roll-threshold">
             Цель: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}

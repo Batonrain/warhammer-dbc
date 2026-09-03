@@ -399,3 +399,93 @@ describe("регрессия: тест Характеристики теперь
     expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>10</b>");
   });
 });
+
+// wdbc-uez7: та же кнопка «Делегировать», что теперь есть у любого обычного
+// теста (Навык/Характеристика) — исполнитель бросает СВОИМ листом (this.actor
+// в _showSkillRollDialog/_rollSkill/_rollCharacteristic — уже сам executor,
+// см. hooks.mjs::registerDelegatedTestOpener("genericTest", ...)), а
+// Таланты/Черты effectTargetActor с областью ":recipient" поднимают/снижают
+// Порог — не иначе, чем у Лечения (healing.mjs::patientHealingMod).
+function effectTarget(name, { items = [] } = {}) {
+  const updates = [];
+  const flags = {};
+  return {
+    id: `${name}-stub`, name, items,
+    system: { characteristics: {} },
+    update: async data => { updates.push(data); return data; },
+    getFlag: (ns, key) => flags[`${ns}.${key}`],
+    setFlag: async (ns, key, value) => { flags[`${ns}.${key}`] = value; return value; },
+    updates
+  };
+}
+
+describe("делегированный тест (wdbc-uez7): _showSkillRollDialog с effectTargetActor", () => {
+  it("без effectTargetActor — поведение не меняется: нет заметки, «Цель» — как раньше", () => {
+    sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" });
+    expect(captured.dialog.content).not.toContain("📨 За");
+    expect(captured.dialog.content).toContain('value="45"');
+  });
+
+  it("с effectTargetActor — заметка «За …», Порог поднимается модификатором цели (:recipient)", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } = await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "pain-tol", label: "Высокий болевой порог",
+        effects: [{ kind: "rollBonus", target: "skill:medicae:recipient", value: 10 }] }
+    ]);
+    try {
+      const patient = effectTarget("Пациент");
+      sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" }, "base", { effectTargetActor: patient });
+      expect(captured.dialog.content).toContain("📨 За <b>Пациент</b>");
+      expect(captured.dialog.content).toContain("Высокий болевой порог");
+      expect(captured.dialog.content).toContain('value="55"'); // 45 + 10
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("effectTargetActor === this.actor (та же цель) не считается делегированием — заметки нет", () => {
+    const s = sheet({});
+    s._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" }, "base", { effectTargetActor: s.actor });
+    expect(captured.dialog.content).not.toContain("📨 За");
+  });
+
+  it("кнопка «Делегировать» есть, когда effectTargetActor не задан; исчезает, когда это УЖЕ делегированный вызов", () => {
+    sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" });
+    expect(captured.dialog.buttons.some(b => b.action === "delegate")).toBe(true);
+
+    const patient = effectTarget("Пациент");
+    sheet({})._showSkillRollDialog("Медицина", 45, "int", false, { skill: "medicae" }, "base", { effectTargetActor: patient });
+    expect(captured.dialog.buttons.some(b => b.action === "delegate")).toBe(false);
+  });
+});
+
+describe("делегированный тест (wdbc-uez7): _rollSkill/_rollCharacteristic маршрутизируют последствия на effectTargetActor", () => {
+  it("_rollSkill: Банк Расширенного теста пишется на effectTargetActor, не на исполнителя; карточка называет цель", async () => {
+    const patient = effectTarget("Пациент");
+    const s = sheet({});
+    const promise = s._rollSkill("Медицина", 45, "int", { skill: "medicae" }, { effectTargetActor: patient });
+    captured.nextRoll = 10; // eff=45, 10<=45 успех
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "extended",
+      "#extended-goal": "5", "#extended-label": "Медицина"
+    }));
+    await promise;
+
+    // Банк Расширенного — на пациенте (effectTargetActor), не на исполнителе.
+    expect(await patient.getFlag("warhammer-dbc", "extendedTests.медицина")).toBeTruthy();
+    expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+
+  it("_rollCharacteristic: то же самое — исход применяется к effectTargetActor, карточка называет цель", async () => {
+    const patient = effectTarget("Пациент");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Воля", "WP", 45, "wp", true, { effectTargetActor: patient });
+    captured.nextRoll = 10;
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+});
