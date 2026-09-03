@@ -97,6 +97,34 @@ describe("activateTechMiracle", () => {
     expect(captured.chat[0].content).toContain("3×5 = 15");
   });
 
+  // wdbc-lp7r: Славословие бывает не primary-типом, а элементом extraTypes на
+  // предмете другого типа (напр. Императив (I.b×2), Славословие(1)) — X тогда
+  // свой (extraType.x), не sys.rating (тот занят под основной тип).
+  it("некомпилированное Славословие как extraTypes у другого primary-типа тоже гейтит компиляцией", async () => {
+    const miracle = item({ system: {
+      miracleType: "imperative", rating: 1, compiled: false,
+      extraTypes: [{ type: "slavoslovie", x: 2 }]
+    } });
+
+    await activateTechMiracle(actor(), miracle);
+
+    expect(captured.rolls).toEqual([]);
+    expect(captured.chat[0].content).toContain("Компиляция Славословия");
+    expect(captured.chat[0].content).toContain("2×5 = 10");
+  });
+
+  it("скомпилированное Славословие-extraTypes активируется как обычно (не перегейчивается снова)", async () => {
+    const a = actor();
+    const miracle = item({ system: {
+      miracleType: "imperative", rating: 1, compiled: true,
+      extraTypes: [{ type: "slavoslovie", x: 2 }], cognitionCost: 0, energyCost: 0
+    } });
+
+    await activateTechMiracle(a, miracle);
+
+    expect(captured.rolls.length).toBeGreaterThan(0);
+  });
+
   it("успех тратит Когницию и Энергию, бросает урон и пишет карточку", async () => {
     const a = actor();
     const miracle = item({ system: {

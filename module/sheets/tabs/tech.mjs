@@ -15,6 +15,7 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
+import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { findTechImperative } from "../../constants/tech-imperatives.mjs";
 import { applyImperative } from "../../rules/imperative.mjs";
@@ -37,9 +38,15 @@ export async function activateTechMiracle(actor, item) {
   }
 
   // ── Славословие: требует предварительной компиляции (X×5 минут) ──────────
-  const isSlavo = sys.miracleType === "slavoslovie";
+  // Может быть primary-типом (X = sys.rating) ИЛИ элементом extraTypes на
+  // предмете другого primary-типа (напр. «Императив (I.b×2), Славословие(1)»
+  // — wdbc-lp7r) — тогда X свой, из самого extraType, а sys.rating занят под
+  // основной тип. isItemActive (module/apps/effects.mjs) уже читает оба
+  // случая тем же способом — держим гейт активации в согласии с ним.
+  const slavoExtra = (sys.extraTypes || []).find(e => e.type === "slavoslovie");
+  const isSlavo = sys.miracleType === "slavoslovie" || !!slavoExtra;
   if (isSlavo && !sys.compiled) {
-    const x = sys.rating || 1;
+    const x = sys.miracleType === "slavoslovie" ? (sys.rating || 1) : (slavoExtra?.x || 1);
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
@@ -391,6 +398,17 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   html.find(".tech-infoguard-roll-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollInfoguard(item);
+  });
+  // Делегирование (wdbc-uez7): цель эффекта — владелец предмета (сам actor
+  // этой вкладки), исполнителя выбирает пикер.
+  html.find(".tech-infoguard-delegate-btn").click(ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    showDelegateTestPicker(actor, {
+      title: `Делегировать Инфограждение: ${item.name}`, kind: "infoguard",
+      label: `Инфограждение: ${item.name}`, buttonLabel: "Наложить Инфограждение",
+      extra: { itemId: item.id }
+    });
   });
   // Кнопки генерации ⚙/⚡ от имплантов Кибернетики Механикум
   html.find(".tech-gen-btn").click(ev => {
