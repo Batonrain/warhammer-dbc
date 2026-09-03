@@ -162,6 +162,25 @@ function onCombatCollapse(event, target) {
   target.closest(".combat-collapsible")?.classList.toggle("collapsed", this._combatCollapse[key]);
 }
 
+// Свёртки: универсальный механизм для ЛЮБОГО блока листа (wdbc-bk4f), не
+// только «Импланты»/СОСТЯЗАНИЯ, которые уже сворачивались каждый своим
+// способом. Блок помечается атрибутом data-collapse-key="<уникальный ключ>"
+// на СЕБЕ (любой уже существующий класс панели, новую обёртку заводить не
+// нужно), а на его .panel-title — data-action="panelCollapse"; больше в
+// разметке ничего менять не нужно, CSS прячет всё после .panel-title сам
+// (styles/base/common.css). Состояние окна, не актора — без ре-рендера/
+// actor.update, восстанавливается после ре-рендера в _onRender (см. ниже),
+// тем же приёмом, что _gearHostCollapse.
+export function onPanelCollapse(event, target) {
+  if (event.target.closest("button, select, input, a")) return;   // не по контролам внутри заголовка
+  const panel = target.closest("[data-collapse-key]");
+  const key = panel?.dataset.collapseKey;
+  if (!key) return;
+  if (this._panelCollapse.has(key)) this._panelCollapse.delete(key);
+  else this._panelCollapse.add(key);
+  panel.classList.toggle("collapsed", this._panelCollapse.has(key));
+}
+
 function onGearCat(event, target) {
   if (event.target.closest("button, select, input, a")) return;   // не по контролам внутри
   const key = target.dataset.gearCat;
@@ -666,6 +685,7 @@ export class WarhammerCharacterSheet
       tab: onTab,
       combatCollapse: onCombatCollapse,
       gearCat: onGearCat,
+      panelCollapse: onPanelCollapse,
       gearModsToggle: onGearModsToggle,
       // Ниже — то, что в V1 стояло после общей проверки isEditable.
       portrait: whenEditable(onPortrait),
@@ -758,6 +778,9 @@ export class WarhammerCharacterSheet
   _gearCollapse = {};
   // Носители (оружие/броня), у которых свёрнут список установленных улучшений.
   _gearHostCollapse = new Set();
+  // Свёрнутые блоки листа по data-collapse-key (wdbc-bk4f) — универсальный
+  // механизм, см. onPanelCollapse выше.
+  _panelCollapse = new Set();
   _wizardPrompted = false;
 
   // Показать/скрыть под-строки установленных улучшений конкретного носителя
@@ -854,7 +877,10 @@ export class WarhammerCharacterSheet
       const mode = effectivePricingMode(this.actor);
       const patronChosen = this.actor.system.patronGod || "";
       context.advancePricingMode = mode;
-      context.usesPatronStereotype = (mode === "patronage" || mode === "mixed") && !!patronChosen;
+      // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — у него
+      // стереотипов Покровительства не бывает, блок должен скрываться целиком.
+      context.usesPatronStereotype = (mode === "patronage" || mode === "mixed") &&
+        !!patronChosen && patronChosen !== "undivided";
       // Блок 8 Склонностей на «Развитии» не нужен, когда цена персонажа
       // считается строго по Покровительству — Смешанная всё ещё их читает.
       context.usesAptitudes = mode !== "patronage";
@@ -1474,7 +1500,8 @@ export class WarhammerCharacterSheet
   /**
    * Состав меню «Настройки листа» по типу актора (таблица от пользователя).
    * Мировоззрение, Телосложение и «Одержимость/Пси-Пробуждение/Техножрец» —
-   * каскадные подпункты (submenu, раскрываются наведением, см. _alignmentSubmenu/
+   * каскадные подпункты (submenu, раскрываются кликом по себе — работает и
+   * без мыши на тач-экране, wdbc-0cgo — см. _alignmentSubmenu/
    * _bodyTypeSubmenu/_accessSubmenu), а не плоский список, как раньше:
    *  - Персонаж — Мастер, Телосложение▸, [разделитель], Мировоззрение▸ (кроме
    *    Аэльдари), [разделитель], Система продвижения, [разделитель], Открыть
@@ -1582,6 +1609,9 @@ export class WarhammerCharacterSheet
 
     // ── Восстановление свёрток после ре-рендера ────────────────────────────
     for (const hid of this._gearHostCollapse) this._applyGearHostCollapse(hid);
+    for (const key of this._panelCollapse) {
+      el.querySelector(`[data-collapse-key="${CSS.escape(key)}"]`)?.classList.add("collapsed");
+    }
     if (this._pathsOpen === false) {
       el.querySelectorAll(".paths-collapse").forEach(n => n.classList.add("collapsed"));
       el.querySelectorAll(".paths-toggle-btn").forEach(n => { n.textContent = "▸ Пути"; });

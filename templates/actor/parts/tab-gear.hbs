@@ -1,8 +1,8 @@
 <div class="tab gear-cog {{#if (eq tab "gear")}}active{{/if}}" data-tab="gear" data-group="primary">
 
   {{!-- ═══ Сенсор нагрузки (всегда виден) ═══ --}}
-  <div class="gear-section-panel gear-load-panel">
-    <div class="panel-title">СЕНСОР НАГРУЗКИ <span class="gl-code">// ENC.SYS</span></div>
+  <div class="gear-section-panel gear-load-panel" data-collapse-key="gear-load">
+    <div class="panel-title" data-action="panelCollapse">СЕНСОР НАГРУЗКИ <span class="gl-code">// ENC.SYS</span></div>
     <div class="gear-load">
       <div class="gl-readout">
         <span class="gl-cur load-{{encumbranceLevel}}">{{system.encumbrance.current}}</span>

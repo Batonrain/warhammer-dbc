@@ -4,8 +4,8 @@
   <div class="tech-binary" aria-hidden="true"><span>01001101 01000101 01000011 01001000 00101111 11000010 10101111 01000001 01010110 01000101 00100000 01001111 01001101 01001110 01001001 01010011 01010011 01001001 01000001 01001000</span><span>01001101 01000101 01000011 01001000 00101111 11000010 10101111 01000001 01010110 01000101 00100000 01001111 01001101 01001110 01001001 01010011 01010011 01001001 01000001 01001000</span></div>
 
   {{!-- ── ТЕХНОЖРЕЦ: консоль Кузницы ───────────────────────────────────────── --}}
-  <div class="tech-panel tech-hero-panel">
-    <div class="tech-panel-title"><span class="tech-cog-mini"></span>ТЕХНОЖРЕЦ <span class="tech-creed">// OMNISSIAH</span></div>
+  <div class="tech-panel tech-hero-panel" data-collapse-key="tech-priest">
+    <div class="tech-panel-title" data-action="panelCollapse"><span class="tech-cog-mini"></span>ТЕХНОЖРЕЦ <span class="tech-creed">// OMNISSIAH</span></div>
 
     <div class="tech-hero">
       {{!-- сигил Механикум (масштаб/вращение) --}}
@@ -44,8 +44,8 @@
 
   {{!-- ── ЭНЕРГОСИСТЕМЫ И ФОКУСЫ (импланты Кибернетики Механикум) ───────────── --}}
   {{#if (or techGenActions.length techToggles.length techFocusList.length)}}
-  <div class="tech-panel">
-    <div class="tech-panel-title"><span class="tech-cog-mini"></span>ЭНЕРГОСИСТЕМЫ И ФОКУСЫ</div>
+  <div class="tech-panel" data-collapse-key="tech-power-focus">
+    <div class="tech-panel-title" data-action="panelCollapse"><span class="tech-cog-mini"></span>ЭНЕРГОСИСТЕМЫ И ФОКУСЫ</div>
     <div class="tech-panel-body">
       {{#if techGenActions.length}}
       <div class="tech-gen-row">
@@ -80,8 +80,8 @@
   {{/if}}
 
   {{!-- ── ТЕХНОЧУДЕСА ──────────────────────────────────────────────────────── --}}
-  <div class="tech-panel">
-    <div class="tech-panel-title"><span class="tech-cog-mini"></span>ТЕХНОЧУДЕСА
+  <div class="tech-panel" data-collapse-key="tech-miracles">
+    <div class="tech-panel-title" data-action="panelCollapse"><span class="tech-cog-mini"></span>ТЕХНОЧУДЕСА
       <button type="button" class="tech-add-btn" title="Добавить Техночудо">＋</button>
     </div>
     <table class="items-table tech-powers-table">
@@ -125,8 +125,8 @@
   </div>
 
   {{!-- ── НООСФЕРНЫЕ ДЕЙСТВИЯ ──────────────────────────────────────────────── --}}
-  <div class="tech-panel">
-    <div class="tech-panel-title"><span class="tech-cog-mini"></span>НООСФЕРНЫЕ ДЕЙСТВИЯ</div>
+  <div class="tech-panel" data-collapse-key="tech-noosphere">
+    <div class="tech-panel-title" data-action="panelCollapse"><span class="tech-cog-mini"></span>НООСФЕРНЫЕ ДЕЙСТВИЯ</div>
     <div class="tech-panel-body">
       <div class="noosphere-list">
         {{#each noosphereActions as |a|}}

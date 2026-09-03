@@ -48,6 +48,39 @@
 
 .warhammer-dbc .panel-body { padding: 6px 8px; }
 
+/* ── Сворачиваемые блоки листа (wdbc-bk4f, единый механизм для ЛЮБОГО блока) ──
+   Блок помечается data-collapse-key на себе (любой класс панели, обёртка не
+   нужна) и data-action="panelCollapse" на своём заголовке — CSS прячет всё
+   после заголовка сам, JS (module/sheets/actor-sheet.mjs::onPanelCollapse)
+   только переключает класс .collapsed. Заголовок обычно .panel-title, но
+   у нескольких вкладок (Гемункул/Одержимость/Техножрец/Психосилы) свой класс
+   заголовка с собственным оформлением — перечисляем его тоже явно, НЕ давая
+   этим блокам класс .panel-title (тот принёс бы чужой фон/паддинг поверх
+   фирменного оформления вкладки). */
+.warhammer-dbc [data-collapse-key] > .panel-title,
+.warhammer-dbc [data-collapse-key] > .haem-panel-title,
+.warhammer-dbc [data-collapse-key] > .poss-panel-title,
+.warhammer-dbc [data-collapse-key] > .tech-panel-title,
+.warhammer-dbc [data-collapse-key] > .psy-panel-title { cursor: pointer; user-select: none; position: relative; }
+.warhammer-dbc [data-collapse-key] > .panel-title::after,
+.warhammer-dbc [data-collapse-key] > .haem-panel-title::after,
+.warhammer-dbc [data-collapse-key] > .poss-panel-title::after,
+.warhammer-dbc [data-collapse-key] > .tech-panel-title::after,
+.warhammer-dbc [data-collapse-key] > .psy-panel-title::after {
+  content: "▾"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  opacity: 0.65; font-size: 0.9em; transition: transform 0.15s;
+}
+.warhammer-dbc [data-collapse-key].collapsed > .panel-title::after,
+.warhammer-dbc [data-collapse-key].collapsed > .haem-panel-title::after,
+.warhammer-dbc [data-collapse-key].collapsed > .poss-panel-title::after,
+.warhammer-dbc [data-collapse-key].collapsed > .tech-panel-title::after,
+.warhammer-dbc [data-collapse-key].collapsed > .psy-panel-title::after { transform: translateY(-50%) rotate(-90deg); }
+.warhammer-dbc [data-collapse-key].collapsed > .panel-title ~ *,
+.warhammer-dbc [data-collapse-key].collapsed > .haem-panel-title ~ *,
+.warhammer-dbc [data-collapse-key].collapsed > .poss-panel-title ~ *,
+.warhammer-dbc [data-collapse-key].collapsed > .tech-panel-title ~ *,
+.warhammer-dbc [data-collapse-key].collapsed > .psy-panel-title ~ * { display: none !important; }
+
 /* ── Таблицы предметов ── */
 .warhammer-dbc .items-table {
   width: 100%;

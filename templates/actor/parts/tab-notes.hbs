@@ -11,8 +11,8 @@
         места в DOM. --}}
   {{#if (eq actor.type "character")}}
   {{#if (or homeworld divination)}}
-  <div class="notes-section-panel homeworld-panel">
-    <div class="panel-title">РОДНОЙ МИР И ПРЕДСКАЗАНИЕ</div>
+  <div class="notes-section-panel homeworld-panel" data-collapse-key="notes-homeworld">
+    <div class="panel-title" data-action="panelCollapse">РОДНОЙ МИР И ПРЕДСКАЗАНИЕ</div>
     <div class="origin-grid">
       {{#if homeworld}}
       <div class="header-cell" title="Родной мир персонажа: три модификатора Характеристик и Особенность"> <label>Происхождение</label> <div class="hw-controls"> <select class="hw-select"> <option value="">— не выбрано —</option> <option value="random">🎲 Выбрать случайно</option> {{#each homeworld.options as |o|}}
@@ -28,8 +28,8 @@
   </div>
   {{/if}}
 
-  <div class="notes-section-panel">
-    <div class="panel-title">СТРЕМЛЕНИЯ</div>
+  <div class="notes-section-panel" data-collapse-key="notes-aspirations">
+    <div class="panel-title" data-action="panelCollapse">СТРЕМЛЕНИЯ</div>
     <div class="notes-aspir-row">
       {{#each aspirationSlots as |a|}}
       <div class="header-cell header-cell-aspir"> <label>{{a.label}}</label>
@@ -56,7 +56,7 @@
         он определяет и Очки Бесчестия, и цену Продвижения по Покровительству,
         то есть логически принадлежит туда же, где считаются остальные цены. --}}
   {{#if showWorldOrigin}}
-  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
+  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-origin-aeldari"> <div class="panel-title" data-action="panelCollapse">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Мир-Корабль</label> <select name="system.world" class="origin-select">{{{worldOptions}}}</select> </div>
       {{#if selectedWorld}}<div class="origin-info"> <div class="origin-chars">{{selectedWorld.chars}}</div> <div class="origin-special">{{selectedWorld.special}}</div> </div>{{/if}}
       <div class="origin-row"> <label class="origin-label">Корсарская Банда</label> <select name="system.band" class="origin-select">{{{bandOptions}}}</select> </div>
@@ -65,7 +65,7 @@
     <div class="gene-seed-hint">Модификаторы характеристик применяются в Базу при создании персонажа (вручную). Особенность — справка для отыгрыша.</div>
   </div> {{/if}}
   {{#if isDrukhari}}
-  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">ПРОИСХОЖДЕНИЕ (ДРУКХАРИ)</div>
+  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-origin-drukhari"> <div class="panel-title" data-action="panelCollapse">ПРОИСХОЖДЕНИЕ (ДРУКХАРИ)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Кабал / Культ / Ковен</label> <select name="system.drukhariFaction" class="origin-select">{{{drukhariFactionOptions}}}</select> </div>
       {{#if selectedDrukhariFaction}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariFaction.chars}}</div> <div class="origin-special">{{selectedDrukhariFaction.special}}</div> </div>{{/if}}
       <div class="origin-row"> <label class="origin-label">Район Комморага</label> <select name="system.drukhariDistrict" class="origin-select">{{{drukhariDistrictOptions}}}</select> </div>
@@ -77,14 +77,14 @@
     <div class="gene-seed-hint">Выберите ОДНО из: Кабал, Культ Ведьм или Ковен Гемункулов — и отдельно Район Комморага (берётся вместе с фракцией). Модификаторы характеристик применяются в Базу при создании (вручную); особенность — справка.</div>
   </div> {{/if}}
   {{#if isHarlequin}}
-  <div class="notes-section-panel aeldari-origin-panel"> <div class="panel-title">МАСКА (АРЛЕКИН)</div>
+  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-mask-harlequin"> <div class="panel-title" data-action="panelCollapse">МАСКА (АРЛЕКИН)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Маска (труппа)</label> <select name="system.harlequinMasque" class="origin-select">{{{masqueOptions}}}</select> </div>
       {{#if selectedMasque}}<div class="origin-info"> <div class="origin-chars">{{selectedMasque.chars}}</div> <div class="origin-special">{{selectedMasque.special}}</div> </div>{{/if}}
     </div>
     <div class="gene-seed-hint">Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».</div>
   </div> {{/if}}
   {{#if isAstartes}}
-  <div class="notes-section-panel astartes-geneseed-panel"> <div class="panel-title">ГЕНОСЕМЯ И КУЛЬТУРА (АСТАРТЕС)</div>
+  <div class="notes-section-panel astartes-geneseed-panel" data-collapse-key="notes-geneseed"> <div class="panel-title" data-action="panelCollapse">ГЕНОСЕМЯ И КУЛЬТУРА (АСТАРТЕС)</div>
     <div class="origin-grid">
       <div class="origin-row"> <label class="origin-label">Геносемя</label> <div class="origin-value">{{#if headerGeneSeedName}}{{headerGeneSeedName}}{{else}}— не выбрано —{{/if}}</div> </div>
       {{#if geneSeedText}}<div class="origin-info"> <div class="origin-special">{{geneSeedText}}</div> </div>{{/if}}
@@ -93,18 +93,18 @@
     </div>
   </div> {{/if}}
 
-  <div class="notes-section-panel"> <div class="panel-title">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Вес (кг)<input type="number" name="system.bio.weight" value="{{system.bio.weight}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div>
+  <div class="notes-section-panel" data-collapse-key="notes-biography"> <div class="panel-title" data-action="panelCollapse">БИОГРАФИЯ</div> <div class="bio-grid"> <label>Пол<input type="text" name="system.bio.gender" value="{{system.bio.gender}}"/></label> <label>Возраст<input type="number" name="system.bio.age" value="{{system.bio.age}}"/></label> <label>Вес (кг)<input type="number" name="system.bio.weight" value="{{system.bio.weight}}"/></label> <label>Рост<input type="text" name="system.bio.height" value="{{system.bio.height}}"/></label> <label>Сложение<input type="text" name="system.bio.build" value="{{system.bio.build}}"/></label> <label>Волосы<input type="text" name="system.bio.hair" value="{{system.bio.hair}}"/></label> </div> </div>
 
   {{!-- Миньоны на «Записях» больше не живут: сам слуга теперь отдельный тип
         актора со своей шапкой (Хозяин, Тип, Сила, Лояльность), а перечень слуг
         Хозяина — блок «МИНЬОНЫ» на вкладке СОЦИУМ. --}}
 
-  <div class="notes-section-panel"> <div class="panel-title">ЗАПИСИ</div> <prose-mirror name="system.notes" class="notes-textarea" toggled value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror> </div>
+  <div class="notes-section-panel" data-collapse-key="notes-records"> <div class="panel-title" data-action="panelCollapse">ЗАПИСИ</div> <prose-mirror name="system.notes" class="notes-textarea" toggled value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror> </div>
 
   {{!-- Только ГМ: то, что видит владелец Ограниченного зрения на этом акторе
         (Limited Vision) — отдельно от обычных Заметок, которые видит владелец. --}}
   {{#if isGM}}
-  <div class="notes-section-panel"> <div class="panel-title">ДАННЫЕ (LIMITED VISION)</div> <prose-mirror name="system.limitedVisionData" class="notes-textarea" toggled value="{{system.limitedVisionData}}">{{{limitedVisionDataEnriched}}}</prose-mirror> </div>
+  <div class="notes-section-panel" data-collapse-key="notes-limited-vision"> <div class="panel-title" data-action="panelCollapse">ДАННЫЕ (LIMITED VISION)</div> <prose-mirror name="system.limitedVisionData" class="notes-textarea" toggled value="{{system.limitedVisionData}}">{{{limitedVisionDataEnriched}}}</prose-mirror> </div>
   {{/if}}
   {{!-- Блок СТАТУС убран: все пять флажков продублированы в меню «Настройки
         листа» у шапки (actor-sheet.mjs, _sheetToggleEntries — состав пунктов
@@ -118,8 +118,8 @@
         здесь остаётся только для Принца Демона — в его меню «В Орду» решили
         не дублировать, своя кнопка на ЗАПИСЯХ и остаётся единственной. --}}
   {{#unless (or (eq actor.type "character") (eq actor.type "daemon") (eq actor.type "minion"))}}
-  <div class="notes-section">
-    <div class="panel-title">ПРЕОБРАЗОВАНИЕ</div>
+  <div class="notes-section" data-collapse-key="notes-horde-convert">
+    <div class="panel-title" data-action="panelCollapse">ПРЕОБРАЗОВАНИЕ</div>
     <button type="button" class="char-wizard-btn horde-convert-btn" data-action="convertToHorde" title="Создать копию этого персонажа как Орду: Раны станут Магнитудой, Характеристики, Навыки, Таланты, Черты и снаряжение переедут">В Орду</button>
   </div>
   {{/unless}}

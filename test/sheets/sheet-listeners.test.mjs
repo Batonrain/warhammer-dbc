@@ -63,6 +63,7 @@ function wire(sheet, nodes) {
   const html = listenerHtml(nodes);
   Object.defineProperty(sheet, "element", { value: html[0], configurable: true });
   sheet._gearHostCollapse ??= new Set();
+  sheet._panelCollapse ??= new Set();
   sheet._onRender({}, {});
   return html.handlers;
 }
