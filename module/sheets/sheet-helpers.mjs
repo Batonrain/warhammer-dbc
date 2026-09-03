@@ -3,6 +3,7 @@
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
+import { SKILL_SPECIALTY_DESCRIPTIONS }               from "../constants/skill-specialty-descriptions.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
@@ -144,14 +145,24 @@ for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
  * ниже, откуда взят сам паттерн data-tooltip: horde-sheet.hbs, tab-social.hbs).
  * data-tooltip рендерится Foundry как sanitized HTML (TooltipManager,
  * foundry.utils.cleanHTML), поэтому `<br>` для переноса строки допустим.
+ *
+ * `specialty` (только для строк группового Навыка, см. вызов в buildGetData
+ * ниже) — сырое `entry.specialty` с листа («Chymist»). Если для НЕЁ САМОЙ
+ * нашлось описание в SKILL_SPECIALTY_DESCRIPTIONS[key] (wdbc-c0yf — книга
+ * описывает каждую специализацию отдельным предложением, не только группу
+ * целиком), тултип показывает именно его; иначе — как раньше, общее
+ * описание группы из SKILL_DESCRIPTIONS. Так тултип на «Ремесло: Химик»
+ * подсказывает химика, а не пересказ всей группы «Ремесло», и никогда не
+ * остаётся пустым, если под конкретную специализацию текста ещё не набрано.
  */
-function skillTip(key, def, rollLabel) {
+function skillTip(key, def, rollLabel, specialty) {
   if (!def) return "";
   const ch   = CHARACTERISTICS[def.char];
   const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
   const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
-  const desc = SKILL_DESCRIPTIONS[key];
+  const desc = (specialty && SKILL_SPECIALTY_DESCRIPTIONS[key]?.[specialty])
+    || SKILL_DESCRIPTIONS[key];
   return desc ? `${head}<br><br>${desc}` : head;
 }
 
@@ -440,7 +451,7 @@ export function buildGetData(actor) {
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
-        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`)
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty)
       }))
     });
   }

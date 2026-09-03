@@ -541,3 +541,40 @@ describe("лист собирает контекст целиком", () => {
     expect(ctx.gearCollapse).toEqual({ weapon: true });
   });
 });
+
+describe("тултип специализации группового Навыка (wdbc-c0yf)", () => {
+  it("специализация с книжным описанием показывает СВОЙ текст, а не общее описание группы", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: { trade: [{ specialty: "Chymist", total: -10 }] }
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const ctx   = await sheet._prepareContext({});
+    const box   = ctx.skillGroupBoxes.find(b => b.groupKey === "trade");
+    const entry = box.entries.find(e => e.specialty === "Chymist");
+    expect(entry.tip).toContain("Создание химикатов");
+    expect(entry.tip).not.toContain("практические навыки и знания персонажа в определённой профессии");
+  });
+
+  it("специализация без записи в каталоге откатывается на общее описание группы", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: { trade: [{ specialty: "Своя профессия", total: -10 }] }
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const ctx   = await sheet._prepareContext({});
+    const box   = ctx.skillGroupBoxes.find(b => b.groupKey === "trade");
+    const entry = box.entries.find(e => e.specialty === "Своя профессия");
+    expect(entry.tip).toContain("практические навыки и знания персонажа в определённой профессии");
+  });
+
+  it("обычный (не групповой) Навык работает как раньше — тултип из общего описания Навыка", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { characteristics: {}, skills: {}, groupSkills: {} });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const ctx = await sheet._prepareContext({});
+    const allSkills = [...ctx.skillsCol1, ...ctx.skillsCol2, ...ctx.skillsCol3, ...ctx.skillsCol4];
+    const acrobatics = allSkills.find(s => s.key === "acrobatics");
+    expect(acrobatics.tip).toContain("быстрых и точных движениях");
+  });
+});
