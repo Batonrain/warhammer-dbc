@@ -113,7 +113,7 @@
 
   {{!-- СИМБИОЗ --}}
   <section class="poss-panel poss-symbiosis" data-collapse-key="poss-symbiosis">
-    <div class="poss-panel-title" data-action="panelCollapse">СИМБИОЗ <span class="poss-band">предел {{possession.symLimit}}</span></div>
+    <div class="poss-panel-title" data-action="panelCollapse" title="Растёт за 250xp на важных событиях (макс. 5, не выше min(Inf/15, Cor/15)). Демон у руля: использует S/T/A хоста, свои I/P/W/F, WS/BS любого. Перехват — тест W против W хоста (при первом Проявлении в сутки). С Симбиоза 2 — только против природы хоста; с 4 — цели сливаются.">СИМБИОЗ <span class="poss-band">предел {{possession.symLimit}}</span></div>
     <div class="poss-pips">
       {{#each possession.symPips as |pip|}}<span class="poss-pip {{#if pip.on}}on{{/if}} {{#if pip.over}}over{{/if}}"></span>{{/each}}
     </div>
@@ -122,19 +122,13 @@
       <div><span>W хоста против перехвата</span><b>+{{possession.hostWBonus}}</b></div>
       <div><span>Макс. контроль демона</span><b>{{possession.controlHours}} ч</b></div>
     </div>
-    <div class="poss-note">
-      Растёт за 250xp на важных событиях (макс. 5, не выше min(Inf/15, Cor/15)). Демон у руля: использует S/T/A хоста, свои I/P/W/F,
-      WS/BS любого. Перехват — тест W против W хоста (при первом Проявлении в сутки). С Симбиоза 2 — только против природы хоста; с 4 — цели сливаются.
-    </div>
   </section>
 
   {{!-- НАСЛОЕНИЕ — божественный оверлей + защита демона --}}
   <section class="poss-panel poss-divine" data-collapse-key="poss-divine">
-    <div class="poss-panel-title" data-action="panelCollapse">НАСЛОЕНИЕ · {{possession.meta.godLabel}}</div>
+    <div class="poss-panel-title" data-action="panelCollapse" title="Повреждения демона: варп-урон и Выжигание Души демон может принять на себя (свои Раны, W.b — поглощение). Раны демона <0 → выход из Проявления, нельзя войти, пока не восстановит 1 Рану. Если Выжигание убивает демона / его изгоняют — персонаж перестаёт быть Одержимым.">НАСЛОЕНИЕ · {{possession.meta.godLabel}}</div>
     <div class="poss-divine-body">
       <p><b>Дар «Наслоение» (750xp, Симбиоз 4):</b> Daemonic Presence (10/10) и — {{possession.meta.naslo}}</p>
-      <p class="poss-note">Повреждения демона: варп-урон и Выжигание Души демон может принять на себя (свои Раны, W.b — поглощение). Раны демона &lt;0 → выход из Проявления,
-        нельзя войти, пока не восстановит 1 Рану. Если Выжигание убивает демона / его изгоняют — персонаж перестаёт быть Одержимым.</p>
     </div>
   </section>
 

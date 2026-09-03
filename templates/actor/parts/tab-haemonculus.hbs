@@ -26,13 +26,8 @@
     </div>
 
     <div class="haem-hero-info">
-      <div class="haem-title">ВЛАДЫКА ПЛОТИ</div>
+      <div class="haem-title" title="Путь Гемункула идёт от низов Комморага до его верхушки. Стадия 0 — архетип взят, работают только его базовые преимущества; таблицы трейтов ещё закрыты. Каждая следующая ступень требует уникального образца, Влияния и опыта.">ВЛАДЫКА ПЛОТИ</div>
       <div class="haem-stage-name">Стадия {{haem.stage}} — {{haem.current.name}}</div>
-      <div class="haem-hint">
-        Путь Гемункула идёт от низов Комморага до его верхушки. <b>Стадия 0</b> — архетип взят,
-        работают только его базовые преимущества; таблицы трейтов ещё закрыты.
-        Каждая следующая ступень требует уникального образца, Влияния и опыта.
-      </div>
       <div class="haem-track" title="Пройдено ступеней: {{haem.stage}} из 5">
         {{#each haem.ladder as |s|}}<span class="haem-pip {{#if s.open}}on{{/if}} {{#if s.isCurrent}}cur{{/if}}">{{s.stage}}</span>{{/each}}
       </div>
@@ -89,7 +84,7 @@
   {{!-- ── ОЧКИ ТРЕЙТОВ ──────────────────────────────────────────────────── --}}
   {{#if haem.anyTable}}
   <div class="haem-panel" data-collapse-key="haem-rebuild-points">
-    <div class="haem-panel-title" data-action="panelCollapse">ОЧКИ ПЕРЕСТРОЙКИ
+    <div class="haem-panel-title" data-action="panelCollapse" title="Бюджет равен I.b и меняется между сессиями. Трейт без рейтинга стоит цену взятия; каждый рейтинг сверх первого стоит цену прокачки.">ОЧКИ ПЕРЕСТРОЙКИ
       <label class="haem-split">
         <input type="checkbox" name="system.haemonculus.splitPools" {{#if haem.split}}checked{{/if}}/>
         раздельные пулы
@@ -104,10 +99,6 @@
         <div class="haem-budget-num">{{b.spent}} / {{b.cap}}{{#if b.over}} — перерасход!{{/if}}</div>
       </div>
       {{/each}}
-    </div>
-    <div class="haem-budget-hint">
-      Бюджет равен <b>I.b</b> и меняется между сессиями. Трейт без рейтинга стоит цену взятия;
-      каждый рейтинг сверх первого стоит цену прокачки.
     </div>
   </div>
   {{/if}}

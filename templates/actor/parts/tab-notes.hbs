@@ -56,16 +56,15 @@
         он определяет и Очки Бесчестия, и цену Продвижения по Покровительству,
         то есть логически принадлежит туда же, где считаются остальные цены. --}}
   {{#if showWorldOrigin}}
-  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-origin-aeldari"> <div class="panel-title" data-action="panelCollapse">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
+  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-origin-aeldari"> <div class="panel-title" data-action="panelCollapse" title="Модификаторы характеристик применяются в Базу при создании персонажа (вручную). Особенность — справка для отыгрыша.">ПРОИСХОЖДЕНИЕ (АЭЛЬДАРИ)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Мир-Корабль</label> <select name="system.world" class="origin-select">{{{worldOptions}}}</select> </div>
       {{#if selectedWorld}}<div class="origin-info"> <div class="origin-chars">{{selectedWorld.chars}}</div> <div class="origin-special">{{selectedWorld.special}}</div> </div>{{/if}}
       <div class="origin-row"> <label class="origin-label">Корсарская Банда</label> <select name="system.band" class="origin-select">{{{bandOptions}}}</select> </div>
       {{#if selectedBand}}<div class="origin-info"> <div class="origin-chars">{{selectedBand.chars}}</div> <div class="origin-special">{{selectedBand.special}}</div> </div>{{/if}}
     </div>
-    <div class="gene-seed-hint">Модификаторы характеристик применяются в Базу при создании персонажа (вручную). Особенность — справка для отыгрыша.</div>
   </div> {{/if}}
   {{#if isDrukhari}}
-  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-origin-drukhari"> <div class="panel-title" data-action="panelCollapse">ПРОИСХОЖДЕНИЕ (ДРУКХАРИ)</div>
+  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-origin-drukhari"> <div class="panel-title" data-action="panelCollapse" title="Выберите ОДНО из: Кабал, Культ Ведьм или Ковен Гемункулов — и отдельно Район Комморага (берётся вместе с фракцией). Модификаторы характеристик применяются в Базу при создании (вручную); особенность — справка.">ПРОИСХОЖДЕНИЕ (ДРУКХАРИ)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Кабал / Культ / Ковен</label> <select name="system.drukhariFaction" class="origin-select">{{{drukhariFactionOptions}}}</select> </div>
       {{#if selectedDrukhariFaction}}<div class="origin-info"> <div class="origin-chars">{{selectedDrukhariFaction.chars}}</div> <div class="origin-special">{{selectedDrukhariFaction.special}}</div> </div>{{/if}}
       <div class="origin-row"> <label class="origin-label">Район Комморага</label> <select name="system.drukhariDistrict" class="origin-select">{{{drukhariDistrictOptions}}}</select> </div>
@@ -74,14 +73,12 @@
       <div class="origin-row"> <label class="origin-label">Корсарская Банда</label> <select name="system.band" class="origin-select">{{{bandOptions}}}</select> </div>
       {{#if selectedBand}}<div class="origin-info"> <div class="origin-chars">{{selectedBand.chars}}</div> <div class="origin-special">{{selectedBand.special}}</div> </div>{{/if}}
     </div>
-    <div class="gene-seed-hint">Выберите ОДНО из: Кабал, Культ Ведьм или Ковен Гемункулов — и отдельно Район Комморага (берётся вместе с фракцией). Модификаторы характеристик применяются в Базу при создании (вручную); особенность — справка.</div>
   </div> {{/if}}
   {{#if isHarlequin}}
-  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-mask-harlequin"> <div class="panel-title" data-action="panelCollapse">МАСКА (АРЛЕКИН)</div>
+  <div class="notes-section-panel aeldari-origin-panel" data-collapse-key="notes-mask-harlequin"> <div class="panel-title" data-action="panelCollapse" title="Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».">МАСКА (АРЛЕКИН)</div>
     <div class="origin-grid"> <div class="origin-row"> <label class="origin-label">Маска (труппа)</label> <select name="system.harlequinMasque" class="origin-select">{{{masqueOptions}}}</select> </div>
       {{#if selectedMasque}}<div class="origin-info"> <div class="origin-chars">{{selectedMasque.chars}}</div> <div class="origin-special">{{selectedMasque.special}}</div> </div>{{/if}}
     </div>
-    <div class="gene-seed-hint">Маска (труппа) определяет бонусы характеристик и особый эффект. Бонусы характеристик применяются в Базу вручную при создании; особенность — справка. Это не то же, что Мириада Масок (Света/Сумерек/Ночи) из Черты «Myriad Masks».</div>
   </div> {{/if}}
   {{#if isAstartes}}
   <div class="notes-section-panel astartes-geneseed-panel" data-collapse-key="notes-geneseed"> <div class="panel-title" data-action="panelCollapse">ГЕНОСЕМЯ И КУЛЬТУРА (АСТАРТЕС)</div>

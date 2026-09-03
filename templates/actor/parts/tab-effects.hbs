@@ -108,7 +108,7 @@
 
   {{!-- ── ГЕНОСЕМЯ (перенесено со Способностей) ────────────────────────── --}}
   {{#if isAstartes}}
-  <div class="ability-section-panel gene-seed-panel" data-collapse-key="body-gene-seed"> <div class="panel-title" data-action="panelCollapse"> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже.</div>
+  <div class="ability-section-panel gene-seed-panel" data-collapse-key="body-gene-seed"> <div class="panel-title" data-action="panelCollapse" title="Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже."> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> </div>
     {{#if geneSeedOrgans.length}}
     <table class="items-table gene-seed-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Орган</th> <th>Эффект</th> </tr> </thead> <tbody> {{#each geneSeedOrgans as |o|}}
       <tr class="item-row" data-item-id="{{o.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{o.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{o.name}}</td> <td class="trait-fx-cell">{{o.effect}}</td> </tr>
