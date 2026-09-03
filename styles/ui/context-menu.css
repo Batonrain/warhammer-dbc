@@ -10,9 +10,6 @@
   border-radius: 4px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.6), 0 0 8px rgba(77,255,166,0.2);
   min-width: 180px;
-  /* Без overflow: hidden — каскадное подменю (.wh-ctx-submenu, absolute внутри
-     .wh-ctx-parent) иначе режется границей родительского меню целиком.
-     Скругление углов держат крайние пункты сами. */
 }
 
 .wh-ctx-item {
@@ -37,18 +34,16 @@
 .wh-ctx-delete:hover { background: #3a1414; color: #ff8a8a; }
 
 /* ── Пункт-родитель каскадного подменю («Мировоззрение», «Открыть доступ» и
-      т.п., «Настройки листа») — раскрывается наведением, влево: сама кнопка
-      обычно стоит у правого края шапки листа, вправо подменю ушло бы за экран. */
-.wh-ctx-parent { display: flex; align-items: center; justify-content: space-between; gap: 10px; position: relative; }
-.wh-ctx-arrow { opacity: 0.6; font-size: 0.85em; }
-.wh-ctx-submenu {
-  display: none;
-  position: absolute;
-  top: -1px;
-  right: 100%;
-  left: auto;
-}
-.wh-ctx-parent:hover > .wh-ctx-submenu { display: block; }
+      т.п., «Настройки листа») — раскрывается КЛИКОМ по себе, разворачивая
+      подпункты на месте, аккордеоном (wdbc-0cgo): прежнее раскрытие
+      наведением мышью на тач-экране (планшет/телефон) недостижимо вовсе —
+      наведения там не бывает, а клик по родителю ничего не делал. */
+.wh-ctx-parent { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; }
+.wh-ctx-arrow { opacity: 0.6; font-size: 0.85em; transition: transform 0.15s; }
+.wh-ctx-parent.open .wh-ctx-arrow { transform: rotate(90deg); }
+.wh-ctx-submenu { display: none; }
+.wh-ctx-parent.open > .wh-ctx-submenu { display: block; }
+.wh-ctx-submenu .wh-ctx-item { padding-left: 30px; }
 
 /* ── Контекстные меню ядра Foundry — тоже под когитатор ── */
 #context-menu, .context-menu, nav#context-menu, menu#context-menu {
