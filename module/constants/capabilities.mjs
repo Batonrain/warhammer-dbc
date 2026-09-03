@@ -2399,7 +2399,7 @@ export const CAPABILITIES = {
   "dodge.core.adrenalineRush": {
     label: "Один раз за бой или сцену персонаж может потратить Очко Бесчестия, чтобы восстановить все потраченные Реакции и потраченную дистанцию отскок…",
     source: "Adrenaline Rush / Прилив Адреналина",
-    reader: "module/combat/adrenaline-rush.mjs (wdbc-ks1r) — hasAdrenalineRush/adrenalineRushAvailable/applyAdrenalineRush восстанавливают Реакции; «дистанция отскока» не трекается движком, только строка в чат-карточке"
+    reader: "module/combat/adrenaline-rush.mjs (wdbc-ks1r/wdbc-2b93) — hasAdrenalineRush/adrenalineRushAvailable/applyAdrenalineRush восстанавливают Реакции И сбрасывают пул дистанции Отскока (recoil-pool.mjs::resetRecoilPool)"
   },
   "dodge.core.bladeReader": {
     label: "Персонаж может перебрасывать встречные тесты против Финта; переброс (но не начальный бросок) делается через Scrutiny(WS). Не работает,",

@@ -1,8 +1,9 @@
 // test/combat/adrenaline-rush.test.mjs
 //
-// module/combat/adrenaline-rush.mjs (wdbc-ks1r) — Adrenaline Rush/Прилив
-// Адреналина: раз за бой/сцену + Очко Бесчестия, восстанавливает Реакции до
-// максимума. «Дистанция отскока» не трекается движком — только чат-строка.
+// module/combat/adrenaline-rush.mjs (wdbc-ks1r/wdbc-2b93) — Adrenaline
+// Rush/Прилив Адреналина: раз за бой/сцену + Очко Бесчестия, восстанавливает
+// Реакции до максимума И полностью сбрасывает пул дистанции Отскока этого
+// Раунда (recoil-pool.mjs::resetRecoilPool, реализован после PR #308).
 
 import "../support/foundry-stub.mjs";
 
@@ -11,14 +12,16 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { hasAdrenalineRush, adrenalineRushAvailable, applyAdrenalineRush }
   from "../../module/combat/adrenaline-rush.mjs";
 
-function trooper({ hasTalent = true, fate = 2, reactValue = 0, reactMax = 1, defenseValue = 0, defenseMax = 1 } = {}) {
+function trooper({ hasTalent = true, fate = 2, reactValue = 0, reactMax = 1, defenseValue = 0, defenseMax = 1, recoilPool = null } = {}) {
   const flags = {};
+  if (recoilPool) flags["warhammer-dbc.recoilPool"] = recoilPool;
   const data = {
     name: "Разведчик",
     items: hasTalent ? [{ type: "talent", name: "Adrenaline Rush / Прилив Адреналина" }] : [],
     system: {
       fate: { value: fate, max: 5 },
-      reactions: { value: reactValue, max: reactMax, defenseValue, defenseMax }
+      reactions: { value: reactValue, max: reactMax, defenseValue, defenseMax },
+      movement: { halfMove: 4 }
     },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; }
@@ -27,6 +30,9 @@ function trooper({ hasTalent = true, fate = 2, reactValue = 0, reactMax = 1, def
     if (patch["system.fate.value"] !== undefined) data.system.fate.value = patch["system.fate.value"];
     if (patch["system.reactions.value"] !== undefined) data.system.reactions.value = patch["system.reactions.value"];
     if (patch["system.reactions.defenseValue"] !== undefined) data.system.reactions.defenseValue = patch["system.reactions.defenseValue"];
+    // resetRecoilPool (recoil-pool.mjs) удаляет флаг этим путём — тот же
+    // приём, что и остальной проект (см. test/combat/recoil.test.mjs update).
+    if (patch["flags.warhammer-dbc.-=recoilPool"] !== undefined) delete flags["warhammer-dbc.recoilPool"];
   };
   return data;
 }
@@ -67,10 +73,23 @@ describe("adrenalineRushAvailable / applyAdrenalineRush", () => {
     expect(t.system.reactions.defenseValue).toBe(1);
   });
 
-  it("чат-карточка упоминает дистанцию отскока как ручную", async () => {
+  it("чат-карточка говорит, что дистанция Отскока восстановлена (не «вручную»)", async () => {
     const t = trooper();
     await applyAdrenalineRush(t);
-    expect(captured.chat[0].content).toContain("Дистанция отскока");
+    expect(captured.chat[0].content).toContain("Дистанция Отскока");
+    expect(captured.chat[0].content).not.toContain("вручную");
+  });
+
+  it("сбрасывает пул дистанции Отскока этого Раунда (wdbc-2b93)", async () => {
+    const t = trooper({ recoilPool: { spent: 3, bonus: 1 } });
+    await applyAdrenalineRush(t);
+    expect(t.getFlag("warhammer-dbc", "recoilPool")).toBeUndefined();
+  });
+
+  it("нет активного пула Отскока — просто ничего лишнего не пишет (resetRecoilPool идемпотентна)", async () => {
+    const t = trooper({ recoilPool: null });
+    await applyAdrenalineRush(t);
+    expect(t.getFlag("warhammer-dbc", "recoilPool")).toBeUndefined();
   });
 
   it("в бою — battle, раз использованное вне боя не блокирует бой (та же семантика unit, что Resplendent Raiment)", async () => {
