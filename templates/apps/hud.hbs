@@ -7,13 +7,13 @@
   </div>
   {{else}}
 
-  {{!-- РАНЫ: Раны/Броня/Судьба/состояния | оружие по рукам | портрет+имя+Ход —
-        три существующие ячейки сведены в одну когитаторную карточку
-        (module/apps/hud.mjs больше не трогает эту вёрстку по данным, только
-        по обёртке — сама разметка/классы внутри не менялись). --}}
-  <div class="hud-panel hud-wounds-panel">
-    <div class="hud-panel-title"><span class="hud-panel-led"></span>РАНЫ</div>
-    <div class="hud-wounds-body">
+  {{!-- СТАТУС: Раны/Броня/Судьба/ОД-Реакции/лампы | портрет+имя+Ход+щит —
+        всегда виден, не вкладка (wdbc-zdu4). Оружие/Психосила/Движение/Химия
+        переехали во вкладки ниже — сюда данные из module/apps/hud.mjs
+        по-прежнему приходят готовыми, разметка внутри ячеек не менялась. --}}
+  <div class="hud-panel hud-status-panel">
+    <div class="hud-panel-title"><span class="hud-panel-led"></span>СТАТУС</div>
+    <div class="hud-status-body">
 
       {{!-- Раны + броня + состояния --}}
       <div class="wh-hud-cell wh-hud-vitals">
@@ -54,7 +54,43 @@
         {{/if}}
       </div>
 
-      {{!-- Оружие: крупный readout + Огонь --}}
+      {{!-- Портрет + имя + Ход + Силовое поле (щит переехал сюда из бывшей
+            оружейной ячейки — он такой же «всегда на виду» статус, как Раны,
+            не атакующее действие). --}}
+      <div class="wh-hud-cell wh-hud-btns">
+        <a class="wh-hud-sheet" data-open-sheet="main" data-tooltip="Лист персонажа">
+          <img class="wh-hud-face noborder" src="{{img}}"/>
+          <span>{{name}}</span>
+        </a>
+        <button type="button" class="wh-hud-endturn" data-end-turn {{#unless myTurn}}disabled{{/unless}}
+          data-tooltip="{{#if myTurn}}Закончить ход{{else}}Сейчас не ваш ход{{/if}}">
+          <i class="fas fa-forward-step"></i> Ход
+        </button>
+        {{#if shield}}
+        <a class="wh-hud-shield {{#if shield.active}}on{{/if}}" data-shield="{{shield.id}}"
+           data-tooltip="{{shield.name}}{{#if shield.active}} — рейтинг {{shield.rating}} (выключить){{else}} — включить{{/if}}">
+          <i class="fas fa-shield-alt"></i>{{#if shield.active}} {{shield.rating}}{{/if}}
+        </a>
+        {{/if}}
+      </div>
+
+    </div>
+  </div>
+
+  {{!-- Вкладки (wdbc-zdu4): Атаки/Психосила/Движение/Химия — полоска в стиле
+        вкладок листа персонажа (styles/sheets/actor-header.css, .cog-frame
+        .sheet-tabs), активная вкладка перетекает в тело без шва. --}}
+  <div class="hud-tabgroup">
+    <nav class="hud-tabs">
+      {{#each tabs as |t|}}
+      <a class="item {{#if t.active}}active{{/if}}" data-hud-tab="{{t.key}}">{{t.label}}</a>
+      {{/each}}
+    </nav>
+    <div class="hud-panel hud-tab-body">
+
+      {{!-- АТАКИ: оружие по рукам + лоток безоружного боя (бывшая ячейка
+            wh-hud-gun панели РАНЫ, разметка внутри не менялась). --}}
+      {{#if (eq activeTab "attacks")}}
       <div class="wh-hud-cell wh-hud-gun">
         {{#if hasWeapon}}
         <div class="wh-hud-hands">
@@ -122,57 +158,79 @@
             <a class="wh-hud-unarmed" data-unarmed="{{z.id}}" title="{{z.name}}"><i class="fas {{z.icon}}"></i></a>
             {{/each}}
           </div>
-          {{#if shield}}
-          <a class="wh-hud-shield {{#if shield.active}}on{{/if}}" data-shield="{{shield.id}}"
-             data-tooltip="{{shield.name}}{{#if shield.active}} — рейтинг {{shield.rating}} (выключить){{else}} — включить{{/if}}">
-            <i class="fas fa-shield-alt"></i>{{#if shield.active}} {{shield.rating}}{{/if}}
-          </a>
-          {{/if}}
         </div>
       </div>
-
-      {{!-- Портрет + имя --}}
-      <div class="wh-hud-cell wh-hud-btns">
-        <a class="wh-hud-sheet" data-open-sheet="main" data-tooltip="Лист персонажа">
-          <img class="wh-hud-face noborder" src="{{img}}"/>
-          <span>{{name}}</span>
-        </a>
-        <button type="button" class="wh-hud-endturn" data-end-turn {{#unless myTurn}}disabled{{/unless}}
-          data-tooltip="{{#if myTurn}}Закончить ход{{else}}Сейчас не ваш ход{{/if}}">
-          <i class="fas fa-forward-step"></i> Ход
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  {{!-- Псайкер: PR + психосилы (быстрый манифест) --}}
-  {{#if hasPsychic}}
-  <div class="hud-panel hud-psy-panel">
-    <div class="hud-panel-title"><span class="hud-panel-led"></span>ПСИХОСИЛЫ</div>
-    <div class="wh-hud-cell wh-hud-psy">
-      <div class="wh-hud-psy-head">
-        <span class="wh-hud-psy-orb {{#unless psychic.canManifest}}spent{{/unless}}"
-              data-tooltip="Текущий Пси-Рейтинг (тПР) из базового {{psychic.bpr}}; поддерживается сил: {{psychic.sustain}}{{#unless psychic.canManifest}} · тПР 0 — новые силы нельзя{{/unless}}">
-          Ψ {{psychic.tpr}}<span class="wh-hud-psy-bpr">/{{psychic.bpr}}</span>
-        </span>
-        {{#if psychic.sustain}}<span class="wh-hud-psy-sus" data-tooltip="Поддерживается сил">◈{{psychic.sustain}}</span>{{/if}}
-      </div>
-      {{#if psychic.powers.length}}
-      <div class="wh-hud-psy-list">
-        {{#each psychic.powers as |p|}}
-        <button type="button" class="wh-hud-psy-power {{#if p.sustained}}on{{/if}}" data-psy="{{p.id}}"
-          data-tooltip="{{p.name}} · PR {{p.pr}}{{#if p.damage}} · урон {{p.damage}}{{/if}} · тест ≤{{p.threshold}}{{#if p.sustainable}} · ПКМ — поддержание{{/if}}">
-          {{p.name}}
-        </button>
-        {{/each}}
-      </div>
-      {{else}}
-      <div class="wh-hud-psy-empty">нет психосил</div>
       {{/if}}
+
+      {{!-- ПСИХОСИЛА: PR + психосилы (быстрый манифест) --}}
+      {{#if (eq activeTab "psychic")}}
+      <div class="wh-hud-cell wh-hud-psy">
+        <div class="wh-hud-psy-head">
+          <span class="wh-hud-psy-orb {{#unless psychic.canManifest}}spent{{/unless}}"
+                data-tooltip="Текущий Пси-Рейтинг (тПР) из базового {{psychic.bpr}}; поддерживается сил: {{psychic.sustain}}{{#unless psychic.canManifest}} · тПР 0 — новые силы нельзя{{/unless}}">
+            Ψ {{psychic.tpr}}<span class="wh-hud-psy-bpr">/{{psychic.bpr}}</span>
+          </span>
+          {{#if psychic.sustain}}<span class="wh-hud-psy-sus" data-tooltip="Поддерживается сил">◈{{psychic.sustain}}</span>{{/if}}
+        </div>
+        {{#if psychic.powers.length}}
+        <div class="wh-hud-psy-list">
+          {{#each psychic.powers as |p|}}
+          <button type="button" class="wh-hud-psy-power {{#if p.sustained}}on{{/if}}" data-psy="{{p.id}}"
+            data-tooltip="{{p.name}} · PR {{p.pr}}{{#if p.damage}} · урон {{p.damage}}{{/if}} · тест ≤{{p.threshold}}{{#if p.sustainable}} · ПКМ — поддержание{{/if}}">
+            {{p.name}}
+          </button>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="wh-hud-psy-empty">нет психосил</div>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{!-- ДВИЖЕНИЕ: боевые манёвры + Карабканье/Прыжок/Плавание/Падение/Полёт/
+            марши — те же пункты и гейты, что Dialog showMovementMenu
+            (movement-actions.mjs, movementMenuItems). --}}
+      {{#if (eq activeTab "movement")}}
+      <div class="wh-hud-cell wh-hud-movement">
+        {{#if movement.length}}
+        <div class="wh-hud-move-grid">
+          {{#each movement as |m|}}
+          <a class="wh-hud-move-btn" data-movement="{{m.key}}">{{m.label}}{{#if m.cost}}<span class="wh-hud-move-cost">{{m.cost}}</span>{{/if}}</a>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="wh-hud-psy-empty">нет доступных действий Движения</div>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{!-- ХИМИЯ: препараты — применить/снять эффект, та же логика, что
+            вкладка «Химия» листа (tabs/drugs.mjs). --}}
+      {{#if (eq activeTab "chemistry")}}
+      <div class="wh-hud-cell wh-hud-chem">
+        {{#if chemistry.length}}
+        <div class="wh-hud-chem-list">
+          {{#each chemistry as |d|}}
+          <div class="wh-hud-chem-row {{#if d.active}}active{{/if}}">
+            <span class="wh-hud-chem-name" data-tooltip="{{d.effect}}">{{d.name}}</span>
+            {{#if d.active}}
+            <span class="wh-hud-chem-rounds" data-tooltip="Раундов осталось">{{d.roundsRemaining}}р.</span>
+            <a class="wh-hud-chem-btn off" data-drug-deactivate="{{d.id}}">Снять</a>
+            {{else}}
+            <span class="wh-hud-chem-qty">×{{d.quantity}}</span>
+            <a class="wh-hud-chem-btn" data-drug-apply="{{d.id}}">Применить</a>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="wh-hud-psy-empty">нет препаратов</div>
+        {{/if}}
+      </div>
+      {{/if}}
+
     </div>
   </div>
-  {{/if}}
   {{/if}}
 
   <a class="wh-hud-macro" data-toggle-hotbar data-tooltip="Макросы (хотбар)"><i class="fas fa-bars"></i></a>

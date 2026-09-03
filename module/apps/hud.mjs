@@ -16,6 +16,8 @@ import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
+import { movementMenuItems } from "../combat/movement-actions.mjs";
+import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const TPL = `systems/${SYSTEM}/templates/apps/hud.hbs`;
@@ -348,6 +350,28 @@ export function hudData(actor) {
     encounterActive: isEncounterActive()
   } : null;
 
+  // Вкладка «Движение» (wdbc-zdu4): те же пункты, что Dialog showMovementMenu
+  // (Token HUD/вкладка БОЙ, movement-actions.mjs) — один источник гейтов
+  // (isEncounterActive/actorCanFly/actorHasHalfStep), без action() — сама
+  // функция не сериализуется в шаблон, клик вызывает её заново через key
+  // (см. wire() ниже).
+  const movement = movementMenuItems(actor).map(({ key, label, cost }) => ({ key, label, cost }));
+
+  // Вкладка «Химия» (wdbc-zdu4): препараты актора для быстрого применения в
+  // бою — та же applyDrug()/deactivateDrugEffect(), что вкладка «Химия»
+  // листа (tabs/drugs.mjs), без новой логики применения. Показываем, пока
+  // есть дозы ИЛИ пока идёт уже применённый эффект (даже с quantity 0 —
+  // игрок должен видеть таймер и снять эффект вручную).
+  const chemistry = actor.items
+    .filter(i => i.type === "drug" && ((Number(i.system.quantity) || 0) > 0 || i.system.activeEffect?.isActive))
+    .map(i => ({
+      id: i.id, name: i.name,
+      quantity: Number(i.system.quantity) || 0,
+      active: !!i.system.activeEffect?.isActive,
+      roundsRemaining: Number(i.system.activeEffect?.roundsRemaining) || 0,
+      effect: i.system.effect || ""
+    }));
+
   return {
     name: actor.name, img: actor.img,
     isGM: game.user.isGM,
@@ -387,6 +411,8 @@ export function hudData(actor) {
     hands, showOff,
     zeroHand,
     hasWeapon: !!(mainId || offId),
+    movement,
+    chemistry,
     shield: shieldBtn ? {
       id: shieldBtn.id, name: shieldBtn.name,
       active: shieldBtn.system.status === "active",
@@ -396,6 +422,32 @@ export function hudData(actor) {
     } : null,
     psychic, hasPsychic: !!psychic
   };
+}
+
+/* ── Вкладки (wdbc-zdu4) ──────────────────────────────────────────────────
+   Общий блок (портрет/раны/броня/Судьба/ОД-Реакции/лампы/Ход/щит) остаётся
+   всегда виден — не вкладка. «Атаки» (бывшая оружейная ячейка) и новые
+   «Движение»/«Химия» видны всем; «Психосила» — только псайкерам
+   (data.hasPsychic). Выбор вкладки — флаг ИГРОКА (game.user, не актора):
+   свой для каждого, кто смотрит на HUD чужого токена, и переживает
+   F5/перезаход — тот же приём, что hudGrip/hudProfile на предметах. */
+const HUD_TAB_LABELS = { attacks: "АТАКИ", psychic: "ПСИХОСИЛА", movement: "ДВИЖЕНИЕ", chemistry: "ХИМИЯ" };
+const HUD_TAB_ORDER = ["attacks", "psychic", "movement", "chemistry"];
+
+function availableHudTabs(data) {
+  return HUD_TAB_ORDER.filter(k => k !== "psychic" || data.hasPsychic);
+}
+
+/** Добавляет data.tabs (список для nav) и data.activeTab — читает сохранённый
+ *  выбор из флага игрока, откатывается на «Атаки», если сохранённая вкладка
+ *  сейчас недоступна (например «Психосила» у не-псайкера). */
+function withHudTabs(data) {
+  const avail = availableHudTabs(data);
+  const saved = game.user?.getFlag?.(SYSTEM, "hudTab");
+  const activeTab = avail.includes(saved) ? saved : avail[0];
+  data.activeTab = activeTab;
+  data.tabs = avail.map(key => ({ key, label: HUD_TAB_LABELS[key], active: key === activeTab }));
+  return data;
 }
 
 /* ── Отрисовка ─────────────────────────────────────────────────────────── */
@@ -415,7 +467,7 @@ export async function refreshHUD() {
       wireShipHud(el, actor);
       return;
     }
-    const data = actor ? hudData(actor) : { idle: true, isGM: !!game.user?.isGM };
+    const data = actor ? withHudTabs(hudData(actor)) : { idle: true, isGM: !!game.user?.isGM };
     el.innerHTML = await foundry.applications.handlebars.renderTemplate(TPL, data);
     wire(el, actor);
   } finally {
@@ -530,6 +582,35 @@ function wire(el, actor) {
       if (p?.system?.sustainable) await p.update({ "system.isSustained": !p.system.isSustained });
     });
   });
+
+  // Вкладки (wdbc-zdu4): чисто зрительский выбор, не трогает актора — доступен
+  // всем, кто видит HUD (в т.ч. ГМ на чужом токене), без gate по own. Выбор
+  // хранится во флаге игрока (не актора) — свой на каждого зрителя.
+  el.querySelectorAll("[data-hud-tab]").forEach(b => b.addEventListener("click", async () => {
+    await game.user.setFlag(SYSTEM, "hudTab", b.dataset.hudTab);
+    refreshHUD();
+  }));
+
+  // Движение (wdbc-zdu4): та же логика и те же гейты, что Dialog showMovementMenu
+  // (movement-actions.mjs, movementMenuItems) — hudData не сериализует action()
+  // в шаблон, здесь просто находим пункт по key и вызываем его заново.
+  el.querySelectorAll("[data-movement]").forEach(b => b.addEventListener("click", () => {
+    if (!own) return;
+    movementMenuItems(actor).find(i => i.key === b.dataset.movement)?.action();
+  }));
+
+  // Химия (wdbc-zdu4): применить/снять эффект — та же applyDrug/deactivateDrugEffect,
+  // что вкладка «Химия» листа (tabs/drugs.mjs), без новой логики применения.
+  el.querySelectorAll("[data-drug-apply]").forEach(b => b.addEventListener("click", async () => {
+    if (!own) return;
+    const item = actor.items.get(b.dataset.drugApply);
+    if (item) await applyDrug(actor, item);
+  }));
+  el.querySelectorAll("[data-drug-deactivate]").forEach(b => b.addEventListener("click", async () => {
+    if (!own) return;
+    const item = actor.items.get(b.dataset.drugDeactivate);
+    if (item) await deactivateDrugEffect(item);
+  }));
 
   // Открыть лист.
   el.querySelectorAll("[data-open-sheet]").forEach(b =>

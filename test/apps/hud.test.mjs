@@ -10,6 +10,7 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
 import { hudData } from "../../module/apps/hud.mjs";
+import { movementMenuItems } from "../../module/combat/movement-actions.mjs";
 
 /** Актор HUD-типа "character" — тип обязателен: hasActionEconomy смотрит именно на него. */
 function hudActor({ type = "character", items = [], ...system } = {}) {
@@ -93,6 +94,62 @@ describe("hudData: гейт кнопки ОГОНЬ/УДАР (wdbc-jpls, тот 
     const actor = hudActor({ items: [weapon], actionPoints: { value: 0, max: 2 } });
     const hand = hudData(actor).hands.find(h => h.slot === "main");
     expect(hand.fireGate.disabled).toBe(false);
+  });
+});
+
+describe("hudData: вкладка «Движение» (wdbc-zdu4) — те же пункты, что movementMenuItems, без функций action()", () => {
+  it("список пунктов совпадает по ключам с movementMenuItems(actor), action не сериализуется в данные", () => {
+    const actor = hudActor();
+    const data = hudData(actor);
+    const expected = movementMenuItems(actor).map(i => i.key);
+    expect(data.movement.map(m => m.key)).toEqual(expected);
+    for (const m of data.movement) {
+      expect(m).not.toHaveProperty("action");
+      expect(typeof m.label).toBe("string");
+    }
+  });
+
+  it("в активном Encounter появляются боевые пункты (halfmove и т.п.)", () => {
+    globalThis.game.combat = { started: true };
+    const data = hudData(hudActor());
+    expect(data.movement.map(m => m.key)).toContain("halfmove");
+  });
+});
+
+describe("hudData: вкладка «Химия» (wdbc-zdu4) — препараты актора для быстрого применения", () => {
+  function drugItem({ id = "d1", name = "Стимм", quantity = 1, active = false, roundsRemaining = 0 } = {}) {
+    return {
+      id, name, type: "drug",
+      system: {
+        quantity, effect: "Тестовый эффект",
+        activeEffect: { isActive: active, roundsRemaining }
+      }
+    };
+  }
+
+  it("препарат с количеством > 0 попадает в список, с полями для кнопки «Применить»", () => {
+    const actor = hudActor({ items: [drugItem({ id: "d1", name: "Стимм", quantity: 2 })] });
+    const data = hudData(actor);
+    expect(data.chemistry).toHaveLength(1);
+    expect(data.chemistry[0]).toMatchObject({ id: "d1", name: "Стимм", quantity: 2, active: false });
+  });
+
+  it("препарат с нулевым количеством, но активным эффектом — остаётся в списке (виден таймер)", () => {
+    const actor = hudActor({ items: [drugItem({ id: "d2", quantity: 0, active: true, roundsRemaining: 4 })] });
+    const data = hudData(actor);
+    expect(data.chemistry).toHaveLength(1);
+    expect(data.chemistry[0]).toMatchObject({ active: true, roundsRemaining: 4 });
+  });
+
+  it("препарат с нулевым количеством и без активного эффекта — не показывается (закончился)", () => {
+    const actor = hudActor({ items: [drugItem({ id: "d3", quantity: 0, active: false })] });
+    expect(hudData(actor).chemistry).toHaveLength(0);
+  });
+
+  it("предметы других типов (оружие, снаряжение) в список Химии не попадают", () => {
+    const actor = hudActor({ items: [weaponItem(), drugItem({ id: "d4" })] });
+    const ids = hudData(actor).chemistry.map(d => d.id);
+    expect(ids).toEqual(["d4"]);
   });
 });
 
