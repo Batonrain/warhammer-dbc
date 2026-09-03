@@ -25,7 +25,7 @@
             <tr> <td class="apt-char-name-cell"> <input type="text" value="{{t.name}}" data-index="{{idx}}" data-field="name" class="advtal-input" placeholder="Название таланта"/> </td> <td class="advtal-cost-cell"> <input type="number" value="{{t.cost}}" data-index="{{idx}}" data-field="cost" class="advtal-input" min="0"/> </td> <td class="apt-char-del-cell"> <button type="button" class="advtal-remove" data-index="{{idx}}" title="Удалить">✕</button> </td> </tr> {{/each}}
           {{else}}
             {{#unless purchasedTalents.length}}<tr class="items-empty"><td colspan="3"><em>Нет талантов</em></td></tr>{{/unless}} {{/if}}
-        </tbody> </table> </div> </div> <div class="stat-panel advance-xp"> <div class="panel-title">ОПЫТ <span class="xp-code">// EXP.LOG</span></div>
+        </tbody> </table> </div> </div> <div class="stat-panel advance-xp"> <div class="panel-title">ОПЫТ <span class="xp-code">// EXP.LOG</span> <button type="button" class="xp-log-btn" data-action="xpLogOpen" title="Открыть журнал опыта отдельным окном — откуда взялся опыт помимо ручной правки «Всего»">📜 Журнал{{#if xpLog.length}} ({{xpLog.length}}){{/if}}</button></div>
       <div class="xp-sensor">
         <div class="xp-bar"><div class="xp-fill" style="width:{{xpPct}}%;"></div><span class="xp-bar-pct">{{xpPct}}%</span></div>
         <div class="xp-sensor-legend"><span>Потрачено <b>{{system.experience.spent}}</b> / {{system.experience.total}}</span><span class="xp-cur">Свободно <b>{{system.experience.current}}</b></span></div>
@@ -60,27 +60,6 @@
       </select>
     </div>
     {{/if}}
-  </div>
-  {{/if}}
-
-  {{!-- Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Возврат
-        за совпавшую выдачу приходит сам собой, посреди применения расы или
-        Архетипа, и без этой ленты разобраться потом было бы негде. --}}
-  {{#if xpLog.length}}
-  <div class="stat-panel xp-log-panel">
-    <div class="panel-title">ЖУРНАЛ ОПЫТА</div>
-    <table class="items-table xp-log-table">
-      <thead><tr><th class="col-narrow">Когда</th><th>За что</th><th class="col-narrow">Опыт</th></tr></thead>
-      <tbody>
-        {{#each xpLog as |e|}}
-        <tr class="item-row">
-          <td class="xp-log-when">{{e.when}}</td>
-          <td class="xp-log-reason">{{e.reason}}</td>
-          <td class="xp-log-amount">+{{e.amount}}</td>
-        </tr>
-        {{/each}}
-      </tbody>
-    </table>
   </div>
   {{/if}}
 

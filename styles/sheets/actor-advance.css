@@ -110,7 +110,15 @@
 }
 
 /* ── Таблица характеристик (редактирование) ── */
-.warhammer-dbc .advance-chars-edit { overflow: hidden; }
+/* align-self:start — иначе грид растягивает панель (align-items:stretch по
+   умолчанию) до высоты строки, а строка сама берётся по max-content САМОЙ
+   ВЫСОКОЙ колонки (список навыков) — из-за этого JS ниже (advance.mjs,
+   syncAdvanceColumnHeight) измерял уже раздутую высоту Характеристик и
+   переносил её раздутой на Навыки же, зацикливая баг (wdbc-10sy: обе панели
+   росли до высоты полного списка навыков вместо компактной). Без stretch
+   панель Характеристик держит свою настоящую высоту по содержимому — её и
+   меряет JS. */
+.warhammer-dbc .advance-chars-edit { overflow: hidden; align-self: start; }
 
 .warhammer-dbc .char-table-edit {
   width: 100%;
@@ -190,11 +198,13 @@
 
 /* ── Таблица навыков (редактирование) ──
    Панель — flex-колонка, скролл-бокс тянется на всё, что останется под
-   заголовком: раньше высота была захардкожена (340px) и не совпадала с
-   реальной высотой соседней панели Характеристик (та выше — почти всегда
-   больше 340px), из-за чего под обрезанным скроллом оставалась пустая
-   полоса самой панели. Теперь высота берётся от grid-строки (обе панели в
-   .advance-bottom растягиваются по умолчанию), а не от догадки в px. */
+   заголовком. Точную высоту (равную высоте соседней панели Характеристик)
+   грид сам посчитать не может — его авто-высота строки берётся по
+   max-content САМОЙ высокой колонки, а это всегда список навыков, а не
+   характеристик; overflow:auto на потомке в это не вмешивается (см. wdbc-
+   10sy). Высоту проставляет JS (sheets/tabs/advance.mjs,
+   syncAdvanceColumnHeight) инлайн-стилем по факту рендера — здесь только
+   flex-разводка под неё. */
 .warhammer-dbc .advance-skills-edit {
   display: flex;
   flex-direction: column;
@@ -536,6 +546,16 @@
   display: inline-block; vertical-align: middle; width: 42px; min-width: 38px; max-width: 46px; box-sizing: border-box;
   font-size: 0.92em; text-align: center; padding: 2px 2px;
 }
+
+/* ── Кнопка «Журнал опыта» (wdbc-ng7q: журнал теперь отдельное окно) ── */
+.warhammer-dbc .xp-log-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-left: 8px; padding: 1px 8px; background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.30); border-radius: 2px; cursor: pointer;
+  font-family: inherit; font-size: 0.82em; font-weight: 600;
+  color: var(--wh-text-light); line-height: 1.4;
+}
+.warhammer-dbc .xp-log-btn:hover { background: rgba(255,255,255,0.22); }
 
 /* ── Стремления (стр. 22) ── */
 .warhammer-dbc .aspir-hint { opacity: .5; font-size: .78em; font-weight: 400; margin-left: 6px; }

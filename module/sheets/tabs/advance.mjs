@@ -282,6 +282,24 @@ export async function removePurchasedTalent(actor, itemId) {
   if (ok) await item.delete();
 }
 
+/**
+ * Панель Навыков должна быть высотой строго как соседняя панель Характеристик
+ * (стр. 24), со своим скроллбаром внутри — CSS Grid тут бессилен: авто-высота
+ * строки берёт БОЛЬШИЙ max-content среди колонок, а `overflow: auto` на
+ * скроллящемся потомке этот вклад не срезает (сам список навыков всегда
+ * длиннее списка характеристик, и грид под него растягивает всю строку).
+ * Единственный надёжный способ — измерить реальную высоту Характеристик и
+ * проставить её Навыкам инлайн-стилем; при 0 (вкладка ещё display:none)
+ * не трогаем — измерять нечего, пересчитается при следующем показе вкладки.
+ */
+export function syncAdvanceColumnHeight(root) {
+  const chars  = root?.querySelector?.(".advance-chars-edit");
+  const skills = root?.querySelector?.(".advance-skills-edit");
+  if (!chars || !skills) return;
+  const h = chars.getBoundingClientRect().height;
+  if (h > 0) skills.style.height = `${h}px`;
+}
+
 export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = globalThis.$ } = {}) {
 
   // ── Характеристики: значение, уровень улучшения и цена ────────────────────
@@ -534,4 +552,6 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     });
     await actor.update({ "system.advanceTalents": arr });
   });
+
+  syncAdvanceColumnHeight(html[0] ?? html);
 }

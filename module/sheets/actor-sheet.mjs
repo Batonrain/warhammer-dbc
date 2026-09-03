@@ -50,10 +50,11 @@ import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
 import { woundLossUpdates } from "../rules/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
-import { activateAdvanceListeners } from "./tabs/advance.mjs";
+import { activateAdvanceListeners, syncAdvanceColumnHeight } from "./tabs/advance.mjs";
 import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
+import { openXpLog }                        from "../apps/xp-log.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
@@ -233,7 +234,8 @@ async function onStatAdd(event, target) {
     // живой процент с актора (module/documents/actor.mjs, system.fastLearnerBonus).
     await promptStatAdd(this.actor, {
       label: "Опыт (Всего)", path: "system.experience.total",
-      bonusPercent: this.actor.system?.fastLearnerBonus || 0
+      bonusPercent: this.actor.system?.fastLearnerBonus || 0,
+      xpLog: true
     });
   } else if (stat === "patronFavor") {
     const god = target.dataset.god;
@@ -572,6 +574,8 @@ export function onSkillRoll(event, target) {
 // ── Снаряжение и пикеры ──
 function onItemAdd() { return this._showAddItemDialog(); }
 function onRigOpen()  { return openRigManager(this.actor); }
+// Журнал опыта — read-only лента (wdbc-ng7q), доступна и без прав на правку листа.
+function onXpLogOpen() { return openXpLog(this.actor); }
 function onGearLib(event) { event.preventDefault(); return this._openGearPicker(); }
 
 // Добавление Черт/Талантов — через пикер с листа (группировка по типам, поиск,
@@ -696,6 +700,7 @@ export class WarhammerCharacterSheet
       skillRoll: whenEditable(onSkillRoll),
       itemAdd: whenEditable(onItemAdd),
       rigOpen: whenEditable(onRigOpen),
+      xpLogOpen: onXpLogOpen,
       gearLib: whenEditable(onGearLib),
       traitAdd: whenEditable(onTraitAdd),
       talentAdd: whenEditable(onTalentAdd),
@@ -768,6 +773,15 @@ export class WarhammerCharacterSheet
       .forEach(n => { n.style.display = "none"; });
     el.querySelectorAll(`.gear-mods-toggle[data-host-id="${hid}"]`)
       .forEach(n => n.classList.toggle("collapsed", collapsed));
+  }
+
+  // Переключение вкладки — чистый CSS-класс-тоггл (без повторного _onRender),
+  // поэтому высоту панели Навыков (wdbc-10sy) надо досчитать именно тут: при
+  // первом открытии листа вкладка Развитие обычно display:none и её высота
+  // Характеристик мерилась нулём (activateAdvanceListeners в _onRender).
+  changeTab(tab, group, options) {
+    super.changeTab(tab, group, options);
+    if (group === "primary" && tab === "advance") syncAdvanceColumnHeight(this.element);
   }
 
   // Foundry титулует окно как «<тип документа>: <имя>», где тип берётся из
