@@ -6,6 +6,7 @@
     "description": "",
     "notes": "",
     "weaponClass": "melee",
+    "itemSize": "2x1",
     "weaponType": "shock",
     "range": 4,
     "balance": 0,

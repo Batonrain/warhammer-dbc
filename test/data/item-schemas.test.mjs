@@ -143,6 +143,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      // Модификация вживлена, не лежит в Разгрузке отдельно (wdbc-e2lt).
+      itemSize: "0",
       activatable: false, active: false, runicWeaveSlots: 0,
       // wdbc-bxw6: «отламывающийся слой» (аблативная модификация брони).
       ablative: false, ablativeCharge: 0,

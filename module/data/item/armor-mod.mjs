@@ -30,6 +30,10 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),
+      // Модификация вживлена/встроена в носителя, а не лежит отдельным
+      // предметом в Разгрузке (wdbc-e2lt) — itemSizeStr() трактует "0" как
+      // «места не занимает» (module/constants/rig.mjs).
+      itemSize:     new StringField({ initial: "0", label: "Место (разгрузка)" }),
       activatable:  new BooleanField({ initial: false, label: "Включаемая" }),
       active:       new BooleanField({ initial: false, label: "Включена" }),
       // Держатель Рунических Вязей (напр. «Загадка Маата», корбук стр. 433) —
