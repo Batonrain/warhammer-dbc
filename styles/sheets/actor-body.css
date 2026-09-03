@@ -18,25 +18,25 @@
   color: var(--bc-teal);
 }
 
-/* wdbc-ycgk.2: Усталость/Безумие/Порча переехали на вкладку ТЕЛО с
-   ПОКАЗАТЕЛЕЙ, но сохранили класс .stats-cog (actor-stats-cog.css) — тот
-   красит .side-bar/.side-fill/.side-pct/.side-code через переменные --cg* в
-   фосфорную зелень когитатора безусловно, тогда как остальная вкладка ТЕЛО
-   (bc-figure/bc-ecg/bc-life) — био-скан/хирургикон со СВОЕЙ, состояние-
-   зависимой палитрой (--bc-*). Сам actor-stats-cog.css не трогаем (общий с
-   ПОКАЗАТЕЛЯМИ файл) — переопределяем --cg* только здесь, внутри .body-tab,
-   по смыслу блока: Усталость — янтарный (та же семантика, что у «wounded»
-   кардиомонитора выше), Безумие — фиолетовый (уже так закрашен психический
-   счётчик Vitals, .bc-vital-psy), Порча — красный (уже так себя ведёт
-   corruption-roll при наведении, только теперь и в состоянии покоя). */
-.warhammer-dbc .body-tab .bc-fatigue-compact.stats-cog {
-  --cg: var(--bc-amber); --cg-dim: #b8862a; --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
-}
-.warhammer-dbc .body-tab .bc-trackers .insanity-panel {
-  --cg: var(--bc-violet); --cg-dim: #7a3fb0; --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
-}
+/* wdbc-ycgk.2 дал трём блокам три РАЗНЫХ акцентных цвета (янтарь/фиолет/
+   красный) вместо ОДНОЙ палитры вкладки Тело (wdbc-ycgk.3/.4, репорт
+   владельца: «с абсолютно другой цветовой гаммой засунуты и не переделаны» —
+   три вставки вместо одной, но по-прежнему не в тон остальной вкладке).
+   Усталость/Безумие/Порча переехали на вкладку ТЕЛО с ПОКАЗАТЕЛЕЙ, сохранив
+   класс .stats-cog (actor-stats-cog.css) — тот красит .side-bar/.side-fill/
+   .side-pct/.side-code через переменные --cg*. Остальная вкладка ТЕЛО
+   (bc-figure/bc-ecg/bc-life — био-скан/хирургикон) целиком в одном холодном
+   --bc-teal — тем же цветом красим и «состояние покоя» этих трёх счётчиков
+   (сам actor-stats-cog.css не трогаем, общий с ПОКАЗАТЕЛЯМИ файл, переопре-
+   деляем --cg* только здесь, внутри .body-tab). --cg-fire (сработавший
+   критический порог) остаётся красным у всех трёх, как и было — это уже
+   общий, состояние-зависимый «тревожный» акцент (та же роль, что у
+   кардиомонитора при «wounded»/«critical»), а не про различение блоков
+   между собой. */
+.warhammer-dbc .body-tab .bc-fatigue-compact.stats-cog,
+.warhammer-dbc .body-tab .bc-trackers .insanity-panel,
 .warhammer-dbc .body-tab .bc-trackers .corruption-panel {
-  --cg: var(--bc-red); --cg-dim: #a03030; --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
+  --cg: var(--bc-teal); --cg-dim: var(--bc-teal-dim); --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
 }
 /* Часть правил actor-stats-cog.css красит текст/фон литералом, не через
    var(--cg…) — переменные выше их не касаются. Перекрываем той же формулой
