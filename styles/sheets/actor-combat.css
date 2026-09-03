@@ -35,6 +35,12 @@
   border: 1px solid var(--wh-border);
 }
 
+/* Аблатив (wdbc-njxj): щит поверх обычных Ран — показан, только когда у
+   персонажа реально есть источник (ablativeMax > 0, см. tab-combat.hbs). */
+.warhammer-dbc .wounds-ablative-vals { display: flex; align-items: center; gap: 3px; }
+.warhammer-dbc .wounds-ablative-max { font-size: 0.9em; opacity: 0.75; }
+.warhammer-dbc .wounds-ablative-row label { color: var(--cg, inherit); }
+
 .warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; }
 .warhammer-dbc .wounds-heal-btn {
   width: 100%;
@@ -1662,6 +1668,20 @@
 /* Когитатор: ещё контрастнее на тёмной шапке */
 .warhammer-dbc.wh-holo .weapon-mod-badge { color: #c9fff2; background: rgba(47,158,106,0.2); border-color: #2f9e6a; }
 .warhammer-dbc .mod-row-installed { background: rgba(58,122,138,0.08); }
+/* Перезарядка (wdbc-ai0o): тот же приём бейджа, что у weapon-mod-badge выше,
+   в тон предупреждению rwc-mag-low (амбер, «требует внимания»). */
+.warhammer-dbc .rwc-recharge-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.72em;
+  color: #cc6600;
+  background: rgba(204,102,0,0.14);
+  border: 1px solid #cc6600;
+  border-radius: 8px;
+  padding: 0 6px;
+  vertical-align: middle;
+}
+.warhammer-dbc.wh-holo .rwc-recharge-badge { color: #ffcf8a; background: rgba(204,102,0,0.22); border-color: #d98a2c; }
 
 /* ── Ручные щиты (стр. 215): строка управления под щитом в списке ближнего боя ── */
 .warhammer-dbc .shield-ctl-row .shield-ctl-cell {
