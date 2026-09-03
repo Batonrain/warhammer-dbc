@@ -18,6 +18,7 @@ import { _showContestDialog } from "../../combat/techniques.mjs";
 import { showGrappleDialog } from "../../combat/grapple.mjs";
 import { beginTargeting } from "../../combat/aim.mjs";
 import { showHealingDialog } from "./healing.mjs";
+import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { painChange, openPainSoulBurnDialog } from "./pain.mjs";
 import { showSkillfulTortureDialog } from "../../apps/skillful-torture.mjs";
 import { frenzyEntryBlocked, markFrenzyExited } from "../../combat/frenzy.mjs";
@@ -87,6 +88,10 @@ export function activateCombatListeners(root, actor) {
 
   // ── Лечение и Очки Боли ──────────────────────────────────────────────────
   on(root, ".wounds-heal-btn", "click", () => showHealingDialog(actor));
+  // Делегирование (wdbc-uez7): актор с этой кнопки — ЦЕЛЬ эффекта (пациент),
+  // не исполнитель — тот выбирается уже в самом пикере.
+  on(root, ".wounds-request-heal-btn", "click", () =>
+    showDelegateTestPicker(actor, { title: "Попросить лечение", kind: "healing", label: "Лечение", buttonLabel: "Открыть Лечение" }));
 
   // ── Перевес выключенной силовой брони: тест раз в T.b часов (стр. 233) ──
   on(root, ".disabled-armour-periodic-test-btn", "click", () => useDisabledArmourPeriodicTest(actor));
@@ -213,20 +218,6 @@ export function activateCombatListeners(root, actor) {
     const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
     if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
     await applyRitualBloodletting(actor, token);
-  });
-
-  // ── Вызвать Психокость (wdbc-sk8s, module/combat/conjure-wraith.mjs) ────
-  on(root, ".conjure-wraith-item-btn", "click", async () => {
-    if (!conjureWraithAvailable(actor)) {
-      return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
-    }
-    await applyConjureWraith(actor, "item");
-  });
-  on(root, ".conjure-wraith-weapon-btn", "click", async () => {
-    if (!conjureWraithAvailable(actor)) {
-      return ui.notifications.warn("Вызвать Психокость уже использовано максимум раз в этой сессии.");
-    }
-    await applyConjureWraith(actor, "weapon");
   });
 
   // ── Вызвать Психокость (wdbc-sk8s, module/combat/conjure-wraith.mjs) ────
