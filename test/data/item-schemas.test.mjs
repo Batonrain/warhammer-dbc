@@ -346,7 +346,7 @@ const TYPES = {
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
       availability: 0, weight: 0, quantity: 1, attackBonus: 0, special: "", equipped: false,
-      loadedAmmoId: "", weaponProps: [], needsRecharge: false, prismaCharge: 0, legacyWeapon: false,
+      loadedAmmoId: "", weaponProps: [], needsRecharge: false, rechargeTurnsRemaining: 0, prismaCharge: 0, legacyWeapon: false,
       sacred: false,
       daemonWeapon: {
         bound: false, god: "", demonName: "", binding: 0, demonWb: 0, demonInf: 0,

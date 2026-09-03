@@ -24,6 +24,7 @@ import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPr
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
+import { processRechargeTurnStart } from "./combat/recharge.mjs";
 import { processWitchsEdgeCombatStart } from "./combat/witchs-edge.mjs";
 import { processSpiritTalkRoundStart } from "./combat/spirit-talk.mjs";
 import { processLastActorCombatStart } from "./combat/last-actor.mjs";
@@ -1604,6 +1605,9 @@ function _attachFateContextMenu(message, html) {
       // пока значения свежие; сама решает, нести ли этому типу актора экономику.
       await postTurnStartCard(nextCombatant.actor);
       await processPrismaTurnStart(nextCombatant.actor);
+      // Перезарядка (wdbc-ai0o): «нельзя стрелять в следующий Ход» — тот же
+      // такт начала Хода носителя, что и заряд Призмы выше.
+      await processRechargeTurnStart(nextCombatant.actor);
       // Грозный Вопль (wdbc-sk8s): усилитель звукового оружия живёт «до
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.

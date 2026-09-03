@@ -569,7 +569,9 @@ export function buildGetData(actor) {
       // «Расклинить» показывается только пока canClearJam не лжив (см.
       // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
       jammed:       !melee && !!s.jammed,
-      canClearJam:  !melee && !!s.jammed && canClearJam(i)
+      canClearJam:  !melee && !!s.jammed && canClearJam(i),
+      // Перезарядка (wdbc-ai0o): тот же гейт кнопки «Атака», что у jammed выше.
+      needsRecharge: !melee && !!s.needsRecharge
     };
   };
 
