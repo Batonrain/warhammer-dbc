@@ -57,9 +57,17 @@ export function recoilButtonHtml(actor) {
     </div>`;
 }
 
-/** Токен актора на текущей сцене, если есть — для авто-подстановки AP Укрытия. */
+/**
+ * Токен актора на текущей сцене, если есть — для авто-подстановки AP Укрытия.
+ * getActiveTokens(), не поиск по t.actor?.uuid (найдено live-тестом): у
+ * непривязанного токена (без «Синхронизировать с актором») t.actor — синтетик
+ * со своим UUID вида Scene.…Token.…Actor.…, который никогда не равен
+ * actor.uuid базового мирового актора — сравнение молча не находило токен, и
+ * подсказка AP Укрытия оставалась 0/снятой даже когда цель реально стояла в
+ * зоне. getActiveTokens() у Foundry сам разрешает и привязанные, и нет.
+ */
 function tokenFor(actor) {
-  return canvas?.tokens?.placeables?.find(t => t.actor?.uuid === actor.uuid) ?? null;
+  return actor?.getActiveTokens?.()?.[0] ?? null;
 }
 
 /**

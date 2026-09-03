@@ -1380,7 +1380,13 @@ body.wh-aiming #board, body.wh-aiming canvas {
 .wh-item-picker .cbrowse-item.cbrowse-picked:hover {
   background: rgba(77,255,166,.18); color: #4dffa6; font-weight: 700;
 }
-.wh-item-picker .cbrowse-item.cbrowse-picked .cbrowse-item-name::after { content: " ✓"; }
+/* Отдельный элемент, а не ::after на .cbrowse-item-name: то имя обрезается
+   text-overflow:ellipsis (длинные двуязычные названия вроде «Artemis Matrix /
+   Матрица Артемида» заполняют всю ширину строки), и добавленная через ::after
+   галочка обрезалась бы вместе с текстом — «выбрано», но невидимо (wdbc-баг
+   «подсветка не всегда видна»). flex:0 0 auto — своя ширина, обрезке не подлежит. */
+.wh-item-picker .cbrowse-picked-mark { flex: 0 0 auto; margin-left: 2px; color: #4dffa6; font-weight: 700; visibility: hidden; }
+.wh-item-picker .cbrowse-item.cbrowse-picked .cbrowse-picked-mark { visibility: visible; }
 
 /* Пара +/− у расходуемых типов (гранаты, боеприпасы и т.п. — STACKABLE_TYPES
    в compendium-browser.mjs): несколько одинаковых предметов берутся кликами

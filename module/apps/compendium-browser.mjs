@@ -328,6 +328,7 @@ function renderItemsHtml(items, multi) {
         <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}" data-stackable="${stackable}">
           <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
           <span class="cbrowse-item-name">${esc(it.name)}</span>
+          <span class="cbrowse-picked-mark">✓</span>
           ${stackable ? `<span class="cbrowse-qty-controls">
             <button type="button" class="cbrowse-qty-minus" data-uuid="${esc(it.uuid)}" title="Убрать один">−</button>
             <span class="cbrowse-qty-n">0</span>

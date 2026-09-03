@@ -33,7 +33,14 @@ export function actorFor({ items = [], ...system } = {}) {
       corruptionBonus: 0,
       ...system
     },
-    items: list
+    items: list,
+    // Тесты подделывают «токен этого актора на сцене» через
+    // canvas.tokens.placeables (см. attack-dialog.mjs/recoil.mjs — читают
+    // actor.getActiveTokens(), не привязанность токена, wdbc-5280: с
+    // linked:true не находился токен без «Синхронизировать с актором»).
+    getActiveTokens() {
+      return (globalThis.canvas?.tokens?.placeables ?? []).filter(t => t.actor?.uuid === this.uuid);
+    }
   };
 }
 
