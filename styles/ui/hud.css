@@ -70,10 +70,36 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
   width: 5px; height: 5px; border-radius: 50%; background: var(--cg);
   box-shadow: 0 0 5px var(--cg); flex: none;
 }
-.hud-wounds-panel { flex: 1 1 auto; min-width: 0; }
-.hud-wounds-body { display: flex; align-items: stretch; flex: 1; min-height: 0; }
-.hud-psy-panel { flex: 0 1 340px; min-width: 0; }
-.hud-psy-panel .wh-hud-cell { padding: 0; border: none; }
+.hud-status-panel { flex: 0 0 auto; }
+.hud-status-body { display: flex; align-items: stretch; flex: 1; min-height: 0; }
+
+/* ── Вкладки (wdbc-zdu4): Атаки/Психосила/Движение/Химия ─────────────────
+   Тот же паттерн, что nav.sheet-tabs на листе персонажа (cog-frame,
+   styles/sheets/actor-header.css:380-427) — «Проводник Windows», активная
+   вкладка перетекает в тело без шва — только акцент когитаторный зелёный
+   (--cg), а не парчмент/акцент листа. */
+.hud-tabgroup { flex: 1 1 auto; min-width: 280px; display: flex; flex-direction: column; }
+.hud-tabs { display: flex; flex-shrink: 0; gap: 3px; padding-left: 2px; }
+.hud-tabs .item {
+  flex: 0 0 auto; padding: 4px 14px; font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+  color: color-mix(in srgb, var(--cg) 45%, transparent);
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  border-radius: 6px 6px 0 0; transition: background .15s, color .15s;
+}
+.hud-tabs .item:hover { color: #b8ffd8; background: rgba(77,255,166,.08); }
+.hud-tabs .item.active {
+  color: #b8ffd8; position: relative; z-index: 1;
+  background: linear-gradient(180deg, #0a1c12, #06120c);
+  border-color: var(--cg-dim);
+  box-shadow: 0 -3px 12px 0 rgba(77,255,166,.2);
+  text-shadow: 0 0 6px rgba(77,255,166,.5);
+}
+.hud-tab-body {
+  flex: 1; min-height: 0; display: flex;
+  border-top: none; border-radius: 0 4px 4px 4px;
+}
+.hud-tab-body .wh-hud-cell { padding: 0; border: none; flex: 1 1 auto; min-width: 0; }
 
 .wh-hud-cell {
   display: flex; flex-direction: column; justify-content: center;
@@ -204,8 +230,10 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 .wh-hud-shield.on { background: #06282e; color: #a8f4ff; border-color: #6fe6ff; box-shadow: 0 0 8px rgba(111,230,255,.35); }
 .wh-hud-shield:hover { filter: brightness(1.15); }
 
-/* ── Портрет ──────────────────────────────────────────────────────────── */
-.wh-hud-btns { flex: none; width: 74px; align-items: center; justify-content: center; }
+/* ── Портрет + Ход + Силовое поле (щит переехал сюда из бывшей оружейной
+     ячейки, wdbc-zdu4 — статус, а не атакующее действие) ────────────────── */
+.wh-hud-btns { flex: none; width: 92px; align-items: center; justify-content: center; gap: 2px; }
+.wh-hud-btns .wh-hud-shield { margin: 2px 0 0; font-size: 10px; padding: 2px 7px; }
 .wh-hud-sheet { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
 .wh-hud-face {
   width: 52px; height: 52px; object-fit: cover; border: 1px solid #1f6f4a;
@@ -269,6 +297,51 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 .wh-hud-psy-power:hover { background: rgba(176,108,217,.28); border-color: #b06cd9; color: #f0e0ff; }
 .wh-hud-psy-power.on { background: #4a2870; border-color: #b06cd9; color: #f0e0ff; box-shadow: 0 0 6px rgba(176,108,217,.4); }
 .wh-hud-psy-empty { font-size: 11px; font-style: italic; color: #6a5a7a; }
+
+/* ── Вкладка «Движение» (wdbc-zdu4) — те же пункты, что Dialog
+     showMovementMenu (movement-actions.mjs, movementMenuItems). ── */
+.wh-hud-movement { flex: 1 1 0; min-width: 220px; max-width: 480px; }
+.wh-hud-move-grid {
+  display: flex; flex-wrap: wrap; gap: 4px; align-content: flex-start;
+  max-height: 96px; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: var(--cg-dim) transparent;
+}
+.wh-hud-move-btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .02em; color: #d8ffe8;
+  border: 1px solid var(--cg-line); border-radius: 3px; padding: 4px 9px;
+  background: rgba(0,0,0,.2); white-space: nowrap;
+}
+.wh-hud-move-btn:hover { color: var(--cg); border-color: var(--cg); background: rgba(77,255,166,.1); }
+.wh-hud-move-cost { font-size: 10px; color: #5aa37e; }
+
+/* ── Вкладка «Химия» (wdbc-zdu4) — применить/снять эффект, та же
+     applyDrug/deactivateDrugEffect, что вкладка «Химия» листа. ── */
+.wh-hud-chem { flex: 1 1 0; min-width: 220px; max-width: 480px; }
+.wh-hud-chem-list {
+  display: flex; flex-direction: column; gap: 3px;
+  max-height: 96px; overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: thin; scrollbar-color: var(--cg-dim) transparent;
+}
+.wh-hud-chem-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 8px; border: 1px solid var(--cg-line); border-radius: 3px; background: rgba(0,0,0,.2);
+}
+.wh-hud-chem-row.active { border-color: var(--cg-fire); background: rgba(255,184,77,.08); }
+.wh-hud-chem-name {
+  flex: 1 1 auto; min-width: 0; font-size: 11px; color: #d8ffe8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.wh-hud-chem-qty { font-size: 10px; color: #5aa37e; }
+.wh-hud-chem-rounds { font-size: 10px; color: var(--cg-fire); font-weight: 700; white-space: nowrap; }
+.wh-hud-chem-btn {
+  cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+  color: #04100a; background: linear-gradient(180deg, #4dffa6, #2f9e6a);
+  border: 1px solid #1f6f4a; border-radius: 3px; padding: 2px 8px; white-space: nowrap;
+}
+.wh-hud-chem-btn:hover { background: linear-gradient(180deg, #a8ffd0, #4dffa6); }
+.wh-hud-chem-btn.off { background: transparent; color: #ff9a6b; border-color: #ff9a6b; }
+.wh-hud-chem-btn.off:hover { background: rgba(255,107,107,.15); }
 
 /* При активном HUD плавающий чат (поле «Введите сообщение» и всплывающие
    уведомления при закрытом чате) перекрывает панель — убираем его. */
