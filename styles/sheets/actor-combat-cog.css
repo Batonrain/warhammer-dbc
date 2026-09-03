@@ -146,11 +146,13 @@
 .warhammer-dbc .combat-cog .rwc-atk-btn:hover:not(:disabled) { box-shadow: 0 0 15px -2px var(--cg-fire); transform: translateY(-1px); }
 .warhammer-dbc .combat-cog .rwc-atk-btn:disabled { opacity: 0.4; }
 .warhammer-dbc .combat-cog .weapon-reload-btn,
-.warhammer-dbc .combat-cog .wounds-heal-btn {
+.warhammer-dbc .combat-cog .wounds-heal-btn,
+.warhammer-dbc .combat-cog .wounds-request-heal-btn {
   font-family: inherit; color: #c8ffe4; background: #0c2418; border: 1px solid var(--cg-line); border-radius: 3px; transition: all 0.13s;
 }
 .warhammer-dbc .combat-cog .weapon-reload-btn:hover,
-.warhammer-dbc .combat-cog .wounds-heal-btn:hover { border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); }
+.warhammer-dbc .combat-cog .wounds-heal-btn:hover,
+.warhammer-dbc .combat-cog .wounds-request-heal-btn:hover { border-color: var(--cg); box-shadow: 0 0 10px -3px var(--cg); }
 .warhammer-dbc .combat-cog .rwc-mag-cur { color: var(--cg); }
 .warhammer-dbc .combat-cog .rwc-mag-empty .rwc-mag-cur { color: var(--cg-red); text-shadow: 0 0 6px var(--cg-red); }
 

@@ -6,7 +6,7 @@
 // модуля, а диалог броска — это DialogV2, кнопку которого тест жмёт через
 // captured.press. Сам расчёт порога заглушку не задействует.
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured, sheetOf, fakeForm, checkbox } from "../support/foundry-stub.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
@@ -487,5 +487,112 @@ describe("делегированный тест (wdbc-uez7): _rollSkill/_rollCha
     await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
     await promise;
     expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+});
+
+// wdbc-j814: авто-встречный тест — соперник берётся из game.user.targets,
+// галочка #opposed-auto заменяет ручной ввод Порога/Броска соперника.
+describe("авто-встречный тест (wdbc-j814)", () => {
+  const realFromUuid = globalThis.fromUuid;
+  const realUsers = globalThis.game.users;
+
+  afterEach(() => {
+    globalThis.fromUuid = realFromUuid;
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    globalThis.game.users = realUsers;
+  });
+
+  /** Соперник-NPC: без testUserPermission — activeOwnerOf всегда вернёт null. */
+  function npcOpponent(name, { skills = {}, characteristics = {} } = {}) {
+    const opp = { id: `${name}-stub`, uuid: `Actor.${name}-stub`, name,
+      system: { skills, characteristics } };
+    globalThis.fromUuid = async uuid => (uuid === opp.uuid ? opp : null);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: opp }]) };
+    return opp;
+  }
+
+  /** Соперник-игрок: testUserPermission совпадает с активным пользователем в game.users. */
+  function playerOpponent(name) {
+    const owner = { id: "u1", name: "ИгрокСоперника", active: true };
+    globalThis.game.users = Object.assign([owner], { players: [owner] });
+    const opp = { id: `${name}-stub`, uuid: `Actor.${name}-stub`, name,
+      system: { skills: {}, characteristics: {} },
+      testUserPermission: (u, level) => level === "OWNER" && u.id === owner.id };
+    globalThis.fromUuid = async uuid => (uuid === opp.uuid ? opp : null);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: opp }]) };
+    return { opp, owner };
+  }
+
+  it("NPC без активного владельца: галочка сразу даёт готовый результат — одно сообщение, opposedLine заполнена", async () => {
+    npcOpponent("Драго", { skills: { intimidate: { total: 40 } } });
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
+    // Очередь кубов: первый d100 — мой бросок (rollD100WithReroll), второй —
+    // соперника (_resolveOpposedAuto), в этом порядке их и зовёт _rollSkill.
+    captured.dice = [20, 60]; // мой 20<=45 успех, его 60>40 провал
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+
+    expect(captured.chat).toHaveLength(1);
+    const content = captured.chat[0].content;
+    expect(content).toContain("Вы побеждаете");
+    expect(content).not.toContain("Ждём встречный бросок");
+  });
+
+  it("мутация: неверный resolveOpposed/skillTotal должен уронить проверку margin/победителя", async () => {
+    npcOpponent("Драго", { skills: { intimidate: { total: 999 } } }); // заведомо гарантированный проигрыш инициатора
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
+    captured.dice = [20, 21]; // мой 20<=45 успех, но соперник при пороге 999 громит степенью
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+    // Соперник (Порог 999, почти гарантированный высокий Успех) должен
+    // побеждать — если резолвер сломан (например, всегда "mine"), тест падает.
+    expect(captured.chat[0].content).toContain("Соперник побеждает");
+  });
+
+  it("соперник с активным владельцем: моё сообщение без opposedLine, но с «Ждём…», плюс отдельный делегированный запрос с моими цифрами", async () => {
+    playerOpponent("Ксерксот");
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 45, "wp", { skill: "intimidate" });
+    captured.nextRoll = 20;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "45", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { "#opposed-auto": [{ dataset: {}, checked: true }] }));
+    await promise;
+
+    expect(captured.chat).toHaveLength(2);
+    expect(captured.chat[0].content).toContain("Ждём встречный бросок");
+    expect(captured.chat[0].content).not.toContain("Побеждает");
+
+    const requestCard = captured.chat[1];
+    expect(requestCard.flags?.["warhammer-dbc"]?.delegatedTest?.kind).toBe("opposedResponse");
+    const payload = requestCard.flags["warhammer-dbc"].delegatedTest;
+    expect(payload.initiatorSide).toMatchObject({ threshold: 45, roll: 20 });
+  });
+
+  it("кнопка «Делегировать» отсутствует, когда opposedRequest задан (ответ соперника не делегируется дальше)", () => {
+    const s = sheet({});
+    s._showSkillRollDialog("Запугивание", 45, "wp", false, { skill: "intimidate" }, "base", {
+      opposedRequest: { initiatorName: "Иван", initiatorSide: { threshold: 40, roll: 30, success: true, deg: 1 }, safe: false }
+    });
+    expect(captured.dialog.buttons.some(b => b.action === "delegate")).toBe(false);
+  });
+
+  it("ответ соперника (opposedRequest): публикует карточку сравнения с готовым победителем", async () => {
+    const s = sheet({});
+    const promise = s._rollSkill("Запугивание", 50, "wp", { skill: "intimidate" }, {
+      opposedRequest: { initiatorName: "Иван", initiatorSide: { threshold: 40, roll: 35, success: true, deg: 1 }, safe: false }
+    });
+    captured.nextRoll = 5; // 5 <= 50 — большой успех, должен побеждать
+    await captured.press("roll", fakeForm({ "#skill-target": "50", "#skill-modifier": "0", "#test-kind": "base" }));
+    await promise;
+    const content = captured.chat.at(-1)?.content ?? "";
+    expect(content).toContain("⚔");
+    expect(content).toContain("Иван");
   });
 });

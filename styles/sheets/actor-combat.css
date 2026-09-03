@@ -35,9 +35,10 @@
   border: 1px solid var(--wh-border);
 }
 
-.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; }
-.warhammer-dbc .wounds-heal-btn {
-  width: 100%;
+.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; gap: 6px; }
+.warhammer-dbc .wounds-heal-btn,
+.warhammer-dbc .wounds-request-heal-btn {
+  flex: 1 1 0;
   padding: 4px 6px;
   font-size: 0.85em;
   font-weight: bold;
@@ -47,7 +48,8 @@
   border-radius: 3px;
   color: var(--wh-text, inherit);
 }
-.warhammer-dbc .wounds-heal-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+.warhammer-dbc .wounds-heal-btn:hover,
+.warhammer-dbc .wounds-request-heal-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
 
 /* ── Экономика действий: ОД / Реакции (стр. 12) ── */
 .warhammer-dbc .action-economy-bar {

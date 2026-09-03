@@ -66,6 +66,7 @@ import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
+import { skillTotal } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
@@ -118,6 +119,29 @@ export function registerHooks() {
     const def = SKILLS_DEF[skillKey];
     const total = executorActor.system.skills?.[skillKey]?.total ?? -20;
     return sheet._rollSkill(label, total, def?.char ?? charKey ?? "ag", { skill: skillKey }, { effectTargetActor });
+  });
+
+  // Ответ соперника во встречном тесте (wdbc-j814) — не «тест за другого»,
+  // а собственный тест исполнителя: effectTargetActor намеренно не передаём.
+  // opposedRequest несёт готовую сторону инициатора — сравнение и публичную
+  // карточку победителя считает и публикует actor-sheet.mjs сразу после
+  // этого броска (_maybePostOpposedComparison), без обратной связи инициатору.
+  registerDelegatedTestOpener("opposedResponse", (executorActor, effectTargetActor, payload) => {
+    const sheet = executorActor.sheet;
+    const { testKind, skillKey, charKey, initiatorLabel, initiatorName, initiatorSide, safe, hideCharSelect } = payload;
+    const opts = { opposedRequest: { initiatorName, initiatorSide, safe } };
+    if (testKind === "characteristic") {
+      if (typeof sheet?._rollCharacteristic !== "function") {
+        return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — встречный тест так не открыть.`);
+      }
+      const total = executorActor.system.characteristics?.[charKey]?.total ?? 0;
+      return sheet._rollCharacteristic(initiatorLabel, CHARACTERISTICS[charKey]?.abbr ?? charKey, total, charKey, !!hideCharSelect, opts);
+    }
+    if (typeof sheet?._rollSkill !== "function") {
+      return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — встречный тест так не открыть.`);
+    }
+    const def = SKILLS_DEF[skillKey];
+    return sheet._rollSkill(initiatorLabel, skillTotal(executorActor, skillKey), def?.char ?? charKey ?? "ag", { skill: skillKey }, opts);
   });
 
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
