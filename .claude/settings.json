@@ -31,10 +31,18 @@
       "Bash(git commit*)",
       "Bash(git merge*)",
       "Bash(git push origin *)",
+      "Bash(git branch*)",
+      "Bash(git worktree*)",
       "Bash(gh pr view*)",
       "Bash(gh pr list*)",
       "Bash(gh pr edit*)",
-      "Bash(gh pr merge*)"
+      "Bash(gh pr merge*)",
+      "Bash(gh pr create*)",
+      "Bash(gh pr checks*)",
+      "Bash(gh pr comment*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(gh run watch*)"
     ],
     "deny": [
       "Bash(git rebase*)",
