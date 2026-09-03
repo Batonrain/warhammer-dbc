@@ -18,6 +18,40 @@
   color: var(--bc-teal);
 }
 
+/* wdbc-ycgk.2: Усталость/Безумие/Порча переехали на вкладку ТЕЛО с
+   ПОКАЗАТЕЛЕЙ, но сохранили класс .stats-cog (actor-stats-cog.css) — тот
+   красит .side-bar/.side-fill/.side-pct/.side-code через переменные --cg* в
+   фосфорную зелень когитатора безусловно, тогда как остальная вкладка ТЕЛО
+   (bc-figure/bc-ecg/bc-life) — био-скан/хирургикон со СВОЕЙ, состояние-
+   зависимой палитрой (--bc-*). Сам actor-stats-cog.css не трогаем (общий с
+   ПОКАЗАТЕЛЯМИ файл) — переопределяем --cg* только здесь, внутри .body-tab,
+   по смыслу блока: Усталость — янтарный (та же семантика, что у «wounded»
+   кардиомонитора выше), Безумие — фиолетовый (уже так закрашен психический
+   счётчик Vitals, .bc-vital-psy), Порча — красный (уже так себя ведёт
+   corruption-roll при наведении, только теперь и в состоянии покоя). */
+.warhammer-dbc .body-tab .bc-fatigue-compact.stats-cog {
+  --cg: var(--bc-amber); --cg-dim: #b8862a; --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
+}
+.warhammer-dbc .body-tab .bc-trackers .insanity-panel {
+  --cg: var(--bc-violet); --cg-dim: #7a3fb0; --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
+}
+.warhammer-dbc .body-tab .bc-trackers .corruption-panel {
+  --cg: var(--bc-red); --cg-dim: #a03030; --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
+}
+/* Часть правил actor-stats-cog.css красит текст/фон литералом, не через
+   var(--cg…) — переменные выше их не касаются. Перекрываем той же формулой
+   color-mix от var(--cg), чтобы каждый блок держал СВОЙ оттенок вместо
+   одного и того же зелёного. */
+.warhammer-dbc .body-tab .stats-cog .side-pct { color: color-mix(in srgb, var(--cg) 55%, white); }
+.warhammer-dbc .body-tab .stats-cog .side-bonus-row { color: color-mix(in srgb, var(--cg) 45%, #9a9a9a); }
+.warhammer-dbc .body-tab .stats-cog .side-roll-btn {
+  background: linear-gradient(180deg, var(--bc-scr2), var(--bc-scr));
+  color: color-mix(in srgb, var(--cg) 70%, white);
+}
+.warhammer-dbc .body-tab .stats-cog .side-roll-btn:hover { color: #fff; }
+.warhammer-dbc .body-tab .stats-cog .side-main-val input { text-shadow: 0 0 10px color-mix(in srgb, var(--cg) 45%, transparent); }
+.warhammer-dbc .body-tab .stats-cog .side-bonus-val { text-shadow: 0 0 6px color-mix(in srgb, var(--cg) 40%, transparent); }
+
 /* ── Общий каркас ──────────────────────────────────────── */
 .warhammer-dbc .body-cogitator { display: flex; flex-direction: column; gap: 8px; }
 .warhammer-dbc .bc-hero {
@@ -517,6 +551,20 @@
 .warhammer-dbc .bc-ecg-death:hover { color: #ff8a8a; }
 .warhammer-dbc .bc-ecg-death input { width: 12px; height: 12px; margin: 0; cursor: pointer; accent-color: #ff6b6b; }
 .warhammer-dbc .bc-ecg.ecg--dead .bc-ecg-death { color: #ff8a8a; }
+
+/* Спасение/Воскресить (wdbc-ycgk.1) — блок всегда в DOM, видимость и высота
+   через класс --show, чтобы был CSS-transition; сам переход между «до» и
+   «после» полного ре-рендера листа форсирует JS (activateBodyListeners,
+   sheets/tabs/body.mjs) — иначе браузер вставляет блок уже в конечном виде. */
+.warhammer-dbc .bc-death-actions {
+  display: flex; gap: 6px; overflow: hidden;
+  max-height: 0; opacity: 0; margin-top: 0; margin-bottom: 0;
+  transition: max-height 0.35s ease, opacity 0.3s ease, margin 0.35s ease;
+}
+.warhammer-dbc .bc-death-actions.bc-death-actions--show {
+  max-height: 60px; opacity: 1; margin-top: 4px; margin-bottom: 4px;
+}
+.warhammer-dbc .bc-death-actions button { flex: 1; }
 
 .warhammer-dbc .bc-ecg-read { display: flex; align-items: baseline; gap: 8px; margin-top: 5px; font-size: 0.72em; }
 .warhammer-dbc .bc-ecg-hp b { font-size: 1.25em; color: var(--bc-teal); }

@@ -46,6 +46,36 @@ export async function setDeceased(actor, deceased) {
   await actor.setFlag("warhammer-dbc", "deceased", deceased);
 }
 
+// wdbc-ycgk.1: полный ре-рендер листа вставляет .bc-death-actions уже в
+// конечном виде (показан/скрыт) — обычный CSS-transition на insert/remove
+// сработать не успевает. Помним последнее состояние по актору и, если оно
+// реально сменилось, на миг форсируем инлайн-стилем ПРОТИВОПОЛОЖНОЕ значение
+// перед снятием — тогда браузеру есть от чего анимировать переход к тому,
+// что уже задаёт CSS-класс .bc-death-actions--show.
+const _lastDeceased = new WeakMap();
+function animateDeathActions(root, actor, deceased) {
+  const el = root.querySelector(".bc-death-actions");
+  if (!el) return;
+  const prev = _lastDeceased.get(actor);
+  _lastDeceased.set(actor, deceased);
+  if (prev === undefined || prev === deceased) return; // первый рендер/без смены — не анимируем
+  el.style.transition = "none";
+  if (deceased) {
+    el.style.maxHeight = "0px"; el.style.opacity = "0";
+    el.style.marginTop = "0px"; el.style.marginBottom = "0px";
+  } else {
+    el.style.maxHeight = "60px"; el.style.opacity = "1";
+  }
+  void el.offsetHeight; // форс рефлоу — иначе браузер схлопнёт оба присвоения в одно
+  el.style.transition = "";
+  requestAnimationFrame(() => {
+    el.style.maxHeight = "";
+    el.style.opacity = "";
+    el.style.marginTop = "";
+    el.style.marginBottom = "";
+  });
+}
+
 /** Л/П для имплантов конечностей и глаз: повторный клик по той же стороне снимает её. */
 export async function toggleImplantSide(item, side) {
   if (!item) return;
@@ -116,6 +146,11 @@ export function activateBodyListeners(root, actor, { openSurgeonWindow = openSur
 
   const figPanel = root.querySelector(".bc-figure-panel");
   if (figPanel) attachImplantTooltips(figPanel);
+
+  // Плавное появление/скрытие блока Спасение/Воскресить (wdbc-ycgk.1) — до
+  // прочих слушателей смерти, чтобы состояние «до» бралось не из уже
+  // перерисованного DOM.
+  animateDeathActions(root, actor, !!actor.getFlag?.("warhammer-dbc", "deceased"));
 
   // Констатация смерти — останавливает кардиомонитор (плоская линия).
   on(root, ".bc-death-toggle", "change", async ev => {
