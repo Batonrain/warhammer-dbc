@@ -67,6 +67,7 @@ import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mj
 import { WC_CODE } from "./constants/ship.mjs";
 import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
+import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
 
@@ -92,6 +93,15 @@ export function registerHooks() {
   // у исполнителя с уже нацеленным пациентом (delegate-test.mjs::openDelegatedTest).
   registerDelegatedTestOpener("healing", (executorActor, effectTargetActor) =>
     showHealingDialog(executorActor, { forcedPatient: effectTargetActor }));
+
+  // Инфограждение (wdbc-uez7) — effectTargetActor тут ВЛАДЕЛЕЦ снаряжения, не
+  // исполнитель: предмет ищем на нём же (payload.itemId), executorActor только
+  // бросает своим Tech-Use, запись всё равно ложится на предмет владельца.
+  registerDelegatedTestOpener("infoguard", (executorActor, effectTargetActor, payload) => {
+    const item = effectTargetActor.items.get(payload.itemId);
+    if (!item) return ui.notifications?.warn(`Предмет для Инфограждения не найден у «${effectTargetActor.name}» (удалён?).`);
+    return rollInfoguard(item, { executorActor });
+  });
 
   // Обычный тест Навыка/Характеристики (wdbc-uez7, кнопка «Делегировать» в
   // самом диалоге броска, actor-sheet.mjs::_showSkillRollDialog) — payload

@@ -15,6 +15,7 @@ import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBloc
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
 import { rollInfoguard, infoguardInteractionSection } from "../../apps/infoguard.mjs";
+import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { findTechImperative } from "../../constants/tech-imperatives.mjs";
 import { applyImperative } from "../../rules/imperative.mjs";
@@ -391,6 +392,17 @@ export function activateTechListeners(html, actor, { rollSkill } = {}) {
   html.find(".tech-infoguard-roll-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) rollInfoguard(item);
+  });
+  // Делегирование (wdbc-uez7): цель эффекта — владелец предмета (сам actor
+  // этой вкладки), исполнителя выбирает пикер.
+  html.find(".tech-infoguard-delegate-btn").click(ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    showDelegateTestPicker(actor, {
+      title: `Делегировать Инфограждение: ${item.name}`, kind: "infoguard",
+      label: `Инфограждение: ${item.name}`, buttonLabel: "Наложить Инфограждение",
+      extra: { itemId: item.id }
+    });
   });
   // Кнопки генерации ⚙/⚡ от имплантов Кибернетики Механикум
   html.find(".tech-gen-btn").click(ev => {
