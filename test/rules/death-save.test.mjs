@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  fatePoolLabel, hasDivineProtectionTalent, hasSusAnMembrane, susAnEligible,
+  fatePoolLabel, hasSusAnMembrane, susAnEligible,
   fateSaveFails, toyOfGodsApplies, SUS_AN_MIN_CRITICAL
 } from "../../module/rules/death-save.mjs";
 
@@ -15,17 +15,6 @@ describe("fatePoolLabel", () => {
   });
   it("хаосит платит Бесчестьем", () => {
     expect(fatePoolLabel({ system: { alignment: "heretic" } })).toBe("Бесчестья");
-  });
-});
-
-describe("hasDivineProtectionTalent", () => {
-  it("находит Талант по имени", () => {
-    const actor = { items: [{ type: "talent", name: "Divine Protection / Божественная Защита" }] };
-    expect(hasDivineProtectionTalent(actor)).toBe(true);
-  });
-  it("не находит без Таланта", () => {
-    const actor = { items: [{ type: "talent", name: "Iron Discipline" }] };
-    expect(hasDivineProtectionTalent(actor)).toBe(false);
   });
 });
 
