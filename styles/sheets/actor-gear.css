@@ -136,13 +136,40 @@
   color: var(--wh-text-mid);
 }
 
-/* Инфограждение — узкая колонка со значением (module/apps/infoguard.mjs) */
+/* Инфограждение — узкая колонка со значением (module/apps/infoguard.mjs).
+   flex вместо простого nowrap (wdbc-kayb): в узкой колонке (~76px) число +
+   две кнопки на inline-block не помещались в строку и переносились друг под
+   друга — высота строки предмета с Инфограждением скакала почти вдвое
+   относительно строки без него ("—", без кнопок). flex-строка без переноса
+   держит содержимое в один ряд всегда, при нехватке места скорее вылезет за
+   колонку, чем перенесётся по вертикали. */
 .gear-infoguard-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   text-align: center;
   font-size: 0.85em;
   color: var(--wh-text-mid);
   white-space: nowrap;
 }
+
+/* Бросок/делегирование прямо из строки (wdbc-0rka) — те же две кнопки, что
+   на вкладке ТЕХ и на листе предмета, только компактнее под узкую колонку. */
+.gear-infoguard-roll-btn,
+.gear-infoguard-delegate-btn {
+  flex: 0 0 auto;
+  padding: 0 3px;
+  font-size: 0.9em;
+  line-height: 1.4;
+  cursor: pointer;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  color: var(--wh-text, inherit);
+}
+.gear-infoguard-roll-btn:hover,
+.gear-infoguard-delegate-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
 
 /* Подсветка экипированной строки */
 .item-row-equipped {

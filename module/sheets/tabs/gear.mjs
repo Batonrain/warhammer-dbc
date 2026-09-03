@@ -9,6 +9,8 @@ import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
+import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
+import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 
 const ARMOR_LOCS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 
@@ -112,7 +114,9 @@ export function activateGearListeners(root, actor, {
   reloadWeapon = _reloadWeapon,
   toggleShield = _toggleShield,
   rollShieldActivation = _rollShieldActivation,
-  repairShield = _repairShield
+  repairShield = _repairShield,
+  rollInfoguard = _rollInfoguard,
+  showDelegateTestPicker = _showDelegateTestPicker
 } = {}) {
   on(root, ".weapon-equip-cb", "change", async ev => {
     const itemId   = ev.currentTarget.dataset.itemId;
@@ -202,5 +206,24 @@ export function activateGearListeners(root, actor, {
   on(root, ".armormod-active-toggle", "click", async ev => {
     ev.preventDefault(); ev.stopPropagation();
     await toggleGearModActive(actor.items.get(ev.currentTarget.dataset.itemId));
+  });
+
+  // Инфограждение прямо из строки таблицы (wdbc-0rka) — та же пара кнопок,
+  // что уже на вкладке ТЕХ (tabs/tech.mjs) и на листе предмета
+  // (infoguard.hbs), просто третья точка входа к тем же функциям.
+  on(root, ".gear-infoguard-roll-btn", "click", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) rollInfoguard(item);
+  });
+  on(root, ".gear-infoguard-delegate-btn", "click", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (!item) return;
+    showDelegateTestPicker(actor, {
+      title: `Делегировать Инфограждение: ${item.name}`, kind: "infoguard",
+      label: `Инфограждение: ${item.name}`, buttonLabel: "Наложить Инфограждение",
+      extra: { itemId: item.id }
+    });
   });
 }
