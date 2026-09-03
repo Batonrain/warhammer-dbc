@@ -2307,6 +2307,17 @@ export async function syncMechanicsEffects(item) {
 
   if (toDelete.length) await item.deleteEmbeddedDocuments("ActiveEffect", toDelete);
   if (toCreate.length) await item.createEmbeddedDocuments("ActiveEffect", toCreate);
+  // wdbc-s9dj: createEmbeddedDocuments не проставляет disabled — новый эффект
+  // приходит включённым по умолчанию Foundry, даже если сам предмет сейчас
+  // неактивен (психосила/техночудо с isSustained=false и т.п., см.
+  // isItemActive выше). Раньше это гасил только ручной клик по тумблеру
+  // «Поддерживать» (sheets/tabs/psychic.mjs) — при ПЕРВОЙ выдаче предмета или
+  // любой правке его Механики бонус (характеристика/броня/движение/лимит
+  // пула) висел включённым до первого клика игрока. Безусловно (не только
+  // когда toDelete/toCreate непусты) — идемпотентна и дёшева, а без этого
+  // осталась бы дыра «Механика не поменялась, но isItemActive успел
+  // измениться где-то ещё до этого вызова».
+  await syncItemEffectsDisabled(item);
 }
 
 /**
