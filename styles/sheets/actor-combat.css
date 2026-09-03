@@ -67,6 +67,15 @@
 .warhammer-dbc .ae-pool-label { font-weight: bold; }
 .warhammer-dbc .ae-pool-value { font-weight: bold; color: var(--wh-accent, #2a6f4c); }
 .warhammer-dbc .ae-pool-sep { opacity: 0.6; }
+/* ОД/Реакции редактируемые на месте (wdbc-21tj) — тот же приём, что .fatigue-value-input. */
+.warhammer-dbc .ae-pool-value-input, .warhammer-dbc .ae-pool-max-input {
+  width: 26px; text-align: center; font-weight: bold; color: var(--wh-accent, #2a6f4c);
+  padding: 0; border: 1px solid transparent; background: transparent;
+}
+.warhammer-dbc .ae-pool-value-input:hover, .warhammer-dbc .ae-pool-max-input:hover,
+.warhammer-dbc .ae-pool-value-input:focus, .warhammer-dbc .ae-pool-max-input:focus {
+  border-color: var(--wh-border); background: var(--wh-input-bg);
+}
 .warhammer-dbc .ae-spend-btn, .warhammer-dbc .ae-reset-btn {
   padding: 1px 6px;
   font-size: 0.9em;
