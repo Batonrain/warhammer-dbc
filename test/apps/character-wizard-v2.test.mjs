@@ -92,6 +92,38 @@ describe("_confirmGear: дедуп с уже выданным Механикой
   });
 });
 
+describe("_sacrificeEquip: интегральные атаки не предлагаются в кандидаты (wdbc-6ry7)", () => {
+  it("оружие с flags.warhammer-dbc.integralAttack исключено из списка — жертвовать нечем", async () => {
+    const integralFist = {
+      id: "fist1", name: "Кулак", type: "weapon",
+      getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "integralAttack") ? true : undefined
+    };
+    const actor = { id: "a1", name: "Тест", items: [integralFist] };
+    const app = appLike(actor);
+    const warn = vi.fn();
+    globalThis.ui = { ...(globalThis.ui || {}), notifications: { warn, info: vi.fn(), error: vi.fn() } };
+    await CharacterWizard.prototype._sacrificeEquip.call(app);
+    expect(warn).toHaveBeenCalledWith("На листе нет оружия/брони/кибернетики для жертвы.");
+  });
+
+  it("обычное купленное оружие рядом с интегральной атакой — в кандидатах только купленное", async () => {
+    const integralFist = {
+      id: "fist1", name: "Кулак", type: "weapon",
+      getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "integralAttack") ? true : undefined
+    };
+    const boughtSword = {
+      id: "sword1", name: "Меч", type: "weapon",
+      getFlag: () => undefined
+    };
+    const actor = { id: "a1", name: "Тест", items: [integralFist, boughtSword] };
+    const app = appLike(actor);
+    let capturedCandidates = null;
+    app._pickOwnedItems = async (candidates) => { capturedCandidates = candidates; return []; };
+    await CharacterWizard.prototype._sacrificeEquip.call(app);
+    expect(capturedCandidates.map(c => c.id)).toEqual(["sword1"]);
+  });
+});
+
 describe("_prepareContext", () => {
   it("сигнализирует отсутствие актора", async () => {
     const app = appLike(null);

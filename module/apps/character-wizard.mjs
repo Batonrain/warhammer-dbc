@@ -1633,7 +1633,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _sacrificeEquip() {
     if (this._confirmingEquipShop) return;
-    const candidates = this.actor.items.filter(it => ["weapon", "armor", "cybernetic", "implant"].includes(it.type));
+    // Интегральные атаки (Кулак/Пинок/Удар головой и т.п., flags.warhammer-
+    // dbc.integralAttack) исключены из кандидатов (wdbc-6ry7): их нельзя
+    // реально удалить (preDeleteItem в warhammer-dbc.mjs блокирует, пока жив
+    // источник) — без исключения игрок получал 3 модификации бесплатно,
+    // а «пожертвованная» врождённая атака оставалась на месте.
+    const candidates = this.actor.items.filter(it =>
+      ["weapon", "armor", "cybernetic", "implant"].includes(it.type) && !it.getFlag?.("warhammer-dbc", "integralAttack"));
     if (!candidates.length) { ui.notifications.warn("На листе нет оружия/брони/кибернетики для жертвы."); return; }
     this._confirmingEquipShop = true;
     this.render(false);
