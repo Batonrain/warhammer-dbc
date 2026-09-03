@@ -234,6 +234,7 @@
           {{/each}}
         </select>
       </div>
+      {{#if usesPatronStereotype}}
       <div class="apt-group">
         <div class="apt-group-lbl">Стереотип</div>
         <select class="wiz-patron-stereotype">
@@ -243,6 +244,7 @@
           {{/each}}
         </select>
       </div>
+      {{/if}}
       {{#unless patronReady}}<div class="apt-warn">Выберите Бога и стереотип — без них не посчитать цену Характеристик.</div>{{/unless}}
     </div>
     {{/if}}

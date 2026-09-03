@@ -957,6 +957,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         && APT_OTHER_KEYS.filter(k => this.pickedApts.has(k)).length === APT_PICK.other;
   }
   _patronReady() {
+    // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — стереотип
+    // для него в принципе не выбрать, поэтому готовность не должна его требовать.
+    if (this.pickedPatronGod === "undivided") return true;
     return !!this.pickedPatronGod && !!this.pickedPatronStereotype;
   }
   /**
@@ -1016,7 +1019,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       usesPatron: this._pricingMode === "patronage" || this._pricingMode === "mixed",
       patronReady: this._patronReady(),
       patronGods: CHAOS_PATRONS.map(p => ({ key: p.key, label: p.label, selected: p.key === this.pickedPatronGod })),
-      patronStereotypes: this.pickedPatronGod
+      // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — стереотип
+      // для него не существует, строка выбора должна скрываться целиком.
+      usesPatronStereotype: !!this.pickedPatronGod && this.pickedPatronGod !== "undivided",
+      patronStereotypes: (this.pickedPatronGod && this.pickedPatronGod !== "undivided")
         ? charStereotypesFor(this.pickedPatronGod).map(s => ({
             key: s.key, label: s.label, selected: s.key === this.pickedPatronStereotype
           }))
