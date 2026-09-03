@@ -34,8 +34,11 @@
    кардиомонитора при «wounded»/«critical»), а не про различение блоков
    между собой. */
 .warhammer-dbc .body-tab .bc-fatigue-compact.stats-cog,
-.warhammer-dbc .body-tab .bc-trackers .insanity-panel,
-.warhammer-dbc .body-tab .bc-trackers .corruption-panel {
+.warhammer-dbc .body-tab .insanity-panel,
+.warhammer-dbc .body-tab .corruption-panel {
+  /* wdbc-ycgk (полный редизайн): Безумие/Порча больше не завёрнуты в общий
+     .bc-trackers — каждая своей субвкладкой (Разум/Скверна) — поэтому этот
+     селектор больше не требует .bc-trackers предком, только .body-tab. */
   --cg: var(--bc-teal); --cg-dim: var(--bc-teal-dim); --cg-line: var(--bc-line); --cg-fire: var(--bc-red);
 }
 /* Часть правил actor-stats-cog.css красит текст/фон литералом, не через
@@ -59,6 +62,50 @@
   grid-template-columns: minmax(200px, 1fr) minmax(220px, 1.15fr);
   gap: 8px;
 }
+
+/* ── СОСТОЯНИЯ в закреплённой приборке — своя рамка-монитор, как у секций
+   субвкладок ниже, но снаружи них (видна на любой субвкладке, wdbc-ycgk). ── */
+.warhammer-dbc .bc-conditions-pinned { padding: 2px; margin-bottom: 0; }
+
+/* ── Субвкладки ТЕЛА: Плоть / Разум / Скверна (wdbc-ycgk, полный редизайн) —
+   тот же приём, что у главной навигации листа (.sheet-tabs) — активная
+   перетекает в тело без разрыва границы, только меньше и в палитре ТЕЛА.
+   Акцентный цвет субвкладки задаёт РАМКУ активной панели (border-color) —
+   Плоть/дефолт в холодном --bc-teal (вся остальная вкладка), Разум в
+   --bc-violet, Скверна в --bc-amber: тот же принцип, каким уже покрашены
+   сами панели Безумие/Порча (stats-cog, --cg* переопределены на --bc-teal
+   в состоянии покоя, но полосы/подписи внутри держат СВОЙ фиолетовый/
+   янтарный акцент через классы .insanity-panel/.corruption-panel из
+   actor-stats-cog.css — здесь только рамка снаружи, не трогает их). */
+.warhammer-dbc .bc-subtabs { display: flex; gap: 3px; padding: 0; margin-top: 2px; }
+.warhammer-dbc .bc-subtab {
+  flex: 1; text-align: center; padding: 6px 8px; cursor: pointer;
+  font-size: 0.76em; font-weight: bold; letter-spacing: 0.5px;
+  color: var(--bc-teal-dim); border: 1px solid var(--bc-line); border-bottom: none;
+  border-radius: 4px 4px 0 0; background: rgba(0,0,0,0.2);
+  transition: color 0.12s, background 0.12s;
+}
+.warhammer-dbc .bc-subtab:hover { color: var(--bc-teal); background: rgba(77,255,176,0.06); }
+.warhammer-dbc .bc-subtab.active {
+  color: #d8ffe8; background: var(--bc-scr); border-color: var(--bc-teal-dim);
+  box-shadow: 0 -2px 10px -4px var(--bc-teal);
+}
+.warhammer-dbc .bc-subtab--mind.active { border-color: var(--bc-violet); box-shadow: 0 -2px 10px -4px var(--bc-violet); }
+.warhammer-dbc .bc-subtab--corruption.active { border-color: var(--bc-amber); box-shadow: 0 -2px 10px -4px var(--bc-amber); }
+
+.warhammer-dbc .bc-subpanel { display: none; }
+.warhammer-dbc .bc-subpanel.active { display: block; }
+.warhammer-dbc .bc-subpanel .effects-section-panel {
+  border-top-left-radius: 0;
+  border-top: none;
+}
+/* !important обязателен — общее правило «монитор-панели» (.body-tab
+   .effects-section-panel ниже, той же специфичности) задаёт border ЦЕЛИКОМ
+   с !important, а тот побеждает по специфичности, а не порядку правил (живой
+   тест: без !important здесь рамка Разум/Скверна оставалась тускло-зелёной,
+   как везде — акцент был только в тексте, не в самой рамке). */
+.warhammer-dbc .bc-subpanel[data-subpanel="mind"] .effects-section-panel { border-color: var(--bc-violet) !important; }
+.warhammer-dbc .bc-subpanel[data-subpanel="corruption"] .effects-section-panel { border-color: var(--bc-amber) !important; }
 @media (max-width: 640px) { .warhammer-dbc .bc-hero { grid-template-columns: 1fr; } }
 
 /* Левая колонка: Био-скан + ХИРУРГЕОН прямо под ним (раньше кнопка стояла
@@ -108,8 +155,9 @@
 .warhammer-dbc .bc-implants,
 .warhammer-dbc .bc-vitals,
 .warhammer-dbc .bc-fatigue-compact,
-.warhammer-dbc .bc-trackers > .stat-panel,
-.warhammer-dbc .bc-panels .effects-section-panel {
+.warhammer-dbc .body-tab .insanity-panel,
+.warhammer-dbc .body-tab .corruption-panel,
+.warhammer-dbc .body-tab .effects-section-panel {
   background:
     radial-gradient(120% 80% at 50% 0%, rgba(77,255,176,0.06), transparent 60%),
     linear-gradient(180deg, var(--bc-scr2), var(--bc-scr)) !important;
@@ -625,34 +673,40 @@
 .warhammer-dbc .bc-impl.is-placed .bc-impl-name { color: #fff; text-shadow: 0 0 6px var(--imp-col); }
 .warhammer-dbc .bc-implants-empty { font-size: 0.72em; color: var(--bc-teal-dim); text-align: center; padding: 8px 0; opacity: 0.8; }
 
-/* ═══════════════ НИЖНИЕ МЕХАНИЧЕСКИЕ ПАНЕЛИ ═══════════════ */
-/* Панели переопределены под тёмный монитор; логика/классы прежние. */
-.warhammer-dbc .bc-panels .effects-section-panel { padding: 2px; margin-bottom: 0; }
-.warhammer-dbc .bc-panels .panel-title {
+/* ═══════════════ МЕХАНИЧЕСКИЕ ПАНЕЛИ ═══════════════
+   wdbc-ycgk: раньше все они жили строго внутри одного общего .bc-panels —
+   селекторы были им и ограничены. Полный редизайн разложил их по субвкладкам
+   (Плоть/Разум/Скверна) и вынес СОСТОЯНИЯ в закреплённую приборку — общего
+   .bc-panels больше нет, поэтому область правил расширена до .body-tab
+   целиком (сама вкладка): всё, что раньше подпадало под .bc-panels X,
+   подпадает и под .body-tab X (тот был его единственным родителем), плюс
+   теперь так же красятся вынесенные в приборку/субвкладки места. */
+.warhammer-dbc .body-tab .effects-section-panel { padding: 2px; margin-bottom: 0; }
+.warhammer-dbc .body-tab .panel-title {
   background: linear-gradient(90deg, rgba(77,255,176,0.12), transparent);
   color: var(--bc-teal); letter-spacing: 1px; border-left: 3px solid var(--bc-teal-dim);
 }
-.warhammer-dbc .bc-panels .conditions-empty,
-.warhammer-dbc .bc-panels .effects-empty { color: var(--bc-teal-dim); }
-.warhammer-dbc .bc-panels .effect-card {
+.warhammer-dbc .body-tab .conditions-empty,
+.warhammer-dbc .body-tab .effects-empty { color: var(--bc-teal-dim); }
+.warhammer-dbc .body-tab .effect-card {
   background: rgba(0,0,0,0.28); border: 1px solid var(--bc-line);
 }
-.warhammer-dbc .bc-panels .effect-name { color: #d6f5e6; }
-.warhammer-dbc .bc-panels .effect-card-disease-active { border-color: #9bd85a; box-shadow: 0 0 7px -2px #9bd85a; }
+.warhammer-dbc .body-tab .effect-name { color: #d6f5e6; }
+.warhammer-dbc .body-tab .effect-card-disease-active { border-color: #9bd85a; box-shadow: 0 0 7px -2px #9bd85a; }
 /* Состояния — светящиеся чипы */
-.warhammer-dbc .bc-panels .condition-tag {
+.warhammer-dbc .body-tab .condition-tag {
   border-color: var(--cond-color);
   box-shadow: 0 0 8px -3px var(--cond-color), inset 0 0 6px -3px var(--cond-color);
 }
-.warhammer-dbc .bc-panels .condition-tag .condition-tag-icon { filter: drop-shadow(0 0 4px var(--cond-color)); }
-.warhammer-dbc .bc-panels .condition-tag-name { color: #e8fff2; }
+.warhammer-dbc .body-tab .condition-tag .condition-tag-icon { filter: drop-shadow(0 0 4px var(--cond-color)); }
+.warhammer-dbc .body-tab .condition-tag-name { color: #e8fff2; }
 /* Компактная таблица «Применить препарат» (кнопки в ряд, меньше отступов) */
-.warhammer-dbc .bc-panels .effects-drug-table thead th { padding: 3px 6px; }
-.warhammer-dbc .bc-panels .effects-drug-table tbody td,
-.warhammer-dbc .bc-panels .effects-drug-table .drug-duration-cell { padding: 2px 6px; }
-.warhammer-dbc .bc-panels .drug-apply-actions { flex-wrap: nowrap; gap: 3px; }
-.warhammer-dbc .bc-panels .drug-apply-btn,
-.warhammer-dbc .bc-panels .drug-apply-other-btn { padding: 2px 7px; font-size: 0.72em; line-height: 1.35; font-weight: 500; }
+.warhammer-dbc .body-tab .effects-drug-table thead th { padding: 3px 6px; }
+.warhammer-dbc .body-tab .effects-drug-table tbody td,
+.warhammer-dbc .body-tab .effects-drug-table .drug-duration-cell { padding: 2px 6px; }
+.warhammer-dbc .body-tab .drug-apply-actions { flex-wrap: nowrap; gap: 3px; }
+.warhammer-dbc .body-tab .drug-apply-btn,
+.warhammer-dbc .body-tab .drug-apply-other-btn { padding: 2px 7px; font-size: 0.72em; line-height: 1.35; font-weight: 500; }
 
 /* ═══════════ Жизнеобеспечение: Голод / Жажда / Сон (корбук 483) ═══════════ */
 .warhammer-dbc .bc-life {
