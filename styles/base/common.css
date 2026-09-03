@@ -5,7 +5,11 @@
 
 /* ── Контейнер ── */
 .warhammer-dbc.sheet {
-  font-family: "Book Antiqua", Palatino, Georgia, serif;
+  /* --wh-font-body подставляется/снимается из module/constants/fonts.mjs
+     (Настройки → шрифт интерфейса, wdbc-9m83) — переменная не задана,
+     пока и мировой, и личный выбор пустые, поэтому var() откатывается
+     на прежний дефолт системы, не на дефолт самого Foundry. */
+  font-family: var(--wh-font-body, "Book Antiqua", Palatino, Georgia, serif);
   /* Базовый размер увеличен для читаемости; почти всё внутри — в em и масштабируется */
   font-size: 14.5px;
   color: var(--wh-text);

@@ -106,6 +106,7 @@ import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
 import { registerDuplicateGrantSettings } from "./module/rules/duplicate-grants.mjs";
 import { registerAdvancePricingSettings, initTalentGodIndex } from "./module/constants/patronage.mjs";
+import { registerSystemFonts, registerFontSettings, applySystemFont } from "./module/constants/fonts.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
 import { initFactionIndex }           from "./module/apps/faction-cache.mjs";
 import { initVehicleWeaponIndex }     from "./module/constants/vehicle-weapons-library.mjs";
@@ -133,7 +134,12 @@ Hooks.once("init", () => {
   registerFeatureSettings();
   registerDuplicateGrantSettings();
   registerAdvancePricingSettings();
+  registerFontSettings();       // выбор шрифта интерфейса (мир + личный, wdbc-9m83)
   registerSettingsSections();   // подразделы в окне настроек
+
+  // Тематические шрифты сеттинга (wdbc-9m83) — ДО FontConfig._loadFonts()
+  // (вызывается позже, при инициализации канваса), см. module/constants/fonts.mjs.
+  registerSystemFonts();
 
   // ── Загрузка партиалов ────────────────────────────────────────────────────
   foundry.applications.handlebars.loadTemplates([
@@ -899,6 +905,11 @@ Hooks.once("ready", async () => {
     await game.settings.set("warhammer-dbc", "minionAptSourceVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Довыдача aptSource Миньонам:", e); }
 });
+
+// ── Шрифт интерфейса (мир + личный оверрайд, wdbc-9m83) ────────────────────
+// onChange у самих настроек (module/constants/fonts.mjs) ловит смену уже
+// после старта — этот вызов только про самый первый рендер после загрузки.
+Hooks.once("ready", () => applySystemFont());
 
 // ── Боевой HUD (панель внизу вместо хотбара) ──────────────────────────────────
 Hooks.once("ready", () => initHUD());

@@ -1,0 +1,49 @@
+/* ═══════════════════════════════════════════════════════
+   Warhammer DBC — тематические шрифты сеттинга (wdbc-9m83)
+   Файлы: systems/warhammer-dbc/fonts/*.ttf|*.otf
+
+   Основной механизм регистрации — CONFIG.fontDefinitions
+   (module/constants/fonts.mjs, Hooks.once("init")): он же кладёт шрифты
+   в document.fonts и делает их видимыми в стандартном пикере/редакторе
+   Foundry. Этот файл — дублирующая подстраховка тем же именем семейства:
+   если по какой-то причине регистрация через CONFIG не сработает (напр.
+   более старая версия ядра без fontDefinitions), обычный @font-face всё
+   равно даст браузеру шрифт для `font-family: var(--wh-font-body, ...)`.
+   Пути НЕ начинаются с "/" — относительно styles/warhammer-dbc.css
+   (см. соседние @import, тот же приём, что и с templates/ через loadTemplates). */
+
+@font-face {
+  font-family: "Бинарный Кант";
+  src: url("../../fonts/binaric.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Колхидский";
+  src: url("../../fonts/colhidian.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Высокая Готика";
+  src: url("../../fonts/highGothic.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Низкая Готика";
+  src: url("../../fonts/lowGothic.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Odessa";
+  src: url("../../fonts/odessa.otf") format("opentype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "System";
+  src: url("../../fonts/system.ttf") format("truetype");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Истинный Язык";
+  src: url("../../fonts/trueTongue.ttf") format("truetype");
+  font-display: swap;
+}
