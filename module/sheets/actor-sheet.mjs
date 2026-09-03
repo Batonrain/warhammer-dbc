@@ -181,6 +181,19 @@ export function onPanelCollapse(event, target) {
   panel.classList.toggle("collapsed", this._panelCollapse.has(key));
 }
 
+// Субвкладки вкладки ТЕЛО (wdbc-ycgk, полный редизайн — Плоть/Разум/Скверна):
+// состояние окна, тем же приёмом, что onPanelCollapse выше — не actor.update,
+// восстанавливается после ре-рендера в _onRender. Один активный ключ, а не
+// Set: субвкладки взаимоисключающие, не сворачиваемые независимо друг от друга.
+export function onBodySubtab(event, target) {
+  const key = target.dataset.subtab;
+  const root = target.closest(".body-cogitator");
+  if (!key || !root) return;
+  this._bodySubtab = key;
+  root.querySelectorAll(".bc-subtab").forEach(t => t.classList?.toggle("active", t.dataset.subtab === key));
+  root.querySelectorAll(".bc-subpanel").forEach(p => p.classList?.toggle("active", p.dataset.subpanel === key));
+}
+
 function onGearCat(event, target) {
   if (event.target.closest("button, select, input, a")) return;   // не по контролам внутри
   const key = target.dataset.gearCat;
@@ -686,6 +699,7 @@ export class WarhammerCharacterSheet
       combatCollapse: onCombatCollapse,
       gearCat: onGearCat,
       panelCollapse: onPanelCollapse,
+      bodySubtab: onBodySubtab,
       gearModsToggle: onGearModsToggle,
       // Ниже — то, что в V1 стояло после общей проверки isEditable.
       portrait: whenEditable(onPortrait),
@@ -781,6 +795,8 @@ export class WarhammerCharacterSheet
   // Свёрнутые блоки листа по data-collapse-key (wdbc-bk4f) — универсальный
   // механизм, см. onPanelCollapse выше.
   _panelCollapse = new Set();
+  // Субвкладка ТЕЛА, открытая сейчас (wdbc-ycgk) — окно, не актор, см. onBodySubtab.
+  _bodySubtab = "flesh";
   _wizardPrompted = false;
 
   // Показать/скрыть под-строки установленных улучшений конкретного носителя
@@ -1612,6 +1628,11 @@ export class WarhammerCharacterSheet
     for (const key of this._panelCollapse) {
       el.querySelector(`[data-collapse-key="${CSS.escape(key)}"]`)?.classList.add("collapsed");
     }
+    // Субвкладка ТЕЛА (wdbc-ycgk) — синхронизируем DOM с this._bodySubtab на
+    // каждый ре-рендер: toggle, а не только add, потому что шаблон всегда
+    // рисует «Плоть» активной по умолчанию (для первого открытия).
+    el.querySelectorAll(".bc-subtab").forEach(t => t.classList?.toggle("active", t.dataset.subtab === this._bodySubtab));
+    el.querySelectorAll(".bc-subpanel").forEach(p => p.classList?.toggle("active", p.dataset.subpanel === this._bodySubtab));
     if (this._pathsOpen === false) {
       el.querySelectorAll(".paths-collapse").forEach(n => n.classList.add("collapsed"));
       el.querySelectorAll(".paths-toggle-btn").forEach(n => { n.textContent = "▸ Пути"; });
