@@ -124,7 +124,10 @@ export async function openDelegatedTestDirect(kind, executorActor, effectTargetA
  * способа targeting на всю игру). Второй путь — клик по заголовку уже
  * открытого окна листа актора (foundry.applications.sheets.ActorSheetV2,
  * см. .window.header — ядро вешает pointerdown для драга, не click, конфликта
- * нет; .header-button — кнопки закрытия/сворачивания — игнорируются).
+ * нет; .header-control — кнопки закрытия/сворачивания/меню в шапке (реальный
+ * класс Foundry v13, application.mjs — не .header-button) — игнорируются,
+ * иначе клик по «✕» во время ожидания и закрывал бы лист, и выбирал бы его
+ * актора исполнителем одновременно; поймано живым тестом 2026-09-03.
  * Esc отменяет. Первый сработавший источник резолвит и снимает оба слушателя.
  */
 export function pickDelegateActor(effectTargetActor, openSheets) {
@@ -153,7 +156,7 @@ export function pickDelegateActor(effectTargetActor, openSheets) {
       const header = app?.window?.header;
       if (!header || !app.actor || app.actor.id === effectTargetActor?.id) continue;
       const fn = ev => {
-        if (ev.target.closest(".header-button")) return;
+        if (ev.target.closest(".header-control")) return;
         finish(app.actor);
       };
       header.addEventListener("click", fn);

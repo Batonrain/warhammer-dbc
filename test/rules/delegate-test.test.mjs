@@ -46,8 +46,10 @@ function fakeOpenSheet(actorObj) {
       addEventListener: (event, fn) => handlers.add(fn),
       removeEventListener: (event, fn) => handlers.delete(fn)
     } },
+    // .header-control — реальный класс кнопок шапки Foundry v13 (close/toggleControls/
+    // copyUuid и т.п.), не .header-button — расхождение поймано живым тестом 2026-09-03.
     _clickHeader: ({ onHeaderButton = false } = {}) => {
-      const ev = { target: { closest: sel => (onHeaderButton && sel === ".header-button") ? {} : null } };
+      const ev = { target: { closest: sel => (onHeaderButton && sel === ".header-control") ? {} : null } };
       for (const fn of [...handlers]) fn(ev);
     }
   };
@@ -283,7 +285,7 @@ describe("showDelegateTestPicker (wdbc-mhds)", () => {
     expect(captured.chat[0].flags["warhammer-dbc"].delegatedTest.targetActorUuid).toBe(patient.uuid);
   });
 
-  it("клик по кнопке закрытия/сворачивания в шапке (.header-button) НЕ выбирает исполнителя", async () => {
+  it("клик по кнопке закрытия/сворачивания в шапке (.header-control) НЕ выбирает исполнителя", async () => {
     game.users = { players: [user("doc-user")], filter: () => [] };
     const patient = actor("Пациент");
     const doctor = actor("Доктор", { owners: ["doc-user"] });
