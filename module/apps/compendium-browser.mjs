@@ -417,10 +417,49 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
     // закрытия. Сворачиваем Мастера на время выбора и разворачиваем обратно
     // при любом исходе — единственная точка выхода ниже.
     const wizardApps = pickMode ? findRenderedCharacterWizards() : [];
-    const finish = v => {
+    // Архетип с несколькими независимыми выборами снаряжения (Пират: Оружие →
+    // Модификации оружия → Модификации брони, один за другим без паузы —
+    // character-wizard.mjs зовёт openCompendiumBrowser несколько раз подряд)
+    // открывает этот пикер ВЛОЖЕННО, пока предыдущий вызов ещё сворачивает/
+    // разворачивает то же самое окно Мастера. minimize()/maximize() у
+    // ApplicationV2 запоминают текущий размер на момент вызова — при парных
+    // вызовах, наложенных друг на друга без завершения предыдущей анимации,
+    // внутренний вызов запоминает УЖЕ свёрнутый размер как «исходный» и
+    // разворачивает Мастера обратно в него: окно навсегда застревает крошечной
+    // полоской заголовка, неотличимо от «само закрылось» (живой тест, найдено
+    // на архетипе Пират). Счётчик глубины — сворачиваем только на первом
+    // вложенном вызове, разворачиваем только когда закрылся последний.
+    for (const a of wizardApps) {
+      a._cbrowsePickerDepth = (a._cbrowsePickerDepth || 0) + 1;
+      // Снимок «нормального» размера — ТОЛЬКО на первом вложенном вызове,
+      // ДО первого minimize() ниже. Живым тестом подтверждено (wdbc-inos-
+      // соседний баг архетипа Пират): даже одна честно спаренная пара
+      // minimize()/maximize() у ApplicationV2 не восстанавливает исходный
+      // размер сама — maximize() снимает класс/флаг «свёрнуто», но position
+      // (width/height) остаётся тем же, что был при minimize() (200×36),
+      // положиться на встроенное восстановление Foundry нельзя. Восстанав-
+      // ливаем размер вручную через явный setPosition() ниже, а не веря
+      // a.maximize().
+      if (a._cbrowsePickerDepth === 1 && !a._cbrowseRestorePos) {
+        a._cbrowseRestorePos = { width: a.position?.width, height: a.position?.height };
+      }
+    }
+    const finish = async v => {
       if (resolved) return;
       resolved = true;
-      for (const a of wizardApps) { try { a.maximize(); } catch (e) {} }
+      for (const a of wizardApps) {
+        try {
+          a._cbrowsePickerDepth = Math.max(0, (a._cbrowsePickerDepth || 1) - 1);
+          if (a._cbrowsePickerDepth === 0) {
+            // await — иначе setPosition ниже гонится с ещё не завершённой
+            // анимацией/логикой самого maximize() и та её же перетирает.
+            await a.maximize();
+            const pos = a._cbrowseRestorePos;
+            a._cbrowseRestorePos = null;
+            if (pos?.width && pos?.height) a.setPosition(pos);
+          }
+        } catch (e) {}
+      }
       resolveFn(v);
     };
 
@@ -673,7 +712,13 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
       }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog", "cbrowse-dialog"],
          width: 640, height: 740, resizable: true });
-    for (const a of wizardApps) { try { a.minimize(); } catch (e) {} }
+    // Только на первом вложенном вызове (см. _cbrowsePickerDepth выше) —
+    // повторный minimize() поверх ещё не завершённого предыдущего и есть то,
+    // что портит размер окна при цепочке пикеров подряд.
+    for (const a of wizardApps) {
+      if (a._cbrowsePickerDepth !== 1) continue;
+      try { a.minimize(); } catch (e) {}
+    }
     dlg.render(true);
   });
 }
