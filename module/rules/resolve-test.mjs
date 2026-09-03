@@ -119,9 +119,27 @@ function powerScopeApplies(scope, ctx) {
  * Манифестация — третья такая ветка: психотест идёт по Воле, а у Прорицания по
  * Псинауке, но «+10 к тестам Воли» и «+10 к манифестациям» — снова два разных
  * правила книги.
+ *
+ * Суффикс `:recipient` (wdbc-uez7 — делегированный тест) — правило с
+ * Предмета/Таланта ПОЛУЧАТЕЛЯ чужого теста (пациент при Лечении, а не сам
+ * медик): «Высокий болевой порог» пациента должно влиять на Медику ДОКТОРА
+ * над ним, а не на собственные броски пациента. Требует `ctx.asRecipient`
+ * — вызывающий код собирает правила С САМОГО получателя (`resolveTest({
+ * actor: patient, ..., asRecipient: true })`) отдельным проходом от обычных
+ * правил бросающего. Без суффикса эффект остаётся «про свои тесты» и в
+ * режиме получателя не подмешивается — иначе Талант «+10 Медика» самого
+ * пациента (для ЕГО собственных бросков) тайно засчитался бы доктору только
+ * потому, что оба читают один и тот же `ctx.skill`.
  */
 function effectAppliesTo(target, ctx) {
   const scope = String(target ?? "all").trim().toLowerCase();
+
+  if (scope.endsWith(":recipient")) {
+    if (!ctx.asRecipient) return false;
+    return effectAppliesTo(scope.slice(0, -":recipient".length), { ...ctx, asRecipient: false });
+  }
+  if (ctx.asRecipient) return false;
+
   if (scope === "all" || scope === "") return true;
   if (scope === "initiative") return ctx.kind === "initiative";
   // Нестабильность — свой вид теста, а не тест Воли: демон бросает его по W, но
