@@ -7,6 +7,15 @@
 //  инструмент Foundry.
 //  Книги: packs-src/books/<slug>.json — по файлу на книгу, формат прежний,
 //  его же читает импорт книг в живом мире (module/apps/books.mjs).
+//
+//  extractPack идёт с clean:true — папка исходника пака перезаписывается
+//  целиком содержимым базы. Любая правка packs-src, которую не успели
+//  закоммитить (а тем более — которую вообще не открывали в git add),
+//  исчезла бы молча и без возможности восстановления. Поэтому перед
+//  извлечением — сторож: незакоммиченные пути под packs-src останавливают
+//  команду, пока их не сохранят или не подтвердят потерю флагом --force
+//  (wdbc-bncx: словесное предупреждение в dbc-workflow уже не сработало
+//  один раз, и требовать от каждого вызова помнить об этом руками — не план).
 // ════════════════════════════════════════════════════════════════════════
 
 import { extractPack } from "@foundryvtt/foundryvtt-cli";
@@ -17,6 +26,20 @@ import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
 import { writeStamp } from "./pack-stamp.mjs";
+import { uncommittedPacksSrc } from "./git-status.mjs";
+
+// ── Сторож несохранённых правок packs-src ──
+const FORCE = process.argv.includes("--force");
+const dirty = uncommittedPacksSrc(SRC_ROOT);
+
+if (dirty.length && !FORCE) {
+  console.error(`В ${SRC_ROOT} есть незакоммиченные правки — unpack перезапишет их содержимым живого компендиума:`);
+  for (const path of dirty) console.error(`  ${path}`);
+  console.error("");
+  console.error("Сохраните их первым делом: git add -- packs-src && git commit");
+  console.error("Если эти правки не нужны — снимите поверх них: npm run packs:unpack -- --force");
+  process.exit(1);
+}
 
 // ── Имена файлов исходника ────────────────────────────────────────────────
 const transformFolderName = (doc) => (doc.name ? safe(doc.name) : doc._id);
