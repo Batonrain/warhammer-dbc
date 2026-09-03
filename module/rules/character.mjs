@@ -70,6 +70,29 @@ function characteristicMechContrib(actor, charKey) {
   return out;
 }
 
+// Пороги Мутации (корбук, VII. БЕСЧЕСТИЕ И ПОРЧА, стр. 440-441): при
+// достижении каждого порога персонаж бросает по таблице Мутаций/Даров.
+// Пороги зависят от расы — у Людей 5 порогов, у Астартес только 4 (пятого
+// нет, они мутируют раньше и резче). «Механикум» (люди с Имплантами
+// Механикум) в книге — свой промежуточный вариант, но в системе нет
+// надёжного способа отличить их от обычных Людей (не расовый признак, а
+// произвольный набор имплантов) — считаются по человеческой таблице, это
+// заведомое упрощение (wdbc-2l2x). Лоялисты-Астартес игнорируют первые 2
+// порога и начинают тестировать только с Cor 60 — учтено через
+// system.alignment==="loyalist".
+const MUTATION_THRESHOLDS_HUMAN    = [10, 20, 40, 60, 80];
+const MUTATION_THRESHOLDS_ASTARTES = [10, 30, 60, 90];
+
+/** Ближайший непройденный Порог Мутации, или null, если все уже пройдены (Cor 100 — не мутация, а Возвышение/Отродье). */
+export function nextMutationThreshold(system) {
+  const cor = Number(system?.corruption?.value) || 0;
+  let table = raceMatches(system, "astartes") ? MUTATION_THRESHOLDS_ASTARTES : MUTATION_THRESHOLDS_HUMAN;
+  if (table === MUTATION_THRESHOLDS_ASTARTES && system?.alignment === "loyalist") {
+    table = table.filter(t => t >= 60);
+  }
+  return table.find(t => t > cor) ?? null;
+}
+
 /**
  * Производные данные Персонажа/NPC. Мутирует system.* (характеристики,
  * навыки, броня, движение, опыт, пси и т.д.) по данным actor.items.
@@ -489,6 +512,11 @@ export function prepareCharacterDerived(actor, system) {
     // Лимит Порчи: база 100 + бонус от Путей (Путь Проклятия и т.п.)
     if (system.corruption) {
       system.corruption.limit = 100 + (pathPassives.corLimit || 0);
+      // Ближайший Порог Мутации — для панели ПОРЧА (wdbc-2l2x), не хранимое
+      // поле, пересчитывается каждый раз, как limit чуть выше.
+      const nextThr = nextMutationThreshold(system);
+      system.corruption.nextThreshold = nextThr;
+      system.corruption.thresholdRemaining = nextThr !== null ? Math.max(0, nextThr - (system.corruption.value || 0)) : null;
     }
 
     system.insanityBonus   = Math.floor((system.insanity?.value   || 0) / 10);
