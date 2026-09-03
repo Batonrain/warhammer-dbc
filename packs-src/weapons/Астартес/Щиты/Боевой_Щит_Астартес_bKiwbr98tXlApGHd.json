@@ -25,7 +25,7 @@
     "availability": 2,
     "weight": 3,
     "attackBonus": 0,
-    "special": "Тарг; Хват П; Досягаемость 0–1. AP 4. Защита: Р1.",
+    "special": "Тарг; Хват П; Досягаемость 0–1. AP 3. Защита: Р1.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [

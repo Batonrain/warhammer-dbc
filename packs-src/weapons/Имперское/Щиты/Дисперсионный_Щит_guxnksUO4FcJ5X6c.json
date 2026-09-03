@@ -25,7 +25,7 @@
     "availability": 5,
     "weight": 5,
     "attackBonus": 0,
-    "special": "Л. Башенный; Хват 1р+П; Досягаемость 0–3. AP 2. Защита: Т+Р1+Н1+Н2+(Р2). Легион-вариант: +1 R, +1 Dmg, +1 Pen, +1 AP и модификация Hardened (или ещё +1 AP, если Hardened уже в профиле).",
+    "special": "Л. Башенный; Хват 1р+П; Досягаемость 0–1. AP 8. Защита: Т+Р1+Н1+Н2+(Г+Р2). Легион-вариант: +1 R, +1 Dmg, +1 Pen, +1 AP и модификация Hardened (или ещё +1 AP, если Hardened уже в профиле).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
