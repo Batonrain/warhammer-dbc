@@ -30,7 +30,8 @@
 .warhammer-dbc.character-sheet .stat-panel > .panel-title::before,
 .warhammer-dbc.character-sheet .gear-section-panel > .panel-title::before,
 .warhammer-dbc.character-sheet .ability-section-panel > .panel-title::before,
-.warhammer-dbc.character-sheet .notes-section-panel > .panel-title::before {
+.warhammer-dbc.character-sheet .notes-section-panel > .panel-title::before,
+.warhammer-dbc.character-sheet .effects-subsection > .panel-title::before {
   content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
   background: var(--cg); box-shadow: 0 0 7px var(--cg); animation: decorOnline 2.4s ease-in-out infinite;
 }

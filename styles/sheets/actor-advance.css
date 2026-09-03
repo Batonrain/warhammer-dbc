@@ -22,6 +22,24 @@
   overflow: hidden;
 }
 
+/* Свёрнутая панель (wdbc-bk4f, .collapsed прячет всё после .panel-title
+   display:none) — тот же баг, что и wdbc-inos у Навыков: фиксированная
+   высота 340px выше держится независимо от .collapsed, и под сжавшимся
+   заголовком Склонностей/Талантов/Опыта оставалась пустая область 340px.
+   align-self:start обязателен (живой тест wdbc-x7zs): .advance-top — грид
+   без align-items:start, и без align-self на самой свёрнутой ячейке браузер
+   (align-items:stretch по умолчанию) растягивает её до высоты самой высокой
+   соседней панели в строке — height:auto/min-height:0 одни это не чинят,
+   когда хотя бы один сосед в ряду остаётся развёрнутым (340px). Тот же
+   приём, что у .advance-chars-edit ниже (wdbc-10sy), только там он
+   безусловный, а тут — только под .collapsed, чтобы развёрнутая панель
+   по-прежнему тянулась на все 340px ряда. */
+.warhammer-dbc .advance-top > .stat-panel.collapsed {
+  height: auto;
+  min-height: 0;
+  align-self: start;
+}
+
 .warhammer-dbc .advance-top .panel-scroll {
   flex: 1 1 auto;
   min-height: 0;             /* обязательно, иначе flex-элемент не сжимается */
