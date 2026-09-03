@@ -17,7 +17,7 @@ import { esc } from "../helpers/utils.mjs";
  *   applySingle(actor, targetActor), applyArea(actor, casterToken) — вызывающие функции ветки.
  */
 export async function showWraithboneSongDialog(actor, { title, applySingle, applyArea }) {
-  const casterToken = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+  const casterToken = actor.getActiveTokens?.(false, true)?.[0] ?? null;
 
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">

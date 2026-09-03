@@ -57,7 +57,7 @@ const BONUS_HALF_MOVE_CAPABILITY = "action.bonusHalfMove";
  * канвас-оверлей за раз, как и раньше.
  */
 function _showReachRing(actor, meters) {
-  const token = actor?.getActiveTokens?.(true)?.[0] ?? null;
+  const token = actor?.getActiveTokens?.(false)?.[0] ?? null;
   if (!token) return;
   clearRangeRings();
   if (!showReachableCells(token, meters)) showMovementRing(token, meters);

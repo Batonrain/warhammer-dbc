@@ -26,7 +26,7 @@ const RANK_INDEX = Object.fromEntries(DEMON_RANKS.map((r, i) => [r.key, i]));
  * @returns {Actor[]}
  */
 export function demonsInHeraldLocus(heraldActor) {
-  const heraldToken = heraldActor?.getActiveTokens?.(true)?.[0];
+  const heraldToken = heraldActor?.getActiveTokens?.(false)?.[0];
   if (!heraldToken || !canvas?.scene) return [];
   const radius = (Number(heraldActor.system?.characteristics?.w?.total) || 0) / 2;
   const heraldRankIdx = RANK_INDEX[heraldActor.system?.rank] ?? RANK_INDEX.lesser;

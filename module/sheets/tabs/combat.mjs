@@ -190,13 +190,13 @@ export function activateCombatListeners(root, actor) {
   // ── Шаман Зверолюдей (wdbc-xxb7, module/combat/beastman-shaman.mjs) ─────
   on(root, ".primal-howl-btn", "click", async () => {
     if (!primalHowlAvailable(actor)) return ui.notifications.warn("Первобытный Вой уже использован в этом бою.");
-    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    const token = actor.getActiveTokens?.(false)?.[0]?.document ?? null;
     if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
     await applyPrimalHowl(actor, token);
   });
   on(root, ".warp-tainted-aura-btn", "click", async () => {
     if (!warpTaintedAuraAvailable(actor)) return ui.notifications.warn("Аура Скверны уже использована в этот час.");
-    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    const token = actor.getActiveTokens?.(false)?.[0]?.document ?? null;
     if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
     await applyWarpTaintedAura(actor, token);
   });
@@ -215,7 +215,7 @@ export function activateCombatListeners(root, actor) {
   });
   on(root, ".ritual-bloodletting-btn", "click", async () => {
     if (!ritualBloodlettingAvailable(actor)) return;
-    const token = actor.getActiveTokens?.(true)?.[0]?.document ?? null;
+    const token = actor.getActiveTokens?.(false)?.[0]?.document ?? null;
     if (!token) return ui.notifications.warn("Разместите токен персонажа на сцене.");
     await applyRitualBloodletting(actor, token);
   });

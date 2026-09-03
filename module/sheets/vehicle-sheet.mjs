@@ -610,7 +610,7 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     // Сектор наводки (wdbc-m38e, geometry: rules/facing.mjs) — предупреждение,
     // не блокировка: как и остальные правила установки орудий в этом окне
     // (см. fixedNote выше), решение остаётся за игроком/ГМ.
-    const vehicleToken = this.actor.getActiveTokens?.(true, true)?.[0] || null;
+    const vehicleToken = this.actor.getActiveTokens?.(false, true)?.[0] || null;
     const outOfArcTargets = (!isMelee && vehicleToken)
       ? [...(game.user?.targets ?? [])].filter(t => !isTargetWithinVehicleArc(vehicleToken, vm.hArc, t))
       : [];

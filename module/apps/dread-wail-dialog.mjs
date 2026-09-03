@@ -12,7 +12,7 @@ import { applyDreadWailWeaponBuff, applyDreadWailWave, WAVE_EFFECTS } from "../c
 export async function showDreadWailDialog(actor) {
   // getActiveTokens(linked, document) — второй true отдаёт TokenDocument
   // напрямую (parent=сцена), то, что нужно tokensWithinRadius (aoe-target.mjs).
-  const casterToken = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+  const casterToken = actor.getActiveTokens?.(false, true)?.[0] ?? null;
 
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">

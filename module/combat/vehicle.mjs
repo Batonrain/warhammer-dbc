@@ -346,7 +346,7 @@ export async function applyDamageToVehicle(actor, damageData) {
   const shields   = Array.isArray(actor.system.voidShields) ? actor.system.voidShields : [];
   const shieldIdx = shields.findIndex(hp => Number(hp) > 0);
   if (shieldIdx !== -1 && !damageData.melee && !damageData.ignoreVoidShields) {
-    const vehicleToken  = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+    const vehicleToken  = actor.getActiveTokens?.(false, true)?.[0] ?? null;
     const attackerToken = await resolveAttackerToken(damageData.attackerUuid);
     const dist = (vehicleToken && attackerToken) ? tokenDistance(vehicleToken, attackerToken) : null;
     // Позиция неизвестна — щит по умолчанию защищает (тот же принцип, что у

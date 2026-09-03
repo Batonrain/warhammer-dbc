@@ -98,7 +98,7 @@ export function spiritTalkRadius(actor) {
  * остальных мест, где measureTokens может не найти токен).
  */
 function distanceToTarget(actor, targetToken) {
-  const casterToken = actor?.getActiveTokens?.(true, true)?.[0] ?? null;
+  const casterToken = actor?.getActiveTokens?.(false, true)?.[0] ?? null;
   if (!casterToken || !targetToken) return null;
   return measureTokens(casterToken, targetToken)?.edgeM ?? null;
 }
@@ -239,7 +239,7 @@ export async function triggerSpiritTalk(actor) {
     return null;
   }
 
-  const casterToken = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+  const casterToken = actor.getActiveTokens?.(false, true)?.[0] ?? null;
   const relationship = casterToken?.document && targetToken?.document
     ? tokenRelationship(casterToken.document.disposition, targetToken.document.disposition)
     : "neutral";

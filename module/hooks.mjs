@@ -726,7 +726,7 @@ export function registerHooks() {
         const primaryToken = canvas.tokens?.controlled?.[0];
         if (!primaryToken?.actor) return ui.notifications.warn("⚠️ Выберите токен поражённой цели на сцене!");
         const attackerToken = ds.attackerUuid
-          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(true)?.[0] : null;
+          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(false)?.[0] : null;
         const candidates = canvas.tokens.placeables.filter(t => t !== primaryToken && t !== attackerToken);
         const target = findArcTarget(primaryToken, candidates, 5);
         if (!target?.actor) return ui.notifications.info("⚡ В радиусе 5м от цели никого нет — Дуга не сработала.");
@@ -749,9 +749,9 @@ export function registerHooks() {
         ev.preventDefault();
         const ds = ev.currentTarget.dataset;
         const attackerToken = ds.attackerUuid
-          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(true)?.[0] : null;
+          ? (await fromUuid(ds.attackerUuid).catch(() => null))?.getActiveTokens?.(false)?.[0] : null;
         const targetActor  = ds.targetUuid ? await fromUuid(ds.targetUuid).catch(() => null) : null;
-        const targetToken  = targetActor?.getActiveTokens?.(true)?.[0];
+        const targetToken  = targetActor?.getActiveTokens?.(false)?.[0];
         if (!attackerToken || !targetToken) {
           return ui.notifications.warn("⚠️ Нет токена стрелка или пробитой цели на сцене — геометрию посчитать не из чего.");
         }

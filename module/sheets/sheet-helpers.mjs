@@ -1088,7 +1088,7 @@ export function buildGetData(actor) {
   // Дальность до цели (wdbc-iy0c): мерим один раз на весь список, не на силу —
   // тот же снимок «текущая цель на сцене», что у attackerToken/targetToken в
   // диалоге атаки (game.user.targets в момент рендера, не живой хук).
-  const _psyAttackerToken = actor.getActiveTokens?.(true)?.[0] ?? null;
+  const _psyAttackerToken = actor.getActiveTokens?.(false)?.[0] ?? null;
   const _psyTargetToken   = [...(game.user?.targets ?? [])][0] ?? null;
   const _psyMeasured = (_psyAttackerToken && _psyTargetToken)
     ? measureTokens(_psyAttackerToken, _psyTargetToken) : null;

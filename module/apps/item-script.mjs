@@ -53,7 +53,7 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  */
 export async function executeItemCode(item, code, event, extra = {}) {
   const actor = item.actor ?? null;
-  const token = actor?.getActiveTokens?.(true)[0] ?? null;
+  const token = actor?.getActiveTokens?.(false)[0] ?? null;
   const speaker = ChatMessage.getSpeaker({ actor, token });
   const extraNames = Object.keys(extra);
   const fn = new AsyncFunction(

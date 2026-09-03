@@ -57,7 +57,7 @@ export function isFrontArcHit(defenderToken, attackerToken, arcWidthDegrees = 90
 export async function resolveAttackerToken(attackerUuid) {
   if (!attackerUuid) return null;
   const actor = await fromUuid(attackerUuid).catch(() => null);
-  const tokens = actor?.getActiveTokens?.(true, true) ?? [];
+  const tokens = actor?.getActiveTokens?.(false, true) ?? [];
   return tokens[0] ?? null;
 }
 
