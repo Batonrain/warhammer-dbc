@@ -34,17 +34,18 @@
 
 .warhammer-dbc .stats-cog .char-grid-body { padding: 8px !important; }
 /* Все ячейки — 10 книжных Характеристик (WS..Inf) + COR/INS (+PF у Rogue
-   Trader) — в ОДНУ строку, сколько бы их ни было: grid-auto-flow:column без
-   grid-template-columns держит все элементы в одном ряду. Ячейки — не 1fr
-   (раньше растягивались на всю ширину листа), а фиксированной ширины
-   (minmax, чтобы не ужиматься до нечитаемости при узком окне) —
-   justify-content:center держит весь ряд по центру панели независимо от
-   реальной ширины окна, как попросил пользователь. */
+   Trader) — растягиваются на всю ширину панели (auto-fit + 1fr: пустых
+   треков-заполнителей не остаётся, вся ширина уходит реальным ячейкам).
+   minmax(64px, 1fr) — тот же пол читаемости, что и у не-cog char-grid
+   (actor-stats.css), только когда ширины не хватает на все 12 в ряд, они
+   переносятся на 2+ строки — раньше здесь стояло grid-auto-flow:column
+   (всегда одна строка по центру, по прошлой просьбе пользователя), но это
+   на узких окнах листа обрезало часть характеристик overflow:hidden у
+   .stat-panel невидимо для игрока (wdbc-joh2) — решено в пользу переноса,
+   чтобы данные не терялись из виду. */
 .warhammer-dbc .stats-cog .char-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(56px, 74px);
-  justify-content: center;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: 5px;
 }
 .warhammer-dbc .stats-cog .char-cell {

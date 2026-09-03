@@ -121,6 +121,11 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Без min-width:0 этот flex-элемент (сам тоже flex-контейнер по столбцу)
+     не сжимается уже min-content своего содержимого — узкое окно листа не
+     ужимало вложенные grid-блоки (напр. .char-grid на ПОКАЗАТЕЛЯХ), они
+     обрезались overflow:hidden у панелей вместо переноса ячеек (wdbc-joh2). */
+  min-width: 0;
   border: 7px solid transparent;
   border-radius: 4px;
   background:

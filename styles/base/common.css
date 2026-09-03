@@ -18,6 +18,10 @@
 /* ── Тело листа ── */
 .warhammer-dbc .sheet-body {
   flex: 1;
+  /* Тот же min-width:0, что и у .cog-screen выше по цепочке flex-родителей —
+     без него это тело тоже не ужимается уже min-content своих вкладок
+     (wdbc-joh2). */
+  min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 8px;
