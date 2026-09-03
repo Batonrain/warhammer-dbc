@@ -184,4 +184,18 @@ describe("hudData: наручное/наплечное оружие (Independent
     expect(data.hands.find(h => h.slot === "main").empty).toBe(true);
     expect(data.zeroHand.map(z => z.id)).toContain("bite1");
   });
+
+  it("1-ручная интегральная атака (Дар Одержимого — Клинок и т.п.) — в слоте руки, не пропадает из HUD (wdbc-alxr)", () => {
+    const blade = {
+      id: "blade1", name: "Blade / Клинок", type: "weapon",
+      system: { weaponClass: "melee", equipped: true, grips: "1р", weaponProps: [] },
+      getFlag: (scope, key) => (key === "integralAttack" ? true : (key === "weaponHand" ? "right" : undefined))
+    };
+    const actor = hudActor({ items: [blade] });
+    const data = hudData(actor);
+    const main = data.hands.find(h => h.slot === "main");
+    expect(main.empty).toBe(false);
+    expect(main.id).toBe("blade1");
+    expect(data.zeroHand.map(z => z.id)).not.toContain("blade1");
+  });
 });
