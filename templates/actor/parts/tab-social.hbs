@@ -6,7 +6,7 @@
 
   {{!-- ── Фракции: перетащить сюда или «＋» (Обозреватель с фильтром) ── --}}
   <div class="notes-section-panel social-factions" data-collapse-key="social-factions">
-    <div class="panel-title" data-action="panelCollapse">ФРАКЦИИ <span class="gene-seed-hint" style="font-weight:400;">— перетащите Фракцию сюда или нажмите ＋</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="перетащите Фракцию сюда или нажмите ＋">ФРАКЦИИ</div>
     {{!-- Классы .faction-drop-zone / .wh-faction-add / .wh-faction-remove —
           те же, что у прежнего поля шапки: их слушает
           activateFactionFieldListeners (apps/actor-factions.mjs). --}}
@@ -29,7 +29,7 @@
 
   {{!-- ── Навыки: только социальные, бросок отсюда ── --}}
   <div class="notes-section-panel" data-collapse-key="social-skills">
-    <div class="panel-title" data-action="panelCollapse">НАВЫКИ <span class="gene-seed-hint" style="font-weight:400;">— клик по названию бросает тест</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="клик по названию бросает тест">НАВЫКИ</div>
     <div class="social-skills">
       {{#each socialSkills as |sk|}}
       <div class="social-skill">
@@ -42,7 +42,7 @@
 
   {{!-- ── Запугивание: встречная проверка (Intimidate vs тест Морали цели) ── --}}
   <div class="notes-section-panel" data-collapse-key="social-intimidate">
-    <div class="panel-title" data-action="panelCollapse">ЗАПУГИВАНИЕ <span class="gene-seed-hint" style="font-weight:400;">— встречная проверка: нацельтесь на токен цели (или выделите его)</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="встречная проверка: нацельтесь на токен цели (или выделите его)">ЗАПУГИВАНИЕ</div>
     <div class="cmd-rolls">
       <button type="button" class="cmd-roll-btn" data-intimidate-roll
               title="Intimidate ({{intimidateTotal}}) против теста Морали (Воля) цели — обе стороны сравниваются по степени, как любой встречный тест (стр. 25)">
@@ -52,7 +52,7 @@
 
   {{!-- ── Таланты: только те, что про социальное ── --}}
   <div class="notes-section-panel" data-collapse-key="social-talents">
-    <div class="panel-title" data-action="panelCollapse">ТАЛАНТЫ <span class="gene-seed-hint" style="font-weight:400;">— влияющие на социальные Навыки, Общительность, Лояльность или Сплочённость</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="влияющие на социальные Навыки, Общительность, Лояльность или Сплочённость">ТАЛАНТЫ</div>
     {{#if socialTalents.length}}
     <table class="items-table"><tbody>
       {{#each socialTalents as |t|}}
@@ -68,7 +68,7 @@
 
   {{!-- ── Особенности: Черты и Мутации, тоже по социальному следу ── --}}
   <div class="notes-section-panel" data-collapse-key="social-features">
-    <div class="panel-title" data-action="panelCollapse">ОСОБЕННОСТИ <span class="gene-seed-hint" style="font-weight:400;">— Черты и Мутации, влияющие на социальное</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="Черты и Мутации, влияющие на социальное">ОСОБЕННОСТИ</div>
     {{#if socialFeatures.length}}
     <table class="items-table"><tbody>
       {{#each socialFeatures as |f|}}
@@ -84,7 +84,7 @@
 
   {{!-- ── Модификаторы: что правит социальные Навыки ── --}}
   <div class="notes-section-panel" data-collapse-key="social-modifiers">
-    <div class="panel-title" data-action="panelCollapse">МОДИФИКАТОРЫ <span class="gene-seed-hint" style="font-weight:400;">— снаряжение, эффекты и силы, что двигают социальные Навыки, Общительность, Лояльность или Сплочённость</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="снаряжение, эффекты и силы, что двигают социальные Навыки, Общительность, Лояльность или Сплочённость">МОДИФИКАТОРЫ</div>
     {{#if socialModifiers.length}}
     <table class="items-table"><tbody>
       {{#each socialModifiers as |m|}}
@@ -100,7 +100,7 @@
 
   {{!-- ── Назначения: где актор числится ── --}}
   <div class="notes-section-panel" data-collapse-key="social-assignments">
-    <div class="panel-title" data-action="panelCollapse">НАЗНАЧЕНИЯ <span class="gene-seed-hint" style="font-weight:400;">— Отряды, Формирования, должности на корабле и места в технике</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="Отряды, Формирования, должности на корабле и места в технике">НАЗНАЧЕНИЯ</div>
     {{#if socialAssignments.length}}
     <table class="items-table"><tbody>
       {{#each socialAssignments as |a|}}
@@ -121,9 +121,8 @@
   {{#if patronAvailable}}
   {{#if isProtegeList}}
   <div class="notes-section-panel social-minions" data-collapse-key="social-proteges">
-    <div class="panel-title" data-action="panelCollapse">
+    <div class="panel-title" data-action="panelCollapse" title="Смертные, отмеченные даром «Помазанник» (вкладка АПОФЕОЗ)">
       ПРОТЕЖЕ
-      <span class="gene-seed-hint" style="font-weight:400;">— смертные, отмеченные даром «Помазанник» (вкладка АПОФЕОЗ)</span>
     </div>
     {{#if proteges.length}}
     <div class="minion-cards">
@@ -147,9 +146,8 @@
   </div>
   {{else}}
   <div class="notes-section-panel social-minions" data-collapse-key="social-patron">
-    <div class="panel-title" data-action="panelCollapse">
+    <div class="panel-title" data-action="panelCollapse" title="Субраса «Наследник»: Трейт Помазанник(X) Демона-Принца">
       ПАТРОН
-      <span class="gene-seed-hint" style="font-weight:400;">— субраса «Наследник»: Трейт Помазанник(X) Демона-Принца</span>
     </div>
     {{#if patronLinked}}
       {{#if patronActor}}
@@ -186,10 +184,9 @@
         такой группы нет — это свойства сведённого отряда, — поэтому порог
         теста здесь чистый Command(F). --}}
   <div class="notes-section-panel cmd-free" data-collapse-key="social-presence">
-    <div class="panel-title" data-action="panelCollapse">
+    <div class="panel-title" data-action="panelCollapse" title="Перетащите актора или возьмите выделенные токены">
       ПОД МОИМ ПРИСУТСТВИЕМ
       <span class="minion-count" title="Сколько подчинённых вне Отряда">{{followerCount}}</span>
-      <span class="gene-seed-hint" style="font-weight:400;">— перетащите актора или возьмите выделенные токены</span>
       <button type="button" class="cmd-take-tokens" title="Взять под Присутствие все выделенные на сцене токены">Взять выделенные</button>
     </div>
 
@@ -313,7 +310,7 @@
 
   {{!-- ── Отношения ── --}}
   <div class="notes-section-panel social-relations" data-collapse-key="social-relations">
-    <div class="panel-title" data-action="panelCollapse">ОТНОШЕНИЯ <span class="gene-seed-hint" style="font-weight:400;">— перетащите сюда Персонажа, Орду, Демона или Принца Демонов</span></div>
+    <div class="panel-title" data-action="panelCollapse" title="перетащите сюда Персонажа, Орду, Демона или Принца Демонов">ОТНОШЕНИЯ</div>
     <div class="social-relations-zone" data-tooltip="Перетащите актора сюда">
       {{#each socialRelations as |r|}}
       <div class="social-relation" data-index="{{r.idx}}">
