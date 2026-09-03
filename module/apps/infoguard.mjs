@@ -43,6 +43,12 @@ export function supportsInfoguard(item) {
       return sys.gearCategory !== "mystic";
     case "tool":
       return sys.toolCategory !== "mystic";
+    // Модификации оружия/брони (включая системы силовой брони, cat:
+    // "powerSystem") — высокотехнологичные по определению, аналога
+    // «Примитивного»/«Мистического» свойства у них в схеме нет (wdbc-y4jl).
+    case "weaponMod":
+    case "armorMod":
+      return true;
     default:
       return false;
   }

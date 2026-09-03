@@ -29,6 +29,12 @@ function gear(over = {}) {
 function tool(over = {}) {
   return { type: "tool", name: "Комби-Инструмент", system: { toolCategory: "kits", infoguard: 0, ...over } };
 }
+function weaponMod(over = {}) {
+  return { type: "weaponMod", name: "Прицел", system: { infoguard: 0, ...over } };
+}
+function armorMod(over = {}) {
+  return { type: "armorMod", name: "Система силовой брони", system: { infoguard: 0, ...over } };
+}
 
 describe("supportsInfoguard — отбор высокотехнологичного снаряжения", () => {
   it("обычное оружие/броня/снаряжение/инструмент — да", () => {
@@ -36,6 +42,11 @@ describe("supportsInfoguard — отбор высокотехнологично�
     expect(supportsInfoguard(armor())).toBe(true);
     expect(supportsInfoguard(gear())).toBe(true);
     expect(supportsInfoguard(tool())).toBe(true);
+  });
+
+  it("Модификации оружия/брони (в т.ч. системы силовой брони) — да (wdbc-y4jl)", () => {
+    expect(supportsInfoguard(weaponMod())).toBe(true);
+    expect(supportsInfoguard(armorMod())).toBe(true);
   });
 
   it("Примитивное оружие/броня — нет", () => {

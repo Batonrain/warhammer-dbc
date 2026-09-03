@@ -13,6 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
+import { infoguardField } from "./infoguard.mjs";
 
 export class ArmorModData extends foundry.abstract.TypeDataModel {
 
@@ -24,6 +25,7 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       description:  new HTMLField({ initial: "", label: "Описание" }),
       notes:        new HTMLField({ initial: "", label: "Заметки" }),
       category:     new StringField({ initial: "armor", label: "Категория" }),
+      infoguard:    infoguardField(),
       modGroup:     new StringField({ initial: "general", label: "Группа" }),
       requirement:  new StringField({ initial: "", label: "Требование" }),
       installedOn:  new StringField({ initial: "", label: "Установлена на" }),
