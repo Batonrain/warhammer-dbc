@@ -37,7 +37,7 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
   };
 
-  constructor(...args) { super(...args); this.state = { cat: "weather", target: null }; }
+  constructor(...args) { super(...args); this.uiState = { cat: "weather", target: null }; }
 
   async _prepareContext(options) {
     const isGM  = game.user.isGM;
@@ -46,9 +46,9 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const inGroup = !!group;
     const hasOverride = envSceneHasOverride(scene);
     // Область правки: по умолчанию — группа (если сцена в группе), иначе сцена.
-    if (this.state.target == null) this.state.target = hasOverride ? "scene" : (inGroup ? "group" : "scene");
-    if (!inGroup) this.state.target = "scene";
-    const target = this.state.target;
+    if (this.uiState.target == null) this.uiState.target = hasOverride ? "scene" : (inGroup ? "group" : "scene");
+    if (!inGroup) this.uiState.target = "scene";
+    const target = this.uiState.target;
     // Для показа: если правим сцену без override — показываем унаследованное от группы.
     const shown = (target === "scene" && !hasOverride) ? readEnvForScene(scene) : resolveEnvContainer(scene, target).read();
     const v = envView(shown);
@@ -58,12 +58,12 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
       inGroup, groupName: group?.name || "", target,
       isTargetGroup: target === "group", isTargetScene: target === "scene",
       hasOverride,
-      cat: this.state.cat,
-      cats: CATS.map(c => ({ ...c, active: c.key === this.state.cat })),
-      isWeather: this.state.cat === "weather",
-      isTemp:    this.state.cat === "temp",
-      isGravity: this.state.cat === "gravity",
-      isRad:     this.state.cat === "rad",
+      cat: this.uiState.cat,
+      cats: CATS.map(c => ({ ...c, active: c.key === this.uiState.cat })),
+      isWeather: this.uiState.cat === "weather",
+      isTemp:    this.uiState.cat === "temp",
+      isGravity: this.uiState.cat === "gravity",
+      isRad:     this.uiState.cat === "rad",
       env: v,
       weatherGroups: WEATHER_GROUPS.map(g => ({
         label: g.label,
@@ -81,9 +81,9 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
   async _patch(patch) {
     const scene = currentScene();
     if (!scene) { ui.notifications?.warn("Окружение: нет активной сцены."); return; }
-    const c = resolveEnvContainer(scene, this.state.target);
+    const c = resolveEnvContainer(scene, this.uiState.target);
     // Первое сохранение override сцены — засеять текущим эффективным окружением.
-    const base = (this.state.target === "scene" && !envSceneHasOverride(scene)) ? readEnvForScene(scene) : c.read();
+    const base = (this.uiState.target === "scene" && !envSceneHasOverride(scene)) ? readEnvForScene(scene) : c.read();
     await c.write({ ...base, ...patch });
     this.render(false);
   }
@@ -93,17 +93,17 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const el = this.element;
 
     // Категории (левое меню)
-    el.querySelectorAll("[data-cat]").forEach(b => b.addEventListener("click", () => { this.state.cat = b.dataset.cat; this.render(false); }));
+    el.querySelectorAll("[data-cat]").forEach(b => b.addEventListener("click", () => { this.uiState.cat = b.dataset.cat; this.render(false); }));
 
     if (!game.user.isGM) return;   // редактирование — только ГМ
 
     // Область правки: Группа / Сцена
-    el.querySelectorAll("[data-target]").forEach(b => b.addEventListener("click", () => { this.state.target = b.dataset.target; this.render(false); }));
+    el.querySelectorAll("[data-target]").forEach(b => b.addEventListener("click", () => { this.uiState.target = b.dataset.target; this.render(false); }));
     // Убрать переопределение сцены → вернуться к окружению группы
     el.querySelector("[data-act=clearOverride]")?.addEventListener("click", async () => {
       const scene = currentScene(); if (!scene) return;
       await resolveEnvContainer(scene, "scene").clear?.();
-      this.state.target = "group";
+      this.uiState.target = "group";
       this.render(false);
     });
 
