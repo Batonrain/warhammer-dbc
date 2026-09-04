@@ -71,6 +71,7 @@
   background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 3px; line-height: 1;
 }
 .wh-nx-gtools button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
+.wh-nx-gtools .wh-nx-gscene { width: auto; padding: 0 6px; }
 .wh-nx-gtools .wh-nx-gdel:hover { background: #4a1414; border-color: #b8453a; color: #ff9a9a; }
 .wh-nx-gcolor { width: 26px; height: 22px; padding: 0; border: 1px solid #2f6f4a; border-radius: 3px; background: none; cursor: pointer; flex: 0 0 auto; }
 

@@ -1,0 +1,25 @@
+/* ═══════════════════════════════════════════════════════
+   Сцена — общая страница ГМа: Окружение + Завеса (wdbc-paif).
+   Сама обёртка-переключатель; разметка каждого раздела и её стили —
+   ui/environment.css и ui/veil.css, здесь не продублированы.
+═══════════════════════════════════════════════════════ */
+
+.wh-scene-settings .window-content { background: #06120c; color: #c6ffe0; padding: 0; }
+
+.wh-ss { display: flex; flex-direction: column; height: 100%; }
+
+.wh-ss-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid #2f9e6a; flex: 0 0 auto;
+}
+.wh-ss-tab {
+  flex: 1; text-align: center; padding: 8px 10px; cursor: pointer;
+  color: #7fe0a8; font-weight: bold; letter-spacing: 0.1em; font-size: 0.9em;
+  background: transparent; border: none; border-right: 1px solid rgba(47,158,106,0.3);
+}
+.wh-ss-tab:last-child { border-right: none; }
+.wh-ss-tab.active { color: #04100a; background: #2f9e6a; text-shadow: none; }
+.wh-ss-tab:hover:not(.active) { color: #4dffa6; }
+
+.wh-ss-body { flex: 1; min-height: 0; display: flex; }
+.wh-ss-section { display: none; flex-direction: column; width: 100%; min-height: 0; }
+.wh-ss-section.active { display: flex; }

@@ -33,8 +33,7 @@
           {{#if @root.isGM}}
           <span class="wh-nx-gtools">
             <input type="color" class="wh-nx-gcolor" value="{{g.color}}" data-gcolor="{{g.id}}" title="Цвет группы"/>
-            <button type="button" data-gveil="{{g.id}}" title="Открыть окно Завесы для этой группы">🌀</button>
-            <button type="button" data-genv="{{g.id}}" title="Открыть Окружающую Среду для этой группы">🌡</button>
+            <button type="button" class="wh-nx-gscene" data-gscene="{{g.id}}" title="Открыть настройки Сцены (Окружение + Завеса) для этой группы">🌡🌀</button>
             <button type="button" data-grename="{{g.id}}" title="Переименовать">✎</button>
             <button type="button" data-gup="{{g.id}}" title="Выше">▲</button>
             <button type="button" data-gdown="{{g.id}}" title="Ниже">▼</button>

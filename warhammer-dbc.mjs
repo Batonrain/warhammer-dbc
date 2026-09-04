@@ -218,6 +218,9 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/squad-sheet.hbs",
     // Формирование («Книга Битв»)
     "systems/warhammer-dbc/templates/actor/formation-sheet.hbs",
+    // Сцена: Окружение + Завеса как партиалы объединённого окна (wdbc-paif)
+    "systems/warhammer-dbc/templates/apps/environment.hbs",
+    "systems/warhammer-dbc/templates/apps/veil.hbs",
   ]);
 
   registerHandlebarsHelpers();
