@@ -22,7 +22,8 @@ export const CORE_RULES = [
     //
     // Книга снимает штраф, если цель Оглушена или Беспомощна — это штраф за
     // скорость цели, а обездвиженная цель ей не пользуется (CONDITIONS_DEF.
-    // stunned/helpless).
+    // stunned/helpless). Ступор считается Оглушением «для прочих эффектов»
+    // (стр. 30-31, wdbc-r5o7.3) — тоже гасит штраф.
     //
     // Имплант «Чёрный Панцирь / Black Carapace» (DoomBC — ГЕНОСЕМЯ) прямо
     // пишет: «позволяет сохранять Трейт Nimble в силовой броне» — то есть без
@@ -31,7 +32,7 @@ export const CORE_RULES = [
     label: "Проворный (цель уворачивается)",
     when: {
       targetHasTrait: "Nimble",
-      targetLacksCondition: ["stunned", "helpless"],
+      targetLacksCondition: ["stunned", "dazed", "helpless"],
       targetKeepsNimbleInArmour: true
     },
     effects: [{

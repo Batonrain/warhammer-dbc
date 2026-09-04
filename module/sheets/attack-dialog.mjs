@@ -30,6 +30,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRecoilSuppressor } from "../combat/armor-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
+import { isStunnedOrDazed }                    from "../rules/predicates.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
@@ -441,11 +442,25 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Цель Повалена (стр. 30-31)">🧎 Цель Повалена (${isMelee ? "+20" : "−20"})</span>`
     : "";
 
+  // Оглушение/Ступор цели (стр. 30-31, wdbc-r5o7.3): «все атаки по нему
+  // получают +20» — безусловно, тем же приёмом, что Повален/Беспомощна
+  // выше. isStunnedOrDazed — Ступор считается Оглушением «для прочих
+  // эффектов» (rules/predicates.mjs). Название бейджа/строки НЕ «Цель
+  // Оглушена» буквально — эта фраза уже занята независимым ручным
+  // чекбоксом «Ситуативные» (commonMods ниже, для случаев, которые система
+  // не отследит сама), тот же приём, что различают «Цель лежит»
+  // (ручной)/«Цель Повалена» (авто) и «Цель бежит» (тот и другой).
+  const targetStunned  = isStunnedOrDazed(attackCtx.targetActor);
+  const stunnedMod     = targetStunned ? 20 : 0;
+  const stunnedBadge   = targetStunned
+    ? `<span class="atk-training-warn" title="Цель Оглушена/в Ступоре (стр. 30-31)">💫 Цель Оглушена/в Ступоре (+20)</span>`
+    : "";
+
   // Шаг За Шагом (стр. 73 Книги Аэльдари): +10, пока персонаж инициировал
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -795,7 +810,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -1500,6 +1515,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Беспомощная цель",   value: helplessRangedMod },
       { label: "Цель бежит",         value: runningMod },
       { label: "Цель Повалена",      value: proneMod },
+      { label: "Оглушение/Ступор цели", value: stunnedMod },
       { label: "Поклон Публике",     value: bowMarkedMod },
       { label: "Шаг за шагом",       value: stepByStepMod },
       { label: "База",               value: sel.baseBon },

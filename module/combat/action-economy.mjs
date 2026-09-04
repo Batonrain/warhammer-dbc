@@ -29,6 +29,7 @@ import { MELEE_STANCES } from "../constants/combat.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
+import { isStunnedOrDazed } from "../rules/predicates.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -83,15 +84,21 @@ export function effectiveActionPointsMax(actor) {
 export async function resetActionEconomy(actor) {
   if (!hasActionEconomy(actor)) return;
   const sys = actor.system;
+  // Стр. 30-31: Оглушение/Ступор — «не может совершать Действия и Реакции»,
+  // абсолютный запрет (0), сильнее ограничения Подавленного ниже (min 1).
+  const stunLocked      = isStunnedOrDazed(actor);
   // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
-  const apMax          = sys.conditions?.pinned
+  const apMax          = stunLocked ? 0 : sys.conditions?.pinned
     ? Math.min(1, effectiveActionPointsMax(actor))
     : effectiveActionPointsMax(actor);
-  const reactMax       = Number(sys.reactions?.max) || 0;
+  const reactMax       = stunLocked ? 0 : (Number(sys.reactions?.max) || 0);
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);
+  // Доп. Реакции «только на Избегание» — тоже Реакции: запрет Оглушения/
+  // Ступора выше распространяется и на них, не только на универсальный пул.
+  const defenseMax     = stunLocked ? 0 : defenseMaxBase + defenseBonus;
 
   // Один update на всё (значения + снятие флагов через -=): каждая отдельная
   // запись — это раунд-трип в базу и полный re-render листов/токенов у всех
@@ -99,8 +106,8 @@ export async function resetActionEconomy(actor) {
   const upd = {};
   if ((Number(sys.actionPoints?.value) || 0) !== apMax) upd["system.actionPoints.value"] = apMax;
   if ((Number(sys.reactions?.value) || 0) !== reactMax) upd["system.reactions.value"] = reactMax;
-  if ((Number(sys.reactions?.defenseValue) || 0) !== defenseMaxBase + defenseBonus)
-    upd["system.reactions.defenseValue"] = defenseMaxBase + defenseBonus;
+  if ((Number(sys.reactions?.defenseValue) || 0) !== defenseMax)
+    upd["system.reactions.defenseValue"] = defenseMax;
   if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
   if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
   // Just the Light/Лишь Свет (wdbc-1rno, combat/just-the-light.mjs): щит

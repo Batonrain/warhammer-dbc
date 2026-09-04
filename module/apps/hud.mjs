@@ -329,6 +329,7 @@ export function hudData(actor) {
     { on: c.bleeding,     label: "КРОВОТЕЧ.", bad: true },
     { on: c.haemorrhaging,label: "ГЕМОРРАГ.", bad: true },
     { on: c.stunned,      label: "ОГЛУШЁН" },
+    { on: c.dazed,        label: "СТУПОР" },
     { on: c.prone,        label: "ЛЕЖИТ" },
     { on: c.blinded,      label: "ОСЛЕПЛЁН" },
     { on: c.deafened,     label: "ОГЛОХ" },

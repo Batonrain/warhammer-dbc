@@ -1745,3 +1745,60 @@ describe("Повален (цель): wdbc-r5o7.2", () => {
     expect(thresholdInCard()).toBe(baseline - 20);
   });
 });
+
+// Оглушение/Ступор (цель): wdbc-r5o7.3 — «все атаки по нему получают +20»,
+// безусловно. Проверяется сразу реальным броском (thresholdInCard), не
+// только «холодным» dialogThreshold — тот путь уже подвёл один раз у
+// Поваленного (wdbc-r5o7.2, см. описание теста выше).
+describe("Оглушение/Ступор (цель): wdbc-r5o7.3", () => {
+  it("рукопашная атака по Оглушённой цели получает +20 — превью и реальный бросок", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { stunned: true } })]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(75); // WS 45 + База 10 + Оглушена 20
+    // Не "Цель Оглушена (+20)" буквально — эта фраза уже занята независимым
+    // ручным чекбоксом «Ситуативные» (всегда в разметке, не привязан к
+    // conditions.stunned) — берём заголовок бейджа, который есть только
+    // когда цель ДЕЙСТВИТЕЛЬНО Оглушена/в Ступоре.
+    expect(captured.dialog.content).toContain("💫 Цель Оглушена/в Ступоре (+20)");
+
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(75);
+  });
+
+  it("цель в Ступоре — тот же +20 (Ступор = Оглушение «для прочих эффектов»)", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { dazed: true } })]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(75);
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(75);
+  });
+
+  it("стрелковая атака по Оглушённой цели тоже +20 — превью и реальный бросок", async () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    const baselineP = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(baselineP);
+    const baseline = thresholdInCard();
+
+    setTargets([actorFor({ conditions: { stunned: true } })]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(p);
+
+    expect(thresholdInCard()).toBe(baseline + 20);
+  });
+
+  it("цель не Оглушена и не в Ступоре — ни бейджа, ни модификатора", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor()]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(55);
+    expect(captured.dialog.content).not.toContain("💫 Цель Оглушена/в Ступоре");
+  });
+});

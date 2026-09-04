@@ -107,6 +107,20 @@ export function isSusAnMembraneItem(item) {
     (itemHasName(item, "Сус-ан Мембрана") || itemHasName(item, "Sus-an Membrane"));
 }
 
+/**
+ * Оглушение ИЛИ Ступор (wdbc-r5o7.3) — не два отдельных условия, а один
+ * читатель: книга прямо называет Ступор «Оглушённой целью для прочих
+ * эффектов» (стр. 30-31), поэтому любой код, спрашивающий «Оглушён ли
+ * актор», обязан спрашивать это, а не только conditions.stunned (иначе
+ * список расходится с книгой при первой же новой проверке). Плоская
+ * функция, не запись PREDICATES — оба читателя (action-economy.mjs,
+ * attack-dialog.mjs) вне конвейера правил `when`/rollBonus.
+ */
+export function isStunnedOrDazed(actor) {
+  const c = actor?.system?.conditions;
+  return !!(c?.stunned || c?.dazed);
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&

@@ -104,6 +104,41 @@ describe("resetActionEconomy", () => {
     expect(actor.system.actionPoints.value).toBe(expected);
   });
 
+  // Оглушение/Ступор (стр. 30-31, wdbc-r5o7.3): «не может совершать Действия
+  // и Реакции» — абсолютный запрет (0), а не просто урезание, и сильнее
+  // Подавленного (min 1) при обоих сразу.
+  it.each([
+    ["Оглушён — 0 ОД, 0 Реакций, 0 доп. Реакций на Избегание", { stunned: true }],
+    ["в Ступоре — тот же запрет (Ступор = Оглушение «для прочих эффектов»)", { dazed: true }]
+  ])("%s", async (_title, conditions) => {
+    const actor = actorFor({
+      actionPoints: { value: 0, max: 2 },
+      reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 1 },
+      conditions
+    });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(0);
+    expect(actor.system.reactions.value).toBe(0);
+    expect(actor.system.reactions.defenseValue).toBe(0);
+  });
+
+  it("Оглушён и Подавлен разом — Оглушение побеждает (0, не 1)", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { stunned: true, pinned: true } });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(0);
+  });
+
+  it("не Оглушён и не в Ступоре — экономика восполняется как обычно", async () => {
+    const actor = actorFor({
+      actionPoints: { value: 0, max: 2 },
+      reactions: { value: 0, max: 1, defenseValue: 0, defenseMax: 0 },
+      conditions: { stunned: false, dazed: false }
+    });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(2);
+    expect(actor.system.reactions.value).toBe(1);
+  });
+
   // Determination To Fight/Решительность Сражаться (wdbc-1rno): +1 ОД при
   // отрицательных Ранах — тот же динамический бонус, что Стойка у Реакций.
   it("Determination To Fight + отрицательные Раны — восполняет ОД с учётом +1", async () => {
