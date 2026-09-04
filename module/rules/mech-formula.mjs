@@ -5,6 +5,9 @@
 // в точности как их даёт книга: «cor/2» (½Cor.b), «ag*2» (A.b×2),
 // «ceil(cor/2)» (½Cor.b, окр.▲), «s+2». Простое число («5») по-прежнему
 // работает без изменений — это тот же путь, просто с одним термом.
+// «corv» — отдельный ключ для «сырого» значения Порчи (system.corruption.
+// value), когда книга даёт формулу по голому «Cor», а не «Cor.b» (редко, но
+// встречается — напр. радиус ауры Herald of Humility «½Cor (окр.▲)м»).
 //
 // НЕ через Foundry Roll: там нет умножения/деления и округления, а этим
 // полям дайсы не нужны — считается один раз в момент применения записи
@@ -21,7 +24,7 @@
 //
 // Чистая функция, Foundry не нужен — проверяется test/rules/mech-formula.test.mjs.
 
-const KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf", "cor", "pr"];
+const KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf", "cor", "pr", "corv"];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
@@ -46,9 +49,15 @@ export function mechRollData(actor) {
   const bonus = k => Number(c[k]?.bonus) || 0;
   const data = {
     cor: Number(actor?.system?.corruptionBonus) || 0,
-    pr: Number(actor?.system?.psyker?.rating) || 0
+    pr: Number(actor?.system?.psyker?.rating) || 0,
+    // «corv» — «сырое» значение Порчи (system.corruption.value), не Cor.b:
+    // редкие книжные формулы радиуса/дистанции используют голое «Cor», не
+    // «Cor.b» (напр. Herald of Humility «½Cor (окр.▲)м», не «Cor.b м»,
+    // wdbc-1rno) — «cor» здесь исторически уже занят под Cor.b (см. шапку
+    // файла), поэтому raw-значение получает отдельный ключ.
+    corv: Number(actor?.system?.corruption?.value) || 0
   };
-  for (const k of KEYS) if (k !== "cor" && k !== "pr") data[k] = bonus(k);
+  for (const k of KEYS) if (k !== "cor" && k !== "pr" && k !== "corv") data[k] = bonus(k);
   return data;
 }
 

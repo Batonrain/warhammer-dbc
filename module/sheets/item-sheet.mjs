@@ -31,6 +31,7 @@ import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
 import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.mjs";
 import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
 import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
+import { tirelessWarriorButtonHtml, useTirelessWarriorKill } from "../apps/tireless-warrior.mjs";
 import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
 import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tentacle-hand-form.mjs";
 import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
@@ -1085,6 +1086,8 @@ export class WarhammerItemSheet
       // утоления по игровому времени, пусто у остальных Мутаций ──────────────
       context.addictionHtml = addictionPanelHtml(this.item);
       context.vampiricHtml  = vampiricPanelHtml(this.item);
+      // «Tireless Warrior» (wdbc-1rno) — пусто у остальных Мутаций/Даров.
+      context.tirelessWarriorHtml = tirelessWarriorButtonHtml(this.item, this.item.parent);
     }
 
     // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) — каждая
@@ -1930,6 +1933,13 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useBloodShieldLose(actor, this.item);
+    });
+
+    // ── Дар Кхорн «Tireless Warrior»: убийство рукопашной (wdbc-1rno) ────────
+    on(".tireless-warrior-kill-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useTirelessWarriorKill(actor, this.item);
     });
 
     // ── Талант «The Eternal War»: дуэль с Кровожадом/ХС (wdbc-173l) ─────────

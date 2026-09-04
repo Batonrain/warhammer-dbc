@@ -8,6 +8,7 @@
 {{!--   • «Щупальце», субмутация 9 (wdbc-2ynk) — форма руки;                 --}}
 {{!--   • «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние    --}}
 {{!--     утоления по игровому времени, кнопка «Утолить».                     --}}
+{{!--   • «Tireless Warrior» (wdbc-1rno) — кнопка «Убил рукопашной».           --}}
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 {{#if (eq item.type "mutation")}}
 
@@ -73,6 +74,13 @@
 <div class="item-section">
   <div class="item-section-title">ВАМПИРИЧЕСКАЯ ЗАВИСИМОСТЬ</div>
   {{{vampiricHtml}}}
+</div>
+{{/if}}
+
+{{#if tirelessWarriorHtml}}
+<div class="item-section">
+  <div class="item-section-title">НЕУТОМИМЫЙ ВОИН</div>
+  {{{tirelessWarriorHtml}}}
 </div>
 {{/if}}
 {{/if}}{{!-- /mutation --}}

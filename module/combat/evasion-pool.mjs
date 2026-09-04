@@ -30,8 +30,19 @@
 import { _degWord, _hitWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { defenseSection } from "./attack-card.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const FLAG_KEY = "evasionPool";
+// Dance of Life / Танец Жизни (Дар Слаанеш, wdbc-1rno): «тратит только 1 Успех
+// вместо 2 на Уклонение от последующих атак» — точечное расширение базового
+// правила стр. 12 (poolHitCost ниже), не отдельный примитив. НЕ смоделировано
+// в этой находке: книга также даёт «сохраняет неизрасходованные Успехи до
+// начала СВОЕГО следующего Хода» и «тратит их на попадания ДРУГИХ персонажей»
+// — базовый пул это не умеет вообще (currentTurnTag живёт до конца Хода
+// АТАКУЮЩЕГО, не защищающегося, и ключ пула — per-attacker, а не общий на
+// актора): расширение "храните между атакующими" — отдельная архитектурная
+// правка (пул стал бы актёр-общим, а не per-attacker), не сделана здесь.
+const DANCE_OF_LIFE = "gift.slaanesh.danceOfLife";
 
 const poolKey = attackerUuid => String(attackerUuid || "").replace(/\./g, "-");
 
@@ -73,17 +84,20 @@ export function getEvasionPool(defender, attackerUuid) {
   return entry;
 }
 
-/** Стоимость снятия ОДНОГО попадания из пула: 2 Успеха база + 1 за каждые
- *  полные −10 штрафа этой атаки сверх штрафа атаки, породившей пул. */
-export function poolHitCost(basePenalty, thisPenalty) {
+/** Стоимость снятия ОДНОГО попадания из пула: 2 Успеха база (1 — с Танцем
+ *  Жизни, см. DANCE_OF_LIFE выше) + 1 за каждые полные −10 штрафа этой атаки
+ *  сверх штрафа атаки, породившей пул. `actor` опционален — без него (старые
+ *  вызовы/тесты) поведение не меняется, база остаётся 2. */
+export function poolHitCost(basePenalty, thisPenalty, actor = null) {
+  const base = actor && hasRuleFlag(actor, DANCE_OF_LIFE) ? 1 : 2;
   const worse = Math.max(0, (basePenalty || 0) - (thisPenalty || 0));
-  return 2 + Math.floor(worse / 10);
+  return base + Math.floor(worse / 10);
 }
 
 /** Сколько попаданий текущей атаки можно снять остатком пула, и по какой цене. */
-export function poolAffordableHits(entry, thisPenalty, hitsCount) {
+export function poolAffordableHits(entry, thisPenalty, hitsCount, actor = null) {
   if (!entry) return { hits: 0, cost: 0, perHit: 0 };
-  const perHit = poolHitCost(entry.penalty, thisPenalty);
+  const perHit = poolHitCost(entry.penalty, thisPenalty, actor);
   const hits = Math.min(hitsCount, Math.floor(entry.successes / perHit));
   return { hits, cost: hits * perHit, perHit };
 }
@@ -137,7 +151,7 @@ export async function performPoolSpend(defender, {
     return;
   }
 
-  const { hits: negated, cost, perHit } = poolAffordableHits(entry, dodgeMod, hitsCount);
+  const { hits: negated, cost, perHit } = poolAffordableHits(entry, dodgeMod, hitsCount, defender);
   await spendFromPool(defender, attackerUuid, cost);
   const remaining = hitsCount - negated;
 
