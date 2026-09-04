@@ -425,6 +425,7 @@ const TYPES = {
       sustainable: false, sustainCost: 1, sustainAction: "free",
       damage: "", damageType: "energy", penetration: 0, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
+      resistChar: "", resistMod: 0,
       effect: "", isSustained: false,
       effects: {
         charBonusStat: "", charBonusValue: 0, charBonuses: [],

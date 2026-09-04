@@ -66,7 +66,7 @@ import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./comba
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
-import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
+import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
 import { skillTotal } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
@@ -119,14 +119,17 @@ export function registerHooks() {
   // этого класса, отсюда явная проверка вместо слепого вызова.
   registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, label, hideCharSelect } = payload;
+    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier } = payload;
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
       }
       const meta = CHARACTERISTICS[charKey];
       const total = executorActor.system.characteristics?.[charKey]?.total ?? 0;
-      return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect, { effectTargetActor });
+      // presetModifier (wdbc-5vf4) — тест Сопротивления психосилы несёт свой
+      // модификатор с самого предмета-источника (executePsychotest, psychic.mjs);
+      // без него игроку пришлось бы держать число в уме и вписывать вручную.
+      return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect, { effectTargetActor, presetModifier: Number(presetModifier) || 0 });
     }
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
@@ -182,6 +185,35 @@ export function registerHooks() {
         try { payload = JSON.parse(ev.currentTarget.dataset.payload || "{}"); }
         catch { return ui.notifications?.warn("Испорченная карточка запроса теста."); }
         await openDelegatedTest(payload);
+      });
+    });
+
+    // Тест Сопротивления цели манифестированной психосилы (wdbc-5vf4) —
+    // кнопка карточки манифестации (module/sheets/tabs/psychic.mjs::
+    // executePsychotest), не общий делегатор showDelegateTestPicker: тут
+    // ИСПОЛНИТЕЛЬ теста заранее известен и совпадает с целью эффекта (цель
+    // защищается своим же тестом), выбирать «кто бросает» (pickDelegateActor)
+    // незачем — тот же двухветочный приём (владелец есть → шёпот с кнопкой,
+    // NPC без владельца → открыть сразу), что и внутри showDelegateTestPicker.
+    html.querySelectorAll(".psy-resist-request-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const d = ev.currentTarget.dataset;
+        const targetActor = d.targetUuid ? await fromUuid(d.targetUuid).catch(() => null) : null;
+        if (!targetActor) return ui.notifications?.warn("Цель психосилы не найдена (токен снят/удалён с этого момента?).");
+        const requesterActor = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
+        const extra = {
+          testKind: "characteristic", charKey: d.charKey, label: d.label,
+          hideCharSelect: true, presetModifier: Number(d.mod) || 0
+        };
+        if (activeOwnerOf(targetActor)) {
+          await requestDelegatedTest({
+            requesterActor, executorActor: targetActor, effectTargetActor: targetActor,
+            kind: "genericTest", label: d.label, buttonLabel: "Открыть тест Сопротивления", extra
+          });
+        } else {
+          await openDelegatedTestDirect("genericTest", targetActor, targetActor, extra);
+        }
       });
     });
 

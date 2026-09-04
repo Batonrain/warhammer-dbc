@@ -1999,7 +1999,7 @@ export class WarhammerCharacterSheet
     };
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null } = {}) {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null, presetModifier = 0 } = {}) {
     // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
     // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
     // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
@@ -2022,6 +2022,14 @@ export class WarhammerCharacterSheet
       ? `<div class="roll-dlg-note">${recipientMods.map(m => `${esc(m.label)} (${esc(effectTargetActor.name)}): ${m.value >= 0 ? "+" : ""}${m.value}`).join("<br/>")}</div>`
       : "";
     baseTotal += recipientTotal;
+    // presetModifier (wdbc-5vf4, тест Сопротивления психосилы) — предзаполняет
+    // поле «Модификатор» готовым числом, но им же и остаётся: обычный input,
+    // игрок волен стереть/поменять. Отличается от recipientMods выше:
+    // recipientMods читает ЖИВЫЕ правила effectTargetActor (Черты/Таланты),
+    // presetModifier приходит ИЗВНЕ, с предмета-источника события (сама
+    // психосила), через плоский примитив в payload делегирования
+    // (delegate-test.mjs — extra несёт только числа/строки), поэтому не может
+    // быть завязан на живой реестр правил актора.
     const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
     if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
@@ -2096,7 +2104,7 @@ export class WarhammerCharacterSheet
             </div>
             <div class="roll-dlg-row">
               <label>Модификатор:</label>
-              <input id="skill-modifier" type="number" value="0"/>
+              <input id="skill-modifier" type="number" value="${presetModifier}"/>
             </div>
             <div class="roll-dlg-row assist-row">
               <label>Ассистенты:</label>
@@ -2452,8 +2460,8 @@ export class WarhammerCharacterSheet
 
   // ── Бросок характеристики ─────────────────────────────────────────────────
 
-  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null } = {}) {
-    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect, null, "base", { effectTargetActor, opposedRequest });
+  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null, presetModifier = 0 } = {}) {
+    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect, null, "base", { effectTargetActor, opposedRequest, presetModifier });
     if (!result) return;
     const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
              assistCount = 0, reroll = null } = result;

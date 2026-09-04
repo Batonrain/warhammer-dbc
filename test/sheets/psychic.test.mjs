@@ -264,6 +264,85 @@ describe("psychic manifestation", () => {
   });
 });
 
+// Тест Сопротивления ЦЕЛИ (wdbc-5vf4) — книжный «Психотест X vs Y+N»:
+// resistChar/resistMod (module/data/item/psychic-power.mjs) читаются живьём
+// прямо при манифестации, а не через Конструктор — testMod с этого предмета
+// применялся бы к тестам ВЛАДЕЛЬЦА (см. заметки в 83 паках психосил), не к
+// выбранной цели.
+describe("тест Сопротивления цели (wdbc-5vf4)", () => {
+  afterEach(() => { delete game.user.targets; });
+
+  it("успешная манифестация + указан resistChar + есть наведённая цель — карточка несёт кнопку запроса с верными данными", async () => {
+    const a = actor();
+    a.uuid = "Actor.caster-1";
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" } }];
+    const power = item({ system: {
+      testChar: "wp", powerType: "utility", testMod: 5,
+      resistChar: "t", resistMod: -5
+    } });
+    captured.nextRoll = 30; // Порог 55 (как в соседнем тесте) — успех.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain("Манифестация удалась");
+    expect(card).toContain("Цель делает тест Сопротивления");
+    expect(card).toContain("<b>T -5</b>");
+    expect(card).toContain('class="psy-resist-request-btn"');
+    expect(card).toContain('data-target-uuid="Actor.target-1"');
+    expect(card).toContain('data-caster-uuid="Actor.caster-1"');
+    expect(card).toContain('data-char-key="t"');
+    expect(card).toContain('data-mod="-5"');
+  });
+
+  it("resistChar задан, но цель не наведена — подсказка вместо кнопки", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5, resistChar: "wp", resistMod: 0 } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain("Наведите цель");
+    expect(card).not.toContain('class="psy-resist-request-btn"');
+  });
+
+  it("resistChar пуст (сила без встречного теста) — секции Сопротивления в карточке нет вовсе", async () => {
+    const a = actor();
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" } }];
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).not.toContain("Цель делает тест Сопротивления");
+  });
+
+  it("манифестация провалена — Сопротивление цели не предлагается (до цели дело не доходит)", async () => {
+    const a = actor();
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" } }];
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5, resistChar: "t", resistMod: 0 } });
+    captured.nextRoll = 99; // выше Порога 55 — провал.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).toContain("Психотест провален");
+    expect(captured.chat[0].content).not.toContain("Цель делает тест Сопротивления");
+  });
+});
+
 // Психотест — такой же тест конвейера, как бросок навыка и атака: правила с
 // областью `power:` должны доходить и до окна манифестации, и до броска.
 // Правило подставляется своим источником, как в test/rules/collect.test.mjs.

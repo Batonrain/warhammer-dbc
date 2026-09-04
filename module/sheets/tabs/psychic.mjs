@@ -629,6 +629,35 @@ export async function executePsychotest(actor, item, opts) {
     conversionLine = `<div class="roll-threshold" style="font-size:0.85em;color:#8b0000;">${rollIcon("blood","#ff6b6b")}Телесная Конверсия: −${PATH.woundCost} Раны.</div>`;
   }
 
+  // ── Тест Сопротивления ЦЕЛИ (wdbc-5vf4) ────────────────────────────────────
+  // Книжный формат «Психотест X vs Y+N» — при успешной манифестации цель
+  // защищается СВОИМ тестом Y+N (см. sys.resistChar/resistMod, психика-power.mjs).
+  // Только при успехе: провал манифестации — до цели дело не доходит, книжные
+  // тексты («Победа: …») всегда завязаны на исход психотеста кастера.
+  let resistSection = "";
+  if (success && sys.resistChar) {
+    const resistAbbr = CHARACTERISTICS[sys.resistChar]?.abbr ?? sys.resistChar.toUpperCase();
+    const resistMod  = Number(sys.resistMod) || 0;
+    const resistModTxt = `${resistMod >= 0 ? "+" : ""}${resistMod}`;
+    // Тот же таргет сцены, что уже читает ruleRollModsHtml выше в
+    // showManifestDialog — если игрок сменил цель между открытием диалога и
+    // нажатием «Психотест!», в карточку идёт актуальный на МОМЕНТ броска.
+    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const resistBtn = targetActor
+      ? `<button type="button" class="psy-resist-request-btn"
+           data-target-uuid="${esc(targetActor.uuid)}" data-caster-uuid="${esc(actor.uuid)}"
+           data-char-key="${esc(sys.resistChar)}" data-mod="${resistMod}"
+           data-label="${esc(`Сопротивление: ${item.name}`)}">
+           📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
+         </button>`
+      : `<div class="roll-threshold" style="font-size:0.78em;opacity:0.8;">Наведите цель (T на токене сцены) до манифестации — тогда кнопка откроет тест сразу у неё.</div>`;
+    resistSection = `
+        <div class="psy-resist-section roll-threshold">
+          Цель делает тест Сопротивления: <b>${resistAbbr} ${resistModTxt}</b>
+          ${resistBtn}
+        </div>`;
+  }
+
   // Применяем накопленные изменения (Раны/Порча)
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
 
@@ -661,6 +690,7 @@ export async function executePsychotest(actor, item, opts) {
               : `<span class="roll-failure">Психотест провален — ${deg} ${_degWord(deg)}</span>`}
           </div>
           ${conversionLine}
+          ${resistSection}
           ${damageSection}
           ${charDamageSection}
           ${attackPropsSection}
