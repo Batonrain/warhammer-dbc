@@ -712,7 +712,7 @@ export const CAPABILITIES = {
   },
   "aura.beastmanShaman.warpTaintedAura.base": {
     label: "Полудействие раз в час: аура 20 м до начала следующего Хода — не-еретики проваливший W−10 получают 1 Cor, союзники в ауре +20 к Сопротивлению (пока нет метки)",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): раз/час (worldTime), радиус 20 м, реальный тест W−10 каждому врагу, провал → +1 Порча (system.corruption.value). +20 Сопротивления союзникам — не смоделирован."
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): раз/час (worldTime), радиус 20 м, реальный тест W−10 каждому врагу, провал → +1 Порча (system.corruption.value). +20 Сопротивления союзникам — реален (kind:testMod +20 на временной Черте, живьём подтверждено wdbc-5smq): галочка в диалоге теста Стойкости, снимается на начале следующего Хода шамана."
   },
   "aura.beastmanShaman.warpTaintedAura.khorneVariant": {
     label: "Кхорн: провалившие тест враги немедленно проходят тест на Fear(4)",
