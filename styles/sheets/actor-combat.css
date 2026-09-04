@@ -239,6 +239,28 @@
   border: 1px solid var(--wh-border);
 }
 
+/* wdbc-wqmr: Инициатива/Размер/Действия — три равноценных блока-колонки в
+   одной строке (раньше ряд был не оформлен CSS вовсе, поэтому колонка
+   Инициатива+Размер и полоса Действий просто стекались друг под другом). */
+.warhammer-dbc .movement-other-row {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.warhammer-dbc .movement-other-col {
+  flex: 0 0 auto;
+  min-width: 150px;
+  padding: 3px 8px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+}
+.warhammer-dbc .movement-other-row .action-economy-compact {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
 /* ── Секция боя ── */
 .warhammer-dbc .combat-section-panel {
   border: 1px solid var(--wh-border);
