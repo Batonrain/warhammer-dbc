@@ -35,6 +35,7 @@ import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
+import { activeEffectsTabContext } from "../apps/effects-summary.mjs";
 import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
@@ -774,6 +775,7 @@ export class WarhammerCharacterSheet
       tabs: [
         { id: "stats",       label: "ПОКАЗАТЕЛИ" },
         { id: "combat",      label: "БОЙ" },
+        { id: "activeEffects", label: "ЭФФЕКТЫ" },
         { id: "effects",     label: "ТЕЛО" },
         { id: "possession",  label: "ОДЕРЖИМОСТЬ" },
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
@@ -851,6 +853,11 @@ export class WarhammerCharacterSheet
     // Фракции, Миньоны и Отношения. Назначения ищутся по миру — привязка живёт
     // у той стороны, к которой персонажа прицепили, а не у него самого.
     Object.assign(context, socialContext(this.actor, [...(game.actors ?? [])]));
+
+    // Вкладка ЭФФЕКТЫ (wdbc-xrsh): сводка активных Foundry ActiveEffect —
+    // баф/дебаф × характеристика/иной показатель. Только чтение уже
+    // применённых change (module/apps/effects-summary.mjs), без пересчёта.
+    Object.assign(context, activeEffectsTabContext(this.actor));
 
     // Блок «МИНЬОНЫ» там же: слоты купленных Талантов, счётчик по группам и
     // максимум, а при свободном Таланте — кнопка «+» в генератор.

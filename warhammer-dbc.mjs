@@ -152,6 +152,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/tab-active-effects.hbs", // ← НОВОЕ, wdbc-xrsh
     "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs",
     "systems/warhammer-dbc/templates/actor/parts/toggle-rows.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs",
