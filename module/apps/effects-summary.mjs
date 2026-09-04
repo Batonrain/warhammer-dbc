@@ -58,9 +58,21 @@ export function effectChangeSign(change) {
   }
 }
 
-/** "+2", "−3", "×2", "=5" и т.п. — знак операции (EFFECT_TYPE_LABELS) плюс число. */
+/**
+ * "+2", "−3", "×2", "=5" и т.п. — знак операции (EFFECT_TYPE_LABELS) плюс число.
+ *
+ * ADD — особый случай: Foundry хранит дебаф тем же режимом ADD с
+ * ОТРИЦАТЕЛЬНЫМ change.value (нет отдельного режима «вычесть»), поэтому
+ * фиксированный префикс "+" из EFFECT_TYPE_LABELS.add дал бы «+-5» — знак
+ * здесь берётся из самого значения, не из ярлыка типа.
+ */
 export function formatChangeValue(change) {
-  const sign = EFFECT_TYPE_LABELS[change?.type] ?? change?.type ?? "+";
+  const type = change?.type;
+  const value = Number(change?.value);
+  if (type === "add" && Number.isFinite(value)) {
+    return value < 0 ? `−${Math.abs(value)}` : `+${value}`;
+  }
+  const sign = EFFECT_TYPE_LABELS[type] ?? type ?? "+";
   return `${sign}${change?.value ?? ""}`;
 }
 

@@ -71,6 +71,17 @@ describe("formatChangeValue", () => {
     expect(formatChangeValue(change("k", "add", 2))).toBe("+2");
     expect(formatChangeValue(change("k", "subtract", 3))).toBe("−3");
   });
+
+  // wdbc-8cyu: Foundry хранит дебаф тем же режимом ADD с отрицательным
+  // value (нет отдельного режима «вычесть») — фиксированный префикс "+"
+  // из EFFECT_TYPE_LABELS.add давал «+-5» вместо «−5».
+  it("ADD с отрицательным value — знак минус, не «+-N»", () => {
+    expect(formatChangeValue(change("k", "add", -5))).toBe("−5");
+  });
+
+  it("ADD с положительным value — по-прежнему плюс", () => {
+    expect(formatChangeValue(change("k", "add", 5))).toBe("+5");
+  });
 });
 
 describe("applicableActorEffects", () => {
