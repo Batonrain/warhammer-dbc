@@ -3,6 +3,14 @@
 //  Превью-кольца дальности на канвасе (wdbc-fb2d, ступень 1 — «дойду ли я и
 //  попаду ли я» без прикладывания линейки).
 //
+//  С wdbc-arqo это уже НЕ основной путь для дальности атаки/рукопашной —
+//  основной путь теперь клеточная подсветка (combat/range-cells.mjs, по
+//  образцу движения — reachable-cells.mjs). Кольца здесь остаются только
+//  резервным вариантом на Gridless-сценах, где клеточная подсветка не имеет
+//  смысла (тот же принцип, что у showMovementRing как резерва
+//  showReachableCells) — плюс сама подсветка достижимости движения
+//  (showMovementRing) отдельно от этой замены не зависит.
+//
 //  Не Region (в отличие от templates.mjs/auras.mjs) — это не игровая зона с
 //  testPoint()/эффектами, а чисто информационный оверлей поверх канваса:
 //  concentric-круги, нарисованные raw PIXI.Graphics прямо в canvas.interface
@@ -80,51 +88,38 @@ function _draw(token, rings, { timeout = null } = {}) {
 }
 
 /**
- * Кольца полос дальности оружия вокруг стрелка — рисуются при начале
- * прицеливания (module/combat/aim.mjs::beginTargeting), чтобы было видно,
- * в какую полосу дальности попадёт цель, ещё до клика по ней.
+ * Одно кольцо максимальной дальности оружия вокруг стрелка (граница
+ * Экстремальной полосы, rangeBandBoundaries) — резерв для Gridless-сцен, где
+ * клеточная подсветка (range-cells.mjs::showWeaponRangeCells) не работает.
+ * ОДИН красный цвет на весь предел дальности — деление на полосы (В
+ * упор/Короткая/Боевая/Длинная/Предельная) осталось только в диалоге атаки
+ * (attack-dialog.mjs) и в живой подсказке у курсора (aim.mjs).
  * @param {Token} token   токен стрелка
  * @param {number} rng    эффективный Rng оружия, м
  */
-export function showWeaponRangeRings(token, rng) {
+export function showWeaponRangeRing(token, rng) {
   if (!(Number(rng) > 0)) return;
-  const b = rangeBandBoundaries(Number(rng));
-  const candidates = [
-    { r: b.pointBlank, color: 0xff5555 },
-    { r: b.short,      color: 0xffaa33 },
-    { r: b.combat,     color: 0x7bd858 },
-    { r: b.long,       color: 0xffaa33 },
-    { r: b.extreme,    color: 0xff5555 }
-  ];
-  // У короткоствольного оружия соседние границы совпадают (полоса вырождена
-  // упором, см. rangeBandBoundaries) — не дублировать одно и то же кольцо.
-  const rings = [];
-  let lastR = 0;
-  for (const ring of candidates) {
-    if (ring.r <= lastR) continue;
-    rings.push(ring);
-    lastR = ring.r;
-  }
-  _draw(token, rings);
+  const { extreme } = rangeBandBoundaries(Number(rng));
+  _draw(token, [{ r: extreme, color: 0xff5555 }]);
 }
 
 /**
  * Одно кольцо досягаемости рукопашной атаки вокруг бойца — «кто рядом».
- * У ближнего боя нет полос В упор/Короткая/Длинная/Предельная дальнобойного
- * оружия (движок атаки их для isMelee и не считает, см. attack-dialog.mjs
- * bandKey), поэтому showWeaponRangeRings тут не годится — она рисовала одно
- * и то же превью banded-дальности и стрелку, и рукопашнику, из-за чего
- * рукопашное оружие с любым ненулевым (в т.ч. случайным/унаследованным от
- * копирования) system.range получало огромные концентрические круги вместо
- * «дотянусь ли я до соседа». Радиус — клетка сетки сцены ×1.5 (накрывает и
- * диагональных соседей, не только ортогональных), без привязки к
- * system.range оружия: тот же принцип «без прикладывания линейки», что и у
- * остального модуля.
+ * Резерв для Gridless-сцен, где клеточная подсветка
+ * (range-cells.mjs::showMeleeRangeCells) не работает. У ближнего боя нет
+ * полос В упор/Короткая/Длинная/Предельная дальнобойного оружия (движок
+ * атаки их для isMelee и не считает, см. attack-dialog.mjs bandKey), поэтому
+ * showWeaponRangeRing тут не годится — рукопашное оружие с любым ненулевым
+ * (в т.ч. случайным/унаследованным от копирования) system.range получило бы
+ * огромный круг вместо «дотянусь ли я до соседа». Радиус — клетка сетки
+ * сцены ×1.5 (накрывает и диагональных соседей, не только ортогональных),
+ * без привязки к system.range оружия: тот же принцип «без прикладывания
+ * линейки», что и у остального модуля.
  * @param {Token} token
  */
 export function showMeleeReachRing(token) {
   const gridUnit = canvas?.scene?.grid?.distance ?? canvas?.grid?.distance ?? 1;
-  _draw(token, [{ r: gridUnit * 1.5, color: 0x7bd858, alpha: 0.75 }]);
+  _draw(token, [{ r: gridUnit * 1.5, color: 0xff5555, alpha: 0.75 }]);
 }
 
 /**
