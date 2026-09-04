@@ -636,6 +636,17 @@ export function registerHooks() {
           if (!actor) return ui.notifications.warn("⚠️ Орда, прикрывшая цель, не найдена.");
           return applyDamageToActor(actor, damageData);
         }
+        // Встречная атака (wdbc-2wy7, Шипы/Цепные Бандольеры, module/combat/
+        // counter-attack.mjs): атакующий уже известен на 100% — это тот, кто
+        // провёл ЭТУ атаку/промахнулся по владельцу, — не требуем от игрока
+        // заново выцеливать его токен на сцене, как у обычного применения
+        // урона (тот же приём, что forceHorde выше).
+        if (ds.forceTarget) {
+          const doc = await fromUuid(ds.forceTarget);
+          const actor = doc?.actor ?? doc ?? null;
+          if (!actor) return ui.notifications.warn("⚠️ Цель для применения урона не найдена (возможно, удалена).");
+          return applyDamageToActor(actor, damageData);
+        }
         await showApplyDamageDialog(damageData);
       });
     });

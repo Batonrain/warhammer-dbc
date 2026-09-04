@@ -30,6 +30,7 @@ import { triggerAttackAnimation }                     from "../integrations/auto
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
 import { evasionImperativeBonus }                     from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
+import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -542,6 +543,25 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // отдельным сообщением следом.
   if (hit && techOpts.technique === "grapple") applyGrappleOnHit(actor, targetToken, hit, techOpts);
 
+  // Встречная атака (wdbc-2wy7, Шипы/Цепные Бандольеры, module/combat/
+  // counter-attack.mjs, kind:"counterAttack" Конструктора): defenderActor
+  // (цель ЭТОЙ атаки) бьёт actor (атакующего) в ответ, если он промахнулся
+  // рукопашной по ней ИЛИ провёл против неё безоружную атаку/приём «Захват» —
+  // независимо от исхода Захвата (контакт с шипами уже случился), поэтому
+  // считается отдельно от applyGrappleOnHit выше (тот только про состояние
+  // Борьбы после УСПЕШНОГО Захвата).
+  let counterAttackBlock = "";
+  if (defenderActor) {
+    const ccTriggers = counterAttackTriggers({
+      isMelee, hit, technique: techOpts.technique || "", meleeCategory: sys.meleeCategory || ""
+    });
+    if (ccTriggers.onMiss || ccTriggers.onUnarmedOrGrapple) {
+      const cc = await counterAttackSectionHtml(defenderActor, actor, ccTriggers);
+      counterAttackBlock = cc.html;
+      allRolls.push(...cc.rolls);
+    }
+  }
+
   // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода
   // (wdbc-ai0o) — rechargeTurnsRemaining:1 читает combat/recharge.mjs на
   // старте следующего Хода носителя: тот Ход остаётся заблокирован, снимается
@@ -633,6 +653,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // спец-боеприпасов, чей эффект зависит от собственной идентичности
         // (Гиперрост), не только от ключа свойства Toxic.
         targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false, ammoName: loadedAmmo?.name || "" }),
+        counterAttack: counterAttackBlock,
         dice:          renderedDice
       }
     }),

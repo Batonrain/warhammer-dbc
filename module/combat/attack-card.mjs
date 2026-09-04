@@ -369,7 +369,8 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
  * @param {object}   [d.notes]       текстовые примечания карточки (см. ниже)
- * @param {object}   [d.blocks]      готовые блоки: props, quality, splinter, targetEffects, dice
+ * @param {object}   [d.blocks]      готовые блоки: props, quality, splinter, targetEffects, dice,
+ *                                    counterAttack (Встречная атака, wdbc-2wy7 — module/combat/counter-attack.mjs)
  */
 export function attackCard({
   actorName = "", weaponName = "", wp = {},
@@ -541,5 +542,6 @@ export function attackCard({
       </button>
     </div>` : ""}
         ${blocks.targetEffects ?? ""}
+        ${blocks.counterAttack ?? ""}
       </div>`;
 }

@@ -196,6 +196,36 @@
 //      (flags.warhammer-dbc.cohesionApplied={squadUuid,amount} на предмете).
 //      Откат при УДАЛЕНИИ предмета — отдельно, в Hooks.on("deleteItem",...),
 //      т.к. предмета уже не будет к моменту, когда reconcile мог бы его найти.
+//    counterAttack: { ccDamage, ccPen, ccDamageType, ccTearing,
+//                      ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
+//      → ВСТРЕЧНАЯ АТАКА (wdbc-2wy7, Шипы/Цепные Бандольеры, стр. брони): пока
+//      предмет на акторе и активен (armorMod — установлен и, если включаемый,
+//      включён), противник, который промахнулся рукопашной по владельцу ИЛИ
+//      провёл против него безоружную атаку/приём «Захват» (даже успешно —
+//      шипы ранят от самого контакта), получает попадание в ответ. ЖИВОЙ
+//      ЗАПРОС, как reroll/terrainIgnore выше: ничего не пишет и не создаёт
+//      при получении предмета — читается прямо в момент атаки, module/combat/
+//      counter-attack.mjs, дальше module/combat/attack.mjs (_executeAttackRoll)
+//      добавляет в карточку кнопку «Применить урон» атакующему (без Парирования
+//      — только Уклонение, по тексту обеих записей брони) и, если сорвал
+//      несколько записей сразу (напр. Шипы + отдельная Черта), показывает их
+//      все. ccDamage — формула урона (кубы + S.b/T.b/… — тот же парсер, что у
+//      урона оружия, module/helpers/utils.mjs::resolveCharFormula), ccTearing —
+//      свойство Рвущее через тот же движок, что у обычного оружия (module/
+//      combat/weapon-properties.mjs::applyDamageDiceMods) — заново формулу и
+//      Рвущее не пишем. ccOnMiss/ccOnUnarmedOrGrapple — независимые галочки:
+//      можно оставить любую одну или обе разом (та же гибкость вкл/выкл, что
+//      у остальных живых записей).
+//      НЕ покрывает: провал/победа в самих тестах раздела «Борьба» (Заломить/
+//      Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, module/combat/
+//      grapple.mjs — ALL_TESTS) — те идут через встречный module/combat/
+//      techniques.mjs::_showContestDialog, симметричный между двумя любыми
+//      участниками БЕЗ единого понятия «атакующий против владельца» (обе
+//      стороны могут вызвать любое из пяти действий на своём Ходу), общий с
+//      добрым десятком других приёмов (Повалить, Финт, Давление) — увязать
+//      именно эту пару предметов брони с этим тестом означало бы re-архитектуру
+//      общего диалога встречных тестов ради одной строки правила, честный
+//      диагноз зафиксирован тикетом, не форсировался обходной путь.
 //
 //  Идемпотентность: flags.warhammer-dbc.mechanicsApplied — один раз при
 //  createItem (см. Hooks.on("createItem", ...) в warhammer-dbc.mjs).
@@ -231,7 +261,7 @@ import { isThrottleReady, markThrottleUsed,
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
-import { AVAILABILITY }                       from "../constants/items.mjs";
+import { AVAILABILITY, DAMAGE_TYPES }         from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
@@ -256,6 +286,10 @@ const FLAG = "warhammer-dbc";
 // вместо голого числа — те же короткие ключи, что книга пишет как «X.b».
 const MECH_FORMULA_HINT = "Число или формула бонуса характеристики: ws/bs/s/t/ag/int/per/wp/fel/inf/cor "
   + "(cor — Cor.b), + - * /, ceil()/floor()/round(). Напр.: ag*2, ceil(cor/2)";
+// Подсказка полю урона «Встречной атаки» (kind:"counterAttack") — та же
+// нотация, что в поле «Урон» у оружия (S.b/T.b/... через resolveCharFormula),
+// а не mech-formula.mjs выше: тут нужны кубы (XdY), не голое число/бонус.
+const CC_DAMAGE_HINT = "Формула урона, как у оружия: кубы + S.b/T.b/Ag.b/... (resolveCharFormula). Напр.: 1d5+S.b, 1d10+2+S.b";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 const higherRank = (a, b) => (SKILL_RANK_STEPS[a] ?? 0) >= (SKILL_RANK_STEPS[b] ?? 0) ? a : b;
 // Операции записи «± Характеристика» — только складываемые. Её эффект целится
@@ -409,6 +443,7 @@ const KIND_LABELS = {
   failDegMod: "Доп. Провалы при провале",
   capability: "Возможность",
   armour: "Очки Брони (локация)",
+  counterAttack: "Встречная атака",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
@@ -641,6 +676,12 @@ export function blankMechEntry(kind = "characteristic") {
     armourLocation: "body", armourValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
+    // counterAttack — «Встречная атака» (wdbc-2wy7): живой запрос, читается в
+    // момент атаки против владельца (module/combat/counter-attack.mjs), при
+    // получении предмета ничего не делает. ccDamage — формула урона (кубы +
+    // S.b/T.b/…, тот же парсер, что у оружия — см. CC_DAMAGE_HINT).
+    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccTearing: false,
+    ccOnMiss: true, ccOnUnarmedOrGrapple: true, ccLabel: "",
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
@@ -805,6 +846,17 @@ export function describeMechEntry(entry) {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
+    }
+    case "counterAttack": {
+      if (!String(entry.ccDamage ?? "").trim()) return "Встречная атака: (формула урона не задана)";
+      const triggers = [];
+      if (entry.ccOnMiss) triggers.push("промах противника в рукопашной");
+      if (entry.ccOnUnarmedOrGrapple) triggers.push("безоружная атака/Захват против владельца");
+      const dt = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType;
+      const tear = entry.ccTearing ? ", Рвущее" : "";
+      const label = entry.ccLabel ? `«${entry.ccLabel}» ` : "";
+      return `Встречная атака: ${label}${entry.ccDamage} ${dt}, Проб. ${entry.ccPen ?? 0}${tear} — ${
+        triggers.length ? triggers.join(" / ") : "(триггер не выбран)"}`;
     }
     case "capability": {
       if (entry.capabilityMode === "aptOverride") {
@@ -993,6 +1045,8 @@ function isEntryComplete(e) {
       return !!e.armourLocation && formulaOk(e.armourValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
+    case "counterAttack":
+      return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
     case "reroll":
@@ -1516,6 +1570,13 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   if (entry.kind === "terrainIgnore") {
     // Ничего не пишем и не создаём — см. комментарий в шапке файла:
     // ignoredTerrainKeysForActor() читает Механику предмета напрямую, живьём.
+    return;
+  }
+
+  if (entry.kind === "counterAttack") {
+    // Живой запрос, как terrainIgnore выше: module/combat/counter-attack.mjs
+    // читает Механику предмета прямо в момент атаки против владельца — писать
+    // и откатывать нечего.
     return;
   }
 
@@ -2638,6 +2699,22 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       `<option value="${esc(p.key)}" ${chosen.has(p.key) ? "selected" : ""}>${esc(p.label)} (${p.mod >= 0 ? "+" : ""}${p.mod})</option>`
     ).join("");
     return `<select class="mech-terrain-ignore" multiple size="6" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
+  }
+
+  if (ent.kind === "counterAttack") {
+    const dtOpts = Object.entries(DAMAGE_TYPES)
+      .map(([v, l]) => optHtml(v, l, (ent.ccDamageType || "rending") === v)).join("");
+    return `
+      <input type="text" class="mech-cc-damage" data-group-id="${groupId}" data-entry-id="${ent.id}"
+             value="${esc(ent.ccDamage ?? "")}" placeholder="напр. 1d5+S.b" title="${esc(CC_DAMAGE_HINT)}" ${dis}/>
+      <select class="mech-cc-damage-type" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${dtOpts}</select>
+      <input type="number" class="mech-cc-pen" min="0" value="${esc(ent.ccPen ?? 0)}"
+             title="Пробитие" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-tearing" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccTearing ? "checked" : ""} ${dis}/> Рвущее</label>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-miss" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnMiss ? "checked" : ""} ${dis}/> при промахе противника (рукопашная)</label>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-unarmed" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnUnarmedOrGrapple ? "checked" : ""} ${dis}/> при безоружной атаке/Захвате против владельца</label>
+      <input type="text" class="mech-cc-label" placeholder="подпись в карточке (по умолчанию — имя предмета)" value="${esc(ent.ccLabel || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
   }
 
   if (ent.kind === "capability") {

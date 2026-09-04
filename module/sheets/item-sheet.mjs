@@ -2148,6 +2148,30 @@ export class WarhammerItemSheet
     mechField(".mech-capability-apt-match", (e, v) => { e.capabilityAptMatch = v; });
     mechField(".mech-capability-apt-align", (e, v) => { e.capabilityAptAlign = v; });
 
+    // Встречная атака (kind:"counterAttack", wdbc-2wy7) — Шипы/Цепные
+    // Бандольеры: формула урона хранится строкой (число ИЛИ формула с S.b/
+    // T.b/…), как и у остальных текстовых полей выше, галочки — независимые
+    // булевы поля.
+    mechField(".mech-cc-damage",      (e, v) => { e.ccDamage = v; });
+    mechField(".mech-cc-damage-type", (e, v) => { e.ccDamageType = v; });
+    mechField(".mech-cc-pen",         (e, v) => { e.ccPen = Math.max(0, parseInt(v) || 0); });
+    mechField(".mech-cc-label",       (e, v) => { e.ccLabel = v; });
+    on(".mech-cc-tearing", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccTearing = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+    on(".mech-cc-on-miss", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccOnMiss = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+    on(".mech-cc-on-unarmed", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccOnUnarmedOrGrapple = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
     on(".mech-fatigue-action", "change", ev => {
