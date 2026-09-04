@@ -424,7 +424,27 @@ globalThis.ChatMessage = class {
   static async create(data) { captured.chat.push(data); return data; }
 };
 
-globalThis.Actor = class { prepareBaseData() {} };
+globalThis.Actor = class {
+  prepareBaseData() {}
+  /**
+   * wdbc-5280/wdbc-kcb5: настоящий Foundry v14 (client/documents/actor.mjs) —
+   * `getActiveTokens(linked=false, document=false)`. `linked=true` оставляет
+   * ТОЛЬКО токены с включённым «Синхронизировать с актором» (actorLink на
+   * TokenDocument); `linked=false` (умолчание) возвращает ВСЕ токены этого
+   * актора на сцене — и привязанные, и нет. До этой заглушки метод не был
+   * определён вовсе, и класс багов «getActiveTokens(true) не находит
+   * непривязанный токен» был невидим npm test — ловился только живым миром.
+   */
+  getActiveTokens(linked = false, document = false) {
+    const placeables = globalThis.canvas?.tokens?.placeables ?? [];
+    const tokens = placeables.filter(t => {
+      const doc = t.document ?? t;
+      if (t.actor?.uuid !== this.uuid && doc.actorId !== this.id) return false;
+      return !linked || doc.actorLink === true;
+    });
+    return document ? tokens.map(t => t.document ?? t) : tokens;
+  }
+};
 globalThis.Item = class {};
 globalThis.ActiveEffect = class {};
 globalThis.Folder = class {};

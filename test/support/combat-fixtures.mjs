@@ -38,8 +38,19 @@ export function actorFor({ items = [], ...system } = {}) {
     // canvas.tokens.placeables (см. attack-dialog.mjs/recoil.mjs — читают
     // actor.getActiveTokens(), не привязанность токена, wdbc-5280: с
     // linked:true не находился токен без «Синхронизировать с актором»).
-    getActiveTokens() {
-      return (globalThis.canvas?.tokens?.placeables ?? []).filter(t => t.actor?.uuid === this.uuid);
+    //
+    // wdbc-kcb5: реальный Foundry v14 — getActiveTokens(linked=false,
+    // document=false). linked:true отбрасывает токены без actorLink на
+    // TokenDocument; умолчание false отдаёт ВСЕ токены актора (и с
+    // привязкой, и без). До этой правки заглушка игнорировала оба
+    // аргумента и всегда вела себя как linked:false — разница true/false
+    // была физически непроверяема юнит-тестом.
+    getActiveTokens(linked = false, document = false) {
+      const tokens = (globalThis.canvas?.tokens?.placeables ?? []).filter(t => {
+        if (t.actor?.uuid !== this.uuid) return false;
+        return !linked || (t.document ?? t).actorLink === true;
+      });
+      return document ? tokens.map(t => t.document ?? t) : tokens;
     }
   };
 }
