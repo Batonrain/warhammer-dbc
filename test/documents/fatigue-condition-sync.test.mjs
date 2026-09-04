@@ -13,11 +13,12 @@ import { describe, it, expect } from "vitest";
 import { WarhammerActor } from "../../module/documents/actor.mjs";
 import { ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
-function characterWith({ fatigueValue = 0, tBonus = 0, wpBonus = 0 } = {}) {
+function characterWith({ fatigueValue = 0, tBonus = 0, wpBonus = 0, gangrene = false } = {}) {
   const system = new ACTOR_DATA_MODELS.character({}).toObject();
   system.fatigue.value = fatigueValue;
   system.characteristics.t.bonus  = tBonus;
   system.characteristics.wp.bonus = wpBonus;
+  system.conditions.gangrene = gangrene;
   const list = [];
   list.get = () => null;
   WarhammerActor.prototype.prepareDerivedData.call({
@@ -51,5 +52,29 @@ describe("Усталость: тег СОСТОЯНИЙ зеркалит fatigue
     });
     expect(system.conditions.fatigued).toBe(false);
     expect(system.conditions.fatiguedLevel).toBe(0);
+  });
+});
+
+// Гангрена (стр. 30-31, wdbc-r5o7.5): «+1 неснимаемой Усталости» — пол на
+// КАЖДЫЙ пересчёт, а не разовое начисление в хранимое поле (иначе отдых
+// откатил бы fatigue.value до 0 обычным путём, ничего не зная о Гангрене).
+describe("Гангрена: +1 неснимаемая Усталость", () => {
+  it("Гангрена стоит, fatigue.value=0 — пол поднимает до 1", () => {
+    const s = characterWith({ fatigueValue: 0, gangrene: true });
+    expect(s.fatigue.value).toBe(1);
+    expect(s.conditions.fatigued).toBe(true);
+    expect(s.conditions.fatiguedLevel).toBe(1);
+  });
+
+  it("Гангрена стоит, fatigue.value уже выше 1 — не трогается", () => {
+    const s = characterWith({ fatigueValue: 3, gangrene: true });
+    expect(s.fatigue.value).toBe(3);
+    expect(s.conditions.fatiguedLevel).toBe(3);
+  });
+
+  it("нет Гангрены — fatigue.value=0 остаётся 0", () => {
+    const s = characterWith({ fatigueValue: 0, gangrene: false });
+    expect(s.fatigue.value).toBe(0);
+    expect(s.conditions.fatigued).toBe(false);
   });
 });

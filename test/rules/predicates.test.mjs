@@ -221,6 +221,26 @@ describe("charNotIn", () => {
   });
 });
 
+describe("charIn", () => {
+  const mental = ["int", "per", "wp", "fel", "inf"];
+
+  it("характеристика теста входит в список — истинно", () => {
+    expect(PREDICATES.charIn(actor(), { char: "wp" }, mental)).toBe(true);
+  });
+
+  it("характеристика теста не входит в список — ложно", () => {
+    expect(PREDICATES.charIn(actor(), { char: "ws" }, mental)).toBe(false);
+  });
+
+  it("регистр не важен", () => {
+    expect(PREDICATES.charIn(actor(), { char: "WP" }, mental)).toBe(true);
+  });
+
+  it("нет ctx.char (тест без характеристики) — не входит ни в какой список", () => {
+    expect(PREDICATES.charIn(actor(), {}, mental)).toBe(false);
+  });
+});
+
 describe("targetHasTrait", () => {
   it("у цели есть такая Черта", () => {
     const targetActor = actor({ items: [trait("Daemonic / Демонический")] });
@@ -355,6 +375,7 @@ describe("общее требование к предикатам", () => {
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasCondition: "prone", targetHasCondition: "prone",
     charNotIn: ["t", "inf", "cor"],
+    charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos",

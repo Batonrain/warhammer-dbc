@@ -68,5 +68,45 @@ export const CONDITION_RULES = [
     label: "Отравление",
     when: { hasCondition: "poisoned", charNotIn: ["t", "inf", "cor"] },
     effects: [{ kind: "critRangeMod", target: "all", side: "failure", value: 10 }]
+  },
+  {
+    // Стр. 30-31, wdbc-r5o7.5: «Потеря стоп — −20 на тесты Движения»,
+    // «Потеря ног — как потеря стопы» (значит, тот же −20 наследуется).
+    // Книга не даёт списка «тестов Движения» — решение (задокументировано,
+    // не молча): Акробатика и Атлетика, единственные два навыка в этой
+    // системе, чьё описание — про физическое перемещение тела (лазание,
+    // прыжки, бег, балансирование), а не про сам расчёт SPD/Полудвижения
+    // (те не тесты вовсе, считаются в rules/character.mjs — см. там же
+    // halfMove/move/charge/run и halvedFloor/immobile в spdBreakdown).
+    // Остальные три последствия этой пары Состояний не выражаются rollBonus:
+    // Уклонение при потере ног — combat/defense.mjs (_performDodge, тот же
+    // отдельный от resolveTest путь, что и Повален); Acrobatics−10 «просто
+    // чтобы идти»/полная неподвижность без обеих ног — combat/movement-actions.mjs
+    // (declareHalfMove/FullMove/Charge/Run/Disengage).
+    id: "conditions.lostFeetOrLegs",
+    label: "Потеря стоп/ног",
+    when: { hasCondition: ["lostFeet", "lostLegs"] },
+    effects: [
+      { kind: "rollBonus", target: "skill:acrobatics", value: -20 },
+      { kind: "rollBonus", target: "skill:athletics",  value: -20 }
+    ]
+  },
+  {
+    // Стр. 30-31, wdbc-r5o7.5: «Гангрена — ... −20 на ментальные действия».
+    // Книга не даёт списка «ментальных действий» — решение (задокументировано,
+    // не молча): Int/Per/WP/Fel/Inf — единственные пять характеристик этой
+    // системы, не завязанные на тело (в отличие от WS/BS/S/T/Ag), charIn
+    // короче и точнее целится, чем «всё кроме пяти физических» через charNotIn.
+    // Остальные три последствия Гангрены не выражаются rollBonus: +1
+    // неснимаемой Усталости — rules/character.mjs (клампится в derived data
+    // на каждый пересчёт); периодический урон T раз в T.b×2 часов — кнопка
+    // на листе, combat/gangrene.mjs (тот же общий приём worldTime-кулдауна,
+    // что у Перевеса выключенной брони); «не восстанавливает T отдыхом» —
+    // сейчас в системе вообще нет авто-восстановления charDamage отдыхом ни
+    // у кого — снимать нечего, см. заголовок combat/gangrene.mjs.
+    id: "conditions.gangrene",
+    label: "Гангрена",
+    when: { hasCondition: "gangrene", charIn: ["int", "per", "wp", "fel", "inf"] },
+    effects: [{ kind: "rollBonus", target: "all", value: -20 }]
   }
 ];

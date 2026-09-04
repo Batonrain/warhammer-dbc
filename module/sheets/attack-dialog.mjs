@@ -1640,7 +1640,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
             const apCost = isMelee
               ? apCostForActionType(sel.bDef.actionType)
               : apCostForActionType(f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
-            if (!await spendActionPoints(actor, apCost)) {
+            if (!await spendActionPoints(actor, apCost, { physical: true })) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
             }

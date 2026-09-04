@@ -33,6 +33,7 @@ import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movemen
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
+import { gangrenePeriodicRemaining }             from "../combat/gangrene.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
@@ -48,6 +49,8 @@ function charTotalTooltip(total, breakdown) {
     if (b.cap != null)   return `${b.label}: не выше ${b.cap}`;
     if (b.floor != null) return `${b.label}: не ниже ${b.floor}`;
     if (b.halved)         return `${b.label}: ÷2`;
+    if (b.halvedFloor)    return `${b.label}: ÷2 (окр. вниз)`;
+    if (b.immobile)       return `${b.label}: не может ходить`;
     if (b.label === "База") return `${b.label}: ${b.value}${b.note ? ` (${b.note})` : ""}`;
     const sign = b.value > 0 ? "+" : "−";
     return `${b.label}: ${sign}${Math.abs(b.value)}`;
@@ -275,6 +278,22 @@ export function characterContext(actor) {
   } else {
     context.disabledArmourPeriodicReady = false;
     context.disabledArmourPeriodicRemainingLabel = null;
+  }
+
+  // Гангрена (стр. 30-31, wdbc-r5o7.5): та же кнопка-таймер, что у Перевеса
+  // брони выше, только на интервал T.b×2 часов и свой флаг (gangreneTestAt,
+  // combat/gangrene.mjs).
+  if (system.conditions?.gangrene) {
+    const tb = Number(system.characteristics?.t?.bonus) || 0;
+    const testAt = actor.getFlag?.("warhammer-dbc", "gangreneTestAt");
+    const remaining = gangrenePeriodicRemaining(testAt, game.time?.worldTime ?? 0, tb);
+    context.gangrenePeriodicReady = remaining <= 0;
+    context.gangrenePeriodicRemainingLabel = remaining > 0
+      ? `${Math.floor(remaining / 3600)}ч ${String(Math.floor((remaining % 3600) / 60)).padStart(2, "0")}м`
+      : null;
+  } else {
+    context.gangrenePeriodicReady = false;
+    context.gangrenePeriodicRemainingLabel = null;
   }
 
   context.races = raceEntries();

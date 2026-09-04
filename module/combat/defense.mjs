@@ -48,6 +48,12 @@ export async function _noReactionCard(actor, label) {
 }
 
 export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false, burst = false, attackerIsHorde = false) {
+  // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
+  // потерянной ноги (книга не требует «обеих», в отличие от полной
+  // неподвижности при потере ОБЕИХ ног, см. rules/character.mjs). Реакция не
+  // тратится — Уклонение физически недоступно, а не просто провалено.
+  if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
+    return _noReactionCard(actor, "Уклонение (нет ног)");
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;

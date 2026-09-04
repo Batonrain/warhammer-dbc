@@ -202,6 +202,13 @@ export const PREDICATES = {
   // исключает, правило действует.
   charNotIn: (actor, ctx, value) => !list(value).includes((ctx?.char || "").toLowerCase()),
 
+  // Обратное charNotIn — характеристика теста ВХОДИТ в список. Нужен, когда
+  // список короче через «входит», чем через «не входит» (Гангрена, стр.
+  // 30-31, wdbc-r5o7.5: −20 именно на Int/Per/WP/Fel/Inf, а не «всё, кроме
+  // WS/BS/S/T/Ag»). Тест без характеристики — список не включает пустую
+  // строку, предикат не срабатывает (симметрично charNotIn).
+  charIn: (actor, ctx, value) => list(value).includes((ctx?.char || "").toLowerCase()),
+
   // Актор цели лежит в ctx.targetActor, а не в ctx.target: в контексте броска
   // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
   // этапе 2 плана оба контекста сошлись в одном объекте.

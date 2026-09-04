@@ -19,6 +19,12 @@
         <div class="armor-tb-note" style="margin-top:4px;"> <button type="button" class="disabled-armour-fork-test-btn" title="Тест-развилка S+0 или Athletics(S)+10 — в начале своего Хода или при отключении брони (стр. 233). Провал (на тире 2 успех тоже) роняет Max.A брони до 10.">Тест S/Athletics — перевес</button> <span>жать в начале своего Хода</span>
         </div> {{/unless}}
         {{/if}}
+        {{#if system.conditions.gangrene}}
+        <div class="armor-tb-note gangrene-periodic-row" style="margin-top:4px;color:#a8c07a;" title="Гангрена (стр. 30-31): каждые T.b×2 часов — 1d10 непоглощаемого урона в T (Мод. характеристики). Отдых/медитация этот урон не лечит.">
+          <button type="button" class="gangrene-periodic-test-btn" {{#unless gangrenePeriodicReady}}disabled{{/unless}}>Урон T — Гангрена</button>
+          <span>{{#if gangrenePeriodicReady}}Доступен{{else}}Перезарядка: {{gangrenePeriodicRemainingLabel}}{{/if}}</span>
+        </div>
+        {{/if}}
         {{#if hasWeaponPropWounds}}
         <div class="armor-tb-note wprop-wounds-block" style="margin-top:6px;">
           <div class="armor-loc-label" style="margin-bottom:2px;">Свойства оружия</div>

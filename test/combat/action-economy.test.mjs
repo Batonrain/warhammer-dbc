@@ -342,6 +342,98 @@ describe("apSpendGate / reactionSpendGate", () => {
   });
 });
 
+// Калечащее (стр. 168, wdbc-r5o7.5): «оба ОД в Ход ушли на физические
+// действия» → непоглощаемый урон каждой раны из system.crippledWounds,
+// раньше только кнопкой в чате (жать вручную), теперь — автоматически по
+// накоплению physicalApSpentThisTurn до effectiveActionPointsMax.
+describe("spendActionPoints({physical:true}) — авто-триггер Калечащего", () => {
+  const withWound = (over = {}) => actorFor({
+    actionPoints: { value: 2, max: 2 },
+    crippledWounds: [{ location: "leftLeg", locationLabel: "Левая нога", rating: 3, damageType: "impact" }],
+    wounds: { value: 5, max: 20 },
+    ...over
+  });
+
+  it("одной физ. траты на весь max ОД хватает — триггерит сразу", async () => {
+    globalThis.game.combat = { started: true };
+    captured.chat = [];
+    const actor = withWound();
+    expect(await spendActionPoints(actor, 2, { physical: true })).toBe(true);
+    expect(captured.chat).toHaveLength(1);
+    expect(captured.chat[0].content).toContain("Калечащее");
+    expect(actor.system.wounds.value).toBe(2); // 5 − рейтинг 3 (непоглощаемый урон)
+  });
+
+  it("две физ. траты по 1 ОД — триггерит только когда накопилось до max", async () => {
+    globalThis.game.combat = { started: true };
+    captured.chat = [];
+    const actor = withWound({ actionPoints: { value: 2, max: 2 } });
+    expect(await spendActionPoints(actor, 1, { physical: true })).toBe(true);
+    expect(captured.chat).toHaveLength(0); // 1 из 2 — ещё не оба ОД
+    expect(await spendActionPoints(actor, 1, { physical: true })).toBe(true);
+    expect(captured.chat).toHaveLength(1); // второй физ. ОД — оба набраны
+  });
+
+  it("не физическая трата не засчитывается в счётчик", async () => {
+    globalThis.game.combat = { started: true };
+    captured.chat = [];
+    const actor = withWound({ actionPoints: { value: 2, max: 2 } });
+    expect(await spendActionPoints(actor, 1)).toBe(true); // без {physical:true}
+    expect(await spendActionPoints(actor, 1, { physical: true })).toBe(true);
+    expect(captured.chat).toHaveLength(0); // только 1 физ. ОД засчитан из 2
+  });
+
+  it("нет незаживших ран Калечащего — ничего не триггерит", async () => {
+    globalThis.game.combat = { started: true };
+    captured.chat = [];
+    const actor = actorFor({ actionPoints: { value: 2, max: 2 }, wounds: { value: 5, max: 20 } });
+    expect(await spendActionPoints(actor, 2, { physical: true })).toBe(true);
+    expect(captured.chat).toHaveLength(0);
+  });
+
+  it("уже триггерилось в этом Ходу — повторно не триггерит на следующей физ. трате", async () => {
+    globalThis.game.combat = { started: true };
+    captured.chat = [];
+    const actor = withWound({ actionPoints: { value: 2, max: 2 } });
+    await spendActionPoints(actor, 2, { physical: true });
+    expect(captured.chat).toHaveLength(1);
+    await actor.update({ "system.actionPoints.value": 2 }); // ещё Ход, ОД не сброшены руками
+    await spendActionPoints(actor, 2, { physical: true });
+    expect(captured.chat).toHaveLength(1); // не второй раз
+  });
+
+  it("несколько ран Калечащего — триггерит урон по каждой", async () => {
+    globalThis.game.combat = { started: true };
+    captured.chat = [];
+    const actor = withWound({
+      actionPoints: { value: 2, max: 2 },
+      crippledWounds: [
+        { location: "leftLeg",  locationLabel: "Левая нога",  rating: 3, damageType: "impact" },
+        { location: "rightArm", locationLabel: "Правая рука", rating: 2, damageType: "impact" }
+      ]
+    });
+    await spendActionPoints(actor, 2, { physical: true });
+    expect(captured.chat).toHaveLength(2);
+    expect(actor.system.wounds.value).toBe(0); // 5 − 3 − 2
+  });
+
+  it("resetActionEconomy снимает оба флага — новый Ход триггерит заново", async () => {
+    const actor = withWound({ actionPoints: { value: 0, max: 2 } });
+    await actor.setFlag("warhammer-dbc", "physicalApSpentThisTurn", 2);
+    await actor.setFlag("warhammer-dbc", "cripplingTriggeredThisTurn", true);
+    await resetActionEconomy(actor);
+    expect(actor.getFlag("warhammer-dbc", "physicalApSpentThisTurn")).toBeUndefined();
+    expect(actor.getFlag("warhammer-dbc", "cripplingTriggeredThisTurn")).toBeUndefined();
+  });
+
+  it("вне активного Encounter физ. трата не списывает ОД и не триггерит", async () => {
+    captured.chat = [];
+    const actor = withWound();
+    expect(await spendActionPoints(actor, 2, { physical: true })).toBe(true);
+    expect(captured.chat).toHaveLength(0);
+  });
+});
+
 // wdbc-qjnk: карточка «сколько у меня ОД/Реакций» в начале своего Хода.
 describe("postTurnStartCard", () => {
   it("постит в чат карточку с текущими ОД и Реакциями", async () => {

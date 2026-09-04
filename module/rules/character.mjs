@@ -527,6 +527,16 @@ export function prepareCharacterDerived(actor, system) {
       system.fatigue.max = (chars.t?.bonus ?? 0) + (chars.wp?.bonus ?? 0);
     }
 
+    // Гангрена (стр. 30-31, wdbc-r5o7.5): «+1 неснимаемой Усталости» — не
+    // разовое начисление (легло бы в хранимое поле и ушло бы при следующем
+    // отдыхе, как обычная Усталость), а пол на КАЖДЫЙ пересчёт: пока
+    // Состояние стоит, fatigue.value здесь не опускается ниже 1, чем бы его
+    // ни обнулили (кнопка отдыха и любой другой писатель поля не в курсе
+    // Гангрены и не обязаны быть). Тег ниже читает уже клампнутое значение.
+    if (system.conditions?.gangrene && system.fatigue) {
+      system.fatigue.value = Math.max(1, Number(system.fatigue.value) || 0);
+    }
+
     // Тег «Усталость» в СОСТОЯНИЯХ — не отдельное поле, а зеркало настоящего
     // счётчика Усталости (вкладка ТЕЛО). Раньше их правили независимо (кнопки
     // ТЕЛА addFatigue/removeFatigue не трогали conditions.fatigued вовсе),
@@ -1045,6 +1055,25 @@ export function prepareCharacterDerived(actor, system) {
       run      = Math.max(0.5, run / 2);
     }
 
+    // Потеря стоп/ног (стр. 30-31, wdbc-r5o7.5): «SPD уменьшена вдвое (окр.
+    // вниз)» — в отличие от Поваленного (обычное ÷2, минимум 0.5), здесь
+    // явное книжное округление вниз, поэтому Math.floor, не Math.max(0.5,…);
+    // одна потерянная стопа/нога уже даёт полный штраф — книга не говорит
+    // «за каждую», считаем булево (есть хоть одна — эффект применён), не по
+    // счётчику count. Без ОБЕИХ ног — «не может ходить» вообще, это сильнее
+    // деления и обнуляет Движение целиком (см. lostLegsCount ниже);
+    // Уклонение при потере ног — отдельно, combat/defense.mjs.
+    const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs);
+    const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) >= 2;
+    if (bothLegsLost) {
+      halfMove = 0; move = 0; charge = 0; run = 0;
+    } else if (lostFeetOrLeg) {
+      halfMove = Math.floor(halfMove / 2);
+      move     = Math.floor(move / 2);
+      charge   = Math.floor(charge / 2);
+      run      = Math.floor(run / 2);
+    }
+
     system.movement.halfMove = halfMove;
     system.movement.move     = move;
     system.movement.charge   = charge;
@@ -1069,6 +1098,13 @@ export function prepareCharacterDerived(actor, system) {
     if (system.conditions?.prone) {
       spdBreakdown.push({ label: "Повален", value: null, halved: true });
       expectedHalfMove /= 2;
+    }
+    if (bothLegsLost) {
+      spdBreakdown.push({ label: "Потеря обеих ног", value: null, immobile: true });
+      expectedHalfMove = 0;
+    } else if (lostFeetOrLeg) {
+      spdBreakdown.push({ label: "Потеря стопы/ноги", value: null, halvedFloor: true });
+      expectedHalfMove = Math.floor(expectedHalfMove / 2);
     }
     if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
     system.movement.spdBreakdown = spdBreakdown;

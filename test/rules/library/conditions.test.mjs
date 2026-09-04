@@ -92,3 +92,64 @@ describe("правило «Отравление»", () => {
     expect(crit).toEqual({ successExtra: 0, failExtra: 0 });
   });
 });
+
+// «Потеря стоп/ног» (стр. 30-31, wdbc-r5o7.5): −20 на тесты Движения — здесь
+// узко Акробатика/Атлетика (решение задокументировано в library/conditions.mjs,
+// заголовок правила). SPD/Уклонение/полная неподвижность — не rollBonus,
+// проверяются отдельно (spd-breakdown.test.mjs, defense.test.mjs,
+// movement-moved-flag.test.mjs).
+describe("правило «Потеря стоп/ног»", () => {
+  it("есть в библиотеке", () => {
+    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.lostFeetOrLegs");
+  });
+
+  it.each(["lostFeet", "lostLegs"])("Потеря стоп/ног (%s) — −20 на Акробатику", key => {
+    const { mods } = resolveTest({ actor: actor({ [key]: true }), skill: "acrobatics", char: "ag" });
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.lostFeetOrLegs", value: -20 })]);
+  });
+
+  it("−20 на Атлетику тоже", () => {
+    const { mods } = resolveTest({ actor: actor({ lostFeet: true }), skill: "athletics", char: "s" });
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.lostFeetOrLegs", value: -20 })]);
+  });
+
+  it("не Акробатика/Атлетика — правило не трогает", () => {
+    const { mods } = resolveTest({ actor: actor({ lostFeet: true }), skill: "medicae", char: "int" });
+    expect(mods).toEqual([]);
+  });
+
+  it("нет ни одного из двух Состояний — не запускает", () => {
+    const { mods } = resolveTest({ actor: actor(), skill: "acrobatics", char: "ag" });
+    expect(mods).toEqual([]);
+  });
+});
+
+// «Гангрена» (стр. 30-31, wdbc-r5o7.5): −20 на ментальные действия — здесь
+// узко Int/Per/WP/Fel/Inf (решение задокументировано в library/conditions.mjs).
+// +1 неснимаемой Усталости и периодический урон T — не rollBonus, см.
+// rules/character.mjs (fatigue floor) и combat/gangrene.mjs (кнопка листа).
+describe("правило «Гангрена»", () => {
+  it("есть в библиотеке", () => {
+    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.gangrene");
+  });
+
+  it.each(["int", "per", "wp", "fel", "inf"])("−20 на тест характеристики %s", char => {
+    const { mods } = resolveTest({ actor: actor({ gangrene: true }), char });
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.gangrene", value: -20 })]);
+  });
+
+  it.each(["ws", "bs", "s", "t", "ag"])("физические характеристики (%s) не штрафуются", char => {
+    const { mods } = resolveTest({ actor: actor({ gangrene: true }), char });
+    expect(mods).toEqual([]);
+  });
+
+  it("нет Гангрены — не запускает", () => {
+    const { mods } = resolveTest({ actor: actor(), char: "wp" });
+    expect(mods).toEqual([]);
+  });
+
+  it("тест без характеристики — не запускает", () => {
+    const { mods } = resolveTest({ actor: actor({ gangrene: true }), skill: "medicae" });
+    expect(mods).toEqual([]);
+  });
+});

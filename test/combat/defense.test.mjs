@@ -279,6 +279,30 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
   });
 });
 
+// Потеря ноги (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» вообще — хватает
+// одной потерянной ноги (не обязательно обеих, в отличие от полной
+// неподвижности Движения, см. spd-breakdown.test.mjs). Реакция не тратится.
+describe("_performDodge: Потеря ноги блокирует Уклонение (wdbc-r5o7.5)", () => {
+  it("одна потерянная нога — карточка «нет ног», Реакция не тратится", async () => {
+    const actor = attacker();
+    actor.system.conditions = { lostLegs: true, lostLegsCount: 1 };
+    actor.system.reactions = { value: 1, max: 1, defenseValue: 0, defenseMax: 0 };
+
+    await _performDodge(actor, 0, "", 1);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("нет ног");
+    expect(actor.system.reactions.value).toBe(1); // не потрачена
+  });
+
+  it("без потери ног — Уклонение работает как раньше", async () => {
+    const actor = attacker();
+    await _performDodge(actor, 0, "", 1);
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("нет ног");
+  });
+});
+
 // Пул Избегания (стр. 12, module/combat/evasion-pool.mjs): излишек Успехов
 // сверх того, что нужно ЭТОЙ атаке, банкуется на попадания ДРУГИХ атак того
 // же противника в этом Ходу — но только пока «Ход» отследим (активный бой).

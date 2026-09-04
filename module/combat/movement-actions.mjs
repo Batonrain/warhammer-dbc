@@ -67,6 +67,31 @@ function _showReachRing(actor, meters) {
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
+/** Потеря ОБЕИХ ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» — жёсткий запрет, не тест. */
+function _bothLegsLost(actor) {
+  return (Number(actor.system.conditions?.lostLegsCount) || 0) >= 2;
+}
+
+/** Потеря ОБЕИХ стоп: сам факт не блокирует движение, но требует Acrobatics−10 «просто чтобы идти». */
+function _bothFeetLost(actor) {
+  return (Number(actor.system.conditions?.lostFeetCount) || 0) >= 2;
+}
+
+/**
+ * Подтверждение Acrobatics−10 «без обеих стоп» (стр. 30-31, wdbc-r5o7.5) —
+ * тот же приём, что Вызов/Challenge выше (Dialog.confirm, а не форсированный
+ * бросок): движок здесь не гоняет тесты навыков за игрока, кнопка навыка
+ * «Акробатика» на листе уже даёт нужный штраф (rules/library/conditions.mjs,
+ * conditions.lostFeetOrLegs) — этот диалог только не даёт забыть, что бросок
+ * вообще нужен, и не позволяет объявить движение без него.
+ */
+async function _confirmAcrobaticsToWalk(actor) {
+  return Dialog.confirm({
+    title: "Потеря обеих стоп",
+    content: `<p>${esc(actor.name)} без обеих стоп: чтобы просто идти, нужен успешный бросок Акробатики−10.</p><p>Бросок сделан и успешен?</p>`
+  });
+}
+
 /**
  * Флаг «двигался в этом Ходу» — ставят и Действия Движения ниже (раздел A),
  * и реальное перемещение токена по канвасу (initMovedFlagTracking, конец
@@ -147,11 +172,15 @@ async function _postCard(actor, content) {
 
 export async function declareHalfMove(actor) {
   if (!actor) return;
+  // Потеря обеих ног (стр. 30-31, wdbc-r5o7.5): «не может ходить» вообще.
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   const useBonus = hasRuleFlag(actor, BONUS_HALF_MOVE_CAPABILITY)
     && isRoundCapabilityAvailable(actor, BONUS_HALF_MOVE_CAPABILITY);
   if (useBonus) {
     await markRoundCapabilityUsed(actor, BONUS_HALF_MOVE_CAPABILITY);
-  } else if (!await spendActionPoints(actor, 1)) {
+  } else if (!await spendActionPoints(actor, 1, { physical: true })) {
     return ui.notifications.warn("⚠️ Не хватает ОД.");
   }
   await markMovedThisTurn(actor);
@@ -167,7 +196,10 @@ export async function declareHalfMove(actor) {
 
 export async function declareFullMove(actor) {
   if (!actor) return;
-  if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
+  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
   _showReachRing(actor, actor.system.movement?.move);
@@ -183,6 +215,8 @@ export async function declareCharge(actor) {
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
   if (actor.system.conditions?.prone)
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Натиск. Сначала встать (Полудействие).");
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -205,6 +239,9 @@ export async function declareCharge(actor) {
  */
 export async function declareDisengage(actor) {
   if (!actor) return;
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (_bothFeetLost(actor) && !await _confirmAcrobaticsToWalk(actor)) return;
   if (actor.system.conditions?.challenged) {
     const confirmed = await Dialog.confirm({
       title: "Вызов (Challenge)",
@@ -212,7 +249,7 @@ export async function declareDisengage(actor) {
     });
     if (!confirmed) return;
   }
-  if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "disengageActive", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "half");
@@ -228,7 +265,9 @@ export async function declareRun(actor) {
   // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
   if (actor.system.conditions?.prone)
     return ui.notifications.warn("⚠️ Повален — нельзя объявить Бег. Сначала встать (Полудействие).");
-  if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
+  if (_bothLegsLost(actor))
+    return ui.notifications.warn("⚠️ Нет обеих ног — Движение недоступно.");
+  if (!await spendActionPoints(actor, 2, { physical: true })) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");

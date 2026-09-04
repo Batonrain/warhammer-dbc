@@ -128,6 +128,10 @@ export async function resetActionEconomy(actor) {
   // из Хода (processSnapshotTurnEnd, до сброса ниже) — сбрасывается здесь
   // тем же тактом, что и movedThisTurn, следующий Ход начинается заново.
   if (actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")) upd["flags.warhammer-dbc.-=moveDegreeThisTurn"] = null;
+  // Калечащее (см. _maybeTriggerCrippling выше): счётчик и защёлка триггера
+  // считаются заново с каждым Ходом, тем же тактом, что movedThisTurn.
+  if (actor.getFlag("warhammer-dbc", "physicalApSpentThisTurn"))  upd["flags.warhammer-dbc.-=physicalApSpentThisTurn"] = null;
+  if (actor.getFlag("warhammer-dbc", "cripplingTriggeredThisTurn")) upd["flags.warhammer-dbc.-=cripplingTriggeredThisTurn"] = null;
   if (Object.keys(upd).length) await actor.update(upd);
 }
 
@@ -179,12 +183,59 @@ export function canSpendActionPoints(actor, cost) {
   return (Number(actor.system.actionPoints?.value) || 0) >= cost;
 }
 
-/** Списать ОД, если возможно. Возвращает false, если ОД не хватило (действие не проведено). */
-export async function spendActionPoints(actor, cost) {
+/**
+ * Калечащее (стр. 168, Крит. свойство оружия «Crippling/Калечащее»,
+ * wdbc-r5o7.5): рана хранится в system.crippledWounds (combat/damage.mjs::
+ * _applyCrippling) и наносит непоглощаемый урон, «когда оба ОД в этот Ход
+ * ушли на физические действия» — раньше только кнопкой в чате
+ * (wh-crippling-trigger-btn, жать вручную «когда вспомнили»), здесь —
+ * автоматически, по факту накопления physicalApSpentThisTurn до максимума
+ * ОД актора (effectiveActionPointsMax — та же цифра, что видит игрок в
+ * счётчике ОД, с учётом Решительности Сражаться/Подавленного).
+ *
+ * «Физическое действие» книга не определяет списком — вызывающая сторона
+ * помечает это сама через spendActionPoints(actor, cost, {physical:true}).
+ * Помечены однозначно телесные действия — Движение (Полудействие/Натиск/
+ * Бег/Отход, movement-actions.mjs) и сама атака (attack-dialog.mjs).
+ * НЕ помечены как физические (решение зафиксировано здесь, не молча):
+ * Поклон Публике (bow-to-audience.mjs) и Духовный Разговор (spirit-talk.mjs)
+ * — оба тратят ОД на тест Восприятия/психический ритуал, а не на телесное
+ * усилие раненой конечностью; общая кнопка «потратить ОД без своей кнопки»
+ * (.ae-spend-btn, sheets/tabs/combat.mjs) и Отскок (.ae-recoil-bonus-btn,
+ * там же) не помечены, потому что представляют произвольное действие игрока
+ * без уточнения его природы — угадывать «физическое оно или нет» значило
+ * бы либо занижать, либо задваивать урон без основания в тексте.
+ */
+async function _maybeTriggerCrippling(actor, cost) {
+  const wounds = actor.system?.crippledWounds;
+  if (!wounds?.length) return;
+  if (actor.getFlag("warhammer-dbc", "cripplingTriggeredThisTurn")) return;
+  const spent = (Number(actor.getFlag("warhammer-dbc", "physicalApSpentThisTurn")) || 0) + cost;
+  if (spent < effectiveActionPointsMax(actor)) {
+    await actor.setFlag("warhammer-dbc", "physicalApSpentThisTurn", spent);
+    return;
+  }
+  await actor.update({
+    "flags.warhammer-dbc.physicalApSpentThisTurn": spent,
+    "flags.warhammer-dbc.cripplingTriggeredThisTurn": true
+  });
+  const { applyCripplingTrigger } = await import("./damage.mjs");
+  for (const w of wounds) {
+    await applyCripplingTrigger(actor, Number(w.rating) || 0, w.locationLabel || w.location || "");
+  }
+}
+
+/**
+ * Списать ОД, если возможно. Возвращает false, если ОД не хватило (действие
+ * не проведено). physical:true — это трата ОД на физическое действие (см.
+ * _maybeTriggerCrippling выше) — считается к авто-триггеру Калечащего.
+ */
+export async function spendActionPoints(actor, cost, { physical = false } = {}) {
   if (!canSpendActionPoints(actor, cost)) return false;
   if (cost && isEncounterActive() && hasActionEconomy(actor)) {
     const value = Number(actor.system.actionPoints?.value) || 0;
     await actor.update({ "system.actionPoints.value": Math.max(0, value - cost) });
+    if (physical) await _maybeTriggerCrippling(actor, cost);
   }
   return true;
 }
