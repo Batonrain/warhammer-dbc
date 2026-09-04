@@ -1179,9 +1179,15 @@ export class WarhammerCharacterSheet
       ["", `Как у мира (${PRICING_MODES[world]})`],
       ...Object.entries(PRICING_MODES)
     ].map(([key, label]) => ({
-      cls: `wh-ctx-pricing-${key || "world"}`, label: `Система продвижения: ${label}`,
+      cls: `wh-ctx-pricing-${key || "world"}`, label,
       checkbox: true, checked: cur === key, onClick: () => set(key)
     }));
+  }
+
+  /** Система продвижения как один каскадный пункт (wdbc-unpb), тот же приём,
+   * что _alignmentSubmenu() — вместо плоского списка мьютекс-пунктов в общем меню. */
+  _advancePricingSubmenu() {
+    return { cls: "wh-ctx-pricing", label: "📈 Система продвижения", submenu: this._advancePricingEntries() };
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */
@@ -1556,7 +1562,7 @@ export class WarhammerCharacterSheet
       return [
         wizard, this._bodyTypeSubmenu(), { sep: true },
         ...(aeldari ? [] : [this._alignmentSubmenu(), { sep: true }]),
-        ...this._advancePricingEntries(), { sep: true },
+        this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
         horde
