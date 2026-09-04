@@ -532,7 +532,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // остаток дистанции — иначе диалог открывать не на что.
   const evasionPool = evasionPoolEntry
     ? { successes: evasionPoolEntry.successes,
-        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount),
+        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
         canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0 }
     : null;
 
