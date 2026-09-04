@@ -42,6 +42,7 @@ import { applyDivinationPicks, divinationSheetContext, rollRandomDivinationKey }
 import { DIVINATION_BY_KEY, hasChoices as divinationHasChoices } from "../constants/divinations.mjs";
 import { grantChoiceBlocksHtml, wireGrantChoiceBlocks, readGrantChoicePicks } from "./origin-shared.mjs";
 import { characterContext }      from "../sheets/character-context.mjs";
+import { generateName, cultureForRace } from "../rules/name-generator.mjs";
 import { CHARACTERISTICS, APTITUDES } from "../constants/characteristics.mjs";
 import { CREATION_ROLL_CHARS, creationBonusRolls, rollCharSet, creationCharSum,
          rollFormula, rollFormulaForChar, APT_CHAR_KEYS, APT_OTHER_KEYS, APT_PICK, resolveCreation,
@@ -1774,6 +1775,16 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     on(".wiz-equip-sacrifice", "click", () => this._sacrificeEquip());
 
     on(".wiz-name-inp",  "change", ev => this.actor.update({ name: ev.currentTarget.value || "Новый персонаж" }));
+    // 🎲 Имя — подставляет случайное имя по культуре выбранной расы/пола
+    // (module/rules/name-generator.mjs, wdbc-ik5s). Раса ещё не выбрана —
+    // используется имперская культура (запасной вариант cultureForRace).
+    // Повторный клик перегенерирует: результат каждый раз новый случайный
+    // выбор из списка, а не запоминается предыдущий вариант.
+    on(".wiz-name-gen", "click", () => {
+      const culture = cultureForRace(this.actor.system.race);
+      const gender = this.actor.system.bodyType || "male";
+      this.actor.update({ name: generateName(culture, gender) }).then(() => this.render(false));
+    });
     on(".wiz-race-sel",  "change", ev => {
       if (ev.currentTarget.value === "") return; // плейсхолдер «— выбрать —», не настоящая раса
       this.actor.update({ "system.race": ev.currentTarget.value, "system.subrace": "" }).then(() => this.render(false));
