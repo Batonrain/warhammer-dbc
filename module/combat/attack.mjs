@@ -629,7 +629,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         props:         buildPropertyChatBlock(wProps),
         quality:       buildQualityChatBlock(item),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
-        targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false }),
+        // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
+        // спец-боеприпасов, чей эффект зависит от собственной идентичности
+        // (Гиперрост), не только от ключа свойства Toxic.
+        targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false, ammoName: loadedAmmo?.name || "" }),
         dice:          renderedDice
       }
     }),

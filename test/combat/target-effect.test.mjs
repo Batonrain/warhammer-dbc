@@ -44,6 +44,19 @@ describe("buildTargetEffectButtons: базовое поведение (не до
   });
 });
 
+describe("ammoName (wdbc-utaw): нить «какой боеприпас дал этот выстрел» до кнопки эффекта", () => {
+  it("кнопка несёт data-wp-ammo-name — имя заряженного боеприпаса этого выстрела", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]),
+      { hit: true, ammoName: "Гиперрост" });
+    expect(html).toContain('data-wp-ammo-name="Гиперрост"');
+  });
+
+  it("без ammoName (рукопашное/оружие без боеприпаса) — атрибут явно пустой, не выпадает", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-ammo-name=""');
+  });
+});
+
 describe("provalyDamage: урон «рейтинг×mult + add + Провалы» без кубика", () => {
   it("Bane — mult:0, add:0: кнопка есть, несмотря на отсутствие condition", () => {
     const html = buildTargetEffectButtons(props([{ key: "bane", rating: 3 }]), { hit: true });

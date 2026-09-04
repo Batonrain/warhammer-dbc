@@ -58,6 +58,7 @@ import { reconcileKingsPlateToFit } from "./module/apps/kings-plate.mjs";
 import { reconcileBloodShieldToFit } from "./module/apps/blood-shield.mjs";
 import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
 import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
+import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
@@ -1645,8 +1646,10 @@ Hooks.on("deleteItem", async (item, options, userId) => {
 });
 
 // Динамические источники аблативных Ран (wdbc-w8ws: Раковое Исцеление,
-// Освежёванный, Чумной Пастырь) держат СВОЮ долю общего пула флагом на
-// акторе-получателе и двигают её ablativeMax вместе с ablative — без этого
+// Освежёванный, Чумной Пастырь; wdbc-utaw: Гиперрост — единственный случай,
+// где получатель доли не владелец источника, а цель, в которую он попал)
+// держат СВОЮ долю общего пула флагом на акторе-получателе и двигают её
+// ablativeMax вместе с ablative — без этого
 // клэмп rules/character.mjs::prepareCharacterDerived («осиротевший пул без
 // источника должен затухать», #291) стёр бы грант на первом же такте
 // расчёта. Как только общий пул уменьшается по ЛЮБОЙ причине (поглощение
@@ -1664,6 +1667,7 @@ Hooks.on("updateActor", async (actor, changed, options, userId) => {
   await reconcileBloodShieldToFit(actor);
   await reconcileEternalWarToFit(actor);
   await reconcilePsalmUnseenFortressToFit(actor);
+  await reconcileHyperGrowthToFit(actor);
   if (actor.effects?.some(e => e.getFlag?.("warhammer-dbc", "cancerousHealingPenalty")))
     await syncCancerousHealingPenalty(actor);
 });

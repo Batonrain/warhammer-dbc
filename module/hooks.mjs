@@ -61,6 +61,7 @@ import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
@@ -1060,6 +1061,10 @@ async function _applyWeaponPropEffect(ds) {
   const minDoP       = parseInt(ds.wpMinDop || "1") || 1;
   const vehicleFlat  = ds.wpVehicleFlat === "1";
   const armorPen     = ds.wpArmorPen === "1";
+  // Имя заряженного боеприпаса этого выстрела (wdbc-utaw) — нужно только
+  // Гиперросту (module/apps/hyper-growth.mjs), чтобы отличить СВОЙ тик яда
+  // от чужого Toxic; остальным свойствам не нужно и не используется.
+  const ammoName     = ds.wpAmmoName || "";
   const rollMode  = game.settings.get("core", "rollMode");
 
   // Bane и т.п. (vehicleFlatDamage): против Техники тест/provalyDamage не
@@ -1141,6 +1146,10 @@ async function _applyWeaponPropEffect(ds) {
     const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
     if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+    // Гиперрост (wdbc-utaw): этот же тик яда, если он от боеприпаса
+    // «Гиперрост» именно — цель получает столько же аблативных Ран.
+    // isHyperGrowthAmmoName внутри отсеивает любой другой Toxic-боеприпас.
+    dmgNote += await applyHyperGrowthTick(actor, { ammoName, dmg });
   } else if (!resisted && isProvaly && armorPen) {
     // Monofilament: та же формула рейтинг×mult+add+Провалы, но урон идёт
     // ЧЕРЕЗ поглощение брони (Pen X) — applyMonofilamentHit постит свою
