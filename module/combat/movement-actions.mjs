@@ -36,6 +36,7 @@ import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
+import { clearRangeCells } from "./range-cells.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { spendRecoil, recoilRemaining } from "./recoil-pool.mjs";
@@ -52,14 +53,15 @@ const BONUS_HALF_MOVE_CAPABILITY = "action.bonusHalfMove";
 /**
  * Достижимость SPD×N вокруг токена актора — честная подсветка клеток
  * (wdbc-rgi8), а на Gridless сцене (клетки не применимы) резервный круг
- * showMovementRing (M-ступень wdbc-fb2d). Гасит кольца дальности оружия
- * (range-rings.mjs), если прицеливание было активно — один активный
- * канвас-оверлей за раз, как и раньше.
+ * showMovementRing (M-ступень wdbc-fb2d). Гасит подсветку/кольца дальности
+ * атаки (range-cells.mjs/range-rings.mjs), если прицеливание было активно —
+ * один активный канвас-оверлей за раз, как и раньше.
  */
 function _showReachRing(actor, meters) {
   const token = actor?.getActiveTokens?.(false)?.[0] ?? null;
   if (!token) return;
   clearRangeRings();
+  clearRangeCells();
   if (!showReachableCells(token, meters)) showMovementRing(token, meters);
 }
 
