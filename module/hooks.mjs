@@ -66,6 +66,12 @@ import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./comba
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
+import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
+import { skillTotal } from "./combat/movement-actions.mjs";
+import { showHealingDialog } from "./sheets/tabs/healing.mjs";
+import { rollInfoguard } from "./apps/infoguard.mjs";
+import { CHARACTERISTICS } from "./constants/characteristics.mjs";
+import { SKILLS_DEF } from "./constants/skills.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -84,6 +90,75 @@ export function registerHooks() {
   // Диалог выбора версии при создании актора В МИРЕ (см. apps/actor-setup.mjs).
   registerActorSetupHook();
 
+  // ── Делегированный тест (wdbc-uez7) — реестр «kind → открыть диалог» ─────
+  // Без этой регистрации кнопки «📨 Делегировать» и карточка запроса в чате
+  // мертвы: delegate-test.mjs умеет только доставить запрос, а какой именно
+  // диалог открыть у исполнителя — знает только этот реестр.
+  //
+  // Лечение — первый потребитель: клик по кнопке карточки открывает Лечение
+  // у исполнителя с уже нацеленным пациентом (delegate-test.mjs::openDelegatedTest).
+  registerDelegatedTestOpener("healing", (executorActor, effectTargetActor) =>
+    showHealingDialog(executorActor, { forcedPatient: effectTargetActor }));
+
+  // Инфограждение (wdbc-uez7) — effectTargetActor тут ВЛАДЕЛЕЦ снаряжения, не
+  // исполнитель: предмет ищем на нём же (payload.itemId), executorActor только
+  // бросает своим Tech-Use, запись всё равно ложится на предмет владельца.
+  registerDelegatedTestOpener("infoguard", (executorActor, effectTargetActor, payload) => {
+    const item = effectTargetActor.items.get(payload.itemId);
+    if (!item) return ui.notifications?.warn(`Предмет для Инфограждения не найден у «${effectTargetActor.name}» (удалён?).`);
+    return rollInfoguard(item, { executorActor });
+  });
+
+  // Обычный тест Навыка/Характеристики (wdbc-uez7, кнопка «Делегировать» в
+  // самом диалоге броска, actor-sheet.mjs::_showSkillRollDialog) — payload
+  // несёт только примитивы (JSON через чат), поэтому executorActor.sheet
+  // достаётся здесь, а не хранится заранее. actor.sheet — та же ActorSheet,
+  // что открывает лист, лениво создаётся Foundry без рендера окна; но не
+  // у ВСЕХ типов актора (Отряд/Техника/Корабль/Демон/Орда/Формирование/
+  // Звёздная система — свои классы листов) есть _rollSkill/_rollCharacteristic
+  // этого класса, отсюда явная проверка вместо слепого вызова.
+  registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
+    const sheet = executorActor.sheet;
+    const { testKind, skillKey, charKey, label, hideCharSelect } = payload;
+    if (testKind === "characteristic") {
+      if (typeof sheet?._rollCharacteristic !== "function") {
+        return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
+      }
+      const meta = CHARACTERISTICS[charKey];
+      const total = executorActor.system.characteristics?.[charKey]?.total ?? 0;
+      return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect, { effectTargetActor });
+    }
+    if (typeof sheet?._rollSkill !== "function") {
+      return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
+    }
+    const def = SKILLS_DEF[skillKey];
+    const total = executorActor.system.skills?.[skillKey]?.total ?? -20;
+    return sheet._rollSkill(label, total, def?.char ?? charKey ?? "ag", { skill: skillKey }, { effectTargetActor });
+  });
+
+  // Ответ соперника во встречном тесте (wdbc-j814) — не «тест за другого»,
+  // а собственный тест исполнителя: effectTargetActor намеренно не передаём.
+  // opposedRequest несёт готовую сторону инициатора — сравнение и публичную
+  // карточку победителя считает и публикует actor-sheet.mjs сразу после
+  // этого броска (_maybePostOpposedComparison), без обратной связи инициатору.
+  registerDelegatedTestOpener("opposedResponse", (executorActor, effectTargetActor, payload) => {
+    const sheet = executorActor.sheet;
+    const { testKind, skillKey, charKey, initiatorLabel, initiatorName, initiatorSide, safe, hideCharSelect } = payload;
+    const opts = { opposedRequest: { initiatorName, initiatorSide, safe } };
+    if (testKind === "characteristic") {
+      if (typeof sheet?._rollCharacteristic !== "function") {
+        return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — встречный тест так не открыть.`);
+      }
+      const total = executorActor.system.characteristics?.[charKey]?.total ?? 0;
+      return sheet._rollCharacteristic(initiatorLabel, CHARACTERISTICS[charKey]?.abbr ?? charKey, total, charKey, !!hideCharSelect, opts);
+    }
+    if (typeof sheet?._rollSkill !== "function") {
+      return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — встречный тест так не открыть.`);
+    }
+    const def = SKILLS_DEF[skillKey];
+    return sheet._rollSkill(initiatorLabel, skillTotal(executorActor, skillKey), def?.char ?? charKey ?? "ag", { skill: skillKey }, opts);
+  });
+
   // ── Обработчики кнопок в чате ────────────────────────────────────────────
   Hooks.on("renderChatMessageHTML", (message, html, data) => {
 
@@ -94,6 +169,19 @@ export function registerHooks() {
       pill.addEventListener("dragstart", ev => {
         ev.dataTransfer.setData("text/plain", pill.dataset.payload);
         ev.dataTransfer.effectAllowed = "copy";
+      });
+    });
+
+    // Делегированный тест (wdbc-uez7) — карточка запроса, отправленная
+    // requestDelegatedTest (module/rules/delegate-test.mjs): кнопка несёт
+    // весь payload в data-payload, никакого поиска по actorId не нужно.
+    html.querySelectorAll(".delegated-test-open").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        let payload;
+        try { payload = JSON.parse(ev.currentTarget.dataset.payload || "{}"); }
+        catch { return ui.notifications?.warn("Испорченная карточка запроса теста."); }
+        await openDelegatedTest(payload);
       });
     });
 
