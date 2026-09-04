@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 import {
   hasCyberpreacher, hasSlowShiftTalent, cyberpreacherApplies,
   effectiveDiceMode, slowShiftBonus, hasPolymath, polymathBonus,
-  hasJourneyman, hasDarkMuse, darkMuseAssistBonus
+  hasJourneyman, hasDarkMuse, darkMuseAssistBonus, haemonculusLabBonus
 } from "../../module/rules/craft-advantage.mjs";
 
 const actorWith = (...talentNames) => ({
@@ -129,6 +129,31 @@ describe("hasPolymath / polymathBonus", () => {
   it("нет актора — false/0, не падает", () => {
     expect(hasPolymath(null)).toBe(false);
     expect(polymathBonus(undefined)).toBe(0);
+  });
+});
+
+// Лаборатория Гемункула (wdbc-6nl9, «Ковен Гемункулов» — благо стадии 0
+// Элитного архетипа) — +60 безусловно на Крафт И Исследования, тем же
+// приёмом, что и Полимат (isHaemonculus, не Талант/Мутация — сам архетип).
+describe("haemonculusLabBonus", () => {
+  it("Гемункул (архетип предметом) — +60, безусловно", () => {
+    const actor = { items: [{ type: "eliteArchetype", name: "Haemonculus / Гемункул" }], system: {} };
+    expect(haemonculusLabBonus(actor)).toBe(60);
+  });
+
+  it("Гемункул (архетип строкой в шапке) — тоже +60", () => {
+    const actor = { items: [], system: { eliteArchetype: "Haemonculus / Гемункул" } };
+    expect(haemonculusLabBonus(actor)).toBe(60);
+  });
+
+  it("не Гемункул (другой архетип/без архетипа) — 0", () => {
+    expect(haemonculusLabBonus({ items: [], system: { eliteArchetype: "Felarch / Феларх" } })).toBe(0);
+    expect(haemonculusLabBonus({ items: [], system: {} })).toBe(0);
+  });
+
+  it("нет актора — 0, не падает", () => {
+    expect(haemonculusLabBonus(null)).toBe(0);
+    expect(haemonculusLabBonus(undefined)).toBe(0);
   });
 });
 
