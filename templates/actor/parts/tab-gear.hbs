@@ -52,7 +52,7 @@
             {{#each gearWeapons as |w|}}
             <tr class="item-row gear-host-row {{#if w.mods.length}}has-mods{{/if}}" data-item-id="{{w.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="weapon-equip-cb" data-item-id="{{w.id}}" {{#if w.equipped}}checked{{/if}}/></td>
-              <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}}</td>
+              <td class="item-name-cell">{{w.name}}{{#if w.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{w.id}}" title="Свернуть/развернуть улучшения"><span class="gmt-chevron">▾</span>⚙{{w.mods.length}}</button>{{/if}} <button type="button" class="gear-mods-toggle gear-mod-picker-btn" data-item-id="{{w.id}}" title="Пикер модификаций оружия, доступных на инвентаре">🔧 Улучшить</button></td>
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
               <td>{{w.magazineCur}}/{{w.magazineMax}}</td><td>{{w.weight}}</td>
@@ -131,7 +131,7 @@
             {{#each gearArmor as |a|}}
             <tr class="item-row gear-host-row {{#if a.equipped}}item-row-equipped{{/if}} {{#if a.mods.length}}has-mods{{/if}}" data-item-id="{{a.id}}">
               <td class="gear-equip-cell"><input type="checkbox" class="armor-equip-cb" data-item-id="{{a.id}}" {{#if a.equipped}}checked{{/if}}/></td>
-              <td class="item-name-cell">{{a.name}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}}</td>
+              <td class="item-name-cell">{{a.name}}{{#if a.mods.length}} <button type="button" class="gear-mods-toggle" data-action="gearModsToggle" data-host-id="{{a.id}}" title="Свернуть/развернуть модификации и системы"><span class="gmt-chevron">▾</span>⚙{{a.mods.length}}</button>{{/if}} <button type="button" class="gear-mods-toggle gear-mod-picker-btn" data-item-id="{{a.id}}" title="Пикер модификаций и систем брони, доступных на инвентаре">🔧 Улучшить</button></td>
               <td class="gear-armor-type">
                 {{#if (eq a.armorType "simple")}}Простая{{/if}}
                 {{#if (eq a.armorType "flak")}}Флак{{/if}}
