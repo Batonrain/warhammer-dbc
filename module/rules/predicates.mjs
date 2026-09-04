@@ -121,6 +121,18 @@ export function isStunnedOrDazed(actor) {
   return !!(c?.stunned || c?.dazed);
 }
 
+/**
+ * Ослеплён — сам флаг ИЛИ производное от Потери глаз: «Без обоих глаз
+ * персонаж Ослеплён» (стр. 30-31, wdbc-r5o7.4). Считается на лету, а не
+ * отдельной проставленной галочкой — иначе два поля разъедутся при первой
+ * же ручной правке conditions.lostEyesCount (тот же принцип, что
+ * isStunnedOrDazed выше).
+ */
+export function isBlindedActor(actor) {
+  const c = actor?.system?.conditions;
+  return !!(c?.blinded || (Number(c?.lostEyesCount) || 0) >= 2);
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&

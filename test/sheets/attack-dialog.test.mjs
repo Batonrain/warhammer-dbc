@@ -298,6 +298,52 @@ describe("усталость и условные эффекты боеприпа
     expect(captured.dialog.content).toContain("−10");
   });
 
+  // Ослеплён (стр. 30-31, wdbc-r5o7.4): та же схема, что Усталость выше —
+  // галочка «Ситуативные» отмечена заранее, если актор ДЕЙСТВИТЕЛЬНО
+  // Ослеплён (свой флаг или Потеря обоих глаз), но остаётся ручной для
+  // случаев, которые система не отследит сама.
+  it("Ослеплён отмечен заранее: рукопашная — штраф −30, стрелковая — автопровал", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword], conditions: { blinded: true } }), sword);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Ослеплён \(-30\)/);
+
+    resetCaptured();
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { blinded: true } }), gun);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Ослеплён \(провал\)/);
+    expect(captured.dialog.content).toMatch(/data-autofail="true"[^>]*checked/);
+  });
+
+  it("Потеря ОБОИХ глаз — то же самое, что Ослеплён (производное, wdbc-r5o7.4)", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { lostEyesCount: 2 } }), gun);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Ослеплён \(провал\)/);
+  });
+
+  it("Потеря ОДНОГО глаза — не Ослеплён, галочка не отмечена", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { lostEyesCount: 1 } }), gun);
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
+  it("не Ослеплён — галочка «Ослеплён» присутствует, но не отмечена", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    expect(captured.dialog.content).toContain("Ослеплён");
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
+  it("Потеря глаз (частичная) — −10 к стрельбе отмечено заранее, в рукопашной строки нет вовсе", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { lostEyes: true, lostEyesCount: 1 } }), gun);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Потеря глаз \(-10\)/);
+
+    resetCaptured();
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword], conditions: { lostEyes: true, lostEyesCount: 1 } }), sword);
+    expect(captured.dialog.content).not.toContain("Потеря глаз");
+  });
+
   it("условные модификаторы боеприпаса даются галочками, а не молча", () => {
     const ammo = ammoFor({ condMods: [
       { label: "против псайкеров", atk: 30, dmg: 2 },

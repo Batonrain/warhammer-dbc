@@ -30,7 +30,7 @@ import { mergeExtraProps } from "../combat/attack-weapon.mjs";
 import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { hasRecoilSuppressor } from "../combat/armor-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
-import { isStunnedOrDazed }                    from "../rules/predicates.mjs";
+import { isStunnedOrDazed, isBlindedActor }    from "../rules/predicates.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
@@ -834,6 +834,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Штраф усталости (мод препаратов уже учтён в char.total)
   const hasFatigue = (actor.system.fatigue?.value ?? 0) >= 1;
+  // Ослеплён (стр. 30-31, wdbc-r5o7.4): автопровал BS, −30 WS — тот же
+  // приём, что Усталость выше (autoCheck на реальном состоянии, галочка
+  // остаётся ручной для случаев, которые система не отследит сама, напр.
+  // ослепление вспышкой без хранимого флага). isBlindedActor — свой флаг
+  // ИЛИ Потеря обоих глаз (rules/predicates.mjs).
+  const isBlinded = isBlindedActor(actor);
+  // Потеря глаз (частичная, book: «−10 на BS», независимо от полной
+  // слепоты) — читает флаг напрямую, не через isBlindedActor: тут именно
+  // «хоть один глаз потерян», а не производное «оба потеряны = Ослеплён».
+  const hasLostEyes = !!actor.system.conditions?.lostEyes;
 
   const rofModes = [];
   if (isMelee) {
@@ -1032,7 +1042,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     { label: "Слабый свет",   value: -10 },
     { label: "Дым / туман",   value: isMelee ? -10 : -20 },
     { label: "Тьма",          value: isMelee ? -20 : -30 },
-    { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee },
+    { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded },
+    // Потеря глаз (частичная): −10 на BS и «тесты определения расстояний»
+    // (последнее не автоматизировано — нет отдельного типа теста «на глаз»)
+    // — только стрелковая, книга не даёт штрафа рукопашной от неё отдельно.
+    ...(isMelee ? [] : [{ label: "Потеря глаз", value: -10, autoCheck: hasLostEyes }]),
     { label: "Цель лежит",    value: isMelee ?  20 : -20 },
     { label: "Цель бежит",    value: isMelee ?  20 : -20 },
     { label: "Цель Оглушена", value: 20 },
