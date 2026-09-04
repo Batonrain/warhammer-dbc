@@ -130,8 +130,18 @@ function renderPlain(text, links, clickable) {
   return html;
 }
 // Рендер тела: маркеры 【L:page:cmd】текст【/L】 (ссылка) и 【TP】текст【/TP】 (техножрец →
-// прочим двоичный код). opts: { clickable, qualifies }.
-function renderBody(page, opts = {}) {
+// прочим двоичный код). opts: { clickable, qualifies, relativeTo, secrets, enrich }.
+// В конце (если enrich !== false) прогоняем собранный HTML через стандартный
+// enrichHTML Foundry — это превращает @UUID[Actor.xxx]{Имя} в тексте страницы
+// в кликабельную ссылку на Журнал/Актора. Порядок безопасен: наш мини-язык
+// навигации использует ПОЛНОШИРИННЫЕ скобки 【 】 (U+3010/3011), а токены
+// [1]/[0] — одиночные ASCII-скобки; у enrichHTML весь синтаксис — либо
+// «@Тип[...]» (с ведущим @), либо ДВОЙНЫЕ ASCII-скобки [[...]] (инлайн-бросок)
+// — ни то ни другое не пересекается ни с «[1]»/«[0]», ни тем более с 【…】,
+// так что уже собранные <a class="cog-link"> и наши маркер-спаны enrichHTML
+// не трогает (это уже теги, а не сырой текст с этим синтаксисом; enrichHTML
+// разбирает HTML и подменяет только текстовые узлы).
+async function renderBody(page, opts = {}) {
   const clickable = !!opts.clickable;
   const qualifies = opts.qualifies !== false;
   const gmView = !!opts.gmView;   // ГМ видит исходник скрапкода
@@ -159,6 +169,11 @@ function renderBody(page, opts = {}) {
     last = re.lastIndex;
   }
   out += renderPlain(raw.slice(last), links, clickable);
+  if (opts.enrich !== false) {
+    out = await foundry.applications.ux.TextEditor.implementation.enrichHTML(out, {
+      relativeTo: opts.relativeTo || null, secrets: !!opts.secrets
+    });
+  }
   return out;
 }
 
@@ -186,12 +201,19 @@ export class CogitatorManager extends HandlebarsApplicationMixin(ApplicationV2) 
     const subs = cogSubfolders(root).sort((a, b) => a.name.localeCompare(b.name, "ru"));
     const validIds = new Set([rootId, ...subs.map(f => f.id)].filter(Boolean));
 
+    // Автооткрытие: у какой сцены (если есть) флаг autoOpenCogitator указывает на этот
+    // когитатор — только для подсветки кнопки в списке, сама привязка живёт на Scene.
+    const scenes = game.scenes ? Array.from(game.scenes) : [];
+    const boundScene = (journalId) => scenes.find(s => s.getFlag(NS, AUTO_OPEN_FLAG)?.journalId === journalId) || null;
+
     const rows = listCogitators()
       .filter(j => j.folder && validIds.has(j.folder.id))
       .map(j => {
         const d = getCog(j);
+        const bs = boundScene(j.id);
         return { id: j.id, title: d?.title || j.name, pages: d?.pages?.length || 0,
-          playerAccess: (j.ownership?.default ?? 0) >= L.OBSERVER, folderId: j.folder?.id || "" };
+          playerAccess: (j.ownership?.default ?? 0) >= L.OBSERVER, folderId: j.folder?.id || "",
+          autoOpenSceneName: bs?.name || "" };
       });
 
     const mkGroup = (id, name, deletable) => ({ id, name, deletable, rows: rows.filter(r => r.folderId === (id || "")) });
@@ -249,6 +271,41 @@ export class CogitatorManager extends HandlebarsApplicationMixin(ApplicationV2) 
       const ok = await Dialog.confirm({ title: "Удалить когитатор?", content: `<p>Удалить «${esc(j.name)}» безвозвратно?</p>` });
       if (ok) { await j.delete(); this.render(false); }
     }));
+    el.querySelectorAll("[data-autoopen]").forEach(b => b.addEventListener("click", async () => {
+      await this._autoOpenDialog(b.dataset.autoopen);
+      this.render(false);
+    }));
+  }
+  // Привязка когитатора к сцене: при входе клиента на выбранную сцену (canvasReady,
+  // module/apps/cogitator.mjs → registerCogitatorAutoOpen) консоль откроется сама.
+  _autoOpenDialog(journalId) {
+    const scenes = (game.scenes ? Array.from(game.scenes) : []).sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    const bound = scenes.find(s => s.getFlag(NS, AUTO_OPEN_FLAG)?.journalId === journalId) || null;
+    const cur = bound?.getFlag(NS, AUTO_OPEN_FLAG) || null;
+    const opts = [`<option value="">— не открывать —</option>`,
+      ...scenes.map(s => `<option value="${s.id}" ${s.id === bound?.id ? "selected" : ""}>${esc(s.name)}</option>`)].join("");
+    return new Promise(resolve => {
+      new Dialog({
+        title: "Автооткрытие на сцене",
+        content: `<div class="cog-dlg"><label>Сцена<select name="scene">${opts}</select></label>`
+          + `<label class="cog-b-crt"><input type="checkbox" name="includegm" ${cur?.includeGm ? "checked" : ""}/> Открывать и ГМу (по умолчанию — только игрокам)</label>`
+          + `<div class="cog-dlg-hint">Когитатор откроется сам у клиента, когда указанная сцена станет для него текущей.</div></div>`,
+        buttons: {
+          ok: { label: "Сохранить", callback: async h => {
+            const q = h[0] ?? h;
+            const sceneId = q.querySelector("[name=scene]").value;
+            const includeGm = q.querySelector("[name=includegm]").checked;
+            if (bound && bound.id !== sceneId) await bound.unsetFlag(NS, AUTO_OPEN_FLAG);
+            if (sceneId) {
+              const sc = game.scenes.get(sceneId);
+              if (sc) await sc.setFlag(NS, AUTO_OPEN_FLAG, { journalId, includeGm });
+            }
+            resolve();
+          } },
+          cancel: { label: "Отмена", callback: () => resolve() }
+        }, default: "ok"
+      }).render(true);
+    });
   }
   _promptFolderName() {
     return new Promise(resolve => {
@@ -511,7 +568,10 @@ export class CogitatorConsole extends HandlebarsApplicationMixin(ApplicationV2) 
     return {
       edit: false, isGM, asPlayer,
       imageUrl: page?.image || "",
-      bodyHtml: renderBody(page, { clickable: !!d?.clickableTokens, qualifies, gmView }),
+      bodyHtml: await renderBody(page, {
+        clickable: !!d?.clickableTokens, qualifies, gmView,
+        relativeTo: j, secrets: isGM
+      }),
       inputPage, inputShared, inputValue, diaryEntries,
       prompt: (page?.prompt ?? "ВВЕДИТЕ КОМАНДУ:"),
       cmdMsg: this.cmdMsg || "",
@@ -684,6 +744,28 @@ export function openCogitator(journalId, edit = false) {
   else if (edit && game.user.isGM && app.mode !== "edit") app._enterEdit();
   app.render(true);
   return app;
+}
+
+// ── Автооткрытие на сцене ───────────────────────────────────────────────────
+// Флаг сцены warhammer-dbc.autoOpenCogitator = { journalId, includeGm } —
+// выставляется из Менеджера (кнопка «Автооткрытие» у записи, см.
+// CogitatorManager._autoOpenDialog). При входе КЛИЕНТА на такую сцену
+// (canvasReady — локально для текущего пользователя, не «сцена активна у
+// всех») открываем консоль сама. По умолчанию — только игрокам: терминал-
+// реквизит по смыслу для них, а ГМу нет причин получать его на каждый вход
+// без явного согласия (includeGm: true).
+export const AUTO_OPEN_FLAG = "autoOpenCogitator";
+export function registerCogitatorAutoOpen() {
+  Hooks.on("canvasReady", () => {
+    const scene = canvas?.scene;
+    const cfg = scene?.getFlag(NS, AUTO_OPEN_FLAG);
+    if (!cfg?.journalId) return;
+    if (game.user.isGM && !cfg.includeGm) return;
+    const j = game.journal.get(cfg.journalId);
+    if (!isCog(j)) return;
+    if (!game.user.isGM && !j.testUserPermission(game.user, "OBSERVER")) return;
+    openCogitator(j.id, false);
+  });
 }
 
 // Живое обновление открытых консолей при изменении журнала (дневники, правки ГМ).

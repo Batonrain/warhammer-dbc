@@ -167,7 +167,7 @@
 .wh-cog-mgr-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border: 1px solid rgba(120,255,190,0.2); border-radius: 5px; background: rgba(8,24,17,0.5); }
 .wh-cog-mgr-name { color: #d6ffe9; font-weight: bold; flex: 1 1 auto; min-width: 0; }
 .wh-cog-dim { color: #7fc4a6; font-weight: normal; font-size: 0.85em; }
-.wh-cog-mgr-actions { display: flex; gap: 5px; }
+.wh-cog-mgr-actions { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
 .wh-cog-mgr-actions button { background: rgba(10,30,22,0.6); border: 1px solid rgba(120,255,190,0.3); border-radius: 4px; color: #bdf0d6; padding: 3px 9px; cursor: pointer; font-size: 0.82em; }
 .wh-cog-mgr-actions button:hover { border-color: #78ffbe; color: #eafff4; }
 .wh-cog-mgr-actions button.on { background: rgba(30,90,66,0.5); border-color: #78ffbe; color: #eafff4; }
