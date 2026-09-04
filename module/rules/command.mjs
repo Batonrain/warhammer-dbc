@@ -13,6 +13,8 @@
 //  «Под моим Присутствием» у командира-персонажа.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { hasRuleFlag } from "./flags.mjs";
+
 /**
  * Ключи преимуществ Командного Присутствия в порядке книги.
  * 1 — Экстремальный Урон, 2 — Концентрация огня, 3 — Воля Командира.
@@ -49,9 +51,20 @@ export function receivesPresence(actorType, benefitKey) {
  * До Орды — нет: «не получает эффектов Командования, кроме эффектов 1 и 3
  * Командного Присутствия». Единственное, на что годится тест Командования по
  * Орде, — вернуть ей психологический урон (см. commandHealsPsych).
+ *
+ * Оглох (стр. 30-31, wdbc-r5o7.6): «не получает эффектов Командования, кроме
+ * жестов/телепатии/Ноосферы» — та же идея («не слышит устные команды»), но
+ * per-АКТОР, а не per-тип, поэтому второй параметр опционален (Отряд как
+ * список типов эту проверку не касается, только конкретный подчинённый).
+ * Исключение — возможность communication.deafExempt (grantFlag, ещё не
+ * выдаётся ни одним правилом книги — читатель заведён заранее для будущих
+ * Талантов/трейтов на телепатию/жесты, тем же приёмом, что и прочие
+ * capability-флаги этого файла).
  */
-export function receivesCommands(actorType) {
-  return actorType !== "horde";
+export function receivesCommands(actorType, actor = null) {
+  if (actorType === "horde") return false;
+  if (actor?.system?.conditions?.deafened && !hasRuleFlag(actor, "communication.deafExempt")) return false;
+  return true;
 }
 
 /** Лечит ли успешный тест Командования психологический урон этому актору. */
@@ -82,10 +95,13 @@ export function suppressionBonus(actor) {
  *
  * @param {string} actorType
  * @param {string} [benefitKey] выбранное сейчас преимущество Присутствия
+ * @param {object} [actor] сам подчинённый — нужен только для per-актор
+ *   исключений (Оглох, wdbc-r5o7.6); необязателен, Отряд как список типов
+ *   его не передаёт вовсе.
  * @returns {{presence:string[], presenceApplies:boolean, commands:boolean,
  *            healsPsych:boolean, forcedMove:boolean, notes:string[]}}
  */
-export function commandReachFor(actorType, benefitKey = "") {
+export function commandReachFor(actorType, benefitKey = "", actor = null) {
   const presence = presenceBenefitsFor(actorType);
   const notes = [];
 
@@ -99,10 +115,14 @@ export function commandReachFor(actorType, benefitKey = "") {
       notes.push(`Выбранное преимущество (эффект ${presenceNumber(benefitKey)}) до Орды не доходит.`);
   }
 
+  const commands = receivesCommands(actorType, actor);
+  if (actorType !== "horde" && !commands)
+    notes.push("Оглох: не получает Короткие и Детальные Команды (кроме жестов/телепатии/Ноосферы).");
+
   return {
     presence,
     presenceApplies: !benefitKey || presence.includes(benefitKey),
-    commands:   receivesCommands(actorType),
+    commands,
     healsPsych: commandHealsPsych(actorType),
     forcedMove: canBeForcedToMove(actorType),
     notes

@@ -65,7 +65,7 @@ function followerRow(entry, idx, benefitKey) {
     wp: sys.characteristics?.wp?.total ?? null,
     // Психологический урон Орды: только его и лечит тест Командования по ней.
     psychDamage: isHorde ? (Number(sys.psychDamage) || 0) : 0,
-    reach: commandReachFor(type, benefitKey)
+    reach: commandReachFor(type, benefitKey, actor)
   };
 }
 

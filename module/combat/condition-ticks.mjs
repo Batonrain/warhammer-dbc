@@ -89,6 +89,13 @@ export async function processConditionTurnStart(actor) {
   const updates = {};
   const lines = [];
   for (const { key, field, label } of ROUND_CONDITIONS) {
+    // Удушье (стр. 30-31, wdbc-r5o7.6) — особый случай, не общий приём этого
+    // цикла: у Оглушения/Ослепления «0 = снято» верно (эффект кончился), а у
+    // Удушья 0 значит ровно противоположное — «запас задержки дыхания
+    // кончился, дальше начинаются тесты», сам тег «Задыхается» на нуле
+    // сниматься не должен (см. отдельный блок ниже, тот же приём, что и у
+    // Горения в processConditionTurnEnd — своя ветка вместо общего цикла).
+    if (key === "suffocating") continue;
     if (!conds[key]) continue;
     const cur = Number(conds[field]) || 0;
     if (cur <= 0) continue;
@@ -98,8 +105,34 @@ export async function processConditionTurnStart(actor) {
       ? `<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`
       : `<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
   }
-  if (!Object.keys(updates).length) return;
-  await actor.update(updates);
+
+  // Удушье: пока есть запас (suffocatingRounds > 0) — просто декремент, без
+  // теста, тегом не рискуя (генерик выше это делал бы для всех остальных, но
+  // тут флаг на нуле остаться ДОЛЖЕН, поэтому не переиспользуем
+  // conditionAdjustFields здесь — тот сам гасит флаг при next<=0).
+  // Запас кончился (было уже 0 или обнулился сейчас) — тест T+0 каждый Ход,
+  // провал даёт +1 Усталости (книга: «тест T+0 каждую минуту/Ход или +1
+  // Усталости»). Потеря сознания/смерть по накоплению Раундов без вздоха —
+  // ЗАВИСИТ от механики Без Сознания (wdbc-r5o7.7, следующий тикет этого же
+  // эпика, ещё не сделан) — сознательно не реализовано здесь, тег остаётся
+  // активным до ручного снятия (персонаж вздохнул — крестик на теге).
+  if (conds.suffocating) {
+    const cur = Number(conds.suffocatingRounds) || 0;
+    if (cur > 0) {
+      const next = cur - 1;
+      await actor.update({ "system.conditions.suffocatingRounds": next });
+      lines.push(`<div class="roll-threshold">${rollIcon("run","#8fb0c4")}Удушье: запас дыхания <b>${cur}</b> → <b>${next}</b>${next <= 0 ? " — запас кончился, дальше тесты T+0" : ""}</div>`);
+    } else {
+      const tTotal = Number(actor.system?.characteristics?.t?.total) || 0;
+      const test = await new Roll("1d100").evaluate();
+      const failed = test.total > tTotal;
+      if (failed) await addFatigue(actor, 1);
+      lines.push(`<div class="roll-threshold">${rollIcon("run","#8fb0c4")}Удушье: тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed ? `<span class="roll-failure">провал → 😓 Усталость +1</span>` : `<span class="roll-success">успех</span>`}</div>`);
+    }
+  }
+
+  if (!Object.keys(updates).length && !lines.length) return;
+  if (Object.keys(updates).length) await actor.update(updates);
   await postConditionCard(actor, lines);
 }
 
@@ -164,6 +197,35 @@ export async function processConditionTurnEnd(actor) {
       if (failed) await addFatigue(actor, 1);
       lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: 1d10 <b>${roll.total}</b> целиком в T.b — тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed ? `<span class="roll-failure">провал → 😓 Усталость +1</span>` : `<span class="roll-success">успех</span>`}</div>`);
     }
+  }
+
+  // Радиация (стр. 30-31, wdbc-r5o7.6): «периодический 1 урон в T» — фикс,
+  // не бросок, в отличие от Горения выше; «при накоплении 10/20/30... — тест
+  // T+0, провал даёт лучевую болезнь» — доза (radiationLevel) растёт на 1 с
+  // тем же тиком, что и сам урон (книга не разводит «урон» и «дозу» по
+  // разным источникам, второе — просто счётчик первого). Урон — в T
+  // (system.charDamage.t, тот же ручной знаковый Мод., что у Гангрены,
+  // combat/gangrene.mjs), НЕ Раны: книга прямо говорит «урон в T». Лучевая
+  // болезнь — не своё Состояние из CONDITIONS_DEF (в книге это осложнение
+  // Радиации, не отдельный тег листа), а флаг актора с собственным
+  // worldTime-тиком раз в 8 часов, combat/radiation.mjs.
+  if (conds.radiation) {
+    const before = Number(actor.system.charDamage?.t) || 0;
+    const after  = before - 1;
+    const level  = Number(conds.radiationLevel) || 0;
+    const newLevel = level + 1;
+    await actor.update({ "system.charDamage.t": after, ...conditionAdjustFields(actor, "radiation", 1) });
+    let sicknessNote = "";
+    if (newLevel % 10 === 0) {
+      const tTotal = Number(actor.system?.characteristics?.t?.total) || 0;
+      const test = await new Roll("1d100").evaluate();
+      const failed = test.total > tTotal;
+      if (failed) await actor.setFlag("warhammer-dbc", "radiationSickness", true);
+      sicknessNote = ` · Доза ${newLevel} — тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed
+        ? `<span class="roll-failure">провал → лучевая болезнь</span>`
+        : `<span class="roll-success">успех</span>`}`;
+    }
+    lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон T <b>1</b> (Мод. T: ${before}→${after})${sicknessNote}</div>`);
   }
 
   if (lines.length) await postConditionCard(actor, lines);

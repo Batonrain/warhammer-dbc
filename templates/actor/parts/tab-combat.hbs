@@ -25,6 +25,12 @@
           <span>{{#if gangrenePeriodicReady}}Доступен{{else}}Перезарядка: {{gangrenePeriodicRemainingLabel}}{{/if}}</span>
         </div>
         {{/if}}
+        {{#if hasRadiationSickness}}
+        <div class="armor-tb-note radiation-sickness-row" style="margin-top:4px;color:#ffe14d;" title="Лучевая болезнь (стр. 30-31, осложнение Радиации): каждые 8 часов — 1 непоглощаемого урона в T (Мод. характеристики). Лечится Medicae−30.">
+          <button type="button" class="radiation-sickness-test-btn" {{#unless radiationSicknessReady}}disabled{{/unless}}>Урон T — Лучевая болезнь</button>
+          <span>{{#if radiationSicknessReady}}Доступен{{else}}Перезарядка: {{radiationSicknessRemainingLabel}}{{/if}}</span>
+        </div>
+        {{/if}}
         {{#if hasWeaponPropWounds}}
         <div class="armor-tb-note wprop-wounds-block" style="margin-top:6px;">
           <div class="armor-loc-label" style="margin-bottom:2px;">Свойства оружия</div>

@@ -153,3 +153,33 @@ describe("правило «Гангрена»", () => {
     expect(mods).toEqual([]);
   });
 });
+
+// «Оглох» (стр. 30-31, wdbc-r5o7.6): −30 на социальные тесты — Командование
+// уже входит в область `social` в этой кодовой базе (apt2:"social"), отдельной
+// записи не нужно. «Не получает эффектов Командования» — не rollBonus, см.
+// rules/command.mjs::receivesCommands (command.test.mjs).
+describe("правило «Оглох»", () => {
+  it("есть в библиотеке", () => {
+    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.deafened");
+  });
+
+  it("−30 на социальный навык (Обаяние)", () => {
+    const { mods } = resolveTest({ actor: actor({ deafened: true }), skill: "charm", char: "fel" });
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.deafened", value: -30 })]);
+  });
+
+  it("−30 на Командование тоже (social scope покрывает оба пункта книги одной записью)", () => {
+    const { mods } = resolveTest({ actor: actor({ deafened: true }), skill: "command", char: "fel" });
+    expect(mods).toEqual([expect.objectContaining({ ruleId: "conditions.deafened", value: -30 })]);
+  });
+
+  it("не социальный навык — не штрафуется", () => {
+    const { mods } = resolveTest({ actor: actor({ deafened: true }), skill: "medicae", char: "int" });
+    expect(mods).toEqual([]);
+  });
+
+  it("не Оглох — не запускает", () => {
+    const { mods } = resolveTest({ actor: actor(), skill: "charm", char: "fel" });
+    expect(mods).toEqual([]);
+  });
+});

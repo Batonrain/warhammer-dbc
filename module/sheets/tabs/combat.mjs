@@ -45,6 +45,7 @@ import { showReformationSongDialog } from "../../apps/reformation-song-dialog.mj
 import { conjureWraithAvailable, applyConjureWraith } from "../../combat/conjure-wraith.mjs";
 import { useDisabledArmourPeriodicTest, promptDisabledArmourForkTest } from "../../combat/armor-mods.mjs";
 import { useGangrenePeriodicTest } from "../../combat/gangrene.mjs";
+import { useRadiationSicknessTest } from "../../combat/radiation.mjs";
 import { repairArmorCorrosion, extractPiercingWound, applyCripplingTrigger } from "../../combat/damage.mjs";
 import { clearWeaponJam } from "../../combat/weapon-properties.mjs";
 import { spendActionPoints, spendReaction, resetActionEconomy } from "../../combat/action-economy.mjs";
@@ -100,6 +101,9 @@ export function activateCombatListeners(root, actor) {
 
   // ── Гангрена: урон T раз в T.b×2 часов (стр. 30-31, wdbc-r5o7.5) ────────
   on(root, ".gangrene-periodic-test-btn", "click", () => useGangrenePeriodicTest(actor));
+
+  // ── Лучевая болезнь: урон T раз в 8 часов (стр. 30-31, wdbc-r5o7.6) ─────
+  on(root, ".radiation-sickness-test-btn", "click", () => useRadiationSicknessTest(actor));
 
   on(root, ".pain-absorb-btn", "click", () => painChange(actor, +1, "absorb"));
   on(root, ".pain-spend-btn", "click", () => painChange(actor, -1, "spend"));

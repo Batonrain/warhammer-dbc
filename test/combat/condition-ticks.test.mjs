@@ -13,6 +13,7 @@ import { clearRuleSources, registerRuleSource, getRuleSources } from "../../modu
 
 function makeActor(overrides = {}) {
   const updates = [];
+  const flags = {};
   const actor = {
     name: "Подставной",
     items: [],
@@ -24,11 +25,13 @@ function makeActor(overrides = {}) {
       conditions: {},
       ...overrides
     },
-    getFlag: () => undefined,
-    setFlag: async () => {},
+    getFlag: (_s, k) => flags[k],
+    setFlag: async (_s, k, v) => { flags[k] = v; },
     update: async data => {
       updates.push(data);
       for (const [path, value] of Object.entries(data)) {
+        const m = path.match(/^flags\.warhammer-dbc\.(-=)?(.+)$/);
+        if (m) { if (m[1]) delete flags[m[2]]; else flags[m[2]] = value; continue; }
         const parts = path.split(".");
         let target = actor;
         for (const part of parts.slice(0, -1)) target = (target[part] ??= {});
@@ -110,6 +113,49 @@ describe("processConditionTurnStart: декремент длительности
 
     expect(actor.system.actionPoints.value).toBe(0);
     expect(captured.chat[0].content).toContain("Ход потерян в панике");
+  });
+});
+
+// Удушье (стр. 30-31, wdbc-r5o7.6): особый случай среди «N раундов» — запас
+// (suffocatingRounds) кончается 0, а не «состояние снято» (в отличие от
+// Оглушения/Ослепления выше): на нуле начинаются тесты T+0, тег остаётся.
+describe("processConditionTurnStart: Удушье — особый случай (не снимается на 0)", () => {
+  it("запас 1 → 0 — тег НЕ снимается, дальше сразу тест (не общий приём цикла)", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 1 } });
+    actor.system.characteristics.t.total = 60;
+    captured.dice = [20]; // тест T+0: 20 <= 60 → успех
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.suffocatingRounds).toBe(0);
+    expect(actor.system.conditions.suffocating).toBe(true); // НЕ false, в отличие от Оглушения
+    expect(captured.chat[0].content).toContain("запас кончился");
+  });
+
+  it("запас уже 0 — тест T+0 каждый Ход, провал даёт +1 Усталости", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 0 } });
+    actor.system.characteristics.t.total = 30;
+    captured.dice = [50]; // 50 > 30 → провал
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.fatigue.value).toBe(1);
+    expect(actor.system.conditions.suffocating).toBe(true);
+    expect(captured.chat[0].content).toContain("провал");
+  });
+
+  it("запас уже 0, тест пройден — Усталость не растёт", async () => {
+    const actor = makeActor({ conditions: { suffocating: true, suffocatingRounds: 0 } });
+    actor.system.characteristics.t.total = 60;
+    captured.dice = [20]; // успех
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.fatigue.value).toBe(0);
+    expect(captured.chat[0].content).toContain("успех");
+  });
+
+  it("не Задыхается — тишина (не запускает тест просто так)", async () => {
+    const actor = makeActor();
+    await processConditionTurnStart(actor);
+    expect(captured.chat).toHaveLength(0);
   });
 });
 
@@ -267,6 +313,55 @@ describe("processConditionTurnEnd: Горение", () => {
   });
 
   it("нет Горения — тишина", async () => {
+    const actor = makeActor();
+    await processConditionTurnEnd(actor);
+    expect(captured.chat).toHaveLength(0);
+  });
+});
+
+// Радиация (стр. 30-31, wdbc-r5o7.6): фиксированный 1 урон в T за Раунд (не
+// бросок, в отличие от Горения), доза (radiationLevel) растёт тем же тактом;
+// на кратных 10 — тест T+0, провал ставит флаг radiationSickness (лечится
+// отдельно, combat/radiation.mjs).
+describe("processConditionTurnEnd: Радиация", () => {
+  it("фикс. 1 урон в T (Мод. характеристики), доза +1, ниже порога — без теста", async () => {
+    const actor = makeActor({ conditions: { radiation: true, radiationLevel: 3 } });
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.charDamage.t).toBe(-1);
+    expect(actor.system.conditions.radiationLevel).toBe(4);
+    expect(captured.chat[0].content).not.toContain("тест T+0");
+  });
+
+  it("доза достигла кратного 10 — тест T+0, провал ставит флаг лучевой болезни", async () => {
+    const actor = makeActor({ conditions: { radiation: true, radiationLevel: 9 } });
+    actor.system.characteristics.t.total = 30;
+    captured.dice = [50]; // d100 = 50 > 30 → провал
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.conditions.radiationLevel).toBe(10);
+    expect(actor.getFlag("warhammer-dbc", "radiationSickness")).toBe(true);
+    expect(captured.chat[0].content).toContain("провал");
+  });
+
+  it("доза достигла кратного 10, тест пройден — флага нет", async () => {
+    const actor = makeActor({ conditions: { radiation: true, radiationLevel: 9 } });
+    actor.system.characteristics.t.total = 60;
+    captured.dice = [20]; // d100 = 20 <= 60 → успех
+    await processConditionTurnEnd(actor);
+
+    expect(actor.getFlag("warhammer-dbc", "radiationSickness")).toBeUndefined();
+    expect(captured.chat[0].content).toContain("успех");
+  });
+
+  it("накопленный урон складывается (Мод. уже отрицательный)", async () => {
+    const actor = makeActor({ conditions: { radiation: true, radiationLevel: 0 } });
+    actor.system.charDamage = { t: -4 };
+    await processConditionTurnEnd(actor);
+    expect(actor.system.charDamage.t).toBe(-5);
+  });
+
+  it("нет Радиации — тишина", async () => {
     const actor = makeActor();
     await processConditionTurnEnd(actor);
     expect(captured.chat).toHaveLength(0);

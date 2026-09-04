@@ -34,6 +34,7 @@ import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
 import { gangrenePeriodicRemaining }             from "../combat/gangrene.mjs";
+import { radiationSicknessRemaining }            from "../combat/radiation.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
@@ -294,6 +295,21 @@ export function characterContext(actor) {
   } else {
     context.gangrenePeriodicReady = false;
     context.gangrenePeriodicRemainingLabel = null;
+  }
+
+  // Лучевая болезнь (стр. 30-31, wdbc-r5o7.6) — осложнение Радиации, свой
+  // флаг (не CONDITIONS_DEF), та же кнопка-таймер, интервал 8 часов.
+  context.hasRadiationSickness = !!actor.getFlag?.("warhammer-dbc", "radiationSickness");
+  if (context.hasRadiationSickness) {
+    const testAt = actor.getFlag?.("warhammer-dbc", "radiationSicknessTestAt");
+    const remaining = radiationSicknessRemaining(testAt, game.time?.worldTime ?? 0);
+    context.radiationSicknessReady = remaining <= 0;
+    context.radiationSicknessRemainingLabel = remaining > 0
+      ? `${Math.floor(remaining / 3600)}ч ${String(Math.floor((remaining % 3600) / 60)).padStart(2, "0")}м`
+      : null;
+  } else {
+    context.radiationSicknessReady = false;
+    context.radiationSicknessRemainingLabel = null;
   }
 
   context.races = raceEntries();
