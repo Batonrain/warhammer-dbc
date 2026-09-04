@@ -1,0 +1,70 @@
+{
+  "name": "Nightmare Roots / Кошмарные Корни",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "i2U3f2pVcGbnQpvl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "worldSinger",
+    "subtype": "Фантазмы Земли",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×2м / PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Атака, Концентрация. Психотест W−30 vs W+30. Треб.: Whispers of the Wyld. Все враждебные существа в ауре PR×2м получают штраф −PR×3 на сопротивление любым психосилам, пока действует эта. В конце своего хода цель может пройти W+20 — набрав больше успехов, чем псайкер, снимает эффект с себя; сила также рассеивается, если цель покидает зону PR×5м.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "MzX1Xc7DcGIOqn7b",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!MzX1Xc7DcGIOqn7b"
+}

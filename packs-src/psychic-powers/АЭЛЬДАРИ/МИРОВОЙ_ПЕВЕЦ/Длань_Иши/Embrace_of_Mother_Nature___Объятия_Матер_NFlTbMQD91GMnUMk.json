@@ -1,0 +1,70 @@
+{
+  "name": "Embrace of Mother Nature / Объятия Матери Природы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "svf7kL1Faag7lAKP",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Иши",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение (бPR×2). Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое»: враги получают штраф PR к тестам WS/BS/S/A, их оружие −2 к надёжности, атаки по их сочленениям +PR×2, SPD −3 (мин.1); союзники (включая псайкера) — те же PR бонусом к WS/BS/S/A, их рукопашные и охотничьи атаки экзодитов +PR×2 урона. Попадание E(Fl) по цели этой психосилы вынуждает псайкера пройти W−40 (психотест), иначе психосила на цели рассеивается; горящие цели иммунны, пока горят. Вне природы — штраф/бонус PR−3, надёжность оружия −1 (без бонуса к надёжности у союзников).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "NFlTbMQD91GMnUMk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!NFlTbMQD91GMnUMk"
+}

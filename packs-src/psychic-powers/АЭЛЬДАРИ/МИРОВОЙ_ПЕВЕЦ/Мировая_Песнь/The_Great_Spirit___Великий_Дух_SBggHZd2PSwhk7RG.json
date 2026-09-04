@@ -1,0 +1,70 @@
+{
+  "name": "The Great Spirit / Великий Дух",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "xFtND4OTeTJmocRV",
+  "system": {
+    "description": "",
+    "notes": "Статблок призываемого Великого Духа (Древолюда, книжная страница Treeman/Древолюд) не заведён отдельным актором — не смоделирован.",
+    "cost": 800,
+    "discipline": "worldSinger",
+    "subtype": "Мировая Песнь",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "testChar": "wp",
+    "testMod": -60,
+    "action": "full",
+    "range": "PR×30м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. 1-я из шести Мировых Песен (И-Лолар, «Великое Древо»). Треб.: Forest Paths (манифестирована). Призывает Великого Духа (Древолюда) — полностью подчинён псайкеру, но лояльнее планетарному духу, чем ему самому. Псайкер может поддерживать только одного Великого Духа одновременно. После гибели духа или рассеивания силы псайкер проходит T+0−бPR×3.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "SBggHZd2PSwhk7RG",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!SBggHZd2PSwhk7RG"
+}

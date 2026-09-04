@@ -1,0 +1,70 @@
+{
+  "name": "World Spirit / Мировой Дух",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "xFtND4OTeTJmocRV",
+  "system": {
+    "description": "",
+    "notes": "Длительность действия «(3 хода)» из книги не хранится отдельным полем (action только различает half/full/free/reaction/extended) — раунды в тексте effect.",
+    "cost": 1000,
+    "discipline": "worldSinger",
+    "subtype": "Мировая Песнь",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 10,
+    "testChar": "wp",
+    "testMod": -60,
+    "action": "extended",
+    "range": "Особое",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение. Длительное действие (3 хода). 6-я из шести Мировых Песен (Аштайнн, «Мировой Дух»). Треб.: 3 психосилы ветки «Мировая Песнь». Манифестируется не чаще раза в неделю и только в Усиленном режиме. Независимо от результата манифестации псайкер получает 1d10+5 урона в W и I и 1d10 Порчи. При успехе может обратиться к Мировому Духу планеты (даже не экзодитской, но тогда результат слабее) с просьбой — дух постарается её исполнить в рамках возможностей; чёткая локальная просьба выполняется предсказуемо, размытая («уничтожь моих врагов») — любыми доступными духу методами, включая опасные для самого псайкера и союзников.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qnRgXTG4rTABqc7g",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!qnRgXTG4rTABqc7g"
+}
