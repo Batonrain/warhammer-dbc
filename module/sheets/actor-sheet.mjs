@@ -32,6 +32,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
+import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
@@ -783,6 +784,7 @@ export class WarhammerCharacterSheet
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
         { id: "gear",        label: "СНАРЯЖЕНИЕ" },
+        { id: "craft",       label: "КРАФТ" },
         { id: "advance",     label: "РАЗВИТИЕ" },
         { id: "notes",       label: "ЗАПИСИ" }
       ]
@@ -801,6 +803,9 @@ export class WarhammerCharacterSheet
   // Субвкладка ТЕЛА, открытая сейчас (wdbc-ycgk) — окно, не актор, см. onBodySubtab.
   _bodySubtab = "flesh";
   _wizardPrompted = false;
+  // Вкладка КРАФТ (wdbc-42a6) — модель проектов Крафта/Исследований живёт на
+  // самом листе, не на акторе (см. заголовок module/sheets/tabs/craft.mjs).
+  _craftModel = null;
 
   // Показать/скрыть под-строки установленных улучшений конкретного носителя
   // (оружия/брони) на вкладке снаряжения. Строки-описания при сворачивании
@@ -855,6 +860,11 @@ export class WarhammerCharacterSheet
     // Блок «МИНЬОНЫ» там же: слоты купленных Талантов, счётчик по группам и
     // максимум, а при свободном Таланте — кнопка «+» в генератор.
     Object.assign(context, minionsPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Вкладка КРАФТ (wdbc-42a6): тот же движок, что у отдельного окна
+    // «Мастерская» (module/apps/craft-workshop.mjs, оно тоже осталось — см.
+    // его заголовок), но проекты свои у этого листа.
+    Object.assign(context, await craftTabContext(this));
 
     // Блок «ВЕРХОМ» на вкладке БОЙ: скакун ищется по списку акторов мира —
     // ссылку на него хранит сам всадник (rules/mount.mjs).
@@ -1716,6 +1726,9 @@ export class WarhammerCharacterSheet
     activateRitualListeners(html, this.actor);
 
     activateGearListeners(root, this.actor);
+
+    // ── Вкладка КРАФТ (wdbc-42a6) ───────────────────────────────────────────
+    activateCraftListeners(root, this);
 
     // ── Вкладка БОЙ ───────────────────────────────────────────────────────
     activateCombatListeners(root, this.actor);

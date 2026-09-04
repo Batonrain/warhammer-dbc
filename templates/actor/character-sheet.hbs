@@ -34,7 +34,7 @@
     <a class="item {{#if (eq tab "tech")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="tech">ТЕХ</a> {{/if}}
     {{#if (eq system.subrace "navigator")}}
     <a class="item {{#if (eq tab "nav")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="nav">НАВ</a> {{/if}}
-    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a> <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a> <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a> </nav> <div class="sheet-body"> {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
+    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a> <a class="item {{#if (eq tab "craft")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="craft" title="Крафт, Исследования и Биолаборатория (перенесены из отдельного окна «Мастерская»)">КРАФТ</a> <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a> <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a> </nav> <div class="sheet-body"> {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs"}}
@@ -46,6 +46,7 @@
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs"}}
 {{/if}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-craft.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}

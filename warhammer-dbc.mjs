@@ -156,6 +156,7 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/tab-craft.hbs", // ← НОВОЕ, wdbc-42a6
     "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs",  // ← НОВОЕ
