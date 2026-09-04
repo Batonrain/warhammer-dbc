@@ -30,6 +30,7 @@ import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { spendReaction }  from "./action-economy.mjs";
 import { _noReactionCard } from "./defense.mjs";
 import { rollIcon }      from "../constants/roll-icons.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
@@ -646,7 +647,7 @@ function fallSection(rider, mount, speedKey) {
 /** Урон падения плюс состояние «лежит»: выпавший из седла оказывается на земле. */
 export async function applyFall(rider, formula) {
   const roll = await new Roll(formula || "1d10").evaluate();
-  await rider.update({ "system.conditions.prone": true });
+  await rider.update(conditionApplyFields("prone"));
   await postCard(rider, `
     <div class="roll-header">${rollIcon("blood", "#ff6b6b")}Выпал из седла — ${esc(rider.name)}</div>
     <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}${formula}: <b>${roll.total}</b></div>

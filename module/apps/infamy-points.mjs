@@ -11,6 +11,7 @@
 
 import { DP_INFAMY_ABILITIES, DP_PATRON_ABILITIES, DP_PATRONAGE, DP_GODS_MAP } from "../constants/demon-prince.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { tempInfamyInfo, tempInfamyAmount, spendTempInfamy } from "../rules/temp-infamy.mjs";
 
 /**
@@ -137,8 +138,7 @@ export async function spendInfamy(actor, key, { godKey, ipFullPath, ipMax, meta 
     if (clearNeg) upd["system.wounds.critical"] = 0;
     lines.push(`Исцеление: восстановлено <b>${healed}</b> Ран${clearNeg ? ", сняты Отрицательные Раны" : ""}.`);
   } else if (key === "recover") {
-    upd["system.conditions.stunned"] = false;
-    upd["system.conditions.stunnedRounds"] = 0;
+    Object.assign(upd, conditionRemoveFields("stunned"));
     lines.push("Приход в себя: снято Оглушение / Ступор / Шок.");
   } else if (key === "success" && patron.successBonusDice && cor >= (patron.successBonusDiceCor ?? Infinity)) {
     const r = await new Roll(patron.successBonusDice).evaluate(); rolls.push(r);

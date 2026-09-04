@@ -21,7 +21,7 @@
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "../rules/wounds.mjs";
-import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { addFatigue, conditionAdjustFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
@@ -93,13 +93,10 @@ export async function processConditionTurnStart(actor) {
     const cur = Number(conds[field]) || 0;
     if (cur <= 0) continue;
     const next = cur - 1;
-    updates[`system.conditions.${field}`] = next;
-    if (next <= 0) {
-      updates[`system.conditions.${key}`] = false;
-      lines.push(`<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`);
-    } else {
-      lines.push(`<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
-    }
+    Object.assign(updates, conditionAdjustFields(actor, key, -1));
+    lines.push(next <= 0
+      ? `<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`
+      : `<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
   }
   if (!Object.keys(updates).length) return;
   await actor.update(updates);
@@ -135,7 +132,7 @@ export async function processConditionTurnEnd(actor) {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
     } else if (eff <= 5) {
       const newLevel = level + 1;
-      await actor.update({ "system.conditions.haemorrhagingLevel": newLevel, "system.conditions.haemorrhaging": true });
+      await actor.update(conditionAdjustFields(actor, "haemorrhaging", 1));
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
     } else {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
@@ -147,7 +144,7 @@ export async function processConditionTurnEnd(actor) {
   // кроме Галлюцинаций: если Оглушение вызвано ими (conds.hallucinogenic),
   // электрошок по мозгу их не лечит.
   if (conds.stunned && !conds.hallucinogenic && hasRuleFlag(actor, "sarcophagus.autoWakeFromStun")) {
-    await actor.update({ "system.conditions.stunned": false, "system.conditions.stunnedRounds": 0 });
+    await actor.update(conditionRemoveFields("stunned"));
     lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
   }
 

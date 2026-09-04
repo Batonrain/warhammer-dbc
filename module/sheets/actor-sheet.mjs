@@ -1456,7 +1456,7 @@ export class WarhammerCharacterSheet
 
     if (payload?.type === "wh-condition") {
       event.preventDefault();
-      return addCondition(this.actor, payload.key, payload.level || null);
+      return addCondition(this.actor, payload.key, { level: payload.level || null });
     }
 
     return super._onDrop(event);

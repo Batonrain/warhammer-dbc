@@ -37,7 +37,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
-import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
+import { fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
   from "../rules/improvised-weapon.mjs";
@@ -60,8 +60,8 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
 
   // Состояние и флаг партнёра одним update на актора: каждая отдельная
   // запись — это prepareData + re-render листа и токена у всех клиентов.
-  await actor.update({ "system.conditions.grappling": true, [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
-  await target.update({ "system.conditions.grappling": true, [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
+  await actor.update({ ...conditionApplyFields("grappling"), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
+  await target.update({ ...conditionApplyFields("grappling"), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
 
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
@@ -84,9 +84,9 @@ export function grapplePartner(actor) {
 /** Снять Борьбу с обоих участников разом (кнопка «Разорвать Захват» и любой Выход). */
 export async function endGrapple(actor) {
   const partner = grapplePartner(actor);
-  await actor.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
+  await actor.update({ ...conditionRemoveFields("grappling"), [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   if (partner) {
-    await partner.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
+    await partner.update({ ...conditionRemoveFields("grappling"), [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   }
 }
 
@@ -367,7 +367,7 @@ async function _doDetachTentacle(actor) {
     ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
     return;
   }
-  await actor.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
+  await actor.update({ ...conditionRemoveFields("grappling"), [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   await markWorldTimeCooldownUsed(actor, TENTACLE_REGROW_FLAG);
 
   const rollMode = game.settings.get("core", "rollMode");
@@ -589,7 +589,7 @@ async function _doThrow(actor) {
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {
       knockedDown = true;
       halved = true;
-      await actor.update({ "system.conditions.prone": true });
+      await actor.update(conditionApplyFields("prone"));
     }
   }
 

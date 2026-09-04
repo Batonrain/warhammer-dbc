@@ -56,6 +56,7 @@ import { expectedPhase } from "../constants/effect-keys.mjs";
 import { WARP_GODS_MAP } from "../constants/veil.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { buildTargetEffectButtons, resolveWeaponPropsList } from "./weapon-properties.mjs";
 
 const GOD_KEYS = ["khorne", "nurgle", "slaanesh", "tzeentch"];
@@ -286,7 +287,7 @@ export async function applyWarpTaintedAura(actor, casterToken) {
     await t.actor.update({ "system.corruption.value": curCor + 1 });
     if (god === "nurgle") {
       const curRounds = Number(t.actor.system?.conditions?.suffocatingRounds) || 0;
-      await t.actor.update({ "system.conditions.suffocating": true, "system.conditions.suffocatingRounds": Math.max(curRounds, 1) });
+      await t.actor.update(conditionApplyFields("suffocating", Math.max(curRounds, 1)));
     }
   }
   lines.push(`Провалившие тест W−10 (${failed.length}/${enemies.length}): ${failed.map(a => esc(a.name)).join(", ") || "—"} — +1 Порча каждому${god === "nurgle" ? " + реальное Состояние «Удушье»" : ""}.`);

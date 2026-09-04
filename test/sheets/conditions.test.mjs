@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, fakeForm, listenerRoot, resetCaptured } from "../support/foundry-stub.mjs";
-import { activateConditionsListeners, addFatigue, removeCondition, removeFatigue,
+import { activateConditionsListeners, addFatigue, addCondition, removeCondition, removeFatigue,
          fatigueSleep, setConditionLevel, fatiguePenalty,
+         conditionApplyFields, conditionRemoveFields, conditionAdjustFields,
          showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -239,6 +240,88 @@ describe("condition rows", () => {
     await setConditionLevel(a, "fatigued", "5");
 
     expect(a.updates).toEqual([]);
+  });
+
+  it("addCondition пишет флаг и, если дан level, счётчик — одним патчем", async () => {
+    const a = makeActor();
+    await addCondition(a, "bleeding", { level: 2 });
+    expect(a.updates[0]).toEqual({ "system.conditions.bleeding": true, "system.conditions.bleedingLevel": 2 });
+
+    await addCondition(a, "prone");
+    expect(a.updates[1]).toEqual({ "system.conditions.prone": true });
+  });
+});
+
+// wdbc-fejd: единая точка наложения/снятия — раньше 19+ мест сами собирали
+// пару «флаг + счётчик» руками, каждое своим кодом. *Fields — те же патчи,
+// что addCondition/removeCondition, но без записи (для слияния с другими
+// полями actor.update в одном вызове — грапл, наркотики, лечение и т.п.).
+describe("conditionApplyFields / conditionRemoveFields / conditionAdjustFields", () => {
+  it("conditionApplyFields: без level трогает только флаг, даже у состояния со счётчиком", () => {
+    expect(conditionApplyFields("bleeding")).toEqual({ "system.conditions.bleeding": true });
+  });
+
+  it("conditionApplyFields: с level пишет и счётчик", () => {
+    expect(conditionApplyFields("stunned", 3)).toEqual({
+      "system.conditions.stunned": true, "system.conditions.stunnedRounds": 3
+    });
+  });
+
+  it("conditionApplyFields: level не действует на состояние без счётчика", () => {
+    expect(conditionApplyFields("prone", 5)).toEqual({ "system.conditions.prone": true });
+  });
+
+  it("conditionApplyFields: «Усталость» и неизвестный ключ — пустой патч", () => {
+    expect(conditionApplyFields("fatigued", 3)).toEqual({});
+    expect(conditionApplyFields("no-such-key")).toEqual({});
+  });
+
+  it("conditionRemoveFields: флаг + счётчик обнулены у состояния с уровнем", () => {
+    expect(conditionRemoveFields("burning")).toEqual({
+      "system.conditions.burning": false, "system.conditions.burningLevel": 0
+    });
+  });
+
+  it("conditionRemoveFields: только флаг у состояния без уровня", () => {
+    expect(conditionRemoveFields("pinned")).toEqual({ "system.conditions.pinned": false });
+  });
+
+  it("conditionAdjustFields: положительная дельта поднимает счётчик и держит флаг true", () => {
+    const a = makeActor();
+    a.system.conditions.bleedingLevel = 1;
+    expect(conditionAdjustFields(a, "bleeding", 1)).toEqual({
+      "system.conditions.bleeding": true, "system.conditions.bleedingLevel": 2
+    });
+  });
+
+  it("conditionAdjustFields: отрицательная дельта снимает флаг на нуле, не уходит в минус", () => {
+    const a = makeActor();
+    a.system.conditions.lostHandsCount = 1;
+    expect(conditionAdjustFields(a, "lostHands", -5)).toEqual({
+      "system.conditions.lostHands": false, "system.conditions.lostHandsCount": 0
+    });
+  });
+
+  it("conditionAdjustFields: отрицательная дельта, флаг остаётся true, пока счётчик > 0", () => {
+    const a = makeActor();
+    a.system.conditions.haemorrhagingLevel = 3;
+    expect(conditionAdjustFields(a, "haemorrhaging", -1)).toEqual({
+      "system.conditions.haemorrhaging": true, "system.conditions.haemorrhagingLevel": 2
+    });
+  });
+
+  it("conditionAdjustFields: состояние без счётчика — положительная дельта накладывает флаг", () => {
+    expect(conditionAdjustFields(makeActor(), "poisoned", 1)).toEqual({ "system.conditions.poisoned": true });
+  });
+
+  it("conditionAdjustFields: состояние без счётчика — неположительная дельта ничего не пишет (снимать — conditionRemoveFields)", () => {
+    expect(conditionAdjustFields(makeActor(), "poisoned", -1)).toEqual({});
+    expect(conditionAdjustFields(makeActor(), "poisoned", 0)).toEqual({});
+  });
+
+  it("conditionAdjustFields: «Усталость» и неизвестный ключ — пустой патч", () => {
+    expect(conditionAdjustFields(makeActor(), "fatigued", 1)).toEqual({});
+    expect(conditionAdjustFields(makeActor(), "no-such-key", 1)).toEqual({});
   });
 });
 

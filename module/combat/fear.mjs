@@ -12,7 +12,7 @@ import { ruleFlagLabels, hasRuleFlag }             from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
-import { fatiguePenalty }                          from "../sheets/tabs/conditions.mjs";
+import { fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
@@ -82,7 +82,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
         ${critPillsHtml(shockPills, actor.uuid)}</div>`;
       // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
       // выхода из Шока в начале Хода (rollShockRecovery ниже).
-      await actor.update({ "system.conditions.shocked": true });
+      await actor.update(conditionApplyFields("shocked"));
     }
   }
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll: !!reroll });
@@ -194,7 +194,7 @@ export async function postShockRecoveryPrompt(actor) {
 export async function rollShockRecovery(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
   const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
-  if (success) await actor.update({ "system.conditions.shocked": false });
+  if (success) await actor.update(conditionRemoveFields("shocked"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
   const rollMode = game.settings.get("core", "rollMode");

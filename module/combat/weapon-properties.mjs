@@ -341,15 +341,3 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
       ${btns.join("")}
     </div>`;
 }
-
-// Состояние → поле уровня/раундов в system.conditions
-export const CONDITION_LEVEL_FIELD = {
-  stunned:        "stunnedRounds",
-  blinded:        "blindedRounds",
-  burning:        "burningLevel",
-  radiation:      "radiationLevel",
-  bleeding:       "bleedingLevel",
-  fatigued:       "fatiguedLevel",
-  haemorrhaging:  "haemorrhagingLevel"
-  // poisoned, pinned, hallucinogenic, prone — без уровня (булевы)
-};

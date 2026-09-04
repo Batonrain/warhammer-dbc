@@ -19,7 +19,9 @@ import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
-import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
+import { conditionLevelField } from "./constants/conditions.mjs";
+import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
@@ -1169,22 +1171,22 @@ async function _applyWeaponPropEffect(ds) {
   // при 5+ Провалах, не при любом провале) отсекает состояние по degrees of
   // failure, не влияя на сам факт провала теста/доп. урон.
   const conditionsToApply = [];
-  if (kind === "grav") conditionsToApply.push(["prone", false], ["pinned", false]);
-  else if (condition && deg >= minDoP) conditionsToApply.push([condition, true]);
+  if (kind === "grav") conditionsToApply.push("prone", "pinned");
+  else if (condition && deg >= minDoP) conditionsToApply.push(condition);
 
   let appliedNote = "";
   if (!resisted && conditionsToApply.length) {
     const update = {};
     const applied = [];
-    for (const [cond, hasLevel] of conditionsToApply) {
-      update[`system.conditions.${cond}`] = true;
-      const levelField = CONDITION_LEVEL_FIELD[cond];
-      if (hasLevel && levelField) {
+    for (const cond of conditionsToApply) {
+      const levelField = conditionLevelField(cond);
+      if (levelField) {
         const lvl = perDoP ? deg : (fixedRnd || 1);
         const cur = actor.system.conditions?.[levelField] ?? 0;
-        update[`system.conditions.${levelField}`] = Math.max(cur, lvl);
+        Object.assign(update, conditionApplyFields(cond, Math.max(cur, lvl)));
         applied.push(`${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`);
       } else {
+        Object.assign(update, conditionApplyFields(cond));
         applied.push(cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label);
       }
     }

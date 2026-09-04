@@ -23,6 +23,7 @@ import {
   toyOfGodsApplies
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { conditionApplyFields } from "./conditions.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { spendFromInfamyPool } from "../../apps/infamy-points.mjs";
 import {
@@ -136,8 +137,8 @@ async function doSusAnimation(actor) {
   if (success) {
     await actor.update({
       [`flags.${NS}.deceased`]: false,
-      "system.conditions.unconscious": true,
-      "system.conditions.helpless": true
+      ...conditionApplyFields("unconscious"),
+      ...conditionApplyFields("helpless")
     });
     lines.push(`<span class="roll-success">Успех — десантник входит в Замедленную Анимацию вместо смерти.</span>`);
     lines.push("Без сознания и Беспомощен. Диагностика −60 (For.Lore (Astartes Implants) снимает штраф). "

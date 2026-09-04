@@ -19,6 +19,7 @@ import { changeInfamy, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 
 const DISGRACE_FLAG = "lordOfExoditesDisgraced";
 
@@ -63,7 +64,7 @@ export async function clearMoraleConditions(lord, targetActors) {
   const targets = (targetActors ?? []).filter(a => a && a !== lord);
   if (!targets.length) return ui.notifications?.warn("⚠️ Выберите хотя бы одного союзника.");
   for (const actor of targets) {
-    await actor.update({ "system.conditions.shocked": false, "system.conditions.pinned": false });
+    await actor.update({ ...conditionRemoveFields("shocked"), ...conditionRemoveFields("pinned") });
   }
   const names = targets.map(a => esc(a.name)).join(", ");
   await ChatMessage.create(ChatMessage.applyRollMode({

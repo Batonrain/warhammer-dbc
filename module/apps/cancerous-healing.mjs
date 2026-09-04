@@ -33,6 +33,7 @@ import { isCancerousHealingItem, cancerousHealingGrant, cancerousHealingPenaltyV
 import { showAttackDialogNoWeapon } from "../sheets/attack-dialog.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { expectedPhase } from "../constants/effect-keys.mjs";
 
 export { isCancerousHealingItem };
@@ -167,12 +168,11 @@ export async function applyCancerousHealingEffect(casterActor, target, { forced 
   };
   const cured = [];
   if (target.system?.conditions?.bleeding) {
-    update["system.conditions.bleeding"] = false;
-    update["system.conditions.bleedingLevel"] = 0;
+    Object.assign(update, conditionRemoveFields("bleeding"));
     cured.push("Кровотечение");
   }
   if (target.system?.conditions?.crippling) {
-    update["system.conditions.crippling"] = false;
+    Object.assign(update, conditionRemoveFields("crippling"));
     cured.push("Калечение (Crippling)");
   }
   await target.update(update);

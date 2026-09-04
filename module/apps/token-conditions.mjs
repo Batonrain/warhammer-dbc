@@ -23,6 +23,9 @@
 // Из реестра constants/conditions.mjs (wdbc-w88h), не из sheets/sheet-helpers.mjs
 // — этот слой (apps/, синхронизация с движком) не должен тянуть слой листа.
 import { CONDITIONS_DEF, CONDITION_ICONS, TOKEN_SYNC_EXCLUDE } from "../constants/conditions.mjs";
+// Единая точка наложения/снятия (wdbc-fejd) — держит флаг и счётчик в
+// согласии сама, вместо ручной сборки пары полей прямо здесь.
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 
 // «Усталость» — не бинарное состояние, а зеркало счётчика system.fatigue.value
 // (actor.mjs prepareDerivedData). Токен умеет только вкл/выкл иконку, а не
@@ -86,10 +89,7 @@ function registerConditionStatusSync() {
     if (!!actor.system.conditions[key] === want) return;
     _syncing = true;
     try {
-      const def = CONDITIONS_DEF[key];
-      const updates = { [`system.conditions.${key}`]: want };
-      if (!want && def.hasLevel && def.levelField) updates[`system.conditions.${def.levelField}`] = 0;
-      await actor.update(updates);
+      await actor.update(want ? conditionApplyFields(key) : conditionRemoveFields(key));
     } finally { _syncing = false; }
   };
   Hooks.on("createActiveEffect", (effect, options, userId) => syncFromEffect(effect, options, userId, false));

@@ -13,6 +13,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -31,7 +32,7 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } =
   const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
   const rollMode  = game.settings.get("core", "rollMode");
 
-  if (!success) await actor.update({ "system.conditions.pinned": true });
+  if (!success) await actor.update(conditionApplyFields("pinned"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
   const modLine = mod !== 0 || bonus !== 0
@@ -93,7 +94,7 @@ export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
   const rollMode  = game.settings.get("core", "rollMode");
 
-  if (success) await actor.update({ "system.conditions.pinned": false });
+  if (success) await actor.update(conditionRemoveFields("pinned"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
   const bonusLine = bonus !== 0 || ruleBonus !== 0

@@ -4,7 +4,11 @@
 //  состояний. Функции принимают актора, а не лист.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
+// Из constants/conditions.mjs (не sheet-helpers.mjs, wdbc-fejd) — этот файл
+// теперь импортируют apps/combat-модули (единая точка наложения/снятия), а
+// sheet-helpers.mjs тянет за собой тяжёлые модули листа (race-library.mjs и
+// т.п.) с побочными эффектами при импорте (Hooks.once вне заглушки Foundry).
+import { CONDITIONS_DEF } from "../../constants/conditions.mjs";
 import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { fatigueGraceForActor } from "../../rules/fatigue-grace.mjs";
@@ -86,7 +90,7 @@ export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
 
   if (threshold > 0 && newVal >= threshold) {
     const unconsciousMinutes = Math.max(1, 10 - tb);
-    updates["system.conditions.unconscious"] = true;
+    Object.assign(updates, conditionApplyFields("unconscious"));
 
     await actor.update(updates);
 
@@ -131,7 +135,7 @@ export async function removeFatigue(actor, amount = 1) {
   };
 
   if (system.conditions?.unconscious && newVal < threshold) {
-    updates["system.conditions.unconscious"] = false;
+    Object.assign(updates, conditionRemoveFields("unconscious"));
   }
 
   await actor.update(updates);
@@ -199,7 +203,7 @@ export async function fatigueSleep(actor) {
   await actor.update({
     "system.fatigue.value": 0,
     "system.fatigue.max": threshold,
-    "system.conditions.unconscious": false
+    ...conditionRemoveFields("unconscious")
   });
   if (actor.getFlag?.("warhammer-dbc", "slowFatigue")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigue");
   if (actor.getFlag?.("warhammer-dbc", "slowFatigueParity")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigueParity");
@@ -216,32 +220,75 @@ export async function fatigueSleep(actor) {
   }, rollMode));
 }
 
+// ── Единая точка наложения/снятия Состояний (wdbc-fejd) ─────────────────────
+// Раньше 19+ мест по всему коду (combat/*, apps/*, sheets/tabs/*) сами
+// собирали пару «флаг + счётчик» вручную, каждое своим кодом — ровно так же,
+// как когда-то разъехались флаг и счётчик Усталости (см. комментарий у
+// prepareDerivedData в rules/character.mjs). Здесь — то место, которое НЕ
+// умеет забыть про счётчик: даёт значение флага и счётчика ОДНИМ вызовом,
+// каким бы способом ни считалось само число (задать явно, поднять «не ниже»,
+// изменить на дельту).
+//
+// *Fields — чистые функции без побочных эффектов: собирают патч под ключи
+// actor.update, но НЕ пишут сами — нужны местам, которые сливают несколько
+// полей (Состояние + другие system.*/flags.*) в один вызов actor.update.
+// addCondition/removeCondition — те же пары полей, но уже отправленные.
+
+/** Патч { "system.conditions.<key>": true, [.<levelField>]: level } — если у Состояния нет счётчика или level не передан, второе поле не пишется. */
+export function conditionApplyFields(key, level = null) {
+  const def = CONDITIONS_DEF[key];
+  if (!def || key === "fatigued") return {};
+  const fields = { [`system.conditions.${key}`]: true };
+  if (def.hasLevel && def.levelField && level != null) {
+    fields[`system.conditions.${def.levelField}`] = Number(level) || 0;
+  }
+  return fields;
+}
+
+/** Патч на снятие — флаг false и (если у Состояния есть счётчик) счётчик 0. */
+export function conditionRemoveFields(key) {
+  if (key === "fatigued") return {};
+  const def    = CONDITIONS_DEF[key];
+  const fields = { [`system.conditions.${key}`]: false };
+  if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
+  return fields;
+}
+
+/**
+ * Патч на «изменить счётчик на delta относительно текущего значения» —
+ * Кровотечение +1 за неудачную ампутацию, снятый ур. Обескровливания от
+ * препарата (−N), пришитая конечность (−1) и т.п. Флаг сам следует за
+ * счётчиком: результат ⩽0 — снят, > 0 — наложен. У Состояния без счётчика
+ * delta трактуется как булев тумблер (delta > 0 — наложить, иначе не трогать —
+ * для явного снятия есть conditionRemoveFields).
+ */
+export function conditionAdjustFields(actor, key, delta) {
+  const def = CONDITIONS_DEF[key];
+  if (!def || key === "fatigued") return {};
+  if (!def.hasLevel || !def.levelField) {
+    return delta > 0 ? { [`system.conditions.${key}`]: true } : {};
+  }
+  const cur  = Number(actor.system.conditions?.[def.levelField]) || 0;
+  const next = Math.max(0, cur + delta);
+  return { [`system.conditions.${key}`]: next > 0, [`system.conditions.${def.levelField}`]: next };
+}
+
 /**
  * Наложить состояние (диалог добавления, драг состояния из карточки ритуала
  * в чате — module/sheets/actor-sheet.mjs, showRitualCastDialog). `level` —
  * только для состояний со счётчиком (Кровотечение, Оглушение и т.п.).
  */
-export async function addCondition(actor, key, level = null) {
-  const def = CONDITIONS_DEF[key];
-  if (!def || key === "fatigued") return;
-  const updates = { [`system.conditions.${key}`]: true };
-  if (def.hasLevel && def.levelField && level != null) {
-    updates[`system.conditions.${def.levelField}`] = Number(level) || 0;
-  }
-  await actor.update(updates);
+export async function addCondition(actor, key, { level = null } = {}) {
+  const fields = conditionApplyFields(key, level);
+  if (Object.keys(fields).length) await actor.update(fields);
 }
 
 /** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
 export async function removeCondition(actor, key) {
   // «Усталость» правится только Усталостью на ТЕЛЕ (см. showAddConditionDialog) —
   // крестик тут ничего не изменит, тег пересчитается обратно из fatigue.value.
-  if (key === "fatigued") return;
-  const def     = CONDITIONS_DEF[key];
-  const updates = { [`system.conditions.${key}`]: false };
-  if (def?.hasLevel && def.levelField) {
-    updates[`system.conditions.${def.levelField}`] = 0;
-  }
-  await actor.update(updates);
+  const fields = conditionRemoveFields(key);
+  if (Object.keys(fields).length) await actor.update(fields);
 }
 
 /** Поле уровня: раунды оглушения, стадии кровотечения и прочие счётчики. */
@@ -289,7 +336,7 @@ export function showAddConditionDialog(actor) {
         callback: async (event, button) => {
           const updates = {};
           for (const cb of button.form.querySelectorAll(".add-cond-cb:checked"))
-            updates[`system.conditions.${cb.dataset.condition}`] = true;
+            Object.assign(updates, conditionApplyFields(cb.dataset.condition));
           if (Object.keys(updates).length) await actor.update(updates);
         }
       },
