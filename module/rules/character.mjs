@@ -1032,6 +1032,19 @@ export function prepareCharacterDerived(actor, system) {
       run      = spdMod * 6;
     }
 
+    // Повален (стр. 30-31, wdbc-r5o7.2): SPD вдвое — применяется к уже
+    // посчитанным halfMove/move/charge/run (после Стойки и прочих модов
+    // выше, а не к сырому spd — итог тот же за счёт линейности, но так
+    // работает независимо от того, что ещё поменяло эти четыре числа).
+    // «Нельзя Бег и Натиск» — отдельный запрет в combat/movement-actions.mjs
+    // (declareCharge/declareRun), не про число.
+    if (system.conditions?.prone) {
+      halfMove = Math.max(0.5, halfMove / 2);
+      move     = Math.max(0.5, move / 2);
+      charge   = Math.max(0.5, charge / 2);
+      run      = Math.max(0.5, run / 2);
+    }
+
     system.movement.halfMove = halfMove;
     system.movement.move     = move;
     system.movement.charge   = charge;
@@ -1048,9 +1061,16 @@ export function prepareCharacterDerived(actor, system) {
     if (piercingSpdMod)          spdBreakdown.push({ label: "Piercing (снаряд в ране)",     value: piercingSpdMod });
     if (stance === "springing")  spdBreakdown.push({ label: "Пружинящая Стойка",           value: -2 });
     // Минимум SPD — 0.5 (стр. 28): сумма слагаемых может уйти в минус, порог
-    // это ловит раньше breakdown.
+    // это ловит раньше breakdown. Повален не складывается, а делит пополам —
+    // считаем ожидаемое ДО сравнения с halfMove, иначе halfMove≠sum срабатывал
+    // бы всегда при Поваленном, даже без реального клампа по минимуму.
     const spdRawSum = spdBreakdown.reduce((s, b) => s + b.value, 0);
-    if (spdRawSum !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
+    let expectedHalfMove = spdRawSum;
+    if (system.conditions?.prone) {
+      spdBreakdown.push({ label: "Повален", value: null, halved: true });
+      expectedHalfMove /= 2;
+    }
+    if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
     system.movement.spdBreakdown = spdBreakdown;
 
     // ── Инициатива ────────────────────────────────────────────────────────

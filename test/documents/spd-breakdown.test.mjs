@@ -63,4 +63,40 @@ describe("system.movement.spdBreakdown", () => {
     expect(system.movement.halfMove).toBe(4);
     expect(system.movement.spdBreakdown.map(b => b.label)).toEqual(["База", "Механика (Конструктор)", "Пружинящая Стойка"]);
   });
+
+  // Повален (стр. 30-31, wdbc-r5o7.2): SPD вдвое — halfMove/move/charge/run
+  // делятся на 2, независимо от прочих модификаторов; breakdown несёт
+  // отдельную non-additive строку («Повален»), не число, иначе сумма строк
+  // разошлась бы с halfMove и ложно показала бы «Минимум SPD».
+  it("Повален — halfMove/move/charge/run делятся на 2", () => {
+    const system = characterWith({ conditions: { prone: true } });
+    expect(system.movement.halfMove).toBe(1.5); // 3 / 2
+    expect(system.movement.move).toBe(3);       // 6 / 2
+    expect(system.movement.charge).toBe(4.5);   // 9 / 2
+    expect(system.movement.run).toBe(9);        // 18 / 2
+    expect(system.movement.spdBreakdown).toEqual([
+      { label: "База", value: 3, note: "Ag.b + Размер" },
+      { label: "Повален", value: null, halved: true }
+    ]);
+  });
+
+  it("Повален + Механика — сумма делится на 2 целиком, до клампа минимума", () => {
+    const system = characterWith({ movement: { spdBonus: 2 }, conditions: { prone: true } });
+    // (3 + 2) / 2 = 2.5
+    expect(system.movement.halfMove).toBe(2.5);
+    expect(system.movement.spdBreakdown.map(b => b.label)).toEqual(["База", "Механика (Конструктор)", "Повален"]);
+  });
+
+  it("Повален с очень низким SPD — клампится на 0.5, «Минимум SPD» появляется", () => {
+    const system = characterWith({ movement: { spdBonus: -3 }, conditions: { prone: true } });
+    // (3 − 3) / 2 = 0 → floor 0.5
+    expect(system.movement.halfMove).toBe(0.5);
+    expect(system.movement.spdBreakdown.map(b => b.label)).toEqual(
+      ["База", "Механика (Конструктор)", "Повален", "Минимум SPD"]);
+  });
+
+  it("не Повален — строки «Повален» нет вовсе", () => {
+    const system = characterWith();
+    expect(system.movement.spdBreakdown.map(b => b.label)).not.toContain("Повален");
+  });
 });

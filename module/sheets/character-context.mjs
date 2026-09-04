@@ -47,6 +47,7 @@ function charTotalTooltip(total, breakdown) {
   const lines = (breakdown || []).map(b => {
     if (b.cap != null)   return `${b.label}: не выше ${b.cap}`;
     if (b.floor != null) return `${b.label}: не ниже ${b.floor}`;
+    if (b.halved)         return `${b.label}: ÷2`;
     if (b.label === "База") return `${b.label}: ${b.value}${b.note ? ` (${b.note})` : ""}`;
     const sign = b.value > 0 ? "+" : "−";
     return `${b.label}: ${sign}${Math.abs(b.value)}`;

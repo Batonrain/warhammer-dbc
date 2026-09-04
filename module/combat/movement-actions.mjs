@@ -180,6 +180,9 @@ export async function declareFullMove(actor) {
 
 export async function declareCharge(actor) {
   if (!actor) return;
+  // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
+  if (actor.system.conditions?.prone)
+    return ui.notifications.warn("⚠️ Повален — нельзя объявить Натиск. Сначала встать (Полудействие).");
   await actor.update({ "system.meleeBase": "charge" });
   await markMovedThisTurn(actor);
   await markMoveDegreeThisTurn(actor, "full");
@@ -222,6 +225,9 @@ export async function declareDisengage(actor) {
 
 export async function declareRun(actor) {
   if (!actor) return;
+  // Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
+  if (actor.system.conditions?.prone)
+    return ui.notifications.warn("⚠️ Повален — нельзя объявить Бег. Сначала встать (Полудействие).");
   if (!await spendActionPoints(actor, 2)) return ui.notifications.warn("⚠️ Не хватает ОД.");
   await actor.setFlag("warhammer-dbc", "running", true);
   await markMovedThisTurn(actor);

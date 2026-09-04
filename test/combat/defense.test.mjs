@@ -253,6 +253,32 @@ describe("_performDodge: несколько попаданий одной ата
   });
 });
 
+// Повален (стр. 30-31, wdbc-r5o7.2): −20 на Уклонение — Ag 35, untrained −20
+// → Порог 15 без Состояния, −5 с ним.
+describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
+  it("Порог падает на 20, чип «повален» в карточке", async () => {
+    const actor = attacker();
+    actor.system.conditions = { prone: true };
+    captured.dice = [90]; // выше нового (отрицательного) порога — провал, но карточка всё равно пишет порог
+
+    await _performDodge(actor, 0, "", 1);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>-5</b>");
+    expect(card).toContain("🧎 повален -20");
+  });
+
+  it("не Повален — штрафа и чипа нет", async () => {
+    const actor = attacker();
+
+    await _performDodge(actor, 0, "", 1);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).not.toContain("повален");
+  });
+});
+
 // Пул Избегания (стр. 12, module/combat/evasion-pool.mjs): излишек Успехов
 // сверх того, что нужно ЭТОЙ атаке, банкуется на попадания ДРУГИХ атак того
 // же противника в этом Ходу — но только пока «Ход» отследим (активный бой).

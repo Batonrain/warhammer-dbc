@@ -217,6 +217,31 @@ describe("targetHasTrait", () => {
   });
 });
 
+describe("hasCondition / targetHasCondition / targetLacksCondition", () => {
+  it("hasCondition: истинно, если хоть одно из перечисленных Состояний стоит на акторе", () => {
+    const a = actor({ conditions: { prone: true } });
+    expect(PREDICATES.hasCondition(a, {}, "prone")).toBe(true);
+    expect(PREDICATES.hasCondition(a, {}, ["stunned", "prone"])).toBe(true);
+    expect(PREDICATES.hasCondition(a, {}, "stunned")).toBe(false);
+  });
+
+  it("hasCondition: у актора без conditions вовсе — false, не падает", () => {
+    expect(PREDICATES.hasCondition(actor(), {}, "prone")).toBe(false);
+  });
+
+  it("targetHasCondition: смотрит на ctx.targetActor, не на самого actor", () => {
+    const targetActor = actor({ conditions: { prone: true } });
+    expect(PREDICATES.targetHasCondition(actor(), { targetActor }, "prone")).toBe(true);
+    expect(PREDICATES.targetHasCondition(actor({ conditions: { prone: true } }), {}, "prone")).toBe(false);
+  });
+
+  it("targetLacksCondition: истинно, только если НИ ОДНОГО из списка нет", () => {
+    const targetActor = actor({ conditions: { stunned: true } });
+    expect(PREDICATES.targetLacksCondition(actor(), { targetActor }, ["stunned", "helpless"])).toBe(false);
+    expect(PREDICATES.targetLacksCondition(actor(), { targetActor }, ["helpless"])).toBe(true);
+  });
+});
+
 describe("targetKeepsNimbleInArmour", () => {
   const armor = (armorType, equipped = true) => ({ type: "armor", system: { armorType, equipped } });
   const blackCarapace = (installed = true) => ({
@@ -307,6 +332,7 @@ describe("общее требование к предикатам", () => {
     wearsSealedArmour: undefined,
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
+    hasCondition: "prone", targetHasCondition: "prone",
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos",

@@ -183,6 +183,18 @@ export const PREDICATES = {
   targetLacksCondition: (actor, ctx, value) =>
     list(value).every(key => !ctx?.targetActor?.system?.conditions?.[key]),
 
+  // Пара к targetLacksCondition — но «или», не «и»: у САМОГО актора есть хотя
+  // бы одно из перечисленных Состояний (wdbc-r5o7, module/rules/library/
+  // conditions.mjs). Список — «Оглушён ИЛИ Ошеломлён» одним условием, как и
+  // у targetHasCondition ниже.
+  hasCondition: (actor, ctx, value) =>
+    list(value).some(key => !!actor?.system?.conditions?.[key]),
+
+  // То же самое, но про цель броска (ctx.targetActor) — «атаки по Поваленной
+  // цели» и подобные правила со стороны атакующего.
+  targetHasCondition: (actor, ctx, value) =>
+    list(value).some(key => !!ctx?.targetActor?.system?.conditions?.[key]),
+
   // Ненулевой Размер — гейт core.sizeToHit/core.sizeStealth (rules/library/
   // core.mjs): без него строка с «(+0)» лезла бы в чек-лист на каждом броске
   // против обычного человека, а не только там, где Размер реально что-то даёт.

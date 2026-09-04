@@ -65,7 +65,12 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   // Перевес инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник,
   // может действовать одновременно с ней (не смешиваются, оба вычитаются).
   const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "dodge" });
-  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus + fatigue + armourPenalty + overloadPenalty;
+  // Повален (стр. 30-31, wdbc-r5o7.2): −20 на Уклонение. Реакция Уклонения
+  // не идёт через общий resolveTest/«Спецправила» (см. заголовок файла и
+  // fatiguePenalty выше — тот же отдельный путь броска), поэтому штраф
+  // добавлен здесь напрямую, а не декларативным правилом.
+  const proneMod   = actor.system.conditions?.prone ? -20 : 0;
+  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus + fatigue + armourPenalty + overloadPenalty + proneMod;
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -109,6 +114,7 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
   if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
   if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
+  if (proneMod !== 0)    modParts.push(`🧎 повален ${proneMod}`);
   if (picked.dropped.length) {
     modParts.push(forcedReroll
       ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`

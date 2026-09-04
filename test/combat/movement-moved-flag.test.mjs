@@ -12,7 +12,7 @@
 // Снимается resetActionEconomy в начале следующего Хода (см. action-economy.test.mjs).
 
 import "../support/foundry-stub.mjs";
-import { resetCaptured } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   declareHalfMove, declareFullMove, declareCharge, declareRun, declareDisengage,
@@ -72,6 +72,34 @@ describe("Действия Движения ставят movedThisTurn", () => {
     await declareDisengage(actor);
     expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
     expect(actor.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
+  });
+});
+
+// Повален (стр. 30-31, wdbc-r5o7.2): «нельзя Бег и Натиск».
+describe("Повален блокирует Натиск и Бег", () => {
+  it("Натиск — предупреждение, meleeBase и movedThisTurn не трогаются", async () => {
+    const actor = fakeActor({ conditions: { prone: true } });
+    await declareCharge(actor);
+    expect(actor.system.meleeBase).toBeUndefined();
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
+    expect(captured.warnings.some(w => w.includes("Натиск"))).toBe(true);
+  });
+
+  it("Бег — предупреждение, running и movedThisTurn не трогаются", async () => {
+    const actor = fakeActor({ conditions: { prone: true } });
+    await declareRun(actor);
+    expect(actor.getFlag("warhammer-dbc", "running")).toBeUndefined();
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
+    expect(captured.warnings.some(w => w.includes("Бег"))).toBe(true);
+  });
+
+  it("не Повален — Натиск и Бег работают как раньше", async () => {
+    const a1 = fakeActor();
+    await declareCharge(a1);
+    expect(a1.system.meleeBase).toBe("charge");
+    const a2 = fakeActor();
+    await declareRun(a2);
+    expect(a2.getFlag("warhammer-dbc", "running")).toBe(true);
   });
 });
 

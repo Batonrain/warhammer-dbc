@@ -1668,3 +1668,80 @@ describe("Числ. перевес: автоотметка 2к1/3к1 по кон
     expect(html).not.toMatch(/data-value="10"[^>]*checked/);
   });
 });
+
+// Повален (стр. 30-31, wdbc-r5o7.2): «Стрельба по нему −20, рукопашная —
+// +20» — тем же приёмом, что уже есть у Беспомощной цели (badge, безусловно,
+// не через «Спецправила»).
+describe("Повален (цель): wdbc-r5o7.2", () => {
+  it("рукопашная атака по Поваленной цели получает +20 и бейдж (окно открытия)", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(75); // WS 45 + База «Стандартная» 10 + Повален 20
+    expect(captured.dialog.content).toContain("Цель Повалена (+20)");
+  });
+
+  it("стрелковая атака по Поваленной цели получает −20 и бейдж (окно открытия)", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline - 20);
+    expect(captured.dialog.content).toContain("Цель Повалена (−20)");
+  });
+
+  it("цель не Повалена — ни бейджа, ни модификатора", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor()]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(55); // WS 45 + База «Стандартная» 10, Повален не сработал
+    expect(captured.dialog.content).not.toContain("Цель Повалена");
+  });
+
+  it("без цели вовсе — правило не срабатывает, не падает", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(55);
+    expect(captured.dialog.content).not.toContain("Цель Повалена");
+  });
+
+  // wdbc-r5o7.2 живая проверка (live-tester) нашла реальный баг: бейдж и
+  // «холодный» charVal видели proneMod, а реальный бросок шёл через
+  // thresholdParts/thresholdOf (updateTotal, кнопка «Бросок!») — там строки
+  // для proneMod не было вовсе, и порог броска не менялся. Эти два теста
+  // жмут «Бросок!» и читают порог ИЗ КАРТОЧКИ (thresholdInCard) — тем самым
+  // путём, где баг жил, а не только «холодный» dialogThreshold() выше,
+  // который бага не ловил (wpAttackMod уже включал proneMod с самого начала).
+  it("реальный бросок рукопашной по Поваленной цели — порог в карточке тоже +20", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+    await pressRoll(p);
+
+    expect(thresholdInCard()).toBe(75); // WS 45 + База 10 + Повален 20
+  });
+
+  it("реальный бросок стрелковой по Поваленной цели — порог в карточке тоже −20", async () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    const baselineP = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(baselineP);
+    const baseline = thresholdInCard();
+
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(p);
+
+    expect(thresholdInCard()).toBe(baseline - 20);
+  });
+});

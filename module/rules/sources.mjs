@@ -10,6 +10,7 @@ import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
+import { CONDITION_RULES } from "./library/conditions.mjs";
 import { rulesFromItemMechanics } from "./item-rules.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
@@ -48,6 +49,11 @@ const hwKey = actor =>
 // ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
 registerRuleSource("core", () => CORE_RULES);
+
+// Штрафы книжных Состояний (wdbc-r5o7) — та же логика: правило не привязано
+// ни к расе, ни к предмету, отбор целиком по `when.hasCondition`/
+// `when.targetHasCondition`.
+registerRuleSource("conditions", () => CONDITION_RULES);
 
 // Машинная часть расовых Черт остаётся кодом (этап 3 плана): в данные уехало
 // описание расы, а не её правила.
