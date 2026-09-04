@@ -6354,9 +6354,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.heraldOfHumility": {
-    label: "Аура ½Cor(окр.▲) м: −10 на встречные тесты (−30 против требований сдаться), Тзинчиты иммунны — аура-подобный эффект без существующего Трейта под kind:\"aura\"",
+    label: "−10 на все встречные тесты врагам в радиусе ½Cor(окр.▲)м механизировано (kind:\"aura\", auraAffects:\"enemies\" → клонирует Черту-шаблон «Aura of Humility», modScope:\"opposed\" −10). НЕ смоделировано: эскалация до −30 конкретно на тесты социальных требований сдаться/подчиниться (нет разреза встречных тестов по цели требования) и иммунитет Тзинчитов (иммунитет ауры завязан на имя Черты/Таланта у цели, а не на Покровительство — у Тзинчитов нет общей опознавательной Черты)",
     source: "Дар Нургл (Herald of Humility)",
-    reader: ""
+    reader: "module/apps/mechanics.mjs::syncAuraFlag + module/regions/auras.mjs (kind:\"aura\" клонирует packs-src/traits/Aura_of_Humility на врагов в радиусе; kind:\"testMod\" modScope:\"opposed\" value:-10 внутри неё читается module/rules/item-rules.mjs как обычный живой модификатор встречного теста); auraRadius:\"ceil(corv/2)\" — module/rules/mech-formula.mjs (новый ключ formulas «corv», сырое значение Порчи)"
   },
   "gift.nurgle.iconoclast": {
     label: "Уничтожение произведения искусства: тест Cor∓30 (по качеству) восстанавливает 1 Очко Бесчестия",
