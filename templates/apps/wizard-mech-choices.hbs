@@ -3,7 +3,7 @@
   <div class="wiz-gen-lbl">Механика предлагает выбор — применится по «Далее»:</div>
   {{#each pendingMechChoices as |r|}}
   {{#if (eq r.type "or")}}
-  <div class="atk-dlg-row wtc-row{{#if r.skipped}} wiz-mech-row-skipped{{/if}}"><label class="wtc-lbl">{{r.itemName}}:</label>
+  <div class="wiz-row wtc-row{{#if r.skipped}} wiz-mech-row-skipped{{/if}}"><label class="wtc-lbl">{{r.itemName}}:</label>
     <select class="wtc-sel wiz-mech-or-sel" data-key="{{r.key}}" {{#if r.skipped}}disabled{{/if}}>
       <option value="" disabled {{#unless r.skipped}}selected{{/unless}}>— выбрать —</option>
       {{#each r.options as |o|}}<option value="{{o.idx}}" {{#if o.selected}}selected{{/if}} {{#if o.disabled}}disabled{{/if}}>{{o.label}}{{#if o.disabled}} (занято другой строкой){{/if}}</option>{{/each}}
@@ -11,7 +11,7 @@
     <button type="button" class="wiz-mini-btn wiz-mech-skip{{#if r.skipped}} active{{/if}}" data-key="{{r.key}}" data-many="0" title="{{#if r.skipped}}Пропущено — нажмите ещё раз, чтобы отменить{{else}}Пропустить{{/if}}">✕</button>
   </div>
   {{else}}
-  <div class="atk-dlg-row wtc-row{{#if r.skipped}} wiz-mech-row-skipped{{/if}}">
+  <div class="wiz-row wtc-row{{#if r.skipped}} wiz-mech-row-skipped{{/if}}">
     <label class="wtc-lbl">{{r.skillLabel}} {{#if r.many}}<span class="wtc-x">×{{r.need}}</span>{{/if}}</label>
     <div class="wtc-inputs">
       {{#each r.choices as |c|}}
