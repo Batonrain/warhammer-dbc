@@ -1,0 +1,151 @@
+// module/apps/effects-summary.mjs
+// ════════════════════════════════════════════════════════════════════════
+//  Вкладка «Эффекты» листа персонажа (wdbc-xrsh): сводка активных Foundry
+//  ActiveEffect — баф/дебаф × характеристика/иной показатель.
+//
+//  ТОЛЬКО ЧТЕНИЕ уже применённых change — никакого пересчёта итоговых
+//  характеристик (тот считает module/documents/actor.mjs при
+//  prepareDerivedData). Собирает эффекты так же, как их находит сам Foundry
+//  перед применением (Actor#allApplicableEffects, client/documents/actor.mjs
+//  движка v14): свои embedded-эффекты актора + effects с transfer:true у
+//  каждого предмета. Правило продублировано намеренно — метод реального
+//  класса Actor недоступен в тестах без foundry-stub, а эта сводка обязана
+//  проверяться без него (см. dbc-workflow, «Заглушка Foundry — узкий
+//  инструмент»).
+//
+//  «Урон характеристикам» из формулировки тикета сюда НЕ входит: в этой
+//  системе это отдельное ХРАНИМОЕ поле system.charDamage.<char> (ручной ввод
+//  на листе, знаковый «Мод.» — см. module/migrations/char-damage-sign.mjs,
+//  module/rules/character.mjs), а не ActiveEffect. Смешивать его с этой
+//  сводкой значило бы выдавать ручное поле за автоматический эффект.
+// ════════════════════════════════════════════════════════════════════════
+
+import { effectKeyLabel, EFFECT_TYPE_LABELS } from "../constants/effect-keys.mjs";
+
+const CHAR_PREFIX = "system.characteristics.";
+
+/** Метка категории цели эффекта: характеристика или прочий показатель (AP, Инициатива, Размер…). */
+export function effectTargetCategory(key = "") {
+  return key.startsWith(CHAR_PREFIX) ? "characteristic" : "other";
+}
+export const TARGET_CATEGORY_LABELS = {
+  characteristic: "Характеристика",
+  other:          "Иной показатель"
+};
+
+/**
+ * Знак изменения по одному change: +1 баф, -1 дебаф, 0 — определить нельзя
+ * (в основном "override": без базового значения неизвестно, растёт итог или
+ * падает).
+ */
+export function effectChangeSign(change) {
+  const raw = Number(change?.value);
+  if (!Number.isFinite(raw) || raw === 0) return 0;
+  switch (change?.type) {
+    case "add":
+    case "upgrade":   return raw > 0 ? 1 : -1;
+    case "subtract":  return raw > 0 ? -1 : 1;
+    case "multiply":  return raw >= 1 ? 1 : -1;
+    // "downgrade" (Math.min) — задаёт потолок: положительное значение всё
+    // равно ограничивает сверху, поэтому это дебаф-ограничение, а не бонус.
+    case "downgrade": return -1;
+    // Деление (Конструктор эффектов, wdbc): делитель ≥1 уменьшает число —
+    // дебаф; дробный делитель <1 увеличивает — баф.
+    case "divideUp":
+    case "divideDown": return raw >= 1 ? -1 : 1;
+    case "override":
+    default: return 0;
+  }
+}
+
+/** "+2", "−3", "×2", "=5" и т.п. — знак операции (EFFECT_TYPE_LABELS) плюс число. */
+export function formatChangeValue(change) {
+  const sign = EFFECT_TYPE_LABELS[change?.type] ?? change?.type ?? "+";
+  return `${sign}${change?.value ?? ""}`;
+}
+
+/**
+ * Все эффекты, которые Foundry применит к актору: свои + transfer:true (по
+ * умолчанию true в схеме ядра) с каждого предмета. Копия Actor#
+ * allApplicableEffects — см. заголовок файла.
+ */
+export function applicableActorEffects(actor) {
+  const own = [...(actor?.effects?.contents ?? actor?.effects ?? [])]
+    .map(effect => ({ effect, source: actor }));
+  const items = actor?.items?.contents ?? actor?.items ?? [];
+  const fromItems = [];
+  for (const item of items) {
+    const effects = item?.effects?.contents ?? item?.effects ?? [];
+    for (const effect of effects) {
+      if (effect?.transfer === false) continue; // явно выключенная передача
+      fromItems.push({ effect, source: item });
+    }
+  }
+  return [...own, ...fromItems];
+}
+
+/** Действует ли эффект прямо сейчас — тот же признак, что держит isItemActive/syncItemEffectsDisabled. */
+function isEffectActive(effect) {
+  return !effect?.disabled;
+}
+
+/**
+ * Построчная сводка активных эффектов актора — одна строка на один change
+ * одного активного ActiveEffect: источник, к чему применяется, знак,
+ * категория цели.
+ */
+export function buildActiveEffectRows(actor) {
+  const rows = [];
+  for (const { effect, source } of applicableActorEffects(actor)) {
+    if (!isEffectActive(effect)) continue;
+    const changes = effect?.system?.changes ?? effect?.changes ?? [];
+    for (const change of changes) {
+      if (!change?.key) continue;
+      const category = effectTargetCategory(change.key);
+      rows.push({
+        effectId:   effect.id,
+        effectName: effect.name || "Эффект",
+        sourceId:   source?.id,
+        sourceUuid: source?.uuid,
+        sourceName: source?.name || effect.name || "—",
+        sourceImg:  source?.img || effect.img || "icons/svg/aura.svg",
+        key:        change.key,
+        targetLabel: effectKeyLabel(change.key),
+        type:       change.type,
+        value:      change.value,
+        valueLabel: formatChangeValue(change),
+        sign:       effectChangeSign(change),
+        category,
+        categoryLabel: TARGET_CATEGORY_LABELS[category]
+      });
+    }
+  }
+  return rows;
+}
+
+/** Строки → { buff, debuff, neutral } × { characteristic, other }. */
+export function groupActiveEffectRows(rows) {
+  const groups = {
+    buff:    { characteristic: [], other: [] },
+    debuff:  { characteristic: [], other: [] },
+    neutral: { characteristic: [], other: [] }
+  };
+  for (const row of rows) {
+    const signKey = row.sign > 0 ? "buff" : row.sign < 0 ? "debuff" : "neutral";
+    groups[signKey][row.category].push(row);
+  }
+  return groups;
+}
+
+/** Контекст вкладки «Эффекты» листа персонажа. */
+export function activeEffectsTabContext(actor) {
+  const rows = buildActiveEffectRows(actor);
+  const groups = groupActiveEffectRows(rows);
+  const count = g => g.characteristic.length + g.other.length;
+  return {
+    activeEffectsRows: rows,
+    activeEffectsGroups: groups,
+    activeEffectsCounts: { buff: count(groups.buff), debuff: count(groups.debuff), neutral: count(groups.neutral) },
+    activeEffectsEmpty: rows.length === 0
+  };
+}

@@ -1,0 +1,31 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ВКЛАДКА ЭФФЕКТЫ (wdbc-xrsh) — сводка активных Foundry ActiveEffect:
+   баф/дебаф × характеристика/иной показатель. Панели общие с «Записями»
+   (.notes-section-panel/.items-table), своя вёрстка — только строка эффекта.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.warhammer-dbc .fx-group-label {
+  margin: 6px 2px 2px; font-size: 0.76em; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--wh-text-mid);
+}
+.warhammer-dbc .fx-table .item-name-cell {
+  display: flex; align-items: center; gap: 6px;
+}
+.warhammer-dbc .fx-src-img {
+  flex: 0 0 18px; width: 18px; height: 18px; object-fit: cover;
+  border: 1px solid var(--wh-border); border-radius: 3px;
+}
+.warhammer-dbc .fx-target { color: var(--wh-text-mid); font-size: 0.88em; }
+.warhammer-dbc .fx-value { font-weight: bold; text-align: right; white-space: nowrap; }
+.warhammer-dbc .fx-value-buff { color: var(--wh-accent, #2f9e6a); }
+.warhammer-dbc .fx-value-debuff { color: #c0392b; }
+.warhammer-dbc .fx-row-buff .fx-target { border-left: 2px solid rgba(47, 158, 106, 0.4); padding-left: 5px; }
+.warhammer-dbc .fx-row-debuff .fx-target { border-left: 2px solid rgba(192, 57, 43, 0.4); padding-left: 5px; }
+
+/* ── Счётчик дебафов на самой вкладке навигации — видно, не открывая её ── */
+.warhammer-dbc .tab-badge {
+  display: inline-block; min-width: 1.3em; margin-left: 3px; padding: 0 3px;
+  border-radius: 8px; font-size: 0.72em; line-height: 1.4; text-align: center;
+  vertical-align: middle;
+}
+.warhammer-dbc .tab-badge-debuff { background: #c0392b; color: #fff; }
