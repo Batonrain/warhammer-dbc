@@ -120,6 +120,21 @@ describe("psychic manifestation", () => {
     expect(captured.dialog.buttons.cast.label).toBe("Психотест!");
   });
 
+  // wdbc-jpmh: Путь Силы («Инкантация»/«Медитация»/«Жертва»/«Телесная
+  // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
+  // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не
+  // хватало только видимости условия доступа (req) в самом списке.
+  it("выпадающий список Путей Силы несёт требование доступа в title, помечает звёздочкой", () => {
+    const a = actor({ system: { psyker: { rating: 2, currentRating: 0, sustain: 2, class: "bound" } } });
+
+    showManifestDialog(a, item({ system: { discipline: "divination", powerType: "utility" } }));
+
+    expect(captured.dialog.content).toContain('value="incantation" title="Талант Blasphemous Incantation">Инкантация *');
+    expect(captured.dialog.content).toContain('value="meditation" title="Талант Meditation">Медитация *');
+    // «— Без Пути —» — единственный пункт без req: без звёздочки и без title.
+    expect(captured.dialog.content).toContain('<option value="">— Без Пути —</option>');
+  });
+
   it("executePsychotest считает порог, бросает d100 и пишет карточку", async () => {
     const a = actor();
     const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });

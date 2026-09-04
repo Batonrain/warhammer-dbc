@@ -92,7 +92,7 @@ export function showManifestDialog(actor, item) {
     : (psy.sustain ? `<div class="pm-note">тPR ${maxPR} = бPR ${psy.rating || 0} − ${psy.sustain} на поддержание.</div>` : "");
 
   const pathOptions = Object.entries(PSY_PATHS).map(([k, p]) =>
-    `<option value="${k}">${p.label}</option>`).join("");
+    `<option value="${k}"${p.req ? ` title="${esc(p.req)}"` : ""}>${p.label}${p.req ? " *" : ""}</option>`).join("");
 
   const profiles = sys.profiles || [];
   const variants = sys.variants || [];
@@ -176,6 +176,7 @@ export function showManifestDialog(actor, item) {
           <label>Путь Силы</label>
           <select id="psy-path" class="pm-input pm-wide">${pathOptions}</select>
         </div>
+        <div class="pm-note" style="font-size:0.78em;">* — путь требует условия (наведите курсор на пункт списка); выбор не проверяется автоматически — сверьтесь сами.</div>
         ${profiles.length ? `
         <div class="pm-row">
           <label>Профиль</label>
