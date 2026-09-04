@@ -54,6 +54,21 @@ class ApplicationStub {
   async _onDropItem() {}
 }
 
+/**
+ * ApplicationV2 (Foundry v14): `state` — геттер без сеттера на прототипе
+ * (render-состояние приложения, enum). Наследник, объявивший СВОЁ поле с тем
+ * же именем через `this.state = {...}` в конструкторе/методе, в реальном
+ * Foundry падает `TypeError: Cannot set property state ... which has only a
+ * getter`. wdbc-7l4r: VeilMystic/EnvironmentApp несли это ровно так и падали
+ * только в живом мире — npm test молчал, потому что ApplicationStub вообще не
+ * объявлял `state`, и присвоение проходило как обычное поле. Не бросаем явно
+ * (это молча повторило бы баг заглушки), а просто НЕ даём сеттер — тест
+ * получит тот же TypeError, что и настоящий Foundry.
+ */
+class ApplicationV2Stub extends ApplicationStub {
+  get state() { return -1; }
+}
+
 // Лист восстанавливает прокрутку следующим кадром; в node кадров нет.
 globalThis.requestAnimationFrame ??= () => 0;
 
@@ -191,7 +206,7 @@ globalThis.foundry = {
   },
   applications: {
     api: {
-      HandlebarsApplicationMixin: base => base, ApplicationV2: ApplicationStub,
+      HandlebarsApplicationMixin: base => base, ApplicationV2: ApplicationV2Stub,
       // «Да/Нет» второго поколения: как и у globalThis.Dialog, ответ задаёт
       // тест через captured.confirmAnswer, а сам запрос остаётся в
       // captured.dialog — по нему проверяют текст.
@@ -225,8 +240,8 @@ globalThis.foundry = {
         }
       }
     },
-    sheets: { ActorSheetV2: ApplicationStub, ItemSheetV2: ApplicationStub,
-              DocumentSheetV2: ApplicationStub, ActiveEffectConfig: ApplicationStub },
+    sheets: { ActorSheetV2: ApplicationV2Stub, ItemSheetV2: ApplicationV2Stub,
+              DocumentSheetV2: ApplicationV2Stub, ActiveEffectConfig: ApplicationV2Stub },
     ux: {
       // Тестам содержимое не важно — только что вызов не падает и возвращает
       // строку (её кладут в контекст листа как notesEnriched и т.п.).
