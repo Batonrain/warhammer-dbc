@@ -33,8 +33,12 @@ import { rangeBandBoundaries } from "../rules/tactical-map.mjs";
 
 const SAFETY_TIMEOUT_MS = 20_000;
 // Предохранитель на случай экзотической сетки/огромной дальности — та же
-// логика, что и MAX_CELLS в reachable-cells.mjs.
-const MAX_CELLS = 4000;
+// логика, что и MAX_CELLS в reachable-cells.mjs. Выше, чем там (4000): у
+// движения радиусы малы (SPD×6 редко больше полусотни метров), а тут — почти
+// любое стрелковое оружие даёт Экстремальную дальность в десятки-сотни метров
+// (пистолет Rng30 → 90м уже 25000+ клеток на сетке 1м/клетка) — с меньшим
+// потолком обрезание задевало бы обычное оружие, не только крайний случай.
+const MAX_CELLS = 20_000;
 const HIGHLIGHT_NAME = "wh-range-cells";
 const FILL_COLOR = 0xff5555;
 const FILL_ALPHA = 0.35;
@@ -75,14 +79,35 @@ export function computeRangeCells(token, radiusMeters) {
   const span = Math.ceil(radiusCells) + 1;
 
   const cells = [];
-  for (let di = -span; di <= span; di++) {
-    for (let dj = -span; dj <= span; dj++) {
-      if (di === 0 && dj === 0) continue;   // исток не входит
-      const offset = { i: origin.i + di, j: origin.j + dj };
-      const p = canvas.grid.getCenterPoint(offset);
-      const distM = (Math.hypot(p.x - c.x, p.y - c.y) / gridSize) * unitDistance;
-      if (distM > radiusMeters + 1e-6) continue;
-      cells.push(offset);
+  /** Клетка (di,dj от истока) в пределах радиуса — сама offset или null. */
+  const cellAt = (di, dj) => {
+    const offset = { i: origin.i + di, j: origin.j + dj };
+    const p = canvas.grid.getCenterPoint(offset);
+    const distM = (Math.hypot(p.x - c.x, p.y - c.y) / gridSize) * unitDistance;
+    return distM <= radiusMeters + 1e-6 ? offset : null;
+  };
+  const push = offset => { if (offset) cells.push(offset); };
+
+  // Кольцами НАРУЖУ от истока (растущий Chebyshev-радиус), а не построчным
+  // сканом квадрата — иначе при большом radiusMeters обход начинается с
+  // САМОГО ДАЛЬНЕГО ряда квадрата (di=-span) и MAX_CELLS обрезает клетки
+  // задолго до истока: подсветка выходит узкой полосой у края дальности,
+  // рядом со стрелком — пусто (найдено живой проверкой wdbc-arqo). Кольцевой
+  // обход гарантирует, что предохранитель, если сработает, обрежет только
+  // ДАЛЬНИЙ край диска — ближние клетки всегда попадают в список первыми,
+  // тот же принцип, что у BFS-обхода в reachable-cells.mjs (там это выходит
+  // само собой из очереди по возрастанию стоимости).
+  for (let ring = 1; ring <= span; ring++) {
+    for (let dj = -ring; dj <= ring; dj++) {
+      push(cellAt(-ring, dj));
+      if (cells.length >= MAX_CELLS) return cells;
+      push(cellAt(ring, dj));
+      if (cells.length >= MAX_CELLS) return cells;
+    }
+    for (let di = -ring + 1; di <= ring - 1; di++) {
+      push(cellAt(di, -ring));
+      if (cells.length >= MAX_CELLS) return cells;
+      push(cellAt(di, ring));
       if (cells.length >= MAX_CELLS) return cells;
     }
   }
