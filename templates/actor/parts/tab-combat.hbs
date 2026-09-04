@@ -534,7 +534,7 @@
               {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.subtype}} · {{p.subtype}}{{/if}}</div>{{/if}}
             </td> <td>{{p.typeLabel}}</td> <td class="psy-pr-cell">{{p.prRequired}}</td> <td>{{p.actionLabel}}</td> <td>{{p.range}}</td> <td>{{#if p.damage}}{{p.damage}} {{p.damageType}}{{#if p.penetration}} (Пб {{p.penetration}}){{/if}}{{else}}—{{/if}}</td> <td class="psy-sustain-cell"> {{#if p.sustainable}}
               <input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}}
-                     title="Поддерживать (−{{p.sustainCost}} PR, действие: {{p.sustainActionLabel}})"/> {{else}}—{{/if}}
+                     title="Поддерживать (−{{p.sustainCost}} PR, действие: {{p.sustainActionLabel}})"/>{{#if p.isSustained}}{{#if p.sustainedDegree}}<span class="psy-sustain-degree" title="Степень успеха психотеста, с которой манифестирована поддерживаемая сила">СУ {{p.sustainedDegree}}</span>{{/if}}{{/if}} {{else}}—{{/if}}
             </td> <td class="psy-actions-cell"> <button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button> </td> </tr> {{/each}}
         {{else}}
           <tr class="items-empty"><td colspan="8"><em>Нет психосил</em></td></tr> {{/if}}

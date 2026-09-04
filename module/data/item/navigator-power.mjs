@@ -18,6 +18,9 @@ export class NavigatorPowerData extends foundry.abstract.TypeDataModel {
       action:      new StringField({ initial: "half", label: "Действие" }),
       sustainable: new BooleanField({ initial: false, label: "Поддерживаемая" }),
       isSustained: new BooleanField({ initial: false, label: "Поддерживается сейчас" }),
+      // wdbc-8m0x: тот же паттерн, что у psychic-power.mjs::sustainedDegree —
+      // степень успеха теста, на которой сейчас поддерживается Сила.
+      sustainedDegree: new NumberField({ initial: null, nullable: true, integer: true, label: "Степень успеха (поддержание)" }),
       testChar:    new StringField({ initial: "wp", label: "Характеристика проверки" }),
       testMod:     num(0, "Модификатор проверки"),
       opposed:     new BooleanField({ initial: false, label: "Встречная проверка" }),

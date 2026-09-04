@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeHtml, listenerHtml } from "../support/foundry-stub.mjs";
 import { setPsychicVessel } from "../../module/rules/psychic-vessel.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import {
@@ -261,6 +261,102 @@ describe("psychic manifestation", () => {
 
     expect(captured.chat[0].content).toContain("mPR <b>3</b> +1 = <b>4</b>");
     expect(captured.chat[0].content).toContain("Порог: <b>65</b>");
+  });
+});
+
+// wdbc-8m0x: степень успеха психотеста манифестации раньше жила только как
+// локальная переменная внутри executePsychotest — после ChatMessage.create
+// след пропадал, и для психосилы, которую потом поддерживают несколько
+// раундов, на листе не оставалось следа, с каким результатом её наложили.
+describe("wdbc-8m0x: степень успеха поддерживаемой силы сохраняется на предмете", () => {
+  it("успешная манифестация пишет system.sustainedDegree на предмет психосилы", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 30; // Порог 55 (WP 40 + 5×2 + мод 5 + 10), успех, |30-55|/10+1 = 3.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 3 });
+  });
+
+  it("провал манифестации не оставляет степень (поддерживать нечего)", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 90; // выше Порога 55 — провал.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": null });
+  });
+
+  it("успешное применение Силы навигатора тоже пишет sustainedDegree", async () => {
+    const a = actor();
+    const power = item({
+      type: "navigatorPower",
+      system: { testChar: "per", testMod: 0, range: "10 м" }
+    });
+    captured.nextRoll = 20; // Порог 35 (Per 35), успех, |20-35|/10+1 = 2.
+
+    await activateNavigatorPower(a, power);
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 2 });
+  });
+
+  it("снятие галочки «Подд.» у психосилы сбрасывает сохранённую степень", async () => {
+    const power = item({ system: { sustainable: true, isSustained: true, sustainedDegree: 3 } });
+    const a = actor({ items: [power] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".psy-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: power.id }, checked: false }
+    });
+
+    expect(power.updates.at(-1)).toEqual({
+      "system.isSustained": false,
+      "system.sustainedDegree": null
+    });
+  });
+
+  it("включение галочки «Подд.» не трогает сохранённую степень", async () => {
+    const power = item({ system: { sustainable: true, isSustained: false, sustainedDegree: 3 } });
+    const a = actor({ items: [power] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".psy-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: power.id }, checked: true }
+    });
+
+    expect(power.updates.at(-1)).toEqual({ "system.isSustained": true });
+  });
+
+  it("снятие поддержания Силы навигатора (в общем переключателе на одну) сбрасывает степень", async () => {
+    const active = item({
+      name: "Третий глаз", type: "navigatorPower",
+      system: { sustainable: true, isSustained: true, sustainedDegree: 4 }
+    });
+    const other = item({
+      name: "Иное зрение", type: "navigatorPower",
+      system: { sustainable: true, isSustained: false }
+    });
+    const a = actor({ items: [active, other] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".nav-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: active.id }, checked: false }
+    });
+
+    expect(a.updatedEmbedded.docs).toContainEqual({
+      _id: active.id, "system.isSustained": false, "system.sustainedDegree": null
+    });
   });
 });
 

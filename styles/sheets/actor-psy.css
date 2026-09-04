@@ -157,6 +157,12 @@
   content: "◈"; color: var(--pc2); margin-right: 5px; font-size: 0.85em;
   animation: psyPip 1.8s ease-in-out infinite;
 }
+/* wdbc-8m0x: степень успеха, на которой поддерживается сила — рядом с
+   галочкой "Подд.", чтобы не листать чат назад. */
+.warhammer-dbc .psy-sustain-degree {
+  display: block; font-size: 0.68em; font-weight: 700; margin-top: 2px;
+  color: var(--pc2, #e85ad6); white-space: nowrap;
+}
 .warhammer-dbc .psy-cost-input {
   width: 46px; text-align: center; background: rgba(0,0,0,0.4);
   border: 1px solid color-mix(in srgb, var(--pc) 24%, #2a3340); color: #e7eefb; border-radius: 3px; padding: 1px 3px;

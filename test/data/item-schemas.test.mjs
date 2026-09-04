@@ -425,7 +425,7 @@ const TYPES = {
       sustainable: false, sustainCost: 1, sustainAction: "free",
       damage: "", damageType: "energy", penetration: 0, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
-      effect: "", isSustained: false,
+      effect: "", isSustained: false, sustainedDegree: null,
       effects: {
         charBonusStat: "", charBonusValue: 0, charBonuses: [],
         armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
@@ -455,7 +455,7 @@ const TYPES = {
     pack: null,
     defaults: {
       description: "", notes: "", xpCost: 0, requirement: "", action: "half",
-      sustainable: false, isSustained: false, testChar: "wp", testMod: 0,
+      sustainable: false, isSustained: false, sustainedDegree: null, testChar: "wp", testMod: 0,
       opposed: false, range: "", powerKind: "Концентрация, Ментальное",
       damage: "", damageType: "energy", penetration: 0, effect: ""
     }

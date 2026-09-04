@@ -453,6 +453,14 @@ export async function executePsychotest(actor, item, opts) {
     deg = Math.max(1, mPR);
   }
 
+  // wdbc-8m0x: сохраняем степень успеха НА ПРЕДМЕТЕ — единственное место, где
+  // она переживает этот вызов (иначе deg был только локальной переменной,
+  // видной лишь в этом одном чат-сообщении). Пишем при любой манифестации
+  // (не только когда isSustained уже включён), чтобы число было готово к
+  // моменту, когда игрок следом поставит галочку «Подд.». Провал — сброс в
+  // null, поддерживать нечего.
+  await item.update({ "system.sustainedDegree": success ? deg : null });
+
   // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
   if (PATH.woundCost) {
     Object.assign(actorUpdates, woundLossUpdates(actor.system, PATH.woundCost));
@@ -750,6 +758,10 @@ export async function activateNavigatorPower(actor, item) {
 
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
 
+  // wdbc-8m0x: тот же паттерн, что у executePsychotest — сохраняем степень
+  // успеха на предмете, чтобы номер был виден на листе, пока Сила поддерживается.
+  await item.update({ "system.sustainedDegree": success ? deg : null });
+
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `
@@ -795,8 +807,13 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     for (const it of actor.items) {
       if (it.type !== "navigatorPower") continue;
       const want = it.id === id ? on : false;
-      if ((it.system.isSustained || false) !== want)
-        updates.push({ _id: it.id, "system.isSustained": want });
+      if ((it.system.isSustained || false) !== want) {
+        // wdbc-8m0x: снятие поддержания (в т.ч. чужой Силы — тут можно
+        // поддерживать только одну) сбрасывает сохранённую степень успеха.
+        const upd = { _id: it.id, "system.isSustained": want };
+        if (!want) upd["system.sustainedDegree"] = null;
+        updates.push(upd);
+      }
     }
     if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
     for (const it of actor.items) {
@@ -829,7 +846,11 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
       ui.notifications.warn("Саркофаг Дредноута: поддержание психосил заблокировано (нужна Матрица Осирис).");
       return;
     }
-    await item.update({ "system.isSustained": turningOn }); await syncItemEffectsDisabled(item);
+    // wdbc-8m0x: снятие поддержания сбрасывает сохранённую степень успеха —
+    // иначе на листе осталось бы висеть устаревшее число от прошлого каста.
+    const upd = { "system.isSustained": turningOn };
+    if (!turningOn) upd["system.sustainedDegree"] = null;
+    await item.update(upd); await syncItemEffectsDisabled(item);
   });
   html.find(".psy-manifest-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);

@@ -64,6 +64,14 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       variants:      list("Вариации броска"),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       isSustained:   new BooleanField({ initial: false, label: "Поддерживается сейчас" }),
+      // wdbc-8m0x: степень успеха психотеста, на которой сейчас манифестирована
+      // поддерживаемая сила — сила/длительность эффекта часто завязаны на неё
+      // (стр. 289 и тексты конкретных сил), а без хранения приходится помнить
+      // или искать в истории чата. null = нет сохранённого результата (ещё не
+      // манифестировалась или поддержание снято). Пишется в executePsychotest
+      // тем же item.update, что и isSustained (module/sheets/tabs/psychic.mjs),
+      // и сбрасывается в null там же при снятии поддержания.
+      sustainedDegree: new NumberField({ initial: null, nullable: true, integer: true, label: "Степень успеха (поддержание)" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
     };
   }

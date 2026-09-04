@@ -1129,6 +1129,7 @@ export function buildGetData(actor) {
       rangeInBounds: _verdict ? _verdict.inBounds : null,
       sustainable:  s.sustainable || false,
       isSustained:  s.isSustained || false,
+      sustainedDegree: s.sustainedDegree ?? null,
       sustainCost:  s.sustainCost ?? 1,
       sustainActionLabel: PSY_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
       damage:       s.damage || "",
@@ -1152,6 +1153,7 @@ export function buildGetData(actor) {
       powerKind:   s.powerKind || "",
       sustainable: s.sustainable || false,
       isSustained: s.isSustained || false,
+      sustainedDegree: s.sustainedDegree ?? null,
       effect:      s.effect || s.description || ""
     };
   });
