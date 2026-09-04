@@ -28,7 +28,7 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
-import { evasionImperativeBonus }                     from "./imperative-bonuses.mjs";
+import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
 import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 
@@ -618,7 +618,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Императив (wdbc-yu32): плоский бонус/штраф активного Императива
         // цели к тесту Избегания — суммируется с базовым модификатором, не
         // заменяет его (у Карабина/рукопашной стрельбы своя причина бонуса).
+        // wdbc-hdxj: dodgeModRecoil — тот же базовый модификатор, но с
+        // recoil-специфичным знаком Императива вместо обычного (null, если у
+        // защищающегося нет активного Evasion/Fortress Imperative — тогда
+        // defenseSection не рендерит декларацию «планирую Отскочить» вовсе).
         dodgeMod: (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor),
+        dodgeModRecoil: hasEvasionRecoilImperative(defenderActor)
+          ? (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor, { planningRecoil: true })
+          : null,
         parryMod: techOpts.targetParryMod ?? 0,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на

@@ -262,6 +262,12 @@ export async function activateTechMiracle(actor, item) {
         const chosen = Number(raw) || 0;
         const bonuses = {
           evasionBonus: chosen,
+          // wdbc-hdxj: recoil-специфичный знак («кроме Отскока в укрытие»,
+          // Evasion −20/Fortress +20) — фиксирован книгой, НЕ следует за
+          // отредактированным chosen выше; читается декларацией «планирую
+          // Отскочить в укрытие?» в диалоге Уклонения (imperative-bonuses.mjs
+          // ::evasionImperativeBonus, planningRecoil).
+          evasionRecoilBonus: imperativeConfig.evasionRecoilBonus,
           coverApDelta: imperativeConfig.coverApDelta,
           coverApFloorRatio: imperativeConfig.coverApFloorRatio,
           coverApCeilRatio: imperativeConfig.coverApCeilRatio

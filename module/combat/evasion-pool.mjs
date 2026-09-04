@@ -122,7 +122,7 @@ export async function spendPoolForRecoil(defender, attackerUuid, cost = 2) {
  * реально осталось), чтобы разыграть их обычной Реакцией, как велит правило.
  */
 export async function performPoolSpend(defender, {
-  attackerUuid, hitsCount = 1, dodgeMod = 0, parryMod = 0, targetIsVehicle = false,
+  attackerUuid, hitsCount = 1, dodgeMod = 0, dodgeModRecoil = null, parryMod = 0, targetIsVehicle = false,
   flexible = false, forcedDefenceReroll = "", isMelee = false
 } = {}) {
   const entry = getEvasionPool(defender, attackerUuid);
@@ -149,7 +149,7 @@ export async function performPoolSpend(defender, {
 
   const continueHtml = remaining > 0
     ? `<div class="roll-defense-note">Успехов из пула не хватило на все попадания — можно разыграть Реакцией обычное Избегание на оставшиеся ${remaining} ${_hitWord(remaining)}:</div>
-       ${defenseSection({ dodgeMod, parryMod, targetIsVehicle, forcedDefenceReroll },
+       ${defenseSection({ dodgeMod, dodgeModRecoil, parryMod, targetIsVehicle, forcedDefenceReroll },
                          { wp: { flexible }, attackerUuid, hitsCount: remaining, isMelee })}`
     : "";
 

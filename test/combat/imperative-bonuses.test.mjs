@@ -7,7 +7,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { evasionImperativeBonus, coverApImperativeAdjust } from "../../module/combat/imperative-bonuses.mjs";
+import { evasionImperativeBonus, coverApImperativeAdjust, hasEvasionRecoilImperative } from "../../module/combat/imperative-bonuses.mjs";
 
 const actorWithCarrier = bonuses => ({
   items: [{ getFlag: (scope, key) => (key === "imperativeCarrier" ? true : key === "imperativeBonuses" ? bonuses : undefined) }]
@@ -21,6 +21,40 @@ describe("evasionImperativeBonus", () => {
   it("возвращает evasionBonus активного носителя", () => {
     expect(evasionImperativeBonus(actorWithCarrier({ evasionBonus: 30 }))).toBe(30);
     expect(evasionImperativeBonus(actorWithCarrier({ evasionBonus: -30 }))).toBe(-30);
+  });
+
+  // wdbc-hdxj: Evasion/Fortress Imperative переворачивают знак СПЕЦИАЛЬНО для
+  // Отскока в укрытие («+30 на Избегания, КРОМЕ Отскока в укрытие −20», и
+  // наоборот у Fortress) — planningRecoil=true декларирует это заранее.
+  it("planningRecoil=true с evasionRecoilBonus — берёт recoil-специфичный знак вместо обычного", () => {
+    const evasion = actorWithCarrier({ evasionBonus: 30, evasionRecoilBonus: -20 });
+    expect(evasionImperativeBonus(evasion, { planningRecoil: true })).toBe(-20);
+    const fortress = actorWithCarrier({ evasionBonus: -30, evasionRecoilBonus: 20 });
+    expect(evasionImperativeBonus(fortress, { planningRecoil: true })).toBe(20);
+  });
+
+  it("planningRecoil=false (умолчание) игнорирует evasionRecoilBonus — обычное значение, как раньше", () => {
+    const evasion = actorWithCarrier({ evasionBonus: 30, evasionRecoilBonus: -20 });
+    expect(evasionImperativeBonus(evasion)).toBe(30);
+    expect(evasionImperativeBonus(evasion, { planningRecoil: false })).toBe(30);
+  });
+
+  it("planningRecoil=true без evasionRecoilBonus (прочие Императивы/эффекты) — обычное значение", () => {
+    const other = actorWithCarrier({ evasionBonus: 10 });
+    expect(evasionImperativeBonus(other, { planningRecoil: true })).toBe(10);
+  });
+});
+
+describe("hasEvasionRecoilImperative", () => {
+  it("нет активного Императива — false", () => {
+    expect(hasEvasionRecoilImperative(actorWithoutCarrier())).toBe(false);
+  });
+  it("активный Императив без evasionRecoilBonus — false (чекбокс декларации не показывается)", () => {
+    expect(hasEvasionRecoilImperative(actorWithCarrier({ evasionBonus: 10 }))).toBe(false);
+  });
+  it("активный Evasion/Fortress Imperative с evasionRecoilBonus — true", () => {
+    expect(hasEvasionRecoilImperative(actorWithCarrier({ evasionBonus: 30, evasionRecoilBonus: -20 }))).toBe(true);
+    expect(hasEvasionRecoilImperative(actorWithCarrier({ evasionBonus: -30, evasionRecoilBonus: 20 }))).toBe(true);
   });
 });
 
