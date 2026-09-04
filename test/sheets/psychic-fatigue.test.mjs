@@ -26,7 +26,10 @@ function makeActor({ fatigue = 0, wp = 40 } = {}) {
   };
 }
 
-const item = { name: "Тестовая сила", system: { powerType: "utility", discipline: "" } };
+const item = {
+  name: "Тестовая сила", system: { powerType: "utility", discipline: "" },
+  update: async () => {}
+};
 
 const baseOpts = { mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
   pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1 };

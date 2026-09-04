@@ -75,7 +75,7 @@
             <td>{{p.range}}</td>
             <td>{{p.requirement}}</td>
             <td class="nav-sustain-cell">
-              {{#if p.sustainable}}<input type="checkbox" class="nav-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (без броска; блокирует другие Силы)"/>{{else}}—{{/if}}
+              {{#if p.sustainable}}<input type="checkbox" class="nav-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (без броска; блокирует другие Силы)"/>{{#if p.isSustained}}{{#if p.sustainedDegree}}<span class="psy-sustain-degree" title="Степень успеха теста, с которой поддерживается эта Сила">СУ {{p.sustainedDegree}}</span>{{/if}}{{/if}}{{else}}—{{/if}}
             </td>
             <td class="psy-actions-cell"><button type="button" class="nav-activate-btn" data-item-id="{{p.id}}" title="Применить силу (тест характеристики)">Применить</button></td>
           </tr>
