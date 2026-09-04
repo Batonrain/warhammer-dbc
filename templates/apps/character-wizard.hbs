@@ -10,141 +10,158 @@
 
   <div class="wiz-step-body">
     {{#if (eq stepId "origin")}}
-    <div class="atk-dlg-header"><span class="atk-weapon-name">🧙 Происхождение</span></div>
+    <div class="wiz-step-head"><span class="wiz-step-title">🧙 Происхождение</span></div>
 
-    <div class="atk-dlg-row"><label>Имя:</label>
-      <input type="text" class="wiz-name-inp" value="{{name}}" placeholder="Имя персонажа"/>
+    <div class="wiz-panel">
+      <div class="wiz-panel-title">Личность</div>
+      <div class="wiz-row"><label>Имя:</label>
+        <input type="text" class="wiz-name-inp" value="{{name}}" placeholder="Имя персонажа"/>
+      </div>
     </div>
 
-    <div class="atk-dlg-row"><label>Раса:</label>
-      <select class="wiz-race-sel">
-        <option value="" disabled {{#unless raceChosen}}selected{{/unless}}>— выбрать —</option>
-        {{#each raceGroups as |g|}}
-        <optgroup label="{{g.label}}">
-          {{#each g.races as |r|}}
-          <option value="{{r.key}}" {{#if r.selected}}selected{{/if}}>{{r.label}}</option>
+    <div class="wiz-panel">
+      <div class="wiz-panel-title">Раса и культура</div>
+      <div class="wiz-row"><label>Раса:</label>
+        <select class="wiz-race-sel">
+          <option value="" disabled {{#unless raceChosen}}selected{{/unless}}>— выбрать —</option>
+          {{#each raceGroups as |g|}}
+          <optgroup label="{{g.label}}">
+            {{#each g.races as |r|}}
+            <option value="{{r.key}}" {{#if r.selected}}selected{{/if}}>{{r.label}}</option>
+            {{/each}}
+          </optgroup>
           {{/each}}
-        </optgroup>
-        {{/each}}
-      </select>
+        </select>
+      </div>
+
+      {{#if hasSubrace}}
+      <div class="wiz-row"><label>Субраса:</label>
+        <select class="wiz-subrace-sel">
+          <option value="">— нет —</option>
+          {{#each subraceOpts as |s|}}
+          <option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{/if}}
+
+      {{#if isAstartes}}
+      <div class="wiz-legion">
+        <div class="wiz-gen-lbl">Легион Астартес (геносемя и культура выбираются отдельно):</div>
+        <div class="wiz-row"><label>Легион (геносемя):</label><select class="wiz-legion-sel">{{{legionOptions}}}</select></div>
+        <div class="wiz-row"><label>Орден / Банда:</label><select class="wiz-chapter-sel">{{{chapterOptions}}}</select></div>
+        <div class="wiz-row" title="Геносемя сохраняешь, а культуру можно перенять у другого легиона."><label>Культура (легион):</label><select class="wiz-cult-sel">{{{cultureOptions}}}</select></div>
+        {{#if hasCultureOverride}}
+        <div class="wiz-row"><label>Культура (орден/банда):</label><select class="wiz-cult-chapter-sel">{{{cultureChapterOptions}}}</select></div>
+        {{/if}}
+      </div>
+      {{/if}}
+
+      {{#if isYnnari}}
+      <div class="wiz-row"><label>Прошлое:</label>
+        <select class="wiz-ynnari-past-sel">
+          <option value="">— Прошлое —</option>
+          {{#each ynnariPastOptions as |p|}}
+          <option value="{{p.key}}" {{#if (eq p.key ../ynnariPast)}}selected{{/if}}>{{p.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{/if}}
+      {{#if isHarlequin}}
+      <div class="wiz-row"><label>Прошлое:</label>
+        <select class="wiz-harlequin-past-sel">
+          <option value="">— Прошлое —</option>
+          {{#each harlequinPastOptions as |p|}}
+          <option value="{{p.key}}" {{#if (eq p.key ../harlequinPast)}}selected{{/if}}>{{p.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="wiz-row"><label>Маска:</label><select class="wiz-masque-sel">{{{masqueOptions}}}</select></div>
+      {{/if}}
+
+      {{#if showWorldOrigin}}
+      <div class="wiz-row"><label>Мир-Корабль:</label><select class="wiz-world-sel">{{{worldOptions}}}</select></div>
+      <div class="wiz-row"><label>Корсарская Банда:</label><select class="wiz-band-sel">{{{bandOptions}}}</select></div>
+      {{/if}}
+      {{#if isDrukhari}}
+      <div class="wiz-row"><label>Кабал:</label><select class="wiz-drukhari-faction-sel">{{{drukhariFactionOptions}}}</select></div>
+      <div class="wiz-row"><label>Округ:</label><select class="wiz-drukhari-district-sel">{{{drukhariDistrictOptions}}}</select></div>
+      {{/if}}
     </div>
 
-    {{#if hasSubrace}}
-    <div class="atk-dlg-row"><label>Субраса:</label>
-      <select class="wiz-subrace-sel">
-        <option value="">— нет —</option>
-        {{#each subraceOpts as |s|}}
-        <option value="{{s.key}}" {{#if s.selected}}selected{{/if}}>{{s.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-    {{/if}}
+    <div class="wiz-panel">
+      <div class="wiz-panel-title">Мировоззрение и телосложение</div>
+      {{#unless isAeldari}}
+      <div class="wiz-row"><label>Мировоззрение:</label>
+        <select class="wiz-align-sel">
+          <option value="loyalist" {{#if (eq alignment "loyalist")}}selected{{/if}}>Лоялист</option>
+          <option value="renegade" {{#if (eq alignment "renegade")}}selected{{/if}}>Ренегат</option>
+          <option value="heretic" {{#if (eq alignment "heretic")}}selected{{/if}}>Хаосит</option>
+        </select>
+      </div>
+      {{/unless}}
 
-    {{#unless isAeldari}}
-    <div class="atk-dlg-row"><label>Мировоззрение:</label>
-      <select class="wiz-align-sel">
-        <option value="loyalist" {{#if (eq alignment "loyalist")}}selected{{/if}}>Лоялист</option>
-        <option value="renegade" {{#if (eq alignment "renegade")}}selected{{/if}}>Ренегат</option>
-        <option value="heretic" {{#if (eq alignment "heretic")}}selected{{/if}}>Хаосит</option>
-      </select>
+      {{#unless isAstartes}}
+      <div class="wiz-row"><label>Телосложение:</label>
+        <select class="wiz-body-type-sel">
+          {{#each bodyTypes as |b|}}
+          <option value="{{b.key}}" {{#if b.selected}}selected{{/if}}>{{b.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{/unless}}
     </div>
-    {{/unless}}
 
-    {{#unless isAstartes}}
-    <div class="atk-dlg-row"><label>Телосложение:</label>
-      <select class="wiz-body-type-sel">
-        {{#each bodyTypes as |b|}}
-        <option value="{{b.key}}" {{#if b.selected}}selected{{/if}}>{{b.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-    {{/unless}}
-
-    {{#if isAstartes}}
-    <div class="wiz-legion">
-      <div class="wiz-gen-lbl">Легион Астартес (геносемя и культура выбираются отдельно):</div>
-      <div class="atk-dlg-row"><label>Легион (геносемя):</label><select class="wiz-legion-sel">{{{legionOptions}}}</select></div>
-      <div class="atk-dlg-row"><label>Орден / Банда:</label><select class="wiz-chapter-sel">{{{chapterOptions}}}</select></div>
-      <div class="atk-dlg-row" title="Геносемя сохраняешь, а культуру можно перенять у другого легиона."><label>Культура (легион):</label><select class="wiz-cult-sel">{{{cultureOptions}}}</select></div>
-      {{#if hasCultureOverride}}
-      <div class="atk-dlg-row"><label>Культура (орден/банда):</label><select class="wiz-cult-chapter-sel">{{{cultureChapterOptions}}}</select></div>
+    {{#if (or homeworld divination)}}
+    <div class="wiz-panel">
+      <div class="wiz-panel-title">Родной мир и предсказание</div>
+      {{#if homeworld}}
+      <div class="wiz-row"><label title="Три модификатора Характеристик и Особенность">Родной мир:</label>
+        <select class="wiz-hw-sel">
+          <option value="">— не выбрано —</option>
+          <option value="random">🎲 Выбрать случайно</option>
+          {{#each homeworld.options as |o|}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}} title="{{o.chars}}">{{o.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{#if homeworld.deferredNote}}<div class="apt-warn">{{homeworld.deferredNote}}</div>{{/if}}
+      {{/if}}
+      {{#if homeworldChoice}}
+      <div class="hw-choice-dialog wiz-hw-choices">
+        <div class="hw-choice-head">{{homeworldChoice.featureName}}</div>
+        <div class="hw-choice-desc">{{homeworldChoice.featureDesc}}</div>
+        {{{homeworldChoice.blocksHtml}}}
+      </div>
+      {{/if}}
+      {{#if divination}}
+      <div class="wiz-row"><label title="Эффект по таблице к100">Предсказание:</label>
+        <select class="wiz-dv-sel">
+          <option value="">— не выбрано —</option>
+          <option value="random">🎲 Бросить к100</option>
+          {{#each divination.options as |o|}}
+          <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{/if}}
+      {{#if divinationChoice}}
+      <div class="hw-choice-dialog wiz-hw-choices">
+        <div class="hw-choice-head">{{divinationChoice.dvText}}</div>
+        <div class="hw-choice-desc">{{divinationChoice.dvEffect}}</div>
+        {{{divinationChoice.blocksHtml}}}
+      </div>
       {{/if}}
     </div>
     {{/if}}
 
-    {{#if isYnnari}}
-    <div class="atk-dlg-row"><label>Прошлое:</label>
-      <select class="wiz-ynnari-past-sel">
-        <option value="">— Прошлое —</option>
-        {{#each ynnariPastOptions as |p|}}
-        <option value="{{p.key}}" {{#if (eq p.key ../ynnariPast)}}selected{{/if}}>{{p.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-    {{/if}}
-    {{#if isHarlequin}}
-    <div class="atk-dlg-row"><label>Прошлое:</label>
-      <select class="wiz-harlequin-past-sel">
-        <option value="">— Прошлое —</option>
-        {{#each harlequinPastOptions as |p|}}
-        <option value="{{p.key}}" {{#if (eq p.key ../harlequinPast)}}selected{{/if}}>{{p.label}}</option>
-        {{/each}}
-      </select>
-    </div>
-    <div class="atk-dlg-row"><label>Маска:</label><select class="wiz-masque-sel">{{{masqueOptions}}}</select></div>
-    {{/if}}
+    <div class="wiz-panel">
+      <div class="wiz-panel-title">Фракция и механика</div>
+      {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
 
-    {{#if showWorldOrigin}}
-    <div class="atk-dlg-row"><label>Мир-Корабль:</label><select class="wiz-world-sel">{{{worldOptions}}}</select></div>
-    <div class="atk-dlg-row"><label>Корсарская Банда:</label><select class="wiz-band-sel">{{{bandOptions}}}</select></div>
-    {{/if}}
-    {{#if isDrukhari}}
-    <div class="atk-dlg-row"><label>Кабал:</label><select class="wiz-drukhari-faction-sel">{{{drukhariFactionOptions}}}</select></div>
-    <div class="atk-dlg-row"><label>Округ:</label><select class="wiz-drukhari-district-sel">{{{drukhariDistrictOptions}}}</select></div>
-    {{/if}}
-
-    {{#if homeworld}}
-    <div class="atk-dlg-row"><label title="Три модификатора Характеристик и Особенность">Родной мир:</label>
-      <select class="wiz-hw-sel">
-        <option value="">— не выбрано —</option>
-        <option value="random">🎲 Выбрать случайно</option>
-        {{#each homeworld.options as |o|}}
-        <option value="{{o.key}}" {{#if o.selected}}selected{{/if}} title="{{o.chars}}">{{o.label}}</option>
-        {{/each}}
-      </select>
+      {{> "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs"}}
+      {{#if originPendingNote}}<div class="apt-warn">{{originPendingNote}}</div>{{/if}}
     </div>
-    {{#if homeworld.deferredNote}}<div class="apt-warn">{{homeworld.deferredNote}}</div>{{/if}}
-    {{/if}}
-    {{#if homeworldChoice}}
-    <div class="hw-choice-dialog wiz-hw-choices">
-      <div class="hw-choice-head">{{homeworldChoice.featureName}}</div>
-      <div class="hw-choice-desc">{{homeworldChoice.featureDesc}}</div>
-      {{{homeworldChoice.blocksHtml}}}
-    </div>
-    {{/if}}
-    {{#if divination}}
-    <div class="atk-dlg-row"><label title="Эффект по таблице к100">Предсказание:</label>
-      <select class="wiz-dv-sel">
-        <option value="">— не выбрано —</option>
-        <option value="random">🎲 Бросить к100</option>
-        {{#each divination.options as |o|}}
-        <option value="{{o.key}}" {{#if o.selected}}selected{{/if}}>{{o.name}}</option>
-        {{/each}}
-      </select>
-    </div>
-    {{/if}}
-    {{#if divinationChoice}}
-    <div class="hw-choice-dialog wiz-hw-choices">
-      <div class="hw-choice-head">{{divinationChoice.dvText}}</div>
-      <div class="hw-choice-desc">{{divinationChoice.dvEffect}}</div>
-      {{{divinationChoice.blocksHtml}}}
-    </div>
-    {{/if}}
-
-    {{> "systems/warhammer-dbc/templates/actor/parts/faction-field.hbs"}}
-
-    {{> "systems/warhammer-dbc/templates/apps/wizard-mech-choices.hbs"}}
-    {{#if originPendingNote}}<div class="apt-warn">{{originPendingNote}}</div>{{/if}}
 
     {{else if (eq stepId "characteristics")}}
     <div class="atk-dlg-header"><span class="atk-weapon-name">🎲 Характеристики</span></div>

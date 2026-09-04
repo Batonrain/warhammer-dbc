@@ -1,6 +1,10 @@
 /* Единый Мастер создания персонажа (module/apps/character-wizard.mjs).
-   Формы полей переиспользуют .wh-wizard-form/.atk-dlg-row/.wiz-* из
-   ui/dialogs.css — здесь только шаги-чипсы и футер с навигацией.
+   Шаги-чипсы/футер — здесь же; собственный язык панелей/строк шага
+   (.wiz-panel/.wiz-row/.wiz-step-head, wdbc-2e9t) — ниже в этом файле.
+   Точечные виджеты шагов (наборы бросков, чипы характеристик, Склонности,
+   Уровень старта) по-прежнему берут .wiz-gen/.wiz-chip/.wiz-set/.wh-apts/
+   .wh-cstart из ui/dialogs.css и ui/character-start.css — это уже
+   собственная разметка Мастера, не заимствованная у диалога атаки.
 
    Каркас — та же схема, что у Разгрузки (ui/rig-manager.css): окно
    V1-приложения само не скроллит контент, а .wiz-step-body раньше рос
@@ -79,3 +83,137 @@
 .wh-char-wizard .wiz-footer button {
   width: auto !important;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   wdbc-2e9t: собственный визуальный язык Мастера — вместо заимствованных
+   .atk-dlg-header/.atk-dlg-row (диалог атаки) шаг теперь: заголовок шага +
+   несколько подписанных панелей-разделов (группировка полей по смыслу),
+   каждая — как отдельная карточка когитатора (перекликается с haem-panel
+   у Гемункула: градиент+внутренняя тень+заголовок-разделитель), а не один
+   плоский список строк. Окно уже несёт .wh-holo (см. character-wizard.mjs
+   DEFAULT_OPTIONS.classes) — переменные --wh-* здесь всегда зелёная
+   когитаторная палитра (variables.css:31), отдельной тёмной темы заводить
+   не нужно. :is(.wh-wizard-form, .wh-char-wizard) — та же необходимость
+   дублировать оба класса, что и у .wiz-gen/.wiz-chip выше (см. комментарий
+   в dialogs.css) — часть разметки рендерит старый монолитный Мастер
+   (creation.mjs, класс формы .wh-wizard-form), часть — этот, новый. ══ */
+
+/* ── Заголовок шага (было — то же, что диалог атаки: atk-dlg-header) ── */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-step-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--wh-accent, #4dffa6);
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-step-title {
+  font-size: 1.05em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--wh-text-light, #d8ffe8);
+  text-shadow: 0 0 8px rgba(77, 255, 166, 0.35);
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-step-sub {
+  font-size: 0.8em;
+  color: var(--wh-text-mid, #7fe0a8);
+  opacity: 0.85;
+}
+
+/* ── Панель-раздел: группа полей одного смысла внутри шага ── */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-panel {
+  position: relative;
+  margin: 0 0 10px;
+  padding: 8px 10px 10px;
+  background: linear-gradient(160deg, rgba(20, 55, 38, 0.32), rgba(4, 16, 10, 0.55));
+  border: 1px solid var(--wh-border, #1f6f4a);
+  border-radius: 4px;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.35);
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-panel:last-child { margin-bottom: 0; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -1px 0 8px;
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--wh-accent, #4dffa6);
+  border-bottom: 1px solid var(--wh-border, #1f6f4a);
+  padding-bottom: 5px;
+}
+/* Пояснение рядом с заголовком панели (напр. «выборы применятся по «Далее»»). */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-panel-note {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1.06em;
+  color: var(--wh-text-mid, #7fe0a8);
+  opacity: 0.8;
+}
+
+/* ── Строка «подпись + поле» внутри панели (было — atk-dlg-row) ── */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row:last-child { margin-bottom: 0; }
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row > label {
+  font-size: 0.84em;
+  color: var(--wh-text-mid, #7fe0a8);
+  white-space: nowrap;
+  min-width: 128px;
+  flex: 0 0 auto;
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row select,
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row input[type="number"],
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row input[type="text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 6px;
+  font-size: 0.9em;
+  font-family: inherit;
+  background: var(--wh-input-bg, #0c2418);
+  border: 1px solid var(--wh-border, #1f6f4a);
+  color: var(--wh-text, #b8ffd8);
+  border-radius: 3px;
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row select:focus,
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row input:focus {
+  outline: none;
+  border-color: var(--wh-accent, #4dffa6);
+  box-shadow: 0 0 6px rgba(77, 255, 166, 0.35);
+}
+/* Строка с кнопкой сбоку (Имя + 🎲, если она есть) — поле не должно душить кнопку. */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-row .wh-slot-btn { flex: 0 0 auto; width: auto; }
+
+/* Заголовок панели, помеченный title-подсказкой (Снаряжение — куда идёт
+   найденное по «Готово») — сам курсор help виднее на панели, чем на строке. */
+:is(.wh-wizard-form, .wh-char-wizard) .wiz-panel-title[title] { cursor: help; }
+
+/* Строки .wtc-row (Таланты/Стремления/Снаряжение на выбор) переиспользуют
+   класс диалога выбора стартовых Талантов (.wh-talent-choices .wtc-*,
+   dialogs.css) — но тот стиль скоуплен на .wh-talent-choices, которого у
+   Мастера нет: без своих правил .wtc-lbl/.wtc-inputs внутри Мастера были
+   голыми блочными элементами (в столбик, без выравнивания) — эти правила
+   тот же вид, что и у диалога, просто на своём классе-предке. */
+:is(.wh-wizard-form, .wh-char-wizard) .wtc-lbl {
+  flex: 0 0 auto; min-width: 128px; font-size: 0.84em; font-weight: 600;
+  color: var(--wh-text-mid, #7fe0a8);
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wtc-x { opacity: 0.6; font-weight: 400; }
+:is(.wh-wizard-form, .wh-char-wizard) .wtc-sel,
+:is(.wh-wizard-form, .wh-char-wizard) .wtc-inp {
+  flex: 1 1 auto; min-width: 0; padding: 3px 6px; font-size: 0.9em; font-family: inherit;
+  background: var(--wh-input-bg, #0c2418); border: 1px solid var(--wh-border, #1f6f4a);
+  color: var(--wh-text, #b8ffd8); border-radius: 3px;
+}
+:is(.wh-wizard-form, .wh-char-wizard) .wtc-inputs { flex: 1 1 auto; display: flex; flex-wrap: wrap; gap: 4px; }
+:is(.wh-wizard-form, .wh-char-wizard) .wtc-mini { flex: 1 1 40%; }
