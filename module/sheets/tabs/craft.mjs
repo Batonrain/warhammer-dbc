@@ -68,7 +68,12 @@ export async function craftTabContext(sheet) {
  * дёргают ре-рендер ЛИСТА, а не отдельного окна.
  */
 export function activateCraftListeners(root, sheet) {
-  const craftRoot = root.querySelector('[data-tab="craft"]');
+  // `[data-tab="craft"]` в одиночку находит навигационную ссылку вкладки
+  // (`<a data-tab="craft">` в nav.sheet-tabs), она идёт раньше в DOM, чем
+  // содержимое (`<div class="tab craft-tab" data-tab="craft">`) — querySelector
+  // молча брал пустую ссылку, и ни один обработчик внутри вкладки не вешался
+  // (найдено живой проверкой wdbc-42a6). `.tab` сужает до контентного узла.
+  const craftRoot = root.querySelector('.tab[data-tab="craft"]');
   if (!craftRoot) return;
   const model = craftModel(sheet);
   const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
