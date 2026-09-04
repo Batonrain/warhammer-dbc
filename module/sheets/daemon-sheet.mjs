@@ -249,6 +249,16 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
    * но по умолчанию сразу открыт на "Встречный": книга формулирует исход
    * («демон должен набрать больше Успехов, чем Ритуалист») как обычный
    * встречный тест (module/rules/test-kind.mjs), не особый случай.
+   *
+   * Авто-встречный чекбокс/делегирование (wdbc-j814/wdbc-uez7) сюда
+   * сознательно НЕ перенесены (wdbc-qc6d), хотя kind по умолчанию уже
+   * "opposed": сторона соперника здесь — бросок Ритуалиста по совсем другому
+   * конвейеру (apps/ritual-cast.mjs, полноценный Ритуал со своими Успехами),
+   * а не Навык/Характеристика того же ключа — auto-резолв через
+   * skillTotal(opponent, skillKey)/characteristics(opponent, charKey)
+   * (_resolveOpposedAuto, actor-sheet.mjs) посчитал бы демону соперника
+   * неверно. Ручные поля «Порог/Бросок соперника» (уже в testKindHtml) —
+   * единственный корректный способ передать сюда чужой ритуальный бросок.
    */
   async _showVsExorcismDialog() {
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;

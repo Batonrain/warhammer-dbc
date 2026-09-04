@@ -604,6 +604,13 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
 
   /**
    * Диалог и бросок Команды.
+   *
+   * Авто-встречный чекбокс/делегирование (wdbc-j814/wdbc-uez7, rules/
+   * delegate-test.mjs) сюда сознательно НЕ перенесены (wdbc-qc6d): «Отдаёт»
+   * (#sq-roller) уже сам выбирает, чьим Command пользоваться, внутри ЭТОГО же
+   * диалога — постороннего «соперника» с симметричным Навыком/Характеристикой
+   * тест не знает, авто-резолв через skillTotal/characteristics опоненту
+   * тут считать нечего.
    * @param {"presence"|"short"|"detail"} kind — что именно отдаётся.
    */
   async _commandRoll(kind) {
