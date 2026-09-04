@@ -62,6 +62,20 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       charDamageFormula: new StringField({ initial: "", label: "Формула урона по характеристике" }),
       profiles:      list("Дополнительные профили"),
       variants:      list("Вариации броска"),
+      // Тест Сопротивления ЦЕЛИ (wdbc-5vf4) — книжный формат «Психотест X vs
+      // Y+N» (стр. 289 далее): resistChar пуст = сила не требует встречного
+      // теста цели (Изменение/Вливание без сопротивления, чисто
+      // информационные/союзные силы). Непусто — характеристика (CHARACTERISTICS,
+      // тот же набор ключей, что и у testChar/charBonusOptions), которой цель
+      // защищается, + resistMod — модификатор ЕЁ теста (в книге почти всегда
+      // +0, но встречаются +3/+20, см. Compel/Terrify/Bolt of Change).
+      // ЖИВОЙ ЗАПРОС, не запись Конструктора: читается прямо при манифестации
+      // (module/sheets/tabs/psychic.mjs::executePsychotest), как уже устроены
+      // testChar/testMod рядом — не ActiveEffect (эффект метит ЧУЖОЙ, ещё не
+      // существующий на момент получения предмета тест — считать заранее
+      // нечем) и не перманентная правка (ничего не хранится).
+      resistChar:    new StringField({ initial: "", label: "Тест Сопротивления цели (характеристика)" }),
+      resistMod:     num(0, "Модификатор теста Сопротивления цели"),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       isSustained:   new BooleanField({ initial: false, label: "Поддерживается сейчас" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
