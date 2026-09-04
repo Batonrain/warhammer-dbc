@@ -1,0 +1,70 @@
+{
+  "name": "Gifts of the Forests / Дары Лесов",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "yBHYtwHZnZweZ3vl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "worldSinger",
+    "subtype": "Воззвание к Природе",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Непрямое. Треб.: Forest Paths (манифестирована). Псайкер и союзники в ауре находят укрытое место (поляну/пещеру) с едой, водой и кровом на зверей размером до 3; один явный и два тайных выхода. Без «Непрямого» — идеальные условия даже там, где это обычно невозможно; на демоническом/мёртвом мире «Непрямое» снимается всегда. Участок держится до бPR дней, затем угасает (мгновенно — если «Непрямое» было снято).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "KkedeJrIZf7QldJV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!KkedeJrIZf7QldJV"
+}

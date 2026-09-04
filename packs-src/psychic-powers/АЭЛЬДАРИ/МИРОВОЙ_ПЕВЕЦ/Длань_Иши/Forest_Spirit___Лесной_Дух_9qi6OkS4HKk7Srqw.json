@@ -1,0 +1,70 @@
+{
+  "name": "Forest Spirit / Лесной Дух",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "svf7kL1Faag7lAKP",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: сам «Лесной Дух» (см. книжную страницу Forest Spirit/Лесной Дух) — не заведённый в бестиарии актор/шаблон, статы и трейты считать по книге вручную.",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Иши",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×30м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. Треб.: Forest Paths (манифестирована). Призывает Лесного Духа. На неосквернённой растительности он получает черту «Пробуждённый Древесный Дух», в глубине леса — «Непрямое». Полностью подчиняется псайкеру, но лояльнее планетарному духу. Можно поддерживать до бPR духов одновременно (манифестация и поддержание каждого — отдельно).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "9qi6OkS4HKk7Srqw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!9qi6OkS4HKk7Srqw"
+}

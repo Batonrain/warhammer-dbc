@@ -1,0 +1,23 @@
+{
+  "name": "Длань Иши",
+  "type": "Item",
+  "folder": "xHNbL2jZwn0dPVH6",
+  "sorting": "m",
+  "_id": "svf7kL1Faag7lAKP",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!svf7kL1Faag7lAKP"
+}

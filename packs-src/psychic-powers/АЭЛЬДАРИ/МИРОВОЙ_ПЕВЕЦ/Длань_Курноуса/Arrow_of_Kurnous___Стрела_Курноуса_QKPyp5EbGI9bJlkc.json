@@ -1,0 +1,70 @@
+{
+  "name": "Arrow of Kurnous / Стрела Курноуса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "GwOyx7wJLrgLTX8b",
+  "system": {
+    "description": "",
+    "notes": "Тип урона (E/I/R/X) не указан явно в книжной таблице этой психосилы — оставлен по умолчанию схемы «Энергетический». Масштабирование профиля по размеру цели (дальность/Pen/свойства/урон растут за каждый размер выше 0) не занесено в структурные поля damage/penetration/weaponProps — как и у всех прочих психосил пака, свойства оружия здесь только текстом в effect.",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Курноуса",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×20м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR",
+    "damageType": "energy",
+    "penetration": 4,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака, Психический Снаряд, Стрельба. Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое». Профиль: Rng PR×20, Dmg 1d10+PR, Pen 4, Devastating(2), Extreme(9), Felling(4), Proven(2). За каждый размер цели выше 0: дальность +10 (модиф. PR), Pen +2, Devastating +2, Extreme −1, Felling +2, Proven +1, урон +1d10, множитель к урону от PR — ×2 (×3 при размере 3+).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "QKPyp5EbGI9bJlkc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!QKPyp5EbGI9bJlkc"
+}

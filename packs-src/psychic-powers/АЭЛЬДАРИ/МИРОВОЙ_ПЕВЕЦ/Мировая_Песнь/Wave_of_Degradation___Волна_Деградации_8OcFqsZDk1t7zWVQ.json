@@ -1,0 +1,70 @@
+{
+  "name": "Wave of Degradation / Волна Деградации",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "xFtND4OTeTJmocRV",
+  "system": {
+    "description": "",
+    "notes": "Числовые параметры Haywire (радиус PR×5, интенсивность PR) зависят от текущего ПР манифестации — как и у прочих психосил пака, не занесены в структурное поле weaponProps, только текстом в effect. Манифестируется только в Усиленном режиме — режим манифестации схемой не хранится, следить вручную.",
+    "cost": 800,
+    "discipline": "worldSinger",
+    "subtype": "Мировая Песнь",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "blast",
+    "prRequired": 8,
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака, Незримое, Психический Взрыв. 4-я из шести Мировых Песен (Фартуремуре Ларилл, «Волна Смерти Оружия»). Треб.: Forest Paths (манифестирована). Манифестируется только в Усиленном режиме. Псайкер создаёт вокруг себя поле, действующее на всё не-экзодитское: Haywire(PR×5, PR). Техника получает от этого непоглощаемый урон, равный интенсивности Haywire.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "8OcFqsZDk1t7zWVQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
+  },
+  "_key": "!items!8OcFqsZDk1t7zWVQ"
+}
