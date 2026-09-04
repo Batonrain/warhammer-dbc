@@ -66,7 +66,7 @@ import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";
 import { openCraftWorkshop } from "./module/apps/craft-workshop.mjs";
-import { openCogitatorManager } from "./module/apps/cogitator.mjs";
+import { openCogitatorManager, registerCogitatorAutoOpen } from "./module/apps/cogitator.mjs";
 import { openTarotReader } from "./module/apps/veil.mjs";
 import { openRigManager } from "./module/apps/rig-manager.mjs";
 import { openSurgeon } from "./module/apps/surgeon.mjs";
@@ -1827,6 +1827,11 @@ registerSceneLiveRecalc({
   tokenFields: ["x", "y", "elevation", "hidden"],
   regionBehavior: true,
 });
+
+// ── Когитаторы (wdbc-4hyt): автооткрытие консоли при входе на привязанную
+// сцену, см. module/apps/cogitator.mjs → registerCogitatorAutoOpen. Привязка
+// сцена→когитатор — флаг Scene, выставляется из CogitatorManager.
+registerCogitatorAutoOpen();
 
 // ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
 // Ловим ЛЮБОЕ уменьшение system.fate.value одним хуком, а не правим каждое из
