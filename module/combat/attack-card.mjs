@@ -226,7 +226,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   этот модуль документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
+                          forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
                           isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
@@ -247,7 +247,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
   const poolBtn = pool && pool.hits > 0
     ? `<button class="wh-pool-spend-btn" type="button"
          data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
-         data-dodge-mod="${dodgeMod}" data-parry-mod="${parryMod}"
+         data-dodge-mod="${dodgeMod}" data-dodge-mod-recoil="${dodgeModRecoil ?? ""}" data-parry-mod="${parryMod}"
          data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
          data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}">
          💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
@@ -261,15 +261,29 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
          🏃 Пул (${pool.successes} Усп.): Отскочить за 2 Усп.
        </button>`
     : "";
+  // Императив Избегания/Крепости (wdbc-hdxj): у обоих книга переворачивает
+  // знак бонуса на тесте Избегания СПЕЦИАЛЬНО для Отскока в укрытие — движок
+  // не знает заранее, каким выйдет этот бросок, ЕСЛИ игрок не декларирует
+  // намерение сам. Чекбокс рендерится ТОЛЬКО когда у защищающегося активен
+  // один из этих двух Императивов (dodgeModRecoil задан и отличается от
+  // обычного — см. attack.mjs::hasEvasionRecoilImperative) — для остальных
+  // атак/акторов UX диалога Уклонения не меняется вовсе.
+  const recoilPlanCheckbox = (!cannotDodge && dodgeModRecoil !== null && dodgeModRecoil !== dodgeMod)
+    ? `<label class="wh-recoil-plan-label" style="font-size:0.85em;display:block;margin:2px 0 4px;">
+         <input type="checkbox" class="wh-recoil-plan-checkbox"/>
+         Планирую Отскочить в укрытие (Уклонение будет ${signed(dodgeModRecoil)} вместо ${signed(dodgeMod)})
+       </label>`
+    : "";
   return `
     <div class="roll-defense-section">
       <div class="roll-section-head">Защита цели <span class="roll-head-hint">— выберите токен защищающегося</span></div>
+      ${recoilPlanCheckbox}
       <div class="roll-defense-btns">
         ${cannotDodge
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }

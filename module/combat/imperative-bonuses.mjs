@@ -9,9 +9,35 @@
 
 import { activeImperativeBonuses } from "../rules/imperative.mjs";
 
-/** Плоский бонус/штраф активного Императива цели к тесту Избегания (не различает Отскок в укрытие — см. tech-imperatives.mjs::evasionRecoilNote). */
-export function evasionImperativeBonus(actor) {
-  return Number(activeImperativeBonuses(actor)?.evasionBonus) || 0;
+/**
+ * Плоский бонус/штраф активного Императива цели к тесту Избегания.
+ *
+ * planningRecoil=true (wdbc-hdxj) берёт вместо обычного значения
+ * recoil-специфичный книжный знак («кроме Отскока в укрытие», Evasion −20/
+ * Fortress +20, evasionRecoilBonus в tech-imperatives.mjs) — читается ТОЛЬКО
+ * когда защищающийся отметил декларацию «планирую Отскочить в укрытие?» ДО
+ * броска Уклонения (module/combat/attack-card.mjs::defenseSection, чекбокс
+ * .wh-recoil-plan-checkbox, гейт клика в module/hooks.mjs). Без декларации —
+ * прежнее поведение, обычное значение.
+ */
+export function evasionImperativeBonus(actor, { planningRecoil = false } = {}) {
+  const bonuses = activeImperativeBonuses(actor);
+  if (planningRecoil && typeof bonuses?.evasionRecoilBonus === "number") {
+    return Number(bonuses.evasionRecoilBonus) || 0;
+  }
+  return Number(bonuses?.evasionBonus) || 0;
+}
+
+/**
+ * Признак: у актора активен Императив, который переворачивает знак бонуса
+ * специально для Отскока в укрытие (Evasion/Fortress Imperative, wdbc-hdxj)
+ * — используется, чтобы решить, показывать ли в диалоге Уклонения условную
+ * декларацию «планирую Отскочить в укрытие?» (module/combat/attack-
+ * card.mjs::defenseSection). false для всех прочих Императивов/без Императива
+ * — тогда чекбокс не рендерится вовсе, UX для них не меняется.
+ */
+export function hasEvasionRecoilImperative(actor) {
+  return typeof activeImperativeBonuses(actor)?.evasionRecoilBonus === "number";
 }
 
 /**

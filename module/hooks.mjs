@@ -191,7 +191,16 @@ export function registerHooks() {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
+        // Императив Избегания/Крепости (wdbc-hdxj): декларация «планирую
+        // Отскочить в укрытие?» — чекбокс рядом с кнопкой (attack-
+        // card.mjs::defenseSection, рендерится только при активном
+        // Императиве). Отмечен → берём recoil-специфичный знак ЗАРАНЕЕ, до
+        // броска; не отмечен — обычный dodgeMod, как раньше.
+        const recoilCheckbox = ev.currentTarget.closest(".roll-defense-section")?.querySelector(".wh-recoil-plan-checkbox");
+        const planningRecoil = recoilCheckbox?.checked === true;
+        const extraMod = parseInt((planningRecoil
+          ? ev.currentTarget.dataset.extraModRecoil
+          : ev.currentTarget.dataset.extraMod) || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         const burst = ev.currentTarget.dataset.burst === "1";
@@ -374,6 +383,8 @@ export function registerHooks() {
           attackerUuid: el.dataset.attackerUuid || "",
           hitsCount: parseInt(el.dataset.hitsCount || "1"),
           dodgeMod: parseInt(el.dataset.dodgeMod || "0"),
+          // wdbc-hdxj: "" (нет Императива) → null, дальше как в attack.mjs.
+          dodgeModRecoil: el.dataset.dodgeModRecoil ? parseInt(el.dataset.dodgeModRecoil) : null,
           parryMod: parseInt(el.dataset.parryMod || "0"),
           targetIsVehicle: el.dataset.targetVehicle === "1",
           flexible: el.dataset.flexible === "1",

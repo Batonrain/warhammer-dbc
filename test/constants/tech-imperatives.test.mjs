@@ -19,3 +19,14 @@ describe("findTechImperative", () => {
     expect(findTechImperative({ name: "Noospheric Uplink / Ноосферный Аплинк" })).toBeNull();
   });
 });
+
+// wdbc-hdxj: книжный знак «кроме Отскока в укрытие» — фиксированный, не
+// следует за отредактированным evasionBonus диалога активации (tech.mjs).
+describe("evasionRecoilBonus (wdbc-hdxj)", () => {
+  it("Evasion Imperative: −20 (книга: «+до +30 на Избегания, кроме Отскока в укрытие −20»)", () => {
+    expect(TECH_IMPERATIVES["Evasion Imperative"].evasionRecoilBonus).toBe(-20);
+  });
+  it("Fortress Imperative: +20 (книга: «+20 на Отскок в укрытие, но −30 на остальные Избегания»)", () => {
+    expect(TECH_IMPERATIVES["Fortress Imperative"].evasionRecoilBonus).toBe(20);
+  });
+});
