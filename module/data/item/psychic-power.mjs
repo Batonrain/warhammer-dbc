@@ -68,7 +68,8 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // информационные/союзные силы). Непусто — характеристика (CHARACTERISTICS,
       // тот же набор ключей, что и у testChar/charBonusOptions), которой цель
       // защищается, + resistMod — модификатор ЕЁ теста (в книге почти всегда
-      // +0, но встречаются +3/+20, см. Compel/Terrify/Bolt of Change).
+      // +0; построчный разбор всех 83 сил с полем — wdbc-3x1n — нашёл ровно
+      // один пример с отличным от нуля модификатором: Mentor/Ментор, −20).
       // ЖИВОЙ ЗАПРОС, не запись Конструктора: читается прямо при манифестации
       // (module/sheets/tabs/psychic.mjs::executePsychotest), как уже устроены
       // testChar/testMod рядом — не ActiveEffect (эффект метит ЧУЖОЙ, ещё не
