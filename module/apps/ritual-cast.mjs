@@ -24,7 +24,7 @@ import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
-import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
+import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { defaultSpawnDemonFn } from "./demon-summon.mjs";
 import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";

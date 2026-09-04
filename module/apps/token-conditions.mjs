@@ -20,14 +20,15 @@
 //  hook → update... до бесконечности).
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
-import { CONDITION_ICONS } from "../constants/condition-icons.mjs";
+// Из реестра constants/conditions.mjs (wdbc-w88h), не из sheets/sheet-helpers.mjs
+// — этот слой (apps/, синхронизация с движком) не должен тянуть слой листа.
+import { CONDITIONS_DEF, CONDITION_ICONS, TOKEN_SYNC_EXCLUDE } from "../constants/conditions.mjs";
 
 // «Усталость» — не бинарное состояние, а зеркало счётчика system.fatigue.value
 // (actor.mjs prepareDerivedData). Токен умеет только вкл/выкл иконку, а не
 // хранить число — включать её щелчком по токену нечего, тег и так следует за
-// настоящей Усталостью на ТЕЛЕ. Поэтому исключена из статус-набора токена.
-const TOKEN_SYNC_EXCLUDE = new Set(["fatigued"]);
+// настоящей Усталостью на ТЕЛЕ. Поэтому исключена из статус-набора токена
+// (CONDITIONS.fatigued.tokenSync === false — единственный ключ там).
 
 export function statusIconUri(key) {
   const ic = CONDITION_ICONS[key];

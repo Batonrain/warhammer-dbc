@@ -16,37 +16,13 @@
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
+// Состояния (conditions) — набор один и тот же у всех существ, строится из
+// реестра constants/conditions.mjs (wdbc-w88h), а не перечисляется здесь: тот
+// же приём, что у Навыков (SKILLS_DEF выше).
+import { CONDITION_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
 
 /** Зоны попадания — порядок как в листе. */
 export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", "rightLeg"];
-
-/** Состояния (conditions) — набор один и тот же у всех существ. */
-const CONDITION_FLAGS = [
-  "bleeding", "haemorrhaging", "stunned", "fatigued", "poisoned", "prone",
-  "helpless", "unconscious", "blinded", "deafened", "burning", "radiation",
-  "hallucinogenic", "pinned", "crippling", "addicted",
-  // Состояние «в Шоке» (стр. 53, «Оправиться от Шока») — раньше таблица Шока
-  // была разовым эффектом без сохраняемого состояния; тест выхода из Шока
-  // (module/combat/fear.mjs::rollShockRecovery) читает и снимает этот флаг.
-  "shocked",
-  // Стр. 30-31 (Раны и Урон, «Статусы») — Ступор и Удушье не имели своих
-  // полей; Гангрена и Потеря Конечностей (по частям тела) — тоже.
-  "dazed", "suffocating", "gangrene",
-  "lostHands", "lostArms", "lostFeet", "lostLegs", "lostEyes",
-  // Стр. 12 («Борьба») — состояние двух персонажей, связанных Захватом.
-  "grappling",
-  // Свойство оружия Вызов/Challenge (X), wdbc-2xku: до конца следующего Хода
-  // нельзя добровольно выйти из рукопашной (кроме уклонения от атаки по
-  // площади) — блокирует действие «Выход из Боя» (movement-actions.mjs).
-  "challenged"
-];
-/** Состояния со счётчиком: имя поля → суффикс счётчика. */
-const CONDITION_COUNTERS = {
-  bleeding: "Level", haemorrhaging: "Level", stunned: "Rounds",
-  fatigued: "Level", blinded: "Rounds", burning: "Level", radiation: "Level",
-  suffocating: "Rounds",
-  lostHands: "Count", lostArms: "Count", lostFeet: "Count", lostLegs: "Count", lostEyes: "Count"
-};
 
 /**
  * Общий блок полей существа.
@@ -137,7 +113,7 @@ export function creatureSchema({ granted = false } = {}) {
   const armorFields = () => Object.fromEntries(HIT_LOCATIONS.map(loc => [loc, num(0, loc)]));
 
   const conditionFields = {};
-  for (const flag of CONDITION_FLAGS) {
+  for (const flag of CONDITION_KEYS) {
     conditionFields[flag] = bool(false, flag);
     const counter = CONDITION_COUNTERS[flag];
     if (counter) conditionFields[flag + counter] = num(0, flag + counter);

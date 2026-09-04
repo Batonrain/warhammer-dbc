@@ -175,7 +175,7 @@ export const PREDICATES = {
 
   // Противоположность targetHasTrait по состояниям, не по Чертам: «нет ни
   // одного из перечисленных состояний X» (ключи — CONDITIONS_DEF в
-  // sheets/sheet-helpers.mjs, напр. "stunned"/"helpless"). Список — не «и»,
+  // constants/conditions.mjs, напр. "stunned"/"helpless"). Список — не «и»,
   // как у hasTalent, а поэлементное «нет», иначе «Оглушён ИЛИ Беспомощен» было
   // бы не выразить одним условием. Нужна как есть, а не через отрицание в
   // данных — `when` в rules/collect.mjs требует ото ВСЕХ условий true разом

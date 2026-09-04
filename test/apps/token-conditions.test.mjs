@@ -11,7 +11,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { CONDITIONS_DEF } from "../../module/sheets/sheet-helpers.mjs";
+import { CONDITIONS_DEF } from "../../module/constants/conditions.mjs";
 import { buildConditionStatusEffects, statusIconUri } from "../../module/apps/token-conditions.mjs";
 
 beforeEach(() => {

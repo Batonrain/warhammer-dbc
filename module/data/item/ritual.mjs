@@ -93,7 +93,7 @@ export class RitualData extends foundry.abstract.TypeDataModel {
         value: num("Модификатор")
       }), { label: "Доп. модификаторы ритуала" }),
 
-      // Состояния (CONDITIONS_DEF, module/sheets/sheet-helpers.mjs), которые
+      // Состояния (CONDITIONS_DEF, module/constants/conditions.mjs), которые
       // ЭТОТ ритуал накладывает при успехе — не применяются автоматически
       // (у ритуала часто нет фиксированной цели на листе): карточка в чате
       // (module/apps/ritual-cast.mjs) показывает их перетаскиваемыми

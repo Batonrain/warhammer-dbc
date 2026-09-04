@@ -7,7 +7,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import { CONDITIONS_DEF } from "../../module/sheets/sheet-helpers.mjs";
+import { CONDITIONS_DEF } from "../../module/constants/conditions.mjs";
 
 describe("CONDITIONS_DEF: desc непуст для каждого состояния", () => {
   for (const [key, def] of Object.entries(CONDITIONS_DEF)) {

@@ -20,7 +20,9 @@
 //  формулировок этой конкретной таблицы.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
+// Из constants/conditions.mjs (wdbc-w88h), не из sheets/sheet-helpers.mjs —
+// combat/ не должен тянуть слой листа.
+import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";

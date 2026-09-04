@@ -26,14 +26,11 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
-// system.conditions.<key> (bool) + system.conditions.<field> (число).
-const ROUND_CONDITIONS = [
-  { key: "stunned",     field: "stunnedRounds",     label: "Оглушение" },
-  { key: "blinded",     field: "blindedRounds",     label: "Ослепление" },
-  { key: "suffocating", field: "suffocatingRounds", label: "Удушье" }
-];
+// system.conditions.<key> (bool) + system.conditions.<field> (число). Из
+// реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
+// "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
+import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS } from "../constants/conditions.mjs";
 
 async function postConditionCard(actor, lines) {
   if (!lines.length) return;
