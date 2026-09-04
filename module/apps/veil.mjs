@@ -1166,7 +1166,14 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 let _veil = null;
 export function openVeilMystic(tab = null) {
   if (!_veil) _veil = new VeilMystic();
-  if (tab) _veil.state.tab = tab;
+  // .state — геттер без сеттера у настоящего ApplicationV2 (Foundry v14);
+  // вкладка листа/окна хранится отдельно, в .uiState (см. конструктор
+  // VeilMystic). Присвоение в .state молча проходило только потому, что
+  // test/support/foundry-stub.mjs не знал об этом геттере ДО wdbc-v8b2 — в
+  // реальном мире падало бы TypeError. openTarotReader() ниже сейчас без
+  // единого вызывающего места, но экспортирован — баг ждал первого, кто его
+  // подключит.
+  if (tab) _veil.uiState.tab = tab;
   _veil.render(true);
   return _veil;
 }

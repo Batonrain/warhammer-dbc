@@ -15,7 +15,7 @@ import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
 import { listenerRoot } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
-import { VeilMystic } from "../../module/apps/veil.mjs";
+import { VeilMystic, openVeilMystic, openTarotReader } from "../../module/apps/veil.mjs";
 import { TAROT_SPREADS } from "../../module/constants/tarot.mjs";
 
 describeV2Sheet(VeilMystic, {
@@ -213,5 +213,23 @@ describe("_onRender: блок ГМа (Завеса/Ритуалы сцены —
     app.element.handlers["[data-act=godpick]:click"]();
     expect(app.uiState.godPicker).toBe(true);
     expect(app.renders).toBe(1);
+  });
+});
+
+// Регрессия (найдено вне сессии, инструктаж пользователя): openVeilMystic
+// писал в _veil.state.tab — .state у настоящего ApplicationV2 (Foundry v14)
+// геттер без сеттера, присвоение бросает TypeError в реальном мире. Тестовая
+// заглушка (test/support/foundry-stub.mjs, wdbc-v8b2) теперь несёт тот же
+// геттер, поэтому этот тест ловит регрессию сам — без него присвоение молча
+// проходило бы как обычное поле, как проходило и раньше в живом баге.
+describe("openVeilMystic / openTarotReader", () => {
+  it("openVeilMystic(tab) пишет в uiState.tab, не в .state — не бросает", () => {
+    const app = openVeilMystic("rituals");
+    expect(app.uiState.tab).toBe("rituals");
+  });
+
+  it("openTarotReader() открывает окно сразу на вкладке «tarot»", () => {
+    const app = openTarotReader();
+    expect(app.uiState.tab).toBe("tarot");
   });
 });
