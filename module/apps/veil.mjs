@@ -45,7 +45,11 @@ import { esc } from "../helpers/utils.mjs";
 
 export { veilShift };
 
-function _newJourney() {
+// Экспортированы для module/apps/scene-settings.mjs (wdbc-paif): единое окно
+// «Сцена» держит СВОЁ состояние вкладки «Завеса» отдельно от EnvironmentApp,
+// но заводит его тем же способом, что и конструктор VeilMystic — не дублируя
+// исходные значения руками.
+export function _newJourney() {
   return {
     shipId: "", gellar: "ok", occulum: "ok", warpEngineDmg: false, emergency: false,
     entryLoc: "mandeville", stability: "", stabilityMult: 1, psyMod: 0, beaconHidden: false,
@@ -57,7 +61,7 @@ function _newJourney() {
 // Состояние вкладки «Ритуалы» ГМ-консоли: ритуалист/предмет ещё не выбраны
 // (в отличие от диалога с листа персонажа, где оба уже известны) — форма
 // начинается пустой, начальные числа как у ритуала книги «по умолчанию».
-function _newRitual() {
+export function _newRitual() {
   return {
     ritualistId: "", itemId: "", name: "", type: "summon",
     skillValue: "", testChar: "", gmMod: -20,
@@ -69,7 +73,7 @@ function _newRitual() {
 }
 
 // ── Таро: пустые слоты по спреду ──────────────────────────────────────────
-function _tarotSlots(spreadKey) {
+export function _tarotSlots(spreadKey) {
   return (TAROT_SPREADS[spreadKey]?.positions || []).map(() => ({ cardN: null, reversed: false }));
 }
 
@@ -88,7 +92,7 @@ function _addFlatDamage(dmg, n) {
 }
 
 // ── Осквернение (крафт демон-оружия): исходное состояние ──────────────────
-function _newDefile() {
+export function _newDefile() {
   return {
     weaponUuid: "", god: "undivided", demonName: "",
     demonFormula: "lesser", demonWb: 4, demonInf: 8, binding: 3,

@@ -1,0 +1,17 @@
+{{!-- Сцена: общая страница ГМа — Окружение + Завеса (wdbc-paif).
+      Оба раздела ниже — партиалы существующих окон, разметка не переписана,
+      только обёрнута общим переключателем вкладок. --}}
+<div class="wh-ss">
+  <nav class="wh-ss-tabs">
+    <button type="button" class="wh-ss-tab {{#if isEnvTab}}active{{/if}}" data-sstab="env">🌡 Окружение</button>
+    <button type="button" class="wh-ss-tab {{#if isVeilTab}}active{{/if}}" data-sstab="veil">🌀 Завеса</button>
+  </nav>
+  <div class="wh-ss-body">
+    <div class="wh-ss-section {{#if isEnvTab}}active{{/if}}">
+      {{> "systems/warhammer-dbc/templates/apps/environment.hbs" env}}
+    </div>
+    <div class="wh-ss-section {{#if isVeilTab}}active{{/if}}">
+      {{> "systems/warhammer-dbc/templates/apps/veil.hbs" veil}}
+    </div>
+  </div>
+</div>
