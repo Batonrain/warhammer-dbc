@@ -39,21 +39,32 @@
 }
 
 .wh-char-wizard .wiz-step-chip {
-  padding: 2px 8px;
+  padding: 2px 9px;
   border-radius: 3px;
-  font-size: 0.78em;
+  font-size: 0.76em;
   font-weight: 600;
-  color: var(--wh-text-dim, #a8926a);
+  letter-spacing: 0.02em;
+  color: var(--wh-text-mid, #7fe0a8);
+  opacity: 0.65;
   border: 1px solid transparent;
+  transition: opacity 0.12s, border-color 0.12s;
 }
 
+/* wdbc-2e9t: тот же акцент, что у .wiz-step-head/.wiz-panel-title ниже —
+   прогресс шагов подан тем же визуальным языком, что и заголовки внутри
+   шага, а не отдельным нестыкующимся цветом. Сама механика перехода между
+   шагами (клик по чипу не навешен — переключает только «Далее»/«Назад»,
+   см. character-wizard.mjs) не менялась. */
 .wh-char-wizard .wiz-step-chip.active {
-  color: var(--wh-text-light, #e8d5a3);
-  border-color: var(--wh-border, #7a5c2e);
-  background: var(--wh-panel-dark, #2a1c10);
+  opacity: 1;
+  color: var(--wh-text-light, #d8ffe8);
+  border-color: var(--wh-accent, #4dffa6);
+  background: var(--wh-panel-dark, #04100a);
+  box-shadow: 0 0 8px rgba(77, 255, 166, 0.35);
 }
 
-.wh-char-wizard .wiz-step-chip.done { color: #7fbf7f; }
+.wh-char-wizard .wiz-step-chip.done { color: #7fbf7f; opacity: 0.85; }
+.wh-char-wizard .wiz-step-chip.done::before { content: "✓ "; }
 
 .wh-char-wizard .wiz-step-body {
   flex: 1 1 auto;
