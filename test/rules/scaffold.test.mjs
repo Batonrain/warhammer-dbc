@@ -22,9 +22,10 @@ describe("каркас module/rules", () => {
     // (метка Аватара Резни, wdbc-sk8s), geneSeedLegion/psyRatingMin (папки
     // пикера Талантов, wdbc-sauo), inRage (гейт Ярости entry.when, wdbc-wyr3)
     // hexMarkedPreyAllyBonus (метка Проклятой Метки, wdbc-xxb7),
-    // wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno) и
-    // hasCondition/targetHasCondition (Состояния актора/цели, wdbc-r5o7).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(23);
+    // wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno),
+    // hasCondition/targetHasCondition (Состояния актора/цели, wdbc-r5o7) и
+    // charNotIn (характеристика теста вне списка, wdbc-r5o7.1).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(24);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

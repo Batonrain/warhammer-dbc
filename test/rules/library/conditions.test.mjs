@@ -56,3 +56,39 @@ describe("правила Состояний", () => {
     expect(mods).toEqual([]);
   });
 });
+
+// «Отравление» (стр. 30-31, wdbc-r5o7.1): −10 к Пределу Крит. Провала на
+// всех тестах, кроме T/Inf/Cor. Механизм готов целиком (critRangeMod) —
+// только запись правила плюс тест.
+describe("правило «Отравление»", () => {
+  it("есть в библиотеке", () => {
+    expect(CONDITION_RULES.map(r => r.id)).toContain("conditions.poisoned");
+  });
+
+  it("расширяет Критический Провал на 10 (side failure)", () => {
+    const { crit } = resolveTest({ actor: actor({ poisoned: true }), skill: "medicae", char: "int" });
+    expect(crit).toEqual({ successExtra: 0, failExtra: 10 });
+  });
+
+  it("не Отравлен — crit не тронут", () => {
+    const { crit } = resolveTest({ actor: actor(), skill: "medicae", char: "int" });
+    expect(crit).toEqual({ successExtra: 0, failExtra: 0 });
+  });
+
+  it.each(["t", "inf", "cor"])("исключение — тест характеристики %s не штрафуется", char => {
+    const { crit } = resolveTest({ actor: actor({ poisoned: true }), char });
+    expect(crit).toEqual({ successExtra: 0, failExtra: 0 });
+  });
+
+  it("действует на атаку (WS/BS — не в списке исключений)", () => {
+    const { crit } = resolveTest({
+      actor: actor({ poisoned: true }), kind: "attack", weaponClass: "melee", isMelee: true, char: "ws"
+    });
+    expect(crit).toEqual({ successExtra: 0, failExtra: 10 });
+  });
+
+  it("другое Состояние (не Отравление) правило не запускает", () => {
+    const { crit } = resolveTest({ actor: actor({ prone: true }), skill: "medicae", char: "int" });
+    expect(crit).toEqual({ successExtra: 0, failExtra: 0 });
+  });
+});

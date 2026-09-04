@@ -200,6 +200,27 @@ describe("weaponClass", () => {
   });
 });
 
+describe("charNotIn", () => {
+  const exempt = ["t", "inf", "cor"];
+
+  it("характеристика теста не входит в список — истинно (правило действует)", () => {
+    expect(PREDICATES.charNotIn(actor(), { char: "ws" }, exempt)).toBe(true);
+  });
+
+  it("характеристика теста входит в список — ложно (правило не действует)", () => {
+    expect(PREDICATES.charNotIn(actor(), { char: "t" }, exempt)).toBe(false);
+    expect(PREDICATES.charNotIn(actor(), { char: "inf" }, exempt)).toBe(false);
+  });
+
+  it("регистр не важен", () => {
+    expect(PREDICATES.charNotIn(actor(), { char: "T" }, exempt)).toBe(false);
+  });
+
+  it("нет ctx.char (тест без характеристики) — список ничего не исключает", () => {
+    expect(PREDICATES.charNotIn(actor(), {}, exempt)).toBe(true);
+  });
+});
+
 describe("targetHasTrait", () => {
   it("у цели есть такая Черта", () => {
     const targetActor = actor({ items: [trait("Daemonic / Демонический")] });
@@ -333,6 +354,7 @@ describe("общее требование к предикатам", () => {
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasCondition: "prone", targetHasCondition: "prone",
+    charNotIn: ["t", "inf", "cor"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos",

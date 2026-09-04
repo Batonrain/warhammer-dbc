@@ -194,6 +194,14 @@ export const PREDICATES = {
 
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),
 
+  // Характеристика ТЕКУЩЕГО теста НЕ входит в список — «для всех тестов,
+  // кроме T/Inf/Cor» (Отравление, Усталость, стр. 30-31/33): список — «не
+  // любой из», как у targetLacksCondition, отрицание зашито в саму функцию
+  // (готового «not» в `when` нет, см. комментарий там). ctx.char пуст у
+  // теста без характеристики (напр. чистый Приём) — тогда список ничего не
+  // исключает, правило действует.
+  charNotIn: (actor, ctx, value) => !list(value).includes((ctx?.char || "").toLowerCase()),
+
   // Актор цели лежит в ctx.targetActor, а не в ctx.target: в контексте броска
   // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
   // этапе 2 плана оба контекста сошлись в одном объекте.
