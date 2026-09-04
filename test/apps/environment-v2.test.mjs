@@ -39,7 +39,7 @@ function appLike(nodesFactory = () => ({})) {
   const handlers = {};
   const nodes = nodesFactory(handlers);
   const app = Object.create(EnvironmentApp.prototype);
-  app.state = { cat: "weather", target: null };
+  app.uiState = { cat: "weather", target: null };
   app.render = () => {};
   app.element = listenerRoot(nodes, handlers);
   return app;
@@ -64,7 +64,7 @@ describe("_prepareContext", () => {
     canvas.scene = stubScene("Мостик «Алого Слова»");
     game.scenes = { current: null };
     const app = appLike();
-    app.state = { cat: "rad", target: null };
+    app.uiState = { cat: "rad", target: null };
     const ctx = await EnvironmentApp.prototype._prepareContext.call(app, {});
     expect(ctx.sceneName).toBe("Мостик «Алого Слова»");
     expect(ctx.isGM).toBe(true);
@@ -81,7 +81,7 @@ describe("_onRender: разводка кнопок", () => {
     app.render = () => { rendered = true; };
     EnvironmentApp.prototype._onRender.call(app, {}, {});
     app.element.handlers["[data-cat]:click"]();
-    expect(app.state.cat).toBe("gravity");
+    expect(app.uiState.cat).toBe("gravity");
     expect(rendered).toBe(true);
   });
 

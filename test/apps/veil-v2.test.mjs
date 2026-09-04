@@ -69,7 +69,7 @@ function newDefile(over = {}) {
 function appLike({ tab = "veil", isGM = false, nodes = {}, handlers = {} } = {}) {
   globalThis.game.user.isGM = isGM;
   const app = Object.create(VeilMystic.prototype);
-  app.state = newState({ tab });
+  app.uiState = newState({ tab });
   app.ritual = newRitual();
   app.journey = newJourney();
   app.tarot = newTarot();
@@ -130,7 +130,7 @@ describe("_onRender: вкладки и общие поля", () => {
     const app = appLike({ nodes: { "[data-tab]": [{ dataset: { tab: "rituals" } }] } });
     VeilMystic.prototype._onRender.call(app, {}, {});
     app.element.handlers["[data-tab]:click"]();
-    expect(app.state.tab).toBe("rituals");
+    expect(app.uiState.tab).toBe("rituals");
     expect(app.renders).toBe(1);
   });
 
@@ -211,7 +211,7 @@ describe("_onRender: блок ГМа (Завеса/Ритуалы сцены —
     });
     VeilMystic.prototype._onRender.call(app, {}, {});
     app.element.handlers["[data-act=godpick]:click"]();
-    expect(app.state.godPicker).toBe(true);
+    expect(app.uiState.godPicker).toBe(true);
     expect(app.renders).toBe(1);
   });
 });

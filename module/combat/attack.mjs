@@ -542,9 +542,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // отдельным сообщением следом.
   if (hit && techOpts.technique === "grapple") applyGrappleOnHit(actor, targetToken, hit, techOpts);
 
-  // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода.
+  // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода
+  // (wdbc-ai0o) — rechargeTurnsRemaining:1 читает combat/recharge.mjs на
+  // старте следующего Хода носителя: тот Ход остаётся заблокирован, снимается
+  // только на Ходе ПОСЛЕ него.
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);
-  if (needsRecharge) await item.update({ "system.needsRecharge": true });
+  if (needsRecharge) await item.update({ "system.needsRecharge": true, "system.rechargeTurnsRemaining": 1 });
 
   // Просмотр кубов (#7) — стандартные «коробочки» Foundry, разворачиваемые кликом
   const renderedDice = (await Promise.all(allRolls.map(r => r.render()))).join("");

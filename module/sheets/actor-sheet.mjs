@@ -50,10 +50,11 @@ import { SANITY_RECOVERY_TALENTS, sanityRecoveryTalentsOf, dailyWillTestOutcome,
 import { woundLossUpdates } from "../rules/wounds.mjs";
 import { activateBodyListeners } from "./tabs/body.mjs";
 import { activatePossessionListeners } from "./tabs/possession.mjs";
-import { activateAdvanceListeners } from "./tabs/advance.mjs";
+import { activateAdvanceListeners, syncAdvanceColumnHeight } from "./tabs/advance.mjs";
 import { activateItemContextMenu, openContextMenu } from "./context-menu.mjs";
 import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
+import { openXpLog }                        from "../apps/xp-log.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
@@ -66,10 +67,13 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
-import { isMoraleOpposedSkill } from "../rules/resolve-test.mjs";
+import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
+import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
-         wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
+         wireTestKindLive, rollD100WithReroll, opposedComparisonHtml } from "../rules/test-kind-widget.mjs";
+import { resolveOpposed } from "../rules/test-kind.mjs";
+import { skillTotal } from "../combat/movement-actions.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
   from "../rules/assists.mjs";
@@ -161,6 +165,38 @@ function onCombatCollapse(event, target) {
   target.closest(".combat-collapsible")?.classList.toggle("collapsed", this._combatCollapse[key]);
 }
 
+// Свёртки: универсальный механизм для ЛЮБОГО блока листа (wdbc-bk4f), не
+// только «Импланты»/СОСТЯЗАНИЯ, которые уже сворачивались каждый своим
+// способом. Блок помечается атрибутом data-collapse-key="<уникальный ключ>"
+// на СЕБЕ (любой уже существующий класс панели, новую обёртку заводить не
+// нужно), а на его .panel-title — data-action="panelCollapse"; больше в
+// разметке ничего менять не нужно, CSS прячет всё после .panel-title сам
+// (styles/base/common.css). Состояние окна, не актора — без ре-рендера/
+// actor.update, восстанавливается после ре-рендера в _onRender (см. ниже),
+// тем же приёмом, что _gearHostCollapse.
+export function onPanelCollapse(event, target) {
+  if (event.target.closest("button, select, input, a")) return;   // не по контролам внутри заголовка
+  const panel = target.closest("[data-collapse-key]");
+  const key = panel?.dataset.collapseKey;
+  if (!key) return;
+  if (this._panelCollapse.has(key)) this._panelCollapse.delete(key);
+  else this._panelCollapse.add(key);
+  panel.classList.toggle("collapsed", this._panelCollapse.has(key));
+}
+
+// Субвкладки вкладки ТЕЛО (wdbc-ycgk, полный редизайн — Плоть/Разум/Скверна):
+// состояние окна, тем же приёмом, что onPanelCollapse выше — не actor.update,
+// восстанавливается после ре-рендера в _onRender. Один активный ключ, а не
+// Set: субвкладки взаимоисключающие, не сворачиваемые независимо друг от друга.
+export function onBodySubtab(event, target) {
+  const key = target.dataset.subtab;
+  const root = target.closest(".body-cogitator");
+  if (!key || !root) return;
+  this._bodySubtab = key;
+  root.querySelectorAll(".bc-subtab").forEach(t => t.classList?.toggle("active", t.dataset.subtab === key));
+  root.querySelectorAll(".bc-subpanel").forEach(p => p.classList?.toggle("active", p.dataset.subpanel === key));
+}
+
 function onGearCat(event, target) {
   if (event.target.closest("button, select, input, a")) return;   // не по контролам внутри
   const key = target.dataset.gearCat;
@@ -233,7 +269,8 @@ async function onStatAdd(event, target) {
     // живой процент с актора (module/documents/actor.mjs, system.fastLearnerBonus).
     await promptStatAdd(this.actor, {
       label: "Опыт (Всего)", path: "system.experience.total",
-      bonusPercent: this.actor.system?.fastLearnerBonus || 0
+      bonusPercent: this.actor.system?.fastLearnerBonus || 0,
+      xpLog: true
     });
   } else if (stat === "patronFavor") {
     const god = target.dataset.god;
@@ -572,6 +609,8 @@ export function onSkillRoll(event, target) {
 // ── Снаряжение и пикеры ──
 function onItemAdd() { return this._showAddItemDialog(); }
 function onRigOpen()  { return openRigManager(this.actor); }
+// Журнал опыта — read-only лента (wdbc-ng7q), доступна и без прав на правку листа.
+function onXpLogOpen() { return openXpLog(this.actor); }
 function onGearLib(event) { event.preventDefault(); return this._openGearPicker(); }
 
 // Добавление Черт/Талантов — через пикер с листа (группировка по типам, поиск,
@@ -662,6 +701,8 @@ export class WarhammerCharacterSheet
       tab: onTab,
       combatCollapse: onCombatCollapse,
       gearCat: onGearCat,
+      panelCollapse: onPanelCollapse,
+      bodySubtab: onBodySubtab,
       gearModsToggle: onGearModsToggle,
       // Ниже — то, что в V1 стояло после общей проверки isEditable.
       portrait: whenEditable(onPortrait),
@@ -696,6 +737,7 @@ export class WarhammerCharacterSheet
       skillRoll: whenEditable(onSkillRoll),
       itemAdd: whenEditable(onItemAdd),
       rigOpen: whenEditable(onRigOpen),
+      xpLogOpen: onXpLogOpen,
       gearLib: whenEditable(onGearLib),
       traitAdd: whenEditable(onTraitAdd),
       talentAdd: whenEditable(onTalentAdd),
@@ -753,6 +795,11 @@ export class WarhammerCharacterSheet
   _gearCollapse = {};
   // Носители (оружие/броня), у которых свёрнут список установленных улучшений.
   _gearHostCollapse = new Set();
+  // Свёрнутые блоки листа по data-collapse-key (wdbc-bk4f) — универсальный
+  // механизм, см. onPanelCollapse выше.
+  _panelCollapse = new Set();
+  // Субвкладка ТЕЛА, открытая сейчас (wdbc-ycgk) — окно, не актор, см. onBodySubtab.
+  _bodySubtab = "flesh";
   _wizardPrompted = false;
 
   // Показать/скрыть под-строки установленных улучшений конкретного носителя
@@ -768,6 +815,15 @@ export class WarhammerCharacterSheet
       .forEach(n => { n.style.display = "none"; });
     el.querySelectorAll(`.gear-mods-toggle[data-host-id="${hid}"]`)
       .forEach(n => n.classList.toggle("collapsed", collapsed));
+  }
+
+  // Переключение вкладки — чистый CSS-класс-тоггл (без повторного _onRender),
+  // поэтому высоту панели Навыков (wdbc-10sy) надо досчитать именно тут: при
+  // первом открытии листа вкладка Развитие обычно display:none и её высота
+  // Характеристик мерилась нулём (activateAdvanceListeners в _onRender).
+  changeTab(tab, group, options) {
+    super.changeTab(tab, group, options);
+    if (group === "primary" && tab === "advance") syncAdvanceColumnHeight(this.element);
   }
 
   // Foundry титулует окно как «<тип документа>: <имя>», где тип берётся из
@@ -840,7 +896,10 @@ export class WarhammerCharacterSheet
       const mode = effectivePricingMode(this.actor);
       const patronChosen = this.actor.system.patronGod || "";
       context.advancePricingMode = mode;
-      context.usesPatronStereotype = (mode === "patronage" || mode === "mixed") && !!patronChosen;
+      // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — у него
+      // стереотипов Покровительства не бывает, блок должен скрываться целиком.
+      context.usesPatronStereotype = (mode === "patronage" || mode === "mixed") &&
+        !!patronChosen && patronChosen !== "undivided";
       // Блок 8 Склонностей на «Развитии» не нужен, когда цена персонажа
       // считается строго по Покровительству — Смешанная всё ещё их читает.
       context.usesAptitudes = mode !== "patronage";
@@ -1460,7 +1519,8 @@ export class WarhammerCharacterSheet
   /**
    * Состав меню «Настройки листа» по типу актора (таблица от пользователя).
    * Мировоззрение, Телосложение и «Одержимость/Пси-Пробуждение/Техножрец» —
-   * каскадные подпункты (submenu, раскрываются наведением, см. _alignmentSubmenu/
+   * каскадные подпункты (submenu, раскрываются кликом по себе — работает и
+   * без мыши на тач-экране, wdbc-0cgo — см. _alignmentSubmenu/
    * _bodyTypeSubmenu/_accessSubmenu), а не плоский список, как раньше:
    *  - Персонаж — Мастер, Телосложение▸, [разделитель], Мировоззрение▸ (кроме
    *    Аэльдари), [разделитель], Система продвижения, [разделитель], Открыть
@@ -1568,6 +1628,14 @@ export class WarhammerCharacterSheet
 
     // ── Восстановление свёрток после ре-рендера ────────────────────────────
     for (const hid of this._gearHostCollapse) this._applyGearHostCollapse(hid);
+    for (const key of this._panelCollapse) {
+      el.querySelector(`[data-collapse-key="${CSS.escape(key)}"]`)?.classList.add("collapsed");
+    }
+    // Субвкладка ТЕЛА (wdbc-ycgk) — синхронизируем DOM с this._bodySubtab на
+    // каждый ре-рендер: toggle, а не только add, потому что шаблон всегда
+    // рисует «Плоть» активной по умолчанию (для первого открытия).
+    el.querySelectorAll(".bc-subtab").forEach(t => t.classList?.toggle("active", t.dataset.subtab === this._bodySubtab));
+    el.querySelectorAll(".bc-subpanel").forEach(p => p.classList?.toggle("active", p.dataset.subpanel === this._bodySubtab));
     if (this._pathsOpen === false) {
       el.querySelectorAll(".paths-collapse").forEach(n => n.classList.add("collapsed"));
       el.querySelectorAll(".paths-toggle-btn").forEach(n => { n.textContent = "▸ Пути"; });
@@ -1931,13 +1999,29 @@ export class WarhammerCharacterSheet
     };
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base") {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null } = {}) {
     // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
     // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
     // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
     // rules/predicates.mjs — уже существовал, но был мёртв за пределами
     // атак) не могли сработать. Тот же приём: первый выбранный таргет сцены.
     const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+
+    // Делегированный тест (wdbc-uez7): effectTargetActor задан и отличается
+    // от бросающего — this.actor тут ИСПОЛНИТЕЛЬ (его лист/модификаторы уже
+    // во всём остальном диалоге), а effectTargetActor — тот, за кого просили
+    // (его Таланты/Черты с областью ":recipient" поднимают/снижают Порог,
+    // тот же механизм, что healing.mjs::patientHealingMod). Не делегированный
+    // вызов effectTargetActor не передаёт вовсе — считаем, что тест «для себя».
+    const delegating = !!effectTargetActor && effectTargetActor.id !== this.actor.id;
+    const recipientMods = delegating
+      ? resolveTest({ actor: effectTargetActor, kind: "skill", skill: rollContext?.skill, char: defaultChar, asRecipient: true }).mods
+      : [];
+    const recipientTotal = recipientMods.reduce((s, m) => s + (Number(m.value) || 0), 0);
+    const recipientNote = recipientMods.length
+      ? `<div class="roll-dlg-note">${recipientMods.map(m => `${esc(m.label)} (${esc(effectTargetActor.name)}): ${m.value >= 0 ? "+" : ""}${m.value}`).join("<br/>")}</div>`
+      : "";
+    baseTotal += recipientTotal;
     const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
     if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
@@ -1999,6 +2083,8 @@ export class WarhammerCharacterSheet
       content: `
           <div class="wh-skill-roll-form">
             <div class="roll-dlg-header"><span>${label}</span></div>
+            ${delegating ? `<div class="roll-dlg-note">📨 За <b>${esc(effectTargetActor.name)}</b> — бросаете листом <b>${esc(this.actor.name)}</b>.</div>` : ""}
+            ${recipientNote}
             ${testKindHtml({ defaultKind, label, combinedSecondHtml, defaultCombinedTarget: defaultCharTotal })}
             ${hideCharSelect ? "" : `<div class="roll-dlg-row">
               <label>Бросок с:</label>
@@ -2045,16 +2131,43 @@ export class WarhammerCharacterSheet
               : null;
             const reroll = mergeReroll(namedReroll, readDiceChoice(val));
             const { kind, difficulty, combined, extended, opposed } = readTestKind(val, { label });
+            // Авто-встречный (wdbc-j814): галочка читается напрямую, тем же
+            // приёмом, что и чекбоксы модификаторов в modifierSumOf — val()
+            // рассчитан на текстовые поля/select, не на checked.
+            const opposedAutoChecked = !!form.querySelector("#opposed-auto")?.checked;
+            const opposedAuto = (opposedAutoChecked && (kind === "opposed" || kind === "opposedSafe") && targetActor)
+              ? { targetActorUuid: targetActor.uuid } : null;
 
             return {
               charKey:  form.querySelector("#skill-char-select")?.value,
               target:   parseInt(form.querySelector("#skill-target").value) || 0,
-              modifier, difficulty, kind, combined, extended, opposed,
+              modifier, difficulty, kind, combined, extended, opposed, opposedAuto,
               assistCount: assistants.length,
               reroll
             };
           }
         },
+        // Делегирование (wdbc-uez7) — альтернатива «Бросок», не второй шаг
+        // после него: запрос уходит СРАЗУ из этого колбэка, сам диалог просто
+        // закрывается (false), ничего не бросая на этом клиенте. Не показан,
+        // если этот диалог УЖЕ открыт делегированием (delegating), и не показан
+        // ответчику встречного теста (opposedRequest, wdbc-j814) — цепочку
+        // «делегировать делегированное/встречный ответ дальше» не поддерживаем.
+        ...(delegating || opposedRequest ? [] : [{
+          action: "delegate", icon: "fas fa-paper-plane", label: "📨 Делегировать",
+          callback: async () => {
+            await showDelegateTestPicker(this.actor, {
+              title: `Делегировать: ${label}`, kind: "genericTest", label,
+              buttonLabel: "Открыть тест",
+              extra: {
+                testKind: rollContext?.skill ? "skill" : "characteristic",
+                skillKey: rollContext?.skill ?? null, charKey: defaultChar,
+                label, hideCharSelect
+              }
+            });
+            return false;
+          }
+        }]),
         // Без callback DialogV2 вернул бы строку "cancel" вместо null — она
         // непустая, проходит проверку `if (!result) return` у вызывающих
         // (_rollSkill/_rollCharacteristic), и деструктуризация полей из строки
@@ -2095,6 +2208,21 @@ export class WarhammerCharacterSheet
             (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
           updateAutoOutcomeNote();
         });
+
+        // Авто-встречный тест (wdbc-j814): галочка видна, только когда есть
+        // таргет сцены — таргет не меняется, пока диалог открыт, поэтому
+        // подпись достаточно выставить один раз при рендере, без слушателя.
+        if (targetActor) {
+          const autoRow = root.querySelector("#opposed-auto-row");
+          const autoLabel = root.querySelector("#opposed-auto-label");
+          if (autoRow && autoLabel) {
+            const owner = activeOwnerOf(targetActor);
+            autoLabel.textContent = owner
+              ? `📨 Запросить бросок у «${owner.name}» (${targetActor.name})`
+              : `🎲 Бросить за «${targetActor.name}» автоматически`;
+            autoRow.hidden = false;
+          }
+        }
         root.querySelector("#skill-target")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelector("#skill-modifier")?.addEventListener("input", updateAutoOutcomeNote);
         root.querySelectorAll(".hw-mod, .item-mod, .rule-mod, .armor-mod, .armor-aspect-mod").forEach(cb =>
@@ -2159,13 +2287,67 @@ export class WarhammerCharacterSheet
     });
   }
 
+  /**
+   * Встречный тест — соперник (wdbc-j814). Соперник — NPC без активного
+   * игрока: бросаем за него тут же и отдаём готовый {threshold, roll}, дальше
+   * всё как при ручном вводе. Соперник с активным владельцем: opposed
+   * оставляем пустым (сравнение придёт отдельным сообщением позже) и отдаём
+   * opponentActor — вызывающий метод после отправки СВОЕГО сообщения попросит
+   * его сделать встречный бросок (_sendOpposedRequest).
+   */
+  async _resolveOpposedAuto(opposedAuto, { skillKey = null, charKey } = {}) {
+    if (!opposedAuto?.targetActorUuid) return { opposed: null, opponentActor: null };
+    const opponentActor = await fromUuid(opposedAuto.targetActorUuid).catch(() => null);
+    if (!opponentActor) {
+      ui.notifications?.warn("Цель встречного теста не найдена (удалена/сцена сменилась) — впишите Порог/Бросок соперника вручную.");
+      return { opposed: null, opponentActor: null };
+    }
+    if (activeOwnerOf(opponentActor)) return { opposed: null, opponentActor };
+    const threshold = skillKey ? skillTotal(opponentActor, skillKey) : (opponentActor.system.characteristics?.[charKey]?.total ?? 0);
+    const roll = await new Roll("1d100").evaluate();
+    return { opposed: { threshold, roll: roll.total }, opponentActor: null };
+  }
+
+  /** Запрос встречного броска сопернику-игроку — payload несёт УЖЕ готовую
+   *  сторону инициатора, опенер "opposedResponse" (hooks.mjs) считает
+   *  сравнение сам, сразу после своего броска, без обратной связи. */
+  async _sendOpposedRequest(opponentActor, { label, kind, testKind, skillKey, charKey, hideCharSelect, baseEff, rv, outcome }) {
+    await requestDelegatedTest({
+      requesterActor: this.actor, executorActor: opponentActor, effectTargetActor: opponentActor,
+      kind: "opposedResponse", label, buttonLabel: "Бросить встречный",
+      extra: {
+        testKind, skillKey, charKey, hideCharSelect: !!hideCharSelect,
+        initiatorName: this.actor.name, initiatorLabel: label,
+        initiatorSide: { threshold: baseEff, roll: rv, success: outcome.success, deg: outcome.deg },
+        safe: kind === "opposedSafe"
+      }
+    });
+  }
+
+  /** Ответ соперника (opposedRequest пришёл через опенер "opposedResponse") —
+   *  публикует готовую карточку сравнения, видимую обеим сторонам. */
+  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome }) {
+    if (!opposedRequest) return;
+    const theirs = { deg: outcome.deg, success: outcome.success, threshold: baseEff };
+    const result = resolveOpposed(opposedRequest.initiatorSide, theirs, { safe: opposedRequest.safe });
+    const content = opposedComparisonHtml({
+      label, mineName: opposedRequest.initiatorName, mine: opposedRequest.initiatorSide,
+      theirsName: this.actor.name, theirs: { threshold: baseEff, roll: rv }, result
+    });
+    await ChatMessage.create({ content, speaker: ChatMessage.getSpeaker({ actor: this.actor }), sound: CONFIG.sounds.dice });
+  }
+
   // ── Бросок навыка ─────────────────────────────────────────────────────────
 
-  async _rollSkill(label, baseTotal, defaultChar, rollContext = null) {
-    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext, "base");
+  async _rollSkill(label, baseTotal, defaultChar, rollContext = null, { effectTargetActor = null, opposedRequest = null } = {}) {
+    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext, "base", { effectTargetActor, opposedRequest });
     if (!result) return;
-    const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
+    const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
              assistCount = 0, reroll = null } = result;
+    // Делегированный тест (wdbc-uez7): эффект/последствия — на effectTargetActor
+    // (тот, за кого просили), сам бросок и его штрафы за состояние тела/снаряжения
+    // (Усталость/Марш/Броня/Перевес) — на this.actor (кто физически бросает).
+    const effectActor = effectTargetActor ?? this.actor;
 
     const fatiguePenalty = this._getFatiguePenalty(defaultChar);
     const marchPen = this._getMarchPenalty(defaultChar);
@@ -2187,9 +2369,21 @@ export class WarhammerCharacterSheet
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
     const rollMode = game.settings.get("core", "rollMode");
 
-    const outcome = await resolveKindOutcome(this.actor, {
-      kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey, skill: rollContext?.skill,
+    // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —
+    // галочка их не перезаписывает, если что-то уже вписано вручную.
+    let finalOpposed = opposed;
+    let opposedOpponent = null;
+    if (!finalOpposed && opposedAuto) {
+      const auto = await this._resolveOpposedAuto(opposedAuto, { skillKey: rollContext?.skill, charKey });
+      finalOpposed = auto.opposed;
+      opposedOpponent = auto.opponentActor;
+    }
+    const pendingOpponentNote = opposedOpponent
+      ? `<div class="roll-dlg-note">⏳ Ждём встречный бросок игрока «${esc(opposedOpponent.name)}»…</div>` : "";
+
+    const outcome = await resolveKindOutcome(effectActor, {
+      kind, baseEff, rv, combined, extended, opposed: finalOpposed,
+      ctx: { actor: effectActor, kind: "skill", char: charKey, skill: rollContext?.skill,
              morale: isMoraleOpposedSkill(rollContext?.skill),
              targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null }
     });
@@ -2209,7 +2403,7 @@ export class WarhammerCharacterSheet
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}</div>
+          <div class="roll-header">${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
           <div class="roll-threshold">
             ${charAbbr}: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
@@ -2228,12 +2422,22 @@ export class WarhammerCharacterSheet
           <div class="roll-outcome">${outcomeHtml}</div>
           ${outcome.extendedLine}
           ${outcome.opposedLine}
+          ${pendingOpponentNote}
         </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice
     }, rollMode);
 
     await ChatMessage.create(messageData);
+
+    if (opposedOpponent) {
+      await this._sendOpposedRequest(opposedOpponent, {
+        label, kind, testKind: rollContext?.skill ? "skill" : "characteristic",
+        skillKey: rollContext?.skill ?? null, charKey, hideCharSelect: false,
+        baseEff, rv, outcome
+      });
+    }
+    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome });
   }
 
   /** Расчёт и применение лечения к пациенту + сообщение в чат. */
@@ -2248,11 +2452,12 @@ export class WarhammerCharacterSheet
 
   // ── Бросок характеристики ─────────────────────────────────────────────────
 
-  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false) {
-    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect);
+  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null } = {}) {
+    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect, null, "base", { effectTargetActor, opposedRequest });
     if (!result) return;
-    const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed,
+    const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
              assistCount = 0, reroll = null } = result;
+    const effectActor = effectTargetActor ?? this.actor;
 
     const fatiguePenalty = this._getFatiguePenalty(charKey);
     const marchPen = this._getMarchPenalty(charKey);
@@ -2271,9 +2476,20 @@ export class WarhammerCharacterSheet
     const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
     const rollMode = game.settings.get("core", "rollMode");
 
-    const outcome = await resolveKindOutcome(this.actor, {
-      kind, baseEff, rv, combined, extended, opposed,
-      ctx: { actor: this.actor, kind: "skill", char: charKey }
+    // Авто-встречный тест (wdbc-j814) — см. _rollSkill, тот же приём.
+    let finalOpposed = opposed;
+    let opposedOpponent = null;
+    if (!finalOpposed && opposedAuto) {
+      const auto = await this._resolveOpposedAuto(opposedAuto, { charKey });
+      finalOpposed = auto.opposed;
+      opposedOpponent = auto.opponentActor;
+    }
+    const pendingOpponentNote = opposedOpponent
+      ? `<div class="roll-dlg-note">⏳ Ждём встречный бросок игрока «${esc(opposedOpponent.name)}»…</div>` : "";
+
+    const outcome = await resolveKindOutcome(effectActor, {
+      kind, baseEff, rv, combined, extended, opposed: finalOpposed,
+      ctx: { actor: effectActor, kind: "skill", char: charKey }
     });
     // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
     const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
@@ -2286,7 +2502,7 @@ export class WarhammerCharacterSheet
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `
         <div class="wh-roll-result">
-          <div class="roll-header">${abbr} — ${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}</div>
+          <div class="roll-header">${abbr} — ${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
           <div class="roll-threshold">
             Цель: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
@@ -2305,12 +2521,21 @@ export class WarhammerCharacterSheet
           <div class="roll-outcome">${outcomeHtml}</div>
           ${outcome.extendedLine}
           ${outcome.opposedLine}
+          ${pendingOpponentNote}
         </div>`,
       rolls: [roll],
       sound: CONFIG.sounds.dice
     }, rollMode);
 
     await ChatMessage.create(messageData);
+
+    if (opposedOpponent) {
+      await this._sendOpposedRequest(opposedOpponent, {
+        label, kind, testKind: "characteristic", skillKey: null, charKey, hideCharSelect,
+        baseEff, rv, outcome
+      });
+    }
+    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome });
   }
 
   _degWord(n) { return _degWord(n); }

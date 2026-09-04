@@ -957,6 +957,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         && APT_OTHER_KEYS.filter(k => this.pickedApts.has(k)).length === APT_PICK.other;
   }
   _patronReady() {
+    // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — стереотип
+    // для него в принципе не выбрать, поэтому готовность не должна его требовать.
+    if (this.pickedPatronGod === "undivided") return true;
     return !!this.pickedPatronGod && !!this.pickedPatronStereotype;
   }
   /**
@@ -1016,7 +1019,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       usesPatron: this._pricingMode === "patronage" || this._pricingMode === "mixed",
       patronReady: this._patronReady(),
       patronGods: CHAOS_PATRONS.map(p => ({ key: p.key, label: p.label, selected: p.key === this.pickedPatronGod })),
-      patronStereotypes: this.pickedPatronGod
+      // "undivided" (Неделимый) не имеет записей в CHAR_STEREOTYPES — стереотип
+      // для него не существует, строка выбора должна скрываться целиком.
+      usesPatronStereotype: !!this.pickedPatronGod && this.pickedPatronGod !== "undivided",
+      patronStereotypes: (this.pickedPatronGod && this.pickedPatronGod !== "undivided")
         ? charStereotypesFor(this.pickedPatronGod).map(s => ({
             key: s.key, label: s.label, selected: s.key === this.pickedPatronStereotype
           }))
@@ -1627,7 +1633,13 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _sacrificeEquip() {
     if (this._confirmingEquipShop) return;
-    const candidates = this.actor.items.filter(it => ["weapon", "armor", "cybernetic", "implant"].includes(it.type));
+    // Интегральные атаки (Кулак/Пинок/Удар головой и т.п., flags.warhammer-
+    // dbc.integralAttack) исключены из кандидатов (wdbc-6ry7): их нельзя
+    // реально удалить (preDeleteItem в warhammer-dbc.mjs блокирует, пока жив
+    // источник) — без исключения игрок получал 3 модификации бесплатно,
+    // а «пожертвованная» врождённая атака оставалась на месте.
+    const candidates = this.actor.items.filter(it =>
+      ["weapon", "armor", "cybernetic", "implant"].includes(it.type) && !it.getFlag?.("warhammer-dbc", "integralAttack"));
     if (!candidates.length) { ui.notifications.warn("На листе нет оружия/брони/кибернетики для жертвы."); return; }
     this._confirmingEquipShop = true;
     this.render(false);

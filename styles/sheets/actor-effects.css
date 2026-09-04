@@ -10,15 +10,55 @@
   overflow: hidden;
 }
 
-.warhammer-dbc .effects-subsection {
-  margin-bottom: 0;
+/* ── ИМПЛАНТЫ на вкладке ТЕЛО — заголовок в стиле Геносемя ─────────────
+   .gear-cat/.gear-cat-head — тот же компонент, что и категории на вкладке
+   СНАРЯЖЕНИЕ (actor-gear.css); менять его общий вид нельзя — там нужен
+   левый шеврон + счётчик. Здесь только вид заголовка ПОДОГНАН под соседние
+   .panel-title (Геносемя выше, Состояния/Болезни/… ниже) — центрированный
+   жирный текст с тем же пульсирующим индикатором и свечением, что у них,
+   сама структура (шеврон слева, счётчик справа, сворачивание через
+   data-action="gearCat") не тронута. */
+.warhammer-dbc .effects-section-panel .gear-cat-title {
+  text-align: center;
+  font-size: 0.88em;
+  letter-spacing: 0.07em;
+}
+.warhammer-dbc.character-sheet .effects-section-panel .gear-cat-head {
+  animation: decorTitleGlow 6s ease-in-out infinite;
+}
+.warhammer-dbc.character-sheet .effects-section-panel .gear-cat-chevron::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px;
+  border-radius: 50%; background: var(--cg); box-shadow: 0 0 7px var(--cg);
+  animation: decorOnline 2.4s ease-in-out infinite; vertical-align: middle;
 }
 
-/* ── Заголовок панели с кнопкой + ───────────────────────── */
+/* Тот же вид, что у .ability-section-panel (Геносемя, actor-gear.css) —
+   рамка+фон+скруглённые углы+overflow:hidden, вложенная в общую рамку
+   .effects-section-panel выше (двойная рамка — тот же приём, каким уже
+   вложены Геносемя/Импланты в неё же). Раньше .effects-subsection не имела
+   своей рамки вовсе — заголовки (Состояния/Ментальные Расстройства/Болезни/
+   Мутации и Дары Богов) плоско лежали прямо на фоне общей панели без
+   разделения между собой, визуально не как отдельные блоки типа Геносемя. */
+.warhammer-dbc .effects-subsection {
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.warhammer-dbc .bc-panels .effects-section-panel > .effects-subsection:last-child { margin-bottom: 0; }
+
+/* ── Заголовок панели с кнопкой + ─────────────────────────
+   justify-content:flex-start (не space-between) — тот же приём, что у
+   .effects-subsection > .panel-title (Мутации и Дары, ниже): с
+   space-between LED-индикатор перед текстом (actor-decor.css, .panel-title
+   ::before) стал бы третьим flex-элементом и space-between раскинул бы его
+   от текста на всю свободную ширину строки вместо тесного соседства, как у
+   Геносемя. Кнопка(-и) прижаты вправо через margin-left:auto на них самих. */
 .warhammer-dbc .conditions-panel-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 /* Кнопка «＋» — маленький квадрат */
@@ -36,7 +76,7 @@
   line-height: 1;
   padding: 0;
   color: var(--wh-text-light);
-  margin-right: 8px;
+  margin-left: auto;
   transition: background 0.12s;
   flex-shrink: 0;
 }
@@ -1019,9 +1059,10 @@
   color: var(--wh-text-light); transition: background 0.12s;
 }
 .warhammer-dbc .panel-mini-btn:hover { background: rgba(255,255,255,0.22); }
-/* Группа кнопок в правом углу заголовка: без отступа справа последняя кнопка
-   упиралась в край панели и обрезалась. */
+/* Группа кнопок в правом углу заголовка: margin-left:auto прижимает её
+   вправо в потоке flex-start (см. .conditions-panel-title выше), margin-right
+   без него последняя кнопка упиралась в край панели и обрезалась. */
 .warhammer-dbc .panel-btn-group {
   display: flex; align-items: center; gap: 4px;
-  flex: 0 0 auto; margin-right: 8px;
+  flex: 0 0 auto; margin-left: auto; margin-right: 8px;
 }

@@ -127,16 +127,36 @@ describe("openContextMenu", () => {
       { cls: "wh-ctx-plain", label: "Обычный пункт", onClick: () => calls.push("plain") }
     ], jq);
 
-    // Родитель — сам без клика, только контейнер: рисуется, но не вешает
-    // обработчик на свой класс (у него нет onClick).
     expect(menu.html).toContain('class="wh-ctx-item wh-ctx-parent wh-ctx-align"');
     expect(menu.html).toContain("wh-ctx-submenu");
-    expect(menu.handlers[".wh-ctx-align:click"]).toBeUndefined();
 
     // Вложенные листовые пункты кликаются как обычные, независимо от глубины.
     menu.handlers[".wh-ctx-align-a:click"]({ stopPropagation: () => {} });
     expect(calls).toEqual(["loyalist"]);
     expect(menu.removed).toBe(true);
+  });
+
+  // wdbc-0cgo: наведения на тач-экранах не бывает — родитель каскадного
+  // подпункта раскрывает вложенные пункты кликом по себе (класс open),
+  // а не только наведением.
+  it("клик по родителю каскадного подпункта переключает класс open, не закрывая меню и не вызывая onClick", () => {
+    const jq = fakeJq();
+    const calls = [];
+
+    const menu = openContextMenu(contextEvent(), [
+      { cls: "wh-ctx-align", label: "Мировоззрение", submenu: [
+        { cls: "wh-ctx-align-a", label: "Лоялист", onClick: () => calls.push("loyalist") }
+      ] }
+    ], jq);
+
+    let stopped = false;
+    const fakeParentEl = { classList: { toggled: [], toggle(c) { this.toggled.push(c); } } };
+    menu.handlers[".wh-ctx-align:click"]({ stopPropagation: () => { stopped = true; }, currentTarget: fakeParentEl });
+
+    expect(fakeParentEl.classList.toggled).toEqual(["open"]);
+    expect(stopped).toBe(true);
+    expect(calls).toEqual([]);
+    expect(menu.removed).toBe(false);
   });
 
   it("одноразовое закрытие вешается с задержкой — клик-открытие не схлопывает меню", async () => {

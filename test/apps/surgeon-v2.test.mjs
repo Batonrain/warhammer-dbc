@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
-import { listenerRoot } from "../support/foundry-stub.mjs";
+import { listenerRoot, captured } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
 import { SurgeonWindow } from "../../module/apps/surgeon.mjs";
 
@@ -86,5 +86,106 @@ describe("_onRender: разводка кнопок", () => {
     const app = appLike(actor, { "[data-open]": [{ dataset: { open: "missing" } }] });
     SurgeonWindow.prototype._onRender.call(app, {}, {});
     expect(() => app.element.handlers["[data-open]:click"]()).not.toThrow();
+  });
+});
+
+// data-both — кнопка «⚭ Обе стороны» (wdbc-7yeh): один и тот же протез сразу
+// на left+right одним действием, вместо двух прогонов select-а. Кейс "own"
+// проверяем целиком (setFlag/createEmbeddedDocuments — обычные mock-функции);
+// кейс "lib" — только форму вызова createEmbeddedDocuments (два объекта), т.к.
+// foundry-stub.mjs даёт foundry.utils.setProperty заглушкой-no-op и не может
+// подтвердить фактическую простановку флагов на клонированном объекте.
+describe("_onRender: data-both — обе стороны одним действием", () => {
+  function fakeItem(id, name, extra = {}) {
+    const calls = [];
+    return {
+      id, name, type: "implant",
+      effects: { contents: [] },
+      getFlag: () => undefined,
+      setFlag: async (ns, key, v) => { calls.push(["setFlag", key, v]); },
+      toObject: () => ({ _id: id, name, type: "implant" }),
+      calls,
+      ...extra,
+    };
+  }
+
+  it("own: единственная неустановленная копия — клонирует вторую и ставит left/right на обе", async () => {
+    const original = fakeItem("i1", "Bionic Leg (Repulsor)");
+    const clone = fakeItem("clone1", "Bionic Leg (Repulsor)");
+    const created = [];
+    const actor = {
+      id: "a1",
+      items: {
+        get: id => ({ i1: original, clone1: clone }[id] ?? null),
+        filter: fn => [original].filter(fn),
+      },
+      createEmbeddedDocuments: async (type, objs) => { created.push([type, objs]); return [clone]; },
+    };
+    const selectNode = { value: "own:i1" };
+    const rowNode = { querySelector: sel => (sel === "[data-install]" ? selectNode : null) };
+    const bothNode = { dataset: { both: "legs" }, closest: sel => (sel === ".wh-surg-install-row" ? rowNode : null) };
+    const app = appLike(actor, { "[data-both]": [bothNode] });
+    SurgeonWindow.prototype._onRender.call(app, {}, {});
+    await app.element.handlers["[data-both]:click"]();
+
+    expect(created).toEqual([["Item", [{ _id: undefined, name: "Bionic Leg (Repulsor)", type: "implant" }]]]);
+    expect(original.calls).toEqual([["setFlag", "installed", true], ["setFlag", "bodySide", "left"]]);
+    expect(clone.calls).toEqual([["setFlag", "installed", true], ["setFlag", "bodySide", "right"]]);
+  });
+
+  it("own: уже есть вторая неустановленная копия — доустанавливает обе без клонирования", async () => {
+    const a = fakeItem("i1", "Bionic Leg (Repulsor)");
+    const b = fakeItem("i2", "Bionic Leg (Repulsor)");
+    const created = [];
+    const actor = {
+      id: "a1",
+      items: {
+        get: id => ({ i1: a, i2: b }[id] ?? null),
+        filter: fn => [a, b].filter(fn),
+      },
+      createEmbeddedDocuments: async (type, objs) => { created.push([type, objs]); return []; },
+    };
+    const selectNode = { value: "own:i1" };
+    const rowNode = { querySelector: sel => (sel === "[data-install]" ? selectNode : null) };
+    const bothNode = { dataset: { both: "legs" }, closest: () => rowNode };
+    const app = appLike(actor, { "[data-both]": [bothNode] });
+    SurgeonWindow.prototype._onRender.call(app, {}, {});
+    await app.element.handlers["[data-both]:click"]();
+
+    expect(created).toEqual([]);
+    expect(a.calls).toEqual([["setFlag", "installed", true], ["setFlag", "bodySide", "left"]]);
+    expect(b.calls).toEqual([["setFlag", "installed", true], ["setFlag", "bodySide", "right"]]);
+  });
+
+  it("lib: создаёт ДВА новых экземпляра одним вызовом createEmbeddedDocuments", async () => {
+    const created = [];
+    const actor = {
+      id: "a1",
+      items: { get: () => null, filter: () => [] },
+      createEmbeddedDocuments: async (type, objs) => { created.push([type, objs]); return []; },
+    };
+    globalThis.fromUuid = async () => ({ name: "Bionic Leg (Arachnid)", toObject: () => ({ name: "Bionic Leg (Arachnid)" }) });
+    const selectNode = { value: "lib:Compendium.warhammer-dbc.implants.Item.abc" };
+    const rowNode = { querySelector: sel => (sel === "[data-install]" ? selectNode : null) };
+    const bothNode = { dataset: { both: "legs" }, closest: () => rowNode };
+    const app = appLike(actor, { "[data-both]": [bothNode] });
+    SurgeonWindow.prototype._onRender.call(app, {}, {});
+    await app.element.handlers["[data-both]:click"]();
+
+    expect(created.length).toBe(1);
+    expect(created[0][0]).toBe("Item");
+    expect(created[0][1]).toHaveLength(2);
+  });
+
+  it("без выбора в select — предупреждает и ничего не создаёт", async () => {
+    captured.warnings = [];
+    const actor = { id: "a1", items: { get: () => null, filter: () => [] }, createEmbeddedDocuments: async () => [] };
+    const selectNode = { value: "" };
+    const rowNode = { querySelector: () => selectNode };
+    const bothNode = { dataset: { both: "legs" }, closest: () => rowNode };
+    const app = appLike(actor, { "[data-both]": [bothNode] });
+    SurgeonWindow.prototype._onRender.call(app, {}, {});
+    await app.element.handlers["[data-both]:click"]();
+    expect(captured.warnings.length).toBe(1);
   });
 });

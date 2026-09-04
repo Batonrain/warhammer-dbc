@@ -328,6 +328,7 @@ function renderItemsHtml(items, multi) {
         <div class="cbrowse-item" draggable="true" data-uuid="${esc(it.uuid)}" data-doc="${esc(it.doc || "Item")}" data-name="${esc(it.name.toLowerCase())}" data-stackable="${stackable}">
           <img src="${esc(it.img || "icons/svg/item-bag.svg")}" class="cbrowse-item-img"/>
           <span class="cbrowse-item-name">${esc(it.name)}</span>
+          <span class="cbrowse-picked-mark">✓</span>
           ${stackable ? `<span class="cbrowse-qty-controls">
             <button type="button" class="cbrowse-qty-minus" data-uuid="${esc(it.uuid)}" title="Убрать один">−</button>
             <span class="cbrowse-qty-n">0</span>
@@ -413,13 +414,39 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
     // ЧТО-ТО в самом Мастере (в т.ч. по заблокированной «Далее» — клик всё
     // равно поднимает окно) — и диалог визуально прячется под ним, выглядит
     // так, будто Мастер «завис», а выбор снаряжения находится уже после его
-    // закрытия. Сворачиваем Мастера на время выбора и разворачиваем обратно
-    // при любом исходе — единственная точка выхода ниже.
+    // закрытия.
+    //
+    // Архетип с несколькими независимыми выборами снаряжения (Пират: Оружие →
+    // Модификации оружия → Модификации брони, один за другим без паузы)
+    // открывает этот пикер ВЛОЖЕННО. Раньше здесь СВОРАЧИВАЛИ Мастера
+    // (a.minimize()/a.maximize()) — три живых теста подряд (wdbc-03ez)
+    // подтвердили, что у ApplicationV2 это ненадёжно: даже одна честно
+    // спаренная пара minimize()/maximize() не восстанавливает position
+    // (width/height) сама, а ручное чтение/запись a.position гонится с
+    // внутренней анимацией/бухгалтерией Foundry — окно застревает крошечной
+    // полоской заголовка навсегда, неотличимо от «само закрылось».
+    // Вместо размера трогаем только ВЗАИМОДЕЙСТВИЕ: делаем окно Мастера
+    // временно «сквозным» для кликов (pointer-events:none, styles/ui/
+    // character-wizard.css) и притушенным — клик по нему больше не может
+    // поднять его z-index над диалогом пикера (сама причина, ради которой
+    // раньше сворачивали), а размер/позиция Мастера вообще не трогаются —
+    // восстанавливать по счёту нечего. Счётчик глубины остаётся — только
+    // чтобы вложенный пикер не снял класс раньше времени, пока внешний ещё
+    // не закрылся.
     const wizardApps = pickMode ? findRenderedCharacterWizards() : [];
+    for (const a of wizardApps) {
+      a._cbrowsePickerDepth = (a._cbrowsePickerDepth || 0) + 1;
+      if (a._cbrowsePickerDepth === 1) a.element?.classList.add("cbrowse-wizard-inert");
+    }
     const finish = v => {
       if (resolved) return;
       resolved = true;
-      for (const a of wizardApps) { try { a.maximize(); } catch (e) {} }
+      for (const a of wizardApps) {
+        try {
+          a._cbrowsePickerDepth = Math.max(0, (a._cbrowsePickerDepth || 1) - 1);
+          if (a._cbrowsePickerDepth === 0) a.element?.classList.remove("cbrowse-wizard-inert");
+        } catch (e) {}
+      }
       resolveFn(v);
     };
 
@@ -672,7 +699,8 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
       }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "wh-item-picker-dialog", "cbrowse-dialog"],
          width: 640, height: 740, resizable: true });
-    for (const a of wizardApps) { try { a.minimize(); } catch (e) {} }
+    // Мастер уже помечен «сквозным» (cbrowse-wizard-inert) выше, синхронно,
+    // до этой точки — отдельного вызова здесь не нужно.
     dlg.render(true);
   });
 }

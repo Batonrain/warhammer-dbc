@@ -311,7 +311,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // диалог открыт) — подсказка и автоподстановка, всё остаётся правимо рукой.
   // Именно placeable (второй аргумент false): coverBonusForShot меряет по
   // .center, которого у TokenDocument нет — с документом Укрытие молча даёт 0.
-  const attackerToken = actor.getActiveTokens?.(true)?.[0] ?? null;
+  // Первый аргумент — false (найдено live-тестом): getActiveTokens(true, …)
+  // фильтрует по actorLink и возвращает пусто для токена без «Синхронизировать
+  // с актором» (обычное состояние вручную перетащенного на карту персонажа) —
+  // Укрытие/дистанция тогда молча не подставлялись даже с верно оттаргеченной
+  // целью. false подхватывает токен независимо от привязки.
+  const attackerToken = actor.getActiveTokens?.(false)?.[0] ?? null;
   const targetToken    = [...(game.user?.targets ?? [])][0] ?? null;
   const measured        = (attackerToken && targetToken) ? measureTokens(attackerToken, targetToken) : null;
   // Укрытие ВНУТРИ техники (Закрытая/Открытая(X), wdbc-y33b) — независимо от

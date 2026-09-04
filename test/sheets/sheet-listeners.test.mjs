@@ -18,7 +18,7 @@ import { weaponFor } from "../support/combat-fixtures.mjs";
 import { eliteRaceMatch } from "../../module/sheets/elite-picker.mjs";
 
 // Динамический импорт: глобали Foundry должны быть на месте раньше листа.
-const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+const { WarhammerCharacterSheet, onBodySubtab } = await import("../../module/sheets/actor-sheet.mjs");
 
 /** Обновление по плоскому пути: Foundry меняет документ на месте, тесты — тоже. */
 function applyPath(target, path, value) {
@@ -63,6 +63,7 @@ function wire(sheet, nodes) {
   const html = listenerHtml(nodes);
   Object.defineProperty(sheet, "element", { value: html[0], configurable: true });
   sheet._gearHostCollapse ??= new Set();
+  sheet._panelCollapse ??= new Set();
   sheet._onRender({}, {});
   return html.handlers;
 }
@@ -687,4 +688,63 @@ describe("Применение расы, Прошлого и легиона", ()
   // Слушатель ".race-select" (обнуление субрасы при смене расы) ушёл вместе с
   // activateRaceListeners и пока не восстановлен: селект в шапке до задачи со
   // слотами пишет ключ напрямую атрибутом name, без применения (wdbc-n1k).
+});
+
+// wdbc-ycgk (полный редизайн вкладки ТЕЛО): субвкладки Плоть/Разум/Скверна —
+// тот же приём window-состояния, что и onPanelCollapse (this._bodySubtab, не
+// actor.update), проверяется отдельно от _onRender-обвязки: настоящий DOM
+// нужен здесь (querySelectorAll/classList), а не listenerHtml-заглушка
+// (та отдаёт для незаявленных селекторов узел без classList — см. защитный
+// `?.` в самом onBodySubtab, добавленный именно из-за этого).
+describe("onBodySubtab (wdbc-ycgk): переключение субвкладок ТЕЛА", () => {
+  function fakeTab(subtab) {
+    const classes = new Set(subtab === "flesh" ? ["bc-subtab", "active"] : ["bc-subtab"]);
+    return {
+      dataset: { subtab },
+      classList: { toggle: (cls, on) => { on ? classes.add(cls) : classes.delete(cls); }, contains: cls => classes.has(cls) }
+    };
+  }
+  function fakePanel(name) {
+    const classes = new Set(name === "flesh" ? ["bc-subpanel", "active"] : ["bc-subpanel"]);
+    return {
+      dataset: { subpanel: name },
+      classList: { toggle: (cls, on) => { on ? classes.add(cls) : classes.delete(cls); }, contains: cls => classes.has(cls) }
+    };
+  }
+
+  function fakeCogitator() {
+    const tabs = { flesh: fakeTab("flesh"), mind: fakeTab("mind"), corruption: fakeTab("corruption") };
+    const panels = { flesh: fakePanel("flesh"), mind: fakePanel("mind"), corruption: fakePanel("corruption") };
+    return {
+      tabs, panels,
+      querySelectorAll(sel) {
+        if (sel === ".bc-subtab") return Object.values(tabs);
+        if (sel === ".bc-subpanel") return Object.values(panels);
+        return [];
+      }
+    };
+  }
+
+  it("клик по субвкладке переключает active на ней и на её субпанели, снимает с остальных", () => {
+    const cog = fakeCogitator();
+    const clickedTab = cog.tabs.mind;
+    clickedTab.closest = () => cog; // target.closest(".body-cogitator")
+    const sheet = { _bodySubtab: "flesh" };
+
+    onBodySubtab.call(sheet, {}, clickedTab);
+
+    expect(sheet._bodySubtab).toBe("mind");
+    expect(cog.tabs.flesh.classList.contains("active")).toBe(false);
+    expect(cog.tabs.mind.classList.contains("active")).toBe(true);
+    expect(cog.tabs.corruption.classList.contains("active")).toBe(false);
+    expect(cog.panels.flesh.classList.contains("active")).toBe(false);
+    expect(cog.panels.mind.classList.contains("active")).toBe(true);
+    expect(cog.panels.corruption.classList.contains("active")).toBe(false);
+  });
+
+  it("без data-subtab на цели (не та кнопка) — ничего не делает", () => {
+    const sheet = { _bodySubtab: "flesh" };
+    onBodySubtab.call(sheet, {}, { dataset: {}, closest: () => null });
+    expect(sheet._bodySubtab).toBe("flesh");
+  });
 });

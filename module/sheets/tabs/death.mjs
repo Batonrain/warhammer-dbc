@@ -3,8 +3,11 @@
 //  Смерть (стр. 232-233): диалог «Спасение» рядом с Кардио-монитором
 //  (bc-death-toggle, templates/actor/parts/tab-effects.hbs) — доступен, только
 //  пока констатирована смерть (флаг warhammer-dbc.deceased). Три пути:
-//  Чудесное Спасение (всем), Божественная Защита (только с Талантом), и
-//  Замедленная Анимация (только Астартес с установленной Сус-ан Мембраной,
+//  Чудесное Спасение и Божественная Защита (оба всем — разница только в
+//  цене и тяжести последствий, книга не требует для второй никакого
+//  Таланта, несмотря на одноимённый Талант Пси-стойкости — совпадение
+//  перевода названий, не связанные механики; wdbc-80du), и Замедленная
+//  Анимация (только Астартес с установленной Сус-ан Мембраной,
 //  Раны не ниже −15). «Игрушка Богов» — напоминание текстом, не гейт: ГМ и
 //  игрок сами решают, вынужден ли персонаж воспользоваться Спасением.
 //  «Воскресить» — отдельная кнопка без формулы вовсе: последствия того, ЧТО
@@ -16,7 +19,7 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
 import {
   fatePoolLabel, MIRACULOUS_SAVE, DIVINE_PROTECTION, SUS_AN_TEST_MOD,
-  hasDivineProtectionTalent, hasSusAnMembrane, susAnEligible, fateSaveFails,
+  hasSusAnMembrane, susAnEligible, fateSaveFails,
   toyOfGodsApplies
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
@@ -159,7 +162,6 @@ export function showDeathSaveDialog(actor) {
     return;
   }
   const pool = fatePoolLabel(actor);
-  const canDivine = hasDivineProtectionTalent(actor);
   const canSusAn  = hasSusAnMembrane(actor) && susAnEligible(actor);
   const phoenix = hasRuleFlag(actor, "runicWeave.ashesOfThePhoenix");
   const miracCorNote = phoenix ? "1d5 Порчи (Прах Феникса)" : "1d10 Порчи";
@@ -197,9 +199,8 @@ export function showDeathSaveDialog(actor) {
       ${toyNote}
       ${ewNote}
       ${opt("miraculous", "Чудесное Спасение", `1d10+10 ${pool} и ${miracCorNote} — провал, если пул опустится до 0.`)}
-      ${opt("divine", "Божественная Защита", canDivine
-        ? `1d5+5 ${pool} и 1d5 Порчи — провал, если пул опустится до 0.`
-        : "Требует Талант «Божественная Защита» — не найден на листе.", canDivine)}
+      ${opt("divine", "Божественная Защита", `1d5+5 ${pool} и 1d5 Порчи — провал, если пул опустится до 0. `
+        + "Дешевле Чудесного Спасения, но персонаж без сознания до конца сцены/боя и до конца сессии — только полудвижения.")}
       ${opt("susan", "Замедленная Анимация", canSusAn
         ? `Тест W+30 (не тратит ${pool}/Порчу). Только Астартес с Сус-ан Мембраной, Раны не ниже −15.`
         : "Только Астартес с установленной Сус-ан Мембраной и Ранами не ниже −15.", canSusAn)}

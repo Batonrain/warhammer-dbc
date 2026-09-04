@@ -320,16 +320,17 @@ describe("Импульсное (aeldari.json): 4-й натуральный вы�
 });
 
 describe("Fanning / Быстрый Курок (wdbc-fy33): opts.rofCapOverride в режиме full", () => {
-  // threshold 90, rv 1 → deg = floor((90-1)/10)+1 = 9 → ceil(9/2) = 5 попаданий
-  // «по броску» — с rof_full=4 без override капнулось бы на 4-х.
+  // threshold 90, rv 1 → deg = floor((90-1)/10)+1 = 9 → длинная очередь бьёт
+  // по 1 попаданию за КАЖДЫЙ Успех (wdbc-dbxc), капнуто override=8 — с
+  // rof_full=4 без override капнулось бы на 4-х.
   it("поднимает потолок попаданий выше собственного rof_full предмета", async () => {
     const weapon = weaponFor({ rof_full: 4, magazineCur: 20 });
     const actor  = actorFor({ items: [weapon] });
-    captured.dice = [1, 3, 3, 3, 3, 3];   // атака (deg 9), 5×урон
+    captured.dice = [1, 3, 3, 3, 3, 3, 3, 3, 3];   // атака (deg 9), 8×урон
 
     await _executeAttackRoll(actor, weapon, "bs", 90, "full", null, { rofCapOverride: 8 });
 
-    expect(hits().length).toBe(5);
+    expect(hits().length).toBe(8);
   });
 
   it("без override — обычный потолок rof_full предмета", async () => {
@@ -345,7 +346,7 @@ describe("Fanning / Быстрый Курок (wdbc-fy33): opts.rofCapOverride �
   it("расход патронов идёт по override, не по фиксированному rof_full", async () => {
     const weapon = weaponFor({ rof_full: 4, magazineCur: 20 });
     const actor  = actorFor({ items: [weapon] });
-    captured.dice = [1, 3, 3, 3, 3, 3];
+    captured.dice = [1, 3, 3, 3, 3, 3, 3, 3, 3];
 
     await _executeAttackRoll(actor, weapon, "bs", 90, "full", null, { rofCapOverride: 8 });
 

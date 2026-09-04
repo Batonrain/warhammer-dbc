@@ -13,6 +13,13 @@
   margin-bottom: 8px;
 }
 
+/* Без min-width:0 grid-элемент не сжимается уже своего содержимого — а
+   содержимое (.char-grid с фиксированным минимумом 64px на ячейку) на узких
+   окнах листа требует больше места, чем есть. Без этой правки .panel-chars
+   раздувается сверх реальной ширины и обрезается overflow:hidden у
+   .stat-panel вместо того, чтобы auto-fit ужал число колонок в ряду. */
+.warhammer-dbc .stats-layout > .panel-chars { min-width: 0; }
+
 .warhammer-dbc .panel-side { display: flex; flex-direction: column; }
 
 /* ── Боковые панели (Безумие / Порча) ── */
@@ -93,7 +100,7 @@
 
 .warhammer-dbc .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: 4px;
 }
 
@@ -101,8 +108,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 3px 2px 4px;
+  gap: 3px;
+  padding: 5px 4px 6px;
   background: var(--wh-parchment2);
   border: 1px solid var(--wh-border-light);
   border-radius: 3px;
@@ -112,7 +119,7 @@
 .warhammer-dbc .char-cell:hover { background: var(--wh-input-bg); }
 
 .warhammer-dbc .char-cell-abbr {
-  font-size: 0.72em;
+  font-size: 0.8em;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -127,7 +134,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  font-size: 1.15em;
+  font-size: 1.35em;
   font-weight: bold;
   line-height: 1.1;
 }

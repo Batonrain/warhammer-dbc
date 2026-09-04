@@ -9,7 +9,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { applyResplendentRaiment } from "../combat/resplendent-raiment.mjs";
 
 export async function showResplendentRaimentDialog(caster) {
-  const casterToken = caster.getActiveTokens?.(true, true)?.[0] ?? null;
+  const casterToken = caster.getActiveTokens?.(false, true)?.[0] ?? null;
   if (!casterToken) return ui.notifications.warn("У актора нет токена на текущей сцене.");
 
   const others = (casterToken.parent?.tokens?.contents ?? [])

@@ -1,0 +1,8 @@
+/* ═══════════════════════════════════════════════════════
+   Журнал опыта — отдельное окно (вкладка Развитие → кнопка «Журнал опыта»).
+═══════════════════════════════════════════════════════ */
+.wh-xplog .window-content { padding: 8px; }
+.wh-xplog .xp-log-panel { margin-bottom: 0; }
+.wh-xplog .xp-log-table { width: 100%; }
+.wh-xplog .xp-log-amount { font-weight: bold; }
+.wh-xplog .xp-log-empty { padding: 10px 8px; margin: 0; opacity: .75; font-size: .92em; line-height: 1.45; }

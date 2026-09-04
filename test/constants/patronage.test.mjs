@@ -70,6 +70,10 @@ describe("стереотипы Покровительства для Харак�
       expect(charStereotypesFor(god)).toHaveLength(3);
     }
   });
+  it("Неделимый — стереотипов нет (wdbc-yyxy: строка выбора должна скрываться)", () => {
+    expect(charStereotypesFor("undivided")).toHaveLength(0);
+    expect(charStereotypesFor("")).toHaveLength(0);
+  });
   it("союзная и враждебные характеристики по книге (Танцор Клинка)", () => {
     expect(charPatronCat("ag", "slaanesh", "slaanesh-dancer")).toBe("ally");
     expect(charPatronCat("int", "slaanesh", "slaanesh-dancer")).toBe("enemy");

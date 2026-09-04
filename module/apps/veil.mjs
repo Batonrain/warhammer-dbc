@@ -125,7 +125,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
   constructor(...args) {
     super(...args);
-    this.state = { tab: "veil", navId: "", godPicker: false };
+    this.uiState = { tab: "veil", navId: "", godPicker: false };
     this.ritual = _newRitual();
     this.journey = _newJourney();
     this.tarot = { subtab: "reading", spread: "cross", question: "", teomant: "", quirit: "", slots: _tarotSlots("cross") };
@@ -287,7 +287,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Навигация
     const navs = this._navigators();
-    let navId = this.state.navId;
+    let navId = this.uiState.navId;
     if (!navs.find(a => a.id === navId)) navId = navs[0]?.id || "";
     const navActor = navs.find(a => a.id === navId) || null;
     const journeyData = this._journeyData(); // сначала — чтобы навык навигации выбрался
@@ -312,20 +312,20 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
     return {
       isGM,
-      tab: this.state.tab,
-      isVeil: this.state.tab === "veil",
-      isRituals: this.state.tab === "rituals",
-      isNav: this.state.tab === "nav",
-      isTarot: this.state.tab === "tarot",
-      isDefile: this.state.tab === "defile",
-      tarot: this.state.tab === "tarot" ? this._tarotData() : null,
-      defile: this.state.tab === "defile" ? this._defileData() : null,
+      tab: this.uiState.tab,
+      isVeil: this.uiState.tab === "veil",
+      isRituals: this.uiState.tab === "rituals",
+      isNav: this.uiState.tab === "nav",
+      isTarot: this.uiState.tab === "tarot",
+      isDefile: this.uiState.tab === "defile",
+      tarot: this.uiState.tab === "tarot" ? this._tarotData() : null,
+      defile: this.uiState.tab === "defile" ? this._defileData() : null,
       sceneName: veilContainerLabel(scene),
       base: v.base, manual: v.manual,
       total, totalSigned: (total > 0 ? "+" : "") + total,
       tier: info.tier, levelLabel: info.label, consequence: info.consequence,
       gauge,
-      god: v.god, godMeta, godColor, gods, godPickerOpen: this.state.godPicker,
+      god: v.god, godMeta, godColor, gods, godPickerOpen: this.uiState.godPicker,
       ritual: this._ritualData(),
       journey: journeyData,
       factors, rituals, log,
@@ -753,10 +753,10 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Вкладки
     el.querySelectorAll("[data-tab]").forEach(b =>
-      b.addEventListener("click", () => { this.state.tab = b.dataset.tab; rr(); }));
+      b.addEventListener("click", () => { this.uiState.tab = b.dataset.tab; rr(); }));
 
     // ── Таро Императора (подвкладки, расклад) ─────────────────────────────
-    if (this.state.tab === "tarot") {
+    if (this.uiState.tab === "tarot") {
       const S = this.tarot;
       el.querySelectorAll("[data-ttab]").forEach(b => b.addEventListener("click", () => { S.subtab = b.dataset.ttab; rr(); }));
       el.querySelector("[name=tspread]")?.addEventListener("change", e => { S.spread = e.target.value; S.slots = _tarotSlots(S.spread); rr(); });
@@ -773,7 +773,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // ── Осквернение (крафт демон-оружия) ──────────────────────────────────
-    if (this.state.tab === "defile") {
+    if (this.uiState.tab === "defile") {
       const D = this.defile;
       const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
       const dz = el.querySelector("[data-defiledrop]");
@@ -820,7 +820,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     // ── Навигация: выбор навигатора / бросок ──────────────────────────────
-    el.querySelector("[name=navPick]")?.addEventListener("change", e => { this.state.navId = e.target.value; rr(); });
+    el.querySelector("[name=navPick]")?.addEventListener("change", e => { this.uiState.navId = e.target.value; rr(); });
     el.querySelector("[data-act=navRoll]")?.addEventListener("click", () => this._rollNavigation());
     el.querySelectorAll("[data-navpower]").forEach(row =>
       row.addEventListener("click", () => this._postNavPower(row.dataset.navpower)));
@@ -889,10 +889,10 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Око Варпа — выбор прорыва конкретного Бога
     el.querySelector("[data-act=godpick]")?.addEventListener("click", () => {
-      this.state.godPicker = !this.state.godPicker; rr();
+      this.uiState.godPicker = !this.uiState.godPicker; rr();
     });
     el.querySelectorAll("[data-setgod]").forEach(b => b.addEventListener("click", async () => {
-      this.state.godPicker = false;
+      this.uiState.godPicker = false;
       const v = readVeil(scene); v.god = b.dataset.setgod || ""; await writeVeil(scene, v);
     }));
 
@@ -963,7 +963,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async _rollNavigation() {
     const navs = this._navigators();
-    const actor = navs.find(a => a.id === (this.state.navId || navs[0]?.id));
+    const actor = navs.find(a => a.id === (this.uiState.navId || navs[0]?.id));
     if (!actor) { ui.notifications?.warn("Навигация: выберите навигатора."); return; }
     const base = this._jSkillTotal(actor, this.journey.navSkill) ?? -20;
     const total = veilTotal(readVeil(currentScene()));
@@ -991,7 +991,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _postNavPower(id) {
     const navs = this._navigators();
-    const actor = navs.find(a => a.id === (this.state.navId || navs[0]?.id));
+    const actor = navs.find(a => a.id === (this.uiState.navId || navs[0]?.id));
     const item = actor?.items.get(id);
     if (!item) return;
     const s = item.system;
@@ -1008,7 +1008,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
   // ── Варп-путешествие: шаги ──────────────────────────────────────────────
   _journeyNav() {
     const navs = this._navigators();
-    return navs.find(a => a.id === (this.state.navId || navs[0]?.id)) || null;
+    return navs.find(a => a.id === (this.uiState.navId || navs[0]?.id)) || null;
   }
   _occNavMod() {
     const J = this.journey;

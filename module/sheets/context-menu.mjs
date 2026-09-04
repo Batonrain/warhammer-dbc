@@ -26,11 +26,22 @@ function entryHtml(e) {
   return `<div class="wh-ctx-item ${e.cls}">${e.label}</div>`;
 }
 
-/** Вешает клики на листовые пункты (без {submenu} — те раскрываются наведением). */
+/** Вешает клики на листовые пункты и на переключатель каскадных подпунктов. */
 function wireEntries(entries, menu, jq) {
   for (const entry of entries) {
     if (entry.sep) continue;
-    if (entry.submenu) { wireEntries(entry.submenu, menu, jq); continue; }
+    if (entry.submenu) {
+      // Раскрытие по клику вместо наведения (wdbc-0cgo) — на тач-экранах
+      // наведения не бывает, а родитель сам клика/onClick не имеет, только
+      // переключает у себя класс open; stopPropagation — чтобы этот же клик
+      // не закрыл всё меню общим обработчиком (openContextMenu, ниже).
+      menu.find(`.${entry.cls}`).on("click", ev2 => {
+        ev2.stopPropagation();
+        ev2.currentTarget?.classList?.toggle("open");
+      });
+      wireEntries(entry.submenu, menu, jq);
+      continue;
+    }
     menu.find(`.${entry.cls}`).on("click", ev2 => {
       ev2.stopPropagation();
       menu.remove();
@@ -52,9 +63,10 @@ function wireEntries(entries, menu, jq) {
  *                         (переключатель — та же семантика клика, чекбокс
  *                         только рисует текущее состояние; сам onClick сам
  *                         решает, на что переключить), { cls, label, submenu: [...] }
- *                         (каскадный подпункт — раскрывается наведением влево,
- *                         сам клика не имеет, только вложенные листовые пункты)
- *                         либо разделитель { sep: true }
+ *                         (каскадный подпункт — раскрывается кликом по себе,
+ *                         работает и без наведения мышью, wdbc-0cgo; сам
+ *                         клика-выбора не имеет, только вложенные листовые
+ *                         пункты) либо разделитель { sep: true }
  * @param {Function} jq    jQuery (подменяется в тестах)
  */
 export function openContextMenu(ev, entries, jq = globalThis.$) {

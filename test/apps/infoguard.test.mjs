@@ -29,6 +29,12 @@ function gear(over = {}) {
 function tool(over = {}) {
   return { type: "tool", name: "Комби-Инструмент", system: { toolCategory: "kits", infoguard: 0, ...over } };
 }
+function weaponMod(over = {}) {
+  return { type: "weaponMod", name: "Прицел", system: { infoguard: 0, ...over } };
+}
+function armorMod(over = {}) {
+  return { type: "armorMod", name: "Система силовой брони", system: { infoguard: 0, ...over } };
+}
 
 describe("supportsInfoguard — отбор высокотехнологичного снаряжения", () => {
   it("обычное оружие/броня/снаряжение/инструмент — да", () => {
@@ -36,6 +42,11 @@ describe("supportsInfoguard — отбор высокотехнологично�
     expect(supportsInfoguard(armor())).toBe(true);
     expect(supportsInfoguard(gear())).toBe(true);
     expect(supportsInfoguard(tool())).toBe(true);
+  });
+
+  it("Модификации оружия/брони (в т.ч. системы силовой брони) — да (wdbc-y4jl)", () => {
+    expect(supportsInfoguard(weaponMod())).toBe(true);
+    expect(supportsInfoguard(armorMod())).toBe(true);
   });
 
   it("Примитивное оружие/броня — нет", () => {
@@ -132,6 +143,96 @@ describe("rollInfoguard — накладывание Инфограждения"
     expect(res).toBeUndefined();
     expect(captured.warnings.length).toBe(1);
     expect(item.system.infoguard).toBe(0);
+  });
+});
+
+describe("rollInfoguard — делегированный тест (wdbc-uez7): исполнитель бросает своим Tech-Use", () => {
+  function executor({ total = 40, fatigueValue = 0, name = "Специалист" } = {}) {
+    return { name, system: { skills: { techUse: { total } }, fatigue: { value: fatigueValue }, characteristics: {} }, items: [] };
+  }
+
+  it("без executorActor — поведение как раньше (владелец сам себе)", async () => {
+    const item = weapon();
+    const owner = actorFor(item, { total: 40 });
+    captured.nextRoll = 30;
+    const successes = await rollInfoguard(item);
+    expect(successes).toBe(1);
+    expect(captured.chat[0].content).not.toContain("— за");
+    void owner;
+  });
+
+  it("с executorActor — Порог считается от ЕГО Tech-Use, не от владельца предмета", async () => {
+    const item = weapon();
+    const owner = actorFor(item, { total: 40 }); // если бы считали от владельца — eff=40, 30<=40 успех с меньшей степенью
+    const exec = executor({ total: 60 }); // exec eff=60
+    captured.nextRoll = 45; // провал при eff=40 (от владельца), успех при eff=60 (от исполнителя)
+    const successes = await rollInfoguard(item, { executorActor: exec });
+    expect(successes).toBeGreaterThan(0);
+    expect(item.system.infoguard).toBeGreaterThan(0);
+    void owner;
+  });
+
+  it("Усталость учитывается ИСПОЛНИТЕЛЯ, а не владельца", async () => {
+    const item = weapon();
+    actorFor(item, { total: 40, fatigueValue: 0 }); // владелец без Усталости
+    const exec = executor({ total: 40, fatigueValue: 2 }); // исполнитель устал → eff=30
+    captured.nextRoll = 35; // 35>30 (исполнитель) — провал; было бы успехом при eff=40 (владелец)
+    const successes = await rollInfoguard(item, { executorActor: exec });
+    expect(successes).toBe(0);
+  });
+
+  it("карточка называет владельца, когда бросает делегат", async () => {
+    const item = weapon();
+    actorFor(item, { total: 40 });
+    const exec = executor({ total: 40, name: "Техножрец Ксилар" });
+    captured.nextRoll = 30;
+    await rollInfoguard(item, { executorActor: exec });
+    expect(captured.chat[0].content).toContain("— за");
+  });
+
+  it("Талант владельца с target:'skill:techUse:recipient' поднимает Порог исполнителя, подписан владельцем", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } = await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test-owner-mod", () => [
+      { id: "wardmark", label: "Клеймо Ограждения",
+        effects: [{ kind: "rollBonus", target: "skill:techUse:recipient", value: 10 }] }
+    ]);
+    try {
+      const item = weapon();
+      const owner = actorFor(item, { total: 40 });
+      owner.name = "Пациент-Владелец";
+      const exec = executor({ total: 30 }); // exec eff без мода = 30, с модом владельца = 40
+      captured.nextRoll = 35; // провал при eff=30, успех при eff=40
+      const successes = await rollInfoguard(item, { executorActor: exec });
+      expect(successes).toBeGreaterThan(0);
+      expect(captured.chat[0].content).toContain("Клеймо Ограждения");
+      expect(captured.chat[0].content).toContain("Пациент-Владелец");
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
+  });
+
+  it("тот же Талант БЕЗ суффикса :recipient не подмешивается в тест исполнителя", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } = await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    clearRuleSources();
+    registerRuleSource("test-owner-mod", () => [
+      { id: "self-only", label: "Своё Tech-Use",
+        effects: [{ kind: "rollBonus", target: "skill:techUse", value: 10 }] }
+    ]);
+    try {
+      const item = weapon();
+      actorFor(item, { total: 40 });
+      const exec = executor({ total: 30 });
+      captured.nextRoll = 35; // без подмешивания eff=30 → провал
+      const successes = await rollInfoguard(item, { executorActor: exec });
+      expect(successes).toBe(0);
+    } finally {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    }
   });
 });
 

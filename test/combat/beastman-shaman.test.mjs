@@ -51,7 +51,13 @@ function mutableActor({ name = "Шаман", items = [], patronGod = "", extra =
         return created;
       }
       if (type === "Item") {
-        const created = docs.map((d, i) => ({ id: `it${data.items.length + i}`, ...d }));
+        const created = docs.map((d, i) => ({
+          id: `it${data.items.length + i}`, ...d,
+          // Реальный Item несёт getFlag — grantTempTestMod/
+          // clearBeastmanShamanTempEffects читают TEMP_FLAG именно так, не
+          // напрямую через .flags (module/combat/beastman-shaman.mjs).
+          getFlag: (scope, key) => d.flags?.[scope]?.[key]
+        }));
         data.items.push(...created);
         return created;
       }
@@ -268,6 +274,76 @@ describe("Warp-Tainted Aura", () => {
     captured.nextRoll = 5; // успех против высокого порога
     await applyWarpTaintedAura(a, casterT);
     expect(enemy.system.corruption.value).toBe(0);
+  });
+
+  // wdbc-j0ip: союзники в ауре получают РЕАЛЬНЫЙ +20 к тестам Стойкости
+  // (Сопротивления) — не текст в чат-карточке, а временная Черта с записью
+  // Конструктора kind:"testMod" (grantTempTestMod).
+  it("союзники в ауре получают временную Черту с testMod +20 к Стойкости", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = shamanWithTalent("Warp-Tainted Aura / Аура Скверны");
+    const casterT = token("c", a, 1);
+    const ally = mutableActor({ name: "Союзник" });
+    casterT.parent = scene([casterT, token("t1", ally, 1)]);
+
+    captured.nextRoll = 5;
+    await applyWarpTaintedAura(a, casterT);
+
+    const granted = ally.items.find(i => i.flags?.["warhammer-dbc"]?.mechanics);
+    expect(granted).toBeDefined();
+    expect(granted.flags["warhammer-dbc"].beastmanShamanTemp).toBe(a.uuid);
+    const [group] = granted.flags["warhammer-dbc"].mechanics;
+    expect(group.operator).toBe("AND");
+    const [entry] = group.entries;
+    expect(entry).toMatchObject({ kind: "testMod", modScope: "char", rerollChar: "t", value: 20 });
+  });
+
+  // wdbc-elng: та же инфраструктура, знак/фильтр в другую сторону — враги
+  // НЕ получают этот бонус (только союзники), мутационная проверка фильтра.
+  it("враги в ауре НЕ получают бонус Сопротивления союзников", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = shamanWithTalent("Warp-Tainted Aura / Аура Скверны");
+    const casterT = token("c", a, 1);
+    const enemy = mutableActor({ name: "Враг", extra: { characteristics: { wp: { total: 80 } } } });
+    casterT.parent = scene([casterT, token("t1", enemy, -1)]);
+
+    captured.nextRoll = 5; // успех — не влияет на проверку testMod-гранта
+    await applyWarpTaintedAura(a, casterT);
+
+    expect(enemy.items.some(i => i.flags?.["warhammer-dbc"]?.mechanics)).toBe(false);
+  });
+
+  it("бонус реально резолвится в тесте Стойкости через resolveTest (не только лежит на предмете)", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    const a = shamanWithTalent("Warp-Tainted Aura / Аура Скверны");
+    const casterT = token("c", a, 1);
+    const ally = mutableActor({ name: "Союзник" });
+    casterT.parent = scene([casterT, token("t1", ally, 1)]);
+
+    captured.nextRoll = 5;
+    await applyWarpTaintedAura(a, casterT);
+
+    const { resolveTest } = await import("../../module/rules/resolve-test.mjs");
+    const { mods } = resolveTest({ actor: ally, char: "t" });
+    expect(mods).toContainEqual(expect.objectContaining({ value: 20 }));
+  });
+
+  it("clearBeastmanShamanTempEffects снимает и временную Черту testMod (Item), не только ActiveEffect", async () => {
+    globalThis.game.time = { worldTime: 0 };
+    globalThis.game.combat = { id: "c1" };
+    const a = shamanWithTalent("Warp-Tainted Aura / Аура Скверны");
+    const casterT = token("c", a, 1);
+    const ally = mutableActor({ name: "Союзник" });
+    casterT.parent = scene([casterT, token("t1", ally, 1)]);
+
+    captured.nextRoll = 5;
+    await applyWarpTaintedAura(a, casterT);
+    expect(ally.items.some(i => i.flags?.["warhammer-dbc"]?.mechanics)).toBe(true);
+
+    const combat = { combatants: [{ actor: a }, { actor: ally }] };
+    await clearBeastmanShamanTempEffects(combat, a);
+
+    expect(ally.items.some(i => i.flags?.["warhammer-dbc"]?.mechanics)).toBe(false);
   });
 });
 

@@ -5,7 +5,10 @@
 // Dialog: обоим передаётся один и тот же объект-словарь.
 
 import { describe, it, expect } from "vitest";
-import { readTestKind, readDiceChoice, mergeReroll, critLineHtml } from "../../module/rules/test-kind-widget.mjs";
+import "../support/foundry-stub.mjs"; // esc() у opposedComparisonHtml зовёт foundry.utils.escapeHTML
+import {
+  readTestKind, readDiceChoice, mergeReroll, critLineHtml, testKindHtml, opposedComparisonHtml
+} from "../../module/rules/test-kind-widget.mjs";
 
 /** val(selector) из словаря — то же самое, чем DialogV2 и jQuery-адаптер
  *  оборачивают форму на вызывающей стороне. */
@@ -82,6 +85,47 @@ describe("mergeReroll", () => {
 
   it("ни того ни другого — null, одиночный бросок", () => {
     expect(mergeReroll(null, "normal")).toBeNull();
+  });
+});
+
+describe("testKindHtml: ряд авто-соперника (wdbc-j814)", () => {
+  it("скрыт по умолчанию — остальные диалоги (Расстройства/Отряд/Демон/Верховая езда) его не видят", () => {
+    const html = testKindHtml();
+    expect(html).toContain('id="opposed-auto-row"');
+    expect(html).toContain('id="opposed-auto"');
+    expect(html).toMatch(/id="opposed-auto-row"[^>]*hidden/);
+  });
+});
+
+describe("opposedComparisonHtml (wdbc-j814)", () => {
+  const base = {
+    label: "Запугивание",
+    mineName: "Иван", mine: { threshold: 50, roll: 30 },
+    theirsName: "Драго", theirs: { threshold: 40, roll: 60 }
+  };
+
+  it("побеждает инициатор (mine) — имя и margin в тексте", () => {
+    const html = opposedComparisonHtml({ ...base, result: { winner: "mine", margin: 5 } });
+    expect(html).toContain("Иван");
+    expect(html).toContain("5");
+  });
+
+  it("побеждает соперник (theirs) — его имя в тексте", () => {
+    const html = opposedComparisonHtml({ ...base, result: { winner: "theirs", margin: 3 } });
+    expect(html).toContain("Драго");
+  });
+
+  it("ничья (winner: null) — не называет победителя, но не падает", () => {
+    const html = opposedComparisonHtml({ ...base, result: { winner: null, margin: 0 } });
+    expect(html).not.toContain("undefined");
+    expect(html.toLowerCase()).toContain("ничья");
+  });
+
+  it("экранирует имена акторов", () => {
+    const html = opposedComparisonHtml({
+      ...base, mineName: '<img src=x onerror=alert(1)>', result: { winner: "mine", margin: 1 }
+    });
+    expect(html).not.toContain("<img");
   });
 });
 

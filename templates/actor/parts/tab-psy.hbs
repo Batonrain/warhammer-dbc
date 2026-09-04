@@ -20,8 +20,8 @@
   <div class="psy-veil-bg" aria-hidden="true"><span></span><span></span><span></span></div>
 
   {{!-- ── ПСАЙКЕР: шапка с проводником Варпа ──────────────────────────────── --}}
-  <div class="psy-panel psy-hero-panel">
-    <div class="psy-panel-title">ПСАЙКЕР <span class="psy-nature-tag">{{psyker.natureLabel}}</span></div>
+  <div class="psy-panel psy-hero-panel" data-collapse-key="psy-psyker">
+    <div class="psy-panel-title" data-action="panelCollapse">ПСАЙКЕР <span class="psy-nature-tag">{{psyker.natureLabel}}</span></div>
 
     <div class="psy-hero">
       {{!-- проводник Варпа (визуализация PR) --}}
@@ -89,8 +89,8 @@
   </div>
 
   {{!-- ── ПСИХОСИЛЫ ────────────────────────────────────────────────────────── --}}
-  <div class="psy-panel psy-powers-panel">
-    <div class="psy-panel-title">ПСИХОСИЛЫ
+  <div class="psy-panel psy-powers-panel" data-collapse-key="psy-powers">
+    <div class="psy-panel-title" data-action="panelCollapse">ПСИХОСИЛЫ
       <button type="button" class="psy-add-btn" title="Добавить психосилу">＋</button>
     </div>
     <table class="items-table psy-powers-table">
@@ -135,8 +135,8 @@
   </div>
 
   {{!-- ── ПРОЧИЕ ПСИХИЧЕСКИЕ ДЕЙСТВИЯ ──────────────────────────────────────── --}}
-  <div class="psy-panel">
-    <div class="psy-panel-title">ПРОЧИЕ ПСИХИЧЕСКИЕ ДЕЙСТВИЯ</div>
+  <div class="psy-panel" data-collapse-key="psy-other-actions">
+    <div class="psy-panel-title" data-action="panelCollapse">ПРОЧИЕ ПСИХИЧЕСКИЕ ДЕЙСТВИЯ</div>
     <div class="psy-other-actions">
       <button type="button" class="psy-action-btn psy-sense-btn" title="Пси-чутьё (Psyniscience), полудействие, Ментальное"><span class="psy-ab-ico">◉</span>Пси-чутьё</button>
       <button type="button" class="psy-action-btn psy-hood-btn" title="Пси-капюшон (Реакция): встречный тест W+PR×5, чтобы погасить вражескую психосилу"><span class="psy-ab-ico">⛨</span>Пси-капюшон</button>
@@ -151,7 +151,7 @@
         кнопкой «＋» — Обозревателем компендиумов. Раскрытие строки ведёт общий
         .ability-detail-toggle, а открытие и удаление — общее контекстное меню
         строки предмета по ПКМ, как у талантов и черт (wdbc-5qk). --}}
-  <div class="ability-section-panel"> <div class="panel-title"> РИТУАЛЫ
+  <div class="ability-section-panel" data-collapse-key="psy-rituals"> <div class="panel-title" data-action="panelCollapse"> РИТУАЛЫ
       <button type="button" class="ritual-add-btn" title="Выбрать ритуал в Обозревателе компендиумов">＋</button> </div>
     <table class="items-table rituals-table"> <thead> <tr>
       <th class="ability-toggle-col"></th>

@@ -3,7 +3,7 @@
 // боя/способностей), но с демонической шапкой (сигил бога, ранг, форма,
 // Нестабильность, Истинное Имя) и урезанным набором вкладок.
 
-import { WarhammerCharacterSheet, onSkillRoll } from "./actor-sheet.mjs";
+import { WarhammerCharacterSheet, onSkillRoll, onPanelCollapse } from "./actor-sheet.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
 import { testKindHtml, readTestKind, wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
@@ -42,7 +42,10 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       minionCreate:      whenEditable(onMinionCreate),
       // Вкладка СОЦИУМ — общая часть (tab-social.hbs), клик по названию Навыка
       // требует того же обработчика, что и на вкладке ПОКАЗАТЕЛИ.
-      skillRoll:         whenEditable(onSkillRoll)
+      skillRoll:         whenEditable(onSkillRoll),
+      // Сворачиваемые блоки (wdbc-bk4f) — общий с листом персонажа механизм,
+      // но карта действий у каждого класса своя, регистрируем и здесь.
+      panelCollapse:     onPanelCollapse
     }
   };
 

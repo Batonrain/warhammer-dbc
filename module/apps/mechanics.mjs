@@ -2013,6 +2013,23 @@ function collectAuraEntries(groups) {
  * «включая себя» берутся у ПЕРВОЙ завершённой (одна аура — один набор правил
  * геометрии), а их grant-предметы собираются в один список: так один Дар
  * может выдавать окружающим сразу несколько Черт одной аурой.
+ *
+ * Бонус/штраф К ТЕСТУ союзникам/врагам в радиусе (wdbc-j0ip/wdbc-elng) — не
+ * отдельный вид записи и не новый ключ эффекта: `grant` клонирует
+ * ПРЕДМЕТ ЦЕЛИКОМ (module/regions/auras.mjs::sweepAurasOnScene), а значит
+ * если у Черты/Таланта-шаблона в `grant` есть СВОЯ запись Механики
+ * kind:"testMod" (module/rules/item-rules.mjs — живой модификатор теста,
+ * читается с ЛЮБОГО предмета актора через rulesFromItemMechanics), клон несёт
+ * её с собой на каждого затронутого — testMod сработает сам, отдельного кода
+ * в auras.mjs не нужно. Знак `value` в testMod-записи шаблона решает бонус это
+ * или штраф, `entry.auraAffects` ("allies"/"enemies"/"all") — кому: та же
+ * пара полей, что и у любой другой ауры, значит книжные «союзники в ауре
+ * получают +X к тесту Y» и «враги получают −X к тесту Y» — одна и та же
+ * Черта-шаблон с testMod внутри, различающаяся только auraAffects и знаком
+ * value. Проверено на реальном примере — DoomBC, Шаман Зверолюдей, Аура
+ * Скверны (module/combat/beastman-shaman.mjs::grantTempTestMod) — там
+ * способность не выдаётся Конструктором, поэтому временная Черта с той же
+ * testMod-записью собирается кодом на лету, а не через grant/sourceUuid.
  */
 export async function syncAuraFlag(item) {
   const actor = item.parent instanceof Actor ? item.parent : null;
@@ -2307,6 +2324,17 @@ export async function syncMechanicsEffects(item) {
 
   if (toDelete.length) await item.deleteEmbeddedDocuments("ActiveEffect", toDelete);
   if (toCreate.length) await item.createEmbeddedDocuments("ActiveEffect", toCreate);
+  // wdbc-s9dj: createEmbeddedDocuments не проставляет disabled — новый эффект
+  // приходит включённым по умолчанию Foundry, даже если сам предмет сейчас
+  // неактивен (психосила/техночудо с isSustained=false и т.п., см.
+  // isItemActive выше). Раньше это гасил только ручной клик по тумблеру
+  // «Поддерживать» (sheets/tabs/psychic.mjs) — при ПЕРВОЙ выдаче предмета или
+  // любой правке его Механики бонус (характеристика/броня/движение/лимит
+  // пула) висел включённым до первого клика игрока. Безусловно (не только
+  // когда toDelete/toCreate непусты) — идемпотентна и дёшева, а без этого
+  // осталась бы дыра «Механика не поменялась, но isItemActive успел
+  // измениться где-то ещё до этого вызова».
+  await syncItemEffectsDisabled(item);
 }
 
 /**

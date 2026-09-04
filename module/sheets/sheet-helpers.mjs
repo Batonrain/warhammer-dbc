@@ -3,6 +3,7 @@
 import { CHARACTERISTICS, APTITUDES }   from "../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }              from "../constants/skills.mjs";
 import { SKILL_DESCRIPTIONS }                        from "../constants/skill-descriptions.mjs";
+import { SKILL_SPECIALTY_DESCRIPTIONS }               from "../constants/skill-specialty-descriptions.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES,
          DRUG_CATEGORIES, DRUG_DELIVERY,
          DRUG_CHAR_KEYS, WEAPON_MOD_GROUPS,
@@ -23,6 +24,7 @@ import { canClearJam }                                from "../combat/weapon-pro
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
+import { xpLogEntries } from "../apps/xp-log.mjs";
 
 // Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
 // раз. Используется для группировки талантов на листе по типам (стр. 62-105).
@@ -144,14 +146,24 @@ for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
  * ниже, откуда взят сам паттерн data-tooltip: horde-sheet.hbs, tab-social.hbs).
  * data-tooltip рендерится Foundry как sanitized HTML (TooltipManager,
  * foundry.utils.cleanHTML), поэтому `<br>` для переноса строки допустим.
+ *
+ * `specialty` (только для строк группового Навыка, см. вызов в buildGetData
+ * ниже) — сырое `entry.specialty` с листа («Chymist»). Если для НЕЁ САМОЙ
+ * нашлось описание в SKILL_SPECIALTY_DESCRIPTIONS[key] (wdbc-c0yf — книга
+ * описывает каждую специализацию отдельным предложением, не только группу
+ * целиком), тултип показывает именно его; иначе — как раньше, общее
+ * описание группы из SKILL_DESCRIPTIONS. Так тултип на «Ремесло: Химик»
+ * подсказывает химика, а не пересказ всей группы «Ремесло», и никогда не
+ * остаётся пустым, если под конкретную специализацию текста ещё не набрано.
  */
-function skillTip(key, def, rollLabel) {
+function skillTip(key, def, rollLabel, specialty) {
   if (!def) return "";
   const ch   = CHARACTERISTICS[def.char];
   const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
   const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
-  const desc = SKILL_DESCRIPTIONS[key];
+  const desc = (specialty && SKILL_SPECIALTY_DESCRIPTIONS[key]?.[specialty])
+    || SKILL_DESCRIPTIONS[key];
   return desc ? `${head}<br><br>${desc}` : head;
 }
 
@@ -440,7 +452,7 @@ export function buildGetData(actor) {
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
-        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`)
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty)
       }))
     });
   }
@@ -568,7 +580,9 @@ export function buildGetData(actor) {
       // «Расклинить» показывается только пока canClearJam не лжив (см.
       // combat/weapon-properties.mjs — блокировка Reformation Song на раунд).
       jammed:       !melee && !!s.jammed,
-      canClearJam:  !melee && !!s.jammed && canClearJam(i)
+      canClearJam:  !melee && !!s.jammed && canClearJam(i),
+      // Перезарядка (wdbc-ai0o): тот же гейт кнопки «Атака», что у jammed выше.
+      needsRecharge: !melee && !!s.needsRecharge
     };
   };
 
@@ -946,15 +960,9 @@ export function buildGetData(actor) {
   // объект (там же Фактор Прибыли), и записанный в него массив схема молча
   // отбрасывала, то есть выбор не доживал до перерисовки листа.
   const aspirRaw = Array.isArray(system.aspirations?.slots) ? system.aspirations.slots : [];
-  // Журнал опыта: свежие записи сверху — интересна последняя выдача, а не
-  // первая. Дата короткая: год у одного персонажа всё равно один.
-  context.xpLog = [...(Array.isArray(system.experience?.log) ? system.experience.log : [])]
-    .sort((a, b) => (b?.at || 0) - (a?.at || 0))
-    .map(e => ({
-      amount: Number(e?.amount) || 0,
-      reason: e?.kind === "refund" ? `Возврат за ${e?.reason || "—"}` : (e?.reason || "—"),
-      when: e?.at ? new Date(e.at).toLocaleString("ru", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""
-    }));
+  // Журнал опыта живёт в отдельном окне (apps/xp-log.mjs, wdbc-ng7q) — здесь
+  // нужен только счётчик записей для кнопки, что открывает то окно.
+  context.xpLog = xpLogEntries(system);
 
   context.aspirationSlots = ASPIRATION_TABLES.map((t, idx) => {
     const a = aspirRaw[idx];
@@ -1091,7 +1099,7 @@ export function buildGetData(actor) {
   // Дальность до цели (wdbc-iy0c): мерим один раз на весь список, не на силу —
   // тот же снимок «текущая цель на сцене», что у attackerToken/targetToken в
   // диалоге атаки (game.user.targets в момент рендера, не живой хук).
-  const _psyAttackerToken = actor.getActiveTokens?.(true)?.[0] ?? null;
+  const _psyAttackerToken = actor.getActiveTokens?.(false)?.[0] ?? null;
   const _psyTargetToken   = [...(game.user?.targets ?? [])][0] ?? null;
   const _psyMeasured = (_psyAttackerToken && _psyTargetToken)
     ? measureTokens(_psyAttackerToken, _psyTargetToken) : null;

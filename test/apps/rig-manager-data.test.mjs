@@ -107,6 +107,44 @@ describe("rigManagerData — перекладка между слотами", ()
   });
 });
 
+// Разгрузка размер 0 (wdbc-e2lt): предмет без физического отпечатка (itemSize
+// "0" явно, либо интегральная атака — flags.warhammer-dbc.integralAttack) не
+// должен появляться ни в «Не размещено», ни в опциях слота.
+describe("rigManagerData — предметы без места (itemSize «0», wdbc-e2lt)", () => {
+  it("предмет с явным itemSize «0» не числится «не размещённым» и не предлагается слоту", () => {
+    const belt = beltItem();
+    const implant = gearItem("impl1", "Вживлённый чип", { itemSize: "0" });
+    const a = actor([belt, implant]);
+
+    const data = rigManagerData(a);
+    expect(data.unassigned.map(i => i.id)).not.toContain("impl1");
+    expect(data.rigs[0].slots[0].opts.map(o => o.id)).not.toContain("impl1");
+  });
+
+  it("интегральная атака (Кулак) не числится «не размещённой» и не предлагается слоту", () => {
+    const belt = beltItem();
+    const fist = {
+      id: "fist1", name: "Fist / Удар кулаком", type: "weapon",
+      system: { weaponClass: "melee", weight: 0 },
+      flags: { "warhammer-dbc": { integralAttack: true } }
+    };
+    const a = actor([belt, fist]);
+
+    const data = rigManagerData(a);
+    expect(data.unassigned.map(i => i.id)).not.toContain("fist1");
+    expect(data.rigs[0].slots[0].opts.map(o => o.id)).not.toContain("fist1");
+  });
+
+  it("обычное оружие того же класса (не интегральное) по-прежнему числится «не размещённым»", () => {
+    const belt = beltItem();
+    const knife = { id: "knife1", name: "Нож", type: "weapon", system: { weaponClass: "melee", weight: 0.2 } };
+    const a = actor([belt, knife]);
+
+    const data = rigManagerData(a);
+    expect(data.unassigned.map(i => i.id)).toContain("knife1");
+  });
+});
+
 describe("rigManagerData — предмет, надетый на другой (wornOn)", () => {
   it("визор, надетый на шлем, не числится «не размещённым» и не занимает слот", () => {
     const belt = beltItem();

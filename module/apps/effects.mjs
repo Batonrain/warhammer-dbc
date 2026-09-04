@@ -121,7 +121,12 @@ export function isItemActive(item) {
  */
 export async function syncItemEffectsDisabled(item, activeOverride) {
   const active = activeOverride !== undefined ? activeOverride : isItemActive(item);
-  const updates = item.effects.contents
+  // item.effects.contents ?? item.effects ?? [] (wdbc-s9dj): настоящая
+  // Foundry-коллекция и часть тестовых фикстур дают .contents, другая часть
+  // (module/apps/mechanics.mjs::syncMechanicsEffects и его тесты) читает
+  // item.effects как простой массив без .contents вовсе — оба варианта
+  // должны отработать одинаково.
+  const updates = (item.effects?.contents ?? item.effects ?? [])
     .filter(fx => fx.disabled === active)
     .map(fx => ({ _id: fx.id, disabled: !active }));
   if (updates.length) await item.updateEmbeddedDocuments("ActiveEffect", updates);

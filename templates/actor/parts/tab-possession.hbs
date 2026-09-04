@@ -82,8 +82,8 @@
   </header>
 
   {{!-- ПРОЯВЛЕНИЕ: таблица по Cor --}}
-  <section class="poss-panel poss-manifest">
-    <div class="poss-panel-title">ПРОЯВЛЕНИЕ <span class="poss-band">{{possession.prof.band}}</span> <span class="poss-cor">Cor {{possession.cor}}</span></div>
+  <section class="poss-panel poss-manifest" data-collapse-key="poss-manifest">
+    <div class="poss-panel-title" data-action="panelCollapse">ПРОЯВЛЕНИЕ <span class="poss-band">{{possession.prof.band}}</span> <span class="poss-cor">Cor {{possession.cor}}</span></div>
     <div class="poss-manifest-grid">
       <div class="poss-mcell"><span>Daemonic</span><b>{{possession.prof.daemonic}}</b></div>
       <div class="poss-mcell"><span>Смерт. оружие (когти)</span><b>{{possession.prof.claws}}</b></div>
@@ -112,8 +112,8 @@
   </section>
 
   {{!-- СИМБИОЗ --}}
-  <section class="poss-panel poss-symbiosis">
-    <div class="poss-panel-title">СИМБИОЗ <span class="poss-band">предел {{possession.symLimit}}</span></div>
+  <section class="poss-panel poss-symbiosis" data-collapse-key="poss-symbiosis">
+    <div class="poss-panel-title" data-action="panelCollapse" title="Растёт за 250xp на важных событиях (макс. 5, не выше min(Inf/15, Cor/15)). Демон у руля: использует S/T/A хоста, свои I/P/W/F, WS/BS любого. Перехват — тест W против W хоста (при первом Проявлении в сутки). С Симбиоза 2 — только против природы хоста; с 4 — цели сливаются.">СИМБИОЗ <span class="poss-band">предел {{possession.symLimit}}</span></div>
     <div class="poss-pips">
       {{#each possession.symPips as |pip|}}<span class="poss-pip {{#if pip.on}}on{{/if}} {{#if pip.over}}over{{/if}}"></span>{{/each}}
     </div>
@@ -122,25 +122,19 @@
       <div><span>W хоста против перехвата</span><b>+{{possession.hostWBonus}}</b></div>
       <div><span>Макс. контроль демона</span><b>{{possession.controlHours}} ч</b></div>
     </div>
-    <div class="poss-note">
-      Растёт за 250xp на важных событиях (макс. 5, не выше min(Inf/15, Cor/15)). Демон у руля: использует S/T/A хоста, свои I/P/W/F,
-      WS/BS любого. Перехват — тест W против W хоста (при первом Проявлении в сутки). С Симбиоза 2 — только против природы хоста; с 4 — цели сливаются.
-    </div>
   </section>
 
   {{!-- НАСЛОЕНИЕ — божественный оверлей + защита демона --}}
-  <section class="poss-panel poss-divine">
-    <div class="poss-panel-title">НАСЛОЕНИЕ · {{possession.meta.godLabel}}</div>
+  <section class="poss-panel poss-divine" data-collapse-key="poss-divine">
+    <div class="poss-panel-title" data-action="panelCollapse" title="Повреждения демона: варп-урон и Выжигание Души демон может принять на себя (свои Раны, W.b — поглощение). Раны демона <0 → выход из Проявления, нельзя войти, пока не восстановит 1 Рану. Если Выжигание убивает демона / его изгоняют — персонаж перестаёт быть Одержимым.">НАСЛОЕНИЕ · {{possession.meta.godLabel}}</div>
     <div class="poss-divine-body">
       <p><b>Дар «Наслоение» (750xp, Симбиоз 4):</b> Daemonic Presence (10/10) и — {{possession.meta.naslo}}</p>
-      <p class="poss-note">Повреждения демона: варп-урон и Выжигание Души демон может принять на себя (свои Раны, W.b — поглощение). Раны демона &lt;0 → выход из Проявления,
-        нельзя войти, пока не восстановит 1 Рану. Если Выжигание убивает демона / его изгоняют — персонаж перестаёт быть Одержимым.</p>
     </div>
   </section>
 
   {{!-- ДАРЫ — каталог --}}
-  <section class="poss-panel poss-gifts">
-    <div class="poss-panel-title">ДАРЫ ОДЕРЖИМОГО
+  <section class="poss-panel poss-gifts" data-collapse-key="poss-gifts">
+    <div class="poss-panel-title" data-action="panelCollapse">ДАРЫ ОДЕРЖИМОГО
       <span class="poss-band {{#if possession.giftsOver}}poss-over{{/if}}">активно {{possession.activeGiftCount}} / {{possession.giftLimit}}</span>
       <span class="poss-cor">каталог · перетащи из «Таланты одержимых»</span>
     </div>
@@ -162,8 +156,8 @@
   </section>
 
   {{!-- ТАЛАНТЫ АРХЕТИПА --}}
-  <section class="poss-panel poss-talents">
-    <div class="poss-panel-title">ТАЛАНТЫ АРХЕТИПА</div>
+  <section class="poss-panel poss-talents" data-collapse-key="poss-talents">
+    <div class="poss-panel-title" data-action="panelCollapse">ТАЛАНТЫ АРХЕТИПА</div>
     <div class="poss-talent-list">
       {{#each possession.talents as |t|}}
       <div class="poss-talent">

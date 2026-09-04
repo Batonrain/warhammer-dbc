@@ -190,7 +190,7 @@ export async function placeLingerZone(shape, damageData, rounds, driftMeters = 0
   if (driftMeters > 0 && damageData.attackerUuid) {
     const attackerActor = await fromUuid(damageData.attackerUuid);
     // Именно placeable (второй аргумент false): у TokenDocument нет .center.
-    const attackerToken = attackerActor?.getActiveTokens?.(true)?.[0];
+    const attackerToken = attackerActor?.getActiveTokens?.(false)?.[0];
     if (attackerToken) {
       const shapeData = region.toObject().shapes[0];
       const ac = attackerToken.center;

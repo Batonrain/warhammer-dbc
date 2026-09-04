@@ -28,6 +28,11 @@ const WEAPON_SIZE = {
 export function itemSizeStr(item) {
   const s = item?.system || {};
   if (s.itemSize) return String(s.itemSize).toLowerCase().replace(/\s/g, "");
+  // Интегральные атаки (Кулак/Пинок/Удар головой…, выданные Конструктором —
+  // apps/mechanics.mjs buildIntegralAttackData) — часть тела, а не физический
+  // предмет: разгрузку не занимают, даже если сам источник (weaponClass=melee)
+  // по умолчанию занял бы 4x1 (wdbc-e2lt).
+  if (item?.flags?.["warhammer-dbc"]?.integralAttack) return "0";
   switch (item?.type) {
     // Граната — отдельный случай класса "thrown": книга (стр. 243, таблица
     // «Размеры предметов») даёт ей 1×1, тогда как остальной «thrown»
@@ -39,8 +44,17 @@ export function itemSizeStr(item) {
   }
 }
 
+// Предмет с itemSize "0" физически не занимает места в Разгрузке (вживлённая
+// модификация брони, интегральная атака) — исключается из «Не размещено» и из
+// списка вариантов для укладки в слот, а не просто «помещается в любой слот».
+export function hasNoStowageFootprint(item) {
+  return itemSizeStr(item) === "0";
+}
+
 export function parseSize(str) {
-  const m = String(str || "1x1").toLowerCase().match(/(\d+)\s*[x×]\s*(\d+)/);
+  const norm = String(str || "1x1").toLowerCase().replace(/\s/g, "");
+  if (norm === "0") return { w: 0, h: 0 };
+  const m = norm.match(/(\d+)\s*[x×]\s*(\d+)/);
   return m ? { w: +m[1], h: +m[2] } : { w: 1, h: 1 };
 }
 
@@ -156,7 +170,8 @@ export function rigManagerData(actor) {
   const stow = actor.getFlag(NS, FLAG) || {};
   const items = actor.items;
 
-  const stowable = items.filter(i => STOWABLE_TYPES.includes(i.type) && !wornOnHost(i, items));
+  const stowable = items.filter(i => STOWABLE_TYPES.includes(i.type) && !wornOnHost(i, items) &&
+    !hasNoStowageFootprint(i));
   // Разгрузка бывает не только снаряжением (Ремень) — у силовой брони (стр. 27)
   // свои 12 магнитных замков на самом предмете брони.
   const rigs = items.filter(i => (i.type === "gear" || i.type === "armor") && i.system?.isRig);

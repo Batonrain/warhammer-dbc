@@ -6,6 +6,7 @@
     "description": "",
     "notes": "",
     "weaponClass": "melee",
+    "itemSize": "2x1",
     "weaponType": "chain",
     "range": 1,
     "balance": 1,

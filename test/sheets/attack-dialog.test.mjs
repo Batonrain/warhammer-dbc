@@ -1222,7 +1222,7 @@ describe("Хват дальнобойного: 6 отложенных потре
       const p = showAttackDialog(attacker({ items: [revolver, talent],
         characteristics: { bs: char(45) } }), revolver);
 
-      captured.dice = [23, 6, 6];   // атака + до 2 попаданий (deg 3 → ceil(3/2)=2)
+      captured.dice = [23, 6, 6, 6];   // атака + до 3 попаданий (длинная очередь: 1 за Успех, deg 3)
       await pressRoll(p, {
         "input[name='atk-rof']:checked": { value: "full", dataset: { bonus: "0" } },
         "input[name='atk-aiming']:checked": { value: "half", dataset: { bonus: "10" } },

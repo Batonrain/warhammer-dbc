@@ -82,11 +82,17 @@
 
 .wh-surgeon .wh-surg-empty { font-size: 0.78em; color: var(--bc-teal-dim); text-align: center; padding: 3px 0 6px; opacity: 0.8; }
 
+.wh-surgeon .wh-surg-install-row { display: flex; gap: 4px; align-items: center; }
 .wh-surgeon .wh-surg-install {
-  width: 100%; background: #0c2418; color: #c6ffe0;
+  flex: 1 1 auto; min-width: 0; background: #0c2418; color: #c6ffe0;
   border: 1px solid var(--bc-line); border-radius: 3px; padding: 3px 5px; font-size: 0.82em; cursor: pointer;
 }
 .wh-surgeon .wh-surg-install:hover { border-color: var(--bc-teal-dim); }
 .wh-surgeon .wh-surg-install option { background: #0c2418; color: #c6ffe0; }
+.wh-surgeon .wh-surg-both {
+  flex: 0 0 auto; background: rgba(198,255,224,0.06); color: var(--bc-teal-dim);
+  border: 1px solid var(--bc-line); border-radius: 3px; padding: 3px 6px; font-size: 0.78em; cursor: pointer; white-space: nowrap;
+}
+.wh-surgeon .wh-surg-both:hover { border-color: var(--bc-teal-dim); color: #e8fff2; background: rgba(198,255,224,0.12); }
 
 .wh-surgeon .wh-surg-missing { padding: 40px; text-align: center; color: #ff8a8a; }

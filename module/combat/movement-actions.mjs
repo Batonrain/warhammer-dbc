@@ -57,7 +57,7 @@ const BONUS_HALF_MOVE_CAPABILITY = "action.bonusHalfMove";
  * канвас-оверлей за раз, как и раньше.
  */
 function _showReachRing(actor, meters) {
-  const token = actor?.getActiveTokens?.(true)?.[0] ?? null;
+  const token = actor?.getActiveTokens?.(false)?.[0] ?? null;
   if (!token) return;
   clearRangeRings();
   if (!showReachableCells(token, meters)) showMovementRing(token, meters);
@@ -776,34 +776,48 @@ async function _resolveMarchHour(actor, def, t, slow) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-// Меню — общее для Token HUD и вкладки БОЙ
+// Меню — общее для Token HUD, вкладки БОЙ и вкладки «Движение» боевого HUD
+// (module/apps/hud.mjs) — один источник списка пунктов на все три места,
+// чтобы гейты (isEncounterActive/actorCanFly/actorHasHalfStep) не разъехались.
 // ════════════════════════════════════════════════════════════════════════
+
+/**
+ * Пункты меню Движения для актора — общие для Dialog (showMovementMenu) и
+ * для вкладки «Движение» боевого HUD. action() вызывает ровно то же, что
+ * раньше вызывал callback кнопки Dialog.
+ */
+export function movementMenuItems(actor) {
+  const items = [];
+  if (isEncounterActive()) {
+    items.push({ key: "halfmove", label: "Полудвижение", cost: "1 ОД", action: () => declareHalfMove(actor) });
+    items.push({ key: "fullmove", label: "Полное движение", cost: "2 ОД", action: () => declareFullMove(actor) });
+    items.push({ key: "charge", label: "Натиск", cost: "", action: () => declareCharge(actor) });
+    items.push({ key: "run", label: "Бег", cost: "2 ОД", action: () => declareRun(actor) });
+    items.push({ key: "disengage", label: "Выход из Боя", cost: "2 ОД", action: () => declareDisengage(actor) });
+    if (actorHasHalfStep(actor)) {
+      items.push({ key: "halfstep", label: "Полушаг", cost: "Талант", action: () => declareHalfStep(actor) });
+    }
+  }
+  items.push({ key: "climb", label: "Карабканье", cost: "", action: () => showClimbDialog(actor) });
+  items.push({ key: "jump", label: "Прыжок", cost: "", action: () => showJumpDialog(actor) });
+  items.push({ key: "swim", label: "Плавание", cost: "", action: () => showSwimDialog(actor) });
+  items.push({ key: "fall", label: "Падение", cost: "", action: () => showFallDialog(actor) });
+  if (actorCanFly(actor)) {
+    items.push({ key: "fly", label: "Полёт", cost: "", action: () => showFlightDialog(actor) });
+  }
+  if (!isEncounterActive()) {
+    items.push({ key: "marchA", label: "Ускоренный марш", cost: "", action: () => showMarchDialog(actor, "accelerated") });
+    items.push({ key: "marchR", label: "Марафонский бег", cost: "", action: () => showMarchDialog(actor, "run") });
+    items.push({ key: "marchF", label: "Форсированный марш", cost: "", action: () => showMarchDialog(actor, "forced") });
+  }
+  return items;
+}
 
 export function showMovementMenu(actor) {
   if (!actor) return;
   const buttons = {};
-
-  if (isEncounterActive()) {
-    buttons.halfmove = { label: "Полудвижение (1 ОД)", callback: () => declareHalfMove(actor) };
-    buttons.fullmove = { label: "Полное движение (2 ОД)", callback: () => declareFullMove(actor) };
-    buttons.charge   = { label: "Натиск", callback: () => declareCharge(actor) };
-    buttons.run      = { label: "Бег (2 ОД)", callback: () => declareRun(actor) };
-    buttons.disengage = { label: "Выход из Боя (2 ОД)", callback: () => declareDisengage(actor) };
-    if (actorHasHalfStep(actor)) {
-      buttons.halfstep = { label: "Полушаг (Талант, Своб. действие)", callback: () => declareHalfStep(actor) };
-    }
-  }
-  buttons.climb = { label: "Карабканье", callback: () => showClimbDialog(actor) };
-  buttons.jump  = { label: "Прыжок", callback: () => showJumpDialog(actor) };
-  buttons.swim  = { label: "Плавание", callback: () => showSwimDialog(actor) };
-  buttons.fall  = { label: "Падение", callback: () => showFallDialog(actor) };
-  if (actorCanFly(actor)) {
-    buttons.fly = { label: "Полёт", callback: () => showFlightDialog(actor) };
-  }
-  if (!isEncounterActive()) {
-    buttons.marchA = { label: "Ускоренный марш", callback: () => showMarchDialog(actor, "accelerated") };
-    buttons.marchR = { label: "Марафонский бег", callback: () => showMarchDialog(actor, "run") };
-    buttons.marchF = { label: "Форсированный марш", callback: () => showMarchDialog(actor, "forced") };
+  for (const it of movementMenuItems(actor)) {
+    buttons[it.key] = { label: it.cost ? `${it.label} (${it.cost})` : it.label, callback: it.action };
   }
   buttons.cancel = { label: "Закрыть" };
 

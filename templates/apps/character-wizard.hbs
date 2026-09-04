@@ -199,8 +199,7 @@
 
     {{#if usesAptitudes}}
     <div class="wiz-gen wh-apts">
-      <div class="wiz-gen-lbl">3. Склонности — ровно <b>4</b> Характеристики и <b>4</b> прочих:</div>
-      <div class="cstart-hint">По ним считается цена Характеристик, Навыков и Талантов, а значит и возврат опыта, когда один и тот же Навык или Талант приходит из двух источников.</div>
+      <div class="wiz-gen-lbl" title="По ним считается цена Характеристик, Навыков и Талантов, а значит и возврат опыта, когда один и тот же Навык или Талант приходит из двух источников.">3. Склонности — ровно <b>4</b> Характеристики и <b>4</b> прочих:</div>
       <div class="apt-group">
         <div class="apt-group-lbl">Характеристики <span class="apt-count{{#if aptChar.full}} apt-count-full{{/if}}">{{aptChar.on}} / {{aptChar.want}}</span></div>
         <div class="apt-list">
@@ -223,8 +222,7 @@
 
     {{#if usesPatron}}
     <div class="wiz-gen wh-apts">
-      <div class="wiz-gen-lbl">3. Покровитель и стереотип:</div>
-      <div class="cstart-hint">По ним считается цена Характеристик, Навыков и Талантов (система «Покровительство», корбук стр. 23) — Бог задаёт цену Навыков/Талантов, стереотип — Характеристик.</div>
+      <div class="wiz-gen-lbl" title="По ним считается цена Характеристик, Навыков и Талантов (система «Покровительство», корбук стр. 23) — Бог задаёт цену Навыков/Талантов, стереотип — Характеристик.">3. Покровитель и стереотип:</div>
       <div class="apt-group">
         <div class="apt-group-lbl">Бог-покровитель</div>
         <select class="wiz-patron-god">
@@ -234,6 +232,7 @@
           {{/each}}
         </select>
       </div>
+      {{#if usesPatronStereotype}}
       <div class="apt-group">
         <div class="apt-group-lbl">Стереотип</div>
         <select class="wiz-patron-stereotype">
@@ -243,6 +242,7 @@
           {{/each}}
         </select>
       </div>
+      {{/if}}
       {{#unless patronReady}}<div class="apt-warn">Выберите Бога и стереотип — без них не посчитать цену Характеристик.</div>{{/unless}}
     </div>
     {{/if}}
@@ -391,7 +391,7 @@
     </div>
 
     {{else if (eq stepId "gear")}}
-    <div class="atk-dlg-header"><span class="atk-weapon-name">🎒 Снаряжение</span></div>
+    <div class="atk-dlg-header" title="По «Готово» найденные предметы добавятся на лист автоматически; для того, что не найдётся один-в-один по имени, откроется Обозреватель компендиумов — выберите сами, по одному."><span class="atk-weapon-name">🎒 Снаряжение</span></div>
 
     {{#if hasGear}}
     {{#if gearFixed.length}}
@@ -418,13 +418,12 @@
     <div class="cstart-hint">+ 4 базовые Системы силовой брони на выбор — добавьте вручную на вкладке «Снаряжение».</div>
     {{/if}}
 
-    <div class="cstart-hint">По «Готово» найденные предметы добавятся на лист автоматически; для того, что не найдётся один-в-один по имени, откроется Обозреватель компендиумов — выберите сами, по одному.</div>
     {{else}}
     <p class="cstart-hint">У выбранной расы/архетипа нет текстового снаряжения для разбора — добавьте нужное вручную на вкладке «Снаряжение» после «Готово».</p>
     {{/if}}
 
     <div class="wiz-gen wiz-equip-shop">
-      <div class="wiz-gen-lbl">Очки Снаряжения — потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonus}} + бонус)</div>
+      <div class="wiz-gen-lbl" title="После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).">Очки Снаряжения — потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonus}} + бонус)</div>
       <div class="atk-dlg-row"><label>Бонусные очки (по решению ГМ):</label>
         <input type="number" class="wiz-equip-bonus" value="{{equipShop.bonusPoints}}" min="0"/>
       </div>
@@ -445,7 +444,6 @@
           Пожертвовать предметом за {{equipShop.sacrificeCount}} модификации…
         </button>
       </div>
-      <div class="cstart-hint">После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).</div>
     </div>
 
     {{else}}

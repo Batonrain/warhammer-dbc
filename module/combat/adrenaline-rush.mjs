@@ -9,18 +9,19 @@
 //  Resplendent Raiment (module/combat/resplendent-raiment.mjs) — переиспользуется
 //  тот же resplendentUnit(), не заводится дубль.
 //
-//  «Дистанция отскока» (evasion/manoeuvre retreat distance) нигде в движке не
-//  трекается — в проекте вообще нет счётчика дистанции, пройденной за Ход
-//  (см. module/combat/movement-actions.mjs). Честный компромисс (тот же
-//  принцип, что Deadly Effectiveness, wdbc-1rno): Реакции восстанавливаются
-//  реальным кодом, дистанция отскока — только информационная строка в
-//  чат-карточке, без автоматизации.
+//  «Дистанция отскока» (wdbc-2b93, после мерджа PR #308): раньше движок её не
+//  трекал вовсе (текстовый честный компромисс, тот же принцип, что Deadly
+//  Effectiveness, wdbc-1rno) — теперь манёвр «Отскок» реализован (wdbc-9wvm,
+//  module/combat/recoil-pool.mjs), и «восстановить дистанцию Отскока»
+//  означает полный сброс пула этого Раунда (resetRecoilPool) — то же, что
+//  «потраченного не было».
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { resplendentUnit } from "./resplendent-raiment.mjs";
 import { effectiveDefenseReactionMax } from "./action-economy.mjs";
+import { resetRecoilPool } from "./recoil-pool.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -38,8 +39,8 @@ export function adrenalineRushAvailable(actor) {
 
 /**
  * Применяет эффект: тратит 1 Очко Бесчестия, восстанавливает Реакции
- * (универсальные + доп. пул на Избегание) до максимума одним update.
- * «Дистанция отскока» не трекается движком — см. заголовок файла.
+ * (универсальные + доп. пул на Избегание) до максимума и полностью сбрасывает
+ * пул дистанции Отскока этого Раунда — одним update плюс resetRecoilPool.
  */
 export async function applyAdrenalineRush(actor) {
   const fate = actor.system.fate?.value ?? 0;
@@ -54,13 +55,14 @@ export async function applyAdrenalineRush(actor) {
     "system.reactions.value": reactMax,
     "system.reactions.defenseValue": defenseMax
   });
+  await resetRecoilPool(actor);
 
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("run", "#4dffa6")}Прилив Адреналина — ${esc(actor.name)}</div>
       <div class="roll-threshold">Реакции восстановлены до максимума (${reactMax}${defenseMax ? ` +${defenseMax}` : ""}).</div>
-      <div><i>Дистанция отскока восстановлена по тексту способности — движок её не трекает, применить на столе вручную.</i></div>
+      <div>Дистанция Отскока в этом Раунде восстановлена — потраченного как не бывало.</div>
     </div>`
   }, game.settings.get("core", "rollMode")));
 }

@@ -41,9 +41,14 @@ describe("hitCount", () => {
     expect(hitCount({ hit: true, isMelee: false, rofMode: "semi", deg: 6, wp: noProps, sys: { rof_semi: 2 } }).count).toBe(2);
   });
 
+  it("длинная очередь — одно попадание за КАЖДЫЙ Успех (не за нечётный), ниже потолка", () => {
+    expect(hitCount({ hit: true, isMelee: false, rofMode: "full", deg: 3, wp: noProps, sys: ranged }))
+      .toEqual({ count: 3, label: "Автоматический" });
+  });
+
   it("длинная очередь считает по своему потолку", () => {
     expect(hitCount({ hit: true, isMelee: false, rofMode: "full", deg: 9, wp: noProps, sys: ranged }))
-      .toEqual({ count: 5, label: "Автоматический" });
+      .toEqual({ count: 6, label: "Автоматический" });
   });
 
   it("подавление попаданий не даёт", () => {

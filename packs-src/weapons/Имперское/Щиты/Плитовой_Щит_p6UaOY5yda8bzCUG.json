@@ -25,7 +25,7 @@
     "availability": 0,
     "weight": 30,
     "attackBonus": 0,
-    "special": "Л. Башенный; Хват 1р+П; Досягаемость 0–3. AP 8. Защита: Т+Р1+П1+П2+(Г+Р2). Легион-вариант: +1 R, +1 Dmg, +1 Pen, +1 AP и модификация Hardened (или ещё +1 AP, если Hardened уже в профиле).",
+    "special": "Л. Башенный; Хват 1р+П; Досягаемость 0–3. AP 8. Защита: Т+Р1+Н1+Н2+(Г+Р2). Легион-вариант: +1 R, +1 Dmg, +1 Pen, +1 AP и модификация Hardened (или ещё +1 AP, если Hardened уже в профиле).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
@@ -63,7 +63,10 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Щит"
+    "meleeCategory": "Щит",
+    "shieldAP": 8,
+    "shieldZones": "Т+Р1+Н1+Н2+(Г+Р2)",
+    "shieldForm": "Л. Башенный"
   },
   "_id": "p6UaOY5yda8bzCUG",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

@@ -11,6 +11,7 @@ import { buildBodyState, buildBodyLayers, buildImplantsSvg,
          classifyImplant, implantCatColor } from "../constants/body-map.mjs";
 import { syncItemEffectsDisabled } from "./effects.mjs";
 import { syncGrantedEquipment } from "./mechanics.mjs";
+import { planBothSidesInstall } from "./surgeon-plan.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 const NS = "warhammer-dbc";
@@ -140,8 +141,13 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
       const groups = Object.entries(byCat)
         .map(([label, arr]) => ({ label, items: arr.sort((a, b) => a.name.localeCompare(b.name, "ru")) }))
         .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+      // «Обе стороны одним действием» имеет смысл только пока СВОБОДНЫ обе
+      // стороны — freeSide() до первой установки этой системы вернёт "left",
+      // т.е. пока не установлено НИ одной этой системы (installed.length===0).
+      // Если одна сторона уже занята — второй добирают только select-ом.
+      const bothEligible = !!sys.sideable && installed.length === 0;
       return { id: sys.id, label: sys.label, icon: sys.icon, sideable: !!sys.sideable,
-               installed, count: installed.length,
+               installed, count: installed.length, bothEligible,
                available: { owned, groups, has: owned.length > 0 || groups.length > 0 } };
     });
 
@@ -195,6 +201,63 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
         await this.actor.createEmbeddedDocuments("Item", [obj]);
         ui.notifications?.info(`🔧 Имплантировано: ${doc.name}${side ? (side === "left" ? " (левый)" : " (правый)") : ""}`);
       }
+      this.render(false);
+    }));
+
+    // «⚭ Обе стороны» — тот же выбранный в select протез сразу на left+right
+    // одним действием (парные системы, пока СВОБОДНЫ обе стороны — см.
+    // bothEligible в _prepareContext). Что именно создавать/обновлять решает
+    // чистая planBothSidesInstall() (surgeon-plan.mjs); здесь — только
+    // Foundry-вызовы по готовому плану.
+    el.querySelectorAll("[data-both]").forEach(btn => btn.addEventListener("click", async () => {
+      const sysId = btn.dataset.both;
+      const sel = btn.closest(".wh-surg-install-row")?.querySelector("[data-install]");
+      const v = sel?.value;
+      if (!v) { ui.notifications?.warn("Сначала выберите протез в списке."); return; }
+      const [src, ref] = v.split(/:(.+)/);
+      const sysDef = SYSTEMS.find(s => s.id === sysId);
+      if (!sysDef?.sideable) return;
+
+      const kset = new Set(sysDef.kinds);
+      const ownedInSystem = this.actor.items
+        .filter(i => i.type === "implant" && kset.has(kindOf(i)) && !i.getFlag(NS, NS_INST))
+        .map(i => ({ id: i.id, name: i.name }));
+      const plan = planBothSidesInstall(src, ref, ownedInSystem);
+      if (!plan) return;
+
+      const sides = ["left", "right"];
+      let installedName = "";
+
+      if (plan.createFromLibCount) {
+        const doc = await fromUuid(ref); if (!doc) return;
+        installedName = doc.name;
+        const objs = sides.map(side => {
+          const obj = doc.toObject(); delete obj._id;
+          foundry.utils.setProperty(obj, `flags.${NS}.${NS_INST}`, true);
+          foundry.utils.setProperty(obj, `flags.${NS}.bodySide`, side);
+          return obj;
+        });
+        const created = await this.actor.createEmbeddedDocuments("Item", objs);
+        for (const it of created) { await syncItemEffectsDisabled(it, true); await syncGrantedEquipment(it); }
+      } else {
+        const ids = [...plan.installExisting];
+        if (plan.cloneSourceId) {
+          const source = this.actor.items.get(plan.cloneSourceId);
+          if (!source) return;
+          const obj = source.toObject(); delete obj._id;
+          const [clone] = await this.actor.createEmbeddedDocuments("Item", [obj]);
+          if (clone) ids.push(clone.id);
+        }
+        for (let idx = 0; idx < ids.length; idx++) {
+          const item = this.actor.items.get(ids[idx]); if (!item) continue;
+          installedName = item.name;
+          await item.setFlag(NS, NS_INST, true);
+          await item.setFlag(NS, "bodySide", sides[idx]);
+          await syncItemEffectsDisabled(item, true);
+          await syncGrantedEquipment(item);
+        }
+      }
+      if (installedName) ui.notifications?.info(`🔧 Имплантировано на обе стороны: ${installedName}`);
       this.render(false);
     }));
 

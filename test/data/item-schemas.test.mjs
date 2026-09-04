@@ -124,6 +124,7 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "ranged", modGroup: "other",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      infoguard: 0,
       effects: {
         attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
         clipMod: 0, clipMult: 1, rofSemiMod: 0, rofFullMod: 0, reliabilityMod: 0,
@@ -143,6 +144,9 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      infoguard: 0,
+      // Модификация вживлена, не лежит в Разгрузке отдельно (wdbc-e2lt).
+      itemSize: "0",
       activatable: false, active: false, runicWeaveSlots: 0,
       // wdbc-bxw6: «отламывающийся слой» (аблативная модификация брони).
       ablative: false, ablativeCharge: 0,
@@ -344,7 +348,7 @@ const TYPES = {
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
       availability: 0, weight: 0, quantity: 1, attackBonus: 0, special: "", equipped: false,
-      loadedAmmoId: "", weaponProps: [], needsRecharge: false, prismaCharge: 0, legacyWeapon: false,
+      loadedAmmoId: "", weaponProps: [], needsRecharge: false, rechargeTurnsRemaining: 0, prismaCharge: 0, legacyWeapon: false,
       sacred: false,
       daemonWeapon: {
         bound: false, god: "", demonName: "", binding: 0, demonWb: 0, demonInf: 0,

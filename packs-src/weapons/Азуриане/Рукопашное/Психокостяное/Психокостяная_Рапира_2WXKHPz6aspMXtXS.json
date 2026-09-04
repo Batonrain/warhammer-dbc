@@ -6,6 +6,7 @@
     "description": "",
     "notes": "",
     "weaponClass": "melee",
+    "itemSize": "2x1",
     "weaponType": "wraithbone",
     "range": 5,
     "balance": 2,

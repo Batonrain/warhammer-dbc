@@ -500,7 +500,7 @@
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/talent.svg",
               "sourceHasRating": false,
               "rating": "",
-              "specialization": "Las/SP/Shock",
+              "specialization": "Las, Solid Projectile, Shock",
               "skillScope": "plain",
               "skillKey": "",
               "specKey": "",

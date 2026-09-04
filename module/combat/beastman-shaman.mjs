@@ -17,6 +17,17 @@
 //  вызывается по границе Хода ИМЕННО ШАМАНА (книга: «до начала ЕГО
 //  следующего Хода»), не получателя бонуса — module/hooks.mjs::updateCombat.
 //
+//  Бонус/штраф К ТЕСТУ (не к числовому полю актора) — грант ДРУГОГО вида:
+//  «бонус к тесту» не ActiveEffect-ключ (его нет в effect-keys.mjs и не может
+//  быть — это не хранимое system.*-поле, а живая галочка диалога), поэтому
+//  Аура Скверны (applyWarpTaintedAura, +20 союзникам к тестам Стойкости,
+//  wdbc-j0ip/wdbc-elng) выдаёт временную ЧЕРТУ с записью Конструктора
+//  kind:"testMod" (grantTempTestMod ниже) — тот же путь, которым kind:"aura"
+//  Конструктора (module/apps/mechanics.mjs) даёт союзникам/врагам в радиусе
+//  клон предмета-шаблона: клонированная запись testMod действует сама, без
+//  нового ключа эффекта. TEMP_FLAG общий для обоих видов гранта (ActiveEffect
+//  и Item) — clearBeastmanShamanTempEffects снимает оба разом.
+//
 //  Свойства попаданий (Hallucinogenic) — переиспользуют РЕАЛЬНЫЙ движок
 //  Особых Свойств Оружия (module/combat/weapon-properties.mjs::
 //  buildTargetEffectButtons, тот же путь, что у обычного оружия с этим
@@ -99,20 +110,74 @@ async function grantTempEffect(targetActor, sourceActor, name, rawChanges, img) 
   }]);
 }
 
+/**
+ * Временный БОНУС/ШТРАФ К ТЕСТУ на `targetActor` (wdbc-j0ip/wdbc-elng) — тот
+ * же принцип, что grantTempEffect выше, но НЕ ActiveEffect: «бонус к тесту»
+ * не хранимое system.*-поле (нет и не может быть ключа в
+ * constants/effect-keys.mjs — ActiveEffect умеет только числовые поля
+ * актора, а модификатор теста живёт галочкой диалога), а живой запрос
+ * конвейера теста (module/rules/item-rules.mjs::ruleFromEntry, kind:"testMod").
+ * Тот запрос читает flags.warhammer-dbc.mechanics С ЛЮБОГО предмета актора —
+ * ровно тот же путь, которым kind:"aura" Конструктора
+ * (module/apps/mechanics.mjs::syncAuraFlag/collectAuraEntries,
+ * module/regions/auras.mjs::sweepAurasOnScene) выдаёт союзникам/врагам в
+ * радиусе КЛОН предмета-шаблона: если у шаблона есть запись kind:"testMod",
+ * клон приносит её с собой, и правило начинает действовать само — Конструктору
+ * для этого не нужно ни нового вида записи, ни нового ключа эффекта, только
+ * подходящий предмет-шаблон в `grant`. Здесь та же идея, только без
+ * предмета-шаблона в паке (способность не выдаётся Конструктором, а
+ * запускается кодом): временная Черта создаётся на лету, единственное её
+ * назначение — нести одну запись testMod.
+ * Помечена тем же TEMP_FLAG, что и grantTempEffect (на Item, не на эффекте) —
+ * clearBeastmanShamanTempEffects снимает оба вида разом по границе Хода
+ * шамана. Знак задаёт вызывающий (`value`): положительный — бонус союзнику,
+ * отрицательный — штраф врагу, инфраструктура ровно одна и та же.
+ */
+async function grantTempTestMod(targetActor, sourceActor, { label, modScope, rerollChar, skillKey, value, img }) {
+  await targetActor.createEmbeddedDocuments("Item", [{
+    name: label, type: "trait", img: img || "icons/svg/upgrade.svg",
+    flags: {
+      "warhammer-dbc": {
+        [TEMP_FLAG]: sourceActor.uuid,
+        // Формат Конструктора: массив ГРУПП {id, operator, entries:[ЗАПИСЬ]},
+        // не голый массив записей — mechanicsOf()/getItemMechanics() в
+        // module/rules/item-rules.mjs и module/apps/mechanics.mjs ждут именно
+        // эту форму, «И»-группа из одной testMod-записи здесь equivalent
+        // «применить всегда».
+        mechanics: [{
+          id: foundry.utils.randomID(), operator: "AND",
+          entries: [{
+            id: foundry.utils.randomID(), kind: "testMod",
+            modScope, rerollChar: rerollChar || "", skillKey: skillKey || "",
+            modValueMode: "flat", value, label
+          }]
+        }]
+      }
+    }
+  }]);
+}
+
 /** Снимает со ВСЕХ комбатантов боя временные эффекты, выданные ИМЕННО этим
  * шаманом — звать, когда начинается Ход `shamanActor` (module/hooks.mjs::
  * updateCombat, тем же тактом, что clearDreadWailWeaponBuff). Безопасно
  * звать для любого актора вне зависимости от того, шаман он или нет —
- * фильтр по uuid сам ничего не найдёт и не тронет чужие эффекты. */
+ * фильтр по uuid сам ничего не найдёт и не тронет чужие эффекты. Снимает ДВА
+ * вида временных грантов с одним и тем же TEMP_FLAG: ActiveEffect
+ * (grantTempEffect — числовые поля) и Item (grantTempTestMod — временная
+ * Черта с записью testMod, бонус/штраф к тесту, wdbc-j0ip/wdbc-elng). */
 export async function clearBeastmanShamanTempEffects(combat, shamanActor) {
   if (!combat || !shamanActor) return;
   for (const combatant of combat.combatants ?? []) {
     const a = combatant.actor;
     if (!a) continue;
-    const ids = (a.effects?.contents ?? [])
+    const fxIds = (a.effects?.contents ?? [])
       .filter(fx => fx.getFlag?.("warhammer-dbc", TEMP_FLAG) === shamanActor.uuid)
       .map(fx => fx.id);
-    if (ids.length) await a.deleteEmbeddedDocuments("ActiveEffect", ids);
+    if (fxIds.length) await a.deleteEmbeddedDocuments("ActiveEffect", fxIds);
+    const itemIds = [...(a.items ?? [])]
+      .filter(it => it.getFlag?.("warhammer-dbc", TEMP_FLAG) === shamanActor.uuid)
+      .map(it => it.id);
+    if (itemIds.length) await a.deleteEmbeddedDocuments("Item", itemIds);
   }
 }
 
@@ -225,9 +290,23 @@ export async function applyWarpTaintedAura(actor, casterToken) {
     }
   }
   lines.push(`Провалившие тест W−10 (${failed.length}/${enemies.length}): ${failed.map(a => esc(a.name)).join(", ") || "—"} — +1 Порча каждому${god === "nurgle" ? " + реальное Состояние «Удушье»" : ""}.`);
-  lines.push(`Союзники (${allies.length}) в ауре: +20 к тестам Сопротивления, пока у персонажа нет метки — не смоделировано (нет ключа эффекта для бонуса теста).`);
 
-  const notes = [];
+  // +20 к тестам Сопротивления (T) союзникам в ауре — РЕАЛЬНЫЙ временный
+  // модификатор теста (wdbc-j0ip/wdbc-elng), не текст: grantTempTestMod даёт
+  // каждому союзнику временную Черту с записью kind:"testMod", которую
+  // конвейер теста (module/rules/item-rules.mjs) сам превращает в галочку
+  // диалога Стойкости. Снимается clearBeastmanShamanTempEffects по границе
+  // Хода ШАМАНА, тем же тактом, что и остальные временные баффы этого файла.
+  const allyNames = [];
+  for (const t of allies) {
+    await grantTempTestMod(t.actor, actor, {
+      label: "Аура Скверны: Сопротивление", modScope: "char", rerollChar: "t", value: 20, img: actor.img
+    });
+    allyNames.push(esc(t.actor.name));
+  }
+  lines.push(`Союзники (${allies.length}) в ауре: реальный +20 к тестам Стойкости (Сопротивления) до начала следующего Хода персонажа — ${allyNames.join(", ") || "никого в радиусе"} (галочка появится в диалоге теста Стойкости).`);
+
+  const notes = ["«Пока у персонажа нет метки» — условие не смоделировано: в системе нет отслеживания подобной метки ни у одного актора, бонус выдаётся безусловно."];
   if (god === "khorne") notes.push("Кхорн: провалившие тест немедленно проходят тест на Fear (4) — не запускается автоматически (тот же уровень, что «fear» у Dread Wail).");
   else if (god === "nurgle") notes.push("Нургл: герметичная броня — попадание Corrosive(Cor.b) — не смоделировано (нужен контекст реального попадания/брони).");
   else if (god === "slaanesh") notes.push("Слаанеш: провалившие очарованы — не атакуют персонажа/стадо, пока их не атакуют первыми — не смоделировано.");

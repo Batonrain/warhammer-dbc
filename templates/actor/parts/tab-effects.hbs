@@ -1,9 +1,14 @@
 <div class="tab body-tab {{#if (eq tab "effects")}}active{{/if}}" data-tab="effects" data-group="primary"> <div class="body-cogitator">
 
-  {{!-- ══════════════ ХИРУРГИКОН-КОГИТАТОР: сводка тела ══════════════ --}}
+  {{!-- ══════════════ ЗАКРЕПЛЁННАЯ ПРИБОРКА: видна на любой субвкладке ══════════════
+        wdbc-ycgk (полный редизайн, по прямому запросу владельца — «то как
+        сейчас выглядит тело это просто отвратно, нагромождение всего и вся
+        без какой-либо структуры»): всё, что меняется каждый раунд боя
+        (Раны/Усталость/Состояния) остаётся видно без переключения вкладки;
+        остальное разложено по трём субвкладкам ниже (Плоть/Разум/Скверна). --}}
   <div class="bc-hero">
 
-    {{!-- ── Голо-скан фигуры + ХИРУРГЕОН прямо под ним ─────────────────── --}}
+    {{!-- ── Голо-скан фигуры (кнопка ХИРУРГЕОН переехала в субвкладку «Плоть») ── --}}
     <div class="bc-figure-col">
     <div class="bc-figure-panel"> <div class="bc-figure-head"> <span class="bc-figure-title">◄ БИО-СКАН ►</span> <span class="bc-figure-serial">SUBJECT // {{actor.name}}</span> </div> <div class="bc-figure-stage"> {{#if body.mechMark}}<img class="bc-mechanicus-mark" src="/systems/warhammer-dbc/assets/mechanicus.png" title="Кибер-Мантия Механикум"/>{{/if}}
         <div class="body-photo {{#if body.skinColor}}has-skin{{/if}}" {{#if body.skinColor}}style="--skin:{{body.skinColor}};"{{/if}}> {{{body.implantsBack}}}
@@ -13,30 +18,24 @@
           <div class="body-photo-scan"></div> </div> <div class="bc-figure-grid"></div> </div> <div class="bc-figure-legend"> <span class="bc-leg bc-leg-flesh">● плоть</span> {{#each body.legend as |lg|}}<span class="bc-leg" style="color:{{lg.color}};">● {{lg.label}}</span>{{/each}}
         {{#if body.mechCount}}<span class="bc-leg bc-leg-mech">● механодендриты: {{body.mechCount}}</span>{{/if}}
       </div> </div>
-
-      {{!-- Кнопка хирургикона — теперь прямо под Био-сканом, не в bc-side --}}
-      <button type="button" class="bc-surgeon-btn bc-surgeon-btn--sm" title="Открыть хирургеон — установка/снятие имплантов"> <img class="bc-surgeon-ic" src="/systems/warhammer-dbc/assets/mechanicus.png" alt=""/> <span class="bc-surgeon-btn-label">ХИРУРГЕОН</span> <span class="bc-surgeon-btn-sub">установка имплантов</span> </button>
     </div>{{!-- /bc-figure-col --}}
 
-    {{!-- ── Правая колонка: кардиограмма, витальные, реестр имплантов ── --}}
+    {{!-- ── Правая колонка: кардиограмма, витальные, состояния ── --}}
     <div class="bc-side">
 
-      {{!-- Кардиограмма (укорочена) + Усталость (компактно) рядом, на месте
-            освободившейся высоты кардиомонитора. --}}
+      {{!-- Кардиограмма + Усталость рядом. --}}
       <div class="bc-ecg-row">
       <div class="bc-ecg ecg--{{body.ecg.key}}"> <div class="bc-ecg-head"> <span class="bc-ecg-title">КАРДИО-МОНИТОР</span> <label class="bc-ecg-death" title="Констатация смерти — остановить кардиомонитор"><input type="checkbox" class="bc-death-toggle" {{#if body.ecg.dead}}checked{{/if}}/> смерть</label> <span class="bc-ecg-status">{{body.ecg.label}}</span> </div>
         {{!-- Стр. 232-233 («Смерть») — только пока констатирована смерть: Спасение
               (Чудесное/Божественная Защита/Замедленная Анимация) и Воскресить
               (без формулы — последствия на ГМа и игроков). --}}
-        {{#if body.deceased}}<div class="bc-death-actions" style="display:flex;gap:6px;margin:4px 0;">
-          <button type="button" class="bc-death-save-btn" style="flex:1;">⚡ Спасение</button>
-          <button type="button" class="bc-resurrect-btn" style="flex:1;">✚ Воскресить</button>
-        </div>{{/if}}
+        <div class="bc-death-actions{{#if body.deceased}} bc-death-actions--show{{/if}}">
+          <button type="button" class="bc-death-save-btn">⚡ Спасение</button>
+          <button type="button" class="bc-resurrect-btn">✚ Воскресить</button>
+        </div>
         <div class="bc-ecg-screen"> <svg class="bc-ecg-wave" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"> <defs> <linearGradient id="ecgSweep-{{actor.id}}" x1="0" y1="0" x2="1" y2="0"> <stop offset="0" stop-color="#fff" stop-opacity="0"/> <stop offset="0.70" stop-color="#fff" stop-opacity="0"/> <stop offset="0.95" stop-color="#fff" stop-opacity="0.95"/> <stop offset="1" stop-color="#fff" stop-opacity="1"/> </linearGradient> <mask id="ecgMask-{{actor.id}}"> <rect class="bc-ecg-sweep" x="-300" y="0" width="300" height="80" fill="url(#ecgSweep-{{actor.id}})"/> </mask> </defs> <path class="bc-ecg-base" d="{{body.ecg.path}}"/> <g mask="url(#ecgMask-{{actor.id}})"><path class="bc-ecg-lead" d="{{body.ecg.path}}"/></g> <rect class="bc-ecg-bar" x="-1.5" y="0" width="3" height="80"/> </svg> </div> <div class="bc-ecg-read"> <span class="bc-ecg-hp">РАНЫ <b>{{body.ecg.value}}</b>/{{body.ecg.max}}</span> <span class="bc-ecg-pct">{{body.ecg.pct}}%</span> {{#if body.ecg.crit}}<span class="bc-ecg-crit">КРИТ −{{body.ecg.crit}}</span>{{/if}}
         <span class="bc-ecg-bpm">{{body.ecg.bpm}} <small>уд/мин</small></span> </div> </div>
 
-      {{!-- Усталость — переехала сюда из шапки листа, компактно рядом с
-            кардиомонитором. Классы .fatigue-*/.fate-cell не менялись. --}}
       <div class="stat-panel panel-side bc-fatigue-compact stats-cog"> <div class="panel-body side-body bc-fatigue-body"> <div class="header-cell fate-cell fatigue-cell"> <label class="fatigue-label"> Усталость
           {{#if system.fatigue.value}}
           <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span> {{/if}}
@@ -47,68 +46,74 @@
       {{!-- Витальные счётчики (светящиеся) --}}
       <div class="bc-vitals"> <div class="bc-vital {{#if body.conditionCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.conditionCount}}</span> <span class="bc-vital-l">Состояния</span> </div> <div class="bc-vital bc-vital-dis {{#if body.diseaseCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.diseaseCount}}</span> <span class="bc-vital-l">Болезни</span> </div> <div class="bc-vital bc-vital-psy {{#if body.disorderCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.disorderCount}}</span> <span class="bc-vital-l">Психика</span> </div> <div class="bc-vital bc-vital-drug {{#if body.drugCount}}is-alert{{/if}}"> <span class="bc-vital-n">{{body.drugCount}}</span> <span class="bc-vital-l">Препараты</span> </div> </div>
 
-      {{!-- Жизненные потребности: Голод / Жажда / Сон (корбук 483) --}}
-      <div class="bc-life">
-        <div class="bc-life-cap">ЖИЗНЕОБЕСПЕЧЕНИЕ</div>
-        {{#each body.life as |v|}}
-        <div class="bc-life-row {{#if v.alert}}is-alert{{/if}} {{#if v.crit}}is-crit{{/if}}" style="--vc:{{v.tone}}" data-tooltip="{{v.fx}}">
-          <span class="bc-life-ic">{{v.icon}}</span>
-          <div class="bc-life-mid">
-            <div class="bc-life-top"> <span class="bc-life-lbl">{{v.label}}</span> <span class="bc-life-stage">{{v.stageLabel}}</span> {{#if v.pen}}<span class="bc-life-pen" title="Авто-дебафф к характеристикам">−{{v.pen}}</span>{{/if}} </div>
-            <div class="bc-life-pips">{{#each v.pips as |p|}}<i class="bc-life-pip {{#if p.on}}on{{/if}}"></i>{{/each}}</div>
-          </div>
-          <div class="bc-life-ctl">
-            <button type="button" class="bc-life-btn" data-vital-adj="{{v.key}}" data-dir="-1" title="Легче">−</button>
-            <button type="button" class="bc-life-btn" data-vital-adj="{{v.key}}" data-dir="1" title="Хуже">+</button>
-            <button type="button" class="bc-life-btn bc-life-ok" data-vital-reset="{{v.key}}" title="{{v.action}} — сбросить">✓</button>
-          </div>
-        </div>
-        {{/each}}
-      </div>
-
-      {{!-- Зависимость (мутация «Addiction», wdbc-5inv) — своей строкой под
-            ЖИЗНЕОБЕСПЕЧЕНИЕМ, только если мутация есть у актора. --}}
-      {{#if body.dependencies.length}}
-      <div class="bc-life bc-dep">
-        <div class="bc-life-cap">ЗАВИСИМОСТЬ</div>
-        {{#each body.dependencies as |d|}}
-        <div class="bc-dep-row {{#if d.unsatisfied}}is-alert{{/if}}">
-          <span class="bc-life-ic">💉</span>
-          <div class="bc-life-mid">
-            <input type="text" class="bc-dep-substance" data-dep-substance="{{d.itemId}}" value="{{d.substance}}" placeholder="объект зависимости"/>
-            <div class="bc-dep-status">{{#if d.unsatisfied}}<span class="bc-life-pen">−10 Навыки</span>{{/if}} <span>{{d.status}}</span></div>
-          </div>
-          <div class="bc-life-ctl">
-            <button type="button" class="bc-life-btn bc-life-ok" data-dep-satisfy="{{d.itemId}}" title="Удовлетворить — сбросить таймер">✓</button>
-          </div>
-        </div>
-        {{/each}}
-      </div>
-      {{/if}}
-
-      {{!-- Безумие / Порча — переехали сюда с вкладки ПОКАЗАТЕЛИ, рядом друг с
-            другом (в две колонки). Весь функционал (кнопки бросков, +/−,
-            полосы) сохранён без изменений, просто другое место на листе. На
-            ПОКАЗАТЕЛЯХ у Характеристик остались только простые значения
-            COR/INS для взгляда без переключения вкладки. Классы
-            .stat-panel/.side-* не менялись; класс stats-cog — тот же, что
-            красит эти самые элементы на ПОКАЗАТЕЛЯХ (actor-stats-cog.css) в
-            фосфорную зелень безусловно (.side-bar/.side-fill/.side-pct/
-            .side-code вообще не имеют иного вида) — вид получается тем же
-            самым, без копирования правил. --}}
-      <div class="bc-trackers bc-trackers-2col stats-cog">
-        {{> "systems/warhammer-dbc/templates/actor/parts/sanity-corruption-panels.hbs"}}
-      </div>{{!-- /bc-trackers --}}
+      {{!-- СОСТОЯНИЯ — полная редактируемая панель, не только счётчик выше:
+            меняются каждый раунд боя, поэтому остаются в закреплённой
+            приборке, а не спрятаны за субвкладкой (wdbc-ycgk). --}}
+      <div class="effects-section-panel bc-conditions-pinned"> <div class="effects-subsection" data-collapse-key="body-conditions"> <div class="panel-title conditions-panel-title" data-action="panelCollapse"> СОСТОЯНИЯ
+          <button type="button" class="conditions-add-btn" title="Добавить состояние">＋</button> </div> {{#if activeConditions.length}}
+        <div class="conditions-active-list"> {{#each activeConditions as |cond|}}
+          <div class="condition-tag {{cond.css}}" data-condition="{{cond.key}}" style="--cond-color:{{cond.color}};" title="{{cond.desc}}"> <span class="condition-tag-icon">{{{cond.svg}}}</span> <span class="condition-tag-name">{{cond.label}}</span> {{#if cond.hasLevel}}
+            <span class="condition-tag-level-wrap"> <input type="number" class="condition-level-input" data-condition="{{cond.key}}" value="{{cond.level}}" min="0" {{#if (eq cond.key "fatigued")}}readonly title="Значение — со вкладки ТЕЛО"{{else}}title="Уровень / Раунды"{{/if}}/> </span> {{/if}}
+            {{#unless (eq cond.key "fatigued")}}<button type="button" class="condition-remove-btn" data-condition="{{cond.key}}" title="Снять состояние">✕</button>{{/unless}} </div> {{/each}}
+        </div> {{else}}
+        <div class="conditions-empty">Нет активных состояний</div> {{/if}}
+      </div> </div>
 
     </div>
   </div>
 
-  {{!-- ══════════════ МЕХАНИЧЕСКИЕ ПАНЕЛИ (без изменения логики) ══════════════ --}}
-  <div class="bc-panels"> <div class="effects-section-panel">
+  {{!-- ══════════════ СУБВКЛАДКИ: Плоть / Разум / Скверна ══════════════ --}}
+  <div class="bc-subtabs">
+    <a class="bc-subtab active" data-action="bodySubtab" data-subtab="flesh">Плоть</a>
+    <a class="bc-subtab bc-subtab--mind" data-action="bodySubtab" data-subtab="mind">Разум</a>
+    <a class="bc-subtab bc-subtab--corruption" data-action="bodySubtab" data-subtab="corruption">Скверна</a>
+  </div>
+
+  {{!-- ─────────────────────── ПЛОТЬ: Нужды, Болезни, Хирургия ─────────────────────── --}}
+  <div class="bc-subpanel active" data-subpanel="flesh"> <div class="effects-section-panel">
+
+  {{!-- Жизненные потребности: Голод / Жажда / Сон (корбук 483) --}}
+  <div class="bc-life">
+    <div class="bc-life-cap">ЖИЗНЕОБЕСПЕЧЕНИЕ</div>
+    {{#each body.life as |v|}}
+    <div class="bc-life-row {{#if v.alert}}is-alert{{/if}} {{#if v.crit}}is-crit{{/if}}" style="--vc:{{v.tone}}" data-tooltip="{{v.fx}}">
+      <span class="bc-life-ic">{{v.icon}}</span>
+      <div class="bc-life-mid">
+        <div class="bc-life-top"> <span class="bc-life-lbl">{{v.label}}</span> <span class="bc-life-stage">{{v.stageLabel}}</span> {{#if v.pen}}<span class="bc-life-pen" title="Авто-дебафф к характеристикам">−{{v.pen}}</span>{{/if}} </div>
+        <div class="bc-life-pips">{{#each v.pips as |p|}}<i class="bc-life-pip {{#if p.on}}on{{/if}}"></i>{{/each}}</div>
+      </div>
+      <div class="bc-life-ctl">
+        <button type="button" class="bc-life-btn" data-vital-adj="{{v.key}}" data-dir="-1" title="Легче">−</button>
+        <button type="button" class="bc-life-btn" data-vital-adj="{{v.key}}" data-dir="1" title="Хуже">+</button>
+        <button type="button" class="bc-life-btn bc-life-ok" data-vital-reset="{{v.key}}" title="{{v.action}} — сбросить">✓</button>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+
+  {{!-- Зависимость (мутация «Addiction», wdbc-5inv) — своей строкой под
+        ЖИЗНЕОБЕСПЕЧЕНИЕМ, только если мутация есть у актора. --}}
+  {{#if body.dependencies.length}}
+  <div class="bc-life bc-dep">
+    <div class="bc-life-cap">ЗАВИСИМОСТЬ</div>
+    {{#each body.dependencies as |d|}}
+    <div class="bc-dep-row {{#if d.unsatisfied}}is-alert{{/if}}">
+      <span class="bc-life-ic">💉</span>
+      <div class="bc-life-mid">
+        <input type="text" class="bc-dep-substance" data-dep-substance="{{d.itemId}}" value="{{d.substance}}" placeholder="объект зависимости"/>
+        <div class="bc-dep-status">{{#if d.unsatisfied}}<span class="bc-life-pen">−10 Навыки</span>{{/if}} <span>{{d.status}}</span></div>
+      </div>
+      <div class="bc-life-ctl">
+        <button type="button" class="bc-life-btn bc-life-ok" data-dep-satisfy="{{d.itemId}}" title="Удовлетворить — сбросить таймер">✓</button>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
 
   {{!-- ── ГЕНОСЕМЯ (перенесено со Способностей) ────────────────────────── --}}
   {{#if isAstartes}}
-  <div class="ability-section-panel gene-seed-panel"> <div class="panel-title"> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> </div> <div class="gene-seed-hint">Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже.</div>
+  <div class="ability-section-panel gene-seed-panel" data-collapse-key="body-gene-seed"> <div class="panel-title" data-action="panelCollapse" title="Числовые бонусы (Unnatural S/T, Размер) применяются автоматически через Черты. Импланты Геносемени — гайд ниже."> ГЕНОСЕМЯ </div> <div class="gene-seed-head"> <span class="gene-origin-label" style="flex:1;align-self:center;">Происхождение и Легион — на вкладке «Записи».</span> </div>
     {{#if geneSeedOrgans.length}}
     <table class="items-table gene-seed-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th class="col-wide">Орган</th> <th>Эффект</th> </tr> </thead> <tbody> {{#each geneSeedOrgans as |o|}}
       <tr class="item-row" data-item-id="{{o.id}}"> <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{o.id}}" title="Показать/скрыть описание">▸</button></td> <td class="item-name-cell">{{o.name}}</td> <td class="trait-fx-cell">{{o.effect}}</td> </tr>
@@ -145,7 +150,7 @@
 
   {{!-- ── АКТИВНЫЕ ПРЕПАРАТЫ ────────────────────────────────────────────── --}}
   {{#if activeDrugs.length}}
-  <div class="effects-subsection"> <div class="panel-title">АКТИВНЫЕ ПРЕПАРАТЫ</div> {{#each activeDrugs as |drug|}}
+  <div class="effects-subsection" data-collapse-key="body-active-drugs"> <div class="panel-title" data-action="panelCollapse">АКТИВНЫЕ ПРЕПАРАТЫ</div> {{#each activeDrugs as |drug|}}
     <div class="effect-card effect-card-drug {{#if drug.isAfterEffect}}effect-card-after{{/if}}" data-item-id="{{drug.id}}"> <div class="effect-card-header"> <span class="effect-icon"></span> <span class="effect-name">{{drug.name}}</span> {{#if drug.isAfterEffect}}
           <span class="effect-state-badge effect-state-after">пост-эффект</span> {{else}}
           <span class="effect-state-badge">активен</span> {{/if}}
@@ -178,29 +183,8 @@
     </div> {{/each}}
   </div> {{/if}}
 
-  {{!-- ── СОСТОЯНИЯ ───────────────────────────────────────────────────────── --}}
-  <div class="effects-subsection"> <div class="panel-title conditions-panel-title"> СОСТОЯНИЯ
-      <button type="button" class="conditions-add-btn" title="Добавить состояние">＋</button> </div> {{#if activeConditions.length}}
-    <div class="conditions-active-list"> {{#each activeConditions as |cond|}}
-      <div class="condition-tag {{cond.css}}" data-condition="{{cond.key}}" style="--cond-color:{{cond.color}};" title="{{cond.desc}}"> <span class="condition-tag-icon">{{{cond.svg}}}</span> <span class="condition-tag-name">{{cond.label}}</span> {{#if cond.hasLevel}}
-        <span class="condition-tag-level-wrap"> <input type="number" class="condition-level-input" data-condition="{{cond.key}}" value="{{cond.level}}" min="0" {{#if (eq cond.key "fatigued")}}readonly title="Значение — со вкладки ТЕЛО"{{else}}title="Уровень / Раунды"{{/if}}/> </span> {{/if}}
-        {{#unless (eq cond.key "fatigued")}}<button type="button" class="condition-remove-btn" data-condition="{{cond.key}}" title="Снять состояние">✕</button>{{/unless}} </div> {{/each}}
-    </div> {{else}}
-    <div class="conditions-empty">Нет активных состояний</div> {{/if}}
-  </div>
-
-  {{!-- ── МЕНТАЛЬНЫЕ РАССТРОЙСТВА ──────────────────────────────────────────── --}}
-  <div class="effects-subsection"> <div class="panel-title conditions-panel-title"> МЕНТАЛЬНЫЕ РАССТРОЙСТВА
-      <span class="panel-btn-group"> <button type="button" class="panel-mini-btn disorder-roll-btn" title="Случайное расстройство (d100)">d100</button> <button type="button" class="panel-mini-btn disorder-add-btn" title="Добавить расстройство из списка">＋</button> </span> </div> {{#if mentalDisorders.length}}
-    <div class="disorders-list"> {{#each mentalDisorders as |d|}}
-      <div class="effect-card" data-item-id="{{d.id}}"> <div class="effect-card-header"> <span class="effect-icon"></span> <span class="effect-name disorder-name-link" data-item-id="{{d.id}}" style="cursor:pointer;">{{d.name}}</span> <span class="addiction-test">Тест: <b>{{d.testLabel}}</b></span> <button type="button" class="disorder-test-btn" data-item-id="{{d.id}}" title="Бросок теста расстройства">Тест</button> <button type="button" class="disorder-remove-btn" data-item-id="{{d.id}}" title="Снять расстройство">✕</button> </div> {{#if d.desc}}<div class="effect-desc">{{d.desc}}</div>{{/if}}
-      </div> {{/each}}
-    </div> {{else}}
-    <div class="conditions-empty">Нет расстройств</div> {{/if}}
-  </div>
-
   {{!-- ── БОЛЕЗНИ ─────────────────────────────────────────────────────────── --}}
-  <div class="effects-subsection"> <div class="panel-title conditions-panel-title"> БОЛЕЗНИ
+  <div class="effects-subsection" data-collapse-key="body-diseases"> <div class="panel-title conditions-panel-title" data-action="panelCollapse"> БОЛЕЗНИ
       <button type="button" class="conditions-add-btn disease-add-btn" title="Добавить болезнь">＋</button> </div> {{#if diseases.length}}
     <div class="diseases-list"> {{#each diseases as |dis|}}
       <div class="effect-card effect-card-disease {{#if dis.active}}effect-card-disease-active{{/if}}" data-item-id="{{dis.id}}"> <div class="effect-card-header"> <span class="effect-icon">☣</span> <span class="effect-name disease-name-link" data-item-id="{{dis.id}}" style="cursor:pointer;">{{dis.name}}</span> <span class="effect-category">{{dis.typeLabel}}</span> {{#if dis.severityLabel}}<span class="effect-category">{{dis.severityLabel}}</span>{{/if}}
@@ -217,7 +201,7 @@
 
   {{!-- ── ЗАВИСИМОСТИ ─────────────────────────────────────────────────────── --}}
   {{#if addictions.length}}
-  <div class="effects-subsection"> <div class="panel-title panel-title-addiction">ЗАВИСИМОСТИ</div> <div class="addictions-list"> {{#each addictions as |add|}}
+  <div class="effects-subsection" data-collapse-key="body-addictions"> <div class="panel-title panel-title-addiction" data-action="panelCollapse">ЗАВИСИМОСТИ</div> <div class="addictions-list"> {{#each addictions as |add|}}
       <div class="addiction-entry" data-item-id="{{add.id}}"> <div class="addiction-header"> <span class="addiction-icon"></span> <span class="addiction-name">{{add.name}}</span> <span class="addiction-status-on">● зависим</span> <span class="addiction-test">Тест: <b>{{add.testChar}}{{#if add.testMod}}{{signedNum add.testMod}}{{/if}}</b></span> {{#if add.frequency}}<span class="addiction-freq">{{add.frequency}}</span>{{/if}}
           <button type="button" class="addiction-test-btn" data-item-id="{{add.id}}" data-char="{{add.testCharKey}}" data-mod="{{add.testMod}}" title="Тест на срыв зависимости (успех — избавление)">Тест</button> <button type="button" class="addiction-remove-btn" data-item-id="{{add.id}}" title="Снять зависимость вручную">✕</button> </div> {{#if add.minDose}}
         <div class="addiction-dose">Мин. опасная доза/нед.: <b>{{add.minDose}}</b></div> {{/if}}
@@ -227,11 +211,42 @@
     </div> </div> {{/if}}
 
   {{!-- ПРИМЕНИТЬ ПРЕПАРАТ переехал на вкладку БОЙ (tab-combat.hbs) — по
-        просьбе пользователя, ближе к остальным боевым действиям. АКТИВНЫЕ
-        ПРЕПАРАТЫ (выше) и остальные секции ТЕЛА остались на месте. --}}
+        просьбе пользователя, ближе к остальным боевым действиям. --}}
+
+  {{!-- Кнопка хирургикона — теперь здесь, вместе с остальным «телесным»
+        содержимым субвкладки «Плоть», а не под Био-сканом (wdbc-ycgk). --}}
+  <button type="button" class="bc-surgeon-btn" title="Открыть хирургеон — установка/снятие имплантов"> <img class="bc-surgeon-ic" src="/systems/warhammer-dbc/assets/mechanicus.png" alt=""/> <span class="bc-surgeon-btn-label">ХИРУРГЕОН</span> <span class="bc-surgeon-btn-sub">установка имплантов</span> </button>
+
+  </div> </div>{{!-- /субвкладка Плоть --}}
+
+  {{!-- ─────────────────────── РАЗУМ: Безумие, Ментальные расстройства ─────────────────────── --}}
+  <div class="bc-subpanel" data-subpanel="mind"> <div class="effects-section-panel">
+
+  <div class="stats-cog">
+    {{> "systems/warhammer-dbc/templates/actor/parts/sanity-panel.hbs"}}
+  </div>
+
+  {{!-- ── МЕНТАЛЬНЫЕ РАССТРОЙСТВА ──────────────────────────────────────────── --}}
+  <div class="effects-subsection" data-collapse-key="body-mental-disorders"> <div class="panel-title conditions-panel-title" data-action="panelCollapse"> МЕНТАЛЬНЫЕ РАССТРОЙСТВА
+      <span class="panel-btn-group"> <button type="button" class="panel-mini-btn disorder-roll-btn" title="Случайное расстройство (d100)">d100</button> <button type="button" class="panel-mini-btn disorder-add-btn" title="Добавить расстройство из списка">＋</button> </span> </div> {{#if mentalDisorders.length}}
+    <div class="disorders-list"> {{#each mentalDisorders as |d|}}
+      <div class="effect-card" data-item-id="{{d.id}}"> <div class="effect-card-header"> <span class="effect-icon"></span> <span class="effect-name disorder-name-link" data-item-id="{{d.id}}" style="cursor:pointer;">{{d.name}}</span> <span class="addiction-test">Тест: <b>{{d.testLabel}}</b></span> <button type="button" class="disorder-test-btn" data-item-id="{{d.id}}" title="Бросок теста расстройства">Тест</button> <button type="button" class="disorder-remove-btn" data-item-id="{{d.id}}" title="Снять расстройство">✕</button> </div> {{#if d.desc}}<div class="effect-desc">{{d.desc}}</div>{{/if}}
+      </div> {{/each}}
+    </div> {{else}}
+    <div class="conditions-empty">Нет расстройств</div> {{/if}}
+  </div>
+
+  </div> </div>{{!-- /субвкладка Разум --}}
+
+  {{!-- ─────────────────────── СКВЕРНА: Порча, Мутации и Дары Богов ─────────────────────── --}}
+  <div class="bc-subpanel" data-subpanel="corruption"> <div class="effects-section-panel">
+
+  <div class="stats-cog">
+    {{> "systems/warhammer-dbc/templates/actor/parts/corruption-panel.hbs"}}
+  </div>
 
   {{!-- ── МУТАЦИИ И ДАРЫ БОГОВ (общий пул, стр. 440-460) ───────────────────── --}}
-  <div class="effects-subsection"> <div class="panel-title"> МУТАЦИИ И ДАРЫ БОГОВ
+  <div class="effects-subsection" data-collapse-key="body-mutations-gifts"> <div class="panel-title" data-action="panelCollapse"> МУТАЦИИ И ДАРЫ БОГОВ
       <button type="button" class="mutgift-roll-btn" data-action="mutgiftRoll" title="Бросок 1d100 — Общие Мутации (стр. 440) или Дар своего Бога (стр. 453-460), со сдвигом ±Inf.b">🎲</button>
       <button type="button" class="mutgift-add-btn" data-action="mutgiftAdd" title="Выбрать мутацию или Дар из общего пула">＋</button> </div>
     <table class="items-table"> <thead> <tr> <th class="ability-toggle-col"></th> <th>Название</th> <th class="col-narrow">Тип</th> </tr> </thead> <tbody> {{#if mutationsAndGifts.length}}
@@ -242,5 +257,6 @@
         <tr class="items-empty"> <td colspan="3"><em>Нет мутаций и Даров</em></td> </tr> {{/if}}
       </tbody> </table> </div>
 
-  </div> </div>{{!-- /bc-panels --}}
+  </div> </div>{{!-- /субвкладка Скверна --}}
+
 </div> </div>{{!-- /tab effects --}}

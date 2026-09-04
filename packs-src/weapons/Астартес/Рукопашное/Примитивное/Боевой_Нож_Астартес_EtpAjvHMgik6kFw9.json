@@ -6,6 +6,7 @@
     "description": "",
     "notes": "",
     "weaponClass": "melee",
+    "itemSize": "2x1",
     "weaponType": "lowtech",
     "range": 2,
     "balance": 1,

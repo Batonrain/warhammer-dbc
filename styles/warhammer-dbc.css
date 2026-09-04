@@ -4,6 +4,7 @@
 ═══════════════════════════════════════════════════════ */
 
 @import url("base/variables.css");
+@import url("base/fonts.css");
 @import url("base/common.css");
 
 @import url("sheets/actor-header.css");
@@ -62,3 +63,4 @@
 @import url("ui/character-wizard.css");
 @import url("ui/callouts.css");
 @import url("ui/content-sync.css");
+@import url("ui/xp-log.css");

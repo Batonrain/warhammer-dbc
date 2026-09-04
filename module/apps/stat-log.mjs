@@ -36,9 +36,13 @@ function parseDelta(raw, allowDice) {
  *   умолчание — единственный источник, который сейчас передаёт bonusPercent.
  * @param {string} [opts.note] — произвольная памятка-напоминание в окне (не влияет на
  *   расчёт, просто видна ДО ввода) — напр. «раса не получает доп. Cor от иных источников».
+ * @param {boolean} [opts.xpLog=false] — вдобавок к правке поля записать причину в
+ *   system.experience.log (Журнал опыта, apps/xp-log.mjs). Без этого правка «＋»
+ *   уходила только в чат: игрок вписывал причину, а лист её не запоминал — журнал
+ *   выглядел «не обновляется», хотя опыт менялся (wdbc-ix95).
  */
 export async function promptStatAdd(actor, { label, path, allowDice = false, clampMin = 0, clampMax = null,
-    bonusPercent = 0, bonusLabel = "Ловит на Лету / Fast Learner", note = "" } = {}) {
+    bonusPercent = 0, bonusLabel = "Ловит на Лету / Fast Learner", note = "", xpLog = false } = {}) {
   const hint = allowDice ? "целое число, либо XdY+Z, напр. 2d10+3" : "целое число";
   // Видно ДО ввода, не только в чате постфактум — иначе игрок вводит число
   // вслепую, не зная, что оно вырастет.
@@ -92,7 +96,14 @@ export async function promptStatAdd(actor, { label, path, allowDice = false, cla
   let next = cur + amount;
   if (clampMin != null) next = Math.max(clampMin, next);
   if (clampMax != null) next = Math.min(clampMax, next);
-  await actor.update({ [path]: next });
+
+  const update = { [path]: next };
+  if (xpLog) {
+    const log = Array.isArray(actor.system?.experience?.log) ? foundry.utils.deepClone(actor.system.experience.log) : [];
+    log.push({ at: Date.now(), amount, kind: amount >= 0 ? "grant" : "spend", reason: result.reason });
+    update["system.experience.log"] = log;
+  }
+  await actor.update(update);
 
   const rollMode = game.settings.get("core", "rollMode");
   const diceHtml = roll ? await roll.render() : "";

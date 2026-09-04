@@ -35,9 +35,16 @@
   border: 1px solid var(--wh-border);
 }
 
-.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; }
-.warhammer-dbc .wounds-heal-btn {
-  width: 100%;
+/* Аблатив (wdbc-njxj): щит поверх обычных Ран — показан, только когда у
+   персонажа реально есть источник (ablativeMax > 0, см. tab-combat.hbs). */
+.warhammer-dbc .wounds-ablative-vals { display: flex; align-items: center; gap: 3px; }
+.warhammer-dbc .wounds-ablative-max { font-size: 0.9em; opacity: 0.75; }
+.warhammer-dbc .wounds-ablative-row label { color: var(--cg, inherit); }
+
+.warhammer-dbc .wounds-heal-row { justify-content: center !important; padding-top: 6px !important; gap: 6px; }
+.warhammer-dbc .wounds-heal-btn,
+.warhammer-dbc .wounds-request-heal-btn {
+  flex: 1 1 0;
   padding: 4px 6px;
   font-size: 0.85em;
   font-weight: bold;
@@ -47,7 +54,8 @@
   border-radius: 3px;
   color: var(--wh-text, inherit);
 }
-.warhammer-dbc .wounds-heal-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
+.warhammer-dbc .wounds-heal-btn:hover,
+.warhammer-dbc .wounds-request-heal-btn:hover { background: var(--wh-accent, #7a1f1f); color: #fff; }
 
 /* ── Экономика действий: ОД / Реакции (стр. 12) ── */
 .warhammer-dbc .action-economy-bar {
@@ -67,6 +75,15 @@
 .warhammer-dbc .ae-pool-label { font-weight: bold; }
 .warhammer-dbc .ae-pool-value { font-weight: bold; color: var(--wh-accent, #2a6f4c); }
 .warhammer-dbc .ae-pool-sep { opacity: 0.6; }
+/* ОД/Реакции редактируемые на месте (wdbc-21tj) — тот же приём, что .fatigue-value-input. */
+.warhammer-dbc .ae-pool-value-input, .warhammer-dbc .ae-pool-max-input {
+  width: 26px; text-align: center; font-weight: bold; color: var(--wh-accent, #2a6f4c);
+  padding: 0; border: 1px solid transparent; background: transparent;
+}
+.warhammer-dbc .ae-pool-value-input:hover, .warhammer-dbc .ae-pool-max-input:hover,
+.warhammer-dbc .ae-pool-value-input:focus, .warhammer-dbc .ae-pool-max-input:focus {
+  border-color: var(--wh-border); background: var(--wh-input-bg);
+}
 .warhammer-dbc .ae-spend-btn, .warhammer-dbc .ae-reset-btn {
   padding: 1px 6px;
   font-size: 0.9em;
@@ -1653,6 +1670,20 @@
 /* Когитатор: ещё контрастнее на тёмной шапке */
 .warhammer-dbc.wh-holo .weapon-mod-badge { color: #c9fff2; background: rgba(47,158,106,0.2); border-color: #2f9e6a; }
 .warhammer-dbc .mod-row-installed { background: rgba(58,122,138,0.08); }
+/* Перезарядка (wdbc-ai0o): тот же приём бейджа, что у weapon-mod-badge выше,
+   в тон предупреждению rwc-mag-low (амбер, «требует внимания»). */
+.warhammer-dbc .rwc-recharge-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.72em;
+  color: #cc6600;
+  background: rgba(204,102,0,0.14);
+  border: 1px solid #cc6600;
+  border-radius: 8px;
+  padding: 0 6px;
+  vertical-align: middle;
+}
+.warhammer-dbc.wh-holo .rwc-recharge-badge { color: #ffcf8a; background: rgba(204,102,0,0.22); border-color: #d98a2c; }
 
 /* ── Ручные щиты (стр. 215): строка управления под щитом в списке ближнего боя ── */
 .warhammer-dbc .shield-ctl-row .shield-ctl-cell {

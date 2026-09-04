@@ -68,6 +68,13 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       loadedAmmoId: new StringField({ initial: "", label: "Заряженный боеприпас" }),
       weaponProps:  list("Свойства"),
       needsRecharge: new BooleanField({ initial: false, label: "Требует перезарядки" }),
+      // «Нельзя стрелять в следующий ход» (стр. Перезарядка, weapon-properties.mjs)
+      // — не «до начала следующего Хода носителя», а РОВНО один Ход целиком.
+      // 1 сразу после выстрела: на СЛЕДУЮЩЕМ старте Хода носителя досчитывается
+      // до 0 (needsRecharge остаётся true — этот Ход ещё заблокирован), на Ходе
+      // ПОСЛЕ ЭТОГО needsRecharge наконец снимается (module/combat/prisma.mjs —
+      // processPrismaTurnStart — образец точки входа, тот же хук начала Хода).
+      rechargeTurnsRemaining: new NumberField({ initial: 0, integer: true, min: 0, label: "Ходов до готовности" }),
       // Призма (стр. 74 Книги Аэльдари): текущий накопленный заряд, живёт на
       // предмете тем же приёмом, что needsRecharge — +1/Ход в руках (движок:
       // module/combat/prisma.mjs), сбрасывается наполовину после выстрела.

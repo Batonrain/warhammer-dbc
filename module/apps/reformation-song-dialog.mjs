@@ -20,7 +20,7 @@ const CATEGORY_LABEL = { weapon: "Оружие", armor: "Броня", gear: "С�
 const TARGET_TYPES = new Set(["weapon", "armor", "gear"]);
 
 export async function showReformationSongDialog(actor) {
-  const casterToken = actor.getActiveTokens?.(true, true)?.[0] ?? null;
+  const casterToken = actor.getActiveTokens?.(false, true)?.[0] ?? null;
   if (!casterToken) {
     ui.notifications?.warn("У актора нет токена на текущей сцене — радиус не от чего мерить.");
     return null;

@@ -1,8 +1,8 @@
 <div class="tab gear-cog {{#if (eq tab "gear")}}active{{/if}}" data-tab="gear" data-group="primary">
 
   {{!-- ═══ Сенсор нагрузки (всегда виден) ═══ --}}
-  <div class="gear-section-panel gear-load-panel">
-    <div class="panel-title">СЕНСОР НАГРУЗКИ <span class="gl-code">// ENC.SYS</span></div>
+  <div class="gear-section-panel gear-load-panel" data-collapse-key="gear-load">
+    <div class="panel-title" data-action="panelCollapse">СЕНСОР НАГРУЗКИ <span class="gl-code">// ENC.SYS</span></div>
     <div class="gear-load">
       <div class="gl-readout">
         <span class="gl-cur load-{{encumbranceLevel}}">{{system.encumbrance.current}}</span>
@@ -56,7 +56,11 @@
               <td>{{w.weaponClass}}</td><td>{{w.weaponType}}</td>
               <td>{{w.damage}}</td><td>{{w.damageType}}</td>
               <td>{{w.magazineCur}}/{{w.magazineMax}}</td><td>{{w.weight}}</td>
-              <td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if w.infoguard}}🛡 {{w.infoguard}}{{else if (eq w.infoguard 0)}}0{{else}}—{{/if}}</td>
+              <td class="gear-infoguard-cell" title="Успехи Инфограждения">
+                {{#if w.infoguard}}🛡 {{w.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{w.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{w.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else if (eq w.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{w.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{w.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else}}—{{/if}}
+              </td>
             </tr>
             {{#each w.mods as |m|}}
             <tr class="item-row gear-modsub-row" data-item-id="{{m.id}}" data-host-id="{{w.id}}">
@@ -143,7 +147,11 @@
               <td class="gear-ap-cell {{#if a.equipped}}gear-ap-active{{/if}}">{{a.leftLeg}}</td>
               <td class="gear-ap-cell {{#if a.equipped}}gear-ap-active{{/if}}">{{a.rightLeg}}</td>
               <td>{{a.weight}}</td>
-              <td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if a.infoguard}}🛡 {{a.infoguard}}{{else if (eq a.infoguard 0)}}0{{else}}—{{/if}}</td>
+              <td class="gear-infoguard-cell" title="Успехи Инфограждения">
+                {{#if a.infoguard}}🛡 {{a.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{a.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{a.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else if (eq a.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{a.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{a.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else}}—{{/if}}
+              </td>
             </tr>
             {{#each a.mods as |m|}}
             <tr class="item-row gear-modsub-row {{#if m.activatable}}{{#unless m.active}}gear-modsub-off{{/unless}}{{/if}}" data-item-id="{{m.id}}" data-host-id="{{a.id}}">
@@ -288,7 +296,11 @@
         <tbody>
           {{#if gearGear.length}}
             {{#each gearGear as |g|}}
-            <tr class="item-row" data-item-id="{{g.id}}"><td class="item-name-cell">{{g.name}}</td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if g.infoguard}}🛡 {{g.infoguard}}{{else if (eq g.infoguard 0)}}0{{else}}—{{/if}}</td></tr>
+            <tr class="item-row" data-item-id="{{g.id}}"><td class="item-name-cell">{{g.name}}</td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
+                {{#if g.infoguard}}🛡 {{g.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{g.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{g.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else if (eq g.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{g.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{g.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else}}—{{/if}}
+              </td></tr>
             {{/each}}
           {{else}}
             <tr class="items-empty"><td colspan="6"><em>Нет снаряжения</em></td></tr>
@@ -334,7 +346,11 @@
         <tbody>
           {{#if gearTools.length}}
             {{#each gearTools as |t|}}
-            <tr class="item-row" data-item-id="{{t.id}}"><td class="item-name-cell">{{t.name}}</td><td></td><td>{{t.quantity}}</td><td>{{t.weight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">{{#if t.infoguard}}🛡 {{t.infoguard}}{{else if (eq t.infoguard 0)}}0{{else}}—{{/if}}</td></tr>
+            <tr class="item-row" data-item-id="{{t.id}}"><td class="item-name-cell">{{t.name}}</td><td></td><td>{{t.quantity}}</td><td>{{t.weight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
+                {{#if t.infoguard}}🛡 {{t.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{t.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{t.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else if (eq t.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{t.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{t.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
+                {{else}}—{{/if}}
+              </td></tr>
             {{/each}}
           {{else}}
             <tr class="items-empty"><td colspan="5"><em>Нет инструментов</em></td></tr>

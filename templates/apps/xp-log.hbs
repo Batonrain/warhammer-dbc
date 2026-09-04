@@ -1,0 +1,21 @@
+<div class="wh-xplog-body">
+  <div class="stat-panel xp-log-panel">
+    <div class="panel-title">ЖУРНАЛ ОПЫТА</div>
+    {{#if entries.length}}
+    <table class="items-table xp-log-table">
+      <thead><tr><th class="col-narrow">Когда</th><th>За что</th><th class="col-narrow">Опыт</th></tr></thead>
+      <tbody>
+        {{#each entries as |e|}}
+        <tr class="item-row">
+          <td class="xp-log-when">{{e.when}}</td>
+          <td class="xp-log-reason">{{e.reason}}</td>
+          <td class="xp-log-amount">{{signedNum e.amount}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <p class="xp-log-empty">Записей ещё нет — журнал наполняется сам: ручное начисление опыта («＋» в блоке ОПЫТ), возврат за совпавшую выдачу при применении расы/Архетипа, покупка элитного архетипа.</p>
+    {{/if}}
+  </div>
+</div>

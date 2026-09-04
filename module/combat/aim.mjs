@@ -118,7 +118,7 @@ export function beginTargeting(actor, weapon, onPick, label = "", { forceMelee =
   // Рукопашная — одно кольцо «кто рядом» (та же isMelee-логика, что и у
   // самого броска, см. combat/attack.mjs:100); дальнобойная — полосы
   // дальности, и только если у оружия задан Rng.
-  const attackerToken = actor?.getActiveTokens?.(true)?.[0] ?? null;
+  const attackerToken = actor?.getActiveTokens?.(false)?.[0] ?? null;
   const isMelee = forceMelee || weapon?.system?.weaponClass === "melee";
   const rng = Number(weapon?.system?.range) || 0;
   const showsRange = !isMelee && !!(attackerToken && rng > 0);

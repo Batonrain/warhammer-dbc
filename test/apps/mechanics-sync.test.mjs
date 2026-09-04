@@ -23,19 +23,19 @@ import { syncMechanicsEffects, describeMechEntry } from "../../module/apps/mecha
 const FLAG = "warhammer-dbc";
 
 /** Предмет с механикой и списком эффектов: столько, сколько читает sync. */
-function itemDoc({ mechanics = [], fx = [] } = {}) {
+function itemDoc({ mechanics = [], fx = [], type = "trait", system = {} } = {}) {
   const flags = { mechanics };
   const item = {
-    id: "item-1", type: "trait", name: "Черта", img: "icons/svg/aura.svg",
-    system: {},
+    id: "item-1", type, name: "Черта", img: "icons/svg/aura.svg",
+    system,
     effects: fx.map((f, i) => ({
-      id: f.id ?? `fx-${i}`, name: f.name, system: f.system,
+      id: f.id ?? `fx-${i}`, name: f.name, system: f.system, disabled: f.disabled ?? false,
       getFlag: (_s, k) => f.flags?.[k]
     })),
     getFlag: (_scope, key) => flags[key],
     async createEmbeddedDocuments(_type, docs) {
       item.effects.push(...docs.map((d, i) => ({
-        id: `new-${i}`, name: d.name, system: d.system,
+        id: `new-${i}`, name: d.name, system: d.system, disabled: false,
         getFlag: (_s, k) => d.flags?.[FLAG]?.[k]
       })));
       return docs;
@@ -43,6 +43,16 @@ function itemDoc({ mechanics = [], fx = [] } = {}) {
     async deleteEmbeddedDocuments(_type, ids) {
       item.effects = item.effects.filter(e => !ids.includes(e.id));
       return ids;
+    },
+    // syncItemEffectsDisabled (wdbc-s9dj) — правит disabled у уже созданных
+    // эффектов ПОСЛЕ createEmbeddedDocuments, тем же приёмом, что психосилы/
+    // техночудеса переключаются тумблером «Поддерживать» на листе.
+    async updateEmbeddedDocuments(_type, updates) {
+      for (const u of updates) {
+        const fx = item.effects.find(e => e.id === u._id);
+        if (fx) fx.disabled = u.disabled;
+      }
+      return updates;
     }
   };
   return item;
@@ -170,5 +180,57 @@ describe("пересборка эффектов Конструктора", () =>
     await syncMechanicsEffects(item);
 
     expect(keysOf(item)).toEqual(["system.characteristics.t.bonusFx"]);
+  });
+});
+
+// wdbc-s9dj: durable-эффект (poolMax/characteristic/movement/armour) не должен
+// висеть включённым, пока источник (психосила/техночудо с isSustained) не
+// активирован — createEmbeddedDocuments сам по себе ставит disabled:false
+// безусловно, синхронизация с isItemActive() должна произойти следом же.
+describe("пересборка эффектов Конструктора: гейт по активности источника (wdbc-s9dj)", () => {
+  const poolEntry = id => ({ id, kind: "poolMax", poolTarget: "ablativeWounds", op: "add", value: "7" });
+
+  it("психосила с isSustained:false — новый durable-эффект создаётся выключенным", async () => {
+    const item = itemDoc({
+      type: "psychicPower", system: { isSustained: false },
+      mechanics: [andGroup(poolEntry("e1"))]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(1);
+    expect(item.effects[0].disabled).toBe(true);
+  });
+
+  it("психосила с isSustained:true — durable-эффект создаётся включённым", async () => {
+    const item = itemDoc({
+      type: "psychicPower", system: { isSustained: true },
+      mechanics: [andGroup(poolEntry("e1"))]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(1);
+    expect(item.effects[0].disabled).toBe(false);
+  });
+
+  it("уже существующий включённый эффект гасится, когда пересборка находит isSustained:false", async () => {
+    const item = itemDoc({
+      type: "psychicPower", system: { isSustained: false },
+      mechanics: [andGroup(poolEntry("e1"))],
+      fx: [{ ...fxFor("e1", "system.wounds.ablativeMax", 7, describeMechEntry(poolEntry("e1"))), disabled: false }]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects[0].disabled).toBe(true);
+  });
+
+  it("трейт (нет понятия «активен») — durable-эффект как раньше включён", async () => {
+    const item = itemDoc({ mechanics: [andGroup(poolEntry("e1"))] });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects[0].disabled).toBe(false);
   });
 });

@@ -1,12 +1,12 @@
-<div class="tab advance-cog {{#if (eq tab "advance")}}active{{/if}}" data-tab="advance" data-group="primary"> <div class="advance-top"> {{#if usesAptitudes}}<div class="stat-panel advance-aptitudes"> <div class="panel-title"> СКЛОННОСТИ
+<div class="tab advance-cog {{#if (eq tab "advance")}}active{{/if}}" data-tab="advance" data-group="primary"> <div class="advance-top"> {{#if usesAptitudes}}<div class="stat-panel advance-aptitudes" data-collapse-key="advance-aptitudes"> <div class="panel-title" data-action="panelCollapse"> СКЛОННОСТИ
         <button type="button" class="apt-char-add-btn" title="Добавить склонность (нужно 8; «Общая» есть у всех)">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <tbody>
-            <tr class="apt-general-row"><td colspan="2"><span class="apt-general">Общая</span> <span class="apt-general-note">— всегда, по умолчанию</span></td></tr>
+            <tr class="apt-general-row"><td colspan="2"><span class="apt-general" title="Всегда, по умолчанию">Общая</span></td></tr>
             {{#if system.aptitudes.length}}
             {{#each system.aptitudes as |apt idx|}}
             <tr> <td class="apt-char-name-cell"> <select data-index="{{idx}}" class="apt-char-select">{{#each ../aptitudeChoices as |c|}}<option value="{{c.key}}" {{#if (eq c.key apt)}}selected{{/if}}>{{c.label}}</option>{{/each}}</select> </td> <td class="apt-char-del-cell"> <button type="button" class="apt-char-remove" data-index="{{idx}}" title="Удалить">✕</button> </td> </tr> {{/each}}
           {{else}}
             <tr class="items-empty"><td colspan="2"><em>Добавь 8 склонностей кнопкой ＋</em></td></tr> {{/if}}
-        </tbody> </table> </div> </div>{{/if}} <div class="stat-panel advance-talents"> <div class="panel-title"> ТАЛАНТЫ
+        </tbody> </table> </div> </div>{{/if}} <div class="stat-panel advance-talents" data-collapse-key="advance-talents"> <div class="panel-title" data-action="panelCollapse"> ТАЛАНТЫ
         <button type="button" class="advtal-add-btn" title="Добавить талант">＋</button> </div> <div class="panel-scroll"> <table class="items-table"> <colgroup><col/><col style="width:56px;"/><col style="width:46px;"/></colgroup> <thead><tr><th>Название</th><th class="col-narrow">Цена</th><th></th></tr></thead> <tbody> {{#each purchasedTalents as |p|}}
             <tr class="advtal-bought {{#if p.isGranted}}is-granted{{/if}} {{#if p.costManual}}is-cost-manual{{/if}}" title="Талант-предмет с листа">
               <td class="apt-char-name-cell"><span class="advtal-bought-name">{{p.name}}</span></td>
@@ -25,7 +25,7 @@
             <tr> <td class="apt-char-name-cell"> <input type="text" value="{{t.name}}" data-index="{{idx}}" data-field="name" class="advtal-input" placeholder="Название таланта"/> </td> <td class="advtal-cost-cell"> <input type="number" value="{{t.cost}}" data-index="{{idx}}" data-field="cost" class="advtal-input" min="0"/> </td> <td class="apt-char-del-cell"> <button type="button" class="advtal-remove" data-index="{{idx}}" title="Удалить">✕</button> </td> </tr> {{/each}}
           {{else}}
             {{#unless purchasedTalents.length}}<tr class="items-empty"><td colspan="3"><em>Нет талантов</em></td></tr>{{/unless}} {{/if}}
-        </tbody> </table> </div> </div> <div class="stat-panel advance-xp"> <div class="panel-title">ОПЫТ <span class="xp-code">// EXP.LOG</span></div>
+        </tbody> </table> </div> </div> <div class="stat-panel advance-xp" data-collapse-key="advance-experience"> <div class="panel-title" data-action="panelCollapse">ОПЫТ <span class="xp-code">// EXP.LOG</span> <button type="button" class="xp-log-btn" data-action="xpLogOpen" title="Открыть журнал опыта отдельным окном — откуда взялся опыт помимо ручной правки «Всего»">📜 Журнал{{#if xpLog.length}} ({{xpLog.length}}){{/if}}</button></div>
       <div class="xp-sensor">
         <div class="xp-bar"><div class="xp-fill" style="width:{{xpPct}}%;"></div><span class="xp-bar-pct">{{xpPct}}%</span></div>
         <div class="xp-sensor-legend"><span>Потрачено <b>{{system.experience.spent}}</b> / {{system.experience.total}}</span><span class="xp-cur">Свободно <b>{{system.experience.current}}</b></span></div>
@@ -33,8 +33,8 @@
       <div class="xp-table"> <div class="xp-row"> <label>Всего</label> <input type="number" name="system.experience.total" value="{{system.experience.total}}" min="0"/> <button type="button" class="stat-add-btn" data-action="statAdd" data-stat="xpTotal" title="Добавить Опыт">＋</button> </div> <div class="xp-row"> <label>Потрачено на Характеристики</label> <span class="xp-auto">{{system.experience.spentChar}}</span> </div> <div class="xp-row"> <label>Потрачено на Навыки</label> <span class="xp-auto">{{system.experience.spentSkills}}</span> </div> <div class="xp-row"> <label>Потрачено на Таланты</label> <span class="xp-auto">{{system.experience.spentTalents}}</span> </div> <div class="xp-row"> <label>Потрачено на Психосилы</label> <span class="xp-auto">{{system.experience.spentPsy}}</span> </div> <div class="xp-row"> <label>Потрачено на Техночудеса</label> <span class="xp-auto">{{system.experience.spentTech}}</span> </div> <div class="xp-row"> <label>Потрачено на Элитные архетипы</label> <span class="xp-auto">{{system.experience.spentElite}}</span> </div> <div class="xp-row"> <label>Потрачено на другое</label> <input type="number" name="system.experience.spentOther" value="{{system.experience.spentOther}}" min="0"/> </div> <div class="xp-row xp-row-result"> <label>Всего потрачено</label> <span>{{system.experience.spent}}</span> </div> <div class="xp-row xp-row-current"> <label>Текущий</label> <span>{{system.experience.current}}</span> </div> </div> </div> </div>{{!-- /advance-top --}}
 
   {{#if showPatronPicker}}
-  <div class="stat-panel chaos-patron-panel" style="margin-bottom:8px;">
-    <div class="panel-title">ПОКРОВИТЕЛЬ ХАОСА</div>
+  <div class="stat-panel chaos-patron-panel" style="margin-bottom:8px;" data-collapse-key="advance-patron">
+    <div class="panel-title" data-action="panelCollapse" title="Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438); в режиме Покровительства/Смешанной — ещё и цену Продвижения ниже.">ПОКРОВИТЕЛЬ ХАОСА</div>
     <div class="chaos-patron-grid">
       {{#each chaosPatrons as |p|}}
       <label class="chaos-patron-opt {{#if p.selected}}sel{{/if}}" title="{{p.label}}" style="--pg:{{p.color}};--pgs:{{p.gc2}};--pgl:{{p.glow}}">
@@ -48,7 +48,6 @@
       </label>
       {{/each}}
     </div>
-    <div class="chaos-patron-note">Выбор Бога окрашивает лист и определяет преимущество/недостаток Очков Бесчестия (корбук 438); в режиме Покровительства/Смешанной — ещё и цену Продвижения ниже.</div>
     {{#if usesPatronStereotype}}
     <div class="patron-stereotype-row" title="Стереотип определяет союзную и 2 враждебные Характеристики для цены их Продвижения (корбук 24) — режим цены задан в Настройках листа/мира.">
       <label>Стереотип Покровительства</label>
@@ -63,32 +62,11 @@
   </div>
   {{/if}}
 
-  {{!-- Журнал опыта: откуда взялся опыт помимо ручной правки «Всего». Возврат
-        за совпавшую выдачу приходит сам собой, посреди применения расы или
-        Архетипа, и без этой ленты разобраться потом было бы негде. --}}
-  {{#if xpLog.length}}
-  <div class="stat-panel xp-log-panel">
-    <div class="panel-title">ЖУРНАЛ ОПЫТА</div>
-    <table class="items-table xp-log-table">
-      <thead><tr><th class="col-narrow">Когда</th><th>За что</th><th class="col-narrow">Опыт</th></tr></thead>
-      <tbody>
-        {{#each xpLog as |e|}}
-        <tr class="item-row">
-          <td class="xp-log-when">{{e.when}}</td>
-          <td class="xp-log-reason">{{e.reason}}</td>
-          <td class="xp-log-amount">+{{e.amount}}</td>
-        </tr>
-        {{/each}}
-      </tbody>
-    </table>
-  </div>
-  {{/if}}
-
   <div class="advance-bottom">{{!-- Характеристики --}}
-        <div class="stat-panel advance-chars-edit"> <div class="panel-title">ХАРАКТЕРИСТИКИ</div> <table class="char-table-edit"> <thead> <tr> <th class="cte-name">Х-ка</th> <th class="cte-imp">Улучшение</th> <th class="cte-num">Сверх.</th> <th class="cte-num">База</th> <th class="cte-num">Итого</th> <th class="cte-num">Бонус</th> <th class="cte-cost">Цена</th> </tr> </thead> <tbody> {{#each chars as |char|}}
+        <div class="stat-panel advance-chars-edit" data-collapse-key="advance-chars"> <div class="panel-title" data-action="panelCollapse">ХАРАКТЕРИСТИКИ</div> <table class="char-table-edit"> <thead> <tr> <th class="cte-name">Х-ка</th> <th class="cte-imp">Улучшение</th> <th class="cte-num">Сверх.</th> <th class="cte-num">База</th> <th class="cte-num">Итого</th> <th class="cte-num">Бонус</th> <th class="cte-cost">Цена</th> </tr> </thead> <tbody> {{#each chars as |char|}}
           <tr> <td class="char-edit-name"> <a class="char-roll" data-action="charRoll" data-char="{{char.key}}" title="{{char.label}}">{{char.abbr}}</a> </td> <td class="cte-imp-cell"> <select class="char-improvement-select" data-char="{{char.key}}"> <option value="none" {{#if (eq char.improvement "none")}}selected{{/if}}>Нет</option> <option value="simple" {{#if (eq char.improvement "simple")}}selected{{/if}}>Простое</option> <option value="average" {{#if (eq char.improvement "average")}}selected{{/if}}>Среднее</option> <option value="trained" {{#if (eq char.improvement "trained")}}selected{{/if}}>Тренированное</option> <option value="significant" {{#if (eq char.improvement "significant")}}selected{{/if}}>Значительное</option> <option value="expert" {{#if (eq char.improvement "expert")}}selected{{/if}}>Экспертное</option> </select> </td> <td> <input class="char-input" type="number" data-char="{{char.key}}" data-field="supernatural" data-dtype="Number" value="{{char.supernatural}}" min="0"/> </td> <td> <input class="char-input" type="number" data-char="{{char.key}}" data-field="base" data-dtype="Number" value="{{char.base}}" min="0"/> </td> <td class="char-total-edit" title="{{char.totalTooltip}}">{{char.total}}</td> <td class="char-bonus-edit">{{char.bonus}}</td> <td class="cte-cost-cell"> <span class="adv-cat adv-cat-{{char.aptCat}}" title="Категория по склонностям">{{#if (eq char.aptCat "ally")}}Д{{else}}{{#if (eq char.aptCat "neutral")}}Н{{else}}В{{/if}}{{/if}}</span> <input class="char-cost-input" type="number" data-char="{{char.key}}" value="{{char.cost}}" min="0" title="Авто-цена по склонностям (можно поправить)"/> <button type="button" class="grant-toggle {{#if char.isGranted}}is-on{{/if}}" data-char="{{char.key}}" title="Пометить текущее улучшение как выданное архетипом/расой (бесплатное). Опыт тратится только выше него.">★</button> </td> </tr> {{/each}}
         </tbody> </table> </div> {{!-- Навыки --}}
-    <div class="stat-panel advance-skills-edit"> <div class="panel-title">НАВЫКИ</div> <div class="skills-advance-scroll"> <table class="skills-advance-table"> <thead> <tr> <th class="sa-name">Название</th> <th class="sa-char">Х-ка</th> <th class="sa-rank">Улучшение</th> <th class="sa-total">Всего</th> <th class="sa-cost">Цена</th> </tr> </thead> <tbody> {{!-- Обычные навыки --}}
+    <div class="stat-panel advance-skills-edit" data-collapse-key="advance-skills"> <div class="panel-title" data-action="panelCollapse">НАВЫКИ</div> <div class="skills-advance-scroll"> <table class="skills-advance-table"> <thead> <tr> <th class="sa-name">Название</th> <th class="sa-char">Х-ка</th> <th class="sa-rank">Улучшение</th> <th class="sa-total">Всего</th> <th class="sa-cost">Цена</th> </tr> </thead> <tbody> {{!-- Обычные навыки --}}
             {{#each skillsAdvance as |sk|}}
             <tr> <td class="sa-name-cell">{{sk.label}}</td> <td class="sa-char-cell">{{sk.char}}</td> <td class="sa-rank-cell"> <select class="skill-rank-select" data-skill="{{sk.key}}" title="★ — уровень от архетипа/расы (бесплатно)"> <option value="untrained" {{#if (eq sk.rank "untrained")}}selected{{/if}}>Нетренированное</option> <option value="knows" {{#if (eq sk.rank "knows")}}selected{{/if}}>Знает{{grantMark "knows" sk.grantedRank}}</option> <option value="trained" {{#if (eq sk.rank "trained")}}selected{{/if}}>Тренированное{{grantMark "trained" sk.grantedRank}}</option> <option value="veteran" {{#if (eq sk.rank "veteran")}}selected{{/if}}>Опытный{{grantMark "veteran" sk.grantedRank}}</option> <option value="expert" {{#if (eq sk.rank "expert")}}selected{{/if}}>Ветеран{{grantMark "expert" sk.grantedRank}}</option> </select> </td> <td class="sa-total-cell {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}"> {{sk.total}}
               </td> <td class="sa-cost-cell"> <span class="adv-cat adv-cat-{{sk.aptCat}}" title="Категория по склонностям">{{#if (eq sk.aptCat "ally")}}Д{{else}}{{#if (eq sk.aptCat "neutral")}}Н{{else}}В{{/if}}{{/if}}</span> <input class="skill-cost-input" type="number" data-skill="{{sk.key}}" value="{{sk.cost}}" min="0"/> <button type="button" class="grant-toggle {{#if sk.isGranted}}is-on{{/if}}" data-skill="{{sk.key}}" title="Пометить текущий уровень как выданный архетипом/расой (бесплатный). Опыт тратится только выше него.">★</button> </td> </tr> {{/each}}
@@ -103,7 +81,7 @@
           </tbody> </table> </div> </div> </div>{{!-- /advance-bottom --}}
 
   {{!-- Психосилы --}}
-  <div class="stat-panel" style="margin-top:8px;"> <div class="panel-title">ПСИХОСИЛЫ</div> <div class="psy-header-small"> <label>Природа Дара:
+  <div class="stat-panel" style="margin-top:8px;" data-collapse-key="advance-psy"> <div class="panel-title" data-action="panelCollapse" title="Сумма цен психосил автоматически идёт в «Потрачено на Психосилы» в Опыте. Синхронизировано с вкладкой «ПСИ».">ПСИХОСИЛЫ</div> <div class="psy-header-small"> <label>Природа Дара:
         <select class="psy-class-select"> <option value="bound" {{#if (eq system.psyker.class "bound")}}selected{{/if}}>Связанный</option> <option value="unbound" {{#if (eq system.psyker.class "unbound")}}selected{{/if}}>Несвязанный</option> <option value="daemonic" {{#if (eq system.psyker.class "daemonic")}}selected{{/if}}>Демонический</option> </select> </label> <label>Базовый PR:
         <input type="number" class="psy-rating-input" value="{{system.psyker.rating}}" min="0" {{#if system.psyker.ratingFromTalent}}disabled title="Равен Рейтингу Таланта Psy Rating / Пси-Рейтинг"{{/if}}/> </label> <label>Текущий PR:
         <span class="psy-stat-value">{{system.psyker.currentRating}}</span> </label> </div> <table class="items-table"> <thead><tr><th>Название</th><th class="col-narrow">Цена</th></tr></thead> <tbody> {{#if psyPowers.length}}
@@ -111,4 +89,4 @@
           <tr> <td class="apt-char-name-cell">{{p.name}}{{#if p.disciplineLabel}} <em style="opacity:.7">· {{p.disciplineLabel}}</em>{{/if}}</td> <td class="advtal-cost-cell"> <input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0"/> <button type="button" class="psy-cost-reset" data-item-id="{{p.id}}" title="Вернуть книжную цену из компендиума">↺</button> </td> </tr> {{/each}}
         {{else}}
           <tr class="items-empty"><td colspan="2"><em>Нет психосил</em></td></tr> {{/if}}
-      </tbody> </table> <div class="gene-seed-hint" style="padding:4px 2px 0;">Сумма цен психосил автоматически идёт в «Потрачено на Психосилы» в Опыте. Синхронизировано с вкладкой «ПСИ».</div> </div> </div>{{!-- /tab advance --}}
+      </tbody> </table> </div> </div>{{!-- /tab advance --}}

@@ -282,6 +282,34 @@ export async function removePurchasedTalent(actor, itemId) {
   if (ok) await item.delete();
 }
 
+/**
+ * Панель Навыков должна быть высотой строго как соседняя панель Характеристик
+ * (стр. 24), со своим скроллбаром внутри — CSS Grid тут бессилен: авто-высота
+ * строки берёт БОЛЬШИЙ max-content среди колонок, а `overflow: auto` на
+ * скроллящемся потомке этот вклад не срезает (сам список навыков всегда
+ * длиннее списка характеристик, и грид под него растягивает всю строку).
+ * Единственный надёжный способ — измерить реальную высоту Характеристик и
+ * проставить её Навыкам инлайн-стилем; при 0 (вкладка ещё display:none)
+ * не трогаем — измерять нечего, пересчитается при следующем показе вкладки.
+ *
+ * Инлайн-высота ставится на ВНУТРЕННИЙ .skills-advance-scroll, не на саму
+ * .advance-skills-edit (wdbc-inos): та несёт data-collapse-key и должна уметь
+ * сжаться до заголовка универсальным механизмом сворачивания (wdbc-bk4f,
+ * actor-sheet.mjs::onPanelCollapse — прячет всё ПОСЛЕ .panel-title через
+ * display:none!important, styles/base/common.css). Высота на самой панели
+ * это display:none у детей игнорировала — заголовок сжимался, а под ним
+ * оставалась пустая область прежней высоты. У соседней .advance-chars-edit
+ * инлайн-высоты на себе никогда не было — оттого её сворачивание всегда
+ * работало как надо.
+ */
+export function syncAdvanceColumnHeight(root) {
+  const chars  = root?.querySelector?.(".advance-chars-edit");
+  const scroll = root?.querySelector?.(".advance-skills-edit .skills-advance-scroll");
+  if (!chars || !scroll) return;
+  const h = chars.getBoundingClientRect().height;
+  if (h > 0) scroll.style.height = `${h}px`;
+}
+
 export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = globalThis.$ } = {}) {
 
   // ── Характеристики: значение, уровень улучшения и цена ────────────────────
@@ -534,4 +562,6 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     });
     await actor.update({ "system.advanceTalents": arr });
   });
+
+  syncAdvanceColumnHeight(html[0] ?? html);
 }
