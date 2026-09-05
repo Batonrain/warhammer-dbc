@@ -9,6 +9,7 @@ import { PA_TABLES, PA_TABLE_ORDER, PA_TABLE_PICK, PA_SHIFT_RULE, PA_ZONES,
          entryByRoll, rangeLabel, shiftOptions } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { esc, relayItemUpdate } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 /** Истории есть только у силовой брони Астартес. */
 export function supportsHistory(item) {
@@ -100,6 +101,16 @@ export async function clearArmourHistory(item) {
   });
 }
 
+// Карточки этого файла — броски по ТАБЛИЦАМ особенностей, не тесты: Порога
+// нет, сравнивать бросок не с чем. Публикация всё равно идёт общим
+// postTestCard (speaker + режим броска в одном месте), а разметка остаётся
+// своей: у корня карточки лишний класс `pa-chat`, а стили
+// (styles/sheets/homeworlds.css) написаны селектором `.wh-roll-result.pa-chat
+// .pa-chat-*` — то есть класс обязан стоять на ТОМ ЖЕ узле. testCardHtml
+// сейчас рисует корень строго с одним классом и своего класса не принимает;
+// добавить ему такую возможность — правка общего helpers/test-card.mjs,
+// которую этот проход не делает (см. отчёт по wdbc-kuun).
+
 /** Бросок 1к5: какая таблица используется. */
 export async function rollArmourTable(item) {
   const roll = await new Roll("1d5").evaluate();
@@ -139,8 +150,7 @@ export async function rollArmourTable(item) {
   }
 
   msg += "</div>";
-  await ChatMessage.create(ChatMessage.applyRollMode(
-    { content: msg, rolls: [roll] }, game.settings.get("core", "rollMode")));
+  await postTestCard(item.actor, msg, { rolls: [roll] });
 }
 
 /**
@@ -164,16 +174,13 @@ export async function rollArmourEntry(item, table) {
   const e = entryByRoll(table, chosen);
   if (e) await setArmourEntry(item, table, e.name, { roll: chosen });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    content: `<div class="wh-roll-result pa-chat">
+  await postTestCard(item.actor, `<div class="wh-roll-result pa-chat">
       <div class="roll-header">${esc(PA_TABLES[table].label)} — ${esc(item.name)}</div>
       <div class="roll-dice">к10: <b>${rv}</b>${chosen !== rv ? ` → сдвинуто на <b>${chosen}</b>` : ""}</div>
       <div class="pa-chat-entry"><b>${esc(e?.name || "—")}</b>
         <div class="pa-chat-desc">${esc(e?.desc || "")}</div>
         <div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>
-    </div>`,
-    rolls: [roll]
-  }, game.settings.get("core", "rollMode")));
+    </div>`, { rolls: [roll] });
 }
 
 /** Диалог сдвига результата на ±½ Inf.b (окр.▲). */
@@ -214,11 +221,8 @@ export async function rollArmourZones(item) {
     lines.push(`${z.label}: к10 = ${r.total} → ${v > 0 ? "+1" : (v < 0 ? "−1" : "без изменений")}`);
   }
   await relayItemUpdate(item, { "system.history.zones": zones });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    content: `<div class="wh-roll-result pa-chat">
+  await postTestCard(item.actor, `<div class="wh-roll-result pa-chat">
       <div class="roll-header">Уничтоженный и восстановленный — ${esc(item.name)}</div>
       <div class="pa-chat-zones">${lines.map(esc).join("<br/>")}</div>
-    </div>`,
-    rolls
-  }, game.settings.get("core", "rollMode")));
+    </div>`, { rolls });
 }

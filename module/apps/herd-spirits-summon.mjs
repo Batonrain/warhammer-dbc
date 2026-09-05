@@ -22,6 +22,7 @@
 import { spawnDemonOnScene } from "./demon-summon.mjs";
 import { WARP_GODS_MAP } from "../constants/veil.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export const HERD_SPIRITS_RITUAL_NAME = "Summon Herd Spirits / Призыв Духов Стада";
 export const MAX_HERD_BATCHES = 3;
@@ -225,12 +226,13 @@ export async function showHerdSpiritsAllocationDialog(actor, successes, { ritual
   const summary = creatures.length
     ? `Призваны: ${creatures.map(c => esc(c.actorName)).join(", ")}.`
     : "Никого не удалось призвать.";
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result wh-ritual-card">
+  // Итог призыва, а не тест: сам бросок ритуала прошёл раньше и в своей
+  // карточке. Публикация общая, разметка осталась своей — у корня нужен класс
+  // `wh-ritual-card` (styles/ui/veil.css), а testCardHtml своего класса на
+  // корне пока не принимает (см. отчёт по wdbc-kuun).
+  await postTestCard(actor, `<div class="wh-roll-result wh-ritual-card">
       <div class="roll-header">Духи Стада — результат</div>
       <div class="roll-threshold">${summary}</div>
       ${warnings.length ? `<div class="roll-threshold" style="opacity:0.85;">${warnings.map(esc).join("<br>")}</div>` : ""}
-    </div>`
-  });
+    </div>`, { sound: false });
 }

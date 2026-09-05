@@ -11,6 +11,7 @@ import { isBloodShieldItem, isSubduedDaemonWeapon, bloodShieldGrant, bloodShield
          BLOOD_SHIELD_FLAG, bloodShieldShrinkToFit } from "../rules/blood-shield.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isBloodShieldItem };
 
@@ -60,15 +61,17 @@ export async function useBloodShieldKill(actor, item) {
     [`flags.${FLAG}.${BLOOD_SHIELD_FLAG}`]: result.contribution
   });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("blood","#8b1a1a")}Blood Shield — насытился убийством</div>
-      <div class="roll-threshold">+${result.granted} аблативных Ран (W.b «${esc(weapon.name)}») → всего <b>${result.ablative}</b> (потолок ${result.cap})</div>
-      <div class="roll-threshold" style="opacity:.8;">В Ход без убийства — тест W+0 в конце Хода или теряет всё; штраф складывается −10 за Ход подряд без убийств — отыгрывать вручную (кнопка «Потерять щит» ниже, если тест провален).</div>
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  // Карточки Кровавого Щита — результат нажатия кнопки, а не тест: своего
+  // броска здесь нет (тест сохранения на конец Хода отыгрывается вручную,
+  // см. rules/blood-shield.mjs), поэтому ни Порога, ни строки броска, ни звука.
+  await postTestCard(actor, {
+    icon: rollIcon("blood", "#8b1a1a"),
+    title: "Blood Shield — насытился убийством",
+    lines: [
+      `<div class="roll-threshold">+${result.granted} аблативных Ран (W.b «${esc(weapon.name)}») → всего <b>${result.ablative}</b> (потолок ${result.cap})</div>`,
+      `<div class="roll-threshold" style="opacity:.8;">В Ход без убийства — тест W+0 в конце Хода или теряет всё; штраф складывается −10 за Ход подряд без убийств — отыгрывать вручную (кнопка «Потерять щит» ниже, если тест провален).</div>`
+    ]
+  }, { sound: false });
 }
 
 /** Нажатие кнопки «Потерять щит» (провален тест сохранения). */
@@ -82,14 +85,11 @@ export async function useBloodShieldLose(actor, item) {
     "system.wounds.ablativeMax": result.ablativeMax,
     [`flags.${FLAG}.${BLOOD_SHIELD_FLAG}`]: result.contribution
   });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("blood","#8b1a1a")}Blood Shield — щит развеян</div>
-      <div class="roll-threshold">Все аблативные Раны Blood Shield потеряны.</div>
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("blood", "#8b1a1a"),
+    title: "Blood Shield — щит развеян",
+    lines: [`<div class="roll-threshold">Все аблативные Раны Blood Shield потеряны.</div>`]
+  }, { sound: false });
 }
 
 /** Кнопки на листе предмета — пусто, если это не Blood Shield или нет актора. */

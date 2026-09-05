@@ -15,6 +15,7 @@ import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { changeInfamy } from "./infamy-points.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const PACK = "warhammer-dbc.divinations";
 const FLAG = "warhammer-dbc";
@@ -194,15 +195,17 @@ async function postSummary(actor, def, { charBonuses, chosen, summary, extra, ro
   lines.push(...(summary || []));
   lines.push(...extra);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result hw-chat">
+  // Не тест, а итог выбора/броска по ТАБЛИЦЕ Предсказаний: Порога нет.
+  // Публикация общая (postTestCard), а разметка осталась своей — у корня
+  // карточки нужен класс `hw-chat`, а стили (styles/sheets/homeworlds.css)
+  // написаны селектором `.wh-roll-result.hw-chat .hw-chat-*`, то есть класс
+  // обязан стоять на том же узле; testCardHtml своего класса пока не
+  // принимает (см. отчёт по wdbc-kuun).
+  await postTestCard(actor, `<div class="wh-roll-result hw-chat">
       <div class="roll-header">Предсказание — ${esc(actor.name)}</div>
       ${rolled ? `<div class="roll-dice">к100: <b>${rolled.total}</b></div>` : ""}
       <div class="hw-chat-world">${esc(rollLabel(def))} — ${esc(def.text)}</div>
       <div class="hw-chat-feature">${esc(def.effect)}</div>
       ${lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""}
-    </div>`,
-    rolls: rolled ? [rolled] : []
-  }, game.settings.get("core", "rollMode")));
+    </div>`, { rolls: rolled ? [rolled] : [], sound: !!rolled });
 }

@@ -194,6 +194,10 @@ export async function runActorSetup(actor) {
   for (const w of plan.warnings) console.warn(`Warhammer DBC | Вариации (${actor.name}):`, w);
   if (plan.log.length) {
     ui.notifications?.info(`🧬 ${actor.name}: ${plan.log.join("; ")}.`);
+    // НЕ карточка теста (wdbc-kuun): броска и Порога нет, это шёпот ГМу о том,
+    // что за вариация досталась существу при перетаскивании. На общий
+    // postTestCard не переводится и технически — нужны whisper GM и
+    // alias-спикер, которых он не принимает.
     ChatMessage.create({
       content: `<div class="wh-roll-result"><div class="roll-header">🧬 Вариация: ${esc(actor.name)}</div>
         <ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${plan.log.map(l => `<li>${esc(l)}</li>`).join("")}</ul>

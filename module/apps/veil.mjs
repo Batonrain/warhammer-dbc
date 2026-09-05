@@ -43,6 +43,7 @@ import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { veilShift };
 
@@ -425,6 +426,9 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const qHtml = s.question ? `<div class="tr-question">«${esc(s.question)}»</div>` : "";
     const hint = this._tarotHint();
     const hintHtml = hint ? `<div class="tr-hint">${esc(hint)}</div>` : "";
+    // НЕ карточка теста (wdbc-kuun): ни броска, ни Порога, и разметка своя
+    // (wh-tarot-reading, не wh-roll-result). Говорит не актор, а Теомант/Таро
+    // — общий postTestCard такого спикера-псевдонима не принимает.
     ChatMessage.create({
       speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
       content: `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`
@@ -562,6 +566,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       body += `<div class="dc-line">Демон вырывается: Сосуд уничтожен, +5 ко всем Хар-кам демона и +2 Раны за каждый Провал Часов. Отвращение Варпа. Участники с Cor&lt;75 получают +1d5+1 Порчи.</div>`;
     }
     body += `<div class="dc-foot">Цена: Ритуалист и ассистенты — 2d10 урона во все Характеристики; Феномен.</div></div>`;
+    // Это ТЕСТ (бросок против Порога), но на общий сборщик он не переводится
+    // (wdbc-kuun): карточку говорит «Кузница Душ», а не актор, и рисуется она
+    // своей разметкой wv-defile-card с цветом бога в inline-стиле, а не
+    // wh-roll-result. postTestCard умеет только спикера-актора и корень с
+    // одним классом — см. отчёт.
     ChatMessage.create({ content: body, speaker: { alias: "Кузница Душ" } });
     this._defileLastSuccess = success ? { dos } : null;
     this.render(false);
@@ -619,6 +628,8 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     });
 
+    // Не тест (броска нет) и та же пара препятствий, что у _defileRitual выше:
+    // спикер-псевдоним «Кузница Душ» и своя разметка wv-defile-card.
     const propHtml = generated.map(g => `<div class="dc-prop"><span class="dc-prop-god" style="color:${(DW_GODS_MAP[g.god]?.color)||'#b477ff'}">${(DW_GODS_MAP[g.god]?.label)||'Неделимый'}</span> <b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
     ChatMessage.create({
       speaker: { alias: "Кузница Душ" },
@@ -699,6 +710,8 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     // техники свои, — поэтому берётся тот, что соответствует сосуду.
     const granted = await this._grantPossessionTraits(mount, wb);
 
+    // Не тест, и те же препятствия, что у _defileApply выше (спикер «Кузница
+    // Душ», разметка wv-defile-card).
     const propHtml = generated.map(g =>
       `<div class="dc-prop"><b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
     ChatMessage.create({
@@ -983,19 +996,22 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const success = rv <= eff;
     const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
     const info = veilLevelInfo(total);
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${veilIcon("compass")} Навигация в Варпе — ${esc(actor.name)}</div>
-          <div class="roll-threshold">Навигация: <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} (завеса ${info.label})${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">${success
-            ? `<span class="roll-success">Курс проложен — ${deg} ${deg === 1 ? "ст." : "ст."}</span>`
-            : `<span class="roll-failure">Сбился с курса — ${deg} ст. (риск варп-инцидента)</span>`}</div>
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    // Настоящий тест с Порогом — единственный такой в этом окне вместе с
+    // Выходом из варпа, поэтому собирается общим строителем. Слагаемые Порога
+    // (завеса + подписи из реестра правил) переехали в скобки общего формата.
+    await postTestCard(actor, {
+      icon: `${veilIcon("compass")} `,
+      title: `Навигация в Варпе — ${esc(actor.name)}`,
+      threshold: thresholdLine({
+        label: "Навигация", base,
+        parts: [`завеса ${info.label} ${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
+        threshold: eff
+      }),
+      rv,
+      outcome: outcomeHtml(success, success
+        ? `Курс проложен — ${deg} ст.`
+        : `Сбился с курса — ${deg} ст. (риск варп-инцидента)`)
+    }, { rolls: [roll] });
   }
 
   _postNavPower(id) {
@@ -1004,14 +1020,15 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const item = actor?.items.get(id);
     if (!item) return;
     const s = item.system;
-    ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${veilIcon("eye")} Сила Навигатора: ${esc(item.name)}</div>
-        ${s.action ? `<div class="roll-threshold">Действие: <b>${esc(s.action)}</b>${s.range ? ` · Дальность: ${esc(s.range)}` : ""}</div>` : ""}
-        ${s.effect ? `<div class="roll-threshold">${esc(s.effect)}</div>` : ""}
-      </div>`
-    }, game.settings.get("core", "rollMode")));
+    // Не тест: справка о силе Навигатора в чат, без броска и Порога.
+    postTestCard(actor, {
+      icon: `${veilIcon("eye")} `,
+      title: `Сила Навигатора: ${esc(item.name)}`,
+      lines: [
+        s.action ? `<div class="roll-threshold">Действие: <b>${esc(s.action)}</b>${s.range ? ` · Дальность: ${esc(s.range)}` : ""}</div>` : "",
+        s.effect ? `<div class="roll-threshold">${esc(s.effect)}</div>` : ""
+      ]
+    }, { sound: false });
   }
 
   // ── Варп-путешествие: шаги ──────────────────────────────────────────────
@@ -1035,6 +1052,20 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const deg = rv <= eff ? 1 + Math.floor((eff - rv) / 10) : -(1 + Math.floor((rv - eff) / 10));
     return { roll, rv, eff, deg, success: deg > 0 };
   }
+  /**
+   * Общая отправка карточек Варп-странствия. На общий сборщик
+   * (helpers/test-card.mjs, wdbc-kuun) НЕ переведена, и это осознанно:
+   *  • почти все её карточки — броски по ТАБЛИЦАМ Варп-столкновений
+   *    (стабильность маршрута, длительность, шторм, неаккуратный выход), а не
+   *    тесты: Порога у них нет, сравнивать бросок не с чем. Исключение —
+   *    Выход из варпа (_exitWarp), но он идёт через эту же отправку;
+   *  • говорит не актор, а «Варп-Навигация» — спикера-псевдонима postTestCard
+   *    не принимает;
+   *  • ярус завесы задаётся классом wv-tier-* на КОРНЕ карточки (styles/ui/
+   *    veil.css переопределяет им переменную --wv-tier, от которой зависит
+   *    весь цвет), а testCardHtml рисует корень строго с одним классом.
+   * Обе нехватки — в общем helpers/test-card.mjs, этот проход его не правит.
+   */
   async _jPost(title, tier, body, rolls = []) {
     const rollMode = game.settings.get("core", "rollMode");
     const dice = rolls.length
@@ -1157,6 +1188,8 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       .map(r => `${esc(r.name)} (${(Number(r.delta) || 0) > 0 ? "+" : ""}${Number(r.delta) || 0})`);
     const factorsHtml = active.length ? `<div class="wv-chat-factors">${active.map(esc).join(" · ")}</div>` : "";
     const ritualsHtml = rituals.length ? `<div class="wv-chat-factors">Ритуалы: ${rituals.join(" · ")}</div>` : "";
+    // Оглашение состояния Завесы — уведомление, не карточка теста (wdbc-kuun):
+    // броска и Порога нет, разметка своя (wh-veil-chat), говорит «Завеса».
     ChatMessage.create(ChatMessage.applyRollMode({
       speaker: { alias: "Завеса" },
       content: `<div class="wh-veil-chat wv-tier-${info.tier}">

@@ -28,6 +28,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isIconOfBlasphemyItem };
 
@@ -69,14 +70,14 @@ export async function resolveIconOfBlasphemy(actor, targets) {
       `<span class="${success ? "roll-success" : "roll-failure"}">${note}</span></div>`);
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("burst", "#ff8f4d")}Икона Богохульства — ${esc(actor.name)}</div>
-      ${rows.join("")}
-    </div>`,
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Карточка сводная: тестов столько, сколько целей, и у каждой свой Порог со
+  // своим броском — общей строки Порога/броска у неё быть не может, всё уже
+  // расписано построчно выше (там же и подписи модификаторов цели).
+  await postTestCard(actor, {
+    icon: rollIcon("burst", "#ff8f4d"),
+    title: `Икона Богохульства — ${esc(actor.name)}`,
+    lines: rows
+  });
 }
 
 /** Кнопка на листе предмета: гейт кулдауна/целей, авто-классификация, делегирует resolveIconOfBlasphemy. */

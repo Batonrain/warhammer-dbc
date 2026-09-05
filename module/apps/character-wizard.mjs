@@ -1515,6 +1515,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       const rows = resolved.map((r, i) =>
         `<li${done[i] ? ' style="color:#4dffa6;"' : ''}>${done[i] ? "✓ " : "▫ "}${esc(r)}</li>`
       ).join("");
+      // НЕ карточка теста (wdbc-kuun): броска и Порога нет, это шёпот ГМу со
+      // списком выданного. Общий postTestCard шлёт открыто и от спикера
+      // актора — whisper GM и alias-спикер он не принимает.
       ChatMessage.create({
         content: `<div class="wh-roll-result"><div class="roll-header">🎒 Стартовое снаряжение — ${esc(actor.name)}</div>
           <ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>
@@ -1618,6 +1621,8 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     }[row.special];
     if (!notes) return false;
     await item.update({ [notes[0]]: true });
+    // Тоже уведомление ГМу, а не тест (wdbc-kuun): броска и Порога нет,
+    // нужен whisper GM и alias-спикер.
     ChatMessage.create({
       content: `<div class="wh-roll-result"><div class="roll-header">Очки Снаряжения — ${esc(this.actor.name)}</div>
         <div class="roll-outcome"><b>${esc(item.name)}</b> помечено: ${esc(row.label)}.</div>
@@ -1750,6 +1755,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       // новом персонаже только случайно наткнувшись на него в списке.
       // Не игроку — свою же карточку видеть незачем (whisper только GM).
       if (!game.user.isGM) {
+        // И это уведомление, не тест (wdbc-kuun) — шёпот ГМу «проверь».
         ChatMessage.create({
           content: `<div class="wh-roll-result"><div class="roll-header">🧙 Создание персонажа завершено</div>
             <div class="roll-outcome">Игрок <b>${esc(game.user.name)}</b> закончил Мастера создания для <b>${esc(this.actor.name)}</b> — стоит проверить.</div></div>`,

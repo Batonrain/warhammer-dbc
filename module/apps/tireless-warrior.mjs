@@ -9,6 +9,7 @@ import { isTirelessWarriorItem, tirelessWarriorFatigueRelief, tirelessWarriorDam
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isTirelessWarriorItem };
 
@@ -68,17 +69,18 @@ export async function useTirelessWarriorKill(actor, item) {
   }
 
   await actor.update(update);
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("blood","#8b1a1a")}Tireless Warrior — убийство рукопашной</div>
-      <div class="roll-threshold">Усталость: <b>${newFatigue}</b> (−1)</div>
-      <div class="roll-threshold">${healLine} — 1d5−1 = ${roll.total < 0 ? 0 : roll.total}</div>
-      <div class="roll-threshold" style="opacity:.8;">Считается получившим 1 час здорового сна (нарративно, часы сна система не отслеживает).</div>
-    </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Бросок есть (1d5−1 — размер восстановления), но Порога нет: это не тест,
+  // сравнивать не с чем. Общая строка «Бросок: N» карточке не нужна — число
+  // уже стоит в строке восстановления.
+  await postTestCard(actor, {
+    icon: rollIcon("blood", "#8b1a1a"),
+    title: "Tireless Warrior — убийство рукопашной",
+    lines: [
+      `<div class="roll-threshold">Усталость: <b>${newFatigue}</b> (−1)</div>`,
+      `<div class="roll-threshold">${healLine} — 1d5−1 = ${roll.total < 0 ? 0 : roll.total}</div>`,
+      `<div class="roll-threshold" style="opacity:.8;">Считается получившим 1 час здорового сна (нарративно, часы сна система не отслеживает).</div>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /** Кнопка на листе предмета — пусто, если это не «Tireless Warrior» или нет актора. */

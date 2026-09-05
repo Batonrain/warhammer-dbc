@@ -131,6 +131,10 @@ export async function grantCreationGear(actor, { race, past, sub, arch, isAstart
   const astartes = isAstartes
     ? `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(77,255,166,.25);"><b>+ 4 базовые Системы силовой брони на выбор</b> — из компендиума «Системы силовой брони» (добавьте во вкладке «Снаряжение»).</div>`
     : "";
+  // НЕ карточка теста (wdbc-kuun): броска и Порога нет вовсе, это шёпот ГМу
+  // со списком «что уже на листе, а что выдать руками». На общий postTestCard
+  // не переводится ещё и технически — тот всегда шлёт открыто от спикера
+  // актора, а здесь нужны whisper GM и alias-спикер без актора.
   ChatMessage.create({
     content: `<div class="wh-roll-result"><div class="roll-header">🎒 Стартовое снаряжение — ${esc(arch?.name || race?.label || "персонаж")}</div>
       <ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>${astartes}

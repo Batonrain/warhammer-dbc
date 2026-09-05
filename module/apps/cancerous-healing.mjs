@@ -35,6 +35,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { expectedPhase } from "../constants/effect-keys.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isCancerousHealingItem };
 
@@ -179,17 +180,18 @@ export async function applyCancerousHealingEffect(casterActor, target, { forced 
   await syncCancerousHealingPenalty(target);
 
   const penalty = cancerousHealingPenaltyValue(contribution);
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: casterActor || target }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("heart","#7a9c3f")}Раковое Исцеление — ${esc(target.name)}</div>
-      ${forced ? `<div class="roll-threshold" style="opacity:.8;">Цель не согласна — навязано безоружной атакой.</div>` : ""}
-      <div class="roll-threshold">Аблативные Раны: <b>${newAblative}</b>${granted > 0 ? ` (+${granted})` : missing === 0 ? " (цель не ранена)" : " (без изменений — уже не меньше)"}</div>
-      ${contribution > 0 ? `<div class="roll-threshold">Штраф от аблативных Ран: A и S <b>−${penalty}</b> каждая</div>` : ""}
-      ${cured.length ? `<div class="roll-threshold">Снято: <b>${esc(cured.join(", "))}</b></div>` : ""}
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  // Результат применения способности, а не тест: своего броска и Порога тут
+  // нет (бросок безоружной атаки живёт в своей карточке), звука тоже.
+  await postTestCard(casterActor || target, {
+    icon: rollIcon("heart", "#7a9c3f"),
+    title: `Раковое Исцеление — ${esc(target.name)}`,
+    lines: [
+      forced ? `<div class="roll-threshold" style="opacity:.8;">Цель не согласна — навязано безоружной атакой.</div>` : "",
+      `<div class="roll-threshold">Аблативные Раны: <b>${newAblative}</b>${granted > 0 ? ` (+${granted})` : missing === 0 ? " (цель не ранена)" : " (без изменений — уже не меньше)"}</div>`,
+      contribution > 0 ? `<div class="roll-threshold">Штраф от аблативных Ран: A и S <b>−${penalty}</b> каждая</div>` : "",
+      cured.length ? `<div class="roll-threshold">Снято: <b>${esc(cured.join(", "))}</b></div>` : ""
+    ]
+  }, { sound: false });
 }
 
 /**

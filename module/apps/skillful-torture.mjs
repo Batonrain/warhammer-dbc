@@ -36,6 +36,7 @@ import { itemHasName } from "../rules/predicates.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "skillfulTorture";
 
@@ -168,10 +169,13 @@ export async function showSkillfulTortureDialog(torturer) {
 
           if (winner !== "mine") {
             lines.push(`<b>Жертва выстояла</b> — пытка не принесла пользы.`);
-            await ChatMessage.create(ChatMessage.applyRollMode({
-              speaker: ChatMessage.getSpeaker({ actor: torturer }),
-              content: `<div class="wh-roll-result"><div class="roll-header">Искусная Пытка</div>${lines.join("<br/>")}</div>`
-            }, game.settings.get("core", "rollMode")));
+            // Встречный тест: Порогов два (свой у пытающего, свой у жертвы) и
+            // они уже расписаны построчно с подписями модификаторов — общей
+            // строки Порога/броска у такой карточки быть не может.
+            await postTestCard(torturer, {
+              title: "Искусная Пытка",
+              lines: [lines.join("<br/>")]
+            }, { sound: false });
             return;
           }
 
@@ -195,10 +199,10 @@ export async function showSkillfulTortureDialog(torturer) {
           if (capped.length) lines.push(`<span style="color:#a33;">Дневной лимит исчерпан:</span> ${capped.map(esc).join(", ")}`);
           if (!recipients.length) lines.push(`<i>Рядом нет друкхари, способных насытиться.</i>`);
 
-          await ChatMessage.create(ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor: torturer }),
-            content: `<div class="wh-roll-result"><div class="roll-header">Искусная Пытка — успех</div>${lines.join("<br/>")}</div>`
-          }, game.settings.get("core", "rollMode")));
+          await postTestCard(torturer, {
+            title: "Искусная Пытка — успех",
+            lines: [lines.join("<br/>")]
+          }, { sound: false });
         }
       },
       { action: "cancel", label: "Отмена" }

@@ -7,6 +7,7 @@
 //  (Безумие/Порча — «можно бросить кости порчи/безумия»).
 // ════════════════════════════════════════════════════════════════════════
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const DICE_RE = /^(\d+)d(\d+)\s*([+-]\s*\d+)?$/i;
 
@@ -105,19 +106,18 @@ export async function promptStatAdd(actor, { label, path, allowDice = false, cla
   }
   await actor.update(update);
 
-  const rollMode = game.settings.get("core", "rollMode");
+  // Лог изменения показателя — не тест: Порога нет, «Изменение» и «cur → next»
+  // это не бросок против числа. Порядок строк сохранён прежний (изменение,
+  // причина, было→стало, кубы), поэтому «было→стало» идёт своим блоком после
+  // исхода, а не в слоте Порога.
   const diceHtml = roll ? await roll.render() : "";
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result wh-statlog-card">
-        <div class="roll-header">${esc(label)} — ${esc(actor.name)}</div>
-        <div class="roll-dice">Изменение: <b>${amount >= 0 ? "+" : ""}${amount}</b> (${esc(formulaText)})</div>
-        <div class="roll-outcome">Причина: <i>${esc(result.reason)}</i></div>
-        <div class="roll-threshold">${cur} → <b>${next}</b></div>
-        ${diceHtml ? `<details class="roll-dice-details"><summary>Показать кубы</summary>${diceHtml}</details>` : ""}
-      </div>`,
-    rolls: roll ? [roll] : [],
-    sound: roll ? CONFIG.sounds.dice : undefined
-  }, rollMode));
+  await postTestCard(actor, {
+    title: `${esc(label)} — ${esc(actor.name)}`,
+    lines: [`<div class="roll-dice">Изменение: <b>${amount >= 0 ? "+" : ""}${amount}</b> (${esc(formulaText)})</div>`],
+    outcome: `Причина: <i>${esc(result.reason)}</i>`,
+    sections: [
+      `<div class="roll-threshold">${cur} → <b>${next}</b></div>`,
+      diceHtml ? `<details class="roll-dice-details"><summary>Показать кубы</summary>${diceHtml}</details>` : ""
+    ]
+  }, { rolls: roll ? [roll] : [], sound: !!roll });
 }

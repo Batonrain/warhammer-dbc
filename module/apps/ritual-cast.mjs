@@ -31,6 +31,7 @@ import { esc } from "../helpers/utils.mjs";
 import { hasDominator } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -251,11 +252,12 @@ export async function castRitual(R, actor, {
       </div>`
     : "";
 
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result wh-ritual-card">
+  // Тест с Порогом, но публикуется строкой, а не через testCardHtml: у корня
+  // карточки нужен класс `wh-ritual-card` (styles/ui/veil.css рисует по нему
+  // блок провала ритуала), а общий строитель своего класса на корне пока не
+  // принимает. Публикация (спикер, режим броска, звук) уже общая.
+  await postTestCard(actor, `<div class="wh-roll-result wh-ritual-card">
       <div class="roll-header">${veilIcon("ritual")} Ритуал: ${esc(R.name || typeLabel)}</div>
       <div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>
       <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}${dominatorNote ? esc(dominatorNote) : ""}</div>
@@ -268,9 +270,7 @@ export async function castRitual(R, actor, {
       ${failHtml}
       ${condHtml}
       <details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>
-    </div>`,
-    rolls: allRolls, sound: CONFIG.sounds.dice
-  }, rollMode));
+    </div>`, { rolls: allRolls });
 
   return { success, deg, threshold, roll: rv };
 }
