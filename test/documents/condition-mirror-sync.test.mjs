@@ -65,6 +65,40 @@ describe("метки доезжают до system.conditions", () => {
   });
 });
 
+describe("метки видны не только у Персонажа", () => {
+  // Блок Состояний берут из общей схемы существа несколько типов актора, и все
+  // они идут через один и тот же prepareCharacterDerived. Если кто-то добавит
+  // для одного из них раннюю ветку в prepareDerivedData (как сделано для
+  // Корабля, Техники, Орды и Отряда), метки у него молча пропадут — на
+  // Персонаже такое не поймается, поэтому проверяется здесь.
+  //
+  // Список типов НЕ выписан руками, а собран из тех, у кого блок Состояний
+  // вообще есть: выписанный руками разъехался бы с системой молча, а тест с
+  // тихим пропуском несуществующего типа проходил бы, ничего не проверяя.
+  const typesWithConditions = Object.entries(ACTOR_DATA_MODELS)
+    .filter(([, M]) => { try { return !!new M({}).toObject().conditions; } catch { return false; } })
+    .map(([type]) => type);
+
+  it("типы с блоком Состояний вообще нашлись", () => {
+    // Иначе цикл ниже был бы пуст и «зелен» — проверять стало бы нечего.
+    expect(typesWithConditions).toContain("character");
+    expect(typesWithConditions.length).toBeGreaterThan(1);
+  });
+
+  for (const type of typesWithConditions) {
+    it(`${type}: Ярость доезжает до Состояний`, () => {
+      const system = new ACTOR_DATA_MODELS[type]({}).toObject();
+      system.inRage = true;
+      const list = [];
+      list.get = () => null;
+      WarhammerActor.prototype.prepareDerivedData.call({
+        type, name: "Подставной", system, items: list, getFlag: () => undefined
+      });
+      expect(system.conditions.inRage).toBe(true);
+    });
+  }
+});
+
 describe("источник истины один — как у тега «Усталость»", () => {
   it("старое значение в conditions игнорируется, пересчитывается из источника", () => {
     // Метка снята с актора, а в отражении почему-то осталась «правда»:
