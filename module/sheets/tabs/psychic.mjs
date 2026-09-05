@@ -26,6 +26,7 @@ import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal } from "../../rules/roll-mods.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
+import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -677,45 +678,31 @@ export async function executePsychotest(actor, item, opts) {
   // Применяем накопленные изменения (Раны/Порча)
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)}</div>
-          <div class="roll-threshold">
-            Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}
-          </div>
-          <div class="roll-threshold">
-            mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${PATH.ePR ? ` (Путь +${PATH.ePR})` : ""}
-          </div>
-          ${aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : ""}
-          ${sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : ""}
-          <div class="roll-threshold">
-            ${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""}
-            → Порог: <b>${threshold}</b>
-          </div>
-          ${variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : ""}
-          ${PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : ""}
-          ${runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : ""}
-          ${focusNote}
-          <div class="roll-dice">Психотест: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Манифестация удалась — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Психотест провален — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          ${conversionLine}
-          ${resistSection}
-          ${damageSection}
-          ${charDamageSection}
-          ${attackPropsSection}
-          ${phenSection}
-          ${warpShockSection}
-        </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Порог у психотеста собирается не как у прочих тестов (база + список
+  // слагаемых через запятую), а книжной формулой «хар-ка + 5×эPR» с
+  // приписками Пути/Вариации — поэтому строка Порога идёт своей строкой в
+  // lines, а не через thresholdLine: общий формат её бы переписал. То же со
+  // строкой броска — она подписана «Психотест», а не «Бросок».
+  await postTestCard(actor, {
+    icon: rollIcon("spark","#c98bff"), title: esc(item.name),
+    lines: [
+      `<div class="roll-threshold">Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}</div>`,
+      `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${PATH.ePR ? ` (Путь +${PATH.ePR})` : ""}</div>`,
+      aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
+      sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
+      `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""} → Порог: <b>${threshold}</b></div>`,
+      variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
+      PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
+      runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
+      focusNote,
+      `<div class="roll-dice">Психотест: <b>${rv}</b></div>`
+    ],
+    outcome: outcomeHtml(success, success
+      ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
+      : `Психотест провален — ${deg} ${_degWord(deg)}`),
+    sections: [conversionLine, resistSection, damageSection, charDamageSection,
+               attackPropsSection, phenSection, warpShockSection]
+  }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit: success });
 }
@@ -735,24 +722,15 @@ export async function rollPsyWpTest(actor, label, note) {
   const rv   = roll.total;
   const success = rv <= eff;
   const deg  = Math.floor(Math.abs(rv - eff) / 10) + 1;
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${label}</div>
-          <div class="roll-threshold">WP: <b>${wp}</b> + 5×PR(${pr}) → Порог: <b>${eff}</b></div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">${note}</div>
-        </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Слагаемое здесь книжное и одно («+ 5×PR»), в скобки общего формата оно не
+  // ложится — строка Порога оставлена своей, как была.
+  await postTestCard(actor, {
+    title: label,
+    threshold: `<div class="roll-threshold">WP: <b>${wp}</b> + 5×PR(${pr}) → Порог: <b>${eff}</b></div>`,
+    rv,
+    outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">${note}</div>`]
+  }, { rolls: [roll] });
 }
 
 /** Применение Силы навигатора: простой тест характеристики (без Феноменов/Прорывов). */
@@ -770,7 +748,6 @@ export async function activateNavigatorPower(actor, item) {
   const rv      = roll.total;
   const success = rv <= eff;
   const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
-  const rollMode = game.settings.get("core", "rollMode");
   const allRolls = [roll];
 
   // Урон (если задан и сила сработала)
@@ -802,30 +779,24 @@ export async function activateNavigatorPower(actor, item) {
   // успеха на предмете, чтобы номер был виден на листе, пока Сила поддерживается.
   await item.update({ "system.sustainedDegree": success ? deg : null });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#8b78ff")}Сила навигатора: ${esc(item.name)}</div>
-          ${sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : ""}
-          <div class="roll-threshold">
-            ${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}
-          </div>
-          ${sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          ${dmgSection}
-          ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}
-          <div class="roll-threshold" style="font-size:0.78em;color:#5a4a30;">Навигатор не бросает по таблицам Феноменов и Прорывов Варпа.</div>
-          <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-        </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Строка Порога здесь своя: подпись усталости идёт значком «😓 −10» без
+  // скобок общего формата — перевод на сборщик её не переписывает.
+  await postTestCard(actor, {
+    icon: rollIcon("spark","#8b78ff"), title: `Сила навигатора: ${esc(item.name)}`,
+    lines: [
+      sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : "",
+      `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}</div>`,
+      sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
+    ],
+    rv,
+    outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
+    sections: [
+      dmgSection,
+      sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : "",
+      `<div class="roll-threshold" style="font-size:0.78em;color:#5a4a30;">Навигатор не бросает по таблицам Феноменов и Прорывов Варпа.</div>`,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: allRolls });
 }
 
 export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBurn } = {}) {

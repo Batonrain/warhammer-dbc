@@ -21,6 +21,7 @@ import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { convertHordeToActor } from "../apps/horde-convert.mjs";
 import { openContextMenu } from "./context-menu.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -461,18 +462,15 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, success = rv <= threshold;
     const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${esc(this.actor.name)} — ${esc(label)}</div>
-        <div class="roll-threshold">${esc(prefix)}${ruleMods.parts.map(p => ` · ${p}`).join("")}: Порог <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех (${deg} ст.)</span>`
-          : `<span class="roll-failure">Провал (${deg} ст.)</span>`}</div>
-      </div>`,
-      rolls: [roll]
-    }, game.settings.get("core", "rollMode")));
+    // Строка Порога у Орды начинается не с числа, а с подписи вида теста
+    // («Навык» / «Хар-ка»), а подписи модификаторов идут через «·» — под
+    // общий формат thresholdLine она не ложится и оставлена своей.
+    await postTestCard(this.actor, {
+      title: `${esc(this.actor.name)} — ${esc(label)}`,
+      threshold: `<div class="roll-threshold">${esc(prefix)}${ruleMods.parts.map(p => ` · ${p}`).join("")}: Порог <b>${threshold}</b></div>`,
+      rv,
+      outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} (${deg} ст.)`)
+    }, { rolls: [roll], sound: false });
   }
 
   // ── Диалог атаки Орды (по образцу атаки персонажа, с поправкой на правила Орд) ──
@@ -624,6 +622,9 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     const magNote = magDice ? ` · <span class="horde-chip">Магнитуда +${magDice}d10</span>` : "";
     const meta = CHARACTERISTICS[key];
 
+    // Карточка АТАКИ (wdbc-kuun): на общий сборщик теста сознательно не
+    // переводится — у атак своя большая разметка (попадания, локации,
+    // урон, кнопки защиты), общая с attack-card.mjs.
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result horde-atk">

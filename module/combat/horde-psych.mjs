@@ -14,6 +14,7 @@ import { psychDamageFor, PSYCH_MULTIPLIERS, WEAKENED_WP_PENALTY, noRecoveryHours
   from "../rules/horde-damage.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 /** Флаг: до какого worldTime Ослабленная Орда не лечит психологический урон. */
 export const PSYCH_LOCK_FLAG = "hordePsychLockUntil";
@@ -52,6 +53,8 @@ export async function rollHordePsychTest(horde, kind, { mod = 0 } = {}) {
   // Несломляемая Орда проходит такие тесты автоматически — и потому неуязвима
   // для психологического урона.
   if (horde.system?.immuneFear) {
+    // НЕ карточка теста (wdbc-kuun): Несломляемая Орда ничего не
+    // бросает и не имеет Порога — это уведомление «тест пройден автоматом».
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: horde }),
       content: `<div class="wh-roll-result horde-psych">
@@ -83,20 +86,21 @@ export async function rollHordePsychTest(horde, kind, { mod = 0 } = {}) {
   const weakenedNote = horde.system?.derived?.state === "weakened"
     ? ` · Ослаблена: ${WEAKENED_WP_PENALTY}` : "";
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: horde }),
-    content: `<div class="wh-roll-result horde-psych">
-      <div class="roll-header">${esc(horde.name)} — ${esc(meta.label)}</div>
-      <div class="roll-threshold">Порог <b>${threshold}</b> = W ${horde.system?.characteristics?.wp?.total ?? 0}
-        + Магнитуда ${horde.system?.magnitude?.value ?? 0}${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")}${weakenedNote}</div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${passed
-        ? `<span class="roll-success">Успех (${deg} ${_degWord(deg)}) — строй держится</span>`
-        : `<span class="roll-failure">Провал (${deg} ${_degWord(deg)}) — психологический урон ×${PSYCH_MULTIPLIERS[kind]} = <b>${damage}</b> Магнитуды</span>`}</div>
-      <div class="roll-damage-meta">${esc(meta.sub)}</div>
-    </div>`,
-    rolls: [roll]
-  }, game.settings.get("core", "rollMode")));
+  // Строка Порога здесь читается с конца — «Порог N = W … + Магнитуда …», а
+  // подписи модификаторов идут через «·». Общий формат thresholdLine её бы
+  // перевернул, поэтому строка оставлена своей. Класс horde-psych на корне
+  // сохранён: за него цепляется вёрстка (styles/sheets/horde-sheet.css).
+  await postTestCard(horde, {
+    classes: "horde-psych",
+    title: `${esc(horde.name)} — ${esc(meta.label)}`,
+    threshold: `<div class="roll-threshold">Порог <b>${threshold}</b> = W ${horde.system?.characteristics?.wp?.total ?? 0}
+        + Магнитуда ${horde.system?.magnitude?.value ?? 0}${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")}${weakenedNote}</div>`,
+    rv,
+    outcome: outcomeHtml(passed, passed
+      ? `Успех (${deg} ${_degWord(deg)}) — строй держится`
+      : `Провал (${deg} ${_degWord(deg)}) — психологический урон ×${PSYCH_MULTIPLIERS[kind]} = <b>${damage}</b> Магнитуды`),
+    sections: [`<div class="roll-damage-meta">${esc(meta.sub)}</div>`]
+  }, { rolls: [roll], sound: false });
 
   return { passed, degrees: deg, psychDamage: damage };
 }
