@@ -13,6 +13,7 @@ import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { autoModsTotal } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { esc, relayItemUpdate } from "../helpers/utils.mjs";
 
 /** Есть ли смысл показывать блок Инфограждения у этого предмета. */
@@ -177,25 +178,25 @@ export async function rollInfoguard(item, { executorActor = null } = {}) {
 
   await relayItemUpdate(item, { "system.infoguard": successes });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Инфограждение: ${esc(item.name)}${delegating ? ` — за ${esc(ownerActor.name)}` : ""}</div>
-          ${ownerMod.lines.length ? `<div class="roll-threshold">${ownerMod.lines.join("<br/>")}</div>` : ""}
-          <div class="roll-threshold">Tech-Use+0${situational.map(m => ` ${m.label} ${m.value >= 0 ? "+" : ""}${m.value}`).join("")} → Порог: <b>${eff}</b> (без бонуса инструментов, кроме Комби-Инструмента в Топоре Омниссии; Unnatural I не учитывается)</div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Успех — ${deg} Усп. → ½ (окр.▲) = <b>${successes}</b> Успехов Инфограждения</span>`
-              : `<span class="roll-failure">Провал — Инфограждение снято (0 Успехов)</span>`}
-          </div>
-          <div class="roll-threshold" style="font-size:0.85em;">Занимает ½ смены. Успехи Инфограждения служат встречным порогом против Техночудес Ноотеургии/Аниматеургии.</div>
-        </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("shield", "#8fd0ff"),
+    title: `Инфограждение: ${esc(item.name)}${delegating ? ` — за ${esc(ownerActor.name)}` : ""}`,
+    threshold: thresholdLine({
+      prefix: "Tech-Use+0", label: "Порог", base: null,
+      parts: situational.map(m => `${m.label} ${m.value >= 0 ? "+" : ""}${m.value}`),
+      threshold: eff
+    }),
+    lines: [
+      ownerMod.lines.length ? `<div class="roll-threshold">${ownerMod.lines.join("<br/>")}</div>` : ""
+    ],
+    rv,
+    outcome: success
+      ? `<span class="roll-success">Успех — ${deg} Усп. → ½ (окр.▲) = <b>${successes}</b> Успехов Инфограждения</span>`
+      : `<span class="roll-failure">Провал — Инфограждение снято (0 Успехов)</span>`,
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em;">Занимает ½ смены. Успехи Инфограждения служат встречным порогом против Техночудес Ноотеургии/Аниматеургии. Без бонуса инструментов, кроме Комби-Инструмента в Топоре Омниссии; Unnatural I не учитывается.</div>`
+    ]
+  }, { rolls: [roll] });
 
   return successes;
 }

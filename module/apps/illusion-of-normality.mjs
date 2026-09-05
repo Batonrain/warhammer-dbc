@@ -40,6 +40,7 @@ import { psyniscienceNoticeBonus, noticeFlagKey, seeThroughFlagKey } from "../ru
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 const NAME = "Illusion of Normality";
 const CAPABILITY_KEY = "mutation.illusionOfNormality";
@@ -72,25 +73,23 @@ function otherMutationCount(actor, excludeItemId) {
   return [...(actor?.items ?? [])].filter(i => i.type === "mutation" && i.id !== excludeItemId).length;
 }
 
-async function postTestCard({ actor, headerIcon, header, thresholdLine, roll, rv, success, note }) {
-  const rollMode = game.settings.get("core", "rollMode");
-  const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${headerIcon}${esc(header)}</div>
-        <div class="roll-threshold">${thresholdLine}</div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех</span>`
-          : `<span class="roll-failure">Провал</span>`}</div>
-        ${note ? `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${note}</div>` : ""}
-        <details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+/**
+ * Тонкая обёртка над общим сборщиком (helpers/test-card.mjs, wdbc-kuun).
+ * Раньше здесь лежала СВОЯ копия карточки теста — ровно тот случай, ради
+ * которого сборщик и заводился: разметка расходилась с боевыми карточками, а
+ * улучшать её пришлось бы отдельно.
+ */
+async function postIllusionCard({ actor, headerIcon, header, thresholdHtml, roll, rv, success, note }) {
+  await postTestCard(actor, {
+    icon: headerIcon, title: esc(header),
+    threshold: `<div class="roll-threshold">${thresholdHtml}</div>`,
+    rv,
+    outcome: outcomeHtml(success, success ? "Успех" : "Провал"),
+    sections: [
+      note ? `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${note}</div>` : "",
+      `<details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${await roll.render()}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -117,11 +116,11 @@ export async function attemptNoticeIllusion(item, actor) {
 
   if (success) await markRuleUsageUsed(observer, noticeFlagKey(CAPABILITY_KEY, actor.id));
 
-  await postTestCard({
+  await postIllusionCard({
     actor: observer,
     headerIcon: rollIcon("target", "#8fd0ff"),
     header: `Психонаука — замечает иллюзию (${actor.name})`,
-    thresholdLine: `Психонаука: <b>${skill}</b> + 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = <b>${bonus}</b> → Порог: <b>${threshold}</b>`,
+    thresholdHtml: `Психонаука: <b>${skill}</b> + 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = <b>${bonus}</b> → Порог: <b>${threshold}</b>`,
     roll, rv, success,
     note: success ? "Наблюдатель теперь знает про активную иллюзию — доступна попытка увидеть сквозь." : ""
   });
@@ -153,11 +152,11 @@ export async function attemptSeeThroughIllusion(item, actor) {
   // «пока не получится».
   await markRuleUsageUsed(observer, seeThroughFlagKey(CAPABILITY_KEY, actor.id));
 
-  await postTestCard({
+  await postIllusionCard({
     actor: observer,
     headerIcon: rollIcon("warp", "#c9a8ff"),
     header: `W+0 — видит сквозь иллюзию (${actor.name})`,
-    thresholdLine: `WP: <b>${wp}</b> → Порог: <b>${wp}</b>`,
+    thresholdHtml: `WP: <b>${wp}</b> → Порог: <b>${wp}</b>`,
     roll, rv, success,
     note: success ? "Мутации персонажа снова видны наблюдателю." : "Раз за бой/сцену на этого мутанта — попытка потрачена."
   });
