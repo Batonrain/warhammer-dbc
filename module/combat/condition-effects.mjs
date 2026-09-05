@@ -26,23 +26,12 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 // Тот же глиф, что рисует иконку статуса на токене — эффект создаётся здесь,
 // а не мостом, и обязан выглядеть ровно так же, как если бы его завёл мост.
 import { statusIconUri } from "../apps/token-conditions.mjs";
-import { durationDataFor, isDurationExpired, remainingRounds, remainingLabel }
+import { durationDataFor, isDurationExpired, remainingRounds, remainingLabel, SECONDS_PER_ROUND }
   from "../rules/condition-duration.mjs";
 
 const FLAG = "warhammer-dbc";
 /** Метка «этот эффект несёт срок Состояния X» — по ней он и находится обратно. */
 const DURATION_FLAG = "conditionDuration";
-
-/** Снимок текущего момента игры для арифметики срока. */
-export function nowSnapshot() {
-  const combat = globalThis.game?.combat ?? null;
-  return {
-    round: Number(combat?.round) || 0,
-    turn: Number(combat?.turn) || 0,
-    combatId: combat?.id ?? null,
-    worldTime: Number(globalThis.game?.time?.worldTime) || 0
-  };
-}
 
 /** Эффекты актора, несущие срок Состояния: [{ effect, key }]. */
 export function conditionDurationEffects(actor) {
@@ -78,13 +67,14 @@ export function hasConditionDuration(actor, key) {
 export async function applyConditionWithDuration(actor, key, { level = null, value = 0, unit = "" } = {}) {
   const def = CONDITIONS_DEF[key];
   if (!actor || !def) return false;
-  const now = nowSnapshot();
-  const duration = durationDataFor(value, unit, now);
+  const duration = durationDataFor(value, unit);
   // Счётчик-зеркало заполняется СРАЗУ, а не ждёт первого подметания: игрок
   // должен увидеть «2 раунда» в момент наложения, а не ноль до конца Хода.
-  // Явно заданная СИЛА (Кровотечение ур. 2) важнее зеркала — она про другое.
+  // В этот момент эффекта ещё нет, и спросить у ядра остаток не у кого —
+  // берём заданную величину как есть (для раундов это она и есть, для минут
+  // и часов это перевод в Раунды по длине Раунда).
   const shown = (level == null && duration && conditionLevelField(key))
-    ? remainingRounds(duration, now) : level;
+    ? initialRounds(duration) : level;
   const fields = conditionApplyFields(key, shown, actor);
   if (!Object.keys(fields).length) return false;   // иммунитет — молча и без иконки
 
@@ -131,19 +121,20 @@ export async function clearConditionDuration(actor, key) {
  * @returns {{expired: string[], refreshed: string[]}} что сняли и что пересчитали
  */
 export async function sweepConditionDurations(actor) {
-  const now = nowSnapshot();
   const expired = [], refreshed = [];
   const updates = {};
   for (const { effect, key } of conditionDurationEffects(actor)) {
-    const duration = effect.duration ?? effect.system?.duration ?? {};
-    if (isDurationExpired(duration, now)) {
+    // effect.duration у живого документа — уже ПОДГОТОВЛЕННЫЙ ядром объект с
+    // remaining/secondsRemaining/expired (см. шапку condition-duration.mjs).
+    const duration = effect.duration ?? {};
+    if (isDurationExpired(duration)) {
       await effect.delete();
       expired.push(key);
       continue;
     }
     const field = conditionLevelField(key);
     if (!field) continue;
-    const left = remainingRounds(duration, now);
+    const left = remainingRounds(duration);
     if (left === null) continue;
     if (Number(actor.system?.conditions?.[field]) !== left) {
       updates[`system.conditions.${field}`] = left;
@@ -158,5 +149,19 @@ export async function sweepConditionDurations(actor) {
 export function conditionRemainingLabel(actor, key) {
   const effect = conditionDurationEffect(actor, key);
   if (!effect) return "";
-  return remainingLabel(effect.duration ?? effect.system?.duration ?? {}, nowSnapshot());
+  return remainingLabel(effect.duration ?? {});
 }
+
+/**
+ * Сколько Раундов показать в счётчике В МОМЕНТ наложения, пока эффекта ещё
+ * нет и спросить остаток не у кого. Для «rounds» это сама величина, для
+ * времени — перевод по длине Раунда, вверх (см. remainingRounds).
+ */
+function initialRounds(duration) {
+  if (duration.units === "rounds" || duration.units === "turns") return duration.value;
+  const secs = duration.value * (UNIT_SECONDS[duration.units] || 0);
+  return secs ? Math.ceil(secs / SECONDS_PER_ROUND) : duration.value;
+}
+
+/** Секунд в единице срока — только для показа счётчика при наложении. */
+const UNIT_SECONDS = { seconds: 1, minutes: 60, hours: 3600, days: 86400 };

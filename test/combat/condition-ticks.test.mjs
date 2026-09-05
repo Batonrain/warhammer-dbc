@@ -404,9 +404,9 @@ describe("processConditionTurnStart: Состояния со сроком Durati
     globalThis.game.time = { worldTime: 0 };
   });
 
-  it("не уменьшает счётчик руками — его уже пересчитало подметание", async () => {
-    // Наложено на Раунде 3 на 4 Раунда: на Раунде 5 осталось 2, не 1.
-    const actor = actorWithDuration("stunned", { rounds: 4, startRound: 3 },
+  it("не уменьшает счётчик руками — его уже пересчитало ядро", async () => {
+    // duration.remaining ядро считает само (Foundry v14); наше дело — зеркало.
+    const actor = actorWithDuration("stunned", { value: 4, units: "rounds", remaining: 2 },
       { stunned: true, stunnedRounds: 4 });
 
     await processConditionTurnStart(actor);
@@ -416,7 +416,7 @@ describe("processConditionTurnStart: Состояния со сроком Durati
   });
 
   it("истёкший срок снимает эффект и говорит об этом в карточке", async () => {
-    const actor = actorWithDuration("stunned", { rounds: 2, startRound: 3 },
+    const actor = actorWithDuration("stunned", { value: 2, units: "rounds", remaining: 0 },
       { stunned: true, stunnedRounds: 1 });
 
     await processConditionTurnStart(actor);
@@ -426,7 +426,7 @@ describe("processConditionTurnStart: Состояния со сроком Durati
   });
 
   it("Состояние БЕЗ эффекта-срока тикает руками, как и раньше", async () => {
-    const actor = actorWithDuration("stunned", { rounds: 9, startRound: 5 },
+    const actor = actorWithDuration("stunned", { value: 9, units: "rounds", remaining: 9 },
       { stunned: true, stunnedRounds: 3, blinded: true, blindedRounds: 3 });
 
     await processConditionTurnStart(actor);

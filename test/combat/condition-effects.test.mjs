@@ -3,25 +3,47 @@
 // Срок Состояния, сторона документов (wdbc-uqco): эффект со штатной Duration
 // заводится ВМЕСТЕ с иконкой (а не рядом со своей второй), продлевается вместо
 // задвоения, истекает подметанием и зеркалит остаток в прежнее поле-счётчик.
+//
+// Подставной эффект повторяет форму Foundry v14: в _source лежит
+// {value, units}, а effect.duration — уже ПОДГОТОВЛЕННЫЙ ядром объект с
+// remaining/secondsRemaining/expired. Первая версия этих тестов проверяла
+// форму v13 ({rounds, startRound, seconds, startTime}) и потому была зелёной
+// на коде, который в живой игре не работал вовсе (wdbc-xjce/wdbc-8ij2) —
+// стенд обязан повторять ту схему, что реально стоит на диске.
 
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { nowSnapshot, conditionDurationEffects, conditionDurationEffect,
+import { conditionDurationEffects, conditionDurationEffect,
          hasConditionDuration, applyConditionWithDuration, clearConditionDuration,
          sweepConditionDurations, conditionRemainingLabel }
   from "../../module/combat/condition-effects.mjs";
 
 const FLAG = "warhammer-dbc";
 
+/**
+ * Эффект, как его отдаёт Foundry v14: ядро само считает remaining по
+ * source-данным. Здесь остаток задаётся тестом напрямую — считать его снова
+ * означало бы проверять свою копию ядра, а не свой код.
+ */
 function mkEffect(owner, data) {
   const fx = {
     name: data.name, img: data.img, statuses: data.statuses ?? [],
-    duration: data.duration ?? {}, flags: data.flags ?? {},
+    flags: data.flags ?? {},
+    duration: { ...(data.duration ?? {}) },
     getFlag: (scope, key) => fx.flags?.[scope]?.[key],
+    /** Ядро пересчитало бы remaining само; в стенде это делает тест. */
+    setRemaining(remaining, secondsRemaining) {
+      fx.duration.remaining = remaining;
+      if (secondsRemaining !== undefined) fx.duration.secondsRemaining = secondsRemaining;
+    },
     async update(patch) { Object.assign(fx, patch); },
     async delete() { owner.effects = owner.effects.filter(e => e !== fx); }
   };
+  // Свежесозданный эффект ядро подготовило бы сразу: остаток равен сроку.
+  if (fx.duration.value != null && fx.duration.remaining === undefined) {
+    fx.duration.remaining = fx.duration.value;
+  }
   return fx;
 }
 
@@ -63,32 +85,34 @@ beforeEach(() => {
   globalThis.game.time = { worldTime: 1000 };
 });
 
-describe("nowSnapshot", () => {
-  it("берёт Раунд из боя, а время из мира", () => {
-    expect(nowSnapshot()).toEqual({ round: 3, turn: 0, combatId: "c1", worldTime: 1000 });
-  });
-
-  it("без боя Раунд ноль, а время всё равно идёт", () => {
-    globalThis.game.combat = null;
-    expect(nowSnapshot()).toEqual({ round: 0, turn: 0, combatId: null, worldTime: 1000 });
-  });
-});
-
 describe("applyConditionWithDuration: со сроком", () => {
   it("заводит ОДИН эффект — он же иконка, он же срок", async () => {
     const actor = makeActor();
-    const ok = await applyConditionWithDuration(actor, "stunned", { level: 2, value: 2, unit: "rounds" });
+    const ok = await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
 
     expect(ok).toBe(true);
     expect(actor.effects).toHaveLength(1);
     // statuses — то, по чему Foundry рисует иконку на токене; отдельного
     // второго эффекта ради срока не заводится (см. шапку модуля).
     expect(actor.effects[0].statuses).toEqual(["stunned"]);
-    expect(actor.effects[0].duration).toEqual({
-      rounds: 2, turns: null, combat: "c1", startRound: 3, startTurn: 0
-    });
     expect(actor.system.conditions.stunned).toBe(true);
-    expect(actor.system.conditions.stunnedRounds).toBe(2);
+  });
+
+  it("duration отдаётся ядру в ЕГО схеме — {value, units}, без своего момента начала", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    const { value, units } = actor.effects[0].duration;
+    expect({ value, units }).toEqual({ value: 2, units: "rounds" });
+    // startRound/startTime не наши — их пишет ядро в effect.start.
+    expect(actor.effects[0].duration.startRound).toBeUndefined();
+    expect(actor.effects[0].duration.startTime).toBeUndefined();
+  });
+
+  it("срок в минутах уходит минутами, а не переведённым в секунды", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "poisoned", { value: 10, unit: "minutes" });
+    const { value, units } = actor.effects[0].duration;
+    expect({ value, units }).toEqual({ value: 10, units: "minutes" });
   });
 
   it("счётчик-зеркало заполняется СРАЗУ, а не ждёт первого подметания", async () => {
@@ -98,28 +122,26 @@ describe("applyConditionWithDuration: со сроком", () => {
     expect(actor.system.conditions.stunnedRounds).toBe(4);
   });
 
+  it("время в счётчике-зеркале переводится в Раунды", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 1, unit: "minutes" });
+    expect(actor.system.conditions.stunnedRounds).toBe(10);   // 60 сек / 6
+  });
+
   it("явная СИЛА важнее зеркала — это про другое", async () => {
     const actor = makeActor();
     await applyConditionWithDuration(actor, "bleeding", { level: 2, value: 1, unit: "hours" });
     expect(actor.system.conditions.bleedingLevel).toBe(2);
-    expect(actor.effects[0].duration.seconds).toBe(3600);
-  });
-
-  it("срок в минутах привязывается к времени мира, а не к бою", async () => {
-    const actor = makeActor();
-    await applyConditionWithDuration(actor, "poisoned", { value: 1, unit: "minutes" });
-    expect(actor.effects[0].duration).toEqual({ seconds: 60, startTime: 1000 });
+    expect(actor.effects[0].duration.units).toBe("hours");
   });
 
   it("повторное наложение ПРОДЛЕВАЕТ срок, а не заводит второй эффект", async () => {
     const actor = makeActor();
-    await applyConditionWithDuration(actor, "stunned", { level: 1, value: 1, unit: "rounds" });
-    globalThis.game.combat.round = 5;
-    await applyConditionWithDuration(actor, "stunned", { level: 3, value: 3, unit: "rounds" });
+    await applyConditionWithDuration(actor, "stunned", { value: 1, unit: "rounds" });
+    await applyConditionWithDuration(actor, "stunned", { value: 3, unit: "rounds" });
 
     expect(actor.effects).toHaveLength(1);
-    expect(actor.effects[0].duration.startRound).toBe(5);
-    expect(actor.effects[0].duration.rounds).toBe(3);
+    expect(actor.effects[0].duration).toEqual({ value: 3, units: "rounds" });
   });
 });
 
@@ -134,7 +156,7 @@ describe("applyConditionWithDuration: без срока и с иммунитет
 
   it("иммунитет гасит и Состояние, и эффект — иконки без Состояния не бывает", async () => {
     const actor = makeActor({ items: [immunityItem("stunned")] });
-    const ok = await applyConditionWithDuration(actor, "stunned", { level: 2, value: 2, unit: "rounds" });
+    const ok = await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
 
     expect(ok).toBe(false);
     expect(actor.effects).toEqual([]);
@@ -149,18 +171,18 @@ describe("applyConditionWithDuration: без срока и с иммунитет
 
 describe("поиск срока", () => {
   it("находит свой эффект и не путается в чужих", async () => {
-    const actor = makeActor({ effects: [{ name: "Чужой", statuses: ["stunned"], duration: { rounds: 9 } }] });
+    const actor = makeActor({ effects: [{ name: "Чужой", statuses: ["stunned"], duration: { value: 9, units: "rounds" } }] });
     expect(conditionDurationEffects(actor)).toEqual([]);
     expect(hasConditionDuration(actor, "stunned")).toBe(false);
 
-    await applyConditionWithDuration(actor, "stunned", { level: 2, value: 2, unit: "rounds" });
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
     expect(hasConditionDuration(actor, "stunned")).toBe(true);
     expect(conditionDurationEffect(actor, "stunned")).not.toBeNull();
   });
 
   it("clearConditionDuration уносит носитель срока", async () => {
     const actor = makeActor();
-    await applyConditionWithDuration(actor, "stunned", { level: 2, value: 2, unit: "rounds" });
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
     await clearConditionDuration(actor, "stunned");
     expect(actor.effects).toEqual([]);
   });
@@ -169,8 +191,8 @@ describe("поиск срока", () => {
 describe("sweepConditionDurations", () => {
   it("истёкший срок уносит эффект — гашение Состояния делает мост, не мы", async () => {
     const actor = makeActor();
-    await applyConditionWithDuration(actor, "stunned", { level: 2, value: 2, unit: "rounds" });
-    globalThis.game.combat.round = 5;   // 3 + 2 = истёк
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    actor.effects[0].setRemaining(0);   // ядро досчитало срок до нуля
 
     const { expired } = await sweepConditionDurations(actor);
     expect(expired).toEqual(["stunned"]);
@@ -179,8 +201,8 @@ describe("sweepConditionDurations", () => {
 
   it("не истёкший срок зеркалится в прежнее поле-счётчик", async () => {
     const actor = makeActor();
-    await applyConditionWithDuration(actor, "stunned", { level: 3, value: 3, unit: "rounds" });
-    globalThis.game.combat.round = 4;   // остался 2
+    await applyConditionWithDuration(actor, "stunned", { value: 3, unit: "rounds" });
+    actor.effects[0].setRemaining(2);
 
     const { expired, refreshed } = await sweepConditionDurations(actor);
     expect(expired).toEqual([]);
@@ -190,22 +212,32 @@ describe("sweepConditionDurations", () => {
 
   it("ничего не изменилось — ничего не пишется", async () => {
     const actor = makeActor();
-    await applyConditionWithDuration(actor, "stunned", { level: 3, value: 3, unit: "rounds" });
+    await applyConditionWithDuration(actor, "stunned", { value: 3, unit: "rounds" });
     actor.updates.length = 0;
 
     await sweepConditionDurations(actor);
     expect(actor.updates).toEqual([]);
   });
 
-  it("срок в минутах доживает до своего worldTime, а не до конца боя", async () => {
+  it("срок в минутах меряется своими единицами, а зеркалится Раундами", async () => {
     const actor = makeActor();
-    await applyConditionWithDuration(actor, "poisoned", { value: 1, unit: "minutes" });
+    await applyConditionWithDuration(actor, "stunned", { value: 10, unit: "minutes" });
+    actor.effects[0].setRemaining(5, 300);   // осталось 5 минут = 300 сек
 
-    globalThis.game.combat.round = 99;
-    expect((await sweepConditionDurations(actor)).expired).toEqual([]);
+    const { expired } = await sweepConditionDurations(actor);
+    expect(expired).toEqual([]);
+    expect(actor.system.conditions.stunnedRounds).toBe(50);
+  });
 
-    globalThis.game.time.worldTime = 1060;
-    expect((await sweepConditionDurations(actor)).expired).toEqual(["poisoned"]);
+  it("бессрочный эффект подметание не трогает", async () => {
+    const actor = makeActor({ effects: [{
+      statuses: ["prone"], duration: { value: null, units: "seconds", expired: true },
+      flags: { [FLAG]: { conditionDuration: "prone" } }
+    }] });
+
+    const { expired } = await sweepConditionDurations(actor);
+    expect(expired).toEqual([]);
+    expect(actor.effects).toHaveLength(1);
   });
 });
 
@@ -213,7 +245,8 @@ describe("conditionRemainingLabel", () => {
   it("остаток словами, своими единицами", async () => {
     const actor = makeActor();
     await applyConditionWithDuration(actor, "poisoned", { value: 1, unit: "hours" });
-    globalThis.game.time.worldTime = 1000 + 1800;
+    actor.effects[0].setRemaining(30);
+    actor.effects[0].duration.units = "minutes";
     expect(conditionRemainingLabel(actor, "poisoned")).toBe("30 минут");
   });
 

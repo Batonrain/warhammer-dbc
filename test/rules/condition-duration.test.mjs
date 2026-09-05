@@ -1,11 +1,21 @@
-// Срок Состояния штатной Duration эффекта (wdbc-uqco) — чистая арифметика:
-// срок автора → объект duration, и обратно, сколько осталось. Заглушка Foundry
-// не нужна и не должна понадобиться.
+// Срок Состояния штатной Duration эффекта (wdbc-uqco).
+//
+// Переписано после живой проверки (wdbc-xjce/wdbc-8ij2): первая версия
+// считала остаток срока сама, по полям {rounds, startRound, seconds,
+// startTime}. Такой формы в Foundry v14 НЕТ — схема duration это
+// {value, units, expiry, expired}, а остаток (remaining/secondsRemaining) и
+// момент начала (effect.start) ведёт ядро. Поэтому здесь проверяется перевод
+// «что выбрал автор» → {value, units} и ЧТЕНИЕ готового остатка обратно,
+// а не своя арифметика — своей больше нет.
 
 import { describe, it, expect } from "vitest";
 import { SECONDS_PER_ROUND, DURATION_UNITS, durationLabel, durationDataFor,
-         remainingSeconds, remainingCombatRounds, remainingRounds,
-         isDurationExpired, remainingLabel } from "../../module/rules/condition-duration.mjs";
+         remainingOf, isDurationExpired, remainingRounds, remainingLabel,
+         conditionEntryTerm, conditionHasLevelInput }
+  from "../../module/rules/condition-duration.mjs";
+
+/** Подготовленный ядром объект duration — та форма, что видит наш код. */
+const prepared = (over = {}) => ({ value: 3, units: "rounds", expired: false, remaining: 3, ...over });
 
 describe("durationLabel: русское согласование", () => {
   it("раунды", () => {
@@ -19,7 +29,6 @@ describe("durationLabel: русское согласование", () => {
   it("минуты и часы", () => {
     expect(durationLabel(1, "minutes")).toBe("1 минута");
     expect(durationLabel(3, "minutes")).toBe("3 минуты");
-    expect(durationLabel(1, "hours")).toBe("1 час");
     expect(durationLabel(12, "hours")).toBe("12 часов");
   });
 
@@ -31,111 +40,136 @@ describe("durationLabel: русское согласование", () => {
 });
 
 describe("durationDataFor: срок автора → duration эффекта", () => {
-  it("раунды привязываются к бою, а не к worldTime", () => {
-    const d = durationDataFor(2, "rounds", { round: 4, turn: 1, combatId: "c1", worldTime: 9000 });
-    expect(d).toEqual({ rounds: 2, turns: null, combat: "c1", startRound: 4, startTurn: 1 });
-    // Секунд у раундового срока нет намеренно: вне боя Раундов не существует,
-    // и перевод в секунды сделал бы их «идущими» там, где боя нет.
-    expect(d.seconds).toBeUndefined();
+  it("единицы автора — это единицы Foundry, переводить нечего", () => {
+    // Свой перевод единиц и был причиной обоих багов живой проверки:
+    // считать самим то, что считает ядро, — способ разойтись с ядром.
+    expect(durationDataFor(2, "rounds")).toEqual({ value: 2, units: "rounds" });
+    expect(durationDataFor(10, "minutes")).toEqual({ value: 10, units: "minutes" });
+    expect(durationDataFor(1, "hours")).toEqual({ value: 1, units: "hours" });
+    expect(durationDataFor(1, "days")).toEqual({ value: 1, units: "days" });
   });
 
-  it("минуты и часы привязываются к worldTime", () => {
-    expect(durationDataFor(1, "minutes", { worldTime: 100 })).toEqual({ seconds: 60, startTime: 100 });
-    expect(durationDataFor(2, "hours", { worldTime: 0 })).toEqual({ seconds: 7200, startTime: 0 });
-    expect(durationDataFor(1, "days", { worldTime: 5 })).toEqual({ seconds: 86400, startTime: 5 });
+  it("момент начала НЕ проставляется — его пишет ядро при создании эффекта", () => {
+    const d = durationDataFor(2, "rounds");
+    expect(Object.keys(d).sort()).toEqual(["units", "value"]);
   });
 
   it("нет срока — null: Состояние висит до ручного снятия, как раньше", () => {
-    expect(durationDataFor(2, "", {})).toBeNull();
-    expect(durationDataFor(0, "rounds", {})).toBeNull();
-    expect(durationDataFor("", "rounds", {})).toBeNull();
-    expect(durationDataFor(2, "недели", {})).toBeNull();
+    expect(durationDataFor(2, "")).toBeNull();
+    expect(durationDataFor(0, "rounds")).toBeNull();
+    expect(durationDataFor("", "rounds")).toBeNull();
+    expect(durationDataFor(2, "недели")).toBeNull();
   });
 
   it("все единицы списка UI разбираются (кроме «без срока»)", () => {
     for (const u of DURATION_UNITS.filter(x => x.key)) {
-      expect(durationDataFor(1, u.key, { worldTime: 0, round: 0 })).not.toBeNull();
+      expect(durationDataFor(1, u.key)).not.toBeNull();
     }
   });
 });
 
-describe("остаток срока", () => {
-  it("раунды считаются от Раунда наложения", () => {
-    const d = durationDataFor(3, "rounds", { round: 4, combatId: "c1" });
-    expect(remainingCombatRounds(d, { round: 4 })).toBe(3);
-    expect(remainingCombatRounds(d, { round: 6 })).toBe(1);
-    expect(remainingCombatRounds(d, { round: 7 })).toBe(0);
-    expect(remainingCombatRounds(d, { round: 99 })).toBe(0);   // не уходит в минус
+describe("remainingOf: остаток берётся у ядра", () => {
+  it("конечный остаток отдаётся как есть", () => {
+    expect(remainingOf(prepared({ remaining: 2 }))).toBe(2);
+    expect(remainingOf(prepared({ remaining: -1 }))).toBe(-1);
   });
 
-  it("секунды считаются от worldTime наложения", () => {
-    const d = durationDataFor(1, "minutes", { worldTime: 1000 });
-    expect(remainingSeconds(d, { worldTime: 1000 })).toBe(60);
-    expect(remainingSeconds(d, { worldTime: 1030 })).toBe(30);
-    expect(remainingSeconds(d, { worldTime: 9999 })).toBe(0);
+  it("бесконечный и отсутствующий — null", () => {
+    expect(remainingOf(prepared({ remaining: Infinity }))).toBeNull();
+    expect(remainingOf({})).toBeNull();
+    expect(remainingOf(null)).toBeNull();
+  });
+});
+
+describe("isDurationExpired", () => {
+  it("остаток кончился — истёк", () => {
+    expect(isDurationExpired(prepared({ remaining: 0 }))).toBe(true);
+    expect(isDurationExpired(prepared({ remaining: -3 }))).toBe(true);
   });
 
-  it("геттеры не путают два вида срока между собой", () => {
-    const rounds = durationDataFor(3, "rounds", { round: 0 });
-    const secs   = durationDataFor(1, "minutes", { worldTime: 0 });
-    expect(remainingSeconds(rounds, {})).toBeNull();
-    expect(remainingCombatRounds(secs, {})).toBeNull();
+  it("остаток есть — не истёк, даже если флаг expired почему-то стоит", () => {
+    // Остаток ядро пересчитывает на каждой подготовке данных, флаг ведёт
+    // отдельный механизм слежения — верим более свежему источнику.
+    expect(isDurationExpired(prepared({ remaining: 1, expired: true }))).toBe(false);
+  });
+
+  it("остатка нет, но флаг стоит — истёк (запасной ответ)", () => {
+    expect(isDurationExpired({ value: 2, units: "rounds", expired: true })).toBe(true);
+  });
+
+  it("бессрочное не истекает НИКОГДА — иначе подметание сняло бы всё разом", () => {
+    expect(isDurationExpired({})).toBe(false);
+    expect(isDurationExpired(null)).toBe(false);
+    expect(isDurationExpired({ value: null, units: "seconds", expired: true })).toBe(false);
+    expect(isDurationExpired(prepared({ remaining: Infinity }))).toBe(false);
   });
 });
 
 describe("remainingRounds: то число, что видит игрок вместо прежнего счётчика", () => {
   it("раундовый срок отдаётся как есть", () => {
-    const d = durationDataFor(2, "rounds", { round: 1 });
-    expect(remainingRounds(d, { round: 2 })).toBe(1);
+    expect(remainingRounds(prepared({ units: "rounds", remaining: 2 }))).toBe(2);
+    expect(remainingRounds(prepared({ units: "turns", remaining: 4 }))).toBe(4);
   });
 
-  it("секунды переводятся ВВЕРХ — неполный Раунд ещё идёт, а не пропал", () => {
-    const d = durationDataFor(1, "minutes", { worldTime: 0 });
-    expect(remainingRounds(d, { worldTime: 0 })).toBe(60 / SECONDS_PER_ROUND);
+  it("время переводится в Раунды ВВЕРХ — неполный Раунд ещё идёт, а не пропал", () => {
+    const d = (secs) => prepared({ units: "minutes", remaining: 1, secondsRemaining: secs });
+    expect(remainingRounds(d(60))).toBe(60 / SECONDS_PER_ROUND);
     // 55 секунд осталось — это ещё целых 10 Раундов, а не 9
-    expect(remainingRounds(d, { worldTime: 5 })).toBe(10);
-    expect(remainingRounds(d, { worldTime: 59 })).toBe(1);
+    expect(remainingRounds(d(55))).toBe(10);
+    expect(remainingRounds(d(1))).toBe(1);
+  });
+
+  it("отрицательный остаток не уходит в минус", () => {
+    expect(remainingRounds(prepared({ remaining: -5 }))).toBe(0);
   });
 
   it("срока нет вовсе — null, а не 0", () => {
-    expect(remainingRounds(null, {})).toBeNull();
-    expect(remainingRounds({}, {})).toBeNull();
-  });
-});
-
-describe("isDurationExpired", () => {
-  it("бессрочное не истекает НИКОГДА — иначе подметание сняло бы всё разом", () => {
-    expect(isDurationExpired(null, { round: 999, worldTime: 1e9 })).toBe(false);
-    expect(isDurationExpired({}, { round: 999, worldTime: 1e9 })).toBe(false);
-  });
-
-  it("раундовый срок истекает ровно на своём Раунде, не раньше", () => {
-    const d = durationDataFor(2, "rounds", { round: 3 });
-    expect(isDurationExpired(d, { round: 4 })).toBe(false);
-    expect(isDurationExpired(d, { round: 5 })).toBe(true);
-  });
-
-  it("срок в секундах истекает по worldTime", () => {
-    const d = durationDataFor(1, "hours", { worldTime: 0 });
-    expect(isDurationExpired(d, { worldTime: 3599 })).toBe(false);
-    expect(isDurationExpired(d, { worldTime: 3600 })).toBe(true);
+    expect(remainingRounds({})).toBeNull();
+    expect(remainingRounds(null)).toBeNull();
   });
 });
 
 describe("remainingLabel: остаток словами", () => {
-  it("секунды показываются своими единицами, а не сотнями Раундов", () => {
-    const hour = durationDataFor(1, "hours", { worldTime: 0 });
-    expect(remainingLabel(hour, { worldTime: 0 })).toBe("1 час");
-    expect(remainingLabel(hour, { worldTime: 3000 })).toBe("10 минут");
-    expect(remainingLabel(hour, { worldTime: 3595 })).toBe("1 раунд");
+  it("показывается СВОИМИ единицами, а не сотнями Раундов", () => {
+    expect(remainingLabel(prepared({ units: "hours", remaining: 1 }))).toBe("1 час");
+    expect(remainingLabel(prepared({ units: "minutes", remaining: 30 }))).toBe("30 минут");
+    expect(remainingLabel(prepared({ units: "rounds", remaining: 2 }))).toBe("2 раунда");
   });
 
-  it("раундовый срок — в раундах", () => {
-    const d = durationDataFor(3, "rounds", { round: 0 });
-    expect(remainingLabel(d, { round: 1 })).toBe("2 раунда");
+  it("бессрочное и истёкшее — пустая строка", () => {
+    expect(remainingLabel({})).toBe("");
+    expect(remainingLabel(prepared({ remaining: 0 }))).toBe("");
+  });
+});
+
+describe("conditionEntryTerm: срок из записи Конструктора", () => {
+  it("явный срок читается как задан", () => {
+    expect(conditionEntryTerm({ condKey: "stunned", condDurationValue: "10", condDurationUnit: "minutes" }))
+      .toEqual({ value: "10", unit: "minutes" });
   });
 
-  it("бессрочное — пустая строка", () => {
-    expect(remainingLabel(null, {})).toBe("");
+  it("пустая единица у НОВОЙ записи — срока нет (wdbc-5zu5)", () => {
+    // Ключ есть и пуст — автор срока не просил. Раньше это принималось за
+    // «старую запись», и предмет тихо навешивал жертве ровно 1 раунд.
+    expect(conditionEntryTerm({ condKey: "stunned", condLevel: "1", condDurationUnit: "" }))
+      .toEqual({ value: "1", unit: "" });
+  });
+
+  it("запись БЕЗ ключа единицы — старая, её condLevel и был сроком в раундах", () => {
+    expect(conditionEntryTerm({ condKey: "stunned", condLevel: "2" }))
+      .toEqual({ value: "2", unit: "rounds" });
+  });
+
+  it("старая запись у Состояния без счётчика «раунды» срока не получает", () => {
+    expect(conditionEntryTerm({ condKey: "prone", condLevel: "2" })).toEqual({ value: 0, unit: "" });
+    expect(conditionEntryTerm({ condKey: "bleeding", condLevel: "2" })).toEqual({ value: 0, unit: "" });
+  });
+});
+
+describe("conditionHasLevelInput", () => {
+  it("сила есть у счётчиков «уровни/штуки», а «раунды» — это срок", () => {
+    expect(conditionHasLevelInput("bleeding")).toBe(true);
+    expect(conditionHasLevelInput("stunned")).toBe(false);
+    expect(conditionHasLevelInput("prone")).toBe(false);
   });
 });

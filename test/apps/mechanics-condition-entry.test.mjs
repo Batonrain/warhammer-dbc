@@ -61,9 +61,16 @@ describe("describeMechEntry: запись «Состояние»", () => {
 
   it("запись, заведённая до появления сроков, читается как «столько-то раундов»", () => {
     // Обратная совместимость: у Состояния со счётчиком «раунды» condLevel и
-    // БЫЛ сроком — выразить его иначе как в Раундах было нечем.
-    expect(describeMechEntry(entry({ condKey: "stunned", condLevel: "2", condDurationUnit: "" })))
-      .toBe("Состояние: наложить «Оглушение» (на 2 раунда)");
+    // БЫЛ сроком — выразить его иначе как в Раундах было нечем. Признак такой
+    // записи — ОТСУТСТВИЕ ключа единицы, поэтому запись собирается вручную,
+    // а не через blankMechEntry (тот ключ уже кладёт).
+    const legacy = { id: "e", kind: "condition", condKey: "stunned", condMode: "apply", condLevel: "2" };
+    expect(describeMechEntry(legacy)).toBe("Состояние: наложить «Оглушение» (на 2 раунда)");
+  });
+
+  it("новая запись с пустой единицей срока НЕ получает его втихую (wdbc-5zu5)", () => {
+    expect(describeMechEntry(entry({ condKey: "stunned", condDurationUnit: "" })))
+      .toBe("Состояние: наложить «Оглушение»");
   });
 
   it("у Состояния без счётчика величины в подписи нет", () => {
@@ -95,7 +102,7 @@ describe("applyMechEntry: разовые режимы", () => {
       "system.conditions.stunned": true, "system.conditions.stunnedRounds": 3
     }]);
     expect(actor.effects).toHaveLength(1);
-    expect(actor.effects[0].duration.rounds).toBe(3);
+    expect(actor.effects[0].duration).toEqual({ value: 3, units: "rounds" });
   });
 
   it("срок — формула бонуса характеристики, как «Рейтинг» у Черты", async () => {
@@ -104,7 +111,7 @@ describe("applyMechEntry: разовые режимы", () => {
       condKey: "stunned", condDurationValue: "t", condDurationUnit: "rounds"
     }), source);
     expect(actor.updates[0]["system.conditions.stunnedRounds"]).toBe(5);
-    expect(actor.effects[0].duration.rounds).toBe(5);
+    expect(actor.effects[0].duration).toEqual({ value: 5, units: "rounds" });
   });
 
   it("сила у Состояния с уровнями — своё поле, и эффекта без срока не заводится", async () => {
