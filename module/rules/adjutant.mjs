@@ -28,25 +28,23 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
+import { registerRuleSource } from "./source-registry.mjs";
 
 const LORE_GROUPS = ["commonLore", "forbiddenLore", "scholasticLore"];
 const RANK_ORDER = ["untrained", "knows", "trained", "veteran", "expert"];
 
 /**
- * Опознание Адъютанта осталось ПО ИМЕНИ, в отличие от прочих способностей
- * (wdbc-iadw). Причина не в самой способности, а в графе импортов: этот файл
- * зарегистрирован источником правил в rules/sources.mjs, а hasAbility тянет
- * hasRuleFlag → collect.mjs → sources.mjs — то есть обратно сюда. Цикл
- * подвешивает загрузку модулей насмерть (тест каркаса rules/scaffold падал по
- * таймауту в 20 секунд).
- *
- * Ключ «ability.adjutant» в реестре и на предмете в паке при этом ЕСТЬ — он
- * заведён вместе с остальными и ждёт, когда цикл разомкнут. Разомкнуть его
- * можно, сняв статический импорт rules/adjutant.mjs из sources.mjs (источник
- * регистрируется там же строкой), но это отдельная правка, а не попутная.
+ * Опознание по ключу, как у прочих способностей (wdbc-iadw). Долгое время
+ * этот файл был единственным исключением: он зарегистрирован источником правил
+ * в rules/sources.mjs, а hasAbility тянет hasRuleFlag → collect.mjs →
+ * sources.mjs, то есть обратно сюда, и цикл подвешивал загрузку модулей
+ * насмерть. Круг разомкнут переносом хранилища источников в отдельный
+ * файл-лист rules/source-registry.mjs (wdbc-795h): сборка правил ходит теперь
+ * туда, а не в файл с регистрациями.
  */
 function hasAdjutant(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Adjutant"));
+  return hasAbility(actor, "ability.adjutant", "Adjutant", "talent");
 }
 
 /** Все Отряды (squad), где commanderActor занимает пост Командира. */
@@ -122,3 +120,25 @@ export function adjutantRerollRules(commanderActor, allActors) {
   }
   return rules;
 }
+
+// ── Регистрация источника ───────────────────────────────────────────────────
+// Здесь, а не в rules/sources.mjs, как у остальных, и это единственное такое
+// исключение (wdbc-795h). Причина в графе импортов: Адъютант — единственный
+// источник правил, которому нужно спросить у актора ВОЗМОЖНОСТЬ, а этот вопрос
+// тянет hasRuleFlag → collect.mjs → sources.mjs, то есть обратно к тому, кто
+// его импортировал. Круг подвешивал загрузку модулей насмерть: тест каркаса
+// (rules/scaffold) падал по таймауту в 20 секунд, не с ошибкой — просто висел.
+//
+// Регистрация берётся из хранилища-листа (source-registry.mjs), а не из
+// sources.mjs: иначе круг вернулся бы тем же путём.
+//
+// Цена решения: файл обязан быть кем-то ЗАГРУЖЕН, иначе источник не появится.
+// Загружает его точка входа системы (warhammer-dbc.mjs) — и тест
+// test/rules/source-registry-acyclic.test.mjs следит, что эта строка оттуда
+// не пропала.
+//
+// Вне игры game нет, и источник молчит — как и остальные Foundry-зависимые.
+registerRuleSource("adjutant", a => {
+  if (typeof game === "undefined") return [];
+  return adjutantRerollRules(a, game.actors ?? []);
+});

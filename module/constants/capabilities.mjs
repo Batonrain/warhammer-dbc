@@ -7149,7 +7149,7 @@ export const CAPABILITIES = {
   "ability.adjutant": {
     label: "Адъютант: даёт своему Командиру переброс, а не себе",
     source: "Adjutant / Адъютант (packs-src/talents/Лидерство)",
-    reader: "module/rules/adjutant.mjs hasAdjutant() — пока по имени, ключ ждёт размыкания цикла импортов"
+    reader: "module/rules/adjutant.mjs hasAdjutant()"
   },
   "ability.adrenalineRush": {
     label: "Прилив Адреналина: раз за бой за Очко Бесчестия вернуть все потраченные Реакции",

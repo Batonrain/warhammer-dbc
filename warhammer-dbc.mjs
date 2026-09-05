@@ -1,6 +1,10 @@
 console.log("Warhammer DBC | Загрузка системы...");
 
 import { getCriticalEffect }          from "./critical-tables.mjs";
+// Источник правил «Адъютант» регистрирует себя сам при загрузке — он
+// единственный, кого rules/sources.mjs не импортирует (цикл импортов,
+// wdbc-795h). Без этой строки Талант просто не даст Командиру переброс.
+import "./module/rules/adjutant.mjs";
 import { RACES, SUBRACES }            from "./module/constants/races.mjs";
 import { CHARACTERISTICS, IMPROVEMENTS,
          IMPROVEMENT_BONUS,
