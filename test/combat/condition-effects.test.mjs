@@ -32,6 +32,9 @@ function mkEffect(owner, data) {
     flags: data.flags ?? {},
     duration: { ...(data.duration ?? {}) },
     getFlag: (scope, key) => fx.flags?.[scope]?.[key],
+    /** Штатный способ спросить ядро заново; стенд считает вызовы. */
+    updateDuration(context) { fx.durationRefreshes.push(context ?? null); return fx.duration; },
+    durationRefreshes: [],
     /** Ядро пересчитало бы remaining само; в стенде это делает тест. */
     setRemaining(remaining, secondsRemaining) {
       fx.duration.remaining = remaining;
@@ -252,5 +255,83 @@ describe("conditionRemainingLabel", () => {
 
   it("без срока — пусто", () => {
     expect(conditionRemainingLabel(makeActor(), "stunned")).toBe("");
+  });
+});
+
+// ── wdbc-tr02: раунды вне боя и устаревший остаток ──────────────────────────
+describe("подметание не трогает чужую епархию", () => {
+  it("ход мирового времени НЕ снимает срок в раундах, даже с поднятым флагом", async () => {
+    // Вне боя ядро остаток в раундах не считает (Infinity), но флаг «истекло»
+    // поднимает на каждый тик времени. Раньше «Оглушение на 2 раунда»,
+    // выданное до объявления боя, снималось само ещё до первого удара.
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    actor.effects[0].duration.remaining = Infinity;
+    actor.effects[0].duration.expired = true;
+
+    const { expired } = await sweepConditionDurations(actor, { timeOnly: true });
+
+    expect(expired).toEqual([]);
+    expect(actor.effects).toHaveLength(1);
+  });
+
+  it("тот же эффект на смене Хода тоже уцелеет — посчитать нечем, значит не вышел", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    actor.effects[0].duration.remaining = Infinity;
+    actor.effects[0].duration.expired = true;
+
+    expect((await sweepConditionDurations(actor)).expired).toEqual([]);
+  });
+
+  it("срок во времени по времени и подметается", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "poisoned", { value: 10, unit: "minutes" });
+    actor.effects[0].setRemaining(0, 0);
+
+    expect((await sweepConditionDurations(actor, { timeOnly: true })).expired).toEqual(["poisoned"]);
+  });
+
+  it("ход времени не снимает раунды ДАЖЕ с честно посчитанным нулём", async () => {
+    // Отдельно от случая «посчитать нечем» выше: даже когда остаток посчитан и
+    // равен нулю, снимать раундовый срок — дело боевого такта, а не хода
+    // мирового времени. Иначе в чат уходила бы карточка «срок вышел» вне боя,
+    // а на смене Хода снимать было бы уже нечего.
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    actor.effects[0].setRemaining(0);
+
+    expect((await sweepConditionDurations(actor, { timeOnly: true })).expired).toEqual([]);
+    expect(actor.effects).toHaveLength(1);
+  });
+
+  it("раунды подметаются на смене Хода, когда остаток реально посчитан", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 2, unit: "rounds" });
+    actor.effects[0].setRemaining(0);
+
+    expect((await sweepConditionDurations(actor)).expired).toEqual(["stunned"]);
+  });
+});
+
+describe("остаток перечитывается перед чтением, а не берётся вчерашний", () => {
+  it("подметание просит ядро пересчитать срок", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 3, unit: "rounds" });
+    actor.effects[0].durationRefreshes.length = 0;
+
+    await sweepConditionDurations(actor);
+
+    expect(actor.effects[0].durationRefreshes).toHaveLength(1);
+  });
+
+  it("новый Раунд из хука передаётся ядру, а не ожидается «сам доедет»", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 3, unit: "rounds" });
+    actor.effects[0].durationRefreshes.length = 0;
+
+    await sweepConditionDurations(actor, { round: 7, turn: 1 });
+
+    expect(actor.effects[0].durationRefreshes[0]).toEqual({ round: 7, turn: 1 });
   });
 });

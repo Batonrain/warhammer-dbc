@@ -64,6 +64,7 @@ import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
+import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
@@ -1719,10 +1720,19 @@ function _attachFateContextMenu(message, html) {
       // по той же причине, что временные выдачи Черт выше: они привязаны к
       // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно
       // это и открывает сроки, которые уже умеет виджет «Летоисчисление»:
-      // прокрутил время — Состояние снялось само. Сроки в РАУНДАХ здесь
-      // истечь не могут (у них своя привязка к бою) — подметание их и не
-      // тронет, они снимаются на смену Хода, в processConditionTurnStart.
-      await sweepConditionDurations(actor);
+      // прокрутил время — Состояние снялось само.
+      //
+      // timeOnly обязателен (wdbc-tr02): без него сюда попадали и сроки в
+      // РАУНДАХ. Вне боя ядро их остаток посчитать не может, но флаг
+      // «истекло» на каждый тик времени поднимает — и «Оглушение на 2
+      // раунда», выданное до объявления боя, снималось само в течение минуты,
+      // ещё до первого удара. Раунды снимаются только на смену Хода, в
+      // processConditionTurnStart.
+      const swept = await sweepConditionDurations(actor, { timeOnly: true });
+      // Молча исчезнувшее Состояние ГМ считает багом, а не сроком — говорим.
+      if (swept.expired.length) {
+        await postConditionCard(actor, swept.expired.map(conditionExpiryLine));
+      }
     }
   });
 

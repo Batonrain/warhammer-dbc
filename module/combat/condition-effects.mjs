@@ -26,7 +26,8 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 // Тот же глиф, что рисует иконку статуса на токене — эффект создаётся здесь,
 // а не мостом, и обязан выглядеть ровно так же, как если бы его завёл мост.
 import { statusIconUri } from "../apps/token-conditions.mjs";
-import { durationDataFor, isDurationExpired, remainingRounds, remainingLabel, SECONDS_PER_ROUND }
+import { durationDataFor, isDurationExpired, remainingRounds, remainingLabel,
+         isTimeBasedDuration, SECONDS_PER_ROUND }
   from "../rules/condition-duration.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -120,13 +121,23 @@ export async function clearConditionDuration(actor, key) {
  *
  * @returns {{expired: string[], refreshed: string[]}} что сняли и что пересчитали
  */
-export async function sweepConditionDurations(actor) {
+export async function sweepConditionDurations(actor, { timeOnly = false, round, turn } = {}) {
   const expired = [], refreshed = [];
   const updates = {};
   for (const { effect, key } of conditionDurationEffects(actor)) {
+    // Пересчитать ПЕРЕД чтением (wdbc-tr02): effect.duration ядро освежает
+    // своим тактом подготовки данных, и на смене Раунда наш хук успевал
+    // прочитать вчерашний остаток — счётчик отставал на Раунд, а последний
+    // Раунд «залипал». updateDuration — штатный способ спросить заново, и ему
+    // можно передать НОВЫЙ Раунд из хука, не дожидаясь, пока он доедет сам.
+    effect.updateDuration?.(round !== undefined ? { round, turn } : undefined);
     // effect.duration у живого документа — уже ПОДГОТОВЛЕННЫЙ ядром объект с
     // remaining/secondsRemaining/expired (см. шапку condition-duration.mjs).
     const duration = effect.duration ?? {};
+    // Ход мирового времени подметает ТОЛЬКО сроки, меряемые временем. Раунды —
+    // дело боевого трекера: вне боя их остаток не считается вовсе, и трогать
+    // их по времени значит снимать «Оглушение на 2 раунда» до начала боя.
+    if (timeOnly && !isTimeBasedDuration(duration)) continue;
     if (isDurationExpired(duration)) {
       await effect.delete();
       expired.push(key);

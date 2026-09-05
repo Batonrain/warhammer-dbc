@@ -93,8 +93,24 @@ describe("isDurationExpired", () => {
     expect(isDurationExpired(prepared({ remaining: 1, expired: true }))).toBe(false);
   });
 
-  it("остатка нет, но флаг стоит — истёк (запасной ответ)", () => {
+  it("остатка нет ВОВСЕ (сырые данные, не подготовленные ядром) — верим флагу", () => {
+    // Это единственный случай, где флаг остаётся единственным источником: у
+    // документа, который ядро ещё не готовило, поля remaining просто нет.
     expect(isDurationExpired({ value: 2, units: "rounds", expired: true })).toBe(true);
+  });
+
+  it("НЕСЧИТАЕМЫЙ остаток не истекает — даже когда ядро подняло флаг (wdbc-tr02)", () => {
+    // Срок в РАУНДАХ вне боя: ядро не может посчитать остаток (Infinity) и при
+    // этом само поднимает expired на любой тик мирового времени — вне боя оно
+    // считает удовлетворённым любое боевое событие истечения
+    // (client/documents/active-effect.mjs::isExpiryEvent). Доверять флагу в
+    // этот момент значит снимать «Оглушение на 2 раунда» ДО начала боя.
+    expect(isDurationExpired({ value: 2, units: "rounds", remaining: Infinity, expired: true })).toBe(false);
+  });
+
+  it("посчитанный остаток важнее флага в обе стороны", () => {
+    expect(isDurationExpired({ value: 2, units: "rounds", remaining: 0, expired: false })).toBe(true);
+    expect(isDurationExpired({ value: 2, units: "rounds", remaining: 2, expired: true })).toBe(false);
   });
 
   it("бессрочное не истекает НИКОГДА — иначе подметание сняло бы всё разом", () => {

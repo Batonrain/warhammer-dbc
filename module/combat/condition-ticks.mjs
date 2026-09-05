@@ -38,7 +38,17 @@ import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../co
 import { sweepConditionDurations, hasConditionDuration } from "./condition-effects.mjs";
 import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
-async function postConditionCard(actor, lines) {
+/**
+ * Строка «срок вышел» для карточки — общая с подметанием по мировому времени
+ * (hooks.mjs), чтобы истечение вне боя не проходило молча: тихо исчезнувшее
+ * Состояние ГМ считает багом, а не сроком.
+ */
+export function conditionExpiryLine(key) {
+  return `<div class="roll-threshold">${CONDITIONS_DEF[key]?.label || key}: срок вышел — снято</div>`;
+}
+
+/** Карточка Состояний в чат — экспортирована ради того же подметания по времени. */
+export async function postConditionCard(actor, lines) {
   if (!lines.length) return;
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -92,10 +102,8 @@ export async function processConditionTurnStart(actor) {
   // истёкшие и освежить видимый остаток. Гашение самого Состояния делает мост
   // «лист ↔ токен» (см. condition-effects.mjs), поэтому строк «снято» ниже мы
   // не дублируем — только называем, что кончилось.
-  const swept = await sweepConditionDurations(actor);
-  for (const key of swept.expired) {
-    lines.push(`<div class="roll-threshold">${CONDITIONS_DEF[key]?.label || key}: срок вышел — снято</div>`);
-  }
+  const swept = await sweepConditionDurations(actor, { round: game.combat?.round, turn: game.combat?.turn });
+  for (const key of swept.expired) lines.push(conditionExpiryLine(key));
 
   for (const { key, field, label } of ROUND_CONDITIONS) {
     // Удушье (стр. 30-31, wdbc-r5o7.6) — особый случай, не общий приём этого
