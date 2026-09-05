@@ -10,7 +10,8 @@
 //  Здесь файл-лист: он не импортирует ни один из этих двух.
 // ══════════════════════════════════════════════════════════════════════════
 
-import { diceModeHtml, mergeReroll } from "../../rules/test-kind-widget.mjs";
+import { mergeReroll } from "../../rules/test-kind-widget.mjs";
+
 
 /** Возможность «раз в Раунд авто-попадание рукопашной» (Локус Неизбежности). */
 export const AUTO_HIT_CAPABILITY = "autoHit.melee.oncePerRound";
