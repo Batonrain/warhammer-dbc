@@ -59,7 +59,7 @@
       {{#each activeCapabilities as |c|}}
       <tr class="item-row">
         <td class="item-name-cell" title="{{c.labelFull}}">{{c.label}}</td>
-        <td class="cap-auto-cell">{{#if c.auto}}<span title="Система учитывает сама">авто</span>{{else}}<span class="cap-manual" title="Читателя в расчёте нет — применяет ГМ">вручную</span>{{/if}}</td>
+        <td class="cap-auto-cell"><span class="{{#unless c.auto}}cap-manual{{/unless}}" title="{{c.autoHint.hint}}">{{c.autoHint.text}}</span></td>
         <td>{{c.sources}}</td>
         <td class="cap-spend-cell">
           {{#if c.isScript}}

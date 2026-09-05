@@ -55,6 +55,7 @@ import { mergeAbilityItems, mergeAbilityEffects,
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
 import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities } from "../rules/flags.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
+import { capabilityAutoHint }                        from "../constants/capability-forms.mjs";
 import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
 import { scriptAbilityRow }                          from "../apps/mechanics.mjs";
 import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mjs";
@@ -961,7 +962,13 @@ export function buildGetData(actor) {
           sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
           // Есть ли код, который эту возможность читает. Ложь честнее молчания:
           // ГМ должен знать, что вот это система сама не посчитает.
+          //
+          // Одного слова «вручную» за столом мало: у иммунитета и у «раз за
+          // бой потратить Очко» это две разные заботы, и первая ГМа не
+          // касается, пока по персонажу не бьют. Поэтому рядом идёт форма —
+          // что именно делать руками (constants/capability-forms.mjs).
           auto: !!CAPABILITIES[key]?.reader,
+          autoHint: capabilityAutoHint(!!CAPABILITIES[key]?.reader, label),
           cost,
           costLabel: cost ? capabilityCostLabel(cost) : "",
           spendGate: cost ? capabilityCostGate(actor, cost) : null
@@ -985,6 +992,7 @@ export function buildGetData(actor) {
           labelFull: row.label,
           sources: item?.name || sa.ruleLabel || "",
           auto: true,
+          autoHint: capabilityAutoHint(true, row.label),
           isScript: true,
           itemId: sa.itemId, groupId: sa.groupId, entryId: sa.entryId,
           scriptReady: row.ready,
