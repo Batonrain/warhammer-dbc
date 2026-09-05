@@ -68,6 +68,7 @@ import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
 import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
@@ -312,6 +313,8 @@ async function onSanityTalentRecover(event, target) {
   const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
   await this.actor.update({ "system.sanity.value": next });
 
+  // Не карточка теста, а строка о трате и прибавке: ни Порога, ни исхода —
+  // общий сборщик нарисовал бы вокруг неё пустую рамку карточки.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -338,23 +341,17 @@ async function onDreadnoughtDailyTest(event) {
     await this.actor.update({ "system.sanity.value": next });
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Тест бодрствования — W+0</div>
-        <div class="roll-threshold">Порог: <b>${wp}</b></div>
-        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-        <div class="roll-outcome">
-          ${success
-            ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
-            : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
-              + `−${sanityLoss} Здравомыслия (${next})</span>`}
-        </div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(this.actor, {
+    title: "Тест бодрствования — W+0",
+    // Порог без слагаемых: тест фиксированный W+0 (см. комментарий выше),
+    // поэтому скобок с подписями здесь нет — их нечем наполнить.
+    threshold: thresholdLine({ threshold: wp }),
+    rv: roll.total,
+    outcome: success
+      ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
+      : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
+        + `−${sanityLoss} Здравомыслия (${next})</span>`
+  }, { rolls: [roll] });
 }
 
 // Электростимуляторы Дредноута (стр. 58): разовый буст Здравомыслия, откат —
@@ -376,6 +373,8 @@ async function onElectrostimActivate(event) {
     "system.electrostim.amount": amount
   });
 
+  // Не карточка теста, а уведомление (Буст включён): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -408,17 +407,14 @@ async function onElectrostimRollback(event) {
     ...woundUpdates
   });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Электростимуляторы — откат</div>
-        <div class="roll-outcome"><span class="roll-failure">−${amount} Здравомыслия (${cur} → ${next})</span></div>
-        <div class="roll-dice">Непоглощаемый урон: <b>${roll.total}</b></div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(this.actor, {
+    title: "Электростимуляторы — откат",
+    outcome: `<span class="roll-failure">−${amount} Здравомыслия (${cur} → ${next})</span>`,
+    // Урон отката идёт ПОСЛЕ исхода и своей подписью («Непоглощаемый урон»,
+    // а не «Бросок») — поэтому он свой блок, а не общая строка броска: тут не
+    // тест, а последствие, и порядок строк сложился обратный.
+    sections: [`<div class="roll-dice">Непоглощаемый урон: <b>${roll.total}</b></div>`]
+  }, { rolls: [roll] });
 }
 
 // «Ферум Инфернус» (стр. 58): пока Здравомыслие ниже ½Inf+5, раз в игровой
@@ -436,6 +432,8 @@ async function onFerumInfernusTick(event) {
   const next = max != null ? Math.min(max, cur + 1) : cur + 1;
   await this.actor.update({ "system.sanity.value": next });
 
+  // Не карточка теста, а уведомление (Часовой тик): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -457,6 +455,8 @@ async function onHibernationEnter(event) {
   event.preventDefault();
   if (this.actor.system.hibernation?.active) return;
   await this.actor.update({ "system.hibernation.active": true });
+  // Не карточка теста, а уведомление (Вход в Гибернацию): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -476,6 +476,8 @@ async function onHibernationExit(event) {
   event.preventDefault();
   if (!this.actor.system.hibernation?.active) return;
   await this.actor.update({ "system.hibernation.active": false });
+  // Не карточка теста, а уведомление (Выход из Гибернации): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -499,17 +501,11 @@ async function onHibernationWeekTick(event) {
   const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
   await this.actor.update({ "system.sanity.value": next });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Гибернация — полная неделя</div>
-        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-success">+${roll.total} Здравомыслия (${cur} → ${next})</span></div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(this.actor, {
+    title: "Гибернация — полная неделя",
+    rv: roll.total,
+    outcome: `<span class="roll-success">+${roll.total} Здравомыслия (${cur} → ${next})</span>`
+  }, { rolls: [roll] });
 }
 
 /**
@@ -528,6 +524,8 @@ async function onSarcophagusHealTick(event) {
   const next = Math.min(max, cur + 1);
   await this.actor.update({ "system.wounds.value": next });
 
+  // Не карточка теста, а уведомление (Тик лечения): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -2385,6 +2383,9 @@ export class WarhammerCharacterSheet
       label, mineName: opposedRequest.initiatorName, mine: opposedRequest.initiatorSide,
       theirsName: this.actor.name, theirs: { threshold: baseEff, roll: rv }, result
     });
+    // Не карточка теста, а готовое сравнение двух уже сделанных бросков
+    // (своя разметка в rules/test-kind-widget.mjs) — и намеренно мимо режима
+    // броска: результат встречного теста должен видеть и соперник.
     await ChatMessage.create({ content, speaker: ChatMessage.getSpeaker({ actor: this.actor }), sound: CONFIG.sounds.dice });
   }
 
@@ -2444,7 +2445,6 @@ export class WarhammerCharacterSheet
     // держится в одном месте, а не переписывается на каждом месте броска.
     const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
-    const rollMode = game.settings.get("core", "rollMode");
 
     // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —
     // галочка их не перезаписывает, если что-то уже вписано вручную.
@@ -2479,32 +2479,31 @@ export class WarhammerCharacterSheet
     // показываем ту, которой бросили, а не ту, с которой открывали диалог.
     const shownAbbr = headerAbbr == null ? null : (charKey === defaultChar ? headerAbbr : charAbbr);
 
-    const messageData = ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${shownAbbr ? `${shownAbbr} — ` : ""}${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
-          <div class="roll-threshold">
+    // Карточка — общим сборщиком (wdbc-kuun). Порядок строк у неё тот же, что
+    // был здесь руками: шапка, Порог, свои строки, бросок, переброс, крит,
+    // исход, свои блоки.
+    //
+    // Строка Порога остаётся своей, а не thresholdLine: у общей слагаемые
+    // уходят в скобки подписью «Усталость −10», а здесь они исторически стоят
+    // подряд числом со скобкой-причиной («-20 (📊 Сложность)», «− 10
+    // (😓 Усталость)»), и этот вид дословно закреплён тестами карточки. Это
+    // самый частый бросок за столом — менять ему вид заодно с переездом
+    // разметки не стоит.
+    await postTestCard(this.actor, {
+      title: `${shownAbbr ? `${shownAbbr} — ` : ""}${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}`,
+      threshold: `<div class="roll-threshold">
             ${targetLabel ?? charAbbr}: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
             ${autoLines}
             → Порог: <b>${baseEff}</b>
-          </div>
-          ${outcome.combinedLine}
-          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          ${rerollNote}
-          ${outcome.critLine}
-          <div class="roll-outcome">${outcomeHtml}</div>
-          ${outcome.extendedLine}
-          ${outcome.opposedLine}
-          ${pendingOpponentNote}
-        </div>`,
-      rolls: [roll],
-      sound: CONFIG.sounds.dice
-    }, rollMode);
-
-    await ChatMessage.create(messageData);
+          </div>`,
+      lines: [
+        outcome.combinedLine,
+        assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""
+      ],
+      rv, rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
+      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote]
+    }, { rolls: [roll] });
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {

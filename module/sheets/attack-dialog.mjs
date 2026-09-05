@@ -46,6 +46,7 @@ import { CAPABILITIES } from "../constants/capabilities.mjs";
 import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../combat/action-economy.mjs";
@@ -1949,7 +1950,6 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   const roll     = await new Roll("1d100").evaluate();
   const rv       = roll.total;
   const { success: hit, deg } = testOutcome(rv, final, { autoSuccess: targetHelpless });
-  const rollMode = game.settings.get("core", "rollMode");
   const outcome  = hit
     ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}</span>`
     : `<span class="roll-failure">Промах — ${deg} ${_degWord(deg)}</span>`;
@@ -2001,30 +2001,27 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // решает только «было ли попадание», прикладной эффект остаётся за кнопкой.
   const hitExtraSection = (hit && techDef.hitSectionHtml) ? techDef.hitSectionHtml : "";
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>${techDef.label}</b>
+  // Слагаемые Порога — подписями из самого сбора (wdbc-kuun). Раньше
+  // вся сумма bodyMods показывалась одним числом с подписью «усталость» —
+  // и выключенная броня, Перевес и «+10 к любому удару» с Черты приходили
+  // игроку под чужим именем или сливались в одно непонятное число.
+  const thresholdParts = [
+    `база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}`,
+    stBon !== 0 ? `стойка ${stBon >= 0 ? "+" : ""}${stBon}` : "",
+    techDef.wsBonus !== 0 ? `${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : "",
+    ...bodyMods.parts
+  ];
+
+  await postTestCard(actor, {
+    // Предисловие — блок выше шапки: название Приёма и его пометка.
+    prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>${techDef.label}</b>
           ${techDef.chatNote
             ? `<div class="roll-technique-note">${techDef.chatNote}</div>` : ""}
-        </div>
-        <div class="roll-header">${rollIcon("sword")}${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}</div>
-        <div class="roll-threshold">
-          WS: <b>${ws}</b>
-          база ${baseBon >= 0 ? "+" : ""}${baseBon}${fullAttackForced ? " (Локус Сокрушения)" : ""}
-          ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
-          ${techDef.wsBonus !== 0 ? ` ${techDef.wsBonus >= 0 ? "+" : ""}${techDef.wsBonus}` : ""}
-          ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}
-          → Порог: <b>${final}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-        ${helplessNote}
-        ${unarmedDmgSection}
-        ${defButtons}
-        ${hitExtraSection}
-      </div>`,
-    rolls: allRolls, sound: CONFIG.sounds.dice
-  }, rollMode));
+        </div>`,
+    icon: rollIcon("sword"),
+    title: `${techDef.label} ${techDef.headerSuffix ? `— ${techDef.headerSuffix}` : "(без оружия)"}`,
+    threshold: thresholdLine({ label: "WS", base: ws, parts: thresholdParts, threshold: final }),
+    rv, outcome,
+    sections: [helplessNote, unarmedDmgSection, defButtons, hitExtraSection]
+  }, { rolls: allRolls });
 }
