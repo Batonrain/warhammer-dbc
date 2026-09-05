@@ -24,6 +24,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
@@ -46,11 +47,11 @@ export const WAVE_EFFECTS = [
 
 /** Владеет ли актор Чертой Dread Wail / Грозный Вопль. */
 export function hasDreadWail(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Dread Wail"));
+  return hasAbility(actor, "ability.dreadWail", "Dread Wail", "trait");
 }
 
 function hasSweetCacophony(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Sweet Cacophony"));
+  return hasAbility(actor, "ability.sweetCacophony", "Sweet Cacophony", "talent");
 }
 
 /** Лимит использований за бой — 1, либо Cor.b с Sweet Cacophony (мин. 1). */

@@ -23,6 +23,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy, isEncounterActive } from "./action-economy.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -32,7 +33,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 export const DEADLY_EFFECTIVENESS_FLAG = "actionPoint.bonusOnFeintKill.extraMeleeAttack";
 
 export function hasDeadlyEffectiveness(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Deadly Effectiveness"));
+  return hasAbility(actor, "ability.deadlyEffectiveness", "Deadly Effectiveness", "talent");
 }
 
 /** {disabled, title} для кнопки — гейт виден ДО клика (wdbc-qjnk, тот же приём, что apSpendGate). */

@@ -35,6 +35,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { normQuality, ITEM_QUALITY } from "../constants/quality.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -50,7 +51,7 @@ const QUALITY_STEP_DOWN = { best: "good", good: "common", common: "poor", poor: 
 
 /** Владеет ли актор Талантом Reformation Song / Песня Изменений. */
 export function hasReformationSong(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Reformation Song"));
+  return hasAbility(actor, "ability.reformationSong", "Reformation Song", "talent");
 }
 
 /** Лимит использований за сессию — фиксированный, 3 (не зависит от F.b). */

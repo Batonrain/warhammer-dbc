@@ -25,13 +25,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 
 const FLAG = "eternalWarrior";
 
 /** Владеет ли актор Даром Eternal Warrior / Вечный Воин (kind:mutation). */
 export function hasEternalWarrior(actor) {
-  return !!actor?.items?.some(i => i.type === "mutation" && itemHasName(i, "Eternal Warrior"));
+  return hasAbility(actor, "ability.eternalWarrior", "Eternal Warrior", "mutation");
 }
 
 /** Дар применим прямо сейчас: есть и Ярость (оба пути требуют её). */

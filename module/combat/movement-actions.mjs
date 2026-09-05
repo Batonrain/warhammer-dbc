@@ -36,6 +36,7 @@ import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { clearRangeCells } from "./range-cells.mjs";
 import { showReachableCells } from "./reachable-cells.mjs";
@@ -137,7 +138,7 @@ export function actorCanFly(actor) {
 // Half-Step/Полушаг (Талант, стр. 12, wdbc-9wvm): доступен только с этим
 // Талантом — та же проверка присутствия по имени, что у actorCanFly выше.
 export function actorHasHalfStep(actor) {
-  return (actor?.items ?? []).some(item => item?.type === "talent" && itemHasName(item, "Half-Step"));
+  return hasAbility(actor, "ability.halfStep", "Half-Step", "talent");
 }
 
 /** Итог Навыка (с учётом Тренировки) — умолчание на саму характеристику,

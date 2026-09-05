@@ -12,7 +12,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 
 export function hasDominator(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Dominator"));
+  return hasAbility(actor, "ability.dominator", "Dominator", "talent");
 }

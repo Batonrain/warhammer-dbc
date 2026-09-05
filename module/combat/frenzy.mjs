@@ -23,17 +23,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 
 const FLAG = "frenzyReentry";
 
 function hasFrenzyTalent(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Frenzy"));
+  return hasAbility(actor, "ability.frenzy", "Frenzy", "talent");
 }
 
 /** Butcher's Nails / Гвозди Мясника — снимает лимит повторного входа целиком. */
 export function hasButchersNails(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Butcher's Nails"));
+  return hasAbility(actor, "ability.butchersNails", "Butcher's Nails", "trait");
 }
 
 /** Заблокирован ли ПОВТОРНЫЙ вход в Ярость в этом бою (уже выходил раньше). */

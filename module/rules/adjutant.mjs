@@ -32,6 +32,19 @@ import { itemHasName } from "./predicates.mjs";
 const LORE_GROUPS = ["commonLore", "forbiddenLore", "scholasticLore"];
 const RANK_ORDER = ["untrained", "knows", "trained", "veteran", "expert"];
 
+/**
+ * Опознание Адъютанта осталось ПО ИМЕНИ, в отличие от прочих способностей
+ * (wdbc-iadw). Причина не в самой способности, а в графе импортов: этот файл
+ * зарегистрирован источником правил в rules/sources.mjs, а hasAbility тянет
+ * hasRuleFlag → collect.mjs → sources.mjs — то есть обратно сюда. Цикл
+ * подвешивает загрузку модулей насмерть (тест каркаса rules/scaffold падал по
+ * таймауту в 20 секунд).
+ *
+ * Ключ «ability.adjutant» в реестре и на предмете в паке при этом ЕСТЬ — он
+ * заведён вместе с остальными и ждёт, когда цикл разомкнут. Разомкнуть его
+ * можно, сняв статический импорт rules/adjutant.mjs из sources.mjs (источник
+ * регистрируется там же строкой), но это отдельная правка, а не попутная.
+ */
 function hasAdjutant(actor) {
   return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Adjutant"));
 }

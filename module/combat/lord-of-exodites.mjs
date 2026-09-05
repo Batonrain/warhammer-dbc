@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { subordinatesOf, squadsCommandedBy } from "../rules/adjutant.mjs";
 import { effectiveRace } from "../rules/race.mjs";
 import { AELDARI_RACES } from "../constants/races.mjs";
@@ -27,7 +28,7 @@ const DISGRACE_FLAG = "lordOfExoditesDisgraced";
 
 /** Владеет ли актор Чертой Lord of the Exodites / Повелитель Экзодитов. */
 export function hasLordOfExodites(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Lord of the Exodites"));
+  return hasAbility(actor, "ability.lordOfTheExodites", "Lord of the Exodites", "trait");
 }
 
 /**

@@ -32,6 +32,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { openCompendiumBrowser } from "../apps/compendium-browser.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -44,7 +45,7 @@ const WRAITHBONE_MELEE_FOLDER = "YwpKwjEs1NBtEKyn";
 
 /** Владеет ли актор Талантом Conjure Wraith / Вызвать Психокость. */
 export function hasConjureWraith(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Conjure Wraith"));
+  return hasAbility(actor, "ability.conjureWraith", "Conjure Wraith", "talent");
 }
 
 /** Лимит использований за сессию — F.b (минимум 1), как у Bone Song/Preservation. */

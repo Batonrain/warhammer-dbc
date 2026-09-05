@@ -11,7 +11,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 
 export function hasElectrovigour(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Electrovigour"));
+  return hasAbility(actor, "ability.electrovigour", "Electrovigour", "talent");
 }

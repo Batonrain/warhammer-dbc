@@ -23,6 +23,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy, spendActionPoints } from "./action-economy.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
@@ -33,7 +34,7 @@ import { collectTestMods } from "../rules/roll-mods.mjs";
 const MARK_FLAG = "bowToAudienceMark";
 
 export function hasBowToAudience(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Bow to the Audience"));
+  return hasAbility(actor, "ability.bowToTheAudience", "Bow to the Audience", "talent");
 }
 
 /** Итог Бдительности (с учётом Тренировки) — умолчание на P, если записи Навыка на акторе нет вовсе. */

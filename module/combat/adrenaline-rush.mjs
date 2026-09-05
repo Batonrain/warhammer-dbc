@@ -18,6 +18,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { resplendentUnit } from "./resplendent-raiment.mjs";
 import { effectiveDefenseReactionMax } from "./action-economy.mjs";
@@ -30,7 +31,7 @@ const FLAG = "dodge.core.adrenalineRush";
 
 /** Владеет ли актор Талантом Adrenaline Rush / Прилив Адреналина. */
 export function hasAdrenalineRush(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Adrenaline Rush"));
+  return hasAbility(actor, "ability.adrenalineRush", "Adrenaline Rush", "talent");
 }
 
 /** Доступно ли прямо сейчас (раз за бой/сцену, тот же троттлинг, что Resplendent Raiment). */

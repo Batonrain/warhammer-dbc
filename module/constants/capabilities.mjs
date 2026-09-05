@@ -7120,6 +7120,211 @@ export const CAPABILITIES = {
     reader: "module/combat/fear.mjs — FAITH_FLAG"
   },
 
+
+  // ── Опознание способности на акторе (wdbc-iadw) ─────────────────────────
+  // Полсотни Талантов, Черт и Мутаций опознавались в коде по литеральному
+  // имени: itemHasName(i, "Bone Song"). Переименование предмета в компендиуме
+  // молча выключало механику — ни один гейт не краснел, в консоль ничего не
+  // шло, заметить можно было только за столом.
+  //
+  // Здесь связь переведена на ключ: предмет несёт запись Конструктора
+  // «Возможность», код спрашивает ключ (module/rules/ability-by-key.mjs).
+  // Ключ не зависит ни от названия по-русски и по-английски, ни от того,
+  // Талант это, Черта или Мутация.
+  //
+  // Проверка по имени пока остаётся рядом и идёт ПЕРВОЙ — см. подробное
+  // обоснование в шапке ability-by-key.mjs (приём «новое рядом со старым»
+  // плюс цена: разбор имени идёт по кэшу, сборка правил — нет).
+  "ability.adjutant": {
+    label: "Адъютант: даёт своему Командиру переброс, а не себе",
+    source: "Adjutant / Адъютант (packs-src/talents/Лидерство)",
+    reader: "module/rules/adjutant.mjs hasAdjutant() — пока по имени, ключ ждёт размыкания цикла импортов"
+  },
+  "ability.adrenalineRush": {
+    label: "Прилив Адреналина: раз за бой за Очко Бесчестия вернуть все потраченные Реакции",
+    source: "Adrenaline Rush / Прилив Адреналина (packs-src/talents/Избегание)",
+    reader: "module/combat/adrenaline-rush.mjs hasAdrenalineRush()"
+  },
+  "ability.assassinStrike": {
+    label: "Удар Ассасина: раз в Раунд после рукопашной атаки тест Акробатики и отскок",
+    source: "Assassin Strike / Удар Ассасина (packs-src/talents/Рукопашные)",
+    reader: "module/combat/assassin-strike.mjs hasAssassinStrike()"
+  },
+  "ability.avatarOfSlaughter": {
+    label: "Аватар Резни: раз за бой отметить противника кровожадностью",
+    source: "Avatar of Slaughter / Аватар Резни (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/avatar-of-slaughter.mjs hasAvatarOfSlaughter()"
+  },
+  "ability.boneSong": {
+    label: "Костяная Песня: Полное действие — починка психокостяной техники в радиусе W м",
+    source: "Bone Song / Костяная Песня (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/bone-song.mjs hasBoneSong()"
+  },
+  "ability.bowToTheAudience": {
+    label: "Поклон Публике: за 3 ОД тест Внимания против нескольких противников сразу",
+    source: "Bow to the Audience / Поклон Публике (packs-src/talents/Арлекины___Солитер)",
+    reader: "module/combat/bow-to-audience.mjs hasBowToAudience()"
+  },
+  "ability.butchersNails": {
+    label: "Гвозди Мясника: своя механика входа и выхода из Ярости",
+    source: "Butcher's Nails / Гвозди Мясника (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/frenzy.mjs hasButchersNails()"
+  },
+  "ability.conjureWraith": {
+    label: "Вызвать Психокость: Полное действие — создать психокостяной предмет",
+    source: "Conjure Wraith / Вызвать Психокость (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/conjure-wraith.mjs hasConjureWraith()"
+  },
+  "ability.dancingAmongTheFire": {
+    label: "Танец Среди Огня: преимущество при Уклонении",
+    source: "Dancing Among The Fire / Танец Среди Огня (packs-src/talents/Азуриани)",
+    reader: "module/rules/dodge-advantage.mjs hasDancingAmongTheFire()"
+  },
+  "ability.deadlyEffectiveness": {
+    label: "Смертоносная Эффективность: убийство после финта даёт +2 ОД и доп. атаку",
+    source: "Deadly Effectiveness / Смертоносная Эффективность (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/combat/deadly-effectiveness.mjs hasDeadlyEffectiveness()"
+  },
+  "ability.deathDance": {
+    label: "Смертельный Танец: раз за битву перераспределить попадания натиска",
+    source: "Death Dance / Смертельный Танец (packs-src/talents/Азуриани)",
+    reader: "module/combat/death-dance.mjs hasDeathDance()"
+  },
+  "ability.determinationToFight": {
+    label: "Решительность Сражаться: своя механика продолжения боя",
+    source: "Determination To Fight / Решительность Сражаться (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/rules/determination-to-fight.mjs hasDeterminationToFight()"
+  },
+  "ability.dominator": {
+    label: "Покоритель: своя механика подчинения",
+    source: "Dominator / Покоритель (packs-src/talents/Оккультист)",
+    reader: "module/rules/dominator.mjs hasDominator()"
+  },
+  "ability.dreadWail": {
+    label: "Грозный Вопль: раз за бой за Очко Бесчестия усилить звуковое оружие брони",
+    source: "Dread Wail / Грозный Вопль (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/dread-wail.mjs hasDreadWail()"
+  },
+  "ability.electrovigour": {
+    label: "Электрорвение: своя механика Техномистика",
+    source: "Electrovigour / Электрорвение (packs-src/talents/Техномистик)",
+    reader: "module/rules/electrovigour.mjs hasElectrovigour()"
+  },
+  "ability.enjoyment": {
+    label: "Наслаждение: Талант друкхари, своя механика на страданиях цели",
+    source: "Enjoyment / Наслаждение (packs-src/talents/Друкхари)",
+    reader: "module/combat/enjoyment.mjs hasEnjoyment()"
+  },
+  "ability.eternalWarrior": {
+    label: "Вечный Воин: смерть в Ярости даёт бесплатное Чудесное Спасение раз за сессию",
+    source: "Eternal Warrior / Вечный Воин (packs-src/mutations/Дары_Богов)",
+    reader: "module/combat/eternal-warrior.mjs hasEternalWarrior()"
+  },
+  "ability.flipBelt": {
+    label: "Ремень Кувырков: бонус к тестам отскока и уклонения",
+    source: "Flip Belt / Ремень Кувырков (packs-src/gear/Мобильность)",
+    reader: "module/combat/recoil-item-bonuses.mjs — бонус снаряжения к отскоку"
+  },
+  "ability.frenzy": {
+    label: "Ярость: вход в Ярость и выход по тесту W",
+    source: "Frenzy / Ярость (packs-src/talents/Берсерк)",
+    reader: "module/combat/frenzy.mjs hasFrenzyTalent()"
+  },
+  "ability.fullyArmed": {
+    label: "Во Всеоружии: своя механика владения оружием",
+    source: "Fully Armed / Во Всеоружии (packs-src/traits/Fully_Armed___Во_Всеоружии_OE7RGbEDpe5iadIq.json)",
+    reader: "module/combat/fully-armed.mjs hasFullyArmed()"
+  },
+  "ability.halfStep": {
+    label: "Полушаг: доступно действие Полушага в меню Движения",
+    source: "Half-Step / Полушаг (packs-src/talents/Скорость)",
+    reader: "module/combat/movement-actions.mjs — пункт меню Движения"
+  },
+  "ability.justTheLight": {
+    label: "Лишь Свет: Талант Солитера, своя механика уклонения от внимания",
+    source: "Just the Light / Лишь Свет (packs-src/talents/Арлекины___Солитер)",
+    reader: "module/combat/just-the-light.mjs hasJustTheLight()"
+  },
+  "ability.lastActor": {
+    label: "Последний Актёр: Талант Солитера, своя механика финального выхода",
+    source: "Last Actor / Последний Актёр (packs-src/talents/Арлекины___Солитер)",
+    reader: "module/combat/last-actor.mjs hasLastActor()"
+  },
+  "ability.lordOfTheExodites": {
+    label: "Повелитель Экзодитов: бонусы к тестам Морали подчинённых",
+    source: "Lord of the Exodites / Повелитель Экзодитов (packs-src/aeldari-traits/Элитные_архетипы_Эльдар)",
+    reader: "module/combat/lord-of-exodites.mjs hasLordOfExodites()"
+  },
+  "ability.malearius": {
+    label: "Малеарий: с метеоритным молотом и лёгкой бронёй — двойные прыжки и доп. Реакция",
+    source: "Malearius / Малеарий (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/recoil-item-bonuses.mjs malaeriusActive()"
+  },
+  "ability.oneAgainstAHundred": {
+    label: "Один Против Сотни: своя механика боя против многих",
+    source: "One Against A Hundred / Один Против Сотни (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/rules/one-against-a-hundred.mjs hasOneAgainstAHundred()"
+  },
+  "ability.preservation": {
+    label: "Защита: Талант Певцов Кости, своя механика сохранения",
+    source: "Preservation / Защита (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/preservation.mjs hasPreservation()"
+  },
+  "ability.reformationSong": {
+    label: "Песня Изменений: Талант Певцов Кости, перестройка психокости",
+    source: "Reformation Song / Песня Изменений (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/reformation-song.mjs hasReformationSong()"
+  },
+  "ability.resplendentRaiment": {
+    label: "Блистательные Одеяния: Дар Слаанеш, своя механика облика",
+    source: "Resplendent Raiment / Блистательные Одеяния (packs-src/mutations/Дары_Богов)",
+    reader: "module/combat/resplendent-raiment.mjs hasResplendentRaiment()"
+  },
+  "ability.salto": {
+    label: "Сальто: бонус к отскоку и уклонению",
+    source: "Salto / Сальто (packs-src/talents/Избегание)",
+    reader: "module/combat/recoil-item-bonuses.mjs — бонус Таланта к отскоку"
+  },
+  "ability.skillfulTorture": {
+    label: "Искусная Пытка: своя механика допроса и Очков Боли",
+    source: "Skillful Torture / Искусная Пытка (packs-src/talents/Таланты_Боли)",
+    reader: "module/apps/skillful-torture.mjs hasSkillfulTorture()"
+  },
+  "ability.snapshot": {
+    label: "Выстрел Навскидку: стрельба реакцией без обычных штрафов",
+    source: "Snapshot / Выстрел Навскидку (packs-src/talents/Избегание)",
+    reader: "module/combat/snapshot.mjs hasSnapshot()"
+  },
+  "ability.songOfSwiftness": {
+    label: "Песня Стремительности: Талант Певцов Кости, ускорение психокости",
+    source: "Song of Swiftness / Песня Стремительности (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/song-of-swiftness.mjs hasSongOfSwiftness()"
+  },
+  "ability.spiritTalk": {
+    label: "Духовный Разговор: Талант Певцов Кости, речь с духами психокости",
+    source: "Spirit Talk / Духовный Разговор (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/spirit-talk.mjs hasSpiritTalk()"
+  },
+  "ability.sweetCacophony": {
+    label: "Сладкая Какофония: усиление Грозного Вопля",
+    source: "Sweet Cacophony / Сладкая Какофония (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dread-wail.mjs hasSweetCacophony()"
+  },
+  "ability.middleOfTheHunt": {
+    label: "Середина Охоты: Талант Лесного Владыки, своя механика преследования",
+    source: "The Middle of the Hunt / Середина Охоты (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/combat/middle-of-the-hunt.mjs hasMiddleOfTheHunt()"
+  },
+  "ability.voiceOfGod": {
+    label: "Глас Божий: своя механика приказов и Командования",
+    source: "Voice of God / Глас Божий (packs-src/talents/Лидерство)",
+    reader: "module/combat/voice-of-god.mjs hasVoiceOfGod()"
+  },
+  "ability.mechanicumImplants": {
+    label: "Импланты Механикум: на листе открывается блок Техножреца",
+    source: "Mechanicum Implants / Импланты Механикум (packs-src/traits/Элитные_архетипы)",
+    reader: "module/sheets/character-context.mjs — context.hasMechImplants"
+  },
 };
 
 /** Известно ли имя. Неизвестное — почти наверняка опечатка в записи. */

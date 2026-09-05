@@ -19,6 +19,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { isBonesingerMaster } from "./bone-song.mjs";
@@ -30,7 +31,7 @@ const FLAG = "preservation";
 
 /** Владеет ли актор Талантом Preservation / Защита. */
 export function hasPreservation(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Preservation"));
+  return hasAbility(actor, "ability.preservation", "Preservation", "talent");
 }
 
 /** Лимит использований за сессию — F.b (минимум 1). */

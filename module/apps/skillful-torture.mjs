@@ -27,6 +27,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
@@ -42,7 +43,7 @@ const FLAG = "skillfulTorture";
 
 /** Владеет ли актор Талантом Skillful Torture / Искусная Пытка. */
 export function hasSkillfulTorture(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Skillful Torture"));
+  return hasAbility(actor, "ability.skillfulTorture", "Skillful Torture", "talent");
 }
 
 /** Друкхари ли актор — по расе, либо по «Прошлому» Иннари/Арлекина (module/rules/race.mjs). */

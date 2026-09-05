@@ -19,9 +19,10 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 
 export function hasOneAgainstAHundred(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "One Against A Hundred"));
+  return hasAbility(actor, "ability.oneAgainstAHundred", "One Against A Hundred", "talent");
 }
 
 /** Преимущество на ЭТОТ тест (атака/избегание) — противная сторона Орда И у актора есть Талант. */

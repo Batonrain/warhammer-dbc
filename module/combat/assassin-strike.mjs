@@ -28,6 +28,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { skillTotal, markMovedThisTurn } from "./movement-actions.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
@@ -40,7 +41,7 @@ export const ASSASSIN_STRIKE_CAPABILITY = "assassinStrike";
 
 /** Владеет ли актор Талантом Assassin Strike / Удар Ассасина. */
 export function hasAssassinStrike(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Assassin Strike"));
+  return hasAbility(actor, "ability.assassinStrike", "Assassin Strike", "talent");
 }
 
 /** Показывать ли кнопку на карточке: Талант есть И раунд ещё не потрачен. */

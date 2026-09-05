@@ -25,6 +25,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -36,7 +37,7 @@ const FLAG = "resplendentRaiment";
 
 /** Владеет ли актор Даром Resplendent Raiment / Блистательные Одеяния. */
 export function hasResplendentRaiment(actor) {
-  return !!actor?.items?.some(i => i.type === "mutation" && itemHasName(i, "Resplendent Raiment"));
+  return hasAbility(actor, "ability.resplendentRaiment", "Resplendent Raiment", "mutation");
 }
 
 /** "battle" в бою, иначе "scene" — та же неоднозначность книги, что у Adrenaline Rush. */

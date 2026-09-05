@@ -15,6 +15,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { grantTempInfamy } from "../rules/temp-infamy.mjs";
 
@@ -22,7 +23,7 @@ const FLAG = "voiceOfGod";
 
 /** Владеет ли актор Талантом Voice of God / Глас Божий. */
 export function hasVoiceOfGod(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Voice of God"));
+  return hasAbility(actor, "ability.voiceOfGod", "Voice of God", "talent");
 }
 
 /** Максимум использований за бой — ½Inf.b Командира, округление вверх. */

@@ -20,6 +20,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { isBonesingerMaster } from "./bone-song.mjs";
@@ -32,7 +33,7 @@ const SUPERHEAVY_SIZE = 6;
 
 /** Владеет ли актор Талантом Song of Swiftness / Песня Стремительности. */
 export function hasSongOfSwiftness(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Song of Swiftness"));
+  return hasAbility(actor, "ability.songOfSwiftness", "Song of Swiftness", "talent");
 }
 
 /** Лимит использований за сессию — фиксированный, 3 (не зависит от F.b). */

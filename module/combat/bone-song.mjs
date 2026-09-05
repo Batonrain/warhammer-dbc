@@ -19,6 +19,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -29,7 +30,7 @@ const FLAG = "boneSong";
 
 /** Владеет ли актор Талантом Bone Song / Костяная Песня. */
 export function hasBoneSong(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Bone Song"));
+  return hasAbility(actor, "ability.boneSong", "Bone Song", "talent");
 }
 
 /** Мастер ли актор на Пути Певца Кости (module/constants/aeldari-paths.mjs::bonesinger). */

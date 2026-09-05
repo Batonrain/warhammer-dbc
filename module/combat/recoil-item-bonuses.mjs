@@ -13,13 +13,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
 
 const ARMOR_LOCATIONS = ["head", "body", "rightArm", "leftArm", "rightLeg", "leftLeg"];
 
 /** Salto/Сальто (Талант, стр. 12): +P.b м к пределу Отскока в Раунде. */
 function saltoBonus(actor) {
-  const has = (actor?.items ?? []).some(i => i.type === "talent" && itemHasName(i, "Salto"));
+  const has = hasAbility(actor, "ability.salto", "Salto", "talent");
   if (!has) return 0;
   return Number(actor?.system?.characteristics?.per?.bonus) || 0;
 }
@@ -32,7 +33,7 @@ function saltoBonus(actor) {
  * факту владения предметом.
  */
 function flipBeltBonus(actor) {
-  const has = (actor?.items ?? []).some(i => i.type === "gear" && itemHasName(i, "Flip Belt"));
+  const has = hasAbility(actor, "ability.flipBelt", "Flip Belt", "gear");
   return has ? 3 : 0;
 }
 
@@ -51,7 +52,7 @@ export function recoilItemBonus(actor) {
  * конкретного удара.
  */
 function malaeriusActive(actor) {
-  const hasTalent = (actor?.items ?? []).some(i => i.type === "talent" && itemHasName(i, "Malearius"));
+  const hasTalent = hasAbility(actor, "ability.malearius", "Malearius", "talent");
   if (!hasTalent) return false;
   const weapon = equippedMeleeWeapon(actor);
   if (!weapon || !itemHasName(weapon, "Meteor Hammer")) return false;

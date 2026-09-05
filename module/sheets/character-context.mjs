@@ -38,6 +38,7 @@ import { radiationSicknessRemaining }            from "../combat/radiation.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { raceMatches } from "../rules/race.mjs";
 
 /**
@@ -494,7 +495,7 @@ export function characterContext(actor) {
 
   // ── Тех: вкладка доступна ещё и по Черте «Импланты Механикум», не только
   // по ручному чекбоксу «Техножрец».
-  context.hasMechImplants = actor.items.some(i => i.type === "trait" && itemHasName(i, "Импланты Механикум"));
+  context.hasMechImplants = hasAbility(actor, "ability.mechanicumImplants", "Импланты Механикум", "trait");
 
   const _charApts = charAptitudeSet(system.aptitudes);
   context.chars = Object.entries(CHARACTERISTICS).map(([key, meta]) => {

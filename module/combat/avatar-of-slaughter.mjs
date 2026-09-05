@@ -19,6 +19,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -30,7 +31,7 @@ const FLAG = "avatarOfSlaughter";
 
 /** Владеет ли актор Чертой Avatar of Slaughter / Аватар Резни. */
 export function hasAvatarOfSlaughter(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Avatar of Slaughter"));
+  return hasAbility(actor, "ability.avatarOfSlaughter", "Avatar of Slaughter", "trait");
 }
 
 /** Доступно ли прямо сейчас — Черта + не использовано в этом бою. */
