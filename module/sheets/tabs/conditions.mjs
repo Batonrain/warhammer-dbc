@@ -294,13 +294,21 @@ export function showAddConditionDialog(actor) {
     // (см. actor.mjs prepareDerivedData), в диалоге добавления ей делать
     // нечего — включать нужно самой Усталостью на вкладке ТЕЛО.
     .filter(([key]) => key !== "fatigued" && !conditions[key])
-    .map(([key, def]) =>
-      `<label class="add-cond-label" style="--cond-color:${def.color || "#4dffa6"};">
-        <input type="checkbox" class="add-cond-cb" data-condition="${key}"/>
+    .map(([key, def]) => {
+      // Состояние, к которому у актора ИММУНИТЕТ (wdbc-d9dp), показывается, но
+      // не выбирается — с названной причиной. Спрятать его было бы хуже: ГМ
+      // решил бы, что Состояние из системы потерялось, и пошёл бы искать баг.
+      // Живая проверка нашла ровно эту дыру: через иконку токена и через
+      // выдачу предмета иммунитет держал, а этой кнопкой продавливался.
+      const immune = isImmuneToCondition(actor, key, isItemActive);
+      const why = immune ? ` — иммунитет: не накладывается` : "";
+      return `<label class="add-cond-label${immune ? " add-cond-immune" : ""}"
+              style="--cond-color:${def.color || "#4dffa6"};" title="${esc(def.label + why)}">
+        <input type="checkbox" class="add-cond-cb" data-condition="${key}" ${immune ? "disabled" : ""}/>
         <span class="add-cond-icon">${def.svg || def.icon}</span>
-        <span class="add-cond-name">${def.label}</span>
-      </label>`
-    ).join("");
+        <span class="add-cond-name">${def.label}${immune ? " (иммунитет)" : ""}</span>
+      </label>`;
+    }).join("");
 
   if (!inactive) {
     ui.notifications.info("Все состояния уже активны!");
@@ -322,8 +330,12 @@ export function showAddConditionDialog(actor) {
         action: "add", label: "Добавить", icon: "fas fa-plus", default: true,
         callback: async (event, button) => {
           const updates = {};
+          // Актор передаётся третьим доводом не для красоты: без него единая
+          // точка не спрашивает иммунитет, и Состояние продавливается вручную
+          // мимо него (wdbc-d9dp). Галочка иммунного Состояния и так отключена
+          // выше — это второй рубеж на случай подделанной формы/скрипта.
           for (const cb of button.form.querySelectorAll(".add-cond-cb:checked"))
-            Object.assign(updates, conditionApplyFields(cb.dataset.condition));
+            Object.assign(updates, conditionApplyFields(cb.dataset.condition, null, actor));
           if (Object.keys(updates).length) await actor.update(updates);
         }
       },

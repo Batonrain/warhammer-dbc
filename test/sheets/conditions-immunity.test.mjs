@@ -99,3 +99,44 @@ describe("иммунитет считается живьём — гейт «Ко
     expect(conditionApplyFields("stunned", 1, actor)).not.toEqual({});
   });
 });
+
+// ── wdbc-d9dp: диалог «Добавить состояние» продавливал иммунитет ────────────
+// Найдено живой проверкой wdbc-tl0f: через иконку токена и через выдачу
+// предмета иммунитет держал, а кнопкой «+» на листе ГМ мог наложить то же
+// Состояние вручную — диалог собирал патч, не спрашивая актора.
+import { captured, fakeForm } from "../support/foundry-stub.mjs";
+import { showAddConditionDialog } from "../../module/sheets/tabs/conditions.mjs";
+
+describe("showAddConditionDialog: иммунитет", () => {
+  it("выбранное вручную Состояние не накладывается, если к нему иммунитет", async () => {
+    const actor = makeActor({ items: [immunityItem("stunned")] });
+    showAddConditionDialog(actor);
+
+    await captured.press("add", fakeForm({}, {
+      ".add-cond-cb:checked": [{ dataset: { condition: "stunned" } }]
+    }));
+
+    expect(actor.updates).toEqual([]);
+  });
+
+  it("остальные Состояния той же галочкой накладываются как раньше", async () => {
+    const actor = makeActor({ items: [immunityItem("stunned")] });
+    showAddConditionDialog(actor);
+
+    await captured.press("add", fakeForm({}, {
+      ".add-cond-cb:checked": [{ dataset: { condition: "prone" } }]
+    }));
+
+    expect(actor.updates).toEqual([{ "system.conditions.prone": true }]);
+  });
+
+  it("Состояние с иммунитетом видно в списке, но выбрать его нельзя — причина названа", () => {
+    const actor = makeActor({ items: [immunityItem("stunned")] });
+    showAddConditionDialog(actor);
+
+    // Молча спрятать было бы хуже: ГМ решил бы, что Состояние потерялось.
+    expect(captured.dialog.content).toContain('data-condition="stunned"');
+    expect(captured.dialog.content).toMatch(/data-condition="stunned"[^>]*disabled/);
+    expect(captured.dialog.content).toContain("иммунитет");
+  });
+});

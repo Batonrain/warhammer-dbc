@@ -404,6 +404,17 @@
   width: 13px; height: 13px; flex: 0 0 auto;
 }
 .wh-add-condition-dialog .add-cond-name { color: #eafff4; }
+/* Состояние, к которому у актора иммунитет (wdbc-d9dp): видно, но не берётся.
+   Спрятать было бы хуже — ГМ решил бы, что Состояние из системы пропало. */
+.wh-add-condition-dialog .add-cond-immune {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+.wh-add-condition-dialog .add-cond-immune:hover {
+  background: rgba(15,58,38,0.45);
+  box-shadow: none;
+}
 .wh-add-condition-dialog .add-cond-icon { display: inline-flex; flex: 0 0 auto; }
 
 /* Обёртка inline-svg иконок состояний — выравнивание глифа */
