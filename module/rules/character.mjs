@@ -740,7 +740,10 @@ export function prepareCharacterDerived(actor, system) {
       const charVal = def ? (chars[def.char]?.total ?? 0) : 0;
       let rankBonus = SKILL_RANKS[sk.rank]?.bonus ?? -20;
       if (rankBonus < 0 && skillPenaltyHalved.has(key)) rankBonus = Math.ceil(rankBonus / 2);
-      sk.total = charVal + rankBonus;
+      // Постоянный модификатор с листа (wdbc-q4wb) — после ополовинивания
+      // штрафа нетренированного: половинится именно штраф ранга (Талант
+      // вроде «Внимательный к деталям»), а не прибавка от снаряжения.
+      sk.total = charVal + rankBonus + (Number(sk.mod) || 0);
     }
 
     // ── Групповые навыки ──────────────────────────────────────────────────
@@ -755,7 +758,10 @@ export function prepareCharacterDerived(actor, system) {
         const charVal   = entryChar ? (chars[entryChar]?.total ?? 0) : 0;
         let gRankBonus  = SKILL_RANKS[entry.rank]?.bonus ?? -20;
         if (gRankBonus < 0 && skillPenaltyHalved.has(groupKey)) gRankBonus = Math.ceil(gRankBonus / 2);
-        entry.total = charVal + gRankBonus;
+        // Постоянный модификатор специализации (wdbc-q4wb) — то же поле, что
+        // у обычных Навыков, только хранится в записи списка, а не в схеме
+        // (групповые Навыки — свободный список специализаций).
+        entry.total = charVal + gRankBonus + (Number(entry.mod) || 0);
       }
     }
 

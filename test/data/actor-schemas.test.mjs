@@ -253,6 +253,9 @@ const DEVIATIONS = {
     "ablativeApShield.max": 0,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
+    // Постоянный модификатор Навыка (wdbc-q4wb) — поле на листе рядом с Итогом,
+    // заведено гораздо позже template.json; входит в total (rules/character.mjs).
+    ...Object.fromEntries(Object.keys(SKILLS_DEF).map(k => [`skills.${k}.mod`, 0])),
     ...OWN_DEVIATIONS[type]
   }]))
 };

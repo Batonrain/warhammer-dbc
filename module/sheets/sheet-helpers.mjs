@@ -96,12 +96,15 @@ export { CONDITIONS_DEF };
  * подсказывает химика, а не пересказ всей группы «Ремесло», и никогда не
  * остаётся пустым, если под конкретную специализацию текста ещё не набрано.
  */
-function skillTip(key, def, rollLabel, specialty) {
+function skillTip(key, def, rollLabel, specialty, mod = 0) {
   if (!def) return "";
   const ch   = CHARACTERISTICS[def.char];
   const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
-  const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
+  // Постоянный модификатор (wdbc-q4wb) виден в Итоге, но по одному числу не
+  // понять, откуда оно — поэтому названо в тултипе, и только когда не ноль.
+  const modStr = mod ? ` · Модификатор: ${mod > 0 ? "+" : ""}${mod}` : "";
+  const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}${modStr}`;
   const desc = (specialty && SKILL_SPECIALTY_DESCRIPTIONS[key]?.[specialty])
     || SKILL_DESCRIPTIONS[key];
   return desc ? `${head}<br><br>${desc}` : head;
@@ -110,8 +113,9 @@ function skillTip(key, def, rollLabel, specialty) {
 export function buildSkillDisplay(key, system) {
   const def = SKILLS_DEF[key];
   const sk  = system.skills?.[key] || {};
+  const mod = Number(sk.mod) || 0;
   return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained",
-    tip: skillTip(key, def, def.label) };
+    mod, tip: skillTip(key, def, def.label, undefined, mod) };
 }
 
 // ── Данные щитов ──────────────────────────────────────────────────────────────
@@ -401,7 +405,8 @@ export function buildGetData(actor) {
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
-        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty)
+        mod:        Number(entry.mod) || 0,
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty, Number(entry.mod) || 0)
       }))
     });
   }

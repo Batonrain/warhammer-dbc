@@ -23,16 +23,16 @@
   {{!-- Навыки: четыре колонки базовых Навыков + плитки групповых (Знания и т.п.) --}}
   <div class="skills-panel" data-collapse-key="stats-skills"> <div class="panel-title" data-action="panelCollapse">НАВЫКИ</div> <div class="skills-grid">
       <div class="skills-column"> {{#each skillsCol1 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <input type="number" class="skill-mod" name="system.skills.{{sk.key}}.mod" value="{{sk.mod}}" data-tooltip="Постоянный модификатор Навыка: прибавляется к Итогу и подставляется в Порог любого броска этого Навыка. Разовую прибавку на один бросок вписывайте в поле «Модификатор» в самом окне броска."/> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
       </div>
       <div class="skills-column"> {{#each skillsCol2 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <input type="number" class="skill-mod" name="system.skills.{{sk.key}}.mod" value="{{sk.mod}}" data-tooltip="Постоянный модификатор Навыка: прибавляется к Итогу и подставляется в Порог любого броска этого Навыка. Разовую прибавку на один бросок вписывайте в поле «Модификатор» в самом окне броска."/> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
       </div>
       <div class="skills-column"> {{#each skillsCol3 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <input type="number" class="skill-mod" name="system.skills.{{sk.key}}.mod" value="{{sk.mod}}" data-tooltip="Постоянный модификатор Навыка: прибавляется к Итогу и подставляется в Порог любого броска этого Навыка. Разовую прибавку на один бросок вписывайте в поле «Модификатор» в самом окне броска."/> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
       </div>
       <div class="skills-column"> {{#each skillsCol4 as |sk|}}
-        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
+        <div class="skill-row"> <a class="skill-roll skill-name" data-action="skillRoll" data-skill="{{sk.key}}" data-tooltip="{{sk.tip}}">{{sk.label}}</a> <input type="number" class="skill-mod" name="system.skills.{{sk.key}}.mod" value="{{sk.mod}}" data-tooltip="Постоянный модификатор Навыка: прибавляется к Итогу и подставляется в Порог любого броска этого Навыка. Разовую прибавку на один бросок вписывайте в поле «Модификатор» в самом окне броска."/> <span class="skill-total {{#if (lt sk.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{sk.total}}</span> </div> {{/each}}
       </div>
     </div>{{!-- /skills-grid --}}
 
@@ -43,7 +43,7 @@
         <div class="skill-group-box">
           <div class="skill-group-header">{{grp.label}}</div>
           <div class="skill-group-body"> {{#each grp.entries as |e|}}
-            <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{grp.groupKey}}" data-index="{{e.entryIndex}}" data-tooltip="{{e.tip}}">{{e.specialty}}</a> <span class="skill-total {{#if (lt e.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{e.total}}</span> </div> {{/each}}
+            <div class="skill-row skill-row-grouped"> <a class="skill-roll skill-name skill-name-specialty" data-action="skillRoll" data-skill="group" data-group="true" data-groupkey="{{grp.groupKey}}" data-index="{{e.entryIndex}}" data-tooltip="{{e.tip}}">{{e.specialty}}</a> <input type="number" class="skill-mod group-skill-mod-input" data-group="{{grp.groupKey}}" data-index="{{e.entryIndex}}" value="{{e.mod}}" data-tooltip="Постоянный модификатор Навыка: прибавляется к Итогу и подставляется в Порог любого броска этого Навыка. Разовую прибавку на один бросок вписывайте в поле «Модификатор» в самом окне броска."/> <span class="skill-total {{#if (lt e.total 0)}}skill-neg{{else}}skill-pos{{/if}}">{{e.total}}</span> </div> {{/each}}
           </div>
         </div>
         {{/each}}
