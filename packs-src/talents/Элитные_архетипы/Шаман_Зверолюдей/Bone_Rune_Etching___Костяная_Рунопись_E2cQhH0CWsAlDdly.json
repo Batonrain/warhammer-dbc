@@ -407,7 +407,9 @@
                 "negatePatronGod": false
               },
               "kind": "capability",
-              "id": "VS1hfATkcqVwmOok"
+              "id": "VS1hfATkcqVwmOok",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1
             },
             {
               "corruptionValue": "1",
