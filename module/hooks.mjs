@@ -1166,7 +1166,7 @@ async function _applyWeaponPropEffect(ds) {
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
     rollHtml = `
-      <div class="roll-threshold">${testChar.toUpperCase()}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""} → Порог: <b>${threshold}</b></div>
+      <div class="roll-threshold">${testChar.toUpperCase()}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${resistMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>
       <div class="roll-dice">Бросок: <b>${rv}</b></div>
       <div class="roll-outcome">${resisted
         ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`

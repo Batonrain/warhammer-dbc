@@ -227,7 +227,10 @@ export async function castRitual(R, actor, {
   const dominatorNote = picked.dropped.length
     ? ` · Покоритель: Преимущество, отброшено ${picked.dropped.join(", ")}` : "";
   const typeLabel = RITUAL_TYPES_MAP[R.type]?.label || R.type;
-  const breakdown = d.rows.map(r => `${r.label}: ${r.signed}`).join(" · ");
+  // Разбивка Порога: к ритуальным слагаемым добавлены подписи из реестра
+  // (wdbc-kuun) — Порог уже считался с Усталостью Ритуалиста, но в карточке
+  // её видно не было.
+  const breakdown = [...d.rows.map(r => `${r.label}: ${r.signed}`), ...ruleMods.parts].join(" · ");
 
   const failHtml = success ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn);
   const condHtml = success ? conditionPillsHtml(item) : "";

@@ -390,7 +390,8 @@ export async function applyHexMarkedPrey(actor, targetActor) {
 
   const god = activeGodBranch(actor);
   const lines = [
-    `Шаман W: ${shamanRoll.total} vs ${shamanThreshold} · Цель W+10: ${targetRoll.total} vs ${targetThreshold}`,
+    `Шаман W: ${shamanRoll.total} vs ${shamanThreshold}${shamanMods.parts.length ? ` (${shamanMods.parts.join(", ")})` : ""}`
+    + ` · Цель W+10: ${targetRoll.total} vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""}`,
     success ? `<b>Успех</b> — «${esc(targetActor.name)}» получает Метку Проклятого до конца боя.` : `<b>Провал</b> — метка не наложена.`
   ];
   if (success) {

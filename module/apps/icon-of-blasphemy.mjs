@@ -65,7 +65,7 @@ export async function resolveIconOfBlasphemy(actor, targets) {
       note = success ? "устоял(а)" : "провал — впадает в Ярость (единственный враг в поле зрения)";
       if (!success) await target.update({ "system.inRage": true });
     }
-    rows.push(`<div class="roll-threshold">${psychic ? "🧠" : "👁"} <b>${esc(target.name)}</b> — WP ${wp}, бросок ${roll.total}: ` +
+    rows.push(`<div class="roll-threshold">${psychic ? "🧠" : "👁"} <b>${esc(target.name)}</b> — WP ${wp}${ruleMods.parts.map(p => ` ${p}`).join("")}${ruleMods.total ? ` → ${threshold}` : ""}, бросок ${roll.total}: ` +
       `<span class="${success ? "roll-success" : "roll-failure"}">${note}</span></div>`);
   }
 

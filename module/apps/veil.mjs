@@ -988,7 +988,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       content: `
         <div class="wh-roll-result">
           <div class="roll-header">${veilIcon("compass")} Навигация в Варпе — ${esc(actor.name)}</div>
-          <div class="roll-threshold">Навигация: <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} (завеса ${info.label}) → Порог: <b>${eff}</b></div>
+          <div class="roll-threshold">Навигация: <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} (завеса ${info.label})${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">${success
             ? `<span class="roll-success">Курс проложен — ${deg} ${deg === 1 ? "ст." : "ст."}</span>`
@@ -1108,7 +1108,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const mult = jumpDurationMult(res.deg);
     const real = this.journey.baseDuration != null ? `≈ ${Math.ceil(this.journey.baseDuration * ({ "×1/4": .25, "×1/2": .5, "×3/4": .75, "×1": 1, "×2": 2, "×3": 3, "×4": 4 }[mult] || 1))} дн.` : "";
     await this._jPost(`${veilIcon("compass")} Направление корабля — ${esc(a.name)}`, "stable",
-      `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
+      `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
   }
   async _warpEncounter() {
     // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): характеристики

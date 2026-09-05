@@ -70,6 +70,9 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
 
   await _postIntimidateMsg(attacker, target, {
     atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,
+    // Подписи модификаторов обеих сторон (wdbc-kuun): Порог считался с ними,
+    // но в карточке стояло голое число.
+    atkParts: atkMods.parts, tgtParts: tgtMods.parts,
     winner, margin, sarcophagusSaved: autoPass && tgtRv > tgtThreshold,
     rolls: [atkRoll, tgtRoll]
   });
@@ -78,7 +81,7 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
 }
 
 async function _postIntimidateMsg(attacker, target, data) {
-  const { atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,
+  const { atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome, atkParts = [], tgtParts = [],
           winner, margin, sarcophagusSaved, rolls } = data;
 
   const outcomeLine = winner === "mine"
@@ -93,9 +96,9 @@ async function _postIntimidateMsg(attacker, target, data) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("skull", "#ff9a4d")}Запугивание — ${esc(attacker.name)} → ${esc(target.name)}</div>
-        <div class="roll-threshold">Intimidate (${esc(attacker.name)}): <b>${atkThreshold}</b> → бросок <b>${atkRv}</b> —
+        <div class="roll-threshold">Intimidate (${esc(attacker.name)}): <b>${atkThreshold}</b>${atkParts.length ? ` (${atkParts.join(", ")})` : ""} → бросок <b>${atkRv}</b> —
           ${atkOutcome.success ? "Успех" : "Провал"} ${atkOutcome.deg} ${_degWord(atkOutcome.deg)}</div>
-        <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b> → бросок <b>${tgtRv}</b> —
+        <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b>${tgtParts.length ? ` (${tgtParts.join(", ")})` : ""} → бросок <b>${tgtRv}</b> —
           ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? " (Саркофаг Дредноута)" : ""}</div>
         <div class="roll-outcome">${outcomeLine}</div>
         <div class="roll-threshold">Исход по книге решает ГМ: подчинение требуемому, паническое бегство или Шок.</div>

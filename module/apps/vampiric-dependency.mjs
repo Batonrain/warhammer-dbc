@@ -64,7 +64,7 @@ export async function useVampiricTest(actor, item) {
   const body = `
     <div class="wh-poss-card">
       <div class="wh-poss-card-h">🩸 ГОЛОД — ${esc(item.name)}</div>
-      <div class="wh-poss-card-r">Тест T${penalty ? ` ${penalty}` : "+0"}: <b>${roll.total}</b> против <b>${target}</b> —
+      <div class="wh-poss-card-r">Тест T${penalty ? ` ${penalty}` : "+0"}${ruleMods.parts.map(p => ` ${p}`).join("")}: <b>${roll.total}</b> против <b>${target}</b> —
         <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
       <div class="wh-poss-card-n">Воздержание: ${months} мес.</div>
     </div>`;

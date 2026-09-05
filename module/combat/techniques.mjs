@@ -148,7 +148,12 @@ export async function _showContestDialog(actor, techDef) {
           const outcome  = hit
             ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
             : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
-          const modStr   = mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : "";
+          // Подписи модификаторов, а не только ручное число (wdbc-kuun):
+          // Порог уже считался с Усталостью и Чертами, но в карточке этого
+          // видно не было — тот же дефект, что живая проверка нашла в
+          // Командовании и Ударе Ассасина.
+          const modStr   = (mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : "")
+            + ruleMods.parts.map(p => ` · ${p}`).join("");
           const rerollLabel = rr.rerolls?.[rerollIdx]?.label;
           const rerollNote = picked.dropped.length
             ? `<div class="roll-defense-note">${rerollLabel || "Переброс"}: отброшено ${picked.dropped.join(", ")}</div>`

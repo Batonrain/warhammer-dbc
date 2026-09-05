@@ -162,8 +162,8 @@ export async function showSkillfulTortureDialog(torturer) {
           const { winner, margin } = resolveOpposed(mine, theirs);
 
           const lines = [
-            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRoll.total}</b> vs ${torturerThreshold} ${mine.success ? "(успех)" : "(провал)"}`,
-            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRoll.total}</b> vs ${targetThreshold} ${theirs.success ? "(успех)" : "(провал)"}`
+            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRoll.total}</b> vs ${torturerThreshold}${torturerMods.parts.length ? ` (${torturerMods.parts.join(", ")})` : ""} ${mine.success ? "(успех)" : "(провал)"}`,
+            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRoll.total}</b> vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""} ${theirs.success ? "(успех)" : "(провал)"}`
           ];
 
           if (winner !== "mine") {

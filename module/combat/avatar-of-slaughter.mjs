@@ -65,7 +65,7 @@ export async function applyAvatarOfSlaughter(berserker, target) {
     speaker: ChatMessage.getSpeaker({ actor: berserker }),
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("skull", "#ff6b6b")}Аватар Резни — ${esc(berserker.name)}</div>
-      <div class="roll-threshold">Цель: <b>${esc(target.name)}</b> — Воля−10: <b>${threshold}</b></div>
+      <div class="roll-threshold">Цель: <b>${esc(target.name)}</b> — Воля−10${ruleMods.parts.map(p => ` ${p}`).join("")}: <b>${threshold}</b></div>
       <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
       <div class="roll-outcome">${success
         ? `<span class="roll-success">Устояла — эффекта нет</span>`
