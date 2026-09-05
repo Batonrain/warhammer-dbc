@@ -56,6 +56,9 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
  * @param {string}   o.icon         готовая разметка иконки (constants/roll-icons.mjs)
  * @param {string}   o.title        заголовок; имя актора дописывается сюда же вызывающим
  * @param {string}   [o.actorUuid]  для кнопок карточки, читающих владельца
+ * @param {string}   [o.classes]    доп. классы корня рядом с `wh-roll-result`:
+ *   у части подсистем за них цеплялась своя вёрстка (`sq-chat` у Отряда,
+ *   `wh-daemon-card` у Демона), и без них карточка теряет вид
  * @param {string}   [o.threshold]  готовая строка Порога (см. thresholdLine)
  * @param {string[]} [o.lines]      свои строки между Порогом и броском
  * @param {number}   [o.rv]         выпавшее число; null — карточка без броска
@@ -66,7 +69,7 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
  * @param {string[]} [o.sections]   свои блоки после исхода (кнопки, таблицы)
  */
 export function testCardHtml({
-  icon = "", title = "", actorUuid = "", threshold = "", lines = [],
+  icon = "", title = "", actorUuid = "", classes = "", threshold = "", lines = [],
   rv = null, dice = "", rerollNote = "", critLine = "", outcome = "", sections = []
 } = {}) {
   const parts = [
@@ -79,7 +82,8 @@ export function testCardHtml({
     ...(sections ?? []).filter(Boolean)
   ].filter(Boolean);
   const uuid = actorUuid ? ` data-actor-uuid="${actorUuid}"` : "";
-  return `<div class="wh-roll-result"${uuid}>${parts.join("")}</div>`;
+  const cls = ["wh-roll-result", ...String(classes).split(/\s+/).filter(Boolean)].join(" ");
+  return `<div class="${cls}"${uuid}>${parts.join("")}</div>`;
 }
 
 /** Успех/провал одной строкой — тот же вид во всех подсистемах. */

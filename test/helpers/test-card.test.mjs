@@ -103,3 +103,14 @@ describe("postTestCard: не только карточки персонажа", 
     expect(captured.chat.at(-1)).not.toHaveProperty("whisper");
   });
 });
+
+describe("classes: своя вёрстка подсистемы не теряется", () => {
+  it("доп. классы встают рядом с wh-roll-result", () => {
+    expect(testCardHtml({ title: "Отряд", classes: "sq-chat cmd-free-chat" }))
+      .toContain('<div class="wh-roll-result sq-chat cmd-free-chat">');
+  });
+
+  it("без них корень остаётся прежним", () => {
+    expect(testCardHtml({ title: "Обычная" })).toContain('<div class="wh-roll-result">');
+  });
+});
