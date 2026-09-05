@@ -398,6 +398,17 @@ Hooks.once("init", () => {
     onChange: () => { try { canvas?.notes?.placeables?.forEach(n => n.draw()); } catch (e) {} }
   });
 
+  // Настройка: личный вид листов — с обшивкой «Инфопланшет» или без неё
+  // (wdbc-3wwe). Тема (когитатор/пергамент) и содержимое листа не меняются —
+  // снимается только декоративный корпус, см. applyHousingMode ниже.
+  game.settings.register("warhammer-dbc", "sheetHousing", {
+    name: "Вид листов",
+    hint: "«Инфопланшет» — металлический корпус когитатора вокруг листа: заклёпки по углам, шильдик с лампами, ободок экрана, нижняя решётка. «Классический» — тот же лист без этого оформления. Настройка личная: у каждого игрока своя, чужие листы она не меняет.",
+    scope: "client", config: true, type: String, default: "cog",
+    choices: { cog: "Инфопланшет", classic: "Классический" },
+    onChange: () => applyHousingMode()
+  });
+
   // Версия разложенных по папкам компендиумов (одноразовая миграция раскладки)
   game.settings.register("warhammer-dbc", "packFoldersVersion", {
     scope: "world", config: false, type: Number, default: 0
@@ -520,6 +531,22 @@ Hooks.once("init", () => {
     });
   } catch (e) { console.warn("warhammer-dbc | noteIcons", e); }
 });
+
+/* Личная настройка «Вид листов» (wdbc-3wwe): «Классический» снимает с листов
+   декоративную обшивку «Инфопланшет» — металлический корпус, заклёпки-черепа,
+   шильдик с лампами, ободок экрана и нижнюю решётку. Класс вешается на <body>,
+   а не на корень каждого листа: обшивку показывают семь разных классов листов
+   (character/minion/daemon/demonPrince через общий .cog-frame + squad/wh-horde/
+   vehicle/ship/formation/star-system напрямую), и один выключатель снаружи
+   дешевле, чем маркер в каждом из них. Стили — styles/sheets/actor-housing.css,
+   блок «Классический вид». */
+function applyHousingMode() {
+  try {
+    const classic = game.settings.get("warhammer-dbc", "sheetHousing") === "classic";
+    document.body.classList.toggle("wh-classic-ui", classic);
+  } catch (e) { /* до ready настройки может ещё не быть */ }
+}
+Hooks.once("ready", applyHousingMode);
 
 // Прямой переход с заметки-пина звёздной системы на лист актёра (минуя журнал).
 // Срабатывает ТОЛЬКО если у журнала заметки выставлен наш флаг systemActorUuid —
