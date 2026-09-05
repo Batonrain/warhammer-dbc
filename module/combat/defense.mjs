@@ -6,6 +6,7 @@ import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
@@ -87,7 +88,6 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx,
   // раньше дублировалась вручную здесь же).
   const { success: passed, deg } = testOutcome(rv, threshold);
-  const rollMode = game.settings.get("core", "rollMode");
 
   // Стр. 12: при Успехе персонаж уклоняется от атаки и попадание становится
   // промахом — сравнивать степени успеха со степенью атакующего не нужно (это
@@ -135,25 +135,11 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   // (см. заголовок module/combat/recoil.mjs).
   const recoilSection = (passed && !isMelee) ? recoilButtonHtml(actor) : "";
 
-    const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
-        <div class="roll-header">${rollIcon("run")}Уклонение — ${esc(actor.name)}</div>
-        <div class="roll-threshold">
-          Ag: <b>${agTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
-          → Порог: <b>${threshold}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcomeHtml}</div>
-        ${leftoverNote}
-        ${recoilSection}
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-
-  await ChatMessage.create(messageData);
+    await postTestCard(actor, {
+    icon: rollIcon("run"), title: `Уклонение — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    threshold: thresholdLine({ label: "Ag", base: agTotal, parts: modParts, threshold }),
+    rv, outcome: outcomeHtml, sections: [leftoverNote, recoilSection]
+  }, { rolls: [roll] });
 }
 
 // Распыление/Spray (wdbc-p06s, свойство оружия «Дальнобойное», стр. 166-170):
@@ -183,7 +169,6 @@ export async function _performSprayCancel(actor) {
   const deg    = passed
     ? Math.floor((threshold - rv) / 10) + 1
     : Math.floor((rv - threshold) / 10) + 1;
-  const rollMode = game.settings.get("core", "rollMode");
 
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
@@ -196,24 +181,12 @@ export async function _performSprayCancel(actor) {
 
   const recoilSection = passed ? recoilButtonHtml(actor) : "";
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
-        <div class="roll-header">${rollIcon("run")}Тест на отмену (Распыление, Acrobatics A+0) — ${esc(actor.name)}</div>
-        <div class="roll-threshold">
-          Ag: <b>${agTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
-          → Порог: <b>${threshold}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcomeHtml}</div>
-        ${recoilSection}
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-
-  await ChatMessage.create(messageData);
+  await postTestCard(actor, {
+    icon: rollIcon("run"),
+    title: `Тест на отмену (Распыление, Acrobatics A+0) — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    threshold: thresholdLine({ label: "Ag", base: agTotal, parts: modParts, threshold }),
+    rv, outcome: outcomeHtml, sections: [recoilSection]
+  }, { rolls: [roll] });
 }
 
 export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false) {
@@ -241,7 +214,7 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
           <div class="roll-header">${rollIcon("sword")}Парирование — ${esc(actor.name)}</div>
           ${meleeWeapon
             ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">
-                 Оружие: ${meleeWeapon.name} (Баланс ${balance >= 0 ? "+" : ""}${balance})
+                 Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})
                </div>`
             : ""
           }
@@ -290,7 +263,6 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const rv       = picked.value;
   // Формула степени успеха/провала — module/rules/roll-outcome.mjs (wdbc-5dvx).
   const { success: passed, deg } = testOutcome(rv, threshold);
-  const rollMode = game.settings.get("core", "rollMode");
 
   // Стр. 12: при Успехе персонаж отбивает или блокирует атаку и попадание
   // становится промахом — сравнивать степени успеха со степенью атакующего не
@@ -363,29 +335,15 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
        </div>`
     : "";
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
-        <div class="roll-header">${rollIcon("sword")}Парирование — ${esc(actor.name)}</div>
-        <div class="roll-threshold">
-          WS: <b>${wsTotal}</b>${modParts.length ? ` (${modParts.join(", ")})` : ""}
-          → Порог: <b>${threshold}</b>
-        </div>
-        ${meleeWeapon
-          ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">
-               Оружие: ${meleeWeapon.name} (Баланс ${balance >= 0 ? "+" : ""}${balance})
-             </div>`
-          : ""
-        }
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcomeHtml}</div>
-        ${leftoverNote}
-        ${powerFieldNote}
-        ${counterAttackHtml}
-      </div>`,
-    rolls: allRolls, sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
+    lines: [meleeWeapon
+      ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
+      : ""],
+    rv, outcome: outcomeHtml,
+    sections: [leftoverNote, powerFieldNote, counterAttackHtml]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -443,19 +401,14 @@ export async function _performCompression(actor, location, attackerUuid = "") {
         Разложить ${loc}
       </button>`).join("");
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result" data-actor-uuid="${actor.uuid}">
-        <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
-        <div class="roll-outcome">
-          <span class="roll-success">Втягивает ${location} в торс (вместе с бронёй/снаряжением на ней) — попадание нивелировано.</span>
-        </div>
-        ${notes.length ? `<div class="roll-defense-note">${notes.join("; ")}.</div>` : ""}
-        <div class="roll-defense-section">${extendBtns}</div>
-      </div>`,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("shield"), title: `Сжатие — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    outcome: `<span class="roll-success">Втягивает ${location} в торс (вместе с бронёй/снаряжением на ней) — попадание нивелировано.</span>`,
+    sections: [
+      notes.length ? `<div class="roll-defense-note">${notes.join("; ")}.</div>` : "",
+      `<div class="roll-defense-section">${extendBtns}</div>`
+    ]
+  });
 }
 
 /**
@@ -470,14 +423,8 @@ export async function _performExtendBodyPart(actor, location) {
   if (!current.includes(location)) return;
   const updated = extendPart(current, location);
   await actor.update({ "flags.warhammer-dbc.compressedParts": updated });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("shield")}Сжатие — ${esc(actor.name)}</div>
-        <div class="roll-outcome">
-          <span class="roll-success">Раскладывает ${location} обратно (полудействие).</span>
-        </div>
-      </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("shield"), title: `Сжатие — ${esc(actor.name)}`,
+    outcome: `<span class="roll-success">Раскладывает ${location} обратно (полудействие).</span>`
+  }, { sound: false });
 }

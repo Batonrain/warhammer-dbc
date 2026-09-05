@@ -31,6 +31,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS } from "../constants/conditions.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
 async function postConditionCard(actor, lines) {
   if (!lines.length) return;
@@ -55,21 +56,14 @@ export async function rollBurningPanicTest(actor) {
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Паника от Горения — ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wp}</b>${parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — держит себя в руках</span>`
-          : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("fire","#ff8a3a"), title: `Паника от Горения — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "WP", base: wp, parts, threshold: eff }),
+    rv, rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Успех — держит себя в руках</span>`
+      : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`
+  }, { rolls: [roll] });
   return { success, rv, eff };
 }
 

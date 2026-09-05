@@ -14,6 +14,7 @@ import { resolveKindOutcome }                      from "../rules/kind-outcome.m
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
@@ -205,22 +206,14 @@ export async function rollShockRecovery(actor) {
   if (success) await actor.update(conditionRemoveFields("shocked"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("target","#8fd0ff")}Выход из Шока — ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wp}</b>${parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — Шок снят</span>`
-          : `<span class="roll-failure">Провал — всё ещё в Шоке</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("target","#8fd0ff"), title: `Выход из Шока — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "WP", base: wp, parts, threshold: eff }),
+    rv, rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Успех — Шок снят</span>`
+      : `<span class="roll-failure">Провал — всё ещё в Шоке</span>`
+  }, { rolls: [roll] });
   return { success, rv, eff };
 }
 
@@ -232,7 +225,6 @@ export async function rollShockRecovery(actor) {
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
   { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "",
     kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [] } = {}) {
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
   // будут цепляться за них (Хатред и т.п.); здесь же дают бесплатный переброс.
@@ -262,39 +254,36 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
       </div>
     </div>` : "";
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}${ruleParts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
-        ${combinedLine}
-        ${propsHtml}
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        ${critLine}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — выстоял</span>`
-          : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`}</div>
-        ${extraHtml}
-        ${extendedLine}
-        ${opposedLine}
-        ${rerollHtml}
-        ${faithHtml}
-        <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: allRolls, sound: CONFIG.sounds.dice
-  }, rollMode);
-
-  if (rerollCtx) {
-    messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
-      "warhammer-dbc": { fearTest: { actorId: actor.id, properties, ...rerollCtx } }
-    });
-  }
-  if (faithCtx) {
-    messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
-      "warhammer-dbc": { faithInThePast: faithCtx }
-    });
-  }
-  await ChatMessage.create(messageData);
+  // Строка Порога и вся обвязка карточки — общим сборщиком (wdbc-kuun).
+  // Раньше разметка жила здесь своей копией: «Сложность» и модификатор
+  // дописывались к числу без разделителей, тогда как боевые карточки
+  // перечисляли слагаемые в скобках через запятую. Теперь вид один.
+  const parts = [
+    mod !== 0 ? `модификатор ${mod >= 0 ? "+" : ""}${mod}` : "",
+    difficulty !== 0 ? `📊 Сложность ${difficulty >= 0 ? "+" : ""}${difficulty}` : "",
+    ...ruleParts
+  ];
+  await postTestCard(actor, {
+    title: `${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}`,
+    threshold: thresholdLine({ prefix: sub, label: "W", base: wp, parts, threshold: eff }),
+    lines: [combinedLine, propsHtml],
+    rv, rerollNote, critLine,
+    outcome: success
+      ? `<span class="roll-success">Успех — выстоял</span>`
+      : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`,
+    sections: [
+      extraHtml, extendedLine, opposedLine, rerollHtml, faithHtml,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, {
+    rolls: allRolls,
+    // Кнопки карточки читают свой контекст из флагов сообщения: бесплатный
+    // переброс «Демон» (hooks.mjs) и «Вера в прошлое» (Особенность Мира).
+    flags: (rerollCtx || faithCtx) ? {
+      "warhammer-dbc": {
+        ...(rerollCtx ? { fearTest: { actorId: actor.id, properties, ...rerollCtx } } : {}),
+        ...(faithCtx ? { faithInThePast: faithCtx } : {})
+      }
+    } : null
+  });
 }

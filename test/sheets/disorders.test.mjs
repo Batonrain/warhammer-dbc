@@ -54,7 +54,7 @@ describe("mental disorders", () => {
     }));
 
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
-    expect(captured.chat[0].content).toContain("Страх 3 | W: <b>40</b> -25 → Порог: <b>15</b>");
+    expect(captured.chat[0].content).toContain("Страх 3 | W: <b>40</b> (модификатор -25) → Порог: <b>15</b>");
     expect(captured.chat[0].content).toContain("Свойства: <b>Демон</b>");
     expect(captured.chat[0].flags["warhammer-dbc"].fearTest).toMatchObject({
       actorId: "actor-stub",
@@ -76,7 +76,7 @@ describe("mental disorders", () => {
     }, [-20, 5]));   // Каталептический Узел -20 (Уничтожители) + случайные +5
 
     // W 40, ratingMod(normal, "3") -20 + mod = -5(ручной) + (-20+5)(галочки) = -20 → всего -40.
-    expect(captured.chat[0].content).toContain("W: <b>40</b> -40 → Порог: <b>0</b>");
+    expect(captured.chat[0].content).toContain("W: <b>40</b> (модификатор -40) → Порог: <b>0</b>");
   });
 
   // wdbc-zepq: раньше openFearDialog звал только ruleRollModsHtml — перебросы

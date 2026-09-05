@@ -106,9 +106,14 @@ describe("_performCompression", () => {
   it("карточка несёт data-actor-uuid и кнопку «Разложить» на только что втянутую часть", async () => {
     grantCompression();
     const actor = attacker();
+    // Подставному актору uuid нужен явно: раньше тест проходил и без него,
+    // потому что карточка писала в атрибут буквальное «undefined». Общий
+    // сборщик (helpers/test-card.mjs) такой атрибут не рисует вовсе — и
+    // проверять теперь есть что: доезжает ли НАСТОЯЩИЙ uuid.
+    actor.uuid = "Actor.compression-1";
     await _performCompression(actor, "Голова", "Actor.attacker-1");
     const card = captured.chat.at(-1).content;
-    expect(card).toContain(`data-actor-uuid="${actor.uuid}"`);
+    expect(card).toContain('data-actor-uuid="Actor.compression-1"');
     expect(card).toContain("wh-extend-btn");
     expect(card).toContain('data-location="Голова"');
   });
