@@ -280,3 +280,62 @@ describe("syncMechanicsEffects: запись сменила вид на недо
     expect(item.effects).toHaveLength(1);
   });
 });
+
+// ── На одну запись — ровно один эффект (wdbc-b3mz) ────────────────────────
+//
+// Отчёт: кнопка «+ И-группа» на предмете БЕЗ актора заводила 2-3 одинаковых
+// ActiveEffect на одну запись — Черта «+1 к Силе» давала бы +2 или +3.
+//
+// Отдельно от того, КАК дубликаты появились (гонка, двойной вызов, старые
+// данные из мира): sync их не подчищала, потому что обход помечал entryId
+// увиденным и шёл дальше. Один раз задвоившись, эффект оставался задвоенным
+// навсегда — и следующее сохранение его не лечило.
+describe("дубликаты эффектов одной записи (wdbc-b3mz)", () => {
+  it("второй эффект той же записи удаляется, первый остаётся", async () => {
+    const entry = charEntry("e1", "s", 1);
+    const item = itemDoc({
+      mechanics: [andGroup(entry)],
+      fx: [
+        { ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-a" },
+        { ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-b" }
+      ]
+    });
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(1);
+    // Числа не задваиваются — ради этого всё и делается.
+    expect(valuesOf(item)).toEqual([1]);
+  });
+
+  it("три копии схлопываются в одну", async () => {
+    const entry = charEntry("e1", "s", 1);
+    const fx = n => ({ ...fxFor("e1", "system.characteristics.s.bonus", 1), id: `fx-${n}` });
+    const item = itemDoc({ mechanics: [andGroup(entry)], fx: [fx(1), fx(2), fx(3)] });
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(1);
+  });
+
+  it("разные записи со схожим эффектом не считаются дубликатами", async () => {
+    // Две Черты, обе «+1 к Силе», но записи РАЗНЫЕ — оба эффекта законны.
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "s", 1), charEntry("e2", "s", 1))],
+      fx: [
+        fxFor("e1", "system.characteristics.s.bonus", 1),
+        fxFor("e2", "system.characteristics.s.bonus", 1)
+      ]
+    });
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(2);
+  });
+
+  it("повторный прогон ничего не меняет — синхронизация идемпотентна", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "s", 1))],
+      fx: [{ ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-a" },
+           { ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-b" }]
+    });
+    await syncMechanicsEffects(item);
+    const after = item.effects.length;
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(after);
+  });
+});

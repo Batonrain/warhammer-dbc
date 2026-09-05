@@ -2526,6 +2526,14 @@ export async function syncMechanicsEffects(item) {
       if (durableIds.has(entryId) || !durableKindIds.has(entryId)) toDelete.push(fx.id);
       continue;
     }
+    // На одну запись — ровно один эффект (wdbc-b3mz). Второй и последующие
+    // уносим, откуда бы они ни взялись: гонка при сохранении, двойной вызов,
+    // старые данные из мира. Без этого один раз задвоившийся эффект оставался
+    // задвоенным навсегда — обход помечал запись увиденной и шёл дальше, а
+    // Черта «+1 к Силе» тихо давала +2. Проверка идёт ДО сравнения содержимого:
+    // копия может отличаться от эталона, и тогда её незачем ни оставлять, ни
+    // пересоздавать — она просто лишняя.
+    if (seen.has(entryId)) { toDelete.push(fx.id); continue; }
     seen.add(entryId);
     const same = fx.name === want.name
       && JSON.stringify(fx.system?.changes ?? []) === JSON.stringify(want.system.changes);
