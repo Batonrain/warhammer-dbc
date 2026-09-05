@@ -553,16 +553,27 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!item) { ui.notifications?.warn("Осквернение: перетащите оружие-сосуд."); return; }
     if (item.system?.daemonWeapon?.bound) { ui.notifications?.warn("Это оружие уже демоническое."); return; }
     const data = this._defileData();
+    // Ритуал Осквернения — тест Ритуалиста, и штрафы его состояния в него
+    // входят (wdbc-9jj7). Порог собирался одной ритуальной арифметикой
+    // (_defileData): ни Усталость, ни Черты до него не доезжали.
+    // Ритуалист — владелец сосуда. Сосудом бывает и скакун (актор), у
+    // которого владельца нет: тогда собирать не с кого, и сбор пуст, а не
+    // подставляет случайного актора.
+    const ritualist = item?.actor ?? null;
+    const ruleMods = ritualist
+      ? collectTestMods(ritualist, { kind: "skill", char: "wp" })
+      : { total: 0, parts: [] };
+    const threshold = data.threshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
-    const success = rv <= data.threshold;
-    const dos = success ? (1 + Math.floor((data.threshold - rv) / 10)) : 0;
+    const success = rv <= threshold;
+    const dos = success ? (1 + Math.floor((threshold - rv) / 10)) : 0;
     const godMeta = data.godMeta;
 
     const vessel = data.isMountVessel ? "скакуна" : "оружие";
     let body = `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
       <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${esc(item.name)}</div>
-      <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b> → ${success
+      <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b>${ruleMods.parts.map(p => ` ${p}`).join("")}${ruleMods.total ? ` = <b>${threshold}</b>` : ""} → ${success
         ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-failure">Провал</span>`}</div>`;
     if (success) {
       body += `<div class="dc-line">Демон вселён в ${vessel}. Связывание установлено до <b>${Math.min(dos, Number(D.binding) || 0) || dos}</b> (≤ успехов).</div>
@@ -1106,8 +1117,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника на сцене."); return; }
     const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
     const mod = this.journey.psyMod || 0;
-    const res = await this._roll(base + mod);
-    let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    // Чтение знамений — тоже тест Псинауки Проводника, и он тоже шёл мимо
+    // реестра (wdbc-9jj7): нашлось при правке соседнего _findBeacon.
+    const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
+    const res = await this._roll(base + mod + ruleMods.total);
+    let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Знамения ясны — ${res.deg} ${degWord(res.deg)}. Судно готово ко входу.</span></div>`;
     else { const g = GUIDE_ESTIMATE[Math.floor(Math.random() * 5)]; body += `<div class="roll-outcome"><span class="roll-failure">Знамения смутны.</span></div><div class="roll-threshold">Оценка Проводника: длительность ${g.mult}, Астрономикон: ${esc(g.astro)}</div>`; }
     await this._jPost(`${veilIcon("eye")} Чтение знамений — ${esc(a.name)}`, "stable", body, [res.roll]);
@@ -1129,11 +1143,14 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
     let mod = /Стабильн/.test(this.journey.stability) ? 20 : 0;
     if (this.journey.beaconHidden) mod -= 20;
-    const res = await this._roll(base + mod);
+    // Общий сбор модификаторов (wdbc-9jj7): тест Псинауки Проводника шёл мимо
+    // реестра — соседний _directShip уже переведён, этот в тот проход не попал.
+    const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
+    const res = await this._roll(base + mod + ruleMods.total);
     const bm = (res.success ? 1 : -1) * Math.floor(Math.abs(res.deg) / 2) * 10;
     this.journey.beaconMod = bm; this.render(false);
     await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${esc(a.name)}`, "stable",
-      `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
+      `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
   }
   async _directShip() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
@@ -1169,8 +1186,10 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
     const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
     const mod = this._occNavMod() - 20;
-    const res = await this._roll(base + mod);
-    let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    // Тот же общий сбор, что у _directShip и _rollNavigation (wdbc-9jj7).
+    const ruleMods = collectTestMods(a, { kind: "skill", group: "navigation", char: "int" });
+    const res = await this._roll(base + mod + ruleMods.total);
+    let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
     else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${esc(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "torn", body, [res.roll, er]); return; }
     await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "stable", body, [res.roll]);
