@@ -17,6 +17,7 @@
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import {
   fatePoolLabel, MIRACULOUS_SAVE, DIVINE_PROTECTION, SUS_AN_TEST_MOD,
   hasSusAnMembrane, susAnEligible, fateSaveFails,
@@ -32,16 +33,15 @@ import {
 
 const NS = "warhammer-dbc";
 
+// Все карточки Спасения — одной формы: шапка «череп + название пути» и один
+// блок строк. Сборка и публикация — общий helpers/test-card.mjs (wdbc-kuun);
+// звук кубика только там, где кубик действительно катался (Замедленная
+// Анимация и бросок пула — с ним, «Воскресить» — без).
 async function _postCard(actor, header, lines, rolls = []) {
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("skull","#ff6b6b")}${esc(header)} — ${esc(actor.name)}</div>
-      <div class="roll-threshold">${lines.join("<br/>")}</div>
-    </div>`,
-    rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("skull", "#ff6b6b"), title: `${esc(header)} — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">${lines.join("<br/>")}</div>`
+  }, { rolls, sound: rolls.length > 0 });
 }
 
 /**

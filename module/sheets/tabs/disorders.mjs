@@ -19,6 +19,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
 import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
 import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
@@ -200,21 +201,18 @@ export async function rollDisorder(actor) {
   const roll = await new Roll("1d100").evaluate();
   const row = rollDisorderEntry(roll.total);
   if (row) await createDisorderItem(actor, row);
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ментальное Расстройство — ${esc(actor.name)}</div>
-        <div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}${esc(row?.name) ?? "—"}</span></div>
-        ${row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : ""}
-        <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Выдача по таблице: Порога нет, подпись броска своя («Бросок d100»),
+  // поэтому строкой в lines, а не через общий rv (helpers/test-card.mjs).
+  await postTestCard(actor, {
+    icon: rollIcon("dice", "#6fe6ff"), title: `Ментальное Расстройство — ${esc(actor.name)}`,
+    lines: [`<div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>`],
+    outcome: `<span class="roll-failure">${rollIcon("warn","#ffb84d")}${esc(row?.name) ?? "—"}</span>`,
+    sections: [
+      row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : "",
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -355,29 +353,22 @@ export async function rollDisorderTest(actor, item) {
     ctx: { actor, kind: "skill", char: charKey }
   });
   const { success, deg } = outcome;
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>
-        ${outcome.combinedLine}
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        ${outcome.critLine}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
-          : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`}</div>
-        ${system.description ? `<div class="roll-threshold" style="font-size:0.9em;">${system.description}</div>` : ""}
-        ${outcome.extendedLine}
-        ${outcome.opposedLine}
-        <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("spark", "#c98bff"),
+    title: `${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>`,
+    lines: [outcome.combinedLine],
+    rv, rerollNote, critLine: outcome.critLine,
+    outcome: success
+      ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
+      : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`,
+    sections: [
+      system.description ? `<div class="roll-threshold" style="font-size:0.9em;">${system.description}</div>` : "",
+      outcome.extendedLine, outcome.opposedLine,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**

@@ -12,6 +12,7 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 
 const DELIVERY_RU = {
   injection: "Инъекция",
@@ -305,14 +306,11 @@ export async function applyDrug(owner, item, recipient = null) {
     Осталось: ${qty}
   </div></div>`;
 
-  const rollMode = game.settings.get("core", "rollMode");
+  // Карточка собрана выше построчно (набор строк зависит от того, что именно
+  // препарат делает) — общий helpers/test-card.mjs берёт на себя публикацию:
+  // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: owner }),
-    content: chatContent,
-    ...(allRolls.length ? { rolls: allRolls } : {}),
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(owner, chatContent, { rolls: allRolls });
 }
 
 export async function triggerAfterEffect(actor, item) {
@@ -431,19 +429,12 @@ export async function triggerAfterEffect(actor, item) {
 
       chatContent += "</div>";
 
-      const rollMode = game.settings.get("core", "rollMode");
-      await ChatMessage.create(ChatMessage.applyRollMode({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        content: chatContent,
-        rolls: [roll, ...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls],
-        sound: CONFIG.sounds.dice
-      }, rollMode));
+      await postTestCard(actor, chatContent,
+        { rolls: [roll, ...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls] });
     } catch(e) {
       chatContent += "</div>";
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        content: chatContent
-      });
+      // Формула не сработала — кубика нет, поэтому без звука.
+      await postTestCard(actor, chatContent, { sound: false });
       ui.notifications.warn(`Не удалось бросить формулу пост-эффекта: ${sys.afterEffectDice}`);
       console.error(e);
     }
@@ -451,13 +442,8 @@ export async function triggerAfterEffect(actor, item) {
     if (fx.customEffect)
       chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
     chatContent += "</div>";
-    const rollMode = game.settings.get("core", "rollMode");
     const postRolls = [...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls];
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: chatContent,
-      ...(postRolls.length ? { rolls: postRolls, sound: CONFIG.sounds.dice } : {})
-    }, rollMode));
+    await postTestCard(actor, chatContent, { rolls: postRolls, sound: postRolls.length > 0 });
   }
 
   ui.notifications.info(`${item.name}: пост-эффект активирован.`);
@@ -573,20 +559,12 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж стал зависим!</span>`;
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn","#ffb84d")}Тест Зависимости — ${name}</div>
-        <div class="roll-threshold">
+  await postTestCard(actor, {
+    icon: rollIcon("warn", "#ffb84d"), title: `Тест Зависимости — ${name}`,
+    threshold: `<div class="roll-threshold">
           ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")}
           → Порог: <b>${eff}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+        </div>`,
+    rv, outcome
+  }, { rolls: [roll] });
 }

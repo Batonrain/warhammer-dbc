@@ -11,6 +11,7 @@ import { ironModForQuality, leastQuality } from "../../constants/implant-mechani
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
@@ -47,6 +48,8 @@ export async function activateTechMiracle(actor, item) {
   const isSlavo = sys.miracleType === "slavoslovie" || !!slavoExtra;
   if (isSlavo && !sys.compiled) {
     const x = sys.miracleType === "slavoslovie" ? (sys.rating || 1) : (slavoExtra?.x || 1);
+    // Уведомление «идёт компиляция», а не карточка теста: ни броска, ни Порога
+    // — на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
@@ -284,37 +287,28 @@ export async function activateTechMiracle(actor, item) {
     }
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
   const techDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("gear","#8fd0ff")}Техночудо: ${esc(item.name)}</div>
-          <div class="roll-threshold">
+  await postTestCard(actor, {
+    icon: rollIcon("gear", "#8fd0ff"), title: `Техночудо: ${esc(item.name)}`,
+    threshold: `<div class="roll-threshold">
             ${skillLabel}: <b>${base}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b>
-          </div>
-          ${ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : ""}
-          ${compLine ? `<div class="roll-threshold" style="font-size:0.85em;">${compLine}</div>` : ""}
-          ${costLine ? `<div class="roll-threshold">${costLine}</div>` : ""}
-          ${sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Активировано — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          ${dmgSection}
-          ${psalmSection}
-          ${attackPropsSection}
-          ${infoguardSection}
-          ${imperativeSection}
-          ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}
-          <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${techDice}</details>
-        </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+          </div>`,
+    lines: [
+      ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : "",
+      compLine ? `<div class="roll-threshold" style="font-size:0.85em;">${compLine}</div>` : "",
+      costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
+      sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
+    ],
+    rv,
+    outcome: success
+      ? `<span class="roll-success">Активировано — ${deg} ${_degWord(deg)}</span>`
+      : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`,
+    sections: [
+      dmgSection, psalmSection, attackPropsSection, infoguardSection, imperativeSection,
+      sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : "",
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${techDice}</details>`
+    ]
+  }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit: success });
 }
@@ -360,6 +354,8 @@ export async function techGenResource(actor, item, { res, amount, fromCognition 
   }
   await actor.update(upd);
   const pretty = msg.replace(/⚙/g, techIcon("cognition")).replace(/⚡/g, techIcon("energy"));
+  // Сводка по энергосистеме — уведомление, не карточка теста (ни броска, ни
+  // Порога): на общий сборщик не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result"><div class="roll-header">${techIcon("energy")} Энергосистема Механикум</div><div class="roll-threshold">${pretty}</div></div>`

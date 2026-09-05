@@ -10,6 +10,7 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
 import { addFatigue, conditionAdjustFields, conditionApplyFields } from "./conditions.mjs";
@@ -250,16 +251,17 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
   });
 }
 
-/** Хвостовая часть общего сообщения в чат — общая на все режимы этого файла. */
+/**
+ * Хвостовая часть общего сообщения в чат — общая на все режимы этого файла.
+ * Сборка и публикация — общий helpers/test-card.mjs (wdbc-kuun): говорящий —
+ * медик, звук кубика только там, где кубик катался (Прижигание/тест Medicae —
+ * с ним, «Пришить бионику вручную» — без).
+ */
 async function sendHealChatMsg(medic, patient, headerIcon, headerLabel, lines, rolls = []) {
-  const rollMode = game.settings.get("core", "rollMode");
-  const msg = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: medic }),
-    content: `<div class="wh-roll-result"><div class="roll-header">${headerIcon}${headerLabel} — ${esc(patient.name)}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
-    rolls,
-    sound: rolls.length ? CONFIG.sounds.dice : undefined
-  }, rollMode);
-  await ChatMessage.create(msg);
+  await postTestCard(medic, {
+    icon: headerIcon, title: `${headerLabel} — ${esc(patient.name)}`,
+    threshold: `<div class="roll-threshold">${lines.join("<br/>")}</div>`
+  }, { rolls, sound: rolls.length > 0 });
 }
 
 /** Прижигание (стр. 231): без теста, 1d5 Усталости + 1d10 урон в Т. */

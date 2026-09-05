@@ -58,6 +58,8 @@ export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
     await actor.update(updates);
 
     const rollMode = game.settings.get("core", "rollMode");
+    // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+    // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
@@ -129,6 +131,8 @@ export async function fatiguePeriodRest(actor) {
     if (!parity) {
       await actor.setFlag("warhammer-dbc", "slowFatigueParity", true);
       const rollMode = game.settings.get("core", "rollMode");
+      // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+      // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
       await ChatMessage.create(ChatMessage.applyRollMode({
         speaker: ChatMessage.getSpeaker({ actor }),
         content: `<div class="wh-roll-result">
@@ -148,6 +152,8 @@ export async function fatiguePeriodRest(actor) {
   await removeFatigue(actor, 1);
 
   const rollMode = game.settings.get("core", "rollMode");
+  // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+  // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
@@ -172,6 +178,8 @@ export async function fatigueSleep(actor) {
   if (actor.getFlag?.("warhammer-dbc", "slowFatigueParity")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigueParity");
 
   const rollMode = game.settings.get("core", "rollMode");
+  // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+  // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
