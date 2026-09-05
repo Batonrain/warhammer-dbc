@@ -106,9 +106,12 @@ describe("отпечаток переживает открытие базы", ()
     const dir = join(tmp, "не-база");
     mkdirSync(dir, { recursive: true });
     expect(await packFingerprint(dir)).toBeNull();
-    // LOCK движок заводит до всякой проверки — это не данные. Важно, что не
-    // появилось ни MANIFEST, ни CURRENT, ни .ldb, то есть базы не возникло.
-    const created = readdirSync(dir).filter(f => f !== "LOCK");
+    // Служебные файлы движок заводит ДО всякой проверки, и на разных системах
+    // по-разному: на Windows это LOCK, на Linux ещё и LOG (поймано красным CI
+    // после того, как тест был зелёным локально). Это не данные. Важно другое —
+    // что не появилось ни MANIFEST, ни CURRENT, ни .ldb, то есть базы не возникло.
+    const HOUSEKEEPING = new Set(["LOCK", "LOG", "LOG.old"]);
+    const created = readdirSync(dir).filter(f => !HOUSEKEEPING.has(f));
     expect(created, "функция чтения завела базу").toEqual([]);
   });
 });

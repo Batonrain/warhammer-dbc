@@ -124,3 +124,49 @@ describe("решение сторожа", () => {
     )).toEqual([]);
   });
 });
+
+describe("отпечаток не считает правкой то, что дописывает сама Foundry", () => {
+  // Измерено 05.09.2026 на свежесобранном паке против того же пака, побывавшего
+  // в открытом мире: движок дописывает `_stats` всем документам, а страницам
+  // журналов ещё и system/image/video/src/category — значения по умолчанию
+  // своей схемы. Без этой поправки сторож краснел после каждой партии уже по
+  // новой причине: содержимое и правда менялось, только менял его не автор.
+  const doc = { name: "Меч", type: "weapon", system: { damage: "1d10" } };
+
+  it("_stats не влияет на отпечаток ни у одного документа", () => {
+    const bare = fingerprintOf([["!items!a", doc]]);
+    const stamped = fingerprintOf([["!items!a",
+      { ...doc, _stats: { coreVersion: "14.367", modifiedTime: 123 } }]]);
+    expect(stamped).toBe(bare);
+  });
+
+  it("у СТРАНИЦ журнала поля по умолчанию не влияют", () => {
+    const page = { name: "Глава", title: { show: true }, text: { content: "<p>т</p>" } };
+    const bare = fingerprintOf([["!journal.pages!a.b", page]]);
+    const filled = fingerprintOf([["!journal.pages!a.b",
+      { ...page, system: {}, image: {}, video: { controls: true }, src: null, category: "" }]]);
+    expect(filled).toBe(bare);
+  });
+
+  it("а у ПРЕДМЕТА system по-прежнему считается — это авторские данные", () => {
+    // Главная граница поправки. Выбросить system у предметов значило бы
+    // ослепить сторожа ровно там, где он нужнее всего: урон оружия, поля Черты.
+    const a = fingerprintOf([["!items!a", doc]]);
+    const b = fingerprintOf([["!items!a", { ...doc, system: { damage: "2d10" } }]]);
+    expect(b).not.toBe(a);
+  });
+
+  it("правка текста страницы по-прежнему видна", () => {
+    const page = { name: "Глава", text: { content: "<p>было</p>" }, system: {} };
+    const a = fingerprintOf([["!journal.pages!a.b", page]]);
+    const b = fingerprintOf([["!journal.pages!a.b",
+      { ...page, text: { content: "<p>стало</p>" } }]]);
+    expect(b).not.toBe(a);
+  });
+
+  it("переименование документа видно всегда", () => {
+    const a = fingerprintOf([["!items!a", doc]]);
+    const b = fingerprintOf([["!items!a", { ...doc, name: "Меч-2" }]]);
+    expect(b).not.toBe(a);
+  });
+});
