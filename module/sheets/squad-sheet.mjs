@@ -21,6 +21,7 @@ import { voiceOfGodAvailable, applyVoiceOfGod } from "../combat/voice-of-god.mjs
 import { tempInfamyInfo, clearTempInfamy } from "../rules/temp-infamy.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
+import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { MINION_TIERS } from "../constants/minions.mjs";
@@ -117,6 +118,8 @@ async function clearVoiceOfGodTemp(sheet) {
   const info = recipientDoc ? tempInfamyInfo(recipientDoc) : null;
   if (!info || info.source !== "Voice of God / Глас Божий") return;
   await clearTempInfamy(recipientDoc);
+  // Уведомление о сгорании запаса, а не карточка теста (ни броска, ни Порога)
+  // — на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: recipientDoc }),
     content: `<div class="wh-roll-result sq-chat">
@@ -544,6 +547,8 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     await this.actor.update({ "system.cohesion.value": after });
 
     const up = after > before;
+    // Запись события Слаженности — уведомление, не карточка теста (броска нет):
+    // на общий сборщик не переводится (wdbc-kuun).
     await ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result sq-chat">
@@ -747,7 +752,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
 
     // Переброс/Кубик — тот же путь, что у общего диалога Навыка/Характеристики.
     const reroll = tk.reroll || null;
-    const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
+    const { rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
 
     const outcome = await resolveKindOutcome(this.actor, {
       kind: tk.kind || "base", baseEff: threshold, rv,
@@ -825,28 +830,26 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
     // книжный термин).
     const plague = (ok && kind !== "presence") ? await this._applyPlagueShepherd(roller.uuid, sux) : "";
 
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result sq-chat">
-        <div class="roll-header">${rollIcon("crown", "#4dffa6")}${esc(title)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
-        <div class="roll-threshold">${esc(roller.label)}: <b>${esc(roller.name)}</b> ·
-          Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""} → Порог <b>${threshold}</b></div>
-        ${outcome.combinedLine}
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        ${outcome.critLine}
-        <div class="roll-outcome">${ok
-          ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}${capped ? `, срезано Риском ${sys.risk} до ${cap}` : ""}</span>`
-          : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}</div>
-        ${outcome.extendedLine}
-        ${outcome.opposedLine}
-        ${effect}
-        ${missed}
-        ${plague}
-      </div>`,
-      rolls: [roll],
-      sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    // Строка Порога у Отряда своя («Командир: имя · Слаженность +5 → Порог»),
+    // поэтому передаётся готовой, а не собирается thresholdLine.
+    // Класс sq-chat — корневой класс карточек Отряда, за него цепляется вёрстка
+    // блоков команды (styles/sheets/squad-sheet.css). В чат идут ВСЕ кубики, а
+    // не только зачтённый: при перебросе отброшенный тоже виден (wdbc-e3k9).
+    await postTestCard(this.actor, testCardHtml({
+      classes: "sq-chat",
+      icon: rollIcon("crown", "#4dffa6"),
+      title: `${esc(title)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
+      threshold: `<div class="roll-threshold">${esc(roller.label)}: <b>${esc(roller.name)}</b> ·
+          Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""} → Порог <b>${threshold}</b></div>`,
+      lines: [outcome.combinedLine],
+      rv,
+      rerollNote,
+      critLine: outcome.critLine,
+      outcome: ok
+        ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}${capped ? `, срезано Риском ${sys.risk} до ${cap}` : ""}`)
+        : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}`),
+      sections: [outcome.extendedLine, outcome.opposedLine, effect, missed, plague]
+    }), { rolls });
   }
 
   /**
@@ -1004,7 +1007,7 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const t1  = (parseInt(form.querySelector("#sq-b1").value) || 0) + mod + difficulty;
             const t2  = (parseInt(form.querySelector("#sq-b2").value) || 0) + mod + difficulty;
             const reroll = mergeReroll(null, readDiceChoice(val));
-            const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
+            const { rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
             const ok1 = rv <= t1, ok2 = rv <= t2;
             const ok  = ok1 && ok2;
             // Комбинированный тест (свой, книжный: успех по худшему порогу) —
@@ -1020,24 +1023,27 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             // Чумной Пастырь (wdbc-w8ws) — «Команда ИЛИ Брифинг» одинаково.
             const plague = ok ? await this._applyPlagueShepherd(cmd.uuid, sux) : "";
 
-            await ChatMessage.create(ChatMessage.applyRollMode({
-              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-              content: `<div class="wh-roll-result sq-chat">
-                <div class="roll-header">${rollIcon("chart", "#4dffa6")}Брифинг — ${esc(this.actor.name)}</div>
-                <div class="roll-threshold">${esc(cmd.name)} · Command(I)−10: <b>${t1}</b> · Logic(I)−10: <b>${t2}</b>
-                  ${difficulty !== 0 ? ` (Сложность ${difficulty >= 0 ? "+" : ""}${difficulty})` : ""}</div>
-                <div class="roll-dice">Бросок: <b>${rv}</b></div>
-                ${rerollNote}
-                ${critLine}
-                <div class="roll-outcome">${ok
-                  ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-                  : `<span class="roll-failure">Провал${!ok1 ? " (Command)" : ""}${!ok2 ? " (Logic)" : ""}</span>`}</div>
-                ${ok ? `<div class="sq-chat-effect">Подчинённые получают <b>${sux}</b> Ход(ов) в следующем бою с преимуществами
-                  Короткой Команды силой <b>${power}</b> Успехов (½ I.b, окр.▼), по выбору их Лидера.</div>` : ""}
-                ${plague}
-              </div>`,
-              rolls: [roll], sound: CONFIG.sounds.dice
-            }, game.settings.get("core", "rollMode")));
+            // Порог здесь двойной (обе части комбинированного теста) — строка
+            // своя, готовой. В чат идут все кубики, включая отброшенный при
+            // перебросе (wdbc-e3k9).
+            await postTestCard(this.actor, testCardHtml({
+              classes: "sq-chat",
+              icon: rollIcon("chart", "#4dffa6"),
+              title: `Брифинг — ${esc(this.actor.name)}`,
+              threshold: `<div class="roll-threshold">${esc(cmd.name)} · Command(I)−10: <b>${t1}</b> · Logic(I)−10: <b>${t2}</b>
+                  ${difficulty !== 0 ? ` (Сложность ${difficulty >= 0 ? "+" : ""}${difficulty})` : ""}</div>`,
+              rv,
+              rerollNote,
+              critLine,
+              outcome: ok
+                ? outcomeHtml(true, `Успех — ${deg} ${_degWord(deg)}`)
+                : outcomeHtml(false, `Провал${!ok1 ? " (Command)" : ""}${!ok2 ? " (Logic)" : ""}`),
+              sections: [
+                ok ? `<div class="sq-chat-effect">Подчинённые получают <b>${sux}</b> Ход(ов) в следующем бою с преимуществами
+                  Короткой Команды силой <b>${power}</b> Успехов (½ I.b, окр.▼), по выбору их Лидера.</div>` : "",
+                plague
+              ]
+            }), { rolls });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -1095,21 +1101,24 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             const critLine = critLineHtml(criticalOutcome(rc.total,
               resolveTest({ actor: this.actor, kind: "skill", skill: "command" }).crit));
 
-            await ChatMessage.create(ChatMessage.applyRollMode({
-              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-              content: `<div class="wh-roll-result sq-chat">
-                <div class="roll-header">${rollIcon("shield", "#4dffa6")}Приказ — ${esc(cmd.name)} → ${esc(tgt?.name || "")}</div>
-                ${text ? `<div class="sq-chat-order">«${esc(text)}»</div>` : ""}
-                <div class="roll-threshold">Command(F) <b>${cTgt}</b> → бросок <b>${rc.total}</b>${okC ? ` (${degC} ${_degWord(degC)})` : " — провал"}</div>
-                ${critLine}
-                <div class="roll-threshold">W подчинённого <b>${wTgt}</b> → бросок <b>${rw.total}</b>${okW ? ` (${degW} ${_degWord(degW)})` : " — провал"}</div>
-                <div class="roll-outcome">${cmdWins
-                  ? `<span class="roll-success">Командир побеждает — подчинённый вынужден следовать приказу</span>`
-                  : `<span class="roll-failure">Подчинённый устоял — приказ не продавлен</span>`}</div>
-                <div class="sq-chat-note">Игровой персонаж получает преимущества Команд только если признаёт авторитет Командира; иначе его Команды считаются как от Координатора.</div>
-              </div>`,
-              rolls: [rc, rw], sound: CONFIG.sounds.dice
-            }, game.settings.get("core", "rollMode")));
+            // Обе стороны встречного теста и текст приказа идут своими
+            // строками: у каждой стороны свой Порог и свой бросок в одной
+            // строке, общего «Порога» у карточки нет.
+            await postTestCard(this.actor, testCardHtml({
+              classes: "sq-chat",
+              icon: rollIcon("shield", "#4dffa6"),
+              title: `Приказ — ${esc(cmd.name)} → ${esc(tgt?.name || "")}`,
+              lines: [
+                text ? `<div class="sq-chat-order">«${esc(text)}»</div>` : "",
+                `<div class="roll-threshold">Command(F) <b>${cTgt}</b> → бросок <b>${rc.total}</b>${okC ? ` (${degC} ${_degWord(degC)})` : " — провал"}</div>`,
+                critLine,
+                `<div class="roll-threshold">W подчинённого <b>${wTgt}</b> → бросок <b>${rw.total}</b>${okW ? ` (${degW} ${_degWord(degW)})` : " — провал"}</div>`
+              ],
+              outcome: cmdWins
+                ? outcomeHtml(true, "Командир побеждает — подчинённый вынужден следовать приказу")
+                : outcomeHtml(false, "Подчинённый устоял — приказ не продавлен"),
+              sections: [`<div class="sq-chat-note">Игровой персонаж получает преимущества Команд только если признаёт авторитет Командира; иначе его Команды считаются как от Координатора.</div>`]
+            }), { rolls: [rc, rw] });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -1164,19 +1173,21 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
               "system.detailCommand.active": false
             });
 
-            await ChatMessage.create(ChatMessage.applyRollMode({
-              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-              content: `<div class="wh-roll-result sq-chat">
-                <div class="roll-header">${rollIcon("skull", "#ff8a8a")}Героический Конец — ${esc(cmd.name)}</div>
-                <div class="roll-threshold">Command(W) <b>${t1}</b> → <b>${r1.total}</b>${ok1 ? ` (${d1} ${_degWord(d1)})` : " — провал"}</div>
-                ${critLine}
-                <div class="roll-threshold">Intimidate(W) врага <b>${t2}</b> → <b>${r2.total}</b>${ok2 ? ` (${d2} ${_degWord(d2)})` : " — провал"}</div>
-                <div class="roll-outcome">${wins
-                  ? `<span class="roll-success">Командование держится ещё ${d1} Раунд(ов)${d1 >= 5 ? " — и он отдаёт Короткую Команду как Подвигом (через W)" : ""}</span>`
-                  : `<span class="roll-failure">Командование потеряно немедленно</span>`}</div>
-              </div>`,
-              rolls: [r1, r2], sound: CONFIG.sounds.dice
-            }, game.settings.get("core", "rollMode")));
+            // Встречный тест: у каждой стороны своя строка «Порог → бросок»,
+            // поэтому обе идут своими строками, а не общим Порогом.
+            await postTestCard(this.actor, testCardHtml({
+              classes: "sq-chat",
+              icon: rollIcon("skull", "#ff8a8a"),
+              title: `Героический Конец — ${esc(cmd.name)}`,
+              lines: [
+                `<div class="roll-threshold">Command(W) <b>${t1}</b> → <b>${r1.total}</b>${ok1 ? ` (${d1} ${_degWord(d1)})` : " — провал"}</div>`,
+                critLine,
+                `<div class="roll-threshold">Intimidate(W) врага <b>${t2}</b> → <b>${r2.total}</b>${ok2 ? ` (${d2} ${_degWord(d2)})` : " — провал"}</div>`
+              ],
+              outcome: wins
+                ? outcomeHtml(true, `Командование держится ещё ${d1} Раунд(ов)${d1 >= 5 ? " — и он отдаёт Короткую Команду как Подвигом (через W)" : ""}`)
+                : outcomeHtml(false, "Командование потеряно немедленно")
+            }), { rolls: [r1, r2] });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -1226,17 +1237,17 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
             ? `<span class="roll-failure">Критический провал — самосохранение до конца боя или сцены</span>`
             : `<span class="roll-failure">Провал — в свой Ход действует из мотивов самосохранения (укрытие, отход, сдача)</span>`));
 
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result sq-chat">
-        <div class="roll-header">${rollIcon(kind === "morale" ? "heart" : "warn", ok ? "#4dffa6" : "#ff8a8a")}${kind === "morale" ? "Тест Морали" : "Сломленный Отряд"} — ${esc(m.name)}</div>
-        <div class="roll-threshold">W <b>${m.wp}</b>${kind === "broken" ? ` · Слаженность ${coh >= 0 ? "+" : ""}${coh}` : ""} → Порог <b>${target}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-        ${kind === "broken" ? `<div class="sq-chat-note">Если боец под Запугиванием своего Лидера или Командира и набрал Провалов не больше, чем тот Успехов на Intimidate, тест считается пройденным.</div>` : ""}
-      </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    // Строка Порога своя: слагаемое Слаженности стоит через «·», а не в
+    // скобках общего формата.
+    await postTestCard(this.actor, testCardHtml({
+      classes: "sq-chat",
+      icon: rollIcon(kind === "morale" ? "heart" : "warn", ok ? "#4dffa6" : "#ff8a8a"),
+      title: `${kind === "morale" ? "Тест Морали" : "Сломленный Отряд"} — ${esc(m.name)}`,
+      threshold: `<div class="roll-threshold">W <b>${m.wp}</b>${kind === "broken" ? ` · Слаженность ${coh >= 0 ? "+" : ""}${coh}` : ""} → Порог <b>${target}</b></div>`,
+      rv,
+      outcome,
+      sections: [kind === "broken" ? `<div class="sq-chat-note">Если боец под Запугиванием своего Лидера или Командира и набрал Провалов не больше, чем тот Успехов на Intimidate, тест считается пройденным.</div>` : ""]
+    }), { rolls: [roll] });
   }
 
   /** Ручная отметка «потерял Командование» у участника. */

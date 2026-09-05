@@ -25,6 +25,7 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { degreesOfSuccess } from "../../constants/craft.mjs";
 import { hasLordOfExodites, unnaturalFHint, clearMoraleConditions, rallyExoditeSquad } from "../../combat/lord-of-exodites.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { postTestCard, testCardHtml, outcomeHtml } from "../../helpers/test-card.mjs";
 
 /** Кого можно взять под своё Присутствие. Шире состава Отряда: миньоны тоже. */
 export const FOLLOWER_TYPES =
@@ -264,22 +265,22 @@ export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey
 
   const title = { presence: "Командное Присутствие", short: "Короткая Команда", detail: "Детальная Команда" }[kind];
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result sq-chat cmd-free-chat">
-      <div class="roll-header">${rollIcon("crown", "#4dffa6")}${esc(title)} — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b>
-        <span class="cmd-chat-hint">— без Слаженности и Риска: группа не сведена в Отряд</span></div>
-      <div class="roll-dice">${declared > 0 ? `Автоуспех (Unnatural F) — бросок не нужен` : `Бросок: <b>${rv}</b>`}</div>
-      <div class="roll-outcome">${ok
-        ? `<span class="roll-success">Успех — ${sux} ${_degWord(sux)}</span>`
-        : `<span class="roll-failure">Провал</span>`}</div>
-      ${effect}
-      ${ok ? notReachedBy(actor, kind, benefit || cmd.presence?.benefit || "extreme") : ""}
-    </div>`,
-    rolls: roll ? [roll] : [],
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Классы sq-chat и cmd-free-chat — корневые классы карточек Командования, за
+  // них цепляется вёрстка (styles/sheets/squad-sheet.css). Строка Порога своя:
+  // слагаемые идут через «·» и с подсказкой про несведённую группу, а не в
+  // скобках общего формата.
+  await postTestCard(actor, testCardHtml({
+    classes: "sq-chat cmd-free-chat",
+    icon: rollIcon("crown", "#4dffa6"),
+    title: `${esc(title)} — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b>
+        <span class="cmd-chat-hint">— без Слаженности и Риска: группа не сведена в Отряд</span></div>`,
+    // Объявленный автоуспех идёт вместо строки броска — она своя, а rv нет.
+    lines: declared > 0 ? [`<div class="roll-dice">Автоуспех (Unnatural F) — бросок не нужен</div>`] : [],
+    rv: declared > 0 ? null : rv,
+    outcome: ok ? outcomeHtml(true, `Успех — ${sux} ${_degWord(sux)}`) : outcomeHtml(false, "Провал"),
+    sections: [effect, ok ? notReachedBy(actor, kind, benefit || cmd.presence?.benefit || "extreme") : ""]
+  }), { rolls: roll ? [roll] : [] });
 
   return { ok, successes: sux, threshold, roll: rv };
 }
@@ -321,20 +322,18 @@ export async function rallyHorde(actor, uuid, { mod = 0 } = {}) {
   const sux = ok ? degreesOfSuccess(rv, threshold) : 0;
   const healed = ok ? await healPsychDamage(horde, sux) : 0;
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result sq-chat cmd-free-chat">
-      <div class="roll-header">${rollIcon("crown", "#4dffa6")}Речь к Орде — ${esc(actor.name)} → ${esc(horde.name)}</div>
-      <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${ok
-        ? `<span class="roll-success">Успех — ${sux} ${_degWord(sux)}, возвращено <b>${healed}</b> Магнитуды</span>`
-        : `<span class="roll-failure">Провал — толпа не слушает</span>`}</div>
-      <div class="sq-chat-note">Тест Командования по Орде лечит только психологический урон; обычные потери восполняются рекрутами и отдыхом.</div>
-    </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Те же корневые классы и та же своя строка Порога, что у rollCommand выше.
+  await postTestCard(actor, testCardHtml({
+    classes: "sq-chat cmd-free-chat",
+    icon: rollIcon("crown", "#4dffa6"),
+    title: `Речь к Орде — ${esc(actor.name)} → ${esc(horde.name)}`,
+    threshold: `<div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>`,
+    rv,
+    outcome: ok
+      ? outcomeHtml(true, `Успех — ${sux} ${_degWord(sux)}, возвращено <b>${healed}</b> Магнитуды`)
+      : outcomeHtml(false, "Провал — толпа не слушает"),
+    sections: [`<div class="sq-chat-note">Тест Командования по Орде лечит только психологический урон; обычные потери восполняются рекрутами и отдыхом.</div>`]
+  }), { rolls: [roll] });
 
   return { ok, healed };
 }
