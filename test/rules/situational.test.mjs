@@ -227,3 +227,27 @@ describe("collectTestMods и autoTestMods различают галочки", ()
     expect(got.parts).toEqual(["😓 Усталость -10"]);
   });
 });
+
+// Обратный дефект того же корня (wdbc-t8dt): взять autoTestMods там, где
+// диалога с галочками НЕТ, — значит молча потерять всё, что реестр даёт
+// тесту. Задвоение видно за столом сразу, потеря — никогда, поэтому она
+// закрыта тестом отдельно.
+describe("autoTestMods теряет то, что collectTestMods отдаёт", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("правило области attack доезжает через collectTestMods и НЕ доезжает через autoTestMods", async () => {
+    const { collectTestMods, autoTestMods } = await import("../../module/rules/roll-mods.mjs");
+    clearRuleSources();
+    registerRuleSource("удар", () => [
+      { id: "черта", label: "Черта", effects: [{ kind: "rollBonus", target: "attack", value: 10 }] }
+    ]);
+    const ctx = { kind: "attack", isMelee: true, char: "ws" };
+    const hero = actor({ fatigue: { value: 0 } });
+    expect(collectTestMods(hero, ctx).total).toBe(10);
+    expect(autoTestMods(hero, ctx).total).toBe(0);
+  });
+});

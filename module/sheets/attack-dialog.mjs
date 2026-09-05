@@ -43,7 +43,7 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
-import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { collectTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
@@ -1930,9 +1930,14 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   // Усталость, а выключенная силовая броня и Перевес инвентаря до приёма без
   // оружия не доезжали, хотя это физическое действие.
   //
-  // autoTestMods, а не collectTestMods: у диалога атаки галочки правил свои
-  // (ruleRollModsHtml там же), и общий сбор сложил бы отмеченную второй раз.
-  const bodyMods = autoTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
+  // collectTestMods, а НЕ autoTestMods: у ЭТОГО пути диалога с галочками нет
+  // вовсе — бросок безусловный, по клику (см. комментарий про Локус
+  // Сокрушения выше). Галочки правил показывает соседний showAttackDialog, а
+  // здесь спрашивать негде, и autoTestMods молча терял бы всё, что реестр
+  // даёт атаке: «+10 к любому удару» с Черты просто не доезжал (wdbc-t8dt,
+  // найдено живой проверкой — синтетическое правило area:attack не попадало
+  // ни в сумму, ни в карточку).
+  const bodyMods = collectTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
   const fatigue  = bodyMods.total;
   // WS уже включает мод препаратов (см. prepareDerivedData)
   const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
