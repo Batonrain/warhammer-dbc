@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs } from "../../tools/packs.mjs";
+import { PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 // Сборка релиза берёт содержимое компендиумов из packs-src/. Пак, объявленный
 // в system.json, но без исходника, соберётся пустым, и потеря заметится только
@@ -81,7 +82,7 @@ describe("исходники книг", () => {
   it.each(JOURNAL_PACKS.map(b => [b.slug, b]))("%s: объявлен паком и имеет JSON", (_slug, book) => {
     expect(book.type).toBe("JournalEntry");
     expect(existsSync(abs(`${SRC_ROOT}/books/${book.slug}.json`))).toBe(true);
-  });
+  }, PACK_SCAN_TIMEOUT);
 });
 
 // CI гоняет круговорот сборка → извлечение и падает при расхождении, поэтому

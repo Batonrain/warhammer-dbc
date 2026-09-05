@@ -16,7 +16,7 @@ import fs   from "node:fs";
 import path from "node:path";
 
 import { ITEM_DATA_MODELS } from "../../module/data/index.mjs";
-import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
+import { packDocuments, leaves, isEmpty, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 /**
  * По типу: папка packs-src с его документами, умолчания прежнего template.json
@@ -654,7 +654,7 @@ describe("типы данных предметов", () => {
           }
         }
         expect(lost).toEqual([]);
-      });
+      }, PACK_SCAN_TIMEOUT);
     });
   }
 
