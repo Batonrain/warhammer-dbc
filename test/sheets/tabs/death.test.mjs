@@ -10,7 +10,7 @@ import "../../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { doMiraculousSave, doDivineProtection } from "../../../module/sheets/tabs/death.mjs";
+import { doMiraculousSave, doDivineProtection, doSusAnimation } from "../../../module/sheets/tabs/death.mjs";
 import { eternalWarriorFreeSaveAvailable } from "../../../module/combat/eternal-warrior.mjs";
 
 // Заглушка foundry.utils.getProperty в стенде всегда отдаёт undefined (не
@@ -72,6 +72,46 @@ describe("Eternal Warrior — путь flat", () => {
   it("недостаточно пула (fate=0) — провал, как у обычного Спасения", async () => {
     const actor = berserker({ fate: 0, corruption: 10 });
     await doMiraculousSave(actor, { eternalWarrior: "flat" });
+    expect(captured.chat.at(-1).content).toContain("Провал");
+  });
+});
+
+function astartesForSusAn({ wp = 40 } = {}) {
+  const flags = {};
+  const updates = [];
+  const actor = {
+    id: "a2", name: "Дредноут", type: "character",
+    system: { characteristics: { wp: { total: wp } } },
+    updates,
+    getFlag: (scope, key) => flags[`${scope}.${key}`],
+    async setFlag(scope, key, value) { flags[`${scope}.${key}`] = value; },
+    async update(data) { updates.push(data); }
+  };
+  return actor;
+}
+
+// Без сознания (стр. 30-31, wdbc-r5o7.7): Замедленная Анимация раньше сама
+// выставляла И unconscious, И helpless — дублирование двух флагов вручную.
+// Теперь Беспомощность — производное поле (rules/character.mjs, derived
+// data), отдельно её здесь ставить не нужно и не должно.
+describe("doSusAnimation (Замедленная Анимация, wdbc-r5o7.7)", () => {
+  it("успех — ставит unconscious, НЕ ставит helpless напрямую (она производная)", async () => {
+    const actor = astartesForSusAn({ wp: 40 });
+    captured.dice = [50]; // W 40 + 30 = 70 порог, 50 <= 70 → успех
+    await doSusAnimation(actor);
+
+    const upd = actor.updates[0];
+    expect(upd["system.conditions.unconscious"]).toBe(true);
+    expect(upd).not.toHaveProperty("system.conditions.helpless");
+    expect(captured.chat.at(-1).content).toContain("Успех");
+  });
+
+  it("провал — ничего не ставит", async () => {
+    const actor = astartesForSusAn({ wp: 10 });
+    captured.dice = [90]; // W 10 + 30 = 40 порог, 90 > 40 → провал
+    await doSusAnimation(actor);
+
+    expect(actor.updates).toHaveLength(0);
     expect(captured.chat.at(-1).content).toContain("Провал");
   });
 });

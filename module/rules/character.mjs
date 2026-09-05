@@ -549,6 +549,19 @@ export function prepareCharacterDerived(actor, system) {
       system.conditions.fatigued = fatVal > 0;
     }
 
+    // Без сознания (стр. 30-31, wdbc-r5o7.7): «Считается Беспомощным» — тем
+    // же приёмом, что тег Усталости выше, а не ручным дублированием двух
+    // флагов у каждого писателя (было — sheets/tabs/death.mjs выставлял оба
+    // разом, и только там; остальные места, где встаёт «Без сознания»
+    // (Усталость сверх порога — addFatigue), Беспомощность не ставили вовсе).
+    // Здесь — единственная точка: Без сознания ⇒ Беспомощен для ЛЮБОГО кода,
+    // читающего conditions.helpless (attack-dialog.mjs авто-попадание/×2
+    // урона/+30 дальнобойным, skillful-torture.mjs, HUD-лампа, предикаты
+    // hasCondition/targetLacksCondition) — без сознания это строго хуже
+    // просто Беспомощности, так что переопределение (не «ИЛИ» с уже стоящим
+    // значением) корректно в обе стороны.
+    if (system.conditions?.unconscious) system.conditions.helpless = true;
+
     // Мёртвое Могущество (Иннари): максимум = W.b × 3
     if (system.deadMight) {
       system.deadMight.max = (chars.wp?.bonus ?? 0) * 3;

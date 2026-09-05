@@ -78,3 +78,43 @@ describe("Гангрена: +1 неснимаемая Усталость", () =>
     expect(s.conditions.fatigued).toBe(false);
   });
 });
+
+// Без сознания (стр. 30-31, wdbc-r5o7.7): «Считается Беспомощным» — тем же
+// приёмом, что тег Усталости выше, а не ручным дублированием двух флагов у
+// каждого писателя (было — только sheets/tabs/death.mjs, остальные места
+// вроде addFatigue-порога Беспомощность не ставили вовсе).
+describe("Без сознания ⇒ Беспомощен (производное поле)", () => {
+  it("unconscious:true — helpless становится true, даже если не был выставлен", () => {
+    const system = new ACTOR_DATA_MODELS.character({}).toObject();
+    system.conditions.unconscious = true;
+    system.conditions.helpless = false;
+    const list = [];
+    list.get = () => null;
+    WarhammerActor.prototype.prepareDerivedData.call({
+      type: "character", name: "Подставной", system, items: list, getFlag: () => undefined
+    });
+    expect(system.conditions.helpless).toBe(true);
+  });
+
+  it("unconscious:false, helpless выставлен отдельно (напр. схвачен) — не трогается", () => {
+    const system = new ACTOR_DATA_MODELS.character({}).toObject();
+    system.conditions.unconscious = false;
+    system.conditions.helpless = true;
+    const list = [];
+    list.get = () => null;
+    WarhammerActor.prototype.prepareDerivedData.call({
+      type: "character", name: "Подставной", system, items: list, getFlag: () => undefined
+    });
+    expect(system.conditions.helpless).toBe(true);
+  });
+
+  it("ни то ни другое — helpless остаётся false", () => {
+    const system = new ACTOR_DATA_MODELS.character({}).toObject();
+    const list = [];
+    list.get = () => null;
+    WarhammerActor.prototype.prepareDerivedData.call({
+      type: "character", name: "Подставной", system, items: list, getFlag: () => undefined
+    });
+    expect(system.conditions.helpless).toBe(false);
+  });
+});

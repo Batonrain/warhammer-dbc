@@ -127,7 +127,7 @@ export async function doDivineProtection(actor, { eternalWarrior = null } = {}) 
 }
 
 /** Замедленная Анимация — не тратит Судьбу/Бесчестье, отдельный тест W+30 (Сус-ан Мембрана). */
-async function doSusAnimation(actor) {
+export async function doSusAnimation(actor) {
   const w = Number(actor.system.characteristics?.wp?.total) || 0;
   const threshold = w + SUS_AN_TEST_MOD;
   const roll = await new Roll("1d100").evaluate();
@@ -135,10 +135,13 @@ async function doSusAnimation(actor) {
 
   const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`];
   if (success) {
+    // Беспомощность отдельно не ставим (wdbc-r5o7.7): «Без сознания» теперь
+    // сама производит Беспомощность для любого читателя conditions.helpless
+    // (rules/character.mjs, derived data) — дублирующая запись годами могла
+    // разойтись, если кто-то снимал один флаг и забывал другой.
     await actor.update({
       [`flags.${NS}.deceased`]: false,
-      ...conditionApplyFields("unconscious"),
-      ...conditionApplyFields("helpless")
+      ...conditionApplyFields("unconscious")
     });
     lines.push(`<span class="roll-success">Успех — десантник входит в Замедленную Анимацию вместо смерти.</span>`);
     lines.push("Без сознания и Беспомощен. Диагностика −60 (For.Lore (Astartes Implants) снимает штраф). "

@@ -109,7 +109,11 @@ describe("resetActionEconomy", () => {
   // Подавленного (min 1) при обоих сразу.
   it.each([
     ["Оглушён — 0 ОД, 0 Реакций, 0 доп. Реакций на Избегание", { stunned: true }],
-    ["в Ступоре — тот же запрет (Ступор = Оглушение «для прочих эффектов»)", { dazed: true }]
+    ["в Ступоре — тот же запрет (Ступор = Оглушение «для прочих эффектов»)", { dazed: true }],
+    // Без сознания (стр. 30-31, wdbc-r5o7.7): свой пункт книги («не может
+    // совершать Действия и Реакции»), не производный от isStunnedOrDazed —
+    // проверен тем же тестом, что и Оглушение/Ступор выше.
+    ["Без сознания — тот же абсолютный запрет", { unconscious: true }]
   ])("%s", async (_title, conditions) => {
     const actor = actorFor({
       actionPoints: { value: 0, max: 2 },
@@ -124,6 +128,12 @@ describe("resetActionEconomy", () => {
 
   it("Оглушён и Подавлен разом — Оглушение побеждает (0, не 1)", async () => {
     const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { stunned: true, pinned: true } });
+    await resetActionEconomy(actor);
+    expect(actor.system.actionPoints.value).toBe(0);
+  });
+
+  it("Без сознания и Подавлен разом — Без сознания побеждает (0, не 1)", async () => {
+    const actor = actorFor({ actionPoints: { value: 0, max: 2 }, conditions: { unconscious: true, pinned: true } });
     await resetActionEconomy(actor);
     expect(actor.system.actionPoints.value).toBe(0);
   });

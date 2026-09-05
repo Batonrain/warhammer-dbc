@@ -84,21 +84,24 @@ export function effectiveActionPointsMax(actor) {
 export async function resetActionEconomy(actor) {
   if (!hasActionEconomy(actor)) return;
   const sys = actor.system;
-  // Стр. 30-31: Оглушение/Ступор — «не может совершать Действия и Реакции»,
-  // абсолютный запрет (0), сильнее ограничения Подавленного ниже (min 1).
-  const stunLocked      = isStunnedOrDazed(actor);
+  // Стр. 30-31: Оглушение/Ступор и Без сознания (wdbc-r5o7.7: «не может
+  // совершать Действия и Реакции», тот же абсолютный запрет, что и у
+  // Оглушения — не через isStunnedOrDazed, у Без сознания это СВОЙ пункт
+  // книги, не производный от Беспомощности выше) — абсолютный запрет (0),
+  // сильнее ограничения Подавленного ниже (min 1).
+  const apLocked       = isStunnedOrDazed(actor) || !!sys.conditions?.unconscious;
   // Стр. 33: Подавленный персонаж в укрытии имеет только 1 ОД в свой Ход
   // («в укрытии» не проверяем — тот же приём, что у штрафа BS в диалоге
   // атаки: считаем по самому факту Подавления).
-  const apMax          = stunLocked ? 0 : sys.conditions?.pinned
+  const apMax          = apLocked ? 0 : sys.conditions?.pinned
     ? Math.min(1, effectiveActionPointsMax(actor))
     : effectiveActionPointsMax(actor);
-  const reactMax       = stunLocked ? 0 : (Number(sys.reactions?.max) || 0);
+  const reactMax       = apLocked ? 0 : (Number(sys.reactions?.max) || 0);
   const defenseMaxBase = Number(sys.reactions?.defenseMax) || 0;
   const defenseBonus   = stanceDefenseReactionBonus(actor);
-  // Доп. Реакции «только на Избегание» — тоже Реакции: запрет Оглушения/
-  // Ступора выше распространяется и на них, не только на универсальный пул.
-  const defenseMax     = stunLocked ? 0 : defenseMaxBase + defenseBonus;
+  // Доп. Реакции «только на Избегание» — тоже Реакции: запрет выше
+  // распространяется и на них, не только на универсальный пул.
+  const defenseMax     = apLocked ? 0 : defenseMaxBase + defenseBonus;
 
   // Один update на всё (значения + снятие флагов через -=): каждая отдельная
   // запись — это раунд-трип в базу и полный re-render листов/токенов у всех
