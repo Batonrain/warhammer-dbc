@@ -99,7 +99,7 @@
 // "undivided" явно не выбран). Нет актора (предпросмотр) — условие пройдено,
 // тот же принцип, что у остальных гейтов.
 
-import { itemHasName, PREDICATES } from "./predicates.mjs";
+import { itemHasName, PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
 export function whenPatronGod(when) {
@@ -142,6 +142,41 @@ function hasTalentSpec(actor, name, specialization) {
     itemHasName(i, name) && normSpec(i?.system?.specialization) === want);
 }
 
+
+/**
+ * Условия из реестра PREDICATES, на которые сослалась запись
+ * (entry.when.predicates) — мост между двумя языками условий (wdbc-n48f).
+ *
+ * Восемь самодельных гейтов рядом никуда не делись: они остаются короткой
+ * записью частых случаев. Мост нужен для остальных двадцати с лишним ключей,
+ * которые записи предмета были недоступны вовсе.
+ */
+function whenPredicates(when) {
+  const raw = when?.predicates;
+  if (!raw || typeof raw !== "object") return [];
+  return Object.entries(raw);
+}
+
+/**
+ * Один предикат из реестра. Неизвестный ключ и предикат, которому нужен
+ * КОНТЕКСТ БРОСКА, — ошибка в консоль и отказ, а не тихое «да»: запись
+ * предмета вычисляется и вне броска, цели там нет, и молчаливый ответ выключал
+ * бы механику незаметно.
+ */
+function predicateOk(key, actor, value) {
+  if (!Object.hasOwn(PREDICATES, key)) {
+    console.error(`Warhammer DBC | запись Конструктора: неизвестное условие «${key}»`);
+    return false;
+  }
+  if (CTX_DEPENDENT_PREDICATES.has(key)) {
+    console.error(
+      `Warhammer DBC | условие «${key}» спрашивает цель или оружие броска, а запись предмета `
+      + "вычисляется и вне броска — такое условие здесь не работает");
+    return false;
+  }
+  return !!PREDICATES[key](actor, {}, value);
+}
+
 /**
  * Выполняет ли актор/предмет условие «Когда» одной записи Механики.
  * @param {?object} actor  владелец — для гейта по Геносемени/Таланту.
@@ -157,8 +192,9 @@ export function entryWhenOk(actor, entry, item = null) {
   const patronGods = whenPatronGod(entry?.when);
   const requireSealedArmour = !!entry?.when?.requireSealedArmour;
   const condKeys = whenCondition(entry?.when);
+  const preds = whenPredicates(entry?.when);
   if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
-      && !patronGods.length && !requireSealedArmour && !condKeys.length) return true;
+      && !patronGods.length && !requireSealedArmour && !condKeys.length && !preds.length) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -219,6 +255,9 @@ export function entryWhenOk(actor, entry, item = null) {
     sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
   }
 
+  let predOk = true;
+  if (preds.length && actor) predOk = preds.every(([key, value]) => predicateOk(key, actor, value));
+
   let condOk = true;
   if (condKeys.length && actor) {
     const matches = PREDICATES.hasCondition(actor, {}, condKeys);
@@ -228,7 +267,7 @@ export function entryWhenOk(actor, entry, item = null) {
   // По умолчанию гейты складываются через «И» — так было всегда, и ни одна
   // существующая запись поведения не меняет.
   if (!entry?.when?.anyOf) {
-    return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk;
+    return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk && predOk;
   }
 
   // when.anyOf — «достаточно одного гейта» (wdbc-n48f). Без него способность
@@ -245,7 +284,8 @@ export function entryWhenOk(actor, entry, item = null) {
     [requireRage, rageOk],
     [patronGods.length, patronOk],
     [requireSealedArmour, sealedOk],
-    [condKeys.length, condOk]
+    [condKeys.length, condOk],
+    [preds.length, predOk]
   ].filter(([on]) => on);
 
   return configured.some(([, ok]) => ok);

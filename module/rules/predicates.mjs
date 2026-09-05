@@ -193,6 +193,23 @@ function inFactions(actor, wanted) {
   return list(wanted).every(key => anySameOrDescendant(mine, key, byKey));
 }
 
+/**
+ * Предикаты, которым нужен КОНТЕКСТ БРОСКА, а не один актор: цель, оружие,
+ * характеристика теста. Их нельзя спрашивать оттуда, где контекста нет —
+ * например из записи Конструктора на предмете (rules/mech-when.mjs): она
+ * вычисляется и вне броска, при выдаче и в предпросмотре, и тихий ответ «нет»
+ * про несуществующую цель выключал бы механику молча.
+ *
+ * Список сверяется с кодом тестом (test/rules/when-predicates-bridge.test.mjs):
+ * предикат, читающий ctx, обязан быть здесь.
+ */
+export const CTX_DEPENDENT_PREDICATES = new Set([
+  "weaponClass", "charNotIn", "charIn",
+  "targetHasTrait", "targetLacksCondition", "targetHasCondition",
+  "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
+  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus"
+]);
+
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
   subrace: (actor, ctx, value) => list(value).includes(actor?.system?.subrace),
