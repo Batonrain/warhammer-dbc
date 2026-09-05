@@ -48,6 +48,21 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
 }
 
 /**
+ * «Статлиния» — строка из ячеек «подпись/значение», которой карточка атаки
+ * заменяет строку Порога: Порог, Режим, Бросок стоят в ряд, а не столбиком.
+ *
+ * Заведена не ради атаки одной: любой карточке, где Порог и бросок читаются
+ * вместе, эта форма подходит лучше двух отдельных строк.
+ *
+ * @param {Array<{label: string, value: string|number, note?: string}>} stats
+ */
+export function statLine(stats = []) {
+  const cells = (stats ?? []).filter(Boolean).map(st =>
+    `<span class="roll-stat"><label>${esc(st.label)}</label><b>${st.value}</b>${st.note ?? ""}</span>`).join("");
+  return cells ? `<div class="roll-statline">${cells}</div>` : "";
+}
+
+/**
  * Разметка карточки теста. Порядок строк — тот, что сложился в боевых
  * карточках и стал общим: шапка, Порог, свои строки, бросок, переброс, крит,
  * исход, свои блоки.
@@ -62,7 +77,10 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
  * @param {string}   [o.classes]    доп. классы корня рядом с `wh-roll-result`:
  *   у части подсистем за них цеплялась своя вёрстка (`sq-chat` у Отряда,
  *   `wh-daemon-card` у Демона), и без них карточка теряет вид
- * @param {string}   [o.threshold]  готовая строка Порога (см. thresholdLine)
+ * @param {string[]} [o.head]       блоки сразу под шапкой, ДО Порога: у карточки
+ *   атаки там стоят Особые Свойства, Качество и «Хват и приёмы»
+ * @param {string}   [o.threshold]  готовая строка Порога (см. thresholdLine) или
+ *   статлиния (см. statLine) — они занимают одно место
  * @param {string[]} [o.lines]      свои строки между Порогом и броском
  * @param {number}   [o.rv]         выпавшее число; null — карточка без броска
  * @param {string}   [o.dice]       отрендеренные кубики Foundry
@@ -72,7 +90,7 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
  * @param {string[]} [o.sections]   свои блоки после исхода (кнопки, таблицы)
  */
 export function testCardHtml({
-  prelude = "", icon = "", title = "", actorUuid = "", classes = "", threshold = "", lines = [],
+  prelude = "", icon = "", title = "", actorUuid = "", classes = "", head = [], threshold = "", lines = [],
   rv = null, dice = "", rerollNote = "", critLine = "", outcome = "", sections = []
 } = {}) {
   const parts = [
@@ -80,6 +98,7 @@ export function testCardHtml({
     // Пустая шапка не рисуется: карточка без заголовка (предисловие уже всё
     // сказало) иначе получала бы пустую полосу сверху.
     (icon || title) ? `<div class="roll-header">${icon}${title}</div>` : "",
+    ...(head ?? []).filter(Boolean),
     threshold,
     ...(lines ?? []).filter(Boolean),
     rv == null ? "" : `<div class="roll-dice">Бросок: <b>${rv}</b></div>`,

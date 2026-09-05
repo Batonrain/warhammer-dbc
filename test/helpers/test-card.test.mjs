@@ -172,3 +172,27 @@ describe("классы исхода не расходятся с вёрстко�
     expect(guilty, "заменить на roll-failure — roll-fail в стилях не существует").toEqual([]);
   });
 });
+
+describe("statLine и head: форма карточки атаки", () => {
+  it("статлиния — ячейки в ряд, а не строки столбиком", async () => {
+    const { statLine } = await import("../../module/helpers/test-card.mjs");
+    expect(statLine([{ label: "Порог", value: 35 }, { label: "Бросок", value: 47 }]))
+      .toBe('<div class="roll-statline">'
+        + '<span class="roll-stat"><label>Порог</label><b>35</b></span>'
+        + '<span class="roll-stat"><label>Бросок</label><b>47</b></span></div>');
+  });
+
+  it("пустая статлиния не рисуется", async () => {
+    const { statLine } = await import("../../module/helpers/test-card.mjs");
+    expect(statLine([])).toBe("");
+  });
+
+  it("head встаёт под шапкой, но ДО Порога — там свойства оружия", () => {
+    const html = testCardHtml({
+      title: "Болтер", head: ['<div class="props">Особые Свойства</div>'],
+      threshold: '<div class="roll-statline">…</div>', outcome: "Попадание"
+    });
+    expect(html.indexOf("props")).toBeGreaterThan(html.indexOf("roll-header"));
+    expect(html.indexOf("props")).toBeLessThan(html.indexOf("roll-statline"));
+  });
+});
