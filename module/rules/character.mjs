@@ -33,6 +33,7 @@ import { vitalCharMods, vitalEffectiveStage, VITAL_TIME_FIELD } from "../constan
 import { raceMatches } from "./race.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
+import { readAllMirrors } from "./condition-mirrors.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
@@ -547,6 +548,17 @@ export function prepareCharacterDerived(actor, system) {
       const fatVal = Math.max(0, Number(system.fatigue.value) || 0);
       system.conditions.fatiguedLevel = fatVal;
       system.conditions.fatigued = fatVal > 0;
+    }
+
+    // Метки (wdbc-5uae) — тем же приёмом, что «Усталость» строкой выше, только
+    // обобщённым: «в Ярости», «в Беге», «отмечен» и т.п. хранятся не своим
+    // флагом Состояния, а там, где хранились всегда (system.inRage, флаги
+    // актора, флаг на щите). Здесь они лишь ОТРАЖАЮТСЯ в system.conditions —
+    // ради иконки на токене, тега на листе и предиката hasCondition. Источник
+    // истины остаётся один, и метка продолжает ставиться/сниматься/истекать
+    // своим кодом; см. rules/condition-mirrors.mjs.
+    if (system.conditions) {
+      Object.assign(system.conditions, readAllMirrors(actor));
     }
 
     // Без сознания (стр. 30-31, wdbc-r5o7.7): «Считается Беспомощным» — тем

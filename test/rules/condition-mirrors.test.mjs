@@ -139,3 +139,37 @@ describe("isMirrorClearable", () => {
     expect(isMirrorClearable("shieldUp")).toBe(false);
   });
 });
+
+// ── Два списка не должны разъехаться ────────────────────────────────────────
+// Тот же класс ошибки, от которого заведён сам реестр Состояний: одна вещь,
+// описанная в двух местах, однажды разойдётся молча. Здесь описание метки
+// («что это, как выглядит») живёт в constants/conditions.mjs, а откуда её
+// читать — здесь; ключи обязаны совпадать ровно.
+import { CONDITIONS, CONDITION_MARK_KEYS, CONDITION_STORED_KEYS, CONDITION_KEYS, isConditionMark }
+  from "../../module/constants/conditions.mjs";
+
+describe("реестр меток и реестр Состояний согласованы", () => {
+  it("ключи совпадают в обе стороны", () => {
+    expect([...MIRROR_KEYS].sort()).toEqual([...CONDITION_MARK_KEYS].sort());
+  });
+
+  it("каждая метка помечена mark:true и подписана одинаково", () => {
+    for (const key of MIRROR_KEYS) {
+      expect(isConditionMark(key)).toBe(true);
+      expect(CONDITIONS[key].label).toBe(CONDITION_MIRRORS[key].label);
+    }
+  });
+
+  it("метки НЕ получают хранимого поля в схеме — они целиком производные", () => {
+    for (const key of MIRROR_KEYS) expect(CONDITION_STORED_KEYS).not.toContain(key);
+    // При этом из общего списка они не выпали: лист, токен и предикаты их видят.
+    for (const key of MIRROR_KEYS) expect(CONDITION_KEYS).toContain(key);
+  });
+
+  it("книжные Состояния зеркалами не считаются", () => {
+    for (const key of ["stunned", "bleeding", "prone"]) {
+      expect(isConditionMark(key)).toBe(false);
+      expect(MIRROR_KEYS).not.toContain(key);
+    }
+  });
+});

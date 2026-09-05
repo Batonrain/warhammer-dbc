@@ -30,6 +30,11 @@ const COUNTER_SUFFIX = { level: "Level", rounds: "Rounds", count: "Count" };
  * @property {("level"|"rounds"|"count")} [counter] тип счётчика; без поля — счётчика нет
  * @property {string} [tickLabel] подпись для карточки тика по Ходам, если отличается от label
  * @property {boolean} [tokenSync] участвует ли в статус-наборе токена (умолчание true)
+ * @property {boolean} [mark] МЕТКА, а не книжное Состояние (wdbc-5uae): хранится
+ *   не своим флагом, а зеркалит чужой источник (см. rules/condition-mirrors.mjs).
+ *   Автор контента такую не накладывает и не снимает — её ставит и снимает своё
+ *   действие («объявить Бег», «войти в Ярость»); реестр нужен ей ради иконки на
+ *   токене, тега на листе и предиката hasCondition.
  */
 
 /** @type {Record<string, ConditionDef>} */
@@ -199,6 +204,59 @@ export const CONDITIONS = {
      <path d="M2.5 5.5C4 4 5.5 4.5 6 6.5S5 10.5 6.5 12.5"/>
      <path d="M13.5 5.5C12 4 10.5 4.5 10 6.5S11 10.5 9.5 12.5"/></g>`
   },
+  // ── МЕТКИ (wdbc-5uae) — не книжные Состояния ─────────────────────────────
+  //  Всё, что ниже, до этого было невидимым: своё поле схемы (system.inRage)
+  //  или флаг актора, без иконки, без тега и без общего способа спросить «а
+  //  это сейчас на мне?». Здесь они получают ровно то, чем от Оглушения
+  //  отличались — вид на токене и на листе; хранятся по-прежнему там, где
+  //  хранились (mark:true, зеркало ведёт rules/condition-mirrors.mjs).
+  inRage: {
+    label: "Ярость", icon: "😡", color: "#ff4d4d", mark: true,
+    desc: "Персонаж в Ярости: пока она держится, работают Черты и Таланты, требующие её. Снимается своим порядком, не крестиком на теге.",
+    body: `<path fill="currentColor" d="M8 1.6C9.1 4 8.4 5.1 7.4 6.2 6.2 7.5 5 8.7 5 10.4a3 3 0 0 0 6 0c0-1.2-.5-2-1-2.9.9.5 1.6 1.4 1.6 2.9a3.6 3.6 0 0 1-7.2 0c0-2.6 2-3.6 3-5.3.6-1 .8-2.2.6-3.5Z"/>`
+  },
+  running: {
+    label: "Бег", icon: "🏃", color: "#7fd6ff", mark: true,
+    desc: "Персонаж объявил Бег: по нему −20 стрельбой и +20 в рукопашной, сам он не может атаковать. Снимается в начале его следующего Хода.",
+    body: `<circle cx="10.2" cy="3.2" r="1.6" fill="currentColor"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+           d="M10.6 6 7.6 8l1.8 2.2-1 3.4M7.6 8 4.4 7.2M9.4 10.2l3 .9"/>`
+  },
+  marching: {
+    label: "Марш", icon: "🥾", color: "#c9a86a", mark: true,
+    desc: "Персонаж в походном Марше (обычном или форсированном). Вид Марша и накопленные штрафы — в подсказке кнопки Марша.",
+    body: `<path fill="currentColor" d="M3.4 2.2h2.4c.5 0 .9.4.9.9v5.3l1.9 1c.4.2.6.6.6 1v1.2H3.4Z"/>
+     <path fill="currentColor" opacity="0.55" d="M9.2 13.8h4.4v-1c0-.4-.2-.8-.6-1l-1.9-1V9.2h-1.9Z"/>`
+  },
+  exposedStance: {
+    label: "Открытая стойка", icon: "🗡️", color: "#ff9f43", mark: true,
+    desc: "Персонаж бил во всю силу и раскрылся: атаки по нему получают бонус до начала его следующего Хода.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+           d="M8 2.4v3M8 10.6v3M2.4 8h3M10.6 8h3"/>
+     <circle cx="8" cy="8" r="2.1" fill="none" stroke="currentColor" stroke-width="1.4"/>`
+  },
+  disengaging: {
+    label: "Выход из Боя", icon: "↩️", color: "#8fd0ff", mark: true,
+    desc: "Персонаж вышел из рукопашной: свободной атаки по нему не будет. Снимается, как только он сдвинулся.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+           d="M5.4 3.4H3.2v9.2h2.2"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+           d="M7.4 8h6M11 5.4 13.6 8 11 10.6"/>`
+  },
+  marked: {
+    label: "Отмечен", icon: "🎯", color: "#ff5ac8", mark: true,
+    desc: "На персонаже чужая метка (Аватар Резни, Проклятая Метка, Поклон Публике): по нему бьют с бонусом. Чья именно — в подсказке.",
+    body: `<circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+     <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+           d="M8 1.4v1.8M8 12.8v1.8M1.4 8h1.8M12.8 8h1.8"/>`
+  },
+  shieldUp: {
+    label: "Щит поднят", icon: "🛡️", color: "#9fe8b0", mark: true,
+    desc: "Хотя бы один щит в руках поднят: работает его защита. Опускается своей кнопкой на вкладке СНАРЯЖЕНИЕ, не крестиком на теге.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"
+           d="M8 1.8 3 3.6v4.2c0 3 2.1 5 5 6.4 2.9-1.4 5-3.4 5-6.4V3.6Z"/>`
+  },
   // Свойство оружия Вызов/Challenge (X), wdbc-2xku: блокирует «Выход из Боя».
   challenged: {
     label: "Вызван", icon: "⚔️", color: "#ff5a5a",
@@ -231,6 +289,28 @@ export function condIconHTML(key, size = 16) {
 
 /** Все ключи Состояний, в книжном порядке — схема существа строит поля из этого списка. */
 export const CONDITION_KEYS = Object.keys(CONDITIONS);
+
+/**
+ * Ключи МЕТОК (mark:true, wdbc-5uae) — не книжные Состояния: хранятся не своим
+ * флагом, а зеркалят чужой источник. Автор контента их не накладывает, поэтому
+ * дропдаун Конструктора и диалог «Добавить состояние» их отсеивают, а иконка на
+ * токене и тег на листе — показывают.
+ */
+export const CONDITION_MARK_KEYS = Object.entries(CONDITIONS)
+  .filter(([, c]) => c.mark).map(([key]) => key);
+
+/**
+ * Ключи, у которых есть СВОЁ хранимое поле в схеме существа. Метки сюда не
+ * входят намеренно: они целиком производные (считаются из чужого источника на
+ * каждом пересчёте, rules/character.mjs), и хранить их — значит завести второе
+ * место правды, ровно то, от чего этот шаг и уходит. Схема
+ * (data/actor/_creature.mjs) строится из ЭТОГО списка, не из CONDITION_KEYS.
+ */
+export const CONDITION_STORED_KEYS = Object.entries(CONDITIONS)
+  .filter(([, c]) => !c.mark).map(([key]) => key);
+
+/** Метка ли это (а не книжное Состояние). */
+export const isConditionMark = (key) => !!CONDITIONS[key]?.mark;
 
 /** key → суффикс счётчика ("Level"/"Rounds"/"Count") — для схемы (data/actor/_creature.mjs). */
 export const CONDITION_COUNTERS = Object.fromEntries(

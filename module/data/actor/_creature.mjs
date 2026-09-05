@@ -19,7 +19,10 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
 // Состояния (conditions) — набор один и тот же у всех существ, строится из
 // реестра constants/conditions.mjs (wdbc-w88h), а не перечисляется здесь: тот
 // же приём, что у Навыков (SKILLS_DEF выше).
-import { CONDITION_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
+// CONDITION_STORED_KEYS, а не CONDITION_KEYS: МЕТКИ (mark:true, wdbc-5uae)
+// своего хранимого поля не получают — они целиком производные, считаются из
+// чужого источника на каждом пересчёте (rules/character.mjs::readAllMirrors).
+import { CONDITION_STORED_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
 
 /** Зоны попадания — порядок как в листе. */
 export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", "rightLeg"];
@@ -113,7 +116,7 @@ export function creatureSchema({ granted = false } = {}) {
   const armorFields = () => Object.fromEntries(HIT_LOCATIONS.map(loc => [loc, num(0, loc)]));
 
   const conditionFields = {};
-  for (const flag of CONDITION_KEYS) {
+  for (const flag of CONDITION_STORED_KEYS) {
     conditionFields[flag] = bool(false, flag);
     const counter = CONDITION_COUNTERS[flag];
     if (counter) conditionFields[flag + counter] = num(0, flag + counter);
