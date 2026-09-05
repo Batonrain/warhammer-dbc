@@ -27,6 +27,7 @@ import { ITEM_QUALITY } from "../constants/quality.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -105,7 +106,14 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
   const check = canAscend(item);
   if (!check.ok) return ui.notifications?.warn(check.reason);
 
-  const { rows, threshold } = ascensionRows(actor, item, { deedBonus, legendary });
+  const { rows, threshold: ritualThreshold } = ascensionRows(actor, item, { deedBonus, legendary });
+  // Возвышение — тест владельца, и штрафы его состояния тела в него входят
+  // (wdbc-9jj7): раньше Порог складывался из одной ритуальной арифметики
+  // (Бесчестие, Редкость, Тяжёлое, свойства, Легион, деяние), и ни Усталость,
+  // ни Черты до него не доезжали. Диалога с галочками у этого броска нет —
+  // значит collectTestMods, а не autoTestMods (docs/rules-format.md).
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "inf" });
+  const threshold = ritualThreshold + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const passed = rv <= threshold;
@@ -120,7 +128,7 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
     title: `Возвышение — ${esc(item.name)}`,
     threshold: thresholdLine({
       label: rows[0]?.label ?? "Бесчестие (Inf)", base: rows[0]?.val ?? 0,
-      parts: rows.slice(1).map(r => `${r.label} ${sgn(r.val)}`),
+      parts: [...rows.slice(1).map(r => `${r.label} ${sgn(r.val)}`), ...ruleMods.parts],
       threshold
     }),
     rv,
