@@ -7,6 +7,7 @@ import { pickReroll }                       from "../rules/reroll-pick.mjs";
 import { testOutcome }                      from "../rules/roll-outcome.mjs";
 import { hasRuleFlag, ruleFlagLabels }      from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -144,54 +145,50 @@ export async function _showContestDialog(actor, techDef) {
           const roll   = rolled[picked.index];
           const rv     = picked.value;
           const { success: hit, deg } = testOutcome(rv, eff);
-          const rollMode = game.settings.get("core", "rollMode");
           const outcome  = hit
-            ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-            : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
+            ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}`)
+            : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}`);
           // Подписи модификаторов, а не только ручное число (wdbc-kuun):
           // Порог уже считался с Усталостью и Чертами, но в карточке этого
           // видно не было — тот же дефект, что живая проверка нашла в
           // Командовании и Ударе Ассасина.
-          const modStr   = (mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : "")
-            + ruleMods.parts.map(p => ` · ${p}`).join("");
+          const modParts = [
+            mod !== 0 ? `${mod >= 0 ? "+" : ""}${mod}` : "",
+            ...ruleMods.parts
+          ];
           const rerollLabel = rr.rerolls?.[rerollIdx]?.label;
           const rerollNote = picked.dropped.length
             ? `<div class="roll-defense-note">${rerollLabel || "Переброс"}: отброшено ${picked.dropped.join(", ")}</div>`
             : "";
 
-                    const messageData = ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor }),
-            content: `
-              <div class="wh-roll-result">
-                <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>${techDef.label}</b>
-                  ${techDef.chatNote
-                    ? `<div class="roll-technique-note">${techDef.chatNote}</div>`
-                    : ""}
-                </div>
-                <div class="roll-header">${techDef.label}</div>
-                <div class="roll-threshold">
-                  ${charMeta?.abbr ?? charKey}: <b>${selfVal}</b>${modStr}
-                  → Порог: <b>${eff}</b>
-                </div>
-                <div class="roll-dice">Бросок: <b>${rv}</b></div>
-                ${rerollNote}
-                <div class="roll-outcome">${outcome}</div>
-                ${hit
-                  ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
-                       ${rollIcon("spark","#8fd0ff")}${techDef.note}
-                     </div>`
-                  : ""}
-                ${hit && immune
-                  ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">
-                       ⚠️ ${esc(target.name)}: нельзя обезоружить${immuneLabels ? ` (${esc(immuneLabels)})` : ""} — эффект Приёма не применяется
-                     </div>`
+          // Карточка — общим сборщиком (wdbc-kuun). Блок «Приём: …» остался
+          // над шапкой (prelude), слагаемые Порога перечисляются в скобках
+          // через запятую вместо « · ».
+          await postTestCard(actor, {
+            prelude: `
+              <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>${techDef.label}</b>
+                ${techDef.chatNote
+                  ? `<div class="roll-technique-note">${techDef.chatNote}</div>`
                   : ""}
               </div>`,
-            rolls: [roll],
-            sound: CONFIG.sounds.dice
-          }, rollMode);
-
-          await ChatMessage.create(messageData);
+            title: techDef.label,
+            threshold: thresholdLine({
+              label: charMeta?.abbr ?? charKey, base: selfVal, parts: modParts, threshold: eff
+            }),
+            rv, rerollNote, outcome,
+            sections: [
+              hit
+                ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;">
+                     ${rollIcon("spark","#8fd0ff")}${techDef.note}
+                   </div>`
+                : "",
+              hit && immune
+                ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">
+                     ⚠️ ${esc(target.name)}: нельзя обезоружить${immuneLabels ? ` (${esc(immuneLabels)})` : ""} — эффект Приёма не применяется
+                   </div>`
+                : ""
+            ]
+          }, { rolls: [roll] });
 
           // Опциональный колбэк на успех (техника несёт реальный эффект,
           // не только прозу-заметку — сейчас только «Заломить», grapple.mjs).

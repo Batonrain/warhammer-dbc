@@ -38,6 +38,7 @@ import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
+import { postTestCard, thresholdLine }   from "./helpers/test-card.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -594,6 +595,9 @@ export function registerHooks() {
         }, { whSkipFateSave: true });
         await markRuleUsageUsed(actor, FAITH_FLAG, "scene");
 
+        // Не карточка теста (wdbc-kuun): броска и Порога здесь нет — Очко
+        // засчитывает уже проваленный тест Страха как пройденный. Уведомление
+        // о трате, поэтому собирается по-прежнему на месте.
         await ChatMessage.create({
           speaker: ChatMessage.getSpeaker({ actor }),
           content: `<div class="wh-roll-result">
@@ -1104,6 +1108,8 @@ async function _applyWeaponPropEffect(ds) {
   // Тело»/«Щит Чистоты» дают weaponPropertyImmunity.<key> через Механику.
   if ((propKey && hasWeaponPropertyImmunity(actor, propKey))
     || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias))) {
+    // Не карточка теста (wdbc-kuun): иммунитет отменяет эффект ДО броска —
+    // ни кубов, ни Порога, только уведомление.
     return ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
@@ -1136,6 +1142,8 @@ async function _applyWeaponPropEffect(ds) {
   // применяются вовсе — рейтинг X идёт в Структуру напрямую, без броска.
   if (vehicleFlat && actor.type === "vehicle") {
     const { currentValue, newValue, newCritical, gotCritical } = await applyStructureLoss(actor, rating);
+    // Не карточка теста (wdbc-kuun): рейтинг уходит в Структуру напрямую,
+    // «автоматически, без теста» — броска и Порога у этой ветки нет.
     return ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
@@ -1152,7 +1160,8 @@ async function _applyWeaponPropEffect(ds) {
   const allRolls = [];
 
   // Тест сопротивления цели (если задана характеристика)
-  let resisted = false, rollHtml = "", deg = 1;
+  let resisted = false, deg = 1;
+  let resistThreshold = "", resistRv = null, resistOutcome = "";
   if (testChar) {
     const charTotal = actor.system.characteristics?.[testChar]?.total ?? 0;
     // Общий сбор модификаторов (wdbc-ct65.2): тест Сопротивления считался
@@ -1165,12 +1174,17 @@ async function _applyWeaponPropEffect(ds) {
     const rv        = roll.total;
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
-    rollHtml = `
-      <div class="roll-threshold">${testChar.toUpperCase()}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${resistMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${resisted
-        ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
-        : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`}</div>`;
+    // Строка Порога — общим сборщиком (wdbc-kuun): слагаемые перечисляются
+    // в скобках через запятую, как в боевых карточках.
+    resistThreshold = thresholdLine({
+      label: testChar.toUpperCase(), base: charTotal,
+      parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
+      threshold
+    });
+    resistRv = rv;
+    resistOutcome = resisted
+      ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
+      : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`;
   }
 
   // Состояния, которые накладываем при провале. minDoP (Вибро — Ничком только
@@ -1244,19 +1258,13 @@ async function _applyWeaponPropEffect(ds) {
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
   }
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${label} → ${esc(actor.name)}</div>
-        ${rollHtml}
-        ${appliedNote}
-        ${dmgNote}
-      </div>`,
-    rolls: allRolls,
-    sound: allRolls.length ? CONFIG.sounds.dice : null
-  }, rollMode);
-  await ChatMessage.create(messageData);
+  await postTestCard(actor, {
+    title: `${label} → ${esc(actor.name)}`,
+    threshold: resistThreshold,
+    rv: resistRv,
+    outcome: resistOutcome,
+    sections: [appliedNote, dmgNote]
+  }, { rolls: allRolls, sound: allRolls.length > 0 });
 }
 
 // ── Выжигание Души (с Психосилового оружия) ──────────────────────────────────
@@ -1285,7 +1293,6 @@ export async function _resolveSoulBurn(attackerId) {
 // Опозный тест W+tPR×5 vs W+tPR×5. При победе псайкера — d10 непоглощаемого
 // E Dmg за каждый чистый Успех, напрямую в Раны цели (минуя броню и T.b).
 async function _executeSoulBurn(attacker, target) {
-  const rollMode = game.settings.get("core", "rollMode");
   const allRolls = [];
 
   // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):
@@ -1336,25 +1343,25 @@ async function _executeSoulBurn(attacker, target) {
       </div>`;
   }
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: attacker }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Выжигание Души → ${esc(target.name)}</div>
-        <div class="roll-threshold">Псайкер W+tPR×5 → Порог <b>${pEff}</b> | Бросок <b>${pRv}</b>
-          ${pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>
-        <div class="roll-threshold">Цель W+tPR×5 → Порог <b>${tEff}</b> | Бросок <b>${tRv}</b>
-          ${tSucc ? `<span class="roll-success">(успех, ${tDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>
-        <div class="roll-outcome">${burned
-          ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
-          : `<span class="roll-success">Цель устояла</span>`}</div>
-        ${dmgNote}
-        <details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>
-      </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-  await ChatMessage.create(messageData);
+  // Карточка — общим сборщиком (wdbc-kuun). Тест встречный: у каждой стороны
+  // свой Порог и свой бросок в одной строке, поэтому обе строки идут как свои
+  // (lines), а не через общую строку Порога — вид сохранён как был.
+  await postTestCard(attacker, {
+    icon: rollIcon("fire","#ff8a3a"), title: `Выжигание Души → ${esc(target.name)}`,
+    lines: [
+      `<div class="roll-threshold">Псайкер W+tPR×5 → Порог <b>${pEff}</b> | Бросок <b>${pRv}</b>
+        ${pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>`,
+      `<div class="roll-threshold">Цель W+tPR×5 → Порог <b>${tEff}</b> | Бросок <b>${tRv}</b>
+        ${tSucc ? `<span class="roll-success">(успех, ${tDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>`
+    ],
+    outcome: burned
+      ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
+      : `<span class="roll-success">Цель устояла</span>`,
+    sections: [
+      dmgNote,
+      `<details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>`
+    ]
+  }, { rolls: allRolls });
 }
 
 // ── Контекстное меню судьбы ───────────────────────────────────────────────────
@@ -1492,8 +1499,6 @@ function _attachFateContextMenu(message, html) {
       const newRoll = new Roll(roll.formula);
       await newRoll.evaluate();
 
-      const rollMode = game.settings.get("core", "rollMode");
-
       // Читаем старый контент и строим новый
       const oldContent = html.querySelector(".wh-roll-result")?.innerHTML ?? "";
 
@@ -1507,31 +1512,26 @@ function _attachFateContextMenu(message, html) {
         ? Math.floor(Math.abs(rv - threshold) / 10) + 1
         : null;
 
-      let outcomeHtml = `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`;
-      if (threshold !== null && hit !== null) {
-        outcomeHtml += hit
-          ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span></div>`
-          : `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span></div>`;
-      }
+      const outcomeSpan = (threshold !== null && hit !== null)
+        ? (hit
+          ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
+          : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`)
+        : "";
 
-      const newMessageData = ChatMessage.applyRollMode({
-        speaker: message.speaker,
-        content: `
-          <div class="wh-roll-result">
-            <div class="roll-header">Переброс за ${ft.one}</div>
-            <div class="roll-damage-meta">
-              ${ft.word} потрачена (осталось: ${reroll1.poolValue})
-            </div>
-            ${threshold !== null
-              ? `<div class="roll-threshold">Порог: <b>${threshold}</b></div>`
-              : ""}
-            ${outcomeHtml}
+      // Карточка — общим сборщиком (wdbc-kuun). Порядок строк сохранён: трата
+      // Очка стоит выше Порога, а сам бросок подписан «Новый бросок», как и
+      // был, поэтому идёт своей строкой, а не общей строкой броска.
+      await postTestCard(actor, {
+        title: `Переброс за ${ft.one}`,
+        lines: [
+          `<div class="roll-damage-meta">
+            ${ft.word} потрачена (осталось: ${reroll1.poolValue})
           </div>`,
-        rolls: [newRoll],
-        sound: CONFIG.sounds.dice
-      }, rollMode);
-
-      await ChatMessage.create(newMessageData);
+          threshold !== null ? thresholdLine({ threshold }) : "",
+          `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`
+        ],
+        outcome: outcomeSpan
+      }, { rolls: [newRoll], speaker: message.speaker });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на переброс! Осталось: ${reroll1.poolValue}`
@@ -1588,30 +1588,27 @@ function _attachFateContextMenu(message, html) {
       const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
       await actor.update({ "system.fate.value": bonus1.poolValue });
 
-      const rollMode = game.settings.get("core", "rollMode");
-      const outcomeHtml = outcome.success
-        ? `<div class="roll-outcome"><span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span></div>`
-        : `<div class="roll-outcome"><span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span></div>`;
+      const outcomeSpan = outcome.success
+        ? `<span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`
+        : `<span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`;
 
-      const newMessageData = ChatMessage.applyRollMode({
-        speaker: message.speaker,
-        content: `
-          <div class="wh-roll-result">
-            <div class="roll-header">+10 за ${ft.one}</div>
-            <div class="roll-damage-meta">
-              ${ft.word} потрачена (осталось: ${bonus1.poolValue})
-            </div>
-            <div class="roll-threshold">
-              Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
-              <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
-            </div>
-            <div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>
-            ${outcomeHtml}
+      // Карточка — общим сборщиком (wdbc-kuun). Строка Порога здесь своя
+      // («было → стало»), и бросок подписан «тот же, куб не перебрасывается» —
+      // обе идут своими строками, чтобы вид не поменялся.
+      await postTestCard(actor, {
+        title: `+10 за ${ft.one}`,
+        lines: [
+          `<div class="roll-damage-meta">
+            ${ft.word} потрачена (осталось: ${bonus1.poolValue})
           </div>`,
-        rolls: [roll]
-      }, rollMode);
-
-      await ChatMessage.create(newMessageData);
+          `<div class="roll-threshold">
+            Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
+            <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
+          </div>`,
+          `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`
+        ],
+        outcome: outcomeSpan
+      }, { rolls: [roll], sound: false, speaker: message.speaker });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на +10! Осталось: ${bonus1.poolValue}`
@@ -1911,6 +1908,8 @@ function _attachFateContextMenu(message, html) {
     if (explosionDamage) {
       const roll = await (new Roll(explosionDamage)).evaluate();
       const { cur, next, lost } = await applyHullDamage(item.actor, roll.total);
+      // Не карточка теста (wdbc-kuun): бросок тут есть, а Порога нет — это
+      // урон Прочности по факту повреждённого узла, а не тест.
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: item.actor }),
         content: `<div class="wh-roll-result"><div class="roll-header">💥 ${esc(item.name)} — ${note}</div>

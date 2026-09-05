@@ -14,6 +14,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const OVERLOAD_TEST_AT_FLAG = "disabledArmourOverloadTestAt";
@@ -244,24 +245,21 @@ export async function useDisabledArmourPeriodicTest(actor) {
   if (!success) await addFatigue(actor, 1);
   await markWorldTimeCooldownUsed(actor, OVERLOAD_TEST_AT_FLAG);
 
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn", "#ff6b6b")}Перевес выключенной брони — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Т: <b>${t}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех</span>`
-          : `<span class="roll-failure">Провал — +1 Усталость</span>`}</div>
-        <div class="roll-threshold" style="font-size:.85em;opacity:.8;">Раз в T.b часов перевеса (стр. 233).</div>
-        <details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Карточка — общим сборщиком (wdbc-kuun): подписи модификаторов теперь
+  // перечисляются в скобках через запятую, как в боевых карточках, а не
+  // дописываются к числу через пробел.
+  await postTestCard(actor, {
+    icon: rollIcon("warn", "#ff6b6b"),
+    title: `Перевес выключенной брони — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Т", base: t, parts: ruleMods.parts, threshold }),
+    rv,
+    outcome: success ? outcomeHtml(true, "Успех") : outcomeHtml(false, "Провал — +1 Усталость"),
+    sections: [
+      `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">Раз в T.b часов перевеса (стр. 233).</div>`,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -304,36 +302,44 @@ export async function useDisabledArmourForkTest(actor, { skillKey } = {}) {
   if (overload.tier === 2) {
     if (success) {
       await actor.setFlag(FLAG, MAX_AGILITY_FORCED_FLAG, true);
-      resultNote = `<span class="roll-success">Успех — засчитан как Провал тира 1: Max.A брони падает до 10</span>`;
+      resultNote = outcomeHtml(true, "Успех — засчитан как Провал тира 1: Max.A брони падает до 10");
     } else {
-      resultNote = `<span class="roll-failure">Провал — Беспомощен до начала следующего Хода (ведите вручную)</span>`;
+      resultNote = outcomeHtml(false, "Провал — Беспомощен до начала следующего Хода (ведите вручную)");
     }
   } else {
     if (success) {
-      resultNote = `<span class="roll-success">Успех</span>`;
+      resultNote = outcomeHtml(true, "Успех");
     } else {
       await actor.setFlag(FLAG, MAX_AGILITY_FORCED_FLAG, true);
-      resultNote = `<span class="roll-failure">Провал — Max.A брони падает до 10</span>`;
+      resultNote = outcomeHtml(false, "Провал — Max.A брони падает до 10");
     }
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
   const testLabel = isAthletics ? "Athletics(S)+10" : "S+0";
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn", "#ff8a5c")}Тест-развилка перевеса (${testLabel}) — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Порог: <b>${eff}</b> (${base}${bonus ? ` +${bonus}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")}${overload.testPenalty ? ` ${overload.testPenalty}` : ""})</div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${resultNote}</div>
-        <div class="roll-threshold" style="font-size:.85em;opacity:.8;">В начале Хода или при отключении брони (стр. 233).</div>
-        <details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Карточка — общим сборщиком (wdbc-kuun). Слагаемые Порога переехали в общий
+  // формат «База (слагаемые) → Порог»: раньше здесь стоял свой обратный
+  // порядок «Порог: N (база слагаемые)».
+  await postTestCard(actor, {
+    icon: rollIcon("warn", "#ff8a5c"),
+    title: `Тест-развилка перевеса (${testLabel}) — ${esc(actor.name)}`,
+    threshold: thresholdLine({
+      label: isAthletics ? "Athletics(S)" : "S",
+      base,
+      parts: [
+        bonus ? `+${bonus}` : "",
+        ...ruleMods.parts,
+        overload.testPenalty ? `${overload.testPenalty}` : ""
+      ],
+      threshold: eff
+    }),
+    rv,
+    outcome: resultNote,
+    sections: [
+      `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">В начале Хода или при отключении брони (стр. 233).</div>`,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
