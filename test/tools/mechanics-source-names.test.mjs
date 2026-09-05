@@ -16,19 +16,22 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { LIBRARY_PACKS, abs } from "../../tools/packs.mjs";
+import { allPacksFiles, packFileText, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 const SOURCE_UUID_RE = /^Compendium\.warhammer-dbc\.([a-zA-Z0-9_-]+)\.(?:Item\.|Actor\.)?([a-zA-Z0-9]{16})$/;
 
-/** Все JSON-документы пака: путь (для отчёта) + разобранное содержимое. */
+/**
+ * Все JSON-документы пака: путь (для отчёта) + разобранное содержимое.
+ * Чтение — через общий кэш (wdbc-lxyl): свой обход читал файлы с диска
+ * заново на каждый вызов, и проверка не укладывалась в таймаут при полном
+ * прогоне.
+ */
 function packFiles(dir) {
   if (!fs.existsSync(dir)) return [];
-  const out = [];
-  for (const e of fs.readdirSync(dir, { withFileTypes: true, recursive: true })) {
-    if (e.isDirectory() || !e.name.endsWith(".json") || e.name.startsWith("_")) continue;
-    const file = path.join(e.parentPath ?? e.path, e.name);
-    out.push({ file, doc: JSON.parse(fs.readFileSync(file, "utf8")) });
-  }
-  return out;
+  const prefix = path.resolve(dir) + path.sep;
+  return allPacksFiles()
+    .filter(file => file.startsWith(prefix))
+    .map(file => ({ file, doc: JSON.parse(packFileText(file)) }));
 }
 
 // id → актуальное имя документа, по каждому паку отдельно (лениво, раз на пак).
@@ -73,7 +76,7 @@ describe("sourceName Механики не отстаёт от переимен�
 
   it("ссылки вообще находятся (проверка не выродилась в пустышку)", () => {
     expect(refs.length).toBeGreaterThan(1000);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("каждый sourceUuid/equipSourceUuid резолвится в документ своего пака", () => {
     const broken = [];
@@ -85,7 +88,7 @@ describe("sourceName Механики не отстаёт от переимен�
         broken.push(`${file} (${docName}): ${uuid} не найден в packs-src/${pack}`);
     }
     expect(broken).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("sourceName/equipSourceName совпадает с текущим именем документа-источника", () => {
     const stale = [];
@@ -99,5 +102,5 @@ describe("sourceName Механики не отстаёт от переимен�
         stale.push(`${file} (${docName}): sourceName="${name}" ≠ актуальное "${currentName}" (${uuid})`);
     }
     expect(stale).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 });
