@@ -77,7 +77,7 @@ export async function applyAvatarOfSlaughter(berserker, target) {
     outcome: success
       ? outcomeHtml(true, "Устояла — эффекта нет")
       : outcomeHtml(false, "Провал — до конца боя −20 на атаки/манёвры не по Берсерку")
-  }, { sound: false });
+  }, { rolls: [roll] });
 }
 
 /**

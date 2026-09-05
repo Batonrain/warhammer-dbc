@@ -683,7 +683,11 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
                             shortKey: form.querySelector("#sq-kind")?.value };
             const tk = readTestKind(val, { label: title });
             const reroll = mergeReroll(null, readDiceChoice(val));
-            await this._executeCommand(kind, key, base + cohesionBonus(coh, isCo) + mod + tk.difficulty, extra, { ...tk, reroll });
+            // mod и Сложность едут ОТДЕЛЬНО от суммы (wdbc-6611): раньше в
+            // карточку попадала только Слаженность, и два других слагаемых
+            // растворялись в числе Порога без следа.
+            await this._executeCommand(kind, key, base + cohesionBonus(coh, isCo) + mod + tk.difficulty,
+              { ...extra, mod, difficulty: tk.difficulty }, { ...tk, reroll });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -840,7 +844,9 @@ export class WarhammerSquadSheet extends WarhammerStructuralSheet {
       icon: rollIcon("crown", "#4dffa6"),
       title: `${esc(title)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
       threshold: `<div class="roll-threshold">${esc(roller.label)}: <b>${esc(roller.name)}</b> ·
-          Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""} → Порог <b>${threshold}</b></div>`,
+          Слаженность ${cohMod >= 0 ? "+" : ""}${cohMod}${isCo ? " (половинный — Координатор)" : ""}${
+            extra.mod ? ` · мод. ${extra.mod >= 0 ? "+" : ""}${extra.mod}` : ""}${
+            extra.difficulty ? ` · 📊 Сложность ${extra.difficulty >= 0 ? "+" : ""}${extra.difficulty}` : ""} → Порог <b>${threshold}</b></div>`,
       lines: [outcome.combinedLine],
       rv,
       rerollNote,

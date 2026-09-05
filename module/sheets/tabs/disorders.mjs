@@ -25,6 +25,7 @@ import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -307,7 +308,12 @@ export async function rollDisorderTest(actor, item) {
   const charKey = system.testChar || "wp";
   const meta = CHARACTERISTICS[charKey];
   const charVal = actor.system.characteristics[charKey]?.total ?? 0;
-  const baseEffNoDiff = charVal + (system.testMod || 0);
+  // Общий сбор модификаторов (wdbc-asuc): подавление Расстройства считалось
+  // мимо реестра. Именно collectTestMods, а не autoTestMods: галочек правил
+  // этот диалог не показывает (в отличие от соседнего диалога Страха), и
+  // задвоить нечего — см. docs/rules-format.md.
+  const suppressMods = collectTestMods(actor, { kind: "skill", char: charKey });
+  const baseEffNoDiff = charVal + (system.testMod || 0) + suppressMods.total;
 
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title: item.name },
@@ -357,7 +363,7 @@ export async function rollDisorderTest(actor, item) {
   await postTestCard(actor, {
     icon: rollIcon("spark", "#c98bff"),
     title: `${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>`,
+    threshold: `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${suppressMods.parts.map(p => ` ${p}`).join("")}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>`,
     lines: [outcome.combinedLine],
     rv, rerollNote, critLine: outcome.critLine,
     outcome: success

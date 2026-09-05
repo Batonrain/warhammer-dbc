@@ -30,6 +30,7 @@ import { spendFromInfamyPool } from "../../apps/infamy-points.mjs";
 import {
   eternalWarriorEligible, eternalWarriorFreeSaveAvailable, markEternalWarriorUsed
 } from "../../combat/eternal-warrior.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -129,11 +130,15 @@ export async function doDivineProtection(actor, { eternalWarrior = null } = {}) 
 /** Замедленная Анимация — не тратит Судьбу/Бесчестье, отдельный тест W+30 (Сус-ан Мембрана). */
 export async function doSusAnimation(actor) {
   const w = Number(actor.system.characteristics?.wp?.total) || 0;
-  const threshold = w + SUS_AN_TEST_MOD;
+  // Общий сбор модификаторов (wdbc-asuc): тест W+30 считался мимо реестра —
+  // ни Усталость, ни Черты, ни Состояния в него не входили. Диалога с
+  // галочками у кнопки нет, поэтому collectTestMods.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = w + SUS_AN_TEST_MOD + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const success = roll.total <= threshold;
 
-  const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`];
+  const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD}${ruleMods.parts.map(p => ` ${p}`).join("")} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`];
   if (success) {
     // Беспомощность отдельно не ставим (wdbc-r5o7.7): «Без сознания» теперь
     // сама производит Беспомощность для любого читателя conditions.helpless
