@@ -104,9 +104,9 @@ describe("collectRules", () => {
 });
 
 describe("источники по умолчанию", () => {
-  it("зарегистрированы основная книга, Состояния, раса, Покровительство, Происхождение, предметы, Аватар Резни, Шаман Зверолюдей, Синэстезия, Адъютант, Зависимость, Дредноут и Локус Неизбежности", () => {
+  it("зарегистрированы основная книга, ситуативные штрафы, Состояния, раса, Покровительство, Происхождение, предметы, Аватар Резни, Шаман Зверолюдей, Синэстезия, Адъютант, Зависимость, Дредноут и Локус Неизбежности", () => {
     expect(getRuleSources().map(([key]) => key))
-      .toEqual(["core", "conditions", "race", "patron", "homeworld", "items", "avatarOfSlaughter", "beastmanShaman", "synesthesia", "adjutant", "addiction", "dreadnought", "daemonInevitability"]);
+      .toEqual(["core", "situational", "conditions", "race", "patron", "homeworld", "items", "avatarOfSlaughter", "beastmanShaman", "synesthesia", "adjutant", "addiction", "dreadnought", "daemonInevitability"]);
   });
 
   // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.

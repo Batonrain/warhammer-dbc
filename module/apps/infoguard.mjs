@@ -11,23 +11,9 @@
 
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
-import { fatigueGraceForActor } from "../rules/fatigue-grace.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
+import { autoModsTotal } from "../rules/roll-mods.mjs";
 import { esc, relayItemUpdate } from "../helpers/utils.mjs";
-
-// Копия fatiguePenalty (module/sheets/tabs/conditions.mjs) без импорта самого
-// conditions.mjs — тот тянет sheet-helpers.mjs, а sheet-helpers.mjs тянет этот
-// файл (supportsInfoguard) обратно: получился бы цикл импортов.
-function fatiguePenalty(actor, charKey) {
-  const fatigueExempt = ["t", "inf", "cog", "pf"];
-  const hw = HOMEWORLD_BY_KEY[actor?.items?.find(i => i.type === "homeworld")?.system?.key || ""];
-  const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor.system.characteristics?.t?.bonus ?? 0) : 0;
-  const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
-  if ((actor.system.fatigue?.value ?? 0) < 1 + grace) return 0;
-  if (fatigueExempt.includes((charKey ?? "").toLowerCase())) return 0;
-  return -10;
-}
 
 /** Есть ли смысл показывать блок Инфограждения у этого предмета. */
 export function supportsInfoguard(item) {
@@ -173,9 +159,14 @@ export async function rollInfoguard(item, { executorActor = null } = {}) {
   const def   = SKILLS_DEF.techUse;
   const sk    = actor.system.skills?.techUse;
   const base  = sk?.total ?? -20;
-  const fatigue = fatiguePenalty(actor, def?.char ?? "int");
+  // Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t) — из реестра
+  // правил, а не своей копией расчёта Усталости, как было здесь раньше. Та
+  // копия успела отстать от оригинала: не знала ни про «Не Чувствует Боли»
+  // (иммунитет), ни про «Иссушенный» (−20 вместо −10), и Инфогвардия у таких
+  // персонажей считалась не по книге.
+  const situational = resolveTest({ actor, kind: "skill", skill: "techUse", char: def?.char ?? "int" }).autoMods;
   const ownerMod = delegating ? ownerInfoguardMod(ownerActor) : { total: 0, lines: [] };
-  const eff   = base + fatigue + ownerMod.total;
+  const eff   = base + autoModsTotal(situational) + ownerMod.total;
 
   const roll    = await new Roll("1d100").evaluate();
   const rv      = roll.total;
@@ -193,7 +184,7 @@ export async function rollInfoguard(item, { executorActor = null } = {}) {
         <div class="wh-roll-result">
           <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Инфограждение: ${esc(item.name)}${delegating ? ` — за ${esc(ownerActor.name)}` : ""}</div>
           ${ownerMod.lines.length ? `<div class="roll-threshold">${ownerMod.lines.join("<br/>")}</div>` : ""}
-          <div class="roll-threshold">Tech-Use+0${fatigue !== 0 ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b> (без бонуса инструментов, кроме Комби-Инструмента в Топоре Омниссии; Unnatural I не учитывается)</div>
+          <div class="roll-threshold">Tech-Use+0${situational.map(m => ` ${m.label} ${m.value >= 0 ? "+" : ""}${m.value}`).join("")} → Порог: <b>${eff}</b> (без бонуса инструментов, кроме Комби-Инструмента в Топоре Омниссии; Unnatural I не учитывается)</div>
           <div class="roll-dice">Бросок: <b>${rv}</b></div>
           <div class="roll-outcome">
             ${success

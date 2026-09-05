@@ -219,6 +219,23 @@
 
 .atk-mods-col1 { grid-template-columns: 1fr !important; }
 
+/* Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t): Усталость,
+   Марш, снятый шлем, выключенная броня, Перевес. Строки, а не галочки —
+   игрок их не выбирает, они уже учтены в Пороге, и показаны затем, чтобы
+   было видно, ПОЧЕМУ Порог такой. */
+.rule-auto-mods .atk-mods-title { color: #ffb066; }
+
+.rule-auto-mod {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.88em;
+  color: var(--wh-text-dim, var(--wh-text));
+  padding: 2px 0;
+  line-height: 1.3;
+}
+
 .attack-mod-check {
   display: flex;
   align-items: flex-start;

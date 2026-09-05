@@ -57,6 +57,32 @@ function applyOverrides(rules) {
 }
 
 /**
+ * Источники, уже работающие ПРЯМО СЕЙЧАС по этому актору. Нужны против
+ * бесконечной рекурсии: источник вправе спросить у актора возможность
+ * (rules/flags.mjs::hasRuleFlag), а та собирает правила заново — и источник
+ * зовёт сам себя. Так и вышло с источником «situational» (wdbc-n17t): штраф
+ * Усталости спрашивает «Не Чувствует Боли», и сборка зациклилась насмерть.
+ *
+ * Ключ — источник ПЛЮС актор, а не один источник: cross-actor правила
+ * («adjutant» смотрит Командира, «dreadnought» — мир) вложенно собирают
+ * правила ДРУГОГО актора, и это законный вложенный вызов, глушить его нельзя.
+ * Повторный вход по тому же актору законным быть не может: тот же источник с
+ * тем же актором ответит то же самое, только глубже.
+ *
+ * WeakMap, а не строковый ключ: у подставного актора в тестах нет ни uuid, ни
+ * id, и по строке два разных актора слились бы в один.
+ */
+const IN_FLIGHT = new WeakMap();
+const IN_FLIGHT_NO_ACTOR = new Set();
+
+function inFlightSetFor(actor) {
+  if (!actor || typeof actor !== "object") return IN_FLIGHT_NO_ACTOR;
+  let set = IN_FLIGHT.get(actor);
+  if (!set) IN_FLIGHT.set(actor, set = new Set());
+  return set;
+}
+
+/**
  * Сбор без отбора: всё, что дают зарегистрированные источники. Отдельно от
  * отбора, потому что конвейер теста (rules/resolve-test.mjs, фаза 2) даёт
  * сторонним модулям дописать правила в этот список до того, как он просеян.
@@ -65,11 +91,16 @@ function applyOverrides(rules) {
  */
 export function gatherRules(actor, ctx = {}) {
   const all = [];
+  const inFlight = inFlightSetFor(actor);
   for (const [key, source] of getRuleSources()) {
+    if (inFlight.has(key)) continue;
+    inFlight.add(key);
     try {
       all.push(...(source(actor, ctx) ?? []));
     } catch (err) {
       console.error(`Warhammer DBC | источник правил «${key}» упал`, err);
+    } finally {
+      inFlight.delete(key);
     }
   }
   return all;

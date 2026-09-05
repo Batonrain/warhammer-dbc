@@ -14,7 +14,7 @@
 //  и применяются независимо, могут действовать одновременно.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { PHYSICAL_CHARS, REACTION_SKILLS } from "../combat/armor-mods.mjs";
+import { PHYSICAL_CHARS, REACTION_SKILLS } from "./armour-penalty.mjs";
 
 /**
  * Классификация Перевеса инвентаря — чистая функция по уже посчитанным

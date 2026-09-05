@@ -21,6 +21,7 @@ import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
+import { situationalRules } from "./situational.mjs";
 
 const SOURCES = new Map();
 
@@ -49,6 +50,13 @@ const hwKey = actor =>
 // ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
 registerRuleSource("core", () => CORE_RULES);
+
+// Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t): Усталость,
+// Марш, снятый шлем, выключенная силовая броня, Перевес инвентаря. Числа
+// зависят от состояния актора и от того, чем именно он сейчас бросает,
+// поэтому источник — функция от (актор, контекст), как у Зависимости, а не
+// готовый список записей. См. module/rules/situational.mjs.
+registerRuleSource("situational", (a, ctx) => situationalRules(a, ctx));
 
 // Штрафы книжных Состояний (wdbc-r5o7) — та же логика: правило не привязано
 // ни к расе, ни к предмету, отбор целиком по `when.hasCondition`/

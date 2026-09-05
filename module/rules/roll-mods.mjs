@@ -10,6 +10,37 @@
 
 import { resolveTest } from "./resolve-test.mjs";
 
+/** Знак перед числом модификатора: «+10», «−10», пустая строка у нуля. */
+const sgn = v => (v > 0 ? `+${v}` : (v < 0 ? `${v}` : ""));
+
+/** Сумма автоматических модификаторов — то, что прибавляется к Порогу само. */
+export function autoModsTotal(autoMods) {
+  return (autoMods ?? []).reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+}
+
+/**
+ * Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t) — строчный
+ * список без галочек: игрок их не выбирает, они действуют, пока действует
+ * само состояние. Раньше эти пять слагаемых просто молча уменьшали Порог, и
+ * увидеть их можно было только в карточке после броска.
+ *
+ * Отдельный блок, а не строка в «Правилах»: там галочки, и поставить рядом
+ * невыбираемую строку значило бы предложить игроку выбор, которого нет.
+ */
+export function ruleAutoModsHtml(actor, context, resolved = null) {
+  const autoMods = (resolved ?? resolveTest({ actor, ...context })).autoMods ?? [];
+  if (!autoMods.length) return { html: "", autoMods, total: 0 };
+  const rows = autoMods.map(m =>
+    `<div class="rule-auto-mod"><span>${m.label}</span><b>${sgn(m.value)}</b></div>`).join("");
+  return {
+    autoMods,
+    total: autoModsTotal(autoMods),
+    html: `<div class="atk-dlg-modifiers rule-auto-mods">
+      <div class="atk-mods-title">Состояние (учтено в Пороге)</div>
+      <div class="atk-mods-list">${rows}</div></div>`
+  };
+}
+
 export function ruleRollModsHtml(actor, context, resolved = null) {
   // resolved — уже посчитанный resolveTest: избавляет вызывающего от
   // повторного обхода правил актора (attack-dialog зовёт трижды за диалог).

@@ -9,9 +9,7 @@
 // sheet-helpers.mjs тянет за собой тяжёлые модули листа (race-library.mjs и
 // т.п.) с побочными эффектами при импорте (Hooks.once вне заглушки Foundry).
 import { CONDITIONS_DEF } from "../../constants/conditions.mjs";
-import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
-import { fatigueGraceForActor } from "../../rules/fatigue-grace.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
 
@@ -22,47 +20,12 @@ function fatigueThreshold(actor) {
   return { tb, wb, threshold: tb + wb };
 }
 
-function actorHomeworldKey(actor) {
-  return actor?.items?.find(i => i.type === "homeworld")?.system?.key || "";
-}
-
-export function fatiguePenalty(actor, charKey) {
-  // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от
-  // Усталости» — полный иммунитет, не отсрочка порога (в отличие от grace
-  // ниже, которая лишь отодвигает начало штрафа). mutation.feelsNoPain —
-  // живой запрос capability-грантера предмета, тот же приём, что и
-  // sarcophagus.* флаги.
-  if (hasRuleFlag(actor, "mutation.feelsNoPain")) return 0;
-  const fatigueExempt = ["t", "inf", "cog", "pf"];
-  // Desiccated / Иссушенный (wdbc-1rno): «Усталость накладывает на персонажа
-  // штраф −20 вместо обычного −10» — тот же ранний выход, что и у Feels No
-  // Pain выше, но удвоение, а не иммунитет.
-  const desiccatedPenalty = hasRuleFlag(actor, "mutation.desiccated") ? -20 : -10;
-  // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
-  const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(actor)];
-  const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor.system.characteristics?.t?.bonus ?? 0) : 0;
-  // То же самое, но заданное записью Конструктора kind:"fatigue" на предмете.
-  // Источники не суммируются — это терпимость к усталости, а не бонус,
-  // поэтому берётся максимум. Прежний захардкоженный путь оставлен работать
-  // рядом: Происхождения на новую запись не переводились.
-  const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
-  if ((actor.system.fatigue?.value ?? 0) < 1 + grace) return 0;
-  if (fatigueExempt.includes((charKey ?? "").toLowerCase())) return 0;
-  return desiccatedPenalty;
-}
-
-/**
- * Штраф Марша/Бега/Форсированного марша (стр. 29) на тесты Восприятия
- * (P — навык `per`), пока марш активен. Значение хранится флагом
- * marchPPenalty (module/combat/movement-actions.mjs, showMarchDialog);
- * применяется тем же способом, что и fatiguePenalty выше, у единственного
- * места, откуда реально катаются тесты Восприятия — общего пути броска
- * Навыка на листе (actor-sheet.mjs, _getMarchPenalty).
- */
-export function marchPenalty(actor, charKey) {
-  if ((charKey ?? "").toLowerCase() !== "per") return 0;
-  return Number(actor.getFlag?.("warhammer-dbc", "marchPPenalty")) || 0;
-}
+// Усталость и Марш переехали в module/rules/situational.mjs (wdbc-n17t): их
+// спрашивает реестр правил, а этот файл через hasRuleFlag тянет сам реестр
+// обратно — получался круг импортов, на котором ES-загрузчик вставал насмерть.
+// Реэкспорт оставлен, чтобы прежние импортёры (лист, combat/*, тесты и ссылки
+// `reader:` в constants/capabilities.mjs) не трогать.
+export { fatiguePenalty, marchPenalty } from "../../rules/situational.mjs";
 
 export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
   // Саркофаг Дредноута (стр. 57): иммунитет к Усталости — не отсрочка порога
