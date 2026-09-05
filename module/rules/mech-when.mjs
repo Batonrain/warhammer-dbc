@@ -225,5 +225,28 @@ export function entryWhenOk(actor, entry, item = null) {
     condOk = entry.when.negateCondition ? !matches : matches;
   }
 
-  return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk;
+  // По умолчанию гейты складываются через «И» — так было всегда, и ни одна
+  // существующая запись поведения не меняет.
+  if (!entry?.when?.anyOf) {
+    return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk;
+  }
+
+  // when.anyOf — «достаточно одного гейта» (wdbc-n48f). Без него способность
+  // вида «работает в Ярости ИЛИ при тяжёлых Ранах» приходилось заводить двумя
+  // записями, и они расходились при первой же правке.
+  //
+  // Считаются ТОЛЬКО НАСТРОЕННЫЕ гейты. Ненастроенный даёт true (он «пройден»),
+  // и наивное ИЛИ по всем восьми пропускало бы вообще всё.
+  const configured = [
+    [conditions.length, geneOk],
+    [subs.length, subOk],
+    [!!talentSpec, talentOk],
+    [tiers.length, tierOk],
+    [requireRage, rageOk],
+    [patronGods.length, patronOk],
+    [requireSealedArmour, sealedOk],
+    [condKeys.length, condOk]
+  ].filter(([on]) => on);
+
+  return configured.some(([, ok]) => ok);
 }

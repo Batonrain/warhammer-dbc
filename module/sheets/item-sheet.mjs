@@ -2590,6 +2590,16 @@ export class WarhammerItemSheet
       e.when.negateSealedArmour = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── Связка гейтов: «И» или «ИЛИ» (entry.when.anyOf, wdbc-n48f) —
+    // не гейт, а то, как складываются все остальные.
+    on(".grant-when-anyof", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.anyOf = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── «Когда Состояние» (entry.when.condition/negateCondition, wdbc-tl0f) —
     // восьмой гейт. Список с множественным выбором, а не россыпь галочек:
     // Состояний 27, см. buildEntryWhenHtml.

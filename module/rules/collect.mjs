@@ -17,6 +17,22 @@ const overridesOf = rule => (Array.isArray(rule?.overrides) ? rule.overrides : [
  */
 export function matchRule(rule, actor, ctx = {}) {
   for (const [key, value] of Object.entries(rule?.when ?? {})) {
+    // anyOf — единственный ключ, который не предикат, а СВЯЗКА: список веток,
+    // из которых достаточно одной (wdbc-n48f). Без него «работает у Кхорнита
+    // ИЛИ у Нурглита» приходилось заводить двумя правилами, и они расходились
+    // при первой правке — одно поправили, второе забыли.
+    //
+    // Внутри ветки условия по-прежнему складываются через «И», а сам anyOf
+    // соседствует с обычными условиями по «И»: «Астартес И (Кхорн ИЛИ Нургл)»
+    // пишется одним правилом, как в книге.
+    if (key === "anyOf") {
+      const branches = Array.isArray(value) ? value : [];
+      // Пустой список — не «условия нет»: автор написал ИЛИ и не заполнил ни
+      // одной ветки. Тихо пропустить всех было бы противоположностью
+      // написанного.
+      if (!branches.some(w => matchRule({ id: rule?.id, when: w }, actor, ctx))) return false;
+      continue;
+    }
     if (!Object.hasOwn(PREDICATES, key)) {
       console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: неизвестное условие «${key}»`);
       return false;

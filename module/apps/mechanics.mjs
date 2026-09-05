@@ -1243,7 +1243,10 @@ function describeMechWhen(when, item = null) {
     const names = condKeys.map(k => CONDITIONS_DEF[k]?.label || k);
     parts.push(`Состояние ${when?.negateCondition ? "≠" : "="} ${names.join(" или ")}`);
   }
-  return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
+  // Связка видна в сводке: «ИЛИ» между условиями меняет смысл записи целиком,
+  // и молчать о нём в описании значит показывать не то, что записано.
+  const join = when?.anyOf ? " ИЛИ " : "; ";
+  return parts.length ? ` · Когда: ${parts.join(join)}` : "";
 }
 
 /**
@@ -3511,6 +3514,17 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
   // тумблер-паттерн, что у Ярости, по PREDICATES.wearsSealedArmour (надета ли
   // броня со свойством Sealed/Закрытая). «Без гермодоспеха» книги — это «не» +
   // галочка.
+  // Связка гейтов: «И» (умолчание) или «ИЛИ» (wdbc-n48f). Без неё способность
+  // вида «работает в Ярости ИЛИ при тяжёлых Ранах» приходилось заводить двумя
+  // записями, и они расходились при первой же правке.
+  const anyOfHtml = `<div class="grant-entry-when grant-entry-when-anyof">
+    <span class="grant-when-label">Связка условий</span>
+    <label class="grant-when-anyof-row" title="По умолчанию все заполненные условия «Когда» должны выполниться разом. С галочкой достаточно любого одного.">
+      <input type="checkbox" class="grant-when-anyof" ${d} ${w.anyOf ? "checked" : ""} ${dis}/>
+      <span>достаточно любого условия (ИЛИ вместо И)</span>
+    </label>
+  </div>`;
+
   const sealedArmourHtml = `<div class="grant-entry-when grant-entry-when-sealed">
     <span class="grant-when-label">Когда Герметичная броня</span>
     <label class="grant-when-negate-label">
@@ -3548,7 +3562,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${anyOfHtml}`;
 }
 
 /**
