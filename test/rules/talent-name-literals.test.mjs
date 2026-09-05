@@ -33,20 +33,38 @@ const filesIn = (dir, ext) => fs.readdirSync(dir, { withFileTypes: true, recursi
   .filter(e => !e.isDirectory() && e.name.endsWith(ext))
   .map(e => path.join(e.parentPath ?? e.path, e.name));
 
+/** Строковые константы модуля: `const X = "…"` и `export const X = "…"`. */
+const stringConstsOf = text => new Map(
+  [...text.matchAll(/(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=\s*"([^"]*)"/g)]
+    .map(m => [m[1], m[2]]));
+
 /**
- * Литеральные имена из вызовов itemHasName(..., "Имя") по всему module/.
- * Вычисляемое второе слово (переменная, поле) сюда не попадает — за такими
- * именами сторож не следит, и это честно: он проверяет ровно те договоры,
- * которые записаны в коде буквой.
+ * Имена, по которым код опознаёт предмет через itemHasName.
+ *
+ * Считаются ДВА вида записи, и второй не менее важен первого: половина
+ * вызовов передаёт не литерал на месте, а константу файла
+ * (`itemHasName(i, FULLY_ARMED_NAME)`). Сторож, знающий только литералы,
+ * молча пропускал бы 23 таких имени — а наверх выносят как раз те, что
+ * используются в нескольких местах, то есть самые важные.
+ *
+ * Имя-переменная времени выполнения (параметр функции) сюда не попадает и не
+ * должна: такой договор складывается в рантайме, следить за ним нечем.
  */
 function literalNames() {
   const found = new Map(); // имя → [«файл:строка», …]
   for (const file of filesIn(path.join(ROOT, "module"), ".mjs")) {
     const rel = path.relative(ROOT, file).split(path.sep).join("/");
-    fs.readFileSync(file, "utf8").split(/\r?\n/).forEach((line, i) => {
-      for (const m of line.matchAll(/itemHasName\([^,]+,\s*"([^"]+)"/g)) {
-        if (!found.has(m[1])) found.set(m[1], []);
-        found.get(m[1]).push(`${rel}:${i + 1}`);
+    const text = fs.readFileSync(file, "utf8");
+    const consts = stringConstsOf(text);
+    text.split(/\r?\n/).forEach((line, i) => {
+      const add = (name) => {
+        if (!found.has(name)) found.set(name, []);
+        found.get(name).push(`${rel}:${i + 1}`);
+      };
+      for (const m of line.matchAll(/itemHasName\([^,]+,\s*"([^"]+)"/g)) add(m[1]);
+      for (const m of line.matchAll(/itemHasName\([^,]+,\s*([A-Za-z_$][\w$]*)\s*[),]/g)) {
+        const value = consts.get(m[1]);
+        if (value !== undefined) add(value);
       }
     });
   }
@@ -97,11 +115,17 @@ describe("имена предметов, зашитые в код, есть в p
   const names = literalNames();
   const docs = packNames();
 
-  it("вызовы itemHasName с литеральным именем вообще находятся", () => {
-    // Если разбор сломается (например, кто-то переименует itemHasName), тест
-    // выше стал бы зелёным на пустом множестве и ничего не проверял.
-    expect(names.size).toBeGreaterThan(40);
+  it("разбор находит и литералы, и имена, вынесенные в константы", () => {
+    // Порог не декоративный. Сузившийся разбор НЕ виден по красноте: сторож,
+    // проверяющий меньше имён, остаётся зелёным. Числом он и ловится —
+    // сейчас под присмотром 78 имён, из них 21 приходит через константу файла
+    // (`itemHasName(i, FULLY_ARMED_NAME)`), а не литералом на месте.
+    expect(names.size).toBeGreaterThanOrEqual(78);
     expect(docs.length).toBeGreaterThan(1000);
+
+    // Именно константная половина: без неё цифра просела бы, но убедимся
+    // прямо, что такие имена в разборе есть.
+    expect([...names.keys()]).toContain("Fully Armed");
   });
 
   it("у каждого имени есть носитель в packs-src", () => {
@@ -115,6 +139,24 @@ describe("имена предметов, зашитые в код, есть в p
       "Код опознаёт эти предметы по имени, а в packs-src такого имени нет.",
       "Механика молча не работает: предмет не находится, условие всегда ложно.",
       "Чинить в packs-src (имя документа), а не в коде — если только имя в коде не опечатка."
+    ].join("\n")).toEqual([]);
+  });
+
+  it("искомое имя — одна половина, а не двуязычная пара целиком", () => {
+    // itemHasName сравнивает искомое с ПОЛОВИНАМИ имени предмета: двуязычное
+    // имя режется по «/». Значит пара «Eng / Рус», переданная целиком, не
+    // совпадёт НИ С ЧЕМ, и проверка будет вечно ложной — тихо, без ошибки.
+    //
+    // Ловушка не выдуманная: так была вечно ложной проверка «эта Черта у
+    // актора уже есть» в combat/beastman-shaman.mjs (Символ Власти), и от
+    // повторной выдачи спасал только внешний гейт по флагу. Рядом в том же
+    // файле половину брали правильно, через engHalf.
+    const pairs = [...names]
+      .filter(([name]) => name.includes("/"))
+      .map(([name, where]) => `«${name}» — ${where.join(", ")}`);
+    expect(pairs, [
+      "Здесь искомым передана двуязычная пара целиком — такое не совпадёт никогда.",
+      "Передавайте одну половину: itemHasName сам найдёт предмет по любой из них."
     ].join("\n")).toEqual([]);
   });
 

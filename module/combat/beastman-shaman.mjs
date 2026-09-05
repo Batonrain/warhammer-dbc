@@ -528,7 +528,13 @@ export async function applySymbolOfPowerGrant(actor) {
   if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
 
   const toCreate = [];
-  if (hadNaturalWeapons && !actor.items.some(i => i.type === "trait" && itemHasName(i, DEADLY_NATURAL_WEAPONS_NAME))) {
+  // engHalf обязателен: itemHasName сравнивает искомое с ПОЛОВИНАМИ имени
+  // предмета (двуязычное имя режется по «/»), поэтому пара «Eng / Рус»,
+  // переданная целиком, не совпадает НИ С ЧЕМ. Здесь её передавали целиком, и
+  // проверка «такая Черта уже есть» была вечно ложной — дублирования спасал
+  // только внешний гейт SYMBOL_GRANT_FLAG. Рядом findTraitLibraryDoc половину
+  // берёт правильно, здесь забыли.
+  if (hadNaturalWeapons && !actor.items.some(i => i.type === "trait" && itemHasName(i, engHalf(DEADLY_NATURAL_WEAPONS_NAME)))) {
     const src = await findTraitLibraryDoc(DEADLY_NATURAL_WEAPONS_NAME);
     if (src) { const d = src.toObject(); delete d._id; toCreate.push(d); }
   }
