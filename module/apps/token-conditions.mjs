@@ -33,14 +33,21 @@ import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/cond
 // настоящей Усталостью на ТЕЛЕ. Поэтому исключена из статус-набора токена
 // (CONDITIONS.fatigued.tokenSync === false — единственный ключ там).
 
+/**
+ * Путь к статическому файлу иконки Состояния (wdbc-ahtb.1): Foundry v14
+ * валидирует поле img создаваемого ActiveEffect как FilePathField —
+ * требует настоящий путь к файлу с расширением. data:image/svg+xml,...
+ * (как было раньше) этой валидации не проходит: actor.toggleStatusEffect
+ * падал с ошибкой на КАЖДОМ Состоянии, иконка на токене не появлялась
+ * никогда ни для одного из 27. Файлы — сгенерированный артефакт
+ * (assets/conditions/<key>.svg, tools/build-condition-icons.mjs) из того
+ * же body/color, что CONDITIONS_DEF отдаёт тегу на листе — перегенерировать
+ * после правки constants/conditions.mjs, test/tools/condition-icons-sync.
+ * test.mjs ловит забытую перегенерацию.
+ */
 export function statusIconUri(key) {
-  const ic = CONDITION_ICONS[key];
-  if (!ic) return "icons/svg/hazard.svg";
-  // currentColor работает только внутри страницы листа (класс задаёт цвет);
-  // иконка токена — самостоятельный <img>, цвет нужно вписать в саму svg.
-  const body = ic.body.replaceAll(/currentColor/g, ic.color);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">${body}</svg>`;
-  return "data:image/svg+xml," + encodeURIComponent(svg);
+  if (!CONDITION_ICONS[key]) return "icons/svg/hazard.svg";
+  return `systems/warhammer-dbc/assets/conditions/${key}.svg`;
 }
 
 /** Заменяет CONFIG.statusEffects на состояния системы (+ «Повержен» ядра — на нём завязан HUD боя/трекер). */

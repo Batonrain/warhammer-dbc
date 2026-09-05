@@ -31,7 +31,7 @@ describe("buildConditionStatusEffects", () => {
       if (key === "fatigued") continue;
       expect(byId[key], `нет статус-эффекта для ${key}`).toBeTruthy();
       expect(byId[key].name).toBe(def.label);
-      expect(byId[key].img).toMatch(/^data:image\/svg\+xml,/);
+      expect(byId[key].img).toBe(`systems/warhammer-dbc/assets/conditions/${key}.svg`);
     }
   });
 
@@ -53,12 +53,16 @@ describe("buildConditionStatusEffects", () => {
   });
 });
 
+// wdbc-ahtb.1: Foundry v14 валидирует img создаваемого ActiveEffect как
+// FilePathField — data:image/svg+xml,... (как было раньше) этой валидации
+// не проходит, actor.toggleStatusEffect падал на КАЖДОМ Состоянии, иконка
+// на токене не появлялась никогда. Теперь — настоящий путь к файлу,
+// сгенерированному tools/build-condition-icons.mjs.
 describe("statusIconUri", () => {
-  it("встраивает конкретный цвет состояния вместо currentColor", () => {
+  it("настоящий путь к файлу (FilePathField Foundry v14), не data: URI", () => {
     const uri = statusIconUri("bleeding");
-    const svg = decodeURIComponent(uri.replace("data:image/svg+xml,", ""));
-    expect(svg).not.toMatch(/currentColor/);
-    expect(svg).toContain(CONDITIONS_DEF.bleeding.color);
+    expect(uri).toBe("systems/warhammer-dbc/assets/conditions/bleeding.svg");
+    expect(uri).not.toMatch(/^data:/);
   });
 
   it("неизвестный ключ — безопасный запасной значок, не падает", () => {

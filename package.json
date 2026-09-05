@@ -7,7 +7,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "packs:unpack": "node tools/unpack.mjs",
-    "packs:build": "node tools/pack.mjs"
+    "packs:build": "node tools/pack.mjs",
+    "icons:build": "node tools/build-condition-icons.mjs"
   },
   "devDependencies": {
     "@foundryvtt/foundryvtt-cli": "^3.0.4",
