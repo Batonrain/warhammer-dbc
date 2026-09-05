@@ -61,6 +61,26 @@ describe("readMirror: флаг актора", () => {
   });
 });
 
+describe("вторая волна меток (wdbc-5uae): что ещё было невидимым", () => {
+  it("Устрашён, Лишь Свет и Лучевая болезнь — обычные флаги", () => {
+    expect(readMirror(actor({ flags: { dreadWailFeared: true } }), "dreadWailFeared")).toBe(true);
+    expect(readMirror(actor({ flags: { justTheLightActive: true } }), "justTheLight")).toBe(true);
+    expect(readMirror(actor({ flags: { radiationSickness: true } }), "radiationSickness")).toBe(true);
+  });
+
+  it("Заворожён — метка с полезной нагрузкой, важен сам факт", () => {
+    expect(readMirror(actor({ flags: { seesOnlyCaster: { casterUuid: "a" } } }), "seesOnlyCaster")).toBe(true);
+    expect(readMirror(actor(), "seesOnlyCaster")).toBe(false);
+  });
+
+  it("имя флага и ключ Состояния могут не совпадать — читается флаг, не ключ", () => {
+    // justTheLight ← флаг justTheLightActive: ключ Состояния подписан для
+    // игрока, а флаг остался тем, что был в коде. Совпадение имён не обязано.
+    expect(readMirror(actor({ flags: { justTheLight: true } }), "justTheLight")).toBe(false);
+    expect(mirrorClearPatch("justTheLight")).toEqual({ [`flags.${FLAG}.-=justTheLightActive`]: null });
+  });
+});
+
 describe("readMirror: несколько источников — это ИЛИ", () => {
   it("«Отмечен» одинаково значит любую из трёх меток", () => {
     // Метка Аватара Резни — объект, а не булево: непустой объект считается

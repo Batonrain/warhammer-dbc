@@ -81,6 +81,25 @@ export const CONDITION_MIRRORS = {
       { kind: "flag", path: "bowToAudienceMark" }
     ]
   },
+  dreadWailFeared: {
+    label: "Устрашён",
+    sources: [{ kind: "flag", path: "dreadWailFeared" }]
+  },
+  seesOnlyCaster: {
+    label: "Заворожён",
+    // Метка с полезной нагрузкой ({casterUuid}) — как метка Аватара Резни:
+    // «кто заворожил» читает своё правило, а Состояние отвечает на вопрос
+    // игрока «а на мне это сейчас есть?».
+    sources: [{ kind: "flag", path: "seesOnlyCaster" }]
+  },
+  justTheLight: {
+    label: "Лишь Свет",
+    sources: [{ kind: "flag", path: "justTheLightActive" }]
+  },
+  radiationSickness: {
+    label: "Лучевая болезнь",
+    sources: [{ kind: "flag", path: "radiationSickness" }]
+  },
   shieldUp: {
     label: "Щит поднят",
     // Флаг на ПРЕДМЕТЕ (щите), не на акторе: у персонажа может быть два щита,

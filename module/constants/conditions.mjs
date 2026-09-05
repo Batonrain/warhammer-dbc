@@ -257,6 +257,35 @@ export const CONDITIONS = {
     body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"
            d="M8 1.8 3 3.6v4.2c0 3 2.1 5 5 6.4 2.9-1.4 5-3.4 5-6.4V3.6Z"/>`
   },
+  dreadWailFeared: {
+    label: "Устрашён", icon: "😱", color: "#b48cff", mark: true,
+    desc: "Грозный Вопль: Рейтинг Страха 2 до конца боя. Метка информационная — в производный Рейтинг Страха не входит, ГМ учитывает её сам.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+           d="M8 2.2c-3 0-5.2 2.2-5.2 5 0 1.9 1 3.2 2.2 4v2.4h6V11.2c1.2-.8 2.2-2.1 2.2-4 0-2.8-2.2-5-5.2-5Z"/>
+     <circle cx="6.1" cy="7" r="1" fill="currentColor"/><circle cx="9.9" cy="7" r="1" fill="currentColor"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M6.6 10.4h2.8"/>`
+  },
+  seesOnlyCaster: {
+    label: "Заворожён", icon: "🌀", color: "#ff8ad6", mark: true,
+    desc: "Блистательные Одеяния: до начала следующего Хода носителя персонаж видит только его, считая всех остальных невидимыми.",
+    body: `<circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+     <circle cx="8" cy="8" r="2.4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+     <circle cx="8" cy="8" r="0.9" fill="currentColor"/>`
+  },
+  justTheLight: {
+    label: "Лишь Свет", icon: "✨", color: "#a8ffe8", mark: true,
+    desc: "Весь прошлый Ход ушёл на движение: колдовской щит-дефлектор A.b×3/−, неперегружаемый. Держится до конца следующего Хода.",
+    body: `<path fill="currentColor" d="M8 1.6 9.3 6 13.7 7.3 9.3 8.6 8 13 6.7 8.6 2.3 7.3 6.7 6Z"/>
+     <path fill="currentColor" opacity="0.6" d="M12.4 10.2l.5 1.6 1.6.5-1.6.5-.5 1.6-.5-1.6-1.6-.5 1.6-.5Z"/>`
+  },
+  radiationSickness: {
+    label: "Лучевая болезнь", icon: "☢️", color: "#e8e04d", mark: true,
+    desc: "Осложнение Радиации: набрана доза кратная 10 и провален тест T+0. Отдельное от самой Радиации длительное последствие.",
+    body: `<circle cx="8" cy="8" r="1.6" fill="currentColor"/>
+     <path fill="currentColor" d="M8 1.6a6.4 6.4 0 0 1 5.5 3.2l-3.1 1.8A2.8 2.8 0 0 0 8 5.2Z"/>
+     <path fill="currentColor" d="M13.5 11.2A6.4 6.4 0 0 1 8 14.4v-3.6a2.8 2.8 0 0 0 2.4-1.4Z"/>
+     <path fill="currentColor" d="M2.5 11.2A6.4 6.4 0 0 0 8 14.4v-3.6a2.8 2.8 0 0 1-2.4-1.4Z" transform="rotate(180 5.25 12.6)"/>`
+  },
   // Свойство оружия Вызов/Challenge (X), wdbc-2xku: блокирует «Выход из Боя».
   challenged: {
     label: "Вызван", icon: "⚔️", color: "#ff5a5a",
