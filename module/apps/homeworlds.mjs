@@ -21,7 +21,7 @@ import { applyItemMechanics } from "./mechanics.mjs";
 import { friendlySpecKey } from "../rules/friendly-specialties.mjs";
 import { targetChoiceHtml, wireTargetChoice, readTargetChoice, targetChoiceLabel } from "./target-choice.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
-import { postTestCard } from "../helpers/test-card.mjs";
+import { postTestCard, testCardHtml } from "../helpers/test-card.mjs";
 
 const PACK = "warhammer-dbc.homeworlds";
 const FLAG = "warhammer-dbc";
@@ -546,15 +546,16 @@ async function postSummary(actor, hw, { charBonuses, grants, chosenLabels, corru
     lines.push(`<b>Дружественные специализации:</b> ${esc(friendly.map(f => f.specialty).join(", "))}`);
 
   // Итог выбора Родного мира, а не тест: Порога нет, броски (Порча и т.п.)
-  // уже посчитаны и показаны строками. Публикация общая, разметка осталась
-  // своей — у корня нужен класс `hw-chat` (styles/sheets/homeworlds.css
-  // селектором `.wh-roll-result.hw-chat .hw-chat-*`), а testCardHtml своего
-  // класса на корне пока не принимает (см. отчёт по wdbc-kuun).
-  await postTestCard(actor, `<div class="wh-roll-result hw-chat">
-      <div class="roll-header">Родной мир — ${esc(actor.name)}</div>
-      <div class="hw-chat-world">${esc(hw.label)}</div>
-      <div class="hw-chat-feature"><b>${esc(hw.feature.name)}</b><div>${esc(hw.feature.desc)}</div></div>
-      ${lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""}
-    </div>`, { rolls, sound: !!rolls?.length });
+  // уже посчитаны и показаны строками. Класс `hw-chat` идёт в classes — на
+  // тот же узел, где был: styles/sheets/homeworlds.css написан селектором
+  // `.wh-roll-result.hw-chat .hw-chat-*`.
+  await postTestCard(actor, testCardHtml({
+    title: `Родной мир — ${esc(actor.name)}`, classes: "hw-chat",
+    lines: [
+      `<div class="hw-chat-world">${esc(hw.label)}</div>`,
+      `<div class="hw-chat-feature"><b>${esc(hw.feature.name)}</b><div>${esc(hw.feature.desc)}</div></div>`,
+      lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""
+    ]
+  }), { rolls, sound: !!rolls?.length });
 }
 

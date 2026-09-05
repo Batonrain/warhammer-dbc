@@ -103,12 +103,14 @@ export function outcomeHtml(success, text) {
  * и в паре мест отличалась.
  *
  * `speaker` и `whisper` нужны карточкам, которые говорит не персонаж
- * (системные уведомления от «Системы») или которые видны не всем.
+ * (системные уведомления от «Системы») или которые видны не всем. Карточка с
+ * `whisper` уходит МИМО режима броска — почему, см. комментарий в теле; то же
+ * делает явный `ignoreRollMode` для карточек, которые вовсе не бросок.
  *
  * @returns {Promise<ChatMessage>}
  */
 export async function postTestCard(actor, card, {
-  rolls = [], sound = true, flags = null, speaker = null, whisper = null
+  rolls = [], sound = true, flags = null, speaker = null, whisper = null, ignoreRollMode = false
 } = {}) {
   const content = typeof card === "string" ? card : testCardHtml(card);
   const data = {
@@ -116,8 +118,6 @@ export async function postTestCard(actor, card, {
     // системные уведомления идут от «Системы» (alias), и getSpeaker с
     // отсутствующим актором подставил бы туда текущего пользователя.
     speaker: speaker ?? ChatMessage.getSpeaker({ actor }),
-    // whisper — для карточек, которые видит только владелец и ГМ (запрос
-    // делегированного теста, приватные напоминания).
     ...(whisper ? { whisper } : {}),
     content,
     ...(rolls.length ? { rolls } : {}),
@@ -127,6 +127,20 @@ export async function postTestCard(actor, card, {
     // видимость сообщения и флаги не трогает.
     ...(flags ? { flags } : {})
   };
+  // Адресная карточка НЕ проходит через applyRollMode. Тот при публичном
+  // режиме броска ОБНУЛЯЕТ список адресатов (Foundry, ChatMessage.applyMode:
+  // `if (mode === "public") whisper.length = 0;`) — и приватная записка ГМу
+  // ушла бы всему столу. Режим броска здесь и не нужен: карточка уже
+  // адресная, скрывать её вторично не от кого.
+  //
+  // Заглушка Foundry в тестах делает applyRollMode тождественной, поэтому
+  // проверка «whisper дошёл» была бы зелёной и при ошибке. Тест ниже
+  // проверяет не результат, а то, что applyRollMode вообще не звался.
+  // ignoreRollMode — для карточек, которые НЕ бросок: выданное игроку
+  // имущество, выпавшие оружию свойства, расклад Таро. Режим броска скрывает
+  // БРОСКИ; спрятать от игрока то, что он получил, — не то же самое, и
+  // молча сделать это, «унифицируя», было бы хуже разнобоя.
+  if (whisper || ignoreRollMode) return ChatMessage.create(data);
   return ChatMessage.create(ChatMessage.applyRollMode(data, game.settings.get("core", "rollMode")));
 }
 

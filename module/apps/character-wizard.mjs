@@ -61,6 +61,7 @@ import { archetypeEntries, archetypesForRace, applyArchetype, actorArchetypeItem
 import { withMechCollector, describeMechEntry } from "./mechanics.mjs";
 import { TALENT_ALIAS, TALENT_CHOICE_SEP } from "../sheets/actor-sheet.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { testCardHtml } from "../helpers/test-card.mjs";
 import { openCompendiumBrowser } from "./compendium-browser.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "./actor-factions.mjs";
 import { EQUIP_SHOP_ROWS, EQUIP_SHOP_ROW_BY_KEY, EQUIP_SHOP_PACKS, equipPointsTotal, equipPointsLeft,
@@ -1516,12 +1517,21 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         `<li${done[i] ? ' style="color:#4dffa6;"' : ''}>${done[i] ? "✓ " : "▫ "}${esc(r)}</li>`
       ).join("");
       // НЕ карточка теста (wdbc-kuun): броска и Порога нет, это шёпот ГМу со
-      // списком выданного. Общий postTestCard шлёт открыто и от спикера
-      // актора — whisper GM и alias-спикер он не принимает.
+      // списком выданного.
+      // Разметка теперь общая (testCardHtml), а публикация осталась своей, и это
+      // не недоделка: postTestCard безусловно прогоняет данные через
+      // ChatMessage.applyRollMode, а тот в публичном режиме броска ОБНУЛЯЕТ
+      // whisper (client/documents/chat-message.mjs, applyMode: `if ( mode ===
+      // "public" ) whisper.length = 0;`) — шёпот ГМу стал бы виден всему столу.
+      // Пока это не разведено в общем helpers/test-card.mjs, шлём напрямую.
       ChatMessage.create({
-        content: `<div class="wh-roll-result"><div class="roll-header">🎒 Стартовое снаряжение — ${esc(actor.name)}</div>
-          <ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>
-          <div style="font-size:.8em;opacity:.7;margin-top:4px;">✓ — добавлено на лист. ▫ — не выбрано (пропущено/абстрактно) — выдайте вручную.</div></div>`,
+        content: testCardHtml({
+          title: `🎒 Стартовое снаряжение — ${esc(actor.name)}`,
+          lines: [
+            `<ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>`,
+            `<div style="font-size:.8em;opacity:.7;margin-top:4px;">✓ — добавлено на лист. ▫ — не выбрано (пропущено/абстрактно) — выдайте вручную.</div>`
+          ]
+        }),
         whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
         speaker: { alias: actor.name }
       });
@@ -1621,12 +1631,14 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     }[row.special];
     if (!notes) return false;
     await item.update({ [notes[0]]: true });
-    // Тоже уведомление ГМу, а не тест (wdbc-kuun): броска и Порога нет,
-    // нужен whisper GM и alias-спикер.
+    // Тоже уведомление ГМу, а не тест (wdbc-kuun): броска и Порога нет.
+    // Публикация своя по той же причине, что у шёпота о снаряжении выше.
     ChatMessage.create({
-      content: `<div class="wh-roll-result"><div class="roll-header">Очки Снаряжения — ${esc(this.actor.name)}</div>
-        <div class="roll-outcome"><b>${esc(item.name)}</b> помечено: ${esc(row.label)}.</div>
-        <div style="font-size:.85em;opacity:.8;">${esc(notes[1])}</div></div>`,
+      content: testCardHtml({
+        title: `Очки Снаряжения — ${esc(this.actor.name)}`,
+        outcome: `<b>${esc(item.name)}</b> помечено: ${esc(row.label)}.`,
+        sections: [`<div style="font-size:.85em;opacity:.8;">${esc(notes[1])}</div>`]
+      }),
       whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
       speaker: { alias: this.actor.name }
     });
@@ -1756,9 +1768,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
       // Не игроку — свою же карточку видеть незачем (whisper только GM).
       if (!game.user.isGM) {
         // И это уведомление, не тест (wdbc-kuun) — шёпот ГМу «проверь».
+        // Публикация своя по той же причине, что у шёпотов выше.
         ChatMessage.create({
-          content: `<div class="wh-roll-result"><div class="roll-header">🧙 Создание персонажа завершено</div>
-            <div class="roll-outcome">Игрок <b>${esc(game.user.name)}</b> закончил Мастера создания для <b>${esc(this.actor.name)}</b> — стоит проверить.</div></div>`,
+          content: testCardHtml({
+            title: "🧙 Создание персонажа завершено",
+            outcome: `Игрок <b>${esc(game.user.name)}</b> закончил Мастера создания для <b>${esc(this.actor.name)}</b> — стоит проверить.`
+          }),
           whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
           speaker: { alias: this.actor.name }
         });

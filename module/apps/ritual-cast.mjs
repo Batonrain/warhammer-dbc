@@ -31,7 +31,7 @@ import { esc } from "../helpers/utils.mjs";
 import { hasDominator } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard } from "../helpers/test-card.mjs";
+import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -253,24 +253,26 @@ export async function castRitual(R, actor, {
     : "";
 
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
-  // Тест с Порогом, но публикуется строкой, а не через testCardHtml: у корня
-  // карточки нужен класс `wh-ritual-card` (styles/ui/veil.css рисует по нему
-  // блок провала ритуала), а общий строитель своего класса на корне пока не
-  // принимает. Публикация (спикер, режим броска, звук) уже общая.
-  await postTestCard(actor, `<div class="wh-roll-result wh-ritual-card">
-      <div class="roll-header">${veilIcon("ritual")} Ритуал: ${esc(R.name || typeLabel)}</div>
-      <div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>
-      <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}${dominatorNote ? esc(dominatorNote) : ""}</div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${success
-        ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`
-        : `<span class="roll-failure">Ритуал провален — ${Math.abs(deg)} Провал(ов)</span>`}</div>
-      ${demonHtml}
-      ${herdHtml}
-      ${failHtml}
-      ${condHtml}
-      <details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>
-    </div>`, { rolls: allRolls });
+  // Класс `wh-ritual-card` идёт в classes: styles/ui/veil.css рисует по нему
+  // блок провала ритуала селектором `.wh-ritual-card .rf-*`, то есть класс
+  // обязан стоять на том же узле, что и `wh-roll-result`. Строка Порога здесь
+  // своего формата («имя · тип → Порог: N»), поэтому передаётся готовой.
+  await postTestCard(actor, testCardHtml({
+    icon: `${veilIcon("ritual")} `, title: `Ритуал: ${esc(R.name || typeLabel)}`,
+    classes: "wh-ritual-card",
+    threshold: `<div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>`,
+    lines: [
+      `<div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}${dominatorNote ? esc(dominatorNote) : ""}</div>`
+    ],
+    rv,
+    outcome: success
+      ? outcomeHtml(true, `Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}`)
+      : outcomeHtml(false, `Ритуал провален — ${Math.abs(deg)} Провал(ов)`),
+    sections: [
+      demonHtml, herdHtml, failHtml, condHtml,
+      `<details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>`
+    ]
+  }), { rolls: allRolls });
 
   return { success, deg, threshold, roll: rv };
 }

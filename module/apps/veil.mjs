@@ -43,7 +43,7 @@ import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, testCardHtml, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { veilShift };
 
@@ -426,13 +426,18 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const qHtml = s.question ? `<div class="tr-question">«${esc(s.question)}»</div>` : "";
     const hint = this._tarotHint();
     const hintHtml = hint ? `<div class="tr-hint">${esc(hint)}</div>` : "";
-    // НЕ карточка теста (wdbc-kuun): ни броска, ни Порога, и разметка своя
-    // (wh-tarot-reading, не wh-roll-result). Говорит не актор, а Теомант/Таро
-    // — общий postTestCard такого спикера-псевдонима не принимает.
-    ChatMessage.create({
-      speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
-      content: `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`
-    });
+    // НЕ карточка теста (wdbc-kuun): ни броска, ни Порога. Разметка остаётся
+    // своей и через testCardHtml не идёт: корень тут `wh-tarot-reading`, а
+    // общий строитель всегда ставит на корень `wh-roll-result` — у того своя
+    // рамка, отступы и ::before (styles/ui/chat.css), расклад бы поехал.
+    // Общей стала только публикация: спикер-псевдоним Теомант/Таро.
+    postTestCard(null,
+      `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`,
+      {
+        sound: false, speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
+        // Расклад Таро — не бросок против Порога, режим броска его не касается.
+        ignoreRollMode: true
+      });
   }
 
   // ═══════════════════ ОСКВЕРНЕНИЕ (крафт демон-оружия) ══════════════════════
@@ -558,7 +563,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     let body = `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
       <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${esc(item.name)}</div>
       <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b> → ${success
-        ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-fail">Провал</span>`}</div>`;
+        ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-failure">Провал</span>`}</div>`;
     if (success) {
       body += `<div class="dc-line">Демон вселён в ${vessel}. Связывание установлено до <b>${Math.min(dos, Number(D.binding) || 0) || dos}</b> (≤ успехов).</div>
         <div class="dc-line">Нажмите «Осквернить» на панели, чтобы применить свойства.</div>`;
@@ -566,12 +571,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       body += `<div class="dc-line">Демон вырывается: Сосуд уничтожен, +5 ко всем Хар-кам демона и +2 Раны за каждый Провал Часов. Отвращение Варпа. Участники с Cor&lt;75 получают +1d5+1 Порчи.</div>`;
     }
     body += `<div class="dc-foot">Цена: Ритуалист и ассистенты — 2d10 урона во все Характеристики; Феномен.</div></div>`;
-    // Это ТЕСТ (бросок против Порога), но на общий сборщик он не переводится
-    // (wdbc-kuun): карточку говорит «Кузница Душ», а не актор, и рисуется она
-    // своей разметкой wv-defile-card с цветом бога в inline-стиле, а не
-    // wh-roll-result. postTestCard умеет только спикера-актора и корень с
-    // одним классом — см. отчёт.
-    ChatMessage.create({ content: body, speaker: { alias: "Кузница Душ" } });
+    // Это ТЕСТ (бросок против Порога), но разметка остаётся своей: корень —
+    // wv-defile-card с цветом бога в inline-стиле и БЕЗ wh-roll-result,
+    // который общий строитель ставит всегда (своя рамка и отступы в
+    // styles/ui/chat.css). Общей стала публикация: спикер «Кузница Душ».
+    await postTestCard(null, body, { sound: false, speaker: { alias: "Кузница Душ" } });
     this._defileLastSuccess = success ? { dos } : null;
     this.render(false);
   }
@@ -628,17 +632,20 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     });
 
-    // Не тест (броска нет) и та же пара препятствий, что у _defileRitual выше:
-    // спикер-псевдоним «Кузница Душ» и своя разметка wv-defile-card.
+    // Не тест (броска нет), и разметка та же своя, что у _defileRitual выше:
+    // wv-defile-card без wh-roll-result. Общая — публикация («Кузница Душ»).
     const propHtml = generated.map(g => `<div class="dc-prop"><span class="dc-prop-god" style="color:${(DW_GODS_MAP[g.god]?.color)||'#b477ff'}">${(DW_GODS_MAP[g.god]?.label)||'Неделимый'}</span> <b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
-    ChatMessage.create({
-      speaker: { alias: "Кузница Душ" },
-      content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+    await postTestCard(null, `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
         <div class="roll-header">⛧ ${esc(item.name)} осквернено — Демоническое Оружие</div>
         <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · +${wb} к Dmg/Pen · Reinforced · теряет Primitive/Sanctified.</div>
         <div class="dc-props">${propHtml}</div>
         <div class="dc-foot">Игнорирует T.b и иммунитеты Daemonic/Stuff of Nightmares; не тратит боеприпасы; игнорирует Haywire.</div>
-      </div>`
+      </div>`, {
+      sound: false, speaker: { alias: "Кузница Душ" },
+      // Не бросок, а выпавшие оружию свойства: скрытый режим броска не должен
+      // прятать от игрока то, что он получил (wdbc-kuun, решение по вопросу
+      // агента при переводе).
+      ignoreRollMode: true
     });
     this._defileLastSuccess = null;
     this.render(false);
@@ -710,19 +717,22 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     // техники свои, — поэтому берётся тот, что соответствует сосуду.
     const granted = await this._grantPossessionTraits(mount, wb);
 
-    // Не тест, и те же препятствия, что у _defileApply выше (спикер «Кузница
-    // Душ», разметка wv-defile-card).
+    // Не тест, и разметка та же своя, что у _defileApply выше. Общая —
+    // публикация («Кузница Душ»).
     const propHtml = generated.map(g =>
       `<div class="dc-prop"><b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
-    ChatMessage.create({
-      speaker: { alias: "Кузница Душ" },
-      content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+    await postTestCard(null, `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
         <div class="roll-header">⛧ ${esc(mount.name)} осквернён — Одержимый ${mount.type === "vehicle" ? "байк" : "скакун"}</div>
         <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · Демонических свойств: ${count}.</div>
         ${granted.length ? `<div class="dc-line">Выданы Трейты: ${granted.map(esc).join(", ")}.</div>` : ""}
         <div class="dc-props">${propHtml}</div>
         <div class="dc-foot">${MOUNT_POSSESSION_COMMON.map(esc).join(" ")}</div>
-      </div>`
+      </div>`, {
+      sound: false, speaker: { alias: "Кузница Душ" },
+      // Не бросок, а выпавшие оружию свойства: скрытый режим броска не должен
+      // прятать от игрока то, что он получил (wdbc-kuun, решение по вопросу
+      // агента при переводе).
+      ignoreRollMode: true
     });
     this._defileLastSuccess = null;
     this.render(false);
@@ -1053,28 +1063,24 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     return { roll, rv, eff, deg, success: deg > 0 };
   }
   /**
-   * Общая отправка карточек Варп-странствия. На общий сборщик
-   * (helpers/test-card.mjs, wdbc-kuun) НЕ переведена, и это осознанно:
-   *  • почти все её карточки — броски по ТАБЛИЦАМ Варп-столкновений
-   *    (стабильность маршрута, длительность, шторм, неаккуратный выход), а не
-   *    тесты: Порога у них нет, сравнивать бросок не с чем. Исключение —
-   *    Выход из варпа (_exitWarp), но он идёт через эту же отправку;
-   *  • говорит не актор, а «Варп-Навигация» — спикера-псевдонима postTestCard
-   *    не принимает;
-   *  • ярус завесы задаётся классом wv-tier-* на КОРНЕ карточки (styles/ui/
-   *    veil.css переопределяет им переменную --wv-tier, от которой зависит
-   *    весь цвет), а testCardHtml рисует корень строго с одним классом.
-   * Обе нехватки — в общем helpers/test-card.mjs, этот проход его не правит.
+   * Общая отправка карточек Варп-странствия — через общий сборщик
+   * (helpers/test-card.mjs, wdbc-kuun). Почти все её карточки — броски по
+   * ТАБЛИЦАМ Варп-столкновений (стабильность маршрута, длительность, шторм,
+   * неаккуратный выход), а не тесты: Порога у них нет, сравнивать бросок не с
+   * чем, поэтому готовое тело карточки идёт строкой в lines. Исключение —
+   * Выход из варпа (_exitWarp), он идёт через эту же отправку.
+   *
+   * Классы корня: `wh-warp-card` и ярус `wv-tier-*` — от последнего зависит
+   * весь цвет карточки (styles/ui/veil.css переопределяет им --wv-tier), так
+   * что он обязан стоять на том же узле, что и `wh-roll-result`.
+   * Говорит не актор, а «Варп-Навигация» — спикер-псевдоним.
    */
   async _jPost(title, tier, body, rolls = []) {
-    const rollMode = game.settings.get("core", "rollMode");
     const dice = rolls.length
       ? `<details class="roll-dice-details"><summary>📊 Кубы</summary>${(await Promise.all(rolls.map(r => r.render()))).join("")}</details>` : "";
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: { alias: "Варп-Навигация" },
-      content: `<div class="wh-roll-result wh-warp-card wv-tier-${tier}"><div class="roll-header">${title}</div>${body}${dice}</div>`,
-      rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
-    }, rollMode));
+    await postTestCard(null, testCardHtml({
+      title, classes: `wh-warp-card wv-tier-${tier}`, lines: [body], sections: [dice]
+    }), { rolls, sound: !!rolls.length, speaker: { alias: "Варп-Навигация" } });
   }
 
   async _rollStability() {
@@ -1189,18 +1195,17 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const factorsHtml = active.length ? `<div class="wv-chat-factors">${active.map(esc).join(" · ")}</div>` : "";
     const ritualsHtml = rituals.length ? `<div class="wv-chat-factors">Ритуалы: ${rituals.join(" · ")}</div>` : "";
     // Оглашение состояния Завесы — уведомление, не карточка теста (wdbc-kuun):
-    // броска и Порога нет, разметка своя (wh-veil-chat), говорит «Завеса».
-    ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: { alias: "Завеса" },
-      content: `<div class="wh-veil-chat wv-tier-${info.tier}">
+    // броска и Порога нет. Разметка своя и через testCardHtml не идёт: корень
+    // тут `wh-veil-chat`, а общий строитель всегда добавил бы `wh-roll-result`
+    // с чужой рамкой и отступами. Общей стала публикация: спикер «Завеса».
+    postTestCard(null, `<div class="wh-veil-chat wv-tier-${info.tier}">
         <div class="wv-chat-head">◈ ИСТОНЧЕНИЕ ЗАВЕСЫ ◈</div>
         <div class="wv-chat-scene">${esc(scene?.name || "")}</div>
         <div class="wv-chat-total">${total > 0 ? "+" : ""}${total}</div>
         <div class="wv-chat-label">${esc(info.label)}</div>
         ${factorsHtml}${ritualsHtml}
         <div class="wv-chat-cons">${esc(info.consequence)}</div>
-      </div>`
-    }, game.settings.get("core", "rollMode")));
+      </div>`, { sound: false, speaker: { alias: "Завеса" } });
   }
 }
 

@@ -102,6 +102,27 @@ describe("postTestCard: не только карточки персонажа", 
     await postTestCard(null, { title: "Общее" }, { sound: false });
     expect(captured.chat.at(-1)).not.toHaveProperty("whisper");
   });
+
+  // Проверяется НЕ результат, а факт вызова: заглушка делает applyRollMode
+  // тождественной, поэтому «whisper дошёл» было бы зелёным и тогда, когда
+  // настоящий Foundry обнулил бы адресатов (ChatMessage.applyMode:
+  // `if (mode === "public") whisper.length = 0;`) и записка ГМу ушла бы
+  // всему столу.
+  it("адресная карточка НЕ проходит через режим броска", async () => {
+    resetCaptured();
+    const { postTestCard } = await import("../../module/helpers/test-card.mjs");
+    const real = ChatMessage.applyRollMode;
+    let called = 0;
+    ChatMessage.applyRollMode = (d, m) => { called += 1; return real(d, m); };
+    try {
+      await postTestCard(null, { title: "Личное" }, { whisper: ["u1"], sound: false });
+      expect(called).toBe(0);
+      await postTestCard(null, { title: "Общее" }, { sound: false });
+      expect(called).toBe(1);
+    } finally {
+      ChatMessage.applyRollMode = real;
+    }
+  });
 });
 
 describe("classes: своя вёрстка подсистемы не теряется", () => {
@@ -127,5 +148,27 @@ describe("prelude: блок перед шапкой", () => {
 
   it("шапка с одной иконкой без заголовка рисуется", () => {
     expect(testCardHtml({ icon: "<i></i>" })).toContain("roll-header");
+  });
+});
+
+// Храповик на класс исхода (wdbc-ncnp): провал Ритуала Осквернения был
+// написан как roll-fail — такого класса в styles/ нет вовсе, и единственный
+// провал во всей системе оставался неподсвеченным. Опечатка в имени класса
+// не ловится ничем: разметка валидна, тест на текст проходит, а цвета нет.
+describe("классы исхода не расходятся с вёрсткой", () => {
+  it("во всём module/ нет класса roll-fail — только roll-failure", async () => {
+    const { readFileSync, readdirSync, statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const guilty = [];
+    const walk = dir => {
+      for (const name of readdirSync(dir)) {
+        const path = join(dir, name);
+        if (statSync(path).isDirectory()) { walk(path); continue; }
+        if (!name.endsWith(".mjs")) continue;
+        if (/class="[^"]*\broll-fail\b(?!ure)/.test(readFileSync(path, "utf8"))) guilty.push(path);
+      }
+    };
+    walk("module");
+    expect(guilty, "заменить на roll-failure — roll-fail в стилях не существует").toEqual([]);
   });
 });
