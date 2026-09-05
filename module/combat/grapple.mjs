@@ -615,7 +615,7 @@ async function _doThrow(actor) {
           <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} метается в ${esc(target.name)} (стр. 28, тир «${TIER_LABEL[profile.tier]}»).</div>
         </div>
         <div class="roll-header">${rollIcon("sword")}Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}</div>
-        <div class="roll-threshold">Порог: <b>${final}</b></div>
+        <div class="roll-threshold">${throwMods.parts.map(p => `${p} `).join("")}→ Порог: <b>${final}</b></div>
         <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
         <div class="roll-outcome"><span class="roll-failure">Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней</span></div>
         ${knockNote}

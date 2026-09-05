@@ -251,7 +251,7 @@ export async function useDisabledArmourPeriodicTest(actor) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("warn", "#ff6b6b")}Перевес выключенной брони — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Т: <b>${t}</b></div>
+        <div class="roll-threshold">Т: <b>${t}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех</span>`

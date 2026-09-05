@@ -139,7 +139,7 @@ export async function useSusAnHeal(actor, item) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("heart", "#4dffa6")}Сус-ан Мембрана — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Т: <b>${t}</b></div>
+        <div class="roll-threshold">Т: <b>${t}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех (${sl} СУ) — ${delayNote ? `исцелит ${healed} Ран` : `исцелено ${healed} Ран`}</span>`

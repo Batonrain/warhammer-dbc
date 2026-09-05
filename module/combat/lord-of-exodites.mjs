@@ -117,7 +117,7 @@ export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("crown","#4dffa6")}Повелитель Экзодитов — восстановление Судьбы</div>
-      <div class="roll-threshold">Command(F) <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} → Порог <b>${threshold}</b></div>
+      <div class="roll-threshold">Command(F) <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>
       <div class="roll-dice">Бросок: <b>${rv}</b></div>
       <div class="roll-outcome">${ok
         ? `<span class="roll-success">Успех — ${sux} ${_degWord(sux)}, +1 Судьбы: ${healedNames.join(", ") || "—"}</span>`

@@ -268,7 +268,7 @@ export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result sq-chat cmd-free-chat">
       <div class="roll-header">${rollIcon("crown", "#4dffa6")}${esc(title)} — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог <b>${threshold}</b>
+      <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b>
         <span class="cmd-chat-hint">— без Слаженности и Риска: группа не сведена в Отряд</span></div>
       <div class="roll-dice">${declared > 0 ? `Автоуспех (Unnatural F) — бросок не нужен` : `Бросок: <b>${rv}</b>`}</div>
       <div class="roll-outcome">${ok
@@ -325,7 +325,7 @@ export async function rallyHorde(actor, uuid, { mod = 0 } = {}) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result sq-chat cmd-free-chat">
       <div class="roll-header">${rollIcon("crown", "#4dffa6")}Речь к Орде — ${esc(actor.name)} → ${esc(horde.name)}</div>
-      <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог <b>${threshold}</b></div>
+      <div class="roll-threshold">Command(F) <b>${base}</b>${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>
       <div class="roll-dice">Бросок: <b>${rv}</b></div>
       <div class="roll-outcome">${ok
         ? `<span class="roll-success">Успех — ${sux} ${_degWord(sux)}, возвращено <b>${healed}</b> Магнитуды</span>`
