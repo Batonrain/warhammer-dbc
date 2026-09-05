@@ -37,11 +37,12 @@ import { readAllMirrors } from "./condition-mirrors.mjs";
 import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
-import { psyRatingFromTalents } from "./psyker.mjs";
 import { hasRuleFlag } from "./flags.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { woundLevel } from "./wound-tier.mjs";
-import { calcMovement } from "./movement.mjs";
+import { prepareFinalPools } from "./character/final-pools.mjs";
+import { prepareMovementDerived } from "./character/movement.mjs";
+import { prepareArmourDerived } from "./character/armour.mjs";
 
 /**
  * Именованный вклад предметов-носителей Механики (Архетип/Раса/Субраса/
@@ -665,111 +666,11 @@ export function prepareCharacterDerived(actor, system) {
     system.sarcophagusHelplessNow = sarcophagusHelplessNow(
       system.sarcophagusInterred, hasRuleFlag(actor, DREADNOUGHT_PILOT_FLAG));
 
-    // ── Броня ─────────────────────────────────────────────────────────────
-    const armorFromItems = {
-      head: 0, body: 0,
-      leftArm: 0, rightArm: 0,
-      leftLeg: 0, rightLeg: 0
-    };
-
-    // Бонусы AP против типов урона от модов брони (всегда складываются) —
-    // chemical добавлен для Protective (wdbc-8b5, «+X AP против урона от
-    // среды», DAMAGE_TYPES.chemical), суммируется ниже вместе с остальными.
-    const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0, chemical: 0 };
-    // «Полный комплект» Sealed (стр. 228, wdbc-8b5): иммунитет к химическому
-    // урону, пока не пробита ни одна из 6 закрывающих локаций. По локации —
-    // true, если её покрывает (ap[k]>0) хотя бы один надетый непробитый
-    // Sealed-предмет; итог — AND по всем шести (нет непокрытой/пробитой
-    // локации), считается после цикла ниже.
-    const sealedCoverage = {
-      head: false, body: false, leftArm: false, rightArm: false, leftLeg: false, rightLeg: false
-    };
-    // Флаги свойств брони (Conductive/Flak/Soft/Rods/Open/Primitive) по
-    // локациям — OR всех надетых предметов, чьё AP в этой локации > 0 (тот же
-    // уровень точности, что и у armorVsType выше: не отслеживаем, какой именно
-    // предмет «выиграл» Math.max в этой локации). См. module/combat/damage.mjs.
-    const propFlagsByLoc = {
-      head: emptyArmorLocFlags(), body: emptyArmorLocFlags(),
-      leftArm: emptyArmorLocFlags(), rightArm: emptyArmorLocFlags(),
-      leftLeg: emptyArmorLocFlags(), rightLeg: emptyArmorLocFlags()
-    };
-
-    for (const item of actor.items) {
-      if (item.type !== "armor" || !item.system.equipped) continue;
-      const s = item.system;
-      // Эффективная броня этого предмета с учётом установленных модификаций
-      const aFx = getArmorModEffects(actor, item);
-      const ap = {
-        head:     (s.head     || 0) + armorModApForLocation(aFx, "head"),
-        body:     (s.body     || 0) + armorModApForLocation(aFx, "body"),
-        leftArm:  (s.leftArm  || 0) + armorModApForLocation(aFx, "leftArm"),
-        rightArm: (s.rightArm || 0) + armorModApForLocation(aFx, "rightArm"),
-        leftLeg:  (s.leftLeg  || 0) + armorModApForLocation(aFx, "leftLeg"),
-        rightLeg: (s.rightLeg || 0) + armorModApForLocation(aFx, "rightLeg")
-      };
-      // Свойства этого предмета брони (Conductive/Flak/Soft/Rods/Open/Primitive)
-      // — распространяются на все локации, куда он реально даёт AP (ap[k] > 0).
-      // isPowerArmor — не свойство из properties[], а сам armorType предмета:
-      // силовой шлем даёт 4 AP на глаза даже при Избирательном в Глаз (стр. 34).
-      const propAuto = aggregateArmorAuto(resolveArmorProps(item), s.propRatings);
-      propAuto.isPowerArmor = s.armorType === "power";
-      for (const k of Object.keys(ap)) {
-        if (ap[k] > 0) propFlagsByLoc[k] = mergeArmorLocFlags(propFlagsByLoc[k], propAuto);
-      }
-      // Protective (wdbc-8b5): +X AP против DAMAGE_TYPES.chemical, суммируется
-      // с остальными vsType-бонусами ниже (та же неточность по локации, что и
-      // у остальных armorVsType — см. комментарий у объявления armorVsType).
-      for (const [t, x] of Object.entries(propAuto.apBonusByType)) {
-        armorVsType[t] = (armorVsType[t] || 0) + x;
-      }
-      // Sealed «полным комплектом» (wdbc-8b5): локация закрыта непробитым
-      // Sealed-предметом — считаем это ниже AND'ом по всем 6 локациям.
-      // Wraithbone Regeneration в руках псайкера (aeldari.json) не теряет
-      // Sealed при пробитии — та же оговорка, что у Void (rules/void-air.mjs).
-      // system.isPsyker — актора, который сейчас в prepareDerivedData (не
-      // item.parent.system: тот же документ, но ещё не факт, что уже
-      // проставлен во встроенном предмете на подставных тестовых акторах).
-      const armorIgnoresBreach = s.breached
-        && (s.properties || []).includes("wraithboneRegen") && !!system.isPsyker;
-      if ((s.properties || []).includes("sealed") && (!s.breached || armorIgnoresBreach)) {
-        for (const k of Object.keys(ap)) { if (ap[k] > 0) sealedCoverage[k] = true; }
-      }
-
-      // Качество брони: Best.Q даёт +1 AP всем частям (сочленения +2 — напоминание).
-      const qArmor = qualityEffects(item).auto;
-      if (qArmor.apAll) { for (const k of Object.keys(ap)) ap[k] += qArmor.apAll; }
-      // Активный режим поля друкхарийской брони: Амортизирующее даёт Protective,
-      // Подавляющее — Blunted и штраф чужим психотестам, Рассеивающее — Nimble.
-      const fld = fieldModeEffects(item);
-      if (fld.protective)      system.fieldProtective = fld.protective;
-      if (fld.nimble != null)  system.fieldNimble  = fld.nimble;
-      if (fld.blunted != null) system.fieldBlunted = fld.blunted;
-      if (fld.psyMod)          system.fieldPsyMod  = fld.psyMod;
-      if (fld.shield)          system.fieldShield  = fld.shield;
-
-      armorVsType.energy  += aFx.vs.energy;
-      armorVsType.impact  += aFx.vs.impact;
-      armorVsType.rending += aFx.vs.rending;
-      armorVsType.blast   += aFx.vs.blast;
-
-      // Особенность комплекта (истории силовой брони): «Под взглядом богов»
-      // даёт +1 ОБ всем зонам, «Уничтоженный и восстановленный» — ±1 по зонам.
-      const hist = s.history;
-      if (hist?.table && isFeatureEnabled("armourHistories")) {
-        const def = PA_TABLES[hist.table]?.entries.find(e => e.name === hist.name);
-        if (def?.apAll) for (const k of Object.keys(ap)) ap[k] += def.apAll;
-        for (const [k, v] of Object.entries(hist.zones || {})) {
-          if (k in ap) ap[k] += Number(v) || 0;
-        }
-      }
-
-      if (s.stacks) {
-        for (const k of Object.keys(ap)) armorFromItems[k] += ap[k];
-      } else {
-        for (const k of Object.keys(ap)) armorFromItems[k] = Math.max(armorFromItems[k], ap[k]);
-      }
-    }
-
+    // Броня вынесена в rules/character/armour.mjs (wdbc-neez). Накопителей
+    // сверху ей не нужно — считает по надетым предметам сама, — но четыре
+    // её величины читают разделы ниже, поэтому она их возвращает.
+    const { armorFromItems, armorVsType, propFlagsByLoc, sealedCoverage } =
+      prepareArmourDerived(actor, system);
     // ── Снятый шлем ────────────────────────────────────────────────────────
     // Показатель «сколько ОБ на голову даёт снаряжение» считается ДО снятия:
     // иначе галочка исчезла бы вместе с бронёй и шлем нельзя было бы надеть.
@@ -999,199 +900,15 @@ export function prepareCharacterDerived(actor, system) {
     system.experience.spent   = spentTotal;
     system.experience.current = (system.experience.total || 0) - spentTotal;
 
-    // ── Движение (авторасчёт) ─────────────────────────────────────────────
+    // Движение вынесено в rules/character/movement.mjs (wdbc-neez). Ему нужны
+    // три накопителя, собранных проходами по предметам выше — это и есть
+    // тот случай, где единый проход мешает разбиению (см. wdbc-uvap).
     const agBonus = chars.ag?.bonus ?? 0;
-    // 0 = Человек; трейт Размера сдвигает SPD (прямой мод). Трейт «Size/Hulking»
-    // выдаётся как embedded ActiveEffect с ключом system.sizeMod, фаза "initial"
-    // (см. packs-src/traits) — на этом месте он уже применён (Foundry вызывает
-    // applyActiveEffects("initial") ДО prepareDerivedData), поэтому traitSizeMod
-    // (легаси-петля выше, которая нарочно пропускает migratedEffect-предметы,
-    // чтобы не посчитать их дважды) складывается С этим значением, а не
-    // затирает его — иначе SPD/Инициатива персонажа с расовым Размером считались
-    // бы без него, при этом бейдж «Размер» на листе показывал бы верное число
-    // (было найдено на живых данных: sizeMod=1, sizeTotal=0 у всех Астартес).
-    traitSizeMod += Number(system.sizeMod) || 0;
-    // system.sizeModNoSpd — ActiveEffect-ключ Конструктора (kind:"characteristic",
-    // charKey:"sizeNoSpd", см. apps/mechanics.mjs) для источников Размера, что
-    // намеренно НЕ двигают SPD. Складывается с тем, что уже мог записать
-    // легаси-эффект тем же ключом (тот же приём, что traitSizeMod/sizeMod выше).
-    traitSizeModNoSpd += Number(system.sizeModNoSpd) || 0;
-    const size    = (system.size ?? 0) + traitSizeMod;
-    system.sizeMod   = traitSizeMod;          // вклад Черт в Размер (двигает SPD)
-    system.sizeModNoSpd = traitSizeModNoSpd;  // вклад в Размер БЕЗ влияния на SPD
-    system.sizeTotal = size + traitSizeModNoSpd; // итоговый Размер (база + оба вклада)
-    const stance  = system.meleeStance || "standard";
-
-    let { spd, halfMove, move, charge, run } = calcMovement(agBonus, size);
-    // Снимок базового SPD (Ag.b + Размер, до модификаторов) — для breakdown
-    // ниже (wdbc-zbiz), тем же приёмом, что charTotalTooltip у характеристик.
-    const spdBase = spd;
-
-    // Бонус к базовой скорости (SPD) от Черт/имплантов/талантов/психосил, плюс
-    // system.movement.spdBonus — входное поле для kind:"movement" (Конструктор,
-    // цель "SPD"), ставится ActiveEffect'ом в фазе "initial" (см. mechanics.mjs),
-    // т.е. уже на месте к этому моменту расчёта.
-    const spdBonus = Number(system.movement.spdBonus) || 0;
-    // Перевес выключенной силовой брони (стр. 233) — SPD −1 с тира 1 и выше;
-    // остальные последствия каскада (штраф теста, только Полное действие на
-    // движение, Беспомощность) — не расчёт, а игровое событие, выведены
-    // read-only на лист (system.disabledArmourOverload) для ручного учёта,
-    // не блокируются здесь. См. wdbc-rdd.
-    const overload = disabledArmourOverloadTier(actor, disabledArmourWeight(actor));
-    system.disabledArmourOverload = overload;
-    const overloadSpdMod = overload?.spdMod || 0;
-    // Перевес ОБЩЕГО инвентаря (стр. 27, wdbc-2l3x) — независимый источник от
-    // перевеса выключенной силовой брони выше (может действовать одновременно,
-    // не смешиваются): «носит больше Ношения, но меньше Подъёма» → SPD −1 и
-    // −10 на движения/атаки (штраф теста подключён в combat/defense.mjs и
-    // sheets/actor-sheet.mjs, не здесь — тут только вклад в SPD).
-    const inventoryOverload = inventoryOverloadTier(actor);
-    system.inventoryOverload = inventoryOverload;
-    const inventoryOverloadSpdMod = inventoryOverload?.spdMod || 0;
-    // Свойство оружия Piercing (wdbc-plsf): снаряд в ране торса/ноги — плоский
-    // −1 SPD, пока не извлечён (не складывается за несколько таких ран —
-    // книга не описывает накопление, см. combat/damage.mjs, где рана ставится).
-    const pw = system.piercingWounds || {};
-    const piercingSpdMod = (pw.body || pw.leftLeg || pw.rightLeg) ? -1 : 0;
-    if (traitSpeedMod || spdBonus || overloadSpdMod || inventoryOverloadSpdMod || piercingSpdMod) {
-      spd = Math.max(0.5, spd + traitSpeedMod + spdBonus + overloadSpdMod + inventoryOverloadSpdMod + piercingSpdMod);
-      halfMove = spd;  move = spd * 2;  charge = spd * 3;  run = spd * 6;
-    }
-
-    // Пружинящая стойка: SPD −2 для движения
-    if (stance === "springing") {
-      const spdMod = Math.max(0.5, spd - 2);
-      halfMove = spdMod;
-      move     = spdMod * 2;
-      charge   = spdMod * 3;
-      run      = spdMod * 6;
-    }
-
-    // Повален (стр. 30-31, wdbc-r5o7.2): SPD вдвое — применяется к уже
-    // посчитанным halfMove/move/charge/run (после Стойки и прочих модов
-    // выше, а не к сырому spd — итог тот же за счёт линейности, но так
-    // работает независимо от того, что ещё поменяло эти четыре числа).
-    // «Нельзя Бег и Натиск» — отдельный запрет в combat/movement-actions.mjs
-    // (declareCharge/declareRun), не про число.
-    if (system.conditions?.prone) {
-      halfMove = Math.max(0.5, halfMove / 2);
-      move     = Math.max(0.5, move / 2);
-      charge   = Math.max(0.5, charge / 2);
-      run      = Math.max(0.5, run / 2);
-    }
-
-    // Потеря стоп/ног (стр. 30-31, wdbc-r5o7.5): «SPD уменьшена вдвое (окр.
-    // вниз)» — в отличие от Поваленного (обычное ÷2, минимум 0.5), здесь
-    // явное книжное округление вниз, поэтому Math.floor, не Math.max(0.5,…);
-    // одна потерянная стопа/нога уже даёт полный штраф — книга не говорит
-    // «за каждую», считаем булево (есть хоть одна — эффект применён), не по
-    // счётчику count. Без ОБЕИХ ног — «не может ходить» вообще, это сильнее
-    // деления и обнуляет Движение целиком (см. lostLegsCount ниже);
-    // Уклонение при потере ног — отдельно, combat/defense.mjs.
-    const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs);
-    const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) >= 2;
-    if (bothLegsLost) {
-      halfMove = 0; move = 0; charge = 0; run = 0;
-    } else if (lostFeetOrLeg) {
-      halfMove = Math.floor(halfMove / 2);
-      move     = Math.floor(move / 2);
-      charge   = Math.floor(charge / 2);
-      run      = Math.floor(run / 2);
-    }
-
-    system.movement.halfMove = halfMove;
-    system.movement.move     = move;
-    system.movement.charge   = charge;
-    system.movement.run      = run;
-    // Откуда число (wdbc-zbiz): те же слагаемые, что складываются выше —
-    // Черты/импланты, Конструктор (kind:"movement"), Перевес брони, Piercing,
-    // Пружинящая Стойка. Полушаг = SPD×1, поэтому его breakdown суммируется в
-    // halfMove без остатка (Полное/Натиск/Бег — те же слагаемые, ×2/3/6).
-    const spdBreakdown = [{ label: "База", value: spdBase, note: "Ag.b + Размер" }];
-    if (traitSpeedMod)           spdBreakdown.push({ label: "Черты/импланты",              value: traitSpeedMod });
-    if (spdBonus)                spdBreakdown.push({ label: "Механика (Конструктор)",      value: spdBonus });
-    if (overloadSpdMod)          spdBreakdown.push({ label: "Перевес выключенной брони",   value: overloadSpdMod });
-    if (inventoryOverloadSpdMod) spdBreakdown.push({ label: "Перевес инвентаря",           value: inventoryOverloadSpdMod });
-    if (piercingSpdMod)          spdBreakdown.push({ label: "Piercing (снаряд в ране)",     value: piercingSpdMod });
-    if (stance === "springing")  spdBreakdown.push({ label: "Пружинящая Стойка",           value: -2 });
-    // Минимум SPD — 0.5 (стр. 28): сумма слагаемых может уйти в минус, порог
-    // это ловит раньше breakdown. Повален не складывается, а делит пополам —
-    // считаем ожидаемое ДО сравнения с halfMove, иначе halfMove≠sum срабатывал
-    // бы всегда при Поваленном, даже без реального клампа по минимуму.
-    const spdRawSum = spdBreakdown.reduce((s, b) => s + b.value, 0);
-    let expectedHalfMove = spdRawSum;
-    if (system.conditions?.prone) {
-      spdBreakdown.push({ label: "Повален", value: null, halved: true });
-      expectedHalfMove /= 2;
-    }
-    if (bothLegsLost) {
-      spdBreakdown.push({ label: "Потеря обеих ног", value: null, immobile: true });
-      expectedHalfMove = 0;
-    } else if (lostFeetOrLeg) {
-      spdBreakdown.push({ label: "Потеря стопы/ноги", value: null, halvedFloor: true });
-      expectedHalfMove = Math.floor(expectedHalfMove / 2);
-    }
-    if (expectedHalfMove !== halfMove) spdBreakdown.push({ label: "Минимум SPD", value: null, floor: 0.5 });
-    system.movement.spdBreakdown = spdBreakdown;
-
-    // ── Инициатива ────────────────────────────────────────────────────────
-    // Хранит Ag.bonus + модификаторы Талантов (Combat Formation, Paranoia).
-    // Сам бросок = 1d10 + system.initiative. Читаем текущее значение ДО
-    // перезаписи (wdbc-v9a7): kind:"characteristic" с charKey:"initiative"
-    // (apps/mechanics.mjs) выдаётся как embedded ActiveEffect с ключом
-    // system.initiative, фаза "final" — применяется Foundry раньше этой
-    // строки, и без чтения назад перезапись стёрла бы вклад Мутаций
-    // («Безголовый» −2) тем же способом, каким раньше терялся sizeMod
-    // Астартес (см. комментарий у traitSizeMod выше).
-    system.initiative = agBonus + (traitInitMod || 0) + (Number(system.initiative) || 0);
-
-    // ── Когниция (Техножрец) ───────────────────────────────────────────────
-    // Пул Когниции = Int.bonus; в начале Хода восстанавливается ½ Int.b.
-    if (system.cognition) {
-      const ib = chars.int?.bonus ?? 0;
-      system.cognition.max   = ib;
-      system.cognition.regen = Math.ceil(ib / 2);
-    }
-
-    // ── Энергия (Катушка Потенции) + Техночудеса Кибернетики Механикум ──────
-    // energy.max — база (ручной ввод); maxTotal = база + бонусы имплантов
-    // (Мотивные Банки +5 и т.п.). Активация/зарядка используют maxTotal.
-    if (system.energy) {
-      system.energy.bonusMax = implantEnergyMax;
-      system.energy.maxTotal = Math.max(0, (system.energy.max || 0) + implantEnergyMax);
-      if ((system.energy.value || 0) > system.energy.maxTotal)
-        system.energy.value = system.energy.maxTotal;
-    }
-    // Бонус к тесту Компенсатора (лучший среди имплантов) и установленные
-    // Технофокусы (Железо) — для активации Техночудес и показа на листе.
-    system.techCompBonus   = implantCompBonus;
-    system.techFocus       = techFocusInstalled;
-
-    // ── Пси-Рейтинг ────────────────────────────────────────────────────────
-    // Базовый PR — по умолчанию хранимое поле (бестиарий/NPC задают его прямо
-    // статблоком, без Таланта). Если на акторе есть Талант «Psy Rating /
-    // Пси-Рейтинг» — он замещает хранимое значение, предмет становится
-    // источником истины (psyRatingFromTalents в module/rules/psyker.mjs).
-    if (system.psyker) {
-      const derivedPR = psyRatingFromTalents(actor.items);
-      system.psyker.ratingFromTalent = derivedPR !== null;
-      if (derivedPR !== null) system.psyker.rating = derivedPR;
-
-      // sustainedCost уже посчитан выше, в общем проходе по actor.items
-      // (вместе с autoPsyCost) — тот же item.type "psychicPower".
-      // Руническая Вязь «Стальной Гриммуар» (wdbc-unku): снимает штраф −1 эPR
-      // за поддержание одной силы. Схема не различает, какая именно сила
-      // «вписана» в Гриммуар — прощаем 1 очко суммарной стоимости поддержания
-      // в целом (только если что-то вообще поддерживается).
-      if (sustainedCost > 0 && hasRuleFlag(actor, "runicWeave.steelGrimoire")) {
-        sustainedCost = Math.max(0, sustainedCost - 1);
-      }
-      system.psyker.sustain       = sustainedCost;
-      system.psyker.currentRating = Math.max(0, (system.psyker.rating || 0) - sustainedCost);
-      // «Независимо от обстоятельств всегда считается Связанным» (Серый
-      // Человек, wdbc-gzuf) — Природа Дара выставляется один раз в чаргене
-      // (дропдаун), но здесь пересчитывается каждый цикл, так что ручная
-      // смена значения на листе тут же откатывается обратно.
-      if (hasRuleFlag(actor, "psyker.alwaysBound")) system.psyker.class = "bound";
-    }
+    prepareMovementDerived(actor, system, { chars, agBonus, traitSizeMod,
+                                            traitSizeModNoSpd, traitSpeedMod });
+    // Хвост пересчёта — Инициатива, Когниция, Энергия, Пси-Рейтинг — вынесен
+    // в rules/character/final-pools.mjs (wdbc-neez): он последний в функции и
+    // считается из уже готовых чисел, поэтому выносится без риска для порядка.
+    prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
+                                       sustainedCost, implantCompBonus, techFocusInstalled });
 }
