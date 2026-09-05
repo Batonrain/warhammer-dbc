@@ -24,6 +24,7 @@ import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { degreesOfSuccess } from "../../constants/craft.mjs";
 import { hasLordOfExodites, unnaturalFHint, clearMoraleConditions, rallyExoditeSquad } from "../../combat/lord-of-exodites.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 
 /** Кого можно взять под своё Присутствие. Шире состава Отряда: миньоны тоже. */
 export const FOLLOWER_TYPES =
@@ -211,7 +212,12 @@ export async function takeSelectedTokens(actor) {
 export async function rollCommand(actor, kind, { mod = 0, benefit = "", shortKey = "", declaredSuccesses = 0 } = {}) {
   const cmd = actor.system?.command ?? {};
   const base = Number(actor.system?.skills?.command?.total) || 0;
-  const threshold = base + (Number(mod) || 0);
+  // Общий сбор модификаторов (wdbc-ct65.2). Командование — социальный навык
+  // (area "social"), поэтому сюда доезжает и «−30 на устные социальные тесты»
+  // Оглохшего, и Черты на само Командование: раньше этот путь шёл мимо
+  // реестра правил целиком, даже без Усталости.
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "command", char: "fel" });
+  const threshold = base + (Number(mod) || 0) + ruleMods.total;
   const declared = Number(declaredSuccesses) || 0;
 
   const roll = declared > 0 ? null : await new Roll("1d100").evaluate();
@@ -306,7 +312,9 @@ export async function rallyHorde(actor, uuid, { mod = 0 } = {}) {
   if (!psych) return ui.notifications?.info(`У «${horde.name}» психологического урона нет.`);
 
   const base = Number(actor.system?.skills?.command?.total) || 0;
-  const threshold = base + (Number(mod) || 0);
+  // Тот же общий сбор, что у rollCommand выше (wdbc-ct65.2).
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "command", char: "fel" });
+  const threshold = base + (Number(mod) || 0) + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const ok = rv <= threshold;

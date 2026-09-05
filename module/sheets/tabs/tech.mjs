@@ -10,7 +10,7 @@ import { techIcon } from "../../constants/tech-icons.mjs";
 import { ironModForQuality, leastQuality } from "../../constants/implant-mechanics.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
-import { fatiguePenalty } from "./conditions.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
@@ -92,9 +92,12 @@ export async function activateTechMiracle(actor, item) {
   const skillLabel = skillDef?.label ?? "Tech-Use";
   const sk         = actor.system.skills?.[skKey];
   const base       = sk?.total ?? -20;
-  const fatigue    = fatiguePenalty(actor, skillDef?.char ?? "int");
+  // Общий сбор модификаторов (wdbc-ct65.2): раньше здесь стояла одна
+  // Усталость, а «+10 к тестам Технопользования» с Черты или импланта в
+  // активацию Техночуда не попадало — путь шёл мимо реестра правил.
+  const ruleMods   = collectTestMods(actor, { kind: "skill", skill: skKey, char: skillDef?.char ?? "int" });
   const testMod    = sys.testMod || 0;
-  const eff        = base + fatigue + testMod + ironMod;
+  const eff        = base + ruleMods.total + testMod + ironMod;
   const allRolls   = [];
 
   // ── Компенсатор (X): тест Т−(10×X) снижает цену в ⚡ на 1 за Успех ─────────
@@ -289,7 +292,7 @@ export async function activateTechMiracle(actor, item) {
         <div class="wh-roll-result">
           <div class="roll-header">${rollIcon("gear","#8fd0ff")}Техночудо: ${esc(item.name)}</div>
           <div class="roll-threshold">
-            ${skillLabel}: <b>${base}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${fatigue !== 0 ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>
+            ${skillLabel}: <b>${base}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b>
           </div>
           ${ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : ""}
           ${compLine ? `<div class="roll-threshold" style="font-size:0.85em;">${compLine}</div>` : ""}

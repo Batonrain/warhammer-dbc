@@ -17,6 +17,7 @@ import { DP_GODS, dpGodMeta, DP_ASCENSION, DP_IMMORTALITY, DP_RETINUE,
 import { veilTotal } from "../constants/veil.mjs";
 import { infamyContext } from "../apps/infamy-points.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 // Дары с полной автоматизацией (создают предметы / меняют числа при взятии).
 const DP_AUTO_GIFTS = new Set([
@@ -294,9 +295,15 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
   async _rollInstability() {
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
+    // Общий сбор модификаторов (wdbc-ct65.2). Область "instability" — своя, не
+    // "char:wp": демон бросает Нестабильность по Воле, но «+10 к тестам Воли»
+    // и «+Inf на Нестабильность» — разные правила книги (rules/resolve-test.mjs).
+    // Тот же приём, что у листа Демона (sheets/daemon-sheet.mjs).
+    const ruleMods = collectTestMods(this.actor, { kind: "instability", char: "wp" });
+    const threshold = wp + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
-    const success = roll.total <= wp;
-    const deg = Math.floor(Math.abs(roll.total - wp) / 10) + 1;
+    const success = roll.total <= threshold;
+    const deg = Math.floor(Math.abs(roll.total - threshold) / 10) + 1;
     const g = this._god;
     const rollMode = game.settings.get("core", "rollMode");
     await ChatMessage.create(ChatMessage.applyRollMode({
@@ -304,7 +311,7 @@ export class WarhammerDemonPrinceSheet extends WarhammerCharacterSheet {
       content: `
         <div class="wh-dp-card" style="--gc:${g.color};--gc2:${g.gc2};">
           <div class="wh-dp-card-h">🌀 Тест Нестабильности — ${esc(this.actor.name)}</div>
-          <div class="wh-dp-card-r">Сила Воли: <b>${wp}</b> · Warp Instability (${rating})</div>
+          <div class="wh-dp-card-r">Сила Воли: <b>${wp}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b> · Warp Instability (${rating})</div>
           <div class="wh-dp-card-r">Бросок: <b>${roll.total}</b> — ${success
             ? `<span class="ok">Реальность держится — ${deg} ст.</span>`
             : `<span class="bad">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`}</div>

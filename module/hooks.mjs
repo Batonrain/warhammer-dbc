@@ -76,6 +76,7 @@ import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
+import { collectTestMods } from "./rules/roll-mods.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -1154,7 +1155,11 @@ async function _applyWeaponPropEffect(ds) {
   let resisted = false, rollHtml = "", deg = 1;
   if (testChar) {
     const charTotal = actor.system.characteristics?.[testChar]?.total ?? 0;
-    const threshold = charTotal + testMod;
+    // Общий сбор модификаторов (wdbc-ct65.2): тест Сопротивления считался
+    // мимо реестра правил — ни Усталость, ни Черты на эту характеристику
+    // в него не попадали.
+    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar });
+    const threshold = charTotal + testMod + resistMods.total;
     const roll      = await new Roll("1d100").evaluate();
     allRolls.push(roll);
     const rv        = roll.total;
@@ -1283,13 +1288,18 @@ async function _executeSoulBurn(attacker, target) {
   const rollMode = game.settings.get("core", "rollMode");
   const allRolls = [];
 
+  // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):
+  // раньше ни один из них не спрашивал реестр правил, и «+10 к тестам Воли»
+  // не работал ни у нападающего псайкера, ни у сопротивляющейся цели.
   const pWp = attacker.system.characteristics?.wp?.total ?? 0;
   const pPr = attacker.system.psyker?.currentRating ?? 0;
-  const pEff = pWp + 5 * pPr;
+  const pMods = collectTestMods(attacker, { kind: "skill", char: "wp" });
+  const pEff = pWp + 5 * pPr + pMods.total;
 
   const tWp = target.system.characteristics?.wp?.total ?? 0;
   const tPr = target.system.psyker?.currentRating ?? 0;
-  const tEff = tWp + 5 * tPr;
+  const tMods = collectTestMods(target, { kind: "skill", char: "wp" });
+  const tEff = tWp + 5 * tPr + tMods.total;
 
   // Бросок псайкера
   const pRoll = await new Roll("1d100").evaluate(); allRolls.push(pRoll);

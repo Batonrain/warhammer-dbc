@@ -6,7 +6,8 @@
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
-import { fatiguePenalty, conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
+import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
@@ -537,8 +538,9 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
   const charTotal = actor.system.characteristics[charKey]?.total ?? 0;
-  const fatigue = fatiguePenalty(actor, charKey);
-  const eff = charTotal + testMod + fatigue;
+  // Общий сбор модификаторов (wdbc-ct65.2) — см. tabs/tech.mjs, тот же перевод.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey });
+  const eff = charTotal + testMod + ruleMods.total;
   const wasAddicted = item?.system?.addiction?.isAddicted || false;
 
   const roll = await new Roll("1d100").evaluate();
@@ -578,7 +580,7 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("warn","#ffb84d")}Тест Зависимости — ${name}</div>
         <div class="roll-threshold">
-          ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${fatigue !== 0 ? ` 😓 ${fatigue}` : ""}
+          ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")}
           → Порог: <b>${eff}</b>
         </div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
