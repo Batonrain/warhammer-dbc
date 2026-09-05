@@ -21,6 +21,8 @@ import { MELEE_STANCES, MELEE_BASES, MELEE_MANEUVERS, GRIPS, parseGrips, gripEff
          RANGED_GRIPS, rangedGripEffects } from "../constants/combat.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { rollIcon }                           from "../constants/roll-icons.mjs";
+import { openAttackDialog } from "./attack/dialog.mjs";
+import { readAttackForm, AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY } from "./attack/form.mjs";
 import { qualityEffects }                     from "../constants/quality.mjs";
 import { _degWord, _buildAmmoModString, resolveCharFormula, esc } from "../helpers/utils.mjs";
 import { _executeAttackRoll }                 from "../combat/attack.mjs";
@@ -61,13 +63,11 @@ import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
 // в showAttackDialog/showAttackDialogNoWeapon ниже.
-const FULL_ATTACK_CAPABILITY = "technique.baseFullAttack";
 
 // Локус Неизбежности (стр. 30, wdbc-smc): раз в Раунд рукопашная атака может
 // попасть автоматически с 1 Успехом (вместо броска) — штраф −10 до начала
 // следующего Хода ставится флагом, читает module/rules/sources.mjs
 // (daemonInevitability), снимает action-economy.mjs::resetActionEconomy.
-const AUTO_HIT_CAPABILITY = "autoHit.melee.oncePerRound";
 
 /**
  * Всё, что игрок отметил в окне, — одним чтением формы.
@@ -79,103 +79,6 @@ const AUTO_HIT_CAPABILITY = "autoHit.melee.oncePerRound";
  * @param {HTMLFormElement} form       форма окна (DialogV2 отдаёт её в button.form)
  * @param {object[]}        ammoConds  условные эффекты боеприпаса, стр. 203
  */
-function readAttackForm(form, ammoConds) {
-  const el   = sel => form.querySelector(sel);
-  const all  = sel => [...form.querySelectorAll(sel)];
-  const on   = sel => !!el(sel)?.checked;
-  const attr = (sel, key) => parseInt(el(sel)?.dataset?.[key]) || 0;
-
-  const ROF = "input[name='atk-rof']:checked";
-  const AIM = "input[name='atk-aiming']:checked";
-
-  // Стойка/База/Приём/Хват/Профиль — undefined, если в форме нет такой
-  // группы (стрелковое: только Профиль) или ничего не выбрано (не должно
-  // случиться — по одному option всегда checked), resolveSelection тогда
-  // берёт стартовое значение диалога.
-  const stanceKey    = el("input[name='atk-stance']:checked")?.value;
-  const baseKey      = el("input[name='atk-base']:checked")?.value;
-  const maneuverKey  = el("input[name='atk-maneuver']:checked")?.value;
-  const gripKeySel   = el("input[name='atk-grip']:checked")?.value;
-  const profIdxRaw   = el("input[name='atk-profile']:checked")?.value;
-  const profIdxSel   = profIdxRaw === undefined ? undefined : Number(profIdxRaw);
-
-  const ammoSel = all(".atk-ammo-cond:checked")
-    .map(cb => ammoConds[parseInt(cb.dataset.idx)]).filter(Boolean);
-
-  // Галочки от реестра правил — тот же формат, что у Особенностей Происхождения
-  // и предметных rollMods в диалоге броска навыка.
-  let ruleMods = 0, halvePenalty = false;
-  for (const cb of all(".rule-mod:checked")) {
-    ruleMods += parseInt(cb.dataset.value) || 0;
-    if (cb.dataset.halve === "1") halvePenalty = true;
-  }
-
-  const allOut = on("#atk-allout");
-
-  // Выбранный переброс: −1 значит «без переброса». Именной (от правила)
-  // важнее общего Кубика (Преимущество/Помеха) — тот же приём, что у диалога
-  // Навыка/Характеристики (rules/test-kind-widget.mjs).
-  const rerollEl = el(".rule-reroll-opt:checked");
-  const rerollIdx = parseInt(rerollEl?.dataset?.idx ?? "-1");
-  const namedReroll = rerollIdx >= 0
-    ? { mode: rerollEl.dataset.mode, rolls: parseInt(rerollEl.dataset.rolls) || 2 }
-    : null;
-  const diceChoice = el(".dice-mode-opt:checked")?.value ?? "normal";
-
-  return {
-    reroll: mergeReroll(namedReroll, diceChoice),
-    autoFail:   all(".atk-mod-cb[data-autofail]:checked").length > 0,
-    // Беспомощная цель в упор/в рукопашной (см. specificMods выше) — авто-
-    // успех и удвоенный урон вместо обычного порога, отдельно от autoFail.
-    autoSuccess: all(".atk-mod-cb[data-autosuccess]:checked").length > 0,
-    char:       el("#atk-char")?.value,
-    modifier:   parseInt(el("#atk-modifier")?.value) || 0,
-    dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
-    coverMod:   parseInt(el("#atk-cover")?.value) || 0,
-    // Штраф стрельбы с седла (wdbc-8nz6) — раньше нигде не применялся к
-    // настоящему броску, только показывался в панели «ВЕРХОМ». Авто-число
-    // предполагает обычное личное оружие; для Интегрированного/турели
-    // Коляски (штраф ниже/отсутствует) поле правится руками.
-    mountRangedMod: parseInt(el("#atk-mount-ranged")?.value) || 0,
-    rofMode:    el(ROF)?.value,
-    rofBonus:   attr(ROF, "bonus"),
-    // Fanning / Быстрый Курок (wdbc-fy33): RoF Длинной очереди 2..BS.b по
-    // выбору — 0 значит «поля в форме нет» (Талант неактивен для этого броска).
-    fanningRof: parseInt(el("#atk-fanning-rof")?.value) || 0,
-    aimVal:     el("#atk-aim")?.value,
-    aimPenalty: attr("#atk-aim option:checked", "penalty"),
-    // Кого выцеливают в паре «всадник + скакун» и во что это обходится. Штраф
-    // берётся только вместе с зоной прицела: не-Избирательная атака никого не
-    // выцеливает вовсе — там попадание делится по дублю (стр. 478).
-    mountPick:    el("#atk-mount")?.value || "",
-    mountPenalty: el("#atk-aim")?.value
-      ? (parseInt(el("#atk-mount option:checked")?.dataset?.penalty) || 0) : 0,
-    aiming:     el(AIM)?.value || "none",
-    aimBonus:   attr(AIM, "bonus"),
-    // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.
-    sitPicked:  all(".atk-mod-cb:checked"),
-    // data-value уже 0 у автоуспеха (см. makeMods выше), поэтому отдельно
-    // исключать его из суммы не нужно — селектор тот же, что и раньше.
-    sitMods:    all(".atk-mod-cb:not([data-autofail]):checked")
-      .reduce((n, cb) => n + (parseInt(cb.dataset.value) || 0), 0),
-    ammoSel,
-    ammoMods:   ammoSel.reduce((n, c) => n + (c.atk || 0), 0),
-    ruleMods, halvePenalty,
-    allOut,
-    extraBonus: allOut ? 20 : 0,
-    autoHit: on("#atk-autohit"),
-    shortRange: on("#atk-shortrange"),
-    // Карабин (wdbc-z56a): нужен на исполнении броска, чтобы дать цели +10
-    // вместо +30 на Уклонение — см. #atk-melee-shot в specificMods выше.
-    meleeShot:  on("#atk-melee-shot"),
-    // Перемены (Change, стр. 74 Книги Аэльдари): цель бездушна/техника → +X Pen.
-    changeSoulless: on("#atk-change-soulless"),
-    weaponOff:  on("#atk-weaponoff"),
-    maximal:    on("#atk-maximal"),
-    bandIdx:    Number(el("#atk-band")?.value ?? -1),
-    stanceKey, baseKey, maneuverKey, gripKey: gripKeySel, profIdx: profIdxSel
-  };
-}
 
 export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Галлюцинации, грань «Я маленький...» (стр. 168, wdbc-r5o7.8): «не может
@@ -1588,327 +1491,45 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // (scripts/foundry.mjs, #_onSubmit) — вернуть отсюда null нельзя, он подменится
   // на строку «roll»/«cancel». Кнопки возвращают false, а «отменой» его делает
   // этот же .then — контракт «null — отмена» остаётся прежним.
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: `Атака: ${item.name}` },
-    classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
-    position: { width: 420 },
+  // Подключение окна — кнопки, обработчики полей, пересчёт порога на лету —
+  // вынесено в sheets/attack/dialog.mjs (wdbc-uh56). Это единственный
+  // ОДНОСТОРОННИЙ шов функции: последний оператор, после него ничего нет, и
+  // значения идут только внутрь. Замер ширины интерфейса по всей длине
+  // функции дал 90–106 значений в середине и узкие места только по краям.
+  return openAttackDialog({
+    actor,
+    item,
     content,
-    // Закрыть окно — это отмена, а не ошибка: вызывающий ждёт null, а не бросок.
-    rejectClose: false,
-    buttons: [
-      {
-        action: "roll", label: "Бросок!", icon: "fas fa-dice-d10", class: "roll", default: true,
-        callback: async (event, button) => {
-          const f = readAttackForm(button.form, ammoConds);
-
-          if (f.autoFail) {
-            await ChatMessage.create({
-              speaker: ChatMessage.getSpeaker({ actor: actor }),
-              content: `<div class="wh-roll-result">
-                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
-                <div class="roll-outcome">
-                  <span class="roll-failure">Автоматический провал (Ослеплён)</span>
-                </div></div>`
-            });
-            return false;
-          }
-
-          const sel = resolveSelectionSafe(f);
-
-          if (sel.blocked) {
-            await ChatMessage.create({
-              speaker: ChatMessage.getSpeaker({ actor: actor }),
-              content: `<div class="wh-roll-result">
-                <div class="roll-header">${rollIcon("sword")}${esc(item.name)}</div>
-                <div class="roll-outcome">
-                  <span class="roll-failure">Защитная Стойка без щита — атака запрещена (стр. 15)</span>
-                </div></div>`
-            });
-            return false;
-          }
-
-          // Экономика действий (стр. 12, wdbc-niv7): рукопашная атака тратит
-          // ОД по actionType выбранной Базы (MELEE_BASES) — Натиск/Полная
-          // Атака и т.п. уже несут это поле. Стрелковые режимы (стр. 32,
-          // раздел «Стрельба»): Одиночный Выстрел/Короткая/Длинная/Широкая
-          // Очередь — все Полудействие; Стрельба на Подавление — Полное
-          // действие (Караул в этом диалоге не выбирается).
-          // Запрещённый Приём (Cheap Shot, стр. 166, wdbc-hmcx): вместо ОД
-          // тратит Реакцию — sel.cheapShotActive уже вынудил Базу быть
-          // "standard" (resolveSelection), здесь остаётся только сменить
-          // ресурс списания на тот же spendReaction, что у Уклонения/Парирования.
-          if (isMelee && sel.cheapShotActive) {
-            if (!await spendReaction(actor)) {
-              ui.notifications.warn("⚠️ Не хватает Реакций (Запрещённый Приём).");
-              return false;
-            }
-          } else {
-            const apCost = isMelee
-              ? apCostForActionType(sel.bDef.actionType)
-              : apCostForActionType(f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
-            if (!await spendActionPoints(actor, apCost, { physical: true })) {
-              ui.notifications.warn("⚠️ Не хватает ОД.");
-              return false;
-            }
-          }
-
-          // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
-          // Хват/Профиль — во флагах предмета (как раньше в HUD): выбор в этом
-          // диалоге должен остаться в силе и после закрытия окна, а не сбрасываться.
-          const actorUpdates = { "system.aiming": "none" };
-          if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
-          if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
-          await actor.update(actorUpdates);
-          if (sel.gKey !== gripKey) await item.setFlag?.("warhammer-dbc", "hudGrip", sel.gKey);
-          if (sel.pIdx !== profIdx) await item.setFlag?.("warhammer-dbc", "hudProfile", sel.pIdx);
-          // Локус Сокрушения тратится реальным броском — отменённая или
-          // закрытая атака способность не расходует (см. meleeBaseKey выше).
-          if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
-
-          // Локус Неизбежности — тем же приёмом: тратится реальным броском,
-          // не открытием окна. Штраф −10 ставится сразу же (до начала
-          // следующего Хода актора, снимает action-economy.mjs).
-          const autoHitUsed = autoHitAvailable && f.autoHit;
-          if (autoHitUsed) {
-            await markRoundCapabilityUsed(actor, AUTO_HIT_CAPABILITY);
-            await actor.setFlag("warhammer-dbc", "inevitabilityPenalty", true);
-          }
-
-          // Приём выбран в этом же окне — свежий techniqueOpts под конкретный
-          // выбор (targetDodgeMod/targetParryMod/chatNote и т.п. зависят от него).
-          const finalTechniqueOpts = isMelee ? {
-            ...techniqueOpts,
-            technique:      sel.maneuverKey,
-            techniqueLabel: sel.mDef.label,
-            techniqueNote:  sel.mDef.note,
-            chatNote:       sel.mDef.chatNote,
-            targetDodgeMod: sel.targetDodgeMod,
-            targetParryMod: sel.targetParryMod,
-            extraBonus:     sel.mDef.wsBonus,
-            stanceLabel:    sel.stDef.label
-          } : techniqueOpts;
-
-          // Беспомощная цель: рукопашная — всегда, стрелковая — только если
-          // отмечена галочка «в упор / в рукопашной» (см. specificMods выше).
-          const helplessAutoHit = helplessAutoMelee || f.autoSuccess;
-
-          await _executeAttackRoll(
-            actor, item, f.char, thresholdOf(f),
-            f.rofMode || rofModes[0]?.value,
-            aimTargets.find(t => t.value === f.aimVal),
-            {
-              forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
-              fixedSuccessDeg: autoHitUsed ? 1 : undefined,
-              // Быстрая/Молниеносная — теперь Приём (стр. 14), а не отдельная
-              // галочка: множитель попаданий включается выбором пилюли.
-              isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
-              isAllOut: f.allOut,
-              // База рукопашной («Натиск» и т.п.): rofMode у рукопашной всегда
-              // "melee", по нему Brutal Charge не отличить (wdbc-ревью стопки 3).
-              baseKey: sel.baseKey ?? null,
-              // Переброс от правила (Локус Буйства) или общий Кубик —
-              // бросок катает несколько кубов и оставляет один — см.
-              // combat/attack.mjs. crit — расширение диапазона Критического
-              // Успеха/Провала тем же правилом (kind:"critRangeMod"); сам
-              // натуральный диапазон 1-5/96-100 применяется уже в attack.mjs.
-              reroll: f.reroll || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined),
-              crit: resolvedAttack.crit,
-              forcedDefenceReroll,
-              techniqueOpts: finalTechniqueOpts,
-              dmgBonus: f.dmgBonus, changeSoulless: f.changeSoulless,
-              meleeShot: f.meleeShot,
-              shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
-              profile: sel.prof, attackNote: sel.note,
-              weaponOff: f.weaponOff, gripKey: sel.gKey,
-              gripProps: sel.gDef ? sel.gDef.addProps : [],
-              gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
-              gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
-              // Fanning / Быстрый Курок (wdbc-fy33): RoF 2..BS.b по выбору
-              // заменяет фиксированный sys.rof_full только в режиме "full".
-              rofCapOverride: (fanningActive && f.rofMode === "full") ? f.fanningRof : 0,
-              // Условные эффекты боеприпаса, отмеченные игроком (стр. 203).
-              ammoCondProps:  f.ammoSel.flatMap(c => c.wp || []),
-              ammoCondDmg:    f.ammoSel.reduce((n, c) => n + (c.dmg || 0), 0),
-              ammoCondLabels: f.ammoSel.map(c => c.label),
-              // Свойства оружия от правила (wdbc-w8z4) — уже отобраны по `when`
-              // выше (resolvedAttack), attack.mjs только доливает их в _entries.
-              ruleProps: resolvedAttack.weaponProps,
-              aimingLabel: (f.aiming !== "none" && !wp.noAim)
-                ? (f.aiming === "half" ? `Полу-прицеливание (+${f.aimBonus})` : `Полное прицеливание (+${f.aimBonus})`)
-                : "",
-              // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
-              // обычно один токен — без этой строки попадание во всадника ушло
-              // бы скакуну просто потому, что кликнули по видимому токену.
-              mountNote: mountPair && f.mountPick && f.aimVal
-                ? (f.mountPick === "rider"
-                    ? `Верхом: попадание во ВСАДНИКА — ${mountPair.rider.name}`
-                    : `Верхом: попадание в скакуна — ${mountPair.mount.name}`)
-                : (mountPair
-                    ? `Верхом: не-Избирательная атака — попадание в скакуна (${mountPair.mount.name}), дубль на броске — во всадника (${mountPair.rider.name})`
-                    : "")
-            }
-          );
-          return true;
-        }
-      },
-      // `false`, а не `null`: `null` DialogV2 подменяет на сам action («cancel»)
-      // — см. комментарий у pickFromList (sheets/item-sheet.mjs).
-      { action: "cancel", label: "Отмена", callback: () => false }
-    ],
-    render: (event, dialog) => {
-      const form      = dialog.element.querySelector("form");
-      const display   = form.querySelector("#atk-total-display");
-      const breakdown = form.querySelector("#atk-threshold-breakdown");
-      const hint      = form.querySelector(".av-adv-hint");
-
-      const badgesEl        = form.querySelector("#atk-badges");
-      const noteEl          = form.querySelector("#atk-gripnote");
-      const stanceNoteEl    = form.querySelector("#atk-stance-note");
-      const baseNoteEl      = form.querySelector("#atk-base-note");
-      const maneuverNoteEl  = form.querySelector("#atk-maneuver-note");
-      const basePillsEl     = form.querySelector("#atk-base-pills");
-      const stancePillsEl   = form.querySelector("#atk-stance-pills");
-      const gripPillsEl     = form.querySelector("#atk-grip-pills");
-      const maneuverPillsEl = form.querySelector("#atk-maneuver-pills");
-      let lastStanceKey = dyn0.stanceKey;
-      let lastBaseKey   = dyn0.baseKey;
-      let lastProfIdx   = dyn0.pIdx;
-      let lastGKey      = dyn0.gKey;
-
-      const updateTotal = () => {
-        const f = readAttackForm(form, ammoConds);
-        // Стойка/База/Приём/Хват/Профиль меняются прямо в форме — заголовок и
-        // сводки эффектов должны обновляться вместе с порогом, иначе бейджи и
-        // заметки показывают устаревший выбор до следующего открытия окна.
-        const sel = resolveSelectionSafe(f);
-        if (badgesEl)       badgesEl.innerHTML       = badgesHtml(sel);
-        if (noteEl)         noteEl.innerHTML         = sel.note;
-        if (stanceNoteEl)   stanceNoteEl.innerHTML   = sel.stDef.note;
-        if (baseNoteEl)     baseNoteEl.innerHTML     = sel.bDef.note;
-        if (maneuverNoteEl) maneuverNoteEl.innerHTML = sel.mDef.note;
-        // База зависит от выбранной Стойки (Частокол запрещает Натиск, стр. 15)
-        // И от Хвата (Хвост временно даёт Cheap Shot, см. computeBaseOptions) —
-        // перерисовываем пилюли только когда что-то из этого реально
-        // поменялось, чтобы не сбрасывать фокус на каждый несвязанный ввод.
-        if (basePillsEl && (sel.stanceKey !== lastStanceKey || sel.gKey !== lastGKey)) {
-          lastStanceKey = sel.stanceKey;
-          lastGKey      = sel.gKey;
-          basePillsEl.innerHTML = pillsHtml("atk-base", computeBaseOptions(sel.stanceKey, sel.gKey), sel.baseKey);
-        }
-        // Смена Профиля меняет категорию оружия (у альт-профиля своя «голова»,
-        // см. categoryFor выше) — вместе с ней и доступность Стойки/Хвата, а
-        // через Тренировку — и Приёма. Приём вдобавок зависит от Базы (см. ниже).
-        const profChanged = sel.pIdx !== lastProfIdx;
-        if (stancePillsEl && profChanged) {
-          stancePillsEl.innerHTML = pillsHtml("atk-stance", computeStanceOptions(sel.pIdx), sel.stanceKey);
-        }
-        if (gripPillsEl && profChanged) {
-          gripPillsEl.innerHTML = pillsHtml("atk-grip", computeGripOptions(sel.pIdx), sel.gKey);
-        }
-        // Приём зависит от выбранной Базы (стр. 14, MELEE_MANEUVERS[*].bases) И
-        // от категории по Профилю — перерисовываем при смене любого из них.
-        if (maneuverPillsEl && (sel.baseKey !== lastBaseKey || profChanged)) {
-          maneuverPillsEl.innerHTML = pillsHtml("atk-maneuver", computeManeuverOptions(sel.baseKey, sel.pIdx), sel.maneuverKey);
-        }
-        lastBaseKey = sel.baseKey;
-        lastProfIdx = sel.pIdx;
-        if (sel.blocked) {
-          display.textContent = "ЗАБЛОКИРОВАНО";
-          display.style.color = "#8b0000";
-          if (breakdown) breakdown.innerHTML = "";
-          return;
-        }
-        if (f.autoFail) {
-          display.textContent = "ПРОВАЛ";
-          display.style.color = "#8b0000";
-          if (breakdown) breakdown.innerHTML = "";
-          return;
-        }
-        if (helplessAutoMelee || f.autoSuccess) {
-          display.textContent = "АВТО-УСПЕХ ×2";
-          display.style.color = "#ff6b6b";
-          if (breakdown) breakdown.innerHTML = "";
-          return;
-        }
-        // wdbc-53lh: один вызов thresholdParts даёт и итог, и построчную
-        // разбивку под ним — сумма списка равна показанному итогу по построению
-        // (thresholdOf выше — тот же total, просто без списка).
-        const { parts: bdParts, total } = thresholdParts(f);
-        display.textContent = total;
-        display.style.color = "";
-        if (breakdown) breakdown.innerHTML = breakdownHtml(bdParts);
-        // Блок ситуативных свёрнут по умолчанию, поэтому его сводка должна быть
-        // видна в заголовке — иначе авто-отметки (Усталость, Ослеплён) молча
-        // уходят в порог, и непонятно, откуда взялся модификатор.
-        if (f.sitPicked.length) {
-          const names = f.sitPicked.map(cb =>
-            (cb.closest?.("label")?.textContent ?? "").trim().replace(/\s+/g, " "));
-          const sign  = f.sitMods > 0 ? "+" : "";
-          hint.classList.add("is-active");
-          hint.textContent =
-            `— активно ${f.sitPicked.length}${f.sitMods ? ` (${sign}${f.sitMods})` : ""}: ${names.join(", ")}`;
-        } else {
-          hint.classList.remove("is-active");
-          hint.textContent = "— разверни, если нужны";
-        }
-      };
-
-      // Death Dance / Смертельный Танец (wdbc-sk8s) — кнопка живёт своим
-      // слушателем рядом с общим updateTotal: активна только при выбранной
-      // Базе «Натиск» и хватающих Очках Судьбы на эскалирующую цену (см.
-      // module/combat/death-dance.mjs). Добавляет +A.b в то же поле «Бонус
-      // урона», что игрок и так может вписать руками — не отдельный путь
-      // в attack.mjs.
-      const ddBtn    = form.querySelector("#atk-death-dance-btn");
-      const ddStatus = form.querySelector("#atk-death-dance-status");
-      if (ddBtn) {
-        const refreshDeathDance = () => {
-          const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
-          const isCharge   = sel.baseKey === "charge";
-          const cost       = deathDanceNextCost(actor);
-          const fate       = actor.system.fate?.value ?? 0;
-          const affordable = cost === 0 || fate >= cost;
-          ddBtn.disabled   = !isCharge || !affordable;
-          ddBtn.classList.toggle("av-pill-disabled", !isCharge || !affordable);
-          ddStatus.textContent = !isCharge
-            ? "— доступно только при Базе «Натиск»"
-            : cost === 0
-              ? "— бесплатно (первый раз в этом бою)"
-              : `— цена ${cost} Очков Судьбы${affordable ? "" : " (не хватает)"}`;
-        };
-        ddBtn.addEventListener("click", async ev => {
-          ev.preventDefault();
-          const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
-          if (sel.baseKey !== "charge") return;
-          const cost = deathDanceNextCost(actor);
-          const fate = actor.system.fate?.value ?? 0;
-          if (cost > 0) {
-            if (fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");
-            await actor.update({ "system.fate.value": fate - cost });
-          }
-          await markDeathDanceUsed(actor);
-          const agBonus  = Number(actor.system.characteristics?.ag?.bonus) || 0;
-          const dmgInput = form.querySelector("#atk-dmg-bonus");
-          dmgInput.value = (parseInt(dmgInput.value) || 0) + agBonus;
-          ui.notifications.info(`Смертельный Танец: +${agBonus} к Бонусу урона (Brutal Charge).`);
-          refreshDeathDance();
-          updateTotal();
-        });
-        form.addEventListener("change", refreshDeathDance);
-        form.addEventListener("input",  refreshDeathDance);
-        refreshDeathDance();
-      }
-
-      // Один слушатель на форму вместо списка селекторов: события всплывают,
-      // и новая галочка в разметке не требует правки этого места.
-      form.addEventListener("change", updateTotal);
-      form.addEventListener("input",  updateTotal);
-      // Сворачивание «Ситуативные модификаторы» — подгоняем высоту окна.
-      form.querySelector(".av-adv")
-          ?.addEventListener("toggle", () => dialog.setPosition({ height: "auto" }));
-      updateTotal();
-    }
-  }).then(res => res === false ? null : res);
+    techniqueOpts,
+    isMelee,
+    wp,
+    stance,
+    gripKey,
+    profIdx,
+    meleeBaseKey,
+    dyn0,
+    resolvedAttack,
+    rofModes,
+    ammoConds,
+    aimTargets,
+    mountPair,
+    oneVsHundred,
+    fanningActive,
+    autoHitAvailable,
+    fullAttackForced,
+    forcedDefenceReroll,
+    helplessAutoMelee,
+    badgesHtml,
+    breakdownHtml,
+    pillsHtml,
+    thresholdOf,
+    thresholdParts,
+    resolveSelectionSafe,
+    computeBaseOptions,
+    computeGripOptions,
+    computeManeuverOptions,
+    computeStanceOptions,
+  });
 }
 
 export async function showAttackDialogNoWeapon(actor, techDef) {
