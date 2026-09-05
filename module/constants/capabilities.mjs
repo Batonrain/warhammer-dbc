@@ -7080,6 +7080,46 @@ export const CAPABILITIES = {
     reader: ""
   },
 
+  // ── Выдаются ПРАВИЛОМ из кода, а не записью Конструктора (wdbc-m7we) ─────
+  // Шесть возможностей, которые работали и читались, но в реестре не значились:
+  // библиотека правил (module/rules/library/) кладёт их эффектом grantFlag
+  // напрямую, минуя проверку isKnownCapability. Побочный вред был не
+  // косметический — имени не было в списке Конструктора, и автор контента не
+  // мог выдать то же самое ДАННЫМИ. А ровно это механизм и обещает: см.
+  // комментарий в rules/flags.mjs про Арлекина, который «лечится как
+  // космодесантник» и должен получать healing.astartes из своих данных.
+  // Сторож против повторения — test/rules/capability-registry-complete.test.mjs.
+  "healing.astartes": {
+    label: "Физиология Астартес: при лечении всегда считается отдыхающим",
+    source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
+    reader: "module/sheets/tabs/healing.mjs — расчёт скорости лечения (isAstartes) и подсказка в панели"
+  },
+  "weapons.legion": {
+    label: "Сложение под легионное оружие: своё берёт без штрафа, чужое — со штрафом за тесную спусковую скобу",
+    source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
+    reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
+  },
+  "fate.save": {
+    label: "Пламенная вера: при трате Очка Судьбы бросок 1d10, на 1 очко не тратится",
+    source: "Происхождение «Мир-храм» (module/rules/library/homeworlds.mjs)",
+    reader: "module/rules/fate-save.mjs — FATE_SAVE_FLAG"
+  },
+  "attack.surpriseImmune": {
+    label: "Паранойя Выжившего: по нему не работает бонус атаки «Цель Врасплох»",
+    source: "Происхождение «Мир смерти» (module/rules/library/homeworlds.mjs)",
+    reader: "module/sheets/attack-dialog.mjs — галочка «Цель Врасплох» (immuneFlag)"
+  },
+  "assist.beyondCap": {
+    label: "Ну-ка вместе: помогает сверх обычного лимита помощников",
+    source: "Происхождение «Промышленный мир» (module/rules/library/homeworlds.mjs)",
+    reader: "module/rules/assists.mjs — ASSIST_BEYOND_CAP_FLAG"
+  },
+  "fear.faithInThePast": {
+    label: "Абсолютная вера в прошлое: Очко Судьбы за провал теста Страха",
+    source: "Происхождение «Мир-кладбище» (module/rules/library/homeworlds.mjs)",
+    reader: "module/combat/fear.mjs — FAITH_FLAG"
+  },
+
 };
 
 /** Известно ли имя. Неизвестное — почти наверняка опечатка в записи. */
