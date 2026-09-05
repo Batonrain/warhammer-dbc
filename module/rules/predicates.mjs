@@ -27,10 +27,50 @@ const norm = s => String(s ?? "").trim().toLowerCase();
 export function itemHasName(item, wanted) {
   const w = norm(wanted);
   if (!w) return false;
-  return norm(item?.name).split("/").some(part => {
+  return nameForms(item).includes(w);
+}
+
+/** Специализация в скобках на конце: «Resistance (Cold)» → «Resistance». */
+const SPEC_TAIL = /\s*\([^)]*\)\s*$/;
+
+/**
+ * Все формы имени предмета, по которым он опознаётся: каждая половина
+ * двуязычного имени, плюс та же половина без специализации в скобках.
+ *
+ * Разбор кэшируется НА САМОМ ПРЕДМЕТЕ (wdbc-uvap). Причина — не сама функция,
+ * а число вызовов: 57 Талантов опознаются по литеральному имени (wdbc-iadw),
+ * и каждый вопрос заново приводил имя каждого предмета к нижнему регистру,
+ * резал по «/» и гонял регулярку. В профиле пересчёта листа (node --cpu-prof,
+ * актор на 120 предметов) на это уходила треть всего времени.
+ *
+ * Ключ кэша — сам объект предмета, а годность проверяется по СЫРОМУ имени:
+ * переименовали предмет — разбор пересчитывается тут же. Иначе правка имени в
+ * компендиуме «применялась бы через раз», а это ровно тот класс молчаливых
+ * поломок, против которого весь wdbc-iadw.
+ *
+ * WeakMap, а не поле на предмете: предмет бывает и живым документом Foundry
+ * (чужое поле на нём — лишняя запись в данные), и сырым объектом из packs-src.
+ */
+const NAME_FORMS = new WeakMap();
+
+function nameForms(item) {
+  const raw = item?.name;
+  // Предмет без имени (или вовсе без предмета) не совпадает ни с чем — и в
+  // кэш его класть не за что.
+  if (typeof raw !== "string" || !raw) return [];
+
+  const hit = NAME_FORMS.get(item);
+  if (hit && hit.raw === raw) return hit.forms;
+
+  const forms = [];
+  for (const part of norm(raw).split("/")) {
     const p = part.trim();
-    return p === w || p.replace(/\s*\([^)]*\)\s*$/, "").trim() === w;
-  });
+    if (p && !forms.includes(p)) forms.push(p);
+    const bare = p.replace(SPEC_TAIL, "").trim();
+    if (bare && !forms.includes(bare)) forms.push(bare);
+  }
+  NAME_FORMS.set(item, { raw, forms });
+  return forms;
 }
 
 /**
