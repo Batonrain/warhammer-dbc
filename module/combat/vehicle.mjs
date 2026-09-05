@@ -18,7 +18,6 @@ import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { resolveAttackerToken, tokenDistance } from "./facing.mjs";
 import { apCostForActionType, canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
-import { applyMechBlocksForActor } from "../apps/mech-blocks-apply.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -393,8 +392,7 @@ export async function applyDamageToVehicle(actor, damageData) {
       const wb = pilot.system?.characteristics?.wp?.bonus ?? 0;
       const threshold = pilotDamageThreshold(wb);
       if (net >= threshold) {
-        const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(pilot, net);
-        if (woundsChanged) await applyMechBlocksForActor(pilot, { kind: "onWoundsLoss" });
+        const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(pilot, net);
         pilotLine = `
     <div class="dmg-critical-block">
       <b>Резонанс саркофага — ${esc(pilot.name)}</b>

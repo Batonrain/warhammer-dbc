@@ -13,7 +13,6 @@ import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
-import { applyMechBlocksForActor } from "../apps/mech-blocks-apply.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -523,14 +522,8 @@ export async function applyDamageToActor(actor, damageData) {
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 
-  const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } =
+  const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
-
-  // Живая врезка Condition "onWoundsLoss" (doombc-req-condition-effect-plan) —
-  // блоки предметов актора, что реагируют на понижение Ран, независимо от
-  // источника (тот же единый applyWoundLoss, что закрыл wdbc-aleb). Только
-  // когда Раны РЕАЛЬНО поменялись — netDamage:0 не должен считаться событием.
-  if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;

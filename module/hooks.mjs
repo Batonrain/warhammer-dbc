@@ -10,7 +10,6 @@ import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
-import { applyMechBlocksForActor } from "./apps/mech-blocks-apply.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -1248,8 +1247,7 @@ async function _applyWeaponPropEffect(ds) {
     const dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
     const dmg = dmgRoll.total;
-    const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
-    if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
+    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
     // Гиперрост (wdbc-utaw): этот же тик яда, если он от боеприпаса
     // «Гиперрост» именно — цель получает столько же аблативных Ран.
@@ -1343,9 +1341,8 @@ async function _executeSoulBurn(attacker, target) {
     const dRoll = await new Roll(`${net}d10`).evaluate(); allRolls.push(dRoll);
     const dmg   = dRoll.total;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
-    const { applied: woundsChanged, currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
+    const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
       await applyWoundLoss(target, dmg);
-    if (woundsChanged) await applyMechBlocksForActor(target, { kind: "onWoundsLoss" });
 
     const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
