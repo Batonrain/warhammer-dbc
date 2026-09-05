@@ -20,6 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { latestDbChange, packsChangedSince, readStamp, writeStamp } from "./pack-stamp.mjs";
+import { packFingerprint, allFingerprints } from "./pack-fingerprint.mjs";
 import { bookDocuments, linkIndexFrom } from "./book-docs.mjs";
 
 /**
@@ -46,9 +47,21 @@ async function build(src, dir) {
 // исходники, она потеряла бы молча. Отметку ставят обе команды — сборка и
 // извлечение (tools/pack-stamp.mjs); база новее отметки означает, что в Foundry
 // правили после последней синхронизации.
+//
+// Решает не дата файлов, а ОТПЕЧАТОК СОДЕРЖИМОГО (wdbc-1c10): classic-level
+// переписывает .ldb при открытии базы, не меняя ни одного документа, и по одной
+// дате «мир открывали» неотличимо от «в мире правили». Дата осталась быстрым
+// предфильтром — отпечаток считается только у паков, которые её не прошли, и
+// только они открываются на чтение.
 const FORCE = process.argv.includes("--force");
-const edited = packsChangedSince(readStamp(),
-  [...LIBRARY_PACKS, ...JOURNAL_PACKS].map(p => ({ name: p.name, mtimeMs: latestDbChange(p.dir) })));
+const stamp = readStamp();
+const stampWhen = typeof stamp === "number" ? stamp : stamp?.when;
+const suspects = [...LIBRARY_PACKS, ...JOURNAL_PACKS]
+  .map(p => ({ pack: p, mtimeMs: latestDbChange(p.dir) }))
+  .filter(x => !stampWhen || x.mtimeMs > stampWhen + 1000);
+const edited = packsChangedSince(stamp, await Promise.all(suspects.map(async x => ({
+  name: x.pack.name, mtimeMs: x.mtimeMs, fingerprint: await packFingerprint(abs(x.pack.dir))
+}))));
 
 if (edited.length && !FORCE) {
   console.error("В компендиумах есть правки, которых нет в исходниках:");
@@ -99,6 +112,6 @@ try {
 
 // Базы и исходники сведены — отметка сдвигается, иначе следующая же сборка
 // приняла бы собственную запись за чужую правку.
-writeStamp();
+await writeStamp(Date.now(), await allFingerprints([...LIBRARY_PACKS, ...JOURNAL_PACKS], abs));
 
 console.log(`Готово: ${LIBRARY_PACKS.length} библиотек, ${JOURNAL_PACKS.length} книг.`);

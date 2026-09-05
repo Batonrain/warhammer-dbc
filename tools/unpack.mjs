@@ -33,6 +33,7 @@ import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
 import { JOURNAL_PACKS, LIBRARY_PACKS, ROOT, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
 import { writeStamp } from "./pack-stamp.mjs";
+import { allFingerprints } from "./pack-fingerprint.mjs";
 import { uncommittedPacksSrc } from "./git-status.mjs";
 import { docIdsIn, docsMissingInDb } from "./pack-drift.mjs";
 
@@ -189,7 +190,7 @@ try {
 if (packFilter) {
   console.log("--pack задан: отметка синхронизации не сдвинута (сдвигает только полный запуск).");
 } else {
-  writeStamp();
+  await writeStamp(Date.now(), await allFingerprints([...libraryPacks, ...journalPacks], abs));
 }
 
 console.log(`Готово: ${done} из ${libraryPacks.length + journalPacks.length}.`);
