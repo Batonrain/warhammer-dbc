@@ -23,7 +23,7 @@ import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
-import { autoModsTotal } from "../../rules/roll-mods.mjs";
+import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
@@ -442,7 +442,14 @@ export async function executePsychotest(actor, item, opts) {
   const powerMod  = sys.testMod || 0; // собственный модификатор силы
   // Только autoMods — галочки приходят из диалога в opts.ruleMod, см.
   // комментарий в showManifestDialog выше.
-  const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: cast.key }).autoMods);
+  //
+  // Держим и подписи, а не одну сумму (wdbc-lnl3): в карточке стояло намертво
+  // «− 10 (😓 Усталость)», тогда как в Порог уходила фактическая сумма всех
+  // автоматических штрафов — несколько уровней Усталости, выключенная силовая
+  // броня, Перевес инвентаря. Порог считался верно, врала подпись, и понять
+  // по карточке, откуда взялось число, было нельзя.
+  const bodyMods = autoTestMods(actor, { kind: "power", power: item, char: cast.key });
+  const fatigue = bodyMods.total;
   // Складываем тем же счётчиком, что и атака: галочка «ополовинить штраф»
   // делит сумму, только если она в минус, и округляет в пользу игрока.
   const threshold = attackThreshold({
@@ -690,7 +697,7 @@ export async function executePsychotest(actor, item, opts) {
       `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${PATH.ePR ? ` (Путь +${PATH.ePR})` : ""}</div>`,
       aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
-      `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""} → Порог: <b>${threshold}</b></div>`,
+      `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>`,
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
       PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
       runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
