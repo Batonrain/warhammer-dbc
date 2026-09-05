@@ -104,6 +104,21 @@ describe("showReachableCells", () => {
     expect(Hooks.on).toHaveBeenCalledWith("canvasReady", expect.any(Function));
   });
 
+  // wdbc-87md: расчёт был верен всегда, а видно подсветку не было — бледная
+  // заливка без обводки тонула в текстуре пола. Заметность держится ровно на
+  // трёх числах, поэтому они закреплены тестом: молча уехавшая обратно alpha
+  // или потерянный border не сломают ни одного другого теста.
+  it("клетка красится зелёным, плотно и С ОБВОДКОЙ — иначе подсветки не видно на полу", () => {
+    showReachableCells(tokenAt(0, 0), 1);
+    for (const call of canvas.interface.grid.highlightPosition.mock.calls) {
+      const [layer, opts] = call;
+      expect(layer).toBe("wh-reach-cells");
+      expect(opts.color).toBe(0x4dffa6);
+      expect(opts.border).toBe(0x4dffa6);
+      expect(opts.alpha).toBeGreaterThanOrEqual(0.5);
+    }
+  });
+
   it("Gridless — не рисует ничего и возвращает false (вызывающий берёт круг)", () => {
     globalThis.canvas.grid = makeGrid({ gridless: true });
     const drawn = showReachableCells(tokenAt(0, 0), 5);
