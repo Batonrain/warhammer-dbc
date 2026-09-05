@@ -53,8 +53,16 @@ describe("isAddictionItem", () => {
   it("другой тип предмета — false", () => {
     expect(isAddictionItem({ ...makeItem({}), type: "trait" })).toBe(false);
   });
-  it("другое имя — false", () => {
-    expect(isAddictionItem(makeItem({ name: "Vampiric Dependency / Вампирическая Зависимость" }))).toBe(false);
+  it("ключ сильнее имени: переименованная Мутация всё1 равно опознаётся", () => {
+    // Раньше здесь ожидался false — опознание шло только по имени.
+    // Теперь решает ключ на самом предмете (wdbc-wdlw), и это и есть цель:
+    // переименование в компендиуме больше не выключает механику.
+    expect(isAddictionItem(makeItem({ name: "Совсем другое имя" }))).toBe(true);
+  });
+  it("ни ключа, ни имени — false", () => {
+    const other = makeItem({ name: "Vampiric Dependency / Вампирическая Зависимость" });
+    other.flags = {};
+    expect(isAddictionItem(other)).toBe(false);
   });
   it("нет предмета — false", () => {
     expect(isAddictionItem(null)).toBe(false);

@@ -22,6 +22,7 @@
 // Модуль чистый — Foundry не нужен, проверяется без стенда.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const NAME = "Tentacle";
@@ -31,7 +32,7 @@ const flagsOf = (item) => item?.flags?.[SYSTEM] || {};
 
 /** Это предмет-Мутация «Щупальце» (любая субмутация)? */
 export function isTentacleItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.tentacle", NAME);
 }
 
 /** Именно строка «9 — Изменчивое»: только у неё есть форма руки. */

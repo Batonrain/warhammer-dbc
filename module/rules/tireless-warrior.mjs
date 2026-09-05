@@ -15,13 +15,14 @@
 // Чистые функции, Foundry не нужен — проверяются test/rules/tireless-warrior.test.mjs.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { CHARACTERISTICS } from "../constants/characteristics.mjs";
 
 const NAME = "Tireless Warrior";
 
 /** Это Дар «Tireless Warrior / Неутомимый Воин»? */
 export function isTirelessWarriorItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.tirelessWarrior", NAME);
 }
 
 /** −1 Усталость, не ниже 0. */

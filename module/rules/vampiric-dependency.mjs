@@ -17,6 +17,7 @@
 // hand-of-death.mjs.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { SECONDS_PER_DAY } from "../constants/imperial-calendar.mjs";
 
 const NAME = "Vampiric Dependency";
@@ -26,7 +27,7 @@ export const VAMPIRIC_TIME_FLAG = "vampiricLastSatisfied";
 
 /** Это предмет-Мутация «Вампирическая Зависимость»? */
 export function isVampiricDependencyItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.vampiricDependency", NAME);
 }
 
 /** Момент (worldTime) последнего утоления, или null — ещё не отмечалось. */

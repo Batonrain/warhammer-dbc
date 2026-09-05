@@ -7121,6 +7121,62 @@ export const CAPABILITIES = {
   },
 
 
+  // ── Метка на САМОМ предмете (wdbc-wdlw) ─────────────────────────
+  // Полтора десятка мест спрашивают не актора, а КОНКРЕТНЫЙ предмет:
+  // «эта ли Мутация — Освежёванный». Возможность актора сюда не годится: она
+  // живёт на акторе и вернуть сам предмет не может, а половина этих мест
+  // читает у найденного предмета его же поля.
+  //
+  // Ключ тот же и из этого же реестра — одно имя, два читателя:
+  // itemHasKey(предмет, ключ) — «этот предмет и есть X» (rules/item-marker.mjs),
+  // hasRuleFlag(актор, ключ) — «у актора есть X». Это не совпадение, а одно
+  // утверждение с разных сторон.
+  "talent.bloodShield": {
+    label: "Талант «Кровавый Щит» — опознание самого предмета",
+    source: "Blood Shield / Кровавый Щит (packs-src/talents/Элитные_архетипы)",
+    reader: "module/rules/blood-shield.mjs isBloodShieldItem()"
+  },
+  "mutation.cancerousHealing": {
+    label: "Мутация «Раковое Исцеление» — опознание самого предмета",
+    source: "Cancerous Healing / Раковое Исцеление (packs-src/mutations/Дары_Богов)",
+    reader: "module/rules/cancerous-healing.mjs isCancerousHealingItem()"
+  },
+  "power.daemonblood": {
+    label: "Психосила «Кровь Демона» — опознание самого предмета",
+    source: "Daemonblood / Кровь Демонов (packs-src/psychic-powers/РЕДКИЕ_ДИСЦИПЛИНЫ)",
+    reader: "module/rules/daemonblood.mjs isDaemonbloodItem()"
+  },
+  "talent.eternalWar": {
+    label: "Талант «Вечная Война» — опознание самого предмета",
+    source: "The Eternal War / Вечная Война (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/rules/eternal-war.mjs isEternalWarItem()"
+  },
+  "mutation.flayed": {
+    label: "Мутация «Освежёванный» — опознание самого предмета",
+    source: "Flayed / Освежеванный (packs-src/mutations/Общие_мутации)",
+    reader: "module/rules/flayed.mjs isFlayedItem()"
+  },
+  "talent.kingsPlate": {
+    label: "Талант «Пластина Короля» — опознание самого предмета",
+    source: "King's Plate / Латы Короля (packs-src/talents/Элитные_архетипы)",
+    reader: "module/rules/kings-plate.mjs isKingsPlateItem()"
+  },
+  "mutation.plagueShepherd": {
+    label: "Мутация «Пастырь Чумы» — опознание самого предмета",
+    source: "Plague Shepherd / Чумной Пастырь (packs-src/mutations/Дары_Богов)",
+    reader: "module/rules/plague-shepherd.mjs isPlagueShepherdItem()"
+  },
+  "techPower.psalmUnseenFortress": {
+    label: "Техносила «Псалом Незримой Крепости» — опознание самого предмета",
+    source: "Psalm of the Unseen Fortress / Псалом Незримой Крепости (packs-src/tech-powers/ТЕХНОЧУДЕСА)",
+    reader: "module/rules/psalm-unseen-fortress.mjs isPsalmUnseenFortressItem()"
+  },
+  "mutation.tirelessWarrior": {
+    label: "Мутация «Неутомимый Воин» — опознание самого предмета",
+    source: "Tireless Warrior / Неутомимый Воин (packs-src/mutations/Дары_Богов)",
+    reader: "module/rules/tireless-warrior.mjs isTirelessWarriorItem()"
+  },
+
   // ── Вооружён определённым оружием (wdbc-h1bx) ───────────────────────────
   // Элитный архетип «Малеарий» требует быть вооружённым метеоритным молотом.
   // Код спрашивал у надетого оружия имя «Meteor Hammer» и не находил его

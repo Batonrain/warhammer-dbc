@@ -35,6 +35,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { itemIs } from "../rules/item-marker.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed } from "../rules/cooldown.mjs";
 import { psyniscienceNoticeBonus, noticeFlagKey, seeThroughFlagKey } from "../rules/illusion-detection.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -48,7 +49,7 @@ const MAINTAIN_FLAG = "illusionMaintained";
 
 /** Это предмет-Мутация «Иллюзия Нормальности»? */
 export function isIllusionOfNormalityItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.illusionOfNormality", NAME);
 }
 
 /** Поддерживается ли иллюзия сейчас — по умолчанию (флага ещё нет) да. */

@@ -14,6 +14,7 @@
 // cancerous-healing.mjs про клэмп #291, ровно та же причина.
 
 import { itemHasName, sizeOf } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "Flayed";
@@ -21,7 +22,7 @@ export const FLAYED_FLAG = "flayedAblative";
 
 /** Это предмет-Мутация «Освежёванный»? */
 export function isFlayedItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.flayed", NAME);
 }
 
 /**

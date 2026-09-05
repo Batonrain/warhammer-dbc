@@ -19,6 +19,7 @@
 // считает магнитуду гранта на killed-событие, тест на сохранение — за столом.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "Blood Shield";
@@ -26,7 +27,7 @@ export const BLOOD_SHIELD_FLAG = "bloodShieldAblative";
 
 /** Это Талант «Blood Shield / Кровавый Щит»? */
 export function isBloodShieldItem(item) {
-  return item?.type === "talent" && itemHasName(item, NAME);
+  return itemIs(item, "talent", "talent.bloodShield", NAME);
 }
 
 /** Демон-оружие с порабощённым (subdued) демоном — RAW-условие триггера. */

@@ -18,6 +18,7 @@
 // пробел, что у Muscle Mass).
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { woundLossAfter } from "./wounds.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
@@ -26,7 +27,7 @@ export const DAEMONBLOOD_FLAG = "daemonbloodAblative";
 
 /** Это предмет-психосила «Daemonblood / Кровь Демонов»? */
 export function isDaemonbloodItem(item) {
-  return item?.type === "psychicPower" && itemHasName(item, NAME);
+  return itemIs(item, "psychicPower", "power.daemonblood", NAME);
 }
 
 /**

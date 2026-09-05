@@ -14,6 +14,7 @@
 // доли ablativeMax грант Ракового Исцеления исчез бы на первом же рендере.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "Cancerous Healing";
@@ -21,7 +22,7 @@ export const CANCEROUS_HEALING_FLAG = "cancerousHealingAblative";
 
 /** Это предмет-Мутация «Раковое Исцеление»? */
 export function isCancerousHealingItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.cancerousHealing", NAME);
 }
 
 /**

@@ -13,6 +13,7 @@
 // в actor.items уже во что-то (система тестируется без запущенного Foundry).
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 
 // itemHasName сравнивает с КАЖДОЙ билингвальной половиной имени предмета по
 // отдельности (см. её докстринг) — здесь достаточно одной половины, не обеих
@@ -22,7 +23,7 @@ const FLAG = "warhammer-dbc";
 
 /** Это предмет-Мутация «Рука Смерти»? */
 export function isHandOfDeathItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.handOfDeath", NAME);
 }
 
 /**

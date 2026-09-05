@@ -42,6 +42,7 @@
 // принуждения целей.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 
 const NAME = "Icon of Blasphemy";
 const PSYKER_TRAIT = "Psyker";
@@ -49,7 +50,7 @@ const SKITARII_IMPLANT = "Skitarii War Plate";
 
 /** Это предмет-Мутация «Икона Богохульства»? */
 export function isIconOfBlasphemyItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.iconOfBlasphemy", NAME);
 }
 
 /** «Имперец» книги — Лоялист по Мировоззрению. */

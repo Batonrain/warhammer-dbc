@@ -31,6 +31,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { isItemActive } from "../apps/effects.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { itemHasName } from "./predicates.mjs";
 import { SECONDS_PER_DAY, formatDuration } from "../constants/imperial-calendar.mjs";
 
@@ -46,7 +47,7 @@ function itemGrantsCapability(item, key) {
 
 /** Это предмет-Мутация «Зависимость»? Поиск по имени — см. шапку файла. */
 export function isAddictionItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.addiction", NAME);
 }
 
 /** Предметы-носители Зависимости на акторе (обычно один, код не полагается на это). */
