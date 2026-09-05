@@ -2472,16 +2472,21 @@ function mechEffectData(entry, sourceItem, actor = null) {
  * либо переиграла бы его, либо отыграла бы сразу все альтернативы.
  */
 function collectMechEntries(groups) {
-  const durable = [], allIds = new Set();
+  const durable = [], allIds = new Set(), durableKindIds = new Set();
   const walk = (entries, operator) => {
     for (const e of entries || []) {
       allIds.add(e.id);
       if (e.kind === "group" && e.group) { walk(e.group.entries, e.group.operator); continue; }
+      // durableKindIds — записи, чей ТЕКУЩИЙ вид вообще умеет эффект, независимо
+      // от ветки И/ИЛИ и полноты заполнения. Отдельно от durable, потому что
+      // отвечает на другой вопрос: не «какой эффект собрать», а «вправе ли эта
+      // запись иметь эффект хоть какой-то» (см. syncMechanicsEffects, wdbc-cx1x).
+      if (DURABLE_MECH_KINDS.has(e.kind)) durableKindIds.add(e.id);
       if (operator !== "OR" && DURABLE_MECH_KINDS.has(e.kind) && isEntryComplete(e)) durable.push(e);
     }
   };
   for (const g of groups || []) walk(g.entries, g.operator);
-  return { durable, allIds };
+  return { durable, allIds, durableKindIds };
 }
 
 /**
@@ -2491,7 +2496,7 @@ function collectMechEntries(groups) {
  */
 export async function syncMechanicsEffects(item) {
   const actor = item.parent instanceof Actor ? item.parent : null;
-  const { durable, allIds } = collectMechEntries(getItemMechanics(item));
+  const { durable, allIds, durableKindIds } = collectMechEntries(getItemMechanics(item));
   // durableIds — ВСЕ И-ветвенные долговечные записи, даже те, чьё «Когда»
   // сейчас не выполнено: их эффект должен ИСЧЕЗНУТЬ (не просто не появиться),
   // а не остаться от прошлого раза, когда условие ещё выполнялось.
@@ -2507,9 +2512,18 @@ export async function syncMechanicsEffects(item) {
     if (!allIds.has(entryId)) { toDelete.push(fx.id); continue; }
     const want = wanted.get(entryId);
     if (!want) {
-      // И-ветвенная запись, чьё «Когда» сейчас не выполнено, — эффект следом
-      // за ней. ИЛИ-ветку/разовую запись (durableIds её не содержит) не трогаем.
-      if (durableIds.has(entryId)) toDelete.push(fx.id);
+      // Три случая на одну ветку, и они разные:
+      //  - И-ветвенная запись, чьё «Когда» сейчас не выполнено — эффект следом
+      //    за ней (durableIds);
+      //  - запись СМЕНИЛА вид на такой, что эффектов не заводит вовсе
+      //    (wdbc-cx1x) — эффект от прежнего вида уносим, откуда бы он ни
+      //    взялся: новая запись Конструктора всегда начинается видом
+      //    «Характеристика» и сразу создаёт эффект, так что переключение вида
+      //    на нужный оставляло молча работающий фантомный бонус навсегда;
+      //  - ИЛИ-ветвенная запись, чей вид ПО-ПРЕЖНЕМУ долговечен, — не трогаем:
+      //    выбор в ИЛИ делается один раз диалогом при выдаче, и созданный тогда
+      //    эффект есть единственный след этого выбора.
+      if (durableIds.has(entryId) || !durableKindIds.has(entryId)) toDelete.push(fx.id);
       continue;
     }
     seen.add(entryId);

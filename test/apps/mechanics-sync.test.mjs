@@ -234,3 +234,49 @@ describe("пересборка эффектов Конструктора: гей
     expect(item.effects[0].disabled).toBe(false);
   });
 });
+
+// ── wdbc-cx1x: смена вида записи оставляла сироту ───────────────────────────
+// Найдено живой проверкой wdbc-tl0f. Новая запись в Конструкторе всегда
+// начинается видом «Характеристика», и он СРАЗУ заводит ActiveEffect. Автор
+// переключает вид на нужный («Состояние», «Черта», «Код»…) — а эффект от
+// первого выбора оставался приклеен к предмету навсегда и молча продолжал
+// давать число. Не лечилось ни правкой записи, ни перезагрузкой страницы.
+describe("syncMechanicsEffects: запись сменила вид на недолговечный", () => {
+  const condEntry = (id) => ({ id, kind: "condition", condKey: "stunned", condMode: "apply", condLevel: "1" });
+
+  it("эффект от прежнего вида уносится вместе с ним", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(condEntry("e1"))],
+      fx: [fxFor("e1", "system.characteristics.s.bonusFx", 5, "Сила: + 5")]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(0);
+  });
+
+  it("то же для ИЛИ-ветки: вид уже не долговечный — эффекту не за чем держаться", async () => {
+    const item = itemDoc({
+      mechanics: [{ id: "g1", operator: "OR", entries: [condEntry("e1")] }],
+      fx: [fxFor("e1", "system.characteristics.s.bonusFx", 5, "Сила: + 5")]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(0);
+  });
+
+  it("регресс: эффект долговечной записи в ИЛИ-ветке НЕ трогается", async () => {
+    // Выбор в ИЛИ делается один раз диалогом при выдаче, и созданный тогда
+    // эффект — единственный след этого выбора; пересборка его сносить не вправе.
+    const entry = charEntry("e1", "s", 5);
+    const item = itemDoc({
+      mechanics: [{ id: "g1", operator: "OR", entries: [entry] }],
+      fx: [fxFor("e1", "system.characteristics.s.bonusFx", 5, describeMechEntry(entry))]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(1);
+  });
+});
