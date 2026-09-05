@@ -16,12 +16,11 @@
 // rerollChar независимо от того, задан ли charKey вообще.
 
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
 import path from "node:path";
 
 // Обход и чтение — общим кэшем (wdbc-lxyl): свой читал 6774 файла с диска
 // заново, из-за чего проверка не укладывалась в таймаут при полном прогоне.
-import { allPacksFiles, packFileText, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
+import { allPacksFiles, packFileText, PACKS_SRC, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 describe("предметы packs-src", () => {
   it("ни один testMod с modScope:char не резолвится в другую характеристику через charKey/rerollChar рассинхрон", () => {
@@ -34,9 +33,9 @@ describe("предметы packs-src", () => {
         for (const e of (g.entries ?? [])) {
           if (e?.kind !== "testMod" || e.modScope !== "char") continue;
           if (!e.rerollChar) {
-            offenders.push(`${path.relative(ROOT, f)} (${doc.name}): rerollChar пуст (charKey=${e.charKey ?? "—"})`);
+            offenders.push(`${path.relative(PACKS_SRC, f)} (${doc.name}): rerollChar пуст (charKey=${e.charKey ?? "—"})`);
           } else if (e.charKey && e.charKey !== e.rerollChar) {
-            offenders.push(`${path.relative(ROOT, f)} (${doc.name}): charKey=${e.charKey} rerollChar=${e.rerollChar}`);
+            offenders.push(`${path.relative(PACKS_SRC, f)} (${doc.name}): charKey=${e.charKey} rerollChar=${e.rerollChar}`);
           }
         }
       }
