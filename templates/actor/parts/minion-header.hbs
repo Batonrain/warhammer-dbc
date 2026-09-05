@@ -157,7 +157,7 @@
           <div class="fate-values fatigue-values">
             <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input{{#if system.fatigue.value}} fatigue-nonzero{{/if}}"/>
             <span>/</span>
-            <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/>
+            <input type="number" value="{{system.fatigue.max}}" readonly title="Порог Усталости — авторасчёт: T.b + W.b"/>
           </div>
           <div class="fatigue-step-btns">
             <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button>
