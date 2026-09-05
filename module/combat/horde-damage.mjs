@@ -13,6 +13,7 @@ import { hordeExtraHits, hordeMagnitudeLoss, needsMassDamageTest, massDamageThre
 import { itemHasName } from "../rules/predicates.mjs";
 import { lockPsychHealing } from "./horde-psych.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { testCardHtml, postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { DAMAGE_TYPES } from "../constants/items.mjs";
 
 /** Флаг накопленного за Раунд урона в Магнитуду — для теста W+Магнитуда. */
@@ -143,39 +144,39 @@ export async function addRoundDamage(horde, amount) {
 
 /** Карточка: потери Орды за Раунд перешли порог — нужен тест W+Магнитуда.
  *
- *  НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun) по двум
- *  причинам: это не карточка теста, а ЗАПРОС теста (броска и Порога в ней
- *  нет — только кнопка «пройди тест»), и её корневой div несёт свой класс
- *  `horde-mass-dmg`, от которого зависит оформление кнопки
- *  (styles/sheets/horde-sheet.css) — общий сборщик доп. класс корня пока не
- *  принимает.
+ *  НЕ карточка теста (wdbc-kuun): броска и Порога здесь нет, это ЗАПРОС теста
+ *  с кнопкой. Разметка общая (testCardHtml; корневой класс `horde-mass-dmg` —
+ *  по нему styles/sheets/horde-sheet.css рисует кнопку), а публикация осталась
+ *  своей и это не недоделка: postTestCard прогоняет данные через
+ *  ChatMessage.applyRollMode, и в приватном режиме броска требование «пройди
+ *  тест» пропало бы у стола, хотя нажимать кнопку нужно игроку.
  */
 async function postMassDamageWarning(horde, roundDamage, threshold) {
   const wp  = Number(horde.system?.characteristics?.wp?.total) || 0;
   const mag = Number(horde.system?.magnitude?.value) || 0;
   await ChatMessage.create({
     speaker: ChatMessage.getSpeaker({ actor: horde }),
-    content: `<div class="wh-roll-result horde-mass-dmg">
-      <div class="roll-header">${esc(horde.name)} — массивные потери</div>
-      <div class="roll-threshold">За Раунд потеряно <b>${roundDamage}</b> Магнитуды при пороге <b>${threshold}</b> (25% стартовой)</div>
-      <div class="roll-outcome"><span class="roll-failure">Требуется тест W+Магнитуда — провал стоит Провалы×3 Магнитуды</span></div>
-      <div class="roll-apply-dmg-section">
+    content: testCardHtml({
+      classes: "horde-mass-dmg",
+      title: `${esc(horde.name)} — массивные потери`,
+      threshold: `<div class="roll-threshold">За Раунд потеряно <b>${roundDamage}</b> Магнитуды при пороге <b>${threshold}</b> (25% стартовой)</div>`,
+      outcome: outcomeHtml(false, "Требуется тест W+Магнитуда — провал стоит Провалы×3 Магнитуды"),
+      sections: [`<div class="roll-apply-dmg-section">
         <button class="wh-horde-psych-btn" type="button"
           data-horde-id="${horde.id}" data-kind="massDamage">
           Тест W+Магнитуда: <b>${wp} + ${mag}</b>
         </button>
-      </div>
-    </div>`
+      </div>`]
+    })
   });
 }
 
 /** Карточка применённого урона по Орде.
  *
- *  НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun): это
- *  карточка УРОНА, а не теста (ни броска, ни Порога), её корневой div несёт
- *  класс `horde-dmg` (styles/sheets/horde-sheet.css рисует по нему чип
- *  «Орда»), а говорит она от лица «Системы», а не от актора — общий сборщик
- *  и того, и другого пока не умеет.
+ *  Это карточка УРОНА, а не теста (ни броска, ни Порога) — от общего сборщика
+ *  (wdbc-kuun) берутся разметка и публикация. Корневой класс `horde-dmg`
+ *  оставлен: по нему styles/sheets/horde-sheet.css рисует чип «Орда».
+ *  Говорит от лица «Системы», а не от Орды, поэтому speaker задан явно.
  */
 async function postHordeDamageCard(horde, d) {
   const dtLabel = DAMAGE_TYPES[d.damageType] || d.damageType || "";
@@ -184,27 +185,29 @@ async function postHordeDamageCard(horde, d) {
   if (d.talent.note) extraNotes.push(d.talent.note);
 
   const outcome = d.pierced
-    ? `<span class="roll-failure">Пробито: −<b>${d.magLoss}</b> Магнитуды${d.psychological ? " (психологический урон)" : ""}</span>`
-    : `<span class="roll-success">Поглощено (${d.rawDamage} ≤ ${d.absorption}) — толпа не заметила</span>`;
+    ? outcomeHtml(false, `Пробито: −<b>${d.magLoss}</b> Магнитуды${d.psychological ? " (психологический урон)" : ""}`)
+    : outcomeHtml(true, `Поглощено (${d.rawDamage} ≤ ${d.absorption}) — толпа не заметила`);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `<div class="wh-roll-result horde-dmg">
-      <div class="roll-header">Урон → ${esc(horde.name)} <span class="horde-chip">Орда</span></div>
-      <div class="roll-damage-meta">
+  await postTestCard(null, {
+    classes: "horde-dmg",
+    title: `Урон → ${esc(horde.name)} <span class="horde-chip">Орда</span>`,
+    lines: [
+      `<div class="roll-damage-meta">
         Источник: <b>${esc(d.attackerName || "?")}</b>${d.weaponName ? ` (${esc(d.weaponName)})` : ""}
         · Место: <b>Торс</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${d.rawDamage}</b>
-      </div>
-      <div class="dmg-absorption-detail">
+      </div>`,
+      `<div class="dmg-absorption-detail">
         Поглощение Орды: <b>${d.absorption}</b>
         <div class="dmg-tb-note">Пробившее попадание стоит 1 Магнитуды — величина урона роли не играет.</div>
-      </div>
-      <div class="roll-damage-section">
+      </div>`
+    ],
+    sections: [
+      `<div class="roll-damage-section">
         <div class="roll-section-head">Попаданий по Орде: <b>${d.hits}</b></div>
         ${extraNotes.length ? `<div class="roll-damage-meta">${extraNotes.map(esc).join(" · ")}</div>` : ""}
         <div class="roll-outcome">${outcome}</div>
         <div class="roll-damage-meta">Магнитуда: <b>${d.before}</b> → <b>${d.after}</b></div>
-      </div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+      </div>`
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }

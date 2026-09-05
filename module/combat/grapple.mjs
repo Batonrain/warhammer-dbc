@@ -495,28 +495,31 @@ async function _doSwing(actor) {
   await applyWoundLoss(partner, dmgTotal);
 
   // Блок «Приём: …» стоит ВЫШЕ шапки карточки — тот же вид, что у остальных
-  // Приёмов (combat/techniques.mjs, карточка атаки). Общий сборщик
-  // testCardHtml блока-предисловия пока не принимает, поэтому разметка здесь
-  // пока своя; публикация (говорящий + режим броска) уже общая.
-  await postTestCard(actor, `<div class="wh-roll-result">
-      <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Замахнуться (Дубина)</b>
+  // Приёмов (combat/techniques.mjs, карточка атаки); в общем сборщике под это
+  // есть prelude. Строка Порога здесь своего формата (слагаемые без скобок,
+  // как сложилось у Приёмов), поэтому передаётся готовой строкой.
+  await postTestCard(actor, {
+    prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Замахнуться (Дубина)</b>
         <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} используется как импровизированная Дубина против ${esc(target.name)} (стр. 27).${profile.tentacleBonus ? ` Щупальце: +${profile.tentacleBonus} учтено.` : ""}</div>
-      </div>
-      <div class="roll-header">${rollIcon("sword")}Замахнуться — удар Дубиной (${profile.diceCount}d10 I(Cr))</div>
-      <div class="roll-threshold">
+      </div>`,
+    icon: rollIcon("sword"),
+    title: `Замахнуться — удар Дубиной (${profile.diceCount}d10 I(Cr))`,
+    threshold: `<div class="roll-threshold">
         WS: <b>${ws}</b> база ${baseBon >= 0 ? "+" : ""}${baseBon}
         ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
         Дубина −20${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
         ${ruleMods.parts.map(p => ` ${p}`).join("")}
         → Порог: <b>${final}</b>
-      </div>
-      <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-      <div class="roll-outcome">${hit
-        ? `<span class="roll-success">Попадание по ${esc(target.name)} — ${deg} степеней</span>`
-        : `<span class="roll-failure">Промах мимо ${esc(target.name)} — ${deg} степеней</span>`}</div>
-      <div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как Дубина: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную), НЕЗАВИСИМО от исхода атаки.</div>
-      ${hit ? _targetDamageSection(dmgTotal, "Замахнуться (Борьба)", actor) : ""}
-    </div>`, { rolls: [roll, dmgRoll] });
+      </div>`,
+    rv: roll.total,
+    outcome: outcomeHtml(hit, hit
+      ? `Попадание по ${esc(target.name)} — ${deg} степеней`
+      : `Промах мимо ${esc(target.name)} — ${deg} степеней`),
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как Дубина: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную), НЕЗАВИСИМО от исхода атаки.</div>`,
+      hit ? _targetDamageSection(dmgTotal, "Замахнуться (Борьба)", actor) : ""
+    ]
+  }, { rolls: [roll, dmgRoll] });
 }
 
 /** Метнуть — бросок партнёра в третью цель под прицелом, тир по весу партнёра. */
@@ -584,22 +587,23 @@ async function _doThrow(actor) {
 
   if (!hit) {
     // Блок «Приём: …» выше шапки — см. комментарий в _doSwing.
-    await postTestCard(actor, `<div class="wh-roll-result">
-        <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
+    await postTestCard(actor, {
+      prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
           <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} метается в ${esc(target.name)} (стр. 28, тир «${TIER_LABEL[profile.tier]}»).</div>
-        </div>
-        <div class="roll-header">${rollIcon("sword")}Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}</div>
-        <div class="roll-threshold">
+        </div>`,
+      icon: rollIcon("sword"),
+      title: `Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}`,
+      threshold: `<div class="roll-threshold">
           ${profile.testLabel}: <b>${charVal}</b>
           ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
           ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
           ${throwMods.parts.map(p => ` ${p}`).join("")}
           → Порог: <b>${final}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-failure">Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней</span></div>
-        ${knockNote}
-      </div>`, { rolls: [roll] });
+        </div>`,
+      rv: roll.total,
+      outcome: outcomeHtml(false, `Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней`),
+      sections: [knockNote]
+    }, { rolls: [roll] });
     return;
   }
 
@@ -615,24 +619,27 @@ async function _doThrow(actor) {
   await applyWoundLoss(partner, dmgTotal);
 
   // Блок «Приём: …» выше шапки — см. комментарий в _doSwing.
-  await postTestCard(actor, `<div class="wh-roll-result">
-      <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
+  await postTestCard(actor, {
+    prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
         <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} метается в ${esc(target.name)} (стр. 28, тир «${TIER_LABEL[profile.tier]}»).${profile.tentacleBonus ? ` Щупальце: +${profile.tentacleBonus} учтено.` : ""}</div>
-      </div>
-      <div class="roll-header">${rollIcon("sword")}Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}</div>
-      <div class="roll-threshold">
+      </div>`,
+    icon: rollIcon("sword"),
+    title: `Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}`,
+    threshold: `<div class="roll-threshold">
         ${profile.testLabel}: <b>${charVal}</b>
         ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
         ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
         ${throwMods.parts.map(p => ` ${p}`).join("")}
         → Порог: <b>${final}</b>
-      </div>
-      <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-      <div class="roll-outcome"><span class="roll-success">Попадание — ${deg} степеней</span></div>
-      ${knockNote}
-      <div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как снаряд: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную).</div>
-      ${_targetDamageSection(dmgTotal, "Метнуть (Борьба)", actor)}
-    </div>`, { rolls: [roll, dmgRoll] });
+      </div>`,
+    rv: roll.total,
+    outcome: outcomeHtml(true, `Попадание — ${deg} степеней`),
+    sections: [
+      knockNote,
+      `<div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как снаряд: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную).</div>`,
+      _targetDamageSection(dmgTotal, "Метнуть (Борьба)", actor)
+    ]
+  }, { rolls: [roll, dmgRoll] });
 }
 
 /** Диалог «Борьба» — вызывается кнопкой из блока Состязаний вкладки БОЙ. */

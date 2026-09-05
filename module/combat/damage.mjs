@@ -210,7 +210,6 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
   const roll = await new Roll("1d100").evaluate();
   const rv   = roll.total;
 
-  const rollMode = game.settings.get("core", "rollMode");
 
   // ── Определяем результат (стр. 240) ───────────────────────────────────────
   // Бросок ≤ рейтинг → удар аннулирован. Рейтинг перегрузки (после «/») — это
@@ -249,38 +248,25 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
   }
 
   // ── Сообщение в чат ───────────────────────────────────────────────────────
-  // НЕ переведено на общий сборщик helpers/test-card.mjs (wdbc-kuun): карточка
-  // говорит от лица «Системы», а не от актора-цели (щит срабатывает при чужом
-  // попадании), а postTestCard всегда подставляет говорящего-актора.
-  const messageData = ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">
-          ${overloaded ? "Щит поглотил удар и перегрузился" : blocked ? "Щит поглотил удар" : "Бросок щита"}
-        </div>
-        <div class="roll-threshold">
-          ${shieldItem.name}
-        </div>
-        <div class="roll-outcome">
-          <span class="${resultClass}">${resultLabel}</span>
-        </div>
-        <div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
+  // Карточка говорит от лица «Системы», а не от актора-цели (щит срабатывает
+  // при чужом попадании) — для этого у общего сборщика (wdbc-kuun) есть
+  // speaker. Строка броска своя: число уже стоит в исходе.
+  await postTestCard(null, {
+    title: overloaded ? "Щит поглотил удар и перегрузился" : blocked ? "Щит поглотил удар" : "Бросок щита",
+    threshold: `<div class="roll-threshold">${esc(shieldItem.name)}</div>`,
+    outcome: `<span class="${resultClass}">${resultLabel}</span>`,
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
           Рейтинг: <b>${rating}</b>
           ${threshold > 0 ? `| Порог перегрузки: <b>${threshold}</b>` : ""}
           | Тип: <b>${typeLabel}</b>
           | Природа: <b>${natureLabel}</b>
-        </div>
-        ${overloaded ? `
-        <div class="roll-threshold" style="color:#c07000;">
+        </div>`,
+      overloaded ? `<div class="roll-threshold" style="color:#c07000;">
           Щит нуждается в обслуживании перед повторным использованием.
-        </div>` : ""}
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-
-  await ChatMessage.create(messageData);
+        </div>` : ""
+    ]
+  }, { rolls: [roll], speaker: { alias: "Система" } });
 
   return { blocked, overloaded };
 }
@@ -571,7 +557,6 @@ export async function applyDamageToActor(actor, damageData) {
   }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
-  const rollMode = game.settings.get("core", "rollMode");
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;
 
   const propNotes = [];
@@ -657,22 +642,22 @@ export async function applyDamageToActor(actor, damageData) {
       🎯 Пробило насквозь — найти следующую цель по линии огня (${throughShotReductionDie(1) ? `−${throughShotReductionDie(1)}` : "флэт −1"} к урону)
     </button>` : "";
 
-  // НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun): это
-  // главная карточка УРОНА — родня attack-card.mjs (своя большая разметка
-  // поглощения, Ран, крита и пилюль Крит. Эффекта), к тому же говорит от лица
-  // «Системы», а не от актора-цели.
-  const messageData = ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Урон → ${esc(actor.name)}</div>
-        <div class="roll-damage-meta">
+  // Карточка УРОНА, а не теста — родня attack-card.mjs (своя большая разметка
+  // поглощения, Ран, крита и пилюль Крит. Эффекта): от общего сборщика
+  // (wdbc-kuun) взяты разметка и публикация. Говорит от лица «Системы», а не
+  // от актора-цели, звука кубика нет.
+  await postTestCard(null, {
+    title: `Урон → ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Место: <b>${hitLocation}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>
-        </div>
-        ${armorBreakdown}
-        ${shieldFailNote}
-        <div class="roll-damage-section">
+        </div>`,
+      armorBreakdown,
+      shieldFailNote
+    ],
+    sections: [
+      `<div class="roll-damage-section">
           <div class="roll-section-head">Итог</div>
           ${netDamage > 0
             ? `<div class="roll-hit-line">
@@ -682,14 +667,12 @@ export async function applyDamageToActor(actor, damageData) {
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${totalAbsorption + incomingReduction})</span></div>`
           }
           <div class="roll-damage-meta">${woundsLine}</div>
-        </div>
-        ${critLine}
-        ${propEffectNotes.join("")}
-        ${throughShotBtn}
-      </div>`
-  }, rollMode);
-
-  await ChatMessage.create(messageData);
+        </div>`,
+      critLine,
+      propEffectNotes.join(""),
+      throughShotBtn
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }
 
 /**

@@ -272,28 +272,29 @@ async function _resolveVoidShieldHit(actor, shields, idx, damageData) {
   await actor.update({ "system.voidShields": newShields });
 
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
-  // НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun): это
-  // карточка УРОНА (ни броска, ни Порога), и говорит она от лица «Системы», а
-  // не от машины — postTestCard всегда подставляет говорящего-актора.
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("shield", "#6fe6ff")}Пустотный Щит — ${esc(actor.name)}</div>
-        <div class="roll-damage-meta">
+  // Карточка УРОНА, а не теста: ни броска, ни Порога — от общего сборщика
+  // (wdbc-kuun) здесь берутся разметка и публикация. Говорит от лица
+  // «Системы», а не от машины, поэтому speaker задан явно; звука кубика нет.
+  await postTestCard(null, {
+    icon: rollIcon("shield", "#6fe6ff"),
+    title: `Пустотный Щит — ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b> · Дистанция &gt;5м
-        </div>
-        <div class="dmg-absorption-detail">
+        </div>`,
+      `<div class="dmg-absorption-detail">
           Щит №${idx + 1}: АР <b>${shieldAP}</b>${penetration > 0 ? ` (30 − Проб. ${penetration})` : ""} → урон щиту <b>${dmgToShield}</b>
-        </div>
-        <div class="roll-damage-section">
+        </div>`
+    ],
+    sections: [
+      `<div class="roll-damage-section">
           <div class="roll-outcome"><span class="roll-success">Структура машины не затронута — щит принял удар целиком${
             collapsed ? ", лишний урон потерян" : ""}.</span></div>
           <div class="roll-damage-meta">Структура щита: <b>${curHP}</b> → <b>${newHP}</b>${collapsed ? " (щит схлопнулся)" : ""}</div>
-        </div>
-      </div>`
-  }, game.settings.get("core", "rollMode")));
+        </div>`
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }
 
 // ─── Применение урона по Структуре ────────────────────────────────────────────
@@ -419,29 +420,29 @@ export async function applyDamageToVehicle(actor, damageData) {
     </div>`;
   })() : "";
 
-  // НЕ переведена на общий сборщик (wdbc-kuun): карточка УРОНА (родня
-  // attack-card.mjs — своя большая разметка поглощения/крита), говорит от лица
-  // «Системы», а не от машины.
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Урон → ${esc(actor.name)}</div>
-        <div class="roll-damage-meta">
+  // Карточка УРОНА, а не теста (родня attack-card.mjs — своя большая разметка
+  // поглощения и крита): от общего сборщика (wdbc-kuun) взяты разметка и
+  // публикация, говорящий — «Система», а не машина, звука кубика нет.
+  await postTestCard(null, {
+    title: `Урон → ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Часть: <b>${vehicleLocation}</b> · Сторона: <b>${ARMOUR_SIDES[side] || side}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>
-        </div>
-        ${deflector > 0 ? `<div class="dmg-absorption-detail">
+        </div>`,
+      deflector > 0 ? `<div class="dmg-absorption-detail">
           ${tf.deflectorDaemonic ? "Колдовской" : "Технологический"} щит-дефлектор <b>1–${deflector}</b> · 1d100: <b>${deflectRoll}</b> →
           ${deflected ? `<span class="roll-success">ОТРАЖЕНО</span>` : `<span class="roll-failure">пробит</span>`}
           ${tf.deflectorDaemonic ? `<div class="dmg-tb-note">Атаки, игнорирующие Daemonic, игнорируют и этот щит.</div>` : ""}
-        </div>` : ""}
-        <div class="dmg-absorption-detail">
+        </div>` : "",
+      `<div class="dmg-absorption-detail">
           AP ${ARMOUR_SIDES[side] || side}: <b>${ap}</b>${penetration > 0 ? ` − Проб. <b>${penetration}</b> = <b>${effAP}</b>` : ""} = Поглощение <b>${effAP}</b>
           <div class="dmg-tb-note">У техники нет T.b — поглощает только броня.</div>
           ${mineAblative > 0 ? `<div class="dmg-tb-note">Аблативная Структура (против мин): +${mineAblative} (остаток после попадания: ${ablativeApAfterHit(mineAblative)})</div>` : ""}
-        </div>
-        <div class="roll-damage-section">
+        </div>`
+    ],
+    sections: [
+      `<div class="roll-damage-section">
           <div class="roll-section-head">Итог</div>
           ${net > 0
             ? `<div class="roll-hit-line"><span class="roll-hit-idx">В Структуру</span><span class="roll-hit-dmg roll-hit-dmg-bad">${net}</span></div>
@@ -449,11 +450,11 @@ export async function applyDamageToVehicle(actor, damageData) {
                  ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}</div>`
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${effAP})</span></div>`
           }
-        </div>
-        ${critLine}
-        ${pilotLine}
-      </div>`
-  }, game.settings.get("core", "rollMode")));
+        </div>`,
+      critLine,
+      pilotLine
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }
 
 /**
