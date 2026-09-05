@@ -13,6 +13,7 @@
 import { psychDamageFor, PSYCH_MULTIPLIERS, WEAKENED_WP_PENALTY, noRecoveryHours }
   from "../rules/horde-damage.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 /** Флаг: до какого worldTime Ослабленная Орда не лечит психологический урон. */
 export const PSYCH_LOCK_FLAG = "hordePsychLockUntil";
@@ -61,7 +62,16 @@ export async function rollHordePsychTest(horde, kind, { mod = 0 } = {}) {
     return { immune: true, psychDamage: 0 };
   }
 
-  const threshold = psychThreshold(horde, mod);
+  // Общий сбор модификаторов (wdbc-kok3). Бросает сама Орда, поэтому и
+  // правила берутся её: Черты Орды, её предметы, её Состояния. Психология
+  // Орды — Страх, Паника и Подавление — по книге тесты Морали, отсюда
+  // morale:true.
+  //
+  // Штрафы состояния тела на Орде безвредны по построению: у неё нет ни
+  // Усталости, ни шлема, ни инвентаря, и каждый из них честно возвращает 0,
+  // а не подставляет чужое число.
+  const ruleMods = collectTestMods(horde, { kind: "skill", char: "wp", morale: true });
+  const threshold = psychThreshold(horde, mod) + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const passed = rv <= threshold;
@@ -78,7 +88,7 @@ export async function rollHordePsychTest(horde, kind, { mod = 0 } = {}) {
     content: `<div class="wh-roll-result horde-psych">
       <div class="roll-header">${esc(horde.name)} — ${esc(meta.label)}</div>
       <div class="roll-threshold">Порог <b>${threshold}</b> = W ${horde.system?.characteristics?.wp?.total ?? 0}
-        + Магнитуда ${horde.system?.magnitude?.value ?? 0}${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${weakenedNote}</div>
+        + Магнитуда ${horde.system?.magnitude?.value ?? 0}${mod ? ` · мод. ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` · ${p}`).join("")}${weakenedNote}</div>
       <div class="roll-dice">Бросок: <b>${rv}</b></div>
       <div class="roll-outcome">${passed
         ? `<span class="roll-success">Успех (${deg} ${_degWord(deg)}) — строй держится</span>`

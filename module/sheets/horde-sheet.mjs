@@ -20,6 +20,7 @@ import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
 import { convertHordeToActor } from "../apps/horde-convert.mjs";
 import { openContextMenu } from "./context-menu.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const CHAR_ORDER = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel"];
 // Общие модификаторы атаки Орды (без Прицеливания и Избирательных — их у Орд нет).
@@ -389,7 +390,8 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     return this._rollTest({
       label:     meta?.label || key,
       threshold: (this.actor.system.characteristics?.[key]?.total ?? 0) + penalty,
-      prefix:    penalty ? `${meta?.abbr || key} (Ослаблена ${penalty})` : (meta?.abbr || key)
+      prefix:    penalty ? `${meta?.abbr || key} (Ослаблена ${penalty})` : (meta?.abbr || key),
+      ctx:       { kind: "skill", char: key }
     });
   }
 
@@ -399,7 +401,8 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     return this._rollTest({
       label:     def?.label || key,
       threshold: this.actor.system.skills?.[key]?.total ?? -20,
-      prefix:    "Навык"
+      prefix:    "Навык",
+      ctx:       { kind: "skill", skill: key, char: def?.char }
     });
   }
 
@@ -411,7 +414,8 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
     return this._rollTest({
       label:     `${def?.label || group}${entry.specialty ? ` (${entry.specialty})` : ""}`,
       threshold: entry.total ?? -20,
-      prefix:    "Навык"
+      prefix:    "Навык",
+      ctx:       { kind: "skill", group, specialty: entry.specialty, char: def?.char }
     });
   }
 
@@ -443,7 +447,17 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
   }
 
   /** Общая карточка теста d100 против порога. */
-  async _rollTest({ label, threshold, prefix }) {
+  /**
+   * @param {object} o
+   * @param {object} [o.ctx] контекст теста для реестра правил (wdbc-kok3):
+   *   бросает сама Орда, поэтому и правила берутся её — Черты Орды, её
+   *   предметы, её Состояния. Штрафы состояния тела на ней безвредны по
+   *   построению: ни Усталости, ни шлема, ни инвентаря у Орды нет, и каждый
+   *   честно возвращает 0.
+   */
+  async _rollTest({ label, threshold: baseThreshold, prefix, ctx = null }) {
+    const ruleMods = collectTestMods(this.actor, ctx ?? { kind: "skill" });
+    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, success = rv <= threshold;
     const deg = Math.floor(Math.abs(rv - threshold) / 10) + 1;
@@ -451,7 +465,7 @@ export class WarhammerHordeSheet extends WarhammerStructuralSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result">
         <div class="roll-header">${esc(this.actor.name)} — ${esc(label)}</div>
-        <div class="roll-threshold">${esc(prefix)}: Порог <b>${threshold}</b></div>
+        <div class="roll-threshold">${esc(prefix)}${ruleMods.parts.map(p => ` · ${p}`).join("")}: Порог <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${success
           ? `<span class="roll-success">Успех (${deg} ст.)</span>`

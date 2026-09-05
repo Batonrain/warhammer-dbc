@@ -26,6 +26,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
@@ -168,6 +169,29 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Приданный командир: его умения и характеристики заменяют показатели войск. */
+  /**
+   * Модификаторы реестра для теста Формирования (wdbc-kok3).
+   *
+   * Вопрос, из-за которого этот шаг откладывали: чьи правила тут считать.
+   * Ответ дал сам расчёт Порога (`_testValue` выше) — тест катится НАВЫКОМ
+   * КОМАНДИРА, если он назначен, и «Выучкой войск» самого Формирования,
+   * если нет. Значит и модификаторы берутся с того же: Черты и Усталость
+   * Командира влияют на его приказ, а безкомандирное Формирование отвечает
+   * за себя само.
+   *
+   * Область — навык из определения теста (`def.skill`), когда он там есть:
+   * «+10 к Командованию» обязано работать в приказе, который катится
+   * Командованием, и не работать в том, который катится Дисциплиной.
+   */
+  _formationTestMods(def = null) {
+    const cmd = this._commanderData();
+    const roller = (cmd.filled && cmd.actor) ? cmd.actor : this.actor;
+    const skill = def?.skill && SKILLS_DEF[def.skill] ? def.skill : undefined;
+    return collectTestMods(roller, {
+      kind: "skill", skill, char: skill ? SKILLS_DEF[skill].char : "wp"
+    });
+  }
+
   _commanderData() {
     const raw = this.actor.system.posts?.commander || {};
     const doc = this._resolve(raw.uuid);
@@ -559,9 +583,11 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Бросок приказа и применение его последствий к состоянию формирования. */
-  async _resolveOrder(key, threshold) {
+  async _resolveOrder(key, baseThreshold) {
     const o = ORDERS[key];
     const d = this.actor.system.derived || {};
+    const ruleMods = this._formationTestMods(o?.test);
+    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
     const deg = Math.abs(degreesOfSuccess(rv, threshold));
@@ -636,7 +662,7 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result fm-chat">
         <div class="roll-header">${rollIcon("shield", "#4dffa6")}Приказ: ${esc(o.label)} — ${esc(this.actor.name)}</div>
-        <div class="roll-threshold">${esc(this._testLabel(o.test))} → Порог <b>${threshold}</b></div>
+        <div class="roll-threshold">${esc(this._testLabel(o.test))}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${ok
           ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
@@ -1013,8 +1039,10 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Разрешение ключевого события с применением его эффектов к формированию. */
-  async _resolveKeyEvent(key, threshold) {
+  async _resolveKeyEvent(key, baseThreshold) {
     const e = KEY_EVENTS[key];
+    const ruleMods = this._formationTestMods(e?.test);
+    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
     const deg = Math.abs(degreesOfSuccess(rv, threshold));
@@ -1088,7 +1116,7 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result fm-chat">
         <div class="roll-header">${rollIcon("spark", "#4dffa6")}${esc(e.label)} — ${esc(this.actor.name)}</div>
-        <div class="roll-threshold">${esc(EVENT_TIERS[e.tier]?.label || "")} · ${esc(this._testLabel(e.test))} → Порог <b>${threshold}</b></div>
+        <div class="roll-threshold">${esc(EVENT_TIERS[e.tier]?.label || "")} · ${esc(this._testLabel(e.test))}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${ok
           ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
