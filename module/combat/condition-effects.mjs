@@ -78,10 +78,16 @@ export function hasConditionDuration(actor, key) {
 export async function applyConditionWithDuration(actor, key, { level = null, value = 0, unit = "" } = {}) {
   const def = CONDITIONS_DEF[key];
   if (!actor || !def) return false;
-  const fields = conditionApplyFields(key, level, actor);
+  const now = nowSnapshot();
+  const duration = durationDataFor(value, unit, now);
+  // Счётчик-зеркало заполняется СРАЗУ, а не ждёт первого подметания: игрок
+  // должен увидеть «2 раунда» в момент наложения, а не ноль до конца Хода.
+  // Явно заданная СИЛА (Кровотечение ур. 2) важнее зеркала — она про другое.
+  const shown = (level == null && duration && conditionLevelField(key))
+    ? remainingRounds(duration, now) : level;
+  const fields = conditionApplyFields(key, shown, actor);
   if (!Object.keys(fields).length) return false;   // иммунитет — молча и без иконки
 
-  const duration = durationDataFor(value, unit, nowSnapshot());
   if (duration) {
     const existing = conditionDurationEffect(actor, key);
     // Повторное наложение продлевает срок, а не плодит второй эффект: книга

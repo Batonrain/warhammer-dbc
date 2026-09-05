@@ -303,6 +303,9 @@ import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCa
 import { hasRuleFlag }                      from "../rules/flags.mjs";
 import { CONDITIONS, CONDITIONS_DEF, conditionLevelField } from "../constants/conditions.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
+import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
+  from "../rules/condition-duration.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
 import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
@@ -763,6 +766,10 @@ export function blankMechEntry(kind = "characteristic") {
     // condLevel читается только режимом "apply" и только у Состояний со
     // счётчиком; condMitigate — только режимом "mitigate".
     condKey: "", condMode: "apply", condLevel: "1", condMitigate: "ignore",
+    // Срок (wdbc-uqco) — отдельно от силы: у Состояния со счётчиком «уровни»
+    // condLevel означает СИЛУ, а сколько оно держится — вот это. Пустая
+    // единица = срока нет, Состояние висит до ручного снятия, как раньше.
+    condDurationValue: "1", condDurationUnit: "",
     // equipment
     equipMode: "direct", equipQty: 1,
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
@@ -966,9 +973,16 @@ export function describeMechEntry(entry) {
         const how = CONDITION_MITIGATE_LABELS[entry.condMitigate === "half" ? "half" : "ignore"];
         return `Состояние: «${label}» — ${how}`;
       }
-      const counter = conditionCounterLabel(entry.condKey);
-      return counter
-        ? `Состояние: наложить «${label}» (${counter}: ${entry.condLevel ?? "1"})`
+      const bits = [];
+      if (conditionHasLevelInput(entry.condKey)) {
+        bits.push(`${conditionCounterLabel(entry.condKey)}: ${entry.condLevel ?? "1"}`);
+      }
+      const term = conditionEntryTerm(entry);
+      const termLabel = durationLabel(term.value, term.unit)
+        || (term.unit ? `${term.value} ${term.unit}` : "");
+      if (termLabel) bits.push(`на ${termLabel}`);
+      return bits.length
+        ? `Состояние: наложить «${label}» (${bits.join(", ")})`
         : `Состояние: наложить «${label}»`;
     }
     case "fatigue": {
@@ -1125,7 +1139,12 @@ function isEntryComplete(e) {
       // Величина проверяется только там, где она вообще есть: у Состояния без
       // счётчика пустой condLevel — не незаполненность записи.
       if (!e.condKey || !CONDITIONS_DEF[e.condKey]) return false;
-      if ((e.condMode || "apply") === "apply" && conditionCounterLabel(e.condKey)) return formulaOk(e.condLevel);
+      if ((e.condMode || "apply") !== "apply") return true;
+      // Сила проверяется только там, где она вообще есть; срок — только если
+      // автор его задал (единица непуста). Ни то ни другое не обязательно:
+      // «Повален» без срока и без уровня — полноценная запись.
+      if (conditionHasLevelInput(e.condKey) && !formulaOk(e.condLevel)) return false;
+      if (e.condDurationUnit && !formulaOk(e.condDurationValue)) return false;
       return true;
     case "reroll":
       if (e.rerollScope === "char")  return !!e.rerollChar;
@@ -1726,16 +1745,22 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     // (wdbc-fejd) — вместе с проверкой иммунитета самого получателя: предмет,
     // накладывающий Оглушение на носителя, не должен обходить его же
     // иммунитет к Оглушению, откуда бы тот ни пришёл.
-    // Величина — формула mech-formula.mjs, как «Рейтинг» у Черты: «Оглушение
-    // на T.b раундов» книга пишет чаще, чем на фиксированное число. Минимум 1:
-    // наложенное Состояние со счётчиком 0 по общему договору единой точки
-    // считается СНЯТЫМ (conditionAdjustFields), то есть запись бы ничего не
-    // сделала, а автор ждал бы обратного.
-    const level = conditionLevelField(key)
-      ? Math.max(1, Math.round(mechFormulaTotalSafe(entry.condLevel ?? "1", mechRollData(actor))))
-      : null;
-    const fields = conditionApplyFields(key, level, actor);
-    if (Object.keys(fields).length) await actor.update(fields);
+    // Величина и срок — обе формулы mech-formula.mjs, как «Рейтинг» у Черты:
+    // «Оглушение на T.b раундов» книга пишет чаще, чем на фиксированное число.
+    // Минимум 1: наложенное Состояние со счётчиком 0 по общему договору единой
+    // точки считается СНЯТЫМ (conditionAdjustFields), то есть запись бы ничего
+    // не сделала, а автор ждал бы обратного.
+    const rd = mechRollData(actor);
+    const num = (f) => Math.max(1, Math.round(mechFormulaTotalSafe(f ?? "1", rd)));
+    const level = conditionHasLevelInput(key) ? num(entry.condLevel) : null;
+    const term = conditionEntryTerm(entry);
+    // Наложение со сроком идёт через combat/condition-effects.mjs: оно вешает
+    // штатную Duration на тот же эффект, что рисует иконку, и само спрашивает
+    // иммунитет через единую точку. Без срока — прежний путь, ничего лишнего
+    // не создаётся (новое живёт рядом со старым).
+    await applyConditionWithDuration(actor, key, {
+      level, value: term.unit ? num(term.value) : 0, unit: term.unit
+    });
     return;
   }
 
@@ -3039,11 +3064,23 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     const keyOpts = optHtml("", "— Состояние —", !ent.condKey)
       + Object.entries(CONDITIONS).map(([k, c]) => optHtml(k, c.label, ent.condKey === k)).join("");
     const modeOpts = CONDITION_MODES_UI.map(([v, l]) => optHtml(v, l, mode === v)).join("");
+    // Сила и срок — разные поля и разные вопросы (wdbc-uqco). Сила есть только
+    // у Состояний со счётчиком «уровни/штуки»: у «раундов» счётчик и ЕСТЬ срок,
+    // спрашивать его дважды незачем.
     const counter = conditionCounterLabel(ent.condKey);
-    const levelInput = (mode === "apply" && counter)
+    const levelInput = (mode === "apply" && conditionHasLevelInput(ent.condKey))
       ? `<input type="text" class="mech-cond-level" data-group-id="${groupId}" data-entry-id="${ent.id}"
                 value="${esc(ent.condLevel ?? "")}" placeholder="${esc(counter)}: 1 или t"
                 title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`
+      : "";
+    const term = conditionEntryTerm(ent);
+    const unitOpts = DURATION_UNITS.map(u => optHtml(u.key, u.label, term.unit === u.key)).join("");
+    const termHtml = mode === "apply"
+      ? `<input type="text" class="mech-cond-duration" data-group-id="${groupId}" data-entry-id="${ent.id}"
+                value="${esc(term.value ?? "")}" placeholder="срок: 2 или t" title="${esc(MECH_FORMULA_HINT)}"
+                ${term.unit ? "" : "disabled"} ${dis}/>
+         <select class="mech-cond-duration-unit" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+                 title="Раунды считает боевой трекер, минуты и часы — «Летоисчисление»">${unitOpts}</select>`
       : "";
     const mitigateSelect = mode === "mitigate"
       ? `<select class="mech-cond-mitigate" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
@@ -3052,7 +3089,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       : "";
     return `<select class="mech-cond-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
       <select class="mech-cond-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${keyOpts}</select>
-      ${levelInput}${mitigateSelect}`;
+      ${levelInput}${termHtml}${mitigateSelect}`;
   }
 
   if (ent.kind === "integralAttack") {

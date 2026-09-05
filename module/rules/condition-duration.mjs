@@ -27,6 +27,8 @@
 //  ровно противоположное тому, что делает истёкшая Duration.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { CONDITIONS } from "../constants/conditions.mjs";
+
 /** Длина боевого Раунда в секундах — умолчание Foundry (CONFIG.time.roundTime). */
 export const SECONDS_PER_ROUND = 6;
 
@@ -159,4 +161,34 @@ export function remainingLabel(duration, now = {}) {
   if (secs >= 3600)  return durationLabel(Math.ceil(secs / 3600), "hours");
   if (secs >= 60)    return durationLabel(Math.ceil(secs / 60), "minutes");
   return durationLabel(Math.ceil(secs / SECONDS_PER_ROUND), "rounds");
+}
+
+/**
+ * Срок, записанный автором в записи Конструктора kind:"condition".
+ *
+ * Обратная совместимость с записями, заведёнными ДО этого шага (wdbc-tl0f):
+ * там единицы не было вовсе, а у Состояния со счётчиком «раунды» величина
+ * condLevel и БЫЛА сроком — просто выразить его иначе как в Раундах было
+ * нечем. Такие записи читаются как «столько-то раундов», и их поведение не
+ * меняется ни на йоту.
+ *
+ * @returns {{value: (string|number), unit: string}} unit:"" — срока нет
+ */
+export function conditionEntryTerm(entry) {
+  const unit = String(entry?.condDurationUnit || "");
+  if (unit) return { value: entry.condDurationValue ?? "1", unit };
+  if (CONDITIONS[entry?.condKey]?.counter === "rounds" && entry?.condLevel != null && entry.condLevel !== "") {
+    return { value: entry.condLevel, unit: "rounds" };
+  }
+  return { value: 0, unit: "" };
+}
+
+/**
+ * Есть ли у Состояния СИЛА, которую автор задаёт отдельно от срока. Счётчик
+ * «раунды» — это срок, а не сила, и величину для него спрашивать незачем:
+ * её место занимает поле срока (см. conditionEntryTerm выше).
+ */
+export function conditionHasLevelInput(key) {
+  const counter = CONDITIONS[key]?.counter;
+  return counter === "level" || counter === "count";
 }

@@ -380,3 +380,57 @@ describe("processConditionTurnEnd: Радиация", () => {
     expect(captured.chat).toHaveLength(0);
   });
 });
+
+// ── wdbc-uqco: срок ведёт Duration, свой декремент ему не нужен ─────────────
+// Состояние, у которого срок задан штатной Duration эффекта, из цикла ручного
+// декремента выпадает целиком: иначе остаток уменьшался бы дважды за Ход —
+// один раз подметанием, другой руками.
+describe("processConditionTurnStart: Состояния со сроком Duration", () => {
+  /** Актор с эффектом-носителем срока: ровно то, что читает подметание. */
+  function actorWithDuration(key, duration, conditions) {
+    const actor = makeActor({ conditions });
+    const fx = {
+      statuses: [key], duration,
+      flags: { "warhammer-dbc": { conditionDuration: key } },
+      getFlag: (scope, k) => fx.flags?.[scope]?.[k],
+      async delete() { actor.effects = actor.effects.filter(e => e !== fx); }
+    };
+    actor.effects = [fx];
+    return actor;
+  }
+
+  beforeEach(() => {
+    globalThis.game.combat = { id: "c1", round: 5, turn: 0 };
+    globalThis.game.time = { worldTime: 0 };
+  });
+
+  it("не уменьшает счётчик руками — его уже пересчитало подметание", async () => {
+    // Наложено на Раунде 3 на 4 Раунда: на Раунде 5 осталось 2, не 1.
+    const actor = actorWithDuration("stunned", { rounds: 4, startRound: 3 },
+      { stunned: true, stunnedRounds: 4 });
+
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.stunnedRounds).toBe(2);
+    expect(captured.chat[0]?.content ?? "").not.toContain("Оглушение: <b>4</b>");
+  });
+
+  it("истёкший срок снимает эффект и говорит об этом в карточке", async () => {
+    const actor = actorWithDuration("stunned", { rounds: 2, startRound: 3 },
+      { stunned: true, stunnedRounds: 1 });
+
+    await processConditionTurnStart(actor);
+
+    expect(actor.effects).toEqual([]);
+    expect(captured.chat[0].content).toContain("Оглушение: срок вышел — снято");
+  });
+
+  it("Состояние БЕЗ эффекта-срока тикает руками, как и раньше", async () => {
+    const actor = actorWithDuration("stunned", { rounds: 9, startRound: 5 },
+      { stunned: true, stunnedRounds: 3, blinded: true, blindedRounds: 3 });
+
+    await processConditionTurnStart(actor);
+
+    expect(actor.system.conditions.blindedRounds).toBe(2);
+  });
+});

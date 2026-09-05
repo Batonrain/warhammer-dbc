@@ -91,6 +91,20 @@ describe("applyConditionWithDuration: со сроком", () => {
     expect(actor.system.conditions.stunnedRounds).toBe(2);
   });
 
+  it("счётчик-зеркало заполняется СРАЗУ, а не ждёт первого подметания", async () => {
+    // Без этого игрок в момент наложения видел бы «0 раундов» до конца Хода.
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "stunned", { value: 4, unit: "rounds" });
+    expect(actor.system.conditions.stunnedRounds).toBe(4);
+  });
+
+  it("явная СИЛА важнее зеркала — это про другое", async () => {
+    const actor = makeActor();
+    await applyConditionWithDuration(actor, "bleeding", { level: 2, value: 1, unit: "hours" });
+    expect(actor.system.conditions.bleedingLevel).toBe(2);
+    expect(actor.effects[0].duration.seconds).toBe(3600);
+  });
+
   it("срок в минутах привязывается к времени мира, а не к бою", async () => {
     const actor = makeActor();
     await applyConditionWithDuration(actor, "poisoned", { value: 1, unit: "minutes" });

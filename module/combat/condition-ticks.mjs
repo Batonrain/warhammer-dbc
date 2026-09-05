@@ -30,7 +30,12 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 // system.conditions.<key> (bool) + system.conditions.<field> (число). Из
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
-import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS } from "../constants/conditions.mjs";
+import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
+// Срок Состояния штатной Duration эффекта (wdbc-uqco). Состояние, у которого
+// срок задан, сюда не попадает вовсе: его считает Foundry, а истечение
+// подметается ниже. Свой декремент остаётся ровно для тех, кому срок
+// проставили старым способом — числом в поле, без эффекта.
+import { sweepConditionDurations, hasConditionDuration } from "./condition-effects.mjs";
 import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
 async function postConditionCard(actor, lines) {
@@ -82,6 +87,16 @@ export async function processConditionTurnStart(actor) {
   if (conds.shocked) await postShockRecoveryPrompt(actor);
   const updates = {};
   const lines = [];
+
+  // Сроки, заданные штатной Duration, истекают сами — здесь только подмести
+  // истёкшие и освежить видимый остаток. Гашение самого Состояния делает мост
+  // «лист ↔ токен» (см. condition-effects.mjs), поэтому строк «снято» ниже мы
+  // не дублируем — только называем, что кончилось.
+  const swept = await sweepConditionDurations(actor);
+  for (const key of swept.expired) {
+    lines.push(`<div class="roll-threshold">${CONDITIONS_DEF[key]?.label || key}: срок вышел — снято</div>`);
+  }
+
   for (const { key, field, label } of ROUND_CONDITIONS) {
     // Удушье (стр. 30-31, wdbc-r5o7.6) — особый случай, не общий приём этого
     // цикла: у Оглушения/Ослепления «0 = снято» верно (эффект кончился), а у
@@ -91,6 +106,9 @@ export async function processConditionTurnStart(actor) {
     // Горения в processConditionTurnEnd — своя ветка вместо общего цикла).
     if (key === "suffocating") continue;
     if (!conds[key]) continue;
+    // Срок ведёт Duration — свой декремент этому Состоянию не нужен и был бы
+    // двойным: остаток уже пересчитан подметанием выше.
+    if (hasConditionDuration(actor, key)) continue;
     const cur = Number(conds[field]) || 0;
     if (cur <= 0) continue;
     const next = cur - 1;

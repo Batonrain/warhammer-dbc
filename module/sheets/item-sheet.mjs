@@ -2213,6 +2213,20 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.condLevel = ev.currentTarget.value; saveMech(arr); }
     });
+    on(".mech-cond-duration", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condDurationValue = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-duration-unit", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      // Смена единицы включает/выключает поле величины срока рядом, поэтому
+      // сохраняем и даём листу перерисоваться — тот же каскад, что у режима.
+      e.condDurationUnit = ev.currentTarget.value;
+      saveMech(arr);
+    });
     on(".mech-cond-mitigate", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);

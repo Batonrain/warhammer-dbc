@@ -63,6 +63,7 @@ import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
+import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
@@ -1714,6 +1715,14 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM) return;
     for (const actor of game.actors ?? []) {
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
+      // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
+      // по той же причине, что временные выдачи Черт выше: они привязаны к
+      // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно
+      // это и открывает сроки, которые уже умеет виджет «Летоисчисление»:
+      // прокрутил время — Состояние снялось само. Сроки в РАУНДАХ здесь
+      // истечь не могут (у них своя привязка к бою) — подметание их и не
+      // тронет, они снимаются на смену Хода, в processConditionTurnStart.
+      await sweepConditionDurations(actor);
     }
   });
 
