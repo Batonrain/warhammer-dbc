@@ -30,6 +30,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "resplendentRaiment";
 
@@ -71,7 +72,9 @@ export async function applyResplendentRaiment(caster, casterToken, excludedIds =
   const lines = [];
   for (const tokenDoc of candidates) {
     const targetActor = tokenDoc.actor;
-    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 30;
+    // Сопротивляется ЦЕЛЬ — значит и её состояние считается (wdbc-1xtl).
+    const targetMods = collectTestMods(targetActor, { kind: "skill", char: "wp" });
+    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 30 + targetMods.total;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) { lines.push(`${esc(targetActor.name)}: устоял(а) (${roll.total} vs ${threshold})`); continue; }

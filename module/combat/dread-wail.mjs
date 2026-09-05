@@ -32,6 +32,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "dreadWail";
 const WEAPON_BUFF_FLAG = "dreadWailWeaponBuff";
@@ -132,7 +133,9 @@ export async function applyDreadWailWave(actor, casterToken, effectKey) {
   const lines = [];
   for (const tokenDoc of inRange) {
     const targetActor = tokenDoc.actor;
-    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 20;
+    // Сопротивляется ЦЕЛЬ — значит и её состояние считается (wdbc-1xtl).
+    const targetMods = collectTestMods(targetActor, { kind: "skill", char: "wp" });
+    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 20 + targetMods.total;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) { lines.push(`${esc(targetActor.name)}: устоял(а) (${roll.total} vs ${threshold})`); continue; }

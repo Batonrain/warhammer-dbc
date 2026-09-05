@@ -15,6 +15,7 @@ import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
 import { isBlindedActor } from "../rules/predicates.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -114,7 +115,11 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
 
 async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels) {
   const totalMod  = terrainMod + extraMod;
-  const threshold = ag + totalMod;
+  // Общий сбор модификаторов (wdbc-1xtl): Порог складывался из Ловкости,
+  // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,
+  // ни Черт. Диалога с галочками у броска нет, поэтому collectTestMods.
+  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag" });
+  const threshold = ag + totalMod + ruleMods.total;
 
   const roll   = await new Roll("1d100").evaluate();
   const rv     = roll.total;
