@@ -53,6 +53,9 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
  * исход, свои блоки.
  *
  * @param {object}   o
+ * @param {string}   [o.prelude]    блок ПЕРЕД шапкой: у приёмов Борьбы и карточек
+ *   урона там стоит предисловие («Приём: Замахнуться», чип Орды), и без него
+ *   их пришлось бы оставить со своей разметкой
  * @param {string}   o.icon         готовая разметка иконки (constants/roll-icons.mjs)
  * @param {string}   o.title        заголовок; имя актора дописывается сюда же вызывающим
  * @param {string}   [o.actorUuid]  для кнопок карточки, читающих владельца
@@ -69,11 +72,14 @@ export function thresholdLine({ prefix = "", label = "Порог", base = null, 
  * @param {string[]} [o.sections]   свои блоки после исхода (кнопки, таблицы)
  */
 export function testCardHtml({
-  icon = "", title = "", actorUuid = "", classes = "", threshold = "", lines = [],
+  prelude = "", icon = "", title = "", actorUuid = "", classes = "", threshold = "", lines = [],
   rv = null, dice = "", rerollNote = "", critLine = "", outcome = "", sections = []
 } = {}) {
   const parts = [
-    `<div class="roll-header">${icon}${title}</div>`,
+    prelude,
+    // Пустая шапка не рисуется: карточка без заголовка (предисловие уже всё
+    // сказало) иначе получала бы пустую полосу сверху.
+    (icon || title) ? `<div class="roll-header">${icon}${title}</div>` : "",
     threshold,
     ...(lines ?? []).filter(Boolean),
     rv == null ? "" : `<div class="roll-dice">Бросок: <b>${rv}</b></div>`,

@@ -114,3 +114,18 @@ describe("classes: своя вёрстка подсистемы не теряе�
     expect(testCardHtml({ title: "Обычная" })).toContain('<div class="wh-roll-result">');
   });
 });
+
+describe("prelude: блок перед шапкой", () => {
+  it("встаёт выше заголовка — там живёт «Приём: …» и чип Орды", () => {
+    const html = testCardHtml({ prelude: '<div class="roll-technique-block">Приём</div>', title: "Метнуть" });
+    expect(html.indexOf("roll-technique-block")).toBeLessThan(html.indexOf("roll-header"));
+  });
+
+  it("пустая шапка не рисуется вовсе — иначе пустая полоса сверху", () => {
+    expect(testCardHtml({ prelude: "<div>Только предисловие</div>" })).not.toContain("roll-header");
+  });
+
+  it("шапка с одной иконкой без заголовка рисуется", () => {
+    expect(testCardHtml({ icon: "<i></i>" })).toContain("roll-header");
+  });
+});

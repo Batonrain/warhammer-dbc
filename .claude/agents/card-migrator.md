@@ -20,7 +20,7 @@ skills: [dbc-workflow]
 
 `module/helpers/test-card.mjs` — прочитай его целиком перед работой. В нём:
 
-- `testCardHtml({icon, title, actorUuid, threshold, lines, rv, dice, rerollNote, critLine, outcome, sections})` — чистая функция разметки. Порядок строк фиксированный: шапка, Порог, свои строки, бросок, кубики, переброс, крит, исход, свои блоки. Пустые куски не рисуются вовсе;
+- `testCardHtml({prelude, icon, title, actorUuid, classes, threshold, lines, rv, dice, rerollNote, critLine, outcome, sections})` — чистая функция разметки. Порядок строк фиксированный: предисловие, шапка, Порог, свои строки, бросок, кубики, переброс, крит, исход, свои блоки. Пустые куски не рисуются вовсе, включая шапку без иконки и заголовка. `prelude` — блок ВЫШЕ шапки («Приём: Замахнуться», чип Орды); `classes` — доп. классы корня рядом с `wh-roll-result`, когда за них цепляется вёрстка подсистемы (`sq-chat`, `wh-daemon-card`, `horde-dmg`, `wv-tier-*`);
 - `thresholdLine({prefix, label, base, parts, threshold})` — строка Порога. `parts` — готовые подписи слагаемых. Пустой список = скобок нет;
 - `outcomeHtml(success, text)` — успех/провал одним классом;
 - `postTestCard(actor, card, {rolls, sound, flags, speaker, whisper})` — публикация:
