@@ -71,8 +71,15 @@
     repeating-linear-gradient(115deg, rgba(0,0,0,0.18) 0 2px, transparent 2px 4px),
     url("../../assets/overlays/dataslate-metal.jpg"),
     linear-gradient(135deg, #d8d8d8, #9a9a9a 25%, #5a5a5a 50%, #8f8f8f 75%, #cfcfcf) !important;
-  background-size: auto, 340px auto, auto;
-  background-repeat: repeat, repeat, no-repeat;
+  /* !important обязателен и здесь. Шорткард background выше стоит с
+     !important (защита от Monk's Little Details) — а он раскрывается во ВСЕ
+     лонгхенды разом, включая background-size:auto и background-repeat:repeat,
+     и тоже важными. Обычные лонгхенды ниже важные не перебивают, порядок тут
+     не решает: живая проверка 06.09.2026 показала computed background-size
+     «auto, auto, auto» — тайл 340px молча не применялся, текстура рисовалась
+     своим размером 260px. */
+  background-size: auto, 340px auto, auto !important;
+  background-repeat: repeat, repeat, no-repeat !important;
   box-shadow:
     0 14px 44px rgba(0,0,0,0.6),
     inset 0 0 24px rgba(0,0,0,0.5),
