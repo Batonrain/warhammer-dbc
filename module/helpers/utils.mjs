@@ -108,6 +108,44 @@ export function _buildAmmoModDetails(sys) {
   return lines.join("<br/>");
 }
 
+/**
+ * Короткая шапка длинной подписи: суть в ячейку, полный текст — в подсказку.
+ *
+ * Подписи возможностей (module/constants/capabilities.mjs) — текст книги
+ * целиком: медиана 120 символов, 98 штук длиннее 200, самая длинная 2266.
+ * Панель «ВОЗМОЖНОСТИ СЕЙЧАС» кладёт их в ячейку таблицы, и подпись на два
+ * абзаца ломает ровно то, ради чего панель заведена — быстрый взгляд «что у
+ * меня сейчас есть». Правило по этому листу: объяснение уходит в подсказку,
+ * место в ячейке остаётся под кнопки и цифры (тот же приём у подсказки слота
+ * субрасы, sheets/character-context.mjs).
+ *
+ * Режется по смысловому шву — «;» или тире, — потому что у этих подписей суть
+ * стоит первой, а после шва идут оговорки. Шва в пределах лимита нет — режем
+ * по границе слова; слово длиннее лимита — жёстко, иначе не влезет вовсе.
+ *
+ * @param {string} text  полная подпись
+ * @param {number} max   предел шапки в символах
+ * @returns {string} шапка (с многоточием, если резали) или пустая строка
+ */
+export function shortLabel(text, max = 70) {
+  const full = String(text ?? "").trim();
+  if (!full) return "";
+
+  // Шов ищем не с самого начала: подпись, начинающаяся с тире («— Не
+  // выбрано»), иначе дала бы пустую шапку.
+  const seam = full.slice(1).search(/\s*[;—]\s|\s+—\s+/);
+  if (seam >= 0 && seam + 1 <= max) {
+    const head = full.slice(0, seam + 1).trim();
+    if (head) return `${head}…`;
+  }
+
+  if (full.length <= max) return full;
+
+  const cut = full.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > 0 ? cut.slice(0, space) : cut).trimEnd()}…`;
+}
+
 export function _degWord(n) {
   if (n === 1) return "степень";
   if (n < 5)  return "степени";

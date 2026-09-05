@@ -39,7 +39,7 @@ const TALENT_TYPE = (() => {
 })();
 import { getModEffects }                             from "../combat/weapon-mods.mjs";
 import { qualityEffects }                            from "../constants/quality.mjs";
-import { _buildAmmoModString }                       from "../helpers/utils.mjs";
+import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs";
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
 import { isMirroredCondition, isMirrorClearable } from "../rules/condition-mirrors.mjs";
@@ -949,9 +949,15 @@ export function buildGetData(actor) {
         // строке появляется кнопка «Потратить» (тот же гейт ДО клика, что
         // wdbc-qjnk у ae-spend-btn — apSpendGate/capabilityCostGate).
         const cost = ruleFlagCost(actor, key, { kind: "skill" });
+        // Подпись в реестре — текст книги целиком (медиана 120 символов, есть
+        // и на 2266): в ячейке таблицы она ломает ровно то, ради чего панель
+        // заведена — быстрый взгляд «что у меня сейчас есть». В ячейку идёт
+        // шапка, полный текст — в подсказку (helpers/utils.mjs::shortLabel).
+        const label = CAPABILITIES[key]?.label || key;
         return {
           key,
-          label: CAPABILITIES[key]?.label || key,
+          label: shortLabel(label),
+          labelFull: label,
           sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
           // Есть ли код, который эту возможность читает. Ложь честнее молчания:
           // ГМ должен знать, что вот это система сама не посчитает.
@@ -975,7 +981,8 @@ export function buildGetData(actor) {
         if (!row) return null; // предмет сняли/запись удалили между рендерами
         return {
           key: `script-${sa.itemId}-${sa.entryId}`,
-          label: row.label,
+          label: shortLabel(row.label),
+          labelFull: row.label,
           sources: item?.name || sa.ruleLabel || "",
           auto: true,
           isScript: true,
