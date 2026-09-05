@@ -193,6 +193,10 @@ const DEVIATIONS = {
     "conditions.suffocating": false,
     "conditions.suffocatingRounds": 0,
     "conditions.gangrene": false,
+    // Галлюцинации (стр. 168 Арсенала, wdbc-r5o7.8) — counter:"rounds"
+    // заведён гораздо позже template.json (раньше decay не срабатывал
+    // вовсе, поле отсутствовало).
+    "conditions.hallucinogenicRounds": 0,
     "conditions.lostHands": false,
     "conditions.lostHandsCount": 0,
     "conditions.lostArms": false,

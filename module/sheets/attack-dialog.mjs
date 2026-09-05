@@ -31,6 +31,7 @@ import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../comb
 import { hasRecoilSuppressor } from "../combat/armor-mods.mjs";
 import { hasRuleFlag, ruleFlagLabels }        from "../rules/flags.mjs";
 import { isStunnedOrDazed, isBlindedActor }    from "../rules/predicates.mjs";
+import { isHallucinatingCannotAttack }         from "../combat/hallucinogenic.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
@@ -177,6 +178,11 @@ function readAttackForm(form, ammoConds) {
 }
 
 export async function showAttackDialog(actor, item, techniqueOpts = {}) {
+  // Галлюцинации, грань «Я маленький...» (стр. 168, wdbc-r5o7.8): «не может
+  // совершать Атаки» — жёсткий запрет, тот же приём, что Повален блокирует
+  // Натиск/Бег (movement-actions.mjs).
+  if (isHallucinatingCannotAttack(actor))
+    return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
   const sys     = item.system;
   // Стартовое значение «Доп. мод» — напр. Контратака (стр. 12, требует Талант
   // Counter Attack): «−10» уже вписаны, когда открывается окно, а не молча
@@ -1906,6 +1912,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 }
 
 export async function showAttackDialogNoWeapon(actor, techDef) {
+  if (isHallucinatingCannotAttack(actor))
+    return ui.notifications.warn("⚠️ Галлюцинации («Я маленький...») — не может совершать Атаки.");
   const ws       = actor.system.characteristics.ws?.total ?? 0;
   const stance   = actor.system.meleeStance || "standard";
   const stBon    = MELEE_STANCES[stance]?.wsBonus ?? 0;

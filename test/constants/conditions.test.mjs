@@ -51,7 +51,7 @@ describe("CONDITIONS: согласованность производных фо
 
   it("ROUND_TICK_CONDITIONS — только состояния со счётчиком rounds", () => {
     const keys = ROUND_TICK_CONDITIONS.map(c => c.key).sort();
-    expect(keys).toEqual(["blinded", "stunned", "suffocating"]);
+    expect(keys).toEqual(["blinded", "hallucinogenic", "stunned", "suffocating"]);
     for (const { key, field } of ROUND_TICK_CONDITIONS)
       expect(field).toBe(conditionLevelField(key));
   });

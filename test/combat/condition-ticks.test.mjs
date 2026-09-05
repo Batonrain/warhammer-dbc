@@ -64,6 +64,19 @@ describe("processConditionTurnStart: декремент длительности
     expect(captured.chat[0].content).toContain("снято");
   });
 
+  // Галлюцинации (стр. 168, wdbc-r5o7.8): раньше counter не был заведён в
+  // CONDITIONS_DEF вовсе — Раунды из теста T-10X тихо терялись, decay здесь
+  // не срабатывал. Теперь counter:"rounds" ставит его в общий цикл, тем же
+  // приёмом, что Оглушение/Ослепление (не Удушье — то особый случай выше).
+  it("Галлюцинации тикают и снимаются на 0, как Оглушение/Ослепление", async () => {
+    const actor = makeActor({ conditions: { hallucinogenic: true, hallucinogenicRounds: 1 } });
+    await processConditionTurnStart(actor);
+    expect(actor.system.conditions.hallucinogenicRounds).toBe(0);
+    expect(actor.system.conditions.hallucinogenic).toBe(false);
+    expect(captured.chat[0].content).toContain("Галлюцинации");
+    expect(captured.chat[0].content).toContain("снято");
+  });
+
   it("Ослепление и Удушье тикают независимо друг от друга и от Оглушения", async () => {
     const actor = makeActor({ conditions: {
       blinded: true, blindedRounds: 2,

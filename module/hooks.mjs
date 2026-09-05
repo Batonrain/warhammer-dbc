@@ -22,6 +22,7 @@ import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } f
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
 import { conditionLevelField } from "./constants/conditions.mjs";
 import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
+import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
@@ -1197,6 +1198,15 @@ async function _applyWeaponPropEffect(ds) {
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
     if (conditionsToApply.some(([cond]) => ENJOYMENT_CONDITIONS.has(cond))) {
       await maybeGrantEnjoymentPain(actor);
+    }
+    // Галлюцинации (Hallucinogenic (X), стр. 168, wdbc-r5o7.8): книга требует
+    // отдельный бросок 1d10 «природа галлюцинации» — тот же клик, что
+    // наложил Состояние выше, сразу решает, какая именно из десяти граней
+    // выпала (module/combat/hallucinogenic.mjs).
+    if (conditionsToApply.includes("hallucinogenic")) {
+      const { roll: hRoll, entry: hEntry } = await rollHallucinogenicEffect(actor);
+      allRolls.push(hRoll);
+      appliedNote += `<div class="roll-threshold">${rollIcon("warp","#c06fff")}Природа галлюцинации (1d10 <b>${hRoll.total}</b>): <b>${hEntry.title}</b></div><div class="roll-wprop-note">${hEntry.text}</div>`;
     }
   }
 

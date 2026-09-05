@@ -108,7 +108,7 @@ export const CONDITIONS = {
      <circle cx="8" cy="8" r="1.7" fill="#06140d"/><circle cx="8" cy="8" r="1.1"/></g>`
   },
   hallucinogenic: {
-    label: "Галлюцинации", icon: "🌀", color: "#c06fff",
+    label: "Галлюцинации", icon: "🌀", counter: "rounds", color: "#c06fff",
     desc: "Провал теста T (обычно −10×X) — галлюцинации на 1 Раунд за Провал, случайный эффект по таблице (может валить с ног, вгонять в Ступор и т.п.).",
     body: `<path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M8 8a1.1 1.1 0 1 1 1.2-1.1A3 3 0 1 1 6 9.9 4.9 4.9 0 1 1 11.6 5.6"/>`
   },

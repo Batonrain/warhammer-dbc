@@ -1848,3 +1848,45 @@ describe("Оглушение/Ступор (цель): wdbc-r5o7.3", () => {
     expect(captured.dialog.content).not.toContain("💫 Цель Оглушена/в Ступоре");
   });
 });
+
+// Галлюцинации, грань «Я маленький...» (стр. 168, wdbc-r5o7.8): «не может
+// совершать Атаки» — жёсткий запрет, тот же приём, что Повален блокирует
+// Натиск/Бег (movement-actions.mjs) — окно атаки не открывается вовсе.
+describe("Галлюцинации («Я маленький...») блокируют Атаку", () => {
+  const hallucinating9 = actor => { actor.getFlag = (_s, k) => k === "hallucinationEffect" ? 9 : undefined; return actor; };
+
+  it("showAttackDialog — предупреждение, окно не открывается", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const a = hallucinating9(attacker({ items: [sword], conditions: { hallucinogenic: true } }));
+    await showAttackDialog(a, sword);
+
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("Атак"))).toBe(true);
+  });
+
+  it("showAttackDialogNoWeapon — та же блокировка", async () => {
+    const a = hallucinating9(attacker({ conditions: { hallucinogenic: true } }));
+    await showAttackDialogNoWeapon(a, { label: "Пинок", wsBonus: -10, damage: "1d5-1+S.b", damageType: "impact", pen: 0 });
+
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("Атак"))).toBe(true);
+  });
+
+  it("грань 9 выпала, но Состояние уже снято — атака проходит как обычно", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const a = hallucinating9(attacker({ items: [sword], conditions: { hallucinogenic: false } }));
+    showAttackDialog(a, sword);
+
+    expect(captured.dialog).not.toBeNull();
+    expect(captured.warnings.some(w => w.includes("Атак"))).toBe(false);
+  });
+
+  it("Состояние стоит, но выпала другая грань — атака проходит как обычно", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const a = attacker({ items: [sword], conditions: { hallucinogenic: true } });
+    a.getFlag = (_s, k) => k === "hallucinationEffect" ? 1 : undefined;
+    showAttackDialog(a, sword);
+
+    expect(captured.dialog).not.toBeNull();
+  });
+});
