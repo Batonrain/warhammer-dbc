@@ -7,7 +7,8 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
-import { conditionApplyFields, conditionAdjustFields, addCondition }
+import { conditionApplyFields, conditionAdjustFields, addCondition,
+         conditionRemoveFields, removeCondition }
   from "../../module/sheets/tabs/conditions.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -138,5 +139,42 @@ describe("showAddConditionDialog: иммунитет", () => {
     expect(captured.dialog.content).toContain('data-condition="stunned"');
     expect(captured.dialog.content).toMatch(/data-condition="stunned"[^>]*disabled/);
     expect(captured.dialog.content).toContain("иммунитет");
+  });
+});
+
+// ── wdbc-5uae: метки проходят через ту же единую точку ──────────────────────
+
+describe("метки в единой точке наложения/снятия", () => {
+  it("снятие метки гасит ИСТОЧНИК, а не отражение", () => {
+    // Записанное в system.conditions производные данные вернут обратно на
+    // первом же пересчёте — снимать надо там, где метка на самом деле лежит.
+    expect(conditionRemoveFields("inRage")).toEqual({ "system.inRage": false });
+    expect(conditionRemoveFields("running")).toEqual({ [`flags.${FLAG}.-=running`]: null });
+  });
+
+  it("книжное Состояние снимается как снималось", () => {
+    expect(conditionRemoveFields("prone")).toEqual({ "system.conditions.prone": false });
+  });
+
+  it("метку нельзя наложить вручную — её включает своё действие", () => {
+    const actor = makeActor();
+    expect(conditionApplyFields("inRage", null, actor)).toEqual({});
+    expect(conditionAdjustFields(actor, "running", 1)).toEqual({});
+  });
+
+  it("removeCondition доводит снятие метки до актора", async () => {
+    const actor = makeActor();
+    await removeCondition(actor, "inRage");
+    expect(actor.updates).toEqual([{ "system.inRage": false }]);
+  });
+
+  it("диалог «Добавить состояние» меток не предлагает", () => {
+    const actor = makeActor();
+    showAddConditionDialog(actor);
+    for (const key of ["inRage", "running", "marked", "shieldUp"]) {
+      expect(captured.dialog.content).not.toContain(`data-condition="${key}"`);
+    }
+    // Книжные при этом на месте — фильтр не срезал лишнего.
+    expect(captured.dialog.content).toContain('data-condition="stunned"');
   });
 });

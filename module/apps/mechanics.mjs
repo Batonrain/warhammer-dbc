@@ -301,7 +301,7 @@ import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
-import { CONDITIONS, CONDITIONS_DEF, conditionLevelField } from "../constants/conditions.mjs";
+import { CONDITIONS, CONDITIONS_DEF, conditionLevelField, isConditionMark } from "../constants/conditions.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
 import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
@@ -3061,8 +3061,16 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // (величина — только у «Наложить» и только у Состояния со счётчиком,
     // выбор смягчения — только у «Смягчить штраф»).
     const mode = ent.condMode || "apply";
+    // МЕТКИ (mark:true, wdbc-5uae) предлагаются только в режиме «Снять» —
+    // единственном, который для них работает. Наложить их нельзя (ставит своё
+    // действие), иммунитет и смягчение к ним неприменимы (первый спрашивается
+    // в точке наложения, второго нет в книжном реестре штрафов). Показать
+    // пункт, который молча ничего не сделает, хуже, чем не показать.
+    const marksOk = mode === "remove";
     const keyOpts = optHtml("", "— Состояние —", !ent.condKey)
-      + Object.entries(CONDITIONS).map(([k, c]) => optHtml(k, c.label, ent.condKey === k)).join("");
+      + Object.entries(CONDITIONS)
+          .filter(([k]) => marksOk || !isConditionMark(k) || ent.condKey === k)
+          .map(([k, c]) => optHtml(k, c.label, ent.condKey === k)).join("");
     const modeOpts = CONDITION_MODES_UI.map(([v, l]) => optHtml(v, l, mode === v)).join("");
     // Сила и срок — разные поля и разные вопросы (wdbc-uqco). Сила есть только
     // у Состояний со счётчиком «уровни/штуки»: у «раундов» счётчик и ЕСТЬ срок,

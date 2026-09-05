@@ -23,6 +23,7 @@
 // Из реестра constants/conditions.mjs (wdbc-w88h), не из sheets/sheet-helpers.mjs
 // — этот слой (apps/, синхронизация с движком) не должен тянуть слой листа.
 import { CONDITIONS_DEF, CONDITION_ICONS, TOKEN_SYNC_EXCLUDE } from "../constants/conditions.mjs";
+import { isMirroredCondition, isMirrorClearable } from "../rules/condition-mirrors.mjs";
 // Единая точка наложения/снятия (wdbc-fejd) — держит флаг и счётчик в
 // согласии сама, вместо ручной сборки пары полей прямо здесь.
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
@@ -104,7 +105,18 @@ function registerConditionStatusSync() {
       // Поэтому эффект снимается обратно, и иконка гаснет сама.
       if (want && !Object.keys(fields).length) {
         await effect.delete();
-        ui.notifications?.info(`${actor.name}: иммунитет к «${CONDITIONS_DEF[key]?.label || key}» — Состояние не накладывается.`);
+        // Причин ровно две, и путать их нельзя: у метки (wdbc-5uae) её ставит
+        // своё действие, у книжного Состояния патч пуст из-за ИММУНИТЕТА.
+        const label = CONDITIONS_DEF[key]?.label || key;
+        ui.notifications?.info(isMirroredCondition(key)
+          ? `${actor.name}: «${label}» вручную не ставится — её включает своё действие.`
+          : `${actor.name}: иммунитет к «${label}» — Состояние не накладывается.`);
+        return;
+      }
+      // Снятие МЕТКИ, живущей на предмете («Щит поднят»): патчем актора её не
+      // достать, поэтому иконку возвращаем на место, а не делаем вид, что сняли.
+      if (!want && isMirroredCondition(key) && !isMirrorClearable(key)) {
+        ui.notifications?.info(`${actor.name}: «${CONDITIONS_DEF[key]?.label || key}» снимается своей кнопкой на вкладке СНАРЯЖЕНИЕ.`);
         return;
       }
       await actor.update(fields);

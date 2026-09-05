@@ -42,6 +42,7 @@ import { qualityEffects }                            from "../constants/quality.
 import { _buildAmmoModString }                       from "../helpers/utils.mjs";
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
+import { isMirroredCondition, isMirrorClearable } from "../rules/condition-mirrors.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -306,7 +307,16 @@ function _buildActiveConditions(system) {
       css:      def.css,
       hasLevel: def.hasLevel,
       level:    def.hasLevel && def.levelField ? (conds[def.levelField] ?? 0) : null,
-      desc:     def.desc || ""
+      desc:     def.desc || "",
+      // Показывать ли крестик «снять» (wdbc-5uae). Раньше единственное
+      // исключение — «Усталость» — было зашито прямо в шаблон условием по
+      // ключу; теперь шаблон спрашивает данные, и исключений стало три класса:
+      //  — «Усталость»: зеркало счётчика с вкладки ТЕЛО, крестик там бессилен;
+      //  — метка, живущая на ПРЕДМЕТЕ («Щит поднят»): снимается своей кнопкой,
+      //    патчем актора её не достать;
+      //  — всё остальное снимается как снималось.
+      // Крестик, который ничего не делает, хуже отсутствующего.
+      removable: key !== "fatigued" && (!isMirroredCondition(key) || isMirrorClearable(key))
     });
   }
 

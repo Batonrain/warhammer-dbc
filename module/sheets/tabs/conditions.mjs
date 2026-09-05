@@ -10,6 +10,8 @@
 // т.п.) с побочными эффектами при импорте (Hooks.once вне заглушки Foundry).
 import { CONDITIONS_DEF } from "../../constants/conditions.mjs";
 import { isImmuneToCondition } from "../../rules/condition-guards.mjs";
+import { isMirroredCondition, mirrorClearPatch, isMirrorClearable }
+  from "../../rules/condition-mirrors.mjs";
 import { isItemActive } from "../../apps/effects.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
@@ -221,6 +223,10 @@ export async function fatigueSleep(actor) {
 export function conditionApplyFields(key, level = null, actor = null) {
   const def = CONDITIONS_DEF[key];
   if (!def || key === "fatigued") return {};
+  // МЕТКА (wdbc-5uae) не хранится своим флагом, а зеркалит чужой источник:
+  // запись сюда затрут производные данные на первом же пересчёте. Метку ставит
+  // её собственное действие («объявить Бег», «войти в Ярость»), не эта функция.
+  if (isMirroredCondition(key)) return {};
   if (actor && isImmuneToCondition(actor, key, isItemActive)) return {};
   const fields = { [`system.conditions.${key}`]: true };
   if (def.hasLevel && def.levelField && level != null) {
@@ -232,6 +238,11 @@ export function conditionApplyFields(key, level = null, actor = null) {
 /** Патч на снятие — флаг false и (если у Состояния есть счётчик) счётчик 0. */
 export function conditionRemoveFields(key) {
   if (key === "fatigued") return {};
+  // Снятие МЕТКИ гасит её настоящий источник, а не отражение: записанное в
+  // system.conditions производные данные вернут обратно на первом пересчёте
+  // (wdbc-5uae). Патч собирает rules/condition-mirrors.mjs — он один знает,
+  // где какая метка живёт.
+  if (isMirroredCondition(key)) return mirrorClearPatch(key);
   const def    = CONDITIONS_DEF[key];
   const fields = { [`system.conditions.${key}`]: false };
   if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
@@ -248,7 +259,7 @@ export function conditionRemoveFields(key) {
  */
 export function conditionAdjustFields(actor, key, delta) {
   const def = CONDITIONS_DEF[key];
-  if (!def || key === "fatigued") return {};
+  if (!def || key === "fatigued" || isMirroredCondition(key)) return {};
   // Иммунитет гасит только НАКОПЛЕНИЕ: снять уровень (delta < 0) он мешать не
   // должен — иначе предмет-иммунитет запер бы Состояние, наложенное до него.
   if (delta > 0 && isImmuneToCondition(actor, key, isItemActive)) return {};
@@ -293,7 +304,10 @@ export function showAddConditionDialog(actor) {
     // «Усталость» — не ручное состояние: тег зеркалит system.fatigue.value
     // (см. actor.mjs prepareDerivedData), в диалоге добавления ей делать
     // нечего — включать нужно самой Усталостью на вкладке ТЕЛО.
-    .filter(([key]) => key !== "fatigued" && !conditions[key])
+    // Метки (wdbc-5uae) сюда не попадают по той же причине, что «Усталость»:
+    // их ставит своё действие, а не рука ГМа. Предложить и не сработать хуже,
+    // чем не предлагать.
+    .filter(([key]) => key !== "fatigued" && !isMirroredCondition(key) && !conditions[key])
     .map(([key, def]) => {
       // Состояние, к которому у актора ИММУНИТЕТ (wdbc-d9dp), показывается, но
       // не выбирается — с названной причиной. Спрятать его было бы хуже: ГМ
