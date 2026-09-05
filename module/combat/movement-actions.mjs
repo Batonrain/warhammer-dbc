@@ -34,6 +34,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { spendActionPoints, isEncounterActive } from "./action-economy.mjs";
 import { addFatigue, fatiguePenalty } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { showMovementRing, clearRangeRings } from "./range-rings.mjs";
 import { clearRangeCells } from "./range-cells.mjs";
@@ -387,15 +388,17 @@ export function showClimbDialog(actor) {
 
 export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
   let passed, deg, thresholdLine;
-  // Усталость (стр. 26): общий диалог теста Навыка её учитывает сама, эти
-  // кнопочные тесты — нет (wdbc-lfho). Athletics на S, Acrobatics на Ag.
-  const athFatigue  = fatiguePenalty(actor, "s");
-  const acroFatigue = fatiguePenalty(actor, "ag");
-  const fatigueNote = f => f ? ` − 10 (😓 Усталость)` : "";
+  // Штрафы состояния тела и снаряжения — общим сбором (wdbc-kuun): раньше
+  // здесь считалась одна Усталость вручную, а выключенная броня и Перевес
+  // инвентаря до Карабканья не доезжали, хотя это физическое действие.
+  // Athletics идёт по S, Acrobatics по Ag — сборы разные.
+  const athMods  = collectTestMods(actor, { kind: "skill", skill: "athletics",  char: "s"  });
+  const acroMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const modsNote = m => (m.parts.length ? ` (${m.parts.join(", ")})` : "");
 
   if (type === "sheer") {
-    const athThreshold  = ath - 10 + mod + athFatigue;
-    const acroThreshold = acro + mod + acroFatigue;
+    const athThreshold  = ath - 10 + mod + athMods.total;
+    const acroThreshold = acro + mod + acroMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
     const passA = rv <= athThreshold;
@@ -405,12 +408,12 @@ export async function _resolveClimb(actor, type, ath, acro, mod, spd) {
       ? Math.min(athThreshold - rv, acroThreshold - rv)
       : Math.max(rv - athThreshold, rv - acroThreshold);
     deg = Math.floor(Math.abs(worstDiff) / 10) + 1;
-    thresholdLine = `Athletics−10 <b>${athThreshold}</b>${fatigueNote(athFatigue)} и Acrobatics <b>${acroThreshold}</b>${fatigueNote(acroFatigue)} (оба) · 1d100: <b>${rv}</b>`;
+    thresholdLine = `Athletics−10 <b>${athThreshold}</b>${modsNote(athMods)} и Acrobatics <b>${acroThreshold}</b>${modsNote(acroMods)} (оба) · 1d100: <b>${rv}</b>`;
   } else {
-    const threshold = ath + mod + athFatigue;
+    const threshold = ath + mod + athMods.total;
     const r = await _d100(threshold);
     passed = r.passed; deg = r.deg;
-    thresholdLine = `Athletics <b>${ath}</b>${sgn(mod)}${fatigueNote(athFatigue)} → Порог <b>${threshold}</b> · 1d100: <b>${r.rv}</b>`;
+    thresholdLine = `Athletics <b>${ath}</b>${sgn(mod)}${modsNote(athMods)} → Порог <b>${threshold}</b> · 1d100: <b>${r.rv}</b>`;
   }
 
   const dist = (spd / 2 + deg).toFixed(1);
@@ -478,9 +481,9 @@ export function showJumpDialog(actor) {
 }
 
 export async function _resolveJump(actor, type, acro, runup, mod, sb) {
-  // Усталость (стр. 26), тот же пробел, что у Карабканья выше (wdbc-lfho).
-  const fatigue = fatiguePenalty(actor, "ag");
-  const threshold = acro + runup + mod + fatigue;
+  // Штрафы состояния тела — общим сбором, как у Карабканья выше (wdbc-kuun).
+  const bodyMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const threshold = acro + runup + mod + bodyMods.total;
   const { rv, passed, deg } = await _d100(threshold);
   const f = JUMP_FORMULAS[type];
   const dist = passed ? f.dist(sb, deg).toFixed(1) : 0;
@@ -490,7 +493,7 @@ export async function _resolveJump(actor, type, acro, runup, mod, sb) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#b0a080")}Прыжок — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Acrobatics <b>${acro}</b>${runup ? ` + ${runup} (разбег)` : ""}${sgn(mod)}${fatigue ? ` − 10 (😓 Усталость)` : ""} → Порог <b>${threshold}</b> · 1d100: <b>${rv}</b></div>
+    <div class="roll-threshold">Acrobatics <b>${acro}</b>${runup ? ` + ${runup} (разбег)` : ""}${sgn(mod)}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог <b>${threshold}</b> · 1d100: <b>${rv}</b></div>
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }
@@ -529,9 +532,9 @@ export function showSwimDialog(actor) {
 }
 
 export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
-  // Усталость (стр. 26), тот же пробел, что у Карабканья/Прыжка (wdbc-lfho).
-  const fatigue = fatiguePenalty(actor, "s");
-  const threshold = ath + (heavy ? -30 : 0) + mod + fatigue;
+  // Штрафы состояния тела — общим сбором, как у Карабканья/Прыжка (wdbc-kuun).
+  const bodyMods = collectTestMods(actor, { kind: "skill", skill: "athletics", char: "s" });
+  const threshold = ath + (heavy ? -30 : 0) + mod + bodyMods.total;
   const r = ext ? await _hourlyTest(actor, { threshold, slow: false })
                 : { ...(await _d100(threshold)), effThreshold: threshold, streak: 0 };
   const { rv, passed, deg, effThreshold, streak } = r;
@@ -542,7 +545,7 @@ export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("run","#6fe6ff")}Плавание — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Athletics <b>${ath}</b>${heavy ? " − 30 (тяж.)" : ""}${sgn(mod)}${fatigue ? ` − 10 (😓 Усталость)` : ""}${streak ? ` − ${streak * 10} (кумулятив)` : ""} → Порог <b>${effThreshold}</b> · 1d100: <b>${rv}</b></div>
+    <div class="roll-threshold">Athletics <b>${ath}</b>${heavy ? " − 30 (тяж.)" : ""}${sgn(mod)}${bodyMods.parts.map(p => ` ${p}`).join("")}${streak ? ` − ${streak * 10} (кумулятив)` : ""} → Порог <b>${effThreshold}</b> · 1d100: <b>${rv}</b></div>
     <div class="roll-outcome">${outcome}</div>
   </div>`);
 }

@@ -43,10 +43,9 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { weaponHandsRequired, handsOccupied } from "../rules/hands.mjs";
 import { isFusedByHandOfDeath } from "../rules/hand-of-death.mjs";
 import { CAPABILITIES } from "../constants/capabilities.mjs";
-import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
-import { fatiguePenalty }                     from "./tabs/conditions.mjs";
 import { diceModeHtml, mergeReroll } from "../rules/test-kind-widget.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { spendActionPoints, apCostForActionType, spendReaction } from "../combat/action-economy.mjs";
@@ -1927,7 +1926,14 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
   if (fullAttackForced) await markRoundCapabilityUsed(actor, FULL_ATTACK_CAPABILITY);
   const meleeBaseKey = fullAttackForced ? "fullatk" : (actor.system.meleeBase || "standard");
   const baseBon  = MELEE_BASES[meleeBaseKey]?.wsBonus ?? 0;
-  const fatigue  = fatiguePenalty(actor, "ws");
+  // Штрафы состояния тела — из конвейера (wdbc-kuun): раньше считалась одна
+  // Усталость, а выключенная силовая броня и Перевес инвентаря до приёма без
+  // оружия не доезжали, хотя это физическое действие.
+  //
+  // autoTestMods, а не collectTestMods: у диалога атаки галочки правил свои
+  // (ruleRollModsHtml там же), и общий сбор сложил бы отмеченную второй раз.
+  const bodyMods = autoTestMods(actor, { kind: "attack", isMelee: true, char: "ws" });
+  const fatigue  = bodyMods.total;
   // WS уже включает мод препаратов (см. prepareDerivedData)
   const final    = ws + techDef.wsBonus + baseBon + stBon + fatigue;
 

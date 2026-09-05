@@ -192,3 +192,38 @@ describe("collectTestMods: общий сбор для мест без диало
     expect(got.parts).toEqual([]);
   });
 });
+
+// ── Два сборщика, и путать их нельзя (wdbc-kuun) ──────────────────────────
+//
+// collectTestMods — для мест БЕЗ диалога: складывает и автоматические штрафы,
+// и галочки правил, потому что спрашивать игрока негде. autoTestMods — для
+// мест, где диалог с галочками уже есть (тест Страха, психотест): там галочки
+// приезжают отдельным числом из формы, и общий сбор сложил бы отмеченную
+// галочку ВТОРОЙ раз. Задвоение видно только за столом, поэтому проверяется
+// здесь.
+describe("collectTestMods и autoTestMods различают галочки", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  const withRule = () => registerRuleSource("испытание", () => [
+    { id: "черта", label: "Черта", effects: [{ kind: "rollBonus", target: "all", value: 10 }] }
+  ]);
+
+  it("collectTestMods берёт и галочку, и автоштраф", async () => {
+    const { collectTestMods } = await import("../../module/rules/roll-mods.mjs");
+    withRule();
+    const got = collectTestMods(actor({ fatigue: { value: 1 } }), { kind: "skill", char: "ag" });
+    expect(got.total).toBe(0);                       // +10 Черта, −10 Усталость
+  });
+
+  it("autoTestMods галочку НЕ берёт — её принесёт диалог", async () => {
+    const { autoTestMods } = await import("../../module/rules/roll-mods.mjs");
+    withRule();
+    const got = autoTestMods(actor({ fatigue: { value: 1 } }), { kind: "skill", char: "ag" });
+    expect(got.total).toBe(-10);                     // только Усталость
+    expect(got.parts).toEqual(["😓 Усталость -10"]);
+  });
+});

@@ -13,7 +13,7 @@ import { isRuleUsageUsed }                         from "../apps/game-session.mj
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
-import { collectTestMods } from "../rules/roll-mods.mjs";
+import { autoTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
@@ -49,12 +49,14 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
   // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
   const tk = opts.tk || {};
-  // Все модификаторы, которые система знает про этот тест (wdbc-ct65.1).
-  // Раньше здесь руками стояла одна Усталость, а «+10 ко всем тестам Воли» с
-  // Черты или Таланта в тест Страха не попадало вовсе — он шёл мимо реестра.
-  // Тест Страха — тест Морали по книге, отсюда morale:true (та же область,
-  // что читает resolveTest ниже при разборе исхода).
-  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp", morale: true });
+  // Штрафы состояния тела (Усталость и прочее) — из конвейера. Тест Страха
+  // это тест Морали по книге, отсюда morale:true (та же область, что читает
+  // resolveTest ниже при разборе исхода).
+  //
+  // Именно autoMods, а НЕ collectTestMods: галочки правил у Страха уже свои —
+  // их показывает диалог (sheets/tabs/disorders.mjs::openFearDialog) и
+  // складывает в `mod`. Общий сбор добавил бы отмеченную галочку второй раз.
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: "wp", morale: true });
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
@@ -137,10 +139,10 @@ export async function createTraumaItem(actor, row) {
 /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона. */
 export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   const wp   = actor.system.characteristics.wp?.total ?? 0;
-  // Тот же общий сбор, что у теста Страха выше (wdbc-ct65.1). Ментальная
-  // Травма — не тест Морали по книге (в отличие от Страха и выхода из Шока),
-  // поэтому morale здесь не ставится: «+10 к тестам Морали» сюда не относится.
-  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  // Тот же autoMods, что у теста Страха выше, и по той же причине: галочки
+  // приходят из диалога в `mod`. Ментальная Травма — не тест Морали по книге
+  // (в отличие от Страха и выхода из Шока), поэтому morale здесь не ставится.
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: "wp" });
   const baseEff = wp + mod + (tk.difficulty || 0) + ruleMods.total;
 
   const reroll = tk.reroll || null;

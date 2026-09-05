@@ -23,7 +23,8 @@ import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
-import { fatiguePenalty } from "./conditions.mjs";
+import { autoModsTotal } from "../../rules/roll-mods.mjs";
+import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 
 /**
@@ -114,7 +115,14 @@ export function showManifestDialog(actor, item) {
                      wp: actor.system.characteristics?.wp?.bonus ?? 0 };
   const powerMod = Number(sys.testMod) || 0;
   const variantMods = variants.map(v => Number(v.testMod) || 0);
-  const fatigue = fatiguePenalty(actor, cast.key);
+  // Штрафы состояния тела — из конвейера (wdbc-kuun): область "power", как и
+  // у прочих правил манифестации. Раньше считалась одна Усталость, а
+  // выключенная броня и Перевес в психотест не доезжали.
+  //
+  // Именно autoMods, а НЕ collectTestMods: галочки правил у психотеста уже
+  // есть свои (ruleRollModsHtml ниже) и приезжают отдельным числом из
+  // диалога — общий сбор сложил бы их второй раз.
+  const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: cast.key }).autoMods);
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue };
 
   // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
@@ -431,10 +439,9 @@ export async function executePsychotest(actor, item, opts) {
   const variantMod = Number(variant?.testMod) || 0;
 
   const powerMod  = sys.testMod || 0; // собственный модификатор силы
-  // Усталость (стр. 26): контрпример уже был рядом — activateNavigatorPower
-  // ниже её учитывает, здесь на общий психотест забыли. Считаем сами, а не
-  // просим игрока вписать «Доп. мод.» руками (wdbc-lfho).
-  const fatigue = fatiguePenalty(actor, cast.key);
+  // Только autoMods — галочки приходят из диалога в opts.ruleMod, см.
+  // комментарий в showManifestDialog выше.
+  const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: cast.key }).autoMods);
   // Складываем тем же счётчиком, что и атака: галочка «ополовинить штраф»
   // делит сумму, только если она в минус, и округляет в пользу игрока.
   const threshold = attackThreshold({
@@ -754,7 +761,9 @@ export async function activateNavigatorPower(actor, item) {
   const charKey = sys.testChar || "wp";
   const meta    = CHARACTERISTICS[charKey];
   const charVal = actor.system.characteristics?.[charKey]?.total ?? 0;
-  const fatigue = fatiguePenalty(actor, charKey);
+  // У Силы навигатора своего диалога с галочками нет, но берём тот же
+  // autoMods — чтобы правило «+10 к манифестациям» не применялось молча.
+  const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: charKey }).autoMods);
   const eff     = charVal + (sys.testMod || 0) + fatigue;
 
   const roll    = await new Roll("1d100").evaluate();

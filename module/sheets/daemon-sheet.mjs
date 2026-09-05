@@ -206,8 +206,12 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
     const ctx = { actor: this.actor, kind: "instability" };
-    const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
-    const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
+    // autoMods наравне с галочками (wdbc-kuun/ct65): штрафы состояния тела —
+    // такие же правила реестра, просто без выбора. Раньше здесь брались
+    // только mods, и Усталость демона в его тесты не доезжала вовсе.
+    const { mods, autoMods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
+    const applied = [...autoMods, ...mods];
+    const bonus = applied.reduce((n, m) => n + (Number(m.value) || 0), 0);
     const threshold = wp + bonus + tk.difficulty;
 
     // Переброс берём первый доступный: выбирать не из чего — на тест
@@ -226,7 +230,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         <div class="wh-roll-result wh-daemon-card">
           <div class="roll-header">🌀 Тест Нестабильности${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")})` : ""
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : ""
           }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b>
             · Warp Instability (${rating})</div>
           ${outcome.combinedLine}
@@ -300,8 +304,12 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
 
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const ctx = { actor: this.actor, kind: "vsExorcism" };
-    const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
-    const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
+    // autoMods наравне с галочками (wdbc-kuun/ct65): штрафы состояния тела —
+    // такие же правила реестра, просто без выбора. Раньше здесь брались
+    // только mods, и Усталость демона в его тесты не доезжала вовсе.
+    const { mods, autoMods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
+    const applied = [...autoMods, ...mods];
+    const bonus = applied.reduce((n, m) => n + (Number(m.value) || 0), 0);
     const threshold = wp + bonus + tk.difficulty;
 
     const rr = rerolls[0] || null;
@@ -318,7 +326,7 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
         <div class="wh-roll-result wh-daemon-card">
           <div class="roll-header">🕯️ Против Экзорцизма / Чистой Демонологии${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
           <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")})` : ""
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : ""
           }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b></div>
           ${outcome.combinedLine}
           <div class="roll-dice">Бросок: <b>${rv}</b></div>

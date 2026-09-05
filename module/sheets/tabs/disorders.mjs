@@ -18,7 +18,7 @@ import { _executeFearRoll, _executeTraumaRoll } from "../../combat/fear.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
-import { ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
+import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
 import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
@@ -112,7 +112,12 @@ export function openFearDialog(actor) {
           const ratingMod = type === "important" ? r.important : r.normal;
           const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(root);
           const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
-          return wp + ratingMod + mod + difficulty + fatiguePenalty(actor, "wp");
+          // autoTestMods, не collectTestMods: галочки правил уже сложены в
+          // `mod` строкой выше (checkedRuleMods) — общий сбор задвоил бы их.
+          // Предпросмотр обязан совпадать с тем, что посчитает сам бросок
+          // (combat/fear.mjs), иначе игрок видит один Порог, а получает другой.
+          return wp + ratingMod + mod + difficulty
+            + autoTestMods(actor, { kind: "skill", char: "wp", morale: true }).total;
         }
       });
       root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>
