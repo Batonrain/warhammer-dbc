@@ -162,7 +162,7 @@ function registerConditionStatusSync() {
       // Снятие МЕТКИ, живущей на предмете («Щит поднят»): патчем актора её не
       // достать, поэтому иконку возвращаем на место, а не делаем вид, что сняли.
       if (!want && isMirroredCondition(key) && !isMirrorClearable(key)) {
-        ui.notifications?.info(`${actor.name}: «${CONDITIONS_DEF[key]?.label || key}» снимается своей кнопкой на вкладке СНАРЯЖЕНИЕ.`);
+        ui.notifications?.info(`${actor.name}: «${CONDITIONS_DEF[key]?.label || key}» снимается кнопкой у самого предмета — щит опускается на вкладке БОЙ.`);
         return;
       }
       await actor.update(fields);
