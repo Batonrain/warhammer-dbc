@@ -120,7 +120,7 @@ export async function attemptNoticeIllusion(item, actor) {
     actor: observer,
     headerIcon: rollIcon("target", "#8fd0ff"),
     header: `Психонаука — замечает иллюзию (${actor.name})`,
-    thresholdHtml: `Психонаука: <b>${skill}</b> + 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = <b>${bonus}</b> → Порог: <b>${threshold}</b>`,
+    thresholdHtml: `Психонаука: <b>${skill}</b> + 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = <b>${bonus}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b>`,
     roll, rv, success,
     note: success ? "Наблюдатель теперь знает про активную иллюзию — доступна попытка увидеть сквозь." : ""
   });
@@ -156,7 +156,10 @@ export async function attemptSeeThroughIllusion(item, actor) {
     actor: observer,
     headerIcon: rollIcon("warp", "#c9a8ff"),
     header: `W+0 — видит сквозь иллюзию (${actor.name})`,
-    thresholdHtml: `WP: <b>${wp}</b> → Порог: <b>${wp}</b>`,
+    // Порог показывался как голое WP, хотя успех считался по wpThreshold —
+    // с Усталостью и Чертами наблюдателя. Игрок видел не то число, по
+    // которому его бросок сравнивали (wdbc-kuun).
+    thresholdHtml: `WP: <b>${wp}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${wpThreshold}</b>`,
     roll, rv, success,
     note: success ? "Мутации персонажа снова видны наблюдателю." : "Раз за бой/сцену на этого мутанта — попытка потрачена."
   });
