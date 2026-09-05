@@ -9,6 +9,7 @@ import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
@@ -84,13 +85,10 @@ export async function extractPiercingWound(actor, armorKey) {
   }
   await actor.update({ [`system.piercingWounds.${armorKey}`]: 0 });
   const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, 1);
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">🏹 Извлечение снаряда → ${esc(actor.name)}</div>
-      <div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
-    </div>`
-  });
+  await postTestCard(actor, {
+    title: `🏹 Извлечение снаряда → ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`]
+  }, { sound: false });
 }
 
 /**
@@ -115,13 +113,10 @@ async function _applyCrippling(actor, armorKey, hitLocation, damageType, rating)
 /** Наносит урон одной раны Калечащего (клик .wh-crippling-trigger-btn, hooks.mjs) — рана не снимается. */
 export async function applyCripplingTrigger(actor, rating, hitLocation) {
   const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, rating);
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">🩸 Калечащее (${hitLocation}) → ${esc(actor.name)}</div>
-      <div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
-    </div>`
-  });
+  await postTestCard(actor, {
+    title: `🩸 Калечащее (${hitLocation}) → ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`]
+  }, { sound: false });
 }
 
 /**
@@ -254,6 +249,9 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
   }
 
   // ── Сообщение в чат ───────────────────────────────────────────────────────
+  // НЕ переведено на общий сборщик helpers/test-card.mjs (wdbc-kuun): карточка
+  // говорит от лица «Системы», а не от актора-цели (щит срабатывает при чужом
+  // попадании), а postTestCard всегда подставляет говорящего-актора.
   const messageData = ChatMessage.applyRollMode({
     speaker: { alias: "Система" },
     content: `
@@ -320,21 +318,14 @@ async function _rollRunesOfProtection(actor) {
   const deg  = success ? Math.floor((threshold - rv) / 10) + 1 : 0;
   const apBonus = success ? bPR + deg + 4 : bPR;
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("shield","#8fd0ff")}Защитные Руны — ${esc(actor.name)}</div>
-        <div class="roll-threshold">W <b>${wpTotal}</b>${bPR ? ` + бPR×5 (бPR <b>${bPR}</b>)` : ""} → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех (${deg} ст.) — +${apBonus} AP (бPR ${bPR} + Успехи ${deg} + 4)</span>`
-          : `<span class="roll-failure">Провал — +${apBonus} AP (бPR)</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("shield","#8fd0ff"), title: `Защитные Руны — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">W <b>${wpTotal}</b>${bPR ? ` + бPR×5 (бPR <b>${bPR}</b>)` : ""} → Порог <b>${threshold}</b></div>`,
+    rv,
+    outcome: success
+      ? outcomeHtml(true,  `Успех (${deg} ст.) — +${apBonus} AP (бPR ${bPR} + Успехи ${deg} + 4)`)
+      : outcomeHtml(false, `Провал — +${apBonus} AP (бPR)`)
+  }, { rolls: [roll] });
 
   return apBonus;
 }
@@ -666,6 +657,10 @@ export async function applyDamageToActor(actor, damageData) {
       🎯 Пробило насквозь — найти следующую цель по линии огня (${throughShotReductionDie(1) ? `−${throughShotReductionDie(1)}` : "флэт −1"} к урону)
     </button>` : "";
 
+  // НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun): это
+  // главная карточка УРОНА — родня attack-card.mjs (своя большая разметка
+  // поглощения, Ран, крита и пилюль Крит. Эффекта), к тому же говорит от лица
+  // «Системы», а не от актора-цели.
   const messageData = ChatMessage.applyRollMode({
     speaker: { alias: "Система" },
     content: `

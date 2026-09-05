@@ -99,7 +99,7 @@ describe("Ослеплён — Трудный Ландшафт вне насто
     await rollTerrain(35, "0");
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("Порог <b>35</b>");
+    expect(card).toContain("Порог: <b>35</b>");
   });
 
   it("реальный тест: Ослеплён в настоящей зоне — порог падает на 30 (10 зона + 20 Ослепление)", async () => {
@@ -108,6 +108,6 @@ describe("Ослеплён — Трудный Ландшафт вне насто
     await rollTerrain(35, "0");
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("Порог <b>5</b>"); // 35 − 30
+    expect(card).toContain("Порог: <b>5</b>"); // 35 − 30
   });
 });

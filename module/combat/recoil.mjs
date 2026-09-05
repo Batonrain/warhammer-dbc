@@ -33,6 +33,7 @@
 
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { spdMeters, recoilRemaining, spendRecoil } from "./recoil-pool.mjs";
 import { coverApForToken } from "./cover.mjs";
 import { spendPoolForRecoil } from "./evasion-pool.mjs";
@@ -165,23 +166,20 @@ export async function performRecoil(actor, { meters, intoCover, coverAp, volt = 
   const remaining = recoilRemaining(actor);
   const remLabel = Number.isFinite(remaining) ? `, остаток ${remaining}м в этом Раунде` : "";
 
-  const outcomeHtml = intoCover
-    ? `<span class="roll-success">Отскочил на ${spent}м в Укрытие — попадания проходят, но со +${coverAp} AP (учтётся при следующем применении урона).</span>`
-    : `<span class="roll-success">Отскочил на ${spent}м вне предела атаки — все попадания промахиваются.</span>`;
+  const outcome = outcomeHtml(true, intoCover
+    ? `Отскочил на ${spent}м в Укрытие — попадания проходят, но со +${coverAp} AP (учтётся при следующем применении урона).`
+    : `Отскочил на ${spent}м вне предела атаки — все попадания промахиваются.`);
   const voltNote = volt
     ? `<div class="roll-defense-note">Засчитан как Вольт (п.6) — гасит Свободную Атаку соседних врагов на этот выход.</div>` : "";
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("run")}Отскок — ${esc(actor.name)}</div>
-        <div class="roll-outcome">${outcomeHtml}</div>
-        <div class="roll-defense-note">Потрачено ${spent}м из дистанции Отскока${remLabel}.</div>
-        ${voltNote}
-      </div>`
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("run"), title: `Отскок — ${esc(actor.name)}`,
+    outcome,
+    sections: [
+      `<div class="roll-defense-note">Потрачено ${spent}м из дистанции Отскока${remLabel}.</div>`,
+      voltNote
+    ]
+  }, { sound: false });
 }
 
 /**
@@ -194,19 +192,17 @@ export async function performRecoil(actor, { meters, intoCover, coverAp, volt = 
  * что у Контратаки (hooks.mjs) и прочих трат-до-подтверждения кнопок.
  */
 export async function performPoolRecoil(actor, attackerUuid) {
-  const rollMode = game.settings.get("core", "rollMode");
   if (recoilRemaining(actor) <= 0) {
     ui.notifications?.warn("⚠️ Дистанция Отскока в этом Раунде исчерпана.");
     return;
   }
   const spent = await spendPoolForRecoil(actor, attackerUuid, POOL_RECOIL_COST);
   if (!spent) {
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-outcome"><span class="roll-failure">${rollIcon("ban","#ff6b6b")}В банке недостаточно Успехов на Отскок (нужно ${POOL_RECOIL_COST}) или он устарел.</span></div>
-      </div>`
-    }, rollMode));
+    // Карточка отказа без шапки — вид сохранён: общий сборщик рисует шапку
+    // всегда, поэтому здесь она заведена явно пустой (icon/title не заданы).
+    await postTestCard(actor, {
+      outcome: outcomeHtml(false, `${rollIcon("ban","#ff6b6b")}В банке недостаточно Успехов на Отскок (нужно ${POOL_RECOIL_COST}) или он устарел.`)
+    }, { sound: false });
     return;
   }
   const choice = await showRecoilDialog(actor);

@@ -30,6 +30,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 
 const FLAG = "dreadWail";
@@ -89,13 +90,10 @@ export async function applyDreadWailWeaponBuff(actor) {
   await spendAndCount(actor);
   const perBonus = Number(actor.system?.characteristics?.per?.bonus) || 0;
   await actor.setFlag("warhammer-dbc", WEAPON_BUFF_FLAG, { active: true, bonus: perBonus });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#c98bff")}Грозный Вопль — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Звуковое оружие получает <b>+${perBonus}</b> Dmg/Pen до начала следующего Хода.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#c98bff"), title: `Грозный Вопль — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Звуковое оружие получает <b>+${perBonus}</b> Dmg/Pen до начала следующего Хода.</div>`]
+  }, { sound: false });
 }
 
 /** Снимает усилитель оружия — звать в начале Хода актора (hooks.mjs::updateCombat). */
@@ -143,12 +141,11 @@ export async function applyDreadWailWave(actor, casterToken, effectKey) {
   }
 
   const effectLabel = WAVE_EFFECTS.find(e => e.key === effectKey)?.label || effectKey;
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#c98bff")}Грозный Вопль — звуковая волна (радиус ${radius} м)</div>
-      <div class="roll-threshold">Тест W−20, при провале: <b>${esc(effectLabel)}</b></div>
-      ${lines.length ? lines.map(l => `<div>${l}</div>`).join("") : "<div><i>Никого в радиусе (кроме посвящённых Слаанеш)</i></div>"}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#c98bff"), title: `Грозный Вопль — звуковая волна (радиус ${radius} м)`,
+    lines: [
+      `<div class="roll-threshold">Тест W−20, при провале: <b>${esc(effectLabel)}</b></div>`,
+      ...(lines.length ? lines.map(l => `<div>${l}</div>`) : ["<div><i>Никого в радиусе (кроме посвящённых Слаанеш)</i></div>"])
+    ]
+  }, { sound: false });
 }

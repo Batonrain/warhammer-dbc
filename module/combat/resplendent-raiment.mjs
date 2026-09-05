@@ -29,6 +29,7 @@ import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "resplendentRaiment";
 
@@ -78,12 +79,11 @@ export async function applyResplendentRaiment(caster, casterToken, excludedIds =
     lines.push(`${esc(targetActor.name)}: провал (${roll.total} vs ${threshold}) — видит только ${esc(caster.name)}`);
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: caster }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("crown", "#e08aff")}Блистательные Одеяния — ${esc(caster.name)}</div>
-      <div class="roll-threshold">Тест W−30 (как против психосилы) всем на сцене, кроме исключённых</div>
-      ${lines.length ? lines.map(l => `<div>${l}</div>`).join("") : "<div><i>Больше никого на сцене</i></div>"}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(caster, {
+    icon: rollIcon("crown", "#e08aff"), title: `Блистательные Одеяния — ${esc(caster.name)}`,
+    lines: [
+      `<div class="roll-threshold">Тест W−30 (как против психосилы) всем на сцене, кроме исключённых</div>`,
+      ...(lines.length ? lines.map(l => `<div>${l}</div>`) : ["<div><i>Больше никого на сцене</i></div>"])
+    ]
+  }, { sound: false });
 }

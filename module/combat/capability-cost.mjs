@@ -20,6 +20,7 @@
 
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 /** label — пункт выпадающего списка в Конструкторе; genitive — для «N Очков <genitive>» на листе. */
 export const CAPABILITY_COST_POOLS = {
@@ -90,12 +91,9 @@ export async function spendCapabilityCost(actor, cost, label) {
   const path = actor.type === "demonPrince" ? "system.dp.ip" : "system.fate.value";
   const have = capabilityPoolValue(actor);
   await actor.update({ [path]: have - amount });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#c98bff")}${esc(label || "Возможность")} — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Потрачено: <b>${capabilityCostLabel(cost)}</b>. Осталось: <b>${have - amount}</b> / ${capabilityPoolMax(actor)}.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#c98bff"), title: `${esc(label || "Возможность")} — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Потрачено: <b>${capabilityCostLabel(cost)}</b>. Осталось: <b>${have - amount}</b> / ${capabilityPoolMax(actor)}.</div>`]
+  }, { sound: false });
   return true;
 }

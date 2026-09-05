@@ -39,6 +39,7 @@ import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/coold
 import { normQuality, ITEM_QUALITY } from "../constants/quality.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "reformationSong";
 const REVERT_FLAG = "reformationSongRevert";
@@ -211,13 +212,10 @@ export async function applyReformationSong(actor, picks) {
     else if (item.type === "gear") lines.push(await applyToGear(item, mode));
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("warp", "#7fd3ff")}Reformation Song / Песня Изменений</div>
-      ${lines.length ? lines.join("") : "<div><i>Ничего не выбрано</i></div>"}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("warp", "#7fd3ff"), title: "Reformation Song / Песня Изменений",
+    lines: lines.length ? lines : ["<div><i>Ничего не выбрано</i></div>"]
+  }, { sound: false });
 }
 
 /**

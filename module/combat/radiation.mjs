@@ -21,6 +21,7 @@
 import { worldTimeRemaining } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const SICKNESS_FLAG = "radiationSickness";
@@ -53,11 +54,8 @@ export async function useRadiationSicknessTest(actor) {
     [`flags.${FLAG}.${TEST_AT_FLAG}`]: game.time.worldTime
   });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("warp","#ffe14d")}Лучевая болезнь → ${esc(actor.name)}</div>
-      <div class="roll-threshold">Урон T: <b>1</b> (Мод. T: ${before}→${after})</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("warp","#ffe14d"), title: `Лучевая болезнь → ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Урон T: <b>1</b> (Мод. T: ${before}→${after})</div>`]
+  }, { sound: false });
 }

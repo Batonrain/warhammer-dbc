@@ -10,6 +10,7 @@
 
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
@@ -121,22 +122,21 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
 
   const outcome = passed
-    ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.</span>`
-    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж падает!</span>`;
+    ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.`)
+    : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Персонаж падает!`);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
-        <div class="roll-threshold">
-          Ag <b>${ag}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}${extraMod ? `, доп. мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b>
-        </div>
-        <div class="roll-dice">${rollIcon("dice","#6fe6ff")}1d100: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Слагаемые Порога — в скобки общего формата (thresholdLine): раньше здесь
+  // рядом стояли и суммарный модификатор, и его разбор, теперь только разбор.
+  const parts = [
+    `ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}`,
+    extraMod ? `доп. мод ${sgn(extraMod)}` : ""
+  ];
+
+  await postTestCard(actor, {
+    icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Ag", base: ag, parts, threshold }),
+    rv, outcome
+  }, { rolls: [roll] });
 }
 
 // ─── Кнопка в меню токена ──────────────────────────────────────────────────

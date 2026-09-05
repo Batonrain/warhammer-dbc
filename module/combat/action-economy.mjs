@@ -28,6 +28,7 @@
 import { MELEE_STANCES } from "../constants/combat.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
 
@@ -148,13 +149,10 @@ export async function postTurnStartCard(actor) {
   if (!hasActionEconomy(actor)) return;
   const ap    = actor.system.actionPoints ?? {};
   const react = actor.system.reactions ?? {};
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("run", "#4dffa6")}${esc(actor.name)} — Начало Хода</div>
-      <div class="roll-threshold">ОД <b>${Number(ap.value) || 0}</b>/${Number(ap.max) || 0} · Реакции <b>${Number(react.value) || 0}</b>/${Number(react.max) || 0}</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("run", "#4dffa6"), title: `${esc(actor.name)} — Начало Хода`,
+    lines: [`<div class="roll-threshold">ОД <b>${Number(ap.value) || 0}</b>/${Number(ap.max) || 0} · Реакции <b>${Number(react.value) || 0}</b>/${Number(react.max) || 0}</div>`]
+  }, { sound: false });
 }
 
 /**

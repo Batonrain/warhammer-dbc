@@ -141,7 +141,15 @@ export async function addRoundDamage(horde, amount) {
   return next;
 }
 
-/** Карточка: потери Орды за Раунд перешли порог — нужен тест W+Магнитуда. */
+/** Карточка: потери Орды за Раунд перешли порог — нужен тест W+Магнитуда.
+ *
+ *  НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun) по двум
+ *  причинам: это не карточка теста, а ЗАПРОС теста (броска и Порога в ней
+ *  нет — только кнопка «пройди тест»), и её корневой div несёт свой класс
+ *  `horde-mass-dmg`, от которого зависит оформление кнопки
+ *  (styles/sheets/horde-sheet.css) — общий сборщик доп. класс корня пока не
+ *  принимает.
+ */
 async function postMassDamageWarning(horde, roundDamage, threshold) {
   const wp  = Number(horde.system?.characteristics?.wp?.total) || 0;
   const mag = Number(horde.system?.magnitude?.value) || 0;
@@ -161,7 +169,14 @@ async function postMassDamageWarning(horde, roundDamage, threshold) {
   });
 }
 
-/** Карточка применённого урона по Орде. */
+/** Карточка применённого урона по Орде.
+ *
+ *  НЕ переведена на общий сборщик helpers/test-card.mjs (wdbc-kuun): это
+ *  карточка УРОНА, а не теста (ни броска, ни Порога), её корневой div несёт
+ *  класс `horde-dmg` (styles/sheets/horde-sheet.css рисует по нему чип
+ *  «Орда»), а говорит она от лица «Системы», а не от актора — общий сборщик
+ *  и того, и другого пока не умеет.
+ */
 async function postHordeDamageCard(horde, d) {
   const dtLabel = DAMAGE_TYPES[d.damageType] || d.damageType || "";
   const extraNotes = [...d.notes];

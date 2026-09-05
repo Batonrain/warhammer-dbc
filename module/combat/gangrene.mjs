@@ -28,6 +28,7 @@
 import { worldTimeRemaining } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const TEST_AT_FLAG = "gangreneTestAt";
@@ -62,13 +63,8 @@ export async function useGangrenePeriodicTest(actor) {
     [`flags.${FLAG}.${TEST_AT_FLAG}`]: game.time.worldTime
   });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("blood","#7a8a4d")}Гангрена → ${esc(actor.name)}</div>
-      <div class="roll-threshold">Урон T: <b>${roll.total}</b> (Мод. T: ${before}→${after})</div>
-    </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("blood","#7a8a4d"), title: `Гангрена → ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Урон T: <b>${roll.total}</b> (Мод. T: ${before}→${after})</div>`]
+  }, { rolls: [roll] });
 }
