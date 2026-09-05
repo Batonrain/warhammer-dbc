@@ -22,6 +22,9 @@ import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs"
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
 
+/** Полный иммунитет к Страху — автоуспех любого теста Страха (wdbc-m7we). */
+export const FEAR_IMMUNE_FLAG = "fear.immune";
+
 /**
  * Тест Страха (1d100 + 10×Провалы−1 − Infamy → таблица Шока при провале).
  * ratingKey — ключ FEAR_RATINGS. properties.demon + провал → карточка
@@ -60,7 +63,16 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
-  const autoPass = steelHeartIgnored || infamy >= r.infamy || hasRuleFlag(actor, "sarcophagus.autoPassFear");
+  // fear.immune — ОБЩЕЕ имя иммунитета к Страху, которое может выдать любой
+  // предмет (wdbc-m7we). До него иммунитет умела только одна подсистема
+  // (Саркофаг Дредноута), и Дар «Инфернальная Воля» обещал его текстом, а
+  // система всё равно требовала тест. Читатель был, не хватало имени.
+  //
+  // Отличие от «Стального Сердца» выше: то лишь снижает воспринимаемый
+  // рейтинг на 1, и Страх 3 остаётся Страхом 2 — тест по-прежнему нужен.
+  const autoPass = steelHeartIgnored || infamy >= r.infamy
+                   || hasRuleFlag(actor, "sarcophagus.autoPassFear")
+                   || hasRuleFlag(actor, FEAR_IMMUNE_FLAG);
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
