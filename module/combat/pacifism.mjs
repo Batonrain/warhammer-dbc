@@ -12,6 +12,7 @@
 
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 export const PACIFISM_ATTACKED_FLAG = "grayManAttacked";
 export const PACIFISM_CAPABILITY = "pacifism.requiresAttackToRage";
@@ -42,7 +43,9 @@ export async function postPacifismGateCard(actor) {
 /** Тест Воли−20 — успех проводит актора в Ярость вопреки миролюбию. */
 export async function rollPacifismTest(actor) {
   const wp = actor.system.characteristics?.wp?.total ?? 0;
-  const threshold = wp - 20;
+  // Общий сбор модификаторов (wdbc-ct65.3): тест Воли шёл мимо реестра правил.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = wp - 20 + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const success = rv <= threshold;

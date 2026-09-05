@@ -42,6 +42,7 @@ import { refreshVeilOverlay } from "./veil-overlay.mjs";
 import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 export { veilShift };
 
@@ -972,7 +973,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const base = this._jSkillTotal(actor, this.journey.navSkill) ?? -20;
     const total = veilTotal(readVeil(currentScene()));
     const mod = veilNavMod(total);
-    const eff = base + mod;
+    // Общий сбор модификаторов (wdbc-ct65.3): тест Навигации шёл мимо реестра
+    // правил. Навигация — групповой навык, ключ едет в ctx.group (обычный
+    // ctx.skill его не поймает, см. rules/resolve-test.mjs::effectAppliesTo).
+    const ruleMods = collectTestMods(actor, { kind: "skill", group: "navigation", char: "int" });
+    const eff = base + mod + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
     const success = rv <= eff;
@@ -1097,13 +1102,17 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
     const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
     const mod = this._occNavMod();
-    const res = await this._roll(base + mod);
+    // Тот же общий сбор, что у _rollNavigation выше (wdbc-ct65.3).
+    const ruleMods = collectTestMods(a, { kind: "skill", group: "navigation", char: "int" });
+    const res = await this._roll(base + mod + ruleMods.total);
     const mult = jumpDurationMult(res.deg);
     const real = this.journey.baseDuration != null ? `≈ ${Math.ceil(this.journey.baseDuration * ({ "×1/4": .25, "×1/2": .5, "×3/4": .75, "×1": 1, "×2": 2, "×3": 3, "×4": 4 }[mult] || 1))} дн.` : "";
     await this._jPost(`${veilIcon("compass")} Направление корабля — ${esc(a.name)}`, "stable",
       `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
   }
   async _warpEncounter() {
+    // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): характеристики
+    // и Порога у него нет, модифицировать нечего — реестр правил не нужен.
     const r = await new Roll("1d100").evaluate();
     const row = lookupTable(WARP_ENCOUNTERS, r.total);
     const tier = r.total <= 20 ? "stable" : (r.total >= 71 ? "torn" : "thin");

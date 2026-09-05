@@ -35,6 +35,7 @@ import { esc } from "../helpers/utils.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { getChapter } from "../constants/legions.mjs";
 import { isSusAnMembraneItem } from "../rules/predicates.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "warhammer-dbc";
 const USED_AT_FLAG = "susAnHealUsedAt";
@@ -106,10 +107,14 @@ export async function useSusAnHeal(actor, item) {
     return ui.notifications.warn("Сус-ан Мембрана ещё не восстановилась — раз в сутки.");
   }
   const t = actor.system.characteristics?.t?.total ?? 0;
+  // Общий сбор модификаторов (wdbc-ct65.3): раньше этот тест катался мимо
+  // реестра правил — ни Усталость, ни Черты/Таланты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "t" });
+  const threshold = t + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const success = rv <= t;
-  const sl = success ? Math.floor((t - rv) / 10) + 1 : 0;
+  const success = rv <= threshold;
+  const sl = success ? Math.floor((threshold - rv) / 10) + 1 : 0;
   const healed = sl * 2;
 
   // «В конце следующего Хода» — только пока идёт бой и актор в нём

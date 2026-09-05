@@ -32,6 +32,7 @@ import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/gam
 import { skillTotal, markMovedThisTurn } from "./movement-actions.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 /** Ключ флага троттлинга «раз в Раунд» (module/rules/cooldown.mjs). */
 export const ASSASSIN_STRIKE_CAPABILITY = "assassinStrike";
@@ -59,7 +60,10 @@ export async function resolveAssassinStrikeClick(actorUuid) {
   }
   await markRoundCapabilityUsed(actor, ASSASSIN_STRIKE_CAPABILITY);
 
-  const threshold = skillTotal(actor, "acrobatics");
+  // Общий сбор модификаторов (wdbc-ct65.3): тест Акробатики шёл мимо реестра
+  // правил — ни Усталость, ни «+10 к Акробатике» с Черты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const threshold = skillTotal(actor, "acrobatics") + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const success = rv <= threshold;

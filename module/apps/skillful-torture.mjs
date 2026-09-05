@@ -35,6 +35,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "skillfulTorture";
 
@@ -127,8 +128,14 @@ export async function showSkillfulTortureDialog(torturer) {
     return ui.notifications.warn(`«${target.name}» не чувствует боли — пытка на неё не действует.`);
   }
 
-  const torturerThreshold = interrogateIntTotal(torturer) - 20;
-  const targetThreshold   = (target.system.characteristics?.wp?.total ?? 0);
+  // Общий сбор модификаторов обеим сторонам (wdbc-ct65.3): встречный тест —
+  // это два теста, каждый со своими Чертами и своим состоянием тела. Допрос
+  // книга называет тестом Морали (rules/resolve-test.mjs::isMoraleOpposedSkill),
+  // жертва отвечает тем же.
+  const torturerMods = collectTestMods(torturer, { kind: "skill", skill: "interrogate", char: "int", morale: true });
+  const targetMods   = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
+  const torturerThreshold = interrogateIntTotal(torturer) - 20 + torturerMods.total;
+  const targetThreshold   = (target.system.characteristics?.wp?.total ?? 0) + targetMods.total;
 
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">

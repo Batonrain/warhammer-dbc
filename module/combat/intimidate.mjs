@@ -25,6 +25,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 /** Порог Intimidate нападающего — обычный тест Навыка (уже посчитан листом). */
 export function intimidateThreshold(attacker, mod = 0) {
@@ -47,8 +48,14 @@ export function moraleThreshold(target, mod = 0) {
  * @returns {Promise<{winner:"mine"|"theirs"|null, margin:number}>}
  */
 export async function rollIntimidateContest(attacker, target, { attackerMod = 0, targetMod = 0 } = {}) {
-  const atkThreshold = intimidateThreshold(attacker, attackerMod);
-  const tgtThreshold = moraleThreshold(target, targetMod);
+  // Общий сбор модификаторов обеим сторонам (wdbc-ct65.3): встречный тест —
+  // это два теста, и каждый обязан видеть свои Черты и своё состояние тела.
+  // Оба помечены morale:true — Запугивание книга прямо называет тестом Морали
+  // (rules/resolve-test.mjs::isMoraleOpposedSkill), и цель отвечает им же.
+  const atkMods = collectTestMods(attacker, { kind: "skill", skill: "intimidate", char: "wp", morale: true });
+  const tgtMods = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
+  const atkThreshold = intimidateThreshold(attacker, attackerMod) + atkMods.total;
+  const tgtThreshold = moraleThreshold(target, targetMod) + tgtMods.total;
   const atkRoll = await new Roll("1d100").evaluate();
   const tgtRoll = await new Roll("1d100").evaluate();
   const atkRv = atkRoll.total, tgtRv = tgtRoll.total;

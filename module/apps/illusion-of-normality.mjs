@@ -39,6 +39,7 @@ import { isRuleUsageUsed, markRuleUsageUsed } from "../rules/cooldown.mjs";
 import { psyniscienceNoticeBonus, noticeFlagKey, seeThroughFlagKey } from "../rules/illusion-detection.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const NAME = "Illusion of Normality";
 const CAPABILITY_KEY = "mutation.illusionOfNormality";
@@ -105,7 +106,11 @@ export async function attemptNoticeIllusion(item, actor) {
 
   const bonus = psyniscienceNoticeBonus(otherMutationCount(actor, item.id));
   const skill = observer.system.skills?.psyniscience?.total ?? -20;
-  const threshold = skill + bonus;
+  // Общий сбор модификаторов (wdbc-ct65.3): раньше этот тест катался мимо
+  // реестра правил — ни Усталость, ни Черты/Таланты в него не попадали.
+  // Тест НАБЛЮДАТЕЛЯ: замечает он, значит и модификаторы его.
+  const ruleMods = collectTestMods(observer, { kind: "skill", skill: "psyniscience", char: "per" });
+  const threshold = skill + bonus + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const success = rv <= threshold;
@@ -137,9 +142,12 @@ export async function attemptSeeThroughIllusion(item, actor) {
     return ui.notifications?.warn("Попытка увидеть сквозь иллюзию уже потрачена в этом бою/сцене.");
 
   const wp = observer.system.characteristics?.wp?.total ?? 0;
+  // Тот же общий сбор, что у теста Псинауки выше (wdbc-ct65.3).
+  const ruleMods = collectTestMods(observer, { kind: "skill", char: "wp" });
+  const wpThreshold = wp + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const success = rv <= wp;
+  const success = rv <= wpThreshold;
 
   // Попытка расходуется в любом случае — «не более одной попытки», а не
   // «пока не получится».

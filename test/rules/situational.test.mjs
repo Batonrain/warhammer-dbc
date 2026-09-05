@@ -157,3 +157,38 @@ describe("защита сборки от повторного входа", () =>
     }
   });
 });
+
+// ── Партия 3/3: разовые способности (wdbc-ct65.3) ─────────────────────────
+//
+// Проверяется не каждая способность по отдельности (их восемнадцать, и у
+// каждой своя обвязка с диалогами и чатом), а сам общий сборщик, которым все
+// они теперь пользуются: он обязан складывать автоматические штрафы вместе с
+// правилами-галочками и различать области.
+describe("collectTestMods: общий сбор для мест без диалога", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("складывает автоматический штраф и правило области в одно число", async () => {
+    const { collectTestMods } = await import("../../module/rules/roll-mods.mjs");
+    registerRuleSource("испытание", () => [
+      { id: "черта", label: "Черта", effects: [{ kind: "rollBonus", target: "skill:dodge", value: 10 }] }
+    ]);
+    const tired = actor({ fatigue: { value: 1 } });
+    const got = collectTestMods(tired, { kind: "skill", skill: "dodge", char: "ag" });
+    expect(got.total).toBe(0);                       // −10 Усталости и +10 Черты
+    expect(got.parts).toEqual(["😓 Усталость -10", "Черта +10"]);
+  });
+
+  it("правило чужой области в сбор не попадает", async () => {
+    const { collectTestMods } = await import("../../module/rules/roll-mods.mjs");
+    registerRuleSource("испытание", () => [
+      { id: "черта", label: "Черта", effects: [{ kind: "rollBonus", target: "skill:stealth", value: 10 }] }
+    ]);
+    const got = collectTestMods(actor({ fatigue: { value: 0 } }), { kind: "skill", skill: "dodge", char: "ag" });
+    expect(got.total).toBe(0);
+    expect(got.parts).toEqual([]);
+  });
+});

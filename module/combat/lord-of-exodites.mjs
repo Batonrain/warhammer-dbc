@@ -20,6 +20,7 @@ import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const DISGRACE_FLAG = "lordOfExoditesDisgraced";
 
@@ -93,7 +94,10 @@ export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
     return ui.notifications?.warn("⚠️ Персонаж не Командир ни одного Отряда.");
   }
   const base = Number(actor.system?.skills?.command?.total) || 0;
-  const threshold = base + mod;
+  // Общий сбор модификаторов (wdbc-ct65.3) — тот же, что у обычного теста
+  // Командования (sheets/tabs/command.mjs).
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "command", char: "fel" });
+  const threshold = base + mod + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const ok = rv <= threshold;

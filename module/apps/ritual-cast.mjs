@@ -30,6 +30,7 @@ import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -206,7 +207,11 @@ export async function castRitual(R, actor, {
     const proceed = await confirmUnmet(actor, d.reqFailed);
     if (!proceed) return null;
   }
-  const threshold = d.threshold;
+  // Общий сбор модификаторов (wdbc-ct65.3): Порог ритуала считался целиком
+  // ритуальной арифметикой (ritualThreshold), мимо реестра правил — Усталость
+  // Ритуалиста и его Черты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = d.threshold + ruleMods.total;
   // Dominator / Покоритель (wdbc-u0by): «Преимущество на тесты Демонического
   // Владычества» — безусловно для R.type==="dominion", авто (кнопка «Провести
   // ритуал» катает сразу, без отдельного шага под переброс).

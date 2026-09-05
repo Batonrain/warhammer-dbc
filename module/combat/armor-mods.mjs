@@ -13,6 +13,7 @@ import { SECONDS_PER_HOUR } from "../constants/imperial-calendar.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { addFatigue } from "../sheets/tabs/conditions.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "warhammer-dbc";
 const OVERLOAD_TEST_AT_FLAG = "disabledArmourOverloadTestAt";
@@ -232,9 +233,14 @@ export async function useDisabledArmourPeriodicTest(actor) {
   }
 
   const t = actor.system.characteristics?.t?.total ?? 0;
+  // Общий сбор модификаторов (wdbc-ct65.3). Усталость Стойкость не трогает
+  // (стр. 26), но Черты и записи Конструктора на Стойкость — трогают, и
+  // раньше этот тест их не видел.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "t" });
+  const threshold = t + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const success = rv <= t;
+  const success = rv <= threshold;
   if (!success) await addFatigue(actor, 1);
   await markWorldTimeCooldownUsed(actor, OVERLOAD_TEST_AT_FLAG);
 
@@ -283,8 +289,12 @@ export async function useDisabledArmourForkTest(actor, { skillKey } = {}) {
   const base  = isAthletics ? Number(actor.system?.skills?.athletics?.total) || 0
                              : Number(actor.system?.characteristics?.s?.total) || 0;
   const bonus = isAthletics ? 10 : 0;
-  const armourPenalty = disabledArmourPenalty(actor, { charKey: "s" });
-  const eff = base + bonus + armourPenalty + overload.testPenalty;
+  // Штраф самой выключенной брони приходит теперь общим сбором (wdbc-ct65.3),
+  // вместе со всем прочим, что реестр знает про этот тест: раньше здесь
+  // стоял только он один, вручную.
+  const ruleMods = collectTestMods(actor,
+    isAthletics ? { kind: "skill", skill: "athletics", char: "s" } : { kind: "skill", char: "s" });
+  const eff = base + bonus + ruleMods.total + overload.testPenalty;
 
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
@@ -315,7 +325,7 @@ export async function useDisabledArmourForkTest(actor, { skillKey } = {}) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("warn", "#ff8a5c")}Тест-развилка перевеса (${testLabel}) — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Порог: <b>${eff}</b> (${base}${bonus ? ` +${bonus}` : ""}${armourPenalty ? ` ${armourPenalty}` : ""}${overload.testPenalty ? ` ${overload.testPenalty}` : ""})</div>
+        <div class="roll-threshold">Порог: <b>${eff}</b> (${base}${bonus ? ` +${bonus}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")}${overload.testPenalty ? ` ${overload.testPenalty}` : ""})</div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         <div class="roll-outcome">${resultNote}</div>
         <div class="roll-threshold" style="font-size:.85em;opacity:.8;">В начале Хода или при отключении брони (стр. 233).</div>

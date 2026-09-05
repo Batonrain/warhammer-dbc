@@ -28,6 +28,7 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const MARK_FLAG = "bowToAudienceMark";
 
@@ -62,7 +63,10 @@ export async function triggerBowToAudience(actor) {
   if (!targets.length) { ui.notifications?.warn("⚠️ Нет выбранных целей."); return null; }
   if (!await spendActionPoints(actor, 3)) { ui.notifications?.warn("⚠️ Не хватает ОД (нужно 3)."); return null; }
 
-  const threshold = awarenessTotal(actor) - 20;
+  // Общий сбор модификаторов (wdbc-ct65.3): тест Внимательности шёл мимо
+  // реестра правил.
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "awareness", char: "per" });
+  const threshold = awarenessTotal(actor) - 20 + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success, deg } = testOutcome(roll.total, threshold);
   const bonus = success ? deg * 3 : 0;

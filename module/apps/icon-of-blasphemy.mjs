@@ -27,6 +27,7 @@ import { isRuleUsageUsed, markRuleUsageUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 export { isIconOfBlasphemyItem };
 
@@ -51,8 +52,12 @@ export async function resolveIconOfBlasphemy(actor, targets) {
     }
     const psychic = group === "psychic";
     const wp = target.system.characteristics?.wp?.total ?? 0;
+    // Общий сбор модификаторов (wdbc-ct65.3) — по ЦЕЛИ: сопротивляется она,
+    // значит и Усталость с Чертами считаются её, а не носителя Иконы.
+    const ruleMods = collectTestMods(target, { kind: "skill", char: "wp" });
+    const threshold = wp + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
-    const { success } = testOutcome(roll.total, wp);
+    const { success } = testOutcome(roll.total, threshold);
     let note;
     if (psychic) {
       note = success ? "устоял(а)" : "провал — вынужден(а) весь следующий Ход атаковать персонажа";

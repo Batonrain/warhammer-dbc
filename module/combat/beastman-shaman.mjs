@@ -58,6 +58,7 @@ import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { buildTargetEffectButtons, resolveWeaponPropsList } from "./weapon-properties.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const GOD_KEYS = ["khorne", "nurgle", "slaanesh", "tzeentch"];
 const ICON = "#c9a24b";
@@ -278,7 +279,9 @@ export async function applyWarpTaintedAura(actor, casterToken) {
   const lines = [`Радиус ${radius} м · Покровитель: <b>${esc(godLabel(god))}</b>`];
   const failed = [];
   for (const t of enemies) {
-    const threshold = (Number(t.actor.system?.characteristics?.wp?.total) || 0) - 10;
+    // Общий сбор модификаторов (wdbc-ct65.3) — по ЦЕЛИ: сопротивляется она.
+    const targetMods = collectTestMods(t.actor, { kind: "skill", char: "wp" });
+    const threshold = (Number(t.actor.system?.characteristics?.wp?.total) || 0) - 10 + targetMods.total;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) continue;
@@ -375,8 +378,11 @@ export async function applyHexMarkedPrey(actor, targetActor) {
   if (!targetActor) { ui.notifications?.warn("Наведите таргет (T) на видимого противника."); return; }
   const shamanRoll = await new Roll("1d100").evaluate();
   const targetRoll = await new Roll("1d100").evaluate();
-  const shamanThreshold = Number(actor.system?.characteristics?.wp?.total) || 0;
-  const targetThreshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) + 10;
+  // Общий сбор обеим сторонам (wdbc-ct65.3) — см. combat/intimidate.mjs.
+  const shamanMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const targetMods = collectTestMods(targetActor, { kind: "skill", char: "wp" });
+  const shamanThreshold = (Number(actor.system?.characteristics?.wp?.total) || 0) + shamanMods.total;
+  const targetThreshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) + 10 + targetMods.total;
   const shamanOutcome = testOutcome(shamanRoll.total, shamanThreshold);
   const targetOutcome = testOutcome(targetRoll.total, targetThreshold);
   const rank = o => (o.success ? 1000 : 0) + o.deg;

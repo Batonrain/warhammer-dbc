@@ -6,6 +6,7 @@ import { ruleRerollsHtml }                  from "../rules/roll-mods.mjs";
 import { pickReroll }                       from "../rules/reroll-pick.mjs";
 import { testOutcome }                      from "../rules/roll-outcome.mjs";
 import { hasRuleFlag, ruleFlagLabels }      from "../rules/flags.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -126,7 +127,10 @@ export async function _showContestDialog(actor, techDef) {
           const charMeta = CHARACTERISTICS[charKey];
           const selfVal  = parseInt(html.find("#contest-self").val()) || 0;
           const mod      = parseInt(html.find("#contest-mod").val())  || 0;
-          const eff      = selfVal + mod;
+          // Общий сбор модификаторов (wdbc-ct65.3): встречный тест приёма
+          // шёл мимо реестра правил — «Цель» в окне игрок правил руками.
+          const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey });
+          const eff      = selfVal + mod + ruleMods.total;
 
           // Опциональный переброс правил (wdbc-u0by) — тот же приём чтения,
           // что actor-sheet.mjs::_showSkillRollDialog (.rule-reroll-opt:checked).

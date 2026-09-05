@@ -23,6 +23,7 @@ import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "avatarOfSlaughter";
 
@@ -50,7 +51,9 @@ export async function applyAvatarOfSlaughter(berserker, target) {
   await berserker.update({ "system.fate.value": fate - 1 });
   await markCapabilityUsed(berserker, FLAG, "battle");
 
-  const threshold = (Number(target.system?.characteristics?.wp?.total) || 0) - 10;
+  // Общий сбор модификаторов (wdbc-ct65.3) — по ЦЕЛИ: сопротивляется она.
+  const ruleMods = collectTestMods(target, { kind: "skill", char: "wp" });
+  const threshold = (Number(target.system?.characteristics?.wp?.total) || 0) - 10 + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success } = testOutcome(roll.total, threshold);
 

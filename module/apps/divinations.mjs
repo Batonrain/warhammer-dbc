@@ -94,6 +94,9 @@ export async function applyDivination(actor, key) {
  *  бросает и узнаёт ключ, а уже потом решает, показывать ли строки выбора
  *  инлайн (см. character-wizard.mjs). */
 export async function rollRandomDivinationKey() {
+  // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): у него нет ни
+  // характеристики, ни Порога, ни степеней успеха — модифицировать нечего, и
+  // реестр правил ему не нужен. Проверено при разборе, не оставлено вопросом.
   const rolled = await new Roll("1d100").evaluate();
   const d = divinationByRoll(rolled.total);
   if (!d) return null;

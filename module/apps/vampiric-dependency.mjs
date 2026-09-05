@@ -12,6 +12,7 @@ import { isVampiricDependencyItem, vampiricMonthsSince, vampiricTestRequired,
          vampiricTestPenalty, satisfyVampiricDependency } from "../rules/vampiric-dependency.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 export { isVampiricDependencyItem };
 
@@ -51,7 +52,10 @@ export async function useVampiricTest(actor, item) {
   const months  = vampiricMonthsSince(item, game.time?.worldTime ?? 0);
   const penalty = vampiricTestPenalty(months);
   const t       = actor.system.characteristics?.t?.total ?? 0;
-  const target  = Math.max(0, t + penalty);
+  // Общий сбор модификаторов (wdbc-ct65.3): раньше этот тест катался мимо
+  // реестра правил — ни Усталость, ни Черты/Таланты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "t" });
+  const target  = Math.max(0, t + penalty + ruleMods.total);
   const roll    = await (new Roll("1d100")).evaluate();
   const success = roll.total <= target;
   const cor     = actor.system.corruption?.value ?? 0;
