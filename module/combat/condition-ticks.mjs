@@ -51,7 +51,7 @@ async function postConditionCard(actor, lines) {
  */
 export async function rollBurningPanicTest(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
-  const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
@@ -60,7 +60,7 @@ export async function rollBurningPanicTest(actor) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("fire","#ff8a3a")}Паника от Горения — ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wp}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-threshold">WP: <b>${wp}</b>${parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         ${rerollNote}
         <div class="roll-outcome">${success

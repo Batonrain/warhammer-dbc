@@ -21,10 +21,11 @@ export const CONDITION_RULES = [
     // Полудействие.» Шесть последствий, четыре места:
     //  - WS (эта запись, weapon:melee — свои рукопашные атаки хуже);
     //  - Stealth (эта запись, +20 — трудно целиться в лежащего);
-    //  - Dodge(A) — НЕ здесь: Уклонение-Реакция (combat/defense.mjs::
-    //    _performDodge) не идёт через resolveTest/«Спецправила», это отдельный
-    //    путь броска (тот же, что и fatiguePenalty(actor,"ag") там же) —
-    //    штраф добавлен туда напрямую;
+    //  - Dodge(A) (эта запись, wdbc-ct65.1): Уклонение-Реакция
+    //    (combat/defense.mjs::_performDodge) с переводом боевых тестов на
+    //    общий сбор пошло через конвейер, и штраф переехал сюда из
+    //    захардкоженного слагаемого. Парирование книга здесь не называет —
+    //    записи на skill:parry нет намеренно;
     //  - SPD вдвое / нельзя Бег и Натиск — Движение считается не тестом, а
     //    отдельно (rules/character.mjs::prepareDerivedData — halfMove/move/
     //    charge/run; combat/movement-actions.mjs::declareCharge/declareRun —
@@ -39,6 +40,7 @@ export const CONDITION_RULES = [
     when: { hasCondition: "prone" },
     effects: [
       { kind: "rollBonus", target: "weapon:melee",  value: -20 },
+      { kind: "rollBonus", target: "skill:dodge",   value: -20 },
       { kind: "rollBonus", target: "skill:stealth",  value: 20 }
     ]
   },

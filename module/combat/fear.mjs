@@ -12,7 +12,8 @@ import { ruleFlagLabels, hasRuleFlag }             from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
-import { fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
@@ -47,10 +48,13 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
   // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
   const tk = opts.tk || {};
-  // Усталость (стр. 26): диалог общего теста Навыка учитывает её сама, тест
-  // Страха забыл — тот же класс пробела, что у психотеста (wdbc-lfho).
-  const fatigue = fatiguePenalty(actor, "wp");
-  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + fatigue;
+  // Все модификаторы, которые система знает про этот тест (wdbc-ct65.1).
+  // Раньше здесь руками стояла одна Усталость, а «+10 ко всем тестам Воли» с
+  // Черты или Таланта в тест Страха не попадало вовсе — он шёл мимо реестра.
+  // Тест Страха — тест Морали по книге, отсюда morale:true (та же область,
+  // что читает resolveTest ниже при разборе исхода).
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp", morale: true });
+  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
   const autoPass = steelHeartIgnored || infamy >= r.infamy || hasRuleFlag(actor, "sarcophagus.autoPassFear");
@@ -105,7 +109,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx,
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0, fatigue
+    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts
   });
 }
 
@@ -132,7 +136,11 @@ export async function createTraumaItem(actor, row) {
 /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона. */
 export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   const wp   = actor.system.characteristics.wp?.total ?? 0;
-  const baseEff = wp + mod + (tk.difficulty || 0);
+  // Тот же общий сбор, что у теста Страха выше (wdbc-ct65.1). Ментальная
+  // Травма — не тест Морали по книге (в отличие от Страха и выхода из Шока),
+  // поэтому morale здесь не ставится: «+10 к тестам Морали» сюда не относится.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const baseEff = wp + mod + (tk.difficulty || 0) + ruleMods.total;
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
@@ -161,7 +169,7 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   await _postFearMsg(actor, "🧠 Ментальная Травма", sub, wp, mod, rv, eff, success, dof, traumaHtml, allRolls, {
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0
+    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts
   });
 }
 
@@ -193,7 +201,7 @@ export async function postShockRecoveryPrompt(actor) {
 /** Тест выхода из Шока (стр. 53): W+0, тест Морали. Успех снимает conditions.shocked. */
 export async function rollShockRecovery(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
-  const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
   if (success) await actor.update(conditionRemoveFields("shocked"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
@@ -203,7 +211,7 @@ export async function rollShockRecovery(actor) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("target","#8fd0ff")}Выход из Шока — ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wp}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-threshold">WP: <b>${wp}</b>${parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
         <div class="roll-dice">Бросок: <b>${rv}</b></div>
         ${rerollNote}
         <div class="roll-outcome">${success
@@ -223,7 +231,7 @@ export async function rollShockRecovery(actor) {
  */
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
   { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "",
-    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, fatigue = 0 } = {}) {
+    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [] } = {}) {
   const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
@@ -259,7 +267,7 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""} → Порог: <b>${eff}</b></div>
+        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}${ruleParts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b></div>
         ${combinedLine}
         ${propsHtml}
         <div class="roll-dice">Бросок: <b>${rv}</b></div>

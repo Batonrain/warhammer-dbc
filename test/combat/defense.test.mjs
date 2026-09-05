@@ -265,7 +265,7 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("→ Порог: <b>-5</b>");
-    expect(card).toContain("🧎 повален -20");
+    expect(card).toContain("Повален -20");
   });
 
   it("не Повален — штрафа и чипа нет", async () => {
@@ -275,7 +275,7 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("→ Порог: <b>15</b>");
-    expect(card).not.toContain("повален");
+    expect(card).not.toContain("Повален");
   });
 });
 
@@ -383,7 +383,7 @@ describe("_performSprayCancel: тест на отмену Распыления (
     await _performSprayCancel(actor);
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("броня выключена -10");
+    expect(card).toContain("Броня выключена -10");
     expect(card).not.toContain("-40");
   });
 });
@@ -517,5 +517,46 @@ describe("_performParry: Один Против Сотни (wdbc-u0by)", () => {
     await _performParry(actor, 0, "", 1, false, false);
 
     expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
+  });
+});
+
+// ── Партия 1/3: боевые тесты через общий сбор модификаторов (wdbc-ct65.1) ──
+//
+// До этого шага Уклонение, Парирование и отмена Распыления считали Порог
+// мимо реестра правил: в них по одному дописывались Усталость, выключенная
+// броня и Перевес, а всё остальное, что книга даёт этим тестам, молчало.
+describe("боевые тесты берут модификаторы из реестра (wdbc-ct65.1)", () => {
+  /** Источник, дающий один модификатор указанной области. */
+  const grantMod = (target, value) => registerRuleSource("test", () => [
+    { id: "испытание", label: "Испытание",
+      effects: [{ kind: "rollBonus", target, value }] }
+  ]);
+
+  it("«+10 к тестам Уклонения» доезжает в Реакцию Уклонения", async () => {
+    grantMod("skill:dodge", 10);
+    const actor = attacker();
+    await _performDodge(actor);
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Испытание +10");
+  });
+
+  it("«+10 к тестам Парирования» доезжает в Реакцию Парирования", async () => {
+    grantMod("skill:parry", 10);
+    const card = await parryCard();
+    expect(card).toContain("Испытание +10");
+  });
+
+  it("отмена Распыления идёт Акробатикой, а не Уклонением", async () => {
+    grantMod("skill:dodge", 10);
+    const actor = attacker();
+    await _performSprayCancel(actor);
+    expect(captured.chat.at(-1).content).not.toContain("Испытание");
+  });
+
+  it("правило чужой области в чужой тест не лезет", async () => {
+    grantMod("skill:stealth", 30);
+    const actor = attacker();
+    await _performDodge(actor);
+    expect(captured.chat.at(-1).content).not.toContain("Испытание");
   });
 });

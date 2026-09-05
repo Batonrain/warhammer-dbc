@@ -5,9 +5,7 @@ import { resolveWeaponPropsList, aggregateAuto } from "./weapon-properties.mjs";
 import { getModEffects, mergeWeaponPropEntries }  from "./weapon-mods.mjs";
 import { rollIcon }       from "../constants/roll-icons.mjs";
 import { pickReroll }     from "../rules/reroll-pick.mjs";
-import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
-import { disabledArmourPenalty } from "./armor-mods.mjs";
-import { inventoryOverloadPenalty } from "../rules/encumbrance.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 import { hasRuleFlag }    from "../rules/flags.mjs";
 import { isRoundCapabilityAvailable } from "../apps/game-session.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
@@ -63,20 +61,13 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   // Клонирующее Поле: голограммы срывают прицел — бонус носителю на физическое
   // избегание. Сила зависит от редкости поля (Poor.Q режет её вдвое).
   const cloneBonus = actor.system.cloneField?.bonus ?? 0;
-  // Эта кнопка (карточка атаки в чате) раньше не учитывала ни Усталость, ни
-  // выключенную силовую броню (стр. 233, −40 на физическую РЕАКЦИЮ) — путь
-  // отдельный от вкладки Навыков (_rollSkill), которая их уже учитывала.
-  const fatigue       = fatiguePenalty(actor, "ag");
-  const armourPenalty = disabledArmourPenalty(actor, { skillKey: "dodge" });
-  // Перевес инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник,
-  // может действовать одновременно с ней (не смешиваются, оба вычитаются).
-  const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "dodge" });
-  // Повален (стр. 30-31, wdbc-r5o7.2): −20 на Уклонение. Реакция Уклонения
-  // не идёт через общий resolveTest/«Спецправила» (см. заголовок файла и
-  // fatiguePenalty выше — тот же отдельный путь броска), поэтому штраф
-  // добавлен здесь напрямую, а не декларативным правилом.
-  const proneMod   = actor.system.conditions?.prone ? -20 : 0;
-  const threshold  = agTotal + rankBonus + stBonus + extraMod + cloneBonus + fatigue + armourPenalty + overloadPenalty + proneMod;
+  // Все модификаторы, которые система знает про этот тест, — одним сбором
+  // (wdbc-ct65.1). Раньше здесь по одному дописывались Усталость, выключенная
+  // силовая броня, Перевес инвентаря и Повален, а всё остальное, что книга
+  // даёт Уклонению (Черты, Таланты, Происхождения, записи Конструктора),
+  // сюда не доезжало вовсе: путь этой кнопки шёл мимо реестра правил.
+  const ruleMods  = collectTestMods(actor, { kind: "skill", skill: "dodge", char: "ag" });
+  const threshold = agTotal + rankBonus + stBonus + extraMod + cloneBonus + ruleMods.total;
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -117,10 +108,7 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   if (stBonus   !== 0)   modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
   if (extraMod  !== 0)   modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
-  if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
-  if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
-  if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
-  if (proneMod !== 0)    modParts.push(`🧎 повален ${proneMod}`);
+  modParts.push(...ruleMods.parts);
   if (picked.dropped.length) {
     modParts.push(forcedReroll
       ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
@@ -182,13 +170,12 @@ export async function _performSprayCancel(actor) {
   const acroSkill = actor.system.skills?.acrobatics;
   const rankBonus = SKILL_RANKS[acroSkill?.rank ?? "untrained"]?.bonus ?? -20;
   const cloneBonus = actor.system.cloneField?.bonus ?? 0;
-  const fatigue    = fatiguePenalty(actor, "ag");
-  // charKey (не skillKey) — REACTION_SKILLS в armor-mods.mjs/encumbrance.mjs
-  // знает только Dodge/Parry (−40 на физическую Реакцию, стр. 233); этот тест
-  // Реакцию не тратит, поэтому берёт обычный физический штраф характеристики.
-  const armourPenalty   = disabledArmourPenalty(actor, { charKey: "ag" });
-  const overloadPenalty = inventoryOverloadPenalty(actor, { charKey: "ag" });
-  const threshold = agTotal + rankBonus + cloneBonus + fatigue + armourPenalty + overloadPenalty;
+  // Тест идёт Акробатикой, а не Уклонением, и Реакцию не тратит — поэтому
+  // штраф выключенной брони берётся обычный физический (−10 характеристике),
+  // а не реакционный −40: REACTION_SKILLS знает только Dodge/Parry, а ключ
+  // навыка здесь другой. Ветвить это руками не нужно, сбор различает сам.
+  const ruleMods  = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const threshold = agTotal + rankBonus + cloneBonus + ruleMods.total;
 
   const roll = await new Roll("1d100").evaluate();
   const rv     = roll.total;
@@ -201,9 +188,7 @@ export async function _performSprayCancel(actor) {
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
   if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
-  if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
-  if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
-  if (overloadPenalty !== 0) modParts.push(`◈ перевес инвентаря ${overloadPenalty}`);
+  modParts.push(...ruleMods.parts);
 
   const outcomeHtml = passed
     ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}! Попадание отменено (если шаблон не накрывает Базу целиком — иначе годится только Отскок ниже, стр. 12).</span>`
@@ -284,16 +269,13 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const duelingBonus   = pwp.duelingParry ? 10 : 0;
   const stepBonus      = pwp.stepByStep   ? 10 : 0;
   const defBonus       = defensiveBonus + duelingBonus + stepBonus;
-  // Та же правка, что у _performDodge выше — эта кнопка тоже не учитывала
-  // ни Усталость, ни выключенную силовую броню.
-  const fatigue       = fatiguePenalty(actor, "ws");
-  const armourPenalty = disabledArmourPenalty(actor, { skillKey: "parry" });
-  const overloadPenalty = inventoryOverloadPenalty(actor, { skillKey: "parry" });
+  // Тот же общий сбор, что у _performDodge выше (wdbc-ct65.1).
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "parry", char: "ws" });
   // Determination To Fight/Решительность Сражаться (wdbc-1rno): +30 при
   // отрицательных Ранах + прошлый раунд в Защитной Стойке.
   const dtfBonus = determinationToFightParryBonus(actor);
 
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + fatigue + armourPenalty + overloadPenalty + dtfBonus;
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + ruleMods.total + dtfBonus;
 
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
@@ -330,8 +312,7 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   if (duelingBonus !== 0)   modParts.push(`Дуэлянтское +${duelingBonus}`);
   if (stepBonus !== 0)      modParts.push(`Шаг За Шагом +${stepBonus}`);
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
-  if (fatigue !== 0)     modParts.push(`😓 усталость ${fatigue}`);
-  if (armourPenalty !== 0) modParts.push(`🔌 броня выключена ${armourPenalty}`);
+  modParts.push(...ruleMods.parts);
   if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
   if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
 

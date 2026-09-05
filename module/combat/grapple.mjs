@@ -37,7 +37,8 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
-import { fatiguePenalty, conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
   from "../rules/improvised-weapon.mjs";
@@ -499,9 +500,12 @@ async function _doSwing(actor) {
   const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
   const baseKey = actor.system.meleeBase || "standard";
   const baseBon = MELEE_BASES[baseKey]?.wsBonus ?? 0;
-  const fatigue = fatiguePenalty(actor, "ws");
+  // Общий сбор модификаторов (wdbc-ct65.1): раньше здесь стояла одна
+  // Усталость, а Черты/Таланты на Оружейное Мастерство в приёмы Борьбы не
+  // попадали вовсе — этот путь шёл мимо реестра правил.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "ws" });
   const ws      = actor.system.characteristics.ws?.total ?? 0;
-  const final   = ws + profile.wsBonus + baseBon + stBon + fatigue;
+  const final   = ws + profile.wsBonus + baseBon + stBon + ruleMods.total;
 
   const roll = await new Roll("1d100").evaluate();
   const { success: hit, deg } = testOutcome(roll.total, final);
@@ -525,7 +529,7 @@ async function _doSwing(actor) {
         WS: <b>${ws}</b> база ${baseBon >= 0 ? "+" : ""}${baseBon}
         ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
         Дубина −20${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-        ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}
+        ${ruleMods.parts.map(p => ` ${p}`).join("")}
         → Порог: <b>${final}</b>
       </div>
       <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
@@ -594,8 +598,9 @@ async function _doThrow(actor) {
   }
 
   const charVal = actor.system.characteristics[profile.testChar]?.total ?? 0;
-  const fatigue = fatiguePenalty(actor, profile.testChar);
-  const final   = charVal + profile.testBonus + fatigue;
+  // Тот же общий сбор, что у «Замахнуться» выше (wdbc-ct65.1).
+  const throwMods = collectTestMods(actor, { kind: "skill", char: profile.testChar });
+  const final   = charVal + profile.testBonus + throwMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success: hit, deg } = testOutcome(roll.total, final);
   const rollMode = game.settings.get("core", "rollMode");
@@ -642,7 +647,7 @@ async function _doThrow(actor) {
         ${profile.testLabel}: <b>${charVal}</b>
         ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
         ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-        ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}
+        ${throwMods.parts.map(p => ` ${p}`).join("")}
         → Порог: <b>${final}</b>
       </div>
       <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
