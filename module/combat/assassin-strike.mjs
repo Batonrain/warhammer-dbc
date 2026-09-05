@@ -33,6 +33,7 @@ import { skillTotal, markMovedThisTurn } from "./movement-actions.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
 /** Ключ флага троттлинга «раз в Раунд» (module/rules/cooldown.mjs). */
 export const ASSASSIN_STRIKE_CAPABILITY = "assassinStrike";
@@ -74,19 +75,14 @@ export async function resolveAssassinStrikeClick(actorUuid) {
     await actor.setFlag("warhammer-dbc", "disengageActive", true);
   }
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">🗡️ Удар Ассасина — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Acrobatics+0: <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — Полудвижение свободным действием (без ОД), не вызывает Свободную Атаку при выходе из рукопашной</span>`
-          : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Полудвижение недоступно</span>`}</div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode"));
-  await ChatMessage.create(messageData);
+  await postTestCard(actor, {
+    icon: "🗡️", title: `Удар Ассасина — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Acrobatics+0", base: skillTotal(actor, "acrobatics"),
+                               parts: ruleMods.parts, threshold }),
+    rv,
+    outcome: success
+      ? `<span class="roll-success">Успех — Полудвижение свободным действием (без ОД), не вызывает Свободную Атаку при выходе из рукопашной</span>`
+      : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Полудвижение недоступно</span>`
+  }, { rolls: [roll] });
   return success;
 }
