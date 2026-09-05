@@ -92,12 +92,23 @@ export function outcomeHtml(success, text) {
  * здесь, а не на каждом месте вызова: раньше эта строчка повторялась 237 раз
  * и в паре мест отличалась.
  *
+ * `speaker` и `whisper` нужны карточкам, которые говорит не персонаж
+ * (системные уведомления от «Системы») или которые видны не всем.
+ *
  * @returns {Promise<ChatMessage>}
  */
-export async function postTestCard(actor, card, { rolls = [], sound = true, flags = null } = {}) {
+export async function postTestCard(actor, card, {
+  rolls = [], sound = true, flags = null, speaker = null, whisper = null
+} = {}) {
   const content = typeof card === "string" ? card : testCardHtml(card);
   const data = {
-    speaker: ChatMessage.getSpeaker({ actor }),
+    // speaker переопределяется для карточек, которые говорит не персонаж:
+    // системные уведомления идут от «Системы» (alias), и getSpeaker с
+    // отсутствующим актором подставил бы туда текущего пользователя.
+    speaker: speaker ?? ChatMessage.getSpeaker({ actor }),
+    // whisper — для карточек, которые видит только владелец и ГМ (запрос
+    // делегированного теста, приватные напоминания).
+    ...(whisper ? { whisper } : {}),
     content,
     ...(rolls.length ? { rolls } : {}),
     ...(sound ? { sound: CONFIG.sounds.dice } : {}),

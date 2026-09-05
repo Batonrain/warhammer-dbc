@@ -23,7 +23,10 @@ skills: [dbc-workflow]
 - `testCardHtml({icon, title, actorUuid, threshold, lines, rv, dice, rerollNote, critLine, outcome, sections})` — чистая функция разметки. Порядок строк фиксированный: шапка, Порог, свои строки, бросок, кубики, переброс, крит, исход, свои блоки. Пустые куски не рисуются вовсе;
 - `thresholdLine({prefix, label, base, parts, threshold})` — строка Порога. `parts` — готовые подписи слагаемых. Пустой список = скобок нет;
 - `outcomeHtml(success, text)` — успех/провал одним классом;
-- `postTestCard(actor, card, {rolls, sound, flags})` — публикация: `getSpeaker`, `applyRollMode` и флаги карточки внутри.
+- `postTestCard(actor, card, {rolls, sound, flags, speaker, whisper})` — публикация:
+  `getSpeaker`, `applyRollMode` и флаги карточки внутри. `speaker` нужен
+  карточкам, которые говорит не персонаж (системные уведомления от «Системы»),
+  `whisper` — тем, что видит только владелец и ГМ.
 
 Образцы уже переведённых карточек, на которые надо равняться: `module/combat/defense.mjs` (Уклонение, Парирование, Сжатие), `module/combat/fear.mjs` (`_postFearMsg` — карточка с флагами и кнопками), `module/apps/infoguard.mjs`.
 

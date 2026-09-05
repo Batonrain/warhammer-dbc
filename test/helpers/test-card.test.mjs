@@ -8,6 +8,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect } from "vitest";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { testCardHtml, thresholdLine, outcomeHtml } from "../../module/helpers/test-card.mjs";
 
 describe("thresholdLine: строка Порога", () => {
@@ -82,5 +83,23 @@ describe("outcomeHtml", () => {
   it("успех и провал различаются классом, а не текстом", () => {
     expect(outcomeHtml(true, "Успех")).toBe('<span class="roll-success">Успех</span>');
     expect(outcomeHtml(false, "Провал")).toBe('<span class="roll-failure">Провал</span>');
+  });
+});
+
+describe("postTestCard: не только карточки персонажа", () => {
+  it("speaker переопределяется — системные уведомления говорит «Система»", async () => {
+    resetCaptured();
+    const { postTestCard } = await import("../../module/helpers/test-card.mjs");
+    await postTestCard(null, { title: "Зона размещена" }, { speaker: { alias: "Система" }, sound: false });
+    expect(captured.chat.at(-1).speaker).toEqual({ alias: "Система" });
+  });
+
+  it("whisper проставляется только когда задан", async () => {
+    resetCaptured();
+    const { postTestCard } = await import("../../module/helpers/test-card.mjs");
+    await postTestCard(null, { title: "Личное" }, { whisper: ["u1"], sound: false });
+    expect(captured.chat.at(-1).whisper).toEqual(["u1"]);
+    await postTestCard(null, { title: "Общее" }, { sound: false });
+    expect(captured.chat.at(-1)).not.toHaveProperty("whisper");
   });
 });
