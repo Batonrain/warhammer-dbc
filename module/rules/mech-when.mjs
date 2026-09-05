@@ -74,6 +74,17 @@
 // Не заполнено (requireSealedArmour:false) — условия нет вовсе, тот же
 // принцип, что у остальных гейтов.
 
+// ── Состояние (when.condition/when.negateCondition) ─────────────────────────
+// Восьмой независимый гейт (wdbc-tl0f): список ключей Состояний
+// (constants/conditions.mjs), между вариантами ИЛИ — та же форма списка, что у
+// Тира Ран и Покровителя. Читает PREDICATES.hasCondition, тот же предикат, по
+// которому книжные штрафы Состояний уже отбираются в rules/library/conditions.mjs
+// — одно и то же слово книги («пока Оглушён») обязано значить одно и то же и в
+// правиле из книги, и в записи автора контента. До этого гейта запись можно
+// было привязать только к Ярости и Тиру Ран, а «пока Повален», «пока Ослеплён»
+// приходилось выражать отдельным предикатом в коде на каждый случай.
+// Нет актора (предпросмотр) — условие пройдено, тот же принцип, что у остальных.
+
 // ── Покровитель (when.patronGod/when.negatePatronGod) ───────────────────────
 // Шестой независимый гейт (wdbc-xxb7): список ключей WARP_GODS
 // (khorne/nurgle/slaanesh/tzeentch/undivided), между вариантами ИЛИ — та же
@@ -111,6 +122,11 @@ export function whenTalentSpec(when) {
   return (ts?.name && ts?.specialization) ? ts : null;
 }
 
+/** Заполненные ключи Состояний из entry.when.condition. */
+export function whenCondition(when) {
+  return (when?.condition || []).filter(Boolean);
+}
+
 /** Заполненные ключи тира Ран из entry.when.woundTier. */
 export function whenWoundTier(when) {
   return (when?.woundTier || []).filter(Boolean);
@@ -140,8 +156,9 @@ export function entryWhenOk(actor, entry, item = null) {
   const requireRage = !!entry?.when?.requireRage;
   const patronGods = whenPatronGod(entry?.when);
   const requireSealedArmour = !!entry?.when?.requireSealedArmour;
+  const condKeys = whenCondition(entry?.when);
   if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
-      && !patronGods.length && !requireSealedArmour) return true;
+      && !patronGods.length && !requireSealedArmour && !condKeys.length) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -202,5 +219,11 @@ export function entryWhenOk(actor, entry, item = null) {
     sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
   }
 
-  return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk;
+  let condOk = true;
+  if (condKeys.length && actor) {
+    const matches = PREDICATES.hasCondition(actor, {}, condKeys);
+    condOk = entry.when.negateCondition ? !matches : matches;
+  }
+
+  return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk;
 }

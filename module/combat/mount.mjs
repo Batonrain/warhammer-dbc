@@ -647,7 +647,7 @@ function fallSection(rider, mount, speedKey) {
 /** Урон падения плюс состояние «лежит»: выпавший из седла оказывается на земле. */
 export async function applyFall(rider, formula) {
   const roll = await new Roll(formula || "1d10").evaluate();
-  await rider.update(conditionApplyFields("prone"));
+  await rider.update(conditionApplyFields("prone", null, rider));
   // Строка броска здесь своя: это не бросок теста (Порога нет), а формула
   // урона падения — «1d10+2: 9», а не «Бросок: 9».
   await postCard(rider, {

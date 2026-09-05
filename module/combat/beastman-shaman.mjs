@@ -290,7 +290,7 @@ export async function applyWarpTaintedAura(actor, casterToken) {
     await t.actor.update({ "system.corruption.value": curCor + 1 });
     if (god === "nurgle") {
       const curRounds = Number(t.actor.system?.conditions?.suffocatingRounds) || 0;
-      await t.actor.update(conditionApplyFields("suffocating", Math.max(curRounds, 1)));
+      await t.actor.update(conditionApplyFields("suffocating", Math.max(curRounds, 1), t.actor));
     }
   }
   lines.push(`Провалившие тест W−10 (${failed.length}/${enemies.length}): ${failed.map(a => esc(a.name)).join(", ") || "—"} — +1 Порча каждому${god === "nurgle" ? " + реальное Состояние «Удушье»" : ""}.`);

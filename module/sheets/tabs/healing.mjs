@@ -331,7 +331,7 @@ async function applyAmputate(medic, patient, { mod, limb }) {
       rolls.push(gangRoll);
       const gangrene = gangRoll.total <= 80;
       lines.push(`Шанс Гангрены (80%): бросок <b>${gangRoll.total}</b> — ${gangrene ? `<span class="roll-failure">Гангрена началась</span>` : `<span class="roll-success">пронесло</span>`}`);
-      if (gangrene) Object.assign(updates, conditionApplyFields("gangrene"));
+      if (gangrene) Object.assign(updates, conditionApplyFields("gangrene", null, patient));
     }
   }
 
@@ -455,7 +455,7 @@ async function resolveBionicTest(medic, patient, { mod }) {
     const dmgRoll = await new Roll("1d10").evaluate();
     rolls.push(dmgRoll);
     const updates = computeWoundDamage(patient.system, dmgRoll.total);
-    Object.assign(updates, conditionApplyFields("crippling"));
+    Object.assign(updates, conditionApplyFields("crippling", null, patient));
     lines.push(`Провал → <b>${dmgRoll.total}</b> непоглощаемого урона + <b>конечность бесполезна</b> (Калечение).`);
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);

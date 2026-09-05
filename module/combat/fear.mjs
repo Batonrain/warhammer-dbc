@@ -89,7 +89,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
         ${critPillsHtml(shockPills, actor.uuid)}</div>`;
       // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
       // выхода из Шока в начале Хода (rollShockRecovery ниже).
-      await actor.update(conditionApplyFields("shocked"));
+      await actor.update(conditionApplyFields("shocked", null, actor));
     }
   }
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll: !!reroll });

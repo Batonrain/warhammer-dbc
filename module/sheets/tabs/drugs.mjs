@@ -181,7 +181,7 @@ export async function applyDrug(owner, item, recipient = null) {
     const lvlToGrant  = fx.grantsConditionLevel ?? 1;
     const levelField  = conditionLevelField(fx.grantsCondition);
     const curLvl      = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
-    Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null));
+    Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
     if (fx.grantsCondition === "fatigued") {
       const fatVal = actor.system.fatigue?.value || 0;
       actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
@@ -337,7 +337,7 @@ export async function triggerAfterEffect(actor, item) {
     const lvlToGrant = fx.grantsConditionLevel ?? 1;
     const levelField = conditionLevelField(fx.grantsCondition);
     const curLvl     = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
-    Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null));
+    Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
     if (fx.grantsCondition === "fatigued") {
       const fatVal = actor.system.fatigue?.value || 0;
       actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
@@ -553,7 +553,7 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
   } else {
     // Провал → персонаж зависим от ЭТОГО препарата.
     if (item) await item.update({ "system.addiction.isAddicted": true });
-    await actor.update(conditionApplyFields("addicted"));
+    await actor.update(conditionApplyFields("addicted", null, actor));
     outcome = wasAddicted
       ? `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Зависимость сохраняется.</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж стал зависим!</span>`;

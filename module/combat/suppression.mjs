@@ -32,7 +32,7 @@ export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } =
   // Подавления независимо от броска.
   const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
 
-  if (!success) await actor.update(conditionApplyFields("pinned"));
+  if (!success) await actor.update(conditionApplyFields("pinned", null, actor));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
   // Подписи, а не голая сумма (wdbc-kuun): раньше здесь стояло « +30 -10»

@@ -130,3 +130,16 @@ export const CONDITION_RULES = [
     effects: [{ kind: "rollBonus", target: "social", value: -30 }]
   }
 ];
+
+/**
+ * Книжные правила, штраф которых даёт это Состояние — по ключу из реестра
+ * (constants/conditions.mjs). Нужно «Смягчению» (запись Конструктора
+ * kind:"condition" режима "mitigate", wdbc-tl0f): чтобы снять или ополовинить
+ * штраф Состояния, надо знать, каким правилом он записан, а не искать его по
+ * коду. Ключ может стоять в списке вместе с другими («Потеря стоп/ног» — одно
+ * правило на два Состояния), поэтому сравнение по вхождению в список.
+ */
+export function conditionRulesFor(key) {
+  if (!key) return [];
+  return CONDITION_RULES.filter(r => [].concat(r.when?.hasCondition ?? []).includes(key));
+}

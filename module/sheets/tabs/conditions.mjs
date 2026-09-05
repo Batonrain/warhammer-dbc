@@ -9,6 +9,8 @@
 // sheet-helpers.mjs тянет за собой тяжёлые модули листа (race-library.mjs и
 // т.п.) с побочными эффектами при импорте (Hooks.once вне заглушки Foundry).
 import { CONDITIONS_DEF } from "../../constants/conditions.mjs";
+import { isImmuneToCondition } from "../../rules/condition-guards.mjs";
+import { isItemActive } from "../../apps/effects.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
@@ -205,10 +207,21 @@ export async function fatigueSleep(actor) {
 // полей (Состояние + другие system.*/flags.*) в один вызов actor.update.
 // addCondition/removeCondition — те же пары полей, но уже отправленные.
 
-/** Патч { "system.conditions.<key>": true, [.<levelField>]: level } — если у Состояния нет счётчика или level не передан, второе поле не пишется. */
-export function conditionApplyFields(key, level = null) {
+/**
+ * Патч { "system.conditions.<key>": true, [.<levelField>]: level } — если у
+ * Состояния нет счётчика или level не передан, второе поле не пишется.
+ *
+ * `actor` необязателен и нужен ровно для одного: спросить ИММУНИТЕТ (запись
+ * Конструктора kind:"condition" режима «иммунитет», wdbc-tl0f). Невосприимчивый
+ * актор получает ПУСТОЙ патч — Состояние не накладывается, каким бы путём его
+ * ни накладывали, потому что все пути идут через эту функцию (wdbc-fejd).
+ * Без актора иммунитет не спрашивается: вызов без владельца бывает только там,
+ * где патч собирают «в воздухе» (предпросмотр, тест) — не молча гасить.
+ */
+export function conditionApplyFields(key, level = null, actor = null) {
   const def = CONDITIONS_DEF[key];
   if (!def || key === "fatigued") return {};
+  if (actor && isImmuneToCondition(actor, key, isItemActive)) return {};
   const fields = { [`system.conditions.${key}`]: true };
   if (def.hasLevel && def.levelField && level != null) {
     fields[`system.conditions.${def.levelField}`] = Number(level) || 0;
@@ -236,6 +249,9 @@ export function conditionRemoveFields(key) {
 export function conditionAdjustFields(actor, key, delta) {
   const def = CONDITIONS_DEF[key];
   if (!def || key === "fatigued") return {};
+  // Иммунитет гасит только НАКОПЛЕНИЕ: снять уровень (delta < 0) он мешать не
+  // должен — иначе предмет-иммунитет запер бы Состояние, наложенное до него.
+  if (delta > 0 && isImmuneToCondition(actor, key, isItemActive)) return {};
   if (!def.hasLevel || !def.levelField) {
     return delta > 0 ? { [`system.conditions.${key}`]: true } : {};
   }
@@ -250,7 +266,7 @@ export function conditionAdjustFields(actor, key, delta) {
  * только для состояний со счётчиком (Кровотечение, Оглушение и т.п.).
  */
 export async function addCondition(actor, key, { level = null } = {}) {
-  const fields = conditionApplyFields(key, level);
+  const fields = conditionApplyFields(key, level, actor);
   if (Object.keys(fields).length) await actor.update(fields);
 }
 

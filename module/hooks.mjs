@@ -20,7 +20,7 @@ import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
-import { conditionLevelField } from "./constants/conditions.mjs";
+import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
 import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
 import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
@@ -1198,20 +1198,31 @@ async function _applyWeaponPropEffect(ds) {
   if (!resisted && conditionsToApply.length) {
     const update = {};
     const applied = [];
+    // Иммунитет цели (запись Конструктора kind:"condition" режима «иммунитет»,
+    // wdbc-tl0f) виден в карточке отдельной строкой, а не молчаливым
+    // «состояние не наложилось»: единая точка (conditionApplyFields с актором)
+    // отдаёт ПУСТОЙ патч, и об этом надо сказать вслух — иначе ГМ решит, что
+    // свойство оружия сломалось.
+    const immune = [];
     for (const cond of conditionsToApply) {
       const levelField = conditionLevelField(cond);
-      if (levelField) {
-        const lvl = perDoP ? deg : (fixedRnd || 1);
-        const cur = actor.system.conditions?.[levelField] ?? 0;
-        Object.assign(update, conditionApplyFields(cond, Math.max(cur, lvl)));
-        applied.push(`${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`);
-      } else {
-        Object.assign(update, conditionApplyFields(cond));
-        applied.push(cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label);
+      const lvl = levelField ? (perDoP ? deg : (fixedRnd || 1)) : null;
+      const cur = levelField ? (actor.system.conditions?.[levelField] ?? 0) : 0;
+      const fields = levelField
+        ? conditionApplyFields(cond, Math.max(cur, lvl), actor)
+        : conditionApplyFields(cond, null, actor);
+      if (!Object.keys(fields).length) {
+        immune.push(CONDITIONS_DEF[cond]?.label || label);
+        continue;
       }
+      Object.assign(update, fields);
+      applied.push(levelField
+        ? `${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`
+        : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label));
     }
-    await actor.update(update);
-    appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    if (Object.keys(update).length) await actor.update(update);
+    if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    if (immune.length) appliedNote += `<div class="roll-threshold">Иммунитет: <b>${immune.join(", ")}</b> — не накладывается</div>`;
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
     // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);

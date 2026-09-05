@@ -167,6 +167,35 @@
 //      Отката при снятии предмета НЕТ, и это осознанный пробел: правка
 //      нескольких ЧУЖИХ акторов сразу не укладывается в откат deleteItem,
 //      который работает по флагу на предмете владельца.
+//    condition: { condKey, condMode:"apply"|"remove"|"immunity"|"mitigate",
+//                  condLevel, condMitigate:"ignore"|"half" }
+//      → СОСТОЯНИЕ (wdbc-tl0f). Книга пишет четыре оборота, и до этого вида
+//      записи ни один из них не выражался данными — только кодом:
+//      «накладывает Оглушение на N раундов» (condMode:"apply" + condLevel),
+//      «снимает Кровотечение» (condMode:"remove"), «иммунитет к Ослеплению»
+//      (condMode:"immunity"), «Состояние на нём не даёт обычного штрафа /
+//      даёт половину» (condMode:"mitigate" + condMitigate).
+//      condKey — ключ из реестра Состояний (constants/conditions.mjs), тот же
+//      источник, из которого строятся схема существа, лист и иконки токена.
+//      Два режима РАЗОВЫЕ, применяются к владельцу в момент получения предмета
+//      через ту же единую точку, что и весь остальной код (wdbc-fejd,
+//      sheets/tabs/conditions.mjs — conditionApplyFields/conditionRemoveFields):
+//        apply  — наложить; condLevel идёт в счётчик Состояния, если он у него
+//                 есть (раунды Оглушения, уровни Кровотечения), иначе не пишется;
+//        remove — снять (и обнулить счётчик).
+//      Два режима ЖИВЫЕ, ничего не пишут при получении (как terrainIgnore/
+//      reroll/fatigue) — их читают прямо в момент события:
+//        immunity — module/rules/condition-guards.mjs, спрашивается из единой
+//                 точки наложения: Состояние не накладывается НИКАКИМ путём,
+//                 пока предмет на акторе. Это шире прежнего иммунитета к
+//                 СВОЙСТВУ ОРУЖИЯ (weaponPropertyImmunity.*, constants/
+//                 capabilities.mjs), который сам оговаривает, что «другие пути
+//                 наложить то же состояние им не гасятся»;
+//        mitigate — module/rules/item-rules.mjs: вытесняет книжное правило
+//                 Состояния (rules/library/conditions.mjs) через overrides и,
+//                 в режиме "half", подставляет вместо него ополовиненную копию.
+//                 Состояние остаётся на листе и на токене — исчезает только его
+//                 штраф, ровно как говорит книга.
 //    group: { } — ВЛОЖЕННАЯ подгруппа И/ИЛИ (поле entry.group = {id,operator,
 //      entries:[...]}, та же форма, что и группа верхнего уровня). Даёт выбор
 //      между НАБОРАМИ из нескольких записей сразу — напр. ИЛИ: [И: Болтер +
@@ -272,8 +301,10 @@ import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
+import { CONDITIONS, CONDITIONS_DEF, conditionLevelField } from "../constants/conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
@@ -438,6 +469,7 @@ const KIND_LABELS = {
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
+  condition: "Состояние",
   reroll: "Переброс",
   testMod: "Модификатор теста",
   failDegMod: "Доп. Провалы при провале",
@@ -486,6 +518,27 @@ const REROLL_SCOPE_LABEL = (e) => {
 // одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
 // потери сознания») не ломало уже сохранённые записи.
 const FATIGUE_ACTIONS = [["threshold", "Порог штрафа"]];
+// «Состояние» (kind:"condition", wdbc-tl0f) — четыре оборота книги одним
+// каскадом «режим → уточнение». apply/remove разовые (владелец, момент
+// получения), immunity/mitigate живые (читаются rules/condition-guards.mjs и
+// rules/item-rules.mjs). Порядок в списке — от самого частого к редкому.
+const CONDITION_MODES_UI = [
+  ["apply",    "Наложить"],
+  ["remove",   "Снять"],
+  ["immunity", "Иммунитет"],
+  ["mitigate", "Смягчить штраф"]
+];
+const CONDITION_MODE_LABELS = Object.fromEntries(CONDITION_MODES_UI);
+const CONDITION_MITIGATE_UI = [
+  ["ignore", "штрафа нет вовсе"],
+  ["half",   "половина штрафа"]
+];
+const CONDITION_MITIGATE_LABELS = Object.fromEntries(CONDITION_MITIGATE_UI);
+// Подпись счётчика Состояния — тот же смысл, что в реестре: "rounds" — срок,
+// "level"/"count" — сила/штуки. Пустая строка означает «счётчика нет», и поле
+// величины у записи не показывается вовсе.
+const CONDITION_COUNTER_LABELS = { rounds: "раундов", level: "уровней", count: "штук" };
+const conditionCounterLabel = (key) => CONDITION_COUNTER_LABELS[CONDITIONS[key]?.counter] || "";
 const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"]];
 // Действия над Свойством оружия (kind:"weaponProp"). increase/decrease появляются
 // в дропдауне только когда перетащенное свойство обладает рейтингом (см.
@@ -706,6 +759,10 @@ export function blankMechEntry(kind = "characteristic") {
     capabilityAptMatch: "", capabilityAptAlign: "ally",
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
+    // condition — Состояние (wdbc-tl0f): каскад «режим → уточнение».
+    // condLevel читается только режимом "apply" и только у Состояний со
+    // счётчиком; condMitigate — только режимом "mitigate".
+    condKey: "", condMode: "apply", condLevel: "1", condMitigate: "ignore",
     // equipment
     equipMode: "direct", equipQty: 1,
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
@@ -899,6 +956,21 @@ export function describeMechEntry(entry) {
       const scope = REROLL_SCOPE_LABEL(entry);
       return scope ? `Переброс: ${scope} — ${modeLabel}` : "Переброс: (область не выбрана)";
     }
+    case "condition": {
+      const label = CONDITIONS_DEF[entry.condKey]?.label;
+      if (!label) return "Состояние: (не выбрано)";
+      const mode = entry.condMode || "apply";
+      if (mode === "remove")   return `Состояние: снять «${label}»`;
+      if (mode === "immunity") return `Состояние: иммунитет к «${label}» — не накладывается ничем`;
+      if (mode === "mitigate") {
+        const how = CONDITION_MITIGATE_LABELS[entry.condMitigate === "half" ? "half" : "ignore"];
+        return `Состояние: «${label}» — ${how}`;
+      }
+      const counter = conditionCounterLabel(entry.condKey);
+      return counter
+        ? `Состояние: наложить «${label}» (${counter}: ${entry.condLevel ?? "1"})`
+        : `Состояние: наложить «${label}»`;
+    }
     case "fatigue": {
       if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
       const charLabel = entry.fatigueThresholdChar === "wp" ? "Воли" : "Стойкости";
@@ -1049,6 +1121,12 @@ function isEntryComplete(e) {
       return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
+    case "condition":
+      // Величина проверяется только там, где она вообще есть: у Состояния без
+      // счётчика пустой condLevel — не незаполненность записи.
+      if (!e.condKey || !CONDITIONS_DEF[e.condKey]) return false;
+      if ((e.condMode || "apply") === "apply" && conditionCounterLabel(e.condKey)) return formulaOk(e.condLevel);
+      return true;
     case "reroll":
       if (e.rerollScope === "char")  return !!e.rerollChar;
       if (e.rerollScope === "skill") return !!e.skillKey;
@@ -1141,6 +1219,11 @@ function describeMechWhen(when, item = null) {
     parts.push(`Покровитель ${when?.negatePatronGod ? "≠" : "="} ${names.join(" или ")}`);
   }
   if (when?.requireSealedArmour) parts.push(`Герметичная броня ${when?.negateSealedArmour ? "≠" : "="} да`);
+  const condKeys = whenCondition(when);
+  if (condKeys.length) {
+    const names = condKeys.map(k => CONDITIONS_DEF[k]?.label || k);
+    parts.push(`Состояние ${when?.negateCondition ? "≠" : "="} ${names.join(" или ")}`);
+  }
   return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
 }
 
@@ -1623,6 +1706,36 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   if (entry.kind === "fatigue") {
     // Тоже живой запрос: fatigueGraceForActor() (rules/fatigue-grace.mjs)
     // читает Механику в момент теста, писать и откатывать нечего.
+    return;
+  }
+
+  if (entry.kind === "condition") {
+    const key = String(entry.condKey || "").trim();
+    if (!key || !CONDITIONS_DEF[key]) return;
+    const mode = entry.condMode || "apply";
+    // Иммунитет и Смягчение — живой запрос, как fatigue выше: их читают
+    // rules/condition-guards.mjs (в момент наложения) и rules/item-rules.mjs
+    // (в момент броска). Писать и откатывать нечего.
+    if (mode === "immunity" || mode === "mitigate") return;
+    if (mode === "remove") {
+      const fields = conditionRemoveFields(key);
+      if (Object.keys(fields).length) await actor.update(fields);
+      return;
+    }
+    // Наложение идёт через ту же единую точку, что весь остальной код
+    // (wdbc-fejd) — вместе с проверкой иммунитета самого получателя: предмет,
+    // накладывающий Оглушение на носителя, не должен обходить его же
+    // иммунитет к Оглушению, откуда бы тот ни пришёл.
+    // Величина — формула mech-formula.mjs, как «Рейтинг» у Черты: «Оглушение
+    // на T.b раундов» книга пишет чаще, чем на фиксированное число. Минимум 1:
+    // наложенное Состояние со счётчиком 0 по общему договору единой точки
+    // считается СНЯТЫМ (conditionAdjustFields), то есть запись бы ничего не
+    // сделала, а автор ждал бы обратного.
+    const level = conditionLevelField(key)
+      ? Math.max(1, Math.round(mechFormulaTotalSafe(entry.condLevel ?? "1", mechRollData(actor))))
+      : null;
+    const fields = conditionApplyFields(key, level, actor);
+    if (Object.keys(fields).length) await actor.update(fields);
     return;
   }
 
@@ -2895,6 +3008,31 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-fatigue-action" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${actionOpts}</select>${charSelect}`;
   }
 
+  if (ent.kind === "condition") {
+    // Каскад «режим → уточнение», тот же приём, что у .mech-fatigue-action:
+    // смена режима перерисовывает поля, лишние поля просто не показываются
+    // (величина — только у «Наложить» и только у Состояния со счётчиком,
+    // выбор смягчения — только у «Смягчить штраф»).
+    const mode = ent.condMode || "apply";
+    const keyOpts = optHtml("", "— Состояние —", !ent.condKey)
+      + Object.entries(CONDITIONS).map(([k, c]) => optHtml(k, c.label, ent.condKey === k)).join("");
+    const modeOpts = CONDITION_MODES_UI.map(([v, l]) => optHtml(v, l, mode === v)).join("");
+    const counter = conditionCounterLabel(ent.condKey);
+    const levelInput = (mode === "apply" && counter)
+      ? `<input type="text" class="mech-cond-level" data-group-id="${groupId}" data-entry-id="${ent.id}"
+                value="${esc(ent.condLevel ?? "")}" placeholder="${esc(counter)}: 1 или t"
+                title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`
+      : "";
+    const mitigateSelect = mode === "mitigate"
+      ? `<select class="mech-cond-mitigate" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+                title="Состояние остаётся на листе и на токене — снимается только его штраф">${
+          CONDITION_MITIGATE_UI.map(([v, l]) => optHtml(v, l, (ent.condMitigate || "ignore") === v)).join("")}</select>`
+      : "";
+    return `<select class="mech-cond-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      <select class="mech-cond-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${keyOpts}</select>
+      ${levelInput}${mitigateSelect}`;
+  }
+
   if (ent.kind === "integralAttack") {
     // Тот же класс, что у «Снаряжения»: обработчик .mech-equip-source в
     // item-sheet.mjs пишет equipSourceUuid/Name по id группы и записи, вида
@@ -3318,6 +3456,23 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </label>
   </div>`;
 
+  // «Когда Состояние» (wdbc-tl0f) — восьмой независимый гейт: список ключей
+  // Состояний, между вариантами ИЛИ. Состояний 27, поэтому не россыпь галочек,
+  // как у Тира Ран и Покровителя (там 4 и 5), а компактный список с
+  // множественным выбором — иначе панель «Когда» разрослась бы на пол-экрана.
+  const condChosen = new Set(w.condition || []);
+  const condOpts = Object.entries(CONDITIONS)
+    .map(([key, c]) => `<option value="${key}" ${condChosen.has(key) ? "selected" : ""}>${esc(c.label)}</option>`).join("");
+  const condHtml = `<div class="grant-entry-when grant-entry-when-cond">
+    <span class="grant-when-label">Когда Состояние</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-cond-negate" ${d} ${w.negateCondition ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <select class="grant-when-cond" ${d} multiple size="4"
+            title="Ctrl/Shift — выбрать несколько; между ними ИЛИ. Пусто — условия нет" ${dis}>${condOpts}</select>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -3326,7 +3481,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}`;
 }
 
 /**

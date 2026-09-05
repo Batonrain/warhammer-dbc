@@ -96,7 +96,18 @@ function registerConditionStatusSync() {
     if (!!actor.system.conditions[key] === want) return;
     _syncing = true;
     try {
-      await actor.update(want ? conditionApplyFields(key) : conditionRemoveFields(key));
+      const fields = want ? conditionApplyFields(key, null, actor) : conditionRemoveFields(key);
+      // Пустой патч на наложении = у актора ИММУНИТЕТ к этому Состоянию
+      // (запись Конструктора kind:"condition", wdbc-tl0f). Просто пропустить
+      // нельзя: иконка на токене осталась бы стоять, а на листе Состояния
+      // не было бы — та самая «невидимая метка», от которой уходит этот этап.
+      // Поэтому эффект снимается обратно, и иконка гаснет сама.
+      if (want && !Object.keys(fields).length) {
+        await effect.delete();
+        ui.notifications?.info(`${actor.name}: иммунитет к «${CONDITIONS_DEF[key]?.label || key}» — Состояние не накладывается.`);
+        return;
+      }
+      await actor.update(fields);
     } finally { _syncing = false; }
   };
   Hooks.on("createActiveEffect", (effect, options, userId) => syncFromEffect(effect, options, userId, false));

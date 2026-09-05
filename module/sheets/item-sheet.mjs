@@ -2194,6 +2194,30 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.fatigueThresholdChar = ev.currentTarget.value; saveMech(arr); }
     });
+    // Состояние (kind:"condition", wdbc-tl0f) — каскад режим → уточнение.
+    // Смена режима/Состояния перерисовывает поля (величина есть только у
+    // «Наложить» со счётчиком, выбор смягчения — только у «Смягчить штраф»),
+    // поэтому сохраняем и даём листу перерисоваться — как у .mech-fatigue-action.
+    on(".mech-cond-mode", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condMode = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-key", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condKey = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-level", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condLevel = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-mitigate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condMitigate = ev.currentTarget.value; saveMech(arr); }
+    });
     // Снаряжение (kind:"equipment")
     on(".mech-equip-mode", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -2550,6 +2574,25 @@ export class WarhammerItemSheet
       if (!e) return;
       e.when = e.when || { negate: false, conditions: [] };
       e.when.negateSealedArmour = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда Состояние» (entry.when.condition/negateCondition, wdbc-tl0f) —
+    // восьмой гейт. Список с множественным выбором, а не россыпь галочек:
+    // Состояний 27, см. buildEntryWhenHtml.
+    on(".grant-when-cond", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.condition = Array.from(ev.currentTarget.selectedOptions).map(o => o.value).filter(Boolean);
+      saveMech(arr);
+    });
+    on(".grant-when-cond-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateCondition = !!ev.currentTarget.checked;
       saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──

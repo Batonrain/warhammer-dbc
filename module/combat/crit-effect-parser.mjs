@@ -140,7 +140,7 @@ export async function applyCritEffectPill(actor, { key, formula, permanent } = {
   } else if (def.hasLevel && def.levelField && amount != null && !permanent) {
     await actor.update(conditionAdjustFields(actor, key, amount));
   } else {
-    await actor.update(conditionApplyFields(key));
+    await actor.update(conditionApplyFields(key, null, actor));
   }
 
   const noteParts = [];

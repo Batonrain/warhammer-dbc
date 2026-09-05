@@ -49,10 +49,10 @@ export const HALLUCINOGENIC_TABLE = [
 ];
 
 /** Патч на дополнительный мех. эффект конкретной грани (или {} — только текст). */
-function mechanicFields(mechanic) {
-  if (mechanic === "dazedProne") return { ...conditionApplyFields("dazed"), ...conditionApplyFields("prone") };
-  if (mechanic === "dazed")      return conditionApplyFields("dazed");
-  if (mechanic === "helpless")   return conditionApplyFields("helpless");
+function mechanicFields(mechanic, actor = null) {
+  if (mechanic === "dazedProne") return { ...conditionApplyFields("dazed", null, actor), ...conditionApplyFields("prone", null, actor) };
+  if (mechanic === "dazed")      return conditionApplyFields("dazed", null, actor);
+  if (mechanic === "helpless")   return conditionApplyFields("helpless", null, actor);
   if (mechanic === "rage")       return { "system.inRage": true };
   return {};
 }
@@ -68,7 +68,7 @@ function mechanicFields(mechanic) {
 export async function rollHallucinogenicEffect(actor) {
   const roll  = await new Roll("1d10").evaluate();
   const entry = HALLUCINOGENIC_TABLE[roll.total - 1];
-  const update = { [`flags.warhammer-dbc.hallucinationEffect`]: roll.total, ...mechanicFields(entry.mechanic) };
+  const update = { [`flags.warhammer-dbc.hallucinationEffect`]: roll.total, ...mechanicFields(entry.mechanic, actor) };
   await actor.update(update);
   return { roll, entry };
 }

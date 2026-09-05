@@ -113,7 +113,7 @@ async function applyWaveEffect(targetActor, effectKey) {
   }
   if (effectKey === "stunned") {
     const curRounds = Number(targetActor.system.conditions?.stunnedRounds) || 0;
-    await targetActor.update(conditionApplyFields("stunned", Math.max(curRounds, 2)));
+    await targetActor.update(conditionApplyFields("stunned", Math.max(curRounds, 2), targetActor));
     return "Оглушение на 2 Раунда";
   }
   // "fear" — информационная метка, см. заголовок файла (не интегрирована в

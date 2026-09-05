@@ -146,7 +146,7 @@ export async function doSusAnimation(actor) {
     // разойтись, если кто-то снимал один флаг и забывал другой.
     await actor.update({
       [`flags.${NS}.deceased`]: false,
-      ...conditionApplyFields("unconscious")
+      ...conditionApplyFields("unconscious", null, actor)
     });
     lines.push(`<span class="roll-success">Успех — десантник входит в Замедленную Анимацию вместо смерти.</span>`);
     lines.push("Без сознания и Беспомощен. Диагностика −60 (For.Lore (Astartes Implants) снимает штраф). "

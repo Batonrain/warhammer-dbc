@@ -62,8 +62,8 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
 
   // Состояние и флаг партнёра одним update на актора: каждая отдельная
   // запись — это prepareData + re-render листа и токена у всех клиентов.
-  await actor.update({ ...conditionApplyFields("grappling"), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
-  await target.update({ ...conditionApplyFields("grappling"), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
+  await actor.update({ ...conditionApplyFields("grappling", null, actor), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
+  await target.update({ ...conditionApplyFields("grappling", null, target), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
 
   await postTestCard(actor, {
     icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} ↔ ${esc(target.name)}`,
@@ -572,7 +572,7 @@ async function _doThrow(actor) {
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {
       knockedDown = true;
       halved = true;
-      await actor.update(conditionApplyFields("prone"));
+      await actor.update(conditionApplyFields("prone", null, actor));
     }
   }
 

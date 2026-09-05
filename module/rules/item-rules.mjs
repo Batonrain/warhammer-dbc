@@ -47,6 +47,11 @@
 //              Навык/Талант/Характеристика всегда Дружественный/Враждебный
 //              независимо от Покровительства, читает
 //              module/rules/aptitude-overrides.mjs.
+//    condition (только режим "mitigate", wdbc-tl0f) — «Смягчение» Состояния:
+//              condKey + condMitigate ("ignore" — штрафа нет вовсе, "half" —
+//              половина). Три остальных режима той же записи сюда не едут:
+//              apply/remove разовые (applyMechEntry), immunity читает
+//              rules/condition-guards.mjs в момент наложения.
 //    script  — «Код» с ценой ИЛИ частотой (wdbc-suwp): не эффект для теста,
 //              а координаты (itemId/groupId/entryId) для панели актора
 //              «ВОЗМОЖНОСТИ СЕЙЧАС» — там kind:"capability" (кнопка
@@ -62,6 +67,7 @@
 
 import { isKnownCapability } from "../constants/capabilities.mjs";
 import { entryWhenOk } from "./mech-when.mjs";
+import { conditionRulesFor } from "./library/conditions.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
@@ -103,6 +109,66 @@ function scopeTarget(rawScope, entry, ruleId, what) {
   }
   console.error(`Warhammer DBC | запись «${what}» (${ruleId}): не заполнена область «${scope}»`);
   return null;
+}
+
+/**
+ * Половина штрафа — той же арифметикой, что галочка «ополовинить штраф» в
+ * диалоге броска (combat/attack-threshold.mjs): модуль уменьшается, знак
+ * сохраняется, дробь отбрасывается. −20 → −10, −15 → −7, +20 → +10.
+ */
+const halve = (n) => (n < 0 ? -Math.floor(Math.abs(n) / 2) : Math.floor(n / 2));
+
+/** Ополовиненная копия эффектов книжного правила Состояния. */
+function halvedEffects(effects, ruleId) {
+  return (effects ?? []).map(fx => {
+    if (typeof fx.value !== "number") {
+      // Молча оставить полный штраф под подписью «половина» — хуже, чем
+      // пожаловаться: автор увидит в консоли, что его «½» ничего не сделала.
+      console.error(`Warhammer DBC | смягчение «${ruleId}»: эффект «${fx.kind}» без числового value ополовинить нечем`);
+      return fx;
+    }
+    return { ...fx, value: halve(fx.value) };
+  });
+}
+
+/**
+ * «Состояние X на нём не даёт обычного штрафа» / «даёт половину» (wdbc-tl0f).
+ *
+ * Само Состояние не трогается: оно остаётся на листе и на токене, исчезает
+ * только его ЧИСЛОВОЙ штраф из книжного реестра (rules/library/conditions.mjs).
+ * Механизм — штатное вытеснение правил (`overrides`, rules/collect.mjs), а не
+ * своя проверка в расчёте: правило-носитель с пустым `when` всегда доходит до
+ * отбора и снимает книжное, а взамен подставляются копии.
+ *
+ * Одно книжное правило может покрывать НЕСКОЛЬКО Состояний сразу
+ * («conditions.lostFeetOrLegs» — потеря стоп И потеря ног). Вытеснение снимает
+ * его целиком, поэтому для остальных Состояний того же правила возвращается
+ * копия в полную силу — иначе иммунитет к штрафу за потерю стоп молча снял бы
+ * и штраф за потерю ног.
+ *
+ * @returns {?Array<object>} null, если смягчать нечего
+ */
+function mitigationRules(item, entry, id) {
+  const key = String(entry.condKey || "").trim();
+  if (!key) return null;
+  const book = conditionRulesFor(key);
+  if (!book.length) return null;   // у Состояния нет числового штрафа в реестре
+  const half = entry.condMitigate === "half";
+  const label = entry.label || item.name;
+  const out = [{ id, label, when: {}, effects: [], overrides: book.map(r => r.id) }];
+  for (const rule of book) {
+    const keys = [].concat(rule.when?.hasCondition ?? []);
+    const others = keys.filter(k => k !== key);
+    if (others.length) {
+      out.push({ ...rule, id: `${id}.rest.${rule.id}`, when: { ...rule.when, hasCondition: others } });
+    }
+    if (half) {
+      out.push({ ...rule, id: `${id}.half.${rule.id}`, label: `${rule.label} (½ — ${label})`,
+                 when: { ...rule.when, hasCondition: [key] },
+                 effects: halvedEffects(rule.effects, rule.id) });
+    }
+  }
+  return out;
 }
 
 /** Запись → правило. Неизвестный вид молча пропускается: он не про броски. */
@@ -168,6 +234,11 @@ function ruleFromEntry(item, entry, groupId = null) {
     const target = scopeTarget(entry.modScope, entry, id, "Доп. Провалы при провале");
     if (target === null) return null;
     return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
+  }
+
+  if (entry?.kind === "condition") {
+    if ((entry.condMode || "apply") !== "mitigate") return null;
+    return mitigationRules(item, entry, id);
   }
 
   if (entry?.kind === "script" && entry.scriptTrigger) {
@@ -274,8 +345,11 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
         continue;
       }
       if (!entryWhenOk(actor, entry, item)) continue;
+      // Одна запись может дать НЕСКОЛЬКО правил: «Смягчение» Состояния
+      // (kind:"condition") возвращает вытесняющее правило плюс замены, см.
+      // mitigationRules. Остальные виды по-прежнему дают одно.
       const rule = ruleFromEntry(item, entry, groupId);
-      if (rule) out.push(rule);
+      if (rule) out.push(...[].concat(rule));
     }
   };
   for (const item of items || []) {
