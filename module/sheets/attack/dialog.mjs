@@ -29,6 +29,7 @@ export function openAttackDialog(ctx) {
     content,
     techniqueOpts,
     isMelee,
+    forceMelee,
     wp,
     stance,
     gripKey,
@@ -187,7 +188,12 @@ export function openAttackDialog(ctx) {
               dmgBonus: f.dmgBonus, changeSoulless: f.changeSoulless,
               meleeShot: f.meleeShot,
               shortRange: f.shortRange, maximal: f.maximal, bandIdx: f.bandIdx,
-              profile: sel.prof, attackNote: sel.note,
+              // forceMelee идёт в бросок вместе с профилем: окно считает вид
+              // теста из ОБОИХ (attack-dialog.mjs: attackIsMelee(sys,
+              // {forceMelee, profile})), и если сюда отдать только профиль,
+              // бросок посчитает вид из половины тех же данных и разойдётся с
+              // окном (wdbc-bs0q).
+              forceMelee, profile: sel.prof, attackNote: sel.note,
               weaponOff: f.weaponOff, gripKey: sel.gKey,
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
