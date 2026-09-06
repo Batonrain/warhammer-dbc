@@ -6,7 +6,8 @@
 import { describe, it, expect } from "vitest";
 import {
   nameKeys, sameValue, buildPackIndex, matchPackSource,
-  diffItemAgainstPack, buildSyncReport, applySyncReport
+  diffItemAgainstPack, buildSyncReport, applySyncReport,
+  MECH_PATH, fieldLabel, describeValue
 } from "../../module/apps/content-sync.mjs";
 
 const doc = (uuid, name, type, system = {}) => ({ uuid, name, type, system });
@@ -148,5 +149,108 @@ describe("buildSyncReport / applySyncReport", () => {
       "flags.warhammer-dbc.contentSync.baseline.dmg": "1d10+5"
     }]);
     expect(conflictEntry).toBeTruthy(); // конфликт остался неотмеченным — не в updateCalls
+  });
+});
+
+
+// ── wdbc-lddr: Механика из пака доезжает до уже созданных персонажей ────────
+//
+// Механика предмета живёт не в system, а во flags.warhammer-dbc.mechanics —
+// и сверка её не видела вовсе. Из-за этого у персонажа, созданного ДО правки,
+// Талант обновлял ОПИСАНИЕ («МЕХАНИЗИРОВАНО», system.notes в сверку входит) и
+// не получал самой механики: текст на листе утверждал то, чего в предмете нет.
+//
+// Механика — такое же поле со своей опорой, как и любое поле system: правка,
+// сделанная ГМом на конкретном предмете актёра, отличима от паковой и уходит
+// в «конфликт», а не затирается молча.
+
+const mech = label => [{ id: "g1", operator: "AND", entries: [{ id: "e1", kind: "testMod", label }] }];
+
+/** Предмет с механикой (и, возможно, со своей опорой механики). */
+const mechItem = ({ id = "m1", name = "Талант", type = "talent", system = {},
+                    src, mechanics, mechBaseline } = {}) => {
+  const flags = { "warhammer-dbc": {} };
+  if (mechanics) flags["warhammer-dbc"].mechanics = mechanics;
+  if (mechBaseline) flags["warhammer-dbc"].contentSync = { mechanicsBaseline: mechBaseline };
+  return { id, name, type, system, _stats: src ? { compendiumSource: src } : {}, flags };
+};
+
+const mechDoc = (uuid, name, type, mechanics, system = {}) =>
+  ({ uuid, name, type, system, flags: { "warhammer-dbc": { mechanics } } });
+
+describe("Механика Конструктора участвует в сверке (wdbc-lddr)", () => {
+  it("у персонажа механики нет, в паке появилась — строка «чисто», применимо", () => {
+    const pack = mechDoc("u9", "Боевое Построение", "talent", mech("Построение"));
+    const it0  = mechItem({ src: "u9", name: "Боевое Построение" });
+    const diff = diffItemAgainstPack(it0, pack);
+    const row  = diff.find(d => d.path === MECH_PATH);
+    expect(row).toBeTruthy();
+    expect(row.status).toBe("clean");
+    expect(row.packVal).toEqual(mech("Построение"));
+  });
+
+  it("механика совпадает с паком — строки нет вовсе", () => {
+    const pack = mechDoc("u9", "Боевое Построение", "talent", mech("Построение"));
+    const it0  = mechItem({ src: "u9", mechanics: mech("Построение") });
+    expect(diffItemAgainstPack(it0, pack).find(d => d.path === MECH_PATH)).toBeUndefined();
+  });
+
+  it("ГМ правил механику на предмете актёра — конфликт, а не молчаливое затирание", () => {
+    const pack = mechDoc("u9", "Боевое Построение", "talent", mech("Построение"));
+    const it0  = mechItem({
+      src: "u9",
+      mechanics:    mech("Правка ГМа"),
+      mechBaseline: mech("Старое паковое")
+    });
+    const row = diffItemAgainstPack(it0, pack).find(d => d.path === MECH_PATH);
+    expect(row.status).toBe("conflict");
+    expect(row.actorVal).toEqual(mech("Правка ГМа"));
+  });
+
+  it("в паке механики нет и у предмета нет — не показываем пустое расхождение", () => {
+    const pack = doc("u8", "Простая Черта", "trait", { notes: "текст" });
+    const it0  = mechItem({ src: "u8", type: "trait" });
+    expect(diffItemAgainstPack(it0, pack).find(d => d.path === MECH_PATH)).toBeUndefined();
+  });
+
+  it("механику из пака СНЯЛИ — предмету тоже предлагается снять", () => {
+    const pack = doc("u7", "Черта", "trait", {});
+    const it0  = mechItem({ src: "u7", type: "trait", mechanics: mech("Устаревшее") });
+    const row = diffItemAgainstPack(it0, pack).find(d => d.path === MECH_PATH);
+    expect(row).toBeTruthy();
+    expect(row.packVal).toEqual([]);
+  });
+
+  it("применение пишет саму механику и продвигает её опору", async () => {
+    const pack  = mechDoc("u9", "Боевое Построение", "talent", mech("Построение"));
+    const index = buildPackIndex([pack]);
+    const actor = { id: "a9", name: "Ветеран", items: [mechItem({ id: "m9", name: "Боевое Построение", src: "u9" })] };
+    const report = buildSyncReport([actor], index);
+    const row = report.rows.find(r => r.path === MECH_PATH);
+    expect(row).toBeTruthy();
+
+    const updateCalls = [];
+    globalThis.game = {
+      actors: { get: id => ({ id, updateEmbeddedDocuments: async (t, u) => updateCalls.push({ id, t, u }) }) }
+    };
+    await applySyncReport(report, new Set([row.entries[0].entryKey]));
+    expect(updateCalls[0].u).toEqual([{
+      _id: "m9",
+      "flags.warhammer-dbc.mechanics": mech("Построение"),
+      "flags.warhammer-dbc.contentSync.mechanicsBaseline": mech("Построение")
+    }]);
+  });
+
+  it("подпись поля в окне — человеческая, а не имя флага", () => {
+    expect(fieldLabel(MECH_PATH)).not.toContain("flags");
+    expect(fieldLabel(MECH_PATH)).toMatch(/МЕХАНИКА|Механика/);
+    expect(fieldLabel("notes")).toBe("notes");
+  });
+
+  it("значение Механики показывается сводкой, а не простынёй JSON", () => {
+    const shown = describeValue(MECH_PATH, mech("Построение"));
+    expect(shown).not.toContain("{");
+    expect(shown).toContain("1");
+    expect(describeValue(MECH_PATH, [])).toBe("—");
   });
 });
