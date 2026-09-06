@@ -430,6 +430,8 @@ export function buildGetData(actor) {
       isGranted: (sk.grantedRank ?? "untrained") !== "untrained",
       total: sk.total ?? -20,
       cost:  sk.cost  ?? 0,
+      // Цена вписана руками (wdbc-rcr9) — см. chars в character-context.mjs.
+      costManual: !!sk.costManual,
       aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor),
       // Привязка Склонностей (wdbc-1pvq): что показать в подсказке и надо ли
       // пометить строку как переопределённую. Кликом по значку Д/Н/В её

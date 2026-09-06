@@ -536,6 +536,9 @@ export function characterContext(actor) {
       bonusModified: bonus !== naturalBonus,
       totalTooltip: charTotalTooltip(total, system.characteristics[key]?.totalBreakdown),
       cost:         system.characteristics[key]?.cost         ?? 0,
+      // Цена вписана ГМом руками (wdbc-rcr9) — строка рисует кнопку ↺ «вернуть
+      // авто-цену» и выпадает из общего пересчёта по Склонностям.
+      costManual:   !!system.characteristics[key]?.costManual,
       charDamage:   system.charDamage?.[key]                  ?? 0
     };
   });
