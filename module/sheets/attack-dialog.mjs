@@ -52,6 +52,8 @@ import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs"
 import { measureTokens }                      from "../combat/tactical-map.mjs";
 import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
+import { weaponProfiles, attackIsMelee }         from "../combat/weapon-profiles.mjs";
+import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -90,13 +92,24 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // бросается по BS — стр. 40: «В рукопашной оно МОЖЕТ использоваться как
   // рукопашное», это не значение по умолчанию.
   const forceMelee = !!techniqueOpts.forceMelee;
-  const isMelee = sys.weaponClass === "melee" || forceMelee;
-  const charKey = isMelee ? "ws" : "bs";
 
-  const atkProfiles = Array.isArray(sys.profiles) ? sys.profiles : [];
+  // Профили считаются ДО isMelee, а не после (wdbc-bs0q): «Удар в упор» —
+  // рукопашный профиль у стрелкового оружия, и если о нём не знать заранее,
+  // весь дальнейший расчёт уедет по BS вместо WS. Список общий с HUD
+  // (combat/weapon-profiles.mjs), поэтому индексы выбора совпадают.
+  const atkProfiles = weaponProfiles(item, { isIntegralAttack });
   let   profIdx   = techniqueOpts.profileIdx;
   if (profIdx === undefined || profIdx === null) profIdx = item.getFlag?.("warhammer-dbc", "hudProfile");
   profIdx = Number.isFinite(Number(profIdx)) ? Number(profIdx) : -1;
+  const startProfile = profIdx >= 0 ? (atkProfiles[profIdx] || null) : null;
+
+  // Вид теста фиксируется на ВХОДЕ в окно и внутри него не меняется: от него
+  // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
+  // одна длинная последовательная сборка). Поэтому рукопашный профиль у
+  // стрелкового выбирается ДО открытия окна — в HUD, — и приходит сюда уже
+  // выбранным; список профилей внутри окна кросс-видовые не предлагает.
+  const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
+  const charKey = isMelee ? "ws" : "bs";
 
   // ── Правила из реестра (module/rules/) ───────────────────────────────────
   //   Атака — такой же тест конвейера, как бросок навыка: вид теста «attack»,

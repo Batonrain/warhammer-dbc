@@ -12,6 +12,7 @@ import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
+import { attackIsMelee } from "./weapon-profiles.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -101,7 +102,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const sys     = item.system;
   // Метательное (Граната и т.п.) по умолчанию бросается по BS — стр. 40:
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
-  const isMelee = sys.weaponClass === "melee" || !!opts.forceMelee;
+  // Решение «рукопашная ли это атака» одно на окно и на бросок
+  // (combat/weapon-profiles.mjs::attackIsMelee, wdbc-bs0q): выбранный ПРОФИЛЬ
+  // важен наравне с классом оружия, иначе «Удар в упор» катился бы тестом по
+  // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
+  // из стрелковой ветки.
+  const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
   // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
