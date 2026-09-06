@@ -32,6 +32,15 @@ const HBS  = path.join(ROOT, "templates", "actor", "horde-sheet.hbs");
 // но их частные правила пишут через !important, и это отдельная история.
 const SIZE_PROPS = ["width", "height", "padding"];
 
+// Ядро Foundry держит для <button> пол min-height: var(--button-size) = 2em
+// (28px при 14px шрифта), и любая высота ниже него без явного min-height: 0 не
+// применяется вовсе. Общее правило снимает этот пол один раз за все кнопки
+// листа — если оттуда пропадёт min-height, все заданные высоты ниже 28px
+// молча перестанут действовать. Замерено живьём (wdbc-gwpu): .horde-char-roll
+// с height: 20px выходил 20x28, а .horde-roll-btn со своим min-height: 0 —
+// ровно 22x22.
+const FLOOR_PROP = "min-height";
+
 /** Классы, стоящие в разметке на одном элементе с `hbtn`. */
 function companionClasses(html) {
   const found = new Set();
@@ -76,7 +85,7 @@ describe("лист Орды: частные размеры кнопок не д�
     const base = rules(css).find(r => r.selector === ".wh-horde .hbtn");
     expect(base, "правило .wh-horde .hbtn пропало — тест потерял предмет проверки").toBeTruthy();
     expect(minClassCount(base.selector)).toBe(2);
-    for (const prop of SIZE_PROPS) {
+    for (const prop of [...SIZE_PROPS, FLOOR_PROP]) {
       expect(new RegExp(`(^|;|\\s)${prop}\\s*:`).test(base.body), `.wh-horde .hbtn задаёт ${prop}`).toBe(true);
     }
   });
