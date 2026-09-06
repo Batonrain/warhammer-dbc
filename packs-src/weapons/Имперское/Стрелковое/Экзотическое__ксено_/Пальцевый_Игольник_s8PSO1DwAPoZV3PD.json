@@ -35,6 +35,9 @@
       {
         "key": "toxic",
         "rating": 1
+      },
+      {
+        "key": "digital"
       }
     ],
     "needsRecharge": false,
