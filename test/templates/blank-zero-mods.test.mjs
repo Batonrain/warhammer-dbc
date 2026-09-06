@@ -24,22 +24,38 @@ import path from "node:path";
 import { blankZero, zeroBlankNumbers } from "../../module/helpers/blank-zero.mjs";
 
 const ROOT   = path.resolve(import.meta.dirname, "../..");
-const PARTS  = path.join(ROOT, "templates", "actor", "parts");
+const DIRS   = [
+  path.join(ROOT, "templates", "actor", "parts"),
+  path.join(ROOT, "templates", "apps")
+];
 
 // Поля, где ноль означает «модификатора нет» и печатать его вредно.
 // Ключ — как имя выглядит в шаблоне (вместе с подстановкой Handlebars).
+//
+// Метку data-blank-zero требуем только у полей СХЕМЫ (name="system.…"): её
+// читает _processFormData листа, возвращая очищенному полю ноль вместо null.
+// «Модификатор ГМа» в КРАФТе схемой не хранится — его читает свой обработчик
+// вкладки (module/sheets/tabs/craft.mjs, num(v, 0)), и пустая строка там уже
+// складывается в ноль сама.
+//
+// Сюда НЕ входят счётчики (Раны, Очки Судьбы, Опыт, Усталость, Очки Действия)
+// и AP укрытия — там ноль осмысленное значение, прятать его нельзя
+// (решение владельца 06.09.2026 по AP укрытия).
 const MOD_FIELDS = [
   "system.charDamage.{{char.key}}",
   "system.initiativeMod",
-  "system.skills.{{sk.key}}.mod"
+  "system.skills.{{sk.key}}.mod",
+  "gmmod"
 ];
 
-/** Все теги <input …> из партиалов листа актора, по одному на элемент. */
+/** Все теги <input …> из партиалов листа актора и окон системы. */
 function actorInputs() {
   const out = [];
-  for (const file of fs.readdirSync(PARTS).filter(f => f.endsWith(".hbs"))) {
-    const text = fs.readFileSync(path.join(PARTS, file), "utf8");
-    for (const m of text.matchAll(/<input\b[^>]*>/g)) out.push({ file, tag: m[0] });
+  for (const dir of DIRS) {
+    for (const file of fs.readdirSync(dir).filter(f => f.endsWith(".hbs"))) {
+      const text = fs.readFileSync(path.join(dir, file), "utf8");
+      for (const m of text.matchAll(/<input\b[^>]*>/g)) out.push({ file, tag: m[0] });
+    }
   }
   return out;
 }
@@ -67,7 +83,7 @@ describe("поля-модификаторы не печатают ноль", () 
         expect(tag).toMatch(/value="\{\{blankZero /);
         expect(tag).toMatch(/placeholder="0"/);
         // Метка для листа: по ней _processFormData возвращает пустому полю 0.
-        expect(tag).toMatch(/data-blank-zero/);
+        if (field.startsWith("system.")) expect(tag).toMatch(/data-blank-zero/);
       });
     }
   }
