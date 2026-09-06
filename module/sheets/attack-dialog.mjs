@@ -213,9 +213,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const sBonus    = actor.system.characteristics?.s?.bonus ?? 0;
   // Рука Смерти форсирует "1р" безусловно — игнорирует и techniqueOpts, и
   // сохранённый hudGrip (тот же выбор, что currentMeleeGrip в hands.mjs).
+  // Сохранённый hudGrip сверяется со списком РЕАЛЬНО доступных сейчас хватов —
+  // ровно так же, как это делает бюджет рук (rules/hands.mjs::
+  // effectiveRangedGripHands). Без сверки окно атаки показывало «Руки: 1» по
+  // хвату, которого больше нет: игрок выбрал «одной рукой» от Пути Воина или
+  // от Откатной Перчатки, источник возможности пропал — пилюль выбора уже нет,
+  // а старое значение всё ещё читалось (найдено живой проверкой wdbc-4e60).
+  const savedGrip = item.getFlag?.("warhammer-dbc", "hudGrip");
   const gripKey   = isFusedByHandOfDeath(item) ? primGrip
                  : (techniqueOpts.gripKey
-                 ?? item.getFlag?.("warhammer-dbc", "hudGrip")
+                 ?? (gripList.includes(savedGrip) ? savedGrip : null)
                  ?? primGrip);
   // Double Grip (wdbc-mu6v, стр. 62): держа пистолет "2р", Прицеливание
   // +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10 сверх обычного.

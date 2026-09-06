@@ -433,6 +433,10 @@ const TYPES = {
     defaults: {
       description: "", notes: "", cost: 0, discipline: "", subtype: "",
       powerType: "attack", extraTypes: [], shootSubtype: "", prRequired: 1,
+      // Полное книжное требование строкой (wdbc-k1q4): у Божественных
+      // Дисциплин оно из трёх частей («Метка Слаанеш, PR 4+, T 40+»), а
+      // prRequired несёт только PR.
+      requirement: "",
       testChar: "wp", testMod: 0, action: "half", range: "",
       sustainable: false, sustainCost: 1, sustainAction: "free",
       damage: "", damageType: "energy", penetration: 0, weaponProps: [],
