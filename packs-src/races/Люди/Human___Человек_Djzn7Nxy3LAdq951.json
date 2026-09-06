@@ -116,7 +116,7 @@
               "sourceName": "Fast Learner / Ловит на Лету (X)",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": true,
-              "rating": "",
+              "rating": 25,
               "specialization": "",
               "skillScope": "plain",
               "skillKey": "",
