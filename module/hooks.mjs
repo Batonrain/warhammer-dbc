@@ -1,4 +1,4 @@
-import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
@@ -238,15 +238,22 @@ export function registerHooks() {
         // card.mjs::defenseSection, рендерится только при активном
         // Императиве). Отмечен → берём recoil-специфичный знак ЗАРАНЕЕ, до
         // броска; не отмечен — обычный dodgeMod, как раньше.
-        const recoilCheckbox = ev.currentTarget.closest(".roll-defense-section")?.querySelector(".wh-recoil-plan-checkbox");
+        // ВЕСЬ dataset читается ДО первого await и только отсюда: браузер
+        // обнуляет ev.currentTarget, как только обработчик отдаёт ход, и любое
+        // обращение к нему ПОСЛЕ await падает с «Cannot read properties of
+        // null». Кнопка при этом молчит: исключение уходит в необработанный
+        // промис, на экране не появляется ничего — ни карточки, ни ошибки.
+        // Именно так Уклонение и Парирование не работали вовсе (найдено живой
+        // проверкой 06.09.2026).
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const recoilCheckbox = el.closest(".roll-defense-section")?.querySelector(".wh-recoil-plan-checkbox");
         const planningRecoil = recoilCheckbox?.checked === true;
-        const extraMod = parseInt((planningRecoil
-          ? ev.currentTarget.dataset.extraModRecoil
-          : ev.currentTarget.dataset.extraMod) || "0");
-        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
-        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        const burst = ev.currentTarget.dataset.burst === "1";
-        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
+        const extraMod = parseInt((planningRecoil ? ds.extraModRecoil : ds.extraMod) || "0");
+        const hitsCount = parseInt(ds.hitsCount || "1");
+        const attackerUuid = ds.attackerUuid || "";
+        const burst = ds.burst === "1";
+        const attackerIsHorde = ds.attackerIsHorde === "1";
         if (!await confirmHordeDefense(actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
@@ -257,8 +264,8 @@ export function registerHooks() {
           if (handled !== null) return;
         }
         await _performDodge(actor, extraMod,
-          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid,
-          ev.currentTarget.dataset.melee === "1", burst, attackerIsHorde);
+          ds.forceReroll || "", hitsCount, attackerUuid,
+          ds.melee === "1", burst, attackerIsHorde);
       });
     });
 
@@ -335,19 +342,41 @@ export function registerHooks() {
       });
     });
 
+    // Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9). Право на
+    // кнопку проверяется здесь, у защищающегося: карточку пишет КАСТЕР, и на
+    // момент её сборки неизвестно, кто будет отбиваться (тот же приём, что у
+    // Сжатия — см. attack-card.mjs::defenseSection).
+    html.querySelectorAll(".psy-blade-shield-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const d = ev.currentTarget.dataset;
+        await _performPsychicParry(actor, {
+          powerName: d.powerName || "", ePR: Number(d.epr) || 0
+        });
+      });
+    });
+
     // Парирование
     html.querySelectorAll(".wh-parry-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
-        const burst = ev.currentTarget.dataset.burst === "1";
-        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
+        // dataset снимается ДО await — см. объяснение у кнопки Уклонения выше.
+        const ds = { ...ev.currentTarget.dataset };
+        const extraMod = parseInt(ds.extraMod || "0");
+        const hitsCount = parseInt(ds.hitsCount || "1");
+        const burst = ds.burst === "1";
+        const attackerIsHorde = ds.attackerIsHorde === "1";
+        // data-melee несёт КАРТОЧКА атаки: парировать стрельбу по книге может
+        // только «Щит Клинков» (wdbc-3e2x), и решает это _performParry — на
+        // момент отрисовки карточки защищающийся ещё не выбран.
+        const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         await _performParry(actor, extraMod,
-          ev.currentTarget.dataset.attackerUuid || "", hitsCount, burst, attackerIsHorde);
+          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee);
       });
     });
 
@@ -980,10 +1009,14 @@ export function registerHooks() {
     html.querySelectorAll(".wh-shock-recovery-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const ds = ev.currentTarget.dataset;
+        // Сама кнопка запоминается ДО await: ev.currentTarget после него null
+        // (см. объяснение у кнопки Уклонения выше), и строка «погасить кнопку»
+        // падала с TypeError, не дав дойти до самого броска.
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Шокированный персонаж не найден.");
-        ev.currentTarget.disabled = true;
+        el.disabled = true;
         await rollShockRecovery(actor);
       });
     });
