@@ -307,7 +307,7 @@ import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
 import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
   from "../rules/condition-duration.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
@@ -1242,6 +1242,11 @@ function describeMechWhen(when, item = null) {
   if (condKeys.length) {
     const names = condKeys.map(k => CONDITIONS_DEF[k]?.label || k);
     parts.push(`Состояние ${when?.negateCondition ? "≠" : "="} ${names.join(" или ")}`);
+  }
+  const quals = whenQuality(when);
+  if (quals.length) {
+    const names = quals.map(k => ITEM_QUALITY[k]?.abbr || k);
+    parts.push(`Качество ${when?.negateQuality ? "≠" : "="} ${names.join(" или ")}`);
   }
   // Связка видна в сводке: «ИЛИ» между условиями меняет смысл записи целиком,
   // и молчать о нём в описании значит показывать не то, что записано.
@@ -3554,6 +3559,25 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
             title="Ctrl/Shift — выбрать несколько; между ними ИЛИ. Пусто — условия нет" ${dis}>${condOpts}</select>
   </div>`;
 
+  // «Когда Качество» (wdbc-9k2q) — девятый независимый гейт: ступень качества
+  // САМОГО предмета (ITEM_QUALITY_LIST, те же четыре ключа, что в выпадашке
+  // «Качество» на вкладке предмета), между вариантами ИЛИ. Так пишется книжное
+  // «Good.Q умеет ещё и вот это»: запись с when.quality ["good","best"] висит
+  // на том же предмете, что и общая, и включается только на своих ступенях.
+  const qualChosen = new Set(w.quality || []);
+  const qualBoxes = ITEM_QUALITY_LIST.map(key => `<label class="grant-when-qual-row">
+    <input type="checkbox" class="grant-when-qual" ${d} data-qual-key="${key}" ${qualChosen.has(key) ? "checked" : ""} ${dis}/>
+    <span>${esc(ITEM_QUALITY[key].abbr)}</span>
+  </label>`).join("");
+  const qualHtml = `<div class="grant-entry-when grant-entry-when-qual">
+    <span class="grant-when-label" title="Ступень качества самого предмета. Пусто — условия нет, запись работает на любом качестве">Когда Качество</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-qual-negate" ${d} ${w.negateQuality ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <div class="grant-when-qual-list">${qualBoxes}</div>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -3562,7 +3586,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${anyOfHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${anyOfHtml}`;
 }
 
 /**

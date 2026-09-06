@@ -2619,6 +2619,28 @@ export class WarhammerItemSheet
       e.when.negateCondition = !!ev.currentTarget.checked;
       saveMech(arr);
     });
+    // ── «Когда Качество» (entry.when.quality/negateQuality, wdbc-9k2q) ──────
+    // Девятый независимый гейт — см. mech-when.mjs. Ключ берётся из
+    // data-qual-key, тот же приём, что у Тира Ран и Покровителя выше.
+    on(".grant-when-qual", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      const quals = new Set(e.when.quality || []);
+      const key = ev.currentTarget.dataset.qualKey;
+      if (ev.currentTarget.checked) quals.add(key); else quals.delete(key);
+      e.when.quality = [...quals];
+      saveMech(arr);
+    });
+    on(".grant-when-qual-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateQuality = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──
     // Кнопки групп и условий — действия [data-action] выше; здесь поля записи.
     const patchReq = (ev, fn) => patchReqEntry(this.item, ev.currentTarget, fn);

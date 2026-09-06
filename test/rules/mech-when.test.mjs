@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition } from "../../module/rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality } from "../../module/rules/mech-when.mjs";
 
 const actorWithItems = (items = [], geneSeed = {}) => ({
   system: { geneSeed, bio: { age: 0 } },
@@ -278,5 +278,61 @@ describe("entryWhenOk: Состояние (wdbc-tl0f)", () => {
   it("whenCondition: пустой список без condition", () => {
     expect(whenCondition({})).toEqual([]);
     expect(whenCondition({ condition: ["stunned", ""] })).toEqual(["stunned"]);
+  });
+});
+
+// ── Девятый гейт: «Когда Качество» (wdbc-9k2q) ─────────────────────────────
+// Гейт смотрит на САМ ПРЕДМЕТ, а не на актора — как гейт по субмутации.
+const gearOfQuality = quality => ({ type: "gear", system: { quality } });
+
+describe("entryWhenOk: Качество предмета (wdbc-9k2q)", () => {
+  const goodOrBest = { when: { quality: ["good", "best"] } };
+
+  it("качество из списка — true (Good.Q Откатная Перчатка игнорирует Recoil)", () => {
+    expect(entryWhenOk(actorWithItems(), goodOrBest, gearOfQuality("good"))).toBe(true);
+    expect(entryWhenOk(actorWithItems(), goodOrBest, gearOfQuality("best"))).toBe(true);
+  });
+
+  it("качество вне списка — false (Poor.Q и Comm.Q того же не дают)", () => {
+    expect(entryWhenOk(actorWithItems(), goodOrBest, gearOfQuality("poor"))).toBe(false);
+    expect(entryWhenOk(actorWithItems(), goodOrBest, gearOfQuality("common"))).toBe(false);
+  });
+
+  it("качество не проставлено — читается как «Обычное», не как «любое»", () => {
+    expect(entryWhenOk(actorWithItems(), goodOrBest, { type: "gear", system: {} })).toBe(false);
+    expect(entryWhenOk(actorWithItems(), { when: { quality: ["common"] } },
+                       { type: "gear", system: {} })).toBe(true);
+  });
+
+  it("нет предмета (предпросмотр вне владельца) — условие пройдено", () => {
+    expect(entryWhenOk(actorWithItems(), goodOrBest)).toBe(true);
+    expect(entryWhenOk(null, goodOrBest)).toBe(true);
+  });
+
+  it("negateQuality переворачивает смысл", () => {
+    const entry = { when: { quality: ["poor"], negateQuality: true } };
+    expect(entryWhenOk(actorWithItems(), entry, gearOfQuality("poor"))).toBe(false);
+    expect(entryWhenOk(actorWithItems(), entry, gearOfQuality("good"))).toBe(true);
+  });
+
+  it("складывается с остальными гейтами через И", () => {
+    const entry = { when: { quality: ["best"], requireRage: true } };
+    const calm  = actorWith({ inRage: false });
+    const raged = actorWith({ inRage: true });
+    expect(entryWhenOk(calm,  entry, gearOfQuality("best"))).toBe(false);
+    expect(entryWhenOk(raged, entry, gearOfQuality("best"))).toBe(true);
+    expect(entryWhenOk(raged, entry, gearOfQuality("good"))).toBe(false);
+  });
+
+  it("участвует в anyOf: достаточно одного настроенного гейта", () => {
+    const entry = { when: { quality: ["best"], requireRage: true, anyOf: true } };
+    expect(entryWhenOk(actorWith({ inRage: false }), entry, gearOfQuality("best"))).toBe(true);
+    expect(entryWhenOk(actorWith({ inRage: true }),  entry, gearOfQuality("poor"))).toBe(true);
+    expect(entryWhenOk(actorWith({ inRage: false }), entry, gearOfQuality("poor"))).toBe(false);
+  });
+
+  it("whenQuality: пустой список без quality", () => {
+    expect(whenQuality({})).toEqual([]);
+    expect(whenQuality({ quality: ["good", ""] })).toEqual(["good"]);
   });
 });
