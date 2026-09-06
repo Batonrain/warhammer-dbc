@@ -169,7 +169,14 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   //   пистолет, wdbc-eduq) и Double Grip (пистолет 2р, wdbc-mu6v) — их самих
   //   на предмете нет, добавляются здесь.
   const installedMods   = isMelee ? [] : getInstalledMods(actor, item);
-  const modGrantedGrips = installedMods.map(m => m.system?.grantsGrip).filter(Boolean);
+  // Эффекты модификации лежат во ВЛОЖЕННОМ system.effects (схема
+  // module/data/item/weapon-mod.mjs), как их и читает getModEffects
+  // (combat/weapon-mods.mjs:38). Здесь они раньше читались плоско из
+  // system.*, из-за чего Pistol Grip и Secondary Grip не работали вовсе:
+  // DataModel плоское поле отбрасывает, так что у реальных модов там всегда
+  // undefined (wdbc-xwe0).
+  const modFxOf = m => m.system?.effects || {};
+  const modGrantedGrips = installedMods.map(m => modFxOf(m).grantsGrip).filter(Boolean);
   const commandoGrip    = (!isMelee && wp.carbine && hasRuleFlag(actor, "weapon.commandoCarbine")) ? "1р" : null;
   const doubleGripGrip  = (!isMelee && sys.weaponClass === "pistol" && hasRuleFlag(actor, "weapon.doubleGripPistol")) ? "2р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []), ...(doubleGripGrip ? [doubleGripGrip] : [])];
@@ -573,9 +580,9 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // — бонус только пока не Прицелились И не держат "1р" (мод сам этого не
     // даёт, стр. 166: «не работает при стрельбе одной рукой»).
     const hipFireOk   = !isMelee && currentAiming === "none" && gripKey !== "1р";
-    const hipFireSemi = hipFireOk ? installedMods.reduce((n, m) => n + (Number(m.system?.hipFireSemiMod) || 0), 0) : 0;
-    const hipFireFull = hipFireOk ? installedMods.reduce((n, m) => n + (Number(m.system?.hipFireFullMod) || 0), 0) : 0;
-    const hipFireSupp = hipFireOk ? installedMods.reduce((n, m) => n + (Number(m.system?.hipFireSuppressionMod) || 0), 0) : 0;
+    const hipFireSemi = hipFireOk ? installedMods.reduce((n, m) => n + (Number(modFxOf(m).hipFireSemiMod) || 0), 0) : 0;
+    const hipFireFull = hipFireOk ? installedMods.reduce((n, m) => n + (Number(modFxOf(m).hipFireFullMod) || 0), 0) : 0;
+    const hipFireSupp = hipFireOk ? installedMods.reduce((n, m) => n + (Number(modFxOf(m).hipFireSuppressionMod) || 0), 0) : 0;
     // Double Grip (wdbc-mu6v): пистолет "2р" — те же +5/+10 короткой/длинной.
     const dgSemi = doubleGripActive ? 5 : 0;
     const dgFull = doubleGripActive ? 10 : 0;
@@ -662,8 +669,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // выбран Хват, который дал сам мод (в отличие от безусловного modFx.rangeMult
   // выше) — считается один раз от стартового gripKey, как doubleGripActive.
   const gripRangeMult = installedMods
-    .filter(m => m.system?.grantsGrip && m.system.grantsGrip === gripKey)
-    .reduce((mult, m) => mult * (Number(m.system?.gripRangeMult) || 1), 1);
+    .filter(m => modFxOf(m).grantsGrip && modFxOf(m).grantsGrip === gripKey)
+    .reduce((mult, m) => mult * (Number(modFxOf(m).gripRangeMult) || 1), 1);
   const gripRange = Math.round((Number(sys.range) || 0) * gripRangeMult);
 
   let rangeInfoHtml = "";

@@ -1087,9 +1087,14 @@ describe("Занятость рук (wdbc-3xqh) — бейдж в диалоге
 });
 
 describe("Хват дальнобойного: 6 отложенных потребителей (wdbc-8vp1/aj6t/mu6v/eduq/cnju/fy33)", () => {
-  const modOn = (weaponId, system, over = {}) => ({
+  // Форма как у настоящих документов пака: installedOn лежит в system, а все
+  // числовые/строковые эффекты мода — во ВЛОЖЕННОМ system.effects (схема
+  // module/data/item/weapon-mod.mjs — там effects это SchemaField). Раньше
+  // хелпер клал эффекты плоско в system, и тесты зеленели на форме, которой у
+  // реальных модов не бывает: DataModel такое поле просто отбрасывает (wdbc-xwe0).
+  const modOn = (weaponId, effects, over = {}) => ({
     id: over.id ?? "mod-1", type: "weaponMod", name: over.name ?? "Мод",
-    system: { installedOn: weaponId, ...system }
+    system: { installedOn: weaponId, effects: { ...effects } }
   });
   const talentWithCapability = (name, capabilityKey) => ({
     type: "talent", name, system: {}, getFlag: () => undefined,
