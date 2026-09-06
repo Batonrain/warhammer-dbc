@@ -19,6 +19,7 @@ import { resolveWeaponProps, aggregateAuto } from "../combat/weapon-properties.m
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
+import { hasRuleFlag } from "./flags.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -55,15 +56,38 @@ export function currentMeleeGrip(item) {
  * чистой функцией, чтобы не тянуть Foundry-диалог в бюджет рук. Возвращает
  * null, если у предмета нет sys.grips (тогда решает RANGED_CLASS_HANDS).
  */
+/**
+ * Хваты дальнобойного, ДОСТУПНЫЕ этому актору: собственный sys.grips предмета
+ * плюс выданные возможностями. Держится в одном месте с attack-dialog.mjs
+ * (extraGrips) намеренно: если бюджет рук не знает про выданный хват, лист
+ * запретит взять оружие, которое окно атаки разрешает держать одной рукой.
+ * Здесь только те источники, что не зависят от выбора в открытом окне —
+ * Commando и Double Grip живут в диалоге, они меняют не занятость рук, а
+ * модификаторы броска.
+ */
+function availableRangedGrips(item, actor) {
+  const own = parseGrips(item.system?.grips).filter(k => RANGED_GRIPS[k]);
+  // Откатная Перчатка / Подавители Отдачи / Рука-Пушка: винтовку (класс basic —
+  // в нём и «Винтовка», и «Длинная Винтовка», стр. 171) можно держать одной
+  // рукой (wdbc-f7iw, wdbc-6tzk).
+  const oneHandRifle = item.system?.weaponClass === "basic"
+                    && hasRuleFlag(actor, "weapon.oneHandedRifle");
+  return oneHandRifle && !own.includes("1р") ? [...own, "1р"] : own;
+}
+
 function effectiveRangedGripHands(item, actor) {
-  const list = parseGrips(item.system?.grips).filter(k => RANGED_GRIPS[k]);
+  const list = availableRangedGrips(item, actor);
   if (!list.length) return null;
   const flagged = item.getFlag?.(NS, "hudGrip");
   let key = list.includes(flagged) ? flagged : list[0];
   if (key === "1р") {
     const recoilRating = aggregateAuto(resolveWeaponProps(item)).recoilRating || 0;
     const sBonus = Number(actor?.system?.characteristics?.s?.bonus) || 0;
-    if (recoilRating > 0 && sBonus < recoilRating) key = list.includes("2р") ? "2р" : key;
+    // Good.Q/Best.Q Откатная Перчатка «игнорирует свойство Recoil оружия» —
+    // гейт по S.b не применяется вовсе (wdbc-f7iw).
+    const gated = recoilRating > 0 && sBonus < recoilRating
+               && !hasRuleFlag(actor, "weapon.ignoreRecoil");
+    if (gated) key = list.includes("2р") ? "2р" : key;
   }
   return key === "1р" ? 1 : key === "2р" ? 2 : null;
 }

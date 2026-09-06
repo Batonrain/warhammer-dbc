@@ -25,6 +25,15 @@ const trait  = (name, rating) => ({ type: "trait", name, system: { rating } });
 const actor = (items = [], conditions = {}, sBonus = 0) =>
   ({ items, system: { conditions, characteristics: { s: { bonus: sBonus } } } });
 
+// Предмет-носитель возможности: Механика с записью kind:"capability" — тем же
+// способом возможности выдают Таланты в паке (Commando, Double Grip).
+const withCapability = (name, capabilityKey) => ({
+  type: "talent", name, system: {}, getFlag: () => undefined,
+  flags: { "warhammer-dbc": { mechanics: [
+    { id: "g1", operator: "AND", entries: [{ id: "e1", kind: "capability", capabilityKey, label: "" }] }
+  ] } }
+});
+
 describe("weaponHandsRequired — рукопашное (GRIPS)", () => {
   it("1р — 1 рука", () => {
     expect(weaponHandsRequired(weapon({ system: { grips: "1р" } }))).toBe(1);
@@ -70,6 +79,35 @@ describe("weaponHandsRequired — стрелковое (корбук стр. 171
   });
   it("Стационарное (на технике) — 0 рук", () => {
     expect(weaponHandsRequired(weapon({ system: { weaponClass: "stationary" } }))).toBe(0);
+  });
+  // wdbc-f7iw / wdbc-6tzk: Откатная Перчатка, Подавители Отдачи и Дар
+  // «Рука-Пушка» разрешают держать винтовку одной рукой. Бюджет рук обязан
+  // знать про этот хват так же, как окно атаки, иначе лист не даст взять
+  // оружие, которым по правилам можно стрелять с одной руки.
+  it("Винтовка без возможности — 2 руки, даже если игрок выбрал «1р»", () => {
+    const w = weapon({ system: { weaponClass: "basic", grips: "2р" } });
+    expect(weaponHandsRequired(w, actor())).toBe(2);
+  });
+  it("Винтовка + weapon.oneHandedRifle — «1р» становится доступен, 1 рука", () => {
+    const w = weapon({ system: { weaponClass: "basic", grips: "2р" } });
+    setHeldHand(w, null);
+    w.setFlag("warhammer-dbc", "hudGrip", "1р");
+    const a = actor([withCapability("Откатная Перчатка", "weapon.oneHandedRifle")]);
+    expect(weaponHandsRequired(w, a)).toBe(1);
+  });
+  it("Возможность не трогает Тяжёлое — книга даёт её только винтовке", () => {
+    const w = weapon({ id: "hv", system: { weaponClass: "heavy", grips: "2р" } });
+    const a = actor([withCapability("Откатная Перчатка", "weapon.oneHandedRifle")]);
+    expect(weaponHandsRequired(w, a)).toBe(2);
+  });
+  it("weapon.ignoreRecoil снимает гейт Отдачи по S.b", () => {
+    const sys = { weaponClass: "basic", grips: "1р (2р)", weaponProps: [{ key: "recoil", rating: 4 }] };
+    const weak = weapon({ id: "r1", system: sys });
+    expect(weaponHandsRequired(weak, actor([], {}, 2))).toBe(2);
+
+    const glove = weapon({ id: "r2", system: sys });
+    const a = actor([withCapability("Откатная Перчатка (Good.Q)", "weapon.ignoreRecoil")], {}, 2);
+    expect(weaponHandsRequired(glove, a)).toBe(1);
   });
   it("Стационарное с заполненным Хватом «2р» — всё равно 0 рук (wdbc-7utm)", () => {
     // «2р» у станкового говорит, КАК за него берутся, а не сколько рук оно

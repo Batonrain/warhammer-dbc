@@ -100,7 +100,12 @@ export function buildSelection(v) {
   // Подавители Отдачи (wdbc-cnju, armorMod на руках) снимают гейт Отдачи
   // целиком у винтовки/длинной винтовки (weaponClass "basic") — своей
   // категории у «длинной винтовки» в схеме нет, обе лежат в "basic".
-  const recoilSuppressed = !isMelee && sys.weaponClass === "basic" && hasRecoilSuppressor(actor);
+  // Откатная Перчатка Good.Q/Best.Q «игнорирует свойство Recoil оружия» — гейт
+  // снимается у ЛЮБОГО класса, не только у винтовки, в отличие от подавителей
+  // (wdbc-f7iw). Возможность выдаётся Механикой самого предмета, а не именем.
+  const recoilSuppressed = !isMelee
+    && ((sys.weaponClass === "basic" && hasRecoilSuppressor(actor))
+        || hasRuleFlag(actor, "weapon.ignoreRecoil"));
   // Рука Смерти форсирует "1р" безусловно (стр. 46) — Отдача её не блокирует,
   // тот же принцип, что и подавители Отдачи, гейт снят наравне с ними.
   const handOfDeathFused = isFusedByHandOfDeath(item);

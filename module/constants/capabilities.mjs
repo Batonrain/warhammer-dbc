@@ -402,6 +402,19 @@ export const CAPABILITIES = {
     source: "Commando / Командо (Стрелок), BS 45, S 40",
     reader: "module/sheets/attack-dialog.mjs — commandoGrip"
   },
+  "weapon.oneHandedRifle": {
+    label: "Винтовку и длинную винтовку можно держать одной рукой без штрафа",
+    source: "Recoil Glove / Откатная Перчатка и Recoil Suppressors / Подавители Отдачи " +
+            "(«позволяя стрелять из винтовки или длинной винтовки с одной руки без штрафа»); " +
+            "Gun Arm / Дар «Рука-Пушка» (Дары Одержимых, 400 хр). " +
+            "Класс basic — «Винтовка» и «Длинная Винтовка» книги живут в нём обе (стр. 171).",
+    reader: "module/sheets/attack-dialog.mjs — oneHandRifleGrip; module/rules/hands.mjs — availableRangedGrips"
+  },
+  "weapon.ignoreRecoil": {
+    label: "Отдача (Recoil X) не мешает стрелять одной рукой при нехватке S.b",
+    source: "Recoil Glove / Откатная Перчатка, Good.Q и Best.Q («игнорирует свойство Recoil оружия»)",
+    reader: "module/sheets/attack-dialog.mjs — recoilBlocksOneHand; module/rules/hands.mjs — effectiveRangedGripHands"
+  },
   "weapon.fanningRevolver": {
     label: "Револьвер в одной руке со свободной второй: Длинная очередь без штрафа −10",
     source: "Fanning / Быстрый Курок (Оружейник), BS 40, A 40",

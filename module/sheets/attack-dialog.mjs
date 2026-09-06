@@ -179,7 +179,15 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const modGrantedGrips = installedMods.map(m => modFxOf(m).grantsGrip).filter(Boolean);
   const commandoGrip    = (!isMelee && wp.carbine && hasRuleFlag(actor, "weapon.commandoCarbine")) ? "1р" : null;
   const doubleGripGrip  = (!isMelee && sys.weaponClass === "pistol" && hasRuleFlag(actor, "weapon.doubleGripPistol")) ? "2р" : null;
-  const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []), ...(doubleGripGrip ? [doubleGripGrip] : [])];
+  // Откатная Перчатка / Подавители Отдачи / Рука-Пушка (wdbc-f7iw, wdbc-6tzk):
+  // винтовку и длинную винтовку (обе в классе basic, стр. 171) можно держать
+  // одной рукой. Тот же список собирает rules/hands.mjs::availableRangedGrips —
+  // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
+  const oneHandRifleGrip = (!isMelee && sys.weaponClass === "basic"
+                         && hasRuleFlag(actor, "weapon.oneHandedRifle")) ? "1р" : null;
+  const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
+                      ...(doubleGripGrip ? [doubleGripGrip] : []),
+                      ...(oneHandRifleGrip ? [oneHandRifleGrip] : [])];
   const ownGrips = parseGrips(sys.grips);
   // Предмет без собственного sys.grips (пак ещё не заполнен, стр. 171) —
   // добавляем природный Хват по классу, иначе доп. Хват окажется в списке
