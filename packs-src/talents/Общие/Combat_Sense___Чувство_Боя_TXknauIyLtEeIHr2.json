@@ -5,7 +5,7 @@
   "folder": "5lNMSWi0f76u3gHZ",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "МЕХАНИЗИРОВАНО (wdbc-7zzr): запись Конструктора kind:\"capability\", capabilityKey:\"combat.initiativeChar.per\" — module/rules/initiative.mjs::initiativeCharKey подставляет P.b вместо A.b, если он больше (книга говорит «может использовать», игрок в этом выборе всегда взял бы большее).",
     "benefit": "Персонаж может использовать P.b вместо A.b при броске на Инициативу.",
     "bookSource": "DoomBC — Основная книга",
     "tier": 1,
@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "cm753L3qV8j8IX5C",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "mjv6tB5kJH2kvpfi",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "combat.initiativeChar.per",
+              "label": "Инициатива по P.b вместо A.b"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

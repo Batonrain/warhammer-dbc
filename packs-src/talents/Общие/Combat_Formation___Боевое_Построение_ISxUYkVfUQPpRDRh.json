@@ -5,7 +5,7 @@
   "folder": "5lNMSWi0f76u3gHZ",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "МЕХАНИЗИРОВАНО (wdbc-7zzr): +1 к Инициативе — embedded ActiveEffect на system.initiative (был и раньше). «Использует I.b вместо A.b» — запись Конструктора kind:\"capability\", capabilityKey:\"combat.initiativeChar.int\"; module/rules/initiative.mjs::initiativeCharKey берёт ЛУЧШУЮ из разрешённых характеристик, потому что книга говорит «может использовать». НЕ механизировано: раздача +1 и подмены соратникам, «с которыми он поделился планами» — это не свойство носителя, а разовое решение за столом; ближайший механизм (kind:\"aura\") раздаёт по радиусу, а не по списку тех, кому рассказали, и врал бы книге.",
     "benefit": "Персонаж тщательно планирует расстановку в бою. Персонаж и все его соратники, с которыми он поделился планами, получают +1 к Инициативе и могут использовать I.b вместо A.b при броске на Инициативу.",
     "tier": 1,
     "requirement": "I 40",
@@ -85,7 +85,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "gbQs9xVMMxcdfVcT",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "tL34acnRmtPM5PHz",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "combat.initiativeChar.int",
+              "label": "Инициатива по I.b вместо A.b"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -17,6 +17,8 @@
 
 import { psyRatingFromTalents } from "../psyker.mjs";
 import { hasRuleFlag } from "../flags.mjs";
+import { initiativeCharKey, fastestHandBonus, initiativeHint,
+         INITIATIVE_DEFAULT_CHAR } from "../initiative.mjs";
 
 /**
  * @param {object} actor            актор — для возможностей (hasRuleFlag) и предметов
@@ -42,7 +44,19 @@ export function prepareFinalPools(actor, system, { chars, agBonus, traitInitMod,
   // строки, и без чтения назад перезапись стёрла бы вклад Мутаций
   // («Безголовый» −2) тем же способом, каким раньше терялся sizeMod
   // Астартес (см. комментарий у traitSizeMod выше).
-  system.initiative = agBonus + (traitInitMod || 0) + (Number(system.initiative) || 0);
+  //
+  // Чем считать (Боевое Построение — I.b, Чувство Боя — P.b), сколько раз
+  // кидать (Молниеносные Рефлексы, Эльдарское Тело) и надбавка Самой Быстрой
+  // Руки живут в module/rules/initiative.mjs (wdbc-7zzr).
+  const initChar  = initiativeCharKey(actor, chars);
+  const initBonus = initChar === INITIATIVE_DEFAULT_CHAR ? agBonus : (chars[initChar]?.bonus ?? agBonus);
+  // На лист кладётся только ПОДСКАЗКА: сам ключ характеристики и число бросков
+  // отдельными полями заводить незачем — их спрашивают у rules/initiative.mjs
+  // напрямую (так делает боевой трекер, documents/combatant.mjs), а поле,
+  // которое никто не читает, со временем начинает врать молча.
+  system.initiativeHint  = initiativeHint(actor, chars);
+  system.initiative = initBonus + fastestHandBonus(actor, chars)
+                    + (traitInitMod || 0) + (Number(system.initiative) || 0);
 
   // ── Когниция (Техножрец) ───────────────────────────────────────────────
   // Пул Когниции = Int.bonus; в начале Хода восстанавливается ½ Int.b.
