@@ -410,6 +410,13 @@ export const CAPABILITIES = {
             "Класс basic — «Винтовка» и «Длинная Винтовка» книги живут в нём обе (стр. 171).",
     reader: "module/sheets/attack-dialog.mjs — oneHandRifleGrip; module/rules/hands.mjs — availableRangedGrips"
   },
+  "weapon.noStandardAmmo": {
+    label: "Пистолет или винтовка в предплечье не тратит стандартные боеприпасы",
+    source: "Gun Arm / Дар «Рука-Пушка» (корбук, Элитные архетипы, 400 хр): " +
+            "«…и оно больше не тратит стандартные боеприпасы при выстреле». " +
+            "Классы pistol и basic — «пистолет или винтовка (в т.ч. длинная)» книги.",
+    reader: "module/combat/attack.mjs — infiniteAmmo"
+  },
   "weapon.oneHandedWarriorPath": {
     label: "Стрела Кхейна: стрельба одной рукой, дальность при этом не режется",
     source: "Книга Аэльдари, Арсенал/Сюрикен: «Персонаж, обладающий любым Путем Воина " +
