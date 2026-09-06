@@ -24,9 +24,11 @@ describe("каркас module/rules", () => {
     // hexMarkedPreyAllyBonus (метка Проклятой Метки, wdbc-xxb7),
     // wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno),
     // hasCondition/targetHasCondition (Состояния актора/цели, wdbc-r5o7),
-    // charNotIn (характеристика теста вне списка, wdbc-r5o7.1) и charIn
-    // (характеристика теста в списке, Гангрена, wdbc-r5o7.5).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(25);
+    // charNotIn (характеристика теста вне списка, wdbc-r5o7.1), charIn
+    // (характеристика теста в списке, Гангрена, wdbc-r5o7.5) и charBonusMin
+    // (порог по Бонусу характеристики, «S.b 5+» у Poor.Q Откатной Перчатки,
+    // wdbc-vsma).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(26);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

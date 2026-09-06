@@ -19,6 +19,19 @@ export const LEGION_STEP = -10;
 export const LEGION_FIT_FLAG = "weapons.legion";
 
 /**
+ * Возможность «оружие не по размеру не штрафует за Размер и Силу» (wdbc-vsma).
+ * Книжный источник — Best.Q Откатная Перчатка: «позволяет людям оперировать
+ * оружием Легиона и Огринов без штрафов за недостаточный размер и S.b, но всё
+ * ещё с −10 за неудобную форму». Снимает ДВА слагаемых из трёх; третье (руки
+ * не под Астартес) и есть та самая «неудобная форма» — остаётся.
+ *
+ * Про Огринизированное оружие: его собственные штрафы система пока не считает
+ * вовсе (свойство ogryned в constants/weapon-properties.mjs описано текстом,
+ * читателя у него нет) — когда появятся, они обязаны спрашивать этот же ключ.
+ */
+export const OVERSIZED_FIT_FLAG = "weapon.oversizedIgnoreSizeStrength";
+
+/**
  * Штраф к тесту атаки за несоответствие оружия и носителя.
  *
  * @param {object}  o
@@ -27,15 +40,19 @@ export const LEGION_FIT_FLAG = "weapons.legion";
  * @param {number}  o.size       Размер носителя
  * @param {number}  o.sBonus     Бонус Силы носителя
  * @param {boolean} o.isGrenade  граната — исключение из штрафа Астартес
+ * @param {boolean} o.ignoresSizeStrength  носитель снимает штрафы за Размер и
+ *        Бонус Силы (Best.Q Откатная Перчатка, OVERSIZED_FIT_FLAG) — «неудобная
+ *        форма» при этом остаётся.
  * @returns {{total: number, parts: {label: string, value: number}[]}}
  */
 export function legionAttackPenalty({ hasLegion = false, fitsLegion = false,
-                                      size = 0, sBonus = 0, isGrenade = false } = {}) {
+                                      size = 0, sBonus = 0, isGrenade = false,
+                                      ignoresSizeStrength = false } = {}) {
   const parts = [];
 
   if (hasLegion && !fitsLegion) {
-    if ((Number(size)   || 0) < 1) parts.push({ label: "Легион: Размер меньше 1",   value: LEGION_STEP });
-    if ((Number(sBonus) || 0) < 7) parts.push({ label: "Легион: Бонус Силы меньше 7", value: LEGION_STEP });
+    if (!ignoresSizeStrength && (Number(size)   || 0) < 1) parts.push({ label: "Легион: Размер меньше 1",   value: LEGION_STEP });
+    if (!ignoresSizeStrength && (Number(sBonus) || 0) < 7) parts.push({ label: "Легион: Бонус Силы меньше 7", value: LEGION_STEP });
     // Руки под Астартес — то же сложение, что даёт fitsLegion; раз его нет,
     // хват не подогнан. Оружие можно доработать (R 0), и тогда предмет просто
     // теряет свойство Legion — отдельного признака для этого не нужно.

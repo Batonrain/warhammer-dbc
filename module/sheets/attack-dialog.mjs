@@ -38,7 +38,7 @@ import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/gam
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
-import { legionAttackPenalty, LEGION_FIT_FLAG } from "../rules/legion-fit.mjs";
+import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
@@ -235,7 +235,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     fitsLegion: hasRuleFlag(actor, LEGION_FIT_FLAG),
     size:       actor.system.size ?? 0,
     sBonus:     actor.system.characteristics?.s?.bonus ?? 0,
-    isGrenade:  sys.weaponType === "grenade"
+    isGrenade:  sys.weaponType === "grenade",
+    // Best.Q Откатная Перчатка (wdbc-vsma): человек берёт легионное оружие без
+    // штрафов за Размер и Силу, «неудобная форма» −10 остаётся.
+    ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
   });
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
   const weaponTraining = weaponTrainingPenalty({

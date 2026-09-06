@@ -147,6 +147,44 @@ describe("charMin", () => {
   });
 });
 
+// wdbc-vsma: книга просит именно Бонус («требует S.b 5 или выше»), и подменять
+// его полным значением нельзя — в Бонус идут ступени Unnatural и надбавки
+// эффектов, у Астартес эти два числа расходятся.
+describe("charBonusMin", () => {
+  const charBonusMin = PREDICATES.charBonusMin;
+  const bonuses = obj => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, { bonus: v }]));
+
+  it("Бонус не ниже порога — true", () => {
+    expect(charBonusMin(actor({ characteristics: bonuses({ s: 5 }) }), {}, { s: 5 })).toBe(true);
+    expect(charBonusMin(actor({ characteristics: bonuses({ s: 8 }) }), {}, { s: 5 })).toBe(true);
+  });
+
+  it("Бонус ниже порога — false", () => {
+    expect(charBonusMin(actor({ characteristics: bonuses({ s: 4 }) }), {}, { s: 5 })).toBe(false);
+  });
+
+  it("смотрит на Бонус, а не на полное значение", () => {
+    // S 45 без Unnatural — это S.b 4: порог «S.b 5» не пройден, хотя charMin
+    // с порогом 40 такого актора пропустил бы.
+    const weak = { characteristics: { s: { total: 45, bonus: 4 } } };
+    expect(charBonusMin(actor(weak), {}, { s: 5 })).toBe(false);
+    // Unnatural Strength поднимает Бонус, не трогая полное значение: тот же
+    // S 45, но S.b 8 — порог пройден.
+    const unnatural = { characteristics: { s: { total: 45, bonus: 8 } } };
+    expect(charBonusMin(actor(unnatural), {}, { s: 5 })).toBe(true);
+  });
+
+  it("несколько порогов сразу — все должны пройти", () => {
+    const a = actor({ characteristics: bonuses({ s: 5, t: 3 }) });
+    expect(charBonusMin(a, {}, { s: 5, t: 3 })).toBe(true);
+    expect(charBonusMin(a, {}, { s: 5, t: 4 })).toBe(false);
+  });
+
+  it("отсутствующая характеристика считается нулём", () => {
+    expect(charBonusMin(actor(), {}, { s: 1 })).toBe(false);
+  });
+});
+
 describe("hasTalent и hasTrait", () => {
   const soldier = actor({ items: [
     talent("Nerves of Steel / Стальные Нервы"),
@@ -363,7 +401,7 @@ describe("hexMarkedPreyAllyBonus", () => {
 describe("общее требование к предикатам", () => {
   const value = {
     race: ["human"], subrace: ["navigator"], geneSeedLegion: ["VIII"], psyRatingMin: 1,
-    sizeMax: 1, charMin: { s: 40 },
+    sizeMax: 1, charMin: { s: 40 }, charBonusMin: { s: 5 },
     woundTier: ["heavy"],
     // В Ярости (wdbc-wyr3) — читает actor.system.inRage, значение из `when`
     // не участвует (тот же случай, что avatarOfSlaughterOffTarget ниже).

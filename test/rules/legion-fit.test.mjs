@@ -40,3 +40,25 @@ describe("legionAttackPenalty", () => {
     expect(legionAttackPenalty()).toEqual({ total: 0, parts: [] });
   });
 });
+
+// ── Best.Q Откатная Перчатка (wdbc-vsma) ───────────────────────────────────
+// «Люди оперируют оружием Легиона и Огринов без штрафов за недостаточный
+// размер и S.b, но всё ещё с −10 за неудобную форму» — снимаются ровно два
+// слагаемых из трёх, третье остаётся.
+describe("legionAttackPenalty: снятие штрафов за Размер и Силу (Best.Q Перчатка)", () => {
+  it("человеку остаётся только «неудобная форма» −10", () => {
+    const out = legionAttackPenalty({ hasLegion: true, ...human, ignoresSizeStrength: true });
+    expect(out.total).toBe(LEGION_STEP);
+    expect(out.parts).toHaveLength(1);
+    expect(out.parts[0].label).toMatch(/руки/i);
+  });
+
+  it("без возможности тот же человек получает все три", () => {
+    expect(legionAttackPenalty({ hasLegion: true, ...human }).total).toBe(3 * LEGION_STEP);
+  });
+
+  it("на штраф Астартес за НЕлегионное оружие не влияет — там другая причина", () => {
+    const out = legionAttackPenalty({ hasLegion: false, ...astartes, ignoresSizeStrength: true });
+    expect(out.total).toBe(LEGION_STEP);
+  });
+});

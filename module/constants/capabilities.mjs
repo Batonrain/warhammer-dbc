@@ -415,6 +415,11 @@ export const CAPABILITIES = {
     source: "Recoil Glove / Откатная Перчатка, Good.Q и Best.Q («игнорирует свойство Recoil оружия»)",
     reader: "module/sheets/attack-dialog.mjs — recoilBlocksOneHand; module/rules/hands.mjs — effectiveRangedGripHands"
   },
+  "weapon.oversizedIgnoreSizeStrength": {
+    label: "Оружие не по размеру (Легион/Огрины): нет штрафов −10 за Размер и −10 за Бонус Силы; −10 за неудобную форму остаётся",
+    source: "Recoil Glove / Откатная Перчатка, Best.Q («люди оперируют оружием Легиона и Огринов без штрафов за размер и S.b, но всё ещё с −10 за неудобную форму»)",
+    reader: "module/rules/legion-fit.mjs — legionAttackPenalty(ignoresSizeStrength), подключено в module/sheets/attack-dialog.mjs. Огринизированное оружие (свойство ogryned) свои штрафы пока не считает вовсе — когда посчитает, обязано спрашивать этот же ключ"
+  },
   "weapon.fanningRevolver": {
     label: "Револьвер в одной руке со свободной второй: Длинная очередь без штрафа −10",
     source: "Fanning / Быстрый Курок (Оружейник), BS 40, A 40",

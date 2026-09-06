@@ -34,15 +34,48 @@ const gloveOfQuality = quality => ({
   flags: glove.flags
 });
 
-const actor = { system: { geneSeed: {}, bio: { age: 0 } }, items: [] };
+/** Владелец с заданным Бонусом Силы — Poor.Q Перчатка спрашивает именно его. */
+const wearer = (sBonus = 3) => ({
+  system: { geneSeed: {}, bio: { age: 0 }, characteristics: { s: { total: 40, bonus: sBonus } } },
+  items: []
+});
 
-const capsOf = quality => rulesFromItemMechanics([gloveOfQuality(quality)], () => true, actor)
-  .flatMap(r => (r.effects || []).filter(e => e.kind === "grantFlag").map(e => e.target));
+const actor = wearer();
+
+const capsOf = (quality, owner = actor) =>
+  rulesFromItemMechanics([gloveOfQuality(quality)], () => true, owner)
+    .flatMap(r => (r.effects || []).filter(e => e.kind === "grantFlag").map(e => e.target));
 
 describe("Откатная Перчатка: возможности по ступеням качества (wdbc-9k2q)", () => {
-  it("стрельба одной рукой из винтовки — на любой ступени (базовое свойство предмета)", () => {
-    for (const q of ["poor", "common", "good", "best"])
+  it("стрельба одной рукой из винтовки — с Обычного качества и выше", () => {
+    for (const q of ["common", "good", "best"])
       expect(capsOf(q)).toContain("weapon.oneHandedRifle");
+  });
+
+  // wdbc-vsma: «Poor.Q: требует S.b 5 или выше для работы» — у слабого
+  // владельца дешёвая перчатка не даёт даже базовой стрельбы одной рукой.
+  it("Poor.Q работает только при S.b 5 и выше", () => {
+    expect(capsOf("poor", wearer(4))).not.toContain("weapon.oneHandedRifle");
+    expect(capsOf("poor", wearer(5))).toContain("weapon.oneHandedRifle");
+  });
+
+  it("Poor.Q спрашивает Бонус Силы, а не полное значение Силы", () => {
+    // S 40 (полное) с Unnatural Strength даёт S.b 6 — книга смотрит на Бонус,
+    // и такой владелец дешёвой перчаткой пользуется.
+    expect(capsOf("poor", wearer(6))).toContain("weapon.oneHandedRifle");
+  });
+
+  it("порог Силы не мешает остальным ступеням — там его нет", () => {
+    for (const q of ["common", "good", "best"])
+      expect(capsOf(q, wearer(1))).toContain("weapon.oneHandedRifle");
+  });
+
+  // «Best.Q: люди оперируют оружием Легиона и Огринов без штрафов за размер и
+  // S.b (но -10 за неудобную форму остаётся)» — читает rules/legion-fit.mjs.
+  it("Best.Q снимает штрафы за Размер и Силу у оружия не по размеру", () => {
+    expect(capsOf("best")).toContain("weapon.oversizedIgnoreSizeStrength");
+    for (const q of ["poor", "common", "good"])
+      expect(capsOf(q)).not.toContain("weapon.oversizedIgnoreSizeStrength");
   });
 
   it("Good.Q и Best.Q игнорируют Recoil", () => {

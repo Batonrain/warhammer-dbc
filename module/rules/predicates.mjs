@@ -246,6 +246,16 @@ export const PREDICATES = {
   charMin: (actor, ctx, value) => Object.entries(value ?? {}).every(
     ([key, min]) => (Number(actor?.system?.characteristics?.[key]?.total) || 0) >= min),
 
+  // Бонус характеристики не ниже указанного: charBonusMin: { s: 5 } — «S.b 5
+  // и выше». НЕ заменяется на charMin: { s: 50 } (wdbc-vsma): Бонус — это не
+  // «полное значение делить на десять», в него идут ступени Unnatural и
+  // надбавки эффектов (rules/character.mjs: floor(total/10) + supernatural +
+  // bonusFx + Черты и Пути). У Астартес с Unnatural Strength полное значение и
+  // Бонус расходятся, и подмена одного другим врала бы именно там, где книга
+  // говорит про Бонус чаще всего («требует S.b 5», «Бонус Силы меньше 7»).
+  charBonusMin: (actor, ctx, value) => Object.entries(value ?? {}).every(
+    ([key, min]) => (Number(actor?.system?.characteristics?.[key]?.bonus) || 0) >= min),
+
   hasTalent: (actor, ctx, value) => hasNamed(actor, value),
   hasTrait:  (actor, ctx, value) => hasNamed(actor, value),
 
