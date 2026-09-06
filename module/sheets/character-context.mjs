@@ -13,8 +13,9 @@
 import { CHARACTERISTICS, APTITUDES }            from "../constants/characteristics.mjs";
 import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
-import { charAptitudeSet, resolveCharCat, CHAR_APTITUDES } from "../constants/advancement.mjs";
+import { charAptitudeSet, CHAR_APTITUDES } from "../constants/advancement.mjs";
 import { aptBindingContext }                    from "../rules/aptitude-binding.mjs";
+import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.mjs";
 
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { raceEntries, raceDef, subracesOf,
@@ -515,8 +516,13 @@ export function characterContext(actor) {
     const improvementSteps = CHAR_IMP_STEPS[improvement] ?? 0;
     return {
       key,
-      // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
-      aptCat:       resolveCharCat(key, _charApts, actor),
+      // Категория цены (стр. 24) — для значка Д/Н/В в «Развитии». Считается
+      // ОБЩЕЙ точкой с ценой (rules/advance-category.mjs): раньше значок знал
+      // только про Склонности и противоречил числу рядом (wdbc-gafj).
+      aptCat:       charAdvanceCat(actor, key, _charApts),
+      // Откуда категория, если не из совпадения Склонностей: раса/субраса или
+      // культура легиона. С листа это иначе не выводится ниоткуда.
+      aptSourceText: advanceCatSource(actor, "char", key)?.text ?? "",
       // Привязка Склонностей (wdbc-1pvq) — см. тот же вызов у Навыков.
       ...aptBindingContext(actor, "char", key, CHAR_APTITUDES[key] || [], a => APTITUDES[a] || a),
       label:        charLabel(key, system.alignment),

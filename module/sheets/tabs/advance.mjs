@@ -10,9 +10,7 @@ import { APTITUDES } from "../../constants/characteristics.mjs";
 import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
          resolveTalentAptitudes } from "../../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
-import { cultureCat, resolveCultureFx } from "../../constants/legions.mjs";
-import { isFriendlySpecialty } from "../../rules/friendly-specialties.mjs";
-import { resolveAptitudeOverride } from "../../rules/aptitude-overrides.mjs";
+import { charAdvanceCat, skillAdvanceCat } from "../../rules/advance-category.mjs";
 import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -25,16 +23,6 @@ export const CHAR_IMP_STEPS = { none: 0, simple: 1, average: 2, trained: 3, sign
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 
 /**
- * Машинная культура легиона персонажа. Культура может быть от ДРУГОГО легиона,
- * чем геносемя (в системе это отдельные поля), поэтому берём именно её.
- */
-function cultFxOf(actor) {
-  const gs = actor?.system?.geneSeed;
-  if (!gs) return null;
-  return resolveCultureFx(gs.cultureLegion || gs.legion, gs.cultureChapter || gs.chapter);
-}
-
-/**
  * Цена уровня улучшения характеристики (стр. 23-24): сумма шагов +5..+25 до
  * выбранного уровня, категория — по совпадению склонностей.
  * grantedImp — бесплатный уровень от архетипа/расы (кнопка ★): опыт считается
@@ -44,10 +32,10 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
   const apts  = charAptitudeSet(actor.system.aptitudes);
   const steps = CHAR_IMP_STEPS[improvement] ?? 0;
   const floor = CHAR_IMP_STEPS[grantedImp ?? actor.system.characteristics?.[charKey]?.grantedImp] ?? 0;
-  // Расовый/субрасовый override (wdbc-zk69) перебивает и Склонности, и
-  // Покровительство — той же приоритетной ступенью, что у cultureCat легиона
-  // для Навыков/Талантов (у характеристик культуры легиона не бывает вовсе).
-  const cultCat = resolveAptitudeOverride(actor, "characteristic", charKey);
+  // Категория считается общей точкой (rules/advance-category.mjs) — той же,
+  // которой лист рисует значок Д/Н/В. Раньше значок считал по-своему, без
+  // расового override, и противоречил цене в соседней ячейке (wdbc-gafj).
+  const cultCat = charAdvanceCat(actor, charKey, apts);
   let sum = 0;
   for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts, cultCat, { actor });
   return sum;
@@ -69,13 +57,7 @@ export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, sp
   // как Дружественная на Родном мире (Исследовательская станция), и расовый/
   // субрасовый override (Африэль/Эльданар/Серый Человек, wdbc-zk69) — тот
   // встаёт ПЕРЕД культурой легиона, см. resolveAptitudeOverride.
-  const cat = def?.alwaysAlly ? "ally"
-    : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
-    : resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group)
-      // cultureCat матчит по-английски (CULT.friendlySkills/hostileSkills в
-      // legions.mjs) — def?.label здесь русский и никогда бы не совпал
-      // (wdbc-ko14), def?.en заведён специально под это.
-      ?? cultureCat("skill", def?.en || def?.label || def?.name || "", "", cultFxOf(actor));
+  const cat = skillAdvanceCat(actor, def, { group, specialty, skillKey, entryChar }, apts);
   // Ключ для Бога Навыка (patronage.mjs, skillGodOf) — у группового ключ группы
   // (forbiddenLore и т.п.), у обычного — его собственный (dodge и т.п.).
   const opts = { actor, skillKey: group || skillKey, specialty };
