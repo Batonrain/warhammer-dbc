@@ -78,6 +78,7 @@ import { openVeilMystic, veilShift, refreshVeilWindow } from "./module/apps/veil
 import { refreshVeilOverlay } from "./module/apps/veil-overlay.mjs";
 import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/apps/scene-nexus.mjs";
 import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-settings.mjs";
+import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
@@ -958,6 +959,7 @@ Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
+Hooks.once("init", () => initSceneControlsGuard());
 
 // ── Виджет «Окружающая Среда» (левый-нижний угол, видят все) ──────────────────
 Hooks.once("ready",     () => refreshEnvWidget());
@@ -1118,20 +1120,32 @@ Hooks.on("getSceneControlButtons", (controls) => {
         { action: "veil", icon: VEIL_ICON, label: "Завеса и Мистика", callback: () => triggerVeil() },
         { action: "nexus", icon: NEXUS_ICON, label: "Нексус Сцен", callback: () => triggerNexus() }
       ];
-      if (game.user.isGM) buttons.push(
-        { action: "env", icon: ENV_ICON, label: "Окружающая Среда", callback: () => triggerEnv() },
-        { action: "calloutAdd", icon: CALLOUT_ICON, label: "Добавить коллаут", callback: () => triggerCallout() },
-        { action: "calloutClear", icon: CALLOUT_CLEAR_ICON, label: "Очистить коллауты", callback: () => triggerClearCallouts() }
-      );
+      // Коллауты рисуются НА сцене (Drawing/Tile) — без открытой карты их
+      // некуда класть. Остальные разделы канваса не требуют и остаются
+      // доступны, когда меню открыто в обход молчащей панели (wdbc-3w94,
+      // module/apps/scene-controls-guard.mjs).
+      const canvasUp = (() => { try { return !!canvas?.ready; } catch (e) { return false; } })();
+      if (game.user.isGM) {
+        buttons.push({ action: "env", icon: ENV_ICON, label: "Окружающая Среда", callback: () => triggerEnv() });
+        if (canvasUp) buttons.push(
+          { action: "calloutAdd", icon: CALLOUT_ICON, label: "Добавить коллаут", callback: () => triggerCallout() },
+          { action: "calloutClear", icon: CALLOUT_CLEAR_ICON, label: "Очистить коллауты", callback: () => triggerClearCallouts() }
+        );
+      }
       foundry.applications.api.DialogV2.wait({
         window: { title: "Doom BC" },
         classes: ["warhammer-dbc", "wh-holo"],
         position: { width: 320 },
-        content: "<p>Выберите раздел:</p>",
+        content: canvasUp
+          ? "<p>Выберите раздел:</p>"
+          : "<p>Выберите раздел:</p><p style=\"opacity:.75\">Сцена не открыта — работа с коллаутами и остальная панель инструментов Foundry недоступны, пока карта не открыта.</p>",
         buttons,
         rejectClose: false
       }).catch(e => console.error("warhammer-dbc | wh-hub", e));
     };
+    // Без открытой сцены панель Foundry молчит и до onChange дело не доходит —
+    // guard в этом случае откроет то же самое меню сам (wdbc-3w94).
+    registerHubOpener(openWhHub);
     const triggerHub = () => {
       openWhHub();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
