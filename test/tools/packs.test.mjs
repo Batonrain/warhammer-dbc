@@ -8,6 +8,32 @@ import { PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 // в system.json, но без исходника, соберётся пустым, и потеря заметится только
 // в игре. Здесь проверяется, что список паков и список исходников совпадают.
 
+// ── ОДИН проход по packs-src на весь файл ────────────────────────────────
+//
+// Раньше их было два, и оба читали все ~6800 документов с диска: один на
+// уровне модуля (проверка формата имён), второй ВНУТРИ теста «каждая ссылка на
+// боевой профиль ведёт к оружию». Второй и падал по таймауту — не из-за
+// объёма, а из-за конкуренции за диск: рабочая копия общая, и в момент прогона
+// на машине бывает под десяток параллельных процессов node. Лечили это уже
+// один раз, подняв таймаут с 5с до 15с, — то есть лечили симптом, и он
+// вернулся.
+//
+// Теперь чтение делается один раз при загрузке модуля, а тесты работают с уже
+// прочитанным. Диск перестаёт участвовать в измеряемом времени теста вовсе.
+const PACK_SOURCE_FILES = (() => {
+  const out = [];
+  for (const pack of LIBRARY_PACKS) {
+    const dir = abs(pack.src);
+    if (!existsSync(dir)) continue;
+    for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
+      if (e.isDirectory() || !e.name.endsWith(".json")) continue;
+      const file = join(e.parentPath ?? e.path, e.name);
+      out.push({ pack: pack.name, file, name: e.name, text: readFileSync(file, "utf8") });
+    }
+  }
+  return out;
+})();
+
 /** Число JSON-документов в папке пака. Файлы не разбираются: проверка дешёвая. */
 function countDocs(dir) {
   let n = 0;
@@ -51,31 +77,26 @@ describe("двупрофильные предметы", () => {
    * warhammer-dbc.weapons — здесь проверка повторяет ровно эту область
    * поиска, а не общий неймспейс по всем паками.
    */
-  function packIndex() {
+  // Разбор идёт по УЖЕ ПРОЧИТАННОМУ (PACK_SOURCE_FILES) и тоже на уровне
+  // модуля: в самом тесте не остаётся ни диска, ни разбора — только проверка
+  // утверждения. Поэтому и особый таймаут больше не нужен.
+  const { weaponNames, links } = (() => {
     const weaponNames = new Set();
     const links = [];
-    for (const pack of LIBRARY_PACKS) {
-      const dir = abs(pack.src);
-      if (!existsSync(dir)) continue;
-      for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
-        if (e.isDirectory() || !e.name.endsWith(".json") || e.name.startsWith("_")) continue;
-        const doc = JSON.parse(readFileSync(join(e.parentPath ?? e.path, e.name), "utf8"));
-        if (doc.type === "weapon") weaponNames.add(doc.name);
-        if (doc.system?.linkedWeapon) links.push({ name: doc.name, link: doc.system.linkedWeapon });
-      }
+    for (const f of PACK_SOURCE_FILES) {
+      if (f.name.startsWith("_")) continue;
+      const doc = JSON.parse(f.text);
+      if (doc.type === "weapon") weaponNames.add(doc.name);
+      if (doc.system?.linkedWeapon) links.push({ name: doc.name, link: doc.system.linkedWeapon });
     }
     return { weaponNames, links };
-  }
+  })();
 
-  // Таймаут увеличен: полный обход packs-src подрос (flags.autoanimations на
-  // Оружии), под нагрузкой всего суйта иногда не укладывался в дефолтные 5с
-  // при заведомо валидном ~1.1с сольно.
   it("каждая ссылка на боевой профиль ведёт к оружию из паков", () => {
-    const { weaponNames, links } = packIndex();
     expect(links.length).toBeGreaterThan(0);
     const broken = links.filter(l => !weaponNames.has(l.link));
     expect(broken).toEqual([]);
-  }, 15000);
+  });
 });
 
 describe("исходники книг", () => {
@@ -93,22 +114,7 @@ describe("исходники книг", () => {
 // как его назвал бы `transformName` — тогда извлечение удаляло старый файл и
 // заводило рядом такой же под своим именем.
 describe("формат исходников паков", () => {
-  /** Все JSON паков-библиотек: путь + содержимое. */
-  function sourceFiles() {
-    const out = [];
-    for (const pack of LIBRARY_PACKS) {
-      const dir = abs(pack.src);
-      if (!existsSync(dir)) continue;
-      for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
-        if (e.isDirectory() || !e.name.endsWith(".json")) continue;
-        const file = join(e.parentPath ?? e.path, e.name);
-        out.push({ pack: pack.name, file, name: e.name, text: readFileSync(file, "utf8") });
-      }
-    }
-    return out;
-  }
-
-  const FILES = sourceFiles();
+  const FILES = PACK_SOURCE_FILES;
   // Правила имени — те же, что у tools/unpack.mjs: CLI оставляет в имени только
   // буквы и цифры, а длину режет ради лимита пути Windows.
   const safe = (name) => String(name).replace(/[^a-zA-Z0-9А-я]/g, "_");
