@@ -105,7 +105,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
   // Решение «рукопашная ли это атака» одно на окно и на бросок
   // (combat/weapon-profiles.mjs::attackIsMelee, wdbc-bs0q): выбранный ПРОФИЛЬ
-  // важен наравне с классом оружия, иначе «Удар в упор» катился бы тестом по
+  // важен наравне с классом оружия, иначе «Ударить оружием» катилось бы тестом по
   // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
   // из стрелковой ветки.
   const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
