@@ -36,6 +36,61 @@ import { ITEM_TYPES } from "../constants/items.mjs";
 const FLAG = "warhammer-dbc";
 const BASELINE_PATH = "contentSync.baseline";
 
+// ────────────────────────────────────────────────────────────────────────────
+//  Механика Конструктора (wdbc-lddr) участвует в сверке НАРАВНЕ с полями
+//  system — как отдельное виртуальное «поле».
+//
+//  Почему это понадобилось. Механика предмета живёт не в system, а во
+//  flags.warhammer-dbc.mechanics, и сверка её не видела вовсе. У персонажа,
+//  созданного ДО правки пака, Талант обновлял ОПИСАНИЕ (system.notes в сверку
+//  входит) и не получал самой механики: на листе было написано, что работает,
+//  а работать было нечему. Хуже, чем «не работает», — текст врал.
+//
+//  Почему безопасно. Механика получает свою опору, как и любое поле: правка,
+//  сделанная ГМом на конкретном предмете актёра, расходится с опорой и уходит
+//  в «конфликт» (решает ГМ), а не затирается паком молча. Опора лежит
+//  отдельным флагом, а не ключом внутри baseline: baseline — это снимок
+//  system целиком (см. migrations/content-sync-baseline.mjs), и подмешивать
+//  туда не-system значение значило бы сломать его смысл.
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Виртуальный путь «поля» Механики. «@» не встречается в ключах system. */
+export const MECH_PATH = "@mechanics";
+const MECH_BASELINE_PATH = "contentSync.mechanicsBaseline";
+
+/** Механика документа (предмета актёра или документа пака) — всегда массив. */
+function mechanicsOf(doc) {
+  const arr = doc?.flags?.[FLAG]?.mechanics;
+  return Array.isArray(arr) ? arr : [];
+}
+
+/** Подпись поля для окна: у виртуального поля Механики она человеческая. */
+export function fieldLabel(path) {
+  return path === MECH_PATH ? "МЕХАНИКА (Конструктор)" : path;
+}
+
+/**
+ * Значение поля для показа в окне. Механика — дерево групп и записей, её JSON
+ * занял бы весь экран и ничего бы не сказал: показываем сводку по записям.
+ */
+export function describeValue(path, value) {
+  if (path !== MECH_PATH) return null;
+  const groups = Array.isArray(value) ? value : [];
+  const labels = [];
+  const walk = entries => {
+    for (const e of entries || []) {
+      if (e?.kind === "group") walk(e.group?.entries);
+      else if (e) labels.push(String(e.label || e.kind || "запись"));
+    }
+  };
+  for (const g of groups) walk(g.entries);
+  if (!labels.length) return "—";
+  const head = labels.slice(0, 4).join(", ");
+  return labels.length > 4
+    ? `${labels.length} записей: ${head}…`
+    : `${labels.length} ${labels.length === 1 ? "запись" : "записи"}: ${head}`;
+}
+
 /**
  * Ключи для поиска по имени: полное имя + обе половины двуязычного "A / Б" —
  * без учёта регистра, как в matchHullDoc (module/migrations/ship-hulls.mjs).
@@ -89,9 +144,18 @@ export function matchPackSource(item, index) {
 
 /** Снимок-опора для конкретного поля: сохранённый флаг либо (если его ещё нет) текущее значение на предмете. */
 function baselineFor(item, path) {
+  if (path === MECH_PATH) {
+    const stored = item.flags?.[FLAG]?.contentSync?.mechanicsBaseline;
+    return Array.isArray(stored) ? stored : mechanicsOf(item);
+  }
   const stored = item.flags?.[FLAG]?.contentSync?.baseline;
   if (stored && Object.prototype.hasOwnProperty.call(stored, path)) return stored[path];
   return item.system?.[path];
+}
+
+/** Значение поля на предмете актёра или в документе пака. */
+function valueAt(doc, path) {
+  return path === MECH_PATH ? mechanicsOf(doc) : doc?.system?.[path];
 }
 
 /**
@@ -102,11 +166,12 @@ function baselineFor(item, path) {
 export function diffItemAgainstPack(item, packDoc) {
   if (!packDoc) return [];
   const out = [];
-  for (const path of Object.keys(packDoc.system || {})) {
-    const packVal = packDoc.system[path];
+  // Механика идёт последней и на равных правах с полями system (wdbc-lddr).
+  for (const path of [...Object.keys(packDoc.system || {}), MECH_PATH]) {
+    const packVal = valueAt(packDoc, path);
     const baseVal = baselineFor(item, path);
     if (sameValue(packVal, baseVal)) continue;
-    const actorVal = item.system?.[path];
+    const actorVal = valueAt(item, path);
     const status = sameValue(actorVal, baseVal) ? "clean" : "conflict";
     out.push({ path, baseVal, actorVal, packVal, status });
   }
@@ -180,8 +245,13 @@ export async function applySyncReport(report, selectedKeys) {
       const actorUpdates = byActor.get(entry.actorId) || new Map();
       byActor.set(entry.actorId, actorUpdates);
       const upd = actorUpdates.get(entry.itemId) || { _id: entry.itemId };
-      upd[`system.${row.path}`] = row.packVal;
-      upd[`flags.${FLAG}.${BASELINE_PATH}.${row.path}`] = row.packVal;
+      if (row.path === MECH_PATH) {
+        upd[`flags.${FLAG}.mechanics`] = row.packVal;
+        upd[`flags.${FLAG}.${MECH_BASELINE_PATH}`] = row.packVal;
+      } else {
+        upd[`system.${row.path}`] = row.packVal;
+        upd[`flags.${FLAG}.${BASELINE_PATH}.${row.path}`] = row.packVal;
+      }
       actorUpdates.set(entry.itemId, upd);
     }
   }
