@@ -71,6 +71,13 @@ describe("weaponHandsRequired — стрелковое (корбук стр. 171
   it("Стационарное (на технике) — 0 рук", () => {
     expect(weaponHandsRequired(weapon({ system: { weaponClass: "stationary" } }))).toBe(0);
   });
+  it("Стационарное с заполненным Хватом «2р» — всё равно 0 рук (wdbc-7utm)", () => {
+    // «2р» у станкового говорит, КАК за него берутся, а не сколько рук оно
+    // отнимает: оружие стоит на станке. Бэкфилл поля grips не должен был
+    // превратить турель в двуручное.
+    const w = weapon({ system: { weaponClass: "stationary", grips: "2р" } });
+    expect(weaponHandsRequired(w, actor())).toBe(0);
+  });
   it("Independent — 0 рук даже у Тяжёлого", () => {
     const w = weapon({ system: { weaponClass: "heavy", weaponProps: [{ key: "independent" }] } });
     expect(weaponHandsRequired(w)).toBe(0);

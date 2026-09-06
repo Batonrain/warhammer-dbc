@@ -86,6 +86,13 @@ export function weaponHandsRequired(item, actor = item?.parent) {
   if (sys.weaponClass === "melee") return MELEE_GRIP_HANDS[currentMeleeGrip(item)] ?? 1;
   const auto = aggregateAuto(resolveWeaponProps(item));
   if (auto.independent || auto.wrist) return 0;
+  // Стационарное: класс решает РАНЬШЕ данных (wdbc-7utm). У станкового хват
+  // «2р» описывает, как за него берутся, а не сколько рук оно отнимает у
+  // бюджета — оружие стоит на станке. Пока поле grips было пустым, сюда
+  // доходил классовый запас с нулём; после бэкфилла заполненное «2р» вернуло
+  // бы 2 и турель начала бы съедать обе руки. Единственный класс, где данные
+  // и запас расходятся намеренно.
+  if (sys.weaponClass === "stationary") return RANGED_CLASS_HANDS.stationary;
   const gripHands = effectiveRangedGripHands(item, actor);
   if (gripHands != null) return gripHands;
   return RANGED_CLASS_HANDS[sys.weaponClass] ?? 1;
