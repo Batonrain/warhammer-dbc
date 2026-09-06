@@ -13,6 +13,8 @@ import { describe, it, expect } from "vitest";
 import { weaponProfiles, improvisedMeleeProfile, canStrikeWithGun,
          isMeleeProfile, attackIsMelee, IMPROVISED_MELEE_LABEL }
   from "../../module/combat/weapon-profiles.mjs";
+import { MELEE_CATEGORIES, MELEE_TRAINING_EXEMPT }
+  from "../../module/constants/weapon-categories.mjs";
 
 const gun = (weaponClass, over = {}) => ({
   name: "Ствол",
@@ -223,5 +225,50 @@ describe("бонус Силы: в строке урона его быть не �
     // У меча в паке «1d10+2», у профиля «Посох» — «2d10+4»: ни у одного нет
     // «+S.b». Форма обязана совпадать, иначе движок посчитает иначе.
     expect(improvisedMeleeProfile(gun("basic")).damage).toMatch(/^\d+d\d+[+-]\d+$/);
+  });
+});
+
+// ── Категория рукопашного у выводимого профиля (решение владельца, вариант «а»)
+//
+// Вопрос владельца был прямой: «какая тренировка нужна для удара прикладом?»
+// Ответ до этой правки — никакая, и НЕ ПО ЗАМЫСЛУ: категория выводилась из
+// метки профиля, метка «Удар в упор» в списке категорий не значится, пустая
+// категория трактуется как «владеет». То есть Тренировка молча не спрашивалась.
+//
+// Теперь категория — та, которой книга велит бить: «как Булава», «как Посох».
+// Она отдельным полем, а не меткой: метку игрок видит в списке профилей, и там
+// должно стоять «Удар в упор».
+//
+// Что это меняет за столом: Melee Training по книге открывает АЛЬТЕРНАТИВНЫЕ
+// приёмы и хваты, а не саму атаку — нетренированный ударит прикладом всегда,
+// просто Обычной Атакой, Стандартной Стойкой и Базовым Хватом. Булава вдобавок
+// освобождена от Таланта прямой цитатой книги, поэтому разница видна только у
+// приклада ВИНТОВКИ, который бьёт как Посох.
+describe("удар в упор: категория рукопашного (wdbc-bs0q)", () => {
+  it("винтовка бьёт как Посох — категория, требующая Тренировки", () => {
+    const p = improvisedMeleeProfile(gun("basic"));
+    expect(p.meleeCategory).toBe("Посох");
+    expect(MELEE_CATEGORIES).toContain(p.meleeCategory);
+    expect(MELEE_TRAINING_EXEMPT).not.toContain(p.meleeCategory);
+  });
+
+  it("пистолет и тяжёлое бьют как Булава — она освобождена книгой от Таланта", () => {
+    for (const cls of ["pistol", "heavy", "launcher", "stationary"]) {
+      const p = improvisedMeleeProfile(gun(cls));
+      expect(p.meleeCategory, cls).toBe("Булава");
+      expect(MELEE_TRAINING_EXEMPT, cls).toContain(p.meleeCategory);
+    }
+  });
+
+  it("категория — НАСТОЯЩАЯ из списка, а не выдуманная: иначе гейт молча отключится", () => {
+    // Категория, которой нет в MELEE_CATEGORIES, схлопывается в пустую, а
+    // пустая означает «владеет». Ровно так дефект и возник.
+    for (const cls of ["pistol", "basic", "heavy", "launcher", "stationary", "thrown"]) {
+      expect(MELEE_CATEGORIES, cls).toContain(improvisedMeleeProfile(gun(cls)).meleeCategory);
+    }
+  });
+
+  it("метка остаётся «Удар в упор» — её читает игрок, а не движок", () => {
+    expect(improvisedMeleeProfile(gun("basic")).label).toBe(IMPROVISED_MELEE_LABEL);
   });
 });

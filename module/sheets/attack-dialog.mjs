@@ -389,7 +389,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // meleeCategory, а не ложный гейт «нет Тренировки (Подавительный)».
   function categoryFor(pIdx) {
     const p = isMelee && pIdx >= 0 ? atkProfiles[pIdx] : null;
-    const raw = p?.label || meleeCategory;
+    // Явная категория профиля важнее метки (wdbc-bs0q): у «Удара в упор» метка
+    // должна читаться игроком как «Удар в упор», а категория при этом — та,
+    // которой книга велит бить («как Булава», «как Посох»). Раньше категория
+    // выводилась только из метки, и у выводимого профиля она выходила пустой,
+    // то есть Тренировка молча не спрашивалась вовсе.
+    const raw = p?.meleeCategory || p?.label || meleeCategory;
     return MELEE_CATEGORIES.some(c => sameCategory(c, raw)) ? raw : "";
   }
   // Melee Training (стр. 62) — используется ниже resolveSelection, чтобы
