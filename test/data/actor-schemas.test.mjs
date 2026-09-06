@@ -243,6 +243,11 @@ const DEVIATIONS = {
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,
+    // Укрытие по частям тела (wdbc-qkua) — своё число AP на случай стола без
+    // размеченных зон и шесть галочек «эта конечность прикрыта»; заведено
+    // гораздо позже template.json, см. rules/cover-locations.mjs.
+    cover: { ap: 0, head: false, leftArm: false, rightArm: false,
+             body: false, leftLeg: false, rightLeg: false },
     // Аблативные Раны (wdbc-smy7, напр. Дар Нургла «Абсурдно Толстый») —
     // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
     "wounds.ablative": 0,

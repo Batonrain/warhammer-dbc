@@ -23,6 +23,7 @@ import { activeAblativeArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
+import { coverApForLocation } from "../rules/cover-locations.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -405,6 +406,9 @@ export async function applyDamageToActor(actor, damageData) {
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
   let coverBonus = 0;
+  // Подпись в карточке: пришёл ли AP от ОБЪЯВЛЕННОГО Отскока или от ручного
+  // поля Укрытия на листе — писать «Отскок» про второе было бы враньём.
+  let coverFromRecoil = false;
 
   if (warpSoak) {
     // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b.
@@ -463,11 +467,28 @@ export async function applyDamageToActor(actor, damageData) {
       // Укрытия при защите (module/combat/recoil.mjs::performRecoil) — доп. AP
       // этой зоны разово применяется к СЛЕДУЮЩЕМУ попаданию, которое пришло по
       // цели, и тратится сразу же (флаг снят), а не копится на весь бой.
-      coverBonus = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
-      if (coverBonus > 0) {
-        armorAP += coverBonus;
-        await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
-      }
+      const recoilCover = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
+      if (recoilCover > 0) await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
+      // Ручное Укрытие по частям тела (wdbc-qkua): своё число AP с листа, для
+      // стола, который не размечает зоны Укрытия на сцене — иначе цифру взять
+      // неоткуда. Галочки локаций ограничивают ОБА источника: и это число, и
+      // разовый бонус Отскока (см. rules/cover-locations.mjs).
+      //
+      // AP зоны Region сюда СОЗНАТЕЛЬНО НЕ подмешивается. coverApForToken
+      // (combat/cover.mjs) не проверяет линию огня — её шапка прямо говорит,
+      // что это законно только потому, что игрок САМ объявил «отскочил в эту
+      // зону». Дёргать её на каждое попадание значило бы дать броню стены и
+      // против удара в упор, и против стрелка, стоящего за той же стеной, —
+      // и молча сделать всю стрельбу по укрывшимся тяжелее, чего wdbc-qkua не
+      // просил. Автоматика зоны остаётся ровно там, где была: в объявленном
+      // Отскоке (combat/recoil.mjs).
+      const manualCover = coverApForLocation(system.cover, armorKey, 0);
+      // Больший из двух, а не сумма: это одна и та же стена, и сложить её с
+      // собой значило бы дать двойную защиту тому, кто и стоял за ней, и
+      // отскочил в неё.
+      coverBonus = Math.max(coverApForLocation(system.cover, armorKey, recoilCover), manualCover);
+      coverFromRecoil = recoilCover > 0 && coverBonus === recoilCover && manualCover < recoilCover;
+      if (coverBonus > 0) armorAP += coverBonus;
       // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
       // поглощения, ДО вычета пробития (стр. 168).
       if (lance && armorAP > 20) armorAP = 20;
@@ -571,7 +592,7 @@ export async function applyDamageToActor(actor, damageData) {
       propNotes.push(pfNote.isPowerArmor ? "Силовой шлем: 4 AP на глаза" : "Глаз: AP шлема проигнорирован");
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
     if (runesBonus > 0) propNotes.push(`Защитные Руны: +${runesBonus} AP (см. бросок выше)`);
-    if (coverBonus > 0) propNotes.push(`Отскок в Укрытие: +${coverBonus} AP`);
+    if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP`);
   }
 
   const reductionNote = incomingReduction > 0
