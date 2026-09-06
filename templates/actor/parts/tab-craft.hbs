@@ -6,7 +6,7 @@
      контекста переименованы с префиксом craft*/ico*, чтобы не столкнуться с
      одноимёнными ключами остальных вкладок листа (module/sheets/tabs/craft.mjs
      ::craftTabContext). Логика та же, движок тот же. --}}
-<div class="tab craft-tab" data-tab="craft" data-group="primary">
+<div class="tab craft-tab {{#if (eq tab "craft")}}active{{/if}}" data-tab="craft" data-group="primary">
   <div class="wh-craft-form wh-craft-tab-form">
     <div class="wh-craft-scroll">
 
