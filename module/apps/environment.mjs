@@ -134,18 +134,15 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Сброс к норме
     el.querySelector("[data-act=reset]")?.addEventListener("click", () => this._patch(defaultEnv()));
   }
-
-  async close(options) { _instance = null; return super.close(options); }
 }
 
-let _instance = null;
-export function openEnvironment() {
-  if (!game.user.isGM) { ui.notifications?.info("Окружающая среда настраивается Мастером."); return null; }
-  if (!_instance) _instance = new EnvironmentApp();
-  _instance.render(true);
-  return _instance;
-}
-export function refreshEnvironment() { if (_instance?.rendered) _instance.render(false); }
+// Своего окна у Окружения больше нет (wdbc-59if). EnvironmentApp остался
+// строительным блоком объединённой страницы «Сцена» (module/apps/
+// scene-settings.mjs) — она берёт отсюда и разметку, и методы. Прежние
+// openEnvironment()/refreshEnvironment() удалены НАМЕРЕННО: пока у старого
+// окна оставался собственный вход, кнопка «Окружающая Среда» и клик по
+// виджету вели в него, и объединения ГМ не видел. Открывать и обновлять —
+// openSceneSettings("env") / refreshSceneSettings().
 
 // ══════════════════════════ ЭКРАННЫЙ ВИДЖЕТ ════════════════════════════════
 // Постоянная панель в левом-нижнем углу (справа от списка игроков) — для ВСЕХ.
@@ -241,7 +238,14 @@ export function refreshEnvWidget() {
       const c = el.classList.toggle("collapsed");
       try { localStorage.setItem("wh-env-collapsed", c ? "1" : "0"); } catch (e) {}
     });
-    // Клик по телу открывает окно (только ГМ).
-    el.querySelector(".wh-env-w-body")?.addEventListener("click", () => { if (game.user.isGM) openEnvironment(); });
+    // Клик по телу открывает окно (только ГМ) — объединённую страницу «Сцена»
+    // на разделе «Окружение», а не старое отдельное окно (wdbc-59if). Импорт
+    // динамический: scene-settings.mjs сам берёт EnvironmentApp отсюда, и
+    // статический импорт замкнул бы кольцо.
+    el.querySelector(".wh-env-w-body")?.addEventListener("click", () => {
+      if (!game.user.isGM) return;
+      import("./scene-settings.mjs").then(m => m.openSceneSettings("env"))
+        .catch(e => console.warn("warhammer-dbc | env widget → Сцена", e));
+    });
   } catch (e) { console.warn("warhammer-dbc | env widget", e); }
 }

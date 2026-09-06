@@ -77,8 +77,9 @@ import { openSurgeon } from "./module/apps/surgeon.mjs";
 import { openVeilMystic, veilShift, refreshVeilWindow } from "./module/apps/veil.mjs";
 import { refreshVeilOverlay } from "./module/apps/veil-overlay.mjs";
 import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/apps/scene-nexus.mjs";
+import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-settings.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
-import { openEnvironment, refreshEnvironment, refreshEnvWidget } from "./module/apps/environment.mjs";
+import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
 import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/apps/callouts.mjs";
@@ -509,7 +510,7 @@ Hooks.once("init", () => {
       try { refreshVeilOverlay(); } catch (e) {}
       try { refreshVeilWindow(); } catch (e) {}
       try { refreshEnvWidget(); } catch (e) {}
-      try { refreshEnvironment(); } catch (e) {}
+      try { refreshSceneSettings(); } catch (e) {}
     }
   });
 
@@ -832,7 +833,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -963,7 +964,8 @@ Hooks.once("ready",     () => refreshEnvWidget());
 Hooks.on("canvasReady", () => refreshEnvWidget());
 Hooks.on("updateScene", (scene) => {
   refreshEnvWidget();                                   // виджет — у всех
-  if (scene?.id === (canvas?.scene?.id)) refreshEnvironment();  // окно ГМа
+  // Окно ГМа — теперь единственное: объединённая страница «Сцена» (wdbc-59if).
+  if (scene?.id === (canvas?.scene?.id)) refreshSceneSettings();
 });
 
 // ── Виджет «Имперская дата» (видят все; источник времени — game.time.worldTime,
@@ -1052,8 +1054,13 @@ Hooks.on("getSceneControlButtons", (controls) => {
     const TAROT_ICON = "fa-solid fa-wand-sparkles";
     const VEIL_ICON = "fa-solid fa-hand-sparkles";
     const NEXUS_ICON = "fa-solid fa-diagram-project";
+    // ГМу — объединённое окно «Сцена» (Окружение + Завеса одной страницей,
+    // wdbc-paif/wdbc-59if). Игроку — та же Завеса отдельным окном: страница
+    // «Сцена» целиком мастерская (openSceneSettings отшивает не-ГМа), а доступ
+    // к Завесе и Таро игрокам нужен. Одно окно на роль, а не две правды.
     const triggerVeil = () => {
-      openVeilMystic();
+      if (game.user.isGM) openSceneSettings("veil");
+      else openVeilMystic();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
     const triggerNexus = () => {
@@ -1062,7 +1069,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
     };
     const ENV_ICON = "fa-solid fa-cloud-sun-rain";
     const triggerEnv = () => {
-      openEnvironment();
+      openSceneSettings("env");
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
     const CALLOUT_ICON = "fa-solid fa-map-pin";
