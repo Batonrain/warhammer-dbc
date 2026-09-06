@@ -19,6 +19,7 @@ import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs"
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 import { determinationToFightParryBonus } from "../rules/determination-to-fight.mjs";
+import { canParryPsychic, psychicParryOutcome, hasBladeShield } from "./blade-shield.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -189,20 +190,102 @@ export async function _performSprayCancel(actor) {
   }, { rolls: [roll] });
 }
 
-export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false) {
+/**
+ * Порог Парирования и всё, из чего он сложился, — ОДИН расчёт на два вызова
+ * (wdbc-bwf9). Парирование обычной атаки и Парирование психосилы Талантом «Щит
+ * Клинков» считаются по книге одинаково (тест WS+навык+баланс+свойства
+ * оружия), различаются только тем, ЧТО отменяет успех. Раньше расчёт жил
+ * внутри _performParry, и второму вызову пришлось бы завести его копию —
+ * то есть второе место, где живут бонусы Дуэлянтского и Шага За Шагом.
+ *
+ * Реакцию НЕ тратит и карточек не пишет: это делает вызывающий, у которого
+ * свой текст отказа.
+ *
+ * @param {object} actor
+ * @param {number} extraMod        модификатор приёма/ситуации
+ * @param {?object} [weaponOverride] чем парируем, если не «надетое рукопашное»
+ */
+export function parryProfile(actor, extraMod = 0, weaponOverride = null) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
 
   // Интегральные атаки (кулак/пинок) надеты всегда — без фильтра они
   // перехватывали бы парирование у настоящего оружия (см. equipped-melee.mjs).
-  const meleeWeapon = equippedMeleeWeapon(actor);
+  const meleeWeapon = weaponOverride ?? equippedMeleeWeapon(actor);
 
   // Эффекты модификаций парирующего оружия (баланс, Защитное/Power Field и т.п.)
   const modFx      = getModEffects(actor, meleeWeapon);
   const balance    = parseInt(meleeWeapon?.system.balance ?? 0) + (modFx.balanceMod || 0);
-  const balanceKey = String(balance);
-  const balanceMod = BALANCE_PARRY_MOD[balanceKey];
+  const balanceMod = BALANCE_PARRY_MOD[String(balance)];
+
+  const stance    = actor.system.meleeStance || "standard";
+  const stBonus   = MELEE_STANCES[stance]?.parryBonus ?? 0;
+
+  // Свойства парирующего оружия (+ модификации): Защитное (+15), Силовое поле,
+  // Дуэлянтское (+10 Парирование), Шаг За Шагом (+10 — Парирование само по
+  // себе означает «в рукопашном бою», условие свойства выполнено безусловно)
+  const parryProps    = resolveWeaponPropsList(withWitchsEdge(meleeWeapon, mergeWeaponPropEntries(meleeWeapon, modFx)));
+  const pwp            = aggregateAuto(parryProps);
+  const defensiveBonus = pwp.defensive    ? 15 : 0;
+  const duelingBonus   = pwp.duelingParry ? 10 : 0;
+  const stepBonus      = pwp.stepByStep   ? 10 : 0;
+  const defBonus       = defensiveBonus + duelingBonus + stepBonus;
+  // Тот же общий сбор, что у _performDodge (wdbc-ct65.1).
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "parry", char: "ws" });
+  // Determination To Fight/Решительность Сражаться (wdbc-1rno): +30 при
+  // отрицательных Ранах + прошлый раунд в Защитной Стойке.
+  const dtfBonus = determinationToFightParryBonus(actor);
+
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + ruleMods.total + dtfBonus;
+
+  const modParts = [];
+  if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
+  if (balanceMod !== 0 && balanceMod != null) modParts.push(`баланс ${balanceMod >= 0 ? "+" : ""}${balanceMod}`);
+  if (stBonus !== 0)     modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
+  if (defensiveBonus !== 0) modParts.push(`Защитное +${defensiveBonus}`);
+  if (duelingBonus !== 0)   modParts.push(`Дуэлянтское +${duelingBonus}`);
+  if (stepBonus !== 0)      modParts.push(`Шаг За Шагом +${stepBonus}`);
+  if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
+  modParts.push(...ruleMods.parts);
+  if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
+
+  return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp };
+}
+
+/** Отказ Парирования стрельбы: почему нельзя. Реакция при этом не тратится. */
+function _bladeShieldRefusal(actor, why) {
+  return postTestCard(actor, {
+    icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
+    outcome: `<span class="roll-failure">${rollIcon("ban","#ff6b6b")}${why}</span>`
+  });
+}
+
+export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false, isMelee = true) {
+  const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp } =
+    parryProfile(actor, extraMod);
+
+  // ── Парирование СТРЕЛЬБЫ — только Талантом «Щит Клинков» (wdbc-3e2x) ──────
+  // Корбук, стр. 62: «Реакция персонажа столь стремительна, что он способен
+  // перехватывать клинком пули и лучи. Если персонаж вооружен оружием с
+  // Балансом 1 и выше, он может парировать им стрелковую атаку.» До этой
+  // правки кнопка Парирования на карточке стрельбы работала у КОГО УГОДНО и с
+  // любым балансом — система была щедрее книги.
+  //
+  // Проверяется здесь, а не при отрисовке карточки: карточку пишет атакующий,
+  // и на момент её сборки неизвестно, кто будет отбиваться (тот же приём, что
+  // у Сжатия). Реакция при отказе не тратится — действие недоступно, а не
+  // провалено.
+  if (!isMelee) {
+    if (!hasBladeShield(actor)) {
+      return _bladeShieldRefusal(actor,
+        "Парировать стрелковую атаку может только персонаж с Талантом «Щит Клинков» (стр. 62).");
+    }
+    if (balance < 1) {
+      return _bladeShieldRefusal(actor,
+        `«Щит Клинков» требует оружия с Балансом 1 и выше — у ${meleeWeapon ? `«${esc(meleeWeapon.name)}»` : "голых рук"} Баланс ${balance >= 0 ? "+" : ""}${balance}.`);
+    }
+  }
 
   // Баланс −2 (или иное значение, помеченное null) — оружием нельзя парировать
   if (balanceMod === null) {
@@ -230,26 +313,6 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
 
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Парирование");
 
-  const stance    = actor.system.meleeStance || "standard";
-  const stBonus   = MELEE_STANCES[stance]?.parryBonus ?? 0;
-
-  // Свойства парирующего оружия (+ модификации): Защитное (+15), Силовое поле,
-  // Дуэлянтское (+10 Парирование), Шаг За Шагом (+10 — Парирование само по
-  // себе означает «в рукопашном бою», условие свойства выполнено безусловно)
-  const parryProps    = resolveWeaponPropsList(withWitchsEdge(meleeWeapon, mergeWeaponPropEntries(meleeWeapon, modFx)));
-  const pwp            = aggregateAuto(parryProps);
-  const defensiveBonus = pwp.defensive    ? 15 : 0;
-  const duelingBonus   = pwp.duelingParry ? 10 : 0;
-  const stepBonus      = pwp.stepByStep   ? 10 : 0;
-  const defBonus       = defensiveBonus + duelingBonus + stepBonus;
-  // Тот же общий сбор, что у _performDodge выше (wdbc-ct65.1).
-  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "parry", char: "ws" });
-  // Determination To Fight/Решительность Сражаться (wdbc-1rno): +30 при
-  // отрицательных Ранах + прошлый раунд в Защитной Стойке.
-  const dtfBonus = determinationToFightParryBonus(actor);
-
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + ruleMods.total + dtfBonus;
-
   // Танец Среди Огня и Один Против Сотни (wdbc-u0by) — Преимущество на
   // Парирование против Очереди / против атаки Орды, тот же приём
   // roll×2 + pickReroll, что у Уклонения выше.
@@ -269,23 +332,21 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // нужно (это не встречная проверка). Очередь/Быстрая/Молниеносная Атака дают
   // больше одного попадания за атаку — тогда Успех снимает их по одному за
   // каждую степень, не больше их числа («Избегание множественных попаданий»).
-  const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
+  // Стр. 62: «Успех на этом тесте парирования ВСЕГДА блокирует только одно
+  // попадание, независимо от количества Успехов» — это про Парирование
+  // СТРЕЛЬБЫ. В рукопашной работает общее правило стр. 12 (по попаданию за
+  // степень), поэтому степень режется только в стрелковой ветке.
+  const effectiveDeg = isMelee ? deg : Math.min(deg, 1);
+  const { total: totalHits, negated, remaining } = negatedHits(passed, effectiveDeg, hitsCount);
   const parried = passed;
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
   // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). См. _performDodge.
-  const leftover = passed ? deg - negated : 0;
+  // При Парировании СТРЕЛЬБЫ банковать нечего: книга даёт ровно одно снятое
+  // попадание независимо от числа Успехов, значит «излишка» в её смысле не
+  // возникает. В рукопашной пул работает как раньше.
+  const leftover = passed && isMelee ? deg - negated : 0;
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
-  const modParts = [];
-  if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
-  if (balanceMod !== 0)  modParts.push(`баланс ${balanceMod >= 0 ? "+" : ""}${balanceMod}`);
-  if (stBonus !== 0)     modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
-  if (defensiveBonus !== 0) modParts.push(`Защитное +${defensiveBonus}`);
-  if (duelingBonus !== 0)   modParts.push(`Дуэлянтское +${duelingBonus}`);
-  if (stepBonus !== 0)      modParts.push(`Шаг За Шагом +${stepBonus}`);
-  if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
-  modParts.push(...ruleMods.parts);
-  if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
   if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
 
   let outcomeHtml;
@@ -343,6 +404,64 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
       : ""],
     rv, outcome: outcomeHtml,
     sections: [leftoverNote, powerFieldNote, counterAttackHtml]
+  }, { rolls: [roll] });
+}
+
+/**
+ * ПАРИРОВАНИЕ ПСИХОСИЛЫ Талантом «Щит Клинков» (wdbc-bwf9).
+ *
+ * Отличается от обычного Парирования только тем, что отменяет: не попадание, а
+ * эффекты психосилы целиком (Книга Жаб-Псайкеров: «При успешном парировании
+ * эффекты психосилы нивелируются»). Poor.Q ноктиковый щит развеивает частично —
+ * снижает эPR за каждый успех, и тогда сила не отменена, а ослаблена.
+ *
+ * Порог тот же самый — parryProfile выше, один расчёт на оба вида Парирования.
+ * Парируем ИМЕННО тем предметом, который разрешён книгой (tool), а не «надетым
+ * рукопашным»: у варлока в другой руке может быть что угодно.
+ *
+ * Излишек Успехов в пул Избегания НЕ банкуется: пул книги (стр. 12) — про
+ * попадания атак того же противника, а психосила попаданий не раздаёт.
+ */
+export async function _performPsychicParry(actor, { powerName = "", ePR = 0, extraMod = 0 } = {}) {
+  const { ok, tool, weakens, reason } = canParryPsychic(actor);
+  if (!ok) {
+    return postTestCard(actor, {
+      icon: rollIcon("sword"), title: `Парирование психосилы — ${esc(actor.name)}`, actorUuid: actor.uuid,
+      outcome: `<span class="roll-failure">${rollIcon("ban","#ff6b6b")}Парировать психосилу нечем: ${esc(reason)}.</span>`
+    });
+  }
+
+  const { wsTotal, balance, balanceMod, threshold, modParts } = parryProfile(actor, extraMod, tool);
+  if (balanceMod === null) {
+    return postTestCard(actor, {
+      icon: rollIcon("sword"), title: `Парирование психосилы — ${esc(actor.name)}`, actorUuid: actor.uuid,
+      outcome: `<span class="roll-failure">${rollIcon("ban","#ff6b6b")}Этим предметом нельзя парировать (Баланс ${balance >= 0 ? "+" : ""}${balance}).</span>`
+    });
+  }
+
+  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Парирование психосилы");
+
+  const roll = await new Roll("1d100").evaluate();
+  const rv   = roll.total;
+  const { success: passed, deg } = testOutcome(rv, threshold);
+  const { negated, ePRLeft, drop } = psychicParryOutcome(passed, deg, weakens, ePR);
+
+  let outcomeHtml;
+  if (!passed) {
+    outcomeHtml = `<span class="roll-failure">Парирование провалено — ${deg} ${_degWord(deg)}. Психосила действует полностью.</span>`;
+  } else if (negated) {
+    outcomeHtml = `<span class="roll-success">Парирование успешно — ${deg} ${_degWord(deg)}! Эффекты психосилы нивелированы.</span>`;
+  } else {
+    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Парирование успешно — ${deg} ${_degWord(deg)}, но щит развеивает не полностью: эPR ${ePR} − ${drop} = <b>${ePRLeft}</b>. Психосила действует ослабленной.</span>`;
+  }
+
+  return postTestCard(actor, {
+    icon: rollIcon("sword"),
+    title: `Парирование психосилы${powerName ? ` «${esc(powerName)}»` : ""} — ${esc(actor.name)}`,
+    actorUuid: actor.uuid,
+    threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
+    lines: [`<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Чем парирует: ${esc(tool.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})${weakens ? " — Poor.Q: развеивает частично" : ""}</div>`],
+    rv, outcome: outcomeHtml
   }, { rolls: [roll] });
 }
 

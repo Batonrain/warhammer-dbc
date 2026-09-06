@@ -682,6 +682,29 @@ export async function executePsychotest(actor, item, opts) {
         </div>`;
   }
 
+  // ── Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9) ──────────────
+  // Отдельная секция, а не общий defenseSection карточки атаки: от психосилы
+  // не Уклоняются, Вираж и Сжатие к ней тоже не относятся, а само Парирование
+  // отменяет не попадание, а эффекты силы. Кнопка показывается всегда, когда
+  // манифестация удалась, — право на неё проверяется у ЗАЩИЩАЮЩЕГОСЯ в момент
+  // клика (module/combat/blade-shield.mjs::canParryPsychic): на момент рендера
+  // карточки токен защищающегося ещё не выбран, тот же приём, что у Сжатия.
+  // Только ВРАЖДЕБНАЯ психосила: книга даёт Щиту Клинков парировать «вражеские
+  // психосилы», а собственное благословение или самобаф парировать не от кого.
+  // Признак враждебности тот же, что уже читает карточка: сила либо наносит
+  // урон (powerType), либо требует от цели теста Сопротивления.
+  const hostilePower = isDamaging || !!sys.resistChar;
+  const bladeShieldSection = success && hostilePower
+    ? `<div class="psy-parry-section roll-threshold">
+         <button type="button" class="psy-blade-shield-btn"
+           data-power-name="${esc(item.name)}" data-epr="${ePR}"
+           title="Талант «Щит Клинков» + силовое эльдарское / психосиловое психокостяное оружие или ноктиковый щит в руках">
+           ${rollIcon("sword")}Парировать психосилу (Щит Клинков)
+         </button>
+         <div style="font-size:0.78em;opacity:0.8;">Выберите токен защищающегося на сцене — Талант и предмет в руках проверятся сами.</div>
+       </div>`
+    : "";
+
   // Применяем накопленные изменения (Раны/Порча)
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
 
@@ -707,7 +730,7 @@ export async function executePsychotest(actor, item, opts) {
     outcome: outcomeHtml(success, success
       ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
       : `Психотест провален — ${deg} ${_degWord(deg)}`),
-    sections: [conversionLine, resistSection, damageSection, charDamageSection,
+    sections: [conversionLine, resistSection, bladeShieldSection, damageSection, charDamageSection,
                attackPropsSection, phenSection, warpShockSection]
   }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.

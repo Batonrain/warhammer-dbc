@@ -78,7 +78,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "gripsAuto": true
+      "gripsAuto": true,
+      "mechanics": [
+        {
+          "id": "COgl6Rm1Tci4mICX",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "S7eiHoAaWMfiShyQ",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.psychicParryTool",
+              "label": "Парирует психосилы (Щит Клинков)"
+            }
+          ]
+        }
+      ]
     },
     "autoanimations": {
       "id": "79a852d1-7748-4c40-aacc-6f135a60a1db",
