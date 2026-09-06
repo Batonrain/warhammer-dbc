@@ -608,8 +608,28 @@ export function characteristicEffectKey(entry) {
   return `system.characteristics.${entry.charKey}.${field}`;
 }
 
+// ── Незавершённые сохранения Механики (wdbc-kntg) ───────────────────────────
+// Каждый обработчик панели Конструктора устроен одинаково: прочитать
+// getItemMechanics → поправить копию → сохранить НАБОР ГРУПП ЦЕЛИКОМ. Чтение
+// синхронное, запись асинхронная (setFlag идёт на сервер), очереди между ними
+// не было — и два быстрых клика подряд успевали прочитать одни и те же старые
+// данные. Второй перезаписывал набор без правки первого, и галочка молча
+// пропадала: найдено живой проверкой гейта «Когда Качество», но касалось всех
+// обработчиков разом (Тир Ран, Покровитель, Состояние, поля самих записей).
+//
+// Лечится в одном месте на всех: пока сохранение не подтверждено, чтение
+// отдаёт уже записанное значение отсюда, а сами сохранения выстраиваются в
+// цепочку по предмету. Запись живёт ровно до конца своего сохранения — дальше
+// свежие данные лежат в самом документе, и подмена больше не нужна.
+const _mechPending = new Map();
+
+/** Ключ предмета для очереди: uuid у настоящего документа, id у тестовых моков. */
+const mechPendingKey = item => item?.uuid || item?.id || item;
+
 /** Нормализованный список групп механики предмета (только чтение). */
 export function getItemMechanics(item) {
+  const pending = _mechPending.get(mechPendingKey(item));
+  if (pending) return pending.groups;
   const arr = item.getFlag(FLAG, "mechanics");
   return Array.isArray(arr) ? arr : [];
 }
@@ -3780,23 +3800,46 @@ export async function saveItemMechanics(item, groups) {
   const broken = collectBrokenFormulas((groups || []).flatMap(g => g.entries || []));
   if (broken.length) ui.notifications?.warn(
     `«${item.name}»: формула не разбирается, запись не применится: ${broken.map(f => `«${f}»`).join(", ")}`);
-  if (item.isOwner) {
-    await item.setFlag("warhammer-dbc", "mechanics", groups);
-    // Без этого вкладка «Эффекты» врала бы про уже НЕСУЩЕСТВУЮЩУЮ Механику:
-    // syncMechanicsEffects раньше звалась только из хука createItem/updateItem
-    // НА АКТОРЕ (_applyItemMechanics) — правка Механики на предмете без
-    // актора (или до его выдачи) молча оставляла старые ActiveEffect висеть,
-    // хотя порождавшая их запись уже удалена/заменена в этом же saveMechanics.
-    await syncMechanicsEffects(item);
-    await syncWeaponPropItemEffects(item);
-    return;
+
+  const write = async () => {
+    if (item.isOwner) {
+      await item.setFlag("warhammer-dbc", "mechanics", groups);
+      // Без этого вкладка «Эффекты» врала бы про уже НЕСУЩЕСТВУЮЩУЮ Механику:
+      // syncMechanicsEffects раньше звалась только из хука createItem/updateItem
+      // НА АКТОРЕ (_applyItemMechanics) — правка Механики на предмете без
+      // актора (или до его выдачи) молча оставляла старые ActiveEffect висеть,
+      // хотя порождавшая их запись уже удалена/заменена в этом же saveMechanics.
+      await syncMechanicsEffects(item);
+      await syncWeaponPropItemEffects(item);
+      return;
+    }
+    if (!game.users?.activeGM) {
+      return ui.notifications?.warn(
+        "Правка не сохранена: предмет не ваш, а Мастера нет в игре — записать её некому.");
+    }
+    // Не свой предмет: правку исполнит ГМ по сокету. Подтверждения отсюда не
+    // видно, документ обновится приходом его правки — как и раньше; очередь
+    // ниже всё равно держит порядок отправки.
+    game.socket?.emit("system.warhammer-dbc",
+      { action: "itemMechanics", uuid: item.uuid, groups, userId: game.user.id });
+  };
+
+  // Очередь на предмет (wdbc-kntg, см. _mechPending выше): следующее
+  // сохранение стартует только после предыдущего, а чтение до подтверждения
+  // отдаёт уже записанные группы — иначе быстрый второй клик прочитал бы
+  // данные ДО первого и перезаписал бы его правку.
+  const key  = mechPendingKey(item);
+  const prev = _mechPending.get(key);
+  const entry = { groups, chain: null };
+  _mechPending.set(key, entry);
+  entry.chain = Promise.resolve(prev?.chain).catch(() => {}).then(write);
+  try {
+    await entry.chain;
+  } finally {
+    // Снимает ТОЛЬКО свою запись: если поверх уже встало следующее
+    // сохранение, чтение обязано видеть его, а не откатываться к документу.
+    if (_mechPending.get(key) === entry) _mechPending.delete(key);
   }
-  if (!game.users?.activeGM) {
-    return ui.notifications?.warn(
-      "Правка не сохранена: предмет не ваш, а Мастера нет в игре — записать её некому.");
-  }
-  game.socket?.emit("system.warhammer-dbc",
-    { action: "itemMechanics", uuid: item.uuid, groups, userId: game.user.id });
 }
 
 /**
