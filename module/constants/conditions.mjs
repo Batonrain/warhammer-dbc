@@ -245,11 +245,22 @@ export const CONDITIONS = {
   },
   marked: {
     label: "Отмечен", icon: "🎯", color: "#ff5ac8", mark: true,
-    desc: "На персонаже чужая метка (Аватар Резни, Проклятая Метка, Поклон Публике): по нему бьют с бонусом. Чья именно — в подсказке.",
+    desc: "На персонаже чужая метка (Аватар Резни или Проклятая Метка): по нему бьют с бонусом. Кто пометил — дописано в подсказке из самой метки.",
     body: `<circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.4"/>
      <circle cx="8" cy="8" r="1.6" fill="currentColor"/>
      <path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
            d="M8 1.4v1.8M8 12.8v1.8M1.4 8h1.8M12.8 8h1.8"/>`
+  },
+  // Поклон Публике живёт ОТДЕЛЬНО от «Отмечен» (wdbc-5uae.2): его флаг лежит
+  // на ИСПОЛНИТЕЛЕ поклона, а не на том, кому поклонились, — под «на мне чужая
+  // метка» показывался тот, кто пометил ДРУГИХ.
+  bowedToAudience: {
+    label: "Поклон Публике", icon: "🎭", color: "#ffc95a", mark: true,
+    desc: "Персонаж поклонился публике и наметил себе цели: по ним он бьёт с бонусом. Сколько целей и какой бонус — в подсказке.",
+    body: `<path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"
+           d="M3.2 6.2c0-2.2 2.1-3.8 4.8-3.8s4.8 1.6 4.8 3.8c0 3.4-2.4 6-4.8 7.4C5.6 12.2 3.2 9.6 3.2 6.2Z"/>
+     <circle cx="6.2" cy="6.2" r="0.9" fill="currentColor"/><circle cx="9.8" cy="6.2" r="0.9" fill="currentColor"/>
+     <path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M6 9.2c1.3 1 2.7 1 4 0"/>`
   },
   shieldUp: {
     label: "Щит поднят", icon: "🛡️", color: "#9fe8b0", mark: true,

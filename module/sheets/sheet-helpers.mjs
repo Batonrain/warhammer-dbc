@@ -42,7 +42,7 @@ import { qualityEffects }                            from "../constants/quality.
 import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs";
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
-import { isMirroredCondition, isMirrorClearable } from "../rules/condition-mirrors.mjs";
+import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/condition-mirrors.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -297,7 +297,7 @@ function _buildDrugData(item) {
 
 // ── Активные состояния для отображения ───────────────────────────────────────
 
-function _buildActiveConditions(system) {
+function _buildActiveConditions(system, actor = null) {
   const conds  = system.conditions || {};
   const result = [];
 
@@ -312,7 +312,12 @@ function _buildActiveConditions(system) {
       css:      def.css,
       hasLevel: def.hasLevel,
       level:    def.hasLevel && def.levelField ? (conds[def.levelField] ?? 0) : null,
-      desc:     def.desc || "",
+      // Подсказка тега = общее описание Состояния + то, ЧЕМ оно поднято прямо
+      // сейчас (wdbc-5uae.2): «Аватар Резни — Кхарн», «Проклятая Метка
+      // (Кхорн)», «вид: форсированный». Нагрузка при этом остаётся у своего
+      // правила — сюда приходит только готовая строка (rules/condition-
+      // mirrors.mjs::mirrorHint), второго места правды не заводится.
+      desc:     [def.desc || "", actor ? mirrorHint(actor, key) : ""].filter(Boolean).join(" "),
       // Показывать ли крестик «снять» (wdbc-5uae). Раньше единственное
       // исключение — «Усталость» — было зашито прямо в шаблон условием по
       // ключу; теперь шаблон спрашивает данные, и исключений стало три класса:
@@ -720,7 +725,7 @@ export function buildGetData(actor) {
   });
 
   // ── Состояния ─────────────────────────────────────────────────────────────
-  context.activeConditions = _buildActiveConditions(system);
+  context.activeConditions = _buildActiveConditions(system, actor);
   context.conditionsDef    = CONDITIONS_DEF;
 
   // ── Прочее снаряжение ─────────────────────────────────────────────────────

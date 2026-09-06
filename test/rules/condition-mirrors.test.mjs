@@ -4,7 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { CONDITION_MIRRORS, MIRROR_KEYS, isMirroredCondition, readMirror,
-         readAllMirrors, mirrorClearPatch, mirrorItemSources, isMirrorClearable }
+         readAllMirrors, mirrorClearPatch, mirrorItemSources, isMirrorClearable,
+         mirrorHint }
   from "../../module/rules/condition-mirrors.mjs";
 
 const FLAG = "warhammer-dbc";
@@ -82,13 +83,22 @@ describe("вторая волна меток (wdbc-5uae): что ещё было
 });
 
 describe("readMirror: несколько источников — это ИЛИ", () => {
-  it("«Отмечен» одинаково значит любую из трёх меток", () => {
+  it("«Отмечен» одинаково значит любую из ДВУХ меток «меня пометили»", () => {
     // Метка Аватара Резни — объект, а не булево: непустой объект считается
     // стоящей меткой.
     expect(readMirror(actor({ flags: { avatarOfSlaughterMark: { berserkerUuid: "a" } } }), "marked")).toBe(true);
     expect(readMirror(actor({ flags: { hexMarkedPrey: true } }), "marked")).toBe(true);
-    expect(readMirror(actor({ flags: { bowToAudienceMark: { by: "x" } } }), "marked")).toBe(true);
     expect(readMirror(actor(), "marked")).toBe(false);
+  });
+
+  it("Поклон Публике — НЕ «меня пометили»: флаг лежит на исполнителе (wdbc-5uae.2)", () => {
+    // combat/bow-to-audience.mjs ставит флаг САМОМУ актору ({targetIds, bonus})
+    // — это «я поклонился и наметил цели». Пока он входил в «Отмечен», лист
+    // показывал «на мне чужая метка» тому, кто пометил ДРУГИХ: смысл прямо
+    // обратный. Разведено в своё Состояние.
+    const performer = actor({ flags: { bowToAudienceMark: { targetIds: ["t1", "t2"], bonus: 10 } } });
+    expect(readMirror(performer, "marked")).toBe(false);
+    expect(readMirror(performer, "bowedToAudience")).toBe(true);
   });
 });
 
@@ -136,9 +146,13 @@ describe("mirrorClearPatch: гасится ИСТОЧНИК, а не отраж�
   it("несколько источников гасятся все разом — иначе метка «вернулась бы»", () => {
     expect(mirrorClearPatch("marked")).toEqual({
       [`flags.${FLAG}.-=avatarOfSlaughterMark`]: null,
-      [`flags.${FLAG}.-=hexMarkedPrey`]: null,
-      [`flags.${FLAG}.-=bowToAudienceMark`]: null
+      [`flags.${FLAG}.-=hexMarkedPrey`]: null
     });
+  });
+
+  it("Поклон Публике гасит свой флаг, а не чужие метки", () => {
+    expect(mirrorClearPatch("bowedToAudience"))
+      .toEqual({ [`flags.${FLAG}.-=bowToAudienceMark`]: null });
   });
 
   it("источник на предмете патчем актора не достаётся — патч пуст", () => {
@@ -191,5 +205,59 @@ describe("реестр меток и реестр Состояний согла�
       expect(isConditionMark(key)).toBe(false);
       expect(MIRROR_KEYS).not.toContain(key);
     }
+  });
+});
+
+// ── Подсказка «чем именно поднята метка» (wdbc-5uae.2) ────────────────────
+//
+// Тикет спрашивал, не завести ли Состояниям поле «источник». Не завели: у
+// каждой метки нагрузка своей формы, одним sourceUuid она не выражается, а
+// второе место правды рядом с настоящим флагом — ровно то, чего зеркала и
+// избегают. Вместо этого источник сам отдаёт готовую строку, и вот она.
+describe("mirrorHint: чем поднята метка прямо сейчас", () => {
+  it("метка без нагрузки — подсказки нет, и это не ошибка", () => {
+    expect(mirrorHint(actor({ system: { inRage: true } }), "inRage")).toBe("");
+  });
+
+  it("Проклятая Метка называет бога, под которым наложена", () => {
+    const a = actor({ flags: { hexMarkedPrey: { shamanUuid: "Actor.x", god: "Кхорн" } } });
+    expect(mirrorHint(a, "marked")).toContain("Проклятая Метка");
+    expect(mirrorHint(a, "marked")).toContain("Кхорн");
+  });
+
+  it("Марш называет свой вид — раньше он терялся в булевом теге", () => {
+    expect(mirrorHint(actor({ flags: { marchKind: "форсированный" } }), "marching"))
+      .toBe("вид: форсированный");
+  });
+
+  it("Поклон Публике называет число намеченных целей и бонус", () => {
+    const a = actor({ flags: { bowToAudienceMark: { targetIds: ["t1", "t2"], bonus: 10 } } });
+    expect(mirrorHint(a, "bowedToAudience")).toBe("цели намечены: 2, бонус +10");
+  });
+
+  it("две метки разом — обе названы, а не только первая", () => {
+    const a = actor({ flags: {
+      avatarOfSlaughterMark: { berserkerUuid: "Actor.a" },
+      hexMarkedPrey: { shamanUuid: "Actor.b", god: "Нургл" }
+    } });
+    const hint = mirrorHint(a, "marked");
+    expect(hint).toContain("Аватар Резни");
+    expect(hint).toContain("Проклятая Метка");
+  });
+
+  it("метка не стоит — подсказки нет", () => {
+    expect(mirrorHint(actor(), "marked")).toBe("");
+  });
+
+  it("незнакомый ключ и пустой актор — пустая строка, а не исключение", () => {
+    expect(mirrorHint(actor(), "нет-такого")).toBe("");
+    expect(mirrorHint(null, "marked")).toBe("");
+  });
+
+  it("имя по uuid не резолвится (нет игры/токен снят) — метка всё равно названа", () => {
+    // fromUuidSync вне запущенной Foundry не существует вовсе: подсказка
+    // обязана пережить это без «undefined» в тексте.
+    const a = actor({ flags: { avatarOfSlaughterMark: { berserkerUuid: "Actor.gone" } } });
+    expect(mirrorHint(a, "marked")).toBe("Аватар Резни");
   });
 });

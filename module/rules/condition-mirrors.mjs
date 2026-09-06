@@ -37,6 +37,23 @@
 const FLAG_SCOPE = "warhammer-dbc";
 
 /**
+ * Имя документа по uuid, куском для подсказки: « — Кхарн» или пусто.
+ *
+ * fromUuidSync — единственный синхронный путь: подсказка собирается при
+ * рендере листа, ждать там нечего. Токена уже нет на сцене (бой кончился,
+ * актор удалён) — молча пусто: «Аватар Резни» без имени лучше, чем ошибка
+ * или строка «undefined» в подсказке.
+ */
+function uuidName(uuid) {
+  if (!uuid) return "";
+  try {
+    const doc = globalThis.fromUuidSync?.(uuid);
+    const name = doc?.name ?? doc?.actor?.name;
+    return name ? ` — ${name}` : "";
+  } catch { return ""; }
+}
+
+/**
  * Откуда читается каждая метка.
  *
  * kind:
@@ -62,8 +79,8 @@ export const CONDITION_MIRRORS = {
   marching: {
     label: "Марш",
     // Флаг несёт ВИД марша (обычный/форсированный), а не «да/нет» — Состояние
-    // читает сам факт непустого значения, вид остаётся в подсказке.
-    sources: [{ kind: "flag", path: "marchKind" }]
+    // читает сам факт непустого значения, вид уходит в подсказку.
+    sources: [{ kind: "flag", path: "marchKind", hint: v => `вид: ${v}` }]
   },
   exposedStance: {
     label: "Открытая стойка",
@@ -75,11 +92,24 @@ export const CONDITION_MIRRORS = {
   },
   marked: {
     label: "Отмечен",
+    // ВАЖНО, чего здесь БОЛЬШЕ НЕТ (wdbc-5uae.2): раньше сюда входил и
+    // bowToAudienceMark. Он лежит на ИСПОЛНИТЕЛЕ поклона, а не на том, кому
+    // поклонились (combat/bow-to-audience.mjs:76 ставит флаг самому актору,
+    // {targetIds, bonus}), — то есть под «на мне чужая метка» показывался тот,
+    // кто пометил ДРУГИХ. Разведено в своё Состояние «Поклон Публике» ниже.
     sources: [
-      { kind: "flag", path: "avatarOfSlaughterMark" },
-      { kind: "flag", path: "hexMarkedPrey" },
-      { kind: "flag", path: "bowToAudienceMark" }
+      { kind: "flag", path: "avatarOfSlaughterMark",
+        hint: v => `Аватар Резни${uuidName(v?.berserkerUuid)}` },
+      { kind: "flag", path: "hexMarkedPrey",
+        hint: v => `Проклятая Метка${v?.god ? ` (${v.god})` : ""}${uuidName(v?.shamanUuid)}` }
     ]
+  },
+  bowedToAudience: {
+    label: "Поклон Публике",
+    // Флаг ИСПОЛНИТЕЛЯ: «я поклонился публике и наметил себе цели» — читает
+    // module/sheets/attack-dialog.mjs у самого атакующего.
+    sources: [{ kind: "flag", path: "bowToAudienceMark",
+                hint: v => `цели намечены: ${(v?.targetIds ?? []).length}${v?.bonus ? `, бонус +${v.bonus}` : ""}` }]
   },
   dreadWailFeared: {
     label: "Устрашён",
@@ -87,10 +117,11 @@ export const CONDITION_MIRRORS = {
   },
   seesOnlyCaster: {
     label: "Заворожён",
-    // Метка с полезной нагрузкой ({casterUuid}) — как метка Аватара Резни:
-    // «кто заворожил» читает своё правило, а Состояние отвечает на вопрос
-    // игрока «а на мне это сейчас есть?».
-    sources: [{ kind: "flag", path: "seesOnlyCaster" }]
+    // Метка с полезной нагрузкой ({casterUuid}): нагрузку по-прежнему читает
+    // своё правило, Состояние отвечает игроку «а на мне это сейчас есть?» —
+    // и, через hint, «от кого».
+    sources: [{ kind: "flag", path: "seesOnlyCaster",
+                hint: v => `видит только${uuidName(v?.casterUuid) || " наложившего"}` }]
   },
   justTheLight: {
     label: "Лишь Свет",
@@ -146,6 +177,33 @@ export function readMirror(actor, key) {
     const v = sourceValue(actor, s);
     return v !== undefined && v !== null && v !== false && v !== "" && v !== 0;
   });
+}
+
+/**
+ * Чем именно поднято Состояние-зеркало прямо сейчас — строкой для подсказки
+ * тега (wdbc-5uae.2).
+ *
+ * Тикет спрашивал, не завести ли Состояниям поле «источник». Заводить не
+ * пришлось: НАГРУЗКА у каждой метки своя и разной формы ({berserkerUuid} у
+ * Аватара Резни, {shamanUuid, god} у Проклятой Метки, {targetIds, bonus} у
+ * Поклона), одним полем sourceUuid она не выражается, а второе место правды
+ * рядом с настоящим флагом — ровно то, чего зеркала и избегают. Поэтому
+ * нагрузка остаётся у своего правила, а сюда приходит только ЧИТАЕМАЯ строка,
+ * которую собирает сам источник своей функцией hint.
+ *
+ * @returns {string} пустая строка, если сказать нечего
+ */
+export function mirrorHint(actor, key) {
+  const def = CONDITION_MIRRORS[key];
+  if (!def || !actor) return "";
+  const parts = [];
+  for (const source of def.sources) {
+    const value = sourceValue(actor, source);
+    if (value === undefined || value === null || value === false || value === "" || value === 0) continue;
+    const text = source.hint ? String(source.hint(value) ?? "").trim() : "";
+    if (text) parts.push(text);
+  }
+  return parts.join("; ");
 }
 
 /** Все метки актора разом: { <ключ>: boolean } — для производных данных листа. */
