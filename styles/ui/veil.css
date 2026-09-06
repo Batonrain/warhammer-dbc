@@ -352,8 +352,16 @@
   color: #0a0714; background: var(--wv-violet); box-shadow: 0 0 6px -2px var(--wv-violet);
 }
 .wv-jsel { max-width: 190px; font-size: 0.78em; padding: 2px 5px; }
+/* Кнопка шага варп-путешествия (wdbc-8yaf). Потолок высоты от ядра Foundry
+   снят общим правилом в base/common.css. Здесь — вторая половина: подпись
+   («Поиск Астрономикона», «Выход из варпа») не должна рваться по словам.
+   .wv-jstep — flex с wrap, и кнопка по умолчанию сжимаема (flex-shrink: 1)
+   до min-content, то есть до одного слова в строке. flex: 0 0 auto запрещает
+   сжатие, nowrap — перенос: при узком окне на следующую строку уезжает КНОПКА
+   ЦЕЛИКОМ (это уже умеет flex-wrap у .wv-jstep), а не её текст. */
 .wh-veil-app .wv-jbtn {
-  width: auto; display: inline-flex; align-items: center; padding: 3px 9px; cursor: pointer;
+  width: auto; flex: 0 0 auto; white-space: nowrap;
+  display: inline-flex; align-items: center; padding: 3px 9px; cursor: pointer;
   font-size: 0.78em; font-weight: 600; border-radius: 5px;
   background: rgba(180,119,255,0.10); border: 1px solid var(--wv-line); color: var(--wv-text);
 }
