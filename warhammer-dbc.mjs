@@ -104,6 +104,7 @@ import { migrateShipHulls } from "./module/migrations/ship-hulls.mjs";
 import { migrateVehicleTraitEffects } from "./module/migrations/vehicle-trait-effects.mjs";
 import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
+import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
@@ -443,6 +444,11 @@ Hooks.once("init", () => {
 
   // Версия довыдачи цен Техночудес вложенным копиям у существующих акторов (одноразовая)
   game.settings.register("warhammer-dbc", "techPowerCostsVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия простановки «надето» носимому снаряжению существующих акторов (одноразовая, wdbc-9h7g)
+  game.settings.register("warhammer-dbc", "gearEquippedVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -834,7 +840,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -906,6 +912,18 @@ Hooks.once("ready", async () => {
     await migrateTechPowerCosts();
     await game.settings.set("warhammer-dbc", "techPowerCostsVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Цены Техночудес:", e); }
+});
+
+// ── Одноразовая простановка: «надето» носимому снаряжению (wdbc-9h7g) ────────
+// Ручной перезапуск («надеть всё носимое заново»): game.warhammerDBC.migrateGearEquipped()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "gearEquippedVersion") || 0) >= VERSION) return;
+  try {
+    await migrateGearEquipped();
+    await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Надетое снаряжение:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────

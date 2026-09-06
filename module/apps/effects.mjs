@@ -25,6 +25,22 @@ import { activeRunicWeaveId, siblingRunicWeaves } from "../rules/runic-weave.mjs
  * на акторе. Исключение — подспособность переключаемой способности: у неё
  * своё «включена/выключена» независимо от типа (см. ниже).
  */
+/**
+ * Требует ли это снаряжение, чтобы его НАДЕЛИ, прежде чем оно заработает
+ * (wdbc-9h7g). Признак — заполненное system.worn, то есть книга сказала, КУДА
+ * предмет надевается: противогаз («Голова (И)»), хамелеолиновый плащ, откатная
+ * перчатка («Кисть»). Снаряжение без такой пометки — хим-лаборатория,
+ * анализатор химии — работает от применения, а не от ношения, и тумблера
+ * «надето» не получает: спрашивать «надел ли ты лабораторию» бессмысленно.
+ *
+ * Почему не «всё снаряжение подряд»: тогда каждая мелочь в рюкзаке требовала бы
+ * галочки, а забытая галочка молча гасила бы бонус. Пустое worn — вещь работает
+ * как раньше (отказ в безопасную сторону).
+ */
+export function gearRequiresWearing(sys) {
+  return !!String(sys?.worn ?? "").trim();
+}
+
 export function isItemActive(item) {
   const sys = item.system || {};
   // Подспособность переключаемой способности (Локус Герольда и подобные,
@@ -35,6 +51,9 @@ export function isItemActive(item) {
   if (toggleParentId(item)) return isToggleOn(item);
   switch (item.type) {
     case "weapon": case "armor": return !!sys.equipped;
+    // Снаряжение (wdbc-9h7g): носимое — по своему тумблеру «надето», прочее —
+    // как раньше, активно фактом владения. См. gearRequiresWearing выше.
+    case "gear": return gearRequiresWearing(sys) ? !!sys.equipped : true;
     case "armorMod": case "weaponMod": {
       if (!sys.installedOn || (sys.activatable && !sys.active)) return false;
       // Носитель в рюкзаке механику не даёт: так считал старый расчёт

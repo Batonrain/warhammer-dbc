@@ -292,18 +292,20 @@
     </div>
     <div class="gear-cat-body">
       <table class="items-table gear-table">
-        <thead><tr><th>Снаряжение</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
+        <thead><tr><th title="Надето — только надетая вещь даёт свою механику">Надето</th><th>Снаряжение</th><th>Описание</th><th>Кол-во</th><th>Вес</th><th>Всего</th><th title="Успехи Инфограждения">Инфогр.</th></tr></thead>
         <tbody>
           {{#if gearGear.length}}
             {{#each gearGear as |g|}}
-            <tr class="item-row" data-item-id="{{g.id}}"><td class="item-name-cell">{{g.name}}</td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
+            {{!-- Носимое снаряжение (у предмета заполнено «Как носится») работает
+                  только надетым — wdbc-9h7g. Прочему тумблер не рисуется вовсе. --}}
+            <tr class="item-row {{#if g.equipped}}item-row-equipped{{/if}}" data-item-id="{{g.id}}"><td class="gear-equip-cell">{{#if g.wearable}}<input type="checkbox" class="gear-equip-cb" data-item-id="{{g.id}}" title="Надето: {{g.worn}}" {{#if g.equipped}}checked{{/if}}/>{{else}}—{{/if}}</td><td class="item-name-cell">{{g.name}}</td><td></td><td>{{g.quantity}}</td><td>{{g.weight}}</td><td>{{g.totalWeight}}</td><td class="gear-infoguard-cell" title="Успехи Инфограждения">
                 {{#if g.infoguard}}🛡 {{g.infoguard}} <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{g.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{g.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else if (eq g.infoguard 0)}}0 <button type="button" class="gear-infoguard-roll-btn" data-item-id="{{g.id}}" title="½ смены, тест Tech-Use+0. Успехи делятся пополам (окр.▲).">🎲</button><button type="button" class="gear-infoguard-delegate-btn" data-item-id="{{g.id}}" title="Попросить другого игрока наложить Инфограждение своим Tech-Use — Успехи лягут на этот предмет">📨</button>
                 {{else}}—{{/if}}
               </td></tr>
             {{/each}}
           {{else}}
-            <tr class="items-empty"><td colspan="6"><em>Нет снаряжения</em></td></tr>
+            <tr class="items-empty"><td colspan="7"><em>Нет снаряжения</em></td></tr>
           {{/if}}
         </tbody>
       </table>

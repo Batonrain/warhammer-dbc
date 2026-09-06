@@ -11,6 +11,13 @@
     </select>
     <label class="wr-label">Носится</label>
     <input type="text" name="system.worn" value="{{system.worn}}" class="wr-input-md" placeholder="напр. Спина / Голова (И,П)"/>
+    {{!-- «Надето» спрашивается только у носимого — то есть когда заполнено поле
+          «Носится» (wdbc-9h7g). Пока оно пусто, вещь работает фактом владения,
+          и тумблер сбил бы с толку. --}}
+    {{#if system.worn}}
+    <label class="wr-label" title="Надетая вещь даёт свою механику; снятая — лежит в рюкзаке и не действует">Надето</label>
+    <input type="checkbox" name="system.equipped" {{#if system.equipped}}checked{{/if}}/>
+    {{/if}}
   </div>
   <div class="weapon-row">
     <label class="wr-label" title="Мелочь, жёстко закреплённая на другом предмете (визор на шлеме, крепление на броне) — не занимает слот в разгрузке, пока указан носитель.">Надеть на</label>

@@ -13,7 +13,7 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import fs   from "node:fs";
 import path from "node:path";
-import { isItemActive, createBlankEffect } from "../../module/apps/effects.mjs";
+import { isItemActive, createBlankEffect, gearRequiresWearing } from "../../module/apps/effects.mjs";
 
 const MODULE = path.resolve(import.meta.dirname, "../../module");
 
@@ -200,6 +200,37 @@ describe("isItemActive: Мутация/Дар (подавление Чистой
 // v12, и схема v13+ чужое имя молча отбрасывает — эффект получает умолчание
 // ядра icons/svg/aura.svg. Видно по packs-src: у всех созданных миграцией
 // эффектов стоит именно оно.
+describe("isItemActive: снаряжение и признак «надето» (wdbc-9h7g)", () => {
+  // До wdbc-9h7g снаряжение попадало в default «активен всегда»: противогаз
+  // защищал от газа, лёжа в рюкзаке. Теперь носимая вещь (у которой книга
+  // сказала, КУДА она надевается — заполнено system.worn) работает только
+  // надетой, а ненадеваемая (хим-лаборатория) — как раньше.
+  const gear = (system) => ({ id: "g", type: "gear", system });
+
+  it("носимое и надетое — активно", () => {
+    expect(isItemActive(gear({ worn: "Голова (И)", equipped: true }))).toBe(true);
+  });
+
+  it("носимое, но не надетое — неактивно (противогаз в рюкзаке не защищает)", () => {
+    expect(isItemActive(gear({ worn: "Голова (И)", equipped: false }))).toBe(false);
+  });
+
+  it("ненадеваемое снаряжение работает как раньше, без тумблера", () => {
+    expect(isItemActive(gear({ worn: "", equipped: false }))).toBe(true);
+    expect(isItemActive(gear({ equipped: false }))).toBe(true);
+  });
+
+  it("пробелы в «Носится» за пометку не считаются", () => {
+    expect(isItemActive(gear({ worn: "   ", equipped: false }))).toBe(true);
+  });
+
+  it("gearRequiresWearing отвечает на тот же вопрос отдельно", () => {
+    expect(gearRequiresWearing({ worn: "Кисть" })).toBe(true);
+    expect(gearRequiresWearing({ worn: "" })).toBe(false);
+    expect(gearRequiresWearing(undefined)).toBe(false);
+  });
+});
+
 describe("картинка создаваемого эффекта", () => {
   it("createBlankEffect берёт картинку предмета", async () => {
     const created = [];

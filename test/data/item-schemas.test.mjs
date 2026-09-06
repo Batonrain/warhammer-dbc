@@ -62,6 +62,9 @@ const TYPES = {
     defaults: {
       description: "", notes: "", quantity: 1, weight: 0, availability: 0,
       quality: "common", gearCategory: "misc", linkedWeapon: "", worn: "", wornOn: "",
+      // Надето ли сейчас (wdbc-9h7g) — носимое снаряжение отдаёт свою Механику
+      // только надетым; спрашивается лишь у того, где заполнено «Носится».
+      equipped: false,
       effect: "", reminder: "", qualityEffects: { poor: "", good: "", best: "" },
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       itemSize: "", bonuses: [], drukhari: false, bookSource: "",

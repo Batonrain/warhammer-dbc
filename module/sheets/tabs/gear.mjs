@@ -132,6 +132,16 @@ export function activateGearListeners(root, actor, {
     await equipItem(actor.items.get(itemId), equipped);
   });
 
+  // Носимое снаряжение (wdbc-9h7g) — тот же тумблер и тот же equipItem, что у
+  // оружия и брони: противогаз, плащ, откатная перчатка дают свою механику
+  // только надетыми. Проверки рук и жёсткой брони внутри equipItem снаряжения
+  // не касаются — они смотрят на тип предмета.
+  on(root, ".gear-equip-cb", "change", async ev => {
+    const itemId   = ev.currentTarget.dataset.itemId;
+    const equipped = ev.currentTarget.checked;
+    await equipItem(actor.items.get(itemId), equipped);
+  });
+
   // ── Ручные щиты (стр. 215) ───────────────────────────────────────────
   // Рука определяет, какая «Р1» в зонах защиты; «поднять щит» включает зоны,
   // указанные в скобках (они прикрываются лишь осознанным движением).

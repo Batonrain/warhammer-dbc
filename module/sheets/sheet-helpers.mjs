@@ -24,6 +24,7 @@ import { canClearJam }                                from "../combat/weapon-pro
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
 import { supportsInfoguard } from "../apps/infoguard.mjs";
+import { gearRequiresWearing } from "../apps/effects.mjs";
 import { xpLogEntries } from "../apps/xp-log.mjs";
 
 // Карта «полное имя таланта → тип (папка корбука)» + порядок типов — строится один
@@ -740,6 +741,12 @@ export function buildGetData(actor) {
     quantity:    i.system.quantity,
     weight:      i.system.weight,
     totalWeight: Math.round((i.system.weight || 0) * (i.system.quantity || 0) * 100) / 100,
+    // Носимое (заполнено «Как носится») спрашивает «надето ли» — от этого
+    // зависит, действует ли его Механика (wdbc-9h7g, gearRequiresWearing в
+    // apps/effects.mjs). Прочему снаряжению тумблер не показывается вовсе.
+    wearable:    gearRequiresWearing(i.system),
+    equipped:    !!i.system.equipped,
+    worn:        i.system.worn || "",
     infoguard:   supportsInfoguard(i) ? (i.system.infoguard || 0) : null
   }));
 

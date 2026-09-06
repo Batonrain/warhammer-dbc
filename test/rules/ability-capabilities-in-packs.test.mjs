@@ -66,9 +66,15 @@ describe("запись Конструктора на предмете пака �
   // в одном документе из сорока, и выборочная проверка её не увидит.
   for (const [key, doc] of granted) {
     it(`«${doc.name}» выдаёт ${key} даже с испорченным именем`, () => {
+      // Предмет берётся В РАБОЧЕМ СОСТОЯНИИ: надетым, если он надевается
+      // (wdbc-9h7g — носимое снаряжение, оружие и броня отдают Механику
+      // только снаряжёнными). Тест про заполненность записей Конструктора, а
+      // не про рубильник надетости: у того свои тесты (test/apps/effects,
+      // test/rules/gear-worn-mechanics). Без этой строки «Ремень Кувырков»
+      // краснел бы не потому, что запись сломана, а потому что он в рюкзаке.
       const item = {
         id: "it1", type: doc.type, name: "ИСПОРЧЕННОЕ ИМЯ",
-        system: doc.system ?? {}, flags: doc.flags
+        system: { ...(doc.system ?? {}), equipped: true }, flags: doc.flags
       };
       const actor = { type: "character", system: { characteristics: {} }, items: [item] };
 
