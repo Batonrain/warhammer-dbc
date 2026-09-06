@@ -10,11 +10,10 @@
 // листе остаётся только то, что зависит от состояния окна (свёрнутые секции)
 // и от переопределяемых им путей — Очки Бесчестия у Демон-Принца.
 
-import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
+import { CHARACTERISTICS, APTITUDES }            from "../constants/characteristics.mjs";
 import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
 import { charAptitudeSet, resolveCharCat, CHAR_APTITUDES } from "../constants/advancement.mjs";
-import { APTITUDES }                            from "../constants/characteristics.mjs";
 import { aptBindingContext }                    from "../rules/aptitude-binding.mjs";
 
 import { fateTerm }                              from "../helpers/utils.mjs";

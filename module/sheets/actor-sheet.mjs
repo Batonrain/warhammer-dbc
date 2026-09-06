@@ -40,15 +40,6 @@ import { showTempModifierDialog, removeTempModifier } from "../apps/temp-modifie
 import { showAptitudeBindingDialog } from "../apps/aptitude-binding-dialog.mjs";
 import { CHAR_APTITUDES } from "../constants/advancement.mjs";
 
-/** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
-const bookSkillPair = (key) => {
-  const def = SKILLS_DEF[key] || GROUP_SKILLS_DEF[key];
-  return def ? [def.char, def.apt2].filter(Boolean) : [];
-};
-/** Как объект называется на листе — для заголовка диалога. */
-const labelOfObject = (scope, key) => (scope === "char"
-  ? CHARACTERISTICS[key]?.label
-  : (SKILLS_DEF[key] || GROUP_SKILLS_DEF[key])?.label) || "";
 import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
@@ -107,6 +98,16 @@ import { actorFactionsContext, activateFactionFieldListeners } from "../apps/act
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
 import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
+
+/** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
+const bookSkillPair = (key) => {
+  const def = SKILLS_DEF[key] || GROUP_SKILLS_DEF[key];
+  return def ? [def.char, def.apt2].filter(Boolean) : [];
+};
+/** Как объект называется на листе — для заголовка диалога. */
+const labelOfObject = (scope, key) => (scope === "char"
+  ? CHARACTERISTICS[key]?.label
+  : (SKILLS_DEF[key] || GROUP_SKILLS_DEF[key])?.label) || "";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →

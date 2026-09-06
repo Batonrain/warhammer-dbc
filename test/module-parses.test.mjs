@@ -23,6 +23,7 @@
 import { describe, it, expect } from "vitest";
 import { transformSync } from "esbuild";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -88,7 +89,11 @@ describe("каждый файл системы разбирается", () => {
   it("сторож действительно ловит задвоенный импорт, а не только пустое множество", () => {
     // Без этой проверки тест остался бы зелёным, даже если бы parseError
     // молча возвращал "" на любой вход.
-    const tmp = path.join(ROOT, "test", ".parse-probe.mjs");
+    // Во ВРЕМЕННЫЙ каталог, а не в рабочую копию: в этом репозитории рядом
+    // работают параллельные сессии, и файл, оставшийся от упавшего процесса,
+    // всплыл бы у них в `git status` неотслеживаемым мусором неизвестного
+    // происхождения.
+    const tmp = path.join(os.tmpdir(), `wdbc-parse-probe-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`);
     fs.writeFileSync(tmp, 'import { A } from "./x.mjs";\nimport { A } from "./x.mjs";\n');
     try {
       expect(parseError(tmp)).not.toBe("");
