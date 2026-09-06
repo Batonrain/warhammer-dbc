@@ -4,7 +4,7 @@
   "system": {
     "description": "",
     "notes": "Linger в книге дан как Cor.b (рейтинг Порчи получателя) — движок weaponProps поддерживает только фиксированное число; взято приближение (4). См. Daemonic Breath в этой же папке — тот же компромисс для d5.",
-    "grips": "",
+    "grips": "1р",
     "profileLabel": "",
     "profiles": [],
     "reload": "–",
