@@ -39,6 +39,7 @@ import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
+import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
 import { MELEE_CATEGORIES, sameCategory } from "../constants/weapon-categories.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
@@ -240,6 +241,18 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // штрафов за Размер и Силу, «неудобная форма» −10 остаётся.
     ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
   });
+  // Огрины (wdbc-flai): свойство Ogrynized устроено как Legion выше — чужак не
+  // сладит с огринским хватом, а Огрин не пролезет пальцем в человеческую
+  // скобу (−10, для стрелкового −20). Best.Q Откатная Перчатка снимает те же
+  // два слагаемых, что и у Легиона: книга даёт её сразу для обоих.
+  const ogrynFit = ogrynAttackPenalty({
+    hasOgrynized: _entries.some(e => e.key === "ogryned"),
+    fitsOgryn:    hasRuleFlag(actor, OGRYN_FIT_FLAG),
+    size:         actor.system.size ?? 0,
+    sBonus:       actor.system.characteristics?.s?.bonus ?? 0,
+    isRanged:     !isMelee,
+    ignoresSizeStrength: hasRuleFlag(actor, OVERSIZED_FIT_FLAG)
+  });
   // Арсенал (стр. 62): без Weapon Training на класс оружия — штраф −20.
   const weaponTraining = weaponTrainingPenalty({
     actor, weaponType: sys.weaponType, weaponClass: sys.weaponClass,
@@ -399,7 +412,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -822,6 +835,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <div class="atk-wprops-list">${legionFit.parts
         .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
     </div>` : "";
+  // Штраф Огринов — тот же приём и та же вёрстка, что у Легиона выше.
+  const ogrynHtml = ogrynFit.parts.length ? `
+    <div class="atk-dlg-modifiers atk-legion-note">
+      <div class="atk-mods-title">${rollIcon("gear","#ffb84d")}Огрины: ${ogrynFit.total} к тесту</div>
+      <div class="atk-wprops-list">${ogrynFit.parts
+        .map(p => `<span class="atk-wprop-badge">${esc(p.label)} (${p.value})</span>`).join("")}</div>
+    </div>` : "";
   // Штраф Арсенала (Weapon Training) — тот же приём, что у Легиона выше.
   const weaponTrainingHtml = weaponTraining.parts.length ? `
     <div class="atk-dlg-modifiers atk-legion-note">
@@ -833,7 +853,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     <div class="atk-dlg-modifiers">
       <div class="atk-mods-title">${rollIcon("gear","#8fd0ff")}Свойства оружия</div>
       <div class="atk-wprops-list">${wpDialogList}</div>
-    </div>` : "") + legionHtml + weaponTrainingHtml;
+    </div>` : "") + legionHtml + ogrynHtml + weaponTrainingHtml;
   // Тактическая карта (wdbc-8k0i): «Короткая дистанция» по половине Дальности
   // (устоявшееся правило Мельты/Рассеивания в WH40k-семействе систем) — авто-
   // галочка, но её всё ещё можно снять руками, если ситуация особая.
@@ -1015,6 +1035,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Модификации",        value: modFx.attackMod || 0 },
       { label: "Качество",           value: qTestMod },
       { label: "Легион",             value: legionFit.total },
+      { label: "Огрины",             value: ogrynFit.total },
       { label: "Тренировка",         value: weaponTraining.total },
       { label: "Стойка цели",        value: targetStanceMod },
       { label: "Цель раскрыта",      value: exposedMod },

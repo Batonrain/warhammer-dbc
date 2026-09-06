@@ -7146,6 +7146,11 @@ export const CAPABILITIES = {
     source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
     reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
   },
+  "weapons.ogryn": {
+    label: "Сложение под огринское оружие: своё берёт без штрафа, чужое — со штрафом (−10, стрелковое −20)",
+    source: "Раса Огрин, Черта «Brute Physiology / Физиология Громилы» (module/rules/library/ogryn.mjs)",
+    reader: "module/rules/ogryn-fit.mjs — OGRYN_FIT_FLAG, подключено в module/sheets/attack-dialog.mjs"
+  },
   "fate.save": {
     label: "Пламенная вера: при трате Очка Судьбы бросок 1d10, на 1 очко не тратится",
     source: "Происхождение «Мир-храм» (module/rules/library/homeworlds.mjs)",

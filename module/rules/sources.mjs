@@ -12,6 +12,7 @@
 // их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
+import { OGRYN_RULES } from "./library/ogryn.mjs";
 import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
          HALF_ELDAR_RULES } from "./library/aeldari.mjs";
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
@@ -65,6 +66,9 @@ registerRuleSource("conditions", () => CONDITION_RULES);
 // DRUKHARI_RULES в library/aeldari.mjs.
 const RACE_RULES = {
   astartes: ASTARTES_RULES,
+  // Огрин (wdbc-flai): признак сложения под огринское оружие — без него
+  // расчёт rules/ogryn-fit.mjs штрафовал бы Огрина за его же дубину.
+  ogryn: OGRYN_RULES,
   exodite: EXODITE_RULES,
   drukhari: DRUKHARI_RULES,
   truebornDrukhari: DRUKHARI_RULES,

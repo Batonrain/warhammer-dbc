@@ -7,6 +7,7 @@
 // rules — машинная часть Черт (module/rules/library/, docs/rules-format.md).
 
 import { ASTARTES_RULES } from "../rules/library/astartes.mjs";
+import { OGRYN_RULES }    from "../rules/library/ogryn.mjs";
 
 export const RACES = {
   human: {
@@ -193,6 +194,7 @@ export const RACES = {
 
   ogryn: {
     label: "Огрин",
+    rules: OGRYN_RULES,
     subraces: [],
     chars: { ws:25, bs:25, s:25, t:25, ag:25, int:25, per:25, wp:25, fel:25, inf:19 },
     bonusRolls: 1, bonusPoints: 4, charShift: 1,
