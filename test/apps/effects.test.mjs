@@ -13,7 +13,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import fs   from "node:fs";
 import path from "node:path";
-import { isItemActive, createBlankEffect, gearRequiresWearing } from "../../module/apps/effects.mjs";
+import { isItemActive, createBlankEffect, gearRequiresWearing,
+         syncOrphanedModEffects } from "../../module/apps/effects.mjs";
 
 const MODULE = path.resolve(import.meta.dirname, "../../module");
 
@@ -283,5 +284,61 @@ describe("картинка создаваемого эффекта", () => {
     };
     walk(MODULE);
     expect(offenders).toEqual([]);
+  });
+});
+
+
+// ── wdbc-z6em, вторая половина: сквозной путь «удалили носитель» ────────────
+//
+// Живая проверка 06.09.2026 показала, что одного верного предиката мало:
+// isItemActive возвращала false для мода-сироты, но СОХРАНЁННЫЙ флаг
+// ActiveEffect.disabled сам не пересчитывается — update пришёл не моду, а
+// удалённому носителю. В игре бонус Керамита продолжал висеть на персонаже
+// после удаления брони, хотя юнит-тест предиката был зелёный. Отсюда правило:
+// у каждой такой починки должен быть тест НА ПУТЬ, а не только на предикат.
+
+describe("syncOrphanedModEffects: эффекты гаснут вместе с удалённым носителем", () => {
+  /** Модификация с одним включённым эффектом и учётом вызовов обновления. */
+  function modWithEffect({ id = "mod", installedOn = "armor-1", disabled = false } = {}) {
+    const calls = [];
+    const m = {
+      id, type: "armorMod", system: { installedOn },
+      effects: { contents: [{ id: "fx1", disabled }] },
+      updateEmbeddedDocuments: async (type, updates) => { calls.push({ type, updates }); }
+    };
+    return { m, calls };
+  }
+
+  it("носителя больше нет — эффект мода выключается", async () => {
+    const { m, calls } = modWithEffect();
+    const actor = actorWith(m);   // брони armor-1 на акторе уже нет
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].updates).toEqual([{ _id: "fx1", disabled: true }]);
+  });
+
+  it("модификации ДРУГОГО носителя не трогаются", async () => {
+    const { m, calls } = modWithEffect({ id: "other", installedOn: "armor-2" });
+    const actor = actorWith(m);
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toEqual([]);
+  });
+
+  it("эффект уже выключен — лишнего обновления не шлём", async () => {
+    const { m, calls } = modWithEffect({ disabled: true });
+    const actor = actorWith(m);
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toEqual([]);
+  });
+
+  it("носитель на месте и надет (сняли не его) — эффект остаётся включённым", async () => {
+    const { m, calls } = modWithEffect();
+    const actor = actorWith(armor("armor-1", true), m);
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toEqual([]);
   });
 });

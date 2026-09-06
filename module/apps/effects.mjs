@@ -146,6 +146,29 @@ export function isItemActive(item) {
  * после любого update, меняющего это состояние. Явный override нужен там, где
  * состояние ставится не флагом предмета, а вызывающим кодом.
  */
+/**
+ * Пересчитать эффекты модификаций, установленных в ЭТОТ носитель (wdbc-z6em).
+ *
+ * Нужна там, где состояние поменялось у носителя, а не у самой модификации:
+ * носитель сняли (sheets/tabs/gear.mjs::setEquipped) или УДАЛИЛИ вовсе
+ * (Hooks.on("deleteItem"), warhammer-dbc.mjs). isItemActive в обоих случаях
+ * уже отвечает «неактивна», но сохранённый флаг ActiveEffect.disabled сам не
+ * пересчитывается — update пришёл не моду.
+ *
+ * Живая проверка 06.09.2026: без этого вызова бонус модификации продолжал
+ * висеть на персонаже после удаления брони, хотя предикат был верный, а
+ * юнит-тест на него — зелёный.
+ *
+ * @param {Actor}  actor   владелец модификаций
+ * @param {string} hostId  id носителя, состояние которого поменялось
+ */
+export async function syncOrphanedModEffects(actor, hostId) {
+  if (!actor || !hostId) return;
+  for (const mod of actor.items ?? []) {
+    if (mod.system?.installedOn === hostId) await syncItemEffectsDisabled(mod);
+  }
+}
+
 export async function syncItemEffectsDisabled(item, activeOverride) {
   const active = activeOverride !== undefined ? activeOverride : isItemActive(item);
   // item.effects.contents ?? item.effects ?? [] (wdbc-s9dj): настоящая
