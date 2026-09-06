@@ -636,4 +636,14 @@ export function initHUD() {
     Hooks.on(h, (it) => { if (mine(it.parent)) refreshHUD(); });
   Hooks.on("controlToken", () => refreshHUD());
   Hooks.on("canvasReady", () => refreshHUD());
+
+  // Боевые хуки (wdbc-9kqs). Половина содержимого HUD зависит от того, идёт ли
+  // Столкновение: список Движения гейтится isEncounterActive() (походные марши
+  // только вне боя, Полудвижение/Натиск/Бег — только в бою), ОД и Реакции
+  // сбрасываются на смене Хода. Без этих подписок HUD, отрисованный до нажатия
+  // «Начать бой», так и висел с походным списком и старым числом ОД до
+  // случайной перерисовки (повторный клик по токену).
+  for (const h of ["combatStart", "createCombat", "updateCombat", "deleteCombat",
+                   "createCombatant", "updateCombatant", "deleteCombatant"])
+    Hooks.on(h, () => refreshHUD());
 }
