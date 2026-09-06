@@ -125,7 +125,7 @@
 .horde-char-total { flex: 1 1 auto; text-align: center; font-size: 1.2em; font-weight: bold; color: #eafff4; white-space: nowrap; }
 .horde-char-total i { display: inline-block; font-size: 0.5em; font-style: normal; font-weight: bold; color: #06120c;
   background: #4dffa6; border-radius: 3px; padding: 0 3px; margin-left: 3px; vertical-align: super; }
-.horde-char-roll { width: 20px; height: 20px; flex: 0 0 auto; }
+.wh-horde .horde-char-roll { width: 20px; height: 20px; flex: 0 0 auto; }
 .horde-char-roll .hi { width: 12px; height: 12px; }
 
 /* Групповые навыки: строка шире обычной — в ней ещё и специализация */
@@ -164,7 +164,7 @@
 
 /* Психологические тесты: Страх, Запугивание, массивные потери. */
 .horde-psych-btns { display: flex; flex-wrap: wrap; gap: 5px; }
-.horde-psych-btn { width: auto; height: 24px; padding: 0 10px; font-size: 0.8em; }
+.wh-horde .horde-psych-btn { width: auto; height: 24px; padding: 0 10px; font-size: 0.8em; }
 
 /* Соседние Орды («Орда против Орды») — под сеткой боевых показателей. */
 .horde-contacts .horde-chip:first-child { border-color: #6a5a2a; color: #ffd98a; }
@@ -180,9 +180,13 @@
 /* Кубик атаки у оружия. min-height: 0 обязателен: без него ядро Foundry
    держит пол min-height: var(--button-size) = 2em ≈ 28px, и кнопка стоит
    на 6px выше соседних иконок «карандаш»/«крестик» (те — <a>, пола не
-   имеют). Соседний .horde-psych-btn уцелел случайно: у него font-size
-   0.8em, и его собственные 2em оказались ниже заданных 24px. */
-.horde-roll-btn { width: 22px; height: 22px; min-height: 0; }
+   имеют). Соседний .horde-psych-btn от пола min-height уцелел случайно: у
+   него font-size 0.8em, и его собственные 2em оказались ниже заданных 24px.
+   Префикс .wh-horde здесь обязателен и к капкану ядра отношения не имеет:
+   без него правило весит (0,1,0) против (0,2,0) у общего .wh-horde .hbtn и
+   не применяется вовсе (wdbc-gwpu). Сторож — test/sheets/
+   horde-hbtn-specificity.test.mjs. */
+.wh-horde .horde-roll-btn { width: 22px; height: 22px; min-height: 0; }
 .horde-row-name { flex: 0 0 auto; font-weight: bold; color: #eafff4; }
 .horde-row-dmg { flex: 0 0 auto; color: #ffd98a; font-size: 0.86em; }
 .horde-row-desc { flex: 1 1 auto; color: #9fe8c4; font-size: 0.82em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
