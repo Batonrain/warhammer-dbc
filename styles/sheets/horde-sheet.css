@@ -170,11 +170,19 @@
 .horde-contacts .horde-chip:first-child { border-color: #6a5a2a; color: #ffd98a; }
 
 /* Списки */
-.horde-add { background: rgba(15,58,38,0.7); color: #d8ffe8; border: 1px solid #2f9e6a; border-radius: 4px; width: 24px; height: 20px; font-size: 0.95em; line-height: 1; padding: 0; cursor: pointer; }
+/* min-height: 0 — иначе высота 20px не соблюдается: ядро Foundry задаёт
+   каждому <button> ещё и min-height: var(--button-size) (2em), а пол
+   сильнее заданной высоты. Кнопка молча вырастала до ~27px. */
+.horde-add { background: rgba(15,58,38,0.7); color: #d8ffe8; border: 1px solid #2f9e6a; border-radius: 4px; width: 24px; height: 20px; min-height: 0; font-size: 0.95em; line-height: 1; padding: 0; cursor: pointer; }
 .horde-add:hover { background: #15492f; }
 .horde-list { display: flex; flex-direction: column; gap: 3px; }
 .horde-row { display: flex; align-items: center; gap: 7px; border: 1px solid rgba(47,158,106,0.24); border-radius: 4px; padding: 3px 7px; background: rgba(15,58,38,0.3); }
-.horde-roll-btn { width: 22px; height: 22px; }
+/* Кубик атаки у оружия. min-height: 0 обязателен: без него ядро Foundry
+   держит пол min-height: var(--button-size) = 2em ≈ 28px, и кнопка стоит
+   на 6px выше соседних иконок «карандаш»/«крестик» (те — <a>, пола не
+   имеют). Соседний .horde-psych-btn уцелел случайно: у него font-size
+   0.8em, и его собственные 2em оказались ниже заданных 24px. */
+.horde-roll-btn { width: 22px; height: 22px; min-height: 0; }
 .horde-row-name { flex: 0 0 auto; font-weight: bold; color: #eafff4; }
 .horde-row-dmg { flex: 0 0 auto; color: #ffd98a; font-size: 0.86em; }
 .horde-row-desc { flex: 1 1 auto; color: #9fe8c4; font-size: 0.82em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -191,7 +191,10 @@
 .wh-nx-subname { font-weight: 700; font-size: 0.9em; letter-spacing: 0.03em; color: #d8ffe8; }
 .wh-nx-subcount { font-size: 0.68em; color: #04100a; background: color-mix(in srgb, var(--gc, #4dffa6) 80%, #7fe0a8); border-radius: 8px; padding: 0 6px; font-weight: 800; }
 .wh-nx-subtools { margin-left: auto; display: flex; gap: 3px; }
-.wh-nx-subtools button { width: 22px; height: 20px; padding: 0; cursor: pointer; font-size: 0.78em; background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 3px; }
+/* min-height: 0 — пол min-height: var(--button-size) от ядра Foundry иначе
+   не даёт кнопке остаться заявленными 20px (тот же капкан, что у .horde-add
+   и .horde-roll-btn). */
+.wh-nx-subtools button { width: 22px; height: 20px; min-height: 0; padding: 0; cursor: pointer; font-size: 0.78em; background: #0e2a1c; color: #cdeede; border: 1px solid #2f6f4a; border-radius: 3px; }
 .wh-nx-subtools button:hover { background: #15492f; box-shadow: 0 0 6px rgba(77,255,166,0.4); }
 .wh-nx-subtools .wh-nx-gdel:hover { background: #4a1414; border-color: #b8453a; color: #ff9a9a; }
 .wh-nx-sub .wh-nx-grid { padding: 8px; }
