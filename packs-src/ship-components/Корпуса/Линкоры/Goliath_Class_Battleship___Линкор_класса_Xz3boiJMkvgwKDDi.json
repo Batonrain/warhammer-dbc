@@ -1,0 +1,57 @@
+{
+  "name": "Goliath Class Battleship / Линкор класса «Голиаф»",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "7XIWvIQncI4e71zW",
+  "system": {
+    "hullClass": "Линкоры",
+    "sp": 80,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "dreadnought"
+      }
+    ],
+    "hull": {
+      "spaceMax": 150,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "1НП, 3К, 3ЛБ, 3ПБ",
+      "hullIntegrity": 200
+    },
+    "chars": {
+      "speed": 3,
+      "manoeuvrability": -20,
+      "detection": 0,
+      "voidShields": 0,
+      "armour": 16,
+      "turretRating": 4
+    }
+  },
+  "_id": "Xz3boiJMkvgwKDDi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!Xz3boiJMkvgwKDDi"
+}

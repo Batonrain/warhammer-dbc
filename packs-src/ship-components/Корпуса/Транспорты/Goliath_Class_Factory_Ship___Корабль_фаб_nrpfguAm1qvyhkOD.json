@@ -1,37 +1,44 @@
 {
-  "name": "Goliath / Голиаф",
+  "name": "Goliath Class Factory Ship / Корабль-фабрика «Голиаф»",
   "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "xU0HcgaUIV5kWjzf",
   "system": {
     "hullClass": "Транспорты",
-    "sp": 80,
+    "sp": 25,
     "rarity": 0,
     "quality": "common",
     "qualityPicks": [],
     "qualityCustom": false,
-    "aspects": "",
+    "aspects": "In-build: Главный грузовой трюм, 2/4. In-build: Переработчик плазмы, 1/3",
     "description": "",
     "notes": "",
     "shipProps": [
       {
-        "key": "dreadnought"
+        "key": "inbuild"
+      },
+      {
+        "key": "inbuild"
+      },
+      {
+        "key": "breathingHeat",
+        "rating": 10
       }
     ],
     "hull": {
-      "spaceMax": 150,
+      "spaceMax": 40,
       "powerGen": 0,
-      "turnArc": "45°",
-      "weaponCapacity": "1НП, 3К, 3ЛБ, 3ПБ",
-      "hullIntegrity": 200
+      "turnArc": "90°",
+      "weaponCapacity": "ПБ1, ЛБ1, НП1",
+      "hullIntegrity": 50
     },
     "chars": {
       "speed": 3,
-      "manoeuvrability": -20,
-      "detection": 0,
+      "manoeuvrability": -10,
+      "detection": 4,
       "voidShields": 0,
-      "armour": 16,
-      "turretRating": 4
+      "armour": 14,
+      "turretRating": 1
     }
   },
   "_id": "nrpfguAm1qvyhkOD",

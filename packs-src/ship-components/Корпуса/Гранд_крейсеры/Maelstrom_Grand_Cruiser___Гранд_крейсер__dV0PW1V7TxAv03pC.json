@@ -1,0 +1,64 @@
+{
+  "name": "Maelstrom Grand Cruiser / Гранд-крейсер типа «Водоворот»",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "IHC1qrw10vbxBx6h",
+  "system": {
+    "hullClass": "Гранд-крейсеры",
+    "sp": 80,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Корпус Варпомор, 1/0. Warp Speed: /2. Особое",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "aimer",
+        "rating": 10
+      },
+      {
+        "key": "inbuild"
+      },
+      {
+        "key": "warpSpeed"
+      }
+    ],
+    "hull": {
+      "spaceMax": 80,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "1К, 1ЛБ, 1ПБ, 1Н",
+      "hullIntegrity": 90
+    },
+    "chars": {
+      "speed": 5,
+      "manoeuvrability": 0,
+      "detection": 30,
+      "voidShields": 0,
+      "armour": 19,
+      "turretRating": 3
+    }
+  },
+  "_id": "dV0PW1V7TxAv03pC",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!dV0PW1V7TxAv03pC"
+}

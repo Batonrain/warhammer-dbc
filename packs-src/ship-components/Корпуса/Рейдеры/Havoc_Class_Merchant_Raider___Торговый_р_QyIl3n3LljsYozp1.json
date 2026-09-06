@@ -1,41 +1,33 @@
 {
-  "name": "Devastation / Опустошение",
+  "name": "Havoc Class Merchant Raider / Торговый рейдер «Опустошение»",
   "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
   "folder": "aIu3pJTuNwSeYJoY",
   "system": {
     "hullClass": "Рейдеры",
-    "sp": 60,
+    "sp": 35,
     "rarity": 0,
     "quality": "common",
     "qualityPicks": [],
     "qualityCustom": false,
-    "aspects": "In-build: Ангар системы Опустошение (ПБ и ЛБ), 2/2",
+    "aspects": "",
     "description": "",
     "notes": "",
-    "shipProps": [
-      {
-        "key": "inbuild"
-      },
-      {
-        "key": "viciousDesign",
-        "rating": 1
-      }
-    ],
+    "shipProps": [],
     "hull": {
-      "spaceMax": 75,
+      "spaceMax": 40,
       "powerGen": 0,
-      "turnArc": "45°",
-      "weaponCapacity": "НП1, ЛБ2, ПБ2",
-      "hullIntegrity": 70
+      "turnArc": "90°",
+      "weaponCapacity": "Н1, НП1",
+      "hullIntegrity": 30
     },
     "chars": {
-      "speed": 7,
-      "manoeuvrability": 5,
+      "speed": 9,
+      "manoeuvrability": 25,
       "detection": 10,
       "voidShields": 0,
-      "armour": 20,
-      "turretRating": 2
+      "armour": 16,
+      "turretRating": 1
     }
   },
   "_id": "QyIl3n3LljsYozp1",
