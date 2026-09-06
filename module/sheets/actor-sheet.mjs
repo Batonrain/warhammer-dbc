@@ -98,6 +98,7 @@ import { actorFactionsContext, activateFactionFieldListeners } from "../apps/act
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
 import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
+import { zeroBlankNumbers } from "../helpers/blank-zero.mjs";
 
 /** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
 const bookSkillPair = (key) => {
@@ -848,6 +849,24 @@ export class WarhammerCharacterSheet
   // непереведённым и стоит в заголовке как есть. Тип и так виден по самому
   // листу — в заголовке нужно имя.
   get title() { return this.actor.name; }
+
+  /**
+   * Поля-модификаторы (Мод. к Итогу Характеристики, Модификатор Навыка,
+   * модификатор Инициативы) рисуются пустыми, пока модификатора нет: ноль в
+   * поле прилипал к набранному числу и вместо 12 выходило 120 (wdbc-mgh6).
+   * Пустое числовое поле приходит сюда как null, а схема ждёт число —
+   * возвращаем ноль явно, не полагаясь на откат Foundry к initial.
+   * Метка полей — data-blank-zero, см. module/helpers/blank-zero.mjs.
+   *
+   * @override
+   */
+  _processFormData(event, form, formData) {
+    const names = [...form.querySelectorAll("input[type=number][data-blank-zero]")]
+      .map(el => el.name)
+      .filter(Boolean);
+    zeroBlankNumbers(formData.object, names);
+    return super._processFormData(event, form, formData);
+  }
 
   // ── Контекст шаблона ──────────────────────────────────────────────────────
 

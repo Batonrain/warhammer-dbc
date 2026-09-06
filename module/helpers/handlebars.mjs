@@ -1,5 +1,6 @@
 import { techIcon } from "../constants/tech-icons.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
+import { blankZero } from "./blank-zero.mjs";
 
 export function registerHandlebarsHelpers() {
 
@@ -77,6 +78,12 @@ export function registerHandlebarsHelpers() {
   });
   Handlebars.registerHelper("not", function(a) {
     return !a;
+  });
+
+  // Пустое поле вместо напечатанного нуля у полей-модификаторов: ноль в поле
+  // прилипал к набранному числу (12 -> 120). Подробнее — blank-zero.mjs.
+  Handlebars.registerHelper("blankZero", function(value) {
+    return blankZero(value);
   });
 
   // Знак числа для отображения модификаторов
