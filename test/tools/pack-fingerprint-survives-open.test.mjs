@@ -18,7 +18,8 @@ import { describe, it, expect, afterAll } from "vitest";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { packFingerprint } from "../../tools/pack-fingerprint.mjs";
+import { packFingerprint, packFingerprintInfo, fingerprintOf,
+         FINGERPRINT_VERSION } from "../../tools/pack-fingerprint.mjs";
 import { latestDbChange } from "../../tools/pack-stamp.mjs";
 
 const tmp = mkdtempSync(join(tmpdir(), "dbc-fp-"));
@@ -121,5 +122,88 @@ describe("отпечаток переживает открытие базы", ()
       || f.endsWith(".ldb") || /^\d+\.log$/.test(f);
     const data = readdirSync(dir).filter(isData);
     expect(data, "функция чтения завела базу").toEqual([]);
+  });
+});
+
+// ── wdbc-7qjg: «база занята» — это не «в игре правили» ────────────────────
+//
+// Сторож объявлял восемнадцать паков изменёнными каждый раз, когда мир был
+// ЗАПУЩЕН: открытый мир держит LOCK, отпечаток становился нечитаем, а
+// нечитаемый отпечаток означал «считать изменённым». Диагноз ложный, а совет
+// («снимите правки через npm run packs:unpack») на занятой базе невыполним —
+// unpack упирается в тот же LOCK.
+describe("занятая база отличается от изменённой (wdbc-7qjg)", () => {
+  it("пока база открыта, отпечаток не читается — и причина названа «занята»", async () => {
+    const dir = join(tmp, "pack-busy");
+    await makePack(dir, DOCS);
+    expect((await packFingerprintInfo(dir)).fingerprint, "закрытая база должна читаться").toBeTruthy();
+
+    const { ClassicLevel } = await import("classic-level");
+    const held = new ClassicLevel(dir, { valueEncoding: "json" });
+    await held.open();
+    try {
+      const info = await packFingerprintInfo(dir);
+      expect(info.fingerprint, "занятую базу прочитать нечем").toBeNull();
+      expect(info.busy, "и это должно быть названо занятостью, а не расхождением").toBe(true);
+      expect(info.missing).toBe(false);
+    } finally {
+      await held.close();
+    }
+  });
+
+  it("отсутствующая база — не «занята», а «её нет»", async () => {
+    const info = await packFingerprintInfo(join(tmp, "нет-и-не-было"));
+    expect(info.busy).toBe(false);
+    expect(info.missing).toBe(true);
+  });
+
+  it("свободная база занятой не считается", async () => {
+    const dir = join(tmp, "pack-free");
+    await makePack(dir, DOCS);
+    const info = await packFingerprintInfo(dir);
+    expect(info.busy).toBe(false);
+    expect(info.fingerprint).toBeTruthy();
+  });
+});
+
+// ── wdbc-7qjg, вторая половина: служебный флаг системы — не правка автора ──
+//
+// Найдено 06.09.2026, когда мир наконец закрыли: сборка объявила пак
+// weapon-mods отредактированным, а документ-в-документ расходился РОВНО один
+// предмет и ровно тремя полями — _stats.coreVersion, _stats.modifiedTime и
+// flags.warhammer-dbc.migratedEffect. Первые два отпечаток и так выбрасывал.
+// Третий ставит наша же миграция (module/migrations/item-effects.mjs) каждому
+// предмету при загрузке мира, в том числе внутри компендиума: документ,
+// заведённый в packs-src без этого флага, получает его при первом же открытии
+// мира. Автор к этому непричастен так же, как к _stats.
+describe("служебные флаги системы не считаются правкой (wdbc-7qjg)", () => {
+  const DOC = ["!items!dddddddddddddddd",
+               { name: "Ноктиковый Щит", type: "weaponMod", system: { availability: 4 } }];
+
+  it("дописанный migratedEffect отпечаток НЕ меняет", () => {
+    const before = fingerprintOf([DOC]);
+    const stamped = ["!items!dddddddddddddddd",
+                     { ...DOC[1], flags: { "warhammer-dbc": { migratedEffect: true } } }];
+    expect(fingerprintOf([stamped])).toBe(before);
+  });
+
+  it("а настоящий авторский флаг рядом с ним — меняет", () => {
+    const stamped = ["!items!dddddddddddddddd",
+                     { ...DOC[1], flags: { "warhammer-dbc": { migratedEffect: true } } }];
+    const authored = ["!items!dddddddddddddddd",
+                      { ...DOC[1], flags: { "warhammer-dbc": { migratedEffect: true,
+                                                               mechanics: [{ id: "g" }] } } }];
+    expect(fingerprintOf([authored])).not.toBe(fingerprintOf([stamped]));
+  });
+
+  it("чужие области флагов не трогаются", () => {
+    const other = ["!items!dddddddddddddddd",
+                   { ...DOC[1], flags: { "some-module": { migratedEffect: true } } }];
+    expect(fingerprintOf([other])).not.toBe(fingerprintOf([DOC]));
+  });
+
+  it("версия алгоритма объявлена числом — по ней отметка понимает, сравнима ли она", () => {
+    expect(Number.isInteger(FINGERPRINT_VERSION)).toBe(true);
+    expect(FINGERPRINT_VERSION).toBeGreaterThan(1);
   });
 });

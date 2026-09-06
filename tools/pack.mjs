@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { latestDbChange, packsChangedSince, readStamp, writeStamp } from "./pack-stamp.mjs";
-import { packFingerprint, allFingerprints } from "./pack-fingerprint.mjs";
+import { packFingerprintInfo, allFingerprints, FINGERPRINT_VERSION } from "./pack-fingerprint.mjs";
 import { bookDocuments, linkIndexFrom } from "./book-docs.mjs";
 
 /**
@@ -59,9 +59,44 @@ const stampWhen = typeof stamp === "number" ? stamp : stamp?.when;
 const suspects = [...LIBRARY_PACKS, ...JOURNAL_PACKS]
   .map(p => ({ pack: p, mtimeMs: latestDbChange(p.dir) }))
   .filter(x => !stampWhen || x.mtimeMs > stampWhen + 1000);
-const edited = packsChangedSince(stamp, await Promise.all(suspects.map(async x => ({
-  name: x.pack.name, mtimeMs: x.mtimeMs, fingerprint: await packFingerprint(abs(x.pack.dir))
-}))));
+const probed = await Promise.all(suspects.map(async x => ({
+  name: x.pack.name, mtimeMs: x.mtimeMs, ...await packFingerprintInfo(abs(x.pack.dir))
+})));
+
+// Занятая база — не правка (wdbc-7qjg). Мир держит LOCK на каждом открытом
+// паке, отпечаток становится нечитаем, и сторож объявлял «в компендиумах есть
+// правки» с советом сделать unpack, который на занятой базе тоже не работает.
+// Диагноз ложный, совет невыполнимый: сказать надо ровно то, что есть — мир
+// запущен, закройте его. Сборка всё равно дальше не пройдёт (rmSync по
+// занятой папке), просто теперь она объясняет это правильно.
+const busy = probed.filter(p => p.busy).map(p => p.name);
+if (busy.length) {
+  console.error("Мир запущен — базы компендиумов заняты, прочитать их нечем:");
+  console.error(`  ${busy.join(", ")}`);
+  console.error("");
+  console.error("Это не значит, что в игре что-то правили. Закройте мир в Foundry");
+  console.error("(«Return to Setup») и повторите сборку.");
+  process.exit(1);
+}
+
+// Отметка посчитана ДРУГОЙ версией алгоритма отпечатка (wdbc-7qjg) — значит
+// сравнивать буквально не с чем: цифры разойдутся у всех паков сразу, и ни
+// один из них при этом никто не правил. Останавливаемся (судить о содержимом
+// нечем — ошибаемся в безопасную сторону), но говорим правду, а не «в
+// компендиумах есть правки»: прежний текст отправлял снимать несуществующие
+// правки через unpack.
+const stampVersion = typeof stamp === "number" ? 1 : (stamp?.fpVersion ?? 1);
+if (stamp && stampVersion !== FINGERPRINT_VERSION && !FORCE) {
+  console.error(`Отметка синхронизации посчитана другой версией отпечатка `
+    + `(в отметке ${stampVersion}, сейчас ${FINGERPRINT_VERSION}) — сравнивать не с чем.`);
+  console.error("");
+  console.error("Это НЕ значит, что в игре что-то правили. Если правок не было —");
+  console.error("пересоберите поверх, отметка обновится: npm run packs:build -- --force");
+  console.error("Если правки были — сперва снимите их: npm run packs:unpack");
+  process.exit(1);
+}
+
+const edited = packsChangedSince(stamp, probed);
 
 if (edited.length && !FORCE) {
   console.error("В компендиумах есть правки, которых нет в исходниках:");

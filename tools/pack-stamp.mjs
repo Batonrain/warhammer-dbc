@@ -21,6 +21,7 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { abs } from "./packs.mjs";
+import { FINGERPRINT_VERSION } from "./pack-fingerprint.mjs";
 
 /** Файл отметки. Имя с точки — рядом с базами паков он не мешает. */
 export const STAMP_FILE = "packs/.pack-stamp";
@@ -37,7 +38,8 @@ export function writeStamp(when = Date.now(), fingerprints = null) {
   const path = abs(STAMP_FILE);
   mkdirSync(dirname(path), { recursive: true });
   const body = fingerprints
-    ? JSON.stringify({ when: new Date(when).toISOString(), packs: fingerprints }, null, 2)
+    ? JSON.stringify({ when: new Date(when).toISOString(),
+                       fpVersion: FINGERPRINT_VERSION, packs: fingerprints }, null, 2)
     : new Date(when).toISOString();
   writeFileSync(path, `${body}\n`);
   return when;
@@ -63,7 +65,8 @@ export function readStamp() {
       const doc = JSON.parse(raw);
       const when = Date.parse(doc.when);
       if (Number.isNaN(when)) return null;
-      return { when, packs: doc.packs && typeof doc.packs === "object" ? doc.packs : {} };
+      return { when, fpVersion: Number(doc.fpVersion) || 1,
+               packs: doc.packs && typeof doc.packs === "object" ? doc.packs : {} };
     } catch {
       return null; // испорченная отметка читается как отсутствующая
     }
