@@ -61,7 +61,7 @@ export function aggregateAuto(props) {
     ordnance: false, otherAttacksMod: 0, doubleDamageRoll: false,
     devastatingRating: 0, wreckerRating: 0, hefty: false, heftyType: "",
     recoilRating: 0, carbine: false, antiAir: false, gyroStabilized: false,
-    independent: false, wrist: false, crunch: false, cheapShot: false,
+    independent: false, wrist: false, digital: false, crunch: false, cheapShot: false,
     smokeRating: 0, lingerRating: 0, lingerDrift: 0, revolver: false,
     combi: false, cognis: false, arcing: false, arcRating: 0, arcDamage: 0,
     shrinkTemplate: 0, difficultTerrain: 0,
@@ -152,6 +152,7 @@ export function aggregateAuto(props) {
     if (au.gyroStabilized) a.gyroStabilized = true;
     if (au.independent)    a.independent = true;
     if (au.wrist)          a.wrist = true;
+    if (au.digital)        a.digital = true;
     if (au.crunch)         a.crunch = true;
     if (au.cheapShot)      a.cheapShot = true;
     if (au.revolver)       a.revolver = true;
