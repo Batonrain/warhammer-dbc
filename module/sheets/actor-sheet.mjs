@@ -36,6 +36,7 @@ import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { activeEffectsTabContext } from "../apps/effects-summary.mjs";
+import { showTempModifierDialog, removeTempModifier } from "../apps/temp-modifier.mjs";
 import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
@@ -1756,6 +1757,24 @@ export class WarhammerCharacterSheet
     });
     // ── Состояния и Усталость ─────────────────────────────────────────────
     activateConditionsListeners(root, this.actor);
+
+    // ── Временный модификатор характеристики (wdbc-5qvo) ──────────────────
+    // Кнопка и крестики живут на вкладке ЭФФЕКТЫ: там же, где видно всё
+    // остальное, что сейчас правит показатели, — чтобы разовый штраф не
+    // оказался единственным, чей источник и срок нигде не написаны.
+    root.querySelectorAll(".fx-temp-add-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        await showTempModifierDialog(this.actor);
+      });
+    });
+    root.querySelectorAll(".fx-temp-remove-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        await removeTempModifier(this.actor, ev.currentTarget.dataset.effectId);
+      });
+    });
 
     // ── Вкладка ТЕЛО ──────────────────────────────────────────────────────
     activateBodyListeners(root, this.actor);

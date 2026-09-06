@@ -29,3 +29,35 @@
   vertical-align: middle;
 }
 .warhammer-dbc .tab-badge-debuff { background: #c0392b; color: #fff; }
+
+/* ── Временный модификатор характеристики (wdbc-5qvo) ─────────────────────
+   Разовый штраф «−10 Ловкости на три Хода» заводится кнопкой и снимается
+   крестиком — как Состояние. Столбец срока узкий: он пуст у большинства
+   строк (у эффекта предмета срока обычно нет), и раздвигать под него
+   таблицу незачем. */
+.warhammer-dbc .fx-temp-bar { margin: 2px 2px 6px; text-align: right; }
+.warhammer-dbc .fx-temp-add-btn {
+  padding: 1px 8px; font-size: 0.8em; line-height: 1.6;
+  border: 1px solid var(--wh-border); border-radius: 3px;
+  background: transparent; color: var(--wh-text-mid); cursor: pointer;
+}
+.warhammer-dbc .fx-temp-add-btn:hover { color: var(--wh-text); border-color: var(--wh-accent, #2f9e6a); }
+.warhammer-dbc .fx-term {
+  width: 1%; white-space: nowrap; text-align: right;
+  font-size: 0.78em; color: var(--wh-text-mid);
+}
+.warhammer-dbc .fx-temp-remove-btn {
+  padding: 0 3px; border: none; background: transparent;
+  color: #c0392b; cursor: pointer; font-size: 0.95em; line-height: 1;
+}
+.warhammer-dbc .fx-temp-remove-btn:hover { color: #ff6b6b; }
+
+/* Диалог «Временный модификатор» — строки в одну колонку меток и полей. */
+.warhammer-dbc .wh-temp-modifier-form .tm-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+}
+.warhammer-dbc .wh-temp-modifier-form .tm-row > :is(input, select) { flex: 1 1 auto; }
+.warhammer-dbc .wh-temp-modifier-form .tm-duration { flex: 0 0 4em; }
+.warhammer-dbc .wh-temp-modifier-form .tm-hint {
+  font-size: 0.78em; color: var(--wh-text-mid); margin-top: 4px;
+}

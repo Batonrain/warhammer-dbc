@@ -7,6 +7,12 @@
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 <div class="tab active-effects-tab {{#if (eq tab "activeEffects")}}active{{/if}}" data-tab="activeEffects" data-group="primary">
 
+  {{!-- Временный модификатор характеристики (wdbc-5qvo): «−10 Ловкости на три
+        Хода» с именем источника и сроком, снимается крестиком в строке. --}}
+  <div class="fx-temp-bar">
+    <button type="button" class="fx-temp-add-btn" title="Наложить временный модификатор характеристики: источник, срок, снятие крестиком">＋ Временный модификатор</button>
+  </div>
+
   {{#if activeEffectsEmpty}}
   <div class="gene-seed-hint">Сейчас на персонажа не действует ни один эффект предмета/состояния — лист собирает только Foundry ActiveEffect (Талант/Черта/Мутация/Состояние с механикой), Модификатор теста и Переброс в эту сводку не входят, они применяются на самом броске.</div>
   {{else}}
@@ -22,6 +28,7 @@
         <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
         <td class="fx-target">{{r.targetLabel}}</td>
         <td class="fx-value fx-value-buff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
       </tr>
       {{/each}}
     </tbody></table>
@@ -34,6 +41,7 @@
         <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
         <td class="fx-target">{{r.targetLabel}}</td>
         <td class="fx-value fx-value-buff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
       </tr>
       {{/each}}
     </tbody></table>
@@ -52,6 +60,7 @@
         <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
         <td class="fx-target">{{r.targetLabel}}</td>
         <td class="fx-value fx-value-debuff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
       </tr>
       {{/each}}
     </tbody></table>
@@ -64,6 +73,7 @@
         <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
         <td class="fx-target">{{r.targetLabel}}</td>
         <td class="fx-value fx-value-debuff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
       </tr>
       {{/each}}
     </tbody></table>
@@ -81,6 +91,7 @@
         <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
         <td class="fx-target">{{r.targetLabel}}</td>
         <td class="fx-value">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
       </tr>
       {{/each}}
       {{#each activeEffectsGroups.neutral.other as |r|}}
@@ -88,6 +99,7 @@
         <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
         <td class="fx-target">{{r.targetLabel}}</td>
         <td class="fx-value">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
       </tr>
       {{/each}}
     </tbody></table>

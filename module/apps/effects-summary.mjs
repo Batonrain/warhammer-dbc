@@ -21,6 +21,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { effectKeyLabel, EFFECT_TYPE_LABELS } from "../constants/effect-keys.mjs";
+import { remainingLabel } from "../rules/condition-duration.mjs";
+import { isTempModifier } from "./temp-modifier.mjs";
 
 const CHAR_PREFIX = "system.characteristics.";
 
@@ -82,18 +84,36 @@ export function formatChangeValue(change) {
  * allApplicableEffects — см. заголовок файла.
  */
 export function applicableActorEffects(actor) {
+  // fromItem различает две ЛИЧНО РАЗНЫЕ вещи с одинаковой формой: эффект,
+  // пришедший с предмета (источник — сам предмет, его имя и картинку и надо
+  // показывать), и эффект, лежащий прямо на акторе (источником там числится
+  // сам актор, и показывать его имя бессмысленно — см. rowSourceName ниже).
   const own = [...(actor?.effects?.contents ?? actor?.effects ?? [])]
-    .map(effect => ({ effect, source: actor }));
+    .map(effect => ({ effect, source: actor, fromItem: false }));
   const items = actor?.items?.contents ?? actor?.items ?? [];
   const fromItems = [];
   for (const item of items) {
     const effects = item?.effects?.contents ?? item?.effects ?? [];
     for (const effect of effects) {
       if (effect?.transfer === false) continue; // явно выключенная передача
-      fromItems.push({ effect, source: item });
+      fromItems.push({ effect, source: item, fromItem: true });
     }
   }
   return [...own, ...fromItems];
+}
+
+/**
+ * Что показать в столбце «источник».
+ *
+ * У эффекта ПРЕДМЕТА это сам предмет: «Силовой меч», «Мутация: Рога». У
+ * эффекта, лежащего на акторе, источником числится сам актор — и строка
+ * получалась «Иван Грозный», то есть имя того же персонажа, чей лист открыт
+ * (найдено живой проверкой 06.09.2026 на Временном модификаторе). Полезное имя
+ * там несёт сам эффект: «Ослепляющая граната (Ag −10)».
+ */
+export function rowSourceName({ effect, source, fromItem }) {
+  if (!fromItem) return effect?.name || "—";
+  return source?.name || effect?.name || "—";
 }
 
 /** Действует ли эффект прямо сейчас — тот же признак, что держит isItemActive/syncItemEffectsDisabled. */
@@ -108,7 +128,8 @@ function isEffectActive(effect) {
  */
 export function buildActiveEffectRows(actor) {
   const rows = [];
-  for (const { effect, source } of applicableActorEffects(actor)) {
+  for (const entry of applicableActorEffects(actor)) {
+    const { effect, source } = entry;
     if (!isEffectActive(effect)) continue;
     const changes = effect?.system?.changes ?? effect?.changes ?? [];
     for (const change of changes) {
@@ -117,10 +138,19 @@ export function buildActiveEffectRows(actor) {
       rows.push({
         effectId:   effect.id,
         effectName: effect.name || "Эффект",
+        // Временный модификатор с листа (wdbc-5qvo) — единственная строка
+        // сводки, которую можно снять отсюда же: у неё нет предмета-владельца,
+        // гасить её больше негде. Срок показывается только у неё по той же
+        // причине — у эффекта предмета срока обычно нет вовсе.
+        temp:       isTempModifier(effect),
+        termLabel:  remainingLabel(effect?.duration),
         sourceId:   source?.id,
         sourceUuid: source?.uuid,
-        sourceName: source?.name || effect.name || "—",
-        sourceImg:  source?.img || effect.img || "icons/svg/aura.svg",
+        sourceName: rowSourceName(entry),
+        // Картинка — по тому же признаку: у эффекта на самом акторе портрет
+        // персонажа в столбце источника не сообщает ничего, там нужна иконка
+        // самого эффекта.
+        sourceImg:  (entry.fromItem ? source?.img : null) || effect.img || "icons/svg/aura.svg",
         key:        change.key,
         targetLabel: effectKeyLabel(change.key),
         type:       change.type,
