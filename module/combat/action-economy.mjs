@@ -31,6 +31,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
+import { turnStartFlagClears } from "../rules/turn-flags.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -112,30 +113,13 @@ export async function resetActionEconomy(actor) {
   if ((Number(sys.reactions?.value) || 0) !== reactMax) upd["system.reactions.value"] = reactMax;
   if ((Number(sys.reactions?.defenseValue) || 0) !== defenseMax)
     upd["system.reactions.defenseValue"] = defenseMax;
-  if (actor.getFlag("warhammer-dbc", "exposedAggressive")) upd["flags.warhammer-dbc.-=exposedAggressive"] = null;
-  if (actor.getFlag("warhammer-dbc", "running"))           upd["flags.warhammer-dbc.-=running"] = null;
-  // Just the Light/Лишь Свет (wdbc-1rno, combat/just-the-light.mjs): щит
-  // живёт «до начала следующего Хода» — тот же такт, что running/exposedAggressive.
-  if (actor.getFlag("warhammer-dbc", "justTheLightActive")) upd["flags.warhammer-dbc.-=justTheLightActive"] = null;
-  // Локус Неизбежности (wdbc-smc): штраф −10 живёт до начала СВОЕГО следующего
-  // Хода — снимается здесь же, тем же приёмом, что exposedAggressive/running.
-  if (actor.getFlag("warhammer-dbc", "inevitabilityPenalty")) upd["flags.warhammer-dbc.-=inevitabilityPenalty"] = null;
-  // Импульсное (movement-actions.mjs, markMovedThisTurn): «не двигался с
-  // прошлого раунда» начинается заново с каждым Ходом этого актора.
-  if (actor.getFlag("warhammer-dbc", "movedThisTurn"))     upd["flags.warhammer-dbc.-=movedThisTurn"] = null;
-  // Отскок (wdbc-9wvm, recoil-pool.mjs): дистанция за Раунд суммарно по всем
-  // Отскокам — тот же такт сброса, что и остальная экономика действий (см.
-  // заголовок recoil-pool.mjs). Инлайн, а не вызов resetRecoilPool() —
-  // держит один update на весь сброс (см. комментарий выше).
-  if (actor.getFlag("warhammer-dbc", "recoilPool"))         upd["flags.warhammer-dbc.-=recoilPool"] = null;
-  // Snapshot/Выстрел Навскидку (wdbc-1rno) читает эту категорию на выходе
-  // из Хода (processSnapshotTurnEnd, до сброса ниже) — сбрасывается здесь
-  // тем же тактом, что и movedThisTurn, следующий Ход начинается заново.
-  if (actor.getFlag("warhammer-dbc", "moveDegreeThisTurn")) upd["flags.warhammer-dbc.-=moveDegreeThisTurn"] = null;
-  // Калечащее (см. _maybeTriggerCrippling выше): счётчик и защёлка триггера
-  // считаются заново с каждым Ходом, тем же тактом, что movedThisTurn.
-  if (actor.getFlag("warhammer-dbc", "physicalApSpentThisTurn"))  upd["flags.warhammer-dbc.-=physicalApSpentThisTurn"] = null;
-  if (actor.getFlag("warhammer-dbc", "cripplingTriggeredThisTurn")) upd["flags.warhammer-dbc.-=cripplingTriggeredThisTurn"] = null;
+  // Флаги, живущие «до начала следующего своего Хода», гасятся ОДНИМ циклом по
+  // реестру (wdbc-5uae.1, rules/turn-flags.mjs) — раньше каждый был вписан
+  // сюда отдельной строкой по имени. Срок жизни метки это её свойство, и
+  // хранится он теперь при метке, а не списком в чужом файле: новая метка
+  // такого срока добавляется строкой в реестр и здесь ничего дописывать не
+  // надо. Патч вливается в общий update — по-прежнему один раунд-трип на всё.
+  Object.assign(upd, turnStartFlagClears(actor));
   if (Object.keys(upd).length) await actor.update(upd);
 }
 
