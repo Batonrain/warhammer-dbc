@@ -13,7 +13,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
 import fs   from "node:fs";
 import path from "node:path";
-import { isItemActive, createBlankEffect, gearRequiresWearing } from "../../module/apps/effects.mjs";
+import { isItemActive, createBlankEffect, gearRequiresWearing,
+         syncOrphanedModEffects } from "../../module/apps/effects.mjs";
 
 const MODULE = path.resolve(import.meta.dirname, "../../module");
 
@@ -56,8 +57,27 @@ describe("isItemActive: модификация и её носитель", () => 
     expect(isItemActive(mod(""))).toBe(false);
   });
 
-  it("носителя не найти (предмет пака, битая ссылка) — судим по своим полям", () => {
+  it("предмет вне актора (компендиум, боковая панель) — судим по своим полям", () => {
     expect(isItemActive(mod("armor-1"))).toBe(true);
+  });
+
+  it("носитель удалён с актора — модификация осиротела и больше не действует (wdbc-z6em)", () => {
+    // Тот же случай, что уже верно считает module/rules/character.mjs:205:
+    // ссылка на носителя есть, а носителя на акторе нет. Оружия/брони, в
+    // которую мод был вставлен, больше не существует — её улучшение обязано
+    // выключиться вместе с ней, а не остаться висеть на персонаже.
+    const m = mod("armor-1");
+    actorWith(m);   // брони armor-1 на акторе нет: её удалили
+
+    expect(isItemActive(m)).toBe(false);
+  });
+
+  it("включаемый мод-сирота не оживает от своего тумблера", () => {
+    const m = mod("wpn-1", { activatable: true, active: true });
+    m.type = "weaponMod";
+    actorWith(m);
+
+    expect(isItemActive(m)).toBe(false);
   });
 });
 
@@ -264,5 +284,61 @@ describe("картинка создаваемого эффекта", () => {
     };
     walk(MODULE);
     expect(offenders).toEqual([]);
+  });
+});
+
+
+// ── wdbc-z6em, вторая половина: сквозной путь «удалили носитель» ────────────
+//
+// Живая проверка 06.09.2026 показала, что одного верного предиката мало:
+// isItemActive возвращала false для мода-сироты, но СОХРАНЁННЫЙ флаг
+// ActiveEffect.disabled сам не пересчитывается — update пришёл не моду, а
+// удалённому носителю. В игре бонус Керамита продолжал висеть на персонаже
+// после удаления брони, хотя юнит-тест предиката был зелёный. Отсюда правило:
+// у каждой такой починки должен быть тест НА ПУТЬ, а не только на предикат.
+
+describe("syncOrphanedModEffects: эффекты гаснут вместе с удалённым носителем", () => {
+  /** Модификация с одним включённым эффектом и учётом вызовов обновления. */
+  function modWithEffect({ id = "mod", installedOn = "armor-1", disabled = false } = {}) {
+    const calls = [];
+    const m = {
+      id, type: "armorMod", system: { installedOn },
+      effects: { contents: [{ id: "fx1", disabled }] },
+      updateEmbeddedDocuments: async (type, updates) => { calls.push({ type, updates }); }
+    };
+    return { m, calls };
+  }
+
+  it("носителя больше нет — эффект мода выключается", async () => {
+    const { m, calls } = modWithEffect();
+    const actor = actorWith(m);   // брони armor-1 на акторе уже нет
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toHaveLength(1);
+    expect(calls[0].updates).toEqual([{ _id: "fx1", disabled: true }]);
+  });
+
+  it("модификации ДРУГОГО носителя не трогаются", async () => {
+    const { m, calls } = modWithEffect({ id: "other", installedOn: "armor-2" });
+    const actor = actorWith(m);
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toEqual([]);
+  });
+
+  it("эффект уже выключен — лишнего обновления не шлём", async () => {
+    const { m, calls } = modWithEffect({ disabled: true });
+    const actor = actorWith(m);
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toEqual([]);
+  });
+
+  it("носитель на месте и надет (сняли не его) — эффект остаётся включённым", async () => {
+    const { m, calls } = modWithEffect();
+    const actor = actorWith(armor("armor-1", true), m);
+
+    await syncOrphanedModEffects(actor, "armor-1");
+    expect(calls).toEqual([]);
   });
 });
