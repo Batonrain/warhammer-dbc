@@ -560,3 +560,63 @@ describe("боевые тесты берут модификаторы из ре�
     expect(captured.chat.at(-1).content).not.toContain("Испытание");
   });
 });
+
+// ── Парирование СТРЕЛЬБЫ: только «Щит Клинков» (wdbc-3e2x) ─────────────────
+//
+// Корбук, стр. 62: «Если персонаж вооружен оружием с Балансом 1 и выше, он
+// может парировать им стрелковую атаку. Успех на этом тесте парирования
+// ВСЕГДА блокирует только одно попадание, независимо от количества Успехов.»
+// До этой правки кнопка Парирования на карточке стрельбы работала у кого
+// угодно и с любым балансом — система была ЩЕДРЕЕ книги, а не скупее.
+describe("_performParry: стрельба (wdbc-3e2x)", () => {
+  const BLADE_SHIELD = "dodge.core.bladeShield";
+
+  function grantBladeShield() {
+    registerRuleSource("test-bs", () => [{ id: "bs", label: "Щит Клинков",
+      effects: [{ kind: "grantFlag", target: BLADE_SHIELD }] }]);
+  }
+
+  /** Парирование стрелковой атаки: последний аргумент isMelee = false. */
+  async function rangedParry({ balance = 1, blade = true, hitsCount = 1 } = {}) {
+    if (blade) grantBladeShield();
+    const sword = equippedMelee({ balance });
+    const actor = attacker({ items: [sword] });
+    await _performParry(actor, 0, "Actor.attacker-1", hitsCount, false, false, false);
+    return captured.chat.at(-1).content;
+  }
+
+  it("без Таланта — отказ с названной причиной, бросок не делается", () => {
+    return rangedParry({ blade: false }).then(html => {
+      expect(html).toContain("Щит Клинков");
+      expect(html).not.toContain("Порог");
+    });
+  });
+
+  it("Талант есть, но Баланс 0 — отказ: книга требует Баланс 1 и выше", async () => {
+    const html = await rangedParry({ balance: 0 });
+    expect(html).toContain("Баланс");
+    expect(html).not.toContain("Порог");
+  });
+
+  it("Талант и Баланс 1 — Парирование стрельбы проходит как обычный тест", async () => {
+    const html = await rangedParry({ balance: 1 });
+    expect(html).toContain("Парирование успешно");
+  });
+
+  it("успех снимает РОВНО одно попадание очереди, сколько бы степеней ни выпало", async () => {
+    // WS 45, бросок 10 — четыре степени успеха. В рукопашной они сняли бы
+    // четыре попадания; в стрельбе книга разрешает ровно одно.
+    captured.dice = [10];
+    const html = await rangedParry({ balance: 1, hitsCount: 3 });
+    expect(html).toContain("снимает 1 из 3");
+  });
+
+  it("в рукопашной то же самое снимает попадания по степени — правило не протекло", async () => {
+    captured.dice = [10];
+    grantBladeShield();
+    const sword = equippedMelee({ balance: 1 });
+    const actor = attacker({ items: [sword] });
+    await _performParry(actor, 0, "Actor.attacker-1", 3);
+    expect(captured.chat.at(-1).content).toContain("снимает все 3");
+  });
+});

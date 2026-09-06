@@ -295,7 +295,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}"${isMelee ? "" : ` title="Стрельбу парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
