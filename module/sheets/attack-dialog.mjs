@@ -107,7 +107,13 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // зависит около восьмидесяти мест расчёта (см. wdbc-uh56 — окно атаки это
   // одна длинная последовательная сборка). Поэтому рукопашный профиль у
   // стрелкового выбирается ДО открытия окна — в HUD, — и приходит сюда уже
-  // выбранным; список профилей внутри окна кросс-видовые не предлагает.
+  // выбранным.
+  //
+  // Что список профилей внутри окна не предложит профиль ДРУГОГО вида — не
+  // само собой разумеется, а отдельно обеспечено фильтром в
+  // attack/selection.mjs (profileOptions). Без него игрок переключал бы вид
+  // теста уже после того, как окно посчитало порог, и бросок расходился бы с
+  // окном — там же разобрано, чем именно.
   const isMelee = attackIsMelee(sys, { forceMelee, profile: startProfile });
   const charKey = isMelee ? "ws" : "bs";
 
@@ -1061,6 +1067,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     content,
     techniqueOpts,
     isMelee,
+    forceMelee,
     wp,
     stance,
     gripKey,
@@ -1146,10 +1153,12 @@ export async function showAttackDialogNoWeapon(actor, techDef) {
       </div>
     </div>` : "";
 
-  // Урон безоружного удара, стр. 40 (сейчас сюда доходит только импровизация
-  // стрелковым оружием в упор — gunMeleeStrike в apps/hud.mjs; Кулак/Пинок/
-  // Удар головой переехали в обычные Item'ы, module/sheets/attack-dialog.mjs
-  // showAttackDialog, с альт-профилем Unarmed Warrior вместо этой ветки).
+  // Урон безоружного удара, стр. 40. Кулак/Пинок/Удар головой переехали в
+  // обычные Item'ы (showAttackDialog выше, альт-профиль Unarmed Warrior), а
+  // удар стрелковым в упор — в профиль оружия (wdbc-bs0q), так что ни один из
+  // прежних поставщиков этой ветки в неё больше не заходит. Живой остаётся
+  // из-за apps/cancerous-healing.mjs — он единственный зовёт
+  // showAttackDialogNoWeapon.
   const allRolls = [roll];
   let unarmedDmgSection = "";
   if (hit && techDef.damage) {

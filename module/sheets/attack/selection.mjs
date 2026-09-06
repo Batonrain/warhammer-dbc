@@ -17,6 +17,7 @@ import { esc }                     from "../../helpers/utils.mjs";
 import { hasRuleFlag }             from "../../rules/flags.mjs";
 import { hasRecoilSuppressor }     from "../../combat/armor-mods.mjs";
 import { isFusedByHandOfDeath }    from "../../rules/hand-of-death.mjs";
+import { attackIsMelee }           from "../../combat/weapon-profiles.mjs";
 import { tentacleBonusSuppressed } from "../../rules/tentacle-hand-form.mjs";
 
 /**
@@ -179,13 +180,29 @@ export function buildSelection(v) {
   // Воин, стр. 40, module/constants/capabilities.mjs: unarmed.warriorProfile) —
   // такой профиль лежит на том же предмете, но выбрать его можно только с
   // Талантом.
+  //
+  // КРОСС-ВИДОВЫЕ ПРОФИЛИ В СПИСОК НЕ ПОПАДАЮТ (wdbc-bs0q). Вид теста
+  // фиксируется на входе в окно (attack-dialog.mjs: isMelee и charKey — const),
+  // а бросок пересчитывает его заново по ВЫБРАННОМУ профилю
+  // (combat/attack.mjs::_executeAttackRoll). Пока список предлагал профили
+  // обоих видов, игрок мог открыть окно выстрела и переключиться в нём на
+  // «Удар в упор»: окно считало порог по BS, а бросок ту же атаку — рукопашной
+  // (прибавлял S.b, не тратил патрон, не проверял заклинивание). Ровно то
+  // расхождение окна и броска, ради устранения которого заведена attackIsMelee.
+  // Рукопашный профиль у стрелкового выбирается ДО открытия окна — кнопкой «в
+  // упор» в HUD, и тогда окно открывается уже рукопашным, а в списке остаётся
+  // он один.
+  const sameKind = profile => attackIsMelee(sys, { profile }) === isMelee;
   const profileOptions = atkProfiles.length ? [
-    { idx: -1, label: sys.profileLabel || "Основной", dmg: sys.damage || "", allowed: true },
+    ...(sameKind(null)
+      ? [{ idx: -1, label: sys.profileLabel || "Основной", dmg: sys.damage || "", allowed: true }]
+      : []),
     ...atkProfiles.map((p, i) => {
       const allowed = !p.requiresCapability || hasRuleFlag(actor, p.requiresCapability);
       const reason  = allowed ? "" : `Нужно: ${CAPABILITIES[p.requiresCapability]?.source || p.requiresCapability}`;
-      return { idx: i, label: p.label || `Проф. ${i + 1}`, dmg: p.damage || "", allowed, reason };
-    })
+      return { idx: i, label: p.label || `Проф. ${i + 1}`, dmg: p.damage || "", allowed, reason,
+               kind: attackIsMelee(sys, { profile: p }) };
+    }).filter(o => o.kind === isMelee)
   ] : [];
   function computeLockNoteHtml(pIdx) {
     const category = categoryFor(pIdx);
