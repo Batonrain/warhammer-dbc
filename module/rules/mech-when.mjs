@@ -99,6 +99,21 @@
 // "undivided" явно не выбран). Нет актора (предпросмотр) — условие пройдено,
 // тот же принцип, что у остальных гейтов.
 
+// ── Качество предмета (when.quality/negateQuality) ──────────────────────────
+// Девятый независимый гейт (wdbc-9k2q): список ключей ITEM_QUALITY
+// (poor/common/good/best/artisan), между вариантами ИЛИ — та же форма списка,
+// что у Тира Ран и Покровителя. ВТОРОЙ гейт после субмутации, который смотрит
+// на САМ ПРЕДМЕТ (item.system.quality), а не на актора: книга сплошь и рядом
+// пишет «Good.Q умеет ещё и вот это» (Откатная Перчатка: Recoil игнорирует
+// только Good.Q и Best.Q; Best.Q вдобавок снимает штрафы за оружие Легиона и
+// Огринов), и до этого гейта выразить такую разницу было нечем — запись либо
+// работала всем ступеням разом, либо не заводилась вовсе.
+// Нет предмета (вызов вне контекста Механики — тот же случай, что «нет
+// актора» у Геносемени) — условие пройдено. Качество на предмете не
+// проставлено — читается как "common" (то же умолчание, что в схемах:
+// StringField initial "common"), а НЕ как «не пройдено»: пустое поле у старых
+// данных значит «обычное», а не «никакое».
+
 import { itemHasName, PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
@@ -125,6 +140,11 @@ export function whenTalentSpec(when) {
 /** Заполненные ключи Состояний из entry.when.condition. */
 export function whenCondition(when) {
   return (when?.condition || []).filter(Boolean);
+}
+
+/** Заполненные ключи Качества предмета из entry.when.quality. */
+export function whenQuality(when) {
+  return (when?.quality || []).filter(Boolean);
 }
 
 /** Заполненные ключи тира Ран из entry.when.woundTier. */
@@ -192,9 +212,11 @@ export function entryWhenOk(actor, entry, item = null) {
   const patronGods = whenPatronGod(entry?.when);
   const requireSealedArmour = !!entry?.when?.requireSealedArmour;
   const condKeys = whenCondition(entry?.when);
+  const quals = whenQuality(entry?.when);
   const preds = whenPredicates(entry?.when);
   if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
-      && !patronGods.length && !requireSealedArmour && !condKeys.length && !preds.length) return true;
+      && !patronGods.length && !requireSealedArmour && !condKeys.length && !quals.length
+      && !preds.length) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -255,6 +277,14 @@ export function entryWhenOk(actor, entry, item = null) {
     sealedOk = entry.when.negateSealedArmour ? !sealed : sealed;
   }
 
+  let qualOk = true;
+  if (quals.length && item) {
+    // Пустое/непроставленное качество — «Обычное», как в схемах предметов.
+    const q = item.system?.quality || "common";
+    const matches = quals.includes(q);
+    qualOk = entry.when.negateQuality ? !matches : matches;
+  }
+
   let predOk = true;
   if (preds.length && actor) predOk = preds.every(([key, value]) => predicateOk(key, actor, value));
 
@@ -267,7 +297,8 @@ export function entryWhenOk(actor, entry, item = null) {
   // По умолчанию гейты складываются через «И» — так было всегда, и ни одна
   // существующая запись поведения не меняет.
   if (!entry?.when?.anyOf) {
-    return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk && predOk;
+    return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk
+        && qualOk && predOk;
   }
 
   // when.anyOf — «достаточно одного гейта» (wdbc-n48f). Без него способность
@@ -275,7 +306,7 @@ export function entryWhenOk(actor, entry, item = null) {
   // записями, и они расходились при первой же правке.
   //
   // Считаются ТОЛЬКО НАСТРОЕННЫЕ гейты. Ненастроенный даёт true (он «пройден»),
-  // и наивное ИЛИ по всем восьми пропускало бы вообще всё.
+  // и наивное ИЛИ по всем гейтам разом пропускало бы вообще всё.
   const configured = [
     [conditions.length, geneOk],
     [subs.length, subOk],
@@ -285,6 +316,7 @@ export function entryWhenOk(actor, entry, item = null) {
     [patronGods.length, patronOk],
     [requireSealedArmour, sealedOk],
     [condKeys.length, condOk],
+    [quals.length, qualOk],
     [preds.length, predOk]
   ].filter(([on]) => on);
 
