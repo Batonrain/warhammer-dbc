@@ -1,8 +1,15 @@
 // module/rules/sources.mjs
 //
-// Реестр источников правил. Источник — функция (actor, ctx) => массив правил.
-// Добавить книгу означает зарегистрировать источник и положить данные; ядро при
-// этом не меняется.
+// РЕГИСТРАЦИИ источников правил. Источник — функция (actor, ctx) => массив
+// правил. Добавить книгу означает зарегистрировать источник здесь и положить
+// данные; ядро при этом не меняется.
+//
+// Само хранилище живёт отдельно, в rules/source-registry.mjs, и намеренно не
+// импортирует ничего: этот файл тянет всю библиотеку правил и все подсистемы,
+// и пока сборка правил (collect.mjs) ходила за списком источников СЮДА, ни один
+// из них не мог спросить у актора возможность — круг замыкался и подвешивал
+// загрузку модулей (wdbc-795h). Три функции реестра реэкспортируются ниже:
+// их импортируют отсюда три с лишним десятка файлов.
 
 import { ASTARTES_RULES } from "./library/astartes.mjs";
 import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_RULES,
@@ -10,31 +17,20 @@ import { EXODITE_RULES, DRUKHARI_RULES, AZURIANE_RULES, HARLEQUIN_RULES, YNNARI_
 import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
+import { CONDITION_RULES } from "./library/conditions.mjs";
 import { rulesFromItemMechanics } from "./item-rules.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
-import { adjutantRerollRules } from "./adjutant.mjs";
 import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
+import { situationalRules } from "./situational.mjs";
+import { registerRuleSource } from "./source-registry.mjs";
 
-const SOURCES = new Map();
-
-export function registerRuleSource(key, fn) {
-  SOURCES.set(key, fn);
-}
-
-export function getRuleSources() {
-  return [...SOURCES.entries()];
-}
-
-/** Очистка реестра. Нужна тестам, чтобы подставить свои источники. */
-export function clearRuleSources() {
-  SOURCES.clear();
-}
+export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
 
 /**
  * Ключ Происхождения лежит на предмете-носителе, а не в system актора. Тип
@@ -48,6 +44,18 @@ const hwKey = actor =>
 // ни к Происхождению, а отбираются по условию `when`. Так живёт «Проворный» —
 // Черта нескольких рас, штраф от которой достаётся не носителю, а атакующему.
 registerRuleSource("core", () => CORE_RULES);
+
+// Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t): Усталость,
+// Марш, снятый шлем, выключенная силовая броня, Перевес инвентаря. Числа
+// зависят от состояния актора и от того, чем именно он сейчас бросает,
+// поэтому источник — функция от (актор, контекст), как у Зависимости, а не
+// готовый список записей. См. module/rules/situational.mjs.
+registerRuleSource("situational", (a, ctx) => situationalRules(a, ctx));
+
+// Штрафы книжных Состояний (wdbc-r5o7) — та же логика: правило не привязано
+// ни к расе, ни к предмету, отбор целиком по `when.hasCondition`/
+// `when.targetHasCondition`.
+registerRuleSource("conditions", () => CONDITION_RULES);
 
 // Машинная часть расовых Черт остаётся кодом (этап 3 плана): в данные уехало
 // описание расы, а не её правила.
@@ -105,10 +113,11 @@ registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
 // Навыка, не только атаках), не источник-владелец Мутации.
 registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
 
-registerRuleSource("adjutant", a => {
-  if (typeof game === "undefined") return [];
-  return adjutantRerollRules(a, game.actors ?? []);
-});
+// Adjutant/Адъютант регистрирует себя САМ, в module/rules/adjutant.mjs, и
+// отсюда намеренно не импортируется (wdbc-795h). Причина в графе импортов:
+// Адъютант — единственный источник, которому нужно спросить у актора
+// возможность (hasAbility → hasRuleFlag → collect.mjs → sюда), и статический
+// импорт отсюда замыкал круг, подвешивая загрузку модулей насмерть.
 
 // Зависимость (wdbc-5inv) — штраф −10 к тестам Навыков, пока не утолена.
 // Считается по времени (game.time.worldTime), не по when: правило действует

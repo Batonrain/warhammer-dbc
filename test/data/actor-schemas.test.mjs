@@ -193,6 +193,10 @@ const DEVIATIONS = {
     "conditions.suffocating": false,
     "conditions.suffocatingRounds": 0,
     "conditions.gangrene": false,
+    // Галлюцинации (стр. 168 Арсенала, wdbc-r5o7.8) — counter:"rounds"
+    // заведён гораздо позже template.json (раньше decay не срабатывал
+    // вовсе, поле отсутствовало).
+    "conditions.hallucinogenicRounds": 0,
     "conditions.lostHands": false,
     "conditions.lostHandsCount": 0,
     "conditions.lostArms": false,
@@ -239,6 +243,15 @@ const DEVIATIONS = {
     crippledWounds: [],
     // Тумблер «В Ярости» (wdbc-plsf) — заведён гораздо позже template.json.
     inRage: false,
+    // Переопределение привязки Склонностей (wdbc-1pvq) — «у нашего стола
+    // Уклонение относится к Интеллекту и Знанию»; свободный объект, пусто =
+    // книжная привязка. Заведено гораздо позже template.json.
+    aptitudeBinding: {},
+    // Укрытие по частям тела (wdbc-qkua) — своё число AP на случай стола без
+    // размеченных зон и шесть галочек «эта конечность прикрыта»; заведено
+    // гораздо позже template.json, см. rules/cover-locations.mjs.
+    cover: { ap: 0, head: false, leftArm: false, rightArm: false,
+             body: false, leftLeg: false, rightLeg: false },
     // Аблативные Раны (wdbc-smy7, напр. Дар Нургла «Абсурдно Толстый») —
     // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
     "wounds.ablative": 0,
@@ -249,6 +262,9 @@ const DEVIATIONS = {
     "ablativeApShield.max": 0,
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
+    // Постоянный модификатор Навыка (wdbc-q4wb) — поле на листе рядом с Итогом,
+    // заведено гораздо позже template.json; входит в total (rules/character.mjs).
+    ...Object.fromEntries(Object.keys(SKILLS_DEF).map(k => [`skills.${k}.mod`, 0])),
     ...OWN_DEVIATIONS[type]
   }]))
 };

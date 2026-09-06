@@ -12,6 +12,7 @@ import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
+import { attackIsMelee } from "./weapon-profiles.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -28,8 +29,9 @@ import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
-import { evasionImperativeBonus }                     from "./imperative-bonuses.mjs";
+import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
 import { isFusedByHandOfDeath }                       from "../rules/hand-of-death.mjs";
+import { counterAttackTriggers, counterAttackSectionHtml } from "./counter-attack.mjs";
 
 /**
  * Экстремальный урон (стр. 166-170): куб урона выбросил Х+ — порог берётся из
@@ -100,7 +102,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const sys     = item.system;
   // Метательное (Граната и т.п.) по умолчанию бросается по BS — стр. 40:
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
-  const isMelee = sys.weaponClass === "melee" || !!opts.forceMelee;
+  // Решение «рукопашная ли это атака» одно на окно и на бросок
+  // (combat/weapon-profiles.mjs::attackIsMelee, wdbc-bs0q): выбранный ПРОФИЛЬ
+  // важен наравне с классом оружия, иначе «Удар в упор» катился бы тестом по
+  // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
+  // из стрелковой ветки.
+  const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
   // Выбранный профиль атаки (стр. 207-221) и хват (стр. 39) переопределяют урон.
   const P = opts.profile || null;
   const gripDmgFlat = Number(opts.gripDmgFlat) || 0;
@@ -532,7 +539,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // остаток дистанции — иначе диалог открывать не на что.
   const evasionPool = evasionPoolEntry
     ? { successes: evasionPoolEntry.successes,
-        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount),
+        ...poolAffordableHits(evasionPoolEntry, techOpts.targetDodgeMod ?? 0, hitsCount, defenderActor),
         canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0 }
     : null;
 
@@ -541,6 +548,25 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Не блокирует построение карточки: чат-сообщение о связывании уходит своим,
   // отдельным сообщением следом.
   if (hit && techOpts.technique === "grapple") applyGrappleOnHit(actor, targetToken, hit, techOpts);
+
+  // Встречная атака (wdbc-2wy7, Шипы/Цепные Бандольеры, module/combat/
+  // counter-attack.mjs, kind:"counterAttack" Конструктора): defenderActor
+  // (цель ЭТОЙ атаки) бьёт actor (атакующего) в ответ, если он промахнулся
+  // рукопашной по ней ИЛИ провёл против неё безоружную атаку/приём «Захват» —
+  // независимо от исхода Захвата (контакт с шипами уже случился), поэтому
+  // считается отдельно от applyGrappleOnHit выше (тот только про состояние
+  // Борьбы после УСПЕШНОГО Захвата).
+  let counterAttackBlock = "";
+  if (defenderActor) {
+    const ccTriggers = counterAttackTriggers({
+      isMelee, hit, technique: techOpts.technique || "", meleeCategory: sys.meleeCategory || ""
+    });
+    if (ccTriggers.onMiss || ccTriggers.onUnarmedOrGrapple) {
+      const cc = await counterAttackSectionHtml(defenderActor, actor, ccTriggers);
+      counterAttackBlock = cc.html;
+      allRolls.push(...cc.rolls);
+    }
+  }
 
   // Перезарядка: оружие с Recharge и Максимальный режим стреляют раз в 2 хода
   // (wdbc-ai0o) — rechargeTurnsRemaining:1 читает combat/recharge.mjs на
@@ -598,7 +624,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Императив (wdbc-yu32): плоский бонус/штраф активного Императива
         // цели к тесту Избегания — суммируется с базовым модификатором, не
         // заменяет его (у Карабина/рукопашной стрельбы своя причина бонуса).
+        // wdbc-hdxj: dodgeModRecoil — тот же базовый модификатор, но с
+        // recoil-специфичным знаком Императива вместо обычного (null, если у
+        // защищающегося нет активного Evasion/Fortress Imperative — тогда
+        // defenseSection не рендерит декларацию «планирую Отскочить» вовсе).
         dodgeMod: (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor),
+        dodgeModRecoil: hasEvasionRecoilImperative(defenderActor)
+          ? (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor, { planningRecoil: true })
+          : null,
         parryMod: techOpts.targetParryMod ?? 0,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
@@ -629,7 +662,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         props:         buildPropertyChatBlock(wProps),
         quality:       buildQualityChatBlock(item),
         splinter:      isSplinter(sys) ? splinterReminders() : "",
-        targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false }),
+        // ammoName (wdbc-utaw) — какой боеприпас заряжен на ЭТОТ выстрел, для
+        // спец-боеприпасов, чей эффект зависит от собственной идентичности
+        // (Гиперрост), не только от ключа свойства Toxic.
+        targetEffects: buildTargetEffectButtons(wProps, { hit, netDamageKnown: false, ammoName: loadedAmmo?.name || "" }),
+        counterAttack: counterAttackBlock,
         dice:          renderedDice
       }
     }),

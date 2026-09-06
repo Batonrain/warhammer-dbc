@@ -12,6 +12,8 @@ import { isVampiricDependencyItem, vampiricMonthsSince, vampiricTestRequired,
          vampiricTestPenalty, satisfyVampiricDependency } from "../rules/vampiric-dependency.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { isVampiricDependencyItem };
 
@@ -43,26 +45,35 @@ export async function useSatisfyVampiric(item) {
 
 /**
  * Тест T+0 (−10 за каждый предыдущий месяц воздержания) — провал даёт 1
- * Порчи. Компактная карточка в чат, тем же стилем, что у Проявления Демона
- * (sheets/tabs/possession.mjs::toggleManifest).
+ * Порчи. Карточка — общего вида (helpers/test-card.mjs, wdbc-kuun). Раньше
+ * она рисовалась своей разметкой wh-poss-card, как у Проявления Демона: тест
+ * с Порогом выглядел иначе, чем все остальные тесты в системе, и база T в
+ * нём вообще не показывалась — только «бросок против числа».
  */
 export async function useVampiricTest(actor, item) {
   if (!isVampiricDependencyItem(item) || !actor) return;
   const months  = vampiricMonthsSince(item, game.time?.worldTime ?? 0);
   const penalty = vampiricTestPenalty(months);
   const t       = actor.system.characteristics?.t?.total ?? 0;
-  const target  = Math.max(0, t + penalty);
+  // Общий сбор модификаторов (wdbc-ct65.3): раньше этот тест катался мимо
+  // реестра правил — ни Усталость, ни Черты/Таланты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "t" });
+  const target  = Math.max(0, t + penalty + ruleMods.total);
   const roll    = await (new Roll("1d100")).evaluate();
   const success = roll.total <= target;
   const cor     = actor.system.corruption?.value ?? 0;
   if (!success) await actor.update({ "system.corruption.value": Math.min(100, cor + 1) });
 
-  const body = `
-    <div class="wh-poss-card">
-      <div class="wh-poss-card-h">🩸 ГОЛОД — ${esc(item.name)}</div>
-      <div class="wh-poss-card-r">Тест T${penalty ? ` ${penalty}` : "+0"}: <b>${roll.total}</b> против <b>${target}</b> —
-        <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
-      <div class="wh-poss-card-n">Воздержание: ${months} мес.</div>
-    </div>`;
-  await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: body });
+  await postTestCard(actor, {
+    icon: rollIcon("blood", "#8b1a1a"),
+    title: `ГОЛОД — ${esc(item.name)}`,
+    threshold: thresholdLine({
+      label: "T", base: t,
+      parts: [penalty ? `воздержание ${penalty}` : "", ...ruleMods.parts].filter(Boolean),
+      threshold: target
+    }),
+    lines: [`<div class="roll-threshold">Воздержание: ${months} мес.</div>`],
+    rv: roll.total,
+    outcome: outcomeHtml(success, success ? "Успех" : "Провал: +1 Порчи")
+  }, { rolls: [roll] });
 }

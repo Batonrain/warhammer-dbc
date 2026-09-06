@@ -6,11 +6,13 @@
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
-import { fatiguePenalty } from "./conditions.mjs";
+import { conditionAdjustFields, conditionApplyFields, conditionRemoveFields } from "./conditions.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
-import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
+import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 
 const DELIVERY_RU = {
   injection: "Инъекция",
@@ -68,10 +70,7 @@ export async function applyEffectExtras(target, fx) {
   const chars = target.system.characteristics;
 
   if (fx.removesHaemorrhagingLevels > 0) {
-    const cur = target.system.conditions?.haemorrhagingLevel || 0;
-    const nv = Math.max(0, cur - fx.removesHaemorrhagingLevels);
-    updates["system.conditions.haemorrhagingLevel"] = nv;
-    updates["system.conditions.haemorrhaging"] = nv > 0;
+    Object.assign(updates, conditionAdjustFields(target, "haemorrhaging", -fx.removesHaemorrhagingLevels));
     lines.push(`${rollIcon("blood","#ff6b6b")}Снято ур. Обескровливания: <b>${fx.removesHaemorrhagingLevels}</b>`);
   }
 
@@ -149,17 +148,12 @@ export async function applyDrug(owner, item, recipient = null) {
   const fx = sys.specialEffects || {};
 
   if (fx.removesBleedingLevels > 0) {
-    const cur = actor.system.conditions?.bleedingLevel || 0;
-    const newVal = Math.max(0, cur - fx.removesBleedingLevels);
-    actorUpdates["system.conditions.bleedingLevel"] = newVal;
-    actorUpdates["system.conditions.bleeding"] = newVal > 0;
+    Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
   }
 
   if (fx.removesFatigueLevels > 0) {
-    const cur = actor.system.conditions?.fatiguedLevel || 0;
-    const newVal = Math.max(0, cur - fx.removesFatigueLevels);
-    actorUpdates["system.conditions.fatiguedLevel"] = newVal;
-    actorUpdates["system.conditions.fatigued"] = newVal > 0;
+    // «Усталость» — зеркало system.fatigue.value (rules/character.mjs), тег
+    // сам пересчитается из него; conditionAdjustFields на "fatigued" — no-op.
     const fatVal = actor.system.fatigue?.value || 0;
     actorUpdates["system.fatigue.value"] = Math.max(0, fatVal - fx.removesFatigueLevels);
   }
@@ -169,42 +163,25 @@ export async function applyDrug(owner, item, recipient = null) {
   }
 
   if (fx.removesCondition) {
-    const condDef = CONDITIONS_DEF[fx.removesCondition];
     const lvlToRemove = fx.removesConditionLevel || 0;
-
-    if (condDef?.hasLevel && condDef.levelField && lvlToRemove > 0) {
-      const curLvl = actor.system.conditions?.[condDef.levelField] || 0;
-      const newLvl = Math.max(0, curLvl - lvlToRemove);
-      actorUpdates[`system.conditions.${condDef.levelField}`] = newLvl;
-      actorUpdates[`system.conditions.${fx.removesCondition}`] = newLvl > 0;
-      if (fx.removesCondition === "fatigued") {
-        const fatVal = actor.system.fatigue?.value || 0;
-        actorUpdates["system.fatigue.value"] = Math.max(0, fatVal - lvlToRemove);
-      }
-    } else {
-      actorUpdates[`system.conditions.${fx.removesCondition}`] = false;
-      if (condDef?.hasLevel && condDef.levelField) {
-        actorUpdates[`system.conditions.${condDef.levelField}`] = 0;
-      }
-      if (fx.removesCondition === "fatigued") {
-        actorUpdates["system.fatigue.value"] = 0;
-      }
+    Object.assign(actorUpdates, lvlToRemove > 0
+      ? conditionAdjustFields(actor, fx.removesCondition, -lvlToRemove)
+      : conditionRemoveFields(fx.removesCondition));
+    if (fx.removesCondition === "fatigued") {
+      const fatVal = actor.system.fatigue?.value || 0;
+      actorUpdates["system.fatigue.value"] = lvlToRemove > 0 ? Math.max(0, fatVal - lvlToRemove) : 0;
     }
   }
 
   if (fx.removesRadiation) {
-    actorUpdates["system.conditions.radiation"] = false;
-    actorUpdates["system.conditions.radiationLevel"] = 0;
+    Object.assign(actorUpdates, conditionRemoveFields("radiation"));
   }
 
   if (fx.grantsCondition) {
-    const condDef = CONDITIONS_DEF[fx.grantsCondition];
-    const lvlToGrant = fx.grantsConditionLevel ?? 1;
-    actorUpdates[`system.conditions.${fx.grantsCondition}`] = true;
-    if (condDef?.hasLevel && condDef.levelField) {
-      const curLvl = actor.system.conditions?.[condDef.levelField] || 0;
-      actorUpdates[`system.conditions.${condDef.levelField}`] = curLvl + lvlToGrant;
-    }
+    const lvlToGrant  = fx.grantsConditionLevel ?? 1;
+    const levelField  = conditionLevelField(fx.grantsCondition);
+    const curLvl      = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
+    Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
     if (fx.grantsCondition === "fatigued") {
       const fatVal = actor.system.fatigue?.value || 0;
       actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
@@ -329,14 +306,11 @@ export async function applyDrug(owner, item, recipient = null) {
     Осталось: ${qty}
   </div></div>`;
 
-  const rollMode = game.settings.get("core", "rollMode");
+  // Карточка собрана выше построчно (набор строк зависит от того, что именно
+  // препарат делает) — общий helpers/test-card.mjs берёт на себя публикацию:
+  // говорящего, режим броска и звук (wdbc-kuun).
   const allRolls = [...(durationRoll ? [durationRoll] : []), ...extras.rolls];
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: owner }),
-    content: chatContent,
-    ...(allRolls.length ? { rolls: allRolls } : {}),
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(owner, chatContent, { rolls: allRolls });
 }
 
 export async function triggerAfterEffect(actor, item) {
@@ -347,17 +321,10 @@ export async function triggerAfterEffect(actor, item) {
   const actorUpdates = {};
 
   if (fx.removesBleedingLevels > 0) {
-    const cur = actor.system.conditions?.bleedingLevel || 0;
-    const newVal = Math.max(0, cur - fx.removesBleedingLevels);
-    actorUpdates["system.conditions.bleedingLevel"] = newVal;
-    actorUpdates["system.conditions.bleeding"] = newVal > 0;
+    Object.assign(actorUpdates, conditionAdjustFields(actor, "bleeding", -fx.removesBleedingLevels));
   }
 
   if (fx.removesFatigueLevels > 0) {
-    const cur = actor.system.conditions?.fatiguedLevel || 0;
-    const newVal = Math.max(0, cur - fx.removesFatigueLevels);
-    actorUpdates["system.conditions.fatiguedLevel"] = newVal;
-    actorUpdates["system.conditions.fatigued"] = newVal > 0;
     const fatVal = actor.system.fatigue?.value || 0;
     actorUpdates["system.fatigue.value"] = Math.max(0, fatVal - fx.removesFatigueLevels);
   }
@@ -367,13 +334,10 @@ export async function triggerAfterEffect(actor, item) {
   }
 
   if (fx.grantsCondition) {
-    const condDef = CONDITIONS_DEF[fx.grantsCondition];
     const lvlToGrant = fx.grantsConditionLevel ?? 1;
-    actorUpdates[`system.conditions.${fx.grantsCondition}`] = true;
-    if (condDef?.hasLevel && condDef.levelField) {
-      const curLvl = actor.system.conditions?.[condDef.levelField] || 0;
-      actorUpdates[`system.conditions.${condDef.levelField}`] = curLvl + lvlToGrant;
-    }
+    const levelField = conditionLevelField(fx.grantsCondition);
+    const curLvl     = levelField ? (actor.system.conditions?.[levelField] || 0) : 0;
+    Object.assign(actorUpdates, conditionApplyFields(fx.grantsCondition, levelField ? curLvl + lvlToGrant : null, actor));
     if (fx.grantsCondition === "fatigued") {
       const fatVal = actor.system.fatigue?.value || 0;
       actorUpdates["system.fatigue.value"] = fatVal + lvlToGrant;
@@ -465,19 +429,12 @@ export async function triggerAfterEffect(actor, item) {
 
       chatContent += "</div>";
 
-      const rollMode = game.settings.get("core", "rollMode");
-      await ChatMessage.create(ChatMessage.applyRollMode({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        content: chatContent,
-        rolls: [roll, ...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls],
-        sound: CONFIG.sounds.dice
-      }, rollMode));
+      await postTestCard(actor, chatContent,
+        { rolls: [roll, ...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls] });
     } catch(e) {
       chatContent += "</div>";
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        content: chatContent
-      });
+      // Формула не сработала — кубика нет, поэтому без звука.
+      await postTestCard(actor, chatContent, { sound: false });
       ui.notifications.warn(`Не удалось бросить формулу пост-эффекта: ${sys.afterEffectDice}`);
       console.error(e);
     }
@@ -485,13 +442,8 @@ export async function triggerAfterEffect(actor, item) {
     if (fx.customEffect)
       chatContent += `<div class="roll-threshold">${rollIcon("target","#8fd0ff")}${fx.customEffect}</div>`;
     chatContent += "</div>";
-    const rollMode = game.settings.get("core", "rollMode");
     const postRolls = [...(charDamageRoll ? [charDamageRoll] : []), ...extras.rolls];
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: chatContent,
-      ...(postRolls.length ? { rolls: postRolls, sound: CONFIG.sounds.dice } : {})
-    }, rollMode));
+    await postTestCard(actor, chatContent, { rolls: postRolls, sound: postRolls.length > 0 });
   }
 
   ui.notifications.info(`${item.name}: пост-эффект активирован.`);
@@ -514,7 +466,7 @@ export async function removeDrugAddiction(actor, item) {
   const stillAddicted = actor.items.some(i =>
     i.type === "drug" && i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
   );
-  if (!stillAddicted) await actor.update({ "system.conditions.addicted": false });
+  if (!stillAddicted) await actor.update(conditionRemoveFields("addicted"));
 }
 
 export function activateDrugListeners(html, actor, { resolveOtherTargetActor } = {}) {
@@ -572,8 +524,9 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
   const charTotal = actor.system.characteristics[charKey]?.total ?? 0;
-  const fatigue = fatiguePenalty(actor, charKey);
-  const eff = charTotal + testMod + fatigue;
+  // Общий сбор модификаторов (wdbc-ct65.2) — см. tabs/tech.mjs, тот же перевод.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey });
+  const eff = charTotal + testMod + ruleMods.total;
   const wasAddicted = item?.system?.addiction?.isAddicted || false;
 
   const roll = await new Roll("1d100").evaluate();
@@ -592,7 +545,7 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
         i.type === "drug" && i.id !== item.id &&
         i.system.addiction?.hasAddiction && i.system.addiction?.isAddicted
       );
-      if (!still) await actor.update({ "system.conditions.addicted": false });
+      if (!still) await actor.update(conditionRemoveFields("addicted"));
       outcome = `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Зависимость преодолена!</span>`;
     } else {
       outcome = `<span class="roll-success">Сопротивление успешно — ${deg} ${_degWord(deg)}</span>`;
@@ -600,26 +553,18 @@ export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0)
   } else {
     // Провал → персонаж зависим от ЭТОГО препарата.
     if (item) await item.update({ "system.addiction.isAddicted": true });
-    await actor.update({ "system.conditions.addicted": true });
+    await actor.update(conditionApplyFields("addicted", null, actor));
     outcome = wasAddicted
       ? `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Зависимость сохраняется.</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж стал зависим!</span>`;
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warn","#ffb84d")}Тест Зависимости — ${name}</div>
-        <div class="roll-threshold">
-          ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${fatigue !== 0 ? ` 😓 ${fatigue}` : ""}
+  await postTestCard(actor, {
+    icon: rollIcon("warn", "#ffb84d"), title: `Тест Зависимости — ${name}`,
+    threshold: `<div class="roll-threshold">
+          ${abbr}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")}
           → Порог: <b>${eff}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+        </div>`,
+    rv, outcome
+  }, { rolls: [roll] });
 }

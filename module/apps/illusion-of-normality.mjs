@@ -35,10 +35,13 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { itemIs } from "../rules/item-marker.mjs";
 import { isRuleUsageUsed, markRuleUsageUsed } from "../rules/cooldown.mjs";
 import { psyniscienceNoticeBonus, noticeFlagKey, seeThroughFlagKey } from "../rules/illusion-detection.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 const NAME = "Illusion of Normality";
 const CAPABILITY_KEY = "mutation.illusionOfNormality";
@@ -46,7 +49,7 @@ const MAINTAIN_FLAG = "illusionMaintained";
 
 /** Это предмет-Мутация «Иллюзия Нормальности»? */
 export function isIllusionOfNormalityItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.illusionOfNormality", NAME);
 }
 
 /** Поддерживается ли иллюзия сейчас — по умолчанию (флага ещё нет) да. */
@@ -71,25 +74,23 @@ function otherMutationCount(actor, excludeItemId) {
   return [...(actor?.items ?? [])].filter(i => i.type === "mutation" && i.id !== excludeItemId).length;
 }
 
-async function postTestCard({ actor, headerIcon, header, thresholdLine, roll, rv, success, note }) {
-  const rollMode = game.settings.get("core", "rollMode");
-  const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${headerIcon}${esc(header)}</div>
-        <div class="roll-threshold">${thresholdLine}</div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех</span>`
-          : `<span class="roll-failure">Провал</span>`}</div>
-        ${note ? `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${note}</div>` : ""}
-        <details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+/**
+ * Тонкая обёртка над общим сборщиком (helpers/test-card.mjs, wdbc-kuun).
+ * Раньше здесь лежала СВОЯ копия карточки теста — ровно тот случай, ради
+ * которого сборщик и заводился: разметка расходилась с боевыми карточками, а
+ * улучшать её пришлось бы отдельно.
+ */
+async function postIllusionCard({ actor, headerIcon, header, thresholdHtml, roll, rv, success, note }) {
+  await postTestCard(actor, {
+    icon: headerIcon, title: esc(header),
+    threshold: `<div class="roll-threshold">${thresholdHtml}</div>`,
+    rv,
+    outcome: outcomeHtml(success, success ? "Успех" : "Провал"),
+    sections: [
+      note ? `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${note}</div>` : "",
+      `<details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${await roll.render()}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -105,18 +106,22 @@ export async function attemptNoticeIllusion(item, actor) {
 
   const bonus = psyniscienceNoticeBonus(otherMutationCount(actor, item.id));
   const skill = observer.system.skills?.psyniscience?.total ?? -20;
-  const threshold = skill + bonus;
+  // Общий сбор модификаторов (wdbc-ct65.3): раньше этот тест катался мимо
+  // реестра правил — ни Усталость, ни Черты/Таланты в него не попадали.
+  // Тест НАБЛЮДАТЕЛЯ: замечает он, значит и модификаторы его.
+  const ruleMods = collectTestMods(observer, { kind: "skill", skill: "psyniscience", char: "per" });
+  const threshold = skill + bonus + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const success = rv <= threshold;
 
   if (success) await markRuleUsageUsed(observer, noticeFlagKey(CAPABILITY_KEY, actor.id));
 
-  await postTestCard({
+  await postIllusionCard({
     actor: observer,
     headerIcon: rollIcon("target", "#8fd0ff"),
     header: `Психонаука — замечает иллюзию (${actor.name})`,
-    thresholdLine: `Психонаука: <b>${skill}</b> + 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = <b>${bonus}</b> → Порог: <b>${threshold}</b>`,
+    thresholdHtml: `Психонаука: <b>${skill}</b> + 5×Прочие мутации(${otherMutationCount(actor, item.id)}) = <b>${bonus}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b>`,
     roll, rv, success,
     note: success ? "Наблюдатель теперь знает про активную иллюзию — доступна попытка увидеть сквозь." : ""
   });
@@ -137,19 +142,25 @@ export async function attemptSeeThroughIllusion(item, actor) {
     return ui.notifications?.warn("Попытка увидеть сквозь иллюзию уже потрачена в этом бою/сцене.");
 
   const wp = observer.system.characteristics?.wp?.total ?? 0;
+  // Тот же общий сбор, что у теста Псинауки выше (wdbc-ct65.3).
+  const ruleMods = collectTestMods(observer, { kind: "skill", char: "wp" });
+  const wpThreshold = wp + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const success = rv <= wp;
+  const success = rv <= wpThreshold;
 
   // Попытка расходуется в любом случае — «не более одной попытки», а не
   // «пока не получится».
   await markRuleUsageUsed(observer, seeThroughFlagKey(CAPABILITY_KEY, actor.id));
 
-  await postTestCard({
+  await postIllusionCard({
     actor: observer,
     headerIcon: rollIcon("warp", "#c9a8ff"),
     header: `W+0 — видит сквозь иллюзию (${actor.name})`,
-    thresholdLine: `WP: <b>${wp}</b> → Порог: <b>${wp}</b>`,
+    // Порог показывался как голое WP, хотя успех считался по wpThreshold —
+    // с Усталостью и Чертами наблюдателя. Игрок видел не то число, по
+    // которому его бросок сравнивали (wdbc-kuun).
+    thresholdHtml: `WP: <b>${wp}</b>${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${wpThreshold}</b>`,
     roll, rv, success,
     note: success ? "Мутации персонажа снова видны наблюдателю." : "Раз за бой/сцену на этого мутанта — попытка потрачена."
   });

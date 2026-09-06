@@ -24,12 +24,16 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "dreadWail";
 const WEAPON_BUFF_FLAG = "dreadWailWeaponBuff";
@@ -43,11 +47,11 @@ export const WAVE_EFFECTS = [
 
 /** Владеет ли актор Чертой Dread Wail / Грозный Вопль. */
 export function hasDreadWail(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Dread Wail"));
+  return hasAbility(actor, "ability.dreadWail", "Dread Wail", "trait");
 }
 
 function hasSweetCacophony(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Sweet Cacophony"));
+  return hasAbility(actor, "ability.sweetCacophony", "Sweet Cacophony", "talent");
 }
 
 /** Лимит использований за бой — 1, либо Cor.b с Sweet Cacophony (мин. 1). */
@@ -88,13 +92,10 @@ export async function applyDreadWailWeaponBuff(actor) {
   await spendAndCount(actor);
   const perBonus = Number(actor.system?.characteristics?.per?.bonus) || 0;
   await actor.setFlag("warhammer-dbc", WEAPON_BUFF_FLAG, { active: true, bonus: perBonus });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#c98bff")}Грозный Вопль — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Звуковое оружие получает <b>+${perBonus}</b> Dmg/Pen до начала следующего Хода.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#c98bff"), title: `Грозный Вопль — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Звуковое оружие получает <b>+${perBonus}</b> Dmg/Pen до начала следующего Хода.</div>`]
+  }, { sound: false });
 }
 
 /** Снимает усилитель оружия — звать в начале Хода актора (hooks.mjs::updateCombat). */
@@ -113,10 +114,7 @@ async function applyWaveEffect(targetActor, effectKey) {
   }
   if (effectKey === "stunned") {
     const curRounds = Number(targetActor.system.conditions?.stunnedRounds) || 0;
-    await targetActor.update({
-      "system.conditions.stunned": true,
-      "system.conditions.stunnedRounds": Math.max(curRounds, 2)
-    });
+    await targetActor.update(conditionApplyFields("stunned", Math.max(curRounds, 2), targetActor));
     return "Оглушение на 2 Раунда";
   }
   // "fear" — информационная метка, см. заголовок файла (не интегрирована в
@@ -136,7 +134,9 @@ export async function applyDreadWailWave(actor, casterToken, effectKey) {
   const lines = [];
   for (const tokenDoc of inRange) {
     const targetActor = tokenDoc.actor;
-    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 20;
+    // Сопротивляется ЦЕЛЬ — значит и её состояние считается (wdbc-1xtl).
+    const targetMods = collectTestMods(targetActor, { kind: "skill", char: "wp" });
+    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 20 + targetMods.total;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) { lines.push(`${esc(targetActor.name)}: устоял(а) (${roll.total} vs ${threshold})`); continue; }
@@ -145,12 +145,11 @@ export async function applyDreadWailWave(actor, casterToken, effectKey) {
   }
 
   const effectLabel = WAVE_EFFECTS.find(e => e.key === effectKey)?.label || effectKey;
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#c98bff")}Грозный Вопль — звуковая волна (радиус ${radius} м)</div>
-      <div class="roll-threshold">Тест W−20, при провале: <b>${esc(effectLabel)}</b></div>
-      ${lines.length ? lines.map(l => `<div>${l}</div>`).join("") : "<div><i>Никого в радиусе (кроме посвящённых Слаанеш)</i></div>"}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#c98bff"), title: `Грозный Вопль — звуковая волна (радиус ${radius} м)`,
+    lines: [
+      `<div class="roll-threshold">Тест W−20, при провале: <b>${esc(effectLabel)}</b></div>`,
+      ...(lines.length ? lines.map(l => `<div>${l}</div>`) : ["<div><i>Никого в радиусе (кроме посвящённых Слаанеш)</i></div>"])
+    ]
+  }, { sound: false });
 }

@@ -289,7 +289,10 @@ describe("activateTechMiracle: Императив (wdbc-yu32)", () => {
 
     expect(target.items).toHaveLength(1);
     expect(target.items[0].type).toBe("trait");
-    expect(target.items[0].getFlag("warhammer-dbc", "imperativeBonuses")).toEqual({ evasionBonus: 30, coverApDelta: -8, coverApFloorRatio: 0.5, coverApCeilRatio: undefined });
+    // wdbc-hdxj: evasionRecoilBonus — фиксированный книжный знак «кроме
+    // Отскока в укрытие» (−20), едет вместе с остальными числами Императива
+    // независимо от отредактированного evasionBonus (30 здесь, как в диалоге).
+    expect(target.items[0].getFlag("warhammer-dbc", "imperativeBonuses")).toEqual({ evasionBonus: 30, evasionRecoilBonus: -20, coverApDelta: -8, coverApFloorRatio: 0.5, coverApCeilRatio: undefined });
     expect(captured.chat[0].content).toContain("Императив Избегания: +30 на Избегания → Цель 1");
   });
 

@@ -32,10 +32,12 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { openCompendiumBrowser } from "../apps/compendium-browser.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "conjureWraith";
 // weapons/Азуриане/Рукопашное/Психокостяное — packs-src/.../_Folder.json
@@ -43,7 +45,7 @@ const WRAITHBONE_MELEE_FOLDER = "YwpKwjEs1NBtEKyn";
 
 /** Владеет ли актор Талантом Conjure Wraith / Вызвать Психокость. */
 export function hasConjureWraith(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Conjure Wraith"));
+  return hasAbility(actor, "ability.conjureWraith", "Conjure Wraith", "talent");
 }
 
 /** Лимит использований за сессию — F.b (минимум 1), как у Bone Song/Preservation. */
@@ -86,11 +88,8 @@ export async function applyConjureWraith(actor, mode) {
   await incrementThrottleCount(actor, FLAG, "session", conjureWraithMax(actor));
   await actor.createEmbeddedDocuments("Item", [data]);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("warp", "#7fd3ff")}Вызвать Психокость — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Создан предмет: <b>${esc(data.name)}</b> — без Reinforced, грубее по форме.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("warp", "#7fd3ff"), title: `Вызвать Психокость — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Создан предмет: <b>${esc(data.name)}</b> — без Reinforced, грубее по форме.</div>`]
+  }, { sound: false });
 }

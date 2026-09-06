@@ -131,7 +131,14 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 .wh-hud-wfill { display: block; height: 100%; transition: width .3s; }
 
 .wh-hud-track { display: flex; align-items: center; gap: 8px; }
-.wh-hud-tlabel { font-size: 11px; color: #7fe0a8; width: 46px; flex: none; letter-spacing: .5px; }
+/* Подпись очков и ОД (wdbc-6lw9). Была прибита width: 46px + flex: none —
+   «Судьба» (6 знаков) влезала, «Бесчестье» (9, у хаосита) и «Боль» нет:
+   слово доходило до первого кружка очков и уползало под него. Теперь ширина
+   по содержимому, а 46px оставлены полом (min-width) — у кого подпись влезала
+   раньше, у того всё до пикселя как было, а длинная просто отодвигает кружки.
+   Слово подставляет fateTerm() (module/helpers/utils.mjs). Общей вертикали с
+   «РАНЫ» тут нет: у той строки свой класс .wh-hud-wlabel, тоже по содержимому. */
+.wh-hud-tlabel { font-size: 11px; color: #7fe0a8; min-width: 46px; flex: 0 0 auto; letter-spacing: .5px; }
 .wh-hud-tbar {
   flex: 1; height: 8px; background: #04100a; border: 1px solid #123a28;
   box-shadow: inset 0 1px 3px rgba(0,0,0,.85); overflow: hidden;
@@ -546,9 +553,22 @@ body.wh-hud-on #chat-notifications { display: none !important; }
   flex-direction: row !important; flex-wrap: wrap;
   align-content: center; justify-content: flex-end;
 }
+/* Кнопка действия корабля (wdbc-k22l). Было: flex-basis 68px + white-space:
+   nowrap. Оба вместе и давали переполнение — база 68px решала, сколько кнопок
+   влезет в ряд, по числу, не связанному с длиной подписи, а nowrap запрещал
+   кнопке стать уже своего текста, так что лишнее уходило ЗА колонку (влево,
+   потому что ряд прижат justify-content: flex-end) и наезжало на соседний блок.
+
+   Теперь база — по самой подписи (flex-basis: auto), то есть перенос ряда
+   считается от реального текста; min-width: 0 и overflow-wrap: anywhere —
+   последняя линия обороны: если подпись не влезет даже одна, она перенесётся
+   ВНУТРИ кнопки, а кнопка станет выше (высоту ей разрешает общее правило в
+   base/common.css). Вылезти за колонку она при этом не может ни при каких
+   размерах шрифта и ни при какой длине подписи. */
 .wh-ship-act {
-  flex: 1 1 68px; padding: 2px 9px; font-size: .74em; font-weight: bold; letter-spacing: .06em;
-  cursor: pointer; white-space: nowrap;
+  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; text-align: center;
+  padding: 2px 7px; font-size: .74em; font-weight: bold; letter-spacing: .06em;
+  cursor: pointer;
   background: linear-gradient(180deg, #103022, #0c2016);
   border: 1px solid #2f9e6a; border-radius: 3px; color: #b8ffd8;
 }

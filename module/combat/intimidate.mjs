@@ -25,6 +25,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { rootEl } from "../sheets/v2-helpers.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 /** Порог Intimidate нападающего — обычный тест Навыка (уже посчитан листом). */
 export function intimidateThreshold(attacker, mod = 0) {
@@ -47,8 +48,14 @@ export function moraleThreshold(target, mod = 0) {
  * @returns {Promise<{winner:"mine"|"theirs"|null, margin:number}>}
  */
 export async function rollIntimidateContest(attacker, target, { attackerMod = 0, targetMod = 0 } = {}) {
-  const atkThreshold = intimidateThreshold(attacker, attackerMod);
-  const tgtThreshold = moraleThreshold(target, targetMod);
+  // Общий сбор модификаторов обеим сторонам (wdbc-ct65.3): встречный тест —
+  // это два теста, и каждый обязан видеть свои Черты и своё состояние тела.
+  // Оба помечены morale:true — Запугивание книга прямо называет тестом Морали
+  // (rules/resolve-test.mjs::isMoraleOpposedSkill), и цель отвечает им же.
+  const atkMods = collectTestMods(attacker, { kind: "skill", skill: "intimidate", char: "wp", morale: true });
+  const tgtMods = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
+  const atkThreshold = intimidateThreshold(attacker, attackerMod) + atkMods.total;
+  const tgtThreshold = moraleThreshold(target, targetMod) + tgtMods.total;
   const atkRoll = await new Roll("1d100").evaluate();
   const tgtRoll = await new Roll("1d100").evaluate();
   const atkRv = atkRoll.total, tgtRv = tgtRoll.total;
@@ -63,6 +70,9 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
 
   await _postIntimidateMsg(attacker, target, {
     atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,
+    // Подписи модификаторов обеих сторон (wdbc-kuun): Порог считался с ними,
+    // но в карточке стояло голое число.
+    atkParts: atkMods.parts, tgtParts: tgtMods.parts,
     winner, margin, sarcophagusSaved: autoPass && tgtRv > tgtThreshold,
     rolls: [atkRoll, tgtRoll]
   });
@@ -71,7 +81,7 @@ export async function rollIntimidateContest(attacker, target, { attackerMod = 0,
 }
 
 async function _postIntimidateMsg(attacker, target, data) {
-  const { atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome,
+  const { atkThreshold, tgtThreshold, atkRv, tgtRv, atkOutcome, tgtOutcome, atkParts = [], tgtParts = [],
           winner, margin, sarcophagusSaved, rolls } = data;
 
   const outcomeLine = winner === "mine"
@@ -86,9 +96,9 @@ async function _postIntimidateMsg(attacker, target, data) {
     content: `
       <div class="wh-roll-result">
         <div class="roll-header">${rollIcon("skull", "#ff9a4d")}Запугивание — ${esc(attacker.name)} → ${esc(target.name)}</div>
-        <div class="roll-threshold">Intimidate (${esc(attacker.name)}): <b>${atkThreshold}</b> → бросок <b>${atkRv}</b> —
+        <div class="roll-threshold">Intimidate (${esc(attacker.name)}): <b>${atkThreshold}</b>${atkParts.length ? ` (${atkParts.join(", ")})` : ""} → бросок <b>${atkRv}</b> —
           ${atkOutcome.success ? "Успех" : "Провал"} ${atkOutcome.deg} ${_degWord(atkOutcome.deg)}</div>
-        <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b> → бросок <b>${tgtRv}</b> —
+        <div class="roll-threshold">Тест Морали (${esc(target.name)}): <b>${tgtThreshold}</b>${tgtParts.length ? ` (${tgtParts.join(", ")})` : ""} → бросок <b>${tgtRv}</b> —
           ${tgtOutcome.success ? "Успех" : "Провал"} ${tgtOutcome.deg} ${_degWord(tgtOutcome.deg)}${sarcophagusSaved ? " (Саркофаг Дредноута)" : ""}</div>
         <div class="roll-outcome">${outcomeLine}</div>
         <div class="roll-threshold">Исход по книге решает ГМ: подчинение требуемому, паническое бегство или Шок.</div>

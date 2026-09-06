@@ -74,6 +74,13 @@ describe("правила основной книги", () => {
     target.system.conditions = { helpless: true };
     expect(attackOn(target).mods).toEqual([]);
   });
+
+  // wdbc-r5o7.3: Ступор считается Оглушением «для прочих эффектов» (стр. 30-31).
+  it("Ступор — та же скидка, что Оглушение (цель им не воспользуется)", () => {
+    const target = nimbleTarget(4);
+    target.system.conditions = { dazed: true };
+    expect(attackOn(target).mods).toEqual([]);
+  });
 });
 
 describe("core.nimble и силовая броня", () => {

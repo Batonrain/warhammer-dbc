@@ -26,6 +26,8 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { WarhammerStructuralSheet } from "./structural-sheet.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 // ── Действия листа ───────────────────────────────────────────────────────────
 // ApplicationV2 зовёт обработчик [data-action] с this = лист и элементом-
@@ -168,6 +170,29 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Приданный командир: его умения и характеристики заменяют показатели войск. */
+  /**
+   * Модификаторы реестра для теста Формирования (wdbc-kok3).
+   *
+   * Вопрос, из-за которого этот шаг откладывали: чьи правила тут считать.
+   * Ответ дал сам расчёт Порога (`_testValue` выше) — тест катится НАВЫКОМ
+   * КОМАНДИРА, если он назначен, и «Выучкой войск» самого Формирования,
+   * если нет. Значит и модификаторы берутся с того же: Черты и Усталость
+   * Командира влияют на его приказ, а безкомандирное Формирование отвечает
+   * за себя само.
+   *
+   * Область — навык из определения теста (`def.skill`), когда он там есть:
+   * «+10 к Командованию» обязано работать в приказе, который катится
+   * Командованием, и не работать в том, который катится Дисциплиной.
+   */
+  _formationTestMods(def = null) {
+    const cmd = this._commanderData();
+    const roller = (cmd.filled && cmd.actor) ? cmd.actor : this.actor;
+    const skill = def?.skill && SKILLS_DEF[def.skill] ? def.skill : undefined;
+    return collectTestMods(roller, {
+      kind: "skill", skill, char: skill ? SKILLS_DEF[skill].char : "wp"
+    });
+  }
+
   _commanderData() {
     const raw = this.actor.system.posts?.commander || {};
     const doc = this._resolve(raw.uuid);
@@ -461,6 +486,9 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
       "system.morale.max": max, "system.morale.value": max, "system.morale.gearRoll": gearRoll
     });
 
+    // НЕ карточка теста (wdbc-kuun): предел боевого духа не бросается против
+    // Порога — кость снаряжения только уточняет величину. Ни Порога, ни строки
+    // броска здесь нет, переводить на сборщик теста нечего.
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result fm-chat">
@@ -486,6 +514,8 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
     // Приказ без броска — просто фиксируем.
     if (!o.test) {
       await this.actor.update({ "system.order.key": key });
+      // НЕ карточка теста (wdbc-kuun): приказ без броска — это уведомление
+      // «приказ отдан», без Порога и без кубика.
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: this.actor }),
         content: `<div class="wh-roll-result fm-chat">
@@ -559,9 +589,11 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Бросок приказа и применение его последствий к состоянию формирования. */
-  async _resolveOrder(key, threshold) {
+  async _resolveOrder(key, baseThreshold) {
     const o = ORDERS[key];
     const d = this.actor.system.derived || {};
+    const ruleMods = this._formationTestMods(o?.test);
+    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
     const deg = Math.abs(degreesOfSuccess(rv, threshold));
@@ -632,19 +664,20 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
 
     await this.actor.update(update);
 
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result fm-chat">
-        <div class="roll-header">${rollIcon("shield", "#4dffa6")}Приказ: ${esc(o.label)} — ${esc(this.actor.name)}</div>
-        <div class="roll-threshold">${esc(this._testLabel(o.test))} → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${ok
-          ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-          : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}</div>
-        ${extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""}
-      </div>`,
-      rolls, sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    // Строка Порога у Формирования начинается не с числа, а с подписи теста
+    // («Командование (Fel) +10 / Дисциплина (WP) +0») — под общий формат
+    // thresholdLine она не ложится и оставлена своей, как была. Класс fm-chat
+    // на корне сохранён: за него цепляется вёрстка листа (styles/sheets/
+    // formation-sheet.css).
+    await postTestCard(this.actor, {
+      classes: "fm-chat",
+      icon: rollIcon("shield", "#4dffa6"),
+      title: `Приказ: ${esc(o.label)} — ${esc(this.actor.name)}`,
+      threshold: `<div class="roll-threshold">${esc(this._testLabel(o.test))}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>`,
+      rv,
+      outcome: outcomeHtml(ok, `${ok ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
+      sections: [extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""]
+    }, { rolls });
   }
 
   // ── Атака ─────────────────────────────────────────────────────────────────
@@ -782,6 +815,9 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
       }
     }
 
+    // НЕ карточка теста (wdbc-kuun): атака Формирования броска против Порога
+    // не требует вовсе (книга: хватает дальности поражения) — это карточка
+    // урона, у неё своя разметка вычета Обороны и укрытия.
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result fm-chat">
@@ -854,6 +890,8 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
     else if (morAfter <= 0) note = "Боевой дух на нуле — формирование ударяется в бегство.";
     else if (morAfter <= half) note = "Боевой дух ниже половины предела — нужен тест боевого духа против его изначальной величины.";
 
+    // НЕ карточка теста (wdbc-kuun): это отчёт о принятом уроне (численность
+    // и боевой дух), Порога и броска против него здесь нет.
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
       content: `<div class="wh-roll-result fm-chat">
@@ -907,19 +945,19 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
           const deg = Math.abs(degreesOfSuccess(rv, target));
           if (!ok) await this.actor.update({ "system.status.fled": true });
 
-          await ChatMessage.create(ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<div class="wh-roll-result fm-chat">
-              <div class="roll-header">${rollIcon("heart", ok ? "#4dffa6" : "#ff8a8a")}Тест боевого духа — ${esc(this.actor.name)}</div>
-              <div class="roll-threshold">Изначальный дух <b>${base}</b>${rally ? ` +${rally} (сплочение)` : ""}${mod ? ` ${mod > 0 ? "+" : ""}${mod}` : ""} → Порог <b>${target}</b></div>
-              <div class="roll-dice">Бросок: <b>${rv}</b></div>
-              <div class="roll-outcome">${ok
-                ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Формирование продолжает бой</span>`
-                : `<span class="roll-failure">Провал — формирование ударяется в бегство</span>`}</div>
-              ${ok ? `<div class="fm-chat-note">Следующий тест — при падении боевого духа до 25% от изначального (${d.quarterMorale}).</div>` : ""}
-            </div>`,
-            rolls: [roll], sound: CONFIG.sounds.dice
-          }, game.settings.get("core", "rollMode")));
+          // Строка Порога своя (подписи слагаемых идут в строку, без скобок
+          // общего формата) — вид карточки перевод не меняет.
+          await postTestCard(this.actor, {
+            classes: "fm-chat",
+            icon: rollIcon("heart", ok ? "#4dffa6" : "#ff8a8a"),
+            title: `Тест боевого духа — ${esc(this.actor.name)}`,
+            threshold: `<div class="roll-threshold">Изначальный дух <b>${base}</b>${rally ? ` +${rally} (сплочение)` : ""}${mod ? ` ${mod > 0 ? "+" : ""}${mod}` : ""} → Порог <b>${target}</b></div>`,
+            rv,
+            outcome: outcomeHtml(ok, ok
+              ? `Успех — ${deg} ${_degWord(deg)}. Формирование продолжает бой`
+              : "Провал — формирование ударяется в бегство"),
+            sections: [ok ? `<div class="fm-chat-note">Следующий тест — при падении боевого духа до 25% от изначального (${d.quarterMorale}).</div>` : ""]
+          }, { rolls: [roll] });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -1013,8 +1051,10 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Разрешение ключевого события с применением его эффектов к формированию. */
-  async _resolveKeyEvent(key, threshold) {
+  async _resolveKeyEvent(key, baseThreshold) {
     const e = KEY_EVENTS[key];
+    const ruleMods = this._formationTestMods(e?.test);
+    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
     const deg = Math.abs(degreesOfSuccess(rv, threshold));
@@ -1084,18 +1124,16 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
     }
     if (Object.keys(update).length) await this.actor.update(update);
 
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result fm-chat">
-        <div class="roll-header">${rollIcon("spark", "#4dffa6")}${esc(e.label)} — ${esc(this.actor.name)}</div>
-        <div class="roll-threshold">${esc(EVENT_TIERS[e.tier]?.label || "")} · ${esc(this._testLabel(e.test))} → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${ok
-          ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-          : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}</div>
-        ${extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""}
-      </div>`,
-      rolls, sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    // Та же своя строка Порога, что у приказа выше (ярус события + подпись
+    // теста + подписи модификаторов) — общий формат её бы переписал.
+    await postTestCard(this.actor, {
+      classes: "fm-chat",
+      icon: rollIcon("spark", "#4dffa6"),
+      title: `${esc(e.label)} — ${esc(this.actor.name)}`,
+      threshold: `<div class="roll-threshold">${esc(EVENT_TIERS[e.tier]?.label || "")} · ${esc(this._testLabel(e.test))}${ruleMods.parts.map(p => ` · ${p}`).join("")} → Порог <b>${threshold}</b></div>`,
+      rv,
+      outcome: outcomeHtml(ok, `${ok ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
+      sections: [extra.length ? `<div class="fm-chat-effect">${extra.join("<br/>")}</div>` : ""]
+    }, { rolls });
   }
 }

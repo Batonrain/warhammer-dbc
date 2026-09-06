@@ -16,12 +16,13 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 
 const BOOST_ROUNDS = new Set([3, 4]);
 const BOOST_FLAG = "middleOfTheHuntRound";
 
 export function hasMiddleOfTheHunt(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "The Middle of the Hunt"));
+  return hasAbility(actor, "ability.middleOfTheHunt", "The Middle of the Hunt", "talent");
 }
 
 /** Смена Раунда: +10 к Инициативе каждого владельца Таланта на раундах 3 и 4, один раз за раунд. */

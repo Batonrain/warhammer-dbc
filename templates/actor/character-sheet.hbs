@@ -28,14 +28,15 @@
 
   {{#if infamy}}{{> "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs" infamy}}{{/if}}
 
-  <nav class="sheet-tabs tabs" data-group="primary"> <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a> <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a> <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="effects">ТЕЛО</a> {{#if possessed}}<a class="item tab-possession-link {{#if (eq tab "possession")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="possession" style="--gc:{{possession.meta.color}}">ОДЕРЖИМОСТЬ</a>{{/if}} {{#if isHaemonculus}}<a class="item tab-haem-link {{#if (eq tab "haemonculus")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="haemonculus">ГЕМУНКУЛ</a>{{/if}} <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a> <a class="item {{#if (eq tab "social")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="social">СОЦИУМ</a>
+  <nav class="sheet-tabs tabs" data-group="primary"> <a class="item {{#if (eq tab "stats")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="stats">ПОКАЗАТЕЛИ</a> <a class="item {{#if (eq tab "combat")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="combat">БОЙ</a> <a class="item {{#if (eq tab "activeEffects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="activeEffects" title="Сводка активных бафов/дебафов — что сейчас правит характеристики и показатели">ЭФФЕКТЫ{{#if activeEffectsCounts.debuff}} <span class="tab-badge tab-badge-debuff">{{activeEffectsCounts.debuff}}</span>{{/if}}</a> <a class="item {{#if (eq tab "effects")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="effects">ТЕЛО</a> {{#if possessed}}<a class="item tab-possession-link {{#if (eq tab "possession")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="possession" style="--gc:{{possession.meta.color}}">ОДЕРЖИМОСТЬ</a>{{/if}} {{#if isHaemonculus}}<a class="item tab-haem-link {{#if (eq tab "haemonculus")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="haemonculus">ГЕМУНКУЛ</a>{{/if}} <a class="item {{#if (eq tab "abilities")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="abilities">СПОСОБНОСТИ</a> <a class="item {{#if (eq tab "social")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="social">СОЦИУМ</a>
     <a class="item {{#if (eq tab "psy")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="psy">МИСТИКА</a>
     {{#if (or system.isTechpriest hasMechImplants)}}
     <a class="item {{#if (eq tab "tech")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="tech">ТЕХ</a> {{/if}}
     {{#if (eq system.subrace "navigator")}}
     <a class="item {{#if (eq tab "nav")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="nav">НАВ</a> {{/if}}
-    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a> <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a> <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a> </nav> <div class="sheet-body"> {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
+    <a class="item {{#if (eq tab "gear")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="gear">СНАРЯЖЕНИЕ</a> <a class="item {{#if (eq tab "craft")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="craft" title="Крафт, Исследования и Биолаборатория (перенесены из отдельного окна «Мастерская»)">КРАФТ</a> <a class="item {{#if (eq tab "advance")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="advance">РАЗВИТИЕ</a> <a class="item {{#if (eq tab "notes")}}active{{/if}}" data-action="tab" data-group="primary" data-tab="notes">ЗАПИСИ</a> </nav> <div class="sheet-body"> {{> "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-active-effects.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs"}}
@@ -46,6 +47,7 @@
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-nav.hbs"}}
 {{/if}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs"}}
+{{> "systems/warhammer-dbc/templates/actor/parts/tab-craft.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs"}}
 {{> "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs"}}

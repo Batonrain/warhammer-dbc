@@ -10,10 +10,12 @@
 // листе остаётся только то, что зависит от состояния окна (свёрнутые секции)
 // и от переопределяемых им путей — Очки Бесчестия у Демон-Принца.
 
-import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
+import { CHARACTERISTICS, APTITUDES }            from "../constants/characteristics.mjs";
 import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
-import { charAptitudeSet, resolveCharCat }       from "../constants/advancement.mjs";
+import { charAptitudeSet, resolveCharCat, CHAR_APTITUDES } from "../constants/advancement.mjs";
+import { aptBindingContext }                    from "../rules/aptitude-binding.mjs";
+
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -33,9 +35,12 @@ import { actorCanFly, actorHasHalfStep, narrativeSpeed } from "../combat/movemen
 import { isFeatureEnabled, disabledRaceKeys }    from "../constants/features.mjs";
 import { isHelmetMod,
          disabledArmourPeriodicTestRemaining }   from "../combat/armor-mods.mjs";
+import { gangrenePeriodicRemaining }             from "../combat/gangrene.mjs";
+import { radiationSicknessRemaining }            from "../combat/radiation.mjs";
 import { archetypeSheetContext }                 from "../apps/archetypes.mjs";
 import { homeworldSheetContext }                 from "../apps/homeworlds.mjs";
 import { itemHasName, hasEliteArchetype, isPossessed } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { raceMatches } from "../rules/race.mjs";
 
 /**
@@ -47,6 +52,9 @@ function charTotalTooltip(total, breakdown) {
   const lines = (breakdown || []).map(b => {
     if (b.cap != null)   return `${b.label}: не выше ${b.cap}`;
     if (b.floor != null) return `${b.label}: не ниже ${b.floor}`;
+    if (b.halved)         return `${b.label}: ÷2`;
+    if (b.halvedFloor)    return `${b.label}: ÷2 (окр. вниз)`;
+    if (b.immobile)       return `${b.label}: не может ходить`;
     if (b.label === "База") return `${b.label}: ${b.value}${b.note ? ` (${b.note})` : ""}`;
     const sign = b.value > 0 ? "+" : "−";
     return `${b.label}: ${sign}${Math.abs(b.value)}`;
@@ -276,6 +284,37 @@ export function characterContext(actor) {
     context.disabledArmourPeriodicRemainingLabel = null;
   }
 
+  // Гангрена (стр. 30-31, wdbc-r5o7.5): та же кнопка-таймер, что у Перевеса
+  // брони выше, только на интервал T.b×2 часов и свой флаг (gangreneTestAt,
+  // combat/gangrene.mjs).
+  if (system.conditions?.gangrene) {
+    const tb = Number(system.characteristics?.t?.bonus) || 0;
+    const testAt = actor.getFlag?.("warhammer-dbc", "gangreneTestAt");
+    const remaining = gangrenePeriodicRemaining(testAt, game.time?.worldTime ?? 0, tb);
+    context.gangrenePeriodicReady = remaining <= 0;
+    context.gangrenePeriodicRemainingLabel = remaining > 0
+      ? `${Math.floor(remaining / 3600)}ч ${String(Math.floor((remaining % 3600) / 60)).padStart(2, "0")}м`
+      : null;
+  } else {
+    context.gangrenePeriodicReady = false;
+    context.gangrenePeriodicRemainingLabel = null;
+  }
+
+  // Лучевая болезнь (стр. 30-31, wdbc-r5o7.6) — осложнение Радиации, свой
+  // флаг (не CONDITIONS_DEF), та же кнопка-таймер, интервал 8 часов.
+  context.hasRadiationSickness = !!actor.getFlag?.("warhammer-dbc", "radiationSickness");
+  if (context.hasRadiationSickness) {
+    const testAt = actor.getFlag?.("warhammer-dbc", "radiationSicknessTestAt");
+    const remaining = radiationSicknessRemaining(testAt, game.time?.worldTime ?? 0);
+    context.radiationSicknessReady = remaining <= 0;
+    context.radiationSicknessRemainingLabel = remaining > 0
+      ? `${Math.floor(remaining / 3600)}ч ${String(Math.floor((remaining % 3600) / 60)).padStart(2, "0")}м`
+      : null;
+  } else {
+    context.radiationSicknessReady = false;
+    context.radiationSicknessRemainingLabel = null;
+  }
+
   context.races = raceEntries();
   // Сгруппированный список рас для optgroup — расы выключенных подсистем
   // (напр. «Книга Эльдар») из списка убираем, кроме уже стоящей у этого
@@ -458,7 +497,7 @@ export function characterContext(actor) {
 
   // ── Тех: вкладка доступна ещё и по Черте «Импланты Механикум», не только
   // по ручному чекбоксу «Техножрец».
-  context.hasMechImplants = actor.items.some(i => i.type === "trait" && itemHasName(i, "Импланты Механикум"));
+  context.hasMechImplants = hasAbility(actor, "ability.mechanicumImplants", "Импланты Механикум", "trait");
 
   const _charApts = charAptitudeSet(system.aptitudes);
   context.chars = Object.entries(CHARACTERISTICS).map(([key, meta]) => {
@@ -478,6 +517,8 @@ export function characterContext(actor) {
       key,
       // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
       aptCat:       resolveCharCat(key, _charApts, actor),
+      // Привязка Склонностей (wdbc-1pvq) — см. тот же вызов у Навыков.
+      ...aptBindingContext(actor, "char", key, CHAR_APTITUDES[key] || [], a => APTITUDES[a] || a),
       label:        charLabel(key, system.alignment),
       abbr:         meta.abbr,
       base:         system.characteristics[key]?.base         ?? 0,

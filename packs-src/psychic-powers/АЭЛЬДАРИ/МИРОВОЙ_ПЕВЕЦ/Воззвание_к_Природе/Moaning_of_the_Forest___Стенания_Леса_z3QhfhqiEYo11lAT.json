@@ -1,0 +1,74 @@
+{
+  "name": "Moaning of the Forest / Стенания Леса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "yBHYtwHZnZweZ3vl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "worldSinger",
+    "subtype": "Воззвание к Природе",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Касание / PR×1м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Непрямое. Треб.: Forest Paths (манифестирована). На растении псайкер узнаёт его «мысли»: что ему нужно, что оно видело за последнюю неделю, с кем связано. На звере (дальность PR×1м) — животное успокаивается, не атакует псайкера и союзников в радиусе, отвечает на вопросы (не действует, если рядом в сознании его всадник). Не работает на мёртвых растениях/животных и искажённых мутациями/варпом существах. При бPR 12+ можно узнать состояние всей планеты разом.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "z3QhfhqiEYo11lAT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009484,
+    "modifiedTime": 1788601009484
+  },
+  "_key": "!items!z3QhfhqiEYo11lAT"
+}

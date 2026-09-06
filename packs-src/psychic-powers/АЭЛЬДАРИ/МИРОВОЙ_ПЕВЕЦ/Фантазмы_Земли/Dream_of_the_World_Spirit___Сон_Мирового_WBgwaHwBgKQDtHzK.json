@@ -1,0 +1,74 @@
+{
+  "name": "Dream of the World Spirit / Сон Мирового Духа",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "i2U3f2pVcGbnQpvl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 600,
+    "discipline": "worldSinger",
+    "subtype": "Фантазмы Земли",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×6м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Атака, Концентрация. Треб.: Nightmare Roots, Glamour of the Glade. Все существа в ауре, кроме псайкера, получают неизбежное попадание со свойством Hallucinogenic(PR) (считается Соблазнением, но обычно иммунные к нему цели получают лишь дополнительный бонус +30 к тесту). При провале теста против галлюцинаций цель засыпает прекрасным сном и выходит из него только при атаке по ней.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "WBgwaHwBgKQDtHzK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008628,
+    "modifiedTime": 1788601008628
+  },
+  "_key": "!items!WBgwaHwBgKQDtHzK"
+}

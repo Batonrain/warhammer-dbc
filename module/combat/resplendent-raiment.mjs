@@ -25,16 +25,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleReady, markThrottleUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const FLAG = "resplendentRaiment";
 
 /** Владеет ли актор Даром Resplendent Raiment / Блистательные Одеяния. */
 export function hasResplendentRaiment(actor) {
-  return !!actor?.items?.some(i => i.type === "mutation" && itemHasName(i, "Resplendent Raiment"));
+  return hasAbility(actor, "ability.resplendentRaiment", "Resplendent Raiment", "mutation");
 }
 
 /** "battle" в бою, иначе "scene" — та же неоднозначность книги, что у Adrenaline Rush. */
@@ -70,7 +73,9 @@ export async function applyResplendentRaiment(caster, casterToken, excludedIds =
   const lines = [];
   for (const tokenDoc of candidates) {
     const targetActor = tokenDoc.actor;
-    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 30;
+    // Сопротивляется ЦЕЛЬ — значит и её состояние считается (wdbc-1xtl).
+    const targetMods = collectTestMods(targetActor, { kind: "skill", char: "wp" });
+    const threshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) - 30 + targetMods.total;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) { lines.push(`${esc(targetActor.name)}: устоял(а) (${roll.total} vs ${threshold})`); continue; }
@@ -78,12 +83,11 @@ export async function applyResplendentRaiment(caster, casterToken, excludedIds =
     lines.push(`${esc(targetActor.name)}: провал (${roll.total} vs ${threshold}) — видит только ${esc(caster.name)}`);
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: caster }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("crown", "#e08aff")}Блистательные Одеяния — ${esc(caster.name)}</div>
-      <div class="roll-threshold">Тест W−30 (как против психосилы) всем на сцене, кроме исключённых</div>
-      ${lines.length ? lines.map(l => `<div>${l}</div>`).join("") : "<div><i>Больше никого на сцене</i></div>"}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(caster, {
+    icon: rollIcon("crown", "#e08aff"), title: `Блистательные Одеяния — ${esc(caster.name)}`,
+    lines: [
+      `<div class="roll-threshold">Тест W−30 (как против психосилы) всем на сцене, кроме исключённых</div>`,
+      ...(lines.length ? lines.map(l => `<div>${l}</div>`) : ["<div><i>Больше никого на сцене</i></div>"])
+    ]
+  }, { sound: false });
 }

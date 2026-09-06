@@ -37,8 +37,10 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { tentacleBonusSuppressed } from "../rules/tentacle-hand-form.mjs";
 import { MELEE_STANCES, MELEE_BASES } from "../constants/combat.mjs";
-import { fatiguePenalty } from "../sheets/tabs/conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { bodyWeightOf, totalWeightOf, throwTier, canWieldAsCudgel, footingRequirement }
   from "../rules/improvised-weapon.mjs";
 
@@ -60,18 +62,14 @@ export async function applyGrappleOnHit(actor, targetToken, hit, techOpts) {
 
   // Состояние и флаг партнёра одним update на актора: каждая отдельная
   // запись — это prepareData + re-render листа и токена у всех клиентов.
-  await actor.update({ "system.conditions.grappling": true, [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
-  await target.update({ "system.conditions.grappling": true, [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
+  await actor.update({ ...conditionApplyFields("grappling", null, actor), [`flags.${NS}.${PARTNER_FLAG}`]: target.uuid });
+  await target.update({ ...conditionApplyFields("grappling", null, target), [`flags.${NS}.${PARTNER_FLAG}`]: actor.uuid });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword","#e08a3a")}Захват — ${esc(actor.name)} ↔ ${esc(target.name)}</div>
-      <div class="roll-outcome"><span class="roll-success">Оба персонажа связаны Захватом (состояние «Борьба»).</span></div>
-      <div class="roll-threshold" style="font-size:0.85em;">Кнопка «Борьба» появилась на вкладке БОЙ у обоих участников.</div>
-    </div>`
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: `Захват — ${esc(actor.name)} ↔ ${esc(target.name)}`,
+    outcome: outcomeHtml(true, "Оба персонажа связаны Захватом (состояние «Борьба»)."),
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Кнопка «Борьба» появилась на вкладке БОЙ у обоих участников.</div>`]
+  }, { sound: false });
 }
 
 /** Партнёр по Борьбе (или null, если флаг протух — цель распалась/сменила сцену). */
@@ -84,9 +82,9 @@ export function grapplePartner(actor) {
 /** Снять Борьбу с обоих участников разом (кнопка «Разорвать Захват» и любой Выход). */
 export async function endGrapple(actor) {
   const partner = grapplePartner(actor);
-  await actor.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
+  await actor.update({ ...conditionRemoveFields("grappling"), [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   if (partner) {
-    await partner.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
+    await partner.update({ ...conditionRemoveFields("grappling"), [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   }
 }
 
@@ -129,7 +127,6 @@ async function _resolveWrenchSuccess(actor) {
   });
   if (!choice || (!choice.dmg && !choice.fat)) return;
 
-  const rollMode = game.settings.get("core", "rollMode");
   if (choice.dmg) {
     const roll = await new Roll("1d5").evaluate();
     const dmg = roll.total + sb;
@@ -139,25 +136,18 @@ async function _resolveWrenchSuccess(actor) {
       hitLocation: "Торс", melee: true,
       attackerName: actor.name, attackerUuid: actor.uuid, weaponName: "Заломить"
     });
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("sword","#e08a3a")}Заломить: урон ${esc(partner.name)}</div>
-        <div class="roll-dice">1d5: <b>${roll.total}</b> + S.b <b>${sb}</b> = <b>${dmg}</b> I(Cr), броня проигнорирована</div>
-      </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: `Заломить: урон ${esc(partner.name)}`,
+      lines: [`<div class="roll-dice">1d5: <b>${roll.total}</b> + S.b <b>${sb}</b> = <b>${dmg}</b> I(Cr), броня проигнорирована</div>`]
+    }, { rolls: [roll] });
   }
   if (choice.fat) {
     const { addFatigue } = await import("../sheets/tabs/conditions.mjs");
     await addFatigue(partner, 1);
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("sword","#e08a3a")}Заломить: Усталость</div>
-        <div class="roll-outcome">${esc(partner.name)} получает 1 Усталость.</div>
-      </div>`
-    }, rollMode));
+    await postTestCard(actor, {
+      icon: rollIcon("sword","#e08a3a"), title: "Заломить: Усталость",
+      outcome: `${esc(partner.name)} получает 1 Усталость.`
+    }, { sound: false });
   }
 }
 
@@ -226,15 +216,11 @@ export function tentacleTechDef(actor, techDef) {
 /** Сжать — без броска, накопительный штраф −10 за полудействие (стр. 12). */
 async function _doSqueeze(actor) {
   const partner = grapplePartner(actor);
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword","#e08a3a")}Борьба: Сжать</div>
-      <div class="roll-outcome">${esc(actor.name)} крепче заламывает ${partner ? esc(partner.name) : "цель"}.</div>
-      <div class="roll-threshold" style="font-size:0.85em;">Пока цель в Захвате: −10 на все Физические действия в её Ход за каждое потраченное на Сжатие полудействие (накапливается вручную).</div>
-    </div>`
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: "Борьба: Сжать",
+    outcome: `${esc(actor.name)} крепче заламывает ${partner ? esc(partner.name) : "цель"}.`,
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Пока цель в Захвате: −10 на все Физические действия в её Ход за каждое потраченное на Сжатие полудействие (накапливается вручную).</div>`]
+  }, { sound: false });
 }
 
 // Оружие «Укус» — обе половины двуязычного имени (wdbc-l07y: было /укус/i, не
@@ -296,15 +282,11 @@ async function _doCrunch(actor) {
     hitLocation: "Торс", melee: true,
     attackerName: actor.name, attackerUuid: actor.uuid, weaponName: weapon.name
   });
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword","#e08a3a")}Борьба: Хруст (${esc(weapon.name)})</div>
-      <div class="roll-outcome">${esc(actor.name)} автоматически наносит ${esc(partner.name)}: <b>${dmg}</b> Dmg (S.b÷2, окр. вверх).</div>
-      <div class="roll-threshold" style="font-size:0.85em;">Свободное действие. Доступно только пока цель удержана Захватом.</div>
-    </div>`
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: `Борьба: Хруст (${esc(weapon.name)})`,
+    outcome: `${esc(actor.name)} автоматически наносит ${esc(partner.name)}: <b>${dmg}</b> Dmg (S.b÷2, окр. вверх).`,
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Свободное действие. Доступно только пока цель удержана Захватом.</div>`]
+  }, { sound: false });
 }
 
 // wdbc-1f5j: субмутация 10 «Отделяемое» (стр. 440) — единственная из шести
@@ -367,18 +349,14 @@ async function _doDetachTentacle(actor) {
     ui.notifications.warn(`${actor.name}: партнёр по Борьбе не найден (Захват уже разорван?).`);
     return;
   }
-  await actor.update({ "system.conditions.grappling": false, [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
+  await actor.update({ ...conditionRemoveFields("grappling"), [`flags.${NS}.-=${PARTNER_FLAG}`]: null });
   await markWorldTimeCooldownUsed(actor, TENTACLE_REGROW_FLAG);
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword","#e08a3a")}Борьба: Отсоединить щупальце</div>
-      <div class="roll-outcome">${esc(actor.name)} отсоединяет щупальце у плеча — оно продолжает держать ${esc(partner.name)} в Захвате, а сам ${esc(actor.name)} волен действовать свободно.</div>
-      <div class="roll-threshold" style="font-size:0.85em;">Без теста (действие по решению стола — книга не уточняет). Новое щупальце отрастёт из культи через 3 часа. ${esc(partner.name)} по-прежнему может Вырваться или Выкрутиться из хватки культи.</div>
-    </div>`
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("sword","#e08a3a"), title: "Борьба: Отсоединить щупальце",
+    outcome: `${esc(actor.name)} отсоединяет щупальце у плеча — оно продолжает держать ${esc(partner.name)} в Захвате, а сам ${esc(actor.name)} волен действовать свободно.`,
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;">Без теста (действие по решению стола — книга не уточняет). Новое щупальце отрастёт из культи через 3 часа. ${esc(partner.name)} по-прежнему может Вырваться или Выкрутиться из хватки культи.</div>`]
+  }, { sound: false });
 }
 
 // Метнуть/Замахнуться (стр. 12) отсылают к ОБЩЕМУ правилу «Импровизированное
@@ -499,9 +477,12 @@ async function _doSwing(actor) {
   const stBon   = MELEE_STANCES[stance]?.wsBonus ?? 0;
   const baseKey = actor.system.meleeBase || "standard";
   const baseBon = MELEE_BASES[baseKey]?.wsBonus ?? 0;
-  const fatigue = fatiguePenalty(actor, "ws");
+  // Общий сбор модификаторов (wdbc-ct65.1): раньше здесь стояла одна
+  // Усталость, а Черты/Таланты на Оружейное Мастерство в приёмы Борьбы не
+  // попадали вовсе — этот путь шёл мимо реестра правил.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "ws" });
   const ws      = actor.system.characteristics.ws?.total ?? 0;
-  const final   = ws + profile.wsBonus + baseBon + stBon + fatigue;
+  const final   = ws + profile.wsBonus + baseBon + stBon + ruleMods.total;
 
   const roll = await new Roll("1d100").evaluate();
   const { success: hit, deg } = testOutcome(roll.total, final);
@@ -513,30 +494,32 @@ async function _doSwing(actor) {
   const { applyWoundLoss } = await import("../rules/wounds.mjs");
   await applyWoundLoss(partner, dmgTotal);
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Замахнуться (Дубина)</b>
+  // Блок «Приём: …» стоит ВЫШЕ шапки карточки — тот же вид, что у остальных
+  // Приёмов (combat/techniques.mjs, карточка атаки); в общем сборщике под это
+  // есть prelude. Строка Порога здесь своего формата (слагаемые без скобок,
+  // как сложилось у Приёмов), поэтому передаётся готовой строкой.
+  await postTestCard(actor, {
+    prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Замахнуться (Дубина)</b>
         <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} используется как импровизированная Дубина против ${esc(target.name)} (стр. 27).${profile.tentacleBonus ? ` Щупальце: +${profile.tentacleBonus} учтено.` : ""}</div>
-      </div>
-      <div class="roll-header">${rollIcon("sword")}Замахнуться — удар Дубиной (${profile.diceCount}d10 I(Cr))</div>
-      <div class="roll-threshold">
+      </div>`,
+    icon: rollIcon("sword"),
+    title: `Замахнуться — удар Дубиной (${profile.diceCount}d10 I(Cr))`,
+    threshold: `<div class="roll-threshold">
         WS: <b>${ws}</b> база ${baseBon >= 0 ? "+" : ""}${baseBon}
         ${stBon !== 0 ? ` стойка ${stBon >= 0 ? "+" : ""}${stBon}` : ""}
         Дубина −20${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-        ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}
+        ${ruleMods.parts.map(p => ` ${p}`).join("")}
         → Порог: <b>${final}</b>
-      </div>
-      <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-      <div class="roll-outcome">${hit
-        ? `<span class="roll-success">Попадание по ${esc(target.name)} — ${deg} степеней</span>`
-        : `<span class="roll-failure">Промах мимо ${esc(target.name)} — ${deg} степеней</span>`}</div>
-      <div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как Дубина: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную), НЕЗАВИСИМО от исхода атаки.</div>
-      ${hit ? _targetDamageSection(dmgTotal, "Замахнуться (Борьба)", actor) : ""}
-    </div>`,
-    rolls: [roll, dmgRoll], sound: CONFIG.sounds.dice
-  }, rollMode));
+      </div>`,
+    rv: roll.total,
+    outcome: outcomeHtml(hit, hit
+      ? `Попадание по ${esc(target.name)} — ${deg} степеней`
+      : `Промах мимо ${esc(target.name)} — ${deg} степеней`),
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как Дубина: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную), НЕЗАВИСИМО от исхода атаки.</div>`,
+      hit ? _targetDamageSection(dmgTotal, "Замахнуться (Борьба)", actor) : ""
+    ]
+  }, { rolls: [roll, dmgRoll] });
 }
 
 /** Метнуть — бросок партнёра в третью цель под прицелом, тир по весу партнёра. */
@@ -589,34 +572,38 @@ async function _doThrow(actor) {
     if (!(sRoll.total <= sTotal - 30 && aRoll.total <= aTotal - 30)) {
       knockedDown = true;
       halved = true;
-      await actor.update({ "system.conditions.prone": true });
+      await actor.update(conditionApplyFields("prone", null, actor));
     }
   }
 
   const charVal = actor.system.characteristics[profile.testChar]?.total ?? 0;
-  const fatigue = fatiguePenalty(actor, profile.testChar);
-  const final   = charVal + profile.testBonus + fatigue;
+  // Тот же общий сбор, что у «Замахнуться» выше (wdbc-ct65.1).
+  const throwMods = collectTestMods(actor, { kind: "skill", char: profile.testChar });
+  const final   = charVal + profile.testBonus + throwMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success: hit, deg } = testOutcome(roll.total, final);
-  const rollMode = game.settings.get("core", "rollMode");
   const knockNote = knockedDown
     ? `<div class="roll-threshold" style="font-size:0.85em;">Без надёжной опоры: ${esc(actor.name)} сбит(а) с ног (Повален), дальность и урон уменьшены вдвое.</div>` : "";
 
   if (!hit) {
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
+    // Блок «Приём: …» выше шапки — см. комментарий в _doSwing.
+    await postTestCard(actor, {
+      prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
           <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} метается в ${esc(target.name)} (стр. 28, тир «${TIER_LABEL[profile.tier]}»).</div>
-        </div>
-        <div class="roll-header">${rollIcon("sword")}Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}</div>
-        <div class="roll-threshold">Порог: <b>${final}</b></div>
-        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-failure">Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней</span></div>
-        ${knockNote}
-      </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+        </div>`,
+      icon: rollIcon("sword"),
+      title: `Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}`,
+      threshold: `<div class="roll-threshold">
+          ${profile.testLabel}: <b>${charVal}</b>
+          ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
+          ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
+          ${throwMods.parts.map(p => ` ${p}`).join("")}
+          → Порог: <b>${final}</b>
+        </div>`,
+      rv: roll.total,
+      outcome: outcomeHtml(false, `Промах — ${esc(partner.name)} улетает мимо ${esc(target.name)}, ${deg} степеней`),
+      sections: [knockNote]
+    }, { rolls: [roll] });
     return;
   }
 
@@ -631,28 +618,28 @@ async function _doThrow(actor) {
   const { applyWoundLoss } = await import("../rules/wounds.mjs");
   await applyWoundLoss(partner, dmgTotal);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
+  // Блок «Приём: …» выше шапки — см. комментарий в _doSwing.
+  await postTestCard(actor, {
+    prelude: `<div class="roll-technique-block">${rollIcon("sword")}Приём: <b>Метнуть</b>
         <div class="roll-technique-note">🤼 Борьба: ${esc(partner.name)} метается в ${esc(target.name)} (стр. 28, тир «${TIER_LABEL[profile.tier]}»).${profile.tentacleBonus ? ` Щупальце: +${profile.tentacleBonus} учтено.` : ""}</div>
-      </div>
-      <div class="roll-header">${rollIcon("sword")}Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}</div>
-      <div class="roll-threshold">
+      </div>`,
+    icon: rollIcon("sword"),
+    title: `Метнуть — ${profile.testLabel}${profile.rangeM ? `, дальность до ${profile.rangeM} м` : ""}`,
+    threshold: `<div class="roll-threshold">
         ${profile.testLabel}: <b>${charVal}</b>
         ${profile.athleticsPenalty ? ` тир ${profile.athleticsPenalty}` : ""}
         ${profile.tentacleBonus ? ` Щупальце +${profile.tentacleBonus}` : ""}
-        ${fatigue !== 0 ? ` усталость ${fatigue}` : ""}
+        ${throwMods.parts.map(p => ` ${p}`).join("")}
         → Порог: <b>${final}</b>
-      </div>
-      <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-      <div class="roll-outcome"><span class="roll-success">Попадание — ${deg} степеней</span></div>
-      ${knockNote}
-      <div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как снаряд: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную).</div>
-      ${_targetDamageSection(dmgTotal, "Метнуть (Борьба)", actor)}
-    </div>`,
-    rolls: [roll, dmgRoll], sound: CONFIG.sounds.dice
-  }, rollMode));
+      </div>`,
+    rv: roll.total,
+    outcome: outcomeHtml(true, `Попадание — ${deg} степеней`),
+    sections: [
+      knockNote,
+      `<div class="roll-threshold" style="font-size:0.85em;">${esc(partner.name)} получил(а) как снаряд: <b>${dmgTotal}</b> Dmg — урон от падения (игнорирует броню, может быть поглощён Группированием вручную).</div>`,
+      _targetDamageSection(dmgTotal, "Метнуть (Борьба)", actor)
+    ]
+  }, { rolls: [roll, dmgRoll] });
 }
 
 /** Диалог «Борьба» — вызывается кнопкой из блока Состязаний вкладки БОЙ. */

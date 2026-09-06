@@ -37,6 +37,7 @@ import { isFeatureEnabled } from "../constants/features.mjs";
 import { supportsHistory } from "./armour-history.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const TALENTS_PACK = "warhammer-dbc.talents";
@@ -183,14 +184,14 @@ export async function useTrance(actor, item) {
   // лист брони не перерисуется, и кнопка застревает в состоянии «Впасть».
   item.sheet?.rendered && item.sheet.render(false);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#ffd24d")}${esc(trance.label)} — ${esc(actor.name)}</div>
-      <div class="roll-outcome"><span class="roll-success">${esc(option.label)}</span></div>
-      <div class="roll-threshold" style="font-size:.85em;opacity:.8;">${esc(trance.aftermathLabel || "")}</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  // Вход в транс — результат действия без броска (тот же случай, что Сжатие в
+  // combat/defense.mjs): Порога и кубика нет, звука тоже.
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#ffd24d"),
+    title: `${esc(trance.label)} — ${esc(actor.name)}`,
+    outcome: outcomeHtml(true, esc(option.label)),
+    sections: [`<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${esc(trance.aftermathLabel || "")}</div>`]
+  }, { sound: false });
 }
 
 /**
@@ -212,14 +213,13 @@ export async function resolveTrancesForCombat(combat) {
       const roll = await new Roll(formula).evaluate();
       const cur = Number(actor.system.corruption?.value) || 0;
       await actor.update({ "system.corruption.value": Math.min(100, cur + roll.total) });
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        content: `<div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("bolt", "#ffd24d")}Дух героя — ${esc(actor.name)}</div>
-          <div class="roll-outcome"><span class="roll-failure">Транс кончился — ${roll.total} Порчи</span></div>
-        </div>`,
-        rolls: [roll]
-      });
+      // Расплата за транс: бросок Порчи по формуле носителя, без Порога —
+      // не тест, сравнивать не с чем.
+      await postTestCard(actor, {
+        icon: rollIcon("bolt", "#ffd24d"),
+        title: `Дух героя — ${esc(actor.name)}`,
+        outcome: outcomeHtml(false, `Транс кончился — ${roll.total} Порчи`)
+      }, { rolls: [roll] });
     }
     await actor.deleteEmbeddedDocuments("Item", carriers.map(i => i.id));
     // Открытые листы брони этого актора всё ещё показывают «В трансе».

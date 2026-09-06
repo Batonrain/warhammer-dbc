@@ -33,6 +33,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { painChange } from "../sheets/tabs/pain.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 
@@ -40,7 +41,7 @@ const FLAG = "enjoyment";
 
 /** Владеет ли актор Талантом Enjoyment / Наслаждение. */
 function hasEnjoyment(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Enjoyment"));
+  return hasAbility(actor, "ability.enjoyment", "Enjoyment", "talent");
 }
 
 /**

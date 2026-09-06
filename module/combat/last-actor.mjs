@@ -20,13 +20,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { extraTurnCount, grantExtraTurn } from "./extra-turn.mjs";
 
 const LAST_ACTOR_SOURCE = "lastActor";
 const LAST_ACTOR_EXTRA_TURNS = 2; // +2 доп. Хода = 3 хода в раунде вместе с обычным.
 
 export function hasLastActor(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Last Actor"));
+  return hasAbility(actor, "ability.lastActor", "Last Actor", ["talent", "trait"]);
 }
 
 /**

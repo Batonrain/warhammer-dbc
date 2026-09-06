@@ -1,0 +1,91 @@
+{
+  "name": "Noctic Shield / Ноктиковый Щит",
+  "type": "weaponMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/weaponmod.svg",
+  "folder": "qyeMndFytvLJ1Fu8",
+  "system": {
+    "description": "Материал щита заменён обратно настроенным ноктилитом, отражающим психосилы и варп. Щит получает +1 AP и свойство Reinforced, имеет Sanctified, а его AP работает против оружия со свойством Warp-Weapon. С Талантом Blade Shield / Щит Клинков этим щитом можно парировать психосилы: при успешном парировании эффекты психосилы нивелируются (то же и когда психический снаряд попадает в прикрытый щитом участок тела). Персонаж с Forbidden Lore (Warp)+20 и Forbidden Lore (Xenos (Necrons/Eldar))+20 может инвертировать щит за смену работы без теста: +10 к тестам манифестации психосил и ровно столько же к варп-феноменам.\nPoor.Q: развеивает психосилу не полноценно — за каждый успех на парировании снижает эPR психосилы на −1.\nGood.Q: всё пространство позади и впереди персонажа рассеивается от психосил с типом Аура, создавая безопасную зону; при инверсии дополнительно колдовской щит-купол 1-25/−.\nBest.Q: персонаж может парировать атакующие психосилы и направлять их обратно в псайкеров; при инверсии парирование атакующих психосил даёт им +3 эPR, а не −3.",
+    "notes": "Источник: Книга Жаб-Псайкеров, «МЕРЫ ПРОТИВОДЕЙСТВИЯ ПСАЙКЕРАМ». МЕХАНИЗИРОВАНО (wdbc-uagn): Reinforced и Sanctified — addProps. Парирование психосил — записи Конструктора kind:\"capability\": defence.psychicParryTool (module/combat/blade-shield.mjs::psychicParryTool ищет такой предмет среди занимающих руки, и вместе с Талантом «Щит Клинков» открывает кнопку «Парировать психосилу» на карточке манифестации) и defence.psychicParryWeakens (срабатывает ТОЛЬКО при system.quality «poor» — ровно как в книге: неполноценное развеивание это оговорка Poor.Q, а не свойство щита вообще; −1 эPR за успех считает psychicParryOutcome).\nНЕ МЕХАНИЗИРОВАНО, и это честный остаток: «+1 AP» — у схемы weaponMod нет поля надбавки AP щита (та же оговорка у соседнего мода «Брутальное Экранирование», где «+2 AP» тоже только текстом); «AP щита против Warp-Weapon» — поглощение варп-оружия обходит броню отдельной веткой, точки расширения под щит там нет; инверсия щита (+10 к манифестации и к варп-феноменам) — переключаемое состояние предмета, отдельной механики под него нет; Good.Q (зона рассеивания Аур, купол 1-25) и Best.Q (отражение психосилы обратно в псайкера, +3 эPR при инверсии) — разные эффекты у разных Качеств, общей схемы масштабирования по Качеству в Конструкторе нет.",
+    "category": "shield",
+    "modGroup": "shield",
+    "requirement": "Только Стандартные щиты. Установка: Tech-Use+0 или Trade (Weaponsmith)+20 (если не с оружием).",
+    "installedOn": "",
+    "weight": 0,
+    "availability": 4,
+    "quality": "common",
+    "effects": {
+      "attackMod": 0,
+      "damageMod": 0,
+      "penMod": 0,
+      "rangeMod": 0,
+      "rangeMult": 1,
+      "clipMod": 0,
+      "clipMult": 1,
+      "rofSemiMod": 0,
+      "rofFullMod": 0,
+      "reliabilityMod": 0,
+      "balanceMod": 0,
+      "weightPct": 0,
+      "addProps": [
+        {
+          "key": "reinforced"
+        },
+        {
+          "key": "sanctified"
+        }
+      ],
+      "removeProps": []
+    },
+    "drukhari": false
+  },
+  "_id": "fkHs39lTjrbJEFcB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "jfjPSBwbkFtJRCKJ",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "BpUMEYJLexeRVoWb",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.psychicParryTool",
+              "label": "Парирует психосилы (Щит Клинков)"
+            }
+          ]
+        },
+        {
+          "id": "mI8BlSspBZGTm7fh",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "8151BUsYRCxB6PvQ",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.psychicParryWeakens",
+              "label": "Poor.Q: развеивает не полностью (−1 эPR за успех)"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788000000000,
+    "modifiedTime": 1788000000000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fkHs39lTjrbJEFcB"
+}

@@ -16,37 +16,16 @@
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
+// Состояния (conditions) — набор один и тот же у всех существ, строится из
+// реестра constants/conditions.mjs (wdbc-w88h), а не перечисляется здесь: тот
+// же приём, что у Навыков (SKILLS_DEF выше).
+// CONDITION_STORED_KEYS, а не CONDITION_KEYS: МЕТКИ (mark:true, wdbc-5uae)
+// своего хранимого поля не получают — они целиком производные, считаются из
+// чужого источника на каждом пересчёте (rules/character.mjs::readAllMirrors).
+import { CONDITION_STORED_KEYS, CONDITION_COUNTERS } from "../../constants/conditions.mjs";
 
 /** Зоны попадания — порядок как в листе. */
 export const HIT_LOCATIONS = ["head", "leftArm", "rightArm", "body", "leftLeg", "rightLeg"];
-
-/** Состояния (conditions) — набор один и тот же у всех существ. */
-const CONDITION_FLAGS = [
-  "bleeding", "haemorrhaging", "stunned", "fatigued", "poisoned", "prone",
-  "helpless", "unconscious", "blinded", "deafened", "burning", "radiation",
-  "hallucinogenic", "pinned", "crippling", "addicted",
-  // Состояние «в Шоке» (стр. 53, «Оправиться от Шока») — раньше таблица Шока
-  // была разовым эффектом без сохраняемого состояния; тест выхода из Шока
-  // (module/combat/fear.mjs::rollShockRecovery) читает и снимает этот флаг.
-  "shocked",
-  // Стр. 30-31 (Раны и Урон, «Статусы») — Ступор и Удушье не имели своих
-  // полей; Гангрена и Потеря Конечностей (по частям тела) — тоже.
-  "dazed", "suffocating", "gangrene",
-  "lostHands", "lostArms", "lostFeet", "lostLegs", "lostEyes",
-  // Стр. 12 («Борьба») — состояние двух персонажей, связанных Захватом.
-  "grappling",
-  // Свойство оружия Вызов/Challenge (X), wdbc-2xku: до конца следующего Хода
-  // нельзя добровольно выйти из рукопашной (кроме уклонения от атаки по
-  // площади) — блокирует действие «Выход из Боя» (movement-actions.mjs).
-  "challenged"
-];
-/** Состояния со счётчиком: имя поля → суффикс счётчика. */
-const CONDITION_COUNTERS = {
-  bleeding: "Level", haemorrhaging: "Level", stunned: "Rounds",
-  fatigued: "Level", blinded: "Rounds", burning: "Level", radiation: "Level",
-  suffocating: "Rounds",
-  lostHands: "Count", lostArms: "Count", lostFeet: "Count", lostLegs: "Count", lostEyes: "Count"
-};
 
 /**
  * Общий блок полей существа.
@@ -121,6 +100,13 @@ export function creatureSchema({ granted = false } = {}) {
       rank: str("untrained", "Ранг"),
       ...(granted ? { grantedRank: str("untrained", "Ранг от источника") } : {}),
       cost:  num(0, "Потрачено опыта"),
+      // Постоянная прибавка к Навыку (wdbc-q4wb): снаряжение, обстоятельства,
+      // договорённость за столом — всё, что держится дольше одного броска.
+      // Входит в total (rules/character.mjs) и потому сразу оказывается в
+      // Пороге любого теста этого Навыка. Разовый бонус на ОДИН бросок сюда
+      // не пишут — для него поле «Модификатор» в самом окне броска
+      // (actor-sheet.mjs::_showSkillRollDialog, #skill-modifier).
+      mod:   num(0, "Модификатор"),
       // −20 — бросок нетренированного навыка: значение пересчитывается
       // в prepareDerivedData, здесь только умолчание пустого листа.
       total: num(-20, "Значение")
@@ -137,7 +123,7 @@ export function creatureSchema({ granted = false } = {}) {
   const armorFields = () => Object.fromEntries(HIT_LOCATIONS.map(loc => [loc, num(0, loc)]));
 
   const conditionFields = {};
-  for (const flag of CONDITION_FLAGS) {
+  for (const flag of CONDITION_STORED_KEYS) {
     conditionFields[flag] = bool(false, flag);
     const counter = CONDITION_COUNTERS[flag];
     if (counter) conditionFields[flag + counter] = num(0, flag + counter);
@@ -295,6 +281,14 @@ export function creatureSchema({ granted = false } = {}) {
     characteristics: new SchemaField(charFields, { label: "Характеристики" }),
     charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
+    // ПЕРЕОПРЕДЕЛЕНИЕ ПРИВЯЗКИ СКЛОННОСТЕЙ (wdbc-1pvq): «у нашего стола
+    // Уклонение относится к Интеллекту и Знанию, а не к Ловкости и Защите».
+    // Свободный объект, а не перечень полей: ключи — Характеристики и Навыки,
+    // и перечислять их вторым списком рядом с CHAR_APTITUDES/SKILLS_DEF
+    // значило бы завести второе место правды о том, что вообще существует.
+    // Форма: { char: { ws: ["int","knowledge"] }, skill: { dodge: [...] } }.
+    // Пусто = книжная привязка (module/rules/aptitude-binding.mjs).
+    aptitudeBinding: new ObjectField({ label: "Привязка Склонностей" }),
     groupSkills:     new SchemaField(groupSkillFields, { label: "Групповые навыки" }),
     armor:      new SchemaField(armorFields(), { label: "Броня" }),
     // Складываемая надбавка AP от эффектов (constants/effect-keys.mjs) —
@@ -306,6 +300,19 @@ export function creatureSchema({ granted = false } = {}) {
     // actor.mjs) — отдельное хранимое поле, а не правка `armor`, тем же
     // приёмом, что armorBonus рядом с ним.
     armorCorrosion: new SchemaField(armorFields(), { label: "Разъедено (Corrosive)" }),
+    // УКРЫТИЕ ПО ЧАСТЯМ ТЕЛА (wdbc-qkua). До этого AP укрытия было общим на
+    // всего персонажа: зона Region отдавала одно число (combat/cover.mjs::
+    // coverApForToken), и «выглянул из-за стены головой и рукой» выразить было
+    // нечем. Здесь две вещи, обе ручные и обе на листе:
+    //   ap — своё число AP укрытия на случай, когда ГМ не размечает зоны вовсе
+    //        (иначе цифру укрытия в системе взять неоткуда);
+    //   шесть галочек — какие конечности реально прикрыты прямо сейчас.
+    // Ни одна не отмечена — укрытие считается общим, как раньше: так лист
+    // старого персонажа продолжает работать без правки.
+    cover: new SchemaField({
+      ap: num(0, "AP укрытия (вручную)"),
+      ...Object.fromEntries(HIT_LOCATIONS.map(loc => [loc, bool(false, loc)]))
+    }, { label: "Укрытие" }),
     // Свойство оружия Piercing, wdbc-plsf: снаряд застрял в ране (после
     // непоглощённого урона), пока цель не потратит полудействие на извлечение
     // (+1 непоглощаемого R Dmg в ту же часть). Штраф −10 на действия этой

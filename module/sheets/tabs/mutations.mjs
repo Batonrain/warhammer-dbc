@@ -16,6 +16,7 @@ import { hasSubmutations }             from "../../rules/submutations.mjs";
 import { rollSubmutation }             from "../../apps/submutations.mjs";
 import { hasRuleFlag }                 from "../../rules/flags.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 
 /**
  * Все записи таблицы, достижимые набором бросков ± Inf.b (или без сдвига,
@@ -116,13 +117,15 @@ export async function rollMutationOrGift(actor) {
         const data  = foundry.utils.deepClone(await mutationItemData(name, type === "gift" ? god : ""));
         delete data.folder; delete data.folderParent; delete data._id;
         const [item] = await actor.createEmbeddedDocuments("Item", [data]);
-        ChatMessage.create({
-          speaker: ChatMessage.getSpeaker({ actor: actor }),
-          content: `<div class="wh-roll-result"><div class="roll-header">${type === "gift" ? `Дар ${GOD_GIFTS[god]?.label || god}` : "Мутация"}</div>
-            <div class="roll-statline"><span class="roll-stat"><label>Бросок</label><b>${rollsLabel}</b></span></div>
-            <div class="roll-outcome"><b>${esc(name)}</b></div></div>`,
-          rolls: [roll1, ...(roll2 && !failed ? [roll2] : [])]
-        });
+        // Выдача по таблице: Порога нет, но бросок есть — карточка собирается
+        // и публикуется общим helpers/test-card.mjs (wdbc-kuun). Своя сборка
+        // не проходила через applyRollMode и не давала звука кубика — теперь
+        // карточка мутации ведёт себя как любой другой бросок системы.
+        postTestCard(actor, {
+          title: type === "gift" ? `Дар ${GOD_GIFTS[god]?.label || god}` : "Мутация",
+          lines: [`<div class="roll-statline"><span class="roll-stat"><label>Бросок</label><b>${rollsLabel}</b></span></div>`],
+          outcome: `<b>${esc(name)}</b>`
+        }, { rolls: [roll1, ...(roll2 && !failed ? [roll2] : [])] });
         // Субмутация бросается сразу за мутацией — она часть той же выдачи
         // (стр. 440), и её сдвиг тоже закрыт Порчей за Провал.
         if (item && hasSubmutations(item.system?.benefit || ""))

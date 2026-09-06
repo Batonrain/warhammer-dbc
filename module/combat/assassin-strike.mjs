@@ -28,17 +28,20 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/game-session.mjs";
 import { skillTotal, markMovedThisTurn } from "./movement-actions.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
 /** Ключ флага троттлинга «раз в Раунд» (module/rules/cooldown.mjs). */
 export const ASSASSIN_STRIKE_CAPABILITY = "assassinStrike";
 
 /** Владеет ли актор Талантом Assassin Strike / Удар Ассасина. */
 export function hasAssassinStrike(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Assassin Strike"));
+  return hasAbility(actor, "ability.assassinStrike", "Assassin Strike", "talent");
 }
 
 /** Показывать ли кнопку на карточке: Талант есть И раунд ещё не потрачен. */
@@ -59,7 +62,10 @@ export async function resolveAssassinStrikeClick(actorUuid) {
   }
   await markRoundCapabilityUsed(actor, ASSASSIN_STRIKE_CAPABILITY);
 
-  const threshold = skillTotal(actor, "acrobatics");
+  // Общий сбор модификаторов (wdbc-ct65.3): тест Акробатики шёл мимо реестра
+  // правил — ни Усталость, ни «+10 к Акробатике» с Черты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "acrobatics", char: "ag" });
+  const threshold = skillTotal(actor, "acrobatics") + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const success = rv <= threshold;
@@ -70,19 +76,14 @@ export async function resolveAssassinStrikeClick(actorUuid) {
     await actor.setFlag("warhammer-dbc", "disengageActive", true);
   }
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">🗡️ Удар Ассасина — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Acrobatics+0: <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — Полудвижение свободным действием (без ОД), не вызывает Свободную Атаку при выходе из рукопашной</span>`
-          : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Полудвижение недоступно</span>`}</div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode"));
-  await ChatMessage.create(messageData);
+  await postTestCard(actor, {
+    icon: "🗡️", title: `Удар Ассасина — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Acrobatics+0", base: skillTotal(actor, "acrobatics"),
+                               parts: ruleMods.parts, threshold }),
+    rv,
+    outcome: success
+      ? `<span class="roll-success">Успех — Полудвижение свободным действием (без ОД), не вызывает Свободную Атаку при выходе из рукопашной</span>`
+      : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Полудвижение недоступно</span>`
+  }, { rolls: [roll] });
   return success;
 }

@@ -1,0 +1,23 @@
+/* ═══════════════════════════════════════════════════════
+   Панель инструментов без открытой сцены (wdbc-3w94).
+
+   Ядро Foundry молча игнорирует клики по ВСЕЙ панели, пока canvas.ready ===
+   false (scene-controls.mjs:580 и :594 — `if ( !canvas.ready ) return;`).
+   Метку wh-canvas-idle ставит module/apps/scene-controls-guard.mjs: панель
+   приглушена, чтобы «не работает» было видно ДО клика, а не после трёх.
+
+   Кнопка «Doom BC» намеренно НЕ приглушена: она одна и без открытой сцены
+   работает — guard открывает её меню в обход панели.
+   ═══════════════════════════════════════════════════════ */
+
+#scene-controls.wh-canvas-idle button.control {
+  opacity: 0.35;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
+
+#scene-controls.wh-canvas-idle button.control[data-control="wh-hub"] {
+  opacity: 1;
+  filter: none;
+  cursor: var(--cursor-pointer, pointer);
+}

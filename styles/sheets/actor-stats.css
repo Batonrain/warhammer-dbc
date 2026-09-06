@@ -98,9 +98,20 @@
    ниже — маленькое поле Мод. (знаковая правка Итога). ── */
 .warhammer-dbc .char-grid-body { padding: 6px !important; }
 
+/* Пол ячейки 56px, а не 64 (wdbc-opgx). Замер живого листа 05.09.2026:
+   .char-grid шириной 845px, gap 5px, 12 треков по 65.8px — а у Вольного
+   Торговца ячеек 13 (10 книжных Характеристик + COR/INS + PF), и 13-я при
+   поле 64px в строку уже не влезала: PF уезжал ОДИН в новый ряд, оставляя
+   справа пустую полосу почти во всю панель. (Вопреки описанию тикета он там
+   не растягивался — обычная ячейка 65.8px, ровно как соседи: при auto-fit +
+   1fr одинокая ячейка второго ряда занимает один трек, а не всю ширину.)
+   13 × 56 + 12 × 5 = 788px — влезают все, начиная с ширины сетки 788px.
+   На 12 ячейках не меняется НИЧЕГО: auto-fit схлопывает пустой 13-й трек, и
+   1fr раздаёт ту же ширину 65.8px, что и раньше. Уже ниже 788px по-прежнему
+   работает перенос (wdbc-joh2) — ячейки переносятся, а не обрезаются. */
 .warhammer-dbc .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
   gap: 4px;
 }
 
@@ -275,3 +286,18 @@
   font-style: italic;
   font-size: 0.9em;
 }
+
+/* Постоянный модификатор Навыка (wdbc-q4wb) — узкое поле между названием и
+   Итогом. Ширина как у .char-cell-mod у Характеристик: это та же по смыслу
+   вещь, и два разных размера рядом читались бы как два разных поля. */
+.warhammer-dbc .skill-mod {
+  width: 30px;
+  flex-shrink: 0;
+  margin-right: 5px;
+  padding: 0;
+  text-align: center;
+  font-size: 0.76em;
+  line-height: 1.3;
+  border-radius: 2px;
+}
+.warhammer-dbc .skill-row-grouped .skill-mod { margin-right: 4px; }

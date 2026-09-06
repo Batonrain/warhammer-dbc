@@ -180,6 +180,10 @@ export async function setGroupEntryField(actor, group, index, field, value) {
       entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty);
     } else if (field === "cost") {
       entry.cost = parseInt(value) || 0;
+    } else if (field === "mod") {
+      // Постоянный модификатор специализации (wdbc-q4wb): число, а не строка —
+      // иначе Итог склеился бы текстом при пересчёте (rules/character.mjs).
+      entry.mod = parseInt(value) || 0;
     } else {
       entry[field] = value;
     }
@@ -500,6 +504,11 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
   html.find(".group-skill-rank-select").change(entryField("rank"));
   html.find(".group-skill-cost-input").change(entryField("cost"));
   html.find(".group-skill-char-select").change(entryField("char"));
+  // Поле «Модификатор» у специализации живёт на вкладке ПОКАЗАТЕЛИ, а не на
+  // РАЗВИТИИ, — но пишется тем же путём (групповые Навыки хранятся списком, и
+  // обычная отправка формы по name их не берёт), поэтому слушатель здесь же.
+  // html — корень всего листа, не одной вкладки, так что find его находит.
+  html.find(".group-skill-mod-input").change(entryField("mod"));
 
   html.find(".group-skill-entry-row").on("contextmenu", ev => {
     ev.preventDefault(); ev.stopPropagation();

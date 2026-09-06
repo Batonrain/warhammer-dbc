@@ -1,0 +1,74 @@
+{
+  "name": "Grace of Mother Nature / Благодать Матери Природы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "svf7kL1Faag7lAKP",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "worldSinger",
+    "subtype": "Длань Иши",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -50,
+    "action": "full",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 3,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Концентрация. Треб.: Forest Paths, 1 психосила ветки «Длань Иши». Поддержание стоит −3 тPR, а не −1. Пока держится — все психосилы псайкера в радиусе действия считаются манифестируемыми в необходимых природных условиях (лесах и т.п.). После рассеивания психосилы псайкер проходит W+30−(5×раунды поддержания), иначе получает 1 усталость.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "aLE2Z3ZPzFGJO6G9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008680,
+    "modifiedTime": 1788601008680
+  },
+  "_key": "!items!aLE2Z3ZPzFGJO6G9"
+}

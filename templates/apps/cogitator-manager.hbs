@@ -21,6 +21,7 @@
           {{#if ../../isGM}}
           <button type="button" data-edit="{{c.id}}" title="Редактировать">Правка</button>
           <button type="button" data-access="{{c.id}}" class="{{#if c.playerAccess}}on{{/if}}" title="Доступ игрокам">{{#if c.playerAccess}}◉ Игроки{{else}}◯ ГМ{{/if}}</button>
+          <button type="button" data-autoopen="{{c.id}}" class="{{#if c.autoOpenSceneName}}on{{/if}}" title="Открывать сам при входе на сцену">{{#if c.autoOpenSceneName}}▣ {{c.autoOpenSceneName}}{{else}}▢ Автооткрытие{{/if}}</button>
           <button type="button" data-del="{{c.id}}" class="del" title="Удалить">✕</button>
           {{/if}}
         </div>

@@ -501,6 +501,9 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     if (reloads <= 0) return ui.notifications.warn(`${item.name}: боекомплект пуст — нечем перезаряжать.`);
 
     await item.update({ "system.magazineCur": magMax, "system.vehicleMount.reloads": reloads - 1 });
+    // Уведомление, а не карточка теста (ни броска, ни Порога) — на общий
+    // сборщик helpers/test-card.mjs сознательно не переведено (wdbc-kuun), как
+    // и «нет доступных Реакций» в combat/defense.mjs.
     const rollMode = game.settings.get("core", "rollMode");
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -722,6 +725,8 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
 
     const [first, ...rest] = weapons;
     if (rest.length) {
+      // Тоже уведомление («ОД потрачены, стреляйте остальными без доп. траты»),
+      // не карточка теста — на общий сборщик не переводится (wdbc-kuun).
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: this.actor }),
         content: `

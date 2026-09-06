@@ -123,7 +123,9 @@
               "when": {
                 "negate": false,
                 "conditions": []
-              }
+              },
+              "capabilityCostPool": "action",
+              "capabilityCostAmount": 1
             }
           ]
         }

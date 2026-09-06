@@ -14,6 +14,7 @@ import { _toggleShield } from "../combat/shield.mjs";
 import { GRIPS, parseGrips } from "../constants/combat.mjs";
 import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
+import { weaponProfiles, canStrikeWithGun } from "../combat/weapon-profiles.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
@@ -73,26 +74,6 @@ function zeroHandIcon(item) {
   const key = unarmedKey(item);
   if (key) return UNARMED_ICONS[key];
   return item.system?.weaponClass === "melee" ? "fa-hand-back-fist" : "fa-satellite-dish";
-}
-
-// Профиль удара стрелковым оружием в упор (импровизированная рукопашная, стр. 40):
-// пистолет — как Булава (1d5−3), винтовка/ручное — как Посох (1d10−3), тяжёлое —
-// как Булава (2d10−4). Всё I(Cr) +S.b, Pen 0, Imprecise + Primitive.
-function gunMeleeStrike(weapon) {
-  const cls = weapon.system?.weaponClass;
-  const p = ({
-    pistol:     { dmg: "1d5-3+S.b",  type: "Булава", reach: "1 м" },
-    basic:      { dmg: "1d10-3+S.b", type: "Посох",  reach: "2–3 м" },
-    heavy:      { dmg: "2d10-4+S.b", type: "Булава", reach: "2 м" },
-    launcher:   { dmg: "2d10-4+S.b", type: "Булава", reach: "2 м" },
-    stationary: { dmg: "2d10-4+S.b", type: "Булава", reach: "2 м" }
-  })[cls] || { dmg: "1d10-3+S.b", type: "Посох", reach: "2–3 м" };
-  return {
-    label: weapon.name, headerSuffix: "удар оружием в упор",
-    wsBonus: 0, damage: p.dmg, damageType: "impact", pen: 0,
-    props: "Imprecise, Primitive",
-    chatNote: `Импровизированное рукопашное — как ${p.type}, досягаемость ${p.reach}.`
-  };
 }
 
 // Локации брони → PNG-маска фигуры (assets/body) и подпись.
@@ -238,7 +219,10 @@ export function hudData(actor) {
         }))
       : [];
 
-    const profList = Array.isArray(g.profiles) ? g.profiles : [];
+    // Профили — из общего сборщика: сюда же попадает выводимый «Удар в упор»
+    // у стрелкового (wdbc-bs0q). Авторские сохраняют свои индексы, по которым
+    // хранится выбор игрока (флаг hudProfile).
+    const profList = weaponProfiles(w, { isIntegralAttack });
     let curProf = Number(w.getFlag(SYSTEM, "hudProfile"));
     if (!Number.isFinite(curProf) || curProf < -1 || curProf >= profList.length) curProf = -1;
     const profOpts = profList.length
@@ -256,13 +240,13 @@ export function hudData(actor) {
     // применяется только к рукопашной) — гейтить «ОГОНЬ» нечем, не гейтим.
     const fireGate = melee ? apSpendGate(actor, 1) : { disabled: false, title: "" };
 
-    // Удар оружием в упор/приклад (стр. 40, gunMeleeStrike выше) — только у
-    // «настоящего» стрелкового. Интегральным атакам (кислотный плевок, вопль,
-    // демонические дары и т.п.) кнопка не полагается по умолчанию: у них нет
-    // физического приклада — если он всё же нужен конкретному предмету
-    // (экзотическое оружие Дредноута и т.п.), включается точечно флагом
-    // flags.warhammer-dbc.allowGunMeleeStrike на самом предмете.
-    const canButtStrike = !melee && (!isIntegralAttack(w) || !!w.getFlag(SYSTEM, "allowGunMeleeStrike"));
+    // Удар оружием в упор/приклад (стр. 40) — быстрая кнопка к тому же
+    // профилю, что лежит в списке Профилей рядом (wdbc-bs0q). Кому он
+    // полагается, решает один общий предикат combat/weapon-profiles.mjs::
+    // canStrikeWithGun: надетое, стрелковое, не интегральная атака (у
+    // кислотного плевка нет приклада — точечно включается флагом
+    // allowGunMeleeStrike на самом предмете).
+    const canButtStrike = canStrikeWithGun(w, { isIntegralAttack });
 
     return {
       slot: slotKey, label, empty: false,
@@ -329,6 +313,7 @@ export function hudData(actor) {
     { on: c.bleeding,     label: "КРОВОТЕЧ.", bad: true },
     { on: c.haemorrhaging,label: "ГЕМОРРАГ.", bad: true },
     { on: c.stunned,      label: "ОГЛУШЁН" },
+    { on: c.dazed,        label: "СТУПОР" },
     { on: c.prone,        label: "ЛЕЖИТ" },
     { on: c.blinded,      label: "ОСЛЕПЛЁН" },
     { on: c.deafened,     label: "ОГЛОХ" },
@@ -543,12 +528,22 @@ function wire(el, actor) {
     await w.setFlag(SYSTEM, "hudProfile", Number(b.dataset.idx));
   }));
 
-  // Экипированное стрелковое как рукопашное (приклад/пистолет в упор, стр. 40):
-  // импровизированный профиль (WS-тест, свой урон/свойства), НЕ стрельба.
+  // Экипированное стрелковое как рукопашное (приклад/пистолет в упор, стр. 40).
+  //
+  // Теперь это ОБЫЧНАЯ атака этим оружием выбранным профилем (wdbc-bs0q), а не
+  // синтетическая безоружная в обход оружейной машинерии, как было раньше:
+  // работают Хват, Стойка, Тренировка по категории и свойства самого предмета.
+  // Кнопка осталась как быстрый путь — она просто выбирает нужный профиль за
+  // игрока и открывает то же окно атаки, что и обычный выстрел.
   el.querySelectorAll("[data-melee-gun]").forEach(b => b.addEventListener("click", () => {
     const w = actor.items.get(b.dataset.meleeGun);
     if (!own || !w) return;
-    beginTargeting(actor, w, () => actor.sheet._showAttackDialogNoWeapon?.(gunMeleeStrike(w)), `${w.name} (в упор)`, { forceMelee: true });
+    const profiles = weaponProfiles(w, { isIntegralAttack });
+    const idx = profiles.findIndex(p => p.generated && p.melee);
+    if (idx < 0) return;   // профиль не полагается (снято/рукопашное/интегральная)
+    beginTargeting(actor, w,
+      () => actor.sheet._showAttackDialog?.(w, { forceMelee: true, profileIdx: idx }),
+      `${w.name} (в упор)`, { forceMelee: true });
   }));
 
   // Лоток «Безоружный бой» (zeroHandItems выше) — перекрестие → обычный
@@ -641,4 +636,14 @@ export function initHUD() {
     Hooks.on(h, (it) => { if (mine(it.parent)) refreshHUD(); });
   Hooks.on("controlToken", () => refreshHUD());
   Hooks.on("canvasReady", () => refreshHUD());
+
+  // Боевые хуки (wdbc-9kqs). Половина содержимого HUD зависит от того, идёт ли
+  // Столкновение: список Движения гейтится isEncounterActive() (походные марши
+  // только вне боя, Полудвижение/Натиск/Бег — только в бою), ОД и Реакции
+  // сбрасываются на смене Хода. Без этих подписок HUD, отрисованный до нажатия
+  // «Начать бой», так и висел с походным списком и старым числом ОД до
+  // случайной перерисовки (повторный клик по токену).
+  for (const h of ["combatStart", "createCombat", "updateCombat", "deleteCombat",
+                   "createCombatant", "updateCombatant", "deleteCombatant"])
+    Hooks.on(h, () => refreshHUD());
 }

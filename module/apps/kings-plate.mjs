@@ -11,6 +11,7 @@ import { isKingsPlateItem, kingsPlateGrant, KINGS_PLATE_FLAG, kingsPlateShrinkTo
   from "../rules/kings-plate.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isKingsPlateItem };
 
@@ -58,15 +59,15 @@ export async function useKingsPlate(actor, item) {
   });
   await target.update({ "system.magnitude.value": 0 });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("shield","#7a9c3f")}King's Plate — поглощён «${esc(target.name)}»</div>
-      <div class="roll-threshold">+${result.granted} аблативных Ран (Магнитуда Роя) → всего <b>${result.ablative}</b></div>
-      <div class="roll-threshold" style="opacity:.8;">Не смоделировано: Natural Armour (Cor.b), +10 S/T, развитие лат за свободное действие — отыгрывать вручную. Рой уничтожен (Магнитуда обнулена) — уберите токен со сцены.</div>
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  // Результат нажатия кнопки, а не тест: броска и Порога нет, звука тоже.
+  await postTestCard(actor, {
+    icon: rollIcon("shield", "#7a9c3f"),
+    title: `King's Plate — поглощён «${esc(target.name)}»`,
+    lines: [
+      `<div class="roll-threshold">+${result.granted} аблативных Ран (Магнитуда Роя) → всего <b>${result.ablative}</b></div>`,
+      `<div class="roll-threshold" style="opacity:.8;">Не смоделировано: Natural Armour (Cor.b), +10 S/T, развитие лат за свободное действие — отыгрывать вручную. Рой уничтожен (Магнитуда обнулена) — уберите токен со сцены.</div>`
+    ]
+  }, { sound: false });
 }
 
 /** Кнопка на листе предмета — пусто, если это не King's Plate или нет актора. */

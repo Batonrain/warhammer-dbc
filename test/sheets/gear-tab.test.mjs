@@ -237,7 +237,8 @@ describe("gear tab listeners", () => {
       rollShieldActivation: (...args) => calls.push(["roll", ...args]),
       repairShield: (...args) => calls.push(["repair", ...args]),
       rollInfoguard: (...args) => calls.push(["infoguardRoll", ...args]),
-      showDelegateTestPicker: (...args) => calls.push(["infoguardDelegate", ...args])
+      showDelegateTestPicker: (...args) => calls.push(["infoguardDelegate", ...args]),
+      openGearModPicker: (...args) => calls.push(["modPicker", ...args])
     });
 
     await handlers[".weapon-equip-cb:change"](event({ itemId: "weapon-1", checked: true }));
@@ -256,6 +257,7 @@ describe("gear tab listeners", () => {
     await handlers[".armormod-active-toggle:click"](event({ itemId: "armor-1" }));
     await handlers[".gear-infoguard-roll-btn:click"](event({ itemId: "weapon-1" }));
     await handlers[".gear-infoguard-delegate-btn:click"](event({ itemId: "armor-1" }));
+    await handlers[".gear-mod-picker-btn:click"](event({ itemId: "weapon-1" }));
 
     expect(weapon.updates).toContainEqual({ "system.equipped": true });
     expect(weapon.updates).toContainEqual({ "system.loadedAmmoId": "ammo-2" });
@@ -269,7 +271,7 @@ describe("gear tab listeners", () => {
     expect(shield.flags.shieldRaised).toBe(true);
     expect(weapon.flags.heldHand).toBe("right");
     expect(shield.sheet.rendered).toBe(1);
-    expect(calls.map(c => c[0])).toEqual(["reload", "toggle", "roll", "repair", "infoguardRoll", "infoguardDelegate"]);
+    expect(calls.map(c => c[0])).toEqual(["reload", "toggle", "roll", "repair", "infoguardRoll", "infoguardDelegate", "modPicker"]);
     expect(calls.slice(0, 4).every(c => c[1] === a)).toBe(true);
     // wdbc-0rka: иконки в таблице Снаряжения зовут предмет по data-item-id —
     // roll на "weapon-1" (тот же weapon, что участвует в остальном тесте),
@@ -277,5 +279,8 @@ describe("gear tab listeners", () => {
     // (как showDelegateTestPicker(actor, {...}) на вкладке ТЕХ).
     expect(calls[4]).toEqual(["infoguardRoll", weapon]);
     expect(calls[5][1]).toBe(a);
+    // wdbc-7td8: «Улучшить» зовёт пикер (actor, item) — тем же способом, что
+    // делегирование выше, только без промежуточного title/kind-объекта.
+    expect(calls[6]).toEqual(["modPicker", a, weapon]);
   });
 });

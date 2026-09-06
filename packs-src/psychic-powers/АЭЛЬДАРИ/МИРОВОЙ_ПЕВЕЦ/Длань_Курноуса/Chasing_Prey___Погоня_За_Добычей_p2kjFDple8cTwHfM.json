@@ -1,0 +1,74 @@
+{
+  "name": "Chasing Prey / Погоня За Добычей",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "GwOyx7wJLrgLTX8b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Курноуса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×100м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение, Концентрация. Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое». Псайкер постоянно видит выбранную цель (её контур подсвечен) даже сквозь укрытия/маскировку/технологии, психосила рассеивается, если цель уходит в иное измерение (Phase и т.п.) или покидает дальность. Оружие псайкера против этой цели получает Accurate и Precise (если Accurate уже был — бесплатное полуприцеливание, за 1 ОД можно превратить в полное). Если SPD цели выше псайкера, он увеличивает свою SPD на бPR, пока гонится.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "p2kjFDple8cTwHfM",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009064,
+    "modifiedTime": 1788601009064
+  },
+  "_key": "!items!p2kjFDple8cTwHfM"
+}

@@ -15,6 +15,7 @@
 // души в варп смертельным ударом — компаунд-бонусы вне объёма прохода.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "The Eternal War";
@@ -22,7 +23,7 @@ export const ETERNAL_WAR_FLAG = "eternalWarAblative";
 
 /** Это Талант «The Eternal War / Вечная Война»? */
 export function isEternalWarItem(item) {
-  return item?.type === "talent" && itemHasName(item, NAME);
+  return itemIs(item, "talent", "talent.eternalWar", NAME);
 }
 
 /**

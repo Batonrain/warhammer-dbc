@@ -11,6 +11,7 @@
 import { TWIN_SPIRIT_DEMONS, twinSpiritMeta, manifestProfile,
          POSSESSION_GIFTS, POSSESSION_TALENTS } from "../../constants/possession.mjs";
 import { giftNamesOf } from "../../rules/predicates.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 
 // Группировка каталога Даров Одержимого по группам (для вкладки «Одержимость»).
 // activeSet — имена Даров, реально надетых на актора (подсветка «активен»).
@@ -80,14 +81,19 @@ export async function toggleManifest(actor) {
 
   if (now) {
     const cor    = sys.corruption?.value ?? 0;
-    const target = Math.min(100, cor + 20);
+    // Общий сбор модификаторов (wdbc-ct65.2): Порог теста Проявления считался
+    // мимо реестра правил — ни Усталость, ни Черты в него не попадали.
+    // Кламп «не выше 100» остаётся на самой Порче: он про её шкалу, а
+    // модификаторы теста ложатся поверх, как у любого другого теста.
+    const ruleMods = collectTestMods(actor, { kind: "skill", char: "cor" });
+    const target = Math.min(100, cor + 20) + ruleMods.total;
     const roll   = await (new Roll("1d100")).evaluate();
     const success = roll.total <= target;
     if (!success) updates["system.corruption.value"] = Math.min(100, cor + 1);
     const body = `
       <div class="wh-poss-card" style="--gc:${meta.color}">
         <div class="wh-poss-card-h">⛧ ПРОЯВЛЕНИЕ — ${meta.label} (${meta.godLabel})</div>
-        <div class="wh-poss-card-r">Тест Cor+20: <b>${roll.total}</b> против <b>${target}</b> —
+        <div class="wh-poss-card-r">Тест Cor+20${ruleMods.parts.map(p => ` ${p}`).join("")}: <b>${roll.total}</b> против <b>${target}</b> —
           <span class="${success ? "ok" : "bad"}">${success ? "Успех" : "Провал: +1 Порчи"}</span></div>
         <div class="wh-poss-card-n">Демон перестраивает тело в боевую форму. Броня/одежда сплавляются с формой.</div>
       </div>`;

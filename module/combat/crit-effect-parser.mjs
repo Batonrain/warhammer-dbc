@@ -20,8 +20,10 @@
 //  формулировок этой конкретной таблицы.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
-import { addFatigue } from "../sheets/tabs/conditions.mjs";
+// Из constants/conditions.mjs (wdbc-w88h), не из sheets/sheet-helpers.mjs —
+// combat/ не должен тянуть слой листа.
+import { CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { addFatigue, conditionAdjustFields, conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -135,13 +137,10 @@ export async function applyCritEffectPill(actor, { key, formula, permanent } = {
   const tracked = key === "fatigued" || (def.hasLevel && def.levelField);
   if (key === "fatigued") {
     await addFatigue(actor, amount || 1);
+  } else if (def.hasLevel && def.levelField && amount != null && !permanent) {
+    await actor.update(conditionAdjustFields(actor, key, amount));
   } else {
-    const updates = { [`system.conditions.${key}`]: true };
-    if (def.hasLevel && def.levelField && amount != null && !permanent) {
-      const cur = Number(actor.system.conditions?.[def.levelField]) || 0;
-      updates[`system.conditions.${def.levelField}`] = cur + amount;
-    }
-    await actor.update(updates);
+    await actor.update(conditionApplyFields(key, null, actor));
   }
 
   const noteParts = [];

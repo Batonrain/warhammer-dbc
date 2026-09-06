@@ -17,30 +17,32 @@
 
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import {
   fatePoolLabel, MIRACULOUS_SAVE, DIVINE_PROTECTION, SUS_AN_TEST_MOD,
   hasSusAnMembrane, susAnEligible, fateSaveFails,
   toyOfGodsApplies
 } from "../../rules/death-save.mjs";
 import { computeWoundHealing } from "./wounds.mjs";
+import { conditionApplyFields } from "./conditions.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { spendFromInfamyPool } from "../../apps/infamy-points.mjs";
 import {
   eternalWarriorEligible, eternalWarriorFreeSaveAvailable, markEternalWarriorUsed
 } from "../../combat/eternal-warrior.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 
 const NS = "warhammer-dbc";
 
+// Все карточки Спасения — одной формы: шапка «череп + название пути» и один
+// блок строк. Сборка и публикация — общий helpers/test-card.mjs (wdbc-kuun);
+// звук кубика только там, где кубик действительно катался (Замедленная
+// Анимация и бросок пула — с ним, «Воскресить» — без).
 async function _postCard(actor, header, lines, rolls = []) {
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("skull","#ff6b6b")}${esc(header)} — ${esc(actor.name)}</div>
-      <div class="roll-threshold">${lines.join("<br/>")}</div>
-    </div>`,
-    rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("skull", "#ff6b6b"), title: `${esc(header)} — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">${lines.join("<br/>")}</div>`
+  }, { rolls, sound: rolls.length > 0 });
 }
 
 /**
@@ -126,18 +128,25 @@ export async function doDivineProtection(actor, { eternalWarrior = null } = {}) 
 }
 
 /** Замедленная Анимация — не тратит Судьбу/Бесчестье, отдельный тест W+30 (Сус-ан Мембрана). */
-async function doSusAnimation(actor) {
+export async function doSusAnimation(actor) {
   const w = Number(actor.system.characteristics?.wp?.total) || 0;
-  const threshold = w + SUS_AN_TEST_MOD;
+  // Общий сбор модификаторов (wdbc-asuc): тест W+30 считался мимо реестра —
+  // ни Усталость, ни Черты, ни Состояния в него не входили. Диалога с
+  // галочками у кнопки нет, поэтому collectTestMods.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = w + SUS_AN_TEST_MOD + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const success = roll.total <= threshold;
 
-  const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`];
+  const lines = [`W <b>${w}</b>+${SUS_AN_TEST_MOD}${ruleMods.parts.map(p => ` ${p}`).join("")} → порог <b>${threshold}</b>, бросок <b>${roll.total}</b>.`];
   if (success) {
+    // Беспомощность отдельно не ставим (wdbc-r5o7.7): «Без сознания» теперь
+    // сама производит Беспомощность для любого читателя conditions.helpless
+    // (rules/character.mjs, derived data) — дублирующая запись годами могла
+    // разойтись, если кто-то снимал один флаг и забывал другой.
     await actor.update({
       [`flags.${NS}.deceased`]: false,
-      "system.conditions.unconscious": true,
-      "system.conditions.helpless": true
+      ...conditionApplyFields("unconscious", null, actor)
     });
     lines.push(`<span class="roll-success">Успех — десантник входит в Замедленную Анимацию вместо смерти.</span>`);
     lines.push("Без сознания и Беспомощен. Диагностика −60 (For.Lore (Astartes Implants) снимает штраф). "

@@ -7,6 +7,7 @@
 import { isEternalWarItem, eternalWarGrant, eternalWarClear, ETERNAL_WAR_FLAG,
          eternalWarShrinkToFit } from "../rules/eternal-war.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isEternalWarItem };
 
@@ -38,15 +39,15 @@ export async function useEternalWarStart(actor, item) {
     "system.wounds.ablativeMax": result.ablativeMax,
     [`flags.${FLAG}.${ETERNAL_WAR_FLAG}`]: result.contribution
   });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword","#c9b37a")}The Eternal War — дуэль началась</div>
-      <div class="roll-threshold">3×T.b аблативных Ран → <b>${result.contribution}</b></div>
-      <div class="roll-threshold" style="opacity:.8;">Не смоделировано: подъём Unnatural Characteristic, T.b невосстанавливаемых Очков Судьбы, изгнание души смертельным ударом — отыгрывать вручную.</div>
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  // Результат нажатия кнопки, а не тест: броска и Порога нет, звука тоже.
+  await postTestCard(actor, {
+    icon: rollIcon("sword", "#c9b37a"),
+    title: "The Eternal War — дуэль началась",
+    lines: [
+      `<div class="roll-threshold">3×T.b аблативных Ран → <b>${result.contribution}</b></div>`,
+      `<div class="roll-threshold" style="opacity:.8;">Не смоделировано: подъём Unnatural Characteristic, T.b невосстанавливаемых Очков Судьбы, изгнание души смертельным ударом — отыгрывать вручную.</div>`
+    ]
+  }, { sound: false });
 }
 
 /** Нажатие кнопки «Битва окончена». */

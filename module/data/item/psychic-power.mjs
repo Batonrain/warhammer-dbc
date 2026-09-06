@@ -62,8 +62,31 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       charDamageFormula: new StringField({ initial: "", label: "Формула урона по характеристике" }),
       profiles:      list("Дополнительные профили"),
       variants:      list("Вариации броска"),
+      // Тест Сопротивления ЦЕЛИ (wdbc-5vf4) — книжный формат «Психотест X vs
+      // Y+N» (стр. 289 далее): resistChar пуст = сила не требует встречного
+      // теста цели (Изменение/Вливание без сопротивления, чисто
+      // информационные/союзные силы). Непусто — характеристика (CHARACTERISTICS,
+      // тот же набор ключей, что и у testChar/charBonusOptions), которой цель
+      // защищается, + resistMod — модификатор ЕЁ теста (в книге почти всегда
+      // +0; построчный разбор всех 83 сил с полем — wdbc-3x1n — нашёл ровно
+      // один пример с отличным от нуля модификатором: Mentor/Ментор, −20).
+      // ЖИВОЙ ЗАПРОС, не запись Конструктора: читается прямо при манифестации
+      // (module/sheets/tabs/psychic.mjs::executePsychotest), как уже устроены
+      // testChar/testMod рядом — не ActiveEffect (эффект метит ЧУЖОЙ, ещё не
+      // существующий на момент получения предмета тест — считать заранее
+      // нечем) и не перманентная правка (ничего не хранится).
+      resistChar:    new StringField({ initial: "", label: "Тест Сопротивления цели (характеристика)" }),
+      resistMod:     num(0, "Модификатор теста Сопротивления цели"),
       effect:        new StringField({ initial: "", label: "Эффект" }),
       isSustained:   new BooleanField({ initial: false, label: "Поддерживается сейчас" }),
+      // wdbc-8m0x: степень успеха психотеста, на которой сейчас манифестирована
+      // поддерживаемая сила — сила/длительность эффекта часто завязаны на неё
+      // (стр. 289 и тексты конкретных сил), а без хранения приходится помнить
+      // или искать в истории чата. null = нет сохранённого результата (ещё не
+      // манифестировалась или поддержание снято). Пишется в executePsychotest
+      // тем же item.update, что и isSustained (module/sheets/tabs/psychic.mjs),
+      // и сбрасывается в null там же при снятии поддержания.
+      sustainedDegree: new NumberField({ initial: null, nullable: true, integer: true, label: "Степень успеха (поддержание)" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
     };
   }

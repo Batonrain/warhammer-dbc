@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { captured, resetCaptured, fakeHtml } from "../support/foundry-stub.mjs";
+import { captured, resetCaptured, fakeHtml, listenerHtml } from "../support/foundry-stub.mjs";
 import { setPsychicVessel } from "../../module/rules/psychic-vessel.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import {
@@ -118,6 +118,21 @@ describe("psychic manifestation", () => {
     expect(captured.dialog.content).toContain("тPR = 0");
     expect(captured.dialog.content).toContain("Порог психотеста (Псинаука)");
     expect(captured.dialog.buttons.cast.label).toBe("Психотест!");
+  });
+
+  // wdbc-jpmh: Путь Силы («Инкантация»/«Медитация»/«Жертва»/«Телесная
+  // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
+  // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не
+  // хватало только видимости условия доступа (req) в самом списке.
+  it("выпадающий список Путей Силы несёт требование доступа в title, помечает звёздочкой", () => {
+    const a = actor({ system: { psyker: { rating: 2, currentRating: 0, sustain: 2, class: "bound" } } });
+
+    showManifestDialog(a, item({ system: { discipline: "divination", powerType: "utility" } }));
+
+    expect(captured.dialog.content).toContain('value="incantation" title="Талант Blasphemous Incantation">Инкантация *');
+    expect(captured.dialog.content).toContain('value="meditation" title="Талант Meditation">Медитация *');
+    // «— Без Пути —» — единственный пункт без req: без звёздочки и без title.
+    expect(captured.dialog.content).toContain('<option value="">— Без Пути —</option>');
   });
 
   it("executePsychotest считает порог, бросает d100 и пишет карточку", async () => {
@@ -261,6 +276,181 @@ describe("psychic manifestation", () => {
 
     expect(captured.chat[0].content).toContain("mPR <b>3</b> +1 = <b>4</b>");
     expect(captured.chat[0].content).toContain("Порог: <b>65</b>");
+  });
+});
+
+// Тест Сопротивления ЦЕЛИ (wdbc-5vf4) — книжный «Психотест X vs Y+N»:
+// resistChar/resistMod (module/data/item/psychic-power.mjs) читаются живьём
+// прямо при манифестации, а не через Конструктор — testMod с этого предмета
+// применялся бы к тестам ВЛАДЕЛЬЦА (см. заметки в 83 паках психосил), не к
+// выбранной цели.
+describe("тест Сопротивления цели (wdbc-5vf4)", () => {
+  afterEach(() => { delete game.user.targets; });
+
+  it("успешная манифестация + указан resistChar + есть наведённая цель — карточка несёт кнопку запроса с верными данными", async () => {
+    const a = actor();
+    a.uuid = "Actor.caster-1";
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" } }];
+    const power = item({ system: {
+      testChar: "wp", powerType: "utility", testMod: 5,
+      resistChar: "t", resistMod: -5
+    } });
+    captured.nextRoll = 30; // Порог 55 (как в соседнем тесте) — успех.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain("Манифестация удалась");
+    expect(card).toContain("Цель делает тест Сопротивления");
+    expect(card).toContain("<b>T -5</b>");
+    expect(card).toContain('class="psy-resist-request-btn"');
+    expect(card).toContain('data-target-uuid="Actor.target-1"');
+    expect(card).toContain('data-caster-uuid="Actor.caster-1"');
+    expect(card).toContain('data-char-key="t"');
+    expect(card).toContain('data-mod="-5"');
+  });
+
+  it("resistChar задан, но цель не наведена — подсказка вместо кнопки", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5, resistChar: "wp", resistMod: 0 } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain("Наведите цель");
+    expect(card).not.toContain('class="psy-resist-request-btn"');
+  });
+
+  it("resistChar пуст (сила без встречного теста) — секции Сопротивления в карточке нет вовсе", async () => {
+    const a = actor();
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" } }];
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).not.toContain("Цель делает тест Сопротивления");
+  });
+
+  it("манифестация провалена — Сопротивление цели не предлагается (до цели дело не доходит)", async () => {
+    const a = actor();
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" } }];
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5, resistChar: "t", resistMod: 0 } });
+    captured.nextRoll = 99; // выше Порога 55 — провал.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.chat[0].content).toContain("Психотест провален");
+    expect(captured.chat[0].content).not.toContain("Цель делает тест Сопротивления");
+  });
+});
+
+// wdbc-8m0x: степень успеха психотеста манифестации раньше жила только как
+// локальная переменная внутри executePsychotest — после ChatMessage.create
+// след пропадал, и для психосилы, которую потом поддерживают несколько
+// раундов, на листе не оставалось следа, с каким результатом её наложили.
+describe("wdbc-8m0x: степень успеха поддерживаемой силы сохраняется на предмете", () => {
+  it("успешная манифестация пишет system.sustainedDegree на предмет психосилы", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 30; // Порог 55 (WP 40 + 5×2 + мод 5 + 10), успех, |30-55|/10+1 = 3.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 3 });
+  });
+
+  it("провал манифестации не оставляет степень (поддерживать нечего)", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 90; // выше Порога 55 — провал.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": null });
+  });
+
+  it("успешное применение Силы навигатора тоже пишет sustainedDegree", async () => {
+    const a = actor();
+    const power = item({
+      type: "navigatorPower",
+      system: { testChar: "per", testMod: 0, range: "10 м" }
+    });
+    captured.nextRoll = 20; // Порог 35 (Per 35), успех, |20-35|/10+1 = 2.
+
+    await activateNavigatorPower(a, power);
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 2 });
+  });
+
+  it("снятие галочки «Подд.» у психосилы сбрасывает сохранённую степень", async () => {
+    const power = item({ system: { sustainable: true, isSustained: true, sustainedDegree: 3 } });
+    const a = actor({ items: [power] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".psy-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: power.id }, checked: false }
+    });
+
+    expect(power.updates.at(-1)).toEqual({
+      "system.isSustained": false,
+      "system.sustainedDegree": null
+    });
+  });
+
+  it("включение галочки «Подд.» не трогает сохранённую степень", async () => {
+    const power = item({ system: { sustainable: true, isSustained: false, sustainedDegree: 3 } });
+    const a = actor({ items: [power] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".psy-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: power.id }, checked: true }
+    });
+
+    expect(power.updates.at(-1)).toEqual({ "system.isSustained": true });
+  });
+
+  it("снятие поддержания Силы навигатора (в общем переключателе на одну) сбрасывает степень", async () => {
+    const active = item({
+      name: "Третий глаз", type: "navigatorPower",
+      system: { sustainable: true, isSustained: true, sustainedDegree: 4 }
+    });
+    const other = item({
+      name: "Иное зрение", type: "navigatorPower",
+      system: { sustainable: true, isSustained: false }
+    });
+    const a = actor({ items: [active, other] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".nav-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: active.id }, checked: false }
+    });
+
+    expect(a.updatedEmbedded.docs).toContainEqual({
+      _id: active.id, "system.isSustained": false, "system.sustainedDegree": null
+    });
   });
 });
 

@@ -4,11 +4,18 @@
 // состав Отряда и свободный список «Под моим Присутствием», — поэтому живёт
 // без Foundry и проверяется напрямую.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { PRESENCE_ORDER, presenceNumber, presenceBenefitsFor, receivesPresence,
          receivesCommands, commandHealsPsych, canBeForcedToMove,
          suppressionBonus, commandReachFor } from "../../module/rules/command.mjs";
 import { PRESENCE_BENEFITS } from "../../module/constants/squad.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
+
+const DEFAULT_SOURCES = getRuleSources();
+afterEach(() => {
+  clearRuleSources();
+  for (const [key, fn] of DEFAULT_SOURCES) registerRuleSource(key, fn);
+});
 
 describe("нумерация преимуществ Присутствия", () => {
   it("совпадает с порядком в реестре Отряда — правила ссылаются номерами", () => {
@@ -84,5 +91,48 @@ describe("сводка по подчинённому", () => {
     const reach = commandReachFor("character", "focus");
     expect(reach).toMatchObject({ presenceApplies: true, commands: true, forcedMove: true });
     expect(reach.notes).toEqual([]);
+  });
+});
+
+// Оглох (стр. 30-31, wdbc-r5o7.6): «не получает эффектов Командования, кроме
+// жестов/телепатии/Ноосферы» — per-АКТОР исключение (второй параметр),
+// в отличие от Орды выше (per-ТИП, первый параметр).
+describe("Оглох блокирует Короткие и Детальные Команды", () => {
+  const deaf = { type: "character", system: { conditions: { deafened: true } }, items: [] };
+  const hearing = { type: "character", system: { conditions: {} }, items: [] };
+
+  it("receivesCommands(type, actor) — false для Оглохшего", () => {
+    expect(receivesCommands("character", deaf)).toBe(false);
+  });
+
+  it("receivesCommands(type, actor) — true без Оглохшести", () => {
+    expect(receivesCommands("character", hearing)).toBe(true);
+  });
+
+  it("receivesCommands(type) без второго параметра — старое поведение (не ломает Отряд)", () => {
+    expect(receivesCommands("character")).toBe(true);
+    expect(receivesCommands("horde")).toBe(false);
+  });
+
+  it("Орда остаётся false независимо от Оглохшести (тип решает первым)", () => {
+    expect(receivesCommands("horde", { type: "horde", system: { conditions: { deafened: true } } })).toBe(false);
+  });
+
+  it("commandReachFor — commands:false и объясняющая заметка", () => {
+    const reach = commandReachFor("character", "", deaf);
+    expect(reach.commands).toBe(false);
+    expect(reach.notes.join(" ")).toContain("Оглох");
+  });
+
+  it("commandReachFor без Оглохшести — заметок нет", () => {
+    const reach = commandReachFor("character", "", hearing);
+    expect(reach.commands).toBe(true);
+    expect(reach.notes).toEqual([]);
+  });
+
+  it("возможность communication.deafExempt (жесты/телепатия/Ноосфера) снимает блок", () => {
+    registerRuleSource("test", () => [{ id: "a", label: "Тест",
+      effects: [{ kind: "grantFlag", target: "communication.deafExempt" }] }]);
+    expect(receivesCommands("character", deaf)).toBe(true);
   });
 });

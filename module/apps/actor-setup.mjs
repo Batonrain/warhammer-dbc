@@ -22,6 +22,7 @@ import { readSetup, defaultAnswers, buildSetupPlan, applyDeltas, pickKey, mergeG
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 // Экранирование одно на проект (wdbc-84g): свой вариант разошёлся бы с общим.
 import { esc } from "../helpers/utils.mjs";
+import { testCardHtml } from "../helpers/test-card.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
@@ -194,10 +195,22 @@ export async function runActorSetup(actor) {
   for (const w of plan.warnings) console.warn(`Warhammer DBC | Вариации (${actor.name}):`, w);
   if (plan.log.length) {
     ui.notifications?.info(`🧬 ${actor.name}: ${plan.log.join("; ")}.`);
+    // НЕ карточка теста (wdbc-kuun): броска и Порога нет, это шёпот ГМу о том,
+    // что за вариация досталась существу при перетаскивании.
+    // Разметка теперь общая (testCardHtml), а публикация осталась своей, и это
+    // не недоделка: postTestCard безусловно прогоняет данные через
+    // ChatMessage.applyRollMode, а тот в публичном режиме броска ОБНУЛЯЕТ
+    // whisper (client/documents/chat-message.mjs, applyMode: `if ( mode ===
+    // "public" ) whisper.length = 0;`) — шёпот ГМу стал бы виден всему столу.
+    // Пока это не разведено в общем helpers/test-card.mjs, шлём напрямую.
     ChatMessage.create({
-      content: `<div class="wh-roll-result"><div class="roll-header">🧬 Вариация: ${esc(actor.name)}</div>
-        <ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${plan.log.map(l => `<li>${esc(l)}</li>`).join("")}</ul>
-        <div style="font-size:.8em;opacity:.7;">Добавлено предметов: ${result.added}, снято: ${result.removed}.</div></div>`,
+      content: testCardHtml({
+        title: `🧬 Вариация: ${esc(actor.name)}`,
+        lines: [
+          `<ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${plan.log.map(l => `<li>${esc(l)}</li>`).join("")}</ul>`,
+          `<div style="font-size:.8em;opacity:.7;">Добавлено предметов: ${result.added}, снято: ${result.removed}.</div>`
+        ]
+      }),
       whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
       speaker: { alias: actor.name }
     });

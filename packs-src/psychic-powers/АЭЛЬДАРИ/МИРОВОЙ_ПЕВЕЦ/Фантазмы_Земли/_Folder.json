@@ -1,0 +1,23 @@
+{
+  "name": "Фантазмы Земли",
+  "type": "Item",
+  "folder": "xHNbL2jZwn0dPVH6",
+  "sorting": "m",
+  "_id": "i2U3f2pVcGbnQpvl",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!i2U3f2pVcGbnQpvl"
+}

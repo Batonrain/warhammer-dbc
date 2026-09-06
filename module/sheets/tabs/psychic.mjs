@@ -23,8 +23,10 @@ import { triggerAttackAnimation } from "../../integrations/autoanimations.mjs";
 import { ruleRollModsHtml } from "../../rules/roll-mods.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
-import { fatiguePenalty } from "./conditions.mjs";
+import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
+import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
+import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -92,7 +94,7 @@ export function showManifestDialog(actor, item) {
     : (psy.sustain ? `<div class="pm-note">тPR ${maxPR} = бPR ${psy.rating || 0} − ${psy.sustain} на поддержание.</div>` : "");
 
   const pathOptions = Object.entries(PSY_PATHS).map(([k, p]) =>
-    `<option value="${k}">${p.label}</option>`).join("");
+    `<option value="${k}"${p.req ? ` title="${esc(p.req)}"` : ""}>${p.label}${p.req ? " *" : ""}</option>`).join("");
 
   const profiles = sys.profiles || [];
   const variants = sys.variants || [];
@@ -114,7 +116,14 @@ export function showManifestDialog(actor, item) {
                      wp: actor.system.characteristics?.wp?.bonus ?? 0 };
   const powerMod = Number(sys.testMod) || 0;
   const variantMods = variants.map(v => Number(v.testMod) || 0);
-  const fatigue = fatiguePenalty(actor, cast.key);
+  // Штрафы состояния тела — из конвейера (wdbc-kuun): область "power", как и
+  // у прочих правил манифестации. Раньше считалась одна Усталость, а
+  // выключенная броня и Перевес в психотест не доезжали.
+  //
+  // Именно autoMods, а НЕ collectTestMods: галочки правил у психотеста уже
+  // есть свои (ruleRollModsHtml ниже) и приезжают отдельным числом из
+  // диалога — общий сбор сложил бы их второй раз.
+  const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: cast.key }).autoMods);
   const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue };
 
   // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
@@ -176,6 +185,7 @@ export function showManifestDialog(actor, item) {
           <label>Путь Силы</label>
           <select id="psy-path" class="pm-input pm-wide">${pathOptions}</select>
         </div>
+        <div class="pm-note" style="font-size:0.78em;">* — путь требует условия (наведите курсор на пункт списка); выбор не проверяется автоматически — сверьтесь сами.</div>
         ${profiles.length ? `
         <div class="pm-row">
           <label>Профиль</label>
@@ -430,10 +440,16 @@ export async function executePsychotest(actor, item, opts) {
   const variantMod = Number(variant?.testMod) || 0;
 
   const powerMod  = sys.testMod || 0; // собственный модификатор силы
-  // Усталость (стр. 26): контрпример уже был рядом — activateNavigatorPower
-  // ниже её учитывает, здесь на общий психотест забыли. Считаем сами, а не
-  // просим игрока вписать «Доп. мод.» руками (wdbc-lfho).
-  const fatigue = fatiguePenalty(actor, cast.key);
+  // Только autoMods — галочки приходят из диалога в opts.ruleMod, см.
+  // комментарий в showManifestDialog выше.
+  //
+  // Держим и подписи, а не одну сумму (wdbc-lnl3): в карточке стояло намертво
+  // «− 10 (😓 Усталость)», тогда как в Порог уходила фактическая сумма всех
+  // автоматических штрафов — несколько уровней Усталости, выключенная силовая
+  // броня, Перевес инвентаря. Порог считался верно, врала подпись, и понять
+  // по карточке, откуда взялось число, было нельзя.
+  const bodyMods = autoTestMods(actor, { kind: "power", power: item, char: cast.key });
+  const fatigue = bodyMods.total;
   // Складываем тем же счётчиком, что и атака: галочка «ополовинить штраф»
   // делит сумму, только если она в минус, и округляет в пользу игрока.
   const threshold = attackThreshold({
@@ -452,6 +468,14 @@ export async function executePsychotest(actor, item, opts) {
     success = true;
     deg = Math.max(1, mPR);
   }
+
+  // wdbc-8m0x: сохраняем степень успеха НА ПРЕДМЕТЕ — единственное место, где
+  // она переживает этот вызов (иначе deg был только локальной переменной,
+  // видной лишь в этом одном чат-сообщении). Пишем при любой манифестации
+  // (не только когда isSustained уже включён), чтобы число было готово к
+  // моменту, когда игрок следом поставит галочку «Подд.». Провал — сброс в
+  // null, поддерживать нечего.
+  await item.update({ "system.sustainedDegree": success ? deg : null });
 
   // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
   if (PATH.woundCost) {
@@ -629,47 +653,86 @@ export async function executePsychotest(actor, item, opts) {
     conversionLine = `<div class="roll-threshold" style="font-size:0.85em;color:#8b0000;">${rollIcon("blood","#ff6b6b")}Телесная Конверсия: −${PATH.woundCost} Раны.</div>`;
   }
 
+  // ── Тест Сопротивления ЦЕЛИ (wdbc-5vf4) ────────────────────────────────────
+  // Книжный формат «Психотест X vs Y+N» — при успешной манифестации цель
+  // защищается СВОИМ тестом Y+N (см. sys.resistChar/resistMod, психика-power.mjs).
+  // Только при успехе: провал манифестации — до цели дело не доходит, книжные
+  // тексты («Победа: …») всегда завязаны на исход психотеста кастера.
+  let resistSection = "";
+  if (success && sys.resistChar) {
+    const resistAbbr = CHARACTERISTICS[sys.resistChar]?.abbr ?? sys.resistChar.toUpperCase();
+    const resistMod  = Number(sys.resistMod) || 0;
+    const resistModTxt = `${resistMod >= 0 ? "+" : ""}${resistMod}`;
+    // Тот же таргет сцены, что уже читает ruleRollModsHtml выше в
+    // showManifestDialog — если игрок сменил цель между открытием диалога и
+    // нажатием «Психотест!», в карточку идёт актуальный на МОМЕНТ броска.
+    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const resistBtn = targetActor
+      ? `<button type="button" class="psy-resist-request-btn"
+           data-target-uuid="${esc(targetActor.uuid)}" data-caster-uuid="${esc(actor.uuid)}"
+           data-char-key="${esc(sys.resistChar)}" data-mod="${resistMod}"
+           data-label="${esc(`Сопротивление: ${item.name}`)}">
+           📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
+         </button>`
+      : `<div class="roll-threshold" style="font-size:0.78em;opacity:0.8;">Наведите цель (T на токене сцены) до манифестации — тогда кнопка откроет тест сразу у неё.</div>`;
+    resistSection = `
+        <div class="psy-resist-section roll-threshold">
+          Цель делает тест Сопротивления: <b>${resistAbbr} ${resistModTxt}</b>
+          ${resistBtn}
+        </div>`;
+  }
+
+  // ── Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9) ──────────────
+  // Отдельная секция, а не общий defenseSection карточки атаки: от психосилы
+  // не Уклоняются, Вираж и Сжатие к ней тоже не относятся, а само Парирование
+  // отменяет не попадание, а эффекты силы. Кнопка показывается всегда, когда
+  // манифестация удалась, — право на неё проверяется у ЗАЩИЩАЮЩЕГОСЯ в момент
+  // клика (module/combat/blade-shield.mjs::canParryPsychic): на момент рендера
+  // карточки токен защищающегося ещё не выбран, тот же приём, что у Сжатия.
+  // Только ВРАЖДЕБНАЯ психосила: книга даёт Щиту Клинков парировать «вражеские
+  // психосилы», а собственное благословение или самобаф парировать не от кого.
+  // Признак враждебности тот же, что уже читает карточка: сила либо наносит
+  // урон (powerType), либо требует от цели теста Сопротивления.
+  const hostilePower = isDamaging || !!sys.resistChar;
+  const bladeShieldSection = success && hostilePower
+    ? `<div class="psy-parry-section roll-threshold">
+         <button type="button" class="psy-blade-shield-btn"
+           data-power-name="${esc(item.name)}" data-epr="${ePR}"
+           title="Талант «Щит Клинков» + силовое эльдарское / психосиловое психокостяное оружие или ноктиковый щит в руках">
+           ${rollIcon("sword")}Парировать психосилу (Щит Клинков)
+         </button>
+         <div style="font-size:0.78em;opacity:0.8;">Выберите токен защищающегося на сцене — Талант и предмет в руках проверятся сами.</div>
+       </div>`
+    : "";
+
   // Применяем накопленные изменения (Раны/Порча)
   if (Object.keys(actorUpdates).length) await actor.update(actorUpdates);
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)}</div>
-          <div class="roll-threshold">
-            Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}
-          </div>
-          <div class="roll-threshold">
-            mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${PATH.ePR ? ` (Путь +${PATH.ePR})` : ""}
-          </div>
-          ${aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : ""}
-          ${sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : ""}
-          <div class="roll-threshold">
-            ${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""}
-            → Порог: <b>${threshold}</b>
-          </div>
-          ${variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : ""}
-          ${PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : ""}
-          ${runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : ""}
-          ${focusNote}
-          <div class="roll-dice">Психотест: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Манифестация удалась — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Психотест провален — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          ${conversionLine}
-          ${damageSection}
-          ${charDamageSection}
-          ${attackPropsSection}
-          ${phenSection}
-          ${warpShockSection}
-        </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Порог у психотеста собирается не как у прочих тестов (база + список
+  // слагаемых через запятую), а книжной формулой «хар-ка + 5×эPR» с
+  // приписками Пути/Вариации — поэтому строка Порога идёт своей строкой в
+  // lines, а не через thresholdLine: общий формат её бы переписал. То же со
+  // строкой броска — она подписана «Психотест», а не «Бросок».
+  await postTestCard(actor, {
+    icon: rollIcon("spark","#c98bff"), title: esc(item.name),
+    lines: [
+      `<div class="roll-threshold">Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}</div>`,
+      `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${PATH.ePR ? ` (Путь +${PATH.ePR})` : ""}</div>`,
+      aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
+      sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
+      `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>`,
+      variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
+      PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
+      runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
+      focusNote,
+      `<div class="roll-dice">Психотест: <b>${rv}</b></div>`
+    ],
+    outcome: outcomeHtml(success, success
+      ? `Манифестация удалась — ${deg} ${_degWord(deg)}`
+      : `Психотест провален — ${deg} ${_degWord(deg)}`),
+    sections: [conversionLine, resistSection, bladeShieldSection, damageSection, charDamageSection,
+               attackPropsSection, phenSection, warpShockSection]
+  }, { rolls: allRolls });
   // Automated Animations (если установлен и включён) — module/integrations/autoanimations.mjs.
   triggerAttackAnimation({ actor, item, hit: success });
 }
@@ -689,24 +752,15 @@ export async function rollPsyWpTest(actor, label, note) {
   const rv   = roll.total;
   const success = rv <= eff;
   const deg  = Math.floor(Math.abs(rv - eff) / 10) + 1;
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${label}</div>
-          <div class="roll-threshold">WP: <b>${wp}</b> + 5×PR(${pr}) → Порог: <b>${eff}</b></div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          <div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">${note}</div>
-        </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Слагаемое здесь книжное и одно («+ 5×PR»), в скобки общего формата оно не
+  // ложится — строка Порога оставлена своей, как была.
+  await postTestCard(actor, {
+    title: label,
+    threshold: `<div class="roll-threshold">WP: <b>${wp}</b> + 5×PR(${pr}) → Порог: <b>${eff}</b></div>`,
+    rv,
+    outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
+    sections: [`<div class="roll-threshold" style="font-size:0.85em;color:#5a4a30;">${note}</div>`]
+  }, { rolls: [roll] });
 }
 
 /** Применение Силы навигатора: простой тест характеристики (без Феноменов/Прорывов). */
@@ -715,14 +769,15 @@ export async function activateNavigatorPower(actor, item) {
   const charKey = sys.testChar || "wp";
   const meta    = CHARACTERISTICS[charKey];
   const charVal = actor.system.characteristics?.[charKey]?.total ?? 0;
-  const fatigue = fatiguePenalty(actor, charKey);
+  // У Силы навигатора своего диалога с галочками нет, но берём тот же
+  // autoMods — чтобы правило «+10 к манифестациям» не применялось молча.
+  const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: charKey }).autoMods);
   const eff     = charVal + (sys.testMod || 0) + fatigue;
 
   const roll    = await new Roll("1d100").evaluate();
   const rv      = roll.total;
   const success = rv <= eff;
   const deg     = Math.floor(Math.abs(rv - eff) / 10) + 1;
-  const rollMode = game.settings.get("core", "rollMode");
   const allRolls = [roll];
 
   // Урон (если задан и сила сработала)
@@ -750,30 +805,28 @@ export async function activateNavigatorPower(actor, item) {
 
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("spark","#8b78ff")}Сила навигатора: ${esc(item.name)}</div>
-          ${sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : ""}
-          <div class="roll-threshold">
-            ${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}
-          </div>
-          ${sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">
-            ${success
-              ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-              : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`}
-          </div>
-          ${dmgSection}
-          ${sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : ""}
-          <div class="roll-threshold" style="font-size:0.78em;color:#5a4a30;">Навигатор не бросает по таблицам Феноменов и Прорывов Варпа.</div>
-          <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-        </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // wdbc-8m0x: тот же паттерн, что у executePsychotest — сохраняем степень
+  // успеха на предмете, чтобы номер был виден на листе, пока Сила поддерживается.
+  await item.update({ "system.sustainedDegree": success ? deg : null });
+
+  // Строка Порога здесь своя: подпись усталости идёт значком «😓 −10» без
+  // скобок общего формата — перевод на сборщик её не переписывает.
+  await postTestCard(actor, {
+    icon: rollIcon("spark","#8b78ff"), title: `Сила навигатора: ${esc(item.name)}`,
+    lines: [
+      sys.powerKind ? `<div class="roll-threshold" style="font-size:0.85em;">${sys.powerKind}</div>` : "",
+      `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${sys.testMod ? ` ${sys.testMod >= 0 ? "+" : ""}${sys.testMod}` : ""}${fatigue ? ` 😓 ${fatigue}` : ""} → Порог: <b>${eff}</b>${sys.opposed ? " <span style='font-size:0.85em;'>(встречный — цель бросает свою хар-ку)</span>" : ""}</div>`,
+      sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
+    ],
+    rv,
+    outcome: outcomeHtml(success, `${success ? "Успех" : "Провал"} — ${deg} ${_degWord(deg)}`),
+    sections: [
+      dmgSection,
+      sys.effect ? `<div class="roll-threshold">${sys.effect}</div>` : "",
+      `<div class="roll-threshold" style="font-size:0.78em;color:#5a4a30;">Навигатор не бросает по таблицам Феноменов и Прорывов Варпа.</div>`,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: allRolls });
 }
 
 export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBurn } = {}) {
@@ -795,8 +848,13 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     for (const it of actor.items) {
       if (it.type !== "navigatorPower") continue;
       const want = it.id === id ? on : false;
-      if ((it.system.isSustained || false) !== want)
-        updates.push({ _id: it.id, "system.isSustained": want });
+      if ((it.system.isSustained || false) !== want) {
+        // wdbc-8m0x: снятие поддержания (в т.ч. чужой Силы — тут можно
+        // поддерживать только одну) сбрасывает сохранённую степень успеха.
+        const upd = { _id: it.id, "system.isSustained": want };
+        if (!want) upd["system.sustainedDegree"] = null;
+        updates.push(upd);
+      }
     }
     if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
     for (const it of actor.items) {
@@ -829,7 +887,11 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
       ui.notifications.warn("Саркофаг Дредноута: поддержание психосил заблокировано (нужна Матрица Осирис).");
       return;
     }
-    await item.update({ "system.isSustained": turningOn }); await syncItemEffectsDisabled(item);
+    // wdbc-8m0x: снятие поддержания сбрасывает сохранённую степень успеха —
+    // иначе на листе осталось бы висеть устаревшее число от прошлого каста.
+    const upd = { "system.isSustained": turningOn };
+    if (!turningOn) upd["system.sustainedDegree"] = null;
+    await item.update(upd); await syncItemEffectsDisabled(item);
   });
   html.find(".psy-manifest-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);

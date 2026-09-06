@@ -5,8 +5,9 @@
 // (module/rules/sources.mjs) не тестируется отдельно — только сама логика,
 // тем же приёмом, что module/rules/dreadnought.mjs.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { adjutantsOf, adjutantRerollRules } from "../../module/rules/adjutant.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 
 function squad({ commander, leader, coordinator, members = [] } = {}) {
   return {
@@ -112,5 +113,51 @@ describe("adjutantRerollRules", () => {
     const s = squad({ commander: "Actor.cmd", members: ["Actor.adj"] });
     const rules = adjutantRerollRules(cmd, [s, cmd, adj]);
     expect(rules.map(r => r.id)).toEqual(["adjutant.command"]);
+  });
+});
+
+describe("Адъютант опознаётся по ключу, а не только по названию (wdbc-795h)", () => {
+  // Ради этого и размыкался круг импортов. Раньше Адъютант был единственной из
+  // тридцати восьми способностей, которую переименование в компендиуме молча
+  // выключало: перевести его на ключ мешал не он сам, а граф импортов —
+  // rules/sources.mjs импортировал этот файл, а ключ спрашивается через
+  // hasRuleFlag → collect.mjs → sources.mjs, то есть обратно сюда.
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  /** Талант, у которого имя не совпадает, но запись Конструктора на месте. */
+  const renamedAdjutant = () => ({
+    id: "t1", type: "talent", name: "Штабной Порученец",
+    flags: { "warhammer-dbc": { mechanics: [{
+      id: "g1", operator: "AND",
+      entries: [{ id: "e1", kind: "capability", capabilityKey: "ability.adjutant",
+                  when: { negate: false, conditions: [] } }]
+    }] } }
+  });
+
+  it("переименованный Талант всё равно даёт Командиру переброс", () => {
+    const cmd = actor("Actor.cmd");
+    const adj = { ...actor("Actor.adj"), items: [renamedAdjutant()] };
+    const s = squad({ commander: "Actor.cmd", members: ["Actor.adj"] });
+    expect(adjutantsOf(cmd, [s, cmd, adj])).toEqual([adj]);
+  });
+
+  it("подчинённый без Таланта и без ключа Адъютантом не считается", () => {
+    const cmd = actor("Actor.cmd");
+    const plain = actor("Actor.plain");
+    const s = squad({ commander: "Actor.cmd", members: ["Actor.plain"] });
+    expect(adjutantsOf(cmd, [s, cmd, plain])).toEqual([]);
+  });
+
+  it("чужой ключ Адъютантом не делает", () => {
+    const cmd = actor("Actor.cmd");
+    const wrong = renamedAdjutant();
+    wrong.flags["warhammer-dbc"].mechanics[0].entries[0].capabilityKey = "ability.snapshot";
+    const other = { ...actor("Actor.other"), items: [wrong] };
+    const s = squad({ commander: "Actor.cmd", members: ["Actor.other"] });
+    expect(adjutantsOf(cmd, [s, cmd, other])).toEqual([]);
   });
 });

@@ -36,16 +36,27 @@
 /* Все ячейки — 10 книжных Характеристик (WS..Inf) + COR/INS (+PF у Rogue
    Trader) — растягиваются на всю ширину панели (auto-fit + 1fr: пустых
    треков-заполнителей не остаётся, вся ширина уходит реальным ячейкам).
-   minmax(64px, 1fr) — тот же пол читаемости, что и у не-cog char-grid
-   (actor-stats.css), только когда ширины не хватает на все 12 в ряд, они
+   Пол ячейки — тот же, что и у не-cog char-grid (actor-stats.css), только
+   когда ширины не хватает на все ячейки в ряд, они
    переносятся на 2+ строки — раньше здесь стояло grid-auto-flow:column
    (всегда одна строка по центру, по прошлой просьбе пользователя), но это
    на узких окнах листа обрезало часть характеристик overflow:hidden у
    .stat-panel невидимо для игрока (wdbc-joh2) — решено в пользу переноса,
    чтобы данные не терялись из виду. */
+/* Пол ячейки 56px, а не 64 (wdbc-opgx). Замер живого листа 05.09.2026:
+   .char-grid шириной 845px, gap 5px, 12 треков по 65.8px — а у Вольного
+   Торговца ячеек 13 (10 книжных Характеристик + COR/INS + PF), и 13-я при
+   поле 64px в строку уже не влезала: PF уезжал ОДИН в новый ряд, оставляя
+   справа пустую полосу почти во всю панель. (Вопреки описанию тикета он там
+   не растягивался — обычная ячейка 65.8px, ровно как соседи: при auto-fit +
+   1fr одинокая ячейка второго ряда занимает один трек, а не всю ширину.)
+   13 × 56 + 12 × 5 = 788px — влезают все, начиная с ширины сетки 788px.
+   На 12 ячейках не меняется НИЧЕГО: auto-fit схлопывает пустой 13-й трек, и
+   1fr раздаёт ту же ширину 65.8px, что и раньше. Уже ниже 788px по-прежнему
+   работает перенос (wdbc-joh2) — ячейки переносятся, а не обрезаются. */
 .warhammer-dbc .stats-cog .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
   gap: 5px;
 }
 .warhammer-dbc .stats-cog .char-cell {
@@ -170,3 +181,16 @@
 .warhammer-dbc .abil-cog .path-card { background: rgba(8,22,14,0.5); border: 1px solid var(--cg-line); border-radius: 4px; }
 .warhammer-dbc .abil-cog .path-grade-name, .warhammer-dbc .abil-cog .path-auto { color: var(--cg-fire); }
 .warhammer-dbc .abil-cog select { background: #08160e; border: 1px solid var(--cg-line); color: #d8ffe8; font-family: inherit; }
+
+/* Постоянный модификатор Навыка (wdbc-q4wb) — под стать .char-cell-mod
+   Характеристик: тёмное поле, тусклая цифра, чтобы не спорить с Итогом. */
+.warhammer-dbc .stats-cog .skill-mod {
+  width: 30px; height: 15px;
+  padding: 0; text-align: center; font-size: 0.72em;
+  background: #08160e; border: 1px solid var(--cg-line); color: #8fbf9c;
+  border-radius: 2px;
+}
+.warhammer-dbc .stats-cog .skill-mod:focus { border-color: var(--cg); color: #eafff4; }
+/* Модификатор проставлен — поле подсвечивается янтарём, тем же цветом, каким
+   у Характеристики отмечается изменённый Итог (.char-cell-modded). */
+.warhammer-dbc .stats-cog .skill-mod:not([value="0"]) { color: var(--cg-fire); border-color: var(--cg-fire); }

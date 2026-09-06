@@ -14,6 +14,7 @@
 // prev+добавка, не пересчитанным с нуля.
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "King's Plate";
@@ -21,7 +22,7 @@ export const KINGS_PLATE_FLAG = "kingsPlateAblative";
 
 /** Это Талант «King's Plate / Латы Короля»? */
 export function isKingsPlateItem(item) {
-  return item?.type === "talent" && itemHasName(item, NAME);
+  return itemIs(item, "talent", "talent.kingsPlate", NAME);
 }
 
 /**

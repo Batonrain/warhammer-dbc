@@ -29,9 +29,21 @@
 
 import { _degWord, _hitWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { defenseSection } from "./attack-card.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 const FLAG_KEY = "evasionPool";
+// Dance of Life / Танец Жизни (Дар Слаанеш, wdbc-1rno): «тратит только 1 Успех
+// вместо 2 на Уклонение от последующих атак» — точечное расширение базового
+// правила стр. 12 (poolHitCost ниже), не отдельный примитив. НЕ смоделировано
+// в этой находке: книга также даёт «сохраняет неизрасходованные Успехи до
+// начала СВОЕГО следующего Хода» и «тратит их на попадания ДРУГИХ персонажей»
+// — базовый пул это не умеет вообще (currentTurnTag живёт до конца Хода
+// АТАКУЮЩЕГО, не защищающегося, и ключ пула — per-attacker, а не общий на
+// актора): расширение "храните между атакующими" — отдельная архитектурная
+// правка (пул стал бы актёр-общим, а не per-attacker), не сделана здесь.
+const DANCE_OF_LIFE = "gift.slaanesh.danceOfLife";
 
 const poolKey = attackerUuid => String(attackerUuid || "").replace(/\./g, "-");
 
@@ -73,17 +85,20 @@ export function getEvasionPool(defender, attackerUuid) {
   return entry;
 }
 
-/** Стоимость снятия ОДНОГО попадания из пула: 2 Успеха база + 1 за каждые
- *  полные −10 штрафа этой атаки сверх штрафа атаки, породившей пул. */
-export function poolHitCost(basePenalty, thisPenalty) {
+/** Стоимость снятия ОДНОГО попадания из пула: 2 Успеха база (1 — с Танцем
+ *  Жизни, см. DANCE_OF_LIFE выше) + 1 за каждые полные −10 штрафа этой атаки
+ *  сверх штрафа атаки, породившей пул. `actor` опционален — без него (старые
+ *  вызовы/тесты) поведение не меняется, база остаётся 2. */
+export function poolHitCost(basePenalty, thisPenalty, actor = null) {
+  const base = actor && hasRuleFlag(actor, DANCE_OF_LIFE) ? 1 : 2;
   const worse = Math.max(0, (basePenalty || 0) - (thisPenalty || 0));
-  return 2 + Math.floor(worse / 10);
+  return base + Math.floor(worse / 10);
 }
 
 /** Сколько попаданий текущей атаки можно снять остатком пула, и по какой цене. */
-export function poolAffordableHits(entry, thisPenalty, hitsCount) {
+export function poolAffordableHits(entry, thisPenalty, hitsCount, actor = null) {
   if (!entry) return { hits: 0, cost: 0, perHit: 0 };
-  const perHit = poolHitCost(entry.penalty, thisPenalty);
+  const perHit = poolHitCost(entry.penalty, thisPenalty, actor);
   const hits = Math.min(hitsCount, Math.floor(entry.successes / perHit));
   return { hits, cost: hits * perHit, perHit };
 }
@@ -122,44 +137,38 @@ export async function spendPoolForRecoil(defender, attackerUuid, cost = 2) {
  * реально осталось), чтобы разыграть их обычной Реакцией, как велит правило.
  */
 export async function performPoolSpend(defender, {
-  attackerUuid, hitsCount = 1, dodgeMod = 0, parryMod = 0, targetIsVehicle = false,
+  attackerUuid, hitsCount = 1, dodgeMod = 0, dodgeModRecoil = null, parryMod = 0, targetIsVehicle = false,
   flexible = false, forcedDefenceReroll = "", isMelee = false
 } = {}) {
   const entry = getEvasionPool(defender, attackerUuid);
-  const rollMode = game.settings.get("core", "rollMode");
   if (!entry) {
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: defender }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-outcome"><span class="roll-failure">${rollIcon("ban","#ff6b6b")}Пул неизрасходованных Успехов пуст или устарел (сменился Ход).</span></div>
-      </div>`
-    }, rollMode));
+    // Карточка отказа без шапки — icon/title не заданы намеренно, вид тот же.
+    await postTestCard(defender, {
+      outcome: outcomeHtml(false, `${rollIcon("ban","#ff6b6b")}Пул неизрасходованных Успехов пуст или устарел (сменился Ход).`)
+    }, { sound: false });
     return;
   }
 
-  const { hits: negated, cost, perHit } = poolAffordableHits(entry, dodgeMod, hitsCount);
+  const { hits: negated, cost, perHit } = poolAffordableHits(entry, dodgeMod, hitsCount, defender);
   await spendFromPool(defender, attackerUuid, cost);
   const remaining = hitsCount - negated;
 
-  const outcomeHtml = negated === 0
-    ? `<span class="roll-failure">В пуле недостаточно Успехов даже на одно попадание (нужно ${perHit} за штуку, доступно ${entry.successes}).</span>`
+  const outcome = negated === 0
+    ? outcomeHtml(false, `В пуле недостаточно Успехов даже на одно попадание (нужно ${perHit} за штуку, доступно ${entry.successes}).`)
     : remaining === 0
-      ? `<span class="roll-success">Потрачено ${cost} Усп. из пула — снимает ${negated > 1 ? `все ${negated} ${_hitWord(negated)}` : "попадание"}! Атака промахивается.</span>`
-      : `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Потрачено ${cost} Усп. из пула — снимает ${negated} из ${hitsCount} ${_hitWord(hitsCount)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит${remaining === 1 ? "" : "ят"}.</span>`;
+      ? outcomeHtml(true, `Потрачено ${cost} Усп. из пула — снимает ${negated > 1 ? `все ${negated} ${_hitWord(negated)}` : "попадание"}! Атака промахивается.`)
+      : outcomeHtml(false, `${rollIcon("warn","#ffb84d")}Потрачено ${cost} Усп. из пула — снимает ${negated} из ${hitsCount} ${_hitWord(hitsCount)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит${remaining === 1 ? "" : "ят"}.`);
 
   const continueHtml = remaining > 0
     ? `<div class="roll-defense-note">Успехов из пула не хватило на все попадания — можно разыграть Реакцией обычное Избегание на оставшиеся ${remaining} ${_hitWord(remaining)}:</div>
-       ${defenseSection({ dodgeMod, parryMod, targetIsVehicle, forcedDefenceReroll },
+       ${defenseSection({ dodgeMod, dodgeModRecoil, parryMod, targetIsVehicle, forcedDefenceReroll },
                          { wp: { flexible }, attackerUuid, hitsCount: remaining, isMelee })}`
     : "";
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: defender }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("run")}Пул Избегания — ${esc(defender.name)}</div>
-      <div class="roll-threshold">Остаток пула был: <b>${entry.successes}</b> Усп. (цена ${perHit}/попадание)</div>
-      <div class="roll-outcome">${outcomeHtml}</div>
-      ${continueHtml}
-    </div>`
-  }, rollMode));
+  await postTestCard(defender, {
+    icon: rollIcon("run"), title: `Пул Избегания — ${esc(defender.name)}`,
+    threshold: `<div class="roll-threshold">Остаток пула был: <b>${entry.successes}</b> Усп. (цена ${perHit}/попадание)</div>`,
+    outcome,
+    sections: [continueHtml]
+  }, { sound: false });
 }

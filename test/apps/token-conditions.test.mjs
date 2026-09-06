@@ -11,7 +11,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { CONDITIONS_DEF } from "../../module/sheets/sheet-helpers.mjs";
+import { CONDITIONS_DEF } from "../../module/constants/conditions.mjs";
 import { buildConditionStatusEffects, statusIconUri } from "../../module/apps/token-conditions.mjs";
 
 beforeEach(() => {
@@ -31,7 +31,7 @@ describe("buildConditionStatusEffects", () => {
       if (key === "fatigued") continue;
       expect(byId[key], `нет статус-эффекта для ${key}`).toBeTruthy();
       expect(byId[key].name).toBe(def.label);
-      expect(byId[key].img).toMatch(/^data:image\/svg\+xml,/);
+      expect(byId[key].img).toBe(`systems/warhammer-dbc/assets/conditions/${key}.svg`);
     }
   });
 
@@ -53,15 +53,65 @@ describe("buildConditionStatusEffects", () => {
   });
 });
 
+// wdbc-ahtb.1: Foundry v14 валидирует img создаваемого ActiveEffect как
+// FilePathField — data:image/svg+xml,... (как было раньше) этой валидации
+// не проходит, actor.toggleStatusEffect падал на КАЖДОМ Состоянии, иконка
+// на токене не появлялась никогда. Теперь — настоящий путь к файлу,
+// сгенерированному tools/build-condition-icons.mjs.
 describe("statusIconUri", () => {
-  it("встраивает конкретный цвет состояния вместо currentColor", () => {
+  it("настоящий путь к файлу (FilePathField Foundry v14), не data: URI", () => {
     const uri = statusIconUri("bleeding");
-    const svg = decodeURIComponent(uri.replace("data:image/svg+xml,", ""));
-    expect(svg).not.toMatch(/currentColor/);
-    expect(svg).toContain(CONDITIONS_DEF.bleeding.color);
+    expect(uri).toBe("systems/warhammer-dbc/assets/conditions/bleeding.svg");
+    expect(uri).not.toMatch(/^data:/);
   });
 
   it("неизвестный ключ — безопасный запасной значок, не падает", () => {
     expect(statusIconUri("no-such-condition")).toBe("icons/svg/hazard.svg");
+  });
+});
+
+// ── wdbc-6xhl: у меток иконка на токене не появлялась вовсе ─────────────────
+// Тег в блоке СОСТОЯНИЯ был, а на токене — ничего, ни для Ярости, ни для Бега,
+// ни для остальных. Хук ловил Состояния по тому, что буквально пришло в патче
+// (system.conditions.<ключ>), а метки туда не пишутся НИКОГДА: их источники —
+// system.inRage, флаги актора, флаг на щите. Решение переехало сюда чистой
+// функцией именно потому, что хук в заглушке — no-op и ничего не доказывает.
+import { markStatusPlan } from "../../module/apps/token-conditions.mjs";
+import { MIRROR_KEYS } from "../../module/rules/condition-mirrors.mjs";
+
+describe("markStatusPlan: метки на токене", () => {
+  it("метка стоит, иконки нет — зажечь", () => {
+    expect(markStatusPlan({ inRage: true }, new Set())).toEqual({ add: ["inRage"], remove: [] });
+  });
+
+  it("метки нет, иконка висит — погасить", () => {
+    expect(markStatusPlan({}, new Set(["running"]))).toEqual({ add: [], remove: ["running"] });
+  });
+
+  it("уже сошлось — ничего не делать (иначе хук зациклился бы сам на себе)", () => {
+    expect(markStatusPlan({ inRage: true }, new Set(["inRage"]))).toEqual({ add: [], remove: [] });
+    expect(markStatusPlan({ inRage: false }, new Set())).toEqual({ add: [], remove: [] });
+  });
+
+  it("книжные Состояния план не трогает — у них свой путь по патчу", () => {
+    const plan = markStatusPlan({ stunned: true, prone: true }, new Set());
+    expect(plan.add).toEqual([]);
+    expect(plan.remove).toEqual([]);
+  });
+
+  it("несколько меток разом, в обе стороны", () => {
+    const plan = markStatusPlan({ inRage: true, marked: true }, new Set(["running", "marked"]));
+    expect(plan.add.sort()).toEqual(["inRage"]);
+    expect(plan.remove.sort()).toEqual(["running"]);
+  });
+
+  it("каждая метка вообще может попасть на токен — ни одна не исключена молча", () => {
+    const all = Object.fromEntries(MIRROR_KEYS.map(k => [k, true]));
+    expect(markStatusPlan(all, new Set()).add.sort()).toEqual([...MIRROR_KEYS].sort());
+  });
+
+  it("пустые входные данные не роняют", () => {
+    expect(markStatusPlan()).toEqual({ add: [], remove: [] });
+    expect(markStatusPlan(null, null)).toEqual({ add: [], remove: [] });
   });
 });

@@ -239,6 +239,28 @@
   border: 1px solid var(--wh-border);
 }
 
+/* wdbc-wqmr: Инициатива/Размер/Действия — три равноценных блока-колонки в
+   одной строке (раньше ряд был не оформлен CSS вовсе, поэтому колонка
+   Инициатива+Размер и полоса Действий просто стекались друг под другом). */
+.warhammer-dbc .movement-other-row {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.warhammer-dbc .movement-other-col {
+  flex: 0 0 auto;
+  min-width: 150px;
+  padding: 3px 8px;
+  border: 1px solid var(--wh-border);
+  border-radius: 3px;
+  background: var(--wh-parchment2);
+}
+.warhammer-dbc .movement-other-row .action-economy-compact {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
 /* ── Секция боя ── */
 .warhammer-dbc .combat-section-panel {
   border: 1px solid var(--wh-border);
@@ -833,6 +855,22 @@
   font-style: italic;
   margin-left: 4px;
 }
+
+/* ─── Укрытие по частям тела (wdbc-qkua) ───────────────────────────────────
+   Галочка «прикрыта» живёт прямо в подписи локации, мелко: панель и так
+   плотная, а отдельной колонки шести галочек она бы не выдержала. Ручное
+   число AP — одной строкой под легендой, там же, где остальные подписи. */
+.armor-cover-cb {
+  width: 10px; height: 10px; margin: 0 0 0 3px; vertical-align: middle;
+  accent-color: var(--wh-accent, #7a2a2a); cursor: pointer;
+}
+.armor-cover-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.78em; margin-top: 2px; padding: 2px 4px;
+  color: var(--wh-text-mid);
+}
+.armor-cover-row .armor-cover-ap { width: 3.2em; text-align: center; }
+.armor-cover-hint { font-style: italic; opacity: 0.8; }
 
 /* ─── В чате ─── */
 .dmg-tb-note {

@@ -24,12 +24,14 @@ import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
-import { CONDITIONS_DEF } from "../sheets/sheet-helpers.mjs";
+import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { defaultSpawnDemonFn } from "./demon-summon.mjs";
 import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
 
 const sgn = n => (n >= 0 ? "+" : "") + n;
 
@@ -206,7 +208,11 @@ export async function castRitual(R, actor, {
     const proceed = await confirmUnmet(actor, d.reqFailed);
     if (!proceed) return null;
   }
-  const threshold = d.threshold;
+  // Общий сбор модификаторов (wdbc-ct65.3): Порог ритуала считался целиком
+  // ритуальной арифметикой (ritualThreshold), мимо реестра правил — Усталость
+  // Ритуалиста и его Черты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = d.threshold + ruleMods.total;
   // Dominator / Покоритель (wdbc-u0by): «Преимущество на тесты Демонического
   // Владычества» — безусловно для R.type==="dominion", авто (кнопка «Провести
   // ритуал» катает сразу, без отдельного шага под переброс).
@@ -222,7 +228,10 @@ export async function castRitual(R, actor, {
   const dominatorNote = picked.dropped.length
     ? ` · Покоритель: Преимущество, отброшено ${picked.dropped.join(", ")}` : "";
   const typeLabel = RITUAL_TYPES_MAP[R.type]?.label || R.type;
-  const breakdown = d.rows.map(r => `${r.label}: ${r.signed}`).join(" · ");
+  // Разбивка Порога: к ритуальным слагаемым добавлены подписи из реестра
+  // (wdbc-kuun) — Порог уже считался с Усталостью Ритуалиста, но в карточке
+  // её видно не было.
+  const breakdown = [...d.rows.map(r => `${r.label}: ${r.signed}`), ...ruleMods.parts].join(" · ");
 
   const failHtml = success ? "" : await ritualFailure(R, Math.abs(deg), d.prMax, allRolls, veilShiftFn);
   const condHtml = success ? conditionPillsHtml(item) : "";
@@ -243,26 +252,27 @@ export async function castRitual(R, actor, {
       </div>`
     : "";
 
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result wh-ritual-card">
-      <div class="roll-header">${veilIcon("ritual")} Ритуал: ${esc(R.name || typeLabel)}</div>
-      <div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>
-      <div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}${dominatorNote ? esc(dominatorNote) : ""}</div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${success
-        ? `<span class="roll-success">Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}</span>`
-        : `<span class="roll-failure">Ритуал провален — ${Math.abs(deg)} Провал(ов)</span>`}</div>
-      ${demonHtml}
-      ${herdHtml}
-      ${failHtml}
-      ${condHtml}
-      <details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>
-    </div>`,
-    rolls: allRolls, sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Класс `wh-ritual-card` идёт в classes: styles/ui/veil.css рисует по нему
+  // блок провала ритуала селектором `.wh-ritual-card .rf-*`, то есть класс
+  // обязан стоять на том же узле, что и `wh-roll-result`. Строка Порога здесь
+  // своего формата («имя · тип → Порог: N»), поэтому передаётся готовой.
+  await postTestCard(actor, testCardHtml({
+    icon: `${veilIcon("ritual")} `, title: `Ритуал: ${esc(R.name || typeLabel)}`,
+    classes: "wh-ritual-card",
+    threshold: `<div class="roll-threshold">${esc(actor.name)} · ${esc(typeLabel)} → Порог: <b>${threshold}</b></div>`,
+    lines: [
+      `<div class="roll-threshold" style="font-size:0.8em;opacity:0.85;">${esc(breakdown)}${dominatorNote ? esc(dominatorNote) : ""}</div>`
+    ],
+    rv,
+    outcome: success
+      ? outcomeHtml(true, `Ритуал удался — ${deg} ${deg === 1 ? "Успех" : "Успех(ов)"}`)
+      : outcomeHtml(false, `Ритуал провален — ${Math.abs(deg)} Провал(ов)`),
+    sections: [
+      demonHtml, herdHtml, failHtml, condHtml,
+      `<details class="roll-dice-details"><summary>📊 Показать кубы</summary>${dice}</details>`
+    ]
+  }), { rolls: allRolls });
 
   return { success, deg, threshold, roll: rv };
 }

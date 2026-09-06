@@ -27,6 +27,7 @@ import { parseSubmutations, submutationByRoll, subShiftLimit, subShiftOptions,
          isSubBlocked, patronSubmutation, needsReroll, SUB_GOD_LABELS }
   from "../rules/submutations.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -108,16 +109,18 @@ async function announce(item, actor, entry, { roll = 0, shift = 0, total = 0, bl
         shift ? stat("Итог", total) : ""}</div>`
     : `<div class="roll-statline">${stat("Выбор", "без броска")}</div>`;
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker(actor ? { actor } : {}),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">Субмутация — ${esc(item.name)}</div>
-      ${line}
-      <div class="roll-outcome"><b>${esc(entryLabel(entry))}</b></div>
-      ${entry?.text ? `<div class="ability-detail-text">${esc(entry.text)}</div>` : ""}
-      ${blocked ? `<div class="roll-note">Строка враждебного Бога — по правилу книги её брать нельзя.</div>` : ""}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  // Бросок по ТАБЛИЦЕ субмутаций, не тест: Порога нет. Кубик и сдвиг несёт
+  // своя строка roll-statline (d10/d5, Сдвиг, Итог) — общая «Бросок: N» её
+  // не заменяет, поэтому rv не передаётся.
+  await postTestCard(actor ?? null, {
+    title: `Субмутация — ${esc(item.name)}`,
+    lines: [line],
+    outcome: `<b>${esc(entryLabel(entry))}</b>`,
+    sections: [
+      entry?.text ? `<div class="ability-detail-text">${esc(entry.text)}</div>` : "",
+      blocked ? `<div class="roll-note">Строка враждебного Бога — по правилу книги её брать нельзя.</div>` : ""
+    ]
+  }, { sound: false });
 }
 
 /**

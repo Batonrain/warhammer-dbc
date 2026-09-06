@@ -21,23 +21,57 @@
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { abs } from "./packs.mjs";
+import { FINGERPRINT_VERSION } from "./pack-fingerprint.mjs";
 
 /** Файл отметки. Имя с точки — рядом с базами паков он не мешает. */
 export const STAMP_FILE = "packs/.pack-stamp";
 
-/** Записать отметку «исходники и базы сведены сейчас». */
-export function writeStamp(when = Date.now()) {
+/**
+ * Записать отметку «исходники и базы сведены сейчас».
+ *
+ * `fingerprints` — отпечатки содержимого баз на этот момент (имя пака → строка,
+ * tools/pack-fingerprint.mjs). Именно по ним следующая сборка отличит правку в
+ * игре от того, что мир просто открывали и LevelDB переписал файлы (wdbc-1c10).
+ * Без них отметка остаётся прежней — одно время.
+ */
+export function writeStamp(when = Date.now(), fingerprints = null) {
   const path = abs(STAMP_FILE);
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${new Date(when).toISOString()}\n`);
+  const body = fingerprints
+    ? JSON.stringify({ when: new Date(when).toISOString(),
+                       fpVersion: FINGERPRINT_VERSION, packs: fingerprints }, null, 2)
+    : new Date(when).toISOString();
+  writeFileSync(path, `${body}\n`);
   return when;
 }
 
-/** Время последней синхронизации в миллисекундах; null — отметки ещё нет. */
+/**
+ * Отметка последней синхронизации.
+ *
+ * Два формата, и старый обязан читаться: на машинах разработчиков отметки уже
+ * лежат простой строкой времени, и обновление инструмента не должно требовать
+ * пересборки компендиумов.
+ *
+ * @returns {?(number|{when: number, packs: Object<string,string>})}
+ *   число — старый формат (только время); объект — новый (время плюс отпечатки);
+ *   null — отметки ещё нет либо она испорчена.
+ */
 export function readStamp() {
   const path = abs(STAMP_FILE);
   if (!existsSync(path)) return null;
-  const ms = Date.parse(readFileSync(path, "utf8").trim());
+  const raw = readFileSync(path, "utf8").trim();
+  if (raw.startsWith("{")) {
+    try {
+      const doc = JSON.parse(raw);
+      const when = Date.parse(doc.when);
+      if (Number.isNaN(when)) return null;
+      return { when, fpVersion: Number(doc.fpVersion) || 1,
+               packs: doc.packs && typeof doc.packs === "object" ? doc.packs : {} };
+    } catch {
+      return null; // испорченная отметка читается как отсутствующая
+    }
+  }
+  const ms = Date.parse(raw);
   return Number.isNaN(ms) ? null : ms;
 }
 
@@ -72,17 +106,44 @@ export function latestDbChange(dir) {
 }
 
 /**
- * Паки, изменённые после отметки. Чистая функция: принимает уже снятые времена,
- * поэтому проверяется без файловой системы.
+ * Паки, изменённые после отметки. Чистая функция: принимает уже снятые времена
+ * и отпечатки, поэтому проверяется без файловой системы и без LevelDB.
+ *
+ * ДВА ШАГА, и решающий — второй (wdbc-1c10):
+ *
+ * 1. Дата файлов — быстрый предфильтр. Пак не новее отметки трогали заведомо не
+ *    после синхронизации, читать его базу незачем.
+ * 2. Отпечаток содержимого — решение. classic-level переписывает .ldb при
+ *    ОТКРЫТИИ базы (уплотнение), не меняя ни одного документа, а мир открывает
+ *    все паки при каждом запуске. По одной дате «поиграли» неотличимо от
+ *    «правили», и гейт краснел после каждого сеанса игры — то есть ровно тогда,
+ *    когда нужен больше всего.
+ *
+ * Отпечатка нет (старая отметка, новый пак, база занята миром и не открылась) —
+ * судить о содержимом нечем, и пак считается изменённым. Ошибиться в эту сторону
+ * значит зря остановить сборку; в другую — молча потерять правки.
  *
  * Допуск в секунду — на разницу часов и на то, что сборка сама пишет файлы:
  * без него собственная запись сборки читалась бы как чужая правка.
  *
- * @param {number|null} stampMs           время последней синхронизации
- * @param {Array<{name: string, mtimeMs: number}>} packs
+ * @param {number|{when: number, packs: Object<string,string>}|null} stamp
+ *   отметка: число (старый формат) или объект с отпечатками (новый)
+ * @param {Array<{name: string, mtimeMs: number, fingerprint?: ?string}>} packs
  */
-export function packsChangedSince(stampMs, packs = [], toleranceMs = 1000) {
+export function packsChangedSince(stamp, packs = [], toleranceMs = 1000) {
   // Отметки нет — сказать нечего: это первая сборка на этой машине.
-  if (!stampMs) return [];
-  return packs.filter(p => (p.mtimeMs || 0) > stampMs + toleranceMs).map(p => p.name);
+  if (!stamp) return [];
+  const when = typeof stamp === "number" ? stamp : stamp.when;
+  const known = typeof stamp === "number" ? null : (stamp.packs ?? {});
+  if (!when) return [];
+
+  return packs
+    .filter(p => (p.mtimeMs || 0) > when + toleranceMs)
+    .filter(p => {
+      if (!known) return true;                 // старый формат — верим дате
+      const was = known[p.name];
+      if (!was || !p.fingerprint) return true; // сравнивать не с чем
+      return p.fingerprint !== was;            // содержимое и правда разошлось
+    })
+    .map(p => p.name);
 }

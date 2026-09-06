@@ -257,8 +257,17 @@ export function buildPropertyChatBlock(props) {
  * Кнопки «Применить эффект к цели» для свойств с auto.targetEffect.
  * onlyUnsoaked=true означает, что был непоглощённый урон (для Toxic/Rad).
  * Возвращает HTML или "".
+ *
+ * ammoName (wdbc-utaw) — имя заряженного боеприпаса ЭТОГО выстрела (если
+ * есть), несётся на каждой кнопке атрибутом data-wp-ammo-name. Список props
+ * не хранит, какая запись пришла от оружия, а какая от боеприпаса (слиты
+ * mergeExtraProps ещё в attack.mjs) — поэтому атрибут одинаков на всех
+ * кнопках этого выстрела, не только на кнопках «от боеприпаса». Единственный
+ * потребитель на 04.09.2026: Гиперрост (module/rules/hyper-growth.mjs)
+ * отличает свой тик яда от чужого Toxic именно по имени боеприпаса в
+ * hooks.mjs::_applyWeaponPropEffect.
  */
-export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false } = {}) {
+export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false, ammoName = "" } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -310,7 +319,8 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         `data-wp-provaly-add="${te.provalyDamage?.add ?? 0}"`,
         `data-wp-min-dop="${te.conditionMinDoP ?? 1}"`,
         `data-wp-vehicle-flat="${te.vehicleFlatDamage ? 1 : 0}"`,
-        `data-wp-armor-pen="${te.armorPenDamage ? 1 : 0}"`
+        `data-wp-armor-pen="${te.armorPenDamage ? 1 : 0}"`,
+        `data-wp-ammo-name="${ammoName}"`
       ].join(" ");
 
       const testStr = te.testChar
@@ -331,15 +341,3 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
       ${btns.join("")}
     </div>`;
 }
-
-// Состояние → поле уровня/раундов в system.conditions
-export const CONDITION_LEVEL_FIELD = {
-  stunned:        "stunnedRounds",
-  blinded:        "blindedRounds",
-  burning:        "burningLevel",
-  radiation:      "radiationLevel",
-  bleeding:       "bleedingLevel",
-  fatigued:       "fatiguedLevel",
-  haemorrhaging:  "haemorrhagingLevel"
-  // poisoned, pinned, hallucinogenic, prone — без уровня (булевы)
-};

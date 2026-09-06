@@ -16,7 +16,7 @@ import fs   from "node:fs";
 import path from "node:path";
 
 import { ITEM_DATA_MODELS } from "../../module/data/index.mjs";
-import { packDocuments, leaves, isEmpty } from "../support/pack-docs.mjs";
+import { packDocuments, leaves, isEmpty, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 /**
  * По типу: папка packs-src с его документами, умолчания прежнего template.json
@@ -425,7 +425,8 @@ const TYPES = {
       sustainable: false, sustainCost: 1, sustainAction: "free",
       damage: "", damageType: "energy", penetration: 0, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
-      effect: "", isSustained: false,
+      resistChar: "", resistMod: 0,
+      effect: "", isSustained: false, sustainedDegree: null,
       effects: {
         charBonusStat: "", charBonusValue: 0, charBonuses: [],
         armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
@@ -455,7 +456,7 @@ const TYPES = {
     pack: null,
     defaults: {
       description: "", notes: "", xpCost: 0, requirement: "", action: "half",
-      sustainable: false, isSustained: false, testChar: "wp", testMod: 0,
+      sustainable: false, isSustained: false, sustainedDegree: null, testChar: "wp", testMod: 0,
       opposed: false, range: "", powerKind: "Концентрация, Ментальное",
       damage: "", damageType: "energy", penetration: 0, effect: ""
     }
@@ -653,7 +654,7 @@ describe("типы данных предметов", () => {
           }
         }
         expect(lost).toEqual([]);
-      });
+      }, PACK_SCAN_TIMEOUT);
     });
   }
 

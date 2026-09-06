@@ -9,6 +9,7 @@ import { PA_TABLES, PA_TABLE_ORDER, PA_TABLE_PICK, PA_SHIFT_RULE, PA_ZONES,
          entryByRoll, rangeLabel, shiftOptions } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { esc, relayItemUpdate } from "../helpers/utils.mjs";
+import { postTestCard, testCardHtml } from "../helpers/test-card.mjs";
 
 /** Истории есть только у силовой брони Астартес. */
 export function supportsHistory(item) {
@@ -100,15 +101,22 @@ export async function clearArmourHistory(item) {
   });
 }
 
+// Карточки этого файла — броски по ТАБЛИЦАМ особенностей, не тесты: Порога
+// нет, сравнивать бросок не с чем. Собираются они всё равно общим строителем
+// (testCardHtml + postTestCard): строка броска у них своя («1к5: N», «к10: N»),
+// поэтому идёт в lines, а класс `pa-chat` — в classes, чтобы встать на тот же
+// узел, что и раньше: стили (styles/sheets/homeworlds.css) написаны селектором
+// `.wh-roll-result.pa-chat .pa-chat-*`.
+
 /** Бросок 1к5: какая таблица используется. */
 export async function rollArmourTable(item) {
   const roll = await new Roll("1d5").evaluate();
   const pick = PA_TABLE_PICK.find(p => p.roll === roll.total);
 
-  let msg = `<div class="wh-roll-result pa-chat">
-    <div class="roll-header">Особенности брони — ${esc(item.name)}</div>
-    <div class="roll-dice">1к5: <b>${roll.total}</b></div>
-    <div class="pa-chat-pick">${esc(pick?.label || "")}</div>`;
+  const lines = [
+    `<div class="roll-dice">1к5: <b>${roll.total}</b></div>`,
+    `<div class="pa-chat-pick">${esc(pick?.label || "")}</div>`
+  ];
 
   // 5 — две разные таблицы: бросаем, пока не выпадут два разных результата.
   if (pick?.table === "two") {
@@ -121,26 +129,26 @@ export async function rollArmourTable(item) {
       if (!p || p.table === "two" || p.table === "any" || picked.includes(p.table)) continue;
       picked.push(p.table);
     }
-    msg += `<div class="pa-chat-two">Таблицы: ${picked.map(t => esc(PA_TABLES[t].label)).join(" и ")}</div>`;
+    lines.push(`<div class="pa-chat-two">Таблицы: ${picked.map(t => esc(PA_TABLES[t].label)).join(" и ")}</div>`);
     for (let i = 0; i < picked.length; i++) {
       const r = await new Roll("1d10").evaluate();
       const e = entryByRoll(picked[i], r.total);
       if (e) await setArmourEntry(item, picked[i], e.name, { second: i === 1, roll: r.total });
-      msg += `<div class="pa-chat-entry"><b>${esc(PA_TABLES[picked[i]].label)} (к10 = ${r.total}):</b>
-        ${esc(e?.name || "—")}<div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>`;
+      lines.push(`<div class="pa-chat-entry"><b>${esc(PA_TABLES[picked[i]].label)} (к10 = ${r.total}):</b>
+        ${esc(e?.name || "—")}<div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>`);
     }
   }
   else if (pick?.table === "any") {
-    msg += `<div class="pa-chat-note">Выберите любую таблицу вручную на листе брони.</div>`;
+    lines.push(`<div class="pa-chat-note">Выберите любую таблицу вручную на листе брони.</div>`);
   }
   else if (pick) {
     await relayItemUpdate(item, { "system.history.table": pick.table });
-    msg += `<div class="pa-chat-note">Теперь бросьте к10 по этой таблице.</div>`;
+    lines.push(`<div class="pa-chat-note">Теперь бросьте к10 по этой таблице.</div>`);
   }
 
-  msg += "</div>";
-  await ChatMessage.create(ChatMessage.applyRollMode(
-    { content: msg, rolls: [roll] }, game.settings.get("core", "rollMode")));
+  await postTestCard(item.actor, testCardHtml({
+    title: `Особенности брони — ${esc(item.name)}`, classes: "pa-chat", lines
+  }), { rolls: [roll] });
 }
 
 /**
@@ -164,16 +172,15 @@ export async function rollArmourEntry(item, table) {
   const e = entryByRoll(table, chosen);
   if (e) await setArmourEntry(item, table, e.name, { roll: chosen });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    content: `<div class="wh-roll-result pa-chat">
-      <div class="roll-header">${esc(PA_TABLES[table].label)} — ${esc(item.name)}</div>
-      <div class="roll-dice">к10: <b>${rv}</b>${chosen !== rv ? ` → сдвинуто на <b>${chosen}</b>` : ""}</div>
-      <div class="pa-chat-entry"><b>${esc(e?.name || "—")}</b>
+  await postTestCard(item.actor, testCardHtml({
+    title: `${esc(PA_TABLES[table].label)} — ${esc(item.name)}`, classes: "pa-chat",
+    lines: [
+      `<div class="roll-dice">к10: <b>${rv}</b>${chosen !== rv ? ` → сдвинуто на <b>${chosen}</b>` : ""}</div>`,
+      `<div class="pa-chat-entry"><b>${esc(e?.name || "—")}</b>
         <div class="pa-chat-desc">${esc(e?.desc || "")}</div>
-        <div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>
-    </div>`,
-    rolls: [roll]
-  }, game.settings.get("core", "rollMode")));
+        <div class="pa-chat-effect">${esc(e?.effect || "")}</div></div>`
+    ]
+  }), { rolls: [roll] });
 }
 
 /** Диалог сдвига результата на ±½ Inf.b (окр.▲). */
@@ -214,11 +221,8 @@ export async function rollArmourZones(item) {
     lines.push(`${z.label}: к10 = ${r.total} → ${v > 0 ? "+1" : (v < 0 ? "−1" : "без изменений")}`);
   }
   await relayItemUpdate(item, { "system.history.zones": zones });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    content: `<div class="wh-roll-result pa-chat">
-      <div class="roll-header">Уничтоженный и восстановленный — ${esc(item.name)}</div>
-      <div class="pa-chat-zones">${lines.map(esc).join("<br/>")}</div>
-    </div>`,
-    rolls
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(item.actor, testCardHtml({
+    title: `Уничтоженный и восстановленный — ${esc(item.name)}`, classes: "pa-chat",
+    lines: [`<div class="pa-chat-zones">${lines.map(esc).join("<br/>")}</div>`]
+  }), { rolls });
 }

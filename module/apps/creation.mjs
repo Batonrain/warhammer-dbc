@@ -20,6 +20,7 @@ import { MECHANICUS_IMPLANTS, SKITARII_WAR_PLATE, MECHANICUM_IMPLANTS_TRAIT } fr
 import { disabledRaceKeys }             from "../constants/features.mjs";
 import { archetypeEntries, archetypesForRace, applyArchetype } from "./archetypes.mjs";
 import { splitTopLevel, esc }           from "../helpers/utils.mjs";
+import { testCardHtml }                 from "../helpers/test-card.mjs";
 import { START_LEVELS, START_CAP, startLevelValues } from "../constants/start-levels.mjs";
 import { startingInfamyFormula } from "../rules/starting-infamy.mjs";
 import { skillGrantOutcome } from "../rules/duplicate-grants.mjs";
@@ -131,10 +132,23 @@ export async function grantCreationGear(actor, { race, past, sub, arch, isAstart
   const astartes = isAstartes
     ? `<div style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(77,255,166,.25);"><b>+ 4 базовые Системы силовой брони на выбор</b> — из компендиума «Системы силовой брони» (добавьте во вкладке «Снаряжение»).</div>`
     : "";
+  // НЕ карточка теста (wdbc-kuun): броска и Порога нет вовсе, это шёпот ГМу
+  // со списком «что уже на листе, а что выдать руками».
+  // Разметка теперь общая (testCardHtml), а публикация осталась своей, и это
+  // не недоделка: postTestCard безусловно прогоняет данные через
+  // ChatMessage.applyRollMode, а тот в публичном режиме броска ОБНУЛЯЕТ
+  // whisper (client/documents/chat-message.mjs, applyMode: `if ( mode ===
+  // "public" ) whisper.length = 0;`) — шёпот ГМу стал бы виден всему столу.
+  // Пока это не разведено в общем helpers/test-card.mjs, шлём напрямую.
   ChatMessage.create({
-    content: `<div class="wh-roll-result"><div class="roll-header">🎒 Стартовое снаряжение — ${esc(arch?.name || race?.label || "персонаж")}</div>
-      <ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>${astartes}
-      <div style="font-size:.8em;opacity:.7;margin-top:4px;">✓ — добавлено на лист. ▫ — выдать вручную (компендиумы Оружие/Броня/Снаряжение или ＋ на вкладке «Снаряжение»).</div></div>`,
+    content: testCardHtml({
+      title: `🎒 Стартовое снаряжение — ${esc(arch?.name || race?.label || "персонаж")}`,
+      lines: [
+        `<ul style="margin:4px 0;padding-left:16px;font-size:.9em;">${rows || "<li>—</li>"}</ul>`,
+        astartes,
+        `<div style="font-size:.8em;opacity:.7;margin-top:4px;">✓ — добавлено на лист. ▫ — выдать вручную (компендиумы Оружие/Броня/Снаряжение или ＋ на вкладке «Снаряжение»).</div>`
+      ]
+    }),
     whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
     speaker: { alias: actor.name }
   });

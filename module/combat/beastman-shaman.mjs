@@ -56,7 +56,9 @@ import { expectedPhase } from "../constants/effect-keys.mjs";
 import { WARP_GODS_MAP } from "../constants/veil.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { buildTargetEffectButtons, resolveWeaponPropsList } from "./weapon-properties.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const GOD_KEYS = ["khorne", "nurgle", "slaanesh", "tzeentch"];
 const ICON = "#c9a24b";
@@ -277,7 +279,9 @@ export async function applyWarpTaintedAura(actor, casterToken) {
   const lines = [`Радиус ${radius} м · Покровитель: <b>${esc(godLabel(god))}</b>`];
   const failed = [];
   for (const t of enemies) {
-    const threshold = (Number(t.actor.system?.characteristics?.wp?.total) || 0) - 10;
+    // Общий сбор модификаторов (wdbc-ct65.3) — по ЦЕЛИ: сопротивляется она.
+    const targetMods = collectTestMods(t.actor, { kind: "skill", char: "wp" });
+    const threshold = (Number(t.actor.system?.characteristics?.wp?.total) || 0) - 10 + targetMods.total;
     const roll = await new Roll("1d100").evaluate();
     const { success } = testOutcome(roll.total, threshold);
     if (success) continue;
@@ -286,7 +290,7 @@ export async function applyWarpTaintedAura(actor, casterToken) {
     await t.actor.update({ "system.corruption.value": curCor + 1 });
     if (god === "nurgle") {
       const curRounds = Number(t.actor.system?.conditions?.suffocatingRounds) || 0;
-      await t.actor.update({ "system.conditions.suffocating": true, "system.conditions.suffocatingRounds": Math.max(curRounds, 1) });
+      await t.actor.update(conditionApplyFields("suffocating", Math.max(curRounds, 1), t.actor));
     }
   }
   lines.push(`Провалившие тест W−10 (${failed.length}/${enemies.length}): ${failed.map(a => esc(a.name)).join(", ") || "—"} — +1 Порча каждому${god === "nurgle" ? " + реальное Состояние «Удушье»" : ""}.`);
@@ -374,8 +378,11 @@ export async function applyHexMarkedPrey(actor, targetActor) {
   if (!targetActor) { ui.notifications?.warn("Наведите таргет (T) на видимого противника."); return; }
   const shamanRoll = await new Roll("1d100").evaluate();
   const targetRoll = await new Roll("1d100").evaluate();
-  const shamanThreshold = Number(actor.system?.characteristics?.wp?.total) || 0;
-  const targetThreshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) + 10;
+  // Общий сбор обеим сторонам (wdbc-ct65.3) — см. combat/intimidate.mjs.
+  const shamanMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const targetMods = collectTestMods(targetActor, { kind: "skill", char: "wp" });
+  const shamanThreshold = (Number(actor.system?.characteristics?.wp?.total) || 0) + shamanMods.total;
+  const targetThreshold = (Number(targetActor.system?.characteristics?.wp?.total) || 0) + 10 + targetMods.total;
   const shamanOutcome = testOutcome(shamanRoll.total, shamanThreshold);
   const targetOutcome = testOutcome(targetRoll.total, targetThreshold);
   const rank = o => (o.success ? 1000 : 0) + o.deg;
@@ -383,7 +390,8 @@ export async function applyHexMarkedPrey(actor, targetActor) {
 
   const god = activeGodBranch(actor);
   const lines = [
-    `Шаман W: ${shamanRoll.total} vs ${shamanThreshold} · Цель W+10: ${targetRoll.total} vs ${targetThreshold}`,
+    `Шаман W: ${shamanRoll.total} vs ${shamanThreshold}${shamanMods.parts.length ? ` (${shamanMods.parts.join(", ")})` : ""}`
+    + ` · Цель W+10: ${targetRoll.total} vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""}`,
     success ? `<b>Успех</b> — «${esc(targetActor.name)}» получает Метку Проклятого до конца боя.` : `<b>Провал</b> — метка не наложена.`
   ];
   if (success) {
@@ -520,7 +528,13 @@ export async function applySymbolOfPowerGrant(actor) {
   if (toDelete.length) await actor.deleteEmbeddedDocuments("Item", toDelete);
 
   const toCreate = [];
-  if (hadNaturalWeapons && !actor.items.some(i => i.type === "trait" && itemHasName(i, DEADLY_NATURAL_WEAPONS_NAME))) {
+  // engHalf обязателен: itemHasName сравнивает искомое с ПОЛОВИНАМИ имени
+  // предмета (двуязычное имя режется по «/»), поэтому пара «Eng / Рус»,
+  // переданная целиком, не совпадает НИ С ЧЕМ. Здесь её передавали целиком, и
+  // проверка «такая Черта уже есть» была вечно ложной — дублирования спасал
+  // только внешний гейт SYMBOL_GRANT_FLAG. Рядом findTraitLibraryDoc половину
+  // берёт правильно, здесь забыли.
+  if (hadNaturalWeapons && !actor.items.some(i => i.type === "trait" && itemHasName(i, engHalf(DEADLY_NATURAL_WEAPONS_NAME)))) {
     const src = await findTraitLibraryDoc(DEADLY_NATURAL_WEAPONS_NAME);
     if (src) { const d = src.toObject(); delete d._id; toCreate.push(d); }
   }

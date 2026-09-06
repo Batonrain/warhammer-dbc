@@ -118,3 +118,45 @@ describe("_executeFearRoll: Стальное Сердце — все рейти�
     expect(msg.content).toContain("Порог: <b>50</b>"); // 40 + важный(+10)
   });
 });
+
+describe("_executeFearRoll: общая возможность fear.immune (wdbc-m7we)", () => {
+  // Иммунитет к Страху был выдан данными и не читался никем: Дар «Инфернальная
+  // Воля» обещал его текстом, а система продолжала требовать тест. Читатель
+  // при этом уже существовал — тот же автопасс, которым пользуется пилот
+  // Саркофага Дредноута. Не хватало только общего имени, которое может выдать
+  // любой предмет, а не одна конкретная подсистема.
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("носитель иммунитета проходит тест Страха автоматически", async () => {
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "fear.immune" }] }
+    ]);
+    captured.nextRoll = 99; // без иммунитета это гарантированный провал
+    await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 3, "important", 0, 0);
+    expect(captured.chat.at(-1).content).toContain("выстоял");
+  });
+
+  it("иммунитет работает и на высоком рейтинге Страха", async () => {
+    // Отличие от «Стального Сердца», которое лишь снижает рейтинг на 1: там
+    // Страх 3 остаётся Страхом 2 и тест по-прежнему нужен.
+    clearRuleSources();
+    registerRuleSource("test", () => [
+      { id: "test.rule", when: {}, effects: [{ kind: "grantFlag", target: "fear.immune" }] }
+    ]);
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 4, "important", 0, 0);
+    expect(captured.chat.at(-1).content).toContain("выстоял");
+  });
+
+  it("без иммунитета тот же бросок на том же рейтинге проваливается", async () => {
+    clearRuleSources();
+    captured.nextRoll = 99;
+    await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 3, "important", 0, 0);
+    expect(captured.chat.at(-1).content).not.toContain("выстоял");
+  });
+});

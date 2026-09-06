@@ -59,6 +59,44 @@ describe("poolAffordableHits", () => {
   });
 });
 
+// Dance of Life / Танец Жизни (Дар Слаанеш, wdbc-1rno): базовая цена снятия
+// попадания из пула −1 (2→1) для актора с этим Даром — точечное расширение
+// poolHitCost/poolAffordableHits, capabilityKey gift.slaanesh.danceOfLife
+// читается через hasRuleFlag (module/rules/flags.mjs).
+const SYSTEM = "warhammer-dbc";
+const mutationWithCapability = (key) => ({
+  id: "m1", name: "Dance of Life", type: "mutation",
+  flags: { [SYSTEM]: { mechanics: [{ id: "g", operator: "AND", entries: [
+    { id: "e1", kind: "capability", capabilityKey: key, label: "" }
+  ] }] } }
+});
+const danceOfLifeActor = () => ({ system: {}, items: [mutationWithCapability("gift.slaanesh.danceOfLife")] });
+
+describe("poolHitCost — Dance of Life / Танец Жизни", () => {
+  it("без actor — поведение не меняется, база 2 (обратная совместимость)", () => {
+    expect(poolHitCost(0, 0)).toBe(2);
+  });
+
+  it("actor без Дара — база остаётся 2", () => {
+    expect(poolHitCost(0, 0, { system: {}, items: [] })).toBe(2);
+  });
+
+  it("actor с Даром — база 1 вместо 2", () => {
+    expect(poolHitCost(0, 0, danceOfLifeActor())).toBe(1);
+  });
+
+  it("actor с Даром — надбавка за штраф всё ещё считается сверх новой базы", () => {
+    expect(poolHitCost(0, -20, danceOfLifeActor())).toBe(3); // 1 база + 2 за −20
+  });
+});
+
+describe("poolAffordableHits — Dance of Life прокидывается 4-м аргументом", () => {
+  it("с Даром позволяет снять вдвое больше попаданий на тот же пул", () => {
+    expect(poolAffordableHits({ successes: 5, penalty: 0 }, 0, 5, danceOfLifeActor()))
+      .toEqual({ hits: 5, cost: 5, perHit: 1 });
+  });
+});
+
 describe("addEvasionSurplus / getEvasionPool: банк на Ход атакующего", () => {
   it("вне активного боя — не банкует", async () => {
     const d = defender();

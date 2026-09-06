@@ -14,19 +14,38 @@
 //                                         module/sheets/tabs/pain.mjs).
 //    system.dp.ip + Inf.b (расчётный максимум) — Демон-Принц (тот же путь,
 //    что actor-sheet.mjs::_infamyPath/_infamyMax и apps/hud.mjs::fate).
-//  cost.pool — не адрес хранения, а АВТОРСКАЯ подпись (что говорит книга у
-//  конкретной способности): три ключа делят одно и то же поле актора.
+//  cost.pool — для этих трёх не адрес хранения, а АВТОРСКАЯ подпись (что
+//  говорит книга у конкретной способности): три ключа делят одно поле актора.
+//
+//  ЧЕТВЁРТЫЙ ПУЛ УСТРОЕН ИНАЧЕ (wdbc-m7we). "action" — Очки Действия, и это
+//  настоящее другое хранилище (system.actionPoints.value), а не ещё одна
+//  подпись к тому же полю. Заведён потому, что самая частая форма способности
+//  без читателя — «Полудействие: сделать X» (113 таких подписей в реестре), и
+//  сказать про эту цену ДАННЫМИ было нечем: автор писал её текстом, игрок
+//  тратил действие по памяти. Счёт и гейт переиспользуют существующий API
+//  экономики действий (combat/action-economy.mjs), а не заводят второй счёт —
+//  в том числе его правило «вне Encounter экономика не проверяется вовсе».
 // ════════════════════════════════════════════════════════════════════════
 
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
+import { canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
 
 /** label — пункт выпадающего списка в Конструкторе; genitive — для «N Очков <genitive>» на листе. */
 export const CAPABILITY_COST_POOLS = {
   infamy: { label: "Очки Бесчестия",  genitive: "Бесчестия" },
   fate:   { label: "Очки Судьбы",     genitive: "Судьбы" },
-  pain:   { label: "Очки Боли",       genitive: "Боли" }
+  pain:   { label: "Очки Боли",       genitive: "Боли" },
+  // Единственный пул со своим хранилищем — см. шапку файла. Подпись «ОД», а не
+  // «Очки Действия»: за столом их называют так, и в ячейку панели длинное имя
+  // не влезает.
+  action: { label: "Очки Действия (ОД)", genitive: "Действия", short: "ОД",
+            storage: "system.actionPoints.value" }
 };
+
+/** Цена берётся из экономики действий, а не из общего поля Судьбы/Бесчестия. */
+const isActionPool = cost => cost?.pool === "action";
 
 /** «1 Очко Бесчестия» / «2 Очка Судьбы» / «5 Очков Боли» — родительный падеж числительного. */
 function amountWord(n) {
@@ -42,6 +61,7 @@ function amountWord(n) {
 export function capabilityCostLabel(cost) {
   if (!cost?.pool) return "";
   const amount = Math.max(1, Number(cost.amount) || 1);
+  if (isActionPool(cost)) return `${amount} ${CAPABILITY_COST_POOLS.action.short}`;
   const genitive = CAPABILITY_COST_POOLS[cost.pool]?.genitive || cost.pool;
   return `${amount} ${amountWord(amount)} ${genitive}`;
 }
@@ -67,6 +87,13 @@ export function capabilityPoolMax(actor) {
 export function capabilityCostGate(actor, cost) {
   if (!cost?.pool) return { disabled: false, title: "" };
   const amount = Math.max(1, Number(cost.amount) || 1);
+  if (isActionPool(cost)) {
+    // Спрашиваем экономику действий, а не своё представление о ней: там же
+    // живёт правило «вне Encounter не проверяем» и учёт Калечащего.
+    const ok = canSpendActionPoints(actor, amount);
+    const have = Number(actor?.system?.actionPoints?.value) || 0;
+    return { disabled: !ok, title: ok ? "" : `Не хватает: нужно ${capabilityCostLabel(cost)}, есть ${have}` };
+  }
   const have = capabilityPoolValue(actor);
   const ok = have >= amount;
   return {
@@ -87,15 +114,23 @@ export async function spendCapabilityCost(actor, cost, label) {
     return false;
   }
   const amount = Math.max(1, Number(cost.amount) || 1);
+  if (isActionPool(cost)) {
+    // Списывает сама экономика действий — она же ведёт учёт физических
+    // действий и Калечащего, дублировать её вычитанием поля нельзя.
+    const before = Number(actor?.system?.actionPoints?.value) || 0;
+    if (!(await spendActionPoints(actor, amount))) return false;
+    await postTestCard(actor, {
+      icon: rollIcon("bolt", "#c98bff"), title: `${esc(label || "Возможность")} — ${esc(actor.name)}`,
+      lines: [`<div class="roll-threshold">Потрачено: <b>${capabilityCostLabel(cost)}</b>. Осталось: <b>${Math.max(0, before - amount)}</b>.</div>`]
+    }, { sound: false });
+    return true;
+  }
   const path = actor.type === "demonPrince" ? "system.dp.ip" : "system.fate.value";
   const have = capabilityPoolValue(actor);
   await actor.update({ [path]: have - amount });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("bolt", "#c98bff")}${esc(label || "Возможность")} — ${esc(actor.name)}</div>
-      <div class="roll-threshold">Потрачено: <b>${capabilityCostLabel(cost)}</b>. Осталось: <b>${have - amount}</b> / ${capabilityPoolMax(actor)}.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("bolt", "#c98bff"), title: `${esc(label || "Возможность")} — ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Потрачено: <b>${capabilityCostLabel(cost)}</b>. Осталось: <b>${have - amount}</b> / ${capabilityPoolMax(actor)}.</div>`]
+  }, { sound: false });
   return true;
 }

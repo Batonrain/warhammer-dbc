@@ -14,6 +14,7 @@
 // ablativeMax (см. cancerous-healing.mjs про клэмп #291 — та же причина).
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "Plague Shepherd";
@@ -21,7 +22,7 @@ export const PLAGUE_SHEPHERD_FLAG = "plagueShepherdAblative";
 
 /** Это предмет-Мутация «Чумной Пастырь»? */
 export function isPlagueShepherdItem(item) {
-  return item?.type === "mutation" && itemHasName(item, NAME);
+  return itemIs(item, "mutation", "mutation.plagueShepherd", NAME);
 }
 
 /** Владеет ли актор Мутацией «Чумной Пастырь». */

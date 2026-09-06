@@ -16,39 +16,30 @@
 // rerollChar независимо от того, задан ли charKey вообще.
 
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
 import path from "node:path";
 
-function walk(dir) {
-  let out = [];
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) out = out.concat(walk(p));
-    else if (e.name.endsWith(".json") && e.name !== "_Folder.json") out.push(p);
-  }
-  return out;
-}
-
-const ROOT = path.resolve(import.meta.dirname, "../../packs-src");
+// Обход и чтение — общим кэшем (wdbc-lxyl): свой читал 6774 файла с диска
+// заново, из-за чего проверка не укладывалась в таймаут при полном прогоне.
+import { allPacksFiles, packFileText, PACKS_SRC, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 
 describe("предметы packs-src", () => {
   it("ни один testMod с modScope:char не резолвится в другую характеристику через charKey/rerollChar рассинхрон", () => {
     const offenders = [];
-    for (const f of walk(ROOT)) {
-      const doc = JSON.parse(fs.readFileSync(f, "utf8"));
+    for (const f of allPacksFiles()) {
+      const doc = JSON.parse(packFileText(f));
       const groups = doc.flags?.["warhammer-dbc"]?.mechanics;
       if (!Array.isArray(groups)) continue;
       for (const g of groups) {
         for (const e of (g.entries ?? [])) {
           if (e?.kind !== "testMod" || e.modScope !== "char") continue;
           if (!e.rerollChar) {
-            offenders.push(`${path.relative(ROOT, f)} (${doc.name}): rerollChar пуст (charKey=${e.charKey ?? "—"})`);
+            offenders.push(`${path.relative(PACKS_SRC, f)} (${doc.name}): rerollChar пуст (charKey=${e.charKey ?? "—"})`);
           } else if (e.charKey && e.charKey !== e.rerollChar) {
-            offenders.push(`${path.relative(ROOT, f)} (${doc.name}): charKey=${e.charKey} rerollChar=${e.rerollChar}`);
+            offenders.push(`${path.relative(PACKS_SRC, f)} (${doc.name}): charKey=${e.charKey} rerollChar=${e.rerollChar}`);
           }
         }
       }
     }
     expect(offenders).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 });

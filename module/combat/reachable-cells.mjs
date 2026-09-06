@@ -34,8 +34,24 @@ const SAFETY_TIMEOUT_MS = 20_000;
 // круг меньше настоящего Бега.
 const MAX_CELLS = 4000;
 const HIGHLIGHT_NAME = "wh-reach-cells";
-const FILL_COLOR = 0x6fe6ff;
-const FILL_ALPHA = 0.35;
+// Цвет и заметность подсветки (wdbc-87md). Раньше здесь был бледно-голубой
+// 0x6fe6ff при alpha 0.35 и БЕЗ обводки клеток — живая проверка 05.09.2026
+// показала, что расчёт всё это время был верным (Полудвижение 3м/48 клеток,
+// Полное 6м/168, Натиск 9м/360, Бег 18м/1368), а на экране подсветки
+// практически не видно: побайтовое сравнение кадра «до/после» дало сдвиг
+// синего канала всего на 10-30 единиц — заливка тонула в текстуре пола.
+// Контрольная отрисовка тем же API с alpha=1 была прекрасно видна, то есть
+// сломан был не рендер, а сами эти два числа.
+//
+// Лечится тремя вещами разом: зелёный вместо голубого (--cg листа, тот же
+// зелёный, что просил пользователь и что у системы везде означает «можно»),
+// плотность заливки выше и — главное — ОБВОДКА каждой клетки. Foundry рисует
+// её с alpha × 1.5 (canvas/layers/grid.mjs::highlightPosition), то есть
+// линия выходит заметно плотнее заливки и держится на любом фоне: получается
+// та самая сетка достижимых клеток, как в тактических CRPG.
+const FILL_COLOR = 0x4dffa6;
+const FILL_ALPHA = 0.5;
+const BORDER_COLOR = 0x4dffa6;
 
 let _active = null;   // { tokenId, offHooks: Function[], timeoutId }
 
@@ -137,7 +153,8 @@ export function showReachableCells(token, meters) {
   canvas.interface.grid.addHighlightLayer(HIGHLIGHT_NAME);
   for (const offset of cells) {
     const p = canvas.grid.getTopLeftPoint(offset);
-    canvas.interface.grid.highlightPosition(HIGHLIGHT_NAME, { x: p.x, y: p.y, color: FILL_COLOR, alpha: FILL_ALPHA });
+    canvas.interface.grid.highlightPosition(HIGHLIGHT_NAME,
+      { x: p.x, y: p.y, color: FILL_COLOR, border: BORDER_COLOR, alpha: FILL_ALPHA });
   }
 
   const tokenId = token.document.id;

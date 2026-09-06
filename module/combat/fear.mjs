@@ -12,13 +12,18 @@ import { ruleFlagLabels, hasRuleFlag }             from "../rules/flags.mjs";
 import { isRuleUsageUsed }                         from "../apps/game-session.mjs";
 import { resolveKindOutcome }                      from "../rules/kind-outcome.mjs";
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
-import { fatiguePenalty }                          from "../sheets/tabs/conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { autoTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
 
 /** Возможность «Абсолютная вера в прошлое» (Мир-кладбище). */
 export const FAITH_FLAG = "fear.faithInThePast";
+
+/** Полный иммунитет к Страху — автоуспех любого теста Страха (wdbc-m7we). */
+export const FEAR_IMMUNE_FLAG = "fear.immune";
 
 /**
  * Тест Страха (1d100 + 10×Провалы−1 − Infamy → таблица Шока при провале).
@@ -47,13 +52,27 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
   // самого первого броска; бесплатный переброс Демона (opts.free) идёт уже
   // Базовым тестом без tk, это отдельная книжная механика, не общий Кубик.
   const tk = opts.tk || {};
-  // Усталость (стр. 26): диалог общего теста Навыка учитывает её сама, тест
-  // Страха забыл — тот же класс пробела, что у психотеста (wdbc-lfho).
-  const fatigue = fatiguePenalty(actor, "wp");
-  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + fatigue;
+  // Штрафы состояния тела (Усталость и прочее) — из конвейера. Тест Страха
+  // это тест Морали по книге, отсюда morale:true (та же область, что читает
+  // resolveTest ниже при разборе исхода).
+  //
+  // Именно autoMods, а НЕ collectTestMods: галочки правил у Страха уже свои —
+  // их показывает диалог (sheets/tabs/disorders.mjs::openFearDialog) и
+  // складывает в `mod`. Общий сбор добавил бы отмеченную галочку второй раз.
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: "wp", morale: true });
+  const baseEff  = wp + ratingMod + mod + (tk.difficulty || 0) + ruleMods.total;
   // Саркофаг Дредноута (стр. 57, wdbc-drn): пилот, отключённый от чувств,
   // автоматически проходит тесты Страха независимо от Infamy.
-  const autoPass = steelHeartIgnored || infamy >= r.infamy || hasRuleFlag(actor, "sarcophagus.autoPassFear");
+  // fear.immune — ОБЩЕЕ имя иммунитета к Страху, которое может выдать любой
+  // предмет (wdbc-m7we). До него иммунитет умела только одна подсистема
+  // (Саркофаг Дредноута), и Дар «Инфернальная Воля» обещал его текстом, а
+  // система всё равно требовала тест. Читатель был, не хватало имени.
+  //
+  // Отличие от «Стального Сердца» выше: то лишь снижает воспринимаемый
+  // рейтинг на 1, и Страх 3 остаётся Страхом 2 — тест по-прежнему нужен.
+  const autoPass = steelHeartIgnored || infamy >= r.infamy
+                   || hasRuleFlag(actor, "sarcophagus.autoPassFear")
+                   || hasRuleFlag(actor, FEAR_IMMUNE_FLAG);
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
@@ -82,7 +101,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
         ${critPillsHtml(shockPills, actor.uuid)}</div>`;
       // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
       // выхода из Шока в начале Хода (rollShockRecovery ниже).
-      await actor.update({ "system.conditions.shocked": true });
+      await actor.update(conditionApplyFields("shocked", null, actor));
     }
   }
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll: !!reroll });
@@ -105,7 +124,7 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
     properties, rerollCtx: canReroll ? { ratingKey, type, infamy, mod } : null, faithCtx,
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0, fatigue
+    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts
   });
 }
 
@@ -132,7 +151,11 @@ export async function createTraumaItem(actor, row) {
 /** Тест Ментальной Травмы (W+0) → при провале таблица Травмы. Без Демона. */
 export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   const wp   = actor.system.characteristics.wp?.total ?? 0;
-  const baseEff = wp + mod + (tk.difficulty || 0);
+  // Тот же autoMods, что у теста Страха выше, и по той же причине: галочки
+  // приходят из диалога в `mod`. Ментальная Травма — не тест Морали по книге
+  // (в отличие от Страха и выхода из Шока), поэтому morale здесь не ставится.
+  const ruleMods = autoTestMods(actor, { kind: "skill", char: "wp" });
+  const baseEff = wp + mod + (tk.difficulty || 0) + ruleMods.total;
 
   const reroll = tk.reroll || null;
   const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
@@ -161,7 +184,7 @@ export async function _executeTraumaRoll(actor, mod = 0, tk = {}) {
   await _postFearMsg(actor, "🧠 Ментальная Травма", sub, wp, mod, rv, eff, success, dof, traumaHtml, allRolls, {
     rerollNote, critLine: outcome.critLine, kindLabel: outcome.kindLabel,
     combinedLine: outcome.combinedLine, extendedLine: outcome.extendedLine, opposedLine: outcome.opposedLine,
-    difficulty: tk.difficulty || 0
+    difficulty: tk.difficulty || 0, ruleParts: ruleMods.parts
   });
 }
 
@@ -193,26 +216,18 @@ export async function postShockRecoveryPrompt(actor) {
 /** Тест выхода из Шока (стр. 53): W+0, тест Морали. Успех снимает conditions.shocked. */
 export async function rollShockRecovery(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
-  const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
-  if (success) await actor.update({ "system.conditions.shocked": false });
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  if (success) await actor.update(conditionRemoveFields("shocked"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("target","#8fd0ff")}Выход из Шока — ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wp}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${eff}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — Шок снят</span>`
-          : `<span class="roll-failure">Провал — всё ещё в Шоке</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("target","#8fd0ff"), title: `Выход из Шока — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "WP", base: wp, parts, threshold: eff }),
+    rv, rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Успех — Шок снят</span>`
+      : `<span class="roll-failure">Провал — всё ещё в Шоке</span>`
+  }, { rolls: [roll] });
   return { success, rv, eff };
 }
 
@@ -223,8 +238,7 @@ export async function rollShockRecovery(actor) {
  */
 export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success, dof, extraHtml, allRolls,
   { properties = {}, rerollCtx = null, faithCtx = null, rerollNote = "", critLine = "",
-    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, fatigue = 0 } = {}) {
-  const rollMode = game.settings.get("core", "rollMode");
+    kindLabel = null, combinedLine = "", extendedLine = "", opposedLine = "", difficulty = 0, ruleParts = [] } = {}) {
   const dice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   // Свойства источника Страха (напр. Демон) — для будущих эффектов, которые
   // будут цепляться за них (Хатред и т.п.); здесь же дают бесплатный переброс.
@@ -254,39 +268,36 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
       </div>
     </div>` : "";
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${sub} | W: <b>${wp}</b>${mod !== 0 ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}${fatigue ? ` − 10 (😓 Усталость)` : ""} → Порог: <b>${eff}</b></div>
-        ${combinedLine}
-        ${propsHtml}
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        ${critLine}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — выстоял</span>`
-          : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`}</div>
-        ${extraHtml}
-        ${extendedLine}
-        ${opposedLine}
-        ${rerollHtml}
-        ${faithHtml}
-        <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: allRolls, sound: CONFIG.sounds.dice
-  }, rollMode);
-
-  if (rerollCtx) {
-    messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
-      "warhammer-dbc": { fearTest: { actorId: actor.id, properties, ...rerollCtx } }
-    });
-  }
-  if (faithCtx) {
-    messageData.flags = foundry.utils.mergeObject(messageData.flags || {}, {
-      "warhammer-dbc": { faithInThePast: faithCtx }
-    });
-  }
-  await ChatMessage.create(messageData);
+  // Строка Порога и вся обвязка карточки — общим сборщиком (wdbc-kuun).
+  // Раньше разметка жила здесь своей копией: «Сложность» и модификатор
+  // дописывались к числу без разделителей, тогда как боевые карточки
+  // перечисляли слагаемые в скобках через запятую. Теперь вид один.
+  const parts = [
+    mod !== 0 ? `модификатор ${mod >= 0 ? "+" : ""}${mod}` : "",
+    difficulty !== 0 ? `📊 Сложность ${difficulty >= 0 ? "+" : ""}${difficulty}` : "",
+    ...ruleParts
+  ];
+  await postTestCard(actor, {
+    title: `${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}`,
+    threshold: thresholdLine({ prefix: sub, label: "W", base: wp, parts, threshold: eff }),
+    lines: [combinedLine, propsHtml],
+    rv, rerollNote, critLine,
+    outcome: success
+      ? `<span class="roll-success">Успех — выстоял</span>`
+      : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`,
+    sections: [
+      extraHtml, extendedLine, opposedLine, rerollHtml, faithHtml,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, {
+    rolls: allRolls,
+    // Кнопки карточки читают свой контекст из флагов сообщения: бесплатный
+    // переброс «Демон» (hooks.mjs) и «Вера в прошлое» (Особенность Мира).
+    flags: (rerollCtx || faithCtx) ? {
+      "warhammer-dbc": {
+        ...(rerollCtx ? { fearTest: { actorId: actor.id, properties, ...rerollCtx } } : {}),
+        ...(faithCtx ? { faithInThePast: faithCtx } : {})
+      }
+    } : null
+  });
 }

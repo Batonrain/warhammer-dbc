@@ -39,9 +39,11 @@ const TALENT_TYPE = (() => {
 })();
 import { getModEffects }                             from "../combat/weapon-mods.mjs";
 import { qualityEffects }                            from "../constants/quality.mjs";
-import { _buildAmmoModString }                       from "../helpers/utils.mjs";
+import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs";
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
-import { condIconHTML, CONDITION_ICONS }            from "../constants/condition-icons.mjs";
+import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
+import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/condition-mirrors.mjs";
+import { aptBindingContext } from "../rules/aptitude-binding.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -54,77 +56,16 @@ import { mergeAbilityItems, mergeAbilityEffects,
 import { toggleParentId, toggleRows }                from "../rules/toggle-abilities.mjs";
 import { ruleFlags, ruleFlagLabels, ruleFlagCost, scriptAbilities } from "../rules/flags.mjs";
 import { CAPABILITIES }                              from "../constants/capabilities.mjs";
+import { capabilityAutoHint }                        from "../constants/capability-forms.mjs";
 import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-cost.mjs";
 import { scriptAbilityRow }                          from "../apps/mechanics.mjs";
 import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mjs";
 import { measureTokens }                             from "../combat/tactical-map.mjs";
 
-// ── Определение всех состояний ────────────────────────────────────────────────
-// desc (wdbc-zbiz): текст по корбуку («Раны и Урон» стр. 30-31, если не
-// указано иное) — уходит в title тега на вкладке Эффекты, короткая версия
-// правила, не вся страница.
-export const CONDITIONS_DEF = {
-  bleeding:      { label: "Кровотечение",    icon: "🩸", hasLevel: true,  levelField: "bleedingLevel",      css: "cond-bleeding",
-    desc: "В конце каждого Хода — бросок d10: на 1-5 персонаж получает 1 уровень Обескровливания, на 0 и меньше — умирает. Снимается полудействием, тестом Medicae−10 (−30, если пациент активно действовал в прошлый Ход)." },
-  haemorrhaging: { label: "Обескровливание", icon: "💔", hasLevel: true,  levelField: "haemorrhagingLevel", css: "cond-haemorrhaging",
-    desc: "За каждый уровень: −1 к тестам на смерть от Кровотечения и −5 ко всем тестам T. Выше 5 (10 у десантников) — раз в минуту тест W+0 или потеря сознания. Снимается по 1 уровню в час." },
-  stunned:       { label: "Оглушение",       icon: "💫", hasLevel: true,  levelField: "stunnedRounds",      css: "cond-stunned",
-    desc: "Не может совершать Действия и Реакции, все атаки по нему получают +20. Не Беспомощен — видит, слышит, говорит с трудом." },
-  fatigued:      { label: "Усталость",       icon: "😓", hasLevel: true,  levelField: "fatiguedLevel",      css: "cond-fatigued",
-    desc: "−10 на все тесты, кроме T, Inf и Cor, с первого же уровня. При T.b+W.b Усталости персонаж теряет сознание." },
-  poisoned:      { label: "Отравление",      icon: "☠️", hasLevel: false, levelField: null,                 css: "cond-poisoned",
-    desc: "Снижает Предел Критического Провала на 10 для всех тестов, кроме T, Inf и Cor. Не касается Пределов Клина/Перегрева стрелкового оружия." },
-  prone:         { label: "Повален",         icon: "🧎", hasLevel: false, levelField: null,                 css: "cond-prone",
-    desc: "−20 на WS и Dodge(A), +20 на Stealth(A), SPD вдвое, нельзя Бег и Натиск. Стрельба по нему −20, рукопашная — +20. Встать — Полудействие." },
-  helpless:      { label: "Беспомощный",     icon: "🪢", hasLevel: false, levelField: null,                 css: "cond-helpless",
-    desc: "Не может совершать Физические действия. Рукопашная и выстрел в упор/в рукопашной по нему автоматически успешны и наносят удвоенный урон. Прочая стрельба получает +30." },
-  unconscious:   { label: "Без сознания",    icon: "😵", hasLevel: false, levelField: null,                 css: "cond-unconscious",
-    desc: "Не может совершать Действия и Реакции. Считается Беспомощным, не видит и не слышит окружающих." },
-  blinded:       { label: "Ослеплён",        icon: "🙈", hasLevel: true,  levelField: "blindedRounds",      css: "cond-blinded",
-    desc: "Не видит: автопровал BS, −30 на WS и тесты, требующие зрения. Весь незнакомый ландшафт — Трудный, −20 против настоящего Трудного Ландшафта. Все атаки по нему — Незримые." },
-  deafened:      { label: "Оглох",           icon: "🔇", hasLevel: false, levelField: null,                 css: "cond-deafened",
-    desc: "Не слышит, автопровал тестов на слух. Не получает эффектов Командования (кроме жестов/телепатии/Ноосферы). −30 на устные социальные тесты и Командование." },
-  burning:       { label: "Горение",         icon: "🔥", hasLevel: true,  levelField: "burningLevel",       css: "cond-burning",
-    desc: "В конце Хода 1d10 E(Fl) урона мимо брони и 1 Усталости при непоглощённом уроне (иначе тест T+0). В начале Хода — тест W+0 или пропуск Хода в панике. Тушится полудействием (себе A−20, другому A+0)." },
-  radiation:     { label: "Радиация",        icon: "☢️", hasLevel: true,  levelField: "radiationLevel",     css: "cond-radiation",
-    desc: "Периодический 1 урон в T от облучения. При накоплении 10/20/30... — тест T+0, провал даёт лучевую болезнь (доп. урон в T каждые 8 часов, лечится Medicae−30)." },
-  hallucinogenic:{ label: "Галлюцинации",    icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-hallucinogenic",
-    desc: "Провал теста T (обычно −10×X) — галлюцинации на 1 Раунд за Провал, случайный эффект по таблице (может валить с ног, вгонять в Ступор и т.п.)." },
-  pinned:        { label: "Подавление",      icon: "📌", hasLevel: false, levelField: null,                 css: "cond-pinned",
-    desc: "Тест W+0 (Мораль) под шквальным огнём. Вне укрытия — тратит все действия, чтобы добраться до него, иначе Залегает. В укрытии — только 1 ОД в Ход и −20 на BS. Снимается тестом W+0 в конце Хода." },
-  crippling:     { label: "Калечение",       icon: "🦯", hasLevel: false, levelField: null,                 css: "cond-crippling",
-    desc: "Оставленные в ране осколки/шипы (свойство оружия Crippling): X непоглощаемого урона того же типа в ту же часть тела каждый раз, когда цель тратит оба ОД на физические действия в Ход. Снимается медицинской помощью или полным исцелением." },
-  addicted:      { label: "Зависимость",     icon: "💊", hasLevel: false, levelField: null,                 css: "cond-addicted",
-    desc: "Провален тест Зависимости от наркотика/яда. Не удовлетворена в срок — штраф зависимости весь период. Тест на избавление — со штрафом −50 (+10 за каждый выдержанный без него период)." },
-  // ── Стр. 30-31 (Раны и Урон, «Статусы») ──────────────────────────────────
-  dazed:         { label: "Ступор",          icon: "🌀", hasLevel: false, levelField: null,                 css: "cond-dazed",
-    desc: "Не может совершать Действия и Реакции, все атаки по нему +20. Не Беспомощен, но не понимает происходящее вокруг. Считается Оглушённой целью для прочих эффектов." },
-  suffocating:   { label: "Удушье",          icon: "🫁", hasLevel: true,  levelField: "suffocatingRounds",  css: "cond-suffocating",
-    desc: "Задержка дыхания: T.b минут покоя или T.b×2 Раундов в активных действиях, дальше тест T+0 каждую минуту/Ход или +1 Усталости. Без вздоха — потеря сознания, смерть через T.b Раундов." },
-  gangrene:      { label: "Гангрена",        icon: "🟢", hasLevel: false, levelField: null,                 css: "cond-gangrene",
-    desc: "+1 неснимаемой Усталости, −20 на ментальные действия. Не восстанавливает урон T отдыхом/медитацией; каждые T.b×2 часов — 1d10 урона в T. Лечится операцией (Medicae−30), конечность теряется." },
-  lostHands:     { label: "Потеря кистей",   icon: "✋", hasLevel: true,  levelField: "lostHandsCount",      css: "cond-lost-hands",
-    desc: "−20 на все тесты, требующие двух рук. Этой рукой нельзя пользоваться оружием/предметами, кроме крепящихся к запястью." },
-  lostArms:      { label: "Потеря рук",      icon: "💪", hasLevel: true,  levelField: "lostArmsCount",       css: "cond-lost-arms",
-    desc: "Как потеря кисти, но без запястья — нельзя закрепить даже щит, когти или другой предмет." },
-  lostFeet:      { label: "Потеря стоп",     icon: "🦶", hasLevel: true,  levelField: "lostFeetCount",       css: "cond-lost-feet",
-    desc: "SPD уменьшена вдвое (окр. вниз), −20 на тесты Движения. Без обеих стоп нужен бросок Acrobatics−10 просто чтобы ходить." },
-  lostLegs:      { label: "Потеря ног",      icon: "🦵", hasLevel: true,  levelField: "lostLegsCount",       css: "cond-lost-legs",
-    desc: "Как потеря стопы, но дополнительно нельзя Уклоняться. Без обеих ног персонаж не может ходить." },
-  lostEyes:      { label: "Потеря глаз",     icon: "👁️", hasLevel: true, levelField: "lostEyesCount",       css: "cond-lost-eyes",
-    desc: "−10 на BS и тесты определения расстояний. Угол Караула сужен до 30°. Без обоих глаз персонаж Ослеплён." },
-  // ── Стр. 12 («Борьба») — связаны Захватом ────────────────────────────────
-  grappling:     { label: "Борьба",          icon: "🤼", hasLevel: false, levelField: null,                 css: "cond-grappling",
-    desc: "После успешного Захвата: только действия Борьбы или не-Физические, прочие атаки по обоим +20. Цель не может Уклоняться; атакующий — если не тяжелее/крупнее цели." },
-  // Свойство оружия Вызов/Challenge (X), wdbc-2xku: блокирует «Выход из Боя».
-  challenged:    { label: "Вызван",          icon: "⚔️", hasLevel: false, levelField: null,                 css: "cond-challenged",
-    desc: "Свойство оружия Вызов (Challenge X): нельзя добровольно выйти из рукопашной, пока наложено — кроме уклонения от атаки по площади (решает ГМ)." }
-};
-// Прикрепляем SVG-глиф и цвет к каждому состоянию (замена эмодзи).
-for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
-  def.svg   = condIconHTML(key);
-  def.color = CONDITION_ICONS[key]?.color || "#8fe8b0";
-}
+// Определение всех Состояний листа — реестр constants/conditions.mjs
+// (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
+// под привычным именем (много мест листа читают его как CONDITIONS_DEF).
+export { CONDITIONS_DEF };
 
 // ── Навык ─────────────────────────────────────────────────────────────────────
 
@@ -156,12 +97,15 @@ for (const [key, def] of Object.entries(CONDITIONS_DEF)) {
  * подсказывает химика, а не пересказ всей группы «Ремесло», и никогда не
  * остаётся пустым, если под конкретную специализацию текста ещё не набрано.
  */
-function skillTip(key, def, rollLabel, specialty) {
+function skillTip(key, def, rollLabel, specialty, mod = 0) {
   if (!def) return "";
   const ch   = CHARACTERISTICS[def.char];
   const base = ch ? `${ch.label} (${ch.abbr})` : def.char;
   const apt2 = APTITUDES[def.apt2] || def.apt2;
-  const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}`;
+  // Постоянный модификатор (wdbc-q4wb) виден в Итоге, но по одному числу не
+  // понять, откуда оно — поэтому названо в тултипе, и только когда не ноль.
+  const modStr = mod ? ` · Модификатор: ${mod > 0 ? "+" : ""}${mod}` : "";
+  const head = `Бросок: ${rollLabel} · Основа: ${base} · Склонность: ${apt2}${modStr}`;
   const desc = (specialty && SKILL_SPECIALTY_DESCRIPTIONS[key]?.[specialty])
     || SKILL_DESCRIPTIONS[key];
   return desc ? `${head}<br><br>${desc}` : head;
@@ -170,8 +114,9 @@ function skillTip(key, def, rollLabel, specialty) {
 export function buildSkillDisplay(key, system) {
   const def = SKILLS_DEF[key];
   const sk  = system.skills?.[key] || {};
+  const mod = Number(sk.mod) || 0;
   return { key, label: def.label, total: sk.total ?? -20, rank: sk.rank ?? "untrained",
-    tip: skillTip(key, def, def.label) };
+    mod, tip: skillTip(key, def, def.label, undefined, mod) };
 }
 
 // ── Данные щитов ──────────────────────────────────────────────────────────────
@@ -353,7 +298,7 @@ function _buildDrugData(item) {
 
 // ── Активные состояния для отображения ───────────────────────────────────────
 
-function _buildActiveConditions(system) {
+function _buildActiveConditions(system, actor = null) {
   const conds  = system.conditions || {};
   const result = [];
 
@@ -368,7 +313,21 @@ function _buildActiveConditions(system) {
       css:      def.css,
       hasLevel: def.hasLevel,
       level:    def.hasLevel && def.levelField ? (conds[def.levelField] ?? 0) : null,
-      desc:     def.desc || ""
+      // Подсказка тега = общее описание Состояния + то, ЧЕМ оно поднято прямо
+      // сейчас (wdbc-5uae.2): «Аватар Резни — Кхарн», «Проклятая Метка
+      // (Кхорн)», «вид: форсированный». Нагрузка при этом остаётся у своего
+      // правила — сюда приходит только готовая строка (rules/condition-
+      // mirrors.mjs::mirrorHint), второго места правды не заводится.
+      desc:     [def.desc || "", actor ? mirrorHint(actor, key) : ""].filter(Boolean).join(" "),
+      // Показывать ли крестик «снять» (wdbc-5uae). Раньше единственное
+      // исключение — «Усталость» — было зашито прямо в шаблон условием по
+      // ключу; теперь шаблон спрашивает данные, и исключений стало три класса:
+      //  — «Усталость»: зеркало счётчика с вкладки ТЕЛО, крестик там бессилен;
+      //  — метка, живущая на ПРЕДМЕТЕ («Щит поднят»): снимается своей кнопкой,
+      //    патчем актора её не достать;
+      //  — всё остальное снимается как снималось.
+      // Крестик, который ничего не делает, хуже отсутствующего.
+      removable: key !== "fatigued" && (!isMirroredCondition(key) || isMirrorClearable(key))
     });
   }
 
@@ -452,7 +411,8 @@ export function buildGetData(actor) {
         entryIndex: idx,
         specialty:  entry.specialty,
         total:      entry.total ?? -20,
-        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty)
+        mod:        Number(entry.mod) || 0,
+        tip:        skillTip(groupKey, def, `${def.label}: ${entry.specialty}`, entry.specialty, Number(entry.mod) || 0)
       }))
     });
   }
@@ -469,7 +429,12 @@ export function buildGetData(actor) {
       isGranted: (sk.grantedRank ?? "untrained") !== "untrained",
       total: sk.total ?? -20,
       cost:  sk.cost  ?? 0,
-      aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor)
+      aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor),
+      // Привязка Склонностей (wdbc-1pvq): что показать в подсказке и надо ли
+      // пометить строку как переопределённую. Кликом по значку Д/Н/В её
+      // меняют — отдельной колонки под это нет намеренно, вкладка и так
+      // плотная.
+      ...aptBindingContext(actor, "skill", key, [def.char, def.apt2], a => APTITUDES[a] || a)
     };
   });
 
@@ -766,7 +731,7 @@ export function buildGetData(actor) {
   });
 
   // ── Состояния ─────────────────────────────────────────────────────────────
-  context.activeConditions = _buildActiveConditions(system);
+  context.activeConditions = _buildActiveConditions(system, actor);
   context.conditionsDef    = CONDITIONS_DEF;
 
   // ── Прочее снаряжение ─────────────────────────────────────────────────────
@@ -1001,13 +966,25 @@ export function buildGetData(actor) {
         // строке появляется кнопка «Потратить» (тот же гейт ДО клика, что
         // wdbc-qjnk у ae-spend-btn — apSpendGate/capabilityCostGate).
         const cost = ruleFlagCost(actor, key, { kind: "skill" });
+        // Подпись в реестре — текст книги целиком (медиана 120 символов, есть
+        // и на 2266): в ячейке таблицы она ломает ровно то, ради чего панель
+        // заведена — быстрый взгляд «что у меня сейчас есть». В ячейку идёт
+        // шапка, полный текст — в подсказку (helpers/utils.mjs::shortLabel).
+        const label = CAPABILITIES[key]?.label || key;
         return {
           key,
-          label: CAPABILITIES[key]?.label || key,
+          label: shortLabel(label),
+          labelFull: label,
           sources: ruleFlagLabels(actor, key, { kind: "skill" }).join(", "),
           // Есть ли код, который эту возможность читает. Ложь честнее молчания:
           // ГМ должен знать, что вот это система сама не посчитает.
+          //
+          // Одного слова «вручную» за столом мало: у иммунитета и у «раз за
+          // бой потратить Очко» это две разные заботы, и первая ГМа не
+          // касается, пока по персонажу не бьют. Поэтому рядом идёт форма —
+          // что именно делать руками (constants/capability-forms.mjs).
           auto: !!CAPABILITIES[key]?.reader,
+          autoHint: capabilityAutoHint(!!CAPABILITIES[key]?.reader, label),
           cost,
           costLabel: cost ? capabilityCostLabel(cost) : "",
           spendGate: cost ? capabilityCostGate(actor, cost) : null
@@ -1027,9 +1004,11 @@ export function buildGetData(actor) {
         if (!row) return null; // предмет сняли/запись удалили между рендерами
         return {
           key: `script-${sa.itemId}-${sa.entryId}`,
-          label: row.label,
+          label: shortLabel(row.label),
+          labelFull: row.label,
           sources: item?.name || sa.ruleLabel || "",
           auto: true,
+          autoHint: capabilityAutoHint(true, row.label),
           isScript: true,
           itemId: sa.itemId, groupId: sa.groupId, entryId: sa.entryId,
           scriptReady: row.ready,
@@ -1129,6 +1108,7 @@ export function buildGetData(actor) {
       rangeInBounds: _verdict ? _verdict.inBounds : null,
       sustainable:  s.sustainable || false,
       isSustained:  s.isSustained || false,
+      sustainedDegree: s.sustainedDegree ?? null,
       sustainCost:  s.sustainCost ?? 1,
       sustainActionLabel: PSY_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
       damage:       s.damage || "",
@@ -1152,6 +1132,7 @@ export function buildGetData(actor) {
       powerKind:   s.powerKind || "",
       sustainable: s.sustainable || false,
       isSustained: s.isSustained || false,
+      sustainedDegree: s.sustainedDegree ?? null,
       effect:      s.effect || s.description || ""
     };
   });

@@ -91,6 +91,12 @@ export class WarhammerMinionSheet extends WarhammerCharacterSheet {
     const tier  = s.minionTier || "";
     const master = await fromUuid(s.masterUuid || "").catch(() => null);
 
+    // Счётчик Усталости у Миньона стоит в шапке (minion-header.hbs) — и общая
+    // вкладка ТЕЛО свою копию тогда не рисует. Два input с одинаковым name в
+    // одной форме Foundry собирает в массив, и любая правка листа падала на
+    // валидации «system.fatigue.value: must be a number», ничего не сохраняя.
+    context.fatigueInHeader = true;
+
     context.minion = {
       group, tier,
       groupLabel: MINION_GROUPS[group]?.label || "—",

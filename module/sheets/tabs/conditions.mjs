@@ -4,10 +4,16 @@
 //  состояний. Функции принимают актора, а не лист.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { CONDITIONS_DEF } from "../sheet-helpers.mjs";
-import { HOMEWORLD_BY_KEY } from "../../constants/homeworlds.mjs";
+// Из constants/conditions.mjs (не sheet-helpers.mjs, wdbc-fejd) — этот файл
+// теперь импортируют apps/combat-модули (единая точка наложения/снятия), а
+// sheet-helpers.mjs тянет за собой тяжёлые модули листа (race-library.mjs и
+// т.п.) с побочными эффектами при импорте (Hooks.once вне заглушки Foundry).
+import { CONDITIONS_DEF } from "../../constants/conditions.mjs";
+import { isImmuneToCondition } from "../../rules/condition-guards.mjs";
+import { isMirroredCondition, mirrorClearPatch, isMirrorClearable }
+  from "../../rules/condition-mirrors.mjs";
+import { isItemActive } from "../../apps/effects.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
-import { fatigueGraceForActor } from "../../rules/fatigue-grace.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { esc, on } from "../../helpers/utils.mjs";
 
@@ -18,47 +24,12 @@ function fatigueThreshold(actor) {
   return { tb, wb, threshold: tb + wb };
 }
 
-function actorHomeworldKey(actor) {
-  return actor?.items?.find(i => i.type === "homeworld")?.system?.key || "";
-}
-
-export function fatiguePenalty(actor, charKey) {
-  // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «не получает штраф −10 от
-  // Усталости» — полный иммунитет, не отсрочка порога (в отличие от grace
-  // ниже, которая лишь отодвигает начало штрафа). mutation.feelsNoPain —
-  // живой запрос capability-грантера предмета, тот же приём, что и
-  // sarcophagus.* флаги.
-  if (hasRuleFlag(actor, "mutation.feelsNoPain")) return 0;
-  const fatigueExempt = ["t", "inf", "cog", "pf"];
-  // Desiccated / Иссушенный (wdbc-1rno): «Усталость накладывает на персонажа
-  // штраф −20 вместо обычного −10» — тот же ранний выход, что и у Feels No
-  // Pain выше, но удвоение, а не иммунитет.
-  const desiccatedPenalty = hasRuleFlag(actor, "mutation.desiccated") ? -20 : -10;
-  // Добывающий мир, «Потом и кровью»: штрафы начинаются лишь после T.b Усталости.
-  const hw = HOMEWORLD_BY_KEY[actorHomeworldKey(actor)];
-  const hwGrace = hw?.fatigueGrace === "tBonus" ? (actor.system.characteristics?.t?.bonus ?? 0) : 0;
-  // То же самое, но заданное записью Конструктора kind:"fatigue" на предмете.
-  // Источники не суммируются — это терпимость к усталости, а не бонус,
-  // поэтому берётся максимум. Прежний захардкоженный путь оставлен работать
-  // рядом: Происхождения на новую запись не переводились.
-  const grace = Math.max(hwGrace, fatigueGraceForActor(actor));
-  if ((actor.system.fatigue?.value ?? 0) < 1 + grace) return 0;
-  if (fatigueExempt.includes((charKey ?? "").toLowerCase())) return 0;
-  return desiccatedPenalty;
-}
-
-/**
- * Штраф Марша/Бега/Форсированного марша (стр. 29) на тесты Восприятия
- * (P — навык `per`), пока марш активен. Значение хранится флагом
- * marchPPenalty (module/combat/movement-actions.mjs, showMarchDialog);
- * применяется тем же способом, что и fatiguePenalty выше, у единственного
- * места, откуда реально катаются тесты Восприятия — общего пути броска
- * Навыка на листе (actor-sheet.mjs, _getMarchPenalty).
- */
-export function marchPenalty(actor, charKey) {
-  if ((charKey ?? "").toLowerCase() !== "per") return 0;
-  return Number(actor.getFlag?.("warhammer-dbc", "marchPPenalty")) || 0;
-}
+// Усталость и Марш переехали в module/rules/situational.mjs (wdbc-n17t): их
+// спрашивает реестр правил, а этот файл через hasRuleFlag тянет сам реестр
+// обратно — получался круг импортов, на котором ES-загрузчик вставал насмерть.
+// Реэкспорт оставлен, чтобы прежние импортёры (лист, combat/*, тесты и ссылки
+// `reader:` в constants/capabilities.mjs) не трогать.
+export { fatiguePenalty, marchPenalty } from "../../rules/situational.mjs";
 
 export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
   // Саркофаг Дредноута (стр. 57): иммунитет к Усталости — не отсрочка порога
@@ -86,11 +57,13 @@ export async function addFatigue(actor, amount = 1, { slow = false } = {}) {
 
   if (threshold > 0 && newVal >= threshold) {
     const unconsciousMinutes = Math.max(1, 10 - tb);
-    updates["system.conditions.unconscious"] = true;
+    Object.assign(updates, conditionApplyFields("unconscious"));
 
     await actor.update(updates);
 
     const rollMode = game.settings.get("core", "rollMode");
+    // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+    // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
     await ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
@@ -131,7 +104,7 @@ export async function removeFatigue(actor, amount = 1) {
   };
 
   if (system.conditions?.unconscious && newVal < threshold) {
-    updates["system.conditions.unconscious"] = false;
+    Object.assign(updates, conditionRemoveFields("unconscious"));
   }
 
   await actor.update(updates);
@@ -162,6 +135,8 @@ export async function fatiguePeriodRest(actor) {
     if (!parity) {
       await actor.setFlag("warhammer-dbc", "slowFatigueParity", true);
       const rollMode = game.settings.get("core", "rollMode");
+      // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+      // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
       await ChatMessage.create(ChatMessage.applyRollMode({
         speaker: ChatMessage.getSpeaker({ actor }),
         content: `<div class="wh-roll-result">
@@ -181,6 +156,8 @@ export async function fatiguePeriodRest(actor) {
   await removeFatigue(actor, 1);
 
   const rollMode = game.settings.get("core", "rollMode");
+  // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+  // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
@@ -199,12 +176,14 @@ export async function fatigueSleep(actor) {
   await actor.update({
     "system.fatigue.value": 0,
     "system.fatigue.max": threshold,
-    "system.conditions.unconscious": false
+    ...conditionRemoveFields("unconscious")
   });
   if (actor.getFlag?.("warhammer-dbc", "slowFatigue")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigue");
   if (actor.getFlag?.("warhammer-dbc", "slowFatigueParity")) await actor.unsetFlag?.("warhammer-dbc", "slowFatigueParity");
 
   const rollMode = game.settings.get("core", "rollMode");
+  // Уведомление о состоянии, а не карточка теста (ни броска, ни Порога) —
+  // на общий сборщик helpers/test-card.mjs не переводится (wdbc-kuun).
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
@@ -216,32 +195,98 @@ export async function fatigueSleep(actor) {
   }, rollMode));
 }
 
+// ── Единая точка наложения/снятия Состояний (wdbc-fejd) ─────────────────────
+// Раньше 19+ мест по всему коду (combat/*, apps/*, sheets/tabs/*) сами
+// собирали пару «флаг + счётчик» вручную, каждое своим кодом — ровно так же,
+// как когда-то разъехались флаг и счётчик Усталости (см. комментарий у
+// prepareDerivedData в rules/character.mjs). Здесь — то место, которое НЕ
+// умеет забыть про счётчик: даёт значение флага и счётчика ОДНИМ вызовом,
+// каким бы способом ни считалось само число (задать явно, поднять «не ниже»,
+// изменить на дельту).
+//
+// *Fields — чистые функции без побочных эффектов: собирают патч под ключи
+// actor.update, но НЕ пишут сами — нужны местам, которые сливают несколько
+// полей (Состояние + другие system.*/flags.*) в один вызов actor.update.
+// addCondition/removeCondition — те же пары полей, но уже отправленные.
+
+/**
+ * Патч { "system.conditions.<key>": true, [.<levelField>]: level } — если у
+ * Состояния нет счётчика или level не передан, второе поле не пишется.
+ *
+ * `actor` необязателен и нужен ровно для одного: спросить ИММУНИТЕТ (запись
+ * Конструктора kind:"condition" режима «иммунитет», wdbc-tl0f). Невосприимчивый
+ * актор получает ПУСТОЙ патч — Состояние не накладывается, каким бы путём его
+ * ни накладывали, потому что все пути идут через эту функцию (wdbc-fejd).
+ * Без актора иммунитет не спрашивается: вызов без владельца бывает только там,
+ * где патч собирают «в воздухе» (предпросмотр, тест) — не молча гасить.
+ */
+export function conditionApplyFields(key, level = null, actor = null) {
+  const def = CONDITIONS_DEF[key];
+  if (!def || key === "fatigued") return {};
+  // МЕТКА (wdbc-5uae) не хранится своим флагом, а зеркалит чужой источник:
+  // запись сюда затрут производные данные на первом же пересчёте. Метку ставит
+  // её собственное действие («объявить Бег», «войти в Ярость»), не эта функция.
+  if (isMirroredCondition(key)) return {};
+  if (actor && isImmuneToCondition(actor, key, isItemActive)) return {};
+  const fields = { [`system.conditions.${key}`]: true };
+  if (def.hasLevel && def.levelField && level != null) {
+    fields[`system.conditions.${def.levelField}`] = Number(level) || 0;
+  }
+  return fields;
+}
+
+/** Патч на снятие — флаг false и (если у Состояния есть счётчик) счётчик 0. */
+export function conditionRemoveFields(key) {
+  if (key === "fatigued") return {};
+  // Снятие МЕТКИ гасит её настоящий источник, а не отражение: записанное в
+  // system.conditions производные данные вернут обратно на первом пересчёте
+  // (wdbc-5uae). Патч собирает rules/condition-mirrors.mjs — он один знает,
+  // где какая метка живёт.
+  if (isMirroredCondition(key)) return mirrorClearPatch(key);
+  const def    = CONDITIONS_DEF[key];
+  const fields = { [`system.conditions.${key}`]: false };
+  if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
+  return fields;
+}
+
+/**
+ * Патч на «изменить счётчик на delta относительно текущего значения» —
+ * Кровотечение +1 за неудачную ампутацию, снятый ур. Обескровливания от
+ * препарата (−N), пришитая конечность (−1) и т.п. Флаг сам следует за
+ * счётчиком: результат ⩽0 — снят, > 0 — наложен. У Состояния без счётчика
+ * delta трактуется как булев тумблер (delta > 0 — наложить, иначе не трогать —
+ * для явного снятия есть conditionRemoveFields).
+ */
+export function conditionAdjustFields(actor, key, delta) {
+  const def = CONDITIONS_DEF[key];
+  if (!def || key === "fatigued" || isMirroredCondition(key)) return {};
+  // Иммунитет гасит только НАКОПЛЕНИЕ: снять уровень (delta < 0) он мешать не
+  // должен — иначе предмет-иммунитет запер бы Состояние, наложенное до него.
+  if (delta > 0 && isImmuneToCondition(actor, key, isItemActive)) return {};
+  if (!def.hasLevel || !def.levelField) {
+    return delta > 0 ? { [`system.conditions.${key}`]: true } : {};
+  }
+  const cur  = Number(actor.system.conditions?.[def.levelField]) || 0;
+  const next = Math.max(0, cur + delta);
+  return { [`system.conditions.${key}`]: next > 0, [`system.conditions.${def.levelField}`]: next };
+}
+
 /**
  * Наложить состояние (диалог добавления, драг состояния из карточки ритуала
  * в чате — module/sheets/actor-sheet.mjs, showRitualCastDialog). `level` —
  * только для состояний со счётчиком (Кровотечение, Оглушение и т.п.).
  */
-export async function addCondition(actor, key, level = null) {
-  const def = CONDITIONS_DEF[key];
-  if (!def || key === "fatigued") return;
-  const updates = { [`system.conditions.${key}`]: true };
-  if (def.hasLevel && def.levelField && level != null) {
-    updates[`system.conditions.${def.levelField}`] = Number(level) || 0;
-  }
-  await actor.update(updates);
+export async function addCondition(actor, key, { level = null } = {}) {
+  const fields = conditionApplyFields(key, level, actor);
+  if (Object.keys(fields).length) await actor.update(fields);
 }
 
 /** Крестик в строке состояния: снять его, а со счётчиком — обнулить и счётчик. */
 export async function removeCondition(actor, key) {
   // «Усталость» правится только Усталостью на ТЕЛЕ (см. showAddConditionDialog) —
   // крестик тут ничего не изменит, тег пересчитается обратно из fatigue.value.
-  if (key === "fatigued") return;
-  const def     = CONDITIONS_DEF[key];
-  const updates = { [`system.conditions.${key}`]: false };
-  if (def?.hasLevel && def.levelField) {
-    updates[`system.conditions.${def.levelField}`] = 0;
-  }
-  await actor.update(updates);
+  const fields = conditionRemoveFields(key);
+  if (Object.keys(fields).length) await actor.update(fields);
 }
 
 /** Поле уровня: раунды оглушения, стадии кровотечения и прочие счётчики. */
@@ -259,14 +304,25 @@ export function showAddConditionDialog(actor) {
     // «Усталость» — не ручное состояние: тег зеркалит system.fatigue.value
     // (см. actor.mjs prepareDerivedData), в диалоге добавления ей делать
     // нечего — включать нужно самой Усталостью на вкладке ТЕЛО.
-    .filter(([key]) => key !== "fatigued" && !conditions[key])
-    .map(([key, def]) =>
-      `<label class="add-cond-label" style="--cond-color:${def.color || "#4dffa6"};">
-        <input type="checkbox" class="add-cond-cb" data-condition="${key}"/>
+    // Метки (wdbc-5uae) сюда не попадают по той же причине, что «Усталость»:
+    // их ставит своё действие, а не рука ГМа. Предложить и не сработать хуже,
+    // чем не предлагать.
+    .filter(([key]) => key !== "fatigued" && !isMirroredCondition(key) && !conditions[key])
+    .map(([key, def]) => {
+      // Состояние, к которому у актора ИММУНИТЕТ (wdbc-d9dp), показывается, но
+      // не выбирается — с названной причиной. Спрятать его было бы хуже: ГМ
+      // решил бы, что Состояние из системы потерялось, и пошёл бы искать баг.
+      // Живая проверка нашла ровно эту дыру: через иконку токена и через
+      // выдачу предмета иммунитет держал, а этой кнопкой продавливался.
+      const immune = isImmuneToCondition(actor, key, isItemActive);
+      const why = immune ? ` — иммунитет: не накладывается` : "";
+      return `<label class="add-cond-label${immune ? " add-cond-immune" : ""}"
+              style="--cond-color:${def.color || "#4dffa6"};" title="${esc(def.label + why)}">
+        <input type="checkbox" class="add-cond-cb" data-condition="${key}" ${immune ? "disabled" : ""}/>
         <span class="add-cond-icon">${def.svg || def.icon}</span>
-        <span class="add-cond-name">${def.label}</span>
-      </label>`
-    ).join("");
+        <span class="add-cond-name">${def.label}${immune ? " (иммунитет)" : ""}</span>
+      </label>`;
+    }).join("");
 
   if (!inactive) {
     ui.notifications.info("Все состояния уже активны!");
@@ -288,8 +344,12 @@ export function showAddConditionDialog(actor) {
         action: "add", label: "Добавить", icon: "fas fa-plus", default: true,
         callback: async (event, button) => {
           const updates = {};
+          // Актор передаётся третьим доводом не для красоты: без него единая
+          // точка не спрашивает иммунитет, и Состояние продавливается вручную
+          // мимо него (wdbc-d9dp). Галочка иммунного Состояния и так отключена
+          // выше — это второй рубеж на случай подделанной формы/скрипта.
           for (const cb of button.form.querySelectorAll(".add-cond-cb:checked"))
-            updates[`system.conditions.${cb.dataset.condition}`] = true;
+            Object.assign(updates, conditionApplyFields(cb.dataset.condition, null, actor));
           if (Object.keys(updates).length) await actor.update(updates);
         }
       },

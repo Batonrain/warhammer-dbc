@@ -1,0 +1,74 @@
+{
+  "name": "Mother Nature's Care / Забота Матери Природы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "svf7kL1Faag7lAKP",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Иши",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура. Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое»: союзники и псайкер в ауре лечат 1d10+PR×2 ран, снимают всю усталость/кровотечение/обескровливание, могут перебросить тест против оглушения/огня/яда и т.п. с +30 и при успехе немедленно избавиться от эффекта, снимают переломы/Crippling/нерабочие конечности (недостающие пальцы/кости/плоть отрастают мгновенно, конечность — за минуту). Раз в 6 суток на существо. Вне природной территории — 1d5+PR ран, снятие усталости ИЛИ обескровливания (на выбор), Crippling/нерабочие конечности (не переломы), тоже раз в 6 суток.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "q6FDN6TrG0D4kB7A",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009116,
+    "modifiedTime": 1788601009116
+  },
+  "_key": "!items!q6FDN6TrG0D4kB7A"
+}

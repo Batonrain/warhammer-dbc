@@ -19,17 +19,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { isBonesingerMaster } from "./bone-song.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "preservation";
 
 /** Владеет ли актор Талантом Preservation / Защита. */
 export function hasPreservation(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Preservation"));
+  return hasAbility(actor, "ability.preservation", "Preservation", "talent");
 }
 
 /** Лимит использований за сессию — F.b (минимум 1). */
@@ -75,13 +77,10 @@ export async function applyPreservationSingle(actor, targetActor) {
   const reduction = preservationSizeReduction(actor, size);
   const rating = await grantShield(targetActor, { shieldType: "deflector", ratingMax: 50, reduction });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("shield", "#7fd3ff")}Защита — ${esc(targetActor.name)}</div>
-      <div class="roll-threshold">Щит-дефлектор ${rating}-/− ${reduction ? `(база 50 − ${reduction}, Размер ${size})` : ""}</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("shield", "#7fd3ff"), title: `Защита — ${esc(targetActor.name)}`,
+    lines: [`<div class="roll-threshold">Щит-дефлектор ${rating}-/− ${reduction ? `(база 50 − ${reduction}, Размер ${size})` : ""}</div>`]
+  }, { sound: false });
 }
 
 /** Область (радиус 10 м) — щит-купол, база 1-35/− каждой технике. */
@@ -98,11 +97,8 @@ export async function applyPreservationArea(actor, casterToken) {
     lines.push(`${esc(vehicleActor.name)}: щит-купол ${rating}-/−${reduction ? ` (−${reduction}, Размер ${size})` : ""}`);
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("shield", "#7fd3ff")}Защита — область (радиус 10 м)</div>
-      ${lines.length ? lines.map(l => `<div>${l}</div>`).join("") : "<div><i>Нет техники в радиусе</i></div>"}
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("shield", "#7fd3ff"), title: "Защита — область (радиус 10 м)",
+    lines: lines.length ? lines.map(l => `<div>${l}</div>`) : ["<div><i>Нет техники в радиусе</i></div>"]
+  }, { sound: false });
 }

@@ -1,0 +1,74 @@
+{
+  "name": "Forest Paths / Лесные Тропы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "yBHYtwHZnZweZ3vl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 100,
+    "discipline": "worldSinger",
+    "subtype": "Воззвание к Природе",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "testChar": "wp",
+    "testMod": 30,
+    "action": "free",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Непрямое. Психотест W+30. Псайкер и союзники в ауре игнорируют трудный ландшафт, вызванный природными условиями (не работает под землёй и в зданиях).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "1w7cyBOVFL0aUQOP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601007586,
+    "modifiedTime": 1788601007586
+  },
+  "_key": "!items!1w7cyBOVFL0aUQOP"
+}

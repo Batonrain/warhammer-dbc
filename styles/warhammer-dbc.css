@@ -22,6 +22,7 @@
 @import url("sheets/actor-advance.css");
 @import url("sheets/actor-notes.css");
 @import url("sheets/actor-effects.css");
+@import url("sheets/actor-active-effects.css");
 @import url("sheets/actor-psy.css");
 @import url("sheets/actor-tech.css");
 @import url("sheets/actor-nav.css");
@@ -53,7 +54,9 @@
 @import url("ui/veil.css");
 @import url("ui/veil-defile.css");
 @import url("ui/scene-nexus.css");
+@import url("ui/scene-controls-guard.css");
 @import url("ui/environment.css");
+@import url("ui/scene-settings.css");
 @import url("ui/hud.css");
 @import url("ui/active-effect-config.css");
 @import url("ui/imperial-calendar.css");

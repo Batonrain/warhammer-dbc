@@ -234,3 +234,108 @@ describe("пересборка эффектов Конструктора: гей
     expect(item.effects[0].disabled).toBe(false);
   });
 });
+
+// ── wdbc-cx1x: смена вида записи оставляла сироту ───────────────────────────
+// Найдено живой проверкой wdbc-tl0f. Новая запись в Конструкторе всегда
+// начинается видом «Характеристика», и он СРАЗУ заводит ActiveEffect. Автор
+// переключает вид на нужный («Состояние», «Черта», «Код»…) — а эффект от
+// первого выбора оставался приклеен к предмету навсегда и молча продолжал
+// давать число. Не лечилось ни правкой записи, ни перезагрузкой страницы.
+describe("syncMechanicsEffects: запись сменила вид на недолговечный", () => {
+  const condEntry = (id) => ({ id, kind: "condition", condKey: "stunned", condMode: "apply", condLevel: "1" });
+
+  it("эффект от прежнего вида уносится вместе с ним", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(condEntry("e1"))],
+      fx: [fxFor("e1", "system.characteristics.s.bonusFx", 5, "Сила: + 5")]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(0);
+  });
+
+  it("то же для ИЛИ-ветки: вид уже не долговечный — эффекту не за чем держаться", async () => {
+    const item = itemDoc({
+      mechanics: [{ id: "g1", operator: "OR", entries: [condEntry("e1")] }],
+      fx: [fxFor("e1", "system.characteristics.s.bonusFx", 5, "Сила: + 5")]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(0);
+  });
+
+  it("регресс: эффект долговечной записи в ИЛИ-ветке НЕ трогается", async () => {
+    // Выбор в ИЛИ делается один раз диалогом при выдаче, и созданный тогда
+    // эффект — единственный след этого выбора; пересборка его сносить не вправе.
+    const entry = charEntry("e1", "s", 5);
+    const item = itemDoc({
+      mechanics: [{ id: "g1", operator: "OR", entries: [entry] }],
+      fx: [fxFor("e1", "system.characteristics.s.bonusFx", 5, describeMechEntry(entry))]
+    });
+
+    await syncMechanicsEffects(item);
+
+    expect(item.effects).toHaveLength(1);
+  });
+});
+
+// ── На одну запись — ровно один эффект (wdbc-b3mz) ────────────────────────
+//
+// Отчёт: кнопка «+ И-группа» на предмете БЕЗ актора заводила 2-3 одинаковых
+// ActiveEffect на одну запись — Черта «+1 к Силе» давала бы +2 или +3.
+//
+// Отдельно от того, КАК дубликаты появились (гонка, двойной вызов, старые
+// данные из мира): sync их не подчищала, потому что обход помечал entryId
+// увиденным и шёл дальше. Один раз задвоившись, эффект оставался задвоенным
+// навсегда — и следующее сохранение его не лечило.
+describe("дубликаты эффектов одной записи (wdbc-b3mz)", () => {
+  it("второй эффект той же записи удаляется, первый остаётся", async () => {
+    const entry = charEntry("e1", "s", 1);
+    const item = itemDoc({
+      mechanics: [andGroup(entry)],
+      fx: [
+        { ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-a" },
+        { ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-b" }
+      ]
+    });
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(1);
+    // Числа не задваиваются — ради этого всё и делается.
+    expect(valuesOf(item)).toEqual([1]);
+  });
+
+  it("три копии схлопываются в одну", async () => {
+    const entry = charEntry("e1", "s", 1);
+    const fx = n => ({ ...fxFor("e1", "system.characteristics.s.bonus", 1), id: `fx-${n}` });
+    const item = itemDoc({ mechanics: [andGroup(entry)], fx: [fx(1), fx(2), fx(3)] });
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(1);
+  });
+
+  it("разные записи со схожим эффектом не считаются дубликатами", async () => {
+    // Две Черты, обе «+1 к Силе», но записи РАЗНЫЕ — оба эффекта законны.
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "s", 1), charEntry("e2", "s", 1))],
+      fx: [
+        fxFor("e1", "system.characteristics.s.bonus", 1),
+        fxFor("e2", "system.characteristics.s.bonus", 1)
+      ]
+    });
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(2);
+  });
+
+  it("повторный прогон ничего не меняет — синхронизация идемпотентна", async () => {
+    const item = itemDoc({
+      mechanics: [andGroup(charEntry("e1", "s", 1))],
+      fx: [{ ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-a" },
+           { ...fxFor("e1", "system.characteristics.s.bonus", 1), id: "fx-b" }]
+    });
+    await syncMechanicsEffects(item);
+    const after = item.effects.length;
+    await syncMechanicsEffects(item);
+    expect(item.effects).toHaveLength(after);
+  });
+});

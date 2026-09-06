@@ -10,6 +10,7 @@ import { testKindHtml, readTestKind, wireTestKindLive, rollD100WithReroll } from
 import { DEMON_ALLEGIANCES, DEMON_RANKS, DEMON_FORMS, DEMON_WEAPON_PROPS, DEMON_KEY_TRAITS,
          allegianceMeta, formDuration } from "../constants/demon-mechanics.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
@@ -206,8 +207,12 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
     const ctx = { actor: this.actor, kind: "instability" };
-    const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
-    const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
+    // autoMods наравне с галочками (wdbc-kuun/ct65): штрафы состояния тела —
+    // такие же правила реестра, просто без выбора. Раньше здесь брались
+    // только mods, и Усталость демона в его тесты не доезжала вовсе.
+    const { mods, autoMods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
+    const applied = [...autoMods, ...mods];
+    const bonus = applied.reduce((n, m) => n + (Number(m.value) || 0), 0);
     const threshold = wp + bonus + tk.difficulty;
 
     // Переброс берём первый доступный: выбирать не из чего — на тест
@@ -219,28 +224,25 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
     });
     const { success, deg } = outcome;
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result wh-daemon-card">
-          <div class="roll-header">🌀 Тест Нестабильности${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
-          <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")})` : ""
+    // Карточка — общим сборщиком (wdbc-kuun). classes: без wh-daemon-card
+    // разъезжается вёрстка демонических карточек (daemon-sheet.css цепляется
+    // именно за него). Строка Порога своя, а не thresholdLine: здесь слагаемые
+    // сложены в ОДНО число с перечнем причин («−20 (Усталость, Локус Цепей)»),
+    // и разбивать их подписью на каждое значило бы менять вид карточки.
+    await postTestCard(this.actor, {
+      classes: "wh-daemon-card",
+      title: `🌀 Тест Нестабильности${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
+      threshold: `<div class="roll-threshold">Сила Воли: <b>${wp}</b>${
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : ""
           }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b>
-            · Warp Instability (${rating})</div>
-          ${outcome.combinedLine}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          ${rerollNote}
-          ${outcome.critLine}
-          <div class="roll-outcome">${success
-            ? `<span class="roll-success">Удержался — ${deg} ст.</span>`
-            : `<span class="roll-failure">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`}</div>
-          ${outcome.extendedLine}
-          ${outcome.opposedLine}
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+            · Warp Instability (${rating})</div>`,
+      lines: [outcome.combinedLine],
+      rv, rerollNote, critLine: outcome.critLine,
+      outcome: success
+        ? `<span class="roll-success">Удержался — ${deg} ст.</span>`
+        : `<span class="roll-failure">Дестабилизация — ${deg} ст.: варп-урон / изгнание в Варп (по решению ГМа).</span>`,
+      sections: [outcome.extendedLine, outcome.opposedLine]
+    }, { rolls: [roll] });
   }
 
   /**
@@ -249,6 +251,16 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
    * но по умолчанию сразу открыт на "Встречный": книга формулирует исход
    * («демон должен набрать больше Успехов, чем Ритуалист») как обычный
    * встречный тест (module/rules/test-kind.mjs), не особый случай.
+   *
+   * Авто-встречный чекбокс/делегирование (wdbc-j814/wdbc-uez7) сюда
+   * сознательно НЕ перенесены (wdbc-qc6d), хотя kind по умолчанию уже
+   * "opposed": сторона соперника здесь — бросок Ритуалиста по совсем другому
+   * конвейеру (apps/ritual-cast.mjs, полноценный Ритуал со своими Успехами),
+   * а не Навык/Характеристика того же ключа — auto-резолв через
+   * skillTotal(opponent, skillKey)/characteristics(opponent, charKey)
+   * (_resolveOpposedAuto, actor-sheet.mjs) посчитал бы демону соперника
+   * неверно. Ручные поля «Порог/Бросок соперника» (уже в testKindHtml) —
+   * единственный корректный способ передать сюда чужой ритуальный бросок.
    */
   async _showVsExorcismDialog() {
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
@@ -290,8 +302,12 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
 
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const ctx = { actor: this.actor, kind: "vsExorcism" };
-    const { mods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
-    const bonus = mods.reduce((n, m) => n + (Number(m.value) || 0), 0);
+    // autoMods наравне с галочками (wdbc-kuun/ct65): штрафы состояния тела —
+    // такие же правила реестра, просто без выбора. Раньше здесь брались
+    // только mods, и Усталость демона в его тесты не доезжала вовсе.
+    const { mods, autoMods, rerolls } = resolveTest({ actor: this.actor, ...ctx });
+    const applied = [...autoMods, ...mods];
+    const bonus = applied.reduce((n, m) => n + (Number(m.value) || 0), 0);
     const threshold = wp + bonus + tk.difficulty;
 
     const rr = rerolls[0] || null;
@@ -301,27 +317,21 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
       kind: tk.kind, baseEff: threshold, rv, combined: tk.combined, extended: tk.extended, opposed: tk.opposed, ctx
     });
     const { success, deg } = outcome;
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result wh-daemon-card">
-          <div class="roll-header">🕯️ Против Экзорцизма / Чистой Демонологии${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}</div>
-          <div class="roll-threshold">Сила Воли: <b>${wp}</b>${
-            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${mods.map(m => m.label).join(", ")})` : ""
-          }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b></div>
-          ${outcome.combinedLine}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          ${rerollNote}
-          ${outcome.critLine}
-          <div class="roll-outcome">${success
-            ? `<span class="roll-success">Устоял — ${deg} ст.</span>`
-            : `<span class="roll-failure">Провален — ${deg} ст.</span>`}</div>
-          ${outcome.extendedLine}
-          ${outcome.opposedLine}
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+    // Та же сборка, что у Нестабильности выше — включая wh-daemon-card и
+    // собственную строку Порога (см. комментарий там же).
+    await postTestCard(this.actor, {
+      classes: "wh-daemon-card",
+      title: `🕯️ Против Экзорцизма / Чистой Демонологии${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(this.actor.name)}`,
+      threshold: `<div class="roll-threshold">Сила Воли: <b>${wp}</b>${
+            bonus ? ` ${bonus > 0 ? "+" : ""}${bonus} (${applied.map(m => m.label).join(", ")})` : ""
+          }${tk.difficulty !== 0 ? ` ${tk.difficulty >= 0 ? "+" : ""}${tk.difficulty} (📊 Сложность)` : ""} → Порог: <b>${threshold}</b></div>`,
+      lines: [outcome.combinedLine],
+      rv, rerollNote, critLine: outcome.critLine,
+      outcome: success
+        ? `<span class="roll-success">Устоял — ${deg} ст.</span>`
+        : `<span class="roll-failure">Провален — ${deg} ст.</span>`,
+      sections: [outcome.extendedLine, outcome.opposedLine]
+    }, { rolls: [roll] });
   }
 
   // Генерация Бесчестия по формуле ранга.
@@ -330,18 +340,18 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
     const f = rank?.infamy;
     if (!f) { ui.notifications.info("Для этого ранга Бесчестие не генерируется формулой."); return; }
     const roll = await new Roll(f).evaluate();
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result wh-daemon-card">
-          <div class="roll-header">👑 Бесчестие демона — ${esc(this.actor.name)}</div>
-          <div class="roll-threshold">${rank.label}: ${f}</div>
-          <div class="roll-dice">Результат: <b>${roll.total}</b> Inf</div>
-          <div class="roll-threshold" style="font-size:0.85em;">Впишите в характеристику Inf (при желании).</div>
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, rollMode));
+    // Не тест: Порога нет, «Результат» — это выпавшее по формуле ранга число,
+    // а не бросок против чего-то. Поэтому строка кубика идёт своим блоком с
+    // собственной подписью, а не общей строкой «Бросок».
+    await postTestCard(this.actor, {
+      classes: "wh-daemon-card",
+      title: `👑 Бесчестие демона — ${esc(this.actor.name)}`,
+      threshold: `<div class="roll-threshold">${rank.label}: ${f}</div>`,
+      sections: [
+        `<div class="roll-dice">Результат: <b>${roll.total}</b> Inf</div>`,
+        `<div class="roll-threshold" style="font-size:0.85em;">Впишите в характеристику Inf (при желании).</div>`
+      ]
+    }, { rolls: [roll] });
   }
 }
 

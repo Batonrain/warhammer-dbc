@@ -298,6 +298,52 @@ describe("усталость и условные эффекты боеприпа
     expect(captured.dialog.content).toContain("−10");
   });
 
+  // Ослеплён (стр. 30-31, wdbc-r5o7.4): та же схема, что Усталость выше —
+  // галочка «Ситуативные» отмечена заранее, если актор ДЕЙСТВИТЕЛЬНО
+  // Ослеплён (свой флаг или Потеря обоих глаз), но остаётся ручной для
+  // случаев, которые система не отследит сама.
+  it("Ослеплён отмечен заранее: рукопашная — штраф −30, стрелковая — автопровал", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword], conditions: { blinded: true } }), sword);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Ослеплён \(-30\)/);
+
+    resetCaptured();
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { blinded: true } }), gun);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Ослеплён \(провал\)/);
+    expect(captured.dialog.content).toMatch(/data-autofail="true"[^>]*checked/);
+  });
+
+  it("Потеря ОБОИХ глаз — то же самое, что Ослеплён (производное, wdbc-r5o7.4)", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { lostEyesCount: 2 } }), gun);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Ослеплён \(провал\)/);
+  });
+
+  it("Потеря ОДНОГО глаза — не Ослеплён, галочка не отмечена", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { lostEyesCount: 1 } }), gun);
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
+  it("не Ослеплён — галочка «Ослеплён» присутствует, но не отмечена", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    expect(captured.dialog.content).toContain("Ослеплён");
+    expect(captured.dialog.content).not.toMatch(/atk-mod-auto[\s\S]*?Ослеплён/);
+  });
+
+  it("Потеря глаз (частичная) — −10 к стрельбе отмечено заранее, в рукопашной строки нет вовсе", () => {
+    const gun = weaponFor();
+    showAttackDialog(attacker({ items: [gun], conditions: { lostEyes: true, lostEyesCount: 1 } }), gun);
+    expect(captured.dialog.content).toMatch(/atk-mod-auto[\s\S]*?Потеря глаз \(-10\)/);
+
+    resetCaptured();
+    const sword = weaponFor({ weaponClass: "melee" });
+    showAttackDialog(attacker({ items: [sword], conditions: { lostEyes: true, lostEyesCount: 1 } }), sword);
+    expect(captured.dialog.content).not.toContain("Потеря глаз");
+  });
+
   it("условные модификаторы боеприпаса даются галочками, а не молча", () => {
     const ammo = ammoFor({ condMods: [
       { label: "против псайкеров", atk: 30, dmg: 2 },
@@ -1666,5 +1712,181 @@ describe("Числ. перевес: автоотметка 2к1/3к1 по кон
     const html = captured.dialog.content;
     expect(html).toMatch(/data-value="20"[^>]*checked/);
     expect(html).not.toMatch(/data-value="10"[^>]*checked/);
+  });
+});
+
+// Повален (стр. 30-31, wdbc-r5o7.2): «Стрельба по нему −20, рукопашная —
+// +20» — тем же приёмом, что уже есть у Беспомощной цели (badge, безусловно,
+// не через «Спецправила»).
+describe("Повален (цель): wdbc-r5o7.2", () => {
+  it("рукопашная атака по Поваленной цели получает +20 и бейдж (окно открытия)", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(75); // WS 45 + База «Стандартная» 10 + Повален 20
+    expect(captured.dialog.content).toContain("Цель Повалена (+20)");
+  });
+
+  it("стрелковая атака по Поваленной цели получает −20 и бейдж (окно открытия)", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline - 20);
+    expect(captured.dialog.content).toContain("Цель Повалена (−20)");
+  });
+
+  it("цель не Повалена — ни бейджа, ни модификатора", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor()]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(55); // WS 45 + База «Стандартная» 10, Повален не сработал
+    expect(captured.dialog.content).not.toContain("Цель Повалена");
+  });
+
+  it("без цели вовсе — правило не срабатывает, не падает", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(55);
+    expect(captured.dialog.content).not.toContain("Цель Повалена");
+  });
+
+  // wdbc-r5o7.2 живая проверка (live-tester) нашла реальный баг: бейдж и
+  // «холодный» charVal видели proneMod, а реальный бросок шёл через
+  // thresholdParts/thresholdOf (updateTotal, кнопка «Бросок!») — там строки
+  // для proneMod не было вовсе, и порог броска не менялся. Эти два теста
+  // жмут «Бросок!» и читают порог ИЗ КАРТОЧКИ (thresholdInCard) — тем самым
+  // путём, где баг жил, а не только «холодный» dialogThreshold() выше,
+  // который бага не ловил (wpAttackMod уже включал proneMod с самого начала).
+  it("реальный бросок рукопашной по Поваленной цели — порог в карточке тоже +20", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+    await pressRoll(p);
+
+    expect(thresholdInCard()).toBe(75); // WS 45 + База 10 + Повален 20
+  });
+
+  it("реальный бросок стрелковой по Поваленной цели — порог в карточке тоже −20", async () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    const baselineP = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(baselineP);
+    const baseline = thresholdInCard();
+
+    setTargets([actorFor({ conditions: { prone: true } })]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(p);
+
+    expect(thresholdInCard()).toBe(baseline - 20);
+  });
+});
+
+// Оглушение/Ступор (цель): wdbc-r5o7.3 — «все атаки по нему получают +20»,
+// безусловно. Проверяется сразу реальным броском (thresholdInCard), не
+// только «холодным» dialogThreshold — тот путь уже подвёл один раз у
+// Поваленного (wdbc-r5o7.2, см. описание теста выше).
+describe("Оглушение/Ступор (цель): wdbc-r5o7.3", () => {
+  it("рукопашная атака по Оглушённой цели получает +20 — превью и реальный бросок", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { stunned: true } })]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(75); // WS 45 + База 10 + Оглушена 20
+    // Не "Цель Оглушена (+20)" буквально — эта фраза уже занята независимым
+    // ручным чекбоксом «Ситуативные» (всегда в разметке, не привязан к
+    // conditions.stunned) — берём заголовок бейджа, который есть только
+    // когда цель ДЕЙСТВИТЕЛЬНО Оглушена/в Ступоре.
+    expect(captured.dialog.content).toContain("💫 Цель Оглушена/в Ступоре (+20)");
+
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(75);
+  });
+
+  it("цель в Ступоре — тот же +20 (Ступор = Оглушение «для прочих эффектов»)", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor({ conditions: { dazed: true } })]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(75);
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(75);
+  });
+
+  it("стрелковая атака по Оглушённой цели тоже +20 — превью и реальный бросок", async () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    const baselineP = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(baselineP);
+    const baseline = thresholdInCard();
+
+    setTargets([actorFor({ conditions: { stunned: true } })]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    captured.dice = [23, 6];
+    await pressRoll(p);
+
+    expect(thresholdInCard()).toBe(baseline + 20);
+  });
+
+  it("цель не Оглушена и не в Ступоре — ни бейджа, ни модификатора", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([actorFor()]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(55);
+    expect(captured.dialog.content).not.toContain("💫 Цель Оглушена/в Ступоре");
+  });
+});
+
+// Галлюцинации, грань «Я маленький...» (стр. 168, wdbc-r5o7.8): «не может
+// совершать Атаки» — жёсткий запрет, тот же приём, что Повален блокирует
+// Натиск/Бег (movement-actions.mjs) — окно атаки не открывается вовсе.
+describe("Галлюцинации («Я маленький...») блокируют Атаку", () => {
+  const hallucinating9 = actor => { actor.getFlag = (_s, k) => k === "hallucinationEffect" ? 9 : undefined; return actor; };
+
+  it("showAttackDialog — предупреждение, окно не открывается", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const a = hallucinating9(attacker({ items: [sword], conditions: { hallucinogenic: true } }));
+    await showAttackDialog(a, sword);
+
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("Атак"))).toBe(true);
+  });
+
+  it("showAttackDialogNoWeapon — та же блокировка", async () => {
+    const a = hallucinating9(attacker({ conditions: { hallucinogenic: true } }));
+    await showAttackDialogNoWeapon(a, { label: "Пинок", wsBonus: -10, damage: "1d5-1+S.b", damageType: "impact", pen: 0 });
+
+    expect(captured.dialog).toBeNull();
+    expect(captured.warnings.some(w => w.includes("Атак"))).toBe(true);
+  });
+
+  it("грань 9 выпала, но Состояние уже снято — атака проходит как обычно", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const a = hallucinating9(attacker({ items: [sword], conditions: { hallucinogenic: false } }));
+    showAttackDialog(a, sword);
+
+    expect(captured.dialog).not.toBeNull();
+    expect(captured.warnings.some(w => w.includes("Атак"))).toBe(false);
+  });
+
+  it("Состояние стоит, но выпала другая грань — атака проходит как обычно", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    const a = attacker({ items: [sword], conditions: { hallucinogenic: true } });
+    a.getFlag = (_s, k) => k === "hallucinationEffect" ? 1 : undefined;
+    showAttackDialog(a, sword);
+
+    expect(captured.dialog).not.toBeNull();
   });
 });

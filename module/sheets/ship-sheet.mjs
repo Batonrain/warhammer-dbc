@@ -16,6 +16,7 @@ import { degreesOfSuccess } from "../constants/craft.mjs";
 import { resolveShipProps, aggregateShipAttackAuto } from "../combat/ship-attack.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { openContextMenu, itemContextEntries } from "./context-menu.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { activateFactionFieldListeners } from "../apps/actor-factions.mjs";
@@ -231,21 +232,16 @@ async function onRollDistortion() {
     }
   }
 
-  // Чат — в стиле броска листа персонажа (wh-roll-result).
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Осквернение корабля — Искажение</div>
-        <div class="roll-threshold">Порог: <b>${esc(thr.name)}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>
-        <div class="roll-dice">1d100: <b>${raw}</b>${applied ? ` ${sgn(applied)} → <b>${total}</b>` : ""}</div>
-        <div class="roll-outcome"><span class="roll-success">Искажение${range ? ` (${range})` : ""}: ${distName}</span></div>
-        ${descBlock}
-      </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Чат — общий сборщик карточки теста (helpers/test-card.mjs, wdbc-kuun).
+  // Порог здесь — не число, а название порога осквернения с реверсом мода,
+  // поэтому строка собрана вручную, а не thresholdLine.
+  await postTestCard(this.actor, {
+    title: "Осквернение корабля — Искажение",
+    threshold: `<div class="roll-threshold">Порог: <b>${esc(thr.name)}</b> (${thr.dp} DP, мод ${sgn(thr.mod)} → реверс ${sgn(applied)})</div>`,
+    lines: [`<div class="roll-dice">1d100: <b>${raw}</b>${applied ? ` ${sgn(applied)} → <b>${total}</b>` : ""}</div>`],
+    outcome: outcomeHtml(true, `Искажение${range ? ` (${range})` : ""}: ${distName}`),
+    sections: [descBlock]
+  }, { rolls: allRolls });
 
   // Записываем искажение в журнал осквернения на листе корабля.
   const arr = foundry.utils.deepClone(this.actor.system.distortions || []);
@@ -278,18 +274,11 @@ async function onApplyDistortion() {
       sm = findSubmutation(dist.submut, sub.total);
     }
     submutText = sm ? sm.name : "";
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">Осквернение корабля — Искажение (вручную): ${esc(dist.name)}</div>
-          <div class="roll-threshold">${dist.submut.label}: <b>${sub ? sub.total : "вручную"}</b>${sm ? ` — <b>${esc(sm.name)}</b>` : ""}</div>
-          ${sm ? `<div class="roll-distort-desc">${sm.desc}</div>` : ""}
-        </div>`,
-      rolls: sub ? [sub] : [],
-      ...(sub ? { sound: CONFIG.sounds.dice } : {})
-    }, rollMode));
+    await postTestCard(this.actor, {
+      title: `Осквернение корабля — Искажение (вручную): ${esc(dist.name)}`,
+      threshold: `<div class="roll-threshold">${dist.submut.label}: <b>${sub ? sub.total : "вручную"}</b>${sm ? ` — <b>${esc(sm.name)}</b>` : ""}</div>`,
+      sections: [sm ? `<div class="roll-distort-desc">${sm.desc}</div>` : ""]
+    }, { rolls: sub ? [sub] : [], sound: !!sub });
   }
 
   const arr = foundry.utils.deepClone(this.actor.system.distortions || []);
@@ -313,13 +302,11 @@ function onDistortDel(event, target) {
 async function onInitRoll() {
   const dt = this.actor.system.derived?.chars?.detection || 0;
   const r  = await (new Roll(`1d10 + ${dt}`)).evaluate();
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `<div class="wh-roll-result"><div class="roll-header">Инициатива корабля</div>
-      <div class="roll-dice">1d10 + DT ${dt} = <b>${r.total}</b></div></div>`,
-    rolls: [r], sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Порога у инициативы нет (не тест) — своя строка броска вместо общей.
+  await postTestCard(this.actor, {
+    title: "Инициатива корабля",
+    lines: [`<div class="roll-dice">1d10 + DT ${dt} = <b>${r.total}</b></div>`]
+  }, { rolls: [r] });
 }
 
 /** Стрельба из орудия — открыть лист атаки. */
@@ -860,15 +847,14 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
             const cmd = parseInt(button.form.querySelector("#mut-cmd").value) || 0;
             const r = await (new Roll("1d100")).evaluate();
             const ok = r.total <= cmd;
-            const rollMode = game.settings.get("core", "rollMode");
-            await ChatMessage.create(ChatMessage.applyRollMode({
-              speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-              content: `<div class="wh-roll-result"><div class="roll-header">Тест бунта — Command</div>
-                <div class="roll-threshold">Command: <b>${cmd}</b></div>
-                <div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b></div>
-                <div class="roll-outcome">${ok ? `<span class="roll-success">Бунт предотвращён</span>` : `<span class="roll-failure">Бунт! Часть экипажа восстаёт — подавление встречным Command/Charm/Intimidation.</span>`}</div></div>`,
-              rolls: [r], sound: CONFIG.sounds.dice
-            }, rollMode));
+            await postTestCard(this.actor, {
+              title: "Тест бунта — Command",
+              threshold: `<div class="roll-threshold">Command: <b>${cmd}</b></div>`,
+              lines: [`<div class="roll-dice">${ICO.dice} 1d100: <b>${r.total}</b></div>`],
+              outcome: outcomeHtml(ok, ok
+                ? "Бунт предотвращён"
+                : "Бунт! Часть экипажа восстаёт — подавление встречным Command/Charm/Intimidation.")
+            }, { rolls: [r] });
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -1148,19 +1134,17 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     }
 
     const subline = `${WTYPE_LABELS[wt] || wt} · S ${S}${critN ? ` · Крит ${critN}${(wt === "torpedo" || wt === "nova") ? "+" : ""}` : ""}${torp ? ` · ${ICO.torp} ${torp.label} ×${launched}${navTR ? ` (наведение +${navTR})` : ""}` : ""}`;
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${ICO.torp} ${esc(item.name)} — Стрельба</div>
-          <div class="roll-threshold">${subline}</div>
-          <div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}${novaPenalty ? ` ${novaPenalty} нова` : ""} → Порог <b>${threshold}</b></div>
-          <div class="roll-dice">${ICO.dice} 1d100: <b>${rv}</b></div>
-          ${body}
-        </div>`,
-      rolls: allRolls, sound: CONFIG.sounds.dice
-    }, rollMode));
+    // Тело карточки (попадания, урон, криты) собрано выше своей разметкой —
+    // общему сборщику отдаётся блоком, строки шапки/Порога/броска у него общие.
+    await postTestCard(this.actor, {
+      icon: ICO.torp, title: `${esc(item.name)} — Стрельба`,
+      threshold: `<div class="roll-threshold">${subline}</div>`,
+      lines: [
+        `<div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}${novaPenalty ? ` ${novaPenalty} нова` : ""} → Порог <b>${threshold}</b></div>`,
+        `<div class="roll-dice">${ICO.dice} 1d100: <b>${rv}</b></div>`
+      ],
+      sections: [body]
+    }, { rolls: allRolls });
 
     // Расход торпед из боезапаса.
     if (torpItem && launched > 0) {
@@ -1174,11 +1158,11 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     }
   }
 
+  // Карточки турелей / эскадрилий / боя истребителей собирают своё тело целиком
+  // (шапка+Порог+бросок в одной строке-блоке) — общий сборщик берёт на себя
+  // говорящего, режим броска и звук (helpers/test-card.mjs, wdbc-kuun).
   _chat(html, rolls = []) {
-    return ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">${html}</div>`, rolls, sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    return postTestCard(this.actor, `<div class="wh-roll-result">${html}</div>`, { rolls });
   }
 
   // Суммарная S исправных ангарных отсеков (лимит подготовки/запуска за СХ).
@@ -1437,7 +1421,6 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
   }
 
   async _resolveSalvo(ids, o) {
-    const rollMode = game.settings.get("core", "rollMode");
     const allRolls = [];
     const cleanDmg = (raw) => { const m = String(raw || "").match(/\(?\d*\s*d\s*\d+\s*(?:[+\-]\s*\d+)?\)?\s*(?:[*x×]\s*\d+)?/i); return (m ? m[0] : raw || "1d10").replace(/\s+/g, "").replace(/[x×]/i, "*") || "1d10"; };
     const hits = []; let critEligible = false; const lines = [];
@@ -1469,21 +1452,22 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     }
     const overloaded = o.shields > 0 && hits.length >= o.shields;
     const vsNote = overloaded ? `<div class="roll-threshold" style="font-size:0.82em;color:#c07000;">Щиты перегружены (${hits.length} ≥ ${o.shields}) — схлопнулись.${o.tgt ? ` <button class="wh-ship-vs-btn" type="button">Отметить щиты цели схлопнутыми</button>` : ""}</div>` : "";
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${ICO.crit} Залп макробатарей — ${esc(this.actor.name)}${o.tgt ? ` → ${esc(o.tgt.name)}` : ""}</div>
-        <div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}</div>
-        ${lines.join("")}
-        <div class="roll-threshold">Всего попаданий: <b>${hits.length}</b>${shieldsUsed ? ` ${ICO.shield} −щиты ${shieldsUsed} = <b>${passed.length}</b>` : ""} · броня −${o.armour}</div>
-        <div class="roll-damage-section">
+    await postTestCard(this.actor, {
+      icon: ICO.crit,
+      title: `Залп макробатарей — ${esc(this.actor.name)}${o.tgt ? ` → ${esc(o.tgt.name)}` : ""}`,
+      threshold: `<div class="roll-threshold">BS ${o.bs}${o.aim ? ` +${o.aim} приц.` : ""}${o.range ? ` ${o.range > 0 ? "+" : ""}${o.range} дальн.` : ""}${o.mod ? ` ${o.mod > 0 ? "+" : ""}${o.mod}` : ""}</div>`,
+      lines: [
+        ...lines,
+        `<div class="roll-threshold">Всего попаданий: <b>${hits.length}</b>${shieldsUsed ? ` ${ICO.shield} −щиты ${shieldsUsed} = <b>${passed.length}</b>` : ""} · броня −${o.armour}</div>`
+      ],
+      sections: [
+        `<div class="roll-damage-section">
           <div class="roll-damage-label">${ICO.dmg} Урон Прочности: <b>${totalHI}</b></div>
           ${(totalHI > 0 || critEligible) ? `<button class="wh-ship-dmg-btn" type="button" data-hi="${totalHI}">${ICO.dmg} Применить ${totalHI} → отмеченной цели</button>` : ""}
-        </div>
-        ${critSection}${vsNote}
-      </div>`,
-      rolls: allRolls, sound: CONFIG.sounds.dice
-    }, rollMode));
+        </div>`,
+        critSection, vsNote
+      ]
+    }, { rolls: allRolls });
   }
 
   // ── Таран ──────────────────────────────────────────────────────────────────
@@ -1524,7 +1508,6 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     const threshold = op + mn - 20 + mod;
     const roll = await (new Roll("1d100")).evaluate();
     const hit  = roll.total <= threshold;
-    const rollMode = game.settings.get("core", "rollMode");
     const allRolls = [roll];
     let body = "";
     if (!hit) {
@@ -1556,15 +1539,12 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
         </div>
         <div class="roll-threshold" style="font-size:0.85em;">Таранящий получил <b>${selfDmg}</b> Прочности (1d5 ${selfR.total} + броня цели ${tgtArm}): ${cur} → ${next}${lost ? `, экипаж −${lost} CP/CM` : ""}.</div>`;
     }
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">Таран — ${esc(this.actor.name)}${tgt ? ` → ${esc(tgt.name)}` : ""}</div>
-        <div class="roll-threshold">Operate+MN−20: <b>${op}</b> +${mn} −20${mod ? ` ${mod>=0?"+":""}${mod}` : ""} → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">${ICO.dice} 1d100: <b>${roll.total}</b></div>
-        ${body}</div>`,
-      rolls: allRolls, sound: CONFIG.sounds.dice
-    }, rollMode));
+    await postTestCard(this.actor, {
+      title: `Таран — ${esc(this.actor.name)}${tgt ? ` → ${esc(tgt.name)}` : ""}`,
+      threshold: `<div class="roll-threshold">Operate+MN−20: <b>${op}</b> +${mn} −20${mod ? ` ${mod>=0?"+":""}${mod}` : ""} → Порог <b>${threshold}</b></div>`,
+      lines: [`<div class="roll-dice">${ICO.dice} 1d100: <b>${roll.total}</b></div>`],
+      sections: [body]
+    }, { rolls: allRolls });
   }
 
   // ── Абордаж ────────────────────────────────────────────────────────────────
@@ -1611,40 +1591,38 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
     const net = myDeg - tgDeg;
     const winner = net > 0 ? this.actor.name : net < 0 ? (o.tgt?.name || "цель") : "ничья";
     const netAbs = Math.abs(net);
-    const rollMode = game.settings.get("core", "rollMode");
     const loserIsTarget = net > 0;
     const applyBtn = (net !== 0 && o.tgt) ? `
         <div class="roll-damage-section">
           <div class="roll-damage-label">За каждый успех (${netAbs}): −1d5 CP и −1d5 CM ИЛИ −1 Прочности проигравшему.</div>
           ${loserIsTarget ? `<button class="wh-ship-dmg-btn" type="button" data-hi="${netAbs}">${ICO.dmg} Применить ${netAbs} Прочности → отмеченной цели</button>` : `<div class="roll-threshold" style="font-size:0.82em;">Проиграл ваш корабль — примените урон/потери к себе вручную.</div>`}
         </div>` : "";
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${ICO.hit} Абордаж — встречный Command</div>
-        <div class="roll-threshold">Мы: <b>${o.mc}</b>${myMod?`+${myMod}`:""}→${myThr}, бросок <b>${r1.total}</b> (${myDeg} ст.)</div>
-        <div class="roll-threshold">Цель: <b>${o.tc}</b>${tgMod?`+${tgMod}`:""}→${tgThr}, бросок <b>${r2.total}</b> (${tgDeg} ст.)</div>
-        <div class="roll-outcome">${net===0?`<span class="roll-failure">Ничья — абордаж продолжается в следующем СХ.</span>`:`<span class="roll-success">Победил: <b>${winner}</b> — чистых успехов ${netAbs}.</span>`}</div>
-        ${applyBtn}
-        <div class="roll-threshold" style="font-size:0.8em;">Проигравший делает бросок CM: ≤ — держится (снова тест), провал — сдаётся.</div>
-      </div>`,
-      rolls: [r1, r2], sound: CONFIG.sounds.dice
-    }, rollMode));
+    await postTestCard(this.actor, {
+      icon: ICO.hit, title: "Абордаж — встречный Command",
+      threshold: `<div class="roll-threshold">Мы: <b>${o.mc}</b>${myMod?`+${myMod}`:""}→${myThr}, бросок <b>${r1.total}</b> (${myDeg} ст.)</div>`,
+      lines: [`<div class="roll-threshold">Цель: <b>${o.tc}</b>${tgMod?`+${tgMod}`:""}→${tgThr}, бросок <b>${r2.total}</b> (${tgDeg} ст.)</div>`],
+      outcome: net === 0
+        ? outcomeHtml(false, "Ничья — абордаж продолжается в следующем СХ.")
+        : outcomeHtml(true, `Победил: <b>${winner}</b> — чистых успехов ${netAbs}.`),
+      sections: [
+        applyBtn,
+        `<div class="roll-threshold" style="font-size:0.8em;">Проигравший делает бросок CM: ≤ — держится (снова тест), провал — сдаётся.</div>`
+      ]
+    }, { rolls: [r1, r2] });
   }
 
   async _rollShipCrit() {
     const r = await (new Roll("1d5")).evaluate();
     const ce = getShipCrit(r.total);
-    const rollMode = game.settings.get("core", "rollMode");
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result"><div class="roll-header">Критическое попадание (корабль)</div>
-        <div class="roll-dice">1d5 = <b>${r.total}</b></div>
-        <div class="roll-outcome"><span class="roll-success">${esc(ce?.name)}</span></div>
-        <div class="roll-distort-desc">${ce?.text || ""}</div>
-        <div class="roll-threshold" style="font-size:0.8em;">У полуразрушенного корабля эффект = пробившему броню урону (1–11).</div></div>`,
-      rolls: [r], sound: CONFIG.sounds.dice
-    }, rollMode));
+    await postTestCard(this.actor, {
+      title: "Критическое попадание (корабль)",
+      lines: [`<div class="roll-dice">1d5 = <b>${r.total}</b></div>`],
+      outcome: outcomeHtml(true, esc(ce?.name)),
+      sections: [
+        `<div class="roll-distort-desc">${ce?.text || ""}</div>`,
+        `<div class="roll-threshold" style="font-size:0.8em;">У полуразрушенного корабля эффект = пробившему броню урону (1–11).</div>`
+      ]
+    }, { rolls: [r] });
   }
   /**
    * Выбор типа груза. Партия называется по типу и сразу получает базовую
@@ -1698,6 +1676,10 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
    * Броски событий по грузам (раздел «Грузы»): порча, воровство, повреждение
    * от попаданий и гибель пассажиров. Каждый бросок печатает в чат, сколько LC
    * или PC потеряно — списывает их ГМ вручную, чтобы выбрать конкретную партию.
+   *
+   * Не карточка теста и потому не переведена на helpers/test-card.mjs
+   * (wdbc-kuun): порог задаёт ГМ у себя (тест Trade/Command сюда не приходит),
+   * успех/провал код не считает, это обычное сообщение броска с пояснением.
    */
   async _rollCargoEvent(kind) {
     const sys = this.actor.system;
@@ -1860,11 +1842,12 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
 
   async _runRecovery(way, form) {
     const caps = this._crewCaps();
-    const say = (title, body, rolls = []) => ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result"><div class="roll-header">${title}</div>${body}</div>`,
-      rolls, sound: rolls.length ? CONFIG.sounds.dice : null
-    }, game.settings.get("core", "rollMode")));
+    // Способы восстановления печатают своё тело целиком (строки Порога/броска
+    // у каждого свои); общий сборщик даёт говорящего, режим броска и звук —
+    // звук только там, где кубик действительно катался.
+    const say = (title, body, rolls = []) => postTestCard(
+      this.actor, `<div class="wh-roll-result"><div class="roll-header">${title}</div>${body}</div>`,
+      { rolls, sound: rolls.length > 0 });
 
     if (way === "inf") {
       const n = Math.max(1, parseInt(form.querySelector("#cr-inf").value) || 1);
@@ -1987,17 +1970,16 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       applied = `Можно предпринять ещё один встречный тест.`;
     }
 
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">Подавление бунта — ${a.skill}</div>
-        <div class="roll-threshold">${a.label}</div>
-        <div class="roll-dice">Персонаж: ${rp.total} против ${tv} — СУ <b>${dp}</b></div>
-        <div class="roll-dice">Бунтовщики: ${rr.total} против ${rv} — СУ <b>${dr}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-        <div class="roll-threshold">${applied}</div></div>`,
-      rolls: [rp, rr], sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    await postTestCard(this.actor, {
+      title: `Подавление бунта — ${a.skill}`,
+      threshold: `<div class="roll-threshold">${a.label}</div>`,
+      lines: [
+        `<div class="roll-dice">Персонаж: ${rp.total} против ${tv} — СУ <b>${dp}</b></div>`,
+        `<div class="roll-dice">Бунтовщики: ${rr.total} против ${rv} — СУ <b>${dr}</b></div>`
+      ],
+      outcome,
+      sections: [`<div class="roll-threshold">${applied}</div>`]
+    }, { rolls: [rp, rr] });
   }
 
 }

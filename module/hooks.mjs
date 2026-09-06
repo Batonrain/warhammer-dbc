@@ -1,4 +1,4 @@
-import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
@@ -10,7 +10,6 @@ import { fatePoolLabel }                 from "./rules/fate-save.mjs";
 import { spendFromInfamyPool }           from "./apps/infamy-points.mjs";
 import { tempInfamyAmount }              from "./rules/temp-infamy.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "./rules/wounds.mjs";
-import { applyMechBlocksForActor } from "./apps/mech-blocks-apply.mjs";
 import { fateBonusOutcome, FATE_BONUS }  from "./rules/fate-bonus.mjs";
 import { showApplyDamageDialog, applyDamageToActor, extractPiercingWound, applyCripplingTrigger, applyMonofilamentHit } from "./combat/damage.mjs";
 import { rollPacifismTest } from "./combat/pacifism.mjs";
@@ -19,7 +18,10 @@ import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
-import { CONDITION_LEVEL_FIELD, resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
+import { conditionLevelField, CONDITIONS_DEF } from "./constants/conditions.mjs";
+import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
+import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
@@ -35,6 +37,7 @@ import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
+import { postTestCard, thresholdLine }   from "./helpers/test-card.mjs";
 import { registerActorSetupHook }        from "./apps/actor-setup.mjs";
 import { resolvePendingSusAnHeals }      from "./apps/sus-an-heal.mjs";
 import { decayAblativeApShieldOnNewRound } from "./apps/ablative-ap-shield.mjs";
@@ -59,19 +62,23 @@ import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
+import { sweepConditionDurations } from "./combat/condition-effects.mjs";
+import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
 import { resolveShipProps } from "./combat/ship-attack.mjs";
 import { resolveNodeDamage, applyHullDamage } from "./combat/ship-node-damage.mjs";
 import { WC_CODE } from "./constants/ship.mjs";
-import { registerDelegatedTestOpener, openDelegatedTest } from "./rules/delegate-test.mjs";
+import { registerDelegatedTestOpener, openDelegatedTest, activeOwnerOf, requestDelegatedTest, openDelegatedTestDirect } from "./rules/delegate-test.mjs";
 import { skillTotal } from "./combat/movement-actions.mjs";
 import { showHealingDialog } from "./sheets/tabs/healing.mjs";
 import { rollInfoguard } from "./apps/infoguard.mjs";
 import { CHARACTERISTICS } from "./constants/characteristics.mjs";
 import { SKILLS_DEF } from "./constants/skills.mjs";
+import { collectTestMods } from "./rules/roll-mods.mjs";
 
 // Последний обработанный ходящий на Combat.id — экономика действий (см. блок
 // updateCombat ниже) сама отслеживает, чей Ход только что закончился.
@@ -93,7 +100,10 @@ export function registerHooks() {
   // ── Делегированный тест (wdbc-uez7) — реестр «kind → открыть диалог» ─────
   // Без этой регистрации кнопки «📨 Делегировать» и карточка запроса в чате
   // мертвы: delegate-test.mjs умеет только доставить запрос, а какой именно
-  // диалог открыть у исполнителя — знает только этот реестр.
+  // диалог открыть у исполнителя — знает только этот реестр. Проверено дважды
+  // за одну ночь (wdbc-86p9 и независимо ещё раз параллельной сессией) — эта
+  // регистрация уже дважды терялась при неаккуратной изоляции чужого WIP в
+  // этом файле, не удаляй без крайней необходимости.
   //
   // Лечение — первый потребитель: клик по кнопке карточки открывает Лечение
   // у исполнителя с уже нацеленным пациентом (delegate-test.mjs::openDelegatedTest).
@@ -119,14 +129,17 @@ export function registerHooks() {
   // этого класса, отсюда явная проверка вместо слепого вызова.
   registerDelegatedTestOpener("genericTest", (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, label, hideCharSelect } = payload;
+    const { testKind, skillKey, charKey, label, hideCharSelect, presetModifier } = payload;
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест характеристики так не открыть.`);
       }
       const meta = CHARACTERISTICS[charKey];
       const total = executorActor.system.characteristics?.[charKey]?.total ?? 0;
-      return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect, { effectTargetActor });
+      // presetModifier (wdbc-5vf4) — тест Сопротивления психосилы несёт свой
+      // модификатор с самого предмета-источника (executePsychotest, psychic.mjs);
+      // без него игроку пришлось бы держать число в уме и вписывать вручную.
+      return sheet._rollCharacteristic(label, meta?.abbr ?? charKey, total, charKey, !!hideCharSelect, { effectTargetActor, presetModifier: Number(presetModifier) || 0 });
     }
     if (typeof sheet?._rollSkill !== "function") {
       return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — тест навыка так не открыть.`);
@@ -185,17 +198,62 @@ export function registerHooks() {
       });
     });
 
+    // Тест Сопротивления цели манифестированной психосилы (wdbc-5vf4) —
+    // кнопка карточки манифестации (module/sheets/tabs/psychic.mjs::
+    // executePsychotest), не общий делегатор showDelegateTestPicker: тут
+    // ИСПОЛНИТЕЛЬ теста заранее известен и совпадает с целью эффекта (цель
+    // защищается своим же тестом), выбирать «кто бросает» (pickDelegateActor)
+    // незачем — тот же двухветочный приём (владелец есть → шёпот с кнопкой,
+    // NPC без владельца → открыть сразу), что и внутри showDelegateTestPicker.
+    html.querySelectorAll(".psy-resist-request-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const d = ev.currentTarget.dataset;
+        const targetActor = d.targetUuid ? await fromUuid(d.targetUuid).catch(() => null) : null;
+        if (!targetActor) return ui.notifications?.warn("Цель психосилы не найдена (токен снят/удалён с этого момента?).");
+        const requesterActor = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
+        const extra = {
+          testKind: "characteristic", charKey: d.charKey, label: d.label,
+          hideCharSelect: true, presetModifier: Number(d.mod) || 0
+        };
+        if (activeOwnerOf(targetActor)) {
+          await requestDelegatedTest({
+            requesterActor, executorActor: targetActor, effectTargetActor: targetActor,
+            kind: "genericTest", label: d.label, buttonLabel: "Открыть тест Сопротивления", extra
+          });
+        } else {
+          await openDelegatedTestDirect("genericTest", targetActor, targetActor, extra);
+        }
+      });
+    });
+
     // Уклонение
     html.querySelectorAll(".wh-dodge-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
-        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        const burst = ev.currentTarget.dataset.burst === "1";
-        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
+        // Императив Избегания/Крепости (wdbc-hdxj): декларация «планирую
+        // Отскочить в укрытие?» — чекбокс рядом с кнопкой (attack-
+        // card.mjs::defenseSection, рендерится только при активном
+        // Императиве). Отмечен → берём recoil-специфичный знак ЗАРАНЕЕ, до
+        // броска; не отмечен — обычный dodgeMod, как раньше.
+        // ВЕСЬ dataset читается ДО первого await и только отсюда: браузер
+        // обнуляет ev.currentTarget, как только обработчик отдаёт ход, и любое
+        // обращение к нему ПОСЛЕ await падает с «Cannot read properties of
+        // null». Кнопка при этом молчит: исключение уходит в необработанный
+        // промис, на экране не появляется ничего — ни карточки, ни ошибки.
+        // Именно так Уклонение и Парирование не работали вовсе (найдено живой
+        // проверкой 06.09.2026).
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
+        const recoilCheckbox = el.closest(".roll-defense-section")?.querySelector(".wh-recoil-plan-checkbox");
+        const planningRecoil = recoilCheckbox?.checked === true;
+        const extraMod = parseInt((planningRecoil ? ds.extraModRecoil : ds.extraMod) || "0");
+        const hitsCount = parseInt(ds.hitsCount || "1");
+        const attackerUuid = ds.attackerUuid || "";
+        const burst = ds.burst === "1";
+        const attackerIsHorde = ds.attackerIsHorde === "1";
         if (!await confirmHordeDefense(actor, "Уклонение")) return;
         // Верхом Уклонение устроено иначе: за скакуна оно комбинируется с
         // Навыком управления, за себя — идёт с −10 (стр. 478). Кнопка в
@@ -206,8 +264,8 @@ export function registerHooks() {
           if (handled !== null) return;
         }
         await _performDodge(actor, extraMod,
-          ev.currentTarget.dataset.forceReroll || "", hitsCount, attackerUuid,
-          ev.currentTarget.dataset.melee === "1", burst, attackerIsHorde);
+          ds.forceReroll || "", hitsCount, attackerUuid,
+          ds.melee === "1", burst, attackerIsHorde);
       });
     });
 
@@ -284,19 +342,41 @@ export function registerHooks() {
       });
     });
 
+    // Парирование психосилы Талантом «Щит Клинков» (wdbc-bwf9). Право на
+    // кнопку проверяется здесь, у защищающегося: карточку пишет КАСТЕР, и на
+    // момент её сборки неизвестно, кто будет отбиваться (тот же приём, что у
+    // Сжатия — см. attack-card.mjs::defenseSection).
+    html.querySelectorAll(".psy-blade-shield-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const d = ev.currentTarget.dataset;
+        await _performPsychicParry(actor, {
+          powerName: d.powerName || "", ePR: Number(d.epr) || 0
+        });
+      });
+    });
+
     // Парирование
     html.querySelectorAll(".wh-parry-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
-        const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
-        const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
-        const burst = ev.currentTarget.dataset.burst === "1";
-        const attackerIsHorde = ev.currentTarget.dataset.attackerIsHorde === "1";
+        // dataset снимается ДО await — см. объяснение у кнопки Уклонения выше.
+        const ds = { ...ev.currentTarget.dataset };
+        const extraMod = parseInt(ds.extraMod || "0");
+        const hitsCount = parseInt(ds.hitsCount || "1");
+        const burst = ds.burst === "1";
+        const attackerIsHorde = ds.attackerIsHorde === "1";
+        // data-melee несёт КАРТОЧКА атаки: парировать стрельбу по книге может
+        // только «Щит Клинков» (wdbc-3e2x), и решает это _performParry — на
+        // момент отрисовки карточки защищающийся ещё не выбран.
+        const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         await _performParry(actor, extraMod,
-          ev.currentTarget.dataset.attackerUuid || "", hitsCount, burst, attackerIsHorde);
+          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee);
       });
     });
 
@@ -374,6 +454,8 @@ export function registerHooks() {
           attackerUuid: el.dataset.attackerUuid || "",
           hitsCount: parseInt(el.dataset.hitsCount || "1"),
           dodgeMod: parseInt(el.dataset.dodgeMod || "0"),
+          // wdbc-hdxj: "" (нет Императива) → null, дальше как в attack.mjs.
+          dodgeModRecoil: el.dataset.dodgeModRecoil ? parseInt(el.dataset.dodgeModRecoil) : null,
           parryMod: parseInt(el.dataset.parryMod || "0"),
           targetIsVehicle: el.dataset.targetVehicle === "1",
           flexible: el.dataset.flexible === "1",
@@ -543,6 +625,9 @@ export function registerHooks() {
         }, { whSkipFateSave: true });
         await markRuleUsageUsed(actor, FAITH_FLAG, "scene");
 
+        // Не карточка теста (wdbc-kuun): броска и Порога здесь нет — Очко
+        // засчитывает уже проваленный тест Страха как пройденный. Уведомление
+        // о трате, поэтому собирается по-прежнему на месте.
         await ChatMessage.create({
           speaker: ChatMessage.getSpeaker({ actor }),
           content: `<div class="wh-roll-result">
@@ -630,6 +715,17 @@ export function registerHooks() {
           const horde = await fromUuid(ds.forceHorde);
           const actor = horde?.actor ?? horde ?? null;
           if (!actor) return ui.notifications.warn("⚠️ Орда, прикрывшая цель, не найдена.");
+          return applyDamageToActor(actor, damageData);
+        }
+        // Встречная атака (wdbc-2wy7, Шипы/Цепные Бандольеры, module/combat/
+        // counter-attack.mjs): атакующий уже известен на 100% — это тот, кто
+        // провёл ЭТУ атаку/промахнулся по владельцу, — не требуем от игрока
+        // заново выцеливать его токен на сцене, как у обычного применения
+        // урона (тот же приём, что forceHorde выше).
+        if (ds.forceTarget) {
+          const doc = await fromUuid(ds.forceTarget);
+          const actor = doc?.actor ?? doc ?? null;
+          if (!actor) return ui.notifications.warn("⚠️ Цель для применения урона не найдена (возможно, удалена).");
           return applyDamageToActor(actor, damageData);
         }
         await showApplyDamageDialog(damageData);
@@ -913,10 +1009,14 @@ export function registerHooks() {
     html.querySelectorAll(".wh-shock-recovery-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
-        const ds = ev.currentTarget.dataset;
+        // Сама кнопка запоминается ДО await: ev.currentTarget после него null
+        // (см. объяснение у кнопки Уклонения выше), и строка «погасить кнопку»
+        // падала с TypeError, не дав дойти до самого броска.
+        const el = ev.currentTarget;
+        const ds = { ...el.dataset };
         const actor = ds.actorUuid ? (await fromUuid(ds.actorUuid).catch(() => null)) : null;
         if (!actor) return ui.notifications.warn("⚠️ Шокированный персонаж не найден.");
-        ev.currentTarget.disabled = true;
+        el.disabled = true;
         await rollShockRecovery(actor);
       });
     });
@@ -1042,6 +1142,8 @@ async function _applyWeaponPropEffect(ds) {
   // Тело»/«Щит Чистоты» дают weaponPropertyImmunity.<key> через Механику.
   if ((propKey && hasWeaponPropertyImmunity(actor, propKey))
     || (immunityAlias && hasWeaponPropertyImmunity(actor, immunityAlias))) {
+    // Не карточка теста (wdbc-kuun): иммунитет отменяет эффект ДО броска —
+    // ни кубов, ни Порога, только уведомление.
     return ChatMessage.create({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `<div class="wh-roll-result">
@@ -1064,12 +1166,18 @@ async function _applyWeaponPropEffect(ds) {
   const minDoP       = parseInt(ds.wpMinDop || "1") || 1;
   const vehicleFlat  = ds.wpVehicleFlat === "1";
   const armorPen     = ds.wpArmorPen === "1";
+  // Имя заряженного боеприпаса этого выстрела (wdbc-utaw) — нужно только
+  // Гиперросту (module/apps/hyper-growth.mjs), чтобы отличить СВОЙ тик яда
+  // от чужого Toxic; остальным свойствам не нужно и не используется.
+  const ammoName     = ds.wpAmmoName || "";
   const rollMode  = game.settings.get("core", "rollMode");
 
   // Bane и т.п. (vehicleFlatDamage): против Техники тест/provalyDamage не
   // применяются вовсе — рейтинг X идёт в Структуру напрямую, без броска.
   if (vehicleFlat && actor.type === "vehicle") {
     const { currentValue, newValue, newCritical, gotCritical } = await applyStructureLoss(actor, rating);
+    // Не карточка теста (wdbc-kuun): рейтинг уходит в Структуру напрямую,
+    // «автоматически, без теста» — броска и Порога у этой ветки нет.
     return ChatMessage.create(ChatMessage.applyRollMode({
       speaker: ChatMessage.getSpeaker({ actor }),
       content: `
@@ -1086,53 +1194,83 @@ async function _applyWeaponPropEffect(ds) {
   const allRolls = [];
 
   // Тест сопротивления цели (если задана характеристика)
-  let resisted = false, rollHtml = "", deg = 1;
+  let resisted = false, deg = 1;
+  let resistThreshold = "", resistRv = null, resistOutcome = "";
   if (testChar) {
     const charTotal = actor.system.characteristics?.[testChar]?.total ?? 0;
-    const threshold = charTotal + testMod;
+    // Общий сбор модификаторов (wdbc-ct65.2): тест Сопротивления считался
+    // мимо реестра правил — ни Усталость, ни Черты на эту характеристику
+    // в него не попадали.
+    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar });
+    const threshold = charTotal + testMod + resistMods.total;
     const roll      = await new Roll("1d100").evaluate();
     allRolls.push(roll);
     const rv        = roll.total;
     resisted        = rv <= threshold;
     deg             = Math.max(1, Math.floor(Math.abs(rv - threshold) / 10) + 1);
-    rollHtml = `
-      <div class="roll-threshold">${testChar.toUpperCase()}: <b>${charTotal}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""} → Порог: <b>${threshold}</b></div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${resisted
-        ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
-        : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`}</div>`;
+    // Строка Порога — общим сборщиком (wdbc-kuun): слагаемые перечисляются
+    // в скобках через запятую, как в боевых карточках.
+    resistThreshold = thresholdLine({
+      label: testChar.toUpperCase(), base: charTotal,
+      parts: [testMod !== 0 ? `${testMod >= 0 ? "+" : ""}${testMod}` : "", ...resistMods.parts],
+      threshold
+    });
+    resistRv = rv;
+    resistOutcome = resisted
+      ? `<span class="roll-success">Цель сопротивилась — эффект не наложен</span>`
+      : `<span class="roll-failure">Провал (${deg} ст.) — эффект наложен</span>`;
   }
 
   // Состояния, которые накладываем при провале. minDoP (Вибро — Ничком только
   // при 5+ Провалах, не при любом провале) отсекает состояние по degrees of
   // failure, не влияя на сам факт провала теста/доп. урон.
   const conditionsToApply = [];
-  if (kind === "grav") conditionsToApply.push(["prone", false], ["pinned", false]);
-  else if (condition && deg >= minDoP) conditionsToApply.push([condition, true]);
+  if (kind === "grav") conditionsToApply.push("prone", "pinned");
+  else if (condition && deg >= minDoP) conditionsToApply.push(condition);
 
   let appliedNote = "";
   if (!resisted && conditionsToApply.length) {
     const update = {};
     const applied = [];
-    for (const [cond, hasLevel] of conditionsToApply) {
-      update[`system.conditions.${cond}`] = true;
-      const levelField = CONDITION_LEVEL_FIELD[cond];
-      if (hasLevel && levelField) {
-        const lvl = perDoP ? deg : (fixedRnd || 1);
-        const cur = actor.system.conditions?.[levelField] ?? 0;
-        update[`system.conditions.${levelField}`] = Math.max(cur, lvl);
-        applied.push(`${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`);
-      } else {
-        applied.push(cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label);
+    // Иммунитет цели (запись Конструктора kind:"condition" режима «иммунитет»,
+    // wdbc-tl0f) виден в карточке отдельной строкой, а не молчаливым
+    // «состояние не наложилось»: единая точка (conditionApplyFields с актором)
+    // отдаёт ПУСТОЙ патч, и об этом надо сказать вслух — иначе ГМ решит, что
+    // свойство оружия сломалось.
+    const immune = [];
+    for (const cond of conditionsToApply) {
+      const levelField = conditionLevelField(cond);
+      const lvl = levelField ? (perDoP ? deg : (fixedRnd || 1)) : null;
+      const cur = levelField ? (actor.system.conditions?.[levelField] ?? 0) : 0;
+      const fields = levelField
+        ? conditionApplyFields(cond, Math.max(cur, lvl), actor)
+        : conditionApplyFields(cond, null, actor);
+      if (!Object.keys(fields).length) {
+        immune.push(CONDITIONS_DEF[cond]?.label || label);
+        continue;
       }
+      Object.assign(update, fields);
+      applied.push(levelField
+        ? `${label} (${useRounds ? "раундов" : "ур."}: ${lvl})`
+        : (cond === "prone" ? "Сбита с ног" : cond === "pinned" ? "Прижата" : label));
     }
-    await actor.update(update);
-    appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    if (Object.keys(update).length) await actor.update(update);
+    if (applied.length) appliedNote = `<div class="roll-threshold">Состояние: <b>${applied.join(", ")}</b></div>`;
+    if (immune.length) appliedNote += `<div class="roll-threshold">Иммунитет: <b>${immune.join(", ")}</b> — не накладывается</div>`;
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
     // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
     if (conditionsToApply.some(([cond]) => ENJOYMENT_CONDITIONS.has(cond))) {
       await maybeGrantEnjoymentPain(actor);
+    }
+    // Галлюцинации (Hallucinogenic (X), стр. 168, wdbc-r5o7.8): книга требует
+    // отдельный бросок 1d10 «природа галлюцинации» — тот же клик, что
+    // наложил Состояние выше, сразу решает, какая именно из десяти граней
+    // выпала (module/combat/hallucinogenic.mjs).
+    if (conditionsToApply.includes("hallucinogenic")) {
+      const { roll: hRoll, entry: hEntry } = await rollHallucinogenicEffect(actor);
+      allRolls.push(hRoll);
+      appliedNote += `<div class="roll-threshold">${rollIcon("warp","#c06fff")}Природа галлюцинации (1d10 <b>${hRoll.total}</b>): <b>${hEntry.title}</b></div><div class="roll-wprop-note">${hEntry.text}</div>`;
     }
   }
 
@@ -1142,9 +1280,12 @@ async function _applyWeaponPropEffect(ds) {
     const dmgRoll = await new Roll(dmgFormula).evaluate();
     allRolls.push(dmgRoll);
     const dmg = dmgRoll.total;
-    const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
-    if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
+    const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+    // Гиперрост (wdbc-utaw): этот же тик яда, если он от боеприпаса
+    // «Гиперрост» именно — цель получает столько же аблативных Ран.
+    // isHyperGrowthAmmoName внутри отсеивает любой другой Toxic-боеприпас.
+    dmgNote += await applyHyperGrowthTick(actor, { ammoName, dmg });
   } else if (!resisted && isProvaly && armorPen) {
     // Monofilament: та же формула рейтинг×mult+add+Провалы, но урон идёт
     // ЧЕРЕЗ поглощение брони (Pen X) — applyMonofilamentHit постит свою
@@ -1161,19 +1302,13 @@ async function _applyWeaponPropEffect(ds) {
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню, ${rating}×${provalyMult}+${provalyAdd}+${deg} Провалы): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
   }
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${label} → ${esc(actor.name)}</div>
-        ${rollHtml}
-        ${appliedNote}
-        ${dmgNote}
-      </div>`,
-    rolls: allRolls,
-    sound: allRolls.length ? CONFIG.sounds.dice : null
-  }, rollMode);
-  await ChatMessage.create(messageData);
+  await postTestCard(actor, {
+    title: `${label} → ${esc(actor.name)}`,
+    threshold: resistThreshold,
+    rv: resistRv,
+    outcome: resistOutcome,
+    sections: [appliedNote, dmgNote]
+  }, { rolls: allRolls, sound: allRolls.length > 0 });
 }
 
 // ── Выжигание Души (с Психосилового оружия) ──────────────────────────────────
@@ -1202,16 +1337,20 @@ export async function _resolveSoulBurn(attackerId) {
 // Опозный тест W+tPR×5 vs W+tPR×5. При победе псайкера — d10 непоглощаемого
 // E Dmg за каждый чистый Успех, напрямую в Раны цели (минуя броню и T.b).
 async function _executeSoulBurn(attacker, target) {
-  const rollMode = game.settings.get("core", "rollMode");
   const allRolls = [];
 
+  // Встречные тесты Воли обеих сторон — оба через общий сбор (wdbc-ct65.2):
+  // раньше ни один из них не спрашивал реестр правил, и «+10 к тестам Воли»
+  // не работал ни у нападающего псайкера, ни у сопротивляющейся цели.
   const pWp = attacker.system.characteristics?.wp?.total ?? 0;
   const pPr = attacker.system.psyker?.currentRating ?? 0;
-  const pEff = pWp + 5 * pPr;
+  const pMods = collectTestMods(attacker, { kind: "skill", char: "wp" });
+  const pEff = pWp + 5 * pPr + pMods.total;
 
   const tWp = target.system.characteristics?.wp?.total ?? 0;
   const tPr = target.system.psyker?.currentRating ?? 0;
-  const tEff = tWp + 5 * tPr;
+  const tMods = collectTestMods(target, { kind: "skill", char: "wp" });
+  const tEff = tWp + 5 * tPr + tMods.total;
 
   // Бросок псайкера
   const pRoll = await new Roll("1d100").evaluate(); allRolls.push(pRoll);
@@ -1235,9 +1374,8 @@ async function _executeSoulBurn(attacker, target) {
     const dRoll = await new Roll(`${net}d10`).evaluate(); allRolls.push(dRoll);
     const dmg   = dRoll.total;
     // Непоглощаемый урон напрямую в Раны (затем в Критические)
-    const { applied: woundsChanged, currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
+    const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } =
       await applyWoundLoss(target, dmg);
-    if (woundsChanged) await applyMechBlocksForActor(target, { kind: "onWoundsLoss" });
 
     const soulDestroyed = newCritical >= woundDeathThreshold(maxWounds);
     dmgNote = `
@@ -1248,25 +1386,25 @@ async function _executeSoulBurn(attacker, target) {
       </div>`;
   }
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: attacker }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Выжигание Души → ${esc(target.name)}</div>
-        <div class="roll-threshold">Псайкер W+tPR×5 → Порог <b>${pEff}</b> | Бросок <b>${pRv}</b>
-          ${pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>
-        <div class="roll-threshold">Цель W+tPR×5 → Порог <b>${tEff}</b> | Бросок <b>${tRv}</b>
-          ${tSucc ? `<span class="roll-success">(успех, ${tDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>
-        <div class="roll-outcome">${burned
-          ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
-          : `<span class="roll-success">Цель устояла</span>`}</div>
-        ${dmgNote}
-        <details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>
-      </div>`,
-    rolls: allRolls,
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-  await ChatMessage.create(messageData);
+  // Карточка — общим сборщиком (wdbc-kuun). Тест встречный: у каждой стороны
+  // свой Порог и свой бросок в одной строке, поэтому обе строки идут как свои
+  // (lines), а не через общую строку Порога — вид сохранён как был.
+  await postTestCard(attacker, {
+    icon: rollIcon("fire","#ff8a3a"), title: `Выжигание Души → ${esc(target.name)}`,
+    lines: [
+      `<div class="roll-threshold">Псайкер W+tPR×5 → Порог <b>${pEff}</b> | Бросок <b>${pRv}</b>
+        ${pSucc ? `<span class="roll-success">(успех, ${pDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>`,
+      `<div class="roll-threshold">Цель W+tPR×5 → Порог <b>${tEff}</b> | Бросок <b>${tRv}</b>
+        ${tSucc ? `<span class="roll-success">(успех, ${tDoS} ст.)</span>` : `<span class="roll-failure">(провал)</span>`}</div>`
+    ],
+    outcome: burned
+      ? `<span class="roll-failure">Душа выжжена — ${net} чист. Успех(ов)!</span>`
+      : `<span class="roll-success">Цель устояла</span>`,
+    sections: [
+      dmgNote,
+      `<details class="roll-dice-details"><summary>Показать кубы</summary>${(await Promise.all(allRolls.map(r => r.render()))).join("")}</details>`
+    ]
+  }, { rolls: allRolls });
 }
 
 // ── Контекстное меню судьбы ───────────────────────────────────────────────────
@@ -1404,8 +1542,6 @@ function _attachFateContextMenu(message, html) {
       const newRoll = new Roll(roll.formula);
       await newRoll.evaluate();
 
-      const rollMode = game.settings.get("core", "rollMode");
-
       // Читаем старый контент и строим новый
       const oldContent = html.querySelector(".wh-roll-result")?.innerHTML ?? "";
 
@@ -1419,31 +1555,26 @@ function _attachFateContextMenu(message, html) {
         ? Math.floor(Math.abs(rv - threshold) / 10) + 1
         : null;
 
-      let outcomeHtml = `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`;
-      if (threshold !== null && hit !== null) {
-        outcomeHtml += hit
-          ? `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span></div>`
-          : `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span></div>`;
-      }
+      const outcomeSpan = (threshold !== null && hit !== null)
+        ? (hit
+          ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
+          : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`)
+        : "";
 
-      const newMessageData = ChatMessage.applyRollMode({
-        speaker: message.speaker,
-        content: `
-          <div class="wh-roll-result">
-            <div class="roll-header">Переброс за ${ft.one}</div>
-            <div class="roll-damage-meta">
-              ${ft.word} потрачена (осталось: ${reroll1.poolValue})
-            </div>
-            ${threshold !== null
-              ? `<div class="roll-threshold">Порог: <b>${threshold}</b></div>`
-              : ""}
-            ${outcomeHtml}
+      // Карточка — общим сборщиком (wdbc-kuun). Порядок строк сохранён: трата
+      // Очка стоит выше Порога, а сам бросок подписан «Новый бросок», как и
+      // был, поэтому идёт своей строкой, а не общей строкой броска.
+      await postTestCard(actor, {
+        title: `Переброс за ${ft.one}`,
+        lines: [
+          `<div class="roll-damage-meta">
+            ${ft.word} потрачена (осталось: ${reroll1.poolValue})
           </div>`,
-        rolls: [newRoll],
-        sound: CONFIG.sounds.dice
-      }, rollMode);
-
-      await ChatMessage.create(newMessageData);
+          threshold !== null ? thresholdLine({ threshold }) : "",
+          `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`
+        ],
+        outcome: outcomeSpan
+      }, { rolls: [newRoll], speaker: message.speaker });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на переброс! Осталось: ${reroll1.poolValue}`
@@ -1500,30 +1631,27 @@ function _attachFateContextMenu(message, html) {
       const bonus1 = await spendFromInfamyPool(actor, 1, "system.fate.value");
       await actor.update({ "system.fate.value": bonus1.poolValue });
 
-      const rollMode = game.settings.get("core", "rollMode");
-      const outcomeHtml = outcome.success
-        ? `<div class="roll-outcome"><span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span></div>`
-        : `<div class="roll-outcome"><span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span></div>`;
+      const outcomeSpan = outcome.success
+        ? `<span class="roll-success">Успех — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`
+        : `<span class="roll-failure">Провал — ${outcome.degrees} ${_degWord(outcome.degrees)}</span>`;
 
-      const newMessageData = ChatMessage.applyRollMode({
-        speaker: message.speaker,
-        content: `
-          <div class="wh-roll-result">
-            <div class="roll-header">+10 за ${ft.one}</div>
-            <div class="roll-damage-meta">
-              ${ft.word} потрачена (осталось: ${bonus1.poolValue})
-            </div>
-            <div class="roll-threshold">
-              Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
-              <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
-            </div>
-            <div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>
-            ${outcomeHtml}
+      // Карточка — общим сборщиком (wdbc-kuun). Строка Порога здесь своя
+      // («было → стало»), и бросок подписан «тот же, куб не перебрасывается» —
+      // обе идут своими строками, чтобы вид не поменялся.
+      await postTestCard(actor, {
+        title: `+10 за ${ft.one}`,
+        lines: [
+          `<div class="roll-damage-meta">
+            ${ft.word} потрачена (осталось: ${bonus1.poolValue})
           </div>`,
-        rolls: [roll]
-      }, rollMode);
-
-      await ChatMessage.create(newMessageData);
+          `<div class="roll-threshold">
+            Порог: <b>${outcome.base}</b> → <b>${outcome.threshold}</b>
+            <span style="font-size:0.82em;color:#3a7a3a;">(+${outcome.bonus})</span>
+          </div>`,
+          `<div class="roll-dice">Бросок: <b>${rv}</b> <span style="font-size:0.82em;opacity:.75;">— тот же, куб не перебрасывается</span></div>`
+        ],
+        outcome: outcomeSpan
+      }, { rolls: [roll], sound: false, speaker: message.speaker });
 
       ui.notifications.info(
         `✨ ${actor.name} тратит ${ft.one} на +10! Осталось: ${bonus1.poolValue}`
@@ -1618,6 +1746,23 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM) return;
     for (const actor of game.actors ?? []) {
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
+      // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
+      // по той же причине, что временные выдачи Черт выше: они привязаны к
+      // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно
+      // это и открывает сроки, которые уже умеет виджет «Летоисчисление»:
+      // прокрутил время — Состояние снялось само.
+      //
+      // timeOnly обязателен (wdbc-tr02): без него сюда попадали и сроки в
+      // РАУНДАХ. Вне боя ядро их остаток посчитать не может, но флаг
+      // «истекло» на каждый тик времени поднимает — и «Оглушение на 2
+      // раунда», выданное до объявления боя, снималось само в течение минуты,
+      // ещё до первого удара. Раунды снимаются только на смену Хода, в
+      // processConditionTurnStart.
+      const swept = await sweepConditionDurations(actor, { timeOnly: true });
+      // Молча исчезнувшее Состояние ГМ считает багом, а не сроком — говорим.
+      if (swept.expired.length) {
+        await postConditionCard(actor, swept.expired.map(conditionExpiryLine));
+      }
     }
   });
 
@@ -1823,6 +1968,8 @@ function _attachFateContextMenu(message, html) {
     if (explosionDamage) {
       const roll = await (new Roll(explosionDamage)).evaluate();
       const { cur, next, lost } = await applyHullDamage(item.actor, roll.total);
+      // Не карточка теста (wdbc-kuun): бросок тут есть, а Порога нет — это
+      // урон Прочности по факту повреждённого узла, а не тест.
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: item.actor }),
         content: `<div class="wh-roll-result"><div class="roll-header">💥 ${esc(item.name)} — ${note}</div>

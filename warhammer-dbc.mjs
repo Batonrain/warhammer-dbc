@@ -1,6 +1,10 @@
 console.log("Warhammer DBC | Загрузка системы...");
 
 import { getCriticalEffect }          from "./critical-tables.mjs";
+// Источник правил «Адъютант» регистрирует себя сам при загрузке — он
+// единственный, кого rules/sources.mjs не импортирует (цикл импортов,
+// wdbc-795h). Без этой строки Талант просто не даст Командиру переброс.
+import "./module/rules/adjutant.mjs";
 import { RACES, SUBRACES }            from "./module/constants/races.mjs";
 import { CHARACTERISTICS, IMPROVEMENTS,
          IMPROVEMENT_BONUS,
@@ -39,7 +43,6 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange } from "./module/apps/mechanics.mjs";
-import { applyMechBlocks, applyMechBlocksForActor } from "./module/apps/mech-blocks-apply.mjs";
 import { isItemActive }              from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
@@ -58,6 +61,7 @@ import { reconcileKingsPlateToFit } from "./module/apps/kings-plate.mjs";
 import { reconcileBloodShieldToFit } from "./module/apps/blood-shield.mjs";
 import { reconcileEternalWarToFit } from "./module/apps/eternal-war.mjs";
 import { reconcilePsalmUnseenFortressToFit } from "./module/apps/psalm-unseen-fortress.mjs";
+import { reconcileHyperGrowthToFit } from "./module/apps/hyper-growth.mjs";
 import { openCompendiumBrowser } from "./module/apps/compendium-browser.mjs";
 import { hasRuleFlag }                from "./module/rules/flags.mjs";
 import { redirectCorruptionToMadness } from "./module/rules/corruption-madness.mjs";
@@ -66,15 +70,17 @@ import { FATE_SAVE_FLAG, FATE_SAVE_DIE, fateSpent, fateSaved, fatePoolLabel }
 import { DEFAULT_CALENDAR_CONFIG }    from "./module/constants/imperial-calendar.mjs";
 import { openSystemsOverview, refreshSystemsOverview } from "./module/apps/systems-overview.mjs";
 import { openCraftWorkshop } from "./module/apps/craft-workshop.mjs";
-import { openCogitatorManager } from "./module/apps/cogitator.mjs";
+import { openCogitatorManager, registerCogitatorAutoOpen } from "./module/apps/cogitator.mjs";
 import { openTarotReader } from "./module/apps/veil.mjs";
 import { openRigManager } from "./module/apps/rig-manager.mjs";
 import { openSurgeon } from "./module/apps/surgeon.mjs";
 import { openVeilMystic, veilShift, refreshVeilWindow } from "./module/apps/veil.mjs";
 import { refreshVeilOverlay } from "./module/apps/veil-overlay.mjs";
 import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/apps/scene-nexus.mjs";
+import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-settings.mjs";
+import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
-import { openEnvironment, refreshEnvironment, refreshEnvWidget } from "./module/apps/environment.mjs";
+import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
 import { addCallout, clearAllCallouts, registerCalloutHooks } from "./module/apps/callouts.mjs";
@@ -151,11 +157,13 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/parts/infamy-strip.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-stats.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-combat.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/tab-active-effects.hbs", // ← НОВОЕ, wdbc-xrsh
     "systems/warhammer-dbc/templates/actor/parts/tab-abilities.hbs",
     "systems/warhammer-dbc/templates/actor/parts/toggle-rows.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-social.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-psy.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-gear.hbs",
+    "systems/warhammer-dbc/templates/actor/parts/tab-craft.hbs", // ← НОВОЕ, wdbc-42a6
     "systems/warhammer-dbc/templates/actor/parts/tab-advance.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-notes.hbs",
     "systems/warhammer-dbc/templates/actor/parts/tab-effects.hbs",  // ← НОВОЕ
@@ -215,6 +223,9 @@ Hooks.once("init", () => {
     "systems/warhammer-dbc/templates/actor/squad-sheet.hbs",
     // Формирование («Книга Битв»)
     "systems/warhammer-dbc/templates/actor/formation-sheet.hbs",
+    // Сцена: Окружение + Завеса как партиалы объединённого окна (wdbc-paif)
+    "systems/warhammer-dbc/templates/apps/environment.hbs",
+    "systems/warhammer-dbc/templates/apps/veil.hbs",
   ]);
 
   registerHandlebarsHelpers();
@@ -389,6 +400,17 @@ Hooks.once("init", () => {
     onChange: () => { try { canvas?.notes?.placeables?.forEach(n => n.draw()); } catch (e) {} }
   });
 
+  // Настройка: личный вид листов — с обшивкой «Инфопланшет» или без неё
+  // (wdbc-3wwe). Тема (когитатор/пергамент) и содержимое листа не меняются —
+  // снимается только декоративный корпус, см. applyHousingMode ниже.
+  game.settings.register("warhammer-dbc", "sheetHousing", {
+    name: "Вид листов",
+    hint: "«Инфопланшет» — металлический корпус когитатора вокруг листа: заклёпки по углам, шильдик с лампами, ободок экрана, нижняя решётка. «Классический» — тот же лист без этого оформления. Настройка личная: у каждого игрока своя, чужие листы она не меняет.",
+    scope: "client", config: true, type: String, default: "cog",
+    choices: { cog: "Инфопланшет", classic: "Классический" },
+    onChange: () => applyHousingMode()
+  });
+
   // Версия разложенных по папкам компендиумов (одноразовая миграция раскладки)
   game.settings.register("warhammer-dbc", "packFoldersVersion", {
     scope: "world", config: false, type: Number, default: 0
@@ -489,7 +511,7 @@ Hooks.once("init", () => {
       try { refreshVeilOverlay(); } catch (e) {}
       try { refreshVeilWindow(); } catch (e) {}
       try { refreshEnvWidget(); } catch (e) {}
-      try { refreshEnvironment(); } catch (e) {}
+      try { refreshSceneSettings(); } catch (e) {}
     }
   });
 
@@ -511,6 +533,22 @@ Hooks.once("init", () => {
     });
   } catch (e) { console.warn("warhammer-dbc | noteIcons", e); }
 });
+
+/* Личная настройка «Вид листов» (wdbc-3wwe): «Классический» снимает с листов
+   декоративную обшивку «Инфопланшет» — металлический корпус, заклёпки-черепа,
+   шильдик с лампами, ободок экрана и нижнюю решётку. Класс вешается на <body>,
+   а не на корень каждого листа: обшивку показывают семь разных классов листов
+   (character/minion/daemon/demonPrince через общий .cog-frame + squad/wh-horde/
+   vehicle/ship/formation/star-system напрямую), и один выключатель снаружи
+   дешевле, чем маркер в каждом из них. Стили — styles/sheets/actor-housing.css,
+   блок «Классический вид». */
+function applyHousingMode() {
+  try {
+    const classic = game.settings.get("warhammer-dbc", "sheetHousing") === "classic";
+    document.body.classList.toggle("wh-classic-ui", classic);
+  } catch (e) { /* до ready настройки может ещё не быть */ }
+}
+Hooks.once("ready", applyHousingMode);
 
 // Прямой переход с заметки-пина звёздной системы на лист актёра (минуя журнал).
 // Срабатывает ТОЛЬКО если у журнала заметки выставлен наш флаг systemActorUuid —
@@ -796,7 +834,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openEnvironment, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -921,13 +959,15 @@ Hooks.once("init", () => initMovedFlagTracking());
 Hooks.once("init", () => initFreeAttackHooks());
 Hooks.once("init", () => initEquipmentIndex());
 Hooks.once("init", () => registerCalloutHooks());
+Hooks.once("init", () => initSceneControlsGuard());
 
 // ── Виджет «Окружающая Среда» (левый-нижний угол, видят все) ──────────────────
 Hooks.once("ready",     () => refreshEnvWidget());
 Hooks.on("canvasReady", () => refreshEnvWidget());
 Hooks.on("updateScene", (scene) => {
   refreshEnvWidget();                                   // виджет — у всех
-  if (scene?.id === (canvas?.scene?.id)) refreshEnvironment();  // окно ГМа
+  // Окно ГМа — теперь единственное: объединённая страница «Сцена» (wdbc-59if).
+  if (scene?.id === (canvas?.scene?.id)) refreshSceneSettings();
 });
 
 // ── Виджет «Имперская дата» (видят все; источник времени — game.time.worldTime,
@@ -1016,8 +1056,13 @@ Hooks.on("getSceneControlButtons", (controls) => {
     const TAROT_ICON = "fa-solid fa-wand-sparkles";
     const VEIL_ICON = "fa-solid fa-hand-sparkles";
     const NEXUS_ICON = "fa-solid fa-diagram-project";
+    // ГМу — объединённое окно «Сцена» (Окружение + Завеса одной страницей,
+    // wdbc-paif/wdbc-59if). Игроку — та же Завеса отдельным окном: страница
+    // «Сцена» целиком мастерская (openSceneSettings отшивает не-ГМа), а доступ
+    // к Завесе и Таро игрокам нужен. Одно окно на роль, а не две правды.
     const triggerVeil = () => {
-      openVeilMystic();
+      if (game.user.isGM) openSceneSettings("veil");
+      else openVeilMystic();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
     const triggerNexus = () => {
@@ -1026,7 +1071,7 @@ Hooks.on("getSceneControlButtons", (controls) => {
     };
     const ENV_ICON = "fa-solid fa-cloud-sun-rain";
     const triggerEnv = () => {
-      openEnvironment();
+      openSceneSettings("env");
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
     };
     const CALLOUT_ICON = "fa-solid fa-map-pin";
@@ -1075,20 +1120,32 @@ Hooks.on("getSceneControlButtons", (controls) => {
         { action: "veil", icon: VEIL_ICON, label: "Завеса и Мистика", callback: () => triggerVeil() },
         { action: "nexus", icon: NEXUS_ICON, label: "Нексус Сцен", callback: () => triggerNexus() }
       ];
-      if (game.user.isGM) buttons.push(
-        { action: "env", icon: ENV_ICON, label: "Окружающая Среда", callback: () => triggerEnv() },
-        { action: "calloutAdd", icon: CALLOUT_ICON, label: "Добавить коллаут", callback: () => triggerCallout() },
-        { action: "calloutClear", icon: CALLOUT_CLEAR_ICON, label: "Очистить коллауты", callback: () => triggerClearCallouts() }
-      );
+      // Коллауты рисуются НА сцене (Drawing/Tile) — без открытой карты их
+      // некуда класть. Остальные разделы канваса не требуют и остаются
+      // доступны, когда меню открыто в обход молчащей панели (wdbc-3w94,
+      // module/apps/scene-controls-guard.mjs).
+      const canvasUp = (() => { try { return !!canvas?.ready; } catch (e) { return false; } })();
+      if (game.user.isGM) {
+        buttons.push({ action: "env", icon: ENV_ICON, label: "Окружающая Среда", callback: () => triggerEnv() });
+        if (canvasUp) buttons.push(
+          { action: "calloutAdd", icon: CALLOUT_ICON, label: "Добавить коллаут", callback: () => triggerCallout() },
+          { action: "calloutClear", icon: CALLOUT_CLEAR_ICON, label: "Очистить коллауты", callback: () => triggerClearCallouts() }
+        );
+      }
       foundry.applications.api.DialogV2.wait({
         window: { title: "Doom BC" },
         classes: ["warhammer-dbc", "wh-holo"],
         position: { width: 320 },
-        content: "<p>Выберите раздел:</p>",
+        content: canvasUp
+          ? "<p>Выберите раздел:</p>"
+          : "<p>Выберите раздел:</p><p style=\"opacity:.75\">Сцена не открыта — работа с коллаутами и остальная панель инструментов Foundry недоступны, пока карта не открыта.</p>",
         buttons,
         rejectClose: false
       }).catch(e => console.error("warhammer-dbc | wh-hub", e));
     };
+    // Без открытой сцены панель Foundry молчит и до onChange дело не доходит —
+    // guard в этом случае откроет то же самое меню сам (wdbc-3w94).
+    registerHubOpener(openWhHub);
     const triggerHub = () => {
       openWhHub();
       setTimeout(() => { try { ui.controls?.activate?.({ control: "tokens" }); } catch (e) {} }, 60);
@@ -1565,13 +1622,6 @@ export async function handleItemCreated(item, options, userId) {
   // ничего про эту гонку не доказывал.
   if (options?.[SKIP_MECHANICS_HOOK]) return;
   await applyItemMechanics(item);
-
-  // Новая блочная модель (doombc-req-condition-effect-plan) — живёт РЯДОМ со
-  // старым flags.mechanics, не вместо: предмет, ещё не переведённый на блоки,
-  // просто не несёт flags.mechBlocks, и applyMechBlocks тихо ничего не находит
-  // (getMechBlocks → []). Тот же SKIP_MECHANICS_HOOK-гейт выше, что и у
-  // applyItemMechanics — носитель Расы/Субраты уже получил её синхронно.
-  await applyMechBlocks(item, actor, { kind: "onGrant" });
 }
 
 Hooks.on("createItem", handleItemCreated);
@@ -1645,8 +1695,10 @@ Hooks.on("deleteItem", async (item, options, userId) => {
 });
 
 // Динамические источники аблативных Ран (wdbc-w8ws: Раковое Исцеление,
-// Освежёванный, Чумной Пастырь) держат СВОЮ долю общего пула флагом на
-// акторе-получателе и двигают её ablativeMax вместе с ablative — без этого
+// Освежёванный, Чумной Пастырь; wdbc-utaw: Гиперрост — единственный случай,
+// где получатель доли не владелец источника, а цель, в которую он попал)
+// держат СВОЮ долю общего пула флагом на акторе-получателе и двигают её
+// ablativeMax вместе с ablative — без этого
 // клэмп rules/character.mjs::prepareCharacterDerived («осиротевший пул без
 // источника должен затухать», #291) стёр бы грант на первом же такте
 // расчёта. Как только общий пул уменьшается по ЛЮБОЙ причине (поглощение
@@ -1664,6 +1716,7 @@ Hooks.on("updateActor", async (actor, changed, options, userId) => {
   await reconcileBloodShieldToFit(actor);
   await reconcileEternalWarToFit(actor);
   await reconcilePsalmUnseenFortressToFit(actor);
+  await reconcileHyperGrowthToFit(actor);
   if (actor.effects?.some(e => e.getFlag?.("warhammer-dbc", "cancerousHealingPenalty")))
     await syncCancerousHealingPenalty(actor);
 });
@@ -1828,6 +1881,11 @@ registerSceneLiveRecalc({
   regionBehavior: true,
 });
 
+// ── Когитаторы (wdbc-4hyt): автооткрытие консоли при входе на привязанную
+// сцену, см. module/apps/cogitator.mjs → registerCogitatorAutoOpen. Привязка
+// сцена→когитатор — флаг Scene, выставляется из CogitatorManager.
+registerCogitatorAutoOpen();
+
 // ── «Пламенная вера» (Мир-храм): шанс не потратить Очко ──────────────────────
 // Ловим ЛЮБОЕ уменьшение system.fate.value одним хуком, а не правим каждое из
 // мест списания (лист, hooks.mjs, Боль/Душа): так правило достанет и то место
@@ -1848,9 +1906,6 @@ Hooks.on("updateActor", async (doc, changes, options, userId) => {
   if (options?.whSkipFateSave) return;
   if (typeof changes.system?.fate?.value !== "number") return;
   const spent = fateSpent(options?.whFatePrev, changes.system.fate.value);
-  // Живая врезка Condition "onResourceSpend" (doombc-req-condition-effect-plan)
-  // — независимо от Пламенной Веры ниже: факт траты, не факт «вернули ли».
-  if (spent) await applyMechBlocksForActor(doc, { kind: "onResourceSpend" });
   if (!spent || !hasRuleFlag(doc, FATE_SAVE_FLAG)) return;
 
   const rolls = [];

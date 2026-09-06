@@ -12,6 +12,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { subordinatesOf, squadsCommandedBy } from "../rules/adjutant.mjs";
 import { effectiveRace } from "../rules/race.mjs";
 import { AELDARI_RACES } from "../constants/races.mjs";
@@ -19,12 +20,15 @@ import { changeInfamy, spendFromInfamyPool } from "../apps/infamy-points.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const DISGRACE_FLAG = "lordOfExoditesDisgraced";
 
 /** Владеет ли актор Чертой Lord of the Exodites / Повелитель Экзодитов. */
 export function hasLordOfExodites(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Lord of the Exodites"));
+  return hasAbility(actor, "ability.lordOfTheExodites", "Lord of the Exodites", "trait");
 }
 
 /**
@@ -63,9 +67,12 @@ export async function clearMoraleConditions(lord, targetActors) {
   const targets = (targetActors ?? []).filter(a => a && a !== lord);
   if (!targets.length) return ui.notifications?.warn("⚠️ Выберите хотя бы одного союзника.");
   for (const actor of targets) {
-    await actor.update({ "system.conditions.shocked": false, "system.conditions.pinned": false });
+    await actor.update({ ...conditionRemoveFields("shocked"), ...conditionRemoveFields("pinned") });
   }
   const names = targets.map(a => esc(a.name)).join(", ");
+  // Не карточка теста (wdbc-kuun): Полное действие снимает состояния
+  // ГАРАНТИРОВАННО, без броска и Порога — это уведомление стола о том, кого
+  // вывели, поэтому собирается по-прежнему на месте.
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: lord }),
     content: `<div class="wh-roll-result">
@@ -92,7 +99,10 @@ export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
     return ui.notifications?.warn("⚠️ Персонаж не Командир ни одного Отряда.");
   }
   const base = Number(actor.system?.skills?.command?.total) || 0;
-  const threshold = base + mod;
+  // Общий сбор модификаторов (wdbc-ct65.3) — тот же, что у обычного теста
+  // Командования (sheets/tabs/command.mjs).
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "command", char: "fel" });
+  const threshold = base + mod + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const ok = rv <= threshold;
@@ -108,18 +118,20 @@ export async function rallyExoditeSquad(actor, { mod = -10 } = {}) {
     }
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("crown","#4dffa6")}Повелитель Экзодитов — восстановление Судьбы</div>
-      <div class="roll-threshold">Command(F) <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} → Порог <b>${threshold}</b></div>
-      <div class="roll-dice">Бросок: <b>${rv}</b></div>
-      <div class="roll-outcome">${ok
-        ? `<span class="roll-success">Успех — ${sux} ${_degWord(sux)}, +1 Судьбы: ${healedNames.join(", ") || "—"}</span>`
-        : `<span class="roll-failure">Провал</span>`}</div>
-    </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Карточка — общим сборщиком (wdbc-kuun): слагаемые Порога перечисляются
+  // в скобках через запятую, как в боевых карточках, а не через « · ».
+  await postTestCard(actor, {
+    icon: rollIcon("crown","#4dffa6"), title: "Повелитель Экзодитов — восстановление Судьбы",
+    threshold: thresholdLine({
+      label: "Command(F)", base,
+      parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
+      threshold
+    }),
+    rv,
+    outcome: ok
+      ? outcomeHtml(true, `Успех — ${sux} ${_degWord(sux)}, +1 Судьбы: ${healedNames.join(", ") || "—"}`)
+      : outcomeHtml(false, "Провал")
+  }, { rolls: [roll] });
   return { ok, healedNames };
 }
 
@@ -137,6 +149,9 @@ export async function applyLordOfExoditesFailPenalty(actor, { dof = 0, usedRerol
   await actor.update({ "system.fate.value": spend.poolValue });
   await actor.setFlag("warhammer-dbc", DISGRACE_FLAG, true);
   await flipAuraGrants(actor, -20);
+  // Не карточка теста (wdbc-kuun): броска и Порога здесь нет — это следствие
+  // УЖЕ проваленного теста Морали (списанная Судьба и перевёрнутая аура),
+  // сообщение-уведомление, поэтому собирается по-прежнему на месте.
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">

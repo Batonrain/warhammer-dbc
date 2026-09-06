@@ -6,6 +6,7 @@
 import { _degWord, _hitWord, _leftoverSuccessPhrase, negatedHits, esc } from "../helpers/utils.mjs";
 import { addEvasionSurplus } from "./evasion-pool.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE, VEHICLE_BREAKAGES } from "../constants/vehicle.mjs";
@@ -17,7 +18,6 @@ import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { resolveAttackerToken, tokenDistance } from "./facing.mjs";
 import { apCostForActionType, canSpendActionPoints, spendActionPoints } from "./action-economy.mjs";
-import { applyMechBlocksForActor } from "../apps/mech-blocks-apply.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -55,35 +55,25 @@ export async function _performSwerve(actor, extraMod = 0, hitsCount = 1, attacke
   if (der.chassisType === "tracked") modParts.push("гусеничная −10");
   if (extraMod !== 0)                modParts.push(`мод ${sgn(extraMod)}`);
 
-  let outcomeHtml;
+  let outcome;
   if (!passed) {
-    outcomeHtml = `<span class="roll-failure">Вираж провален — ${deg} ${_degWord(deg)}. ${
-      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Попадание проходит."}</span>`;
+    outcome = outcomeHtml(false, `Вираж провален — ${deg} ${_degWord(deg)}. ${
+      totalHits > 1 ? `Все ${totalHits} ${_hitWord(totalHits)} проходят.` : "Попадание проходит."}`);
   } else if (remaining === 0) {
-    outcomeHtml = `<span class="roll-success">Вираж успешен — ${deg} ${_degWord(deg)}${
-      totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака промахивается.</span>`;
+    outcome = outcomeHtml(true, `Вираж успешен — ${deg} ${_degWord(deg)}${
+      totalHits > 1 ? `, снимает все ${totalHits} ${_hitWord(totalHits)}` : ""}! Атака промахивается.`);
   } else {
-    outcomeHtml = `<span class="roll-failure">${rollIcon("warn","#ffb84d")}Вираж успешен — ${deg} ${_degWord(deg)}, снимает ${negated} из ${totalHits} ${_hitWord(totalHits)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит.</span>`;
+    outcome = outcomeHtml(false, `${rollIcon("warn","#ffb84d")}Вираж успешен — ${deg} ${_degWord(deg)}, снимает ${negated} из ${totalHits} ${_hitWord(totalHits)}. ${remaining} ${_hitWord(remaining)} всё ещё проходит.`);
   }
   const leftoverNote = banked
     ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
     : "";
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("warp","#8fd0ff")}Вираж — ${esc(actor.name)}</div>
-        <div class="roll-threshold">
-          Operate: <b>${operate}</b> (${modParts.join(", ")}) → Порог: <b>${threshold}</b>
-        </div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcomeHtml}</div>
-        ${leftoverNote}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("warp","#8fd0ff"), title: `Вираж — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Operate", base: operate, parts: modParts, threshold }),
+    rv, outcome, sections: [leftoverNote]
+  }, { rolls: [roll] });
 }
 
 // ─── Тест Трудного Ландшафта ──────────────────────────────────────────────────
@@ -94,11 +84,10 @@ export async function showTerrainDialog(actor) {
   const operate = Number(actor.system.operate) || 0;
   const der     = actor.system.derived || {};
   if (der.traitFlags?.ignoreDifficultTerrain) {
-    return ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
-        <div class="roll-outcome"><span class="roll-success">Сверхтяжёлая — игнорирует Трудный Ландшафт, тест не требуется.</span></div></div>`
-    });
+    return postTestCard(actor, {
+      icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+      outcome: outcomeHtml(true, "Сверхтяжёлая — игнорирует Трудный Ландшафт, тест не требуется.")
+    }, { sound: false });
   }
 
   const terrainOpts = TERRAIN_TABLE
@@ -146,23 +135,19 @@ export async function showTerrainDialog(actor) {
 async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amphibiousWater = false) {
   // Амфибия по воде: неглубокая вода не считается Трудным Ландшафтом вовсе.
   if (amphibiousWater) {
-    return ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result"><div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
-        <div class="roll-outcome"><span class="roll-success">Амфибия — неглубокая вода не считается Трудным Ландшафтом, тест не требуется.</span></div></div>`
-    });
+    return postTestCard(actor, {
+      icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+      outcome: outcomeHtml(true, "Амфибия — неглубокая вода не считается Трудным Ландшафтом, тест не требуется.")
+    }, { sound: false });
   }
   const totalMod  = terrainMod + manMod + extraMod;
   const threshold = operate + totalMod;
 
   if (totalMod >= 0) {
-    return ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
-        <div class="roll-outcome"><span class="roll-success">Суммарный штраф ${sgn(totalMod)} ≥ 0 — проезд безопасен без теста.</span></div>
-      </div>`
-    });
+    return postTestCard(actor, {
+      icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+      outcome: outcomeHtml(true, `Суммарный штраф ${sgn(totalMod)} ≥ 0 — проезд безопасен без теста.`)
+    }, { sound: false });
   }
 
   const roll   = await new Roll("1d100").evaluate();
@@ -190,17 +175,11 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
       ${stopped ? `<div class="roll-allout-note">Машина останавливается, зайдя наполовину в область Трудного Ландшафта.</div>` : ""}`;
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Operate <b>${operate}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">${rollIcon("dice","#6fe6ff")}1d100: <b>${rv}</b></div>
-        ${body}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">Operate <b>${operate}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${manMod ? `, манёвр ${sgn(manMod)}` : ""}${extraMod ? `, мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b></div>`,
+    rv, sections: [body]
+  }, { rolls: [roll] });
 }
 
 // ─── Таран ────────────────────────────────────────────────────────────────────
@@ -269,19 +248,13 @@ async function _resolveRam(actor, fast, targetBigger) {
     ? `<div class="roll-allout-note">Цель ≥ машины: машина получает попадание в Лоб. броню = Поглощению цели от Тарана + 1d5${fast ? "/1d10" : ""}.</div>`
     : `<div class="roll-threshold" style="font-size:0.82em;">Цель ≤ машины: её отбрасывает на &lt;Урон до поглощения / 10 × (1 + Размер машины − Размер цели)&gt; м; меньшую на 1+ Размер — тест или сбита с ног.</div>`;
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#ff8a3a")}Таран — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b>${fast ? " (1d10+1d10)" : " (1d10)"} = <b>${dmg}</b></div>
-        <div class="roll-dice">${rollIcon("dice","#6fe6ff")}${fast ? "2×1d10" : "1d10"}: <b>${roll.total}</b></div>
-        ${bigNote}
-        ${defenseBtns}
-        ${applyBtn}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Строка броска здесь своя: это бросок УРОНА («2×1d10: 12»), а не теста.
+  await postTestCard(actor, {
+    icon: rollIcon("burst","#ff8a3a"), title: `Таран — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b>${fast ? " (1d10+1d10)" : " (1d10)"} = <b>${dmg}</b></div>`,
+    lines: [`<div class="roll-dice">${rollIcon("dice","#6fe6ff")}${fast ? "2×1d10" : "1d10"}: <b>${roll.total}</b></div>`],
+    sections: [bigNote, defenseBtns, applyBtn]
+  }, { rolls: [roll] });
 }
 
 // ─── Пустотные Щиты: попадание принял щит, не броня (wdbc-y33b) ───────────────
@@ -298,25 +271,29 @@ async function _resolveVoidShieldHit(actor, shields, idx, damageData) {
   await actor.update({ "system.voidShields": newShields });
 
   const dtLabel = DAMAGE_TYPES[damageType] || damageType;
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("shield", "#6fe6ff")}Пустотный Щит — ${esc(actor.name)}</div>
-        <div class="roll-damage-meta">
+  // Карточка УРОНА, а не теста: ни броска, ни Порога — от общего сборщика
+  // (wdbc-kuun) здесь берутся разметка и публикация. Говорит от лица
+  // «Системы», а не от машины, поэтому speaker задан явно; звука кубика нет.
+  await postTestCard(null, {
+    icon: rollIcon("shield", "#6fe6ff"),
+    title: `Пустотный Щит — ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b> · Дистанция &gt;5м
-        </div>
-        <div class="dmg-absorption-detail">
+        </div>`,
+      `<div class="dmg-absorption-detail">
           Щит №${idx + 1}: АР <b>${shieldAP}</b>${penetration > 0 ? ` (30 − Проб. ${penetration})` : ""} → урон щиту <b>${dmgToShield}</b>
-        </div>
-        <div class="roll-damage-section">
+        </div>`
+    ],
+    sections: [
+      `<div class="roll-damage-section">
           <div class="roll-outcome"><span class="roll-success">Структура машины не затронута — щит принял удар целиком${
             collapsed ? ", лишний урон потерян" : ""}.</span></div>
           <div class="roll-damage-meta">Структура щита: <b>${curHP}</b> → <b>${newHP}</b>${collapsed ? " (щит схлопнулся)" : ""}</div>
-        </div>
-      </div>`
-  }, game.settings.get("core", "rollMode")));
+        </div>`
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }
 
 // ─── Применение урона по Структуре ────────────────────────────────────────────
@@ -415,8 +392,7 @@ export async function applyDamageToVehicle(actor, damageData) {
       const wb = pilot.system?.characteristics?.wp?.bonus ?? 0;
       const threshold = pilotDamageThreshold(wb);
       if (net >= threshold) {
-        const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(pilot, net);
-        if (woundsChanged) await applyMechBlocksForActor(pilot, { kind: "onWoundsLoss" });
+        const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(pilot, net);
         pilotLine = `
     <div class="dmg-critical-block">
       <b>Резонанс саркофага — ${esc(pilot.name)}</b>
@@ -442,26 +418,29 @@ export async function applyDamageToVehicle(actor, damageData) {
     </div>`;
   })() : "";
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Урон → ${esc(actor.name)}</div>
-        <div class="roll-damage-meta">
+  // Карточка УРОНА, а не теста (родня attack-card.mjs — своя большая разметка
+  // поглощения и крита): от общего сборщика (wdbc-kuun) взяты разметка и
+  // публикация, говорящий — «Система», а не машина, звука кубика нет.
+  await postTestCard(null, {
+    title: `Урон → ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Часть: <b>${vehicleLocation}</b> · Сторона: <b>${ARMOUR_SIDES[side] || side}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>
-        </div>
-        ${deflector > 0 ? `<div class="dmg-absorption-detail">
+        </div>`,
+      deflector > 0 ? `<div class="dmg-absorption-detail">
           ${tf.deflectorDaemonic ? "Колдовской" : "Технологический"} щит-дефлектор <b>1–${deflector}</b> · 1d100: <b>${deflectRoll}</b> →
           ${deflected ? `<span class="roll-success">ОТРАЖЕНО</span>` : `<span class="roll-failure">пробит</span>`}
           ${tf.deflectorDaemonic ? `<div class="dmg-tb-note">Атаки, игнорирующие Daemonic, игнорируют и этот щит.</div>` : ""}
-        </div>` : ""}
-        <div class="dmg-absorption-detail">
+        </div>` : "",
+      `<div class="dmg-absorption-detail">
           AP ${ARMOUR_SIDES[side] || side}: <b>${ap}</b>${penetration > 0 ? ` − Проб. <b>${penetration}</b> = <b>${effAP}</b>` : ""} = Поглощение <b>${effAP}</b>
           <div class="dmg-tb-note">У техники нет T.b — поглощает только броня.</div>
           ${mineAblative > 0 ? `<div class="dmg-tb-note">Аблативная Структура (против мин): +${mineAblative} (остаток после попадания: ${ablativeApAfterHit(mineAblative)})</div>` : ""}
-        </div>
-        <div class="roll-damage-section">
+        </div>`
+    ],
+    sections: [
+      `<div class="roll-damage-section">
           <div class="roll-section-head">Итог</div>
           ${net > 0
             ? `<div class="roll-hit-line"><span class="roll-hit-idx">В Структуру</span><span class="roll-hit-dmg roll-hit-dmg-bad">${net}</span></div>
@@ -469,11 +448,11 @@ export async function applyDamageToVehicle(actor, damageData) {
                  ablated ? ` · <span class="dmg-tb-note">Аблативное Бронирование: ${rawNet} → 1</span>` : ""}</div>`
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${effAP})</span></div>`
           }
-        </div>
-        ${critLine}
-        ${pilotLine}
-      </div>`
-  }, game.settings.get("core", "rollMode")));
+        </div>`,
+      critLine,
+      pilotLine
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }
 
 /**
@@ -590,17 +569,11 @@ async function _resolveRepair(actor, { skill, cond, pace, mod, per, stateId }) {
       ${critFail ? `<div class="roll-allout-note">Крит. Провал: ГМ может усугубить поломку или потратить материалы впустую.</div>` : ""}`;
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ремонт — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Навык <b>${skill}</b> ${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""}) → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">${rollIcon("dice","#6fe6ff")}1d100: <b>${rv}</b></div>
-        ${body}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("dice","#6fe6ff"), title: `Ремонт — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">Навык <b>${skill}</b> ${sgn(totalMod)} (условия ${sgn(cond)}${pace ? `, темп ${sgn(pace)}` : ""}${mod ? `, мод ${sgn(mod)}` : ""}) → Порог <b>${threshold}</b></div>`,
+    rv, sections: [body]
+  }, { rolls: [roll] });
 }
 
 // ─── Ремонт Пустотного Щита (wdbc-y33b) ────────────────────────────────────────
@@ -677,17 +650,11 @@ async function _resolveVoidShieldRepair(actor, shields, idx, skill, extraMod) {
     body = `<div class="roll-outcome"><span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Щит не восстановлен.</span></div>`;
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("shield", "#6fe6ff")}Ремонт Щита №${idx + 1} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(totalMod)} (${cfg.label}, ${cfg.action}) → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
-        ${body}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("shield", "#6fe6ff"), title: `Ремонт Щита №${idx + 1} — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">Tech-Use <b>${skill}</b> ${sgn(totalMod)} (${cfg.label}, ${cfg.action}) → Порог <b>${threshold}</b></div>`,
+    rv, sections: [body]
+  }, { rolls: [roll] });
 }
 
 // ─── Орбитальная высадка (wdbc-y33b) ────────────────────────────────────────
@@ -696,15 +663,11 @@ async function _resolveVoidShieldRepair(actor, shields, idx, skill, extraMod) {
 // как и в остальных диалогах техники (Таран/Ландшафт) — решает ГМ руками.
 export async function showOrbitalDeployTurn1(actor) {
   if (actor.type !== "vehicle") return;
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst", "#8fd0ff")}Орбитальная высадка — Ход 1 — ${esc(actor.name)}</div>
-        <div class="roll-outcome"><span class="roll-success">Влетает на Высокую высоту.</span></div>
-        <div class="roll-allout-note">Все атаки по машине в этот Ход получают −30.</div>
-      </div>`
-  });
+  await postTestCard(actor, {
+    icon: rollIcon("burst", "#8fd0ff"), title: `Орбитальная высадка — Ход 1 — ${esc(actor.name)}`,
+    outcome: outcomeHtml(true, "Влетает на Высокую высоту."),
+    sections: [`<div class="roll-allout-note">Все атаки по машине в этот Ход получают −30.</div>`]
+  }, { sound: false });
 }
 
 // Направление смещения — 1d8 по компасу: книга не называет конкретный способ
@@ -718,21 +681,19 @@ export async function showOrbitalDeployTurn2(actor) {
   const dirRoll = await new Roll("1d8").evaluate();
   const dir = COMPASS_8[dirRoll.total - 1];
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst", "#ff8a3a")}Орбитальная высадка — Ход 2 (Приземление) — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Смещение: <b>${scatter.total}</b> м на <b>${dir}</b> от точки посадки</div>
-        <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}2d10: <b>${scatter.total}</b> · 1d8 (направление): <b>${dirRoll.total}</b></div>
-        <div class="roll-allout-note">
+  // Строка броска своя: два разных броска (смещение и направление), а не один
+  // бросок теста.
+  await postTestCard(actor, {
+    icon: rollIcon("burst", "#ff8a3a"),
+    title: `Орбитальная высадка — Ход 2 (Приземление) — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">Смещение: <b>${scatter.total}</b> м на <b>${dir}</b> от точки посадки</div>`,
+    lines: [`<div class="roll-dice">${rollIcon("dice", "#6fe6ff")}2d10: <b>${scatter.total}</b> · 1d8 (направление): <b>${dirRoll.total}</b></div>`],
+    sections: [`<div class="roll-allout-note">
           Если наводчик/маяк не подсвечивал точку — сдвинуть место посадки на это расстояние в этом направлении.
           При посадке на занятое токеном место — считается Тараном на скорости &gt;1,5 SPD (кнопка «Таран»).
           Атаки из машины в этот Раунд получают −20.
-        </div>
-      </div>`,
-    rolls: [scatter, dirRoll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+        </div>`]
+  }, { rolls: [scatter, dirRoll] });
 }
 
 // ─── Пожар: тест внутренней детонации (wdbc-y33b) ───────────────────────────
@@ -784,17 +745,14 @@ async function _resolveFireDetonation(actor, turns, threshold, volatile) {
     body = `<div class="roll-outcome"><span class="roll-success">Без детонации.</span></div>`;
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst", "#ff6b6b")}Пожар: тест детонации — ${esc(actor.name)}</div>
-        <div class="roll-threshold">1d10 + Ходов Пожара (${turns}) ≥ ${threshold}</div>
-        <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d10: <b>${roll.total}</b> + ${turns} = <b>${total}</b></div>
-        ${body}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Строка броска своя: тест идёт на 1d10 со слагаемым, а не на d100 против
+  // Порога — общая строка «Бросок: N» скрыла бы слагаемое.
+  await postTestCard(actor, {
+    icon: rollIcon("burst", "#ff6b6b"), title: `Пожар: тест детонации — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">1d10 + Ходов Пожара (${turns}) ≥ ${threshold}</div>`,
+    lines: [`<div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d10: <b>${roll.total}</b> + ${turns} = <b>${total}</b></div>`],
+    sections: [body]
+  }, { rolls: [roll] });
 }
 
 // ─── Тормоза Падения (wdbc-y33b) ────────────────────────────────────────────
@@ -829,15 +787,11 @@ export async function showFallBreaksDialog(actor) {
   });
   await actor.update({ "system.damageStates": states, "system.fallBreaksUsed": true });
 
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst", "#b0a080")}Тормоза Падения — ${esc(actor.name)}</div>
-        <div class="roll-outcome"><span class="roll-success">Крушение с Низкой высоты → с Приземной высоты.</span></div>
-        <div class="roll-allout-note">Поломка «Ходовая Часть Повреждена» добавлена. Тормоза израсходованы до конца боя/сцены.</div>
-      </div>`
-  });
+  await postTestCard(actor, {
+    icon: rollIcon("burst", "#b0a080"), title: `Тормоза Падения — ${esc(actor.name)}`,
+    outcome: outcomeHtml(true, "Крушение с Низкой высоты → с Приземной высоты."),
+    sections: [`<div class="roll-allout-note">Поломка «Ходовая Часть Повреждена» добавлена. Тормоза израсходованы до конца боя/сцены.</div>`]
+  }, { sound: false });
 }
 
 // ─── Выгрузка пассажиров (wdbc-y33b) ────────────────────────────────────────
@@ -904,15 +858,11 @@ async function _resolveDisembark(actor, stations, stationId, bonus, mode) {
       ? "Полное действие: Выгрузка + Бег."
       : "Полудействие: Выгрузка без движения.";
 
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("run", "#8fd0ff")}Выгрузка — ${esc(name)}</div>
-        <div class="roll-outcome"><span class="roll-success">${esc(name)} выгружается из ${esc(actor.name)}.</span></div>
-        <div class="roll-allout-note">${actionLine}</div>
-      </div>`
-  });
+  await postTestCard(actor, {
+    icon: rollIcon("run", "#8fd0ff"), title: `Выгрузка — ${esc(name)}`,
+    outcome: outcomeHtml(true, `${esc(name)} выгружается из ${esc(actor.name)}.`),
+    sections: [`<div class="roll-allout-note">${actionLine}</div>`]
+  }, { sound: false });
 }
 
 // ─── Залп: Мультиприцел / Продвинутые Прицельные Системы (wdbc-y33b) ───────

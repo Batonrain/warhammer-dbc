@@ -10,9 +10,12 @@
 
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
+import { isBlindedActor } from "../rules/predicates.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -36,7 +39,12 @@ function ignoredTerrainKeysForActor(actor) {
 
 /**
  * Модификатор трудного ландшафта под токеном ПОСЛЕ вычета свойств, которые
- * актор игнорирует (Механика предмета, kind:"terrainIgnore").
+ * актор игнорирует (Механика предмета, kind:"terrainIgnore"), и с учётом
+ * Ослепления (стр. 30-31, wdbc-r5o7.4): «весь незнакомый ландшафт — Трудный
+ * +0» (тест нужен даже вне реальной зоны, но без доп. штрафа) и «−20 против
+ * настоящего Трудного Ландшафта» (доп. штраф ТОЛЬКО когда актор и так уже в
+ * зоне — Ослепление не создаёт зону там, где её нет, оно делает трудным то,
+ * что уже трудно, ЕЩЁ трудней).
  * @returns {{inTerrain: boolean, mod: number, labels: string[], ignoredLabels: string[]}}
  */
 function effectiveTerrainInfo(tokenDoc, actor) {
@@ -44,10 +52,20 @@ function effectiveTerrainInfo(tokenDoc, actor) {
   const ignored = ignoredTerrainKeysForActor(actor);
   const active = raw.props.filter(p => !ignored.has(p.key));
   const skipped = raw.props.filter(p => ignored.has(p.key));
+  const blinded = isBlindedActor(actor);
+  const blindedPenalty = (blinded && raw.inTerrain) ? -20 : 0;
   return {
-    inTerrain: raw.inTerrain,
-    mod: active.reduce((s, p) => s + p.mod, 0) + raw.extraMod,
-    labels: active.map(p => p.label),
+    inTerrain: raw.inTerrain || blinded,
+    // Настоящая зона под токеном (Region), в отличие от Ослепления, которое
+    // лишь ОБЯЗЫВАЕТ тестировать — сама по себе SPD не режет (та половина
+    // уже посчитана отдельно, rules/character.mjs, для Поваленного; у
+    // Ослепления в книге такого пункта нет). Нужно только для текста
+    // подсказки ниже (showDifficultTerrainDialog) — не путать игрока, что
+    // SPD «уже уменьшена зоной», когда зоны физически нет.
+    realTerrain: raw.inTerrain,
+    blinded,
+    mod: active.reduce((s, p) => s + p.mod, 0) + raw.extraMod + blindedPenalty,
+    labels: [...active.map(p => p.label), ...(blindedPenalty ? ["Ослеплён (−20)"] : blinded ? ["Ослеплён"] : [])],
     ignoredLabels: skipped.map(p => p.label)
   };
 }
@@ -75,7 +93,11 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="tr-mod" type="number" value="0"/></div>
         ${ignoredLine}
         <div class="atk-range-info" style="font-size:0.82em;">
-          Бег/Натиск через трудный ландшафт — тест A+0 или падение (стр. 29). SPD уже уменьшена вдвое зоной.
+          Бег/Натиск через трудный ландшафт — тест A+0 или падение (стр. 29).${info.realTerrain
+            ? " SPD уже уменьшена вдвое зоной."
+            : info.blinded
+              ? " Ослеплён считает незнакомый ландшафт Трудным — тест нужен, даже когда сама зона не размечена."
+              : ""}
         </div>
       </form>`,
     buttons: {
@@ -93,7 +115,11 @@ export async function showDifficultTerrainDialog(actor, tokenDoc = null) {
 
 async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels) {
   const totalMod  = terrainMod + extraMod;
-  const threshold = ag + totalMod;
+  // Общий сбор модификаторов (wdbc-1xtl): Порог складывался из Ловкости,
+  // модификатора ландшафта и ручной поправки — ни Усталости, ни Перевеса,
+  // ни Черт. Диалога с галочками у броска нет, поэтому collectTestMods.
+  const ruleMods  = collectTestMods(actor, { kind: "skill", char: "ag" });
+  const threshold = ag + totalMod + ruleMods.total;
 
   const roll   = await new Roll("1d100").evaluate();
   const rv     = roll.total;
@@ -101,37 +127,37 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
   const deg    = Math.floor(Math.abs(passed ? threshold - rv : rv - threshold) / 10) + 1;
 
   const outcome = passed
-    ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.</span>`
-    : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Персонаж падает!</span>`;
+    ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.`)
+    : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Персонаж падает!`);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("burst","#b0a080")}Трудный Ландшафт — ${esc(actor.name)}</div>
-        <div class="roll-threshold">
-          Ag <b>${ag}</b> ${sgn(totalMod)} (ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}${extraMod ? `, доп. мод ${sgn(extraMod)}` : ""}) → Порог <b>${threshold}</b>
-        </div>
-        <div class="roll-dice">${rollIcon("dice","#6fe6ff")}1d100: <b>${rv}</b></div>
-        <div class="roll-outcome">${outcome}</div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Слагаемые Порога — в скобки общего формата (thresholdLine): раньше здесь
+  // рядом стояли и суммарный модификатор, и его разбор, теперь только разбор.
+  const parts = [
+    `ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}`,
+    extraMod ? `доп. мод ${sgn(extraMod)}` : ""
+  ];
+
+  await postTestCard(actor, {
+    icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Ag", base: ag, parts, threshold }),
+    rv, outcome
+  }, { rolls: [roll] });
 }
 
 // ─── Кнопка в меню токена ──────────────────────────────────────────────────
-// Показывается владельцу/ГМу, только когда токен реально стоит в зоне
-// «Трудный ландшафт». Техника ведёт свой Трудный Ландшафт через отдельное
-// меню (вираж/urban), поэтому здесь не участвует.
+// Показывается владельцу/ГМу, когда токен реально стоит в зоне «Трудный
+// ландшафт» — ИЛИ актор Ослеплён (стр. 30-31, wdbc-r5o7.4: весь незнакомый
+// ландшафт становится Трудным для него, даже вне настоящей зоны). Техника
+// ведёт свой Трудный Ландшафт через отдельное меню (вираж/urban), поэтому
+// здесь не участвует.
 export function initDifficultTerrainHud() {
   Hooks.on("renderTokenHUD", (hud, html, data) => {
     const tokenDoc = hud.object?.document;
     const actor    = tokenDoc?.actor;
     if (!actor || actor.type === "vehicle") return;
 
-    const raw = getTerrainInfoForToken(tokenDoc);
-    if (!raw.inTerrain) return;
     const info = effectiveTerrainInfo(tokenDoc, actor);
+    if (!info.inTerrain) return;
 
     const isGM = game.user.isGM;
     const owns = actor.isOwner;

@@ -13,6 +13,8 @@ import { esc } from "../helpers/utils.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
 /** Стрелковая RoF, которой ведётся Стрельба на Подавление, задаёт штраф цели. */
 export function suppressionTestMod(sys) {
@@ -25,33 +27,27 @@ export function suppressionTestMod(sys) {
  */
 export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const { eff: threshold, bonus, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod);
+  const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod);
   // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
   // Подавления независимо от броска.
   const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
-  const rollMode  = game.settings.get("core", "rollMode");
 
-  if (!success) await actor.update({ "system.conditions.pinned": true });
+  if (!success) await actor.update(conditionApplyFields("pinned", null, actor));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  const modLine = mod !== 0 || bonus !== 0
-    ? ` ${mod >= 0 ? "+" : ""}${mod}${bonus ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""}` : "";
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("target","#ff9a4d")}Тест Подавления${sourceLabel ? ` — ${esc(sourceLabel)}` : ""} → ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wpTotal}</b>${modLine} → Порог: <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — сохраняет самообладание</span>`
-          : `<span class="roll-failure">Провал — Подавлен (📌)</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-  await ChatMessage.create(messageData);
+  // Подписи, а не голая сумма (wdbc-kuun): раньше здесь стояло « +30 -10»
+  // без объяснения, откуда −10 — тот же дефект, что живая проверка нашла в
+  // Командовании и Ударе Ассасина.
+  const modParts = [mod !== 0 ? `модификатор ${mod >= 0 ? "+" : ""}${mod}` : "", ...parts];
+  await postTestCard(actor, {
+    icon: rollIcon("target","#ff9a4d"),
+    title: `Тест Подавления${sourceLabel ? ` — ${esc(sourceLabel)}` : ""} → ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "WP", base: wpTotal, parts: modParts, threshold }),
+    rv, rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Успех — сохраняет самообладание</span>`
+      : `<span class="roll-failure">Провал — Подавлен (📌)</span>`
+  }, { rolls: [roll] });
   return { success, rv, threshold };
 }
 
@@ -86,33 +82,23 @@ export async function postSuppressionRecoveryPrompt(actor) {
  */
 export async function rollSuppressionRecovery(actor, { bonus = 0 } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const { eff: threshold, bonus: ruleBonus, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus);
+  const { eff: threshold, parts: ruleParts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + bonus);
   // Саркофаг Дредноута (стр. 57, wdbc-drn): та же возможность, что и на самом
   // тесте Подавления выше — практически недостижимо (auto-pass не даёт
   // Подавлению вообще наступить), но на случай ручного наложения ГМом.
   const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");
-  const rollMode  = game.settings.get("core", "rollMode");
 
-  if (success) await actor.update({ "system.conditions.pinned": false });
+  if (success) await actor.update(conditionRemoveFields("pinned"));
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  const bonusLine = bonus !== 0 || ruleBonus !== 0
-    ? ` ${bonus >= 0 ? "+" : ""}${bonus}${ruleBonus ? ` ${ruleBonus >= 0 ? "+" : ""}${ruleBonus}` : ""}` : "";
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("target","#4dffa6")}Преодоление Подавления → ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wpTotal}</b>${bonusLine} → Порог: <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — Подавление снято</span>`
-          : `<span class="roll-failure">Провал — всё ещё Подавлен</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-  await ChatMessage.create(messageData);
+  const bonusParts = [bonus !== 0 ? `тишина ${bonus >= 0 ? "+" : ""}${bonus}` : "", ...ruleParts];
+  await postTestCard(actor, {
+    icon: rollIcon("target","#4dffa6"), title: `Преодоление Подавления → ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "WP", base: wpTotal, parts: bonusParts, threshold }),
+    rv, rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Успех — Подавление снято</span>`
+      : `<span class="roll-failure">Провал — всё ещё Подавлен</span>`
+  }, { rolls: [roll] });
   return { success, rv, threshold };
 }

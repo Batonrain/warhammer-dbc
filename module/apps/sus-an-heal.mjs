@@ -35,6 +35,8 @@ import { esc } from "../helpers/utils.mjs";
 import { worldTimeRemaining, markWorldTimeCooldownUsed } from "../rules/cooldown.mjs";
 import { getChapter } from "../constants/legions.mjs";
 import { isSusAnMembraneItem } from "../rules/predicates.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "warhammer-dbc";
 const USED_AT_FLAG = "susAnHealUsedAt";
@@ -106,10 +108,14 @@ export async function useSusAnHeal(actor, item) {
     return ui.notifications.warn("Сус-ан Мембрана ещё не восстановилась — раз в сутки.");
   }
   const t = actor.system.characteristics?.t?.total ?? 0;
+  // Общий сбор модификаторов (wdbc-ct65.3): раньше этот тест катался мимо
+  // реестра правил — ни Усталость, ни Черты/Таланты в него не попадали.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "t" });
+  const threshold = t + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
-  const success = rv <= t;
-  const sl = success ? Math.floor((t - rv) / 10) + 1 : 0;
+  const success = rv <= threshold;
+  const sl = success ? Math.floor((threshold - rv) / 10) + 1 : 0;
   const healed = sl * 2;
 
   // «В конце следующего Хода» — только пока идёт бой и актор в нём
@@ -127,25 +133,23 @@ export async function useSusAnHeal(actor, item) {
   // раз в сутки, а не «пока не получится».
   await markWorldTimeCooldownUsed(item, USED_AT_FLAG);
 
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("heart", "#4dffa6")}Сус-ан Мембрана — ${esc(actor.name)}</div>
-        <div class="roll-threshold">Т: <b>${t}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех (${sl} СУ) — ${delayNote ? `исцелит ${healed} Ран` : `исцелено ${healed} Ран`}</span>`
-          : `<span class="roll-failure">Провал — Раны не исцелены</span>`}</div>
-        ${delayNote ? `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${delayNote}</div>` : ""}
-        <div class="roll-threshold" style="font-size:.85em;opacity:.8;">Раз в сутки (Календарь).</div>
-        <details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("heart", "#4dffa6"),
+    title: `Сус-ан Мембрана — ${esc(actor.name)}`,
+    // Подписи модификаторов теперь едут слагаемыми в скобках общего формата
+    // Порога, а не приписками после базы.
+    threshold: thresholdLine({ label: "Т", base: t, parts: ruleMods.parts, threshold }),
+    rv,
+    outcome: outcomeHtml(success, success
+      ? `Успех (${sl} СУ) — ${delayNote ? `исцелит ${healed} Ран` : `исцелено ${healed} Ран`}`
+      : "Провал — Раны не исцелены"),
+    sections: [
+      delayNote ? `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">${delayNote}</div>` : "",
+      `<div class="roll-threshold" style="font-size:.85em;opacity:.8;">Раз в сутки (Календарь).</div>`,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart", "#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -166,13 +170,13 @@ export async function resolvePendingSusAnHeals(combat, { force = false } = {}) {
       if (!force && (combat.round ?? 0) <= pending.dueRound) continue;
       await applyHeal(actor, pending.amount);
       await item.unsetFlag(FLAG, PENDING_FLAG);
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        content: `<div class="wh-roll-result">
-          <div class="roll-header">${rollIcon("heart", "#4dffa6")}Сус-ан Мембрана — ${esc(actor.name)}</div>
-          <div class="roll-outcome"><span class="roll-success">Отложенное исцеление наступило — ${pending.amount} Ран</span></div>
-        </div>`
-      });
+      // Дозревшее отложенное исцеление: своего броска у него нет — он был
+      // раньше, в карточке самого теста Мембраны.
+      await postTestCard(actor, {
+        icon: rollIcon("heart", "#4dffa6"),
+        title: `Сус-ан Мембрана — ${esc(actor.name)}`,
+        outcome: outcomeHtml(true, `Отложенное исцеление наступило — ${pending.amount} Ран`)
+      }, { sound: false });
     }
   }
 }

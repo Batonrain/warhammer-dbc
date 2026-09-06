@@ -8,7 +8,7 @@
 export const EFFECT_KINDS = {
   charBonus:   ["target", "value"],   // плюс к бонусу характеристики (Unnatural)
   charTotal:   ["target", "value"],   // плюс к значению характеристики
-  rollBonus:   ["target", "value"],   // модификатор к тесту
+  rollBonus:   ["target", "value"],   // модификатор к тесту; auto:true — без галочки
   rollMode:    ["target", "mode", "rolls"], // несколько бросков с выбором
   penaltyMul:  ["target", "factor"],  // множитель штрафов, 0.5 = половина
   apBonus:     ["target", "value"],   // броня по локации или all

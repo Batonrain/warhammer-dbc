@@ -1,0 +1,74 @@
+{
+  "name": "Those Who Live Below / Живущие Внизу",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "svf7kL1Faag7lAKP",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: щупальца — не заведённые токены/акторы, их боевые действия (Сжать/Заломить, захваты, урон) отыгрываются вручную по тексту.",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Иши",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака, Призыв. Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое». Создаёт ½PR (окр. ▲) щупалец: раны=Pen=PR, WS/S=W псайкера, Unnatural S(+½PR окр.▲), Athletics+20, Parry+10, неограниченные реакции на физическое избегание, +3×PR ко всем тестам. В свой ход хватают ближайшего врага (сначала «Сжать», затем «Заломить»), штраф от захвата растёт на −10 за раунд, урон +бPR за раунд удержания; могут утащить схваченного под землю на 5м (если есть земля).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LSTyDm1urioeggQr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008350,
+    "modifiedTime": 1788601008350
+  },
+  "_key": "!items!LSTyDm1urioeggQr"
+}

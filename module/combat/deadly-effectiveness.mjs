@@ -23,15 +23,17 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy, isEncounterActive } from "./action-economy.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export const DEADLY_EFFECTIVENESS_FLAG = "actionPoint.bonusOnFeintKill.extraMeleeAttack";
 
 export function hasDeadlyEffectiveness(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Deadly Effectiveness"));
+  return hasAbility(actor, "ability.deadlyEffectiveness", "Deadly Effectiveness", "talent");
 }
 
 /** {disabled, title} для кнопки — гейт виден ДО клика (wdbc-qjnk, тот же приём, что apSpendGate). */
@@ -52,12 +54,9 @@ export async function triggerDeadlyEffectiveness(actor) {
   await markCapabilityUsed(actor, DEADLY_EFFECTIVENESS_FLAG, "round");
   const value = Number(actor.system.actionPoints?.value) || 0;
   await actor.update({ "system.actionPoints.value": value + 2 });
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("sword", "#ff9d4d")}${esc(actor.name)} — Смертоносная Эффективность</div>
-      <div class="roll-threshold">Убийство после Финта в этом Раунде: +2 ОД.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("sword", "#ff9d4d"), title: `${esc(actor.name)} — Смертоносная Эффективность`,
+    lines: [`<div class="roll-threshold">Убийство после Финта в этом Раунде: +2 ОД.</div>`]
+  }, { sound: false });
   return true;
 }

@@ -9,10 +9,10 @@ import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { ablativeDamage } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
-import { applyMechBlocksForActor } from "../apps/mech-blocks-apply.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -23,6 +23,7 @@ import { activeAblativeArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
+import { coverApForLocation } from "../rules/cover-locations.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -84,13 +85,10 @@ export async function extractPiercingWound(actor, armorKey) {
   }
   await actor.update({ [`system.piercingWounds.${armorKey}`]: 0 });
   const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, 1);
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">🏹 Извлечение снаряда → ${esc(actor.name)}</div>
-      <div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
-    </div>`
-  });
+  await postTestCard(actor, {
+    title: `🏹 Извлечение снаряда → ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Снаряд извлечён (${armorKey}), +1 непоглощ. R Dmg (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`]
+  }, { sound: false });
 }
 
 /**
@@ -115,13 +113,10 @@ async function _applyCrippling(actor, armorKey, hitLocation, damageType, rating)
 /** Наносит урон одной раны Калечащего (клик .wh-crippling-trigger-btn, hooks.mjs) — рана не снимается. */
 export async function applyCripplingTrigger(actor, rating, hitLocation) {
   const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, rating);
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">🩸 Калечащее (${hitLocation}) → ${esc(actor.name)}</div>
-      <div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>
-    </div>`
-  });
+  await postTestCard(actor, {
+    title: `🩸 Калечащее (${hitLocation}) → ${esc(actor.name)}`,
+    lines: [`<div class="roll-threshold">Непоглощ. урон: <b>${rating}</b> (Раны ${currentWounds}→${newWounds}${gotCritical ? `, крит. ${newCritical}` : ""})</div>`]
+  }, { sound: false });
 }
 
 /**
@@ -215,7 +210,6 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
   const roll = await new Roll("1d100").evaluate();
   const rv   = roll.total;
 
-  const rollMode = game.settings.get("core", "rollMode");
 
   // ── Определяем результат (стр. 240) ───────────────────────────────────────
   // Бросок ≤ рейтинг → удар аннулирован. Рейтинг перегрузки (после «/») — это
@@ -254,35 +248,25 @@ async function _rollActiveShield(actor, { skipWarp = false } = {}) {
   }
 
   // ── Сообщение в чат ───────────────────────────────────────────────────────
-  const messageData = ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">
-          ${overloaded ? "Щит поглотил удар и перегрузился" : blocked ? "Щит поглотил удар" : "Бросок щита"}
-        </div>
-        <div class="roll-threshold">
-          ${shieldItem.name}
-        </div>
-        <div class="roll-outcome">
-          <span class="${resultClass}">${resultLabel}</span>
-        </div>
-        <div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
+  // Карточка говорит от лица «Системы», а не от актора-цели (щит срабатывает
+  // при чужом попадании) — для этого у общего сборщика (wdbc-kuun) есть
+  // speaker. Строка броска своя: число уже стоит в исходе.
+  await postTestCard(null, {
+    title: overloaded ? "Щит поглотил удар и перегрузился" : blocked ? "Щит поглотил удар" : "Бросок щита",
+    threshold: `<div class="roll-threshold">${esc(shieldItem.name)}</div>`,
+    outcome: `<span class="${resultClass}">${resultLabel}</span>`,
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
           Рейтинг: <b>${rating}</b>
           ${threshold > 0 ? `| Порог перегрузки: <b>${threshold}</b>` : ""}
           | Тип: <b>${typeLabel}</b>
           | Природа: <b>${natureLabel}</b>
-        </div>
-        ${overloaded ? `
-        <div class="roll-threshold" style="color:#c07000;">
+        </div>`,
+      overloaded ? `<div class="roll-threshold" style="color:#c07000;">
           Щит нуждается в обслуживании перед повторным использованием.
-        </div>` : ""}
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode);
-
-  await ChatMessage.create(messageData);
+        </div>` : ""
+    ]
+  }, { rolls: [roll], speaker: { alias: "Система" } });
 
   return { blocked, overloaded };
 }
@@ -320,21 +304,14 @@ async function _rollRunesOfProtection(actor) {
   const deg  = success ? Math.floor((threshold - rv) / 10) + 1 : 0;
   const apBonus = success ? bPR + deg + 4 : bPR;
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("shield","#8fd0ff")}Защитные Руны — ${esc(actor.name)}</div>
-        <div class="roll-threshold">W <b>${wpTotal}</b>${bPR ? ` + бPR×5 (бPR <b>${bPR}</b>)` : ""} → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех (${deg} ст.) — +${apBonus} AP (бPR ${bPR} + Успехи ${deg} + 4)</span>`
-          : `<span class="roll-failure">Провал — +${apBonus} AP (бPR)</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("shield","#8fd0ff"), title: `Защитные Руны — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">W <b>${wpTotal}</b>${bPR ? ` + бPR×5 (бPR <b>${bPR}</b>)` : ""} → Порог <b>${threshold}</b></div>`,
+    rv,
+    outcome: success
+      ? outcomeHtml(true,  `Успех (${deg} ст.) — +${apBonus} AP (бPR ${bPR} + Успехи ${deg} + 4)`)
+      : outcomeHtml(false, `Провал — +${apBonus} AP (бPR)`)
+  }, { rolls: [roll] });
 
   return apBonus;
 }
@@ -429,6 +406,9 @@ export async function applyDamageToActor(actor, damageData) {
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
   let coverBonus = 0;
+  // Подпись в карточке: пришёл ли AP от ОБЪЯВЛЕННОГО Отскока или от ручного
+  // поля Укрытия на листе — писать «Отскок» про второе было бы враньём.
+  let coverFromRecoil = false;
 
   if (warpSoak) {
     // Варп-Оружие: игнорирует броню и обычную Стойкость — поглощает только W.b.
@@ -487,11 +467,28 @@ export async function applyDamageToActor(actor, damageData) {
       // Укрытия при защите (module/combat/recoil.mjs::performRecoil) — доп. AP
       // этой зоны разово применяется к СЛЕДУЮЩЕМУ попаданию, которое пришло по
       // цели, и тратится сразу же (флаг снят), а не копится на весь бой.
-      coverBonus = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
-      if (coverBonus > 0) {
-        armorAP += coverBonus;
-        await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
-      }
+      const recoilCover = Number(actor.getFlag?.("warhammer-dbc", "recoilCoverBonus")) || 0;
+      if (recoilCover > 0) await actor.unsetFlag?.("warhammer-dbc", "recoilCoverBonus");
+      // Ручное Укрытие по частям тела (wdbc-qkua): своё число AP с листа, для
+      // стола, который не размечает зоны Укрытия на сцене — иначе цифру взять
+      // неоткуда. Галочки локаций ограничивают ОБА источника: и это число, и
+      // разовый бонус Отскока (см. rules/cover-locations.mjs).
+      //
+      // AP зоны Region сюда СОЗНАТЕЛЬНО НЕ подмешивается. coverApForToken
+      // (combat/cover.mjs) не проверяет линию огня — её шапка прямо говорит,
+      // что это законно только потому, что игрок САМ объявил «отскочил в эту
+      // зону». Дёргать её на каждое попадание значило бы дать броню стены и
+      // против удара в упор, и против стрелка, стоящего за той же стеной, —
+      // и молча сделать всю стрельбу по укрывшимся тяжелее, чего wdbc-qkua не
+      // просил. Автоматика зоны остаётся ровно там, где была: в объявленном
+      // Отскоке (combat/recoil.mjs).
+      const manualCover = coverApForLocation(system.cover, armorKey, 0);
+      // Больший из двух, а не сумма: это одна и та же стена, и сложить её с
+      // собой значило бы дать двойную защиту тому, кто и стоял за ней, и
+      // отскочил в неё.
+      coverBonus = Math.max(coverApForLocation(system.cover, armorKey, recoilCover), manualCover);
+      coverFromRecoil = recoilCover > 0 && coverBonus === recoilCover && manualCover < recoilCover;
+      if (coverBonus > 0) armorAP += coverBonus;
       // Копьё/Пика (Lance): если AP цели > 20 — снижается до 20 в расчёте
       // поглощения, ДО вычета пробития (стр. 168).
       if (lance && armorAP > 20) armorAP = 20;
@@ -546,14 +543,8 @@ export async function applyDamageToActor(actor, damageData) {
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 
-  const { applied: woundsChanged, currentWounds, newWounds, newCritical, gotCritical } =
+  const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
-
-  // Живая врезка Condition "onWoundsLoss" (doombc-req-condition-effect-plan) —
-  // блоки предметов актора, что реагируют на понижение Ран, независимо от
-  // источника (тот же единый applyWoundLoss, что закрыл wdbc-aleb). Только
-  // когда Раны РЕАЛЬНО поменялись — netDamage:0 не должен считаться событием.
-  if (woundsChanged) await applyMechBlocksForActor(actor, { kind: "onWoundsLoss" });
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
@@ -580,7 +571,6 @@ export async function applyDamageToActor(actor, damageData) {
   }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
-  const rollMode = game.settings.get("core", "rollMode");
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;
 
   const propNotes = [];
@@ -602,7 +592,7 @@ export async function applyDamageToActor(actor, damageData) {
       propNotes.push(pfNote.isPowerArmor ? "Силовой шлем: 4 AP на глаза" : "Глаз: AP шлема проигнорирован");
     if (primitive && pfNote.blocksPrimitiveDouble)    propNotes.push("Примитивная броня: без бонуса AP примитивного оружия");
     if (runesBonus > 0) propNotes.push(`Защитные Руны: +${runesBonus} AP (см. бросок выше)`);
-    if (coverBonus > 0) propNotes.push(`Отскок в Укрытие: +${coverBonus} AP`);
+    if (coverBonus > 0) propNotes.push(`${coverFromRecoil ? "Отскок в Укрытие" : "Укрытие"}: +${coverBonus} AP`);
   }
 
   const reductionNote = incomingReduction > 0
@@ -666,18 +656,22 @@ export async function applyDamageToActor(actor, damageData) {
       🎯 Пробило насквозь — найти следующую цель по линии огня (${throughShotReductionDie(1) ? `−${throughShotReductionDie(1)}` : "флэт −1"} к урону)
     </button>` : "";
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: { alias: "Система" },
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Урон → ${esc(actor.name)}</div>
-        <div class="roll-damage-meta">
+  // Карточка УРОНА, а не теста — родня attack-card.mjs (своя большая разметка
+  // поглощения, Ран, крита и пилюль Крит. Эффекта): от общего сборщика
+  // (wdbc-kuun) взяты разметка и публикация. Говорит от лица «Системы», а не
+  // от актора-цели, звука кубика нет.
+  await postTestCard(null, {
+    title: `Урон → ${esc(actor.name)}`,
+    lines: [
+      `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
           · Место: <b>${hitLocation}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>
-        </div>
-        ${armorBreakdown}
-        ${shieldFailNote}
-        <div class="roll-damage-section">
+        </div>`,
+      armorBreakdown,
+      shieldFailNote
+    ],
+    sections: [
+      `<div class="roll-damage-section">
           <div class="roll-section-head">Итог</div>
           ${netDamage > 0
             ? `<div class="roll-hit-line">
@@ -687,14 +681,12 @@ export async function applyDamageToActor(actor, damageData) {
             : `<div class="roll-outcome"><span class="roll-success">Урон поглощён (${rawDamage} ≤ ${totalAbsorption + incomingReduction})</span></div>`
           }
           <div class="roll-damage-meta">${woundsLine}</div>
-        </div>
-        ${critLine}
-        ${propEffectNotes.join("")}
-        ${throughShotBtn}
-      </div>`
-  }, rollMode);
-
-  await ChatMessage.create(messageData);
+        </div>`,
+      critLine,
+      propEffectNotes.join(""),
+      throughShotBtn
+    ]
+  }, { speaker: { alias: "Система" }, sound: false });
 }
 
 /**

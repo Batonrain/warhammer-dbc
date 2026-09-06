@@ -1,0 +1,74 @@
+{
+  "name": "Touching the Flesh / Касание Плоти",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "EPy5bFYJzzAVQjBj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Творец Жизни",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×1м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Вливание, Концентрация. Треб.: Flesh Sense — психосила Биомантии. Внутри ауры все существа считаются в постоянном физическом контакте с псайкером для манифестации его психосил, игнорируя их броню и одежду.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "AbgQ0PcTYYtaIkc8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008023,
+    "modifiedTime": 1788601008023
+  },
+  "_key": "!items!AbgQ0PcTYYtaIkc8"
+}

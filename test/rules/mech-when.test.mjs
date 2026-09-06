@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod } from "../../module/rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition } from "../../module/rules/mech-when.mjs";
 
 const actorWithItems = (items = [], geneSeed = {}) => ({
   system: { geneSeed, bio: { age: 0 } },
@@ -239,5 +239,44 @@ describe("whenConditions/whenSubmutations/whenTalentSpec: геттеры не с
   it("conditions/submutations — регресс на пустых значениях", () => {
     expect(whenConditions({})).toEqual([]);
     expect(whenSubmutations({})).toEqual([]);
+  });
+});
+
+// ── Восьмой гейт: «Когда Состояние» (wdbc-tl0f) ────────────────────────────
+const actorWithConditions = (conditions = {}, extra = {}) => ({
+  system: { geneSeed: {}, bio: { age: 0 }, conditions, inRage: false, patronGod: "", ...extra },
+  items: []
+});
+
+describe("entryWhenOk: Состояние (wdbc-tl0f)", () => {
+  const stunnedOrProne = { when: { condition: ["stunned", "prone"] } };
+
+  it("одно из перечисленных Состояний стоит — true", () => {
+    expect(entryWhenOk(actorWithConditions({ prone: true }), stunnedOrProne)).toBe(true);
+  });
+
+  it("ни одного не стоит — false", () => {
+    expect(entryWhenOk(actorWithConditions({ blinded: true }), stunnedOrProne)).toBe(false);
+  });
+
+  it("negateCondition переворачивает смысл", () => {
+    const entry = { when: { condition: ["stunned"], negateCondition: true } };
+    expect(entryWhenOk(actorWithConditions({ stunned: true }), entry)).toBe(false);
+    expect(entryWhenOk(actorWithConditions({}), entry)).toBe(true);
+  });
+
+  it("нет актора (превью) — условие пройдено", () => {
+    expect(entryWhenOk(null, stunnedOrProne)).toBe(true);
+  });
+
+  it("складывается с остальными гейтами через И", () => {
+    const entry = { when: { condition: ["prone"], requireRage: true } };
+    expect(entryWhenOk(actorWithConditions({ prone: true }, { inRage: false }), entry)).toBe(false);
+    expect(entryWhenOk(actorWithConditions({ prone: true }, { inRage: true }), entry)).toBe(true);
+  });
+
+  it("whenCondition: пустой список без condition", () => {
+    expect(whenCondition({})).toEqual([]);
+    expect(whenCondition({ condition: ["stunned", ""] })).toEqual(["stunned"]);
   });
 });

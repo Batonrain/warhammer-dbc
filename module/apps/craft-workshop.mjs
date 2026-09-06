@@ -6,6 +6,14 @@
 //  • Комбинированный тест: ОДИН Предел (ведущий навык + бонусы рангов остальных)
 //    и одна проверка; редкость+качество→сложность и Банк (из таблицы категорий).
 //  • Ассистенты дают доп. Успехи; смена авто-начисляет Усталость крафтеру.
+//
+//  Это окно — партийный инструмент, НЕ привязанный к одному актору: крафтер и
+//  ассистенты выбираются из ЛЮБОГО актора мира, открывается из сцен-контролов
+//  (Doom BC → Мастерская), работает без открытого листа персонажа вовсе.
+//  Ровно поэтому вкладка «КРАФТ» на листе персонажа (wdbc-42a6,
+//  module/sheets/tabs/craft.mjs) НЕ заменяет это окно, а переиспользует его
+//  методы (Object.create(CraftWorkshop.prototype)) на своей отдельной модели —
+//  своя вкладка на каждом листе, тот же движок. См. заголовок craft.mjs.
 // ════════════════════════════════════════════════════════════════════════
 
 import { CRAFT_CATEGORIES, CRAFT_QUALITY, CRAFT_TOOLS, RARITY_LABELS, RARITY_ORDER,
@@ -24,7 +32,7 @@ import { pickReroll } from "../rules/reroll-pick.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveTest } from "../rules/resolve-test.mjs";
-import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, darkMuseAssistBonus } from "../rules/craft-advantage.mjs";
+import { hasSlowShiftTalent, cyberpreacherApplies, effectiveDiceMode, slowShiftBonus, polymathBonus, darkMuseAssistBonus, haemonculusLabBonus } from "../rules/craft-advantage.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
@@ -36,19 +44,33 @@ function _hasPlayerOwner(actor) {
 }
 
 function _crafterChoices() {
-  return game.actors
+  // game.actors может быть ещё не готов (ранний вызов контекста листа в
+  // тестовой заглушке/до "ready") — тот же приём защиты, что и у остальных
+  // мест листа, читающих список акторов мира (actor-sheet.mjs: [...(game.actors ?? [])]).
+  return [...(game.actors ?? [])]
     .filter(a => a.type === "character" && (a.system?.craftAvailable || _hasPlayerOwner(a))
                  && (game.user.isGM || a.isOwner))
     .map(a => ({ id: a.id, name: a.name }))
     .sort((x, y) => x.name.localeCompare(y.name, "ru"));
 }
 
-function _newProject() {
+/**
+ * Новый проект (Крафт/Исследование/Биолаборатория). `preferredCrafterId` —
+ * вкладка листа персонажа (wdbc-42a6, module/sheets/tabs/craft.mjs) передаёт
+ * сюда владельца листа, чтобы новый проект сразу предлагал ЕГО крафтером,
+ * если он вообще доступен для крафта; отдельное окно «Мастерская» вызывает
+ * без аргумента — там нет «своего» актора, первый по алфавиту, как раньше.
+ */
+export function newCraftProject(preferredCrafterId) {
+  const choices = _crafterChoices();
+  const crafterId = (preferredCrafterId && choices.some(c => c.id === preferredCrafterId))
+    ? preferredCrafterId
+    : (choices[0]?.id || "");
   return {
     id: foundry.utils.randomID(8),
     title: "", collapsed: false,
     mode: "craft",
-    crafterId: _crafterChoices()[0]?.id || "",
+    crafterId,
     categoryKey: CRAFT_CATEGORIES[3].key,
     rarity: 1, quality: "common", toolKey: "common",
     gmMod: 0, assistants: 0, baseBank: null, improve: false, monotony: false, machineSize: 0,
@@ -94,11 +116,11 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
 
   constructor(...args) {
     super(...args);
-    this.projects = [_newProject()];
+    this.projects = [newCraftProject()];
   }
 
   _proj(pid) { return this.projects.find(p => p.id === pid) || null; }
-  _crafter(proj) { return game.actors.get(proj.crafterId) || null; }
+  _crafter(proj) { return game.actors?.get(proj.crafterId) || null; }
   _reqs(proj, category) {
     if (proj.mode === "research") return [{ group: "forbiddenLore" }];
     return category?.req || [];
@@ -272,7 +294,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const upd = (t, mut) => { const p = this._proj(pidOf(t)); if (!p) return; mut(p); this.render(false); };
 
     // Проекты: добавить / свернуть / удалить.
-    el.querySelector("[data-act=add-project]")?.addEventListener("click", () => { this.projects.push(_newProject()); this.render(false); });
+    el.querySelector("[data-act=add-project]")?.addEventListener("click", () => { this.projects.push(newCraftProject()); this.render(false); });
     on("[data-act=toggle]", "click", e => upd(e.currentTarget, p => p.collapsed = !p.collapsed));
     on("[data-act=remove]", "click", e => { const pid = pidOf(e.currentTarget); if (this.projects.length > 1) { this.projects = this.projects.filter(p => p.id !== pid); this.render(false); } });
     on("[name=ptitle]", "change", e => upd(e.currentTarget, p => p.title = e.target.value));
@@ -389,7 +411,9 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
     const slowBonus = slowShiftBonus(crafter, proj.slowShift);
     // Polymath / Полимат (wdbc-1rno): +10 безусловно на Крафт И Исследования.
     const polyBonus = polymathBonus(crafter);
-    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus;
+    // Лаборатория Гемункула (wdbc-6nl9): +60 безусловно на Крафт И Исследования.
+    const labBonus = haemonculusLabBonus(crafter);
+    const limit = R.combined.limit + mono + assistBonus + slowBonus + polyBonus + labBonus;
 
     // Комбинированный тест — ОДНА проверка против наименьшего/итогового Предела
     // (свой книжный расчёт, не общий combinedThreshold — см. computeCombined).
@@ -434,6 +458,7 @@ export class CraftWorkshop extends HandlebarsApplicationMixin(ApplicationV2) {
           ${critLine}
           ${assist ? `<div class="wh-craft-roll-line ok">Ассистенты (${assist}): +${assistBonus} к тесту, +${assist} успеха${darkMuseBonus ? ` (вкл. Тёмную Музу +${darkMuseBonus})` : ""}</div>` : ""}
           ${polyBonus ? `<div class="wh-craft-roll-line ok">Полимат: +${polyBonus} к тесту</div>` : ""}
+          ${labBonus ? `<div class="wh-craft-roll-line ok">Лаборатория Гемункула: +${labBonus} к тесту</div>` : ""}
           <div class="wh-craft-msg-sum ${gain > 0 ? "ok" : "fail"}">Итог смены: <b>+${gain}</b> · Прогресс: <b>${proj.project.accumulated}</b>/${R.bank}${done ? " · <b style='color:#8cf0a0'>ГОТОВО!</b>" : ""}</div>
           <div class="wh-craft-msg-foot">Смена №${proj.project.shifts} · Усталость +1 (крафтеру)${mono ? " · монотонность −30" : ""}</div>
         </div>`,

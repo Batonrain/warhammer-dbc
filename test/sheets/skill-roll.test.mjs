@@ -384,6 +384,24 @@ describe("Кубик: Преимущество/Помеха доступны н�
   });
 });
 
+// presetModifier (wdbc-5vf4, тест Сопротивления психосилы) — genericTest
+// (hooks.mjs) прокидывает число из payload делегирования в готовое поле
+// «Модификатор», чтобы цели не приходилось держать его в уме и вписывать
+// самой. Обычный input, значение по-прежнему можно поменять — не галочка.
+describe("presetModifier: готовый модификатор предзаполняет поле диалога", () => {
+  it("_rollCharacteristic передаёт presetModifier как начальное значение #skill-modifier", () => {
+    const s = sheet({});
+    s._rollCharacteristic("Стойкость", "T", 45, "t", true, { presetModifier: -5 });
+    expect(captured.dialog.content).toContain('id="skill-modifier" type="number" value="-5"');
+  });
+
+  it("без presetModifier поле остаётся 0, как раньше", () => {
+    const s = sheet({});
+    s._rollCharacteristic("Стойкость", "T", 45, "t", true);
+    expect(captured.dialog.content).toContain('id="skill-modifier" type="number" value="0"');
+  });
+});
+
 describe("регрессия: тест Характеристики теперь тоже уважает переброс/Кубик", () => {
   // Ревизия главы «Тесты» нашла, что _rollCharacteristic полностью игнорировал
   // result.reroll — диалог показывал переброс, а бросок всегда был одиночным.

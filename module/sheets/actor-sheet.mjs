@@ -22,8 +22,7 @@ import { createDisorderItem, activateDisorderListeners,
          openFearDialog, openTraumaDialog, rollDisorder } from "./tabs/disorders.mjs";
 import { activateDiseaseListeners } from "./tabs/diseases.mjs";
 import { fatiguePenalty, marchPenalty, activateConditionsListeners, addCondition } from "./tabs/conditions.mjs";
-import { disabledArmourPenalty } from "../combat/armor-mods.mjs";
-import { inventoryOverloadPenalty } from "../rules/encumbrance.mjs";
+import { helmetlessBonus } from "../rules/situational.mjs";
 import { painChatMsg } from "./tabs/pain.mjs";
 import { applyHealing } from "./tabs/healing.mjs";
 import { activateDrugListeners } from "./tabs/drugs.mjs";
@@ -32,9 +31,15 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
+import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
+import { activeEffectsTabContext } from "../apps/effects-summary.mjs";
+import { showTempModifierDialog, removeTempModifier } from "../apps/temp-modifier.mjs";
+import { showAptitudeBindingDialog } from "../apps/aptitude-binding-dialog.mjs";
+import { CHAR_APTITUDES } from "../constants/advancement.mjs";
+
 import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
@@ -65,8 +70,9 @@ import { CHAOS_PATRONS, chaosPatronMeta } from "../constants/chaos-patron.mjs";
 import { charStereotypesFor, effectivePricingMode, worldAdvancePricingMode, PRICING_MODES } from "../constants/patronage.mjs";
 import { applyArchetype } from "../apps/archetypes.mjs";
 import { homeworldRollMods, matchesContext } from "../constants/homeworlds.mjs";
-import { ruleRollModsHtml, ruleRerollsHtml } from "../rules/roll-mods.mjs";
+import { ruleRollModsHtml, ruleRerollsHtml, ruleAutoModsHtml, autoModsTotal } from "../rules/roll-mods.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 import { isMoraleOpposedSkill, resolveTest } from "../rules/resolve-test.mjs";
 import { applyLordOfExoditesFailPenalty } from "../combat/lord-of-exodites.mjs";
 import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../rules/delegate-test.mjs";
@@ -86,13 +92,22 @@ import { applyRace, applySubrace, clearRace, clearSubrace,
 import { raceDef } from "../apps/race-library.mjs";
 import { raceKeyOf, isAeldariRace } from "../apps/race-library.mjs";
 import { openRacePicker } from "./race-picker.mjs";
-import { HELMETLESS_FEL_BONUS } from "../constants/power-armour-lore.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { actorFactionsContext, activateFactionFieldListeners } from "../apps/actor-factions.mjs";
 import { toggleAbility } from "../apps/toggle-abilities.mjs";
 import { resolveArmorProps, aggregateArmorSkillMods } from "../combat/armor-properties.mjs";
 import { actorHasAspectPath } from "../constants/aeldari-paths.mjs";
+
+/** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
+const bookSkillPair = (key) => {
+  const def = SKILLS_DEF[key] || GROUP_SKILLS_DEF[key];
+  return def ? [def.char, def.apt2].filter(Boolean) : [];
+};
+/** Как объект называется на листе — для заголовка диалога. */
+const labelOfObject = (scope, key) => (scope === "char"
+  ? CHARACTERISTICS[key]?.label
+  : (SKILLS_DEF[key] || GROUP_SKILLS_DEF[key])?.label) || "";
 
 // Псевдонимы коротких имён талантов из данных рас/архетипов → имена в библиотеке
 // (по англ. части, в нижнем регистре). Покрывает расхождения «Minion» →
@@ -312,6 +327,8 @@ async function onSanityTalentRecover(event, target) {
   const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
   await this.actor.update({ "system.sanity.value": next });
 
+  // Не карточка теста, а строка о трате и прибавке: ни Порога, ни исхода —
+  // общий сборщик нарисовал бы вокруг неё пустую рамку карточки.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -338,23 +355,17 @@ async function onDreadnoughtDailyTest(event) {
     await this.actor.update({ "system.sanity.value": next });
   }
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Тест бодрствования — W+0</div>
-        <div class="roll-threshold">Порог: <b>${wp}</b></div>
-        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-        <div class="roll-outcome">
-          ${success
-            ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
-            : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
-              + `−${sanityLoss} Здравомыслия (${next})</span>`}
-        </div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(this.actor, {
+    title: "Тест бодрствования — W+0",
+    // Порог без слагаемых: тест фиксированный W+0 (см. комментарий выше),
+    // поэтому скобок с подписями здесь нет — их нечем наполнить.
+    threshold: thresholdLine({ threshold: wp }),
+    rv: roll.total,
+    outcome: success
+      ? `<span class="roll-success">Успех — ${degrees} ${_degWord(degrees)}</span>`
+      : `<span class="roll-failure">Провал — ${degrees} ${_degWord(degrees)}, `
+        + `−${sanityLoss} Здравомыслия (${next})</span>`
+  }, { rolls: [roll] });
 }
 
 // Электростимуляторы Дредноута (стр. 58): разовый буст Здравомыслия, откат —
@@ -376,6 +387,8 @@ async function onElectrostimActivate(event) {
     "system.electrostim.amount": amount
   });
 
+  // Не карточка теста, а уведомление (Буст включён): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -408,17 +421,14 @@ async function onElectrostimRollback(event) {
     ...woundUpdates
   });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Электростимуляторы — откат</div>
-        <div class="roll-outcome"><span class="roll-failure">−${amount} Здравомыслия (${cur} → ${next})</span></div>
-        <div class="roll-dice">Непоглощаемый урон: <b>${roll.total}</b></div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(this.actor, {
+    title: "Электростимуляторы — откат",
+    outcome: `<span class="roll-failure">−${amount} Здравомыслия (${cur} → ${next})</span>`,
+    // Урон отката идёт ПОСЛЕ исхода и своей подписью («Непоглощаемый урон»,
+    // а не «Бросок») — поэтому он свой блок, а не общая строка броска: тут не
+    // тест, а последствие, и порядок строк сложился обратный.
+    sections: [`<div class="roll-dice">Непоглощаемый урон: <b>${roll.total}</b></div>`]
+  }, { rolls: [roll] });
 }
 
 // «Ферум Инфернус» (стр. 58): пока Здравомыслие ниже ½Inf+5, раз в игровой
@@ -436,6 +446,8 @@ async function onFerumInfernusTick(event) {
   const next = max != null ? Math.min(max, cur + 1) : cur + 1;
   await this.actor.update({ "system.sanity.value": next });
 
+  // Не карточка теста, а уведомление (Часовой тик): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -457,6 +469,8 @@ async function onHibernationEnter(event) {
   event.preventDefault();
   if (this.actor.system.hibernation?.active) return;
   await this.actor.update({ "system.hibernation.active": true });
+  // Не карточка теста, а уведомление (Вход в Гибернацию): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -476,6 +490,8 @@ async function onHibernationExit(event) {
   event.preventDefault();
   if (!this.actor.system.hibernation?.active) return;
   await this.actor.update({ "system.hibernation.active": false });
+  // Не карточка теста, а уведомление (Выход из Гибернации): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -499,17 +515,11 @@ async function onHibernationWeekTick(event) {
   const next = max != null ? Math.min(max, cur + roll.total) : cur + roll.total;
   await this.actor.update({ "system.sanity.value": next });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Гибернация — полная неделя</div>
-        <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-success">+${roll.total} Здравомыслия (${cur} → ${next})</span></div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(this.actor, {
+    title: "Гибернация — полная неделя",
+    rv: roll.total,
+    outcome: `<span class="roll-success">+${roll.total} Здравомыслия (${cur} → ${next})</span>`
+  }, { rolls: [roll] });
 }
 
 /**
@@ -528,6 +538,8 @@ async function onSarcophagusHealTick(event) {
   const next = Math.min(max, cur + 1);
   await this.actor.update({ "system.wounds.value": next });
 
+  // Не карточка теста, а уведомление (Тик лечения): ни броска, ни Порога —
+  // переводить на общий сборщик нечего.
   const rollMode = game.settings.get("core", "rollMode");
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: this.actor }),
@@ -774,6 +786,7 @@ export class WarhammerCharacterSheet
       tabs: [
         { id: "stats",       label: "ПОКАЗАТЕЛИ" },
         { id: "combat",      label: "БОЙ" },
+        { id: "activeEffects", label: "ЭФФЕКТЫ" },
         { id: "effects",     label: "ТЕЛО" },
         { id: "possession",  label: "ОДЕРЖИМОСТЬ" },
         { id: "haemonculus", label: "ГЕМУНКУЛ" },
@@ -783,6 +796,7 @@ export class WarhammerCharacterSheet
         { id: "tech",        label: "ТЕХ" },
         { id: "nav",         label: "НАВ" },
         { id: "gear",        label: "СНАРЯЖЕНИЕ" },
+        { id: "craft",       label: "КРАФТ" },
         { id: "advance",     label: "РАЗВИТИЕ" },
         { id: "notes",       label: "ЗАПИСИ" }
       ]
@@ -801,6 +815,9 @@ export class WarhammerCharacterSheet
   // Субвкладка ТЕЛА, открытая сейчас (wdbc-ycgk) — окно, не актор, см. onBodySubtab.
   _bodySubtab = "flesh";
   _wizardPrompted = false;
+  // Вкладка КРАФТ (wdbc-42a6) — модель проектов Крафта/Исследований живёт на
+  // самом листе, не на акторе (см. заголовок module/sheets/tabs/craft.mjs).
+  _craftModel = null;
 
   // Показать/скрыть под-строки установленных улучшений конкретного носителя
   // (оружия/брони) на вкладке снаряжения. Строки-описания при сворачивании
@@ -852,9 +869,19 @@ export class WarhammerCharacterSheet
     // у той стороны, к которой персонажа прицепили, а не у него самого.
     Object.assign(context, socialContext(this.actor, [...(game.actors ?? [])]));
 
+    // Вкладка ЭФФЕКТЫ (wdbc-xrsh): сводка активных Foundry ActiveEffect —
+    // баф/дебаф × характеристика/иной показатель. Только чтение уже
+    // применённых change (module/apps/effects-summary.mjs), без пересчёта.
+    Object.assign(context, activeEffectsTabContext(this.actor));
+
     // Блок «МИНЬОНЫ» там же: слоты купленных Талантов, счётчик по группам и
     // максимум, а при свободном Таланте — кнопка «+» в генератор.
     Object.assign(context, minionsPanelContext(this.actor, [...(game.actors ?? [])]));
+
+    // Вкладка КРАФТ (wdbc-42a6): тот же движок, что у отдельного окна
+    // «Мастерская» (module/apps/craft-workshop.mjs, оно тоже осталось — см.
+    // его заголовок), но проекты свои у этого листа.
+    Object.assign(context, await craftTabContext(this));
 
     // Блок «ВЕРХОМ» на вкладке БОЙ: скакун ищется по списку акторов мира —
     // ссылку на него хранит сам всадник (rules/mount.mjs).
@@ -968,8 +995,7 @@ export class WarhammerCharacterSheet
    * Правило безусловное, поэтому применяется само, а не галочкой в диалоге.
    */
   _getHelmetlessBonus(charKey) {
-    if (!this.actor.system.helmetlessActive) return 0;
-    return (charKey ?? "").toLowerCase() === "fel" ? HELMETLESS_FEL_BONUS : 0;
+    return helmetlessBonus(this.actor, charKey);
   }
 
   _getFatiguePenalty(charKey) {
@@ -1179,9 +1205,15 @@ export class WarhammerCharacterSheet
       ["", `Как у мира (${PRICING_MODES[world]})`],
       ...Object.entries(PRICING_MODES)
     ].map(([key, label]) => ({
-      cls: `wh-ctx-pricing-${key || "world"}`, label: `Система продвижения: ${label}`,
+      cls: `wh-ctx-pricing-${key || "world"}`, label,
       checkbox: true, checked: cur === key, onClick: () => set(key)
     }));
+  }
+
+  /** Система продвижения как один каскадный пункт (wdbc-unpb), тот же приём,
+   * что _alignmentSubmenu() — вместо плоского списка мьютекс-пунктов в общем меню. */
+  _advancePricingSubmenu() {
+    return { cls: "wh-ctx-pricing", label: "📈 Система продвижения", submenu: this._advancePricingEntries() };
   }
 
   /** Создаёт Черты из списка {name,benefit,rating,hasRating,effects}, пропуская существующие по имени. */
@@ -1433,7 +1465,7 @@ export class WarhammerCharacterSheet
 
     if (payload?.type === "wh-condition") {
       event.preventDefault();
-      return addCondition(this.actor, payload.key, payload.level || null);
+      return addCondition(this.actor, payload.key, { level: payload.level || null });
     }
 
     return super._onDrop(event);
@@ -1556,7 +1588,7 @@ export class WarhammerCharacterSheet
       return [
         wizard, this._bodyTypeSubmenu(), { sep: true },
         ...(aeldari ? [] : [this._alignmentSubmenu(), { sep: true }]),
-        ...this._advancePricingEntries(), { sep: true },
+        this._advancePricingSubmenu(), { sep: true },
         this._accessSubmenu(accessKeys),
         ...this._sheetToggleEntries(["craftAvailable", ...(aeldari ? [] : ["isRogueTrader"])]),
         horde
@@ -1717,6 +1749,9 @@ export class WarhammerCharacterSheet
 
     activateGearListeners(root, this.actor);
 
+    // ── Вкладка КРАФТ (wdbc-42a6) ───────────────────────────────────────────
+    activateCraftListeners(root, this);
+
     // ── Вкладка БОЙ ───────────────────────────────────────────────────────
     activateCombatListeners(root, this.actor);
 
@@ -1735,6 +1770,42 @@ export class WarhammerCharacterSheet
     });
     // ── Состояния и Усталость ─────────────────────────────────────────────
     activateConditionsListeners(root, this.actor);
+
+    // ── Привязка Склонностей объекта (wdbc-1pvq) ──────────────────────────
+    // Щелчок по значку Д/Н/В у Характеристики или Навыка на вкладке
+    // ПРОДВИЖЕНИЕ. Значок стоит там же, где видно последствие — цену, поэтому
+    // отдельной колонки под смену привязки не заводится.
+    root.querySelectorAll("[data-apt-scope]").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;                       // до await, см. wdbc-odgs
+        const scope = el.dataset.aptScope;
+        const key   = el.dataset.aptKey;
+        const title = el.getAttribute("title") || key;
+        const book  = scope === "char"
+          ? (CHAR_APTITUDES[key] || [])
+          : bookSkillPair(key);
+        await showAptitudeBindingDialog(this.actor, scope, key, labelOfObject(scope, key) || title, book);
+      });
+    });
+
+    // ── Временный модификатор характеристики (wdbc-5qvo) ──────────────────
+    // Кнопка и крестики живут на вкладке ЭФФЕКТЫ: там же, где видно всё
+    // остальное, что сейчас правит показатели, — чтобы разовый штраф не
+    // оказался единственным, чей источник и срок нигде не написаны.
+    root.querySelectorAll(".fx-temp-add-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        await showTempModifierDialog(this.actor);
+      });
+    });
+    root.querySelectorAll(".fx-temp-remove-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        await removeTempModifier(this.actor, ev.currentTarget.dataset.effectId);
+      });
+    });
 
     // ── Вкладка ТЕЛО ──────────────────────────────────────────────────────
     activateBodyListeners(root, this.actor);
@@ -1999,7 +2070,7 @@ export class WarhammerCharacterSheet
     };
   }
 
-  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null } = {}) {
+  _showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect = false, rollContext = null, defaultKind = "base", { effectTargetActor = null, opposedRequest = null, presetModifier = 0 } = {}) {
     // targetActor (wdbc-1rno): раньше был только у атак (attack-dialog.mjs) —
     // обычный тест Навыка/Характеристики цель не нёс вовсе, и правила вида
     // «противник ПРОТИВ персонажа получает штраф» (targetHasTrait,
@@ -2022,12 +2093,35 @@ export class WarhammerCharacterSheet
       ? `<div class="roll-dlg-note">${recipientMods.map(m => `${esc(m.label)} (${esc(effectTargetActor.name)}): ${m.value >= 0 ? "+" : ""}${m.value}`).join("<br/>")}</div>`
       : "";
     baseTotal += recipientTotal;
+    // presetModifier (wdbc-5vf4, тест Сопротивления психосилы) — предзаполняет
+    // поле «Модификатор» готовым числом, но им же и остаётся: обычный input,
+    // игрок волен стереть/поменять. Отличается от recipientMods выше:
+    // recipientMods читает ЖИВЫЕ правила effectTargetActor (Черты/Таланты),
+    // presetModifier приходит ИЗВНЕ, с предмета-источника события (сама
+    // психосила), через плоский примитив в payload делегирования
+    // (delegate-test.mjs — extra несёт только числа/строки), поэтому не может
+    // быть завязан на живой реестр правил актора.
     const rollCtx = { kind: "skill", char: defaultChar, targetActor, ...(rollContext || {}) };
     // Встречные Запугивание/Пытки — тесты Морали по книге (wdbc-zepq).
     if (isMoraleOpposedSkill(rollCtx.skill)) rollCtx.morale = true;
     const hw = this._homeworldModsHtml(rollCtx);
     const im = this._itemRollModsHtml(rollCtx);
     const rl = this._ruleRollModsHtml(rollCtx);
+    // Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t): Усталость,
+    // Марш, снятый шлем, выключенная броня, Перевес инвентаря. Раньше все пять
+    // дописывались слагаемыми в Порог здесь же и в _rollSkill/_rollCharacteristic
+    // — теперь приходят из реестра правил одним списком (источник
+    // «situational», rules/situational.mjs) и показаны игроку строками.
+    //
+    // Кэш по характеристике: пока диалог открыт, состояние актора не меняется,
+    // а «Бросок с:» игрок может переключать сколько угодно — пересобирать
+    // правила на каждое нажатие клавиши незачем.
+    const autoModsCache = new Map();
+    const autoModsFor = key => {
+      if (!autoModsCache.has(key)) autoModsCache.set(key, ruleAutoModsHtml(this.actor, { ...rollCtx, char: key }));
+      return autoModsCache.get(key);
+    };
+    const au = autoModsFor(defaultChar);
     const am = this._armorSkillModsHtml(rollCtx);
     const aa = this._armorAspectModHtml();
     // Перебросы (Локусы Герольдов и прочие «перебросить тест X») — отдельным
@@ -2096,7 +2190,7 @@ export class WarhammerCharacterSheet
             </div>
             <div class="roll-dlg-row">
               <label>Модификатор:</label>
-              <input id="skill-modifier" type="number" value="0"/>
+              <input id="skill-modifier" type="number" value="${presetModifier}"/>
             </div>
             <div class="roll-dlg-row assist-row">
               <label>Ассистенты:</label>
@@ -2107,6 +2201,7 @@ export class WarhammerCharacterSheet
             ${hw.html}
             ${im.html}
             ${rl.html}
+            <div id="rule-auto-mods-slot">${au.html}</div>
             ${am.html}
             ${aa.html}
             ${rr.html}
@@ -2193,19 +2288,23 @@ export class WarhammerCharacterSheet
             const target     = parseInt(root.querySelector("#skill-target")?.value) || 0;
             const modifier    = modifierSumOf(root);
             const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
-            const charKey = currentCharKey();
-            return target + modifier + difficulty
-              + this._getFatiguePenalty(charKey)
-              + this._getMarchPenalty(charKey)
-              + this._getHelmetlessBonus(charKey)
-              + disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill })
-              + inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+            return target + modifier + difficulty + autoModsFor(currentCharKey()).total;
           }
         });
+
+        // Список «Состояние» пересобирается вместе с выбором характеристики:
+        // Усталость не трогает Стойкость, снятый шлем помогает только
+        // Товариществу — переключил «Бросок с:», и строки обязаны стать
+        // другими, иначе игрок видит Порог, не сходящийся с показанным.
+        const refreshAutoMods = () => {
+          const slot = root.querySelector("#rule-auto-mods-slot");
+          if (slot) slot.innerHTML = autoModsFor(currentCharKey()).html;
+        };
 
         charSelectEl?.addEventListener("change", ev => {
           root.querySelector("#skill-target").value =
             (this.actor.system.characteristics[ev.currentTarget.value]?.total ?? 0) + rankBonus;
+          refreshAutoMods();
           updateAutoOutcomeNote();
         });
 
@@ -2334,47 +2433,75 @@ export class WarhammerCharacterSheet
       label, mineName: opposedRequest.initiatorName, mine: opposedRequest.initiatorSide,
       theirsName: this.actor.name, theirs: { threshold: baseEff, roll: rv }, result
     });
+    // Не карточка теста, а готовое сравнение двух уже сделанных бросков
+    // (своя разметка в rules/test-kind-widget.mjs) — и намеренно мимо режима
+    // броска: результат встречного теста должен видеть и соперник.
     await ChatMessage.create({ content, speaker: ChatMessage.getSpeaker({ actor: this.actor }), sound: CONFIG.sounds.dice });
   }
 
-  // ── Бросок навыка ─────────────────────────────────────────────────────────
+  // -- Тест: общее тело Навыка и Характеристики ------------------------------
 
-  async _rollSkill(label, baseTotal, defaultChar, rollContext = null, { effectTargetActor = null, opposedRequest = null } = {}) {
-    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, false, rollContext, "base", { effectTargetActor, opposedRequest });
+  /**
+   * Один тест от диалога до карточки (wdbc-n17t). Раньше это были два
+   * близнеца по ~110 строк — `_rollSkill` и `_rollCharacteristic`, — у
+   * которых совпадало всё: диалог, сложение Порога, бросок с перебросом,
+   * авто-встречный тест, разбор исхода, карточка в чат. Пока их было два,
+   * любая правка расчёта Порога делалась дважды и один раз из двух
+   * забывалась — так и разъехались пять ситуативных штрафов.
+   *
+   * Различия остались параметрами, а не ветками «если это навык»:
+   *  - `headerAbbr`/`targetLabel` — шапка карточки и подпись Цели;
+   *  - навык теста берётся из `rollContext.skill` (у Характеристики его нет),
+   *    и от него же зависят тест Морали и Владыка Исходников;
+   *  - `withSceneTarget` — см. комментарий у `_rollCharacteristic`.
+   */
+  async _runTest(label, baseTotal, defaultChar, {
+    rollContext = null, hideCharSelect = false, effectTargetActor = null,
+    opposedRequest = null, presetModifier = 0,
+    headerAbbr = null, targetLabel = null, withSceneTarget = true
+  } = {}) {
+    const result = await this._showSkillRollDialog(label, baseTotal, defaultChar, hideCharSelect,
+      rollContext, "base", { effectTargetActor, opposedRequest, presetModifier });
     if (!result) return;
-    const { charKey, target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
+    const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
              assistCount = 0, reroll = null } = result;
     // Делегированный тест (wdbc-uez7): эффект/последствия — на effectTargetActor
     // (тот, за кого просили), сам бросок и его штрафы за состояние тела/снаряжения
     // (Усталость/Марш/Броня/Перевес) — на this.actor (кто физически бросает).
     const effectActor = effectTargetActor ?? this.actor;
+    const skillKey = rollContext?.skill ?? null;
+    // Характеристика броска — та, что стоит в «Бросок с:» на момент нажатия
+    // кнопки. Тест Характеристики раньше читал её из параметра и переключатель
+    // игнорировал: Цель менялась, а Усталость и снятый шлем считались по
+    // прежней характеристике.
+    const charKey = hideCharSelect ? defaultChar : (result.charKey ?? defaultChar);
+    const sceneTarget = withSceneTarget ? ([...(game.user?.targets ?? [])][0]?.actor ?? null) : null;
 
-    const fatiguePenalty = this._getFatiguePenalty(defaultChar);
-    const marchPen = this._getMarchPenalty(defaultChar);
-    // Снятый шлем: +5 ко всем тестам на основе Товарищества.
-    const helmetBonus = this._getHelmetlessBonus(charKey);
-    // Выключенная силовая броня: −10 физическому действию, −40 Уклонению/
-    // Парированию (стр. 233) — skill берётся из rollContext, если он у этого
-    // навыка есть (Dodge/Parry передают его отдельным ключом, не через charKey).
-    const armourPenalty = disabledArmourPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
-    // Перевес общего инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник.
-    const overloadPenalty = inventoryOverloadPenalty(this.actor, { charKey, skillKey: rollContext?.skill });
+    // Ситуативные штрафы состояния тела и снаряжения (Усталость, Марш, снятый
+    // шлем, выключенная броня, Перевес) — из реестра правил, тем же списком,
+    // что диалог показал строками. Контекст собирается так же, как в диалоге
+    // (_showSkillRollDialog выше): разойдись эти два места, показанный Порог не
+    // сошёлся бы с брошенным.
+    const autoCtx = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
+    if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
+    const autoMods = resolveTest({ actor: this.actor, ...autoCtx }).autoMods;
+    const autoLines = autoMods
+      .map(m => ` ${m.value >= 0 ? "+" : "−"} ${Math.abs(m.value)} (${m.label})`).join("");
 
-    // Мод препаратов уже входит в target (через char.total → итог навыка)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty + overloadPenalty;
+    // Мод препаратов уже входит в target (через char.total -> итог навыка)
+    const baseEff = target + modifier + difficulty + autoModsTotal(autoMods);
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
-    const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
+    const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
-    const rollMode = game.settings.get("core", "rollMode");
 
     // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —
     // галочка их не перезаписывает, если что-то уже вписано вручную.
     let finalOpposed = opposed;
     let opposedOpponent = null;
     if (!finalOpposed && opposedAuto) {
-      const auto = await this._resolveOpposedAuto(opposedAuto, { skillKey: rollContext?.skill, charKey });
+      const auto = await this._resolveOpposedAuto(opposedAuto, { skillKey, charKey });
       finalOpposed = auto.opposed;
       opposedOpponent = auto.opponentActor;
     }
@@ -2383,11 +2510,11 @@ export class WarhammerCharacterSheet
 
     const outcome = await resolveKindOutcome(effectActor, {
       kind, baseEff, rv, combined, extended, opposed: finalOpposed,
-      ctx: { actor: effectActor, kind: "skill", char: charKey, skill: rollContext?.skill,
-             morale: isMoraleOpposedSkill(rollContext?.skill),
-             targetActor: [...(game.user?.targets ?? [])][0]?.actor ?? null }
+      ctx: { actor: effectActor, kind: "skill", char: charKey, skill: skillKey ?? undefined,
+             morale: isMoraleOpposedSkill(skillKey),
+             ...(withSceneTarget ? { targetActor: sceneTarget } : {}) }
     });
-    if (isMoraleOpposedSkill(rollContext?.skill)) {
+    if (isMoraleOpposedSkill(skillKey)) {
       await applyLordOfExoditesFailPenalty(this.actor, {
         dof: outcome.success ? 0 : outcome.deg, usedReroll: !!reroll
       });
@@ -2398,46 +2525,50 @@ export class WarhammerCharacterSheet
       ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
     const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
+    // Подпись характеристики в шапке: если игрок переключил «Бросок с:»,
+    // показываем ту, которой бросили, а не ту, с которой открывали диалог.
+    const shownAbbr = headerAbbr == null ? null : (charKey === defaultChar ? headerAbbr : charAbbr);
 
-    const messageData = ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
-          <div class="roll-threshold">
-            ${charAbbr}: <b>${target}</b>${modStr}
+    // Карточка — общим сборщиком (wdbc-kuun). Порядок строк у неё тот же, что
+    // был здесь руками: шапка, Порог, свои строки, бросок, переброс, крит,
+    // исход, свои блоки.
+    //
+    // Строка Порога остаётся своей, а не thresholdLine: у общей слагаемые
+    // уходят в скобки подписью «Усталость −10», а здесь они исторически стоят
+    // подряд числом со скобкой-причиной («-20 (📊 Сложность)», «− 10
+    // (😓 Усталость)»), и этот вид дословно закреплён тестами карточки. Это
+    // самый частый бросок за столом — менять ему вид заодно с переездом
+    // разметки не стоит.
+    await postTestCard(this.actor, {
+      title: `${shownAbbr ? `${shownAbbr} — ` : ""}${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}`,
+      threshold: `<div class="roll-threshold">
+            ${targetLabel ?? charAbbr}: <b>${target}</b>${modStr}
             ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
-            ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
-            ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
-            ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
-            ${overloadPenalty !== 0 ? ` ${overloadPenalty} (◈ Перевес инвентаря)` : ""}
-            ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
+            ${autoLines}
             → Порог: <b>${baseEff}</b>
-          </div>
-          ${outcome.combinedLine}
-          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          ${rerollNote}
-          ${outcome.critLine}
-          <div class="roll-outcome">${outcomeHtml}</div>
-          ${outcome.extendedLine}
-          ${outcome.opposedLine}
-          ${pendingOpponentNote}
-        </div>`,
-      rolls: [roll],
-      sound: CONFIG.sounds.dice
-    }, rollMode);
-
-    await ChatMessage.create(messageData);
+          </div>`,
+      lines: [
+        outcome.combinedLine,
+        assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""
+      ],
+      rv, rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
+      sections: [outcome.extendedLine, outcome.opposedLine, pendingOpponentNote]
+    }, { rolls: [roll] });
 
     if (opposedOpponent) {
       await this._sendOpposedRequest(opposedOpponent, {
-        label, kind, testKind: rollContext?.skill ? "skill" : "characteristic",
-        skillKey: rollContext?.skill ?? null, charKey, hideCharSelect: false,
+        label, kind, testKind: skillKey ? "skill" : "characteristic",
+        skillKey, charKey, hideCharSelect,
         baseEff, rv, outcome
       });
     }
     await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome });
+  }
+
+  // -- Бросок навыка ---------------------------------------------------------
+
+  async _rollSkill(label, baseTotal, defaultChar, rollContext = null, { effectTargetActor = null, opposedRequest = null } = {}) {
+    return this._runTest(label, baseTotal, defaultChar, { rollContext, effectTargetActor, opposedRequest });
   }
 
   /** Расчёт и применение лечения к пациенту + сообщение в чат. */
@@ -2450,92 +2581,23 @@ export class WarhammerCharacterSheet
     return painChatMsg(this.actor, text);
   }
 
-  // ── Бросок характеристики ─────────────────────────────────────────────────
+  // -- Бросок характеристики -------------------------------------------------
 
-  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null } = {}) {
-    const result = await this._showSkillRollDialog(label, threshold, charKey, hideCharSelect, null, "base", { effectTargetActor, opposedRequest });
-    if (!result) return;
-    const { target, modifier, difficulty = 0, kind = "base", combined, extended, opposed, opposedAuto,
-             assistCount = 0, reroll = null } = result;
-    const effectActor = effectTargetActor ?? this.actor;
-
-    const fatiguePenalty = this._getFatiguePenalty(charKey);
-    const marchPen = this._getMarchPenalty(charKey);
-    // Снятый шлем: +5 ко всем тестам на основе Товарищества.
-    const helmetBonus = this._getHelmetlessBonus(charKey);
-    // Выключенная силовая броня: −10 физической характеристике (стр. 233).
-    const armourPenalty = disabledArmourPenalty(this.actor, { charKey });
-    // Перевес общего инвентаря (стр. 27, wdbc-2l3x) — независимый от брони источник.
-    const overloadPenalty = inventoryOverloadPenalty(this.actor, { charKey });
-
-    // Мод препаратов уже входит в target (через char.total)
-    const baseEff  = target + modifier + difficulty + fatiguePenalty + marchPen + helmetBonus + armourPenalty + overloadPenalty;
-    // Переброс/Преимущество/Помеха — тот же путь, что у теста Навыка
-    // (rules/reroll-pick.mjs::pickReroll); раньше здесь бросался только один
-    // d100 и выбор диалога тихо игнорировался (см. ревизию главы «Тесты»).
-    const { roll, rv, rolls, rerollNote } = await rollD100WithReroll(reroll);
-    const rollMode = game.settings.get("core", "rollMode");
-
-    // Авто-встречный тест (wdbc-j814) — см. _rollSkill, тот же приём.
-    let finalOpposed = opposed;
-    let opposedOpponent = null;
-    if (!finalOpposed && opposedAuto) {
-      const auto = await this._resolveOpposedAuto(opposedAuto, { charKey });
-      finalOpposed = auto.opposed;
-      opposedOpponent = auto.opponentActor;
-    }
-    const pendingOpponentNote = opposedOpponent
-      ? `<div class="roll-dlg-note">⏳ Ждём встречный бросок игрока «${esc(opposedOpponent.name)}»…</div>` : "";
-
-    const outcome = await resolveKindOutcome(effectActor, {
-      kind, baseEff, rv, combined, extended, opposed: finalOpposed,
-      ctx: { actor: effectActor, kind: "skill", char: charKey }
+  /**
+   * `abbr` — подпись характеристики в шапке карточки. Если игрок переключил
+   * «Бросок с:», подпись берётся у фактической характеристики броска, а не у
+   * той, с которой диалог открывали.
+   */
+  async _rollCharacteristic(label, abbr, threshold, charKey, hideCharSelect = false, { effectTargetActor = null, opposedRequest = null, presetModifier = 0 } = {}) {
+    return this._runTest(label, threshold, charKey, {
+      hideCharSelect, effectTargetActor, opposedRequest, presetModifier,
+      headerAbbr: abbr, targetLabel: "Цель",
+      // Тест Характеристики не клал цель сцены в контекст исхода, тест Навыка
+      // клал. Не выравниваем заодно с объединением: правила с условием по цели
+      // начали бы срабатывать на тестах характеристик, а это другое число за
+      // столом и отдельное решение (заведено отдельной задачей).
+      withSceneTarget: false
     });
-    // Ассистенты добавляют степень только к успеху — см. rules/assists.mjs.
-    const deg      = assistDegrees(outcome.deg, assistCount, outcome.success);
-    const outcomeHtml = outcome.success
-      ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}</span>`
-      : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`;
-    const modStr   = modifier !== 0 ? ` ${modifier >= 0 ? "+" : ""}${modifier}` : "";
-
-    const messageData = ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${abbr} — ${label}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""}${effectTargetActor ? ` — за ${esc(effectTargetActor.name)}` : ""}</div>
-          <div class="roll-threshold">
-            Цель: <b>${target}</b>${modStr}
-            ${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""}
-            ${fatiguePenalty !== 0 ? ` − 10 (😓 Усталость)` : ""}
-            ${marchPen !== 0 ? ` ${marchPen} (🏃 Марш)` : ""}
-            ${armourPenalty !== 0 ? ` ${armourPenalty} (🔌 Броня выключена)` : ""}
-            ${overloadPenalty !== 0 ? ` ${overloadPenalty} (◈ Перевес инвентаря)` : ""}
-            ${helmetBonus !== 0 ? ` + ${helmetBonus} (шлем снят)` : ""}
-            → Порог: <b>${baseEff}</b>
-          </div>
-          ${outcome.combinedLine}
-          ${assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""}
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          ${rerollNote}
-          ${outcome.critLine}
-          <div class="roll-outcome">${outcomeHtml}</div>
-          ${outcome.extendedLine}
-          ${outcome.opposedLine}
-          ${pendingOpponentNote}
-        </div>`,
-      rolls: [roll],
-      sound: CONFIG.sounds.dice
-    }, rollMode);
-
-    await ChatMessage.create(messageData);
-
-    if (opposedOpponent) {
-      await this._sendOpposedRequest(opposedOpponent, {
-        label, kind, testKind: "characteristic", skillKey: null, charKey, hideCharSelect,
-        baseEff, rv, outcome
-      });
-    }
-    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome });
   }
 
   _degWord(n) { return _degWord(n); }

@@ -27,10 +27,50 @@ const norm = s => String(s ?? "").trim().toLowerCase();
 export function itemHasName(item, wanted) {
   const w = norm(wanted);
   if (!w) return false;
-  return norm(item?.name).split("/").some(part => {
+  return nameForms(item).includes(w);
+}
+
+/** Специализация в скобках на конце: «Resistance (Cold)» → «Resistance». */
+const SPEC_TAIL = /\s*\([^)]*\)\s*$/;
+
+/**
+ * Все формы имени предмета, по которым он опознаётся: каждая половина
+ * двуязычного имени, плюс та же половина без специализации в скобках.
+ *
+ * Разбор кэшируется НА САМОМ ПРЕДМЕТЕ (wdbc-uvap). Причина — не сама функция,
+ * а число вызовов: 57 Талантов опознаются по литеральному имени (wdbc-iadw),
+ * и каждый вопрос заново приводил имя каждого предмета к нижнему регистру,
+ * резал по «/» и гонял регулярку. В профиле пересчёта листа (node --cpu-prof,
+ * актор на 120 предметов) на это уходила треть всего времени.
+ *
+ * Ключ кэша — сам объект предмета, а годность проверяется по СЫРОМУ имени:
+ * переименовали предмет — разбор пересчитывается тут же. Иначе правка имени в
+ * компендиуме «применялась бы через раз», а это ровно тот класс молчаливых
+ * поломок, против которого весь wdbc-iadw.
+ *
+ * WeakMap, а не поле на предмете: предмет бывает и живым документом Foundry
+ * (чужое поле на нём — лишняя запись в данные), и сырым объектом из packs-src.
+ */
+const NAME_FORMS = new WeakMap();
+
+function nameForms(item) {
+  const raw = item?.name;
+  // Предмет без имени (или вовсе без предмета) не совпадает ни с чем — и в
+  // кэш его класть не за что.
+  if (typeof raw !== "string" || !raw) return [];
+
+  const hit = NAME_FORMS.get(item);
+  if (hit && hit.raw === raw) return hit.forms;
+
+  const forms = [];
+  for (const part of norm(raw).split("/")) {
     const p = part.trim();
-    return p === w || p.replace(/\s*\([^)]*\)\s*$/, "").trim() === w;
-  });
+    if (p && !forms.includes(p)) forms.push(p);
+    const bare = p.replace(SPEC_TAIL, "").trim();
+    if (bare && !forms.includes(bare)) forms.push(bare);
+  }
+  NAME_FORMS.set(item, { raw, forms });
+  return forms;
 }
 
 /**
@@ -107,6 +147,32 @@ export function isSusAnMembraneItem(item) {
     (itemHasName(item, "Сус-ан Мембрана") || itemHasName(item, "Sus-an Membrane"));
 }
 
+/**
+ * Оглушение ИЛИ Ступор (wdbc-r5o7.3) — не два отдельных условия, а один
+ * читатель: книга прямо называет Ступор «Оглушённой целью для прочих
+ * эффектов» (стр. 30-31), поэтому любой код, спрашивающий «Оглушён ли
+ * актор», обязан спрашивать это, а не только conditions.stunned (иначе
+ * список расходится с книгой при первой же новой проверке). Плоская
+ * функция, не запись PREDICATES — оба читателя (action-economy.mjs,
+ * attack-dialog.mjs) вне конвейера правил `when`/rollBonus.
+ */
+export function isStunnedOrDazed(actor) {
+  const c = actor?.system?.conditions;
+  return !!(c?.stunned || c?.dazed);
+}
+
+/**
+ * Ослеплён — сам флаг ИЛИ производное от Потери глаз: «Без обоих глаз
+ * персонаж Ослеплён» (стр. 30-31, wdbc-r5o7.4). Считается на лету, а не
+ * отдельной проставленной галочкой — иначе два поля разъедутся при первой
+ * же ручной правке conditions.lostEyesCount (тот же принцип, что
+ * isStunnedOrDazed выше).
+ */
+export function isBlindedActor(actor) {
+  const c = actor?.system?.conditions;
+  return !!(c?.blinded || (Number(c?.lostEyesCount) || 0) >= 2);
+}
+
 /** Хирургически установленный (не просто лежащий в инвентаре) имплант с этим именем. */
 function hasInstalledImplant(actor, name) {
   return (actor?.items ?? []).some(i => i?.type === "implant" && itemHasName(i, name) &&
@@ -126,6 +192,23 @@ function inFactions(actor, wanted) {
   const byKey = getFactionIndex();
   return list(wanted).every(key => anySameOrDescendant(mine, key, byKey));
 }
+
+/**
+ * Предикаты, которым нужен КОНТЕКСТ БРОСКА, а не один актор: цель, оружие,
+ * характеристика теста. Их нельзя спрашивать оттуда, где контекста нет —
+ * например из записи Конструктора на предмете (rules/mech-when.mjs): она
+ * вычисляется и вне броска, при выдаче и в предпросмотре, и тихий ответ «нет»
+ * про несуществующую цель выключал бы механику молча.
+ *
+ * Список сверяется с кодом тестом (test/rules/when-predicates-bridge.test.mjs):
+ * предикат, читающий ctx, обязан быть здесь.
+ */
+export const CTX_DEPENDENT_PREDICATES = new Set([
+  "weaponClass", "charNotIn", "charIn",
+  "targetHasTrait", "targetLacksCondition", "targetHasCondition",
+  "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
+  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus"
+]);
 
 export const PREDICATES = {
   race:    (actor, ctx, value) => list(value).includes(actor?.system?.race),
@@ -168,6 +251,21 @@ export const PREDICATES = {
 
   weaponClass: (actor, ctx, value) => list(value).includes(ctx?.weapon?.system?.weaponClass),
 
+  // Характеристика ТЕКУЩЕГО теста НЕ входит в список — «для всех тестов,
+  // кроме T/Inf/Cor» (Отравление, Усталость, стр. 30-31/33): список — «не
+  // любой из», как у targetLacksCondition, отрицание зашито в саму функцию
+  // (готового «not» в `when` нет, см. комментарий там). ctx.char пуст у
+  // теста без характеристики (напр. чистый Приём) — тогда список ничего не
+  // исключает, правило действует.
+  charNotIn: (actor, ctx, value) => !list(value).includes((ctx?.char || "").toLowerCase()),
+
+  // Обратное charNotIn — характеристика теста ВХОДИТ в список. Нужен, когда
+  // список короче через «входит», чем через «не входит» (Гангрена, стр.
+  // 30-31, wdbc-r5o7.5: −20 именно на Int/Per/WP/Fel/Inf, а не «всё, кроме
+  // WS/BS/S/T/Ag»). Тест без характеристики — список не включает пустую
+  // строку, предикат не срабатывает (симметрично charNotIn).
+  charIn: (actor, ctx, value) => list(value).includes((ctx?.char || "").toLowerCase()),
+
   // Актор цели лежит в ctx.targetActor, а не в ctx.target: в контексте броска
   // (rules/match-context.mjs) имя `target` занято флагом «бросок нацелен», и на
   // этапе 2 плана оба контекста сошлись в одном объекте.
@@ -175,13 +273,25 @@ export const PREDICATES = {
 
   // Противоположность targetHasTrait по состояниям, не по Чертам: «нет ни
   // одного из перечисленных состояний X» (ключи — CONDITIONS_DEF в
-  // sheets/sheet-helpers.mjs, напр. "stunned"/"helpless"). Список — не «и»,
+  // constants/conditions.mjs, напр. "stunned"/"helpless"). Список — не «и»,
   // как у hasTalent, а поэлементное «нет», иначе «Оглушён ИЛИ Беспомощен» было
   // бы не выразить одним условием. Нужна как есть, а не через отрицание в
   // данных — `when` в rules/collect.mjs требует ото ВСЕХ условий true разом
   // (AND), готового «not» нет, поэтому отрицание зашито в саму функцию.
   targetLacksCondition: (actor, ctx, value) =>
     list(value).every(key => !ctx?.targetActor?.system?.conditions?.[key]),
+
+  // Пара к targetLacksCondition — но «или», не «и»: у САМОГО актора есть хотя
+  // бы одно из перечисленных Состояний (wdbc-r5o7, module/rules/library/
+  // conditions.mjs). Список — «Оглушён ИЛИ Ошеломлён» одним условием, как и
+  // у targetHasCondition ниже.
+  hasCondition: (actor, ctx, value) =>
+    list(value).some(key => !!actor?.system?.conditions?.[key]),
+
+  // То же самое, но про цель броска (ctx.targetActor) — «атаки по Поваленной
+  // цели» и подобные правила со стороны атакующего.
+  targetHasCondition: (actor, ctx, value) =>
+    list(value).some(key => !!ctx?.targetActor?.system?.conditions?.[key]),
 
   // Ненулевой Размер — гейт core.sizeToHit/core.sizeStealth (rules/library/
   // core.mjs): без него строка с «(+0)» лезла бы в чек-лист на каждом броске

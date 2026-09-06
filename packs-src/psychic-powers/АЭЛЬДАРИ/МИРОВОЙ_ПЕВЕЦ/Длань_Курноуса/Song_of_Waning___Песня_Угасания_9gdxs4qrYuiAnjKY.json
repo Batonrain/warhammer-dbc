@@ -1,0 +1,74 @@
+{
+  "name": "Song of Waning / Песня Угасания",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "GwOyx7wJLrgLTX8b",
+  "system": {
+    "description": "",
+    "notes": "Pen (PR×2) и рейтинги Extreme(10−PR)/Haywire(0, PR) зависят от текущего ПР манифестации — числовое поле penetration оставлено 0, реальное значение и свойства считать по тексту effect. Тип урона не указан явно в книге.",
+    "cost": 500,
+    "discipline": "worldSinger",
+    "subtype": "Длань Курноуса",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "barrage",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR×2",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака, Незримое, Психический Обстрел, Стрельба. Треб.: Arrow of Kurnous. Профиль: Rng PR×10, Dmg 1d10+PR×2, Pen PR×2, Extreme(10−PR), Haywire(0, PR), Warp Weapon. Несмотря на Warp Weapon, наносит урон технике и обездушенным предметам: Dmg +1d10, Pen до PR×3 против техники.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "9gdxs4qrYuiAnjKY",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601007797,
+    "modifiedTime": 1788601007797
+  },
+  "_key": "!items!9gdxs4qrYuiAnjKY"
+}

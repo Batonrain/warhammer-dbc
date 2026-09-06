@@ -13,6 +13,8 @@
 // чем притворяться, будто она работает, и честнее, чем не заводить её вовсе:
 // текст способности уже лежит правильно, останется дописать чтение.
 
+import { CHARACTERISTICS } from "./characteristics.mjs";
+
 export const CAPABILITIES = {
   // ── Иммунитет к свойствам оружия (wdbc-plsf) ────────────────────────────
   // Восемь свойств из ревизии Мутаций/Даров: Corrosive/Crippling/Flame
@@ -143,10 +145,23 @@ export const CAPABILITIES = {
   // НЕ то же самое, что charRollAdvantage субрасы (module/rules/roll-advantage.mjs) —
   // тот про разовый бросок Мастера создания (Inf), этот про боевой трекер,
   // каждый бой заново.
+  // Броски СКЛАДЫВАЮТСЯ: база 1 бросок, эта возможность даёт +2, «ещё один
+  // бросок» ниже — +1. Книга Аэльдари: «эльдар бросает три раза; с Lightning
+  // Reflexes — не три, а четыре» (module/rules/initiative.mjs::initiativeRolls).
   "combat.initiativeAdvantage": {
     label: "Инициатива в бою кидается трижды, берётся лучший результат",
-    source: "Раса: Серый Человек (Oteshii)",
-    reader: "module/documents/combatant.mjs — WarhammerCombatant.getInitiativeRoll() подменяет кубик формулы на kh"
+    source: "Раса: Серый Человек (Oteshii); Черта «Эльдарское Тело» (Книга Аэльдари)",
+    reader: "module/rules/initiative.mjs initiativeRolls() — число бросков; подмена кубика на kh в module/documents/combatant.mjs"
+  },
+  "combat.initiativeExtraRoll": {
+    label: "Инициатива в бою кидается на один раз больше",
+    source: "Талант «Молниеносные Рефлексы» (корбук стр. 62)",
+    reader: "module/rules/initiative.mjs initiativeRolls() — число бросков; подмена кубика на kh в module/documents/combatant.mjs"
+  },
+  "combat.fastestHand": {
+    label: "Самая Быстрая Рука: +WS.b/BS.b к Инициативе, пока в руках только ножи и/или пистолеты",
+    source: "Талант «Самая Быстрая Рука» (корбук стр. 62)",
+    reader: "module/rules/initiative.mjs fastestHandBonus() — надбавка входит в system.initiative"
   },
   // ── Роли ──────────────────────────────────────────────────────────────────
   "pilot.dreadnought": {
@@ -712,7 +727,7 @@ export const CAPABILITIES = {
   },
   "aura.beastmanShaman.warpTaintedAura.base": {
     label: "Полудействие раз в час: аура 20 м до начала следующего Хода — не-еретики проваливший W−10 получают 1 Cor, союзники в ауре +20 к Сопротивлению (пока нет метки)",
-    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): раз/час (worldTime), радиус 20 м, реальный тест W−10 каждому врагу, провал → +1 Порча (system.corruption.value). +20 Сопротивления союзникам — не смоделирован."
+    source: "Warp-Tainted Aura / Аура Скверны", reader: "module/combat/beastman-shaman.mjs — applyWarpTaintedAura(): раз/час (worldTime), радиус 20 м, реальный тест W−10 каждому врагу, провал → +1 Порча (system.corruption.value). +20 Сопротивления союзникам — реален (kind:testMod +20 на временной Черте, живьём подтверждено wdbc-5smq): галочка в диалоге теста Стойкости, снимается на начале следующего Хода шамана."
   },
   "aura.beastmanShaman.warpTaintedAura.khorneVariant": {
     label: "Кхорн: провалившие тест враги немедленно проходят тест на Fear(4)",
@@ -2407,7 +2422,21 @@ export const CAPABILITIES = {
   },
   "dodge.core.bladeShield": {
     label: "Вооружённый оружием с Балансом 1+, персонаж может парировать им стрелковую атаку. Успех всегда блокирует только одно попадание независимо от…",
-    source: "Blade Shield / Щит Клинков", reader: ""
+    source: "Blade Shield / Щит Клинков",
+    reader: "module/combat/blade-shield.mjs hasBladeShield() — вместе с предметом-инструментом открывает кнопку Парирования психосилы на карточке манифестации (wdbc-bwf9)"
+  },
+  // Инструмент Парирования психосил (wdbc-bwf9). Имя на ПРЕДМЕТЕ, а не на
+  // акторе: книга разрешает отбивать силу не всякому носителю Таланта, а
+  // конкретным клинком/щитом в руках — читается itemHasKey, не hasRuleFlag.
+  "defence.psychicParryTool": {
+    label: "Этим предметом можно парировать психосилы (с Талантом «Щит Клинков»)",
+    source: "Книга Аэльдари, Путь Варлока (силовое эльдарское и психосиловое психокостяное оружие); Книга Жаб-Псайкеров (ноктиковый щит)",
+    reader: "module/combat/blade-shield.mjs psychicParryTool() — ищет такой предмет среди занимающих руки"
+  },
+  "defence.psychicParryWeakens": {
+    label: "В плохом качестве развеивает психосилу не полностью — снижает эPR за каждый успех",
+    source: "Книга Жаб-Псайкеров, ноктиковый щит (Poor.Q)",
+    reader: "module/combat/blade-shield.mjs canParryPsychic() — вместе с system.quality «poor»"
   },
   "dodge.core.bodyguard": {
     label: "Персонаж может парировать атаки по союзнику, если атакующий на расстоянии удара от персонажа.",
@@ -6299,9 +6328,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.khorne.tirelessWarrior": {
-    label: "Убийство рукопашной атакой в бою: снять 1 Усталость, восстановить 1d5-1 Ран/урона в Характеристику, засчитан 1 час здорового сна",
+    label: "Кнопка «Убил рукопашной» на листе Дара (момент убийства подтверждает игрок, автодетекта нет — тот же принцип, что Blood Shield): снять 1 Усталость + восстановить 1d5-1 Ран ИЛИ урона в одну повреждённую Характеристику (диалог выбора). НЕ смоделировано: «засчитан 1 час здорового сна» — чисто нарративная бухгалтерия, в системе нет счётчика часов сна",
     source: "Дар Кхорн (Tireless Warrior)",
-    reader: ""
+    reader: "module/apps/tireless-warrior.mjs::useTirelessWarriorKill (кнопка на листе, module/rules/tireless-warrior.mjs — арифметика)"
   },
   "gift.khorne.truthSeer": {
     label: "Автопобеда над обманом с Cor.b Успехами; иммунитет к галлюциногенам/Иллюзионизму, видит истинные формы/сквозь иллюзии — статус см. остальные записи блока mechanics. Преимущество на встречные тесты против Финта механизировано (wdbc-u0by, kind:\"reroll\", char:ws) — опциональная радиокнопка в диалоге Состязаний (module/combat/techniques.mjs::_showContestDialog, раньше вообще не читал реестр правил). Диалог общий для ОБЕИХ сторон контеста (инициатора и обороняющегося) — роль не различается программно, честное самоподтверждение игрока решает, отмечать ли галочку (тот же принцип, что у остальных опциональных перебросов); заодно шире книги — сработает на любом тесте WS, не только Финте",
@@ -6354,9 +6383,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.heraldOfHumility": {
-    label: "Аура ½Cor(окр.▲) м: −10 на встречные тесты (−30 против требований сдаться), Тзинчиты иммунны — аура-подобный эффект без существующего Трейта под kind:\"aura\"",
+    label: "−10 на все встречные тесты врагам в радиусе ½Cor(окр.▲)м механизировано (kind:\"aura\", auraAffects:\"enemies\" → клонирует Черту-шаблон «Aura of Humility», modScope:\"opposed\" −10). НЕ смоделировано: эскалация до −30 конкретно на тесты социальных требований сдаться/подчиниться (нет разреза встречных тестов по цели требования) и иммунитет Тзинчитов (иммунитет ауры завязан на имя Черты/Таланта у цели, а не на Покровительство — у Тзинчитов нет общей опознавательной Черты)",
     source: "Дар Нургл (Herald of Humility)",
-    reader: ""
+    reader: "module/apps/mechanics.mjs::syncAuraFlag + module/regions/auras.mjs (kind:\"aura\" клонирует packs-src/traits/Aura_of_Humility на врагов в радиусе; kind:\"testMod\" modScope:\"opposed\" value:-10 внутри неё читается module/rules/item-rules.mjs как обычный живой модификатор встречного теста); auraRadius:\"ceil(corv/2)\" — module/rules/mech-formula.mjs (новый ключ formulas «corv», сырое значение Порчи)"
   },
   "gift.nurgle.iconoclast": {
     label: "Уничтожение произведения искусства: тест Cor∓30 (по качеству) восстанавливает 1 Очко Бесчестия",
@@ -6429,7 +6458,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.avatarOfGreed": {
-    label: "Атака по персонажу с лучшим снаряжением (по решению ГМа) — перебросить все тесты этой атаки",
+    label: "Переброс атаки механизирован отдельной записью kind:\"reroll\" (rerollScope:attack) на этом же предмете — галочка в диалоге броска, доступная всегда; книжное условие «цель экипирована лучше (решает ГМ)» не распознаётся автоматически, применимость решает игрок/ГМ, тот же принцип, что у остальных testMod-галочек. Capability покрывает ТОЛЬКО это условие — само по себе не число, оставлено на решение за столом.",
     source: "Дар Слаанеш (Avatar of Greed)",
     reader: ""
   },
@@ -6459,9 +6488,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.danceOfLife": {
-    label: "Тратит 1 Успех вместо 2 на повторные Уклонения в тот же Ход; сохраняет неизрасходованные Успехи Уклонения до начала следующего Хода на чужие попадания",
+    label: "Базовая стоимость снятия попадания из пула неизрасходованных Успехов Уклонения (стр. 12) для этого актора −1 (2→1), module/combat/evasion-pool.mjs::poolHitCost — точечное расширение уже существующего примитива, не новый. НЕ смоделировано: «сохраняет неизрасходованные Успехи до начала СВОЕГО следующего Хода» (пул живёт только до конца Хода атакующего, не до начала следующего Хода защищающегося) и «тратит их на попадания ДРУГИХ персонажей» (пул привязан к конкретному атакующему, не общий на актора) — оба потребовали бы сделать пул актёр-общим и завязанным на Ход владельца, а не атакующего, отдельная архитектурная правка.",
     source: "Дар Слаанеш (Dance of Life)",
-    reader: ""
+    reader: "module/combat/evasion-pool.mjs::poolHitCost/poolAffordableHits — читает capabilityKey gift.slaanesh.danceOfLife через hasRuleFlag"
   },
   "gift.slaanesh.darkMuse": {
     label: "Крафт-часть смоделирована (wdbc-1rno): именованный ассистент (assistantId) с этим Даром даёт +30 вместо +10 за себя (module/rules/craft-advantage.mjs::darkMuseAssistBonus, читает module/apps/craft-workshop.mjs::_rollShift) — «отклонение результата от замысла автора» не отражено численно, текстовая оговорка. Общее «+20 вместо +10» ВНЕ Крафта (обычный ассистент диалога Навыка, module/rules/assists.mjs) — НЕ смоделировано, отдельная точка интеграции.",
@@ -6509,7 +6538,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.knightOfSlaanesh": {
-    label: "Демонический скакун (Скакун Слаанеш) в услужении — призыв ритуалом, вселение в технику даёт +20 на тесты управления",
+    label: "+20 на тесты управления механизировано отдельной записью kind:\"testMod\" (modScope:skill, skillKey:operate — единственный в системе Навык вождения/пилотирования, отдельного «верхового» Навыка нет) на этом же предмете; действует на все специализации Управления разом (surface/aeronautica/voidship), галочка в диалоге броска. Capability покрывает ТОЛЬКО остаток: сам демонический скакун (призыв ритуалом, услужение, вселение в технику, телепатическая связь, стабилизация от дестабилизации демона) — целая под-подсистема (новый актор-компаньон), не число.",
     source: "Дар Слаанеш (Knight of Slaanesh)",
     reader: ""
   },
@@ -6539,7 +6568,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.touchOfPain": {
-    label: "Безоружные/природные атаки игнорируют T.b в Поглощении живых целей, получают Shocking; Критические Эффекты от них никогда не убивают/не калечат; +30 на тесты пыток",
+    label: "+30 на тесты пыток механизировано отдельной записью kind:\"testMod\" (modScope:skill, skillKey:interrogate — тот же Навык, что Искусная Пытка/skillful-torture.mjs использует для теста пытки) на этом же предмете. Capability покрывает ТОЛЬКО остаток: безоружные/природные атаки игнорируют T.b в Поглощении живых целей и получают свойство Shocking (нет способа применить свойство ко ВСЕМ природным атакам актора разом — weaponProp правит конкретный предмет-оружие, не «все безоружные атаки» абстрактно), Критические Эффекты от них никогда не убивают/не калечат — не смоделировано.",
     source: "Дар Слаанеш (Touch of Pain)",
     reader: ""
   },
@@ -6616,7 +6645,7 @@ export const CAPABILITIES = {
   "gift.tzeentch.mutableSoul": {
     label: "9 минут медитации: сменить Природу Дара как псайкер на любую другую; если не был псайкером — Трейт Psyker(PR0)",
     source: "Дар Тзинч (Mutable Soul)",
-    reader: ""
+    reader: "Оба поля, которые меняет находка, уже редактируются напрямую без этой находки — не «стаб», а обычный самостоятельный доступ игрока к своему листу: actor.system.psyker.class («Природа Дара» — <select> bound/unbound/daemonic, templates/actor/parts/tab-psy.hbs:52-56) и actor.system.isPsyker (галочка «Пси-Пробуждение» в меню листа ⚙ → «Открыть доступ», module/sheets/actor-sheet.mjs::_sheetToggleEntries/_accessSubmenu, actor.update без доп. проверок). Находка лишь даёт СЮЖЕТНОЕ право это сделать (было бы читом без неё) — механически ставить галочку/выбирать пункт списка не нужно программировать отдельно. НЕ проверяется кодом: «если ещё не был псайкером» (игрок сверяет по своему же листу) и 9 минут медитации (тайминг, как и прочие «X минут» в этом паке)."
   },
   "gift.tzeentch.omniglot": {
     label: "Понимает все языки (устные и письменные) и автоматически расшифровывает любые коды/шифры — не даёт говорить/писать на них",
@@ -6837,7 +6866,7 @@ export const CAPABILITIES = {
     reader: "module/combat/fear.mjs — _executeFearRoll (базовый эффект: все воспринимаемые рейтинги Страха на 1 меньше, игнорируются на 0 или пределе Бесчестия)"
   },
   "mutation.infernalWill": {
-    label: "Иммунитет к Страху (упирается в архитектурный пробел wdbc-plsf), но провал теста Навыка на 4+ (не Крит) — бросок по таблице Шока; Неделимость/Покровительство снижают результат",
+    label: "Иммунитет к Страху механизирован отдельной записью на этом же предмете (fear.immune, wdbc-m7we) — теперь тест Страха проходится автоматически. Capability покрывает ТОЛЬКО остаток: провал теста Навыка на 4+ Провалов (не Крит) — бросок по таблице Шока; Неделимость/Покровительство снижают результат — не смоделировано",
     source: "Мутация: Infernal Will (Общие мутации)",
     reader: ""
   },
@@ -6867,7 +6896,7 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.shieldOfPurity": {
-    label: "Иммунитет к Горению и свойству Corrosive — полностью реализован двумя отдельными записями (weaponPropertyImmunity.flame + weaponPropertyImmunity.corrosive, wdbc-plsf); эта запись — оставшаяся историческая заглушка, ничего сверх них не читает",
+    label: "СНЯТА С ПРЕДМЕТА (wdbc-m7we). Иммунитет к Горению и свойству Corrosive полностью реализован двумя отдельными записями на том же предмете (weaponPropertyImmunity.flame + weaponPropertyImmunity.corrosive, wdbc-plsf), а эта была исторической заглушкой и ничего сверх них не читала — то есть панель показывала лишнюю строку «вручную» у того, что и так считается само. Имя оставлено в реестре, чтобы старая запись в чужом мире опозналась, а не ругалась неизвестным ключом",
     source: "Мутация: Shield of Purity (Общие мутации)",
     reader: ""
   },
@@ -7080,7 +7109,414 @@ export const CAPABILITIES = {
     reader: ""
   },
 
+  // ── Выдаются ПРАВИЛОМ из кода, а не записью Конструктора (wdbc-m7we) ─────
+  // Шесть возможностей, которые работали и читались, но в реестре не значились:
+  // библиотека правил (module/rules/library/) кладёт их эффектом grantFlag
+  // напрямую, минуя проверку isKnownCapability. Побочный вред был не
+  // косметический — имени не было в списке Конструктора, и автор контента не
+  // мог выдать то же самое ДАННЫМИ. А ровно это механизм и обещает: см.
+  // комментарий в rules/flags.mjs про Арлекина, который «лечится как
+  // космодесантник» и должен получать healing.astartes из своих данных.
+  // Сторож против повторения — test/rules/capability-registry-complete.test.mjs.
+  "healing.astartes": {
+    label: "Физиология Астартес: при лечении всегда считается отдыхающим",
+    source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
+    reader: "module/sheets/tabs/healing.mjs — расчёт скорости лечения (isAstartes) и подсказка в панели"
+  },
+  "weapons.legion": {
+    label: "Сложение под легионное оружие: своё берёт без штрафа, чужое — со штрафом за тесную спусковую скобу",
+    source: "Раса Астартес, «Физиология Астартес» (module/rules/library/astartes.mjs)",
+    reader: "module/rules/legion-fit.mjs — LEGION_FIT_FLAG"
+  },
+  "fate.save": {
+    label: "Пламенная вера: при трате Очка Судьбы бросок 1d10, на 1 очко не тратится",
+    source: "Происхождение «Мир-храм» (module/rules/library/homeworlds.mjs)",
+    reader: "module/rules/fate-save.mjs — FATE_SAVE_FLAG"
+  },
+  "attack.surpriseImmune": {
+    label: "Паранойя Выжившего: по нему не работает бонус атаки «Цель Врасплох»",
+    source: "Происхождение «Мир смерти» (module/rules/library/homeworlds.mjs)",
+    reader: "module/sheets/attack-dialog.mjs — галочка «Цель Врасплох» (immuneFlag)"
+  },
+  "assist.beyondCap": {
+    label: "Ну-ка вместе: помогает сверх обычного лимита помощников",
+    source: "Происхождение «Промышленный мир» (module/rules/library/homeworlds.mjs)",
+    reader: "module/rules/assists.mjs — ASSIST_BEYOND_CAP_FLAG"
+  },
+  "fear.faithInThePast": {
+    label: "Абсолютная вера в прошлое: Очко Судьбы за провал теста Страха",
+    source: "Происхождение «Мир-кладбище» (module/rules/library/homeworlds.mjs)",
+    reader: "module/combat/fear.mjs — FAITH_FLAG"
+  },
+
+
+  // ── Метка на САМОМ предмете (wdbc-wdlw) ─────────────────────────
+  // Полтора десятка мест спрашивают не актора, а КОНКРЕТНЫЙ предмет:
+  // «эта ли Мутация — Освежёванный». Возможность актора сюда не годится: она
+  // живёт на акторе и вернуть сам предмет не может, а половина этих мест
+  // читает у найденного предмета его же поля.
+  //
+  // Ключ тот же и из этого же реестра — одно имя, два читателя:
+  // itemHasKey(предмет, ключ) — «этот предмет и есть X» (rules/item-marker.mjs),
+  // hasRuleFlag(актор, ключ) — «у актора есть X». Это не совпадение, а одно
+  // утверждение с разных сторон.
+  "talent.bloodShield": {
+    label: "Талант «Кровавый Щит» — опознание самого предмета",
+    source: "Blood Shield / Кровавый Щит (packs-src/talents/Элитные_архетипы)",
+    reader: "module/rules/blood-shield.mjs isBloodShieldItem()"
+  },
+  "mutation.cancerousHealing": {
+    label: "Мутация «Раковое Исцеление» — опознание самого предмета",
+    source: "Cancerous Healing / Раковое Исцеление (packs-src/mutations/Дары_Богов)",
+    reader: "module/rules/cancerous-healing.mjs isCancerousHealingItem()"
+  },
+  "power.daemonblood": {
+    label: "Психосила «Кровь Демона» — опознание самого предмета",
+    source: "Daemonblood / Кровь Демонов (packs-src/psychic-powers/РЕДКИЕ_ДИСЦИПЛИНЫ)",
+    reader: "module/rules/daemonblood.mjs isDaemonbloodItem()"
+  },
+  "talent.eternalWar": {
+    label: "Талант «Вечная Война» — опознание самого предмета",
+    source: "The Eternal War / Вечная Война (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/rules/eternal-war.mjs isEternalWarItem()"
+  },
+  "mutation.flayed": {
+    label: "Мутация «Освежёванный» — опознание самого предмета",
+    source: "Flayed / Освежеванный (packs-src/mutations/Общие_мутации)",
+    reader: "module/rules/flayed.mjs isFlayedItem()"
+  },
+  "talent.kingsPlate": {
+    label: "Талант «Пластина Короля» — опознание самого предмета",
+    source: "King's Plate / Латы Короля (packs-src/talents/Элитные_архетипы)",
+    reader: "module/rules/kings-plate.mjs isKingsPlateItem()"
+  },
+  "mutation.plagueShepherd": {
+    label: "Мутация «Пастырь Чумы» — опознание самого предмета",
+    source: "Plague Shepherd / Чумной Пастырь (packs-src/mutations/Дары_Богов)",
+    reader: "module/rules/plague-shepherd.mjs isPlagueShepherdItem()"
+  },
+  "techPower.psalmUnseenFortress": {
+    label: "Техносила «Псалом Незримой Крепости» — опознание самого предмета",
+    source: "Psalm of the Unseen Fortress / Псалом Незримой Крепости (packs-src/tech-powers/ТЕХНОЧУДЕСА)",
+    reader: "module/rules/psalm-unseen-fortress.mjs isPsalmUnseenFortressItem()"
+  },
+  "mutation.tirelessWarrior": {
+    label: "Мутация «Неутомимый Воин» — опознание самого предмета",
+    source: "Tireless Warrior / Неутомимый Воин (packs-src/mutations/Дары_Богов)",
+    reader: "module/rules/tireless-warrior.mjs isTirelessWarriorItem()"
+  },
+
+  // ── Вооружён определённым оружием (wdbc-h1bx) ───────────────────────────
+  // Элитный архетип «Малеарий» требует быть вооружённым метеоритным молотом.
+  // Код спрашивал у надетого оружия имя «Meteor Hammer» и не находил его
+  // никогда: документ в паке называется «Метеоритный Молот», без английской
+  // половины — и так названы все четырнадцать соседей по папке, у оружия здесь
+  // принято русское имя, в отличие от Черт и Талантов.
+  //
+  // Ключ снимает зависимость от названия и заодно чинит вторую половину бага:
+  // проверка по имени не признала бы СИЛОВОЙ Метеоритный Молот, хотя книга
+  // говорит про метеоритный молот вообще. Оружие выдаёт ключ, пока НАДЕТО
+  // (isItemActive у weapon — это system.equipped), поэтому «вооружён» остаётся
+  // вопросом к актору, а не к названию предмета.
+  "weapon.meteorHammer": {
+    label: "Вооружён метеоритным молотом (обычным или силовым)",
+    source: "Метеоритный Молот / Силовой Метеоритный Молот (Основная книга, таблица рукопашного оружия)",
+    reader: "module/combat/recoil-item-bonuses.mjs — malaeriusActive() (элитный архетип «Малеарий»)"
+  },
+
+  // ── Иммунитет к Страху, общий (wdbc-m7we) ───────────────────────────────
+  // Иммунитет к Страху умела ровно одна подсистема — Саркофаг Дредноута, и
+  // её имя (sarcophagus.autoPassFear) на другой предмет не повесишь. Дар
+  // «Инфернальная Воля» обещал иммунитет текстом, а система продолжала
+  // требовать тест. Читатель существовал, не хватало общего имени.
+  "fear.immune": {
+    label: "Иммунитет к Страху: любой тест Страха проходится автоматически",
+    source: "Мутация: Infernal Will / Инфернальная Воля (Общие мутации)",
+    reader: "module/combat/fear.mjs — _executeFearRoll (autoPass, FEAR_IMMUNE_FLAG)"
+  },
+
+  // ── Опознание способности на акторе (wdbc-iadw) ─────────────────────────
+  // Полсотни Талантов, Черт и Мутаций опознавались в коде по литеральному
+  // имени: itemHasName(i, "Bone Song"). Переименование предмета в компендиуме
+  // молча выключало механику — ни один гейт не краснел, в консоль ничего не
+  // шло, заметить можно было только за столом.
+  //
+  // Здесь связь переведена на ключ: предмет несёт запись Конструктора
+  // «Возможность», код спрашивает ключ (module/rules/ability-by-key.mjs).
+  // Ключ не зависит ни от названия по-русски и по-английски, ни от того,
+  // Талант это, Черта или Мутация.
+  //
+  // Проверка по имени пока остаётся рядом и идёт ПЕРВОЙ — см. подробное
+  // обоснование в шапке ability-by-key.mjs (приём «новое рядом со старым»
+  // плюс цена: разбор имени идёт по кэшу, сборка правил — нет).
+  "ability.adjutant": {
+    label: "Адъютант: даёт своему Командиру переброс, а не себе",
+    source: "Adjutant / Адъютант (packs-src/talents/Лидерство)",
+    reader: "module/rules/adjutant.mjs hasAdjutant()"
+  },
+  "ability.adrenalineRush": {
+    label: "Прилив Адреналина: раз за бой за Очко Бесчестия вернуть все потраченные Реакции",
+    source: "Adrenaline Rush / Прилив Адреналина (packs-src/talents/Избегание)",
+    reader: "module/combat/adrenaline-rush.mjs hasAdrenalineRush()"
+  },
+  "ability.assassinStrike": {
+    label: "Удар Ассасина: раз в Раунд после рукопашной атаки тест Акробатики и отскок",
+    source: "Assassin Strike / Удар Ассасина (packs-src/talents/Рукопашные)",
+    reader: "module/combat/assassin-strike.mjs hasAssassinStrike()"
+  },
+  "ability.avatarOfSlaughter": {
+    label: "Аватар Резни: раз за бой отметить противника кровожадностью",
+    source: "Avatar of Slaughter / Аватар Резни (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/avatar-of-slaughter.mjs hasAvatarOfSlaughter()"
+  },
+  "ability.boneSong": {
+    label: "Костяная Песня: Полное действие — починка психокостяной техники в радиусе W м",
+    source: "Bone Song / Костяная Песня (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/bone-song.mjs hasBoneSong()"
+  },
+  "ability.bowToTheAudience": {
+    label: "Поклон Публике: за 3 ОД тест Внимания против нескольких противников сразу",
+    source: "Bow to the Audience / Поклон Публике (packs-src/talents/Арлекины___Солитер)",
+    reader: "module/combat/bow-to-audience.mjs hasBowToAudience()"
+  },
+  "ability.butchersNails": {
+    label: "Гвозди Мясника: своя механика входа и выхода из Ярости",
+    source: "Butcher's Nails / Гвозди Мясника (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/frenzy.mjs hasButchersNails()"
+  },
+  "ability.conjureWraith": {
+    label: "Вызвать Психокость: Полное действие — создать психокостяной предмет",
+    source: "Conjure Wraith / Вызвать Психокость (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/conjure-wraith.mjs hasConjureWraith()"
+  },
+  "ability.dancingAmongTheFire": {
+    label: "Танец Среди Огня: преимущество при Уклонении",
+    source: "Dancing Among The Fire / Танец Среди Огня (packs-src/talents/Азуриани)",
+    reader: "module/rules/dodge-advantage.mjs hasDancingAmongTheFire()"
+  },
+  "ability.deadlyEffectiveness": {
+    label: "Смертоносная Эффективность: убийство после финта даёт +2 ОД и доп. атаку",
+    source: "Deadly Effectiveness / Смертоносная Эффективность (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/combat/deadly-effectiveness.mjs hasDeadlyEffectiveness()"
+  },
+  "ability.deathDance": {
+    label: "Смертельный Танец: раз за битву перераспределить попадания натиска",
+    source: "Death Dance / Смертельный Танец (packs-src/talents/Азуриани)",
+    reader: "module/combat/death-dance.mjs hasDeathDance()"
+  },
+  "ability.determinationToFight": {
+    label: "Решительность Сражаться: своя механика продолжения боя",
+    source: "Determination To Fight / Решительность Сражаться (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/rules/determination-to-fight.mjs hasDeterminationToFight()"
+  },
+  "ability.dominator": {
+    label: "Покоритель: своя механика подчинения",
+    source: "Dominator / Покоритель (packs-src/talents/Оккультист)",
+    reader: "module/rules/dominator.mjs hasDominator()"
+  },
+  "ability.dreadWail": {
+    label: "Грозный Вопль: раз за бой за Очко Бесчестия усилить звуковое оружие брони",
+    source: "Dread Wail / Грозный Вопль (packs-src/traits/Элитные_архетипы)",
+    reader: "module/combat/dread-wail.mjs hasDreadWail()"
+  },
+  "ability.electrovigour": {
+    label: "Электрорвение: своя механика Техномистика",
+    source: "Electrovigour / Электрорвение (packs-src/talents/Техномистик)",
+    reader: "module/rules/electrovigour.mjs hasElectrovigour()"
+  },
+  "ability.enjoyment": {
+    label: "Наслаждение: Талант друкхари, своя механика на страданиях цели",
+    source: "Enjoyment / Наслаждение (packs-src/talents/Друкхари)",
+    reader: "module/combat/enjoyment.mjs hasEnjoyment()"
+  },
+  "ability.eternalWarrior": {
+    label: "Вечный Воин: смерть в Ярости даёт бесплатное Чудесное Спасение раз за сессию",
+    source: "Eternal Warrior / Вечный Воин (packs-src/mutations/Дары_Богов)",
+    reader: "module/combat/eternal-warrior.mjs hasEternalWarrior()"
+  },
+  "ability.flipBelt": {
+    label: "Ремень Кувырков: бонус к тестам отскока и уклонения",
+    source: "Flip Belt / Ремень Кувырков (packs-src/gear/Мобильность)",
+    reader: "module/combat/recoil-item-bonuses.mjs — бонус снаряжения к отскоку"
+  },
+  "ability.frenzy": {
+    label: "Ярость: вход в Ярость и выход по тесту W",
+    source: "Frenzy / Ярость (packs-src/talents/Берсерк)",
+    reader: "module/combat/frenzy.mjs hasFrenzyTalent()"
+  },
+  "ability.fullyArmed": {
+    label: "Во Всеоружии: своя механика владения оружием",
+    source: "Fully Armed / Во Всеоружии (packs-src/traits/Fully_Armed___Во_Всеоружии_OE7RGbEDpe5iadIq.json)",
+    reader: "module/combat/fully-armed.mjs hasFullyArmed()"
+  },
+  "ability.halfStep": {
+    label: "Полушаг: доступно действие Полушага в меню Движения",
+    source: "Half-Step / Полушаг (packs-src/talents/Скорость)",
+    reader: "module/combat/movement-actions.mjs — пункт меню Движения"
+  },
+  "ability.justTheLight": {
+    label: "Лишь Свет: Талант Солитера, своя механика уклонения от внимания",
+    source: "Just the Light / Лишь Свет (packs-src/talents/Арлекины___Солитер)",
+    reader: "module/combat/just-the-light.mjs hasJustTheLight()"
+  },
+  "ability.lastActor": {
+    label: "Последний Актёр: Талант Солитера, своя механика финального выхода",
+    source: "Last Actor / Последний Актёр (packs-src/talents/Арлекины___Солитер)",
+    reader: "module/combat/last-actor.mjs hasLastActor()"
+  },
+  "ability.lordOfTheExodites": {
+    label: "Повелитель Экзодитов: бонусы к тестам Морали подчинённых",
+    source: "Lord of the Exodites / Повелитель Экзодитов (packs-src/aeldari-traits/Элитные_архетипы_Эльдар)",
+    reader: "module/combat/lord-of-exodites.mjs hasLordOfExodites()"
+  },
+  "ability.malearius": {
+    label: "Малеарий: с метеоритным молотом и лёгкой бронёй — двойные прыжки и доп. Реакция",
+    source: "Malearius / Малеарий (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/recoil-item-bonuses.mjs malaeriusActive()"
+  },
+  "ability.oneAgainstAHundred": {
+    label: "Один Против Сотни: своя механика боя против многих",
+    source: "One Against A Hundred / Один Против Сотни (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/rules/one-against-a-hundred.mjs hasOneAgainstAHundred()"
+  },
+  "ability.preservation": {
+    label: "Защита: Талант Певцов Кости, своя механика сохранения",
+    source: "Preservation / Защита (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/preservation.mjs hasPreservation()"
+  },
+  "ability.reformationSong": {
+    label: "Песня Изменений: Талант Певцов Кости, перестройка психокости",
+    source: "Reformation Song / Песня Изменений (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/reformation-song.mjs hasReformationSong()"
+  },
+  "ability.resplendentRaiment": {
+    label: "Блистательные Одеяния: Дар Слаанеш, своя механика облика",
+    source: "Resplendent Raiment / Блистательные Одеяния (packs-src/mutations/Дары_Богов)",
+    reader: "module/combat/resplendent-raiment.mjs hasResplendentRaiment()"
+  },
+  "ability.salto": {
+    label: "Сальто: бонус к отскоку и уклонению",
+    source: "Salto / Сальто (packs-src/talents/Избегание)",
+    reader: "module/combat/recoil-item-bonuses.mjs — бонус Таланта к отскоку"
+  },
+  "ability.skillfulTorture": {
+    label: "Искусная Пытка: своя механика допроса и Очков Боли",
+    source: "Skillful Torture / Искусная Пытка (packs-src/talents/Таланты_Боли)",
+    reader: "module/apps/skillful-torture.mjs hasSkillfulTorture()"
+  },
+  "ability.snapshot": {
+    label: "Выстрел Навскидку: стрельба реакцией без обычных штрафов",
+    source: "Snapshot / Выстрел Навскидку (packs-src/talents/Избегание)",
+    reader: "module/combat/snapshot.mjs hasSnapshot()"
+  },
+  "ability.songOfSwiftness": {
+    label: "Песня Стремительности: Талант Певцов Кости, ускорение психокости",
+    source: "Song of Swiftness / Песня Стремительности (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/song-of-swiftness.mjs hasSongOfSwiftness()"
+  },
+  "ability.spiritTalk": {
+    label: "Духовный Разговор: Талант Певцов Кости, речь с духами психокости",
+    source: "Spirit Talk / Духовный Разговор (packs-src/talents/Певцы_Кости)",
+    reader: "module/combat/spirit-talk.mjs hasSpiritTalk()"
+  },
+  "ability.sweetCacophony": {
+    label: "Сладкая Какофония: усиление Грозного Вопля",
+    source: "Sweet Cacophony / Сладкая Какофония (packs-src/talents/Элитные_архетипы)",
+    reader: "module/combat/dread-wail.mjs hasSweetCacophony()"
+  },
+  "ability.middleOfTheHunt": {
+    label: "Середина Охоты: Талант Лесного Владыки, своя механика преследования",
+    source: "The Middle of the Hunt / Середина Охоты (packs-src/aeldari-talents/Элитные_архетипы)",
+    reader: "module/combat/middle-of-the-hunt.mjs hasMiddleOfTheHunt()"
+  },
+  "ability.voiceOfGod": {
+    label: "Глас Божий: своя механика приказов и Командования",
+    source: "Voice of God / Глас Божий (packs-src/talents/Лидерство)",
+    reader: "module/combat/voice-of-god.mjs hasVoiceOfGod()"
+  },
+  // ── МЕТКИ БОГОВ ХАОСА (wdbc-f7fn) ────────────────────────────────────────
+  // Отдельная от Покровительства сущность, и книга различает их прямо: в
+  // таблице модификаторов Призыва (корбук, «VI. МИСТИКА → РИТУАЛЫ») стоят две
+  // РАЗНЫЕ строки — «Персонаж имеет метку бога демона +30» и «Персонаж имеет
+  // покровительство (но не метку) бога демона +20». Метка ещё и требование:
+  // тринадцать психосил Божественных Дисциплин требуют «Метка <Бог>» и для
+  // изучения, и для манифестации, и теряется она отдельно от фавора («Если
+  // псайкер теряет Метку, он также лишается возможности использовать психосилы
+  // требующие ее»).
+  //
+  // Сама Метка выдаётся предметом-Чертой из packs-src/traits/Метки_Богов —
+  // всё, что она даёт по книге (Сверхъестественные характеристики, Таланты),
+  // раздаётся записями Конструктора этого предмета. Здесь только ИМЯ факта «на
+  // персонаже Метка такого-то», по которому спрашивают требования.
+  "mark.khorne": {
+    label: "Метка Кхорна",
+    source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
+    reader: ""
+  },
+  "mark.nurgle": {
+    label: "Метка Нургла",
+    source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
+    reader: ""
+  },
+  "mark.tzeentch": {
+    label: "Метка Тзинча",
+    source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
+    reader: ""
+  },
+  "mark.slaanesh": {
+    label: "Метка Слаанеш",
+    source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
+    reader: ""
+  },
+  // Иммунитет к пыткам (Метка Слаанеш). Единственная реализованная в системе
+  // пытка болью — Искусная Пытка друкхари, туда и смотрит читатель; отдельная
+  // от mutation.feelsNoPain, у которой свой список эффектов.
+  "defence.tortureImmune": {
+    label: "Иммунитет к пыткам",
+    source: "Метка Слаанеш (корбук); Feels No Pain (Общие мутации)",
+    reader: "module/apps/skillful-torture.mjs showSkillfulTortureDialog() — жертва с этим именем не даёт результата"
+  },
+  // Иммунитет к негативным эффектам болезней (Метка Нургла). Читателя пока нет
+  // и это честно: предметы типа disease в системе — чистый текст без тестовой
+  // функции, отменять механикой нечего, пока сами болезни не станут механикой.
+  "defence.diseaseEffectsImmune": {
+    label: "Иммунитет к негативным эффектам болезней",
+    source: "Метка Нургла (корбук)",
+    reader: ""
+  },
+  // Кровь и трупы не считаются Трудным Ландшафтом и не дают штрафа от брызг
+  // (Метка Кхорна). Ландшафт покрывается записью kind:"terrainIgnore" самого
+  // предмета; здесь остаток — штраф от брызг крови, которого в системе нет.
+  "mark.khorne.bloodNoPenalty": {
+    label: "Кровь и трупы: ни Трудного Ландшафта, ни штрафа от брызг",
+    source: "Метка Кхорна (корбук)",
+    reader: ""
+  },
+  "ability.mechanicumImplants": {
+    label: "Импланты Механикум: на листе открывается блок Техножреца",
+    source: "Mechanicum Implants / Импланты Механикум (packs-src/traits/Элитные_архетипы)",
+    reader: "module/sheets/character-context.mjs — context.hasMechImplants"
+  },
 };
+
+// ── «Инициатива считается по другой характеристике» (wdbc-7zzr) ────────────
+// Имя на характеристику, а не одно имя с параметром: у записи Конструктора
+// «Возможность» единственное поле — само имя, параметра ей передать нечем.
+// Перечислять восемь записей руками значило бы завести второе место правды
+// рядом с CHARACTERISTICS — поэтому список строится из него же.
+//
+// Ловкость пропущена (она и есть умолчание, подменять её собой нечего), Инф —
+// не бросковая характеристика и своего бонуса на листе не имеет.
+export const INITIATIVE_CHAR_PREFIX = "combat.initiativeChar.";
+export const INITIATIVE_CHAR_KEYS = Object.keys(CHARACTERISTICS)
+  .filter(key => key !== "ag" && key !== "inf");
+for (const key of INITIATIVE_CHAR_KEYS) {
+  CAPABILITIES[INITIATIVE_CHAR_PREFIX + key] = {
+    label: `Инициатива считается по ${CHARACTERISTICS[key].abbr}.b, а не по Ag.b`,
+    source: "Таланты «Боевое Построение» (Int) и «Чувство Боя» (Per), корбук стр. 62",
+    reader: "module/rules/initiative.mjs initiativeCharKey() — выбирает лучшую из разрешённых"
+  };
+}
 
 /** Известно ли имя. Неизвестное — почти наверняка опечатка в записи. */
 export function isKnownCapability(key) {

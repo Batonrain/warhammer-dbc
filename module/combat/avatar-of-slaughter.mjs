@@ -19,16 +19,19 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 const FLAG = "avatarOfSlaughter";
 
 /** Владеет ли актор Чертой Avatar of Slaughter / Аватар Резни. */
 export function hasAvatarOfSlaughter(actor) {
-  return !!actor?.items?.some(i => i.type === "trait" && itemHasName(i, "Avatar of Slaughter"));
+  return hasAbility(actor, "ability.avatarOfSlaughter", "Avatar of Slaughter", "trait");
 }
 
 /** Доступно ли прямо сейчас — Черта + не использовано в этом бою. */
@@ -50,7 +53,10 @@ export async function applyAvatarOfSlaughter(berserker, target) {
   await berserker.update({ "system.fate.value": fate - 1 });
   await markCapabilityUsed(berserker, FLAG, "battle");
 
-  const threshold = (Number(target.system?.characteristics?.wp?.total) || 0) - 10;
+  // Общий сбор модификаторов (wdbc-ct65.3) — по ЦЕЛИ: сопротивляется она.
+  const wp = Number(target.system?.characteristics?.wp?.total) || 0;
+  const ruleMods = collectTestMods(target, { kind: "skill", char: "wp" });
+  const threshold = wp - 10 + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success } = testOutcome(roll.total, threshold);
 
@@ -58,17 +64,21 @@ export async function applyAvatarOfSlaughter(berserker, target) {
     await target.setFlag("warhammer-dbc", "avatarOfSlaughterMark", { berserkerUuid: berserker.uuid });
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: berserker }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("skull", "#ff6b6b")}Аватар Резни — ${esc(berserker.name)}</div>
-      <div class="roll-threshold">Цель: <b>${esc(target.name)}</b> — Воля−10: <b>${threshold}</b></div>
-      <div class="roll-dice">Бросок: <b>${roll.total}</b></div>
-      <div class="roll-outcome">${success
-        ? `<span class="roll-success">Устояла — эффекта нет</span>`
-        : `<span class="roll-failure">Провал — до конца боя −20 на атаки/манёвры не по Берсерку</span>`}</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  // Карточка — общим сборщиком (wdbc-kuun). Строка Порога теперь показывает
+  // Волю цели и −10 отдельными слагаемыми: раньше видно было только итоговое
+  // число, а по какой Воле оно посчитано — нет. Бросок к сообщению по-прежнему
+  // не прикладывается (как было), поэтому и звука кубов у карточки нет.
+  await postTestCard(berserker, {
+    icon: rollIcon("skull", "#ff6b6b"), title: `Аватар Резни — ${esc(berserker.name)}`,
+    threshold: thresholdLine({
+      prefix: `Цель: ${target.name}`, label: "Воля", base: wp,
+      parts: ["−10", ...ruleMods.parts], threshold
+    }),
+    rv: roll.total,
+    outcome: success
+      ? outcomeHtml(true, "Устояла — эффекта нет")
+      : outcomeHtml(false, "Провал — до конца боя −20 на атаки/манёвры не по Берсерку")
+  }, { rolls: [roll] });
 }
 
 /**

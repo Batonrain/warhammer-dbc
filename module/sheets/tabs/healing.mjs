@@ -10,9 +10,10 @@ import { computeWoundHealing } from "./wounds.mjs";
 import { woundLossUpdates as computeWoundDamage } from "../../rules/wounds.mjs";
 import { woundLevel } from "../../rules/wound-tier.mjs";
 import { esc } from "../../helpers/utils.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import { SECONDS_PER_DAY } from "../../constants/imperial-calendar.mjs";
 import { openSurgeon } from "../../apps/surgeon.mjs";
-import { addFatigue } from "./conditions.mjs";
+import { addFatigue, conditionAdjustFields, conditionApplyFields } from "./conditions.mjs";
 import { worldTimeRemaining } from "../../rules/cooldown.mjs";
 import { showDelegateTestPicker } from "../../rules/delegate-test.mjs";
 
@@ -250,16 +251,17 @@ export function showHealingDialog(medic, { forcedPatient = null } = {}) {
   });
 }
 
-/** Хвостовая часть общего сообщения в чат — общая на все режимы этого файла. */
+/**
+ * Хвостовая часть общего сообщения в чат — общая на все режимы этого файла.
+ * Сборка и публикация — общий helpers/test-card.mjs (wdbc-kuun): говорящий —
+ * медик, звук кубика только там, где кубик катался (Прижигание/тест Medicae —
+ * с ним, «Пришить бионику вручную» — без).
+ */
 async function sendHealChatMsg(medic, patient, headerIcon, headerLabel, lines, rolls = []) {
-  const rollMode = game.settings.get("core", "rollMode");
-  const msg = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: medic }),
-    content: `<div class="wh-roll-result"><div class="roll-header">${headerIcon}${headerLabel} — ${esc(patient.name)}</div><div class="roll-threshold">${lines.join("<br/>")}</div></div>`,
-    rolls,
-    sound: rolls.length ? CONFIG.sounds.dice : undefined
-  }, rollMode);
-  await ChatMessage.create(msg);
+  await postTestCard(medic, {
+    icon: headerIcon, title: `${headerLabel} — ${esc(patient.name)}`,
+    threshold: `<div class="roll-threshold">${lines.join("<br/>")}</div>`
+  }, { rolls, sound: rolls.length > 0 });
 }
 
 /** Прижигание (стр. 231): без теста, 1d5 Усталости + 1d10 урон в Т. */
@@ -310,17 +312,12 @@ async function applyAmputate(medic, patient, { mod, limb }) {
     `${rollIcon("blood","#ff6b6b")}<b>Ампутация</b> (${def.label}): Медика−10${mod ? `${mod >= 0 ? "+" : ""}${mod}` : ""} → порог <b>${eff}</b>, бросок <b>${roll.total}</b> — ${success ? `<span class="roll-success">Успех</span>` : `<span class="roll-failure">Провал</span>`}`
   ];
 
-  const curCount = patient.system.conditions?.[def.count] ?? 0;
-  const updates = {
-    [`system.conditions.${def.flag}`]: true,
-    [`system.conditions.${def.count}`]: curCount + 1
-  };
+  const updates = conditionAdjustFields(patient, def.flag, 1);
   lines.push(`Конечность (${def.label}) удалена.`);
 
   if (!success) {
     const bleedLvl = patient.system.conditions?.bleedingLevel ?? 0;
-    updates["system.conditions.bleeding"] = true;
-    updates["system.conditions.bleedingLevel"] = bleedLvl + 1;
+    Object.assign(updates, conditionAdjustFields(patient, "bleeding", 1));
     lines.push(`${rollIcon("blood","#ff6b6b")}Провал → <b>Кровотечение</b> (уровень ${bleedLvl + 1}).`);
 
     const stumpEff = medicaeEff(medic, patient, mod - 10);
@@ -334,7 +331,7 @@ async function applyAmputate(medic, patient, { mod, limb }) {
       rolls.push(gangRoll);
       const gangrene = gangRoll.total <= 80;
       lines.push(`Шанс Гангрены (80%): бросок <b>${gangRoll.total}</b> — ${gangrene ? `<span class="roll-failure">Гангрена началась</span>` : `<span class="roll-success">пронесло</span>`}`);
-      if (gangrene) updates["system.conditions.gangrene"] = true;
+      if (gangrene) Object.assign(updates, conditionApplyFields("gangrene", null, patient));
     }
   }
 
@@ -369,9 +366,7 @@ async function applyReattach(medic, patient, { mod, limb }) {
     const daysRoll = await new Roll("1d10").evaluate();
     rolls.push(daysRoll);
     const days = Math.max(1, daysRoll.total + 3 - tb);
-    const newCount = curCount - 1;
-    const updates = { [`system.conditions.${def.count}`]: newCount };
-    if (newCount <= 0) updates[`system.conditions.${def.flag}`] = false;
+    const updates = conditionAdjustFields(patient, def.flag, -1);
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);
     }
@@ -460,7 +455,7 @@ async function resolveBionicTest(medic, patient, { mod }) {
     const dmgRoll = await new Roll("1d10").evaluate();
     rolls.push(dmgRoll);
     const updates = computeWoundDamage(patient.system, dmgRoll.total);
-    updates["system.conditions.crippling"] = true;
+    Object.assign(updates, conditionApplyFields("crippling", null, patient));
     lines.push(`Провал → <b>${dmgRoll.total}</b> непоглощаемого урона + <b>конечность бесполезна</b> (Калечение).`);
     try { await patient.update(updates); } catch {
       lines.push(`${rollIcon("warn","#ffb84d")}Нет прав на изменение листа цели — примените вручную.`);

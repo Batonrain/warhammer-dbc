@@ -26,14 +26,16 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { extractPack } from "@foundryvtt/foundryvtt-cli";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
-import { JOURNAL_PACKS, LIBRARY_PACKS, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
+import { JOURNAL_PACKS, LIBRARY_PACKS, ROOT, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
 import { writeStamp } from "./pack-stamp.mjs";
+import { allFingerprints } from "./pack-fingerprint.mjs";
 import { uncommittedPacksSrc } from "./git-status.mjs";
+import { docIdsIn, docsMissingInDb } from "./pack-drift.mjs";
 
 // ── --pack=имя1,имя2: сузить набор паков ──
 const packArg = process.argv.find((a) => a.startsWith("--pack="));
@@ -84,22 +86,72 @@ const hasDb = (p) => {
   return false;
 };
 
+// Сторож ОБРАТНОГО рассинхрона: исходники новее базы (wdbc-uozs).
+//
+// Извлечение идёт с clean:true — папка исходника перезаписывается составом
+// базы целиком, поэтому документ, которого в базе НЕТ, из packs-src молча
+// исчезает. Раньше это проверялось только в одну сторону (сборка не сносит
+// ручные правки), и обратный случай стоил 45 удалённых файлов: ветка
+// психосил «Мировой Певец» лежала в исходниках и отсутствовала в собранном
+// компендиуме.
+//
+// Поэтому извлекаем СНАЧАЛА во временный каталог, сравниваем состав по
+// идентификаторам документов и только потом переносим на место.
+const libTmp = mkdtempSync(join(tmpdir(), "dbc-unpack-lib-"));
+const behind = [];
+
 let done = 0;
-for (const p of libraryPacks) {
-  if (!hasDb(p)) continue;
-  // clean снимает файлы удалённых документов, omitVolatile не переписывает
-  // файл, если изменились только метки времени в _stats.
-  try {
-    await extractPack(abs(p.dir), abs(p.src), {
-      folders: true, clean: true, omitVolatile: true, transformFolderName, transformName
-    });
-  } catch (e) {
-    // Запущенная Foundry держит базы открытыми — из стека ядра это не следует.
-    if (isPacksBusy(e)) { reportBusy(e, "снять"); process.exit(1); }
-    throw e;
+try {
+  for (const p of libraryPacks) {
+    if (!hasDb(p)) continue;
+    const stage = join(libTmp, p.name);
+    // Временный каталог наполняется КОПИЕЙ текущего исходника, и это не
+    // оптимизация, а условие правильности: `omitVolatile` не переписывает
+    // файл, только если ему есть с чем сравнить. Извлечение в пустой каталог
+    // сравнивать не с чем, поэтому каждый файл пишется заново — и порядок
+    // ключей в JSON может разойтись с тем, что лежит в репозитории. Ровно так
+    // и вышло: круговорот компендиумов на CI покраснел на одном документе,
+    // у которого поле `_key` переехало в конец объекта, хотя данные те же.
+    if (existsSync(abs(p.src))) cpSync(abs(p.src), stage, { recursive: true });
+    // clean снимает файлы удалённых документов, omitVolatile не переписывает
+    // файл, если изменились только метки времени в _stats.
+    try {
+      await extractPack(abs(p.dir), stage, {
+        folders: true, clean: true, omitVolatile: true, transformFolderName, transformName
+      });
+    } catch (e) {
+      // Запущенная Foundry держит базы открытыми — из стека ядра это не следует.
+      if (isPacksBusy(e)) { reportBusy(e, "снять"); process.exit(1); }
+      throw e;
+    }
+
+    const srcIds = docIdsIn(abs(p.src));
+    const lost = docsMissingInDb(srcIds.keys(), docIdsIn(stage).keys());
+    if (lost.length && !FORCE) {
+      behind.push({ pack: p.name, files: lost.map(id => srcIds.get(id)) });
+      continue;
+    }
+
+    rmSync(abs(p.src), { recursive: true, force: true });
+    cpSync(stage, abs(p.src), { recursive: true });
+    console.log(`извлечён ${p.name} → ${p.src}`);
+    done++;
   }
-  console.log(`извлечён ${p.name} → ${p.src}`);
-  done++;
+} finally {
+  rmSync(libTmp, { recursive: true, force: true });
+}
+
+if (behind.length) {
+  console.error("База ОТСТАЁТ от исходников — извлечение стёрло бы то, чего в ней нет:");
+  for (const { pack, files } of behind) {
+    console.error(`  ${pack}: ${files.length} докум. только в packs-src`);
+    for (const file of files.slice(0, 5)) console.error(`    ${file.replace(ROOT, "")}`);
+    if (files.length > 5) console.error(`    …и ещё ${files.length - 5}`);
+  }
+  console.error("");
+  console.error("Похоже, packs-src правили и не собирали. Соберите базу: npm run packs:build");
+  console.error("Если эти документы не нужны — снимите поверх них: npm run packs:unpack -- --force");
+  process.exit(1);
 }
 
 // Книги извлекаются во временную папку по документу на файл, а в исходник
@@ -138,7 +190,7 @@ try {
 if (packFilter) {
   console.log("--pack задан: отметка синхронизации не сдвинута (сдвигает только полный запуск).");
 } else {
-  writeStamp();
+  await writeStamp(Date.now(), await allFingerprints([...libraryPacks, ...journalPacks], abs));
 }
 
 console.log(`Готово: ${done} из ${libraryPacks.length + journalPacks.length}.`);

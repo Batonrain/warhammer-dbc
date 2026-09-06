@@ -253,6 +253,56 @@ describe("_performDodge: несколько попаданий одной ата
   });
 });
 
+// Повален (стр. 30-31, wdbc-r5o7.2): −20 на Уклонение — Ag 35, untrained −20
+// → Порог 15 без Состояния, −5 с ним.
+describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
+  it("Порог падает на 20, чип «повален» в карточке", async () => {
+    const actor = attacker();
+    actor.system.conditions = { prone: true };
+    captured.dice = [90]; // выше нового (отрицательного) порога — провал, но карточка всё равно пишет порог
+
+    await _performDodge(actor, 0, "", 1);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>-5</b>");
+    expect(card).toContain("Повален -20");
+  });
+
+  it("не Повален — штрафа и чипа нет", async () => {
+    const actor = attacker();
+
+    await _performDodge(actor, 0, "", 1);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).not.toContain("Повален");
+  });
+});
+
+// Потеря ноги (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» вообще — хватает
+// одной потерянной ноги (не обязательно обеих, в отличие от полной
+// неподвижности Движения, см. spd-breakdown.test.mjs). Реакция не тратится.
+describe("_performDodge: Потеря ноги блокирует Уклонение (wdbc-r5o7.5)", () => {
+  it("одна потерянная нога — карточка «нет ног», Реакция не тратится", async () => {
+    const actor = attacker();
+    actor.system.conditions = { lostLegs: true, lostLegsCount: 1 };
+    actor.system.reactions = { value: 1, max: 1, defenseValue: 0, defenseMax: 0 };
+
+    await _performDodge(actor, 0, "", 1);
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("нет ног");
+    expect(actor.system.reactions.value).toBe(1); // не потрачена
+  });
+
+  it("без потери ног — Уклонение работает как раньше", async () => {
+    const actor = attacker();
+    await _performDodge(actor, 0, "", 1);
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("нет ног");
+  });
+});
+
 // Пул Избегания (стр. 12, module/combat/evasion-pool.mjs): излишек Успехов
 // сверх того, что нужно ЭТОЙ атаке, банкуется на попадания ДРУГИХ атак того
 // же противника в этом Ходу — но только пока «Ход» отследим (активный бой).
@@ -333,7 +383,7 @@ describe("_performSprayCancel: тест на отмену Распыления (
     await _performSprayCancel(actor);
 
     const card = captured.chat.at(-1).content;
-    expect(card).toContain("броня выключена -10");
+    expect(card).toContain("Броня выключена -10");
     expect(card).not.toContain("-40");
   });
 });
@@ -467,5 +517,106 @@ describe("_performParry: Один Против Сотни (wdbc-u0by)", () => {
     await _performParry(actor, 0, "", 1, false, false);
 
     expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
+  });
+});
+
+// ── Партия 1/3: боевые тесты через общий сбор модификаторов (wdbc-ct65.1) ──
+//
+// До этого шага Уклонение, Парирование и отмена Распыления считали Порог
+// мимо реестра правил: в них по одному дописывались Усталость, выключенная
+// броня и Перевес, а всё остальное, что книга даёт этим тестам, молчало.
+describe("боевые тесты берут модификаторы из реестра (wdbc-ct65.1)", () => {
+  /** Источник, дающий один модификатор указанной области. */
+  const grantMod = (target, value) => registerRuleSource("test", () => [
+    { id: "испытание", label: "Испытание",
+      effects: [{ kind: "rollBonus", target, value }] }
+  ]);
+
+  it("«+10 к тестам Уклонения» доезжает в Реакцию Уклонения", async () => {
+    grantMod("skill:dodge", 10);
+    const actor = attacker();
+    await _performDodge(actor);
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("Испытание +10");
+  });
+
+  it("«+10 к тестам Парирования» доезжает в Реакцию Парирования", async () => {
+    grantMod("skill:parry", 10);
+    const card = await parryCard();
+    expect(card).toContain("Испытание +10");
+  });
+
+  it("отмена Распыления идёт Акробатикой, а не Уклонением", async () => {
+    grantMod("skill:dodge", 10);
+    const actor = attacker();
+    await _performSprayCancel(actor);
+    expect(captured.chat.at(-1).content).not.toContain("Испытание");
+  });
+
+  it("правило чужой области в чужой тест не лезет", async () => {
+    grantMod("skill:stealth", 30);
+    const actor = attacker();
+    await _performDodge(actor);
+    expect(captured.chat.at(-1).content).not.toContain("Испытание");
+  });
+});
+
+// ── Парирование СТРЕЛЬБЫ: только «Щит Клинков» (wdbc-3e2x) ─────────────────
+//
+// Корбук, стр. 62: «Если персонаж вооружен оружием с Балансом 1 и выше, он
+// может парировать им стрелковую атаку. Успех на этом тесте парирования
+// ВСЕГДА блокирует только одно попадание, независимо от количества Успехов.»
+// До этой правки кнопка Парирования на карточке стрельбы работала у кого
+// угодно и с любым балансом — система была ЩЕДРЕЕ книги, а не скупее.
+describe("_performParry: стрельба (wdbc-3e2x)", () => {
+  const BLADE_SHIELD = "dodge.core.bladeShield";
+
+  function grantBladeShield() {
+    registerRuleSource("test-bs", () => [{ id: "bs", label: "Щит Клинков",
+      effects: [{ kind: "grantFlag", target: BLADE_SHIELD }] }]);
+  }
+
+  /** Парирование стрелковой атаки: последний аргумент isMelee = false. */
+  async function rangedParry({ balance = 1, blade = true, hitsCount = 1 } = {}) {
+    if (blade) grantBladeShield();
+    const sword = equippedMelee({ balance });
+    const actor = attacker({ items: [sword] });
+    await _performParry(actor, 0, "Actor.attacker-1", hitsCount, false, false, false);
+    return captured.chat.at(-1).content;
+  }
+
+  it("без Таланта — отказ с названной причиной, бросок не делается", () => {
+    return rangedParry({ blade: false }).then(html => {
+      expect(html).toContain("Щит Клинков");
+      expect(html).not.toContain("Порог");
+    });
+  });
+
+  it("Талант есть, но Баланс 0 — отказ: книга требует Баланс 1 и выше", async () => {
+    const html = await rangedParry({ balance: 0 });
+    expect(html).toContain("Баланс");
+    expect(html).not.toContain("Порог");
+  });
+
+  it("Талант и Баланс 1 — Парирование стрельбы проходит как обычный тест", async () => {
+    const html = await rangedParry({ balance: 1 });
+    expect(html).toContain("Парирование успешно");
+  });
+
+  it("успех снимает РОВНО одно попадание очереди, сколько бы степеней ни выпало", async () => {
+    // WS 45, бросок 10 — четыре степени успеха. В рукопашной они сняли бы
+    // четыре попадания; в стрельбе книга разрешает ровно одно.
+    captured.dice = [10];
+    const html = await rangedParry({ balance: 1, hitsCount: 3 });
+    expect(html).toContain("снимает 1 из 3");
+  });
+
+  it("в рукопашной то же самое снимает попадания по степени — правило не протекло", async () => {
+    captured.dice = [10];
+    grantBladeShield();
+    const sword = equippedMelee({ balance: 1 });
+    const actor = attacker({ items: [sword] });
+    await _performParry(actor, 0, "Actor.attacker-1", 3);
+    expect(captured.chat.at(-1).content).toContain("снимает все 3");
   });
 });

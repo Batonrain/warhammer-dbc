@@ -31,6 +31,7 @@ import { flayedButtonHtml, useFlayed }               from "../apps/flayed.mjs";
 import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.mjs";
 import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
 import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
+import { tirelessWarriorButtonHtml, useTirelessWarriorKill } from "../apps/tireless-warrior.mjs";
 import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
 import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tentacle-hand-form.mjs";
 import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
@@ -1085,6 +1086,8 @@ export class WarhammerItemSheet
       // утоления по игровому времени, пусто у остальных Мутаций ──────────────
       context.addictionHtml = addictionPanelHtml(this.item);
       context.vampiricHtml  = vampiricPanelHtml(this.item);
+      // «Tireless Warrior» (wdbc-1rno) — пусто у остальных Мутаций/Даров.
+      context.tirelessWarriorHtml = tirelessWarriorButtonHtml(this.item, this.item.parent);
     }
 
     // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) — каждая
@@ -1932,6 +1935,13 @@ export class WarhammerItemSheet
       if (actor) await useBloodShieldLose(actor, this.item);
     });
 
+    // ── Дар Кхорн «Tireless Warrior»: убийство рукопашной (wdbc-1rno) ────────
+    on(".tireless-warrior-kill-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useTirelessWarriorKill(actor, this.item);
+    });
+
     // ── Талант «The Eternal War»: дуэль с Кровожадом/ХС (wdbc-173l) ─────────
     on(".eternal-war-start-btn", "click", async ev => {
       ev.preventDefault();
@@ -2148,6 +2158,30 @@ export class WarhammerItemSheet
     mechField(".mech-capability-apt-match", (e, v) => { e.capabilityAptMatch = v; });
     mechField(".mech-capability-apt-align", (e, v) => { e.capabilityAptAlign = v; });
 
+    // Встречная атака (kind:"counterAttack", wdbc-2wy7) — Шипы/Цепные
+    // Бандольеры: формула урона хранится строкой (число ИЛИ формула с S.b/
+    // T.b/…), как и у остальных текстовых полей выше, галочки — независимые
+    // булевы поля.
+    mechField(".mech-cc-damage",      (e, v) => { e.ccDamage = v; });
+    mechField(".mech-cc-damage-type", (e, v) => { e.ccDamageType = v; });
+    mechField(".mech-cc-pen",         (e, v) => { e.ccPen = Math.max(0, parseInt(v) || 0); });
+    mechField(".mech-cc-label",       (e, v) => { e.ccLabel = v; });
+    on(".mech-cc-tearing", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccTearing = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+    on(".mech-cc-on-miss", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccOnMiss = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+    on(".mech-cc-on-unarmed", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccOnUnarmedOrGrapple = !!ev.currentTarget.checked; saveMech(arr); }
+    });
+
     // Усталость (kind:"fatigue") — каскад действие → характеристика. Смена
     // действия перерисовывает поля, поэтому сохраняем и даём листу обновиться.
     on(".mech-fatigue-action", "change", ev => {
@@ -2159,6 +2193,44 @@ export class WarhammerItemSheet
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.fatigueThresholdChar = ev.currentTarget.value; saveMech(arr); }
+    });
+    // Состояние (kind:"condition", wdbc-tl0f) — каскад режим → уточнение.
+    // Смена режима/Состояния перерисовывает поля (величина есть только у
+    // «Наложить» со счётчиком, выбор смягчения — только у «Смягчить штраф»),
+    // поэтому сохраняем и даём листу перерисоваться — как у .mech-fatigue-action.
+    on(".mech-cond-mode", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condMode = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-key", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condKey = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-level", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condLevel = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-duration", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condDurationValue = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-cond-duration-unit", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      // Смена единицы включает/выключает поле величины срока рядом, поэтому
+      // сохраняем и даём листу перерисоваться — тот же каскад, что у режима.
+      e.condDurationUnit = ev.currentTarget.value;
+      saveMech(arr);
+    });
+    on(".mech-cond-mitigate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.condMitigate = ev.currentTarget.value; saveMech(arr); }
     });
     // Снаряжение (kind:"equipment")
     on(".mech-equip-mode", "change", ev => {
@@ -2516,6 +2588,35 @@ export class WarhammerItemSheet
       if (!e) return;
       e.when = e.when || { negate: false, conditions: [] };
       e.when.negateSealedArmour = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── Связка гейтов: «И» или «ИЛИ» (entry.when.anyOf, wdbc-n48f) —
+    // не гейт, а то, как складываются все остальные.
+    on(".grant-when-anyof", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.anyOf = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда Состояние» (entry.when.condition/negateCondition, wdbc-tl0f) —
+    // восьмой гейт. Список с множественным выбором, а не россыпь галочек:
+    // Состояний 27, см. buildEntryWhenHtml.
+    on(".grant-when-cond", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.condition = Array.from(ev.currentTarget.selectedOptions).map(o => o.value).filter(Boolean);
+      saveMech(arr);
+    });
+    on(".grant-when-cond-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateCondition = !!ev.currentTarget.checked;
       saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──

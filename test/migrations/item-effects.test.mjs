@@ -36,6 +36,7 @@ import { migrateItemEffects, repairCharValueEffectKeys, dropMechanicsDuplicates,
 import { describeMechEntry, characteristicEffectKey } from "../../module/apps/mechanics.mjs";
 
 const PACKS_SRC = path.resolve(import.meta.dirname, "../../packs-src");
+import { allPacksFiles, packFileText, PACK_SCAN_TIMEOUT } from "../support/pack-docs.mjs";
 const CHAR_BONUS = { charBonuses: [{ stat: "s", value: 2 }] };
 
 /** Предмет-заглушка: флаги, список эффектов и запись новых — больше миграции нечего. */
@@ -585,19 +586,13 @@ describe("миграция мира", () => {
 });
 
 describe("предметы packs-src", () => {
-  /** Все документы packs-src. */
+  /**
+   * Все документы packs-src. Через общий кэш (wdbc-lxyl): свой обход читал
+   * 6774 файла с диска заново на каждый вызов — 2.5 секунды, и этот файл
+   * зовёт его пятью проверками подряд.
+   */
   function allPackDocs() {
-    const out = [];
-    const walk = dir => {
-      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, entry.name);
-        if (entry.isDirectory()) { walk(full); continue; }
-        if (!entry.name.endsWith(".json")) continue;
-        out.push(JSON.parse(fs.readFileSync(full, "utf8")));
-      }
-    };
-    walk(PACKS_SRC);
-    return out;
+    return allPacksFiles({ includeFolders: true }).map(f => JSON.parse(packFileText(f)));
   }
 
   /**
@@ -616,13 +611,13 @@ describe("предметы packs-src", () => {
     type: doc.type, name: doc.name, effects: doc.system.effects,
     flags: doc.flags?.["warhammer-dbc"] ?? {},
     fx: doc.effects ?? []
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   const docs = legacyPackDocs();
 
   it("в паках есть предметы со старой механикой — миграции есть что переносить", () => {
     expect(docs.length).toBeGreaterThan(0);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("механика каждого предмета оказывается в эффектах, и лишнего источника не появляется", async () => {
     // Источники ключа — эффекты предмета и записи Конструктора (свои эффекты он
@@ -645,7 +640,7 @@ describe("предметы packs-src", () => {
         expect(count(after, key), `${doc.name}: ${key}`).toBe(was || 1);
       }
     }
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("ни один предмет пака не правит характеристику из двух источников", async () => {
     // Иначе на акторе сложатся оба: эффект приезжает с предметом, записи
@@ -677,7 +672,7 @@ describe("предметы packs-src", () => {
       if (twice.length) doubled.push(`${doc.name}: ${twice.join(", ")}`);
     }
     expect(doubled).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("ни одна модификация брони не осталась с мёртвым AP против типа урона", async () => {
     // Помеченный перенесённым мод старое поле теряет: combat/armor-mods.mjs
@@ -692,7 +687,7 @@ describe("предметы packs-src", () => {
       if (keys.size) dead.push(`${doc.name}: ${[...keys].join(", ")}`);
     }
     expect(dead).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("ни один предмет пака не помечен перенесённым с полем мимо ActiveEffect", async () => {
     // Пометка велит актору старое поле не читать, а переносить такое поле
@@ -704,7 +699,7 @@ describe("предметы packs-src", () => {
                   && legacyOnlyKeys(doc).some(k => doc.system?.effects?.[k]))
       .map(doc => doc.name);
     expect(stuck).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("мёртвого ключа system.armour.* в паках не осталось", async () => {
     const dead = [];
@@ -712,7 +707,7 @@ describe("предметы packs-src", () => {
       for (const c of (doc.effects ?? []).flatMap(f => f.system?.changes ?? []))
         if (c.key?.startsWith("system.armour.")) dead.push(`${doc.name}: ${c.key}`);
     expect(dead).toEqual([]);
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   it("предмет с механикой Конструктора миграция не трогает", async () => {
     const byBuilder = docs.filter(d => mechanicsKeys(d).length);
@@ -722,7 +717,7 @@ describe("предметы packs-src", () => {
       const item = packItem(doc);
       expect(await migrateItemEffects(item), doc.name).toBe(false);
     }
-  });
+  }, PACK_SCAN_TIMEOUT);
 
   /** Ключи характеристик, которые правит Конструктор этого предмета (как в applyMechEntry). */
   // Ключ строит та же функция, что и Конструктор: своя копия правила здесь

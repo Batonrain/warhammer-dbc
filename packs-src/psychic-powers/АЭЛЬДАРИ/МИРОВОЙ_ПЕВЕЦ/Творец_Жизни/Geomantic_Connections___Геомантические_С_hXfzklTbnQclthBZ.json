@@ -1,0 +1,74 @@
+{
+  "name": "Geomantic Connections / Геомантические Связи",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "EPy5bFYJzzAVQjBj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "worldSinger",
+    "subtype": "Творец Жизни",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание, Концентрация. Треб.: Ley Leach — психосила Геомантии. Пока держится, псайкер может находиться на высоте до PR метров и не касаться земли, продолжая манифестировать и поддерживать психосилы Геомантии с типом Заземление.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "hXfzklTbnQclthBZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008856,
+    "modifiedTime": 1788601008856
+  },
+  "_key": "!items!hXfzklTbnQclthBZ"
+}

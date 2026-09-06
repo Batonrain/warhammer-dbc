@@ -1,4 +1,5 @@
 import { _buildAmmoModString, _buildAmmoModDetails, _getAmmoSpent, esc } from "../helpers/utils.mjs";
+import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 
 export function _getCompatibleAmmo(actor, weapon) {
   const sys        = weapon.system;
@@ -122,24 +123,16 @@ export async function _reloadWeapon(actor, weapon) {
   });
   await preferredAmmo.update({ "system.quantity": newQty });
 
-  const rollMode = game.settings.get("core", "rollMode");
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">Перезарядка — ${esc(weapon.name)}</div>
-        <div class="roll-damage-meta">
+  await postTestCard(actor, {
+    title: `Перезарядка — ${esc(weapon.name)}`,
+    lines: [`<div class="roll-damage-meta">
           Боеприпасы: <b>${esc(preferredAmmo.name)}</b>
-        </div>
-        <div class="roll-outcome">
-          <span class="roll-success">
+        </div>`],
+    outcome: outcomeHtml(true, `
             Вставлен магазин · Заряд <b>${newMag}/${maxMag}</b> · В запасе: <b>${newQty}</b> маг.
-          </span>
-        </div>
-        ${newQty === 0
-          ? `<div class="roll-allout-note">Боеприпасы <b>${esc(preferredAmmo.name)}</b> закончились!</div>`
-          : ""}
-      </div>`,
-    rollMode
-  });
+          `),
+    sections: [newQty === 0
+      ? `<div class="roll-allout-note">Боеприпасы <b>${esc(preferredAmmo.name)}</b> закончились!</div>`
+      : ""]
+  }, { sound: false });
 }

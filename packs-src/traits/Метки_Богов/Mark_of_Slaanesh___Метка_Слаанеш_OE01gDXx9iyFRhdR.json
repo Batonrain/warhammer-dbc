@@ -1,0 +1,120 @@
+{
+  "name": "Mark of Slaanesh / Метка Слаанеш",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "11Few3bZaF1HEmu9",
+  "system": {
+    "description": "Своих верных последователей Боги награждают Метками, которые проявляются на их телах в виде родимых пятен, ран, ожогов и т.п. Еретик может получить Метку за длительную службу богу, подвиг, совершённый в интересах Бога, или просто по достижении определённого уровня Бесчестия по решению ГМа.",
+    "notes": "МЕХАНИЗИРОВАНО: факт «Метка Слаанеш на персонаже» (kind:\"capability\", mark.slaanesh); выбор Unnatural F (+2) ИЛИ Unnatural A (+2) — ОДНА группа Конструктора с operator:\"OR\" и двумя завершёнными записями kind:\"trait\": при выдаче Механика сама спрашивает диалогом (showMechChoiceDialog), какую из двух брать, ответ запоминается — «по решению ГМа» здесь превращается в решение ГМа/игрока в момент получения Метки, а не в ручную правку листа; Талант Heightened Senses (All) (kind:\"talent\", specialization:\"All\" — тот же формат, что уже используется у готового предмета «Two Weapon Wielder (All)» в паке рас Сслитов); иммунитет к пыткам (kind:\"capability\", defence.tortureImmune — читает module/apps/skillful-torture.mjs). НЕ МЕХАНИЗИРОВАНО: ничего — все четыре пункта книги покрыты записями выше.",
+    "benefit": "Даёт персонажу Трейт Unnatural F (+2) или Unnatural A (+2) (по решению ГМа), Талант Heightened Senses (All) и иммунитет к пыткам.",
+    "source": "Служение Слаанеш (Метка)",
+    "bookSource": "DoomBC — Основная книга",
+    "requirement": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "OE01gDXx9iyFRhdR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "0Ij6aLX8lzFc3wfK",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "h1j4RYC8PZBgKGhj",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "mark.slaanesh",
+              "label": "Метка Слаанеш: факт на персонаже"
+            }
+          ]
+        },
+        {
+          "id": "0lkZmE5yX5B43TyS",
+          "operator": "OR",
+          "entries": [
+            {
+              "id": "sa2LGX5llhgND981",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.qfDJtzpKamiIIgXU",
+              "sourceName": "Unnatural Fellowship (+2) / Сверхъест. Общительность",
+              "rating": "",
+              "label": "Unnatural F (+2)"
+            },
+            {
+              "id": "lBBkVqVqrMWhfQPA",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.0zmGhvlJeH3sYKEY",
+              "sourceName": "Unnatural A (+2) / Сверхъест. Ловкость",
+              "rating": "",
+              "label": "Unnatural A (+2)"
+            }
+          ]
+        },
+        {
+          "id": "A1osI2evpzM7jv0q",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "vklSx6kqVY2u2Zr0",
+              "kind": "talent",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.4HKZYgPhtTrhJEIq",
+              "sourceName": "Heightened Senses / Усиленные Чувства",
+              "specialization": "All",
+              "rating": "",
+              "label": "Heightened Senses (All)"
+            }
+          ]
+        },
+        {
+          "id": "HTS8zynHFHjQk8oB",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "UnxWzXqaoVA5JOKA",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.tortureImmune",
+              "label": "Иммунитет к пыткам"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788680249080,
+    "modifiedTime": 1788680249080,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OE01gDXx9iyFRhdR"
+}

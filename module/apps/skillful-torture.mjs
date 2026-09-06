@@ -27,6 +27,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
@@ -35,12 +36,14 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { raceMatches } from "../rules/race.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "skillfulTorture";
 
 /** Владеет ли актор Талантом Skillful Torture / Искусная Пытка. */
 export function hasSkillfulTorture(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Skillful Torture"));
+  return hasAbility(actor, "ability.skillfulTorture", "Skillful Torture", "talent");
 }
 
 /** Друкхари ли актор — по расе, либо по «Прошлому» Иннари/Арлекина (module/rules/race.mjs). */
@@ -123,12 +126,23 @@ export async function showSkillfulTortureDialog(torturer) {
   }
   // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «иммунен к пыткам, что
   // полагаются на боль» — Искусная Пытка книжно и есть пытка болью.
-  if (hasRuleFlag(target, "mutation.feelsNoPain")) {
+  // Иммунитет к пыткам приходит из двух мест и должен работать одинаково:
+  // мутация «Не Чувствует Боли» (своя, с собственным списком эффектов) и
+  // Метка Слаанеш (wdbc-f7fn), которой книга даёт «иммунитет к пыткам» прямым
+  // текстом. Общее имя defence.tortureImmune заведено ради второго; первое
+  // остаётся как есть, чтобы не трогать уже работающие данные мутации.
+  if (hasRuleFlag(target, "mutation.feelsNoPain") || hasRuleFlag(target, "defence.tortureImmune")) {
     return ui.notifications.warn(`«${target.name}» не чувствует боли — пытка на неё не действует.`);
   }
 
-  const torturerThreshold = interrogateIntTotal(torturer) - 20;
-  const targetThreshold   = (target.system.characteristics?.wp?.total ?? 0);
+  // Общий сбор модификаторов обеим сторонам (wdbc-ct65.3): встречный тест —
+  // это два теста, каждый со своими Чертами и своим состоянием тела. Допрос
+  // книга называет тестом Морали (rules/resolve-test.mjs::isMoraleOpposedSkill),
+  // жертва отвечает тем же.
+  const torturerMods = collectTestMods(torturer, { kind: "skill", skill: "interrogate", char: "int", morale: true });
+  const targetMods   = collectTestMods(target, { kind: "skill", char: "wp", morale: true });
+  const torturerThreshold = interrogateIntTotal(torturer) - 20 + torturerMods.total;
+  const targetThreshold   = (target.system.characteristics?.wp?.total ?? 0) + targetMods.total;
 
   const content = `
     <div class="wh-wizard-form" style="padding:6px;">
@@ -155,16 +169,19 @@ export async function showSkillfulTortureDialog(torturer) {
           const { winner, margin } = resolveOpposed(mine, theirs);
 
           const lines = [
-            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRoll.total}</b> vs ${torturerThreshold} ${mine.success ? "(успех)" : "(провал)"}`,
-            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRoll.total}</b> vs ${targetThreshold} ${theirs.success ? "(успех)" : "(провал)"}`
+            `${rollIcon("target","#c98bff")}${esc(torturer.name)}: <b>${torturerRoll.total}</b> vs ${torturerThreshold}${torturerMods.parts.length ? ` (${torturerMods.parts.join(", ")})` : ""} ${mine.success ? "(успех)" : "(провал)"}`,
+            `${rollIcon("target","#8a8a8a")}${esc(target.name)}: <b>${targetRoll.total}</b> vs ${targetThreshold}${targetMods.parts.length ? ` (${targetMods.parts.join(", ")})` : ""} ${theirs.success ? "(успех)" : "(провал)"}`
           ];
 
           if (winner !== "mine") {
             lines.push(`<b>Жертва выстояла</b> — пытка не принесла пользы.`);
-            await ChatMessage.create(ChatMessage.applyRollMode({
-              speaker: ChatMessage.getSpeaker({ actor: torturer }),
-              content: `<div class="wh-roll-result"><div class="roll-header">Искусная Пытка</div>${lines.join("<br/>")}</div>`
-            }, game.settings.get("core", "rollMode")));
+            // Встречный тест: Порогов два (свой у пытающего, свой у жертвы) и
+            // они уже расписаны построчно с подписями модификаторов — общей
+            // строки Порога/броска у такой карточки быть не может.
+            await postTestCard(torturer, {
+              title: "Искусная Пытка",
+              lines: [lines.join("<br/>")]
+            }, { sound: false });
             return;
           }
 
@@ -188,10 +205,10 @@ export async function showSkillfulTortureDialog(torturer) {
           if (capped.length) lines.push(`<span style="color:#a33;">Дневной лимит исчерпан:</span> ${capped.map(esc).join(", ")}`);
           if (!recipients.length) lines.push(`<i>Рядом нет друкхари, способных насытиться.</i>`);
 
-          await ChatMessage.create(ChatMessage.applyRollMode({
-            speaker: ChatMessage.getSpeaker({ actor: torturer }),
-            content: `<div class="wh-roll-result"><div class="roll-header">Искусная Пытка — успех</div>${lines.join("<br/>")}</div>`
-          }, game.settings.get("core", "rollMode")));
+          await postTestCard(torturer, {
+            title: "Искусная Пытка — успех",
+            lines: [lines.join("<br/>")]
+          }, { sound: false });
         }
       },
       { action: "cancel", label: "Отмена" }

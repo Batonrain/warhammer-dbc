@@ -275,3 +275,36 @@ describe("_prepareContext", () => {
     expect(ctx.chaosPatrons).toBeUndefined();
   });
 });
+
+// wdbc-unpb: Система продвижения — один каскадный пункт меню настроек листа,
+// тем же приёмом, что уже даёт _alignmentSubmenu() для Мировоззрения.
+describe("_advancePricingSubmenu", () => {
+  it("оборачивает мьютекс-пункты в один каскадный пункт с меткой-эмодзи", () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { pricingModeOverride: "" });
+
+    const submenu = sheet._advancePricingSubmenu();
+
+    expect(submenu.cls).toBe("wh-ctx-pricing");
+    expect(submenu.label).toBe("📈 Система продвижения");
+    expect(Array.isArray(submenu.submenu)).toBe(true);
+    expect(submenu.submenu.length).toBeGreaterThan(1);
+  });
+
+  it("пункты подменю — короткие метки без повторного 'Система продвижения:' (было дублирование при плоском списке)", () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { pricingModeOverride: "" });
+
+    const entries = sheet._advancePricingEntries();
+
+    for (const e of entries) expect(e.label).not.toMatch(/^Система продвижения:/);
+  });
+
+  it("текущий выбор актора отмечен галочкой в подменю, остальные — нет", () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, { pricingModeOverride: "patronage" });
+
+    const entries = sheet._advancePricingSubmenu().submenu;
+
+    const checkedCount = entries.filter(e => e.checked).length;
+    expect(checkedCount).toBe(1);
+    expect(entries.find(e => e.cls === "wh-ctx-pricing-patronage").checked).toBe(true);
+  });
+});

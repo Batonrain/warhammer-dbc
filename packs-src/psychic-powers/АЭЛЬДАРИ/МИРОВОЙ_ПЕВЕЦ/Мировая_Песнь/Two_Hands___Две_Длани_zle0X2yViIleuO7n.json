@@ -1,0 +1,74 @@
+{
+  "name": "Two Hands / Две Длани",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "xFtND4OTeTJmocRV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 800,
+    "discipline": "worldSinger",
+    "subtype": "Мировая Песнь",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение, Концентрация. Психотест W−30 vs W+10. 3-я из шести Мировых Песен (Кьюаринашатх, «Запрет Колдуна»). Треб.: Forest Paths (манифестирована). Псайкер выбирает цель в поле зрения; он и цель проходят соревновательный тест, при провале цели на обоих накладывается запрет манифестировать и поддерживать любые психосилы. Действует, пока псайкер не развеет. Цель в конце каждого хода может пройти W+10 против успехов псайкера, чтобы вырваться — тогда псайкер получает 1d5 усталости от разрыва связи.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "zle0X2yViIleuO7n",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009589,
+    "modifiedTime": 1788601009589
+  },
+  "_key": "!items!zle0X2yViIleuO7n"
+}

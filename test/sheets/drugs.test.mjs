@@ -249,6 +249,121 @@ describe("applyDrug", () => {
     expect(a.updates).toEqual([]);
     expect(captured.chat).toEqual([]);
   });
+
+  // wdbc-fejd: эти ветки идут через единую точку conditionAdjustFields/
+  // conditionApplyFields/conditionRemoveFields вместо ручной сборки пары
+  // «флаг+счётчик» — тесты фиксируют НАБЛЮДАЕМЫЙ результат (что видит игрок
+  // на листе), а не то, каким способом он посчитан.
+  describe("removesCondition / grantsCondition / removesRadiation", () => {
+    it("removesCondition с уровнем (Оглушение) снижает счётчик, снимает флаг на нуле", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: {
+        removesCondition: "stunned", removesConditionLevel: 5
+      }, activeEffect: {} } });
+      const a = actor({ items: [item] });
+      a.system.conditions = { stunned: true, stunnedRounds: 2 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({
+        "system.conditions.stunned": false, "system.conditions.stunnedRounds": 0
+      });
+    });
+
+    it("removesCondition с уровнем — счётчик не уходит в 0, если снятого меньше остатка", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: {
+        removesCondition: "bleeding", removesConditionLevel: 1
+      }, activeEffect: {} } });
+      const a = actor({ items: [item] });
+      a.system.conditions = { bleeding: true, bleedingLevel: 3 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({
+        "system.conditions.bleeding": true, "system.conditions.bleedingLevel": 2
+      });
+    });
+
+    it("removesCondition без счётчика (Отравление) — только флаг", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: {
+        removesCondition: "poisoned"
+      }, activeEffect: {} } });
+      const a = actor({ items: [item] });
+      a.system.conditions = { poisoned: true };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({ "system.conditions.poisoned": false });
+    });
+
+    it("removesRadiation — флаг и уровень обнулены", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: { removesRadiation: true }, activeEffect: {} } });
+      const a = actor({ items: [item] });
+      a.system.conditions = { radiation: true, radiationLevel: 4 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({
+        "system.conditions.radiation": false, "system.conditions.radiationLevel": 0
+      });
+    });
+
+    it("grantsCondition с уровнем (Оглушение) — прибавляет к текущему счётчику", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: {
+        grantsCondition: "stunned", grantsConditionLevel: 2
+      }, activeEffect: {} } });
+      const a = actor({ items: [item] });
+      a.system.conditions = { stunned: false, stunnedRounds: 1 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({
+        "system.conditions.stunned": true, "system.conditions.stunnedRounds": 3
+      });
+    });
+
+    it("grantsCondition без счётчика (Отравление) — только флаг", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: { grantsCondition: "poisoned" }, activeEffect: {} } });
+      const a = actor({ items: [item] });
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({ "system.conditions.poisoned": true });
+    });
+
+    it("removesFatigueLevels — снимает и уровень Усталости, и реальный fatigue.value", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: { removesFatigueLevels: 2 }, activeEffect: {} } });
+      const a = actor({ items: [item], fatigue: 5 });
+      a.system.conditions = { fatigued: true, fatiguedLevel: 5 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({ "system.fatigue.value": 3 });
+    });
+
+    it("removesCondition:'fatigued' — снимает реальный fatigue.value (тег fatigued лишь зеркалит его)", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: {
+        removesCondition: "fatigued", removesConditionLevel: 2
+      }, activeEffect: {} } });
+      const a = actor({ items: [item], fatigue: 5 });
+      a.system.conditions = { fatigued: true, fatiguedLevel: 5 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({ "system.fatigue.value": 3 });
+    });
+
+    it("grantsCondition:'fatigued' — поднимает реальный fatigue.value", async () => {
+      const item = drug({ system: { quantity: 1, specialEffects: {
+        grantsCondition: "fatigued", grantsConditionLevel: 2
+      }, activeEffect: {} } });
+      const a = actor({ items: [item], fatigue: 1 });
+      a.system.conditions = { fatigued: true, fatiguedLevel: 1 };
+
+      await applyDrug(a, item);
+
+      expect(a.updates[0]).toMatchObject({ "system.fatigue.value": 3 });
+    });
+  });
 });
 
 describe("triggerAfterEffect", () => {

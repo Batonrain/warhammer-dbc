@@ -42,10 +42,16 @@ import { refreshVeilOverlay } from "./veil-overlay.mjs";
 import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, testCardHtml, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { veilShift };
 
-function _newJourney() {
+// Экспортированы для module/apps/scene-settings.mjs (wdbc-paif): единое окно
+// «Сцена» держит СВОЁ состояние вкладки «Завеса» отдельно от EnvironmentApp,
+// но заводит его тем же способом, что и конструктор VeilMystic — не дублируя
+// исходные значения руками.
+export function _newJourney() {
   return {
     shipId: "", gellar: "ok", occulum: "ok", warpEngineDmg: false, emergency: false,
     entryLoc: "mandeville", stability: "", stabilityMult: 1, psyMod: 0, beaconHidden: false,
@@ -57,7 +63,7 @@ function _newJourney() {
 // Состояние вкладки «Ритуалы» ГМ-консоли: ритуалист/предмет ещё не выбраны
 // (в отличие от диалога с листа персонажа, где оба уже известны) — форма
 // начинается пустой, начальные числа как у ритуала книги «по умолчанию».
-function _newRitual() {
+export function _newRitual() {
   return {
     ritualistId: "", itemId: "", name: "", type: "summon",
     skillValue: "", testChar: "", gmMod: -20,
@@ -69,7 +75,7 @@ function _newRitual() {
 }
 
 // ── Таро: пустые слоты по спреду ──────────────────────────────────────────
-function _tarotSlots(spreadKey) {
+export function _tarotSlots(spreadKey) {
   return (TAROT_SPREADS[spreadKey]?.positions || []).map(() => ({ cardN: null, reversed: false }));
 }
 
@@ -88,7 +94,7 @@ function _addFlatDamage(dmg, n) {
 }
 
 // ── Осквернение (крафт демон-оружия): исходное состояние ──────────────────
-function _newDefile() {
+export function _newDefile() {
   return {
     weaponUuid: "", god: "undivided", demonName: "",
     demonFormula: "lesser", demonWb: 4, demonInf: 8, binding: 3,
@@ -420,10 +426,18 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const qHtml = s.question ? `<div class="tr-question">«${esc(s.question)}»</div>` : "";
     const hint = this._tarotHint();
     const hintHtml = hint ? `<div class="tr-hint">${esc(hint)}</div>` : "";
-    ChatMessage.create({
-      speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
-      content: `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`
-    });
+    // НЕ карточка теста (wdbc-kuun): ни броска, ни Порога. Разметка остаётся
+    // своей и через testCardHtml не идёт: корень тут `wh-tarot-reading`, а
+    // общий строитель всегда ставит на корень `wh-roll-result` — у того своя
+    // рамка, отступы и ::before (styles/ui/chat.css), расклад бы поехал.
+    // Общей стала только публикация: спикер-псевдоним Теомант/Таро.
+    postTestCard(null,
+      `<div class="wh-tarot-reading"><div class="tr-head">✦ ТАРО ИМПЕРАТОРА · ${esc(sp.label)} ✦</div>${qHtml}${metaHtml}<div class="tr-cards">${rows}</div>${hintHtml}</div>`,
+      {
+        sound: false, speaker: { alias: s.teomant ? `Теомант — ${s.teomant}` : "Таро Императора" },
+        // Расклад Таро — не бросок против Порога, режим броска его не касается.
+        ignoreRollMode: true
+      });
   }
 
   // ═══════════════════ ОСКВЕРНЕНИЕ (крафт демон-оружия) ══════════════════════
@@ -539,17 +553,28 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!item) { ui.notifications?.warn("Осквернение: перетащите оружие-сосуд."); return; }
     if (item.system?.daemonWeapon?.bound) { ui.notifications?.warn("Это оружие уже демоническое."); return; }
     const data = this._defileData();
+    // Ритуал Осквернения — тест Ритуалиста, и штрафы его состояния в него
+    // входят (wdbc-9jj7). Порог собирался одной ритуальной арифметикой
+    // (_defileData): ни Усталость, ни Черты до него не доезжали.
+    // Ритуалист — владелец сосуда. Сосудом бывает и скакун (актор), у
+    // которого владельца нет: тогда собирать не с кого, и сбор пуст, а не
+    // подставляет случайного актора.
+    const ritualist = item?.actor ?? null;
+    const ruleMods = ritualist
+      ? collectTestMods(ritualist, { kind: "skill", char: "wp" })
+      : { total: 0, parts: [] };
+    const threshold = data.threshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
-    const success = rv <= data.threshold;
-    const dos = success ? (1 + Math.floor((data.threshold - rv) / 10)) : 0;
+    const success = rv <= threshold;
+    const dos = success ? (1 + Math.floor((threshold - rv) / 10)) : 0;
     const godMeta = data.godMeta;
 
     const vessel = data.isMountVessel ? "скакуна" : "оружие";
     let body = `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
       <div class="roll-header">⚒ Ритуал Создания Демонического Оружия — ${esc(item.name)}</div>
-      <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b> → ${success
-        ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-fail">Провал</span>`}</div>`;
+      <div class="roll-outcome"><b>${rv}</b> vs Порог <b>${data.thresholdSigned}</b>${ruleMods.parts.map(p => ` ${p}`).join("")}${ruleMods.total ? ` = <b>${threshold}</b>` : ""} → ${success
+        ? `<span class="roll-success">Успех (${dos} ст.)</span>` : `<span class="roll-failure">Провал</span>`}</div>`;
     if (success) {
       body += `<div class="dc-line">Демон вселён в ${vessel}. Связывание установлено до <b>${Math.min(dos, Number(D.binding) || 0) || dos}</b> (≤ успехов).</div>
         <div class="dc-line">Нажмите «Осквернить» на панели, чтобы применить свойства.</div>`;
@@ -557,7 +582,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       body += `<div class="dc-line">Демон вырывается: Сосуд уничтожен, +5 ко всем Хар-кам демона и +2 Раны за каждый Провал Часов. Отвращение Варпа. Участники с Cor&lt;75 получают +1d5+1 Порчи.</div>`;
     }
     body += `<div class="dc-foot">Цена: Ритуалист и ассистенты — 2d10 урона во все Характеристики; Феномен.</div></div>`;
-    ChatMessage.create({ content: body, speaker: { alias: "Кузница Душ" } });
+    // Это ТЕСТ (бросок против Порога), но разметка остаётся своей: корень —
+    // wv-defile-card с цветом бога в inline-стиле и БЕЗ wh-roll-result,
+    // который общий строитель ставит всегда (своя рамка и отступы в
+    // styles/ui/chat.css). Общей стала публикация: спикер «Кузница Душ».
+    await postTestCard(null, body, { sound: false, speaker: { alias: "Кузница Душ" } });
     this._defileLastSuccess = success ? { dos } : null;
     this.render(false);
   }
@@ -614,15 +643,20 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     });
 
+    // Не тест (броска нет), и разметка та же своя, что у _defileRitual выше:
+    // wv-defile-card без wh-roll-result. Общая — публикация («Кузница Душ»).
     const propHtml = generated.map(g => `<div class="dc-prop"><span class="dc-prop-god" style="color:${(DW_GODS_MAP[g.god]?.color)||'#b477ff'}">${(DW_GODS_MAP[g.god]?.label)||'Неделимый'}</span> <b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
-    ChatMessage.create({
-      speaker: { alias: "Кузница Душ" },
-      content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+    await postTestCard(null, `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
         <div class="roll-header">⛧ ${esc(item.name)} осквернено — Демоническое Оружие</div>
         <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · +${wb} к Dmg/Pen · Reinforced · теряет Primitive/Sanctified.</div>
         <div class="dc-props">${propHtml}</div>
         <div class="dc-foot">Игнорирует T.b и иммунитеты Daemonic/Stuff of Nightmares; не тратит боеприпасы; игнорирует Haywire.</div>
-      </div>`
+      </div>`, {
+      sound: false, speaker: { alias: "Кузница Душ" },
+      // Не бросок, а выпавшие оружию свойства: скрытый режим броска не должен
+      // прятать от игрока то, что он получил (wdbc-kuun, решение по вопросу
+      // агента при переводе).
+      ignoreRollMode: true
     });
     this._defileLastSuccess = null;
     this.render(false);
@@ -694,17 +728,22 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     // техники свои, — поэтому берётся тот, что соответствует сосуду.
     const granted = await this._grantPossessionTraits(mount, wb);
 
+    // Не тест, и разметка та же своя, что у _defileApply выше. Общая —
+    // публикация («Кузница Душ»).
     const propHtml = generated.map(g =>
       `<div class="dc-prop"><b>${esc(g.name)}</b> — ${esc(g.text)}</div>`).join("");
-    ChatMessage.create({
-      speaker: { alias: "Кузница Душ" },
-      content: `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
+    await postTestCard(null, `<div class="wh-warp-card wv-defile-card" style="--gc:${godMeta.color}">
         <div class="roll-header">⛧ ${esc(mount.name)} осквернён — Одержимый ${mount.type === "vehicle" ? "байк" : "скакун"}</div>
         <div class="dc-line">Связывание ${binding} · W.b демона ${wb} · Демонических свойств: ${count}.</div>
         ${granted.length ? `<div class="dc-line">Выданы Трейты: ${granted.map(esc).join(", ")}.</div>` : ""}
         <div class="dc-props">${propHtml}</div>
         <div class="dc-foot">${MOUNT_POSSESSION_COMMON.map(esc).join(" ")}</div>
-      </div>`
+      </div>`, {
+      sound: false, speaker: { alias: "Кузница Душ" },
+      // Не бросок, а выпавшие оружию свойства: скрытый режим броска не должен
+      // прятать от игрока то, что он получил (wdbc-kuun, решение по вопросу
+      // агента при переводе).
+      ignoreRollMode: true
     });
     this._defileLastSuccess = null;
     this.render(false);
@@ -968,25 +1007,32 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const base = this._jSkillTotal(actor, this.journey.navSkill) ?? -20;
     const total = veilTotal(readVeil(currentScene()));
     const mod = veilNavMod(total);
-    const eff = base + mod;
+    // Общий сбор модификаторов (wdbc-ct65.3): тест Навигации шёл мимо реестра
+    // правил. Навигация — групповой навык, ключ едет в ctx.group (обычный
+    // ctx.skill его не поймает, см. rules/resolve-test.mjs::effectAppliesTo).
+    const ruleMods = collectTestMods(actor, { kind: "skill", group: "navigation", char: "int" });
+    const eff = base + mod + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total;
     const success = rv <= eff;
     const deg = Math.floor(Math.abs(rv - eff) / 10) + 1;
     const info = veilLevelInfo(total);
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `
-        <div class="wh-roll-result">
-          <div class="roll-header">${veilIcon("compass")} Навигация в Варпе — ${esc(actor.name)}</div>
-          <div class="roll-threshold">Навигация: <b>${base}</b> ${mod >= 0 ? "+" : ""}${mod} (завеса ${info.label}) → Порог: <b>${eff}</b></div>
-          <div class="roll-dice">Бросок: <b>${rv}</b></div>
-          <div class="roll-outcome">${success
-            ? `<span class="roll-success">Курс проложен — ${deg} ${deg === 1 ? "ст." : "ст."}</span>`
-            : `<span class="roll-failure">Сбился с курса — ${deg} ст. (риск варп-инцидента)</span>`}</div>
-        </div>`,
-      rolls: [roll], sound: CONFIG.sounds.dice
-    }, game.settings.get("core", "rollMode")));
+    // Настоящий тест с Порогом — единственный такой в этом окне вместе с
+    // Выходом из варпа, поэтому собирается общим строителем. Слагаемые Порога
+    // (завеса + подписи из реестра правил) переехали в скобки общего формата.
+    await postTestCard(actor, {
+      icon: `${veilIcon("compass")} `,
+      title: `Навигация в Варпе — ${esc(actor.name)}`,
+      threshold: thresholdLine({
+        label: "Навигация", base,
+        parts: [`завеса ${info.label} ${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
+        threshold: eff
+      }),
+      rv,
+      outcome: outcomeHtml(success, success
+        ? `Курс проложен — ${deg} ст.`
+        : `Сбился с курса — ${deg} ст. (риск варп-инцидента)`)
+    }, { rolls: [roll] });
   }
 
   _postNavPower(id) {
@@ -995,14 +1041,15 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const item = actor?.items.get(id);
     if (!item) return;
     const s = item.system;
-    ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: `<div class="wh-roll-result">
-        <div class="roll-header">${veilIcon("eye")} Сила Навигатора: ${esc(item.name)}</div>
-        ${s.action ? `<div class="roll-threshold">Действие: <b>${esc(s.action)}</b>${s.range ? ` · Дальность: ${esc(s.range)}` : ""}</div>` : ""}
-        ${s.effect ? `<div class="roll-threshold">${esc(s.effect)}</div>` : ""}
-      </div>`
-    }, game.settings.get("core", "rollMode")));
+    // Не тест: справка о силе Навигатора в чат, без броска и Порога.
+    postTestCard(actor, {
+      icon: `${veilIcon("eye")} `,
+      title: `Сила Навигатора: ${esc(item.name)}`,
+      lines: [
+        s.action ? `<div class="roll-threshold">Действие: <b>${esc(s.action)}</b>${s.range ? ` · Дальность: ${esc(s.range)}` : ""}</div>` : "",
+        s.effect ? `<div class="roll-threshold">${esc(s.effect)}</div>` : ""
+      ]
+    }, { sound: false });
   }
 
   // ── Варп-путешествие: шаги ──────────────────────────────────────────────
@@ -1026,15 +1073,25 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const deg = rv <= eff ? 1 + Math.floor((eff - rv) / 10) : -(1 + Math.floor((rv - eff) / 10));
     return { roll, rv, eff, deg, success: deg > 0 };
   }
+  /**
+   * Общая отправка карточек Варп-странствия — через общий сборщик
+   * (helpers/test-card.mjs, wdbc-kuun). Почти все её карточки — броски по
+   * ТАБЛИЦАМ Варп-столкновений (стабильность маршрута, длительность, шторм,
+   * неаккуратный выход), а не тесты: Порога у них нет, сравнивать бросок не с
+   * чем, поэтому готовое тело карточки идёт строкой в lines. Исключение —
+   * Выход из варпа (_exitWarp), он идёт через эту же отправку.
+   *
+   * Классы корня: `wh-warp-card` и ярус `wv-tier-*` — от последнего зависит
+   * весь цвет карточки (styles/ui/veil.css переопределяет им --wv-tier), так
+   * что он обязан стоять на том же узле, что и `wh-roll-result`.
+   * Говорит не актор, а «Варп-Навигация» — спикер-псевдоним.
+   */
   async _jPost(title, tier, body, rolls = []) {
-    const rollMode = game.settings.get("core", "rollMode");
     const dice = rolls.length
       ? `<details class="roll-dice-details"><summary>📊 Кубы</summary>${(await Promise.all(rolls.map(r => r.render()))).join("")}</details>` : "";
-    await ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: { alias: "Варп-Навигация" },
-      content: `<div class="wh-roll-result wh-warp-card wv-tier-${tier}"><div class="roll-header">${title}</div>${body}${dice}</div>`,
-      rolls, sound: rolls.length ? CONFIG.sounds.dice : undefined
-    }, rollMode));
+    await postTestCard(null, testCardHtml({
+      title, classes: `wh-warp-card wv-tier-${tier}`, lines: [body], sections: [dice]
+    }), { rolls, sound: !!rolls.length, speaker: { alias: "Варп-Навигация" } });
   }
 
   async _rollStability() {
@@ -1060,8 +1117,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника на сцене."); return; }
     const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
     const mod = this.journey.psyMod || 0;
-    const res = await this._roll(base + mod);
-    let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    // Чтение знамений — тоже тест Псинауки Проводника, и он тоже шёл мимо
+    // реестра (wdbc-9jj7): нашлось при правке соседнего _findBeacon.
+    const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
+    const res = await this._roll(base + mod + ruleMods.total);
+    let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Знамения ясны — ${res.deg} ${degWord(res.deg)}. Судно готово ко входу.</span></div>`;
     else { const g = GUIDE_ESTIMATE[Math.floor(Math.random() * 5)]; body += `<div class="roll-outcome"><span class="roll-failure">Знамения смутны.</span></div><div class="roll-threshold">Оценка Проводника: длительность ${g.mult}, Астрономикон: ${esc(g.astro)}</div>`; }
     await this._jPost(`${veilIcon("eye")} Чтение знамений — ${esc(a.name)}`, "stable", body, [res.roll]);
@@ -1083,23 +1143,30 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const base = this._jSkillTotal(a, this.journey.senseSkill) ?? -20;
     let mod = /Стабильн/.test(this.journey.stability) ? 20 : 0;
     if (this.journey.beaconHidden) mod -= 20;
-    const res = await this._roll(base + mod);
+    // Общий сбор модификаторов (wdbc-9jj7): тест Псинауки Проводника шёл мимо
+    // реестра — соседний _directShip уже переведён, этот в тот проход не попал.
+    const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
+    const res = await this._roll(base + mod + ruleMods.total);
     const bm = (res.success ? 1 : -1) * Math.floor(Math.abs(res.deg) / 2) * 10;
     this.journey.beaconMod = bm; this.render(false);
     await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${esc(a.name)}`, "stable",
-      `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
+      `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
   }
   async _directShip() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
     const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
     const mod = this._occNavMod();
-    const res = await this._roll(base + mod);
+    // Тот же общий сбор, что у _rollNavigation выше (wdbc-ct65.3).
+    const ruleMods = collectTestMods(a, { kind: "skill", group: "navigation", char: "int" });
+    const res = await this._roll(base + mod + ruleMods.total);
     const mult = jumpDurationMult(res.deg);
     const real = this.journey.baseDuration != null ? `≈ ${Math.ceil(this.journey.baseDuration * ({ "×1/4": .25, "×1/2": .5, "×3/4": .75, "×1": 1, "×2": 2, "×3": 3, "×4": 4 }[mult] || 1))} дн.` : "";
     await this._jPost(`${veilIcon("compass")} Направление корабля — ${esc(a.name)}`, "stable",
-      `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
+      `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
   }
   async _warpEncounter() {
+    // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): характеристики
+    // и Порога у него нет, модифицировать нечего — реестр правил не нужен.
     const r = await new Roll("1d100").evaluate();
     const row = lookupTable(WARP_ENCOUNTERS, r.total);
     const tier = r.total <= 20 ? "stable" : (r.total >= 71 ? "torn" : "thin");
@@ -1119,8 +1186,10 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
     const base = this._jSkillTotal(a, this.journey.navSkill) ?? -20;
     const mod = this._occNavMod() - 20;
-    const res = await this._roll(base + mod);
-    let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    // Тот же общий сбор, что у _directShip и _rollNavigation (wdbc-9jj7).
+    const ruleMods = collectTestMods(a, { kind: "skill", group: "navigation", char: "int" });
+    const res = await this._roll(base + mod + ruleMods.total);
+    let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
     else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${esc(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "torn", body, [res.roll, er]); return; }
     await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "stable", body, [res.roll]);
@@ -1144,17 +1213,18 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
       .map(r => `${esc(r.name)} (${(Number(r.delta) || 0) > 0 ? "+" : ""}${Number(r.delta) || 0})`);
     const factorsHtml = active.length ? `<div class="wv-chat-factors">${active.map(esc).join(" · ")}</div>` : "";
     const ritualsHtml = rituals.length ? `<div class="wv-chat-factors">Ритуалы: ${rituals.join(" · ")}</div>` : "";
-    ChatMessage.create(ChatMessage.applyRollMode({
-      speaker: { alias: "Завеса" },
-      content: `<div class="wh-veil-chat wv-tier-${info.tier}">
+    // Оглашение состояния Завесы — уведомление, не карточка теста (wdbc-kuun):
+    // броска и Порога нет. Разметка своя и через testCardHtml не идёт: корень
+    // тут `wh-veil-chat`, а общий строитель всегда добавил бы `wh-roll-result`
+    // с чужой рамкой и отступами. Общей стала публикация: спикер «Завеса».
+    postTestCard(null, `<div class="wh-veil-chat wv-tier-${info.tier}">
         <div class="wv-chat-head">◈ ИСТОНЧЕНИЕ ЗАВЕСЫ ◈</div>
         <div class="wv-chat-scene">${esc(scene?.name || "")}</div>
         <div class="wv-chat-total">${total > 0 ? "+" : ""}${total}</div>
         <div class="wv-chat-label">${esc(info.label)}</div>
         ${factorsHtml}${ritualsHtml}
         <div class="wv-chat-cons">${esc(info.consequence)}</div>
-      </div>`
-    }, game.settings.get("core", "rollMode")));
+      </div>`, { sound: false, speaker: { alias: "Завеса" } });
   }
 }
 
@@ -1162,7 +1232,14 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
 let _veil = null;
 export function openVeilMystic(tab = null) {
   if (!_veil) _veil = new VeilMystic();
-  if (tab) _veil.state.tab = tab;
+  // .state — геттер без сеттера у настоящего ApplicationV2 (Foundry v14);
+  // вкладка листа/окна хранится отдельно, в .uiState (см. конструктор
+  // VeilMystic). Присвоение в .state молча проходило только потому, что
+  // test/support/foundry-stub.mjs не знал об этом геттере ДО wdbc-v8b2 — в
+  // реальном мире падало бы TypeError. openTarotReader() ниже сейчас без
+  // единого вызывающего места, но экспортирован — баг ждал первого, кто его
+  // подключит.
+  if (tab) _veil.uiState.tab = tab;
   _veil.render(true);
   return _veil;
 }

@@ -16,12 +16,13 @@
 // формулировкой ("вдвое, окр.▼", talents-library.mjs:84/capabilities.mjs:1420).
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 
 const CUSTOM_GRIP_NAME = "Персональный Хват";
 const FULLY_ARMED_NAME = "Fully Armed";
 
 export function hasFullyArmed(actor) {
-  return !!actor?.items?.some?.(i => i.type === "trait" && itemHasName(i, FULLY_ARMED_NAME));
+  return hasAbility(actor, "ability.fullyArmed", FULLY_ARMED_NAME, "trait");
 }
 
 // «Не-тяжёлое стрелковое» — weaponClass "pistol"/"basic" (см. templates/item/

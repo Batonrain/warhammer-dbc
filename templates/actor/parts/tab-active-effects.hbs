@@ -1,0 +1,110 @@
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+{{!--  ЭФФЕКТЫ (wdbc-xrsh) — сводка активных Foundry ActiveEffect: баф/дебаф  --}}
+{{!--  × характеристика/иной показатель. Только чтение уже применённых       --}}
+{{!--  change (предметы + сам актор) — не пересчёт итоговых характеристик.   --}}
+{{!--  «Урон характеристикам» (system.charDamage.*, ручное поле «Мод.» на    --}}
+{{!--  вкладке ПОКАЗАТЕЛИ) сюда намеренно не входит — это не ActiveEffect.   --}}
+{{!-- ══════════════════════════════════════════════════════════════════════ --}}
+<div class="tab active-effects-tab {{#if (eq tab "activeEffects")}}active{{/if}}" data-tab="activeEffects" data-group="primary">
+
+  {{!-- Временный модификатор характеристики (wdbc-5qvo): «−10 Ловкости на три
+        Хода» с именем источника и сроком, снимается крестиком в строке. --}}
+  <div class="fx-temp-bar">
+    <button type="button" class="fx-temp-add-btn" title="Наложить временный модификатор характеристики: источник, срок, снятие крестиком">＋ Временный модификатор</button>
+  </div>
+
+  {{#if activeEffectsEmpty}}
+  <div class="gene-seed-hint">Сейчас на персонажа не действует ни один эффект предмета/состояния — лист собирает только Foundry ActiveEffect (Талант/Черта/Мутация/Состояние с механикой), Модификатор теста и Переброс в эту сводку не входят, они применяются на самом броске.</div>
+  {{else}}
+
+  {{!-- ── БАФЫ ── --}}
+  <div class="notes-section-panel" data-collapse-key="fx-buffs">
+    <div class="panel-title" data-action="panelCollapse" title="активные эффекты, что усиливают показатель">БАФЫ ({{activeEffectsCounts.buff}})</div>
+    {{#if activeEffectsGroups.buff.characteristic.length}}
+    <div class="fx-group-label">Характеристики</div>
+    <table class="items-table fx-table"><tbody>
+      {{#each activeEffectsGroups.buff.characteristic as |r|}}
+      <tr class="item-row fx-row-buff">
+        <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
+        <td class="fx-target">{{r.targetLabel}}</td>
+        <td class="fx-value fx-value-buff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{/if}}
+    {{#if activeEffectsGroups.buff.other.length}}
+    <div class="fx-group-label">Иные показатели</div>
+    <table class="items-table fx-table"><tbody>
+      {{#each activeEffectsGroups.buff.other as |r|}}
+      <tr class="item-row fx-row-buff">
+        <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
+        <td class="fx-target">{{r.targetLabel}}</td>
+        <td class="fx-value fx-value-buff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{/if}}
+    {{#unless activeEffectsCounts.buff}}<div class="gene-seed-hint">Бафов нет.</div>{{/unless}}
+  </div>
+
+  {{!-- ── ДЕБАФЫ ── --}}
+  <div class="notes-section-panel" data-collapse-key="fx-debuffs">
+    <div class="panel-title" data-action="panelCollapse" title="активные эффекты, что ослабляют показатель — включая урон характеристике от Мутации/Порчи">ДЕБАФЫ ({{activeEffectsCounts.debuff}})</div>
+    {{#if activeEffectsGroups.debuff.characteristic.length}}
+    <div class="fx-group-label">Характеристики</div>
+    <table class="items-table fx-table"><tbody>
+      {{#each activeEffectsGroups.debuff.characteristic as |r|}}
+      <tr class="item-row fx-row-debuff">
+        <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
+        <td class="fx-target">{{r.targetLabel}}</td>
+        <td class="fx-value fx-value-debuff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{/if}}
+    {{#if activeEffectsGroups.debuff.other.length}}
+    <div class="fx-group-label">Иные показатели</div>
+    <table class="items-table fx-table"><tbody>
+      {{#each activeEffectsGroups.debuff.other as |r|}}
+      <tr class="item-row fx-row-debuff">
+        <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
+        <td class="fx-target">{{r.targetLabel}}</td>
+        <td class="fx-value fx-value-debuff">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+    {{/if}}
+    {{#unless activeEffectsCounts.debuff}}<div class="gene-seed-hint">Дебафов нет.</div>{{/unless}}
+  </div>
+
+  {{!-- ── БЕЗ ЯВНОГО ЗНАКА ── (override и т.п. — знак зависит от базового значения, автоматически не определяется) --}}
+  {{#if activeEffectsCounts.neutral}}
+  <div class="notes-section-panel" data-collapse-key="fx-neutral">
+    <div class="panel-title" data-action="panelCollapse" title="эффект типа «=» (override) заменяет значение целиком — баф это или дебаф, зависит от того, что было раньше, сводка это не считает">БЕЗ ЯВНОГО ЗНАКА ({{activeEffectsCounts.neutral}})</div>
+    <table class="items-table fx-table"><tbody>
+      {{#each activeEffectsGroups.neutral.characteristic as |r|}}
+      <tr class="item-row">
+        <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
+        <td class="fx-target">{{r.targetLabel}}</td>
+        <td class="fx-value">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
+      </tr>
+      {{/each}}
+      {{#each activeEffectsGroups.neutral.other as |r|}}
+      <tr class="item-row">
+        <td class="item-name-cell" data-uuid="{{r.sourceUuid}}" title="{{r.effectName}}"><img class="fx-src-img" src="{{r.sourceImg}}" alt=""/>{{r.sourceName}}</td>
+        <td class="fx-target">{{r.targetLabel}}</td>
+        <td class="fx-value">{{r.valueLabel}}</td>
+        <td class="fx-term">{{r.termLabel}}{{#if r.temp}} <button type="button" class="fx-temp-remove-btn" data-effect-id="{{r.effectId}}" title="Снять временный модификатор">✕</button>{{/if}}</td>
+      </tr>
+      {{/each}}
+    </tbody></table>
+  </div>
+  {{/if}}
+
+  {{/if}}
+</div>{{!-- /tab activeEffects --}}

@@ -13,13 +13,15 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { equippedMeleeWeapon } from "./equipped-melee.mjs";
 
 const ARMOR_LOCATIONS = ["head", "body", "rightArm", "leftArm", "rightLeg", "leftLeg"];
 
 /** Salto/Сальто (Талант, стр. 12): +P.b м к пределу Отскока в Раунде. */
 function saltoBonus(actor) {
-  const has = (actor?.items ?? []).some(i => i.type === "talent" && itemHasName(i, "Salto"));
+  const has = hasAbility(actor, "ability.salto", "Salto", "talent");
   if (!has) return 0;
   return Number(actor?.system?.characteristics?.per?.bonus) || 0;
 }
@@ -32,7 +34,7 @@ function saltoBonus(actor) {
  * факту владения предметом.
  */
 function flipBeltBonus(actor) {
-  const has = (actor?.items ?? []).some(i => i.type === "gear" && itemHasName(i, "Flip Belt"));
+  const has = hasAbility(actor, "ability.flipBelt", "Flip Belt", "gear");
   return has ? 3 : 0;
 }
 
@@ -51,10 +53,17 @@ export function recoilItemBonus(actor) {
  * конкретного удара.
  */
 function malaeriusActive(actor) {
-  const hasTalent = (actor?.items ?? []).some(i => i.type === "talent" && itemHasName(i, "Malearius"));
+  const hasTalent = hasAbility(actor, "ability.malearius", "Malearius", "talent");
   if (!hasTalent) return false;
-  const weapon = equippedMeleeWeapon(actor);
-  if (!weapon || !itemHasName(weapon, "Meteor Hammer")) return false;
+  // «Вооружён метеоритным молотом» спрашивается КЛЮЧОМ, а не именем надетого
+  // оружия (wdbc-h1bx). Прежняя проверка itemHasName(weapon, "Meteor Hammer")
+  // не срабатывала НИКОГДА: документ в паке называется «Метеоритный Молот»,
+  // без английской половины, и так названы все соседи по папке — у оружия
+  // здесь принято русское имя. Ключ заодно покрывает СИЛОВОЙ вариант, который
+  // проверка по имени не признала бы и с исправленным названием, хотя книга
+  // говорит про метеоритный молот вообще. Оружие выдаёт ключ, только пока
+  // надето, поэтому отдельная проверка экипировки больше не нужна.
+  if (!hasRuleFlag(actor, "weapon.meteorHammer")) return false;
   const absorption = actor?.system?.absorption ?? {};
   const tb = Number(absorption.toughnessBonus) || 0;
   return ARMOR_LOCATIONS.every(loc => (Number(absorption[loc]) || 0) - tb <= 4);

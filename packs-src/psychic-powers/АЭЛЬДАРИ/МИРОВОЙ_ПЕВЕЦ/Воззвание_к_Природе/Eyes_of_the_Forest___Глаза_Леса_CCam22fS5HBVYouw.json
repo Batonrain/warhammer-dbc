@@ -1,0 +1,74 @@
+{
+  "name": "Eyes of the Forest / Глаза Леса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "yBHYtwHZnZweZ3vl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 250,
+    "discipline": "worldSinger",
+    "subtype": "Воззвание к Природе",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×30м / PR×3км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Непрямое. Психотест W−20 vs W+30. Треб.: Forest Paths (манифестирована). Мелкие звери и птицы в ауре при провале подчиняются псайкеру (звери при хозяине получают +10 к сопротивлению). Псайкер видит и ощущает одновременно через P.b существ (рой = 1 существо). Радиус подчинения PR×3км, звери не могут добровольно его покинуть без приказа. При рассеивании силы подчинённые звери получают 1 усталость.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "CCam22fS5HBVYouw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008131,
+    "modifiedTime": 1788601008131
+  },
+  "_key": "!items!CCam22fS5HBVYouw"
+}

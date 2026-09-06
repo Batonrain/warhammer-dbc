@@ -230,6 +230,17 @@ describe("боеприпас", () => {
     expect(card()).toContain("Кракен");
   });
 
+  it("wdbc-utaw: имя заряженного боеприпаса доходит до кнопки эффекта Toxic (data-wp-ammo-name)", async () => {
+    const ammo   = ammoFor({ properties: [{ key: "toxic", rating: 4, rating2: 0 }] }, { name: "Гиперрост" });
+    const weapon = weaponFor({ loadedAmmoId: ammo.id });
+    const actor  = actorFor({ items: [weapon, ammo] });
+    captured.dice = [23, 6];
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+
+    expect(card()).toContain('data-wp-ammo-name="Гиперрост"');
+  });
+
   it("условный эффект боеприпаса, отмеченный игроком, добавляет урон", async () => {
     const weapon = weaponFor();
     const actor  = actorFor({ items: [weapon] });

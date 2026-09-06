@@ -120,7 +120,7 @@
             <td>{{p.actionLabel}}</td>
             <td>{{p.range}}{{#if p.rangeVerdictText}}<div class="psy-range-verdict {{#if p.rangeInBounds}}in-bounds{{else}}out-bounds{{/if}}">{{p.rangeVerdictText}}</div>{{/if}}</td>
             <td class="psy-sustain-cell">
-              {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{else}}—{{/if}}
+              {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{#if p.isSustained}}{{#if p.sustainedDegree}}<span class="psy-sustain-degree" title="Степень успеха психотеста, с которой манифестирована поддерживаемая сила">СУ {{p.sustainedDegree}}</span>{{/if}}{{/if}}{{else}}—{{/if}}
             </td>
             <td class="psy-cost-cell"><input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Психосилы»)"/></td>
             <td class="psy-actions-cell"><button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button></td>

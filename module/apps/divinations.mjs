@@ -15,6 +15,7 @@ import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { changeInfamy } from "./infamy-points.mjs";
+import { postTestCard, testCardHtml } from "../helpers/test-card.mjs";
 
 const PACK = "warhammer-dbc.divinations";
 const FLAG = "warhammer-dbc";
@@ -94,6 +95,9 @@ export async function applyDivination(actor, key) {
  *  бросает и узнаёт ключ, а уже потом решает, показывать ли строки выбора
  *  инлайн (см. character-wizard.mjs). */
 export async function rollRandomDivinationKey() {
+  // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): у него нет ни
+  // характеристики, ни Порога, ни степеней успеха — модифицировать нечего, и
+  // реестр правил ему не нужен. Проверено при разборе, не оставлено вопросом.
   const rolled = await new Roll("1d100").evaluate();
   const d = divinationByRoll(rolled.total);
   if (!d) return null;
@@ -191,15 +195,18 @@ async function postSummary(actor, def, { charBonuses, chosen, summary, extra, ro
   lines.push(...(summary || []));
   lines.push(...extra);
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result hw-chat">
-      <div class="roll-header">Предсказание — ${esc(actor.name)}</div>
-      ${rolled ? `<div class="roll-dice">к100: <b>${rolled.total}</b></div>` : ""}
-      <div class="hw-chat-world">${esc(rollLabel(def))} — ${esc(def.text)}</div>
-      <div class="hw-chat-feature">${esc(def.effect)}</div>
-      ${lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""}
-    </div>`,
-    rolls: rolled ? [rolled] : []
-  }, game.settings.get("core", "rollMode")));
+  // Не тест, а итог выбора/броска по ТАБЛИЦЕ Предсказаний: Порога нет, есть
+  // только строка броска — и та своя («к100: N»), поэтому идёт в lines. Класс
+  // `hw-chat` встаёт на корень через classes: стили
+  // (styles/sheets/homeworlds.css) написаны селектором
+  // `.wh-roll-result.hw-chat .hw-chat-*` — класс обязан быть на том же узле.
+  await postTestCard(actor, testCardHtml({
+    title: `Предсказание — ${esc(actor.name)}`, classes: "hw-chat",
+    lines: [
+      rolled ? `<div class="roll-dice">к100: <b>${rolled.total}</b></div>` : "",
+      `<div class="hw-chat-world">${esc(rollLabel(def))} — ${esc(def.text)}</div>`,
+      `<div class="hw-chat-feature">${esc(def.effect)}</div>`,
+      lines.length ? `<div class="hw-chat-grants">${lines.join("<br/>")}</div>` : ""
+    ]
+  }), { rolls: rolled ? [rolled] : [], sound: !!rolled });
 }

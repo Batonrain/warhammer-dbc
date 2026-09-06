@@ -23,16 +23,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy, spendActionPoints } from "./action-economy.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const MARK_FLAG = "bowToAudienceMark";
 
 export function hasBowToAudience(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Bow to the Audience"));
+  return hasAbility(actor, "ability.bowToTheAudience", "Bow to the Audience", "talent");
 }
 
 /** Итог Бдительности (с учётом Тренировки) — умолчание на P, если записи Навыка на акторе нет вовсе. */
@@ -62,7 +64,10 @@ export async function triggerBowToAudience(actor) {
   if (!targets.length) { ui.notifications?.warn("⚠️ Нет выбранных целей."); return null; }
   if (!await spendActionPoints(actor, 3)) { ui.notifications?.warn("⚠️ Не хватает ОД (нужно 3)."); return null; }
 
-  const threshold = awarenessTotal(actor) - 20;
+  // Общий сбор модификаторов (wdbc-ct65.3): тест Внимательности шёл мимо
+  // реестра правил.
+  const ruleMods = collectTestMods(actor, { kind: "skill", skill: "awareness", char: "per" });
+  const threshold = awarenessTotal(actor) - 20 + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const { success, deg } = testOutcome(roll.total, threshold);
   const bonus = success ? deg * 3 : 0;
@@ -76,7 +81,7 @@ export async function triggerBowToAudience(actor) {
     speaker: ChatMessage.getSpeaker({ actor }),
     content: `<div class="wh-roll-result">
       <div class="roll-header">${rollIcon("spark", "#c98bff")}${esc(actor.name)} — Поклон Публике</div>
-      <div class="roll-threshold">Awareness(P)−20 = <b>${threshold}</b>, бросок <b>${roll.total}</b> — ${success ? `успех, степень ${deg}` : "провал"}.</div>
+      <div class="roll-threshold">Awareness(P)−20${ruleMods.parts.map(p => ` ${p}`).join("")} = <b>${threshold}</b>, бросок <b>${roll.total}</b> — ${success ? `успех, степень ${deg}` : "провал"}.</div>
       ${success
         ? `<div class="roll-threshold">Цели (${esc(targetNames)}) отмечены: <b>+${bonus}</b> атакующему / <b>−${bonus}</b> их физическим Избеганиям до начала следующего Хода атакующего.</div>`
         : `<div class="roll-threshold">Действие израсходовано впустую — метка не наложена.</div>`}

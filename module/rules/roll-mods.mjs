@@ -10,6 +10,77 @@
 
 import { resolveTest } from "./resolve-test.mjs";
 
+/** Знак перед числом модификатора: «+10», «−10», пустая строка у нуля. */
+const sgn = v => (v > 0 ? `+${v}` : (v < 0 ? `${v}` : ""));
+
+/** Сумма автоматических модификаторов — то, что прибавляется к Порогу само. */
+export function autoModsTotal(autoMods) {
+  return (autoMods ?? []).reduce((sum, m) => sum + (Number(m.value) || 0), 0);
+}
+
+/**
+ * Модификаторы теста для мест БЕЗ диалога с галочками — кнопок в карточке чата
+ * и Реакций (Уклонение, Парирование, Страх, Захват, Паника). Спрашивать игрока
+ * там негде: карточка уже отправлена, кнопка одна, и «поставьте галочку, если
+ * считаете уместным» превратилось бы во второй диалог поверх боя.
+ *
+ * Поэтому здесь автоматические и «галочные» модификаторы складываются в одно
+ * число, а игрок видит подписи в карточке результата — тот же неопросный
+ * приём, каким уже сделано Карабканье (combat/movement-actions.mjs).
+ *
+ * @returns {{list: object[], total: number, parts: string[]}} parts — готовые
+ *   строки для перечня модификаторов в карточке.
+ */
+export function collectTestMods(actor, context) {
+  const { mods, autoMods } = resolveTest({ actor, ...context });
+  const list = [...autoMods, ...mods];
+  return {
+    list,
+    total: list.reduce((sum, m) => sum + (Number(m.value) || 0), 0),
+    parts: list.map(m => `${m.label} ${sgn(m.value)}`)
+  };
+}
+
+/**
+ * Только АВТОМАТИЧЕСКИЕ модификаторы — для мест, у которых свой диалог с
+ * галочками правил уже есть (тест Страха, психотест). Там галочки приезжают
+ * отдельным числом из формы, и общий collectTestMods сложил бы отмеченную
+ * галочку второй раз — задвоение, которое видно только за столом.
+ *
+ * Разница с collectTestMods ровно в этом: тот для мест БЕЗ диалога.
+ */
+export function autoTestMods(actor, context) {
+  const list = resolveTest({ actor, ...context }).autoMods;
+  return {
+    list,
+    total: autoModsTotal(list),
+    parts: list.map(m => `${m.label} ${sgn(m.value)}`)
+  };
+}
+
+/**
+ * Ситуативные штрафы состояния тела и снаряжения (wdbc-n17t) — строчный
+ * список без галочек: игрок их не выбирает, они действуют, пока действует
+ * само состояние. Раньше эти пять слагаемых просто молча уменьшали Порог, и
+ * увидеть их можно было только в карточке после броска.
+ *
+ * Отдельный блок, а не строка в «Правилах»: там галочки, и поставить рядом
+ * невыбираемую строку значило бы предложить игроку выбор, которого нет.
+ */
+export function ruleAutoModsHtml(actor, context, resolved = null) {
+  const autoMods = (resolved ?? resolveTest({ actor, ...context })).autoMods ?? [];
+  if (!autoMods.length) return { html: "", autoMods, total: 0 };
+  const rows = autoMods.map(m =>
+    `<div class="rule-auto-mod"><span>${m.label}</span><b>${sgn(m.value)}</b></div>`).join("");
+  return {
+    autoMods,
+    total: autoModsTotal(autoMods),
+    html: `<div class="atk-dlg-modifiers rule-auto-mods">
+      <div class="atk-mods-title">Состояние (учтено в Пороге)</div>
+      <div class="atk-mods-list">${rows}</div></div>`
+  };
+}
+
 export function ruleRollModsHtml(actor, context, resolved = null) {
   // resolved — уже посчитанный resolveTest: избавляет вызывающего от
   // повторного обхода правил актора (attack-dialog зовёт трижды за диалог).

@@ -22,13 +22,14 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { throttleCount, incrementThrottleCount } from "../rules/cooldown.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 
 const FLAG = "deathDance";
 
 /** Владеет ли актор Талантом Death Dance / Смертельный Танец. */
 export function hasDeathDance(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Death Dance"));
+  return hasAbility(actor, "ability.deathDance", "Death Dance", "talent");
 }
 
 /** Сколько раз уже использован в ТЕКУЩЕМ бою — 0, если бой сменился или ещё не использовался. */

@@ -200,6 +200,47 @@ describe("weaponClass", () => {
   });
 });
 
+describe("charNotIn", () => {
+  const exempt = ["t", "inf", "cor"];
+
+  it("характеристика теста не входит в список — истинно (правило действует)", () => {
+    expect(PREDICATES.charNotIn(actor(), { char: "ws" }, exempt)).toBe(true);
+  });
+
+  it("характеристика теста входит в список — ложно (правило не действует)", () => {
+    expect(PREDICATES.charNotIn(actor(), { char: "t" }, exempt)).toBe(false);
+    expect(PREDICATES.charNotIn(actor(), { char: "inf" }, exempt)).toBe(false);
+  });
+
+  it("регистр не важен", () => {
+    expect(PREDICATES.charNotIn(actor(), { char: "T" }, exempt)).toBe(false);
+  });
+
+  it("нет ctx.char (тест без характеристики) — список ничего не исключает", () => {
+    expect(PREDICATES.charNotIn(actor(), {}, exempt)).toBe(true);
+  });
+});
+
+describe("charIn", () => {
+  const mental = ["int", "per", "wp", "fel", "inf"];
+
+  it("характеристика теста входит в список — истинно", () => {
+    expect(PREDICATES.charIn(actor(), { char: "wp" }, mental)).toBe(true);
+  });
+
+  it("характеристика теста не входит в список — ложно", () => {
+    expect(PREDICATES.charIn(actor(), { char: "ws" }, mental)).toBe(false);
+  });
+
+  it("регистр не важен", () => {
+    expect(PREDICATES.charIn(actor(), { char: "WP" }, mental)).toBe(true);
+  });
+
+  it("нет ctx.char (тест без характеристики) — не входит ни в какой список", () => {
+    expect(PREDICATES.charIn(actor(), {}, mental)).toBe(false);
+  });
+});
+
 describe("targetHasTrait", () => {
   it("у цели есть такая Черта", () => {
     const targetActor = actor({ items: [trait("Daemonic / Демонический")] });
@@ -214,6 +255,31 @@ describe("targetHasTrait", () => {
   // а не актор. Предикат не должен принимать его за цель.
   it("флаг ctx.target целью не считается", () => {
     expect(PREDICATES.targetHasTrait(actor(), { target: true }, "Daemonic")).toBe(false);
+  });
+});
+
+describe("hasCondition / targetHasCondition / targetLacksCondition", () => {
+  it("hasCondition: истинно, если хоть одно из перечисленных Состояний стоит на акторе", () => {
+    const a = actor({ conditions: { prone: true } });
+    expect(PREDICATES.hasCondition(a, {}, "prone")).toBe(true);
+    expect(PREDICATES.hasCondition(a, {}, ["stunned", "prone"])).toBe(true);
+    expect(PREDICATES.hasCondition(a, {}, "stunned")).toBe(false);
+  });
+
+  it("hasCondition: у актора без conditions вовсе — false, не падает", () => {
+    expect(PREDICATES.hasCondition(actor(), {}, "prone")).toBe(false);
+  });
+
+  it("targetHasCondition: смотрит на ctx.targetActor, не на самого actor", () => {
+    const targetActor = actor({ conditions: { prone: true } });
+    expect(PREDICATES.targetHasCondition(actor(), { targetActor }, "prone")).toBe(true);
+    expect(PREDICATES.targetHasCondition(actor({ conditions: { prone: true } }), {}, "prone")).toBe(false);
+  });
+
+  it("targetLacksCondition: истинно, только если НИ ОДНОГО из списка нет", () => {
+    const targetActor = actor({ conditions: { stunned: true } });
+    expect(PREDICATES.targetLacksCondition(actor(), { targetActor }, ["stunned", "helpless"])).toBe(false);
+    expect(PREDICATES.targetLacksCondition(actor(), { targetActor }, ["helpless"])).toBe(true);
   });
 });
 
@@ -307,6 +373,9 @@ describe("общее требование к предикатам", () => {
     wearsSealedArmour: undefined,
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
+    hasCondition: "prone", targetHasCondition: "prone",
+    charNotIn: ["t", "inf", "cor"],
+    charIn: ["int", "per", "wp", "fel", "inf"],
     hasSize: undefined, targetHasSize: undefined, targetKeepsNimbleInArmour: undefined,
     // Принадлежность к фракции — своя и у цели (дерево фракций).
     hasFaction: "chaos", targetHasFaction: "chaos",

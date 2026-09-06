@@ -15,8 +15,7 @@ import {
   addSceneToGroup, removeSceneFromGroup,
   createSubgroup, renameSubgroup, deleteSubgroup, assignSceneToSub, unassignScene
 } from "../constants/scene-nexus.mjs";
-import { openVeilMystic } from "./veil.mjs";
-import { openEnvironment } from "./environment.mjs";
+import { openSceneSettings } from "./scene-settings.mjs";
 import { esc } from "../helpers/utils.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
@@ -375,19 +374,12 @@ export class SceneNexus extends HandlebarsApplicationMixin(ApplicationV2) {
       const ok = await Dialog.confirm({ title: "Удалить группу", content: `<p>Удалить группу «${esc(g.name)}»? Сцены и их Завеса-флаги останутся, удалится только группа (и её общая Завеса).</p>` });
       if (ok) { await deleteGroup(b.dataset.gdel); this.render(); }
     }));
-    el.querySelectorAll("[data-gveil]").forEach(b => b.addEventListener("click", async () => {
-      const g = getGroup(b.dataset.gveil); if (!g) return;
+    el.querySelectorAll("[data-gscene]").forEach(b => b.addEventListener("click", async () => {
+      const g = getGroup(b.dataset.gscene); if (!g) return;
       const first = (g.sceneIds || []).map(id => game.scenes.get(id)).find(Boolean);
-      if (!first) { ui.notifications?.warn("В группе нет сцен — добавьте сцену, чтобы задать Завесу."); return; }
+      if (!first) { ui.notifications?.warn("В группе нет сцен — добавьте сцену, чтобы задать Окружение/Завесу."); return; }
       try { await first.view(); } catch (e) {}
-      openVeilMystic();
-    }));
-    el.querySelectorAll("[data-genv]").forEach(b => b.addEventListener("click", async () => {
-      const g = getGroup(b.dataset.genv); if (!g) return;
-      const first = (g.sceneIds || []).map(id => game.scenes.get(id)).find(Boolean);
-      if (!first) { ui.notifications?.warn("В группе нет сцен — добавьте сцену, чтобы задать Окружение."); return; }
-      try { await first.view(); } catch (e) {}
-      openEnvironment();
+      openSceneSettings();
     }));
 
     // Добавить сцену в группу

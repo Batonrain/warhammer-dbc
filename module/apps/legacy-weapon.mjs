@@ -26,6 +26,8 @@ import { canAscend, ascensionRows, legacyBonus, qualityAfterLegacy, propsAfterLe
 import { ITEM_QUALITY } from "../constants/quality.mjs";
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -104,7 +106,14 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
   const check = canAscend(item);
   if (!check.ok) return ui.notifications?.warn(check.reason);
 
-  const { rows, threshold } = ascensionRows(actor, item, { deedBonus, legendary });
+  const { rows, threshold: ritualThreshold } = ascensionRows(actor, item, { deedBonus, legendary });
+  // Возвышение — тест владельца, и штрафы его состояния тела в него входят
+  // (wdbc-9jj7): раньше Порог складывался из одной ритуальной арифметики
+  // (Бесчестие, Редкость, Тяжёлое, свойства, Легион, деяние), и ни Усталость,
+  // ни Черты до него не доезжали. Диалога с галочками у этого броска нет —
+  // значит collectTestMods, а не autoTestMods (docs/rules-format.md).
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "inf" });
+  const threshold = ritualThreshold + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const passed = rv <= threshold;
@@ -112,20 +121,22 @@ export async function rollAscension(item, { deedBonus = 0, legendary = false } =
 
   if (passed) await applyLegacy(item, { legendary });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("crown", "#e8c76a")}Возвышение — ${esc(item.name)}</div>
-        <div class="roll-threshold">${rows.map(r => `${esc(r.label)} ${sgn(r.val)}`).join(" · ")} → Порог <b>${threshold}</b></div>
-        <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d100: <b>${rv}</b></div>
-        <div class="roll-outcome">${passed
-          ? `<span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Оружие стало Оружием Наследия.</span>`
-          : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}. Попытку можно повторить, подняв Inf.b или совершив деяние, достойное легенды.</span>`}</div>
-        ${passed ? `<div class="dc-foot">${LEGACY_COMMON.map(esc).join(" ")}</div>` : ""}
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Первая строка ascensionRows — база (Бесчестие), остальные слагаемые уходят
+  // в скобки общего формата Порога (helpers/test-card.mjs).
+  await postTestCard(actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `Возвышение — ${esc(item.name)}`,
+    threshold: thresholdLine({
+      label: rows[0]?.label ?? "Бесчестие (Inf)", base: rows[0]?.val ?? 0,
+      parts: [...rows.slice(1).map(r => `${r.label} ${sgn(r.val)}`), ...ruleMods.parts],
+      threshold
+    }),
+    rv,
+    outcome: outcomeHtml(passed, passed
+      ? `Успех — ${deg} ${_degWord(deg)}. Оружие стало Оружием Наследия.`
+      : `Провал — ${deg} ${_degWord(deg)}. Попытку можно повторить, подняв Inf.b или совершив деяние, достойное легенды.`),
+    sections: [passed ? `<div class="dc-foot">${LEGACY_COMMON.map(esc).join(" ")}</div>` : ""]
+  }, { rolls: [roll] });
 }
 
 /** Применить общие свойства Наследия к профилю, сняв снимок прежнего. */
@@ -166,13 +177,13 @@ export async function breakLegacy(item) {
     "system.penetration": Number(L.prePen) || 0,
     "system.quality": L.preQuality || item.system.quality
   });
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor: item.actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("warn", "#ffb84d")}Связь разорвана — ${esc(item.name)}</div>
-      <div class="roll-outcome">Оружие перестало быть Оружием Наследия. История и Мутации сохранены: при повторном Возвышении они вернутся.</div>
-    </div>`
-  });
+  // Карточка без броска — результат действия, не тест (тот же случай, что
+  // Сжатие в combat/defense.mjs): сборщик общий, строки Порога и броска нет.
+  await postTestCard(item.actor, {
+    icon: rollIcon("warn", "#ffb84d"),
+    title: `Связь разорвана — ${esc(item.name)}`,
+    outcome: "Оружие перестало быть Оружием Наследия. История и Мутации сохранены: при повторном Возвышении они вернутся."
+  }, { sound: false });
 }
 
 /** Плоская прибавка к строке урона: «1d10+4» → «1d10+6». */
@@ -203,16 +214,16 @@ export async function rollHistory(item) {
   const roll = await new Roll("1d10").evaluate();
   await setHistory(item, roll.total);
   const entry = historyByRoll(roll.total);
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor: item.actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("crown", "#e8c76a")}История — ${esc(item.name)}</div>
-      <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d10: <b>${roll.total}</b></div>
-      <div class="roll-outcome"><b>${esc(entry.name)}</b></div>
-      <div class="dc-foot">${esc(entryText(entry, isMeleeWeapon(item)))}</div>
-    </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Бросок по ТАБЛИЦЕ, а не тест: Порога нет, и какой именно кубик бросали
+  // (1d10) для таблицы важно — поэтому строка кубика своя, а не общая
+  // «Бросок: N» (rv намеренно не передаётся).
+  await postTestCard(item.actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `История — ${esc(item.name)}`,
+    lines: [`<div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d10: <b>${roll.total}</b></div>`],
+    outcome: `<b>${esc(entry.name)}</b>`,
+    sections: [`<div class="dc-foot">${esc(entryText(entry, isMeleeWeapon(item)))}</div>`]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -251,17 +262,19 @@ export async function rollMutation(item, characterKey) {
     { name: entry.name, text: entryText(entry, melee), roll: roll.total, character: key }];
   await item.update({ "system.legacy.character": key, "system.legacy.mutations": list });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("crown", "#e8c76a")}Мутация ${list.length} — ${esc(item.name)}</div>
-      <div class="roll-threshold">Характер: <b>${esc(LEGACY_CHARACTERS[key].label)}</b> · Порча владельца: <b>${actor.system?.corruption?.value ?? 0}</b></div>
-      <div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d10: <b>${roll.total}</b></div>
-      <div class="roll-outcome"><b>${esc(entry.name)}</b></div>
-      <div class="dc-foot">${esc(entryText(entry, melee))}</div>
-    </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  // Тоже бросок по таблице (см. rollHistory): «Порога» здесь нет — строка
+  // roll-threshold несёт условия выбора таблицы, а не число, с которым
+  // сравнивают бросок.
+  await postTestCard(actor, {
+    icon: rollIcon("crown", "#e8c76a"),
+    title: `Мутация ${list.length} — ${esc(item.name)}`,
+    lines: [
+      `<div class="roll-threshold">Характер: <b>${esc(LEGACY_CHARACTERS[key].label)}</b> · Порча владельца: <b>${actor.system?.corruption?.value ?? 0}</b></div>`,
+      `<div class="roll-dice">${rollIcon("dice", "#6fe6ff")}1d10: <b>${roll.total}</b></div>`
+    ],
+    outcome: `<b>${esc(entry.name)}</b>`,
+    sections: [`<div class="dc-foot">${esc(entryText(entry, melee))}</div>`]
+  }, { rolls: [roll] });
 }
 
 /**

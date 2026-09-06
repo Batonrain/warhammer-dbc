@@ -35,6 +35,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { isHaemonculus } from "../constants/haemonculus.mjs";
 
 const hasItem = (actor, type, name) =>
   !!actor?.items?.some(i => i.type === type && itemHasName(i, name));
@@ -85,4 +86,26 @@ export function effectiveDiceMode(rawMode, crafter, categoryKey, slowShiftChosen
 /** +30 от Медленной Смены — только если выбрано И Талант реально есть у крафтера. */
 export function slowShiftBonus(crafter, slowShiftChosen) {
   return (slowShiftChosen && hasSlowShiftTalent(crafter)) ? 30 : 0;
+}
+
+/**
+ * +60 от Лаборатории Гемункула (wdbc-6nl9, «Ковен Гемункулов» — благо стадии
+ * 0 Элитного архетипа Гемункул, module/constants/haemonculus.mjs:32) — БЕЗ
+ * УСЛОВИЯ на категорию, тем же приёмом, что и polymathBonus («+60 на все
+ * крафты и исследования» в тексте, без ограничения по категории/навыку, в
+ * отличие от Киберпроповедника). Стадия 0 доступна ЛЮБОМУ Гемункулу
+ * (haemState().open всегда включает stage:0) — isHaemonculus() уже
+ * достаточная проверка, отдельного флага на «физическую Лабораторию» в
+ * системе нет (тот же класс упрощения, что у Киберпроповедника — не
+ * проверяем наличие инструментов).
+ *
+ * НЕ покрыто здесь (тот же текст благ, другая точка интеграции): +80 на
+ * Medicae/Lore(Chymistry)/Trade(Chymist) — это отдельные тесты Навыка, не
+ * тесты Мастерской, к общему конвейеру резолва Навыка это преимущество ещё
+ * не подключено (см. wdbc-6nl9). До 5 бригад одновременно и +3 к максимуму
+ * ассистентов (после чего число удваивается) — тоже отдельные лимиты, не
+ * бонус к самому броску.
+ */
+export function haemonculusLabBonus(crafter) {
+  return isHaemonculus(crafter) ? 60 : 0;
 }

@@ -292,6 +292,24 @@ describe("showRecoilDialog: чекбокс Вольта (wdbc-zik7, п.6) тол
     expect((await promise).volt).toBe(false);
   });
 
+  // wdbc-5280/wdbc-kcb5: сам токен ЗАЩИТНИКА (не врага) без «Синхронизировать
+  // с актором» (actorLink:false) — tokenFor(actor) внутри recoil.mjs зовёт
+  // getActiveTokens() без аргументов (linked:false по умолчанию), поэтому
+  // непривязанный токен всё равно находится и чекбокс Вольта появляется.
+  it("токен защитника непривязан (actorLink:false) — контакт всё равно находится", async () => {
+    const d = defender();
+    const own = zik7Token(d, { x: 0, y: 0, disposition: FRIENDLY });
+    own.document.actorLink = false;
+    canvas.tokens.placeables = [
+      own,
+      zik7Token(defender(), { x: 1, y: 0, disposition: HOSTILE })
+    ];
+    const promise = showRecoilDialog(d);
+    expect(captured.dialog.content).toContain('name="volt"');
+    await captured.press("recoil", recoilForm({ volt: false }));
+    expect((await promise).volt).toBe(false);
+  });
+
   it("враг вплотную, чекбокс отмечен — volt=true", async () => {
     const d = defender();
     canvas.tokens.placeables = [

@@ -10,6 +10,7 @@
 import { isDaemonbloodItem, daemonbloodOptions, daemonbloodGrant, DAEMONBLOOD_FLAG,
          daemonbloodShrinkToFit } from "../rules/daemonblood.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isDaemonbloodItem };
 
@@ -88,15 +89,15 @@ export async function useDaemonblood(actor, item) {
     [`flags.${FLAG}.${DAEMONBLOOD_FLAG}`]: contribution
   });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("blood","#8b1a1a")}Daemonblood — Кровавая Жертва</div>
-      <div class="roll-threshold">Пролито крови: <b>${amount}</b> → аблативные Раны <b>${ablative}</b></div>
-      <div class="roll-threshold" style="opacity:.8;">Пока действует: Daemonic (+½PR окр.▲) против попаданий по защищённым бронёй зонам — не смоделировано, отыгрывать вручную.</div>
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  // Результат нажатия кнопки, а не тест: броска и Порога нет, звука тоже.
+  await postTestCard(actor, {
+    icon: rollIcon("blood", "#8b1a1a"),
+    title: "Daemonblood — Кровавая Жертва",
+    lines: [
+      `<div class="roll-threshold">Пролито крови: <b>${amount}</b> → аблативные Раны <b>${ablative}</b></div>`,
+      `<div class="roll-threshold" style="opacity:.8;">Пока действует: Daemonic (+½PR окр.▲) против попаданий по защищённым бронёй зонам — не смоделировано, отыгрывать вручную.</div>`
+    ]
+  }, { sound: false });
 }
 
 /** Кнопка на листе предмета — пусто, если это не Daemonblood, нет актора, или жертва уже принесена. */

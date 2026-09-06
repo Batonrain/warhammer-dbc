@@ -261,6 +261,27 @@ describe("_rollShift: Полимат (wdbc-1rno)", () => {
 
     expect(captured.chat[0].content).not.toContain("Полимат");
   });
+});
+
+// Лаборатория Гемункула (wdbc-6nl9): +60 безусловно на тест Крафта/
+// Исследования — благо стадии 0 Элитного архетипа Гемункул, не Талант/Мутация.
+describe("_rollShift: Лаборатория Гемункула (wdbc-6nl9)", () => {
+  it("Гемункул — +60 к тесту, отдельная строка в карточке", async () => {
+    currentCrafter.system.eliteArchetype = "Haemonculus / Гемункул";
+    const app = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await app._rollShift("p1");
+
+    expect(captured.chat[0].content).toContain("Лаборатория Гемункула: +60 к тесту");
+  });
+
+  it("не Гемункул — строки нет, Предел ниже на 60", async () => {
+    const withoutBonus = newApp("crafter-1");
+    captured.nextRoll = 40;
+    await withoutBonus._rollShift("p1");
+
+    expect(captured.chat[0].content).not.toContain("Лаборатория Гемункула");
+  });
 
   it("сдвигает Предел теста ровно на +10", async () => {
     const base = newApp("crafter-1");

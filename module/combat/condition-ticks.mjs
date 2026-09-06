@@ -21,21 +21,34 @@
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { applyWoundLoss, woundDeathThreshold } from "../rules/wounds.mjs";
-import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { addFatigue, conditionAdjustFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
-
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
-// system.conditions.<key> (bool) + system.conditions.<field> (число).
-const ROUND_CONDITIONS = [
-  { key: "stunned",     field: "stunnedRounds",     label: "Оглушение" },
-  { key: "blinded",     field: "blindedRounds",     label: "Ослепление" },
-  { key: "suffocating", field: "suffocatingRounds", label: "Удушье" }
-];
+// system.conditions.<key> (bool) + system.conditions.<field> (число). Из
+// реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
+// "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
+import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
+// Срок Состояния штатной Duration эффекта (wdbc-uqco). Состояние, у которого
+// срок задан, сюда не попадает вовсе: его считает Foundry, а истечение
+// подметается ниже. Свой декремент остаётся ровно для тех, кому срок
+// проставили старым способом — числом в поле, без эффекта.
+import { sweepConditionDurations, hasConditionDuration } from "./condition-effects.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
-async function postConditionCard(actor, lines) {
+/**
+ * Строка «срок вышел» для карточки — общая с подметанием по мировому времени
+ * (hooks.mjs), чтобы истечение вне боя не проходило молча: тихо исчезнувшее
+ * Состояние ГМ считает багом, а не сроком.
+ */
+export function conditionExpiryLine(key) {
+  return `<div class="roll-threshold">${CONDITIONS_DEF[key]?.label || key}: срок вышел — снято</div>`;
+}
+
+/** Карточка Состояний в чат — экспортирована ради того же подметания по времени. */
+export async function postConditionCard(actor, lines) {
   if (!lines.length) return;
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),
@@ -54,25 +67,18 @@ async function postConditionCard(actor, lines) {
  */
 export async function rollBurningPanicTest(actor) {
   const wp = actor.system.characteristics.wp?.total ?? 0;
-  const { eff, bonus, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
+  const { eff, parts, roll, rv, rerollNote, success, dof, usedReroll } = await rollMoraleTest(actor, wp);
   if (!success) await actor.update({ "system.actionPoints.value": 0 });
   await applyLordOfExoditesFailPenalty(actor, { dof, usedReroll });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("fire","#ff8a3a")}Паника от Горения — ${esc(actor.name)}</div>
-        <div class="roll-threshold">WP: <b>${wp}</b>${bonus !== 0 ? ` ${bonus >= 0 ? "+" : ""}${bonus}` : ""} → Порог: <b>${eff}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — держит себя в руках</span>`
-          : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`}</div>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("fire","#ff8a3a"), title: `Паника от Горения — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "WP", base: wp, parts, threshold: eff }),
+    rv, rerollNote,
+    outcome: success
+      ? `<span class="roll-success">Успех — держит себя в руках</span>`
+      : `<span class="roll-failure">Провал — Ход потерян в панике (ОД обнулены)</span>`
+  }, { rolls: [roll] });
   return { success, rv, eff };
 }
 
@@ -91,21 +97,62 @@ export async function processConditionTurnStart(actor) {
   if (conds.shocked) await postShockRecoveryPrompt(actor);
   const updates = {};
   const lines = [];
+
+  // Сроки, заданные штатной Duration, истекают сами — здесь только подмести
+  // истёкшие и освежить видимый остаток. Гашение самого Состояния делает мост
+  // «лист ↔ токен» (см. condition-effects.mjs), поэтому строк «снято» ниже мы
+  // не дублируем — только называем, что кончилось.
+  const swept = await sweepConditionDurations(actor, { round: game.combat?.round, turn: game.combat?.turn });
+  for (const key of swept.expired) lines.push(conditionExpiryLine(key));
+
   for (const { key, field, label } of ROUND_CONDITIONS) {
+    // Удушье (стр. 30-31, wdbc-r5o7.6) — особый случай, не общий приём этого
+    // цикла: у Оглушения/Ослепления «0 = снято» верно (эффект кончился), а у
+    // Удушья 0 значит ровно противоположное — «запас задержки дыхания
+    // кончился, дальше начинаются тесты», сам тег «Задыхается» на нуле
+    // сниматься не должен (см. отдельный блок ниже, тот же приём, что и у
+    // Горения в processConditionTurnEnd — своя ветка вместо общего цикла).
+    if (key === "suffocating") continue;
     if (!conds[key]) continue;
+    // Срок ведёт Duration — свой декремент этому Состоянию не нужен и был бы
+    // двойным: остаток уже пересчитан подметанием выше.
+    if (hasConditionDuration(actor, key)) continue;
     const cur = Number(conds[field]) || 0;
     if (cur <= 0) continue;
     const next = cur - 1;
-    updates[`system.conditions.${field}`] = next;
-    if (next <= 0) {
-      updates[`system.conditions.${key}`] = false;
-      lines.push(`<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`);
+    Object.assign(updates, conditionAdjustFields(actor, key, -1));
+    lines.push(next <= 0
+      ? `<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`
+      : `<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
+  }
+
+  // Удушье: пока есть запас (suffocatingRounds > 0) — просто декремент, без
+  // теста, тегом не рискуя (генерик выше это делал бы для всех остальных, но
+  // тут флаг на нуле остаться ДОЛЖЕН, поэтому не переиспользуем
+  // conditionAdjustFields здесь — тот сам гасит флаг при next<=0).
+  // Запас кончился (было уже 0 или обнулился сейчас) — тест T+0 каждый Ход,
+  // провал даёт +1 Усталости (книга: «тест T+0 каждую минуту/Ход или +1
+  // Усталости»). Потеря сознания/смерть по накоплению Раундов без вздоха —
+  // ЗАВИСИТ от механики Без Сознания (wdbc-r5o7.7, следующий тикет этого же
+  // эпика, ещё не сделан) — сознательно не реализовано здесь, тег остаётся
+  // активным до ручного снятия (персонаж вздохнул — крестик на теге).
+  if (conds.suffocating) {
+    const cur = Number(conds.suffocatingRounds) || 0;
+    if (cur > 0) {
+      const next = cur - 1;
+      await actor.update({ "system.conditions.suffocatingRounds": next });
+      lines.push(`<div class="roll-threshold">${rollIcon("run","#8fb0c4")}Удушье: запас дыхания <b>${cur}</b> → <b>${next}</b>${next <= 0 ? " — запас кончился, дальше тесты T+0" : ""}</div>`);
     } else {
-      lines.push(`<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
+      const tTotal = Number(actor.system?.characteristics?.t?.total) || 0;
+      const test = await new Roll("1d100").evaluate();
+      const failed = test.total > tTotal;
+      if (failed) await addFatigue(actor, 1);
+      lines.push(`<div class="roll-threshold">${rollIcon("run","#8fb0c4")}Удушье: тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed ? `<span class="roll-failure">провал → 😓 Усталость +1</span>` : `<span class="roll-success">успех</span>`}</div>`);
     }
   }
-  if (!Object.keys(updates).length) return;
-  await actor.update(updates);
+
+  if (!Object.keys(updates).length && !lines.length) return;
+  if (Object.keys(updates).length) await actor.update(updates);
   await postConditionCard(actor, lines);
 }
 
@@ -138,7 +185,7 @@ export async function processConditionTurnEnd(actor) {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − Обескровливание ${level} = <b>${eff}</b> → <span class="roll-failure"><b>СМЕРТЬ</b> (независимо от количества Ран)</span></div>`);
     } else if (eff <= 5) {
       const newLevel = level + 1;
-      await actor.update({ "system.conditions.haemorrhagingLevel": newLevel, "system.conditions.haemorrhaging": true });
+      await actor.update(conditionAdjustFields(actor, "haemorrhaging", 1));
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → +1 Обескровливание (<b>${newLevel}</b>)</div>`);
     } else {
       lines.push(`<div class="roll-threshold">${rollIcon("blood", "#ff6b6b")}Кровотечение: 1d10 <b>${roll.total}</b> − ${level} = <b>${eff}</b> → обошлось</div>`);
@@ -150,7 +197,7 @@ export async function processConditionTurnEnd(actor) {
   // кроме Галлюцинаций: если Оглушение вызвано ими (conds.hallucinogenic),
   // электрошок по мозгу их не лечит.
   if (conds.stunned && !conds.hallucinogenic && hasRuleFlag(actor, "sarcophagus.autoWakeFromStun")) {
-    await actor.update({ "system.conditions.stunned": false, "system.conditions.stunnedRounds": 0 });
+    await actor.update(conditionRemoveFields("stunned"));
     lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
   }
 
@@ -170,6 +217,35 @@ export async function processConditionTurnEnd(actor) {
       if (failed) await addFatigue(actor, 1);
       lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: 1d10 <b>${roll.total}</b> целиком в T.b — тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed ? `<span class="roll-failure">провал → 😓 Усталость +1</span>` : `<span class="roll-success">успех</span>`}</div>`);
     }
+  }
+
+  // Радиация (стр. 30-31, wdbc-r5o7.6): «периодический 1 урон в T» — фикс,
+  // не бросок, в отличие от Горения выше; «при накоплении 10/20/30... — тест
+  // T+0, провал даёт лучевую болезнь» — доза (radiationLevel) растёт на 1 с
+  // тем же тиком, что и сам урон (книга не разводит «урон» и «дозу» по
+  // разным источникам, второе — просто счётчик первого). Урон — в T
+  // (system.charDamage.t, тот же ручной знаковый Мод., что у Гангрены,
+  // combat/gangrene.mjs), НЕ Раны: книга прямо говорит «урон в T». Лучевая
+  // болезнь — не своё Состояние из CONDITIONS_DEF (в книге это осложнение
+  // Радиации, не отдельный тег листа), а флаг актора с собственным
+  // worldTime-тиком раз в 8 часов, combat/radiation.mjs.
+  if (conds.radiation) {
+    const before = Number(actor.system.charDamage?.t) || 0;
+    const after  = before - 1;
+    const level  = Number(conds.radiationLevel) || 0;
+    const newLevel = level + 1;
+    await actor.update({ "system.charDamage.t": after, ...conditionAdjustFields(actor, "radiation", 1) });
+    let sicknessNote = "";
+    if (newLevel % 10 === 0) {
+      const tTotal = Number(actor.system?.characteristics?.t?.total) || 0;
+      const test = await new Roll("1d100").evaluate();
+      const failed = test.total > tTotal;
+      if (failed) await actor.setFlag("warhammer-dbc", "radiationSickness", true);
+      sicknessNote = ` · Доза ${newLevel} — тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed
+        ? `<span class="roll-failure">провал → лучевая болезнь</span>`
+        : `<span class="roll-success">успех</span>`}`;
+    }
+    lines.push(`<div class="roll-threshold">${rollIcon("warp", "#ffe14d")}Радиация: урон T <b>1</b> (Мод. T: ${before}→${after})${sicknessNote}</div>`);
   }
 
   if (lines.length) await postConditionCard(actor, lines);

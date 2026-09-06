@@ -19,16 +19,18 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 const FLAG = "boneSong";
 
 /** Владеет ли актор Талантом Bone Song / Костяная Песня. */
 export function hasBoneSong(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Bone Song"));
+  return hasAbility(actor, "ability.boneSong", "Bone Song", "talent");
 }
 
 /** Мастер ли актор на Пути Певца Кости (module/constants/aeldari-paths.mjs::bonesinger). */
@@ -84,14 +86,13 @@ export async function applyBoneSongSingle(actor, targetActor) {
   const reduction = boneSongSizeReduction(actor, size);
   const { name, amount, clearedStates } = await repairOne(targetActor, roll.total, reduction, { clearAll: true });
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("wrench", "#7fd3ff")}Костяная Песня — ${esc(name)}</div>
-      <div class="roll-threshold">1d10+F.b = <b>${roll.total}</b>${reduction ? ` − ${reduction} (Размер ${size})` : ""} → <b>+${amount}</b> Структуры${clearedStates ? ", все поломки сняты" : ""}</div>
-      <div class="roll-threshold" style="font-size:0.85em;opacity:.8;">AP техники: не отслеживается движком, восстанавливать нечего.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("wrench", "#7fd3ff"), title: `Костяная Песня — ${esc(name)}`,
+    lines: [
+      `<div class="roll-threshold">1d10+F.b = <b>${roll.total}</b>${reduction ? ` − ${reduction} (Размер ${size})` : ""} → <b>+${amount}</b> Структуры${clearedStates ? ", все поломки сняты" : ""}</div>`,
+      `<div class="roll-threshold" style="font-size:0.85em;opacity:.8;">AP техники: не отслеживается движком, восстанавливать нечего.</div>`
+    ]
+  }, { sound: false });
 }
 
 /** Область (радиус 10 м) — вся техника в радиусе casterToken, один общий бросок. */
@@ -111,13 +112,12 @@ export async function applyBoneSongArea(actor, casterToken) {
     lines.push(`${esc(name)}: +${amount} Структуры${reduction ? ` (−${reduction}, Размер ${size})` : ""}${clearedStates ? ", 1 поломка снята" : ""}`);
   }
 
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("wrench", "#7fd3ff")}Костяная Песня — область (радиус 10 м)</div>
-      <div class="roll-threshold">1d5+½F.b = <b>${roll.total}</b> каждой технике</div>
-      ${lines.length ? lines.map(l => `<div>${l}</div>`).join("") : "<div><i>Нет техники в радиусе</i></div>"}
-      <div class="roll-threshold" style="font-size:0.85em;opacity:.8;">AP техники: не отслеживается движком, восстанавливать нечего.</div>
-    </div>`
-  }, game.settings.get("core", "rollMode")));
+  await postTestCard(actor, {
+    icon: rollIcon("wrench", "#7fd3ff"), title: "Костяная Песня — область (радиус 10 м)",
+    lines: [
+      `<div class="roll-threshold">1d5+½F.b = <b>${roll.total}</b> каждой технике</div>`,
+      ...(lines.length ? lines.map(l => `<div>${l}</div>`) : ["<div><i>Нет техники в радиусе</i></div>"]),
+      `<div class="roll-threshold" style="font-size:0.85em;opacity:.8;">AP техники: не отслеживается движком, восстанавливать нечего.</div>`
+    ]
+  }, { sound: false });
 }

@@ -19,6 +19,11 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
+# Таблицы, из которых не вышло ни одной строки, хотя текст в них был.
+# Пустой список — единственный нормальный итог импорта; см. сторож в
+# convert_block.
+DROPPED = []
+
 
 def parse_css(style_text):
     """Класс -> {bold, italic, color, bg}. Игнорирует свойства, которые не нужны."""
@@ -159,13 +164,21 @@ def convert_block(node, css, slug, art_map):
         return f"<h{level}>{inner}</h{level}>"
     if node.name == "table":
         rows = []
-        # Строки только ЭТОЙ таблицы — recursive=False по контейнеру (сама
-        # <table> или её <tbody>), а не find_all(recursive=True): иначе
-        # строки вложенной <table> внутри <td> подхватывались как строки
-        # внешней и дублировались/схлопывались (баг нашла сверка Аэльдари:
-        # Ответвления — 44 места).
-        container = node.find("tbody", recursive=False) or node
-        for tr in container.find_all("tr", recursive=False):
+        # Строки только ЭТОЙ таблицы: берём все <tr> в глубину, но оставляем
+        # те, у кого ближайшая <table> сверху — это наш node. Иначе строки
+        # вложенной <table> внутри <td> подхватывались как строки внешней и
+        # дублировались/схлопывались (баг нашла сверка Аэльдари: Ответвления,
+        # 44 места).
+        #
+        # Обход в глубину, а не recursive=False по <table>/<tbody>: Google Docs
+        # помечает повторяющуюся шапку через <thead>, и тогда прямых <tr> у
+        # таблицы нет вовсе — вся таблица молча пропадала. У Некрон так ушли
+        # Навыки у 19 статблоков из 32 (wdbc-04w). Сюда же ложится и то, как
+        # html.parser восстанавливает такую разметку, пряча остальные строки
+        # в <tbody> внутри первой же <tr>.
+        for tr in node.find_all("tr"):
+            if tr.find_parent("table") is not node:
+                continue
             cells = []
             for td in tr.find_all(["td", "th"], recursive=False):
                 tag = "th" if td.name == "th" else "td"
@@ -179,6 +192,12 @@ def convert_block(node, css, slug, art_map):
             if cells:
                 rows.append(f"<tr>{''.join(cells)}</tr>")
         if not rows:
+            # Сторож: таблица с текстом, из которой не вышло ни строки, —
+            # это молчаливая потеря куска книги, а не пустая вёрстка. Ровно
+            # так ушли Навыки у некрон, и заметили это только через полгода
+            # сплошным замером. Пусть впредь кричит на импорте.
+            if node.get_text(strip=True):
+                DROPPED.append(re.sub(r"\s+", " ", node.get_text(" ", strip=True))[:120])
             return ""
         return f"<table>{''.join(rows)}</table>"
     if node.name in ("ul", "ol"):
@@ -391,6 +410,14 @@ def main():
 
     total_pages = sum(len(e["pages"]) for e in entries)
     print(f"Готово: {slug} — {len(entries)} глав, {total_pages} разделов -> {out_path}")
+    if DROPPED:
+        print("")
+        print(f"ВНИМАНИЕ: {len(DROPPED)} таблиц с текстом не дали ни одной строки —")
+        print("это потерянный кусок книги, а не пустая вёрстка. Начало каждой:")
+        for t in DROPPED[:20]:
+            print("  •", t)
+        if len(DROPPED) > 20:
+            print(f"  … и ещё {len(DROPPED) - 20}")
     if art_map:
         print(f"Артов скопировано: {len(art_map)} -> assets/art/{slug}/")
 

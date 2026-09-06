@@ -36,11 +36,18 @@
         <div class="bc-ecg-screen"> <svg class="bc-ecg-wave" viewBox="0 0 300 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"> <defs> <linearGradient id="ecgSweep-{{actor.id}}" x1="0" y1="0" x2="1" y2="0"> <stop offset="0" stop-color="#fff" stop-opacity="0"/> <stop offset="0.70" stop-color="#fff" stop-opacity="0"/> <stop offset="0.95" stop-color="#fff" stop-opacity="0.95"/> <stop offset="1" stop-color="#fff" stop-opacity="1"/> </linearGradient> <mask id="ecgMask-{{actor.id}}"> <rect class="bc-ecg-sweep" x="-300" y="0" width="300" height="80" fill="url(#ecgSweep-{{actor.id}})"/> </mask> </defs> <path class="bc-ecg-base" d="{{body.ecg.path}}"/> <g mask="url(#ecgMask-{{actor.id}})"><path class="bc-ecg-lead" d="{{body.ecg.path}}"/></g> <rect class="bc-ecg-bar" x="-1.5" y="0" width="3" height="80"/> </svg> </div> <div class="bc-ecg-read"> <span class="bc-ecg-hp">РАНЫ <b>{{body.ecg.value}}</b>/{{body.ecg.max}}</span> <span class="bc-ecg-pct">{{body.ecg.pct}}%</span> {{#if body.ecg.crit}}<span class="bc-ecg-crit">КРИТ −{{body.ecg.crit}}</span>{{/if}}
         <span class="bc-ecg-bpm">{{body.ecg.bpm}} <small>уд/мин</small></span> </div> </div>
 
+      {{!-- Усталость. Панель прячется, если этот же счётчик уже стоит в шапке
+           листа (fatigueInHeader — лист Миньона, minion-header.hbs): два
+           набора input с ОДНИМ И ТЕМ ЖЕ name в одной форме Foundry
+           складывает в массив, и вся отправка листа падала на валидации
+           «system.fatigue.value: must be a number» — правки не сохранялись. --}}
+      {{#unless fatigueInHeader}}
       <div class="stat-panel panel-side bc-fatigue-compact stats-cog"> <div class="panel-body side-body bc-fatigue-body"> <div class="header-cell fate-cell fatigue-cell"> <label class="fatigue-label"> Усталость
           {{#if system.fatigue.value}}
           <span class="fatigue-penalty-badge" title="Штраф −10 на все тесты (кроме T, Inf, Cog)">−10</span> {{/if}}
         </label> <div class="fate-values fatigue-values"> <input type="number" name="system.fatigue.value" value="{{system.fatigue.value}}" min="0" class="fatigue-value-input
-                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" name="system.fatigue.max" value="{{system.fatigue.max}}" min="0" title="Порог (= T.b + W.b)"/> </div> <div class="fatigue-step-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div> </div> </div>
+                   {{#if system.fatigue.value}}fatigue-nonzero{{/if}}"/> <span>/</span> <input type="number" value="{{system.fatigue.max}}" readonly title="Порог Усталости — авторасчёт: T.b + W.b"/> </div> <div class="fatigue-step-btns"> <button type="button" class="fatigue-btn fatigue-add-btn" title="Добавить 1 Усталость">+1</button> <button type="button" class="fatigue-btn fatigue-remove-btn" title="Снять 1 Усталость">−1</button> </div> <div class="fatigue-bar" title="Усталость {{fatiguePct}}%"><div class="fatigue-fill load-{{fatigueLevel}}" style="width:{{fatiguePct}}%;"></div></div> <div class="fatigue-btns"> <button type="button" class="fatigue-btn fatigue-rest-btn" title="Час отдыха (−1 Усталость)">Отдых</button> <button type="button" class="fatigue-btn fatigue-btn-sleep fatigue-sleep-btn" title="Полноценный сон (снять всю Усталость)">Сон</button> </div> </div> </div> </div>
+      {{/unless}}
       </div>{{!-- /bc-ecg-row --}}
 
       {{!-- Витальные счётчики (светящиеся) --}}
@@ -54,7 +61,7 @@
         <div class="conditions-active-list"> {{#each activeConditions as |cond|}}
           <div class="condition-tag {{cond.css}}" data-condition="{{cond.key}}" style="--cond-color:{{cond.color}};" title="{{cond.desc}}"> <span class="condition-tag-icon">{{{cond.svg}}}</span> <span class="condition-tag-name">{{cond.label}}</span> {{#if cond.hasLevel}}
             <span class="condition-tag-level-wrap"> <input type="number" class="condition-level-input" data-condition="{{cond.key}}" value="{{cond.level}}" min="0" {{#if (eq cond.key "fatigued")}}readonly title="Значение — со вкладки ТЕЛО"{{else}}title="Уровень / Раунды"{{/if}}/> </span> {{/if}}
-            {{#unless (eq cond.key "fatigued")}}<button type="button" class="condition-remove-btn" data-condition="{{cond.key}}" title="Снять состояние">✕</button>{{/unless}} </div> {{/each}}
+            {{#if cond.removable}}<button type="button" class="condition-remove-btn" data-condition="{{cond.key}}" title="Снять состояние">✕</button>{{/if}} </div> {{/each}}
         </div> {{else}}
         <div class="conditions-empty">Нет активных состояний</div> {{/if}}
       </div> </div>

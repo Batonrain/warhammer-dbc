@@ -4,7 +4,13 @@
 //
 //  Сюда приходят уже посчитанные числа, отсюда выходит HTML. Модуль ничего не
 //  бросает, не читает документы Foundry и не трогает актора — поэтому его
-//  проверяет test/combat/attack-card.test.mjs напрямую, без заглушки.
+//  проверяет test/combat/attack-card.test.mjs напрямую, без броска кубов.
+//
+//  Каркас карточки (корневой div, шапка, статлиния, исход) собирает общий
+//  сборщик helpers/test-card.mjs (wdbc-kuun): порядок и подписи те же, что были
+//  здесь своей разметкой, но живут они теперь в одном месте на все подсистемы.
+//  Публикация — не здесь: обе функции возвращают строку, в чат её отправляет
+//  combat/attack.mjs.
 //
 //  Блоки, которые собирают другие модули (свойства оружия, качество, напоминания
 //  осколочного, кнопки эффектов на цель, развёрнутые кубы), приходят готовыми
@@ -14,6 +20,7 @@
 import { _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { isCompressibleLocation } from "../rules/compression.mjs";
+import { testCardHtml, statLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
 const signed = n => `${n >= 0 ? "+" : ""}${n}`;
@@ -23,17 +30,14 @@ const signed = n => `${n >= 0 ? "+" : ""}${n}`;
  * `blocks.props` — блок особых свойств (buildPropertyChatBlock).
  */
 export function jamCard({ weaponName = "", rv = 0, blocks = {} } = {}) {
-  return `
-        <div class="wh-roll-result">
-          ${blocks.props ?? ""}
-          <div class="roll-header">${weaponName}</div>
-          <div class="roll-statline">
-            <span class="roll-stat"><label>Бросок</label><b>${rv}</b></span>
-          </div>
-          <div class="roll-outcome">
-            <span class="roll-failure">Оружие заклинило! Требуется действие на устранение Клина.</span>
-          </div>
-        </div>`;
+  return testCardHtml({
+    // Особые свойства стоят ВЫШЕ шапки — как и в полной карточке атаки.
+    prelude: blocks.props ?? "",
+    title: weaponName,
+    // Порога у Клина нет: строку Порога занимает статлиния с одним броском.
+    threshold: statLine([{ label: "Бросок", value: rv }]),
+    outcome: outcomeHtml(false, "Оружие заклинило! Требуется действие на устранение Клина.")
+  });
 }
 
 /**
@@ -226,7 +230,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   этот модуль документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
-                          forcedDefenceReroll = "" }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
+                          forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
                           isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
@@ -247,7 +251,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
   const poolBtn = pool && pool.hits > 0
     ? `<button class="wh-pool-spend-btn" type="button"
          data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
-         data-dodge-mod="${dodgeMod}" data-parry-mod="${parryMod}"
+         data-dodge-mod="${dodgeMod}" data-dodge-mod-recoil="${dodgeModRecoil ?? ""}" data-parry-mod="${parryMod}"
          data-target-vehicle="${targetIsVehicle ? 1 : 0}" data-flexible="${wp.flexible ? 1 : 0}"
          data-force-reroll="${forcedDefenceReroll}" data-melee="${isMelee ? 1 : 0}">
          💰 Пул (${pool.successes} Усп.): снять ${pool.hits} из ${hitsCount} за ${pool.cost}
@@ -261,15 +265,29 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
          🏃 Пул (${pool.successes} Усп.): Отскочить за 2 Усп.
        </button>`
     : "";
+  // Императив Избегания/Крепости (wdbc-hdxj): у обоих книга переворачивает
+  // знак бонуса на тесте Избегания СПЕЦИАЛЬНО для Отскока в укрытие — движок
+  // не знает заранее, каким выйдет этот бросок, ЕСЛИ игрок не декларирует
+  // намерение сам. Чекбокс рендерится ТОЛЬКО когда у защищающегося активен
+  // один из этих двух Императивов (dodgeModRecoil задан и отличается от
+  // обычного — см. attack.mjs::hasEvasionRecoilImperative) — для остальных
+  // атак/акторов UX диалога Уклонения не меняется вовсе.
+  const recoilPlanCheckbox = (!cannotDodge && dodgeModRecoil !== null && dodgeModRecoil !== dodgeMod)
+    ? `<label class="wh-recoil-plan-label" style="font-size:0.85em;display:block;margin:2px 0 4px;">
+         <input type="checkbox" class="wh-recoil-plan-checkbox"/>
+         Планирую Отскочить в укрытие (Уклонение будет ${signed(dodgeModRecoil)} вместо ${signed(dodgeMod)})
+       </label>`
+    : "";
   return `
     <div class="roll-defense-section">
       <div class="roll-section-head">Защита цели <span class="roll-head-hint">— выберите токен защищающегося</span></div>
+      ${recoilPlanCheckbox}
       <div class="roll-defense-btns">
         ${cannotDodge
           ? `<button class="wh-dodge-btn wh-dodge-disabled" disabled>
                Уклонение (невозможно)
              </button>`
-          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
+          : `<button class="wh-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-extra-mod-recoil="${dodgeModRecoil ?? dodgeMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-melee="${isMelee ? 1 : 0}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
                Уклонение${dodgeMod !== 0 ? ` (${signed(dodgeMod)})` : ""}
              </button>`
         }
@@ -277,7 +295,7 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-parry-btn wh-dodge-disabled" disabled>
                Парирование (невозможно${wp.flexible ? " — Гибкое" : ""})
              </button>`
-          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}">
+          : `<button class="wh-parry-btn" type="button" data-extra-mod="${parryMod}" data-force-reroll="${forcedDefenceReroll}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}" data-burst="${burst ? 1 : 0}" data-attacker-is-horde="${attackerIsHorde ? 1 : 0}" data-melee="${isMelee ? 1 : 0}"${isMelee ? "" : ` title="Стрельбу парирует только Талант «Щит Клинков» оружием с Балансом 1+ (стр. 62) — право проверится при нажатии"`}>
                Парирование${parryMod !== 0 ? ` (${signed(parryMod)})` : ""}
              </button>`
         }
@@ -369,7 +387,8 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
  * @param {object}   [d.notes]       текстовые примечания карточки (см. ниже)
- * @param {object}   [d.blocks]      готовые блоки: props, quality, splinter, targetEffects, dice
+ * @param {object}   [d.blocks]      готовые блоки: props, quality, splinter, targetEffects, dice,
+ *                                    counterAttack (Встречная атака, wdbc-2wy7 — module/combat/counter-attack.mjs)
  */
 export function attackCard({
   actorName = "", weaponName = "", wp = {},
@@ -404,9 +423,9 @@ export function attackCard({
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
-  const outcomeHtml = hit
-    ? `<span class="roll-success">Попадание — ${deg} ${_degWord(deg)}${hitCountNote}</span>`
-    : `<span class="roll-failure">Промах — ${deg} ${_degWord(deg)}</span>`;
+  const outcomeLine = outcomeHtml(hit, hit
+    ? `Попадание — ${deg} ${_degWord(deg)}${hitCountNote}`
+    : `Промах — ${deg} ${_degWord(deg)}`);
 
   // Бонус Силы в рукопашной: Могучее ×2, Сдержанное 0, Обратный хват ½.
   const sbNote = isMelee
@@ -463,83 +482,97 @@ export function attackCard({
       </button>
     </div>` : "";
 
-  return `
-      <div class="wh-roll-result">
-        ${techniqueHtml}
-        ${notes.aiming ? `<div class="roll-aiming-note">${notes.aiming}</div>` : ""}
-        ${ammo ? ammoBlock(ammo) : ""}
-        <div class="roll-header">${weaponName}</div>
-        ${notes.attack
-          ? `<details class="roll-collapsible roll-note-collapsible">
+  return testCardHtml({
+    // ВЫШЕ шапки: приём/стойка, прицеливание и боеприпасы — так карточка
+    // выглядела и до общего сборщика, порядок сохранён.
+    prelude: [
+      techniqueHtml,
+      notes.aiming ? `<div class="roll-aiming-note">${notes.aiming}</div>` : "",
+      ammo ? ammoBlock(ammo) : ""
+    ].filter(Boolean).join(""),
+    title: weaponName,
+    // Сразу под шапкой и ДО статлинии: свёрнутые «Хват и приёмы», особые
+    // свойства, качество, напоминание осколочного.
+    head: [
+      notes.attack
+        ? `<details class="roll-collapsible roll-note-collapsible">
                <summary class="roll-section-head"><span class="roll-sum-title">Хват и приёмы</span></summary>
                <div class="roll-threshold" style="font-size:0.82em;">${notes.attack}</div>
              </details>`
-          : ""}
-        ${blocks.props ?? ""}
-        ${blocks.quality ?? ""}
-        ${blocks.splinter ?? ""}
-        <div class="roll-statline">
-          <span class="roll-stat"><label>Порог</label><b>${threshold}</b></span>
-          <span class="roll-stat"><label>Режим</label><b>${modeLine}</b></span>
-          <span class="roll-stat"><label>Бросок</label><b>${rv}</b>${
-            rerollDropped.length ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : ""}</span>
-        </div>
-        ${critLine}
-        <div class="roll-outcome">${outcomeHtml}</div>
-        ${isMelee && assassinStrike ? `
+        : "",
+      blocks.props ?? "",
+      blocks.quality ?? "",
+      blocks.splinter ?? ""
+    ],
+    // Место строки Порога здесь занимает статлиния: Порог, Режим и Бросок
+    // читаются в ряд, а приписка про отброшенные перебросом кубы висит на
+    // ячейке Броска.
+    threshold: statLine([
+      { label: "Порог", value: threshold },
+      { label: "Режим", value: modeLine },
+      { label: "Бросок", value: rv,
+        note: rerollDropped.length
+          ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : "" }
+    ]),
+    critLine,
+    outcome: outcomeLine,
+    sections: [
+      isMelee && assassinStrike ? `
     <button class="wh-assassin-strike-btn" type="button" data-attacker-uuid="${attackerUuid}"
       title="Раз в Раунд после рукопашной атаки (успешной или нет): Acrobatics+0 → Полудвижение свободным действием, не вызывает Свободную Атаку при выходе из рукопашной">
       🗡️ Удар Ассасина — Acrobatics+0
-    </button>` : ""}
-        ${notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : ""}
-        ${hit && hitsCount > 0
-          ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
-          : ""}
-        ${notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : ""}
-        ${locShift ? locShiftSection(locShift, actorName) : ""}
-        ${gorget ? gorgetSection(gorget) : ""}
-        ${notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : ""}
-        ${notes.blastScatter ? `
+    </button>` : "",
+      notes.helpless ? `<div class="roll-allout-note">${notes.helpless}</div>` : "",
+      hit && hitsCount > 0
+        ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
+        : "",
+      notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : "",
+      locShift ? locShiftSection(locShift, actorName) : "",
+      gorget ? gorgetSection(gorget) : "",
+      notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : "",
+      notes.blastScatter ? `
     <div class="roll-allout-note">
       💥 Взрыв мимо цели — смещение <b>${notes.blastScatter.distance}м</b>
       ${notes.blastScatter.dir.icon} <b>${notes.blastScatter.dir.label}</b>
       (роза, направление ${notes.blastScatter.dir.n}/8) от точки прицела.
       Радиус взрыва <b>${notes.blastScatter.radius}м</b> — проверьте, не задело ли исходную цель или тех, кто рядом.
-    </div>` : ""}
-        ${notes.mount ? `<div class="roll-aim-note">${notes.mount}</div>` : ""}
-        ${damageSection}
-        ${notes.maximal
-          ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : ""}
-        ${notes.off ? `<div class="roll-wprop-note">${notes.off}</div>` : ""}
-        ${corNotes}
-        ${band ? `<div class="roll-wprop-note">Дистанция: ${band.label}${band.dice ? ` (+${band.dice}d10 урона)` : ""}${band.dmg ? ` (+${band.dmg} урона)` : ""}${band.pen ? ` (+${band.pen} Проб.)` : ""}</div>` : ""}
-        ${wp.devastatingRating ? `<div class="roll-wprop-note">Опустошительное (${wp.devastatingRating}): по Орде +${wp.devastatingRating} урона в Магнитуду</div>` : ""}
-        ${wp.wreckerRating ? `<div class="roll-wprop-note">Крушитель (${wp.wreckerRating}): +${wp.wreckerRating}d10 по земле/камню/рокриту/стеклу, AP таких укрытий вдвое меньше</div>` : ""}
-        ${wp.ordnance ? `<div class="roll-wprop-note">Артиллерия: все прочие атаки стрелка до начала его следующего Хода получают ${wp.otherAttacksMod}</div>` : ""}
-        ${suppressionHtml}
-        ${notes.allOut
-          ? `<div class="roll-allout-note">Атака всем телом — Уклонение недоступно до следующего хода</div>` : ""}
-        ${notes.recharge
-          ? `<div class="roll-allout-note">Перезарядка: следующий ход — подзарядка (стрелять можно раз в 2 хода).</div>` : ""}
-        ${blocks.dice ? `
+    </div>` : "",
+      notes.mount ? `<div class="roll-aim-note">${notes.mount}</div>` : "",
+      damageSection,
+      notes.maximal
+        ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : "",
+      notes.off ? `<div class="roll-wprop-note">${notes.off}</div>` : "",
+      corNotes,
+      band ? `<div class="roll-wprop-note">Дистанция: ${band.label}${band.dice ? ` (+${band.dice}d10 урона)` : ""}${band.dmg ? ` (+${band.dmg} урона)` : ""}${band.pen ? ` (+${band.pen} Проб.)` : ""}</div>` : "",
+      wp.devastatingRating ? `<div class="roll-wprop-note">Опустошительное (${wp.devastatingRating}): по Орде +${wp.devastatingRating} урона в Магнитуду</div>` : "",
+      wp.wreckerRating ? `<div class="roll-wprop-note">Крушитель (${wp.wreckerRating}): +${wp.wreckerRating}d10 по земле/камню/рокриту/стеклу, AP таких укрытий вдвое меньше</div>` : "",
+      wp.ordnance ? `<div class="roll-wprop-note">Артиллерия: все прочие атаки стрелка до начала его следующего Хода получают ${wp.otherAttacksMod}</div>` : "",
+      suppressionHtml,
+      notes.allOut
+        ? `<div class="roll-allout-note">Атака всем телом — Уклонение недоступно до следующего хода</div>` : "",
+      notes.recharge
+        ? `<div class="roll-allout-note">Перезарядка: следующий ход — подзарядка (стрелять можно раз в 2 хода).</div>` : "",
+      blocks.dice ? `
     <details class="roll-dice-details">
       <summary>Показать кубы</summary>
       ${blocks.dice}
-    </details>` : ""}
-        ${hit ? `
+    </details>` : "",
+      hit ? `
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
-    </button>` : ""}
-        ${hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee, burst, attackerIsHorde, hitLocLabel }) : ""}
-        ${applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
-                                                vehicleSide, isMelee, burst, weaponRange,
-                                                attackerUuid, itemUuid, hordeHits })}
-        ${soulBurnActorId ? `
+    </button>` : "",
+      hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
+      applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
+                                            vehicleSide, isMelee, burst, weaponRange,
+                                            attackerUuid, itemUuid, hordeHits }),
+      soulBurnActorId ? `
     <div class="roll-wprop-effects">
       <button class="wh-soulburn-btn" type="button" data-attacker-id="${soulBurnActorId}">
         Выжигание Души (выберите токен цели)
       </button>
-    </div>` : ""}
-        ${blocks.targetEffects ?? ""}
-      </div>`;
+    </div>` : "",
+      blocks.targetEffects ?? "",
+      blocks.counterAttack ?? ""
+    ]
+  });
 }

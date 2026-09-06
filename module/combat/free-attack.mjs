@@ -74,6 +74,10 @@ export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc) {
   if (!isRoundCapabilityAvailable(reactor, FREE_ATTACK_CAPABILITY)) return;
   if (!canSpendReaction(reactor)) return;
 
+  // Это НЕ карточка теста (wdbc-kuun): ни броска, ни Порога, ни исхода —
+  // предложение возможности («хочешь потратить Реакцию?»), как «запрос теста»
+  // или «зона размещена». Общий сборщик helpers/test-card.mjs собирает
+  // результат теста, здесь ему нечего собирать — оставлено как есть.
   const rollMode = game.settings.get("core", "rollMode");
   const messageData = ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor: reactor }),

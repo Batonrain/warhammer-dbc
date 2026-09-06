@@ -1,0 +1,74 @@
+{
+  "name": "Kurnous Collar / Ошейник Курноуса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "GwOyx7wJLrgLTX8b",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: альтернативный тест Survival(P)+20 за наездника скакуна (если тот в сознании) — кнопка запроса теста сопротивления всегда предложит W+30 самой цели.",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Курноуса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение, Концентрация. Психотест W−20 vs W+30 (или Survival(P)+20 у наездника скакуна). Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое». Цель зверя ≤2 размера (лимит +1 за каждые 3 бPR после 5-го, максимум размер 4) при провале подчиняется, пока сила держится: +PR ко всем тестам, приказы псайкера приоритетнее воли/старых приказов (ослушание — W−50, иначе подчинение; скакуны Механикус/Астартес получают +60 к этому тесту и в успехе просто пропускают ход). Атака псайкером по своей же цели (даже случайная) — цель проходит W+30, чтобы разорвать контроль. Освобождённые/вырвавшиеся звери получают иммунитет к этой силе на сутки.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "zR78DTMWuBbUyaLZ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009538,
+    "modifiedTime": 1788601009538
+  },
+  "_key": "!items!zR78DTMWuBbUyaLZ"
+}

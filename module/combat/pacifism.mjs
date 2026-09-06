@@ -12,6 +12,8 @@
 
 import { degreesOfSuccess } from "../constants/craft.mjs";
 import { esc, _degWord } from "../helpers/utils.mjs";
+import { collectTestMods } from "../rules/roll-mods.mjs";
+import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
 
 export const PACIFISM_ATTACKED_FLAG = "grayManAttacked";
 export const PACIFISM_CAPABILITY = "pacifism.requiresAttackToRage";
@@ -42,7 +44,9 @@ export async function postPacifismGateCard(actor) {
 /** Тест Воли−20 — успех проводит актора в Ярость вопреки миролюбию. */
 export async function rollPacifismTest(actor) {
   const wp = actor.system.characteristics?.wp?.total ?? 0;
-  const threshold = wp - 20;
+  // Общий сбор модификаторов (wdbc-ct65.3): тест Воли шёл мимо реестра правил.
+  const ruleMods = collectTestMods(actor, { kind: "skill", char: "wp" });
+  const threshold = wp - 20 + ruleMods.total;
   const roll = await new Roll("1d100").evaluate();
   const rv = roll.total;
   const success = rv <= threshold;
@@ -50,19 +54,13 @@ export async function rollPacifismTest(actor) {
 
   if (success) await actor.update({ "system.inRage": true }, { whSkipPacifismGate: true });
 
-  const messageData = ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">🕊️ Тест Воли−20 — ${esc(actor.name)}</div>
-        <div class="roll-threshold">W: <b>${wp}</b> −20 → Порог: <b>${threshold}</b></div>
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — Ярость входит вопреки миролюбию</span>`
-          : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, в Ярость войти не удаётся</span>`}</div>
-      </div>`,
-    rolls: [roll], sound: CONFIG.sounds.dice
-  }, game.settings.get("core", "rollMode"));
-  await ChatMessage.create(messageData);
+  await postTestCard(actor, {
+    icon: "🕊️", title: `Тест Воли−20 — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "W", base: wp, parts: ["миролюбие −20", ...ruleMods.parts], threshold }),
+    rv,
+    outcome: success
+      ? `<span class="roll-success">Успех — Ярость входит вопреки миролюбию</span>`
+      : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, в Ярость войти не удаётся</span>`
+  }, { rolls: [roll] });
   return success;
 }

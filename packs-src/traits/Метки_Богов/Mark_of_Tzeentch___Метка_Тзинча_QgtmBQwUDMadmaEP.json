@@ -1,0 +1,113 @@
+{
+  "name": "Mark of Tzeentch / Метка Тзинча",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "11Few3bZaF1HEmu9",
+  "system": {
+    "description": "Своих верных последователей Боги награждают Метками, которые проявляются на их телах в виде родимых пятен, ран, ожогов и т.п. Еретик может получить Метку за длительную службу богу, подвиг, совершённый в интересах Бога, или просто по достижении определённого уровня Бесчестия по решению ГМа.",
+    "notes": "МЕХАНИЗИРОВАНО: факт «Метка Тзинча на персонаже» (kind:\"capability\", mark.tzeentch); Трейт Unnatural W/WP (+2) (kind:\"trait\", ссылка на готовый предмет «Unnatural WP (+2)», значение уже впечатано в шаблон — рейтинг записью не переопределяется); Трейт Psyker (kind:\"trait\", ссылка на готовый предмет); Талант Psy-Rating (+1) (kind:\"talent\", rating 1). НЕ МЕХАНИЗИРОВАНО: оговорка книги «связанный, если персонаж не был псайкером до этого» — в реестре есть capabilityKey psyker.alwaysBound (module/rules/character.mjs), но она форсирует «Связанного» БЕЗУСЛОВНО и всегда, а книга просит это только для персонажа, который псайкером ещё не был; ставить её сюда значило бы молча переписывать класс псайкера тем, кто получил Метку уже будучи, например, Несвязанным по другой причине — не то же самое, что просит книга. Выдан только сам Трейт Psyker; является ли новый псайкер именно «Связанным» и связан ли уже бывший псайкер иначе — решает ГМ вручную, как и было до этой записи.",
+    "benefit": "Даёт персонажу Трейты Unnatural W (+2) и Psyker (связанный, если персонаж не был псайкером до этого), а также Талант Psy-Rating (+1).",
+    "source": "Служение Тзинчу (Метка)",
+    "bookSource": "DoomBC — Основная книга",
+    "requirement": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "QgtmBQwUDMadmaEP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "yZhDHqgjGSyqeAm9",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "EX81rMbmYD2wjFeq",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "mark.tzeentch",
+              "label": "Метка Тзинча: факт на персонаже"
+            }
+          ]
+        },
+        {
+          "id": "mAnW5oKnbe93QNWK",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "TqOlZrKQsFnHKLjn",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.0A12TcD79wynam9l",
+              "sourceName": "Unnatural WP (+2) / Сверхъест. Воля",
+              "rating": "",
+              "label": "Unnatural W (+2)"
+            }
+          ]
+        },
+        {
+          "id": "FLZyjHV4Twuhq4Ug",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "gHFz2VxsIIkV7wqI",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.ptoBb9NH6g51SfJD",
+              "sourceName": "Psyker / Псайкер",
+              "rating": "",
+              "label": "Psyker (оговорка «если не был псайкером» — на усмотрение ГМа, см. notes)"
+            }
+          ]
+        },
+        {
+          "id": "AB5V32brYkUkfjPB",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "yr1yP5MwnfdpAGS7",
+              "kind": "talent",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.566Szi6nouVtPtCb",
+              "sourceName": "Psy Rating / Пси-Рейтинг",
+              "specialization": "",
+              "rating": "1",
+              "label": "Psy-Rating (+1)"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788680249080,
+    "modifiedTime": 1788680249080,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QgtmBQwUDMadmaEP"
+}

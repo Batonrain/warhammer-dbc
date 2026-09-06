@@ -17,7 +17,9 @@
 
    Спрайт-текстура вырезана из assets/overlays/dataslate.png (1131×1600,
    см. Dataslate 2.png мира iz-pepla) через background-position — без
-   офлайн-нарезки на отдельные PNG.
+   офлайн-нарезки на отдельные PNG. Исключение одно: фактура самого корпуса
+   (assets/overlays/dataslate-metal.jpg, свотч из макета) — её надо тайлить,
+   а окно общего спрайта на повторе даёт видимый шов, см. .cog-frame ниже.
 ═══════════════════════════════════════════════════════ */
 
 /* Корпус: .cog-frame — JS-маркер у листов, чей базовый класс расшарен с
@@ -49,12 +51,35 @@
      29.08.2026 «открытие листа персонажа сдвигает боковую панель»). Якорь
      для .cog-rivet (position:absolute) не нужен отдельно — fixed уже
      валидный containing block для absolute-потомков. */
-  padding: 14px 14px 8px;
+  padding: 15px 16px 10px;
   border: 1px solid #4a331a;
   border-radius: 8px;
+  /* Фактура корпуса (wdbc-e3h9). До 05.09.2026 здесь стояла ТОЛЬКО штриховка
+     поверх серого linear-gradient — из-за чего корпус читался плоской серой
+     пластиной, а в макете это фотография гравированного металла (артборды
+     .cog-frame → url("ds-metal-swatch.jpg"), 340px тайл). Именно этой фактуры
+     и не хватало: заклёпки, шильдик и решётка на месте, а поверхность корпуса
+     была не перенесена вовсе.
+
+     Свотч лежит отдельным файлом (dataslate-metal.jpg, тот же из макета), а не
+     кропом dataslate.png: тайлить нужно ЧИСТЫЙ кусок металла, а любое окно
+     общего спрайта тащит за собой череп или кромку и на повторе рвётся швом.
+
+     Градиент оставлен ПОД текстурой запасным слоем: не загрузится картинка —
+     корпус остаётся металлически-серым, а не прозрачным. */
   background:
-    repeating-linear-gradient(115deg, rgba(0,0,0,0.16) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(115deg, rgba(0,0,0,0.18) 0 2px, transparent 2px 4px),
+    url("../../assets/overlays/dataslate-metal.jpg"),
     linear-gradient(135deg, #d8d8d8, #9a9a9a 25%, #5a5a5a 50%, #8f8f8f 75%, #cfcfcf) !important;
+  /* !important обязателен и здесь. Шорткард background выше стоит с
+     !important (защита от Monk's Little Details) — а он раскрывается во ВСЕ
+     лонгхенды разом, включая background-size:auto и background-repeat:repeat,
+     и тоже важными. Обычные лонгхенды ниже важные не перебивают, порядок тут
+     не решает: живая проверка 06.09.2026 показала computed background-size
+     «auto, auto, auto» — тайл 340px молча не применялся, текстура рисовалась
+     своим размером 260px. */
+  background-size: auto, 340px auto, auto !important;
+  background-repeat: repeat, repeat, no-repeat !important;
   box-shadow:
     0 14px 44px rgba(0,0,0,0.6),
     inset 0 0 24px rgba(0,0,0,0.5),
@@ -173,4 +198,39 @@
 @media (prefers-reduced-motion: reduce) {
   .warhammer-dbc .cog-led.on,
   .warhammer-dbc .cog-status-dot { animation: none !important; }
+}
+
+/* ═══ Классический вид (wdbc-3wwe) ═══
+   Личная настройка «Вид листов» → «Классический» (client-scope, вешает
+   body.wh-classic-ui, см. applyHousingMode в warhammer-dbc.mjs) снимает всю
+   обшивку разом: корпус, заклёпки, шильдик, ободок экрана, решётку и строку
+   «Дух машины пробуждён». Тема и содержимое листа не трогаются — окно
+   становится просто фоном --wh-bg с обычной рамкой. Селекторы длиннее
+   исходных на один класс (body.wh-classic-ui) — этого хватает, чтобы
+   перебить их без гонки !important; background у корпуса всё же с
+   !important, потому что !important стоит и в исходном правиле. ═══ */
+body.wh-classic-ui .warhammer-dbc.character-sheet.cog-frame,
+body.wh-classic-ui .warhammer-dbc.squad-sheet,
+body.wh-classic-ui .warhammer-dbc.wh-horde,
+body.wh-classic-ui .warhammer-dbc.vehicle-sheet,
+body.wh-classic-ui .warhammer-dbc.ship-sheet,
+body.wh-classic-ui .warhammer-dbc.formation-sheet,
+body.wh-classic-ui .warhammer-dbc.star-system-sheet {
+  padding: 0;
+  border: 1px solid #4a331a;
+  border-radius: 6px;
+  background: var(--wh-bg) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+}
+body.wh-classic-ui .warhammer-dbc .cog-rivet,
+body.wh-classic-ui .warhammer-dbc .cog-plate-row,
+body.wh-classic-ui .warhammer-dbc .cog-status-row,
+body.wh-classic-ui .warhammer-dbc .screen-status-line { display: none; }
+/* Экран остаётся flex-колонкой (иначе схлопнется раскладка листа) — снимаем
+   у него только металлический ободок и свечение. */
+body.wh-classic-ui .warhammer-dbc .cog-screen {
+  border: 0;
+  border-radius: 0;
+  background: var(--wh-bg);
+  box-shadow: none;
 }

@@ -6,6 +6,7 @@ import { prepareHordeDerived } from "../rules/horde.mjs";
 import { prepareFormationDerived } from "../rules/formation.mjs";
 import { prepareSquadDerived } from "../rules/squad.mjs";
 import { prepareCharacterDerived } from "../rules/character.mjs";
+import { withRulesCache } from "../rules/collect.mjs";
 
 export class WarhammerActor extends Actor {
   prepareData() { super.prepareData(); }
@@ -183,6 +184,11 @@ export class WarhammerActor extends Actor {
     // (test/documents/*, test/rules/*) вызывает prepareDerivedData через
     // WarhammerActor.prototype.prepareDerivedData.call({ type, system, items, … })
     // на голом объекте без цепочки прототипов — this.someMethod() там упал бы.
-    prepareCharacterDerived(this, system);
+    //
+    // withRulesCache: пересчёт задаёт правилам один и тот же вопрос несколько
+    // раз («он пилот Дредноута?» — четырежды), а каждый ответ обходил заново
+    // все предметы и все записи их Конструктора. Обёртка держит сборку одну на
+    // весь пересчёт и снимает её на выходе — см. rules/collect.mjs (wdbc-uvap).
+    withRulesCache(() => prepareCharacterDerived(this, system));
   }
 }

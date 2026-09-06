@@ -1,0 +1,74 @@
+{
+  "name": "Isha's Touch / Прикосновение Иши",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "xFtND4OTeTJmocRV",
+  "system": {
+    "description": "",
+    "notes": "В книге на странице этой психосилы заголовок ошибочно продублирован как «The Great Spirit/Великий Дух» (копипаста заголовка первой психосилы ветки) — использовано корректное название из сводной таблицы дисциплины «Isha's Touch/Прикосновение Иши», сама механика (исцеление) соответствует описанию.",
+    "cost": 800,
+    "discipline": "worldSinger",
+    "subtype": "Мировая Песнь",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "testChar": "wp",
+    "testMod": -50,
+    "action": "full",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение, Касание, Концентрация. 2-я из шести Мировых Песен (Синос-Иша, «Прикосновение Иши»). Треб.: Forest Paths (манифестирована). Псайкер выбирает цель в поле зрения; если цель сопротивляется, нужно попасть по ней рукопашной атакой рукой. Цель излечивается от всех физических и ментальных травм и болезней, всех негативных ран и эффектов (горение, кровотечение, гангрена, Crippling и т.п.) и немедленно восстанавливает 3×PR ран (излишек сверх максимума — в аблативные раны). На одну цель — не чаще раза в месяц.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "BCxIBqcC8dr0OdK5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008077,
+    "modifiedTime": 1788601008077
+  },
+  "_key": "!items!BCxIBqcC8dr0OdK5"
+}

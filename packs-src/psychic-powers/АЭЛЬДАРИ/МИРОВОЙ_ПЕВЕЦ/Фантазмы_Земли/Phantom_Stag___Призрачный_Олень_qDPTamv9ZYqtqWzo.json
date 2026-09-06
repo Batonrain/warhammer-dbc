@@ -1,0 +1,74 @@
+{
+  "name": "Phantom Stag / Призрачный Олень",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "i2U3f2pVcGbnQpvl",
+  "system": {
+    "description": "",
+    "notes": "Не смоделирован отдельный статблок призываемого фантома (не заведён как шаблон/актор бестиария) — параметры и выбранный трейт считать по effect вручную при манифестации.",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Фантазмы Земли",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×50м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. Треб.: Illusory Thicket. Манифестируется только на лесной местности. Фантом: WS/BS = W псайкера, S/T/A = P псайкера, прочие характеристики = 10, раны 10+PR×2, атака 1d10+PR E Dmg, Pen 4, Tearing; действует на инициативу псайкера. За 3 успеха теста манифестации получает один трейт на выбор: Amphibious, Amorphous, Burrower(PR), Crawler, Digitigrade(3), Flyer(12), Multiple Arms(+2), Natural Armour(6), Deadly Natural Weapons(+4) или Quadruped(1).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qDPTamv9ZYqtqWzo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009167,
+    "modifiedTime": 1788601009167
+  },
+  "_key": "!items!qDPTamv9ZYqtqWzo"
+}

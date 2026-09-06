@@ -1,0 +1,74 @@
+{
+  "name": "Sacred Flesh / Священная Плоть",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "EPy5bFYJzzAVQjBj",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Творец Жизни",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Вливание, Концентрация. Треб.: Flesh Sense — психосила Биомантии. Пока держится, псайкер может выбрать одну известную психосилу Биомантии с типом Вливание и добавить ей тип «Истинная Плоть», защищающий от полей, отменяющих психосилы и колдовство.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "cAnzIPZGW2jFsRPv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008739,
+    "modifiedTime": 1788601008739
+  },
+  "_key": "!items!cAnzIPZGW2jFsRPv"
+}

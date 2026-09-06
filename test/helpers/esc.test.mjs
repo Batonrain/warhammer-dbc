@@ -37,7 +37,12 @@ describe("esc", () => {
 // а creation.mjs — только "<". Пока копию легко завести, разойдутся и новые.
 describe("своих экранировщиков в module/ нет", () => {
   it("нигде не собирают HTML-сущности через .replace", () => {
-    const guilty = FILES.filter(f => {
+    // helpers/utils.mjs — сам канонический экранировщик: храповик ловит его
+    // КОПИИ, а не оригинал. Запасной путь там нужен, чтобы esc работал без
+    // Foundry — иначе чистые модули, зовущие его, тянули бы заглушку в
+    // каждый свой тест (wdbc-ec0r).
+    const CANONICAL = path.join(root, "module", "helpers", "utils.mjs");
+    const guilty = FILES.filter(f => f !== CANONICAL).filter(f => {
       const flat = fs.readFileSync(f, "utf8").replace(/\s+/g, "");
       return /\.replace\([^;]{0,200}?(&amp;|&lt;|&gt;|&quot;)/.test(flat);
     }).map(rel);
@@ -116,5 +121,26 @@ describe("Dialog.confirm", () => {
     expect(n).toBe(FILES.reduce(
       (s, f) => s + (fs.readFileSync(f, "utf8").match(/\b(Dialog|DialogV2)\.confirm\(/g) || []).length, 0));
     expect(n).toBeGreaterThan(10);
+  });
+});
+
+// wdbc-ec0r: esc обязан работать и там, где Foundry нет вовсе — иначе любой
+// чистый модуль, экранирующий текст, тянет заглушку в каждый свой тест.
+describe("esc без Foundry", () => {
+  it("даёт тот же результат, что и через foundry.utils.escapeHTML", () => {
+    // esc читает глобаль в момент ВЫЗОВА, а не импорта, поэтому переимпорт
+    // не нужен: достаточно убрать глобаль на время проверки.
+    const saved = globalThis.foundry;
+    delete globalThis.foundry;
+    try {
+      expect(esc(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&#x27;");
+      expect(esc(null)).toBe("");
+      expect(esc(0)).toBe("0");
+    } finally {
+      globalThis.foundry = saved;
+    }
+    // И с Foundry результат тот же — иначе разошлись бы две ветки одной
+    // функции, и разницу нашли бы только по кривому имени в чате.
+    expect(esc(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&#x27;");
   });
 });

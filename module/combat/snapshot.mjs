@@ -21,10 +21,11 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy } from "./action-economy.mjs";
 
 export function hasSnapshot(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Snapshot"));
+  return hasAbility(actor, "ability.snapshot", "Snapshot", "talent");
 }
 
 /** Конец Хода актора: +1 ОД, если Ход провёл без движения больше Полудвижения. */

@@ -51,11 +51,12 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 
 const STANCE_LAST_ROUND_FLAG = "stanceLastRound";
 
 export function hasDeterminationToFight(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Determination To Fight"));
+  return hasAbility(actor, "ability.determinationToFight", "Determination To Fight", "talent");
 }
 
 /** Доп. снижение входящего урона (WP.b, минимум 1) при отрицательных Ранах. */

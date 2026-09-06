@@ -14,6 +14,7 @@
 // который отразил бы Рефрактор», вне объёма этого прохода).
 
 import { itemHasName } from "./predicates.mjs";
+import { itemIs } from "./item-marker.mjs";
 import { replaceAblativeContribution, shrinkAblativeContributionToFit } from "./wounds.mjs";
 
 const NAME = "Psalm of the Unseen Fortress";
@@ -21,7 +22,7 @@ export const PSALM_UNSEEN_FORTRESS_FLAG = "psalmUnseenFortressAblative";
 
 /** Это Техночудо «Psalm of the Unseen Fortress / Псалом Незримой Крепости»? */
 export function isPsalmUnseenFortressItem(item) {
-  return item?.type === "techPower" && itemHasName(item, NAME);
+  return itemIs(item, "techPower", "techPower.psalmUnseenFortress", NAME);
 }
 
 /** Успешная активация: контрибуция = 2×Успех (переоформляет прошлую). */

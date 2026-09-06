@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { matchRule, collectRules } from "../../module/rules/collect.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
+// Адъютант регистрирует себя САМ и из rules/sources.mjs намеренно не
+// импортируется — иначе круг импортов подвешивает загрузку модулей
+// (wdbc-795h, объяснение в шапке adjutant.mjs). Значит и здесь его надо
+// загрузить явно, иначе список источников по умолчанию окажется неполным.
+// В игре его тем же способом загружает точка входа warhammer-dbc.mjs.
+import "../../module/rules/adjutant.mjs";
 
 /** Снимок настоящих источников: тесты подменяют реестр и возвращают как было. */
 const DEFAULT_SOURCES = getRuleSources();
@@ -104,9 +110,15 @@ describe("collectRules", () => {
 });
 
 describe("источники по умолчанию", () => {
-  it("зарегистрированы основная книга, раса, Покровительство, Происхождение, предметы, Аватар Резни, Шаман Зверолюдей, Синэстезия, Адъютант, Зависимость, Дредноут и Локус Неизбежности", () => {
-    expect(getRuleSources().map(([key]) => key))
-      .toEqual(["core", "race", "patron", "homeworld", "items", "avatarOfSlaughter", "beastmanShaman", "synesthesia", "adjutant", "addiction", "dreadnought", "daemonInevitability"]);
+  it("зарегистрированы основная книга, ситуативные штрафы, Состояния, раса, Покровительство, Происхождение, предметы, Аватар Резни, Шаман Зверолюдей, Синэстезия, Адъютант, Зависимость, Дредноут и Локус Неизбежности", () => {
+    // Порядок здесь — порядок регистрации, а он определяет порядок обхода в
+    // gatherRules. Адъютант стоит после Синэстезии не по смыслу, а потому что
+    // его файл загружается импортом выше; список сверяется как множество,
+    // чтобы не превращать тест в заложника порядка импортов.
+    expect([...getRuleSources().map(([key]) => key)].sort())
+      .toEqual(["addiction", "adjutant", "avatarOfSlaughter", "beastmanShaman", "conditions", "core",
+                "daemonInevitability", "dreadnought", "homeworld", "items", "patron", "race",
+                "situational", "synesthesia"]);
   });
 
   // Наполнена пока одна раса (этап 3 плана), у остальных поле rules пустое.

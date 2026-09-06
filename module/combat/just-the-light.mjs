@@ -25,12 +25,13 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy } from "./action-economy.mjs";
 
 const FLAG = "justTheLightActive";
 
 export function hasJustTheLight(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Just the Light"));
+  return hasAbility(actor, "ability.justTheLight", "Just the Light", "talent");
 }
 
 /** Конец Хода актора: если весь Ход ушёл на движение (двигался и дожёг ОД до 0) — ставит щит до начала следующего Хода. */

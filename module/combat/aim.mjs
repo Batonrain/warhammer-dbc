@@ -7,7 +7,8 @@
 // Вся возня с канвасом и мышью здесь; боёвке про неё знать незачем — она
 // получает уже назначенную цель через game.user.targets.
 import { esc } from "../helpers/utils.mjs";
-import { showWeaponRangeRings, showMeleeReachRing, clearRangeRings } from "./range-rings.mjs";
+import { showWeaponRangeRing, showMeleeReachRing, clearRangeRings } from "./range-rings.mjs";
+import { showWeaponRangeCells, showMeleeRangeCells, clearRangeCells } from "./range-cells.mjs";
 import { clearReachableCells } from "./reachable-cells.mjs";
 import { measureTokens } from "./tactical-map.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
@@ -98,6 +99,7 @@ export function endTargeting() {
   document.getElementById(HINT_ID)?.remove();
   document.getElementById(RANGE_HINT_ID)?.remove();
   clearRangeRings();
+  clearRangeCells();
   clearReachableCells();
 }
 
@@ -115,18 +117,20 @@ export function beginTargeting(actor, weapon, onPick, label = "", { forceMelee =
   if (!canvas?.ready) { ui.notifications?.warn("Сцена не готова."); return; }
   endTargeting();   // второй раз — начинаем заново, а не копим слушателей
 
-  // Рукопашная — одно кольцо «кто рядом» (та же isMelee-логика, что и у
-  // самого броска, см. combat/attack.mjs:100); дальнобойная — полосы
-  // дальности, и только если у оружия задан Rng.
+  // Рукопашная — подсветка клеток «кто рядом» (та же isMelee-логика, что и у
+  // самого броска, см. combat/attack.mjs:100); дальнобойная — клетки в
+  // пределах дальности, и только если у оружия задан Rng. Клеточная
+  // подсветка (range-cells.mjs) — основной путь; кольцо (range-rings.mjs) —
+  // резерв на Gridless-сценах, где клеток нет.
   const attackerToken = actor?.getActiveTokens?.(false)?.[0] ?? null;
   const isMelee = forceMelee || weapon?.system?.weaponClass === "melee";
   const rng = Number(weapon?.system?.range) || 0;
   const showsRange = !isMelee && !!(attackerToken && rng > 0);
   if (attackerToken) {
     if (isMelee) {
-      showMeleeReachRing(attackerToken);
+      if (!showMeleeRangeCells(attackerToken)) showMeleeReachRing(attackerToken);
     } else if (showsRange) {
-      showWeaponRangeRings(attackerToken, rng);
+      if (!showWeaponRangeCells(attackerToken, rng)) showWeaponRangeRing(attackerToken, rng);
     }
   }
 

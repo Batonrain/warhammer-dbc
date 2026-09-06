@@ -9,6 +9,7 @@
 import { isFlayedItem, flayedGrant, flayedVisualNote, flayedShrinkToFit, FLAYED_FLAG } from "../rules/flayed.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
+import { postTestCard } from "../helpers/test-card.mjs";
 
 export { isFlayedItem };
 
@@ -58,15 +59,15 @@ export async function useFlayed(actor, item) {
   });
 
   const note = flayedVisualNote(newAblative);
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `<div class="wh-roll-result">
-      <div class="roll-header">${rollIcon("skull","#c9b37a")}Освежёванный — кожа «${esc(donor.name)}»</div>
-      <div class="roll-threshold">3 + Размер донора (${donorSize}) = <b>+${add}</b> → аблативные Раны <b>${newAblative}</b>${granted < add ? ` (срезано потолком 3×Cor.b = ${cap})` : ""}</div>
-      ${note ? `<div class="roll-threshold" style="opacity:.8;">${esc(note)}</div>` : ""}
-    </div>`,
-    sound: null
-  }, game.settings.get("core", "rollMode")));
+  // Результат нажатия кнопки, а не тест: броска и Порога нет, звука тоже.
+  await postTestCard(actor, {
+    icon: rollIcon("skull", "#c9b37a"),
+    title: `Освежёванный — кожа «${esc(donor.name)}»`,
+    lines: [
+      `<div class="roll-threshold">3 + Размер донора (${donorSize}) = <b>+${add}</b> → аблативные Раны <b>${newAblative}</b>${granted < add ? ` (срезано потолком 3×Cor.b = ${cap})` : ""}</div>`,
+      note ? `<div class="roll-threshold" style="opacity:.8;">${esc(note)}</div>` : ""
+    ]
+  }, { sound: false });
 }
 
 /** Кнопка/статус для листа предмета — пусто, если это не «Освежёванный» или нет актора. */

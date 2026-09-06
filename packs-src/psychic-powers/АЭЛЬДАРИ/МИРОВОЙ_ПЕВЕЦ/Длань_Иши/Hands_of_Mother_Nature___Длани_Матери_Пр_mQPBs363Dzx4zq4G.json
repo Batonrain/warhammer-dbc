@@ -1,0 +1,74 @@
+{
+  "name": "Hands of Mother Nature / Длани Матери Природы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "svf7kL1Faag7lAKP",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 400,
+    "discipline": "worldSinger",
+    "subtype": "Длань Иши",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Призыв. Треб.: Forest Paths (манифестирована). На природной территории — «Непрямое»: до бPR целей получают укрытие AP 3×PR (держит даже пламя и плазму), расступается для атаки/движения цели и восстанавливается на месте. Противники могут применять Караул против стрелковой атаки из этого укрытия. Вне природы — AP PR, закрывает только 270° (спина открыта); в начале хода выбор — держать укрытие (−2 SPD) или убрать (восстановится в начале следующего хода).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "mQPBs363Dzx4zq4G",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601008961,
+    "modifiedTime": 1788601008961
+  },
+  "_key": "!items!mQPBs363Dzx4zq4G"
+}

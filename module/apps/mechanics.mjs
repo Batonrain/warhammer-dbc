@@ -167,6 +167,35 @@
 //      Отката при снятии предмета НЕТ, и это осознанный пробел: правка
 //      нескольких ЧУЖИХ акторов сразу не укладывается в откат deleteItem,
 //      который работает по флагу на предмете владельца.
+//    condition: { condKey, condMode:"apply"|"remove"|"immunity"|"mitigate",
+//                  condLevel, condMitigate:"ignore"|"half" }
+//      → СОСТОЯНИЕ (wdbc-tl0f). Книга пишет четыре оборота, и до этого вида
+//      записи ни один из них не выражался данными — только кодом:
+//      «накладывает Оглушение на N раундов» (condMode:"apply" + condLevel),
+//      «снимает Кровотечение» (condMode:"remove"), «иммунитет к Ослеплению»
+//      (condMode:"immunity"), «Состояние на нём не даёт обычного штрафа /
+//      даёт половину» (condMode:"mitigate" + condMitigate).
+//      condKey — ключ из реестра Состояний (constants/conditions.mjs), тот же
+//      источник, из которого строятся схема существа, лист и иконки токена.
+//      Два режима РАЗОВЫЕ, применяются к владельцу в момент получения предмета
+//      через ту же единую точку, что и весь остальной код (wdbc-fejd,
+//      sheets/tabs/conditions.mjs — conditionApplyFields/conditionRemoveFields):
+//        apply  — наложить; condLevel идёт в счётчик Состояния, если он у него
+//                 есть (раунды Оглушения, уровни Кровотечения), иначе не пишется;
+//        remove — снять (и обнулить счётчик).
+//      Два режима ЖИВЫЕ, ничего не пишут при получении (как terrainIgnore/
+//      reroll/fatigue) — их читают прямо в момент события:
+//        immunity — module/rules/condition-guards.mjs, спрашивается из единой
+//                 точки наложения: Состояние не накладывается НИКАКИМ путём,
+//                 пока предмет на акторе. Это шире прежнего иммунитета к
+//                 СВОЙСТВУ ОРУЖИЯ (weaponPropertyImmunity.*, constants/
+//                 capabilities.mjs), который сам оговаривает, что «другие пути
+//                 наложить то же состояние им не гасятся»;
+//        mitigate — module/rules/item-rules.mjs: вытесняет книжное правило
+//                 Состояния (rules/library/conditions.mjs) через overrides и,
+//                 в режиме "half", подставляет вместо него ополовиненную копию.
+//                 Состояние остаётся на листе и на токене — исчезает только его
+//                 штраф, ровно как говорит книга.
 //    group: { } — ВЛОЖЕННАЯ подгруппа И/ИЛИ (поле entry.group = {id,operator,
 //      entries:[...]}, та же форма, что и группа верхнего уровня). Даёт выбор
 //      между НАБОРАМИ из нескольких записей сразу — напр. ИЛИ: [И: Болтер +
@@ -196,6 +225,36 @@
 //      (flags.warhammer-dbc.cohesionApplied={squadUuid,amount} на предмете).
 //      Откат при УДАЛЕНИИ предмета — отдельно, в Hooks.on("deleteItem",...),
 //      т.к. предмета уже не будет к моменту, когда reconcile мог бы его найти.
+//    counterAttack: { ccDamage, ccPen, ccDamageType, ccTearing,
+//                      ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
+//      → ВСТРЕЧНАЯ АТАКА (wdbc-2wy7, Шипы/Цепные Бандольеры, стр. брони): пока
+//      предмет на акторе и активен (armorMod — установлен и, если включаемый,
+//      включён), противник, который промахнулся рукопашной по владельцу ИЛИ
+//      провёл против него безоружную атаку/приём «Захват» (даже успешно —
+//      шипы ранят от самого контакта), получает попадание в ответ. ЖИВОЙ
+//      ЗАПРОС, как reroll/terrainIgnore выше: ничего не пишет и не создаёт
+//      при получении предмета — читается прямо в момент атаки, module/combat/
+//      counter-attack.mjs, дальше module/combat/attack.mjs (_executeAttackRoll)
+//      добавляет в карточку кнопку «Применить урон» атакующему (без Парирования
+//      — только Уклонение, по тексту обеих записей брони) и, если сорвал
+//      несколько записей сразу (напр. Шипы + отдельная Черта), показывает их
+//      все. ccDamage — формула урона (кубы + S.b/T.b/… — тот же парсер, что у
+//      урона оружия, module/helpers/utils.mjs::resolveCharFormula), ccTearing —
+//      свойство Рвущее через тот же движок, что у обычного оружия (module/
+//      combat/weapon-properties.mjs::applyDamageDiceMods) — заново формулу и
+//      Рвущее не пишем. ccOnMiss/ccOnUnarmedOrGrapple — независимые галочки:
+//      можно оставить любую одну или обе разом (та же гибкость вкл/выкл, что
+//      у остальных живых записей).
+//      НЕ покрывает: провал/победа в самих тестах раздела «Борьба» (Заломить/
+//      Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, module/combat/
+//      grapple.mjs — ALL_TESTS) — те идут через встречный module/combat/
+//      techniques.mjs::_showContestDialog, симметричный между двумя любыми
+//      участниками БЕЗ единого понятия «атакующий против владельца» (обе
+//      стороны могут вызвать любое из пяти действий на своём Ходу), общий с
+//      добрым десятком других приёмов (Повалить, Финт, Давление) — увязать
+//      именно эту пару предметов брони с этим тестом означало бы re-архитектуру
+//      общего диалога встречных тестов ради одной строки правила, честный
+//      диагноз зафиксирован тикетом, не форсировался обходной путь.
 //
 //  Идемпотентность: flags.warhammer-dbc.mechanicsApplied — один раз при
 //  createItem (см. Hooks.on("createItem", ...) в warhammer-dbc.mjs).
@@ -231,7 +290,7 @@ import { isThrottleReady, markThrottleUsed,
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
-import { AVAILABILITY }                       from "../constants/items.mjs";
+import { AVAILABILITY, DAMAGE_TYPES }         from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
@@ -242,8 +301,13 @@ import { WARP_GODS, WARP_GODS_MAP }           from "../constants/veil.mjs";
 import { CAPABILITIES, CAPABILITY_OPTIONS } from "../constants/capabilities.mjs";
 import { CAPABILITY_COST_POOLS, capabilityCostLabel, capabilityCostGate, spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { hasRuleFlag }                      from "../rules/flags.mjs";
+import { CONDITIONS, CONDITIONS_DEF, conditionLevelField, isConditionMark } from "../constants/conditions.mjs";
+import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
+import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
+  from "../rules/condition-duration.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
@@ -256,6 +320,10 @@ const FLAG = "warhammer-dbc";
 // вместо голого числа — те же короткие ключи, что книга пишет как «X.b».
 const MECH_FORMULA_HINT = "Число или формула бонуса характеристики: ws/bs/s/t/ag/int/per/wp/fel/inf/cor "
   + "(cor — Cor.b), + - * /, ceil()/floor()/round(). Напр.: ag*2, ceil(cor/2)";
+// Подсказка полю урона «Встречной атаки» (kind:"counterAttack") — та же
+// нотация, что в поле «Урон» у оружия (S.b/T.b/... через resolveCharFormula),
+// а не mech-formula.mjs выше: тут нужны кубы (XdY), не голое число/бонус.
+const CC_DAMAGE_HINT = "Формула урона, как у оружия: кубы + S.b/T.b/Ag.b/... (resolveCharFormula). Напр.: 1d5+S.b, 1d10+2+S.b";
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 const higherRank = (a, b) => (SKILL_RANK_STEPS[a] ?? 0) >= (SKILL_RANK_STEPS[b] ?? 0) ? a : b;
 // Операции записи «± Характеристика» — только складываемые. Её эффект целится
@@ -404,11 +472,13 @@ const KIND_LABELS = {
   weaponProp: "Оружие: Свойство",
   movement: "Движение: Скорость", terrainIgnore: "Движение: Ландшафт (игнор)",
   fatigue: "Усталость",
+  condition: "Состояние",
   reroll: "Переброс",
   testMod: "Модификатор теста",
   failDegMod: "Доп. Провалы при провале",
   capability: "Возможность",
   armour: "Очки Брони (локация)",
+  counterAttack: "Встречная атака",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
   loyalty: "Лояльность миньонов",
@@ -451,6 +521,27 @@ const REROLL_SCOPE_LABEL = (e) => {
 // одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
 // потери сознания») не ломало уже сохранённые записи.
 const FATIGUE_ACTIONS = [["threshold", "Порог штрафа"]];
+// «Состояние» (kind:"condition", wdbc-tl0f) — четыре оборота книги одним
+// каскадом «режим → уточнение». apply/remove разовые (владелец, момент
+// получения), immunity/mitigate живые (читаются rules/condition-guards.mjs и
+// rules/item-rules.mjs). Порядок в списке — от самого частого к редкому.
+const CONDITION_MODES_UI = [
+  ["apply",    "Наложить"],
+  ["remove",   "Снять"],
+  ["immunity", "Иммунитет"],
+  ["mitigate", "Смягчить штраф"]
+];
+const CONDITION_MODE_LABELS = Object.fromEntries(CONDITION_MODES_UI);
+const CONDITION_MITIGATE_UI = [
+  ["ignore", "штрафа нет вовсе"],
+  ["half",   "половина штрафа"]
+];
+const CONDITION_MITIGATE_LABELS = Object.fromEntries(CONDITION_MITIGATE_UI);
+// Подпись счётчика Состояния — тот же смысл, что в реестре: "rounds" — срок,
+// "level"/"count" — сила/штуки. Пустая строка означает «счётчика нет», и поле
+// величины у записи не показывается вовсе.
+const CONDITION_COUNTER_LABELS = { rounds: "раундов", level: "уровней", count: "штук" };
+const conditionCounterLabel = (key) => CONDITION_COUNTER_LABELS[CONDITIONS[key]?.counter] || "";
 const FATIGUE_THRESHOLD_CHARS = [["t", "Бонус Стойкости (T.b)"], ["wp", "Бонус Воли (WP.b)"]];
 // Действия над Свойством оружия (kind:"weaponProp"). increase/decrease появляются
 // в дропдауне только когда перетащенное свойство обладает рейтингом (см.
@@ -641,6 +732,12 @@ export function blankMechEntry(kind = "characteristic") {
     armourLocation: "body", armourValue: 1,
     // terrainIgnore
     ignoreTerrainProps: [],
+    // counterAttack — «Встречная атака» (wdbc-2wy7): живой запрос, читается в
+    // момент атаки против владельца (module/combat/counter-attack.mjs), при
+    // получении предмета ничего не делает. ccDamage — формула урона (кубы +
+    // S.b/T.b/…, тот же парсер, что у оружия — см. CC_DAMAGE_HINT).
+    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccTearing: false,
+    ccOnMiss: true, ccOnUnarmedOrGrapple: true, ccLabel: "",
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
     rerollScope: "all", rerollChar: "ag", rerollMode: "keepBest",
@@ -665,6 +762,14 @@ export function blankMechEntry(kind = "characteristic") {
     capabilityAptMatch: "", capabilityAptAlign: "ally",
     // fatigue — каскад: действие → характеристика (см. шапку файла)
     fatigueAction: "threshold", fatigueThresholdChar: "t",
+    // condition — Состояние (wdbc-tl0f): каскад «режим → уточнение».
+    // condLevel читается только режимом "apply" и только у Состояний со
+    // счётчиком; condMitigate — только режимом "mitigate".
+    condKey: "", condMode: "apply", condLevel: "1", condMitigate: "ignore",
+    // Срок (wdbc-uqco) — отдельно от силы: у Состояния со счётчиком «уровни»
+    // condLevel означает СИЛУ, а сколько оно держится — вот это. Пустая
+    // единица = срока нет, Состояние висит до ручного снятия, как раньше.
+    condDurationValue: "1", condDurationUnit: "",
     // equipment
     equipMode: "direct", equipQty: 1,
     equipSourceUuid: "", equipSourceName: "", equipSourceImg: "",
@@ -806,6 +911,17 @@ export function describeMechEntry(entry) {
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
       return `Ландшафт: игнорирует — ${labels.join(", ")}`;
     }
+    case "counterAttack": {
+      if (!String(entry.ccDamage ?? "").trim()) return "Встречная атака: (формула урона не задана)";
+      const triggers = [];
+      if (entry.ccOnMiss) triggers.push("промах противника в рукопашной");
+      if (entry.ccOnUnarmedOrGrapple) triggers.push("безоружная атака/Захват против владельца");
+      const dt = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType;
+      const tear = entry.ccTearing ? ", Рвущее" : "";
+      const label = entry.ccLabel ? `«${entry.ccLabel}» ` : "";
+      return `Встречная атака: ${label}${entry.ccDamage} ${dt}, Проб. ${entry.ccPen ?? 0}${tear} — ${
+        triggers.length ? triggers.join(" / ") : "(триггер не выбран)"}`;
+    }
     case "capability": {
       if (entry.capabilityMode === "aptOverride") {
         if (!entry.capabilityAptMatch) return "Возможность (override склонности): (не задано совпадение)";
@@ -846,6 +962,28 @@ export function describeMechEntry(entry) {
       const modeLabel = entry.rerollMode === "keepWorst" ? "худший из двух" : "лучший из двух";
       const scope = REROLL_SCOPE_LABEL(entry);
       return scope ? `Переброс: ${scope} — ${modeLabel}` : "Переброс: (область не выбрана)";
+    }
+    case "condition": {
+      const label = CONDITIONS_DEF[entry.condKey]?.label;
+      if (!label) return "Состояние: (не выбрано)";
+      const mode = entry.condMode || "apply";
+      if (mode === "remove")   return `Состояние: снять «${label}»`;
+      if (mode === "immunity") return `Состояние: иммунитет к «${label}» — не накладывается ничем`;
+      if (mode === "mitigate") {
+        const how = CONDITION_MITIGATE_LABELS[entry.condMitigate === "half" ? "half" : "ignore"];
+        return `Состояние: «${label}» — ${how}`;
+      }
+      const bits = [];
+      if (conditionHasLevelInput(entry.condKey)) {
+        bits.push(`${conditionCounterLabel(entry.condKey)}: ${entry.condLevel ?? "1"}`);
+      }
+      const term = conditionEntryTerm(entry);
+      const termLabel = durationLabel(term.value, term.unit)
+        || (term.unit ? `${term.value} ${term.unit}` : "");
+      if (termLabel) bits.push(`на ${termLabel}`);
+      return bits.length
+        ? `Состояние: наложить «${label}» (${bits.join(", ")})`
+        : `Состояние: наложить «${label}»`;
     }
     case "fatigue": {
       if (entry.fatigueAction !== "threshold") return "Усталость: (действие не выбрано)";
@@ -993,8 +1131,21 @@ function isEntryComplete(e) {
       return !!e.armourLocation && formulaOk(e.armourValue);
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
+    case "counterAttack":
+      return !!String(e.ccDamage ?? "").trim() && !!(e.ccOnMiss || e.ccOnUnarmedOrGrapple);
     case "fatigue":
       return e.fatigueAction === "threshold" && !!e.fatigueThresholdChar;
+    case "condition":
+      // Величина проверяется только там, где она вообще есть: у Состояния без
+      // счётчика пустой condLevel — не незаполненность записи.
+      if (!e.condKey || !CONDITIONS_DEF[e.condKey]) return false;
+      if ((e.condMode || "apply") !== "apply") return true;
+      // Сила проверяется только там, где она вообще есть; срок — только если
+      // автор его задал (единица непуста). Ни то ни другое не обязательно:
+      // «Повален» без срока и без уровня — полноценная запись.
+      if (conditionHasLevelInput(e.condKey) && !formulaOk(e.condLevel)) return false;
+      if (e.condDurationUnit && !formulaOk(e.condDurationValue)) return false;
+      return true;
     case "reroll":
       if (e.rerollScope === "char")  return !!e.rerollChar;
       if (e.rerollScope === "skill") return !!e.skillKey;
@@ -1087,7 +1238,15 @@ function describeMechWhen(when, item = null) {
     parts.push(`Покровитель ${when?.negatePatronGod ? "≠" : "="} ${names.join(" или ")}`);
   }
   if (when?.requireSealedArmour) parts.push(`Герметичная броня ${when?.negateSealedArmour ? "≠" : "="} да`);
-  return parts.length ? ` · Когда: ${parts.join("; ")}` : "";
+  const condKeys = whenCondition(when);
+  if (condKeys.length) {
+    const names = condKeys.map(k => CONDITIONS_DEF[k]?.label || k);
+    parts.push(`Состояние ${when?.negateCondition ? "≠" : "="} ${names.join(" или ")}`);
+  }
+  // Связка видна в сводке: «ИЛИ» между условиями меняет смысл записи целиком,
+  // и молчать о нём в описании значит показывать не то, что записано.
+  const join = when?.anyOf ? " ИЛИ " : "; ";
+  return parts.length ? ` · Когда: ${parts.join(join)}` : "";
 }
 
 /**
@@ -1317,13 +1476,36 @@ function showAltTalentDialog(dupName, candidates) {
   });
 }
 
+// Очередь попапов «Дубль Навыка» — сама выдача Механики (applyGroupEntries,
+// _applyItemMechanics) для ОДНОГО предмета идёт строго по одной записи за
+// раз, но РАЗНЫЕ источники (Раса и Архетип, оба выдают Групповые Навыки)
+// применяются независимо друг от друга и не сериализованы между собой —
+// см. комментарий у _mechRuns ниже про уже пойманную живьём гонку
+// «Геносемя выдала 38 органов вместо 19» (тот же класс бага, для предметов,
+// не Навыков). Если оба источника одновременно решат, что их Групповой
+// Навык — дубль (ни один ещё не успел записать свой раньше другого), оба
+// открывают this Dialog не глядя друг на друга — игрок живьём видел 4 таких
+// окна стопкой при Архетипе Пират (2× Общие знания + 2× Ремесло). Очередь
+// не устраняет саму гонку определения «дубль ли это» (это отдельная,
+// более рискованная правка сериализации между РАЗНЫМИ предметами), но
+// гарантирует, что попапы САМИ не открываются кучей — следующий появляется
+// только после того, как игрок ответил на предыдущий.
+let _altSkillDialogQueue = Promise.resolve();
+
 /**
  * Диалог настройки «Повтор Навыка — Выбор альтернативного» (skillDuplicatePolicy).
  * Групповой Навык (Общие знания и т.п.) — специализация свободным текстом:
  * закрытого списка вариантов книга не даёт. Обычный — выбор другого Навыка
  * из полного списка (candidates от altSkillCandidates). Пусто/отмена → null.
  */
-function showAltSkillDialog(dupLabel, { group, candidates }) {
+function showAltSkillDialog(dupLabel, opts) {
+  const result = _altSkillDialogQueue.then(() => _showAltSkillDialogNow(dupLabel, opts));
+  // Не даём одному отменённому/упавшему диалогу застопорить очередь навсегда.
+  _altSkillDialogQueue = result.then(() => {}, () => {});
+  return result;
+}
+
+function _showAltSkillDialogNow(dupLabel, { group, candidates }) {
   const body = group
     ? `<div class="wh-grant-choice">
         <p>«${esc(dupLabel)}» с такой Специализацией уже есть — впишите другую:</p>
@@ -1519,6 +1701,13 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     return;
   }
 
+  if (entry.kind === "counterAttack") {
+    // Живой запрос, как terrainIgnore выше: module/combat/counter-attack.mjs
+    // читает Механику предмета прямо в момент атаки против владельца — писать
+    // и откатывать нечего.
+    return;
+  }
+
   if (entry.kind === "aura") {
     // Ничего не пишем и не создаём здесь — как terrainIgnore выше:
     // flags.warhammer-dbc.aura на предмете (не в этом applied-цикле) ведёт
@@ -1539,6 +1728,42 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
   if (entry.kind === "fatigue") {
     // Тоже живой запрос: fatigueGraceForActor() (rules/fatigue-grace.mjs)
     // читает Механику в момент теста, писать и откатывать нечего.
+    return;
+  }
+
+  if (entry.kind === "condition") {
+    const key = String(entry.condKey || "").trim();
+    if (!key || !CONDITIONS_DEF[key]) return;
+    const mode = entry.condMode || "apply";
+    // Иммунитет и Смягчение — живой запрос, как fatigue выше: их читают
+    // rules/condition-guards.mjs (в момент наложения) и rules/item-rules.mjs
+    // (в момент броска). Писать и откатывать нечего.
+    if (mode === "immunity" || mode === "mitigate") return;
+    if (mode === "remove") {
+      const fields = conditionRemoveFields(key);
+      if (Object.keys(fields).length) await actor.update(fields);
+      return;
+    }
+    // Наложение идёт через ту же единую точку, что весь остальной код
+    // (wdbc-fejd) — вместе с проверкой иммунитета самого получателя: предмет,
+    // накладывающий Оглушение на носителя, не должен обходить его же
+    // иммунитет к Оглушению, откуда бы тот ни пришёл.
+    // Величина и срок — обе формулы mech-formula.mjs, как «Рейтинг» у Черты:
+    // «Оглушение на T.b раундов» книга пишет чаще, чем на фиксированное число.
+    // Минимум 1: наложенное Состояние со счётчиком 0 по общему договору единой
+    // точки считается СНЯТЫМ (conditionAdjustFields), то есть запись бы ничего
+    // не сделала, а автор ждал бы обратного.
+    const rd = mechRollData(actor);
+    const num = (f) => Math.max(1, Math.round(mechFormulaTotalSafe(f ?? "1", rd)));
+    const level = conditionHasLevelInput(key) ? num(entry.condLevel) : null;
+    const term = conditionEntryTerm(entry);
+    // Наложение со сроком идёт через combat/condition-effects.mjs: оно вешает
+    // штатную Duration на тот же эффект, что рисует иконку, и само спрашивает
+    // иммунитет через единую точку. Без срока — прежний путь, ничего лишнего
+    // не создаётся (новое живёт рядом со старым).
+    await applyConditionWithDuration(actor, key, {
+      level, value: term.unit ? num(term.value) : 0, unit: term.unit
+    });
     return;
   }
 
@@ -2275,16 +2500,21 @@ function mechEffectData(entry, sourceItem, actor = null) {
  * либо переиграла бы его, либо отыграла бы сразу все альтернативы.
  */
 function collectMechEntries(groups) {
-  const durable = [], allIds = new Set();
+  const durable = [], allIds = new Set(), durableKindIds = new Set();
   const walk = (entries, operator) => {
     for (const e of entries || []) {
       allIds.add(e.id);
       if (e.kind === "group" && e.group) { walk(e.group.entries, e.group.operator); continue; }
+      // durableKindIds — записи, чей ТЕКУЩИЙ вид вообще умеет эффект, независимо
+      // от ветки И/ИЛИ и полноты заполнения. Отдельно от durable, потому что
+      // отвечает на другой вопрос: не «какой эффект собрать», а «вправе ли эта
+      // запись иметь эффект хоть какой-то» (см. syncMechanicsEffects, wdbc-cx1x).
+      if (DURABLE_MECH_KINDS.has(e.kind)) durableKindIds.add(e.id);
       if (operator !== "OR" && DURABLE_MECH_KINDS.has(e.kind) && isEntryComplete(e)) durable.push(e);
     }
   };
   for (const g of groups || []) walk(g.entries, g.operator);
-  return { durable, allIds };
+  return { durable, allIds, durableKindIds };
 }
 
 /**
@@ -2294,7 +2524,7 @@ function collectMechEntries(groups) {
  */
 export async function syncMechanicsEffects(item) {
   const actor = item.parent instanceof Actor ? item.parent : null;
-  const { durable, allIds } = collectMechEntries(getItemMechanics(item));
+  const { durable, allIds, durableKindIds } = collectMechEntries(getItemMechanics(item));
   // durableIds — ВСЕ И-ветвенные долговечные записи, даже те, чьё «Когда»
   // сейчас не выполнено: их эффект должен ИСЧЕЗНУТЬ (не просто не появиться),
   // а не остаться от прошлого раза, когда условие ещё выполнялось.
@@ -2310,11 +2540,28 @@ export async function syncMechanicsEffects(item) {
     if (!allIds.has(entryId)) { toDelete.push(fx.id); continue; }
     const want = wanted.get(entryId);
     if (!want) {
-      // И-ветвенная запись, чьё «Когда» сейчас не выполнено, — эффект следом
-      // за ней. ИЛИ-ветку/разовую запись (durableIds её не содержит) не трогаем.
-      if (durableIds.has(entryId)) toDelete.push(fx.id);
+      // Три случая на одну ветку, и они разные:
+      //  - И-ветвенная запись, чьё «Когда» сейчас не выполнено — эффект следом
+      //    за ней (durableIds);
+      //  - запись СМЕНИЛА вид на такой, что эффектов не заводит вовсе
+      //    (wdbc-cx1x) — эффект от прежнего вида уносим, откуда бы он ни
+      //    взялся: новая запись Конструктора всегда начинается видом
+      //    «Характеристика» и сразу создаёт эффект, так что переключение вида
+      //    на нужный оставляло молча работающий фантомный бонус навсегда;
+      //  - ИЛИ-ветвенная запись, чей вид ПО-ПРЕЖНЕМУ долговечен, — не трогаем:
+      //    выбор в ИЛИ делается один раз диалогом при выдаче, и созданный тогда
+      //    эффект есть единственный след этого выбора.
+      if (durableIds.has(entryId) || !durableKindIds.has(entryId)) toDelete.push(fx.id);
       continue;
     }
+    // На одну запись — ровно один эффект (wdbc-b3mz). Второй и последующие
+    // уносим, откуда бы они ни взялись: гонка при сохранении, двойной вызов,
+    // старые данные из мира. Без этого один раз задвоившийся эффект оставался
+    // задвоенным навсегда — обход помечал запись увиденной и шёл дальше, а
+    // Черта «+1 к Силе» тихо давала +2. Проверка идёт ДО сравнения содержимого:
+    // копия может отличаться от эталона, и тогда её незачем ни оставлять, ни
+    // пересоздавать — она просто лишняя.
+    if (seen.has(entryId)) { toDelete.push(fx.id); continue; }
     seen.add(entryId);
     const same = fx.name === want.name
       && JSON.stringify(fx.system?.changes ?? []) === JSON.stringify(want.system.changes);
@@ -2640,6 +2887,22 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-terrain-ignore" multiple size="6" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opts}</select>`;
   }
 
+  if (ent.kind === "counterAttack") {
+    const dtOpts = Object.entries(DAMAGE_TYPES)
+      .map(([v, l]) => optHtml(v, l, (ent.ccDamageType || "rending") === v)).join("");
+    return `
+      <input type="text" class="mech-cc-damage" data-group-id="${groupId}" data-entry-id="${ent.id}"
+             value="${esc(ent.ccDamage ?? "")}" placeholder="напр. 1d5+S.b" title="${esc(CC_DAMAGE_HINT)}" ${dis}/>
+      <select class="mech-cc-damage-type" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${dtOpts}</select>
+      <input type="number" class="mech-cc-pen" min="0" value="${esc(ent.ccPen ?? 0)}"
+             title="Пробитие" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-tearing" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccTearing ? "checked" : ""} ${dis}/> Рвущее</label>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-miss" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnMiss ? "checked" : ""} ${dis}/> при промахе противника (рукопашная)</label>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-unarmed" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnUnarmedOrGrapple ? "checked" : ""} ${dis}/> при безоружной атаке/Захвате против владельца</label>
+      <input type="text" class="mech-cc-label" placeholder="подпись в карточке (по умолчанию — имя предмета)" value="${esc(ent.ccLabel || "")}"
+             data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
+  }
+
   if (ent.kind === "capability") {
     // Два режима (wdbc-zk69): обычная именованная Возможность (флаг) или
     // override склонности «Навык/Талант/Характеристика Х всегда Дружественный/
@@ -2793,6 +3056,51 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       ? `<select class="mech-fatigue-char" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${charOpts}</select>`
       : "";
     return `<select class="mech-fatigue-action" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${actionOpts}</select>${charSelect}`;
+  }
+
+  if (ent.kind === "condition") {
+    // Каскад «режим → уточнение», тот же приём, что у .mech-fatigue-action:
+    // смена режима перерисовывает поля, лишние поля просто не показываются
+    // (величина — только у «Наложить» и только у Состояния со счётчиком,
+    // выбор смягчения — только у «Смягчить штраф»).
+    const mode = ent.condMode || "apply";
+    // МЕТКИ (mark:true, wdbc-5uae) предлагаются только в режиме «Снять» —
+    // единственном, который для них работает. Наложить их нельзя (ставит своё
+    // действие), иммунитет и смягчение к ним неприменимы (первый спрашивается
+    // в точке наложения, второго нет в книжном реестре штрафов). Показать
+    // пункт, который молча ничего не сделает, хуже, чем не показать.
+    const marksOk = mode === "remove";
+    const keyOpts = optHtml("", "— Состояние —", !ent.condKey)
+      + Object.entries(CONDITIONS)
+          .filter(([k]) => marksOk || !isConditionMark(k) || ent.condKey === k)
+          .map(([k, c]) => optHtml(k, c.label, ent.condKey === k)).join("");
+    const modeOpts = CONDITION_MODES_UI.map(([v, l]) => optHtml(v, l, mode === v)).join("");
+    // Сила и срок — разные поля и разные вопросы (wdbc-uqco). Сила есть только
+    // у Состояний со счётчиком «уровни/штуки»: у «раундов» счётчик и ЕСТЬ срок,
+    // спрашивать его дважды незачем.
+    const counter = conditionCounterLabel(ent.condKey);
+    const levelInput = (mode === "apply" && conditionHasLevelInput(ent.condKey))
+      ? `<input type="text" class="mech-cond-level" data-group-id="${groupId}" data-entry-id="${ent.id}"
+                value="${esc(ent.condLevel ?? "")}" placeholder="${esc(counter)}: 1 или t"
+                title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`
+      : "";
+    const term = conditionEntryTerm(ent);
+    const unitOpts = DURATION_UNITS.map(u => optHtml(u.key, u.label, term.unit === u.key)).join("");
+    const termHtml = mode === "apply"
+      ? `<input type="text" class="mech-cond-duration" data-group-id="${groupId}" data-entry-id="${ent.id}"
+                value="${esc(term.value ?? "")}" placeholder="срок: 2 или t" title="${esc(MECH_FORMULA_HINT)}"
+                ${term.unit ? "" : "disabled"} ${dis}/>
+         <select class="mech-cond-duration-unit" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+                 title="Раунды считает боевой трекер, минуты и часы — «Летоисчисление»">${unitOpts}</select>`
+      : "";
+    const mitigateSelect = mode === "mitigate"
+      ? `<select class="mech-cond-mitigate" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}
+                title="Состояние остаётся на листе и на токене — снимается только его штраф">${
+          CONDITION_MITIGATE_UI.map(([v, l]) => optHtml(v, l, (ent.condMitigate || "ignore") === v)).join("")}</select>`
+      : "";
+    return `<select class="mech-cond-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      <select class="mech-cond-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${keyOpts}</select>
+      ${levelInput}${termHtml}${mitigateSelect}`;
   }
 
   if (ent.kind === "integralAttack") {
@@ -3206,6 +3514,17 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
   // тумблер-паттерн, что у Ярости, по PREDICATES.wearsSealedArmour (надета ли
   // броня со свойством Sealed/Закрытая). «Без гермодоспеха» книги — это «не» +
   // галочка.
+  // Связка гейтов: «И» (умолчание) или «ИЛИ» (wdbc-n48f). Без неё способность
+  // вида «работает в Ярости ИЛИ при тяжёлых Ранах» приходилось заводить двумя
+  // записями, и они расходились при первой же правке.
+  const anyOfHtml = `<div class="grant-entry-when grant-entry-when-anyof">
+    <span class="grant-when-label">Связка условий</span>
+    <label class="grant-when-anyof-row" title="По умолчанию все заполненные условия «Когда» должны выполниться разом. С галочкой достаточно любого одного.">
+      <input type="checkbox" class="grant-when-anyof" ${d} ${w.anyOf ? "checked" : ""} ${dis}/>
+      <span>достаточно любого условия (ИЛИ вместо И)</span>
+    </label>
+  </div>`;
+
   const sealedArmourHtml = `<div class="grant-entry-when grant-entry-when-sealed">
     <span class="grant-when-label">Когда Герметичная броня</span>
     <label class="grant-when-negate-label">
@@ -3218,6 +3537,23 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     </label>
   </div>`;
 
+  // «Когда Состояние» (wdbc-tl0f) — восьмой независимый гейт: список ключей
+  // Состояний, между вариантами ИЛИ. Состояний 27, поэтому не россыпь галочек,
+  // как у Тира Ран и Покровителя (там 4 и 5), а компактный список с
+  // множественным выбором — иначе панель «Когда» разрослась бы на пол-экрана.
+  const condChosen = new Set(w.condition || []);
+  const condOpts = Object.entries(CONDITIONS)
+    .map(([key, c]) => `<option value="${key}" ${condChosen.has(key) ? "selected" : ""}>${esc(c.label)}</option>`).join("");
+  const condHtml = `<div class="grant-entry-when grant-entry-when-cond">
+    <span class="grant-when-label">Когда Состояние</span>
+    <label class="grant-when-negate-label">
+      <input type="checkbox" class="grant-when-cond-negate" ${d} ${w.negateCondition ? "checked" : ""} ${dis}/> не
+    </label>
+    <span>=</span>
+    <select class="grant-when-cond" ${d} multiple size="4"
+            title="Ctrl/Shift — выбрать несколько; между ними ИЛИ. Пусто — условия нет" ${dis}>${condOpts}</select>
+  </div>`;
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -3226,7 +3562,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${anyOfHtml}`;
 }
 
 /**

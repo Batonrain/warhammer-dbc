@@ -1,0 +1,74 @@
+{
+  "name": "Shield of Nature / Щит Природы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "xFtND4OTeTJmocRV",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 800,
+    "discipline": "worldSinger",
+    "subtype": "Мировая Песнь",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение (PR). 5-я из шести Мировых Песен (Лммаелолар, «Сила Древа»). Треб.: Forest Paths (манифестирована). Псайкер выбирает до PR целей — они получают неперегружаемый чародейский щит-дефлектор, рейтинг которого зависит от локации: 1–10 мёртвая земля/промзона/испорченная Хаосом территория/пустотное судно; 1–20 лёгкая растительность/ботанический сад на судне/сильно испорченная Хаосом земля; 1–30 лёгкий лес/опушка/природная пустошь/земля средней порчи; 1–40 лес/джунгли/горы/мир-корабль/земля лёгкой порчи; 1–50 мир экзодитов/девственный мир/очищенная от Хаоса земля/храм эльдарского божества; 1–60 храм Иши или Курноуса/вблизи Планетарного Духа или Бесконечного Круга мира-корабля.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qJaqJNoOcY5WklGV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009220,
+    "modifiedTime": 1788601009220
+  },
+  "_key": "!items!qJaqJNoOcY5WklGV"
+}

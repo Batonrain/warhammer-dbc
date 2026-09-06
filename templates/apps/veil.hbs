@@ -61,7 +61,7 @@
         <div class="wv-factors">
           {{#each factors as |f|}}
           <label class="wv-factor {{#if f.active}}on{{/if}} {{#if f.pos}}pos{{/if}} {{#if f.neg}}neg{{/if}}">
-            <input type="checkbox" data-factor="{{f.key}}" data-group="{{f.group}}" {{#if f.active}}checked{{/if}} {{#unless @root.isGM}}disabled{{/unless}}/>
+            <input type="checkbox" data-factor="{{f.key}}" data-group="{{f.group}}" {{#if f.active}}checked{{/if}} {{#unless ../isGM}}disabled{{/unless}}/>
             <span class="wv-factor-val">{{f.signed}}</span>
             <span class="wv-factor-lbl">{{f.label}}</span>
           </label>
@@ -155,7 +155,7 @@
           <div class="wv-rit-row">
             <label class="wv-rit-lbl">Ритуалист</label>
             <select name="ritActor" class="wv-rit-wide">
-              {{#each actors as |a|}}<option value="{{a.id}}" {{#if (eq a.id @root.ritual.ritualistId)}}selected{{/if}}>{{a.name}}</option>{{/each}}
+              {{#each actors as |a|}}<option value="{{a.id}}" {{#if (eq a.id ../ritualistId)}}selected{{/if}}>{{a.name}}</option>{{/each}}
             </select>
           </div>
           {{!-- Ритуалы, лежащие на Ритуалисте: путь проведения берётся из самого
@@ -361,7 +361,7 @@
       <div class="wv-jrow">
         <label class="wv-rit-lbl">Корабль</label>
         <select name="jShip" class="wv-rit-wide">
-          {{#each ships as |s|}}<option value="{{s.id}}" {{#if (eq s.id @root.journey.shipId)}}selected{{/if}}>{{s.name}}</option>{{/each}}
+          {{#each ships as |s|}}<option value="{{s.id}}" {{#if (eq s.id ../shipId)}}selected{{/if}}>{{s.name}}</option>{{/each}}
         </select>
       </div>
       <div class="wv-jrow">
@@ -441,7 +441,7 @@
     </div>
 
     {{#if isReading}}
-      {{#unless @root.isGM}}<div class="tr-playerhint">🎲 Вы можете бросить случайные карты. Ручной выбор карты — только у Мастера.</div>{{/unless}}
+      {{#unless ../isGM}}<div class="tr-playerhint">🎲 Вы можете бросить случайные карты. Ручной выбор карты — только у Мастера.</div>{{/unless}}
       <div class="tr-top">
         <div class="tr-row">
           <label class="tr-lbl">Расклад
@@ -472,8 +472,8 @@
         {{#each slots as |sl|}}
         <div class="tr-slot {{#if sl.signal}}signal{{/if}} {{#if sl.reversed}}reversed{{/if}}">
           <div class="tr-slot-head"><span class="tr-slot-name">{{sl.name}}</span>{{#if sl.signal}}<span class="tr-slot-sig">знаковая</span>{{/if}}</div>
-          <div class="tr-slot-ctl {{#unless @root.isGM}}ro{{/unless}}">
-            {{#if @root.isGM}}
+          <div class="tr-slot-ctl {{#unless ../../isGM}}ro{{/unless}}">
+            {{#if ../../isGM}}
             <select data-tcardsel="{{sl.i}}" class="tr-cardsel"><option value="">— выбрать карту —</option>
               {{#each ../suitGroups as |g|}}<optgroup label="{{g.label}}">{{#each g.cards as |c|}}<option value="{{c.n}}" {{#if (eq c.n sl.cardN)}}selected{{/if}}>{{c.label}}</option>{{/each}}</optgroup>{{/each}}
             </select>

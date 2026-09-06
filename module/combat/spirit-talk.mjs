@@ -59,6 +59,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
+import { hasAbility } from "../rules/ability-by-key.mjs";
 import { hasActionEconomy, isEncounterActive, spendActionPoints, apCostForActionType } from "./action-economy.mjs";
 import { isThrottleCountAvailable, incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokenRelationship } from "../regions/auras.mjs";
@@ -77,7 +78,7 @@ const ROUND_SYNC_FLAG = "spiritTalkSyncedRound"; // идемпотентност
 const WRAITHLORD_SIZE = 2;
 
 export function hasSpiritTalk(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Spirit Talk"));
+  return hasAbility(actor, "ability.spiritTalk", "Spirit Talk", "talent");
 }
 
 /** Длительность контроля — F.b раундов (Товарищество, ключ "fel" в схеме характеристик). */

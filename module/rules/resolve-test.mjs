@@ -257,8 +257,22 @@ function effectValue(effect, ctx, ruleId) {
  *
  * Модификатор не применяется молча: игрок сам решает, уместен ли он здесь, — так
  * же, как с Особенностями.
+ *
+ * Исключение — `auto: true` у эффекта (wdbc-n17t, ситуативные штрафы состояния
+ * тела и снаряжения: Усталость, Марш, снятый шлем, выключенная броня, Перевес).
+ * Спрашивать про них игрока не за что: это не выбор «уместен ли здесь бонус
+ * Черты», а состояние его тела, действующее всегда. Такие едут ОТДЕЛЬНЫМ
+ * списком (`autoMods` у resolveTest), а не подмешиваются к галочкам:
+ *
+ *  - галочки складываются в «Модификатор» диалога и попадают под
+ *    «ополовинить штраф», а ситуативные штрафы прибавлялись к Порогу ПОСЛЕ
+ *    ополовинивания — смешай их, и число за столом поменялось бы;
+ *  - все нынешние читатели `.mods` (диалог атаки, Карабканье, Инфогвардия)
+ *    продолжают видеть ровно то же, что видели, и ничего не задваивают.
+ *
+ * @param {{auto?: boolean}} [opts] — какую половину списка вернуть.
  */
-export function rollModsFromRules(rules, ctx = {}) {
+export function rollModsFromRules(rules, ctx = {}, { auto = false } = {}) {
   const mods = [];
   for (const rule of rules ?? []) {
     for (const effect of rule?.effects ?? []) {
@@ -267,6 +281,7 @@ export function rollModsFromRules(rules, ctx = {}) {
         continue;
       }
       if (!effectAppliesTo(effect.target, ctx)) continue;
+      if (!!effect.auto !== auto) continue;
 
       const label = effect.label ?? rule.label ?? rule.id;
       if (effect.kind === "rollBonus") {
@@ -454,7 +469,11 @@ export function scriptTriggersFromRules(rules, ctx = {}) {
  * отбора — так сторонний модуль дописывает правила, и они просеиваются по `when`
  * наравне с остальными.
  *
- * @returns {{ctx: object, rules: object[], mods: object[], rerolls: object[]}}
+ * `mods` — галочки на усмотрение игрока, `autoMods` — то, что применяется само
+ * (`auto: true`, см. rollModsFromRules). Два списка, а не флаг в одном: их
+ * складывают в Порог в разных местах формулы.
+ *
+ * @returns {{ctx: object, rules: object[], mods: object[], autoMods: object[], rerolls: object[]}}
  */
 export function resolveTest(input = {}) {
   const ctx = buildTestContext(input);
@@ -464,6 +483,7 @@ export function resolveTest(input = {}) {
   return {
     ctx, rules,
     mods: rollModsFromRules(rules, ctx),
+    autoMods: rollModsFromRules(rules, ctx, { auto: true }),
     rerolls: rerollsFromRules(rules, ctx),
     crit: critModsFromRules(rules, ctx),
     weaponProps: weaponPropsFromRules(rules, ctx),

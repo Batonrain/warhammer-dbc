@@ -1,0 +1,74 @@
+{
+  "name": "Summer Walk / Лесная Прогулка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psychicpower.svg",
+  "folder": "yBHYtwHZnZweZ3vl",
+  "system": {
+    "description": "",
+    "notes": "",
+    "cost": 500,
+    "discipline": "worldSinger",
+    "subtype": "Воззвание к Природе",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура, Концентрация. Треб.: Gifts of the Forests, Roots of Forests, Moaning of the Forest. Пока держится — в ауре растёт буйная растительность, действует эффект «Даров Лесов» (еда/вода), псайкер и все разумные существа в ауре игнорируют природный жар/холод/болезни/Трудный ландшафт, а сам псайкер может задавать Трудный ландшафт от +20 до −20 по желанию. Манифестация психосил в радиусе считается происходящей на экзодитском мире, но теряет «Непрямое» (можно сохранить «Непрямое», отказавшись от этого бонуса). Растительность вне купола быстро гибнет.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "quX5SE10THv5EpMy",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.367",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "createdTime": 1788601009326,
+    "modifiedTime": 1788601009326
+  },
+  "_key": "!items!quX5SE10THv5EpMy"
+}

@@ -10,9 +10,10 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "./predicates.mjs";
+import { hasAbility } from "./ability-by-key.mjs";
 
 export function hasDancingAmongTheFire(actor) {
-  return !!actor?.items?.some(i => i.type === "talent" && itemHasName(i, "Dancing Among The Fire"));
+  return hasAbility(actor, "ability.dancingAmongTheFire", "Dancing Among The Fire", "talent");
 }
 
 /** Преимущество на ЭТО Уклонение/Парирование — атака была Очередью И у защищающегося есть Талант. */

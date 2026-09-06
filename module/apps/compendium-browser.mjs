@@ -519,6 +519,38 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         </div>` : ""}
       </div>` : "";
 
+    /**
+     * Разрешить промис ПОСЛЕ того, как окно реально пропало из DOM — не сразу
+     * (wdbc-… живая находка при wdbc-2e9t): dlg.close() запускает jQuery-
+     * анимацию slideUp(200мс), а el.remove() происходит только по её
+     * завершении (application-v1.mjs::close). Старый код звал finish(v) СИНХРОННО
+     * и до dlg.close() — вызывающий код (Мастер создания, цепочка пикеров
+     * архетипа) получал результат мгновенно и уже открывал СЛЕДУЮЩИЙ
+     * Обозреватель, пока прежнее окно ещё 200мс видимо и кликабельно поверх/
+     * под новым — залипание на неактуальном слое.
+     *
+     * await dlg.close() ЗДЕСЬ безопасен даже из колбэков close:/cancel,
+     * которые сами вызываются ИЗНУТРИ уже идущего dlg.close() — проверено по
+     * реальному исходнику Foundry v14 (application-v1.mjs::close): состояние
+     * приложения переходит в CLOSING синхронно, ДО того как control
+     * возвращается вызвавшему; повторный (вложенный) вызов close() либо сам
+     * становится «настоящим» закрытием (и его и ждёт наш await), либо, если
+     * уже опоздал, тут же выходит по guard'у `_state !== RENDERED` — двойной
+     * анимации/удаления не бывает в любом порядке.
+     */
+    const settle = async value => {
+      if (resolved) return;
+      resolved = true;
+      for (const a of wizardApps) {
+        try {
+          a._cbrowsePickerDepth = Math.max(0, (a._cbrowsePickerDepth || 1) - 1);
+          if (a._cbrowsePickerDepth === 0) a.element?.classList.remove("cbrowse-wizard-inert");
+        } catch (e) {}
+      }
+      await dlg.close();
+      resolveFn(value);
+    };
+
     const dlg = new Dialog({
       title: pick ? `📚 Выбор предмета${pickSuffix}` : "📚 Обозреватель компендиумов",
       content: `<div class="wh-item-picker cbrowse">
@@ -530,9 +562,9 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         ${headHtml}
         <div class="pick-list">${body || "<em>Ничего не найдено под заданные фильтры.</em>"}</div>
       </div>`,
-      buttons: pick ? { cancel: { label: "Отмена", callback: () => finish(null) } } : { close: { label: "Закрыть" } },
+      buttons: pick ? { cancel: { label: "Отмена", callback: () => settle(null) } } : { close: { label: "Закрыть" } },
       default: pick ? "cancel" : "close",
-      close: () => finish(null),
+      close: () => settle(null),
       render: html => {
         let activeTab = "all";
         // Выбранное при count > 1. Порядок сохраняется: он же порядок выдачи.
@@ -574,7 +606,7 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
 
         html.find(".cbrowse-item").on("click", async ev => {
           const uuid = ev.currentTarget.dataset.uuid;
-          if (pick && !multi) { finish(uuid); dlg.close(); return; }
+          if (pick && !multi) { settle(uuid); return; }
           if (multi) {
             // Расходуемые типы (гранаты, боеприпасы и т.п.) копятся кликами —
             // снять лишнее можно кнопкой «−» рядом со счётчиком, не тем же
@@ -616,8 +648,7 @@ export function openCompendiumBrowser(force = false, pickMode = null) {
         html.find(".cbrowse-pick-confirm").on("click", ev => {
           ev.preventDefault();
           if (!budgetReady(picked(), budget, xpCost)) return;
-          finish(chosen.slice());
-          dlg.close();
+          settle(chosen.slice());
         });
         // Драг-н-дроп наружу — на лист актора (в инвентарь) или на дроп-зоны
         // вкладки МЕХАНИКА листа предмета (Черта/Талант/Свойство оружия).

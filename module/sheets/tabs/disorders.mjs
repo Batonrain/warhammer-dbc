@@ -2,6 +2,14 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  Ментальные расстройства: случайный бросок по таблице, пикер записей и тест
 //  конкретного расстройства. Функции принимают актора, а не лист.
+//
+//  Авто-встречный чекбокс/делегирование (wdbc-j814/wdbc-uez7) сюда сознательно
+//  НЕ перенесены (wdbc-qc6d): Тест Страха/Травмы/конкретного Расстройства —
+//  всегда тест самого actor (W + рейтинг/testMod записи), без соперника с
+//  симметричным Навыком/Характеристикой на другой стороне — авто-резолву
+//  через skillTotal/characteristics опонента тут просто нечего считать, а
+//  делегировать (просить ЧУЖОГО актора бросить ЗА этого) книжно бессмысленно:
+//  это не тест «за пациента» (Лечение), а собственная психика этого actor.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
@@ -10,12 +18,14 @@ import { _executeFearRoll, _executeTraumaRoll } from "../../combat/fear.mjs";
 import { _degWord, esc } from "../../helpers/utils.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { centerPicker, pickerPos } from "../picker-ui.mjs";
-import { ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
+import { autoTestMods, ruleRollModsHtml, ruleRerollsHtml } from "../../rules/roll-mods.mjs";
+import { postTestCard } from "../../helpers/test-card.mjs";
 import { resolveKindOutcome } from "../../rules/kind-outcome.mjs";
 import { actorInfamyValue } from "../../apps/infamy-points.mjs";
 import { fatiguePenalty } from "./conditions.mjs";
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../../rules/test-kind-widget.mjs";
+import { collectTestMods } from "../../rules/roll-mods.mjs";
 
 /** Сумма отмеченных галочек «Правила» диалога — общий приём с _showSkillRollDialog. */
 function checkedRuleMods(form) {
@@ -104,7 +114,12 @@ export function openFearDialog(actor) {
           const ratingMod = type === "important" ? r.important : r.normal;
           const mod = (parseInt(html.find("#fear-mod").val()) || 0) + checkedRuleMods(root);
           const difficulty = parseInt(root.querySelector("#test-difficulty")?.value) || 0;
-          return wp + ratingMod + mod + difficulty + fatiguePenalty(actor, "wp");
+          // autoTestMods, не collectTestMods: галочки правил уже сложены в
+          // `mod` строкой выше (checkedRuleMods) — общий сбор задвоил бы их.
+          // Предпросмотр обязан совпадать с тем, что посчитает сам бросок
+          // (combat/fear.mjs), иначе игрок видит один Порог, а получает другой.
+          return wp + ratingMod + mod + difficulty
+            + autoTestMods(actor, { kind: "skill", char: "wp", morale: true }).total;
         }
       });
       root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>
@@ -187,21 +202,18 @@ export async function rollDisorder(actor) {
   const roll = await new Roll("1d100").evaluate();
   const row = rollDisorderEntry(roll.total);
   if (row) await createDisorderItem(actor, row);
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("dice","#6fe6ff")}Ментальное Расстройство — ${esc(actor.name)}</div>
-        <div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>
-        <div class="roll-outcome"><span class="roll-failure">${rollIcon("warn","#ffb84d")}${esc(row?.name) ?? "—"}</span></div>
-        ${row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : ""}
-        <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  // Выдача по таблице: Порога нет, подпись броска своя («Бросок d100»),
+  // поэтому строкой в lines, а не через общий rv (helpers/test-card.mjs).
+  await postTestCard(actor, {
+    icon: rollIcon("dice", "#6fe6ff"), title: `Ментальное Расстройство — ${esc(actor.name)}`,
+    lines: [`<div class="roll-dice">Бросок d100: <b>${roll.total}</b></div>`],
+    outcome: `<span class="roll-failure">${rollIcon("warn","#ffb84d")}${esc(row?.name) ?? "—"}</span>`,
+    sections: [
+      row?.desc ? `<div class="roll-threshold">${row.desc}</div>` : "",
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**
@@ -296,7 +308,12 @@ export async function rollDisorderTest(actor, item) {
   const charKey = system.testChar || "wp";
   const meta = CHARACTERISTICS[charKey];
   const charVal = actor.system.characteristics[charKey]?.total ?? 0;
-  const baseEffNoDiff = charVal + (system.testMod || 0);
+  // Общий сбор модификаторов (wdbc-asuc): подавление Расстройства считалось
+  // мимо реестра. Именно collectTestMods, а не autoTestMods: галочек правил
+  // этот диалог не показывает (в отличие от соседнего диалога Страха), и
+  // задвоить нечего — см. docs/rules-format.md.
+  const suppressMods = collectTestMods(actor, { kind: "skill", char: charKey });
+  const baseEffNoDiff = charVal + (system.testMod || 0) + suppressMods.total;
 
   const result = await foundry.applications.api.DialogV2.wait({
     window: { title: item.name },
@@ -342,29 +359,22 @@ export async function rollDisorderTest(actor, item) {
     ctx: { actor, kind: "skill", char: charKey }
   });
   const { success, deg } = outcome;
-  const rollMode = game.settings.get("core", "rollMode");
   const dice = await roll.render();
-  await ChatMessage.create(ChatMessage.applyRollMode({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content: `
-      <div class="wh-roll-result">
-        <div class="roll-header">${rollIcon("spark","#c98bff")}${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}</div>
-        <div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>
-        ${outcome.combinedLine}
-        <div class="roll-dice">Бросок: <b>${rv}</b></div>
-        ${rerollNote}
-        ${outcome.critLine}
-        <div class="roll-outcome">${success
-          ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
-          : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`}</div>
-        ${system.description ? `<div class="roll-threshold" style="font-size:0.9em;">${system.description}</div>` : ""}
-        ${outcome.extendedLine}
-        ${outcome.opposedLine}
-        <details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>
-      </div>`,
-    rolls: [roll],
-    sound: CONFIG.sounds.dice
-  }, rollMode));
+  await postTestCard(actor, {
+    icon: rollIcon("spark", "#c98bff"),
+    title: `${esc(item.name)}${outcome.kindLabel ? ` · ${outcome.kindLabel}` : ""} — ${esc(actor.name)}`,
+    threshold: `<div class="roll-threshold">${meta?.abbr ?? charKey}: <b>${charVal}</b>${system.testMod ? ` ${system.testMod >= 0 ? "+" : ""}${system.testMod}` : ""}${suppressMods.parts.map(p => ` ${p}`).join("")}${difficulty !== 0 ? ` ${difficulty >= 0 ? "+" : ""}${difficulty} (📊 Сложность)` : ""} → Порог: <b>${eff0}</b></div>`,
+    lines: [outcome.combinedLine],
+    rv, rerollNote, critLine: outcome.critLine,
+    outcome: success
+      ? `<span class="roll-success">Успех — контроль удержан (${deg} ${_degWord(deg)})</span>`
+      : `<span class="roll-failure">Провал — расстройство проявляется (${deg} ${_degWord(deg)})</span>`,
+    sections: [
+      system.description ? `<div class="roll-threshold" style="font-size:0.9em;">${system.description}</div>` : "",
+      outcome.extendedLine, outcome.opposedLine,
+      `<details class="roll-dice-details"><summary>${rollIcon("chart","#8fd0ff")}Показать кубы</summary>${dice}</details>`
+    ]
+  }, { rolls: [roll] });
 }
 
 /**

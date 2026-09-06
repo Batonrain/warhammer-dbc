@@ -11,6 +11,7 @@ import { on } from "../../helpers/utils.mjs";
 import { canEquipInHands, handsOccupied, getHeldHand, setHeldHand } from "../../rules/hands.mjs";
 import { rollInfoguard as _rollInfoguard } from "../../apps/infoguard.mjs";
 import { showDelegateTestPicker as _showDelegateTestPicker } from "../../rules/delegate-test.mjs";
+import { openGearModPicker as _openGearModPicker } from "../gear-mod-picker.mjs";
 
 const ARMOR_LOCS = ["head", "body", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 
@@ -116,7 +117,8 @@ export function activateGearListeners(root, actor, {
   rollShieldActivation = _rollShieldActivation,
   repairShield = _repairShield,
   rollInfoguard = _rollInfoguard,
-  showDelegateTestPicker = _showDelegateTestPicker
+  showDelegateTestPicker = _showDelegateTestPicker,
+  openGearModPicker = _openGearModPicker
 } = {}) {
   on(root, ".weapon-equip-cb", "change", async ev => {
     const itemId   = ev.currentTarget.dataset.itemId;
@@ -225,5 +227,13 @@ export function activateGearListeners(root, actor, {
       label: `Инфограждение: ${item.name}`, buttonLabel: "Наложить Инфограждение",
       extra: { itemId: item.id }
     });
+  });
+
+  // «Улучшить» (wdbc-7td8): кнопка на строке оружия/брони открывает пикер
+  // уже имеющихся у актора модификаций, совместимых с этим предметом.
+  on(root, ".gear-mod-picker-btn", "click", ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) openGearModPicker(actor, item);
   });
 }

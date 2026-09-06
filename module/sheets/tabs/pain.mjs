@@ -8,7 +8,12 @@ import { rollIcon } from "../../constants/roll-icons.mjs";
 import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { esc } from "../../helpers/utils.mjs";
 
-/** Краткое сообщение о Боли в чат. */
+/**
+ * Краткое сообщение о Боли в чат. Не карточка теста: ни броска, ни Порога,
+ * ни исхода — просто учёт «впитал/потратил». На общий сборщик
+ * helpers/test-card.mjs сознательно не переведено (wdbc-kuun), как и прочие
+ * уведомления системы.
+ */
 export async function painChatMsg(actor, text) {
   await ChatMessage.create(ChatMessage.applyRollMode({
     speaker: ChatMessage.getSpeaker({ actor }),

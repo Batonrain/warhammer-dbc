@@ -116,6 +116,19 @@
   </div>
 
   <div class="weapon-row">
+    <label class="wr-label" title="Книжный формат «Психотест X vs Y+N» (стр. 289) — характеристика, которой ЦЕЛЬ сопротивляется манифестации. Пусто — сила не требует встречного теста цели.">Сопротивление цели</label>
+    <select name="system.resistChar" class="wr-select-sm">
+      <option value="" {{#if (eq system.resistChar "")}}selected{{/if}}>— нет —</option>
+      {{#each charBonusOptions as |c|}}
+      <option value="{{c.key}}" {{#if (eq @root.system.resistChar c.key)}}selected{{/if}}>{{c.abbr}}</option>
+      {{/each}}
+    </select>
+    <label class="wr-label">Мод.</label>
+    <input type="number" name="system.resistMod" value="{{system.resistMod}}" class="wr-input-xs"
+           title="Модификатор ТЕСТА ЦЕЛИ (в книге почти всегда +0, встречаются +3/+20)"/>
+  </div>
+
+  <div class="weapon-row">
     <label class="wr-label">Дальность</label>
     <input type="text" name="system.range" value="{{system.range}}"
            class="wr-input-md" placeholder="напр. W.b ×10 м"/>
