@@ -1,0 +1,110 @@
+{
+  "name": "Mark of Nurgle / Метка Нургла",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "11Few3bZaF1HEmu9",
+  "system": {
+    "description": "Своих верных последователей Боги награждают Метками, которые проявляются на их телах в виде родимых пятен, ран, ожогов и т.п. Еретик может получить Метку за длительную службу богу, подвиг, совершённый в интересах Бога, или просто по достижении определённого уровня Бесчестия по решению ГМа.",
+    "notes": "МЕХАНИЗИРОВАНО: факт «Метка Нургла на персонаже» (kind:\"capability\", mark.nurgle); Трейт Unnatural T (+2) (kind:\"trait\", ссылка на шаблон «Unnatural Toughness (X)», rating 2 — базовый рейтинг шаблона 1 рескейлится до 2); Трейт Stuff of Nightmares (kind:\"trait\", ссылка на готовый предмет, без рейтинга — Черта не принимает (X)); иммунитет к негативным эффектам болезней (kind:\"capability\", defence.diseaseEffectsImmune). НЕ МЕХАНИЗИРОВАНО: у defence.diseaseEffectsImmune пока нет читателя в коде — болезни в системе целиком текстовые предметы без тестовой функции, отменять механикой нечего, пока сами болезни не станут механикой (это честно отражено в самом реестре capabilities.mjs, а не пробел этой записи).",
+    "benefit": "Даёт персонажу Трейты Unnatural T (+2) и Stuff of Nightmares, а также иммунитет к негативным эффектам болезней.",
+    "source": "Служение Нурглу (Метка)",
+    "bookSource": "DoomBC — Основная книга",
+    "requirement": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "XkIB40mdGUwg1zbD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "ktDT3syIGS6YMvLH",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "pkBkIb2p4GEFwH3r",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "mark.nurgle",
+              "label": "Метка Нургла: факт на персонаже"
+            }
+          ]
+        },
+        {
+          "id": "taJ2YUv1j3WMr1Vj",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "V5PHL3V0IYYAYu86",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.jY9DymS8AVjRrTsp",
+              "sourceName": "Unnatural Toughness / Сверхъестественная Стойкость (X)",
+              "rating": "2",
+              "label": "Unnatural T (+2)"
+            }
+          ]
+        },
+        {
+          "id": "Zxjoiz78VM3hrsfq",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "msNzOiAxaw43196Q",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.njhMytZB06EWtsQA",
+              "sourceName": "Stuff of Nightmares / Существо из Кошмаров",
+              "rating": "",
+              "label": "Stuff of Nightmares"
+            }
+          ]
+        },
+        {
+          "id": "7IAuNQKvAQZJ2lst",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "8TfxTkRfnE9vizdp",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.diseaseEffectsImmune",
+              "label": "Иммунитет к негативным эффектам болезней"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788680249080,
+    "modifiedTime": 1788680249080,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XkIB40mdGUwg1zbD"
+}

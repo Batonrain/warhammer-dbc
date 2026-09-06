@@ -1,0 +1,127 @@
+{
+  "name": "Mark of Khorne / Метка Кхорна",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": "11Few3bZaF1HEmu9",
+  "system": {
+    "description": "Своих верных последователей Боги награждают Метками, которые проявляются на их телах в виде родимых пятен, ран, ожогов и т.п. Еретик может получить Метку за длительную службу богу, подвиг, совершённый в интересах Бога, или просто по достижении определённого уровня Бесчестия по решению ГМа.",
+    "notes": "МЕХАНИЗИРОВАНО: факт «Метка Кхорна на персонаже» (kind:\"capability\", mark.khorne — по нему книга гейтит психосилы Божественных Дисциплин и модификатор Призыва); Трейт Unnatural S (+2) (kind:\"trait\", ссылка на шаблон «Unnatural Strength (X)», rating 2 — базовый рейтинг шаблона 1 рескейлится Конструктором до 2); Талант Resistance (Psychic Powers) (kind:\"talent\", специализация проставлена записью); кровь/трупы не считаются Трудным Ландшафтом (kind:\"terrainIgnore\", ключи bloodPool+corpses — «Лужа воды или крови» и «Трупы» из module/regions/difficult-terrain.mjs); факт-остаток «нет штрафа от брызг крови» (kind:\"capability\", mark.khorne.bloodNoPenalty — у системы нет отдельного штрафа за брызги, снимать нечего, факт занесён для полноты и на будущее). НЕ МЕХАНИЗИРОВАНО: «входить в Ярость за свободное действие» — отдельной записи нет, потому что в системе вход в Ярость и так не стоит очков действия никому (голый чекбокс на листе), носителю Метки эта строка книги уже верна без доработки.",
+    "benefit": "Даёт персонажу Трейт Unnatural S (+2), Талант Resistance (Psychic Powers) и способность входить в Ярость за свободное действие; персонажи с этой Меткой не считают кровь и трупы трудным ландшафтом и не получают штрафов от брызг крови.",
+    "source": "Служение Кхорну (Метка)",
+    "bookSource": "DoomBC — Основная книга",
+    "requirement": "",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    }
+  },
+  "_id": "0tTA5xG2WsipS2e2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "gvZ1EIDv3SadcVTa",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "jW7liEIQZPEiLgPm",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "mark.khorne",
+              "label": "Метка Кхорна: факт на персонаже"
+            }
+          ]
+        },
+        {
+          "id": "qqjkAisgcrdxobZI",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "dSy3Vnnko5mT0cjP",
+              "kind": "trait",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.rSU3EzCeVbGZU8mv",
+              "sourceName": "Unnatural Strength / Сверхъестественная Сила (X)",
+              "rating": "2",
+              "label": "Unnatural S (+2)"
+            }
+          ]
+        },
+        {
+          "id": "ss7jpwlbiibPMGcU",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "gg9KjdgIU295VwhF",
+              "kind": "talent",
+              "group": null,
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.KUrEsT190BtUwtW8",
+              "sourceName": "Resistance / Сопротивление",
+              "specialization": "Psychic Powers",
+              "rating": "",
+              "label": "Resistance (Psychic Powers)"
+            }
+          ]
+        },
+        {
+          "id": "H5jDEY9eaS70MQCO",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "eijbh5yPQrnDRdCI",
+              "kind": "terrainIgnore",
+              "group": null,
+              "ignoreTerrainProps": [
+                "bloodPool",
+                "corpses"
+              ],
+              "label": "Кровь и трупы — не Трудный Ландшафт"
+            }
+          ]
+        },
+        {
+          "id": "I9c6NbtMukhssU0X",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "74WfKYVhGAZKyIiM",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "mark.khorne.bloodNoPenalty",
+              "label": "Нет штрафа от брызг крови (факт-остаток)"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788680249080,
+    "modifiedTime": 1788680249080,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!0tTA5xG2WsipS2e2"
+}

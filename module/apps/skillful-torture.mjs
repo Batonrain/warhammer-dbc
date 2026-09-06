@@ -126,7 +126,12 @@ export async function showSkillfulTortureDialog(torturer) {
   }
   // Feels No Pain / Не Чувствует Боли (wdbc-1rno): «иммунен к пыткам, что
   // полагаются на боль» — Искусная Пытка книжно и есть пытка болью.
-  if (hasRuleFlag(target, "mutation.feelsNoPain")) {
+  // Иммунитет к пыткам приходит из двух мест и должен работать одинаково:
+  // мутация «Не Чувствует Боли» (своя, с собственным списком эффектов) и
+  // Метка Слаанеш (wdbc-f7fn), которой книга даёт «иммунитет к пыткам» прямым
+  // текстом. Общее имя defence.tortureImmune заведено ради второго; первое
+  // остаётся как есть, чтобы не трогать уже работающие данные мутации.
+  if (hasRuleFlag(target, "mutation.feelsNoPain") || hasRuleFlag(target, "defence.tortureImmune")) {
     return ui.notifications.warn(`«${target.name}» не чувствует боли — пытка на неё не действует.`);
   }
 
