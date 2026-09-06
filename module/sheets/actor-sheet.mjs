@@ -15,7 +15,7 @@ import { openCharacterWizard } from "../apps/character-wizard.mjs";
 import { onConvertToHorde, convertActorToHorde } from "../apps/horde-convert.mjs";
 import { buildGetData } from "./sheet-helpers.mjs";
 import { characterContext, charLabel } from "./character-context.mjs";
-import { showAttackDialog, showAttackDialogNoWeapon } from "./attack-dialog.mjs";
+import { showAttackDialog } from "./attack-dialog.mjs";
 import { rollMutationOrGift, openMutationPicker } from "./tabs/mutations.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { createDisorderItem, activateDisorderListeners,
@@ -1781,11 +1781,14 @@ export class WarhammerCharacterSheet
         const el = ev.currentTarget;                       // до await, см. wdbc-odgs
         const scope = el.dataset.aptScope;
         const key   = el.dataset.aptKey;
-        const title = el.getAttribute("title") || key;
+        // Запасной вариант — сам ключ, а НЕ атрибут title: там лежит целая
+        // подсказка («Склонности: … — нажмите, чтобы поменять привязку»), и в
+        // заголовок окна она попадала бы мусором. Срабатывает только на
+        // незнакомом ключе, то есть практически никогда.
         const book  = scope === "char"
           ? (CHAR_APTITUDES[key] || [])
           : bookSkillPair(key);
-        await showAptitudeBindingDialog(this.actor, scope, key, labelOfObject(scope, key) || title, book);
+        await showAptitudeBindingDialog(this.actor, scope, key, labelOfObject(scope, key) || key, book);
       });
     });
 
@@ -1816,14 +1819,14 @@ export class WarhammerCharacterSheet
 
   // ── Диалог атаки ─────────────────────────────────────────────────────────
 
-  // Сам диалог живёт в attack-dialog.mjs. Точки входа остаются здесь: их зовут
+  // Сам диалог живёт в attack-dialog.mjs. Точка входа остаётся здесь: её зовут
   // кнопки листа и HUD (module/apps/hud.mjs) — через actor.sheet.
+  // Второй обёртки (безоружная атака) тут нет намеренно: после переезда кнопки
+  // «в упор» в профиль оружия её никто не звал, а сама
+  // showAttackDialogNoWeapon жива и вызывается напрямую из
+  // apps/cancerous-healing.mjs.
   _showAttackDialog(item, techniqueOpts = {}) {
     return showAttackDialog(this.actor, item, techniqueOpts);
-  }
-
-  _showAttackDialogNoWeapon(techDef) {
-    return showAttackDialogNoWeapon(this.actor, techDef);
   }
 
   // ── Добавление предмета ───────────────────────────────────────────────────
