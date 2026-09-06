@@ -8,6 +8,7 @@
 import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIndex }
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
+import { hasPathGrade } from "../constants/aeldari-paths.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -255,6 +256,15 @@ export const PREDICATES = {
   // говорит про Бонус чаще всего («требует S.b 5», «Бонус Силы меньше 7»).
   charBonusMin: (actor, ctx, value) => Object.entries(value ?? {}).every(
     ([key, min]) => (Number(actor?.system?.characteristics?.[key]?.bonus) || 0) >= min),
+
+  // Градация Пути Азуриан (wdbc-4e60): «любой Путь Воина на уровне Следующий»
+  // пишется pathGradeMin: { group: "Путь Воина", grade: "next" }, конкретный
+  // Путь — key: "banshee". Сравнение «не ниже», как читается книжное «на
+  // уровне X»: Мастер подходит там, где книга просит Следующего.
+  //
+  // Пути хранятся полем актора (system.paths), предметами не являются — и до
+  // этого предиката ни одно правило не могло на них опереться вовсе.
+  pathGradeMin: (actor, ctx, value) => hasPathGrade(actor?.system?.paths, value || {}),
 
   hasTalent: (actor, ctx, value) => hasNamed(actor, value),
   hasTrait:  (actor, ctx, value) => hasNamed(actor, value),

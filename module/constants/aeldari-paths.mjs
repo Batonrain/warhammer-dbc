@@ -531,3 +531,71 @@ export function actorHasAspectPath(system, ratingText) {
   if (!key) return true;
   return (system?.paths || []).some(p => p?.key === key);
 }
+
+/**
+ * Достиг ли персонаж указанной градации хотя бы на одном подходящем Пути
+ * (wdbc-4e60). Отбор — по группе Путей и/или по конкретным ключам:
+ *
+ *   { group: "Путь Воина", grade: "next" }   — любой из десяти Путей Воина
+ *   { key: "banshee", grade: "master" }      — конкретный Путь
+ *   { key: ["banshee", "scorpion"], grade: "novice" }
+ *
+ * Градация сравнивается по PATH_GRADE_ORDER (Новичок → Следующий → Мастер →
+ * Заблудившийся): «не ниже указанной», как читается любое книжное «на уровне
+ * Следующий» — Мастер тоже подходит.
+ *
+ * ГРУППА ЕСТЬ НЕ У ВСЕХ ПУТЕЙ, и это не пробел в данных: книга Аэльдари
+ * («II. ПУТИ АЗУРИАНА») объединяет заголовками только «ПУТЬ ВИДЯЩИХ» (5) и
+ * «ПУТЬ ВОИНА» (10), остальные пятнадцать стоят в ней самостоятельными
+ * разделами. Условие по группе на них не сработает — и не должно.
+ */
+export function hasPathGrade(paths, { group = "", key = null, grade = "novice" } = {}) {
+  const want = PATH_GRADE_ORDER.indexOf(grade);
+  if (want < 0 || !Array.isArray(paths)) return false;
+  const keys = key == null ? null : (Array.isArray(key) ? key : [key]);
+  const wantGroup = String(group || "").trim();
+  return paths.some(row => {
+    const def = AZURIANE_PATHS[row?.key];
+    if (!def) return false;
+    if (keys && !keys.includes(row.key)) return false;
+    if (wantGroup && def.group !== wantGroup) return false;
+    return PATH_GRADE_ORDER.indexOf(row?.grade) >= want;
+  });
+}
+
+/**
+ * Правила, которые дают достигнутые градации Путей (wdbc-4e60). Пока их
+ * источник — поле `rules` у градации (рядом с `auto` и `desc`), и заполнено оно
+ * не везде: из 120 описанных градаций машинную часть имеют единицы, остальные
+ * остаются текстом справки. Функция существует, чтобы эта часть БЫЛА КУДА
+ * ПИСАТЬ: до неё Путь не мог выдать ни возможности, ни модификатора вовсе —
+ * Пути хранятся полем актора, а возможности раздают только источники правил.
+ *
+ * Правила берутся кумулятивно по достигнутым градациям — как и `auto` в
+ * computePathPassives: дошедший до Мастера не теряет того, что дал Новичок.
+ */
+export function pathRules(paths) {
+  const out = [];
+  if (!Array.isArray(paths)) return out;
+  for (const row of paths) {
+    const def = AZURIANE_PATHS[row?.key];
+    if (!def) continue;
+    const gradeIdx = PATH_GRADE_ORDER.indexOf(row?.grade);
+    if (gradeIdx < 0) continue;
+    for (let i = 0; i <= gradeIdx; i++) {
+      const gKey = PATH_GRADE_ORDER[i];
+      for (const rule of def.grades?.[gKey]?.rules ?? []) {
+        out.push({
+          ...rule,
+          // Свой id и подпись — ПОСЛЕ разворота записи: id обязан быть
+          // уникальным на акторе (два Пути с одинаково названным правилом
+          // иначе слиплись бы), а подпись игрок читает в диалоге броска и
+          // должна называть Путь и градацию, а не «rule 2».
+          id: `path.${row.key}.${gKey}.${rule.id || out.length}`,
+          label: rule.label || `${def.label} — ${PATH_GRADES[gKey]}`
+        });
+      }
+    }
+  }
+  return out;
+}

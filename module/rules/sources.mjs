@@ -29,6 +29,7 @@ import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 import { situationalRules } from "./situational.mjs";
+import { pathRulesFor } from "./library/paths.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -81,6 +82,14 @@ const RACE_RULES = {
 };
 
 registerRuleSource("race", a => RACE_RULES[a?.system?.race] ?? []);
+
+// Пути Азуриан (system.paths) — восьмой источник, wdbc-4e60. Пути хранятся
+// полем актора и предметами не являются, поэтому ни один предмет не мог выдать
+// «у меня Путь Воина уровня Следующий»: из 120 описанных градаций система
+// считала сама лишь дюжину пассивных чисел, остальное держал в голове ГМ.
+// См. library/paths.mjs — там и общие правила групп, и сбор правил
+// достигнутых градаций.
+registerRuleSource("paths", a => pathRulesFor(a));
 
 // Правила по Покровительству Бога (system.patronGod) — см. library/patronage.mjs.
 registerRuleSource("patron", a => PATRON_RULES[a?.system?.patronGod] ?? []);

@@ -55,6 +55,7 @@ import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { weaponProfiles, attackIsMelee }         from "../combat/weapon-profiles.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
+import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -186,9 +187,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
   const oneHandRifleGrip = (!isMelee && sys.weaponClass === "basic"
                          && hasRuleFlag(actor, "weapon.oneHandedRifle")) ? "1р" : null;
+  // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60): книга
+  // разрешает одну руку и отдельно оговаривает, что дальность при этом НЕ
+  // режется — в отличие от модификации Pistol Grip. Список оружия именной, а
+  // не по классу/свойству: во всех шестнадцати книгах такое правило одно.
+  const pathOneHandGrip = (!isMelee && isPathOneHandedWeapon(item)
+                        && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) ? "1р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
                       ...(doubleGripGrip ? [doubleGripGrip] : []),
-                      ...(oneHandRifleGrip ? [oneHandRifleGrip] : [])];
+                      ...(oneHandRifleGrip ? [oneHandRifleGrip] : []),
+                      ...(pathOneHandGrip ? [pathOneHandGrip] : [])];
   const ownGrips = parseGrips(sys.grips);
   // Предмет без собственного sys.grips (пак ещё не заполнен, стр. 171) —
   // добавляем природный Хват по классу, иначе доп. Хват окажется в списке

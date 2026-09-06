@@ -410,6 +410,14 @@ export const CAPABILITIES = {
             "Класс basic — «Винтовка» и «Длинная Винтовка» книги живут в нём обе (стр. 171).",
     reader: "module/sheets/attack-dialog.mjs — oneHandRifleGrip; module/rules/hands.mjs — availableRangedGrips"
   },
+  "weapon.oneHandedWarriorPath": {
+    label: "Стрела Кхейна: стрельба одной рукой, дальность при этом не режется",
+    source: "Книга Аэльдари, Арсенал/Сюрикен: «Персонаж, обладающий любым Путем Воина " +
+            "на уровне Следующий, может стрелять из этого оружия держа его в одной руке " +
+            "без траты в Rng». Выдаётся источником правил «paths» (rules/library/paths.mjs), " +
+            "список подходящего оружия — там же (PATH_ONE_HANDED_WEAPONS).",
+    reader: "module/sheets/attack-dialog.mjs — pathOneHandGrip; module/rules/hands.mjs — availableRangedGrips"
+  },
   "weapon.ignoreRecoil": {
     label: "Отдача (Recoil X) не мешает стрелять одной рукой при нехватке S.b",
     source: "Recoil Glove / Откатная Перчатка, Good.Q и Best.Q («игнорирует свойство Recoil оружия»)",

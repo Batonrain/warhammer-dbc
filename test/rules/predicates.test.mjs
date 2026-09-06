@@ -409,6 +409,8 @@ describe("общее требование к предикатам", () => {
     // Герметичная броня (wdbc-1rno) — читает actor.items, значение из `when`
     // не участвует, тот же случай, что inRage выше.
     wearsSealedArmour: undefined,
+    // Градация Пути Азуриан (wdbc-4e60): значение — объект-отбор.
+    pathGradeMin: { group: "Путь Воина", grade: "next" },
     hasTalent: "Frenzy", hasTrait: "Gene-Seed", weaponClass: ["melee"],
     targetHasTrait: "Daemonic", targetLacksCondition: "stunned",
     hasCondition: "prone", targetHasCondition: "prone",
