@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
+import { IMPROVISED_MELEE_LABEL } from "../../module/combat/weapon-profiles.mjs";
 
 /** Разметка открытого окна — то, что видит игрок. */
 const content = () => captured.dialog?.content ?? "";
@@ -81,7 +82,12 @@ describe("список Профилей не смешивает рукопашн
     }, { name: "Лазган" });
     showAttackDialog(shooter([gun]), gun, { forceMelee: true, profileIdx: 0 });
     expect(content()).toContain("Перегрузка");   // выбранный на месте
-    expect(content()).toContain("Удар в упор");  // и рукопашный, по виду окна
+    // Метка берётся КОНСТАНТОЙ, а не дословной копией (wdbc-d56f): она одна на
+    // весь проект и её переименовывают, а переписанная сюда строка тихо
+    // разъезжается с той, что видит игрок. Этот файл на том уже споткнулся:
+    // переименование метки шло отдельной веткой, и оба пул-реквеста были
+    // зелёными порознь, а вместе роняли main.
+    expect(content()).toContain(IMPROVISED_MELEE_LABEL);  // и рукопашный, по виду окна
   });
 
   it("у стрелкового свои СТРЕЛКОВЫЕ профили остались на месте — регресс", async () => {
