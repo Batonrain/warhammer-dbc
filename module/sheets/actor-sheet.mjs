@@ -37,6 +37,18 @@ import { activateAspirationListeners } from "./tabs/aspirations.mjs";
 import { socialContext, activateSocialListeners } from "./tabs/social.mjs";
 import { activeEffectsTabContext } from "../apps/effects-summary.mjs";
 import { showTempModifierDialog, removeTempModifier } from "../apps/temp-modifier.mjs";
+import { showAptitudeBindingDialog } from "../apps/aptitude-binding-dialog.mjs";
+import { CHAR_APTITUDES } from "../constants/advancement.mjs";
+
+/** Книжная пара Склонностей Навыка — [char, apt2] его определения. */
+const bookSkillPair = (key) => {
+  const def = SKILLS_DEF[key] || GROUP_SKILLS_DEF[key];
+  return def ? [def.char, def.apt2].filter(Boolean) : [];
+};
+/** Как объект называется на листе — для заголовка диалога. */
+const labelOfObject = (scope, key) => (scope === "char"
+  ? CHARACTERISTICS[key]?.label
+  : (SKILLS_DEF[key] || GROUP_SKILLS_DEF[key])?.label) || "";
 import { minionsPanelContext, activateMinionPanelListeners } from "./tabs/minions-panel.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
 import { isMinionTalent, minionSlotOf } from "../rules/minion-build.mjs";
@@ -1757,6 +1769,24 @@ export class WarhammerCharacterSheet
     });
     // ── Состояния и Усталость ─────────────────────────────────────────────
     activateConditionsListeners(root, this.actor);
+
+    // ── Привязка Склонностей объекта (wdbc-1pvq) ──────────────────────────
+    // Щелчок по значку Д/Н/В у Характеристики или Навыка на вкладке
+    // ПРОДВИЖЕНИЕ. Значок стоит там же, где видно последствие — цену, поэтому
+    // отдельной колонки под смену привязки не заводится.
+    root.querySelectorAll("[data-apt-scope]").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        const el = ev.currentTarget;                       // до await, см. wdbc-odgs
+        const scope = el.dataset.aptScope;
+        const key   = el.dataset.aptKey;
+        const title = el.getAttribute("title") || key;
+        const book  = scope === "char"
+          ? (CHAR_APTITUDES[key] || [])
+          : bookSkillPair(key);
+        await showAptitudeBindingDialog(this.actor, scope, key, labelOfObject(scope, key) || title, book);
+      });
+    });
 
     // ── Временный модификатор характеристики (wdbc-5qvo) ──────────────────
     // Кнопка и крестики живут на вкладке ЭФФЕКТЫ: там же, где видно всё

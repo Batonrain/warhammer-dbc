@@ -702,3 +702,33 @@
 /* Ровные компактные строки списка талантов. */
 .warhammer-dbc .advtal-bought td { height: 24px; padding: 2px 4px; vertical-align: middle; }
 .warhammer-dbc .advtal-bought .advtal-bought-name { font-size: 11px; line-height: 1.2; }
+
+/* ── Привязка Склонностей меняется щелчком по значку Д/Н/В (wdbc-1pvq) ─────
+   Значок был подписью, стал кнопкой: отдельной колонки под смену привязки
+   вкладка не выдержит, а стоит он ровно там, где видно последствие — цену.
+   Внешне остаётся тем же, добавляется только курсор и рамка у
+   переопределённых, чтобы «не как в книге» было видно не наводя мышь. */
+.warhammer-dbc button.adv-cat {
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+.warhammer-dbc button.adv-cat:hover { filter: brightness(1.3); }
+/* Селектор с тем же весом, что у «button.adv-cat» выше: короткий
+   «.adv-cat-custom» проигрывал ему по специфичности, и курсив — второй
+   визуальный признак «переопределено» — не показывался никогда (найдено живой
+   проверкой 06.09.2026). Рамка при этом работала: у неё конфликта не было. */
+.warhammer-dbc button.adv-cat.adv-cat-custom {
+  box-shadow: inset 0 0 0 1px currentColor;
+  font-style: italic;
+}
+
+/* Диалог смены привязки Склонностей. */
+.warhammer-dbc .wh-apt-binding-form .apt-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+}
+.warhammer-dbc .wh-apt-binding-form .apt-row > select { flex: 1 1 auto; }
+.warhammer-dbc .wh-apt-binding-form .apt-book-line { margin-bottom: 8px; }
+.warhammer-dbc .wh-apt-binding-form .apt-hint {
+  font-size: 0.78em; color: var(--wh-text-mid); margin-top: 4px;
+}

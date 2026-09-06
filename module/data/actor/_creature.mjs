@@ -281,6 +281,14 @@ export function creatureSchema({ granted = false } = {}) {
     characteristics: new SchemaField(charFields, { label: "Характеристики" }),
     charDamage:      new SchemaField(charDamageFields, { label: "Мод. характеристик" }),
     skills:          new SchemaField(skillFields, { label: "Навыки" }),
+    // ПЕРЕОПРЕДЕЛЕНИЕ ПРИВЯЗКИ СКЛОННОСТЕЙ (wdbc-1pvq): «у нашего стола
+    // Уклонение относится к Интеллекту и Знанию, а не к Ловкости и Защите».
+    // Свободный объект, а не перечень полей: ключи — Характеристики и Навыки,
+    // и перечислять их вторым списком рядом с CHAR_APTITUDES/SKILLS_DEF
+    // значило бы завести второе место правды о том, что вообще существует.
+    // Форма: { char: { ws: ["int","knowledge"] }, skill: { dodge: [...] } }.
+    // Пусто = книжная привязка (module/rules/aptitude-binding.mjs).
+    aptitudeBinding: new ObjectField({ label: "Привязка Склонностей" }),
     groupSkills:     new SchemaField(groupSkillFields, { label: "Групповые навыки" }),
     armor:      new SchemaField(armorFields(), { label: "Броня" }),
     // Складываемая надбавка AP от эффектов (constants/effect-keys.mjs) —

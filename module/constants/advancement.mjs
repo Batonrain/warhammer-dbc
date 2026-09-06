@@ -8,6 +8,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { specChar } from "./skill-specializations.mjs";
+import { objectAptitudes } from "../rules/aptitude-binding.mjs";
 import { effectivePricingMode, charPatronCat, skillPatronCat, talentPatronCat, mixedCat }
   from "./patronage.mjs";
 
@@ -96,14 +97,23 @@ export function fixedTalentCost(name, patron = "") {
 // сразу, module/constants/patronage.mjs → mixedCat). Без актора — всегда
 // Склонности (безопасный дефолт для мест, ещё не прокинувших актора).
 export function resolveCharCat(charKey, charApts, actor) {
-  const apt = () => aptitudeCat(charApts, CHAR_APTITUDES[charKey] || []);
+  // Привязка Склонностей объекта переопределяема с листа (wdbc-1pvq):
+  // objectAptitudes отдаёт либо запись актора, либо книжную таблицу. Читается
+  // ЗДЕСЬ, в единой точке расчёта категории, а не у вызывающих — иначе каждый
+  // из них получил бы свой шанс забыть переопределение.
+  const apt = () => aptitudeCat(charApts, objectAptitudes(actor, "char", charKey, CHAR_APTITUDES[charKey] || []));
   const mode = actor ? effectivePricingMode(actor) : "aptitude";
   if (mode === "aptitude") return apt();
   const patron = () => charPatronCat(charKey, actor.system?.patronGod, actor.system?.patronStereotype);
   return mode === "patronage" ? patron() : mixedCat(apt(), patron());
 }
 export function resolveSkillCat(skillKey, specialty, itemApts, charApts, actor) {
-  const apt = () => aptitudeCat(charApts, itemApts);
+  // itemApts остаётся ЗАПАСНЫМ вариантом, а не игнорируется: специализации
+  // групповых Навыков считают первую Склонность у самой специализации
+  // («Навигация (Варп) — это Воля, а не Интеллект группы»), и вывести её
+  // здесь из одного ключа Навыка нечем. Переопределение, если оно есть,
+  // сильнее и того, и другого.
+  const apt = () => aptitudeCat(charApts, objectAptitudes(actor, "skill", skillKey, itemApts));
   const mode = actor ? effectivePricingMode(actor) : "aptitude";
   if (mode === "aptitude" || !skillKey) return apt();
   const patron = () => skillPatronCat(skillKey, specialty, actor.system?.patronGod);

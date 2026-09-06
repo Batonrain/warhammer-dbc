@@ -1,0 +1,120 @@
+// module/rules/aptitude-binding.mjs
+// ════════════════════════════════════════════════════════════════════════════
+//  КАКИЕ ДВЕ СКЛОННОСТИ У ОБЪЕКТА (wdbc-1pvq).
+//
+//  Книга (Black Crusade, стр. 23-24) привязывает к каждому объекту —
+//  Характеристике, Навыку, Таланту — ровно две Склонности, и от совпадения их
+//  со Склонностями персонажа зависит цена Продвижения: две — Дружественная,
+//  одна — Нейтральная, ноль — Враждебная.
+//
+//  До этого привязка была НЕПЕРЕОПРЕДЕЛЯЕМОЙ и жила в трёх разных местах:
+//   • у Характеристики — таблицей CHAR_APTITUDES (constants/advancement.mjs);
+//   • у Навыка — парой char + apt2 его определения (constants/skills.mjs);
+//   • у Таланта — своим полем system.aptitudes НА ПРЕДМЕТЕ.
+//  У Таланта переопределение, выходит, уже было по построению: правится на
+//  листе. У первых двух — только правкой кода, то есть с игрового стола
+//  никак, даже когда у стола хоумрул или в книге опечатка.
+//
+//  ── Почему переопределение читается ЗДЕСЬ, а не у вызывающих ─────────────
+//  Пару [char, apt2] для Навыка собирает КАЖДЫЙ вызывающий сам — таких мест
+//  пять, и одно из них считает первую Склонность не у самого Навыка, а у его
+//  специализации («Навигация (Варп) — это Воля, а не Интеллект группы»).
+//  Раздать переопределение по пяти местам значило бы завести пять шансов
+//  забыть его в шестом. Поэтому оно применяется в единой точке — там же, где
+//  считается категория цены (resolveCharCat/resolveSkillCat), и всем пяти
+//  вызывающим достаётся даром.
+//
+//  ── Что переопределение НЕ трогает ──────────────────────────────────────
+//  Это ДРУГАЯ вещь, чем module/rules/aptitude-overrides.mjs, и путать их
+//  нельзя. Тот отвечает на вопрос «Дружественный этот Навык или Враждебный
+//  независимо от Покровительства» — то есть сразу называет ИТОГ. Этот —
+//  «какие две Склонности у объекта», то есть вход, из которого итог считается.
+//  У них разный смысл, разные источники и разный приоритет: итоговое
+//  переопределение сильнее, потому что оно последнее слово.
+//
+//  Чистый модуль: ни одного обращения к Foundry.
+// ════════════════════════════════════════════════════════════════════════════
+
+//  ── Почему у модуля НЕТ импортов ────────────────────────────────────────
+//  Книжные таблицы сюда не втягиваются намеренно: читатель этого
+//  переопределения — constants/advancement.mjs, и импорт таблиц оттуда завёл
+//  бы цикл advancement → aptitude-binding → advancement. Цикл в ESM обычно
+//  «работает» и падает однажды, от перестановки порядка загрузки. Поэтому
+//  книжная привязка приходит сюда АРГУМЕНТОМ: у вызывающего она и так под
+//  рукой, а модуль остаётся про одно — про переопределение.
+
+/** Область переопределения: Характеристика или Навык. */
+export const BINDING_SCOPES = ["char", "skill"];
+
+/**
+ * Переопределение, записанное на акторе, — или null.
+ *
+ * Хранится как system.aptitudeBinding.<область>.<ключ> = ["апт1", "апт2"].
+ * Значение принимается, только если это непустой массив: полупустая запись
+ * («поменяли одну Склонность, вторую забыли») хуже отсутствия — она молча
+ * сделала бы объект Нейтральным для всех.
+ */
+export function aptitudeBindingOverride(actor, scope, key) {
+  if (!actor || !BINDING_SCOPES.includes(scope) || !key) return null;
+  const raw = actor.system?.aptitudeBinding?.[scope]?.[key];
+  if (!Array.isArray(raw)) return null;
+  const apts = raw.map(a => String(a ?? "").trim()).filter(Boolean);
+  return apts.length ? apts : null;
+}
+
+/**
+ * Две Склонности объекта с учётом переопределения.
+ *
+ * @param {object} actor  актор (без него — всегда книжная привязка)
+ * @param {"char"|"skill"} scope
+ * @param {string} key    ключ Характеристики или Навыка
+ * @param {string[]} bookApts книжная привязка от вызывающего — см. шапку
+ *   про отсутствие импортов
+ */
+export function objectAptitudes(actor, scope, key, bookApts = []) {
+  const override = aptitudeBindingOverride(actor, scope, key);
+  if (override) return override;
+  return Array.isArray(bookApts) ? [...bookApts] : [];
+}
+
+/** Переопределена ли привязка — для пометки на листе. */
+export function isAptitudeBindingOverridden(actor, scope, key) {
+  return aptitudeBindingOverride(actor, scope, key) !== null;
+}
+
+/**
+ * Патч для actor.update, задающий или снимающий переопределение.
+ *
+ * Пустой список снимает его штатным `-=`, а не пишет пустой массив: иначе в
+ * данных остался бы мусор, неотличимый от «переопределяли и вернули назад».
+ */
+export function setBindingPatch(scope, key, aptitudes) {
+  if (!BINDING_SCOPES.includes(scope) || !key) return {};
+  const list = (Array.isArray(aptitudes) ? aptitudes : [])
+    .map(a => String(a ?? "").trim()).filter(Boolean);
+  return list.length
+    ? { [`system.aptitudeBinding.${scope}.${key}`]: list }
+    : { [`system.aptitudeBinding.${scope}.-=${key}`]: null };
+}
+
+/**
+ * Кусок контекста строки листа: подпись привязки и пометка «переопределено».
+ *
+ * Живёт здесь, а не в двух местах сборки контекста (Навыки — sheets/
+ * sheet-helpers.mjs, Характеристики — sheets/character-context.mjs): подпись
+ * должна читаться одинаково у обоих, иначе игрок увидит две разные правды об
+ * одном и том же понятии.
+ *
+ * @param {Function} labelOf  ключ Склонности → её подпись (APTITUDES)
+ */
+export function aptBindingContext(actor, scope, key, bookApts = [], labelOf = null) {
+  const apts = objectAptitudes(actor, scope, key, bookApts);
+  const name = labelOf || (a => a);
+  return {
+    aptScope: scope,
+    aptKey: key,
+    aptBound: apts,
+    aptBoundLabel: apts.map(a => name(a)).filter(Boolean).join(" + "),
+    aptOverridden: isAptitudeBindingOverridden(actor, scope, key)
+  };
+}

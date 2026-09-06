@@ -13,7 +13,10 @@
 import { CHARACTERISTICS }                       from "../constants/characteristics.mjs";
 import { CHAR_IMP_STEPS }                        from "./tabs/advance.mjs";
 import { equippedMeleeWeapon } from "../combat/equipped-melee.mjs";
-import { charAptitudeSet, resolveCharCat }       from "../constants/advancement.mjs";
+import { charAptitudeSet, resolveCharCat, CHAR_APTITUDES } from "../constants/advancement.mjs";
+import { APTITUDES }                            from "../constants/characteristics.mjs";
+import { aptBindingContext }                    from "../rules/aptitude-binding.mjs";
+
 import { fateTerm }                              from "../helpers/utils.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
@@ -515,6 +518,8 @@ export function characterContext(actor) {
       key,
       // Категория цены по склонностям (стр. 24) — для подсветки в «Развитии».
       aptCat:       resolveCharCat(key, _charApts, actor),
+      // Привязка Склонностей (wdbc-1pvq) — см. тот же вызов у Навыков.
+      ...aptBindingContext(actor, "char", key, CHAR_APTITUDES[key] || [], a => APTITUDES[a] || a),
       label:        charLabel(key, system.alignment),
       abbr:         meta.abbr,
       base:         system.characteristics[key]?.base         ?? 0,

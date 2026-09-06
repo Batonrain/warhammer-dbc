@@ -43,6 +43,7 @@ import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs"
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
 import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/condition-mirrors.mjs";
+import { aptBindingContext } from "../rules/aptitude-binding.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -428,7 +429,12 @@ export function buildGetData(actor) {
       isGranted: (sk.grantedRank ?? "untrained") !== "untrained",
       total: sk.total ?? -20,
       cost:  sk.cost  ?? 0,
-      aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor)
+      aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor),
+      // Привязка Склонностей (wdbc-1pvq): что показать в подсказке и надо ли
+      // пометить строку как переопределённую. Кликом по значку Д/Н/В её
+      // меняют — отдельной колонки под это нет намеренно, вкладка и так
+      // плотная.
+      ...aptBindingContext(actor, "skill", key, [def.char, def.apt2], a => APTITUDES[a] || a)
     };
   });
 
