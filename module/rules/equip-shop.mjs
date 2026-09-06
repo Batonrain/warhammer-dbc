@@ -50,9 +50,17 @@ export const EQUIP_SHOP_ROW_BY_KEY = Object.fromEntries(EQUIP_SHOP_ROWS.map(r =>
 /** Категории снаряжения, из которых можно покупать по строкам "buy" — любой физический предмет, не Таланты/Психосилы/Черты. */
 export const EQUIP_SHOP_PACKS = ["weapons", "armor", "gear", "ammunition", "implants", "tools", "shields"];
 
-/** Пул: Inf.b + ручной бонус (ГМ может расщедриться, стр. 24 явно этого не запрещает). */
-export function equipPointsTotal(infBonus, bonusPoints = 0) {
-  return Math.max(0, Number(infBonus) || 0) + Math.max(0, Number(bonusPoints) || 0);
+/**
+ * Пул: Inf.b + любое число надбавок. Надбавки бывают двух видов и обе
+ * законные: ручной бонус ГМа (стр. 24 щедрости не запрещает) и надбавка из
+ * текста Расы — «+2 очка стартового снаряжения» у Сквата (wdbc-yobj); раньше
+ * такая строка Расы была словами на экране и досчитывалась игроком руками.
+ * Каждая надбавка не может уйти в минус отдельно — «штраф к очкам» книга не
+ * описывает, а отрицательное число в поле ГМа было бы опечаткой.
+ */
+export function equipPointsTotal(infBonus, ...bonuses) {
+  return Math.max(0, Number(infBonus) || 0)
+    + bonuses.reduce((s, b) => s + Math.max(0, Number(b) || 0), 0);
 }
 
 /** Сколько ещё доступно после уже потраченного. Не может уйти в минус — это ошибка вызывающего, не пользователя. */

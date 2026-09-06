@@ -473,7 +473,7 @@
     <div class="wiz-panel">
       <div class="wiz-panel-title">Очки Снаряжения</div>
       <div class="wiz-gen wiz-equip-shop">
-        <div class="wiz-gen-lbl" title="После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).">Потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonus}} + бонус)</div>
+        <div class="wiz-gen-lbl" title="После «Готово» на оружие с магазином автоматически довыдадутся боеприпасы (4 полных магазина или 20 штук, что больше).">Потрачено {{equipShop.spent}} из {{equipShop.total}} (Inf.b {{equipShop.infBonus}}{{#if equipShop.raceBonus}} + {{equipShop.raceBonus}} от Расы{{/if}} + бонус)</div>
         <div class="wiz-row"><label>Бонусные очки (по решению ГМ):</label>
           <input type="number" class="wiz-equip-bonus" value="{{equipShop.bonusPoints}}" min="0"/>
         </div>

@@ -55,6 +55,13 @@ describe("Очки Снаряжения: пул", () => {
     expect(equipPointsTotal(-1, -5)).toBe(0);
   });
 
+  it("надбавок может быть несколько: Inf.b + бонус ГМа + «+2 очка» из текста Расы (wdbc-yobj)", () => {
+    expect(equipPointsTotal(3, 1, 2)).toBe(6);
+    expect(equipPointsTotal(3, 0, 2)).toBe(5);
+    expect(equipPointsTotal(3, 1, 0)).toBe(4);
+    expect(equipPointsTotal(3, 1, -2)).toBe(4); // отрицательная надбавка — опечатка, не штраф
+  });
+
   it("остаток не уходит в минус даже если потрачено больше пула", () => {
     expect(equipPointsLeft(5, 2)).toBe(3);
     expect(equipPointsLeft(5, 5)).toBe(0);
