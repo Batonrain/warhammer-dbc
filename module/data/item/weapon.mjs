@@ -56,6 +56,7 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       damageType:   new StringField({ initial: "impact", label: "Тип урона" }),
       penetration:  num(0, "Пробитие"),
       quality:      new StringField({ initial: "common", label: "Качество" }),
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
       // Расходное оружие (гранаты и т.п.) — тот же приём, что у Снаряжения/
