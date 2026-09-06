@@ -207,3 +207,44 @@ describe("служебные флаги системы не считаются �
     expect(FINGERPRINT_VERSION).toBeGreaterThan(1);
   });
 });
+
+// ── wdbc-1c10, третий случай: разметку таблиц достраивает сам редактор ─────
+//
+// 06.09.2026 сборка снова встала: четыре книги (Аэльдари, Ветви Аэльдари,
+// Техника Эльдар, Некроны) объявлены изменёнными после сеанса игры. Полное
+// извлечение дало 226 расхождений на 435 страницах — и ни одного
+// содержательного: ProseMirror достраивает таблицу тегом <tbody> при первом
+// открытии книги в игре и сохраняет её такой.
+describe("<tbody> от редактора не считается правкой (wdbc-1c10)", () => {
+  const KEY = "!journal.pages!aaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbb";
+  const html = "<h2>Некроны</h2><table><tr><td><p>WS</p></td></tr></table>";
+  const page = content => [KEY, { name: "Скарабеи", type: "text", text: { format: 1, content } }];
+
+  /** Ровно то, что делает редактор Foundry при открытии книги. */
+  const asEditorSaves = s => s.replace(/<table>/g, "<table><tbody>")
+                              .replace(/<\/table>/g, "</tbody></table>");
+
+  it("страница после сеанса игры даёт тот же отпечаток", () => {
+    const opened = asEditorSaves(html);
+    expect(opened, "заготовка теста должна отличаться от исходной").not.toBe(html);
+    expect(fingerprintOf([page(opened)])).toBe(fingerprintOf([page(html)]));
+  });
+
+  it("а правка текста внутри той же таблицы — видна", () => {
+    const edited = asEditorSaves(html).replace("<p>WS</p>", "<p>БС</p>");
+    expect(fingerprintOf([page(edited)])).not.toBe(fingerprintOf([page(html)]));
+  });
+
+  it("удаление строки таблицы тоже видно", () => {
+    const cut = asEditorSaves(html).replace("<tr><td><p>WS</p></td></tr>", "");
+    expect(fingerprintOf([page(cut)])).not.toBe(fingerprintOf([page(html)]));
+  });
+
+  it("поправка не трогает документы, которые не являются страницами", () => {
+    // У предмета то же самое не измерено, и молчаливо слепнуть там нельзя:
+    // описание с таблицей — авторское поле, а не вывод редактора книги.
+    const item = c => ["!items!cccccccccccccccc",
+                       { name: "Гаусс-бластер", type: "weapon", system: { description: c } }];
+    expect(fingerprintOf([item(asEditorSaves(html))])).not.toBe(fingerprintOf([item(html)]));
+  });
+});
