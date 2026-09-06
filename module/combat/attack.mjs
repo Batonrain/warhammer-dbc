@@ -21,6 +21,7 @@ import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../const
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
+import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
@@ -248,6 +249,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     await ChatMessage.create(jamData);
     return;
   }
+
+  // ── Оружие не по руке в лапах Огрина (wdbc-flai) ──────────────────────────
+  // Бросок ПОСЛЕ атаки и независимо от попадания: Огрин ломает человеческую
+  // рукоять самим ударом. Стрелкового не касается — там своя цена (−20 к
+  // тесту, rules/ogryn-fit.mjs).
+  const ogrynBreak = await rollOgrynWeaponBreak({
+    actor, item, isMelee,
+    hasOgrynized: wProps.some(p => (p?.key ?? p) === "ogryned")
+  });
 
   // Место попадания. locationShift — сдвиг результата (±A.b) от Таланта/Черты
   // «сдвинуть место попадания» (kind:"script" Конструктора ставит на предмет
@@ -656,7 +666,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         allOut:    !!opts.isAllOut,
         off:       offNote,
         maximal:   maximalOn,
-        recharge:  needsRecharge
+        recharge:  needsRecharge,
+        // Поломка человеческого оружия в руках Огрина (wdbc-flai): пустая
+        // строка, когда бросок не требовался вовсе.
+        ogrynBreak: ogrynBreakNote(ogrynBreak, item.name)
       },
       blocks: {
         props:         buildPropertyChatBlock(wProps),

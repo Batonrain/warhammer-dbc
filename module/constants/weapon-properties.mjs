@@ -366,9 +366,10 @@ export const WEAPON_PROPERTIES = {
     // Силы/сложения носителя, которых у aggregateAuto(props) нет (нет актора).
     // Реальный расчёт — ogrynAttackPenalty() в module/rules/ogryn-fit.mjs,
     // подключён в module/sheets/attack-dialog.mjs (wpAttackMod), устроен по
-    // образцу legion-fit.mjs. Закрепление оружия (снимает штрафы чужой
-    // стороны) и поломка при рукопашной атаке Огрина 1d10 на 1-3 пока не
-    // моделируются — см. шапку ogryn-fit.mjs.
+    // образцу legion-fit.mjs. Закрепление (снимает штрафы чужой стороны) —
+    // галочка окна атаки, module/sheets/attack/mods.mjs; поломка оружия при
+    // рукопашной атаке Огрина (1d10, на 1-3) — module/combat/
+    // ogryn-weapon-break.mjs, бросок после атаки.
     auto: { reinforced: true, hefty: "impact" }
   },
 

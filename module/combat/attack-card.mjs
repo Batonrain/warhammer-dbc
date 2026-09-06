@@ -527,6 +527,8 @@ export function attackCard({
         ? `<div class="roll-location">Место попадания: <b>${hitLocLabel}</b> (${locRoll})</div>`
         : "",
       notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : "",
+      // Огрин и человеческое оружие (wdbc-flai): бросок 1d10 после атаки.
+      notes.ogrynBreak ? `<div class="roll-wprop-note">${notes.ogrynBreak}</div>` : "",
       locShift ? locShiftSection(locShift, actorName) : "",
       gorget ? gorgetSection(gorget) : "",
       notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : "",

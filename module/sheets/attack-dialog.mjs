@@ -762,6 +762,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     targetToken,
     wProps,
     wp,
+    // Закрепление снимает штрафы ЧУЖОЙ стороны правила Огринов (оружие велико
+    // и не по руке); обратную сторону — Огрин с человеческим оружием — оно не
+    // трогает, там мешает не упор, а сама рукоять.
+    ogrynBracePenalty: ogrynFit.parts.some(p => p.label.startsWith("Огрины:")) ? ogrynFit.total : 0,
   });
 
   const makeMods = arr => arr.map(m => {
