@@ -74,11 +74,15 @@ function raceSections(lines, russianNames) {
   const anchors = [];
   lines.forEach((l, i) => { if (/^Стартовые\s+Характеристики/i.test(l)) anchors.push(i); });
 
+  // Регистр не значим: книга пишет заголовок раздела прописными («ССЛИТ»), а
+  // документ пака — как обычное имя («Сслиты»).
+  const byLower = new Map([...russianNames].map(n => [n.toLowerCase(), n]));
   const sections = [];
   anchors.forEach((at, n) => {
     let name = null;
     for (let j = at - 1; j >= 0 && j > at - 40; j--) {
-      if (russianNames.has(lines[j])) { name = lines[j]; break; }
+      const hit = byLower.get(String(lines[j]).toLowerCase());
+      if (hit) { name = hit; break; }
     }
     if (!name) return;
     sections.push({ name, from: at, to: anchors[n + 1] ?? lines.length });
@@ -200,14 +204,37 @@ function russianHalf(name) {
   return (parts[1] ?? parts[0]).trim();
 }
 
+/** Страницы ВСЕХ книг, где вообще есть блок «Стартовые Трейты». */
+function pagesWithTraits() {
+  const out = [];
+  for (const file of walk(path.join(ROOT, "packs-src/books"))) {
+    let book;
+    try { book = JSON.parse(fs.readFileSync(file, "utf8")); } catch { continue; }
+    for (const entry of book.entries || []) {
+      for (const page of entry.pages || []) {
+        const lines = pageLines(page.html);
+        // Имя страницы идёт первой строкой: у книг Аэльдари раздел расы
+        // назван именно страницей («ССЛИТ»), а внутри текста её имени нет.
+        if (lines.some(l => /^Стартовые\s+Трейты\s*:?$/i.test(l)))
+          out.push([String(page.name || ""), ...lines]);
+      }
+    }
+  }
+  return out;
+}
+
 /**
- * Сверка всех рас корбука.
+ * Сверка рас со ВСЕМИ книгами, а не только со страницей «РАСЫ» корбука.
+ *
+ * Рейтинги стартовых Трейтов встречаются и в других книгах: Сслиты и
+ * друкхари-Недорождённый живут в «Книге Аэльдари: Ответвления», и пока обход
+ * шёл по одной странице, они не сверялись вовсе.
+ *
  * @returns {{race:string, file:string, problems:string[]}[]}
  */
 export function compareRaces() {
-  const book = JSON.parse(fs.readFileSync(path.join(ROOT, "packs-src/books/core.json"), "utf8"));
-  const page = book.entries.flatMap(e => e.pages || []).find(p => p.name === "РАСЫ");
-  if (!page) throw new Error("в core.json нет страницы «РАСЫ» — сверять не с чем");
+  const pages = pagesWithTraits();
+  if (!pages.length) throw new Error("ни в одной книге нет блока «Стартовые Трейты» — сверять не с чем");
 
   const docs = walk(path.join(ROOT, "packs-src/races"))
     .map(file => ({ file, doc: JSON.parse(fs.readFileSync(file, "utf8")) }))
@@ -217,16 +244,22 @@ export function compareRaces() {
   for (const [inBook, inPack] of Object.entries(BOOK_NAME_ALIASES)) {
     if (byRussian.has(inPack)) byRussian.set(inBook, byRussian.get(inPack));
   }
-  const lines = pageLines(page.html);
-  const sections = raceSections(lines, new Set(byRussian.keys()));
+  const names = new Set(byRussian.keys());
   const fromRules = rulesLibraryTraits();
 
   const report = [];
-  for (const section of sections) {
+  // Раса могла попасть в несколько книг (перепечатка) — сверяем по первой
+  // найденной, иначе один и тот же документ отчитывался бы дважды.
+  const seen = new Set();
+  const sections = pages.flatMap(lines =>
+    raceSections(lines, names).map(section => ({ lines, section })));
+
+  for (const { lines, section } of sections) {
     const found = byRussian.get(section.name);
-    if (!found) continue;
+    if (!found || seen.has(found.file)) continue;
     const bookTraits = bookTraitsIn(lines, section);
     if (!bookTraits) continue;
+    seen.add(found.file);
 
     // Трейты расы приходят из двух мест: записи Конструктора в паке и правила
     // слоя правил. Сверять надо объединение — иначе раса, переведённая на
