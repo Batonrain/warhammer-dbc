@@ -236,6 +236,7 @@ function baselineFor(item, path) {
     const stored = item.flags?.[FLAG]?.contentSync?.effectsBaseline;
     return Array.isArray(stored) ? stored : effectsOf(item);
   }
+
   const stored = item.flags?.[FLAG]?.contentSync?.baseline;
   if (stored && Object.prototype.hasOwnProperty.call(stored, path)) return stored[path];
   return item.system?.[path];
@@ -263,7 +264,27 @@ export function diffItemAgainstPack(item, packDoc) {
     const baseVal = baselineFor(item, path);
     if (sameValue(packVal, baseVal)) continue;
     const actorVal = valueAt(item, path);
-    const status = sameValue(actorVal, baseVal) ? "clean" : "conflict";
+    let status = sameValue(actorVal, baseVal) ? "clean" : "conflict";
+
+    // Эффекты БЕЗ сохранённой опоры — всегда «решает ГМ», даже когда по
+    // формуле выходит «чисто» (wdbc-9aj9, найдено живой проверкой).
+    //
+    // Опора у поля без своего снимка берётся равной текущему значению, и тогда
+    // любое расхождение с паком автоматически считается «чистым» — то есть
+    // «актёр не правил». Для полей system это приемлемо: их правит ГМ через
+    // лист, и снимок опоры у старых предметов уже проставлен миграцией. Для
+    // эффектов снимка нет ни у одного предмета в мире, а правка руками —
+    // штатный способ работы с шаблонными Чертами вида «Сверхъестественная
+    // Сила (X)»: в паке лежит дефолтный +1, а ГМ вписывает степень конкретного
+    // персонажа. Замер на живом мире: у двух персонажей стояло верное +2, и
+    // строка предлагала «безопасно» откатить его на паковый +1.
+    //
+    // Утверждать «актёр не правил», когда сравнивать не с чем, значит врать.
+    // Один прогон с применением проставит опору, и дальше поле заработает как
+    // все остальные.
+    if (path === EFFECTS_PATH && !Array.isArray(item.flags?.[FLAG]?.contentSync?.effectsBaseline))
+      status = "conflict";
+
     out.push({ path, baseVal, actorVal, packVal, status });
   }
   return out;

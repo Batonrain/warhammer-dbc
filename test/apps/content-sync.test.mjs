@@ -281,13 +281,27 @@ const fxItem = ({ id = "a1", name = "Латы", type = "armor", system = {},
 const fxDoc = (uuid, name, type, effects, system = {}) => ({ uuid, name, type, system, effects });
 
 describe("Эффекты предмета участвуют в сверке (wdbc-9aj9)", () => {
-  it("у персонажа эффект со старым числом, в паке новое — строка «чисто»", () => {
+  it("у персонажа эффект со старым числом, в паке новое — строка есть, решает ГМ", () => {
+    // Именно «решает ГМ», а не «чисто»: опоры у эффектов нет ни у одного
+    // предмета в мире, а значит утверждать «актёр не правил» не на чем.
+    // Живой замер: у двух персонажей ГМ вручную вписал верную степень
+    // шаблонной Черты, и «чистая» строка предлагала откатить её на паковую.
     const pack = fxDoc("u1", "Латы", "armor", [fx("Латы", [ch("system.armour.body", 6)])]);
     const item = fxItem({ src: "u1", effects: [fx("Латы (перенесено)", [ch("system.armour.body", 12)])] });
     const row = diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH);
     expect(row).toBeTruthy();
-    expect(row.status).toBe("clean");
+    expect(row.status).toBe("conflict");
     expect(row.packVal[0].changes[0].value).toBe(6);
+  });
+
+  it("после первого применения опора есть — строка становится обычной «чистой»", () => {
+    const pack = fxDoc("u1", "Латы", "armor", [fx("Латы", [ch("system.armour.body", 6)])]);
+    const base = [{ name: "Латы", transfer: true, statuses: [],
+                    changes: [{ key: "system.armour.body", type: "add", value: 12, phase: "final", priority: 0 }] }];
+    const item = fxItem({ src: "u1", effectsBaseline: base,
+                          effects: [fx("Латы", [ch("system.armour.body", 12)])] });
+    const row = diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH);
+    expect(row.status).toBe("clean");
   });
 
   it("эффекты совпадают с паком — строки нет вовсе", () => {
