@@ -61,7 +61,12 @@ async function promptWeapon(actor, currentId) {
 export async function useGunArm(actor, item) {
   if (!isGunArmGift(item) || !actor) return;
   const weaponId = await promptWeapon(actor, gunArmWeaponOf(actor)?.id);
-  if (weaponId) await applyGunArm(actor, item, weaponId);
+  if (!weaponId) return;
+  await applyGunArm(actor, item, weaponId);
+  // Метка живёт на ОРУЖИИ, а показывает её лист ДАРА — сам он об изменении не
+  // узнаёт и остаётся с прежней строкой «Оружие не выбрано» (замечено живой
+  // проверкой wdbc-qefa). Перерисовываем его руками.
+  item.sheet?.render(false);
 }
 
 /**
