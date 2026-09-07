@@ -55,6 +55,7 @@ import { rangeBandBoundaries }                from "../rules/tactical-map.mjs";
 import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { weaponProfiles, attackIsMelee }         from "../combat/weapon-profiles.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
+import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -186,9 +187,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // иначе окно атаки разрешило бы хват, которого бюджет рук не знает.
   const oneHandRifleGrip = (!isMelee && sys.weaponClass === "basic"
                          && hasRuleFlag(actor, "weapon.oneHandedRifle")) ? "1р" : null;
+  // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60): книга
+  // разрешает одну руку и отдельно оговаривает, что дальность при этом НЕ
+  // режется — в отличие от модификации Pistol Grip. Список оружия именной, а
+  // не по классу/свойству: во всех шестнадцати книгах такое правило одно.
+  const pathOneHandGrip = (!isMelee && isPathOneHandedWeapon(item)
+                        && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) ? "1р" : null;
   const extraGrips = [...modGrantedGrips, ...(commandoGrip ? [commandoGrip] : []),
                       ...(doubleGripGrip ? [doubleGripGrip] : []),
-                      ...(oneHandRifleGrip ? [oneHandRifleGrip] : [])];
+                      ...(oneHandRifleGrip ? [oneHandRifleGrip] : []),
+                      ...(pathOneHandGrip ? [pathOneHandGrip] : [])];
   const ownGrips = parseGrips(sys.grips);
   // Предмет без собственного sys.grips (пак ещё не заполнен, стр. 171) —
   // добавляем природный Хват по классу, иначе доп. Хват окажется в списке
@@ -205,9 +213,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const sBonus    = actor.system.characteristics?.s?.bonus ?? 0;
   // Рука Смерти форсирует "1р" безусловно — игнорирует и techniqueOpts, и
   // сохранённый hudGrip (тот же выбор, что currentMeleeGrip в hands.mjs).
+  // Сохранённый hudGrip сверяется со списком РЕАЛЬНО доступных сейчас хватов —
+  // ровно так же, как это делает бюджет рук (rules/hands.mjs::
+  // effectiveRangedGripHands). Без сверки окно атаки показывало «Руки: 1» по
+  // хвату, которого больше нет: игрок выбрал «одной рукой» от Пути Воина или
+  // от Откатной Перчатки, источник возможности пропал — пилюль выбора уже нет,
+  // а старое значение всё ещё читалось (найдено живой проверкой wdbc-4e60).
+  const savedGrip = item.getFlag?.("warhammer-dbc", "hudGrip");
   const gripKey   = isFusedByHandOfDeath(item) ? primGrip
                  : (techniqueOpts.gripKey
-                 ?? item.getFlag?.("warhammer-dbc", "hudGrip")
+                 ?? (gripList.includes(savedGrip) ? savedGrip : null)
                  ?? primGrip);
   // Double Grip (wdbc-mu6v, стр. 62): держа пистолет "2р", Прицеливание
   // +15/+30 вместо +10/+20, Короткие/Длинные очереди +5/+10 сверх обычного.

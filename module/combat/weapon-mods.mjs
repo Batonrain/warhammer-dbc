@@ -85,7 +85,10 @@ export function getModEffects(actor, weapon) {
   // в module/documents/actor.mjs). ──
   for (const talent of actor.items) {
     if (talent.type !== "talent") continue;
-    const wb = talent.system.effects?.weaponBuff;
+    // system?. — предмет сюда приходит не только настоящим документом Foundry:
+    // бюджет рук считают и на сырых объектах (тесты, компендиум), а талант без
+    // system роняет весь расчёт занятости рук (wdbc-4e60).
+    const wb = talent.system?.effects?.weaponBuff;
     if (!wb || !wb.enabled) continue;
     const scope = wb.scope || "equipped";
     if (scope === "equipped" && !weapon.system.equipped) continue;

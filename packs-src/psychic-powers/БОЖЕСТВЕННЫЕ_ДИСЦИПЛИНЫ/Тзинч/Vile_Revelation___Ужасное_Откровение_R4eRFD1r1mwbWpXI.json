@@ -46,7 +46,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "requirement": "Метка Тзинча, PR 5+, P 50+"
   },
   "_id": "R4eRFD1r1mwbWpXI",
   "effects": [],

@@ -56,6 +56,7 @@ export class ArmorData extends foundry.abstract.TypeDataModel {
       leftLeg:      num(0, "AP: левая нога"),
       rightLeg:     num(0, "AP: правая нога"),
       quality:      new StringField({ initial: "common", label: "Качество" }),
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       availability: num(0, "Доступность"),
       weight:       num(0, "Вес"),
       properties:   new ArrayField(new ObjectField(), { label: "Свойства" }),

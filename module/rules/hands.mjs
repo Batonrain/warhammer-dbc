@@ -21,6 +21,7 @@ import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { isPathOneHandedWeapon } from "./library/paths.mjs";
 
 const NS = "warhammer-dbc";
 const BASE_HANDS = 2;
@@ -73,7 +74,11 @@ function availableRangedGrips(item, actor) {
   // рукой (wdbc-f7iw, wdbc-6tzk).
   const oneHandRifle = item.system?.weaponClass === "basic"
                     && hasRuleFlag(actor, "weapon.oneHandedRifle");
-  return oneHandRifle && !own.includes("1р") ? [...own, "1р"] : own;
+  // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же
+  // список читает окно атаки; расходиться этим двум местам нельзя.
+  const pathOneHand = isPathOneHandedWeapon(item)
+                   && hasRuleFlag(actor, "weapon.oneHandedWarriorPath");
+  return (oneHandRifle || pathOneHand) && !own.includes("1р") ? [...own, "1р"] : own;
 }
 
 /**
@@ -182,10 +187,18 @@ export function maxHands(actor) {
   return Math.max(0, baseHandsFromTraits(actor) - lost);
 }
 
-/** Экипированные предметы, реально занимающие руки (щиты — тоже type:"weapon"). */
+/**
+ * Экипированные предметы, реально занимающие руки (щиты — тоже type:"weapon").
+ *
+ * Актор передаётся в weaponHandsRequired ЯВНО, а не добывается из item.parent:
+ * от него зависят возможности («винтовку одной рукой», «Стрела Кхейна у адепта
+ * Пути Воина») и гейт Отдачи по S.b, а parent есть только у настоящего
+ * Foundry-документа. Раз актор здесь и так на руках, полагаться на обратную
+ * ссылку незачем.
+ */
 export function handHeldItems(actor) {
   return (actor?.items ? [...actor.items] : [])
-    .filter(i => i.type === "weapon" && i.system?.equipped && weaponHandsRequired(i) > 0);
+    .filter(i => i.type === "weapon" && i.system?.equipped && weaponHandsRequired(i, actor) > 0);
 }
 
 /**
@@ -194,7 +207,7 @@ export function handHeldItems(actor) {
  */
 export function handsOccupied(actor, { exclude = null } = {}) {
   const items = handHeldItems(actor).filter(i => i.id !== exclude);
-  const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i), 0);
+  const used  = items.reduce((sum, i) => sum + weaponHandsRequired(i, actor), 0);
   const max   = maxHands(actor);
   return { max, used, free: Math.max(0, max - used), over: used > max, items };
 }
@@ -205,7 +218,7 @@ export function handsOccupied(actor, { exclude = null } = {}) {
  * связки на старых листах персонажей этим не блокируются и не трогаются.
  */
 export function canEquipInHands(actor, item) {
-  const need = weaponHandsRequired(item);
+  const need = weaponHandsRequired(item, actor);
   if (need <= 0) return true;
   return need <= handsOccupied(actor, { exclude: item.id }).free;
 }

@@ -379,9 +379,9 @@
     },
     "psyker": {
       "class": "daemonic",
-      "rating": 0,
+      "rating": 9,
       "sustain": 0,
-      "currentRating": 0
+      "currentRating": 9
     },
     "cognition": {
       "value": 0,

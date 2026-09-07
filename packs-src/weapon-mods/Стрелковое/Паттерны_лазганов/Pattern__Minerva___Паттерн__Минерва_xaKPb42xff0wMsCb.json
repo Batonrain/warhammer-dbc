@@ -29,7 +29,8 @@
       "addProps": [],
       "removeProps": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": ""
   },
   "_id": "xaKPb42xff0wMsCb",
   "effects": [],

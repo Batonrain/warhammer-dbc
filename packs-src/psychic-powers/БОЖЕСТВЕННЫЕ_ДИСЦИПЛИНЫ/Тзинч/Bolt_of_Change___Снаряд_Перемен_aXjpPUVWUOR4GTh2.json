@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "t",
-    "resistMod": 0
+    "resistMod": 0,
+    "requirement": "Метка Тзинча, PR 5+, W 50+"
   },
   "_id": "aXjpPUVWUOR4GTh2",
   "effects": [],

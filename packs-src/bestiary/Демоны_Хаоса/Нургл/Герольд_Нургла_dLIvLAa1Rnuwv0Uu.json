@@ -371,9 +371,9 @@
     },
     "psyker": {
       "class": "bound",
-      "rating": 0,
+      "rating": 5,
       "sustain": 0,
-      "currentRating": 0
+      "currentRating": 5
     },
     "cognition": {
       "value": 0,

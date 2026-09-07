@@ -83,7 +83,10 @@ export function creatureSchema({ granted = false } = {}) {
       ...(granted ? { grantedImp: str("none", "Улучшение от источника") } : {}),
       total:        num(0, "Значение"),
       bonus:        num(0, "Бонус"),
-      cost:         num(0, "Потрачено опыта")
+      cost:         num(0, "Потрачено опыта"),
+      // ГМ вписал цену руками — пересчёт по Склонностям/Покровительству её не
+      // трогает (wdbc-rcr9). Тот же приём, что у Талантов (item/talent.mjs).
+      costManual:   bool(false, "Цена задана вручную")
     }, { label: def.label });
   }
 
@@ -100,6 +103,8 @@ export function creatureSchema({ granted = false } = {}) {
       rank: str("untrained", "Ранг"),
       ...(granted ? { grantedRank: str("untrained", "Ранг от источника") } : {}),
       cost:  num(0, "Потрачено опыта"),
+      // См. characteristics.costManual выше (wdbc-rcr9).
+      costManual: bool(false, "Цена задана вручную"),
       // Постоянная прибавка к Навыку (wdbc-q4wb): снаряжение, обстоятельства,
       // договорённость за столом — всё, что держится дольше одного броска.
       // Входит в total (rules/character.mjs) и потому сразу оказывается в

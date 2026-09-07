@@ -114,7 +114,10 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
 
     expect(sheet.actor.updates[0]).toEqual({
       "system.characteristics.ws.improvement": "trained",
-      "system.characteristics.ws.cost": 850                 // 100+250+500, Дружественная
+      "system.characteristics.ws.cost": 850,                // 100+250+500, Дружественная
+      // Цену поставила сама эта ветка — пометка «вписано руками» снимается,
+      // иначе строка выпала бы из пересчёта по Склонностям (wdbc-rcr9).
+      "system.characteristics.ws.costManual": false
     });
   });
 
@@ -128,14 +131,16 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
     await handlers[".grant-toggle[data-char]:click"](ev({ char: "ws" }));
     expect(sheet.actor.updates[0]).toEqual({
       "system.characteristics.ws.grantedImp": "trained",
-      "system.characteristics.ws.cost": 0
+      "system.characteristics.ws.cost": 0,
+      "system.characteristics.ws.costManual": false
     });
 
     // Повторное нажатие снимает ★ — за уровень снова платят.
     await handlers[".grant-toggle[data-char]:click"](ev({ char: "ws" }));
     expect(sheet.actor.updates[1]).toEqual({
       "system.characteristics.ws.grantedImp": "none",
-      "system.characteristics.ws.cost": 850
+      "system.characteristics.ws.cost": 850,
+      "system.characteristics.ws.costManual": false
     });
   });
 
@@ -161,7 +166,8 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
 
     expect(sheet.actor.updates[0]).toEqual({
       "system.skills.medicae.grantedRank": "knows",
-      "system.skills.medicae.cost": 0
+      "system.skills.medicae.cost": 0,
+      "system.skills.medicae.costManual": false
     });
   });
 
@@ -208,7 +214,7 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
 
     expect(sheet.actor.updates[0]).toEqual({
       "system.groupSkills.scholasticLore": [
-        { specialty: "Тактика", rank: "trained", char: "int", cost: 0, grantedRank: "trained" }
+        { specialty: "Тактика", rank: "trained", char: "int", cost: 0, grantedRank: "trained", costManual: false }
       ]
     });
   });
@@ -224,7 +230,8 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
 
     expect(sheet.actor.updates[0]).toEqual({
       "system.skills.medicae.rank": "trained",
-      "system.skills.medicae.cost": 350                     // одна ступень: первая выдана
+      "system.skills.medicae.cost": 350,                    // одна ступень: первая выдана
+      "system.skills.medicae.costManual": false
     });
   });
 
@@ -238,8 +245,9 @@ describe("вкладка РАЗВИТИЕ: характеристики и на�
 
     expect(sheet.actor.updates).toEqual([
       { "system.characteristics.ws.base": 35 },
-      { "system.characteristics.ws.cost": 500 },
-      { "system.skills.medicae.cost": 0 }
+      // Ввод в поле «Цена» руками взводит costManual (wdbc-rcr9).
+      { "system.characteristics.ws.cost": 500, "system.characteristics.ws.costManual": true },
+      { "system.skills.medicae.cost": 0, "system.skills.medicae.costManual": true }
     ]);
   });
 });
