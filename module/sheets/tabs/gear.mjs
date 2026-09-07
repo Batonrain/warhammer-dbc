@@ -4,7 +4,7 @@
 //  Функции принимают актора, а не лист.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
+import { syncItemEffectsDisabled, syncOrphanedModEffects } from "../../apps/effects.mjs";
 import { _reloadWeapon } from "../../combat/reload.mjs";
 import { _toggleShield, _rollShieldActivation, _repairShield } from "../../combat/shield.mjs";
 import { on } from "../../helpers/utils.mjs";
@@ -59,8 +59,7 @@ export async function equipItem(item, equipped) {
   await syncItemEffectsDisabled(item, equipped);
   // Эффекты установленных модификаций гаснут вместе с носителем (isItemActive),
   // но update пришёл не им — пересчитываем сами.
-  for (const mod of item.parent?.items ?? [])
-    if (mod.system?.installedOn === item.id) await syncItemEffectsDisabled(mod);
+  await syncOrphanedModEffects(item.parent, item.id);
 }
 
 export async function setShieldHand(item, hand) {

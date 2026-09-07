@@ -43,7 +43,7 @@ import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
          saveItemMechanics, mechanicsRelevantChange } from "./module/apps/mechanics.mjs";
-import { isItemActive }              from "./module/apps/effects.mjs";
+import { isItemActive, syncOrphanedModEffects } from "./module/apps/effects.mjs";
 import { raceKeyOf } from "./module/apps/race-library.mjs"; // + хуки кэша рас (пак читается по готовности мира)
 import { applyRace, applySubrace, SKIP_MECHANICS_HOOK } from "./module/apps/races.mjs";
 import { backfillAspirationGrants } from "./module/apps/aspirations.mjs";
@@ -1693,6 +1693,18 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   if (game.user.id !== userId) return;
   if (!isCyberneticExcellence(item) || !(item.parent instanceof Actor)) return;
   await syncCyberneticExcellenceArms(item.parent);
+});
+
+// Модификация пережила своего носителя (wdbc-z6em). Удалили оружие или броню,
+// в которую вставлена модификация, — сама модификация остаётся на листе
+// сиротой, и её бонусы обязаны погаснуть вместе с вещью. isItemActive это уже
+// считает, но сохранённый флаг ActiveEffect.disabled сам не пересчитывается:
+// update пришёл удалённому носителю, а не моду. Тот же вызов, что при снятии
+// носителя (sheets/tabs/gear.mjs::setEquipped).
+Hooks.on("deleteItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!(item.parent instanceof Actor)) return;
+  await syncOrphanedModEffects(item.parent, item.id);
 });
 
 // Мутация «Рука Смерти» (wdbc-hftn): удаление ЛЮБОЙ из двух сторон слияния

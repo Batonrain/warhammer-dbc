@@ -58,13 +58,21 @@ export function isItemActive(item) {
       if (!sys.installedOn || (sys.activatable && !sys.active)) return false;
       // Носитель в рюкзаке механику не даёт: так считал старый расчёт
       // модификаций брони (getInstalledArmorMods в combat/armor-mods.mjs), и
-      // эффекты, забравшие эту механику, обязаны считать так же. Носителя не
-      // нашли (предмет пака, битая ссылка) — судим по своим полям, как раньше.
+      // эффекты, забравшие эту механику, обязаны считать так же.
       // Потолок: снятый шлем и требование силовой брони у систем сюда не
       // заведены — их по-прежнему знает только getInstalledArmorMods, то есть
       // старое поле. Заводить, когда такая механика уедет в эффект.
       const host = item.parent?.items?.get(sys.installedOn);
-      return host ? !!host.system?.equipped : true;
+      if (host) return !!host.system?.equipped;
+      // Носителя по ссылке нет — и это два разных случая (wdbc-z6em):
+      //   • предмет вообще не на акторе (компендиум, боковая панель) —
+      //     носителя там и не может быть, судим по своим полям, как раньше;
+      //   • предмет НА АКТОРЕ, а носителя с таким id нет — значит вещь, в
+      //     которую мод вставлен, удалили. Мод осиротел, и его бонусы обязаны
+      //     погаснуть вместе с носителем, а не остаться висеть на персонаже.
+      // Так же — «нет носителя на акторе, значит неактивна» — этот случай уже
+      // считает module/rules/character.mjs (isActiveArmorMod).
+      return !item.parent;
     }
     case "psychicPower": return !!sys.isSustained;
     case "techPower": {
@@ -138,6 +146,29 @@ export function isItemActive(item) {
  * после любого update, меняющего это состояние. Явный override нужен там, где
  * состояние ставится не флагом предмета, а вызывающим кодом.
  */
+/**
+ * Пересчитать эффекты модификаций, установленных в ЭТОТ носитель (wdbc-z6em).
+ *
+ * Нужна там, где состояние поменялось у носителя, а не у самой модификации:
+ * носитель сняли (sheets/tabs/gear.mjs::setEquipped) или УДАЛИЛИ вовсе
+ * (Hooks.on("deleteItem"), warhammer-dbc.mjs). isItemActive в обоих случаях
+ * уже отвечает «неактивна», но сохранённый флаг ActiveEffect.disabled сам не
+ * пересчитывается — update пришёл не моду.
+ *
+ * Живая проверка 06.09.2026: без этого вызова бонус модификации продолжал
+ * висеть на персонаже после удаления брони, хотя предикат был верный, а
+ * юнит-тест на него — зелёный.
+ *
+ * @param {Actor}  actor   владелец модификаций
+ * @param {string} hostId  id носителя, состояние которого поменялось
+ */
+export async function syncOrphanedModEffects(actor, hostId) {
+  if (!actor || !hostId) return;
+  for (const mod of actor.items ?? []) {
+    if (mod.system?.installedOn === hostId) await syncItemEffectsDisabled(mod);
+  }
+}
+
 export async function syncItemEffectsDisabled(item, activeOverride) {
   const active = activeOverride !== undefined ? activeOverride : isItemActive(item);
   // item.effects.contents ?? item.effects ?? [] (wdbc-s9dj): настоящая
