@@ -20,7 +20,9 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 import { determinationToFightParryBonus } from "../rules/determination-to-fight.mjs";
 import { canParryPsychic, psychicParryOutcome, hasBladeShield } from "./blade-shield.mjs";
-import { crossblockPair, CROSSBLOCK_SIZE_STEPS } from "../rules/dual-wield-talents.mjs";
+import { crossblockPair, CROSSBLOCK_SIZE_STEPS, maineGaucheParryReroll }
+  from "../rules/dual-wield-talents.mjs";
+import { attackedPrevTurn } from "../rules/turn-flags.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -356,7 +358,12 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // roll×2 + pickReroll, что у Уклонения выше.
   const dancerAdvantage = danceOfFireAdvantage(actor, burst);
   const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
+  // Мэн-Гош (стр. 62, wdbc-pb60): «перебрасывать тесты на Парирование ЭТИМ
+  // ножом», если им не били в предыдущий Ход. Переброс с выбором лучшего — то
+  // же самое, что делают два Преимущества выше, поэтому считается тем же
+  // приёмом, а не отдельной веткой.
+  const maineGauche     = maineGaucheParryReroll(actor, meleeWeapon, attackedPrevTurn(actor));
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche;
   const rolled = [];
   for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
@@ -385,7 +392,14 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const leftover = passed && isMelee ? deg - negated : 0;
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
-  if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
+  if (picked.dropped.length) {
+    // Книга называет это по-разному, и подпись должна называть так же: у
+    // Танца и Сотни это Преимущество, у Мэн-Гоша — переброс.
+    modParts.push(
+      dancerAdvantage ? `Танец Среди Огня: Преимущество, отброшено ${picked.dropped.join(", ")}`
+      : hordeAdvantage ? `Один Против Сотни: Преимущество, отброшено ${picked.dropped.join(", ")}`
+      : `Мэн-Гош: переброс ножом, отброшено ${picked.dropped.join(", ")}`);
+  }
 
   let outcomeHtml;
   if (!passed) {

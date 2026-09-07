@@ -9,7 +9,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import {
   crossblockPair, pounderPair, savagePair, savageExtraHits, gunGuardCancelsDodgeBonus,
-  CAP_CROSSBLOCK, CAP_POUNDER, CAP_SAVAGE, CAP_GUN_GUARD
+  maineGaucheParryReroll,
+  CAP_CROSSBLOCK, CAP_POUNDER, CAP_SAVAGE, CAP_GUN_GUARD, CAP_MAINE_GAUCHE
 } from "../../module/rules/dual-wield-talents.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -136,5 +137,43 @@ describe("Дикарь — надбавка Успехов считается т
   it("без второго когтя надбавки нет", () => {
     const c1 = weapon({ cat: "Когти" });
     expect(savageExtraHits(hero([c1, weapon({ cat: "Меч" })], CAP_SAVAGE), c1)).toBe(0);
+  });
+});
+
+describe("Мэн-Гош — переброс Парирования ножом", () => {
+  it("нож, которым не били в прошлый Ход, даёт переброс", () => {
+    const knife = weapon({ cat: "Нож" });
+    const a = hero([weapon({ cat: "Меч" }), knife], CAP_MAINE_GAUCHE);
+    expect(maineGaucheParryReroll(a, knife, [])).toBe(true);
+  });
+
+  it("тем же ножом били в прошлый Ход — переброса нет", () => {
+    const knife = weapon({ cat: "Нож" });
+    const a = hero([weapon({ cat: "Меч" }), knife], CAP_MAINE_GAUCHE);
+    expect(maineGaucheParryReroll(a, knife, [knife.id])).toBe(false);
+  });
+
+  it("били ДРУГИМ оружием — нож свободен, переброс есть", () => {
+    const knife = weapon({ cat: "Нож" });
+    const sword = weapon({ cat: "Меч" });
+    const a = hero([sword, knife], CAP_MAINE_GAUCHE);
+    expect(maineGaucheParryReroll(a, knife, [sword.id])).toBe(true);
+  });
+
+  it("парируем не ножом — правило не про это оружие", () => {
+    const knife = weapon({ cat: "Нож" });
+    const sword = weapon({ cat: "Меч" });
+    const a = hero([sword, knife], CAP_MAINE_GAUCHE);
+    expect(maineGaucheParryReroll(a, sword, [])).toBe(false);
+  });
+
+  it("одна занятая рука — книга требует двух оружий", () => {
+    const knife = weapon({ cat: "Нож" });
+    expect(maineGaucheParryReroll(hero([knife], CAP_MAINE_GAUCHE), knife, [])).toBe(false);
+  });
+
+  it("без Таланта переброса нет", () => {
+    const knife = weapon({ cat: "Нож" });
+    expect(maineGaucheParryReroll(hero([weapon({ cat: "Меч" }), knife]), knife, [])).toBe(false);
   });
 });

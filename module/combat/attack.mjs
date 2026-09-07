@@ -28,6 +28,7 @@ import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
 import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair }
                                                       from "../rules/dual-wield-talents.mjs";
+import { attackedThisTurn }                           from "../rules/turn-flags.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
@@ -609,6 +610,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     ? "🔨 Молотильщик: успешно Парировавший этот удар теряет все неиспользованные Успехи "
       + "и парирует второе оружие пары отдельным тестом (если остались Реакции)."
     : "";
+
+  // Чем актор атаковал в этом Ходу (wdbc-pb60): Мэн-Гош даёт переброс
+  // Парирования ножом, которым НЕ били в предыдущий Ход, и без этого следа
+  // ответить на его вопрос нечем. Список переезжает на Ход назад в
+  // resetActionEconomy (rules/turn-flags.mjs::turnStartAttackCarryOver).
+  if (item?.id && typeof actor.setFlag === "function") {
+    const already = attackedThisTurn(actor);
+    if (!already.includes(String(item.id)))
+      await actor.setFlag("warhammer-dbc", "attackedThisTurn", [...already, String(item.id)]);
+  }
 
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);
   if (needsRecharge) await item.update({ "system.needsRecharge": true, "system.rechargeTurnsRemaining": 1 });

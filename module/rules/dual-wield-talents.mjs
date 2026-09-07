@@ -9,12 +9,14 @@
 //  держал эффект в голове.
 //
 //  Здесь только условия и числа — чистые функции без Foundry и без интерфейса.
-//  Кто зовёт и куда подключено (Мэн-Гош и «Огонь из Всех Орудий» ещё не
-//  подключены — им нужны, соответственно, память «чем бил в прошлый Ход» и
-//  контекст пары в окне атаки; оба остались в wdbc-pb60):
+//  Кто зовёт и куда подключено («Огонь из Всех Орудий» ещё не подключён — ему
+//  нужен режим огня второй руки в окне атаки, которого пока нет: вторая рука
+//  всегда стреляет одиночным; остался в wdbc-pb60):
 //
 //   • Крестовой Блок — module/combat/defense.mjs: parryProfile суммирует бонусы
 //     Парирования ОБОИХ оружий, _performParry прячет кнопку Контратаки.
+//   • Мэн-Гош — module/combat/defense.mjs::_performParry (переброс теста
+//     Парирования ножом, которым не били в прошлый Ход).
 //   • Молотильщик — module/combat/attack.mjs + attack-card.mjs (примечание
 //     защищающемуся: успешное Парирование сжигает Успехи и требует второго
 //     теста — «неиспользованных Успехов защиты» система не хранит, обнулять
@@ -37,6 +39,7 @@ import { hasRuleFlag } from "./flags.mjs";
 import { handHeldItems } from "./hands.mjs";
 
 export const CAP_CROSSBLOCK       = "dualWield.core.crossblock";
+export const CAP_MAINE_GAUCHE     = "dualWield.core.maineGauche";
 export const CAP_POUNDER          = "dualWield.core.pounder";
 export const CAP_SAVAGE           = "dualWield.core.savage";
 export const CAP_GUN_GUARD        = "dualWield.core.gunGuard";
@@ -86,6 +89,26 @@ export function pounderPair(actor) {
   if (!hasRuleFlag(actor, CAP_POUNDER)) return null;
   const hits = heldWeapons(actor).filter(w => cls(w) === "melee" && POUNDER_CATEGORIES.includes(cat(w)));
   return hits.length >= 2 ? { main: hits[0], off: hits[1] } : null;
+}
+
+/**
+ * Мэн-Гош: «вооружённый двумя оружиями, одно из которых нож, и НЕ использовав
+ * этот нож для атаки в предыдущий Ход, персонаж может перебрасывать тесты на
+ * Парирование этим ножом».
+ *
+ * Три условия, и все три обязательны: две руки заняты, парируем именно ножом,
+ * и этим самым ножом не били в прошлый Ход. Список «чем бил» ведёт
+ * rules/turn-flags.mjs — событие боя, а не свойство предмета.
+ *
+ * @param {object} actor
+ * @param {object} parryWeapon оружие, которым сейчас парируют
+ * @param {string[]} attackedIds id оружия, которым актор бил в прошлый Ход
+ */
+export function maineGaucheParryReroll(actor, parryWeapon, attackedIds = []) {
+  if (!hasRuleFlag(actor, CAP_MAINE_GAUCHE)) return false;
+  if (!isMeleeCat(parryWeapon, "Нож")) return false;
+  if (heldWeapons(actor).length < 2) return false;
+  return !attackedIds.map(String).includes(String(parryWeapon.id));
 }
 
 /** Дикарь: «вооружённый парными когтями». */
