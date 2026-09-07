@@ -367,6 +367,60 @@ describe("порог и гейт требований (ritualThreshold)", () => 
       const d = ritualThreshold(baseR({ type: "circle", demonGod: "khorne" }), hero({ marks: ["khorne"] }), null);
       expect(d.threshold).toBe(-20 - 20);
     });
+
+    // «Персонаж имеет покровительство или метку враждебного бога −20». Кто кому
+    // враждебен, книга определяет один раз — матрицей отношений Богов
+    // (корбук, стр. 23: Слаанеш↔Кхорн и Нургл↔Тзинч «Вражд.», Неделимый
+    // нейтрален всем), она же считает цену Продвижений. Второго определения в
+    // книге нет, поэтому строка Призыва читается ею же.
+    describe("враждебный Бог −20 по матрице отношений (стр. 23)", () => {
+      it("Метка Слаанеш при вызове кхорнита — −20", () => {
+        const d = ritualThreshold(baseR({ demonGod: "khorne" }), hero({ marks: ["slaanesh"] }), null);
+        expect(d.threshold).toBe(-20 - 20 - 20);
+        expect(d.rows.some(r => r.label.includes("Враждебный Бог: Слаанеш"))).toBe(true);
+      });
+
+      it("для −20 годится и одно Покровительство, без Метки", () => {
+        const d = ritualThreshold(baseR({ demonGod: "nurgle" }), hero({ patron: "tzeentch" }), null);
+        expect(d.threshold).toBe(-20 - 20 - 20);
+        expect(d.rows.some(r => r.label.includes("Враждебный Бог: Тзинч"))).toBe(true);
+      });
+
+      it("нейтральный Бог штрафа не даёт — враждебны только две пары", () => {
+        for (const [demon, mine] of [["khorne", "nurgle"], ["khorne", "tzeentch"],
+                                     ["slaanesh", "nurgle"], ["nurgle", "khorne"]]) {
+          const d = ritualThreshold(baseR({ demonGod: demon }), hero({ marks: [mine] }), null);
+          expect(d.threshold, `${mine} → ${demon}`).toBe(-20 - 20);
+        }
+      });
+
+      it("Неделимый нейтрален всем в обе стороны", () => {
+        expect(ritualThreshold(baseR({ demonGod: "undivided" }), hero({ marks: ["khorne"] }), null).threshold)
+          .toBe(-20 - 20);
+        expect(ritualThreshold(baseR({ demonGod: "khorne" }), hero({ patron: "undivided" }), null).threshold)
+          .toBe(-20 - 20);
+      });
+
+      it("своя Метка и вражеский фавор складываются: +30 и −20 разом", () => {
+        // Отдельные строки таблицы про РАЗНЫХ богов — взаимоисключение книга
+        // прописывает только Метке с Покровительством одного и того же бога.
+        const d = ritualThreshold(baseR({ demonGod: "khorne" }),
+          hero({ marks: ["khorne"], patron: "slaanesh" }), null);
+        expect(d.threshold).toBe(-20 - 20 + 30 - 20);
+      });
+
+      it("Бог демона не назван — строка остаётся ручной", () => {
+        const d = ritualThreshold(baseR({ summon: { enemyMark: true } }), hero({ marks: ["slaanesh"] }), null);
+        expect(d.threshold).toBe(-20 - 20 - 20);
+        expect(d.rows.some(r => r.label.includes("Враждебный Бог"))).toBe(false);
+      });
+
+      it("ручная отметка при названном боге не даёт вторых −20", () => {
+        const d = ritualThreshold(baseR({ demonGod: "khorne", summon: { enemyMark: true } }),
+          hero({ marks: ["slaanesh"] }), null);
+        expect(d.threshold).toBe(-20 - 20 - 20);
+      });
+    });
   });
 });
 

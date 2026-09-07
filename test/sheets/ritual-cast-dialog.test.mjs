@@ -248,6 +248,15 @@ describe("диалог «Провести ритуал»", () => {
       expect(captured.dialog.content).toContain("Метка Кхорна");
     });
 
+    it("Метка враждебного Бога даёт −20 сама — по матрице отношений корбука", async () => {
+      const promise = showRitualCastDialog(marked("slaanesh"), item({ failureType: "summon", testMod: 0 }));
+      captured.dice = [1, 50];
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0", "#rit-demon-god": "khorne" }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("Враждебный Бог: Слаанеш: -20");
+    });
+
     it("Бог не назван — ничего не подставляется", async () => {
       const promise = showRitualCastDialog(marked("khorne"), item({ failureType: "summon", testMod: 0 }));
       captured.dice = [1, 50];
