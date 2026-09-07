@@ -6,6 +6,8 @@
 // «Multiple Arms (X)» — X это ПОЛНОЕ число рук, не «доп.» (apps/cybernetic-
 // excellence.mjs:BASE_ARMS), lostHands/lostArms срезают бюджет.
 
+import "../support/foundry-stub.mjs";
+
 import { describe, it, expect } from "vitest";
 import {
   currentMeleeGrip, weaponHandsRequired, getHeldHand, setHeldHand,
@@ -291,5 +293,101 @@ describe("handHeldItems", () => {
     const armor = item("armor", { id: "a1", system: { equipped: true } });
     const a = actor([equippedPistol, unequipped, armor]);
     expect(handHeldItems(a)).toEqual([equippedPistol]);
+  });
+});
+
+
+// ── wdbc-9dg8: свойства «руку не занимает» должны работать везде ────────────
+//
+// Три случая одной природы: свойство «руки не занимает» есть, а рука всё равно
+// числится занятой.
+//   C — у рукопашного эти свойства не читались вовсе (проверка стояла ПОСЛЕ
+//       ветки melee): Поцелуй Арлекина надет на запястье и съедал руку;
+//   B — свойство, ПРИШЕДШЕЕ ОТ МОДИФИКАЦИИ (Наплечное/Наручное), не читалось
+//       ни у кого: hands.mjs был единственным потребителем свойств, который
+//       смотрел мимо модификаций;
+//   A — пальцевое оружие (перстень на палец) по книге не занимает руки вообще,
+//       а система считала его обычным пистолетом.
+
+/** Модификация оружия, дарующая свойства (тот же вид, что в паке weapon-mods). */
+const propMod = (installedOn, addProps, removeProps = []) => ({
+  type: "weaponMod", id: `mod-${installedOn}`, name: "Модификация",
+  system: { installedOn, effects: { addProps, removeProps } }
+});
+
+/** Актор с предметами, у которых проставлен parent — как у настоящих документов. */
+function actorOwning(items, conditions = {}, sBonus = 0) {
+  const a = actor(items, conditions, sBonus);
+  for (const i of items) i.parent = a;
+  return a;
+}
+
+describe("weaponHandsRequired — рукопашное тоже читает Independent/Wrist (wdbc-9dg8 C)", () => {
+  it("Поцелуй Арлекина: рукопашное с «1р» и свойством Запястье — 0 рук", () => {
+    const kiss = weapon({ id: "kiss", system: {
+      weaponClass: "melee", grips: "1р", weaponProps: [{ key: "wrist" }]
+    } });
+    expect(weaponHandsRequired(kiss)).toBe(0);
+  });
+
+  it("рукопашное с Independent — тоже 0 рук", () => {
+    const w = weapon({ id: "ind", system: {
+      weaponClass: "melee", grips: "1р", weaponProps: [{ key: "independent" }] } });
+    expect(weaponHandsRequired(w)).toBe(0);
+  });
+
+  it("обычное рукопашное «1р» без таких свойств — по-прежнему 1 рука", () => {
+    expect(weaponHandsRequired(weapon({ id: "sw", system: { weaponClass: "melee", grips: "1р" } }))).toBe(1);
+  });
+});
+
+describe("weaponHandsRequired — свойства от модификаций (wdbc-9dg8 B)", () => {
+  it("Наплечное на болтере (мод даёт independent) — 0 рук", () => {
+    const bolter = weapon({ id: "b1", system: { weaponClass: "basic", grips: "2р" } });
+    const a = actorOwning([bolter, propMod("b1", [{ key: "independent" }])]);
+    expect(weaponHandsRequired(bolter, a)).toBe(0);
+  });
+
+  it("Наручное (мод даёт wrist) — 0 рук", () => {
+    const gun = weapon({ id: "b2", system: { weaponClass: "pistol", grips: "1р" } });
+    const a = actorOwning([gun, propMod("b2", [{ key: "wrist" }])]);
+    expect(weaponHandsRequired(gun, a)).toBe(0);
+  });
+
+  it("тот же болтер без модификации — 2 руки", () => {
+    const bolter = weapon({ id: "b3", system: { weaponClass: "basic", grips: "2р" } });
+    const a = actorOwning([bolter]);
+    expect(weaponHandsRequired(bolter, a)).toBe(2);
+  });
+
+  it("модификация чужого оружия на бюджет не влияет", () => {
+    const bolter = weapon({ id: "b4", system: { weaponClass: "basic", grips: "2р" } });
+    const other  = weapon({ id: "b5", system: { weaponClass: "basic", grips: "2р" } });
+    const a = actorOwning([bolter, other, propMod("b5", [{ key: "independent" }])]);
+    expect(weaponHandsRequired(bolter, a)).toBe(2);
+  });
+
+  it("бюджет рук считает модификации сам, без явного актора (parent предмета)", () => {
+    const bolter = weapon({ id: "b6", system: { weaponClass: "basic", grips: "2р", equipped: true } });
+    const a = actorOwning([bolter, propMod("b6", [{ key: "independent" }])]);
+    expect(handsOccupied(a).used).toBe(0);
+  });
+});
+
+describe("weaponHandsRequired — пальцевое оружие (wdbc-9dg8 A)", () => {
+  const finger = id => weapon({ id, system: {
+    weaponClass: "pistol", grips: "1р", equipped: true, weaponProps: [{ key: "digital" }]
+  } });
+
+  it("перстень-пистолет не занимает руки", () => {
+    expect(weaponHandsRequired(finger("f1"))).toBe(0);
+  });
+
+  it("четыре пальцевых на одной руке и меч в ней же — занята 1 рука, а не 5", () => {
+    const sword = weapon({ id: "sw", system: { weaponClass: "melee", grips: "1р", equipped: true } });
+    const a = actorOwning([finger("f1"), finger("f2"), finger("f3"), finger("f4"), sword]);
+    const occ = handsOccupied(a);
+    expect(occ.used).toBe(1);
+    expect(occ.over).toBe(false);
   });
 });

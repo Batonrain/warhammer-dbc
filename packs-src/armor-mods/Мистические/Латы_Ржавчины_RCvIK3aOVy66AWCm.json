@@ -29,7 +29,8 @@
       "addProps": [],
       "charBonuses": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 232)"
   },
   "_id": "RCvIK3aOVy66AWCm",
   "effects": [],

@@ -410,6 +410,21 @@ export const CAPABILITIES = {
             "Класс basic — «Винтовка» и «Длинная Винтовка» книги живут в нём обе (стр. 171).",
     reader: "module/sheets/attack-dialog.mjs — oneHandRifleGrip; module/rules/hands.mjs — availableRangedGrips"
   },
+  "weapon.noStandardAmmo": {
+    label: "Пистолет или винтовка в предплечье не тратит стандартные боеприпасы",
+    source: "Gun Arm / Дар «Рука-Пушка» (корбук, Элитные архетипы, 400 хр): " +
+            "«…и оно больше не тратит стандартные боеприпасы при выстреле». " +
+            "Классы pistol и basic — «пистолет или винтовка (в т.ч. длинная)» книги.",
+    reader: "module/combat/attack.mjs — infiniteAmmo"
+  },
+  "weapon.oneHandedWarriorPath": {
+    label: "Стрела Кхейна: стрельба одной рукой, дальность при этом не режется",
+    source: "Книга Аэльдари, Арсенал/Сюрикен: «Персонаж, обладающий любым Путем Воина " +
+            "на уровне Следующий, может стрелять из этого оружия держа его в одной руке " +
+            "без траты в Rng». Выдаётся источником правил «paths» (rules/library/paths.mjs), " +
+            "список подходящего оружия — там же (PATH_ONE_HANDED_WEAPONS).",
+    reader: "module/sheets/attack-dialog.mjs — pathOneHandGrip; module/rules/hands.mjs — availableRangedGrips"
+  },
   "weapon.ignoreRecoil": {
     label: "Отдача (Recoil X) не мешает стрелять одной рукой при нехватке S.b",
     source: "Recoil Glove / Откатная Перчатка, Good.Q и Best.Q («игнорирует свойство Recoil оружия»)",
@@ -7462,7 +7477,8 @@ export const CAPABILITIES = {
   // таблице модификаторов Призыва (корбук, «VI. МИСТИКА → РИТУАЛЫ») стоят две
   // РАЗНЫЕ строки — «Персонаж имеет метку бога демона +30» и «Персонаж имеет
   // покровительство (но не метку) бога демона +20». Метка ещё и требование:
-  // тринадцать психосил Божественных Дисциплин требуют «Метка <Бог>» и для
+  // двенадцать психосил Божественных Дисциплин (Слаанеш 4, Нургл 3, Тзинч 5;
+  // у Кхорна психосил нет вовсе) требуют «Метка <Бог>» и для
   // изучения, и для манифестации, и теряется она отдельно от фавора («Если
   // псайкер теряет Метку, он также лишается возможности использовать психосилы
   // требующие ее»).
@@ -7474,22 +7490,22 @@ export const CAPABILITIES = {
   "mark.khorne": {
     label: "Метка Кхорна",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   "mark.nurgle": {
     label: "Метка Нургла",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   "mark.tzeentch": {
     label: "Метка Тзинча",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   "mark.slaanesh": {
     label: "Метка Слаанеш",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   // Иммунитет к пыткам (Метка Слаанеш). Единственная реализованная в системе
   // пытка болью — Искусная Пытка друкхари, туда и смотрит читатель; отдельная

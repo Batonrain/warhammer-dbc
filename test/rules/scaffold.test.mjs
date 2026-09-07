@@ -28,7 +28,7 @@ describe("каркас module/rules", () => {
     // (характеристика теста в списке, Гангрена, wdbc-r5o7.5) и charBonusMin
     // (порог по Бонусу характеристики, «S.b 5+» у Poor.Q Откатной Перчатки,
     // wdbc-vsma).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(26);
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(27);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

@@ -46,7 +46,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "requirement": "Метка Нургла, PR 1+"
   },
   "_id": "bAvrUmddtdl4urye",
   "effects": [],

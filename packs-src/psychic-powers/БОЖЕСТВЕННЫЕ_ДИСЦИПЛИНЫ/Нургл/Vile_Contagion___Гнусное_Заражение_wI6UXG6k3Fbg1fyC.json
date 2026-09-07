@@ -46,7 +46,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "requirement": "Метка Нургла, PR 1+, Nurgle's Rot"
   },
   "_id": "wI6UXG6k3Fbg1fyC",
   "effects": [],

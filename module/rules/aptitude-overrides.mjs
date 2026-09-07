@@ -66,3 +66,26 @@ export function resolveAptitudeOverride(actor, scope, name, group = "", ctx = {}
   if (ally) return "ally";
   return null;
 }
+
+/**
+ * Названия правил, давших override этому объекту (wdbc-gafj) — для подписи под
+ * значком Д/Н/В: «Дружественный независимо от Склонностей: Субраса: Эльданар».
+ * Тот же приём, что у ruleFlagLabels (module/rules/flags.mjs) для grantFlag:
+ * категорию считает resolveAptitudeOverride выше, здесь только имена
+ * источников. Пустой список — override нет либо у правил нет подписи.
+ */
+export function aptitudeOverrideLabels(actor, scope, name, group = "", ctx = {}) {
+  if (!actor || !name) return [];
+  const n = norm(name);
+  const out = [];
+  for (const rule of collectRules(actor, ctx)) {
+    for (const effect of rule?.effects ?? []) {
+      if (effect?.kind !== "grantAptitudeOverride" || effect.scope !== scope) continue;
+      const hit = scope === "characteristic" ? norm(effect.match) === n : nameHit(effect.match, n, group);
+      if (!hit) continue;
+      const label = rule.label || rule.id;
+      if (label && !out.includes(label)) out.push(label);
+    }
+  }
+  return out;
+}

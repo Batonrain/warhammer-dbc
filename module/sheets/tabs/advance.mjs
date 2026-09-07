@@ -10,9 +10,7 @@ import { APTITUDES } from "../../constants/characteristics.mjs";
 import { charAptitudeSet, charCostXP, skillCostXP, talentCostXP,
          resolveTalentAptitudes } from "../../constants/advancement.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../../constants/skills.mjs";
-import { cultureCat, resolveCultureFx } from "../../constants/legions.mjs";
-import { isFriendlySpecialty } from "../../rules/friendly-specialties.mjs";
-import { resolveAptitudeOverride } from "../../rules/aptitude-overrides.mjs";
+import { charAdvanceCat, skillAdvanceCat } from "../../rules/advance-category.mjs";
 import { talentCategory } from "../item-picker.mjs";
 import { openContextMenu, closeContextMenus } from "../context-menu.mjs";
 import { esc } from "../../helpers/utils.mjs";
@@ -25,16 +23,6 @@ export const CHAR_IMP_STEPS = { none: 0, simple: 1, average: 2, trained: 3, sign
 const SKILL_RANK_STEPS = { untrained: 0, knows: 1, trained: 2, veteran: 3, expert: 4 };
 
 /**
- * Машинная культура легиона персонажа. Культура может быть от ДРУГОГО легиона,
- * чем геносемя (в системе это отдельные поля), поэтому берём именно её.
- */
-function cultFxOf(actor) {
-  const gs = actor?.system?.geneSeed;
-  if (!gs) return null;
-  return resolveCultureFx(gs.cultureLegion || gs.legion, gs.cultureChapter || gs.chapter);
-}
-
-/**
  * Цена уровня улучшения характеристики (стр. 23-24): сумма шагов +5..+25 до
  * выбранного уровня, категория — по совпадению склонностей.
  * grantedImp — бесплатный уровень от архетипа/расы (кнопка ★): опыт считается
@@ -44,10 +32,10 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
   const apts  = charAptitudeSet(actor.system.aptitudes);
   const steps = CHAR_IMP_STEPS[improvement] ?? 0;
   const floor = CHAR_IMP_STEPS[grantedImp ?? actor.system.characteristics?.[charKey]?.grantedImp] ?? 0;
-  // Расовый/субрасовый override (wdbc-zk69) перебивает и Склонности, и
-  // Покровительство — той же приоритетной ступенью, что у cultureCat легиона
-  // для Навыков/Талантов (у характеристик культуры легиона не бывает вовсе).
-  const cultCat = resolveAptitudeOverride(actor, "characteristic", charKey);
+  // Категория считается общей точкой (rules/advance-category.mjs) — той же,
+  // которой лист рисует значок Д/Н/В. Раньше значок считал по-своему, без
+  // расового override, и противоречил цене в соседней ячейке (wdbc-gafj).
+  const cultCat = charAdvanceCat(actor, charKey, apts);
   let sum = 0;
   for (let i = Math.max(floor, 0); i < steps; i++) sum += charCostXP(i, charKey, apts, cultCat, { actor });
   return sum;
@@ -69,13 +57,7 @@ export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, sp
   // как Дружественная на Родном мире (Исследовательская станция), и расовый/
   // субрасовый override (Африэль/Эльданар/Серый Человек, wdbc-zk69) — тот
   // встаёт ПЕРЕД культурой легиона, см. resolveAptitudeOverride.
-  const cat = def?.alwaysAlly ? "ally"
-    : (group && isFriendlySpecialty(actor, group, specialty)) ? "ally"
-    : resolveAptitudeOverride(actor, "skill", def?.label || def?.name || "", group)
-      // cultureCat матчит по-английски (CULT.friendlySkills/hostileSkills в
-      // legions.mjs) — def?.label здесь русский и никогда бы не совпал
-      // (wdbc-ko14), def?.en заведён специально под это.
-      ?? cultureCat("skill", def?.en || def?.label || def?.name || "", "", cultFxOf(actor));
+  const cat = skillAdvanceCat(actor, def, { group, specialty, skillKey, entryChar }, apts);
   // Ключ для Бога Навыка (patronage.mjs, skillGodOf) — у группового ключ группы
   // (forbiddenLore и т.п.), у обычного — его собственный (dodge и т.п.).
   const opts = { actor, skillKey: group || skillKey, specialty };
@@ -121,18 +103,21 @@ export async function removeAptitude(actor, index) {
  */
 export async function recalcAllAdvanceCosts(actor) {
   const upd = {};
+  // costManual — цена вписана ГМом руками (поле «Цена» на вкладке «Развитие»
+  // прямо это предлагает). Пересчёт её не трогает, иначе правка терялась бы на
+  // ближайшую смену Склонностей/Покровителя или щелчок по Д/Н/В (wdbc-rcr9).
   for (const [k, c] of Object.entries(actor.system.characteristics || {}))
-    if (c?.improvement && c.improvement !== "none")
+    if (c?.improvement && c.improvement !== "none" && !c.costManual)
       upd[`system.characteristics.${k}.cost`] = charImpCost(actor, k, c.improvement, c.grantedImp || "none");
   for (const [k, s] of Object.entries(actor.system.skills || {}))
-    if (s?.rank && s.rank !== "untrained")
+    if (s?.rank && s.rank !== "untrained" && !s.costManual)
       upd[`system.skills.${k}.cost`] = skillCumCost(actor, SKILLS_DEF[k], s.rank, null, s.grantedRank || "untrained", null, "", k);
   for (const [gk, entries] of Object.entries(actor.system.groupSkills || {})) {
     if (!Array.isArray(entries) || !entries.length) continue;
     const def = GROUP_SKILLS_DEF[gk];
     upd[`system.groupSkills.${gk}`] = entries.map(e => ({
       ...e,
-      cost: (e?.rank && e.rank !== "untrained")
+      cost: (e?.rank && e.rank !== "untrained" && !e.costManual)
         ? skillCumCost(actor, def, e.rank, e.char, e.grantedRank || "untrained", gk, e.specialty)
         : (e.cost || 0)
     }));
@@ -178,8 +163,11 @@ export async function setGroupEntryField(actor, group, index, field, value) {
     if (field === "rank") {
       entry.rank = value;
       entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty);
+      // Цену поставила эта ветка, а не ГМ (wdbc-rcr9) — см. recalcAllAdvanceCosts.
+      entry.costManual = false;
     } else if (field === "cost") {
       entry.cost = parseInt(value) || 0;
+      entry.costManual = true;
     } else if (field === "mod") {
       // Постоянный модификатор специализации (wdbc-q4wb): число, а не строка —
       // иначе Итог склеился бы текстом при пересчёте (rules/character.mjs).
@@ -329,12 +317,18 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     // Ставим уровень И авто-цену (можно затем поправить вручную в поле «Цена»).
     actor.update({
       [`system.characteristics.${charKey}.improvement`]: el.value,
-      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, el.value)
+      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, el.value),
+      // Цену ставит сама эта ветка — оставить пометку «вписано руками» значило
+      // бы навсегда исключить строку из пересчёта с чужим числом (wdbc-rcr9).
+      [`system.characteristics.${charKey}.costManual`]: false
     });
   });
   html.find(".char-cost-input").change(ev => {
     const el = ev.currentTarget;
-    actor.update({ [`system.characteristics.${el.dataset.char}.cost`]: parseInt(el.value) || 0 });
+    actor.update({
+      [`system.characteristics.${el.dataset.char}.cost`]: parseInt(el.value) || 0,
+      [`system.characteristics.${el.dataset.char}.costManual`]: true
+    });
   });
 
   // Цена психосилы и техночуда: поле есть и здесь, и на вкладках «ПСИ»/«ТЕХНО»,
@@ -374,12 +368,52 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     const granted = actor.system.skills?.[key]?.grantedRank || "untrained";
     actor.update({
       [`system.skills.${key}.rank`]: el.value,
-      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key)
+      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], el.value, null, granted, null, "", key),
+      [`system.skills.${key}.costManual`]: false
     });
   });
   html.find(".skill-cost-input").change(ev => {
     const el = ev.currentTarget;
-    actor.update({ [`system.skills.${el.dataset.skill}.cost`]: parseInt(el.value) || 0 });
+    actor.update({
+      [`system.skills.${el.dataset.skill}.cost`]: parseInt(el.value) || 0,
+      [`system.skills.${el.dataset.skill}.costManual`]: true
+    });
+  });
+
+  // Вернуть авто-цену Характеристике / Навыку / записи Группового Навыка
+  // (wdbc-rcr9). Без этой кнопки ручная правка была бы ловушкой: снять
+  // пометку «вписано руками» иначе нечем, и строка навсегда выпадала бы из
+  // пересчёта по Склонностям. Как у Талантов (.advtal-cost-reset), кнопка не
+  // просто снимает флаг, а сразу же ставит посчитанное число — иначе игрок
+  // видел бы старую цену до ближайшей смены Склонности.
+  html.find(".adv-cost-reset").click(async ev => {
+    ev.preventDefault();
+    const { scope, key, index } = ev.currentTarget.dataset;
+    if (scope === "char") {
+      const c = actor.system.characteristics?.[key] || {};
+      await actor.update({
+        [`system.characteristics.${key}.costManual`]: false,
+        [`system.characteristics.${key}.cost`]:
+          charImpCost(actor, key, c.improvement || "none", c.grantedImp || "none")
+      });
+    } else if (scope === "skill") {
+      const sk = actor.system.skills?.[key] || {};
+      await actor.update({
+        [`system.skills.${key}.costManual`]: false,
+        [`system.skills.${key}.cost`]: (sk.rank && sk.rank !== "untrained")
+          ? skillCumCost(actor, SKILLS_DEF[key], sk.rank, null, sk.grantedRank || "untrained", null, "", key)
+          : 0
+      });
+    } else if (scope === "group") {
+      const entries = foundry.utils.deepClone(actor.system.groupSkills?.[key] ?? []);
+      const e = entries[parseInt(index)];
+      if (!e) return;
+      e.costManual = false;
+      e.cost = (e.rank && e.rank !== "untrained")
+        ? skillCumCost(actor, GROUP_SKILLS_DEF[key], e.rank, e.char, e.grantedRank || "untrained", key, e.specialty)
+        : 0;
+      await actor.update({ [`system.groupSkills.${key}`]: entries });
+    }
   });
 
   // ── Ручная пометка «выдано архетипом» (★) ────────────────────────────────
@@ -397,7 +431,8 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       return ui.notifications.warn("Сначала выберите уровень улучшения, потом помечайте его как выданный.");
     actor.update({
       [`system.characteristics.${charKey}.grantedImp`]: nextGranted,
-      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, imp, nextGranted)
+      [`system.characteristics.${charKey}.cost`]: charImpCost(actor, charKey, imp, nextGranted),
+      [`system.characteristics.${charKey}.costManual`]: false
     });
   });
 
@@ -412,7 +447,8 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
     actor.update({
       [`system.skills.${key}.grantedRank`]: nextGranted,
-      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], rank, null, nextGranted, null, "", key)
+      [`system.skills.${key}.cost`]: skillCumCost(actor, SKILLS_DEF[key], rank, null, nextGranted, null, "", key),
+      [`system.skills.${key}.costManual`]: false
     });
   });
 
@@ -489,6 +525,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
     e.grantedRank = on ? "untrained" : rank;
     e.cost = skillCumCost(actor, GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank, gk, e.specialty);
+    e.costManual = false;
     actor.update({ [`system.groupSkills.${gk}`]: entries });
   });
 

@@ -6,6 +6,11 @@
 // важнее всего: книга Аэльдари прямо говорит, что 3 броска расы и Талант
 // «бросает 2 раза» дают ЧЕТЫРЕ, а не три и не два.
 
+// Заглушка Foundry нужна с тех пор, как бюджет рук считает свойства оружия С
+// УЧЁТОМ модификаций (mergeWeaponPropEntries зовёт foundry.utils.deepClone).
+// Раньше расчёт молча обходился без актора и до этой ветки не доходил.
+import "../support/foundry-stub.mjs";
+
 import { describe, it, expect } from "vitest";
 
 import { initiativeCharKey, initiativeRolls, fastestHandBonus,

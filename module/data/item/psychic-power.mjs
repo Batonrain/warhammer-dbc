@@ -46,6 +46,12 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       extraTypes:    list("Дополнительные типы"),
       shootSubtype:  new StringField({ initial: "", label: "Подтип стрельбы" }),
       prRequired:    num(1, "Требуемый ПР"),
+      // Полное книжное требование строкой — «Метка Слаанеш, PR 4+, T 40+»
+      // (wdbc-k1q4). prRequired выше несёт только PR и потому не мог выразить
+      // ни Метку Бога, ни порог Характеристики: у Божественных Дисциплин
+      // требование из трёх частей, и две из них были не видны нигде, кроме
+      // книги. Разбирается тем же checkRequirement, что и у Талантов.
+      requirement:   new StringField({ initial: "", label: "Требование" }),
       testChar:      new StringField({ initial: "wp", label: "Характеристика проверки" }),
       testMod:       num(0, "Модификатор проверки"),
       action:        new StringField({ initial: "half", label: "Действие" }),

@@ -31,6 +31,9 @@
     "weaponProps": [
       {
         "key": "overheats"
+      },
+      {
+        "key": "digital"
       }
     ],
     "needsRecharge": false,

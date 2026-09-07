@@ -10,11 +10,15 @@
 //  раскрывашка со сводным чекбоксом «отметить всё в группе» для удобства.
 // ════════════════════════════════════════════════════════════════════════
 
-import { buildLiveSyncReport, applySyncReport } from "./content-sync.mjs";
+import { buildLiveSyncReport, applySyncReport, fieldLabel, describeValue } from "./content-sync.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
-function fmtVal(v) {
+function fmtVal(v, path) {
+  // Механика Конструктора (wdbc-lddr) — дерево групп и записей: её JSON занял
+  // бы весь экран и ничего бы не сказал, показываем сводку по записям.
+  const summary = path ? describeValue(path, v) : null;
+  if (summary !== null) return summary;
   if (v === null || v === undefined || v === "") return "—";
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
@@ -69,13 +73,13 @@ export class ContentSyncApp extends HandlebarsApplicationMixin(ApplicationV2) {
       .map(e => ({
         ...e,
         checked: this.selected.has(e.entryKey),
-        baseValStr: fmtVal(e.baseVal),
-        actorValStr: fmtVal(e.actorVal)
+        baseValStr: fmtVal(e.baseVal, row.path),
+        actorValStr: fmtVal(e.actorVal, row.path)
       }));
     const checkedCount = entries.filter(e => e.checked).length;
     return {
       key: row.key, packName: row.packName, itemTypeLabel: row.itemTypeLabel,
-      path: row.path, packValStr: fmtVal(row.packVal),
+      path: fieldLabel(row.path), packValStr: fmtVal(row.packVal, row.path),
       count: entries.length, checkedCount,
       allChecked: checkedCount === entries.length,
       noneChecked: checkedCount === 0,

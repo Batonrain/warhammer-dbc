@@ -8,7 +8,7 @@
 // восьмидесяти мест расчёта). Бросок же пересчитывает вид ЗАНОВО, по
 // выбранному профилю (combat/attack.mjs::_executeAttackRoll). Пока список
 // профилей показывал оба вида сразу, игрок мог открыть окно выстрела и ткнуть
-// в нём «Удар в упор»: окно считало порог по BS, а бросок ту же атаку —
+// в нём «Ударить оружием»: окно считало порог по BS, а бросок ту же атаку —
 // рукопашной. Одно действие, два разных правила.
 //
 // Проверяется через НАСТОЯЩЕЕ открытие окна, а не через buildSelection: дыра
@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
+import { IMPROVISED_MELEE_LABEL } from "../../module/combat/weapon-profiles.mjs";
 
 /** Разметка открытого окна — то, что видит игрок. */
 const content = () => captured.dialog?.content ?? "";
@@ -35,10 +36,10 @@ function shooter(items = []) {
 describe("список Профилей не смешивает рукопашное со стрельбой (wdbc-bs0q)", () => {
   beforeEach(() => resetCaptured());
 
-  it("окно ВЫСТРЕЛА из надетой винтовки не предлагает «Удар в упор»", async () => {
+  it("окно ВЫСТРЕЛА из надетой винтовки не предлагает «Ударить оружием»", async () => {
     const gun = weaponFor({ weaponClass: "basic", equipped: true }, { name: "Лазган" });
     showAttackDialog(shooter([gun]), gun, {});
-    expect(content()).not.toContain("Удар в упор");
+    expect(content()).not.toContain("Ударить оружием");
   });
 
   it("…и блока «Профиль» у такой винтовки нет вовсе — выбирать не из чего", async () => {
@@ -67,6 +68,28 @@ describe("список Профилей не смешивает рукопашн
     expect(content()).toContain("Обратный хват");
   });
 
+  it("выбранный профиль остаётся в списке, даже когда он другого вида (wdbc-4ltj)", async () => {
+    // Единственный способ развести вид окна с видом выбранного профиля —
+    // forceMelee:true вместе со СТРЕЛКОВЫМ profileIdx. Такого вызывающего
+    // сегодня нет, и сторож нужен именно поэтому: фильтр по виду выкинул бы
+    // отмеченную пилюлю, игрок увидел бы список без своего выбора, а profIdx
+    // указывал бы мимо списка. Смягчать сам фильтр (считать вид вместе с
+    // forceMelee) нельзя — тогда в окно «в упор» вернутся стрелковые профили,
+    // то есть дыра wdbc-bs0q выше.
+    const gun = weaponFor({
+      weaponClass: "basic", equipped: true,
+      profiles: [{ label: "Перегрузка", damage: "2d10" }]
+    }, { name: "Лазган" });
+    showAttackDialog(shooter([gun]), gun, { forceMelee: true, profileIdx: 0 });
+    expect(content()).toContain("Перегрузка");   // выбранный на месте
+    // Метка берётся КОНСТАНТОЙ, а не дословной копией (wdbc-d56f): она одна на
+    // весь проект и её переименовывают, а переписанная сюда строка тихо
+    // разъезжается с той, что видит игрок. Этот файл на том уже споткнулся:
+    // переименование метки шло отдельной веткой, и оба пул-реквеста были
+    // зелёными порознь, а вместе роняли main.
+    expect(content()).toContain(IMPROVISED_MELEE_LABEL);  // и рукопашный, по виду окна
+  });
+
   it("у стрелкового свои СТРЕЛКОВЫЕ профили остались на месте — регресс", async () => {
     // Фильтр отсекает по виду, а не по признаку «выводимый»: авторский профиль
     // стрельбы обязан остаться в окне выстрела.
@@ -76,6 +99,6 @@ describe("список Профилей не смешивает рукопашн
     }, { name: "Лазган" });
     showAttackDialog(shooter([gun]), gun, {});
     expect(content()).toContain("Перегрузка");
-    expect(content()).not.toContain("Удар в упор");
+    expect(content()).not.toContain("Ударить оружием");
   });
 });
