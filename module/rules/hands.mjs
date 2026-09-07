@@ -15,7 +15,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { parseGrips, RANGED_GRIPS } from "../constants/combat.mjs";
-import { resolveWeaponProps, aggregateAuto } from "../combat/weapon-properties.mjs";
+import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
+import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
@@ -75,13 +76,35 @@ function availableRangedGrips(item, actor) {
   return oneHandRifle && !own.includes("1р") ? [...own, "1р"] : own;
 }
 
-function effectiveRangedGripHands(item, actor) {
+/**
+ * Свойства оружия С УЧЁТОМ УСТАНОВЛЕННЫХ МОДИФИКАЦИЙ (wdbc-9dg8).
+ *
+ * Раньше здесь стояла resolveWeaponProps — «свойства самого предмета, без
+ * модификаций», и бюджет рук оказался единственным потребителем свойств,
+ * который смотрел мимо модификаций (остальные пять — attack.mjs, defense.mjs,
+ * hooks.mjs, attack-dialog.mjs, horde-sheet.mjs — давно считают через
+ * mergeWeaponPropEntries). Из-за этого купленное за R3 «Наплечное» честно
+ * применялось в бою, а руку всё равно держало занятой.
+ *
+ * Владельца предмета берём из переданного актора, иначе из item.parent; вне
+ * актора (компендиум, боковая панель) модификаций и быть не может — тогда
+ * читаем собственные свойства предмета, как раньше.
+ */
+function effectiveAuto(item, actor) {
+  const owner = actor?.items ? actor : (item?.parent?.items ? item.parent : null);
+  const entries = owner
+    ? mergeWeaponPropEntries(item, getModEffects(owner, item))
+    : (item?.system?.weaponProps ?? []);
+  return aggregateAuto(resolveWeaponPropsList(entries));
+}
+
+function effectiveRangedGripHands(item, actor, auto) {
   const list = availableRangedGrips(item, actor);
   if (!list.length) return null;
   const flagged = item.getFlag?.(NS, "hudGrip");
   let key = list.includes(flagged) ? flagged : list[0];
   if (key === "1р") {
-    const recoilRating = aggregateAuto(resolveWeaponProps(item)).recoilRating || 0;
+    const recoilRating = auto.recoilRating || 0;
     const sBonus = Number(actor?.system?.characteristics?.s?.bonus) || 0;
     // Good.Q/Best.Q Откатная Перчатка «игнорирует свойство Recoil оружия» —
     // гейт по S.b не применяется вовсе (wdbc-f7iw).
@@ -93,8 +116,10 @@ function effectiveRangedGripHands(item, actor) {
 }
 
 /**
- * Сколько рук занимает предмет ПРЯМО СЕЙЧАС (0-2). Independent/Wrist —
- * всегда 0, они и есть исключение из правила «оружие занимает руку». actor —
+ * Сколько рук занимает предмет ПРЯМО СЕЙЧАС (0-2). Independent/Wrist/Пальцевое
+ * — всегда 0, они и есть исключение из правила «оружие занимает руку», и
+ * читаются они ДО ветвления рукопашное/дальнобойное: Поцелуй Арлекина надет на
+ * запястье и рукопашный (wdbc-9dg8). actor —
  * нужен только дальнобойному (гейт Отдачи по S.b); по умолчанию — носитель
  * предмета (у настоящих Foundry-документов item.parent это и есть актор).
  */
@@ -107,9 +132,13 @@ export function weaponHandsRequired(item, actor = item?.parent) {
   // случая читают sys.grips/RANGED_CLASS_HANDS ниже, которых это правило не
   // касается.
   if (isFusedByHandOfDeath(item)) return 1;
+  // «Руки не занимает» — свойство самой вещи, а не её дальнобойности: проверка
+  // стоит ДО ветвления melee/ranged (wdbc-9dg8). Пальцевое (перстень на палец)
+  // здесь же — по книге его можно надеть на каждый палец и стрелять
+  // одновременно с оружием в той же руке.
+  const auto = effectiveAuto(item, actor);
+  if (auto.independent || auto.wrist || auto.digital) return 0;
   if (sys.weaponClass === "melee") return MELEE_GRIP_HANDS[currentMeleeGrip(item)] ?? 1;
-  const auto = aggregateAuto(resolveWeaponProps(item));
-  if (auto.independent || auto.wrist) return 0;
   // Стационарное: класс решает РАНЬШЕ данных (wdbc-7utm). У станкового хват
   // «2р» описывает, как за него берутся, а не сколько рук оно отнимает у
   // бюджета — оружие стоит на станке. Пока поле grips было пустым, сюда
@@ -117,7 +146,7 @@ export function weaponHandsRequired(item, actor = item?.parent) {
   // бы 2 и турель начала бы съедать обе руки. Единственный класс, где данные
   // и запас расходятся намеренно.
   if (sys.weaponClass === "stationary") return RANGED_CLASS_HANDS.stationary;
-  const gripHands = effectiveRangedGripHands(item, actor);
+  const gripHands = effectiveRangedGripHands(item, actor, auto);
   if (gripHands != null) return gripHands;
   return RANGED_CLASS_HANDS[sys.weaponClass] ?? 1;
 }
