@@ -1626,3 +1626,10 @@ body.wh-aiming #board, body.wh-aiming canvas {
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px; padding: 6px 8px; border-top: 1px solid rgba(128,128,128,.35);
 }
+/* Галочка «закончить сессию» жмётся к кнопке «Раздать»: это её уточнение,
+   а не отдельный пункт — счётчик опыта остаётся слева сам по себе. */
+.warhammer-dbc.wh-session-rewards .wh-sr-end {
+  display: flex; align-items: center; gap: 5px; margin-left: auto;
+  font-size: 12px; white-space: nowrap; cursor: pointer;
+}
+.warhammer-dbc.wh-session-rewards .wh-sr-end input { min-height: 0; margin: 0; }

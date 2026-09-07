@@ -8,7 +8,8 @@
 // проверить без запущенной игры.
 
 import { describe, it, expect } from "vitest";
-import { partyXp, actorXp, parseRewardAmount, buildRewardRows }
+import { partyXp, actorXp, parseRewardAmount, buildRewardRows,
+  infamyRoom, infamyGain, INFAMY_PATH, INFAMY_CAP }
   from "../../module/rules/session-rewards.mjs";
 import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS }
   from "../../module/constants/session-rewards.mjs";
@@ -85,6 +86,39 @@ describe("Порча и Бесчестие: число или бросок", () 
   it("опечатка не превращается молча в ноль", () => {
     expect(parseRewardAmount("много")).toBeNull();
     expect(parseRewardAmount("1д")).toBeNull();
+  });
+});
+
+describe("Бесчестие наградой — характеристика, а не пул очков", () => {
+  const withInf = (total, base = total) =>
+    ({ system: { characteristics: { inf: { total, base } } } });
+
+  it("пишется в базу характеристики, а не в пул Очков Бесчестия", () => {
+    // Пул (system.fate.value / system.dp.ip) конец сессии всё равно восполняет
+    // до максимума — награда туда не пережила бы до следующей игры.
+    expect(INFAMY_PATH).toBe("system.characteristics.inf.base");
+  });
+
+  it("до потолка остаётся столько, сколько не хватает ИТОГУ", () => {
+    expect(infamyRoom(withInf(40))).toBe(60);
+    // Считать по базе было бы ошибкой: сверх неё есть Продвижение и надбавки.
+    expect(infamyRoom(withInf(95, 30))).toBe(5);
+  });
+
+  it("прибавка обрезается потолком, а не проходит целиком", () => {
+    expect(infamyGain(withInf(98), 5)).toBe(2);
+    expect(infamyGain(withInf(100), 5)).toBe(0);
+    expect(infamyGain(withInf(40), 5)).toBe(5);
+  });
+
+  it("вычитание потолком не обрезается", () => {
+    // Потолок сторожит только верх; ноль снизу ставит уже сама запись.
+    expect(infamyGain(withInf(100), -10)).toBe(-10);
+  });
+
+  it("у актора без характеристик прибавка упирается в полный потолок", () => {
+    expect(infamyRoom({})).toBe(INFAMY_CAP);
+    expect(infamyGain({}, 5)).toBe(5);
   });
 });
 

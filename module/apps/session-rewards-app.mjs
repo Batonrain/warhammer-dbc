@@ -1,8 +1,17 @@
 // module/apps/session-rewards-app.mjs
 // ════════════════════════════════════════════════════════════════════════
 //  Окно «Итоги Сессии» (wdbc-ce8e) — раздача опыта по книжной таблице, плюс
-//  необязательные Порча и Бесчестие. Открывается пунктом системных Настроек
-//  (warhammer-dbc.mjs, game.settings.registerMenu), как «Обновить мир».
+//  необязательные Порча и Бесчестие.
+//
+//  ГДЕ ОТКРЫВАЕТСЯ. Главный вход — кнопка «⏻ Сессия» виджета Летоисчисления
+//  (module/apps/imperial-calendar.mjs): по решению владельца от 07.09.2026
+//  конец сессии — это одно действие, а не два в разных углах экрана. Раньше та
+//  кнопка сразу звала triggerSessionEnd(); теперь она открывает это окно, а
+//  triggerSessionEnd() вызывается отсюда, ПОСЛЕ наград (галочка «закончить
+//  сессию», по умолчанию включена). Порядок принципиален: восполнение ставит
+//  Очки Бесчестия на максимум, и награда, выданная после него, пропала бы
+//  молча. Запасной вход — пункт системных Настроек (warhammer-dbc.mjs,
+//  game.settings.registerMenu), как «Обновить мир».
 //
 //  ДВЕ ВЕЩИ, РАДИ КОТОРЫХ ОНО И ДЕЛАЛОСЬ:
 //
@@ -17,14 +26,18 @@
 //
 //  Порча и Бесчестие книжной таблицы наград не имеют — они добавлены по
 //  прямому решению владельца (07.09.2026) отдельными необязательными полями,
-//  каждое либо числом, либо формулой броска («1d5»).
+//  каждое либо числом, либо формулой броска («1d5»). Бесчестие при этом растит
+//  ХАРАКТЕРИСТИКУ Inf, а не пул Очков Бесчестия: пул и так восполняется каждую
+//  сессию, и награда в него не пережила бы до следующей игры (см. INFAMY_PATH
+//  в rules/session-rewards.mjs).
 //
 //  Расчёт — в module/rules/session-rewards.mjs, здесь только окно и запись.
 // ════════════════════════════════════════════════════════════════════════
 
 import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS } from "../constants/session-rewards.mjs";
-import { buildRewardRows } from "../rules/session-rewards.mjs";
-import { actorInfamyValue } from "./infamy-points.mjs";
+import { buildRewardRows, infamyRoom, infamyGain, INFAMY_PATH }
+  from "../rules/session-rewards.mjs";
+import { triggerSessionEnd } from "./game-session.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 
@@ -32,16 +45,6 @@ const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 
 /** Кому вообще можно раздавать опыт: у Орды и техники его нет. */
 const REWARDABLE = new Set(["character", "daemon", "demonPrince", "minion"]);
-
-/** Куда писать Очки Бесчестия у этого актора — пул зависит от типа. */
-export function infamyPathOf(actor) {
-  return actor?.type === "demonPrince" ? "system.dp.ip" : "system.fate.value";
-}
-
-/** Максимум Очков Бесчестия — Inf.b (тот же, что показывает лист). */
-export function infamyMaxOf(actor) {
-  return Math.max(0, Number(actor?.system?.characteristics?.inf?.bonus) || 0);
-}
 
 export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
@@ -61,9 +64,17 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
   constructor(options = {}) {
     super(options);
     /** Состояние формы живёт в приложении, а не в DOM: окно перерисовывается
-     *  на каждый выбор, и введённые числа иначе слетали бы. */
-    this.form = { party: {}, personal: {}, xpOverride: {}, corruption: {}, infamy: {} };
+     *  на каждый выбор, и введённые числа иначе слетали бы.
+     *
+     *  НЕ `this.form`: у ApplicationV2 это свой геттер (DOM-элемент формы) без
+     *  сеттера, и присваивание роняет конструктор целиком — окно тогда не
+     *  открывается вовсе, молча, ещё до первого рендера (wdbc-gy9n). */
+    this.picks = { party: {}, personal: {}, xpOverride: {}, corruption: {}, infamy: {} };
     this.chosen = null;   // Set id выбранных актёров; null — ещё не трогали
+    /** Доводить ли конец сессии до конца (откат разовых + восполнение пулов).
+     *  По умолчанию да: окно открывается кнопкой «⏻ Сессия» календаря, и до
+     *  появления окна эта кнопка делала ровно это — терять её нельзя. */
+    this.endSession = true;
   }
 
   /** Кандидаты: игровые персонажи мира, у которых есть опыт. */
@@ -86,36 +97,42 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
 
   async _prepareContext() {
     const actors = this.selectedActors;
-    const rows = buildRewardRows(actors.map(a => ({ id: a.id, name: a.name })), this.form);
+    const rows = buildRewardRows(actors.map(a => ({ id: a.id, name: a.name })), this.picks);
     const byId = new Map(actors.map(a => [a.id, a]));
 
     return {
       isGM: game.user.isGM,
       partyCats: XP_CATEGORIES.filter(c => PARTY_KEYS.includes(c.key))
-        .map(c => ({ ...c, chosen: Number(this.form.party[c.key]) || 0 })),
+        .map(c => ({ ...c, chosen: Number(this.picks.party[c.key]) || 0 })),
       eachCats: XP_CATEGORIES.filter(c => EACH_KEYS.includes(c.key)),
       candidates: this.candidates.map(a => ({ id: a.id, name: a.name, on: this.chosen.has(a.id) })),
       rows: rows.map(r => {
         const actor = byId.get(r.id);
         return {
           ...r,
-          personal: this.form.personal[r.id] ?? {},
-          override: this.form.xpOverride[r.id] ?? "",
-          corruptionRaw: this.form.corruption[r.id] ?? "",
-          infamyRaw: this.form.infamy[r.id] ?? "",
+          personal: this.picks.personal[r.id] ?? {},
+          override: this.picks.xpOverride[r.id] ?? "",
+          corruptionRaw: this.picks.corruption[r.id] ?? "",
+          infamyRaw: this.picks.infamy[r.id] ?? "",
           // Что у персонажа сейчас — чтобы ГМ видел, к чему прибавляет.
           xpNow: Number(actor?.system?.experience?.total) || 0,
           corNow: Number(actor?.system?.corruption?.value) || 0,
-          ipNow: actorInfamyValue(actor),
-          ipMax: infamyMaxOf(actor),
+          infNow: Number(actor?.system?.characteristics?.inf?.total) || 0,
+          infRoom: infamyRoom(actor),
           // Непонятый ввод — не «ноль», а прямая жалоба: пустое поле молчит,
           // а «много» в поле Порчи должно быть видно ошибкой.
-          corBad: !!this.form.corruption[r.id] && !r.corruption,
-          infBad: !!this.form.infamy[r.id] && !r.infamy
+          corBad: !!this.picks.corruption[r.id] && !r.corruption,
+          infBad: !!this.picks.infamy[r.id] && !r.infamy
         };
       }),
       total: rows.reduce((n, r) => n + r.xp, 0),
-      anyRows: rows.length > 0
+      anyRows: rows.length > 0,
+      endSession: this.endSession,
+      // Кнопка называет то, что произойдёт: раздача без конца сессии и конец
+      // сессии без раздачи — обе законные ситуации одного и того же окна.
+      applyLabel: this.endSession
+        ? (rows.length ? "Раздать и закончить сессию" : "Закончить сессию")
+        : "Раздать"
     };
   }
 
@@ -125,29 +142,33 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
     const on = (sel, evt, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(evt, fn));
 
     on(".wh-sr-party", "change", ev => {
-      this.form.party[ev.currentTarget.dataset.cat] = Number(ev.currentTarget.value) || 0;
+      this.picks.party[ev.currentTarget.dataset.cat] = Number(ev.currentTarget.value) || 0;
       this.render();
     });
     on(".wh-sr-personal", "change", ev => {
       const { actor, cat } = ev.currentTarget.dataset;
-      (this.form.personal[actor] ??= {})[cat] = Number(ev.currentTarget.value) || 0;
+      (this.picks.personal[actor] ??= {})[cat] = Number(ev.currentTarget.value) || 0;
       this.render();
     });
     on(".wh-sr-override", "change", ev => {
-      this.form.xpOverride[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
+      this.picks.xpOverride[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
       this.render();
     });
     on(".wh-sr-cor", "change", ev => {
-      this.form.corruption[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
+      this.picks.corruption[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
       this.render();
     });
     on(".wh-sr-inf", "change", ev => {
-      this.form.infamy[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
+      this.picks.infamy[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
       this.render();
     });
     on(".wh-sr-who", "change", ev => {
       const id = ev.currentTarget.dataset.actor;
       if (ev.currentTarget.checked) this.chosen.add(id); else this.chosen.delete(id);
+      this.render();
+    });
+    on(".wh-sr-endsession", "change", ev => {
+      this.endSession = ev.currentTarget.checked;
       this.render();
     });
     on(".wh-sr-apply", "click", () => this._apply());
@@ -156,7 +177,7 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
   /** Раздать. Пишет опыт, Порчу и Бесчестие и кладёт одну карточку в чат. */
   async _apply() {
     const actors = this.selectedActors;
-    const rows = buildRewardRows(actors.map(a => ({ id: a.id, name: a.name })), this.form);
+    const rows = buildRewardRows(actors.map(a => ({ id: a.id, name: a.name })), this.picks);
     const byId = new Map(actors.map(a => [a.id, a]));
     const lines = [];
     const rolls = [];
@@ -187,28 +208,35 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
 
       const inf = await this._amount(row.infamy, rolls);
       if (inf !== null) {
-        const path = infamyPathOf(actor);
-        const max = infamyMaxOf(actor);
-        const now = Math.max(0, Number(foundry.utils.getProperty(actor, path)) || 0);
-        await actor.update({ [path]: Math.max(0, Math.min(max, now + inf)) });
-        parts.push(`Бесчестие ${inf >= 0 ? "+" : ""}${inf}`);
+        const base = Number(actor.system.characteristics?.inf?.base) || 0;
+        const gain = infamyGain(actor, inf);
+        await actor.update({ [INFAMY_PATH]: Math.max(0, base + gain) });
+        // Обрезанную прибавку называем честно: «+2 (потолок)» вместо «+5».
+        const clipped = gain !== inf ? " (потолок)" : "";
+        parts.push(`Бесчестие ${gain >= 0 ? "+" : ""}${gain}${clipped}`);
       }
 
       if (parts.length) lines.push(`<li><b>${esc(row.name)}</b>: ${parts.join(", ")}</li>`);
     }
 
-    if (!lines.length) {
+    if (!lines.length && !this.endSession) {
       ui.notifications?.warn("Нечего раздавать: ни у кого не выбрано ни опыта, ни Порчи, ни Бесчестия.");
       return;
     }
 
-    await ChatMessage.create({
+    if (lines.length) await ChatMessage.create({
       content: `<div class="wh-roll-result">
         <div class="roll-header">${rollIcon("crown", "#ffd24d")}Итоги Сессии</div>
         <ul class="roll-threshold" style="margin:2px 0 0;padding-left:18px;">${lines.join("")}</ul>
       </div>`,
       rolls, sound: null
     });
+
+    // Строго ПОСЛЕ наград: восполнение ставит Очки Бесчестия на максимум, и
+    // выданное до него остаётся в журнале чата, а выданное после пропало бы
+    // молча — пул и так уже полон.
+    if (this.endSession) await triggerSessionEnd();
+
     this.close();
   }
 
