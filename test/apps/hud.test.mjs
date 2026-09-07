@@ -11,6 +11,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import { hudData } from "../../module/apps/hud.mjs";
 import { movementMenuItems } from "../../module/combat/movement-actions.mjs";
+import { weaponProfiles } from "../../module/combat/weapon-profiles.mjs";
+import { isIntegralAttack } from "../../module/combat/equipped-melee.mjs";
 
 /** Актор HUD-типа "character" — тип обязателен: hasActionEconomy смотрит именно на него. */
 function hudActor({ type = "character", items = [], ...system } = {}) {
@@ -27,11 +29,15 @@ function hudActor({ type = "character", items = [], ...system } = {}) {
 }
 
 /** Экипированное оружие в правой руке — минимум полей, которые читает hudData. */
-function weaponItem({ id = "w1", weaponClass = "basic", hand = "right" } = {}) {
+function weaponItem({ id = "w1", weaponClass = "basic", hand = "right", hudProfile } = {}) {
   return {
     id, name: "Тестовое оружие", type: "weapon",
     system: { weaponClass, equipped: true, magazineCur: 10, magazineMax: 10 },
-    getFlag: (scope, key) => (key === "weaponHand" ? hand : undefined)
+    getFlag: (scope, key) => {
+      if (key === "weaponHand") return hand;
+      if (key === "hudProfile") return hudProfile;
+      return undefined;
+    }
   };
 }
 
@@ -94,6 +100,53 @@ describe("hudData: гейт кнопки ОГОНЬ/УДАР (wdbc-jpls, тот 
     const actor = hudActor({ items: [weapon], actionPoints: { value: 0, max: 2 } });
     const hand = hudData(actor).hands.find(h => h.slot === "main");
     expect(hand.fireGate.disabled).toBe(false);
+  });
+});
+
+describe("hudData: выбранный профиль решает, рукопашная ли это атака (wdbc-vxs3)", () => {
+  // Выбор профиля в HUD липкий (флаг hudProfile на предмете), и «Удар в упор»
+  // у ствола — рукопашная атака: окно атаки открывается рукопашное, S.b идёт в
+  // урон, Приёмы стоят ОД. Значит и кнопка, и её гейт обязаны знать о профиле,
+  // а не судить по одному классу оружия.
+  const profileIdx = weapon => weaponProfiles(weapon, { isIntegralAttack }).findIndex(p => p.generated && p.melee);
+
+  it("у ствола вообще есть выводимый рукопашный профиль (иначе тест ничего не проверяет)", () => {
+    expect(profileIdx(weaponItem({ weaponClass: "basic" }))).toBeGreaterThanOrEqual(0);
+  });
+
+  it("выбран «Удар в упор» — кнопка становится УДАР, а не ОГОНЬ", () => {
+    const weapon = weaponItem({ weaponClass: "basic", hudProfile: profileIdx(weaponItem()) });
+    const actor = hudActor({ items: [weapon], actionPoints: { value: 2, max: 2 } });
+    const hand = hudData(actor).hands.find(h => h.slot === "main");
+    expect(hand.isMelee).toBe(true);
+  });
+
+  it("выбран «Удар в упор» при 0 ОД в бою — кнопка заблокирована с причиной", () => {
+    globalThis.game.combat = { started: true };
+    const weapon = weaponItem({ weaponClass: "basic", hudProfile: profileIdx(weaponItem()) });
+    const actor = hudActor({ items: [weapon], actionPoints: { value: 0, max: 2 } });
+    const hand = hudData(actor).hands.find(h => h.slot === "main");
+    expect(hand.fireGate.disabled).toBe(true);
+    expect(hand.fireGate.title).toContain("ОД");
+  });
+
+  it("тот же ствол на основном профиле при 0 ОД — не гейтится и остаётся ОГОНЬ", () => {
+    globalThis.game.combat = { started: true };
+    const weapon = weaponItem({ weaponClass: "basic" });
+    const actor = hudActor({ items: [weapon], actionPoints: { value: 0, max: 2 } });
+    const hand = hudData(actor).hands.find(h => h.slot === "main");
+    expect(hand.isMelee).toBe(false);
+    expect(hand.fireGate.disabled).toBe(false);
+  });
+
+  it("выбор профиля не выдаёт стволу рукопашных Хватов и не гасит счётчик магазина", () => {
+    const weapon = weaponItem({ weaponClass: "basic", hudProfile: profileIdx(weaponItem()) });
+    weapon.system.grips = "1р/2р";
+    weapon.system.magazineCur = 0;
+    const actor = hudActor({ items: [weapon], actionPoints: { value: 2, max: 2 } });
+    const hand = hudData(actor).hands.find(h => h.slot === "main");
+    expect(hand.gripOpts).toEqual([]);
+    expect(hand.empty2).toBe(true);
   });
 });
 

@@ -14,7 +14,7 @@ import { _toggleShield } from "../combat/shield.mjs";
 import { GRIPS, parseGrips } from "../constants/combat.mjs";
 import { SHIP_TPL, shipHudData, wireShipHud } from "./ship-hud.mjs";
 import { isIntegralAttack } from "../combat/equipped-melee.mjs";
-import { weaponProfiles, canStrikeWithGun } from "../combat/weapon-profiles.mjs";
+import { weaponProfiles, canStrikeWithGun, attackIsMelee } from "../combat/weapon-profiles.mjs";
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
@@ -202,6 +202,8 @@ export function hudData(actor) {
     const w = id ? actor.items.get(id) : null;
     if (!w) return { slot: slotKey, label, empty: true };
     const g = w.system ?? {};
+    // Рукопашность ПРЕДМЕТА — про сам ствол: Хваты, магазин, перезарядка.
+    // Рукопашность АТАКИ считается ниже, по выбранному профилю.
     const melee = g.weaponClass === "melee";
     const ammo = g.loadedAmmoId ? actor.items.get(g.loadedAmmoId) : null;
     const rof = [g.rof_single ? "•" : null, g.rof_semi ? "≈" : null, g.rof_full ? "≡" : null]
@@ -232,13 +234,21 @@ export function hudData(actor) {
           })))
       : [];
 
+    // Рукопашная ли АТАКА, которую откроет кнопка (wdbc-vxs3). Выбор профиля
+    // в HUD липкий (флаг hudProfile), и «Удар в упор» у ствола — рукопашная
+    // атака: окно откроется рукопашное. Значит и надпись на кнопке, и её гейт
+    // обязаны считать по тому же общему предикату, что и само окно с броском
+    // (combat/weapon-profiles.mjs::attackIsMelee, wdbc-bs0q), — иначе кнопка
+    // говорит «ОГОНЬ» и выглядит доступной там, где ходов уже не хватает.
+    const meleeAttack = attackIsMelee(g, { profile: curProf >= 0 ? profList[curProf] : null });
+
     // Гейт кнопки ОГОНЬ/УДАР (wdbc-jpls, тот же предикат, что и wdbc-qjnk):
     // рукопашная База всегда стоит минимум 1 ОД (Полудействие) — ни одна не
     // бесплатна (module/constants/combat.mjs, MELEE_BASES), поэтому 0 ОД уже
     // однозначно блокирует любой рукопашный Приём. Дальнобойная стрельба ОД
     // сейчас не тратит вовсе (см. action-economy.mjs, apCostForActionType
     // применяется только к рукопашной) — гейтить «ОГОНЬ» нечем, не гейтим.
-    const fireGate = melee ? apSpendGate(actor, 1) : { disabled: false, title: "" };
+    const fireGate = meleeAttack ? apSpendGate(actor, 1) : { disabled: false, title: "" };
 
     // Удар оружием в упор/приклад (стр. 40) — быстрая кнопка к тому же
     // профилю, что лежит в списке Профилей рядом (wdbc-bs0q). Кому он
@@ -250,7 +260,7 @@ export function hudData(actor) {
 
     return {
       slot: slotKey, label, empty: false,
-      id: w.id, name: w.name, isMelee: melee, canButtStrike,
+      id: w.id, name: w.name, isMelee: meleeAttack, canButtStrike,
       loaded: ammo?.name ?? "",
       clip: Number(g.magazineCur) || 0,
       clipMax: Number(g.magazineMax) || 0,
