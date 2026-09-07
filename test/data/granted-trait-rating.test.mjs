@@ -51,22 +51,27 @@ function mechEntries(file) {
 
 const FILES = listJson(ROOT);
 
+// Разбор всего packs-src — секунды, а нужен всем трём проверкам. Раньше каждая
+// звала mechEntries по всему списку заново, и весь пак читался трижды: сам по
+// себе такой прогон в бюджет укладывался, но под нагрузкой от параллельных
+// сессий проверки упирались в таймаут и падали на ровном месте. Теперь разбор
+// один, на уровне модуля — то есть в сбор, а не в бюджет проверки.
+const ENTRIES = FILES.flatMap(mechEntries);
+const FILES_WITH_MECH = new Set(ENTRIES.map(e => e.file)).size;
+
 describe("выдаваемые Черты: рейтинг проставлен явно", () => {
   it("packs-src вообще разобран — иначе тест зелен от пустоты", () => {
     expect(FILES.length).toBeGreaterThan(1000);
-    const withMech = FILES.filter(f => mechEntries(f).length);
-    expect(withMech.length).toBeGreaterThan(50);
+    expect(FILES_WITH_MECH).toBeGreaterThan(50);
   });
 
   it("ни одна запись kind:\"trait\" с рейтингом не оставлена пустой", () => {
     const holes = [];
-    for (const file of FILES) {
-      for (const { doc, entry } of mechEntries(file)) {
-        if (entry?.kind !== "trait" || !entry?.sourceHasRating) continue;
-        const rating = entry.rating;
-        if (rating === "" || rating === null || rating === undefined) {
-          holes.push(`${doc.name} → ${entry.sourceName}`);
-        }
+    for (const { doc, entry } of ENTRIES) {
+      if (entry?.kind !== "trait" || !entry?.sourceHasRating) continue;
+      const rating = entry.rating;
+      if (rating === "" || rating === null || rating === undefined) {
+        holes.push(`${doc.name} → ${entry.sourceName}`);
       }
     }
     expect(holes, holes.join("\n")).toEqual([]);
@@ -75,8 +80,7 @@ describe("выдаваемые Черты: рейтинг проставлен �
   it("Нага получает четыре руки, как в книге, а не заглушку шаблона", () => {
     // Именной случай из wdbc-w27k: при X=2 Черта не даёт вообще ничего (две
     // руки есть у всех), и дополнительные атаки парой рук не появляются.
-    const naga = FILES.map(f => mechEntries(f)).flat()
-      .filter(({ doc }) => String(doc.name || "").includes("Нага"));
+    const naga = ENTRIES.filter(({ doc }) => String(doc.name || "").includes("Нага"));
     const arms = naga.find(({ entry }) => String(entry.sourceName || "").includes("Multiple Arms"));
     expect(arms, "у Наги пропала выдача Multiple Arms").toBeTruthy();
     expect(String(arms.entry.rating)).toBe("4");
