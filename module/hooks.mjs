@@ -36,6 +36,7 @@ import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
 import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
 import { processTurnStateShieldsTurnEnd, clearTurnStateShields } from "./combat/turn-state-shield.mjs";
 import { processVultureTurnStart } from "./combat/vulture.mjs";
+import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -1863,6 +1864,10 @@ function _attachFateContextMenu(message, html) {
       // умирающих/трупа в 7 м — начисляется и сгорает тем же тактом, поэтому
       // нужен токен носителя, а не только актор.
       await processVultureTurnStart(nextCombatant.actor, nextCombatant.token);
+      // Облучённый/Дар Нургла (wdbc-1rno): попадание Рад(1d10) от каждого
+      // носителя Дара в 3 м — книга бьёт им «в начале своего Хода» жертвы,
+      // тот же такт и та же геометрия, что у Стервятника выше.
+      await processIrradiatedTurnStart(nextCombatant.actor, nextCombatant.token);
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
       await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);

@@ -6426,9 +6426,9 @@ export const CAPABILITIES = {
     reader: "packs-src/mutations/Дары_Богов/Нургл/Iconoclast___Иконокласт_dsPYJTttPRnf2c8e.json, запись kind:\"script\" (id iconoclast-script) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.nurgle.irradiated": {
-    label: "Аура 3м: попадание Rad(1d10) всем в начале их Хода, Cor.b Dmg в пробитие; сам иммунен к радиации; вкусивший плоти/крови получает иммунитет на 7 дней (тест T+0 или 1d5 Порчи без покровительства Нургла)",
+    label: "Реализовано (wdbc-1rno): в начале Хода каждой жертвы в 3 м от носителя кидается Рад(1d10); попадание «пробивает», если Cor.b НОСИТЕЛЯ минус поглощение торса жертвы (AP+T.b) ≥ выпавшего рейтинга — тогда тест T+0, провал даёт +1 уровень Радиации. Ран это попадание не наносит: книга даёт Cor.b только «в расчёте пробития брони». Несколько носителей рядом бьют независимо. Иммунитет самого носителя — записью kind:\"condition\" condMode:\"immunity\" на этом же Даре, её уважает любой путь наложения Состояния. НЕ смоделировано: «вкусивший плоти или крови чемпиона получает неуязвимость к радиации на 7 дней» — поедание чужой плоти событием движка не является",
     source: "Дар Нургл (Irradiated)",
-    reader: ""
+    reader: "module/combat/irradiated.mjs::processIrradiatedTurnStart (такт начала Хода жертвы — module/hooks.mjs::updateCombat, та же геометрия tokensWithinRadius, что у Стервятника); арифметика пробития — radAuraOutcome (чистая); иммунитет носителя — packs-src/mutations/Дары_Богов/Нургл/Irradiated…json, запись id irradiated-immunity, читается module/rules/condition-guards.mjs::isImmuneToCondition"
   },
   "gift.nurgle.knightOfNurgle": {
     label: "Демонический скакун (Паланкин Нургла) в услужении — призыв ритуалом, вселение в технику даёт +7 Ран/Структуры и автопрохождение тестов Трудного Ландшафта",
