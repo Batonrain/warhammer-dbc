@@ -209,7 +209,13 @@ function pagesWithTraits() {
   const out = [];
   for (const file of walk(path.join(ROOT, "packs-src/books"))) {
     let book;
-    try { book = JSON.parse(fs.readFileSync(file, "utf8")); } catch { continue; }
+    // Не «пропустить молча»: нечитаемая книга уменьшает число сверенных рас, и
+    // сверка тогда врёт в спокойную сторону — «расхождений нет», потому что
+    // сверять было не с чем. Один раз так и вышло: книгу писал параллельный
+    // агент, JSON был на середине записи, и сверка отчиталась по одной расе
+    // вместо одиннадцати.
+    try { book = JSON.parse(fs.readFileSync(file, "utf8")); }
+    catch (e) { throw new Error(`книга ${path.basename(file)} не разбирается: ${e.message}`); }
     for (const entry of book.entries || []) {
       for (const page of entry.pages || []) {
         const lines = pageLines(page.html);
