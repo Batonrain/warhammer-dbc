@@ -135,3 +135,33 @@ describe("двенадцать психосил Божественных Дис�
     expect(extra).toEqual([]);
   });
 });
+
+describe("лист показывает требование, не дожидаясь нажатия «Манифестировать»", () => {
+  // Гейт на манифестации был и раньше, но игрок узнавал о нём только по отказу.
+  // В проекте, где «игрок минимально считает и помнит сам», причина обязана
+  // стоять там, где силу выбирают (ревью 07.09.2026).
+  it("в строке психосилы есть книжное требование и пометка отсутствующей Метки", async () => {
+    const { sheetOf } = await import("../support/foundry-stub.mjs");
+    const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+    const { buildGetData } = await import("../../module/sheets/sheet-helpers.mjs");
+
+    clearRuleSources();
+    registerRuleSource("test", () => []);   // Метки у персонажа нет
+
+    const power = {
+      id: "p1", name: "Адский Вопль", type: "psychicPower",
+      system: { requirement: "Метка Слаанеш, PR 5+, T 40+", prRequired: 5, testChar: "wp",
+                discipline: "slaanesh", powerType: "attack", cost: 400 },
+      getFlag: () => undefined
+    };
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      items: [power], characteristics: {}, skills: {}, groupSkills: {}, psyker: { rating: 6 }
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+
+    const row = buildGetData(sheet.actor).psyPowers?.find(p => p.id === "p1");
+    expect(row, "психосила не попала в контекст вкладки ПСИ").toBeTruthy();
+    expect(row.requirement).toBe("Метка Слаанеш, PR 5+, T 40+");
+    expect(row.missingMark).toBe("Слаанеш");
+  });
+});

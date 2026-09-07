@@ -7477,7 +7477,8 @@ export const CAPABILITIES = {
   // таблице модификаторов Призыва (корбук, «VI. МИСТИКА → РИТУАЛЫ») стоят две
   // РАЗНЫЕ строки — «Персонаж имеет метку бога демона +30» и «Персонаж имеет
   // покровительство (но не метку) бога демона +20». Метка ещё и требование:
-  // тринадцать психосил Божественных Дисциплин требуют «Метка <Бог>» и для
+  // двенадцать психосил Божественных Дисциплин (Слаанеш 4, Нургл 3, Тзинч 5;
+  // у Кхорна психосил нет вовсе) требуют «Метка <Бог>» и для
   // изучения, и для манифестации, и теряется она отдельно от фавора («Если
   // псайкер теряет Метку, он также лишается возможности использовать психосилы
   // требующие ее»).
@@ -7489,22 +7490,22 @@ export const CAPABILITIES = {
   "mark.khorne": {
     label: "Метка Кхорна",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   "mark.nurgle": {
     label: "Метка Нургла",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   "mark.tzeentch": {
     label: "Метка Тзинча",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   "mark.slaanesh": {
     label: "Метка Слаанеш",
     source: "Корбук, «I. СОЗДАНИЕ ПЕРСОНАЖА → ОПЫТ и СТАРТОВОЕ СНАРЯЖЕНИЕ»",
-    reader: ""
+    reader: "module/constants/talent-requirements.mjs — атом «Метка <Бог>» в checkRequirement; module/sheets/tabs/psychic.mjs — missingMarkForPower (гейт манифестации)"
   },
   // Иммунитет к пыткам (Метка Слаанеш). Единственная реализованная в системе
   // пытка болью — Искусная Пытка друкхари, туда и смотрит читатель; отдельная

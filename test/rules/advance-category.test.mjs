@@ -83,6 +83,11 @@ describe("единая категория Продвижения (значок =
 
     expect(def.alwaysAlly).toBe(true);
     expect(skillAdvanceCat(a, def, { group: "trade", specialty: "Оружейник" }, apts)).toBe("ally");
+    // Подпись обязана объяснять ТУ ЖЕ букву: раньше она обходила alwaysAlly и
+    // рассказывала про Враждебность, пока значок показывал Д (ревью 07.09.2026).
+    const src = advanceCatSource(a, "group", "trade", { specialty: "Оружейник" });
+    expect(src.align).toBe("ally");
+    expect(src.text).toMatch(/Дружественн/);
   });
 
   it("Враждебный override побеждает Дружественный (правило самого resolveAptitudeOverride)", () => {

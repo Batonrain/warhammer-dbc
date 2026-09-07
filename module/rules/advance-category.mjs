@@ -94,16 +94,22 @@ export function advanceCatSource(actor, scope, key, { group = "", specialty = ""
   const name = def?.label || def?.name || "";
   const grp  = group || (scope === "group" ? key : "");
 
+  // ПОРЯДОК ЗДЕСЬ ОБЯЗАН СОВПАДАТЬ С skillAdvanceCat, иначе подпись объяснит
+  // не ту букву, которая нарисована (ревью 07.09.2026): у Ремесла с расовым
+  // override «Враждебный» буква осталась бы Д (alwaysAlly сильнее), а подпись
+  // рассказывала бы про Враждебность.
+  if (def?.alwaysAlly) return describe("book", "ally", ["Ремесло и Общие знания Дружественные всегда"]);
+
+  // Дружественная специализация Родного мира — источник виден на листе
+  // (Родной мир), но не в этой строке, поэтому подписывается.
+  if (grp && specialty && isFriendlySpecialty(actor, grp, specialty))
+    return describe("homeworld", "ally", ["Родной мир"]);
+
   const align = resolveAptitudeOverride(actor, "skill", name, grp);
   if (align) return describe("override", align, aptitudeOverrideLabels(actor, "skill", name, grp));
 
   const cult = cultureCat("skill", def?.en || name, "", cultFxOf(actor));
   if (cult) return describe("culture", cult, ["культура легиона"]);
-
-  // Дружественная специализация Родного мира — источник виден на листе
-  // (Родной мир), но не в этой строке, поэтому подписывается тоже.
-  if (grp && specialty && isFriendlySpecialty(actor, grp, specialty))
-    return describe("homeworld", "ally", ["Родной мир"]);
 
   return null;
 }
@@ -112,5 +118,9 @@ function describe(kind, align, labels) {
   const clean = (labels || []).filter(Boolean);
   const word  = ALIGN_WORD[align] || align;
   const from  = clean.length ? `: ${clean.join(", ")}` : "";
-  return { kind, align, labels: clean, text: `${word} независимо от Склонностей${from}` };
+  // «независимо от Склонностей» — формулировка книги для override и культуры.
+  // Для книжного «всегда Дружественный» она была бы маслом масляным, поэтому
+  // у него своя.
+  const head  = kind === "book" ? `${word} по книге` : `${word} независимо от Склонностей`;
+  return { kind, align, labels: clean, text: `${head}${from}` };
 }

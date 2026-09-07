@@ -91,19 +91,29 @@ describe("pathRules — правила достигнутых градаций �
       next:   { rules: [{ id: "b", effects: [] }] },
       master: { rules: [{ id: "c", effects: [] }] }
     } };
+    // Подмена экспортируемой таблицы — сознательная и на один тест: другого
+    // входа у pathRules() нет, она читает AZURIANE_PATHS по ключу записи.
+    // Ключ заведомо не книжный, прежнее значение восстанавливается в finally.
+    const had = Object.hasOwn(AZURIANE_PATHS, "__test");
     AZURIANE_PATHS.__test = fake;
     try {
       const got = pathRules([{ key: "__test", grade: "next" }]).map(r => r.id);
       expect(got).toEqual(["path.__test.novice.a", "path.__test.next.b"]);
       expect(PATH_GRADE_ORDER.indexOf("master")).toBeGreaterThan(PATH_GRADE_ORDER.indexOf("next"));
     } finally {
-      delete AZURIANE_PATHS.__test;
+      if (!had) delete AZURIANE_PATHS.__test;
     }
   });
 
-  it("сегодня ни одна книжная градация правил не несёт — сбор пуст и не падает", () => {
+  it("сбор по каждому книжному Пути не падает и отдаёт правила с уникальными id", () => {
+    // НЕ «сбор пуст»: сегодня поле `rules` у градаций не заполнено ни у кого,
+    // но заполнить его — ровно то, ради чего pathRules() и написан. Тест,
+    // требующий пустоты, покраснел бы от первой же честной записи данных.
     for (const key of Object.keys(AZURIANE_PATHS)) {
-      expect(pathRules([{ key, grade: "lost" }]), key).toEqual([]);
+      const rules = pathRules([{ key, grade: "lost" }]);
+      expect(Array.isArray(rules), key).toBe(true);
+      expect(new Set(rules.map(r => r.id)).size, key).toBe(rules.length);
+      for (const r of rules) expect(r.label, `${key}: правило без подписи`).toBeTruthy();
     }
   });
 });

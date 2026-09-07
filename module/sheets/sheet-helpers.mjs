@@ -45,6 +45,7 @@ import { CONDITIONS_DEF }                            from "../constants/conditio
 import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/condition-mirrors.mjs";
 import { aptBindingContext } from "../rules/aptitude-binding.mjs";
 import { skillAdvanceCat, advanceCatSource } from "../rules/advance-category.mjs";
+import { missingMarkForPower } from "./tabs/psychic.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -1111,6 +1112,11 @@ export function buildGetData(actor) {
       testAbbr:     _psyAbbr[s.testChar] ?? (s.testChar || "").toUpperCase(),
       threshold,
       prRequired:   s.prRequired ?? 0,
+      // Полное книжное требование и «а Метки-то нет» (wdbc-k1q4). Гейт на
+      // манифестации был, но игрок узнавал о нём только нажав кнопку: причина
+      // есть, а нащупать её надо. Здесь она видна в самой строке силы.
+      requirement:  s.requirement || "",
+      missingMark:  missingMarkForPower(actor, i)?.label ?? "",
       cost:         s.cost ?? 0,
       disciplineLabel: PSY_DISCIPLINES[s.discipline]?.label ?? "",
       subtype:      s.subtype || "",
