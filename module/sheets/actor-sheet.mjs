@@ -31,6 +31,8 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
+import { isUnseenBeggarItem, betterThanPoorEquipped } from "../rules/unseen-beggar.mjs";
+import { QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
@@ -662,7 +664,18 @@ function onMutgiftRoll(event) {
 // только на общее поле system.active + isItemActive().
 async function onMutgiftToggleActive(event, target) {
   event.preventDefault(); event.stopPropagation();
-  await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
+  const item = this.actor.items.get(target.dataset.itemId);
+  // Незримый Нищий (wdbc-1rno): чары накладываются, только пока НАДЕТО одно
+  // Poor.Q. Гейт стоит на включении, не на выключении — развеять чары книга
+  // разрешает всегда, и запертый «включённым» Дар был бы хуже отсутствующего.
+  if (item && !item.system?.active && isUnseenBeggarItem(item)) {
+    const blockers = betterThanPoorEquipped(this.actor.items);
+    if (blockers.length) {
+      return ui.notifications.warn(`Незримый Нищий: чары требуют только снаряжения Poor.Q. Мешают: ${
+        blockers.map(b => `${b.name} (${QUALITY_LABELS[b.quality] || b.quality})`).join(", ")}.`);
+    }
+  }
+  await toggleGearModActive(item);
 }
 
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
