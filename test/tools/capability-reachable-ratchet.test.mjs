@@ -1,101 +1,97 @@
 // test/tools/capability-reachable-ratchet.test.mjs
 //
-// ХРАПОВИК ДОСЯГАЕМОСТИ ВОЗМОЖНОСТЕЙ (wdbc-3jlm, найдено живой проверкой
-// 07.09.2026).
+// ХРАПОВИК ДОСЯГАЕМОСТИ ВОЗМОЖНОСТЕЙ (заведён по wdbc-3jlm, пересчитан по
+// wdbc-czra).
 //
-// У возможности две половины: ЧИТАТЕЛЬ в коде (кто-то спрашивает hasRuleFlag)
-// и ВЫДАЧА — предмет в packs-src с записью Конструктора kind:"capability" либо
-// правило в module/rules/library/* с effects grantFlag. Пока есть только одна
-// половина, механика не работает НИ У КОГО, и заметить это тестами нельзя:
-// код правильный, тесты зелёные, а за столом ничего не происходит.
+// У возможности две половины: ЧИТАТЕЛЬ в коде (кто-то спрашивает про неё) и
+// ВЫДАЧА — то, чем она включается из игры. Пока есть только читатель, механика
+// не работает НИ У КОГО, и заметить это обычными средствами нельзя: код
+// правильный, тесты зелёные, а за столом ничего не происходит. Ровно так вышло
+// с Талантом «Два Оружия»: модуль правил, окно атаки, списание одного ОД на
+// пару ударов — всё написано и покрыто тестами, но сам Талант в компендиуме
+// записи «Возможность» не нёс, и галочка не появлялась ни у кого.
 //
-// Ровно так вышло с Талантом «Два Оружия»: модуль rules/dual-wield.mjs, окно
-// атаки, списание одного ОД на пару ударов — всё было написано и покрыто
-// пятнадцатью тестами, но сам Талант в компендиуме записи «Возможность» не
-// нёс, и галочка «Обе руки» не появлялась ни у кого. Поймала только живая
-// проверка.
+// ПЕРВЫЙ ЗАМЕР ДАЛ 69 — И ОКАЗАЛСЯ ПОЧТИ ЦЕЛИКОМ АРТЕФАКТОМ ИЗМЕРЕНИЯ.
+// Он искал ровно одно: строковый литерал ключа в `target:` или в записи
+// Конструктора. Разбор каждой из 69 (07.09.2026) показал, что способность
+// обычно РАБОТАЕТ, просто включается не ключом с этим именем:
 //
-// Замер на 07.09.2026: 69 возможностей из 253 имеет читателя и не выдаётся
-// ничем. Это долг, а не норма: у части «выдача» задумана снаружи (эффект,
-// который ГМ ставит руками), но у большинства — просто не дописана.
+//   31 — та же способность смоделирована под рабочим ключом `ability.*`
+//        (module/rules/ability-by-key.mjs), и выдаётся ИМЕННО он;
+//    8 — выдаётся кодом, но имя цели там переменная, а не литерал
+//        (pilot.dreadnought и семь sarcophagus.* — rules/sources.mjs);
+//    9 — предмет несёт запись Конструктора другого вида (Преимущество
+//        механизировано kind:"reroll", wdbc-u0by);
+//    1 — предмет несёт ActiveEffect (Эльдарская Ловкость, +1 к максимуму ОД);
+//    9 — код опознаёт носителя по имени предмета (долг wdbc-iadw о хрупкости
+//        опознания по имени, но за столом способность есть).
 //
-// Число только вниз (toBeLessThanOrEqual). Новая возможность с читателем и
-// без выдачи ломает тест — и это правильно: писать читателя, к которому
-// невозможно прийти из игры, значит писать мёртвый код.
+// Осталось 11, и все одиннадцать — законные: перечислены поимённо ниже.
+// Настоящих дыр «написано, но включить нечем» на 07.09.2026 не осталось.
+//
+// Разбор живёт в tools/capability-reachability.mjs, здесь — только гейт.
 
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
+import { analyze } from "../../tools/capability-reachability.mjs";
 
-const ROOT = path.resolve(import.meta.dirname, "../..");
+/**
+ * Возможности без выдачи, признанные законными — каждая с причиной.
+ *
+ * Это НЕ список «руки не дошли»: у каждой записи выдача не нужна по замыслу.
+ * Новый ключ сюда добавляется только вместе с объяснением, ПОЧЕМУ включатель
+ * не требуется; «потом сделаем» — не причина, такой ключ должен ронять тест.
+ */
+const ALLOWED = {
+  // Иммунитеты к свойствам оружия: в паке нет предмета, который бы их давал,
+  // они заведены про запас — ГМ ставит эффектом (см. их же `source`).
+  "weaponPropertyImmunity.piercing": "иммунитет про запас, ставится эффектом ГМа",
+  "weaponPropertyImmunity.haywire":  "иммунитет про запас, ставится эффектом ГМа",
+  "weaponPropertyImmunity.shocking": "иммунитет про запас, ставится эффектом ГМа",
+  "weaponPropertyImmunity.snare":    "иммунитет про запас, ставится эффектом ГМа",
 
-/** Текущий долг. Двигать ТОЛЬКО вниз и только вместе с реальной выдачей. */
-const DEBT = 69;
+  // Состязания рукопашной доступны всем — Талант их не гейтит, это общий
+  // принцип (character-context.mjs, тот же у Финта/Давления/Напролома).
+  "meleeCore.core.disarm": "Состязание доступно всем, Талант доступность не гейтит",
 
-function walk(dir, onFile) {
-  if (!fs.existsSync(dir)) return;
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    // Книги — журнальные тексты, записей Конструктора в них нет.
-    if (e.isDirectory()) { if (e.name !== "books" && e.name !== "node_modules") walk(p, onFile); }
-    else onFile(p);
-  }
-}
-
-/** Ключи, выдаваемые предметами: flags.warhammer-dbc.mechanics[].entries[].capabilityKey. */
-function grantedByPacks() {
-  const keys = new Set();
-  const scan = o => {
-    if (Array.isArray(o)) o.forEach(scan);
-    else if (o && typeof o === "object") {
-      if (o.capabilityKey) keys.add(String(o.capabilityKey));
-      Object.values(o).forEach(scan);
-    }
-  };
-  walk(path.join(ROOT, "packs-src"), p => {
-    if (!p.endsWith(".json")) return;
-    try { scan(JSON.parse(fs.readFileSync(p, "utf8"))?.flags); } catch { /* не наш файл */ }
-  });
-  return keys;
-}
-
-/** Ключи, выдаваемые правилами в коде: effects: [{ kind: "grantFlag", target: "…" }]. */
-function grantedByCode() {
-  const keys = new Set();
-  walk(path.join(ROOT, "module"), p => {
-    if (!p.endsWith(".mjs")) return;
-    const src = fs.readFileSync(p, "utf8");
-    for (const m of src.matchAll(/target:\s*"([\w.\-]+)"/g)) keys.add(m[1]);
-  });
-  return keys;
-}
+  // Подмена характеристики Инициативы: книга даёт только Int (Боевое
+  // Построение) и Per (Чувство Боя) — оба выдаются Талантами. Остальные шесть
+  // существуют, чтобы ГМ мог разрешить свой вариант эффектом.
+  "combat.initiativeChar.ws":  "книжного носителя нет, ключ про запас для эффекта ГМа",
+  "combat.initiativeChar.bs":  "книжного носителя нет, ключ про запас для эффекта ГМа",
+  "combat.initiativeChar.s":   "книжного носителя нет, ключ про запас для эффекта ГМа",
+  "combat.initiativeChar.t":   "книжного носителя нет, ключ про запас для эффекта ГМа",
+  "combat.initiativeChar.wp":  "книжного носителя нет, ключ про запас для эффекта ГМа",
+  "combat.initiativeChar.fel": "книжного носителя нет, ключ про запас для эффекта ГМа"
+};
 
 describe("возможности с читателем должны быть достижимы из игры", () => {
-  const withReader = Object.entries(CAPABILITIES)
-    .filter(([, v]) => String(v?.reader ?? "").trim() !== "")
-    .map(([k]) => k);
+  const report = analyze(CAPABILITIES);
 
   it("реестр и паки вообще разобраны — иначе тест зелен от пустоты", () => {
-    expect(withReader.length).toBeGreaterThan(100);
-    expect(grantedByPacks().size).toBeGreaterThan(100);
+    expect(report.withReader.length).toBeGreaterThan(100);
+    expect(report.byWay.packs.length).toBeGreaterThan(100);
   });
 
-  it("число недостижимых возможностей не растёт", () => {
-    const packs = grantedByPacks();
-    const code  = grantedByCode();
-    const unreachable = withReader.filter(k => !packs.has(k) && !code.has(k));
+  it("нет возможности с читателем, которую нечем включить", () => {
+    const unexplained = report.unreachable.filter(k => !Object.hasOwn(ALLOWED, k));
+    expect(unexplained, `нечем включить:\n${unexplained
+      .map(k => `  ${k}  [${CAPABILITIES[k]?.source ?? ""}]`).join("\n")}`).toEqual([]);
+  });
 
-    expect(unreachable.length, `недостижимы:\n${unreachable.join("\n")}`)
-      .toBeLessThanOrEqual(DEBT);
+  it("список законных исключений не заводится про запас", () => {
+    // Обратная сторона: ключ ушёл из недосягаемых (его наконец выдали), а
+    // строка исключения осталась — и следующая настоящая дыра под тем же
+    // именем проедет молча.
+    const stale = Object.keys(ALLOWED).filter(k => !report.unreachable.includes(k));
+    expect(stale, `выдача появилась, строку исключения пора убрать:\n${stale.join("\n")}`).toEqual([]);
   });
 
   it("вся ветка «Два оружия», у которой есть читатель, выдаётся Талантами", () => {
     // Именной случай, из-за которого храповик и заведён: код был, выдачи не
     // было, и ни один игрок галочку «Обе руки» не видел.
-    const packs = grantedByPacks();
-    const dual = withReader.filter(k => k.startsWith("dualWield."));
+    const dual = report.withReader.filter(k => k.startsWith("dualWield."));
     expect(dual.length).toBeGreaterThan(0);
-    expect(dual.filter(k => !packs.has(k))).toEqual([]);
+    expect(dual.filter(k => !report.byWay.packs.includes(k))).toEqual([]);
   });
 });

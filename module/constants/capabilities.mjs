@@ -6348,7 +6348,7 @@ export const CAPABILITIES = {
   },
   "gift.khorne.livingWeapon": {
     label: "Полудействие+1 Бесчестия: до конца боя оружие/импровизированное оружие в руке нельзя выбить, +10 WS, Баланс до 0, Pen до Cor.b, теряет Primitive/получает Reinforced (импровизированное: без штрафа −20, +1 кубик, ×2 S.b). Disarm-часть подключена под combat.cannotBeDisarmed (wdbc-egll), гейтится system.activatable/active (isItemActive) — кнопка на листе включает/выключает предмет целиком, полудействие/1 Бесчестие на вход и конец боя/сцены на выход — вручную. +10 WS/Баланс/Pen/Reinforced-Primitive — ещё не заведены (нужен профиль оружия в руке, отдельная работа).",
-    source: "Дар Кхорн (Living Weapon)",
+    source: "Living Weapon / Живое Оружие (Дар Кхорна, packs-src/mutations/Дары_Богов/Кхорн)",
     reader: "module/data/item/mutation.mjs (activatable/active) + module/apps/effects.mjs::isItemActive case \"mutation\" — только capabilityKey combat.cannotBeDisarmed, остальное ещё не читается"
   },
   "gift.khorne.priestOfBloodshed": {
@@ -7568,7 +7568,9 @@ export const INITIATIVE_CHAR_KEYS = Object.keys(CHARACTERISTICS)
 for (const key of INITIATIVE_CHAR_KEYS) {
   CAPABILITIES[INITIATIVE_CHAR_PREFIX + key] = {
     label: `Инициатива считается по ${CHARACTERISTICS[key].abbr}.b, а не по Ag.b`,
-    source: "Таланты «Боевое Построение» (Int) и «Чувство Боя» (Per), корбук стр. 62",
+    source: key === "int" ? "Combat Formation / Боевое Построение (корбук стр. 62)"
+          : key === "per" ? "Combat Sense / Чувство Боя (корбук стр. 62)"
+          : "нет книжного носителя: ключ заведён про запас, ставится эффектом ГМа (корбук стр. 62 даёт только Int и Per)",
     reader: "module/rules/initiative.mjs initiativeCharKey() — выбирает лучшую из разрешённых"
   };
 }
