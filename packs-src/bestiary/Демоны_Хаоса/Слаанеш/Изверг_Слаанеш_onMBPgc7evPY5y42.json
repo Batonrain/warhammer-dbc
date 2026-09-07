@@ -392,7 +392,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "разрушающая песнь",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {

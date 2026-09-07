@@ -400,7 +400,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "злоба и ненависть к жизни",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {

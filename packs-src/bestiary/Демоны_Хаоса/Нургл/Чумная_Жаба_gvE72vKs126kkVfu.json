@@ -392,7 +392,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "наказание за амбиции",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {

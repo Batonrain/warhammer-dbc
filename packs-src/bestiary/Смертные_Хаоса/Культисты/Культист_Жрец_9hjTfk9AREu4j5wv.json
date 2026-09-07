@@ -483,7 +483,8 @@
       "hunger": 0,
       "thirst": 0,
       "sleep": 0
-    }
+    },
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {
