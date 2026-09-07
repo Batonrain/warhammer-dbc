@@ -16,12 +16,13 @@ import path from "node:path";
 
 import { isItemActive } from "../../module/apps/effects.mjs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const GAS_MASK_PATH = path.join(ROOT,
   "packs-src/gear/Головное/Gas_Mask___Противогаз_AQLQSuvuH2LWm1sU.json");
 
-const gasMask = JSON.parse(fs.readFileSync(GAS_MASK_PATH, "utf8"));
+const gasMask = packDocByFileHint(GAS_MASK_PATH);
 
 const maskItem = equipped => ({
   id: "mask", name: gasMask.name, type: gasMask.type,
