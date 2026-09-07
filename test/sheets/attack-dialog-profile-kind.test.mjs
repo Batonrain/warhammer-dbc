@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor } from "../support/combat-fixtures.mjs";
 import { showAttackDialog } from "../../module/sheets/attack-dialog.mjs";
+import { IMPROVISED_MELEE_LABEL } from "../../module/combat/weapon-profiles.mjs";
 
 /** Разметка открытого окна — то, что видит игрок. */
 const content = () => captured.dialog?.content ?? "";
@@ -65,6 +66,28 @@ describe("список Профилей не смешивает рукопашн
     showAttackDialog(shooter([blade]), blade, {});
     expect(content()).toContain("atk-profile");
     expect(content()).toContain("Обратный хват");
+  });
+
+  it("выбранный профиль остаётся в списке, даже когда он другого вида (wdbc-4ltj)", async () => {
+    // Единственный способ развести вид окна с видом выбранного профиля —
+    // forceMelee:true вместе со СТРЕЛКОВЫМ profileIdx. Такого вызывающего
+    // сегодня нет, и сторож нужен именно поэтому: фильтр по виду выкинул бы
+    // отмеченную пилюлю, игрок увидел бы список без своего выбора, а profIdx
+    // указывал бы мимо списка. Смягчать сам фильтр (считать вид вместе с
+    // forceMelee) нельзя — тогда в окно «в упор» вернутся стрелковые профили,
+    // то есть дыра wdbc-bs0q выше.
+    const gun = weaponFor({
+      weaponClass: "basic", equipped: true,
+      profiles: [{ label: "Перегрузка", damage: "2d10" }]
+    }, { name: "Лазган" });
+    showAttackDialog(shooter([gun]), gun, { forceMelee: true, profileIdx: 0 });
+    expect(content()).toContain("Перегрузка");   // выбранный на месте
+    // Метка берётся КОНСТАНТОЙ, а не дословной копией (wdbc-d56f): она одна на
+    // весь проект и её переименовывают, а переписанная сюда строка тихо
+    // разъезжается с той, что видит игрок. Этот файл на том уже споткнулся:
+    // переименование метки шло отдельной веткой, и оба пул-реквеста были
+    // зелёными порознь, а вместе роняли main.
+    expect(content()).toContain(IMPROVISED_MELEE_LABEL);  // и рукопашный, по виду окна
   });
 
   it("у стрелкового свои СТРЕЛКОВЫЕ профили остались на месте — регресс", async () => {

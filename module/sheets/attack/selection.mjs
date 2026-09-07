@@ -197,9 +197,21 @@ export function buildSelection(v) {
   // Рукопашный профиль у стрелкового выбирается ДО открытия окна — кнопкой «в
   // упор» в HUD, и тогда окно открывается уже рукопашным, а в списке остаётся
   // он один.
+  //
+  // ВЫБРАННЫЙ профиль остаётся в списке всегда, даже если он другого вида
+  // (wdbc-4ltj). Вид окна считается по forceMelee И по профилю
+  // (attack-dialog.mjs: attackIsMelee(sys, { forceMelee, profile })), поэтому
+  // разойтись они могут ровно в одном случае — вызывающий передал
+  // forceMelee:true вместе со СТРЕЛКОВЫМ profileIdx. Сегодня такого
+  // вызывающего нет (кнопка «в упор» в HUD всегда шлёт индекс выводимого
+  // рукопашного профиля), но появись он — фильтр по виду выкинул бы из списка
+  // именно отмеченную пилюлю: игрок видел бы набор без выбранного, а profIdx
+  // указывал бы на профиль вне списка. Считать вид вместе с forceMelee вместо
+  // этого нельзя — тогда в окно «в упор» вернулись бы стрелковые профили, а
+  // это и есть та дыра, которую закрывает wdbc-bs0q.
   const sameKind = profile => attackIsMelee(sys, { profile }) === isMelee;
   const profileOptions = atkProfiles.length ? [
-    ...(sameKind(null)
+    ...(sameKind(null) || profIdx < 0
       ? [{ idx: -1, label: sys.profileLabel || "Основной", dmg: sys.damage || "", allowed: true }]
       : []),
     ...atkProfiles.map((p, i) => {
@@ -207,7 +219,7 @@ export function buildSelection(v) {
       const reason  = allowed ? "" : `Нужно: ${CAPABILITIES[p.requiresCapability]?.source || p.requiresCapability}`;
       return { idx: i, label: p.label || `Проф. ${i + 1}`, dmg: p.damage || "", allowed, reason,
                kind: attackIsMelee(sys, { profile: p }) };
-    }).filter(o => o.kind === isMelee)
+    }).filter(o => o.kind === isMelee || o.idx === profIdx)
   ] : [];
   function computeLockNoteHtml(pIdx) {
     const category = categoryFor(pIdx);
