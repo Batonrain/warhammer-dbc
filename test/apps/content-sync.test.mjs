@@ -7,7 +7,7 @@ import { describe, it, expect } from "vitest";
 import {
   nameKeys, sameValue, buildPackIndex, matchPackSource,
   diffItemAgainstPack, buildSyncReport, applySyncReport,
-  MECH_PATH, fieldLabel, describeValue
+  MECH_PATH, EFFECTS_PATH, effectsOf, fieldLabel, describeValue
 } from "../../module/apps/content-sync.mjs";
 
 const doc = (uuid, name, type, system = {}) => ({ uuid, name, type, system });
@@ -252,5 +252,97 @@ describe("Механика Конструктора участвует в све
     expect(shown).not.toContain("{");
     expect(shown).toContain("1");
     expect(describeValue(MECH_PATH, [])).toBe("—");
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Эффекты предмета (wdbc-9aj9). Найдено живой проверкой: сверка не смотрела
+//  на встроенную коллекцию ActiveEffect вовсе, и любая поломка, осевшая в
+//  эффекте, «Обновить мир» не лечил и даже не показывал.
+//
+//  Именной случай — Боевые Латы Скитарии: миграция перенесла очки брони в
+//  эффект на предмете, пак потом починили, у нового персонажа всё верно, а у
+//  старого броня по-прежнему задваивалась.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** ActiveEffect в форме, в которой он лежит и на предмете, и в документе пака. */
+const fx = (name, changes, extra = {}) =>
+  ({ name, transfer: true, statuses: [], system: { changes }, ...extra });
+
+const ch = (key, value) => ({ key, type: "add", value, phase: "final", priority: 0 });
+
+const fxItem = ({ id = "a1", name = "Латы", type = "armor", system = {},
+                  src, effects = [], effectsBaseline } = {}) => {
+  const flags = { "warhammer-dbc": {} };
+  if (effectsBaseline) flags["warhammer-dbc"].contentSync = { effectsBaseline };
+  return { id, name, type, system, effects, _stats: src ? { compendiumSource: src } : {}, flags };
+};
+
+const fxDoc = (uuid, name, type, effects, system = {}) => ({ uuid, name, type, system, effects });
+
+describe("Эффекты предмета участвуют в сверке (wdbc-9aj9)", () => {
+  it("у персонажа эффект со старым числом, в паке новое — строка «чисто»", () => {
+    const pack = fxDoc("u1", "Латы", "armor", [fx("Латы", [ch("system.armour.body", 6)])]);
+    const item = fxItem({ src: "u1", effects: [fx("Латы (перенесено)", [ch("system.armour.body", 12)])] });
+    const row = diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH);
+    expect(row).toBeTruthy();
+    expect(row.status).toBe("clean");
+    expect(row.packVal[0].changes[0].value).toBe(6);
+  });
+
+  it("эффекты совпадают с паком — строки нет вовсе", () => {
+    const eff = [fx("Латы", [ch("system.armour.body", 6)])];
+    const pack = fxDoc("u1", "Латы", "armor", eff);
+    const item = fxItem({ src: "u1", effects: eff });
+    expect(diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH)).toBeUndefined();
+  });
+
+  it("ГМ правил эффект на предмете актёра — конфликт, а не молчаливое затирание", () => {
+    const pack = fxDoc("u1", "Латы", "armor", [fx("Латы", [ch("system.armour.body", 6)])]);
+    const item = fxItem({
+      src: "u1",
+      effectsBaseline: [{ name: "Латы", transfer: true, statuses: [],
+                          changes: [{ key: "system.armour.body", type: "add", value: 12, phase: "final", priority: 0 }] }],
+      effects: [fx("Латы", [ch("system.armour.body", 99)])]
+    });
+    const row = diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH);
+    expect(row.status).toBe("conflict");
+  });
+
+  it("эффекты Конструктора в сверку не входят — их ведёт syncMechanicsEffects", () => {
+    // Иначе сверка дралась бы с Конструктором за одну и ту же коллекцию: его
+    // эффектов в паке нет вовсе, и каждый предмет с Механикой давал бы строку.
+    const pack = fxDoc("u1", "Талант", "talent", []);
+    const item = fxItem({
+      src: "u1", type: "talent", name: "Талант",
+      effects: [fx("Талант: +1 к Силе", [ch("system.characteristics.s.total", 1)],
+                   { flags: { "warhammer-dbc": { mechEntry: "e1" } } })]
+    });
+    expect(diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH)).toBeUndefined();
+  });
+
+  it("выключенность эффекта не считается расхождением — её ведёт надетость предмета", () => {
+    // syncItemEffectsDisabled переключает disabled по тому, надет ли предмет:
+    // сравнивай сверка это поле, каждый снятый предмет давал бы ложную строку.
+    const pack = fxDoc("u1", "Латы", "armor", [fx("Латы", [ch("system.armour.body", 6)], { disabled: false })]);
+    const item = fxItem({ src: "u1", effects: [fx("Латы", [ch("system.armour.body", 6)], { disabled: true })] });
+    expect(diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH)).toBeUndefined();
+  });
+
+  it("порядок эффектов в коллекции не считается расхождением", () => {
+    const a = fx("Альфа", [ch("system.a", 1)]);
+    const b = fx("Бета",  [ch("system.b", 2)]);
+    const pack = fxDoc("u1", "Латы", "armor", [a, b]);
+    const item = fxItem({ src: "u1", effects: [b, a] });
+    expect(diffItemAgainstPack(item, pack).find(d => d.path === EFFECTS_PATH)).toBeUndefined();
+  });
+
+  it("окно называет поле по-человечески и показывает, что правит эффект", () => {
+    expect(fieldLabel(EFFECTS_PATH)).not.toContain("@");
+    expect(fieldLabel(EFFECTS_PATH)).toMatch(/Эффект/);
+    const shown = describeValue(EFFECTS_PATH, effectsOf({ effects: [fx("Латы", [ch("system.armour.body", 6)])] }));
+    expect(shown).toContain("Латы");
+    expect(shown).toContain("system.armour.body");
+    expect(describeValue(EFFECTS_PATH, [])).toBe("—");
   });
 });
