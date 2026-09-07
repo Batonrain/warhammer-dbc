@@ -51,6 +51,8 @@ import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
 import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
+import { cleanupGunArm } from "./module/apps/gun-arm.mjs";
+import { isGunArmGift } from "./module/rules/gun-arm.mjs";
 import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
 import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
   from "./module/apps/cancerous-healing.mjs";
@@ -1718,6 +1720,10 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
   if (isHandOfDeathItem(item)) { await cleanupHandOfDeath(actor, item.id); return; }
+  // Дар «Рука-Пушка» (wdbc-spsd): та же беда с обратной стороны — метка
+  // «вросло» остаётся на оружии, и вернувшийся другим предметом Дар начал бы
+  // действовать на него сам собой, без выбора ГМа.
+  if (isGunArmGift(item)) { await cleanupGunArm(actor, item.id); return; }
   if (item.type === "weapon" && item.getFlag("warhammer-dbc", "handOfDeathSource")) {
     const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
     if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });
