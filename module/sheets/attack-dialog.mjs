@@ -999,7 +999,8 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       <select id="atk-off-hand" class="av-input">
         ${dualCandidates.map(it => `<option value="${esc(it.id)}">${esc(it.name)}</option>`).join("")}
       </select>
-    </div>` : "";
+    </div>
+    <div class="av-opt-note" id="atk-dual-note"></div>` : "";
 
   // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
   // вложенная форма недопустима — браузер её выбросит вместе с оформлением.

@@ -24,6 +24,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { hasRuleFlag } from "./flags.mjs";
+import { itemIs }     from "./item-marker.mjs";
 
 /** −20 за пару (сам Талант «Два Оружия»). */
 export const PAIR_PENALTY = -20;
@@ -108,4 +109,101 @@ export function dualWieldActionType(a, b) {
 export function offHandCandidates(actor, main) {
   return [...(actor?.items ?? [])].filter(it =>
     it?.type === "weapon" && it.id !== main?.id && it.system?.equipped);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ДВА УСЛОВИЯ КНИГИ, КОТОРЫЕ ДО ЭТОГО НИКТО НЕ СЧИТАЛ
+//
+//  «Парные рукопашные и стрелковые требуют двух разных специализаций,
+//   комбинация рукопашного+стрелкового — обеих. Цели могут быть разными, но
+//   не дальше 10 м друг от друга.»
+//
+//  Талант «Два Оружия» берётся отдельно на рукопашную и на стрелковую руку
+//  (system.specialization = "Melee, Ranged" в шаблоне пака — это ПЕРЕЧЕНЬ
+//  вариантов, а не выбор). Пара клинков требует рукопашной специализации,
+//  пара пистолетов — стрелковой, клинок с пистолетом — обеих.
+//
+//  ── Почему предупреждение, а не запрет ──────────────────────────────────
+//  Тот же выбор, что у Талантов-Миньонов (apps/minion-talent.mjs): книга
+//  оставляет ГМу право разрешить исключение, и система в таких местах
+//  говорит вслух, но кнопку не запирает. Плюс здесь есть вторая причина:
+//  Талант, перетащенный на лист из компендиума мимо Пикера, несёт весь
+//  перечень вариантов сразу — такой считается покрывающим обе стороны, иначе
+//  проверка ругалась бы на уже созданных персонажей на ровном месте.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Цели пары — не дальше этого друг от друга; снимает Независимое Прицеливание. */
+export const TARGET_SPREAD_LIMIT_M = 10;
+export const CAP_INDEPENDENT_TARGETING = "dualWield.core.independentTargeting";
+
+/** Подписи сторон Таланта для глаз игрока. */
+export const SPEC_LABELS = { melee: "Рукопашный", ranged: "Стрелковый" };
+
+/**
+ * Одна запись специализации → сторона Таланта. Понимает и английский шаблон
+ * пака ("Melee"/"Ranged"/"Ballistic"), и русскую запись с листа.
+ * @returns {"melee"|"ranged"|null}
+ */
+export function normalizeSpec(text) {
+  const s = String(text ?? "").trim().toLowerCase();
+  if (!s) return null;
+  if (/melee|рукопаш|ближ/.test(s)) return "melee";
+  if (/ranged|ballistic|стрелк|дальн/.test(s)) return "ranged";
+  return null;
+}
+
+/**
+ * Стороны Таланта «Два Оружия», записанные у актора: по одной на каждую
+ * купленную копию. Перечень через запятую (Талант перетащили из компендиума,
+ * выбор не делался) даёт обе стороны сразу — см. шапку раздела.
+ * @returns {Set<"melee"|"ranged">}
+ */
+export function talentSpecs(actor) {
+  const out = new Set();
+  let found = false;
+  for (const it of actor?.items ?? []) {
+    if (!itemIs(it, "talent", CAP_TWO_WEAPON, "Two Weapon Wielder")) continue;
+    found = true;
+    const parts = String(it.system?.specialization ?? "").split(",")
+      .map(normalizeSpec).filter(Boolean);
+    // Ни одной узнаваемой стороны (пустое поле у старого предмета) — не повод
+    // ругаться: Талант есть, чем именно он записан, мы не знаем.
+    if (!parts.length) { out.add("melee"); out.add("ranged"); continue; }
+    for (const p of parts) out.add(p);
+  }
+  // Умение есть, а Таланта-носителя на листе нет — значит его дало что-то
+  // другое (правило Расы, дар, эффект). Спрашивать с него специализацию не с
+  // чего: молчим, а не выдумываем нехватку.
+  if (!found) return new Set(["melee", "ranged"]);
+  return out;
+}
+
+/**
+ * Какие стороны Таланта нужны на ЭТУ пару: пара рукопашных — рукопашную,
+ * пара стрелковых — стрелковую, смесь — обе.
+ * @returns {Array<"melee"|"ranged">}
+ */
+export function requiredSpecs(main, off) {
+  const side = w => (cls(w) === "melee" ? "melee" : "ranged");
+  return [...new Set([side(main), side(off)])];
+}
+
+/**
+ * Чего не хватает для этой пары. Пустой список — всё на месте.
+ * @returns {Array<"melee"|"ranged">}
+ */
+export function missingSpecs(actor, main, off) {
+  const have = talentSpecs(actor);
+  return requiredSpecs(main, off).filter(s => !have.has(s));
+}
+
+/**
+ * Разлетелись ли цели дальше книжных 10 м. `null` вместо расстояния (целей
+ * меньше двух, нет сцены, позиция неизвестна) — не нарушение: измерять
+ * нечего, а не «слишком далеко».
+ */
+export function targetSpreadExceeded(actor, distanceM) {
+  if (distanceM == null || !Number.isFinite(distanceM)) return false;
+  if (hasRuleFlag(actor, CAP_INDEPENDENT_TARGETING)) return false;
+  return distanceM > TARGET_SPREAD_LIMIT_M;
 }

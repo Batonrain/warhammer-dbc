@@ -14,7 +14,8 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import { dualWieldMods, dualWieldActionType, canDualWield, offHandCandidates,
-         PAIR_PENALTY, OFF_HAND_PENALTY }
+         PAIR_PENALTY, OFF_HAND_PENALTY,
+         requiredSpecs, missingSpecs, targetSpreadExceeded, TARGET_SPREAD_LIMIT_M }
   from "../../module/rules/dual-wield.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -148,5 +149,98 @@ describe("что предлагать во вторую руку", () => {
 
   it("пустой лист не роняет отбор", () => {
     expect(offHandCandidates(null, null)).toEqual([]);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Два условия книги, которые до этого никто не считал (вторая половина
+//  wdbc-3jlm): специализация Таланта под эту пару и разлёт целей.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Талант «Два Оружия» на листе — с выбранной стороной (или без выбора). */
+const twoWeaponTalent = (specialization = "") => ({
+  id: "tww", type: "talent", name: "Two Weapon Wielder / Два Оружия",
+  system: { specialization },
+  flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+    { id: "e", kind: "capability", capabilityKey: "dualWield.core.twoWeaponWielder" }
+  ] }] } }
+});
+
+/** Персонаж с возможностями И с предметами на листе. */
+function heroWith(caps, items) {
+  const a = hero(...caps);
+  a.items = items;
+  return a;
+}
+
+describe("какая сторона Таланта нужна на эту пару", () => {
+  it("пара рукопашных — рукопашная, пара стрелковых — стрелковая, смесь — обе", () => {
+    expect(requiredSpecs(sword("a"), knife("b"))).toEqual(["melee"]);
+    expect(requiredSpecs(pistol("a"), pistol("b"))).toEqual(["ranged"]);
+    expect(requiredSpecs(sword("a"), pistol("b"))).toEqual(["melee", "ranged"]);
+    // Метательное — тоже стрелковая сторона: бросок по BS, не по WS.
+    expect(requiredSpecs(thrown("a"), pistol("b"))).toEqual(["ranged"]);
+  });
+});
+
+describe("хватает ли купленных сторон Таланта", () => {
+  const caps = ["dualWield.core.twoWeaponWielder"];
+
+  it("одна купленная сторона закрывает свою пару и не закрывает чужую", () => {
+    const melee = heroWith(caps, [twoWeaponTalent("Melee")]);
+    expect(missingSpecs(melee, sword("a"), knife("b"))).toEqual([]);
+    expect(missingSpecs(melee, pistol("a"), pistol("b"))).toEqual(["ranged"]);
+    // Клинок с пистолетом требует обеих — не хватает стрелковой.
+    expect(missingSpecs(melee, sword("a"), pistol("b"))).toEqual(["ranged"]);
+  });
+
+  it("две купленные копии закрывают любую пару", () => {
+    const both = heroWith(caps, [
+      { ...twoWeaponTalent("Melee"), id: "t1" },
+      { ...twoWeaponTalent("Ranged"), id: "t2" }
+    ]);
+    expect(missingSpecs(both, sword("a"), pistol("b"))).toEqual([]);
+    expect(missingSpecs(both, pistol("a"), pistol("b"))).toEqual([]);
+  });
+
+  it("русская запись стороны читается наравне с английской", () => {
+    const ru = heroWith(caps, [twoWeaponTalent("Стрелковый")]);
+    expect(missingSpecs(ru, pistol("a"), pistol("b"))).toEqual([]);
+    expect(missingSpecs(ru, sword("a"), knife("b"))).toEqual(["melee"]);
+  });
+
+  it("Талант перетащен из компендиума без выбора — перечень покрывает обе стороны", () => {
+    const raw = heroWith(caps, [twoWeaponTalent("Melee, Ranged")]);
+    expect(missingSpecs(raw, sword("a"), pistol("b"))).toEqual([]);
+  });
+
+  it("у старого предмета специализация пустая — тоже не придираемся", () => {
+    const blank = heroWith(caps, [twoWeaponTalent("")]);
+    expect(missingSpecs(blank, sword("a"), pistol("b"))).toEqual([]);
+  });
+
+  it("умение есть, а Таланта на листе нет — претензий не предъявляем", () => {
+    expect(missingSpecs(heroWith(caps, []), sword("a"), pistol("b"))).toEqual([]);
+  });
+});
+
+describe("разлёт целей", () => {
+  const hero1 = () => hero("dualWield.core.twoWeaponWielder");
+
+  it("дальше 10 м — нарушение, ровно 10 м — нет", () => {
+    expect(targetSpreadExceeded(hero1(), 12)).toBe(true);
+    expect(targetSpreadExceeded(hero1(), TARGET_SPREAD_LIMIT_M)).toBe(false);
+    expect(targetSpreadExceeded(hero1(), 3)).toBe(false);
+  });
+
+  it("Независимое Прицеливание снимает лимит", () => {
+    const free = hero("dualWield.core.twoWeaponWielder", "dualWield.core.independentTargeting");
+    expect(targetSpreadExceeded(free, 40)).toBe(false);
+  });
+
+  it("измерять нечего — это не нарушение", () => {
+    expect(targetSpreadExceeded(hero1(), null)).toBe(false);
+    expect(targetSpreadExceeded(hero1(), undefined)).toBe(false);
+    expect(targetSpreadExceeded(hero1(), NaN)).toBe(false);
   });
 });

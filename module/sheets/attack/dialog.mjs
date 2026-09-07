@@ -21,8 +21,41 @@ import { spendActionPoints, apCostForActionType, spendReaction } from "../../com
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
-import { dualWieldMods, dualWieldActionType } from "../../rules/dual-wield.mjs";
+import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
+         SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
+import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
+
+/**
+ * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
+ * игрок держал в голове: своя сторона Таланта под эту пару и разлёт целей не
+ * дальше 10 м. Обе строки — ПРЕДУПРЕЖДЕНИЕ, а не запрет: книга оставляет ГМу
+ * право разрешить исключение, поэтому окно говорит вслух, но кнопку не
+ * запирает (тот же выбор, что у Талантов-Миньонов).
+ *
+ * Цели читаются заново на каждый пересчёт: игрок переназначает их прямо при
+ * открытом окне, и подсказка обязана меняться вместе с ними.
+ */
+function dualWieldNoteHtml(actor, main, off) {
+  if (!off) return "";
+  const out = [];
+
+  const missing = missingSpecs(actor, main, off);
+  if (missing.length) {
+    out.push(`${rollIcon("warn", "#ffb347")}Талант «Два Оружия» на эту пару нужен со стороной: `
+      + `${missing.map(s => SPEC_LABELS[s]).join(" и ")} — у персонажа её нет.`);
+  }
+
+  const targets = [...(game.user?.targets ?? [])];
+  const spreadM = targets.length >= 2
+    ? (measureTokens(targets[0], targets[1])?.edgeM ?? null) : null;
+  if (targetSpreadExceeded(actor, spreadM)) {
+    out.push(`${rollIcon("warn", "#ffb347")}Цели пары разнесены на ${spreadM} м `
+      + `при пределе ${TARGET_SPREAD_LIMIT_M} м (снимает Независимое Прицеливание).`);
+  }
+
+  return out.join("<br/>");
+}
 
 export function openAttackDialog(ctx) {
   const {
@@ -212,7 +245,15 @@ export function openAttackDialog(ctx) {
               // {forceMelee, profile})), и если сюда отдать только профиль,
               // бросок посчитает вид из половины тех же данных и разойдётся с
               // окном (wdbc-bs0q).
-              forceMelee, profile: sel.prof, attackNote: sel.note,
+              forceMelee, profile: sel.prof,
+              // Первая карточка пары тоже должна признаться, что она половина
+              // одной атаки (wdbc-3jlm): без этой строки за столом ровно тот
+              // спор, ради которого просили «одну карточку» — два сообщения
+              // подряд читаются как две атаки и два потраченных ОД.
+              attackNote: dualOff
+                ? [sel.note, `Обе руки: основная рука, пара с «${dualOff.name}» — одно действие на две атаки`]
+                    .filter(Boolean).join(" · ")
+                : sel.note,
               weaponOff: f.weaponOff, gripKey: sel.gKey,
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
@@ -257,7 +298,8 @@ export function openAttackDialog(ctx) {
               offMelee ? "melee" : "single",
               undefined,
               {
-                attackNote: `Вторая рука (${dw.pair} за пару`
+                attackNote: `Обе руки: вторая рука, пара с «${item.name}» —`
+                  + ` ОД уже списаны первой карточкой (${dw.pair} за пару`
                   + (dw.offHand ? `, ${dw.offHand} за неосновную руку` : ", неосновная рука без штрафа")
                   + (dw.reductions.length ? `; убавили: ${dw.reductions.map(r => r.label).join(", ")}` : "")
                   + ")"
@@ -279,6 +321,7 @@ export function openAttackDialog(ctx) {
 
       const badgesEl        = form.querySelector("#atk-badges");
       const noteEl          = form.querySelector("#atk-gripnote");
+      const dualNoteEl      = form.querySelector("#atk-dual-note");
       const stanceNoteEl    = form.querySelector("#atk-stance-note");
       const baseNoteEl      = form.querySelector("#atk-base-note");
       const maneuverNoteEl  = form.querySelector("#atk-maneuver-note");
@@ -299,6 +342,10 @@ export function openAttackDialog(ctx) {
         const sel = resolveSelectionSafe(f);
         if (badgesEl)       badgesEl.innerHTML       = badgesHtml(sel);
         if (noteEl)         noteEl.innerHTML         = sel.note;
+        // Условия парной атаки — только когда галочка «Обе руки» реально
+        // стоит: без неё второго оружия нет и предупреждать не о чем.
+        if (dualNoteEl) dualNoteEl.innerHTML = f.dualWield
+          ? dualWieldNoteHtml(actor, item, actor.items.get(f.offHandId)) : "";
         if (stanceNoteEl)   stanceNoteEl.innerHTML   = sel.stDef.note;
         if (baseNoteEl)     baseNoteEl.innerHTML     = sel.bDef.note;
         if (maneuverNoteEl) maneuverNoteEl.innerHTML = sel.mDef.note;
