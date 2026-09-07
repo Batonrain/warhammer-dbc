@@ -6381,9 +6381,9 @@ export const CAPABILITIES = {
     reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart), module/apps/mechanics.mjs (characteristicEffectKey charKey:\"sizeNoSpd\" → system.sizeModNoSpd), module/rules/character.mjs (traitSizeModNoSpd, не идёт в calcMovement)"
   },
   "gift.nurgle.blackPhysician": {
-    label: "Полное действие+1R себе: заражает до 3 трупов в 2м, оживают зомби (Раны×2, теряют Навыки/Таланты кроме оружейных), контроль до Cor.b зомби",
+    label: "Автоматизировано то, что считается (wdbc-1rno), записью kind:\"script\" ценой 2 ОД: 1 непоглощаемый R Dmg себе через общую арифметику потери Ран (woundLossUpdates), список подходящих тел в 2 м (порог «Раны −5 и ниже», тот же, что у Стервятника — понятия смерти в системе нет) с отсечкой по трём, и предел контроля Cor.b. НЕ выполняется движком само превращение трупов в зомби (A и I до 10, Раны ×2, снятие Навыков и не-оружейных Талантов): это разрушительная правка чужих акторов, а «призыва существа вне слотов Миньонов» в системе всё равно нет — карточка называет цели и правила, зомби готовит МИ",
     source: "Дар Нургл (Black Physician)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Нургл/Black_Physician…json, запись kind:\"script\" (id blackPhysician-bleed, capabilityCostPool \"action\" ×2) — исполняется module/apps/item-script.mjs::executeItemCode (woundLossUpdates входит в его стандартные помощники), цена списывается module/combat/capability-cost.mjs"
   },
   "gift.nurgle.breathOfLife": {
     label: "Реализовано (wdbc-1rno) кнопкой «Вдохнуть жизнь» на листе Дара: цель берётся штатным таргетингом, Раны носителя уходят в 0 (и НЕ поднимаются, если уже были ниже — прямая оговорка книги), цель встаёт с 0 Ран со снятыми отрицательными, кнопка запирается до полного излечения Ран носителя. НЕ проверяется: «труп умер не более 3 дней назад» (понятия смерти и её времени в системе нет вовсе, разбор в шапке combat/deadly-effectiveness.mjs) и выбор Тзинчита/Слаанешита «остаться мёртвым либо потерять покровительство» — это решение игрока цели, не движка; оба уходят текстом в карточку",
@@ -6411,9 +6411,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.gazeOfInevitability": {
-    label: "Видящие глаза чемпиона комбинируют Избегание с W-10 или теряют все Реакции; полное действие: сфокусированный взор W-30 на одну цель на тот же эффект",
+    label: "Реализована половина «сфокусированного взора» (wdbc-1rno): запись kind:\"script\" ценой 2 ОД (полное действие) на этом же Даре — цель берётся штатным таргетингом, проверяется, что она ВИДИТ глаза чемпиона (дальность + сектор обзора токена, rules/vision-target.mjs — то же геометрическое приближение без стен и темноты, что у Иконы Богохульства), кидается тест W−30, провал обнуляет все Реакции цели (и универсальные, и «только на Избегание»). НЕ реализована ПАССИВНАЯ половина: «все, видящие глаза чемпиона, комбинируют Избегание с W−10 или теряют все Реакции» — это второй тест ВНУТРИ чужого Избегания на каждую попытку, то есть крюк в общем конвейере защиты (combat/defense.mjs, evasion-pool.mjs), а не кнопка; отдельная работа",
     source: "Дар Нургл (Gaze of Inevitability)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Нургл/Gaze_of_Inevitability…json, запись kind:\"script\" (id gazeOfInevitability-focus, capabilityCostPool \"action\" ×2) — исполняется module/apps/item-script.mjs::executeItemCode, цена списывается module/combat/capability-cost.mjs, всплывает на панели «ВОЗМОЖНОСТИ СЕЙЧАС» (rules/item-rules.mjs пускает туда script с ценой)"
   },
   "gift.nurgle.heraldOfHumility": {
     label: "−10 на все встречные тесты врагам в радиусе ½Cor(окр.▲)м механизировано (kind:\"aura\", auraAffects:\"enemies\" → клонирует Черту-шаблон «Aura of Humility», modScope:\"opposed\" −10). НЕ смоделировано: эскалация до −30 конкретно на тесты социальных требований сдаться/подчиниться (нет разреза встречных тестов по цели требования) и иммунитет Тзинчитов (иммунитет ауры завязан на имя Черты/Таланта у цели, а не на Покровительство — у Тзинчитов нет общей опознавательной Черты)",
