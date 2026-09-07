@@ -1,12 +1,12 @@
 {
-  "name": "Cloven One / Раздвоенный",
+  "name": "Gene-Splice / Ген-Сплайс",
   "type": "trait",
   "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
   "system": {
-    "description": "Двусоставные ноги дают скорость: +20 на тесты Трудного Ландшафта.",
-    "notes": "«+20 на тесты Трудного Ландшафта» — тест ведётся через отдельный диалог module/combat/movement-terrain.mjs (жёстко A+0 + ландшафт зоны), который не читает testMod/Механику предметов вовсе (только kind:\"terrainIgnore\").",
-    "benefit": "+20 vs Трудный Ландшафт.",
-    "source": "Зверолюд",
+    "description": "Выбирает по одной адаптации из трёх списков (Сенсорные/Защитные/Атакующие). Может выбрать дополнительные адаптации сверх этого (макс. 3 дополнительные), теряя +5% опыта от Fast Learner за каждую.",
+    "notes": "«Выбор адаптаций» — грант контента по выбору игрока (набор способностей из списка), не число.",
+    "benefit": "Выбор адаптаций.",
+    "source": "Сплайс",
     "hasRating": false,
     "rating": 0,
     "hasRating2": false,
@@ -24,7 +24,7 @@
     },
     "bookSource": "DoomBC — Основная книга"
   },
-  "_id": "NOaPE0AYhvLGTVPI",
+  "_id": "i9H3cvRgDK6MHfjp",
   "effects": [],
   "folder": null,
   "sort": 0,
@@ -44,9 +44,9 @@
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1781701498775,
-    "modifiedTime": 1786121959348,
+    "createdTime": 1781702161374,
+    "modifiedTime": 1786121961036,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!NOaPE0AYhvLGTVPI"
+  "_key": "!items!i9H3cvRgDK6MHfjp"
 }

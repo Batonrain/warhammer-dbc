@@ -1,19 +1,13 @@
 {
-  "name": "Potentia Coil / Потенциа Коил",
+  "name": "Noospheric Uplink / Ноосферное Подключение",
   "type": "implant",
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
-    "description": "Энергетический банк для мощных Техночудес.",
-    "notes": "",
+    "description": "Беспроводное подключение к ноосфере.",
+    "notes": "Значение/эффект меняется по Качеству (Poor/Good/Best), и тиры переопределяют разные числа для разных под-эффектов, а не растягивают одну шкалу — общей схемы масштабирования по Качеству для generic testMod/characteristic не существует (в отличие от выделенных полей energyMax/compensator у профильных имплантов).",
     "category": "mechanicus",
     "quality": "common",
-    "energyMax": {
-      "poor": 1,
-      "common": 3,
-      "good": 5,
-      "best": 7
-    },
-    "effect": "Энергетический банк Техночудес: даёт заряды Энергии (Poor 1 / Common 3 / Good 5 / Best 7, максимум выставляется автоматически при установке). Заряжается Электу-Индукторами или генераторами ⚡ других имплантов Механикум.",
+    "effect": "Приём потоков ноосферы; обмен данными. Poor.Q −10, Good.Q +5, Best.Q +10.",
     "installed": "",
     "linkedWeapon": "",
     "effects": {
@@ -46,7 +40,7 @@
     "bookSource": "DoomBC — Основная книга, БИОНИКА И КИБЕРНЕТИКА (стр. 263-275)"
   },
   "folder": "ai5XtC0QXBo34wg9",
-  "_id": "EijXeVNbA61hj3wa",
+  "_id": "AmZ8pwOAozlZAm0D",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -66,8 +60,8 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1781703698894,
-    "modifiedTime": 1786122012380,
+    "modifiedTime": 1786122011977,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!EijXeVNbA61hj3wa"
+  "_key": "!items!AmZ8pwOAozlZAm0D"
 }

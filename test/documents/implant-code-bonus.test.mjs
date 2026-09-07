@@ -89,7 +89,7 @@ describe("числовая роспись IMPLANT_MECH больше не при�
 // Good 5/Best 7).
 describe("Катушка Потенции: базовый максимум Энергии по Качеству", () => {
   function coil(quality) {
-    return { id: `coil-${quality}`, name: "Potentia Coil / Потенциа Коил", type: "implant",
+    return { id: `coil-${quality}`, name: "Potentia Coil / Катушка Потенции", type: "implant",
              system: { effects: {}, category: "cybernetic", quality },
              getFlag: (_s, k) => (k === "installed" ? true : undefined) };
   }
@@ -163,7 +163,7 @@ describe("energyMax/compensator/ironFocus: со схемы предмета, н�
   });
 
   it("легаси-имплант без полей схемы всё ещё получает бонус по таблице (фоллбэк)", () => {
-    const system = characterWith([implantSchema("Potentia Coil / Потенциа Коил")]);
+    const system = characterWith([implantSchema("Potentia Coil / Катушка Потенции")]);
     expect(system.energy.maxTotal).toBe(3); // common → 3 из таблицы IMPLANT_MECH
   });
 });

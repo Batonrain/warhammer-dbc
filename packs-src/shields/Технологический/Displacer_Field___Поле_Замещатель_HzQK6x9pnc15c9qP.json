@@ -1,24 +1,24 @@
 {
-  "name": "Frozen Heart / Ледяное Сердце",
+  "name": "Displacer Field / Поле Замещатель",
   "type": "forcefield",
-  "folder": "IRQ8ooDLYqL9rtA6",
+  "folder": "AnN2qDXTrN7Qt3MS",
   "system": {
-    "description": "Чародейский дефлектор. Крайне редкий артефакт варп-природы.",
+    "description": "Мощный сквозной щит. При активации переводит персонажа в фазовое состояние.",
     "notes": "",
-    "shieldNature": "warp",
-    "shieldType": "deflector",
+    "shieldNature": "technological",
+    "shieldType": "penetrating",
     "ratingMin": 1,
-    "ratingMax": 25,
-    "overloadThreshold": 1,
+    "ratingMax": 65,
+    "overloadThreshold": 10,
     "currentRating": 0,
     "isSpecialRating": false,
     "equipped": false,
     "status": "inactive",
     "quality": "common",
-    "availability": 3,
-    "weight": 0.5
+    "availability": 4,
+    "weight": 2
   },
-  "_id": "7TQw5Wt6gJQu2Epu",
+  "_id": "HzQK6x9pnc15c9qP",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
   "effects": [],
   "sort": 0,
@@ -38,5 +38,5 @@
     "modifiedTime": 1782752979845,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!7TQw5Wt6gJQu2Epu"
+  "_key": "!items!HzQK6x9pnc15c9qP"
 }

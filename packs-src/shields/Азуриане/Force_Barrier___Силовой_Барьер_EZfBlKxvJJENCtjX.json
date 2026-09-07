@@ -1,24 +1,24 @@
 {
-  "name": "Archeotech Refractor / Археотехнический Рефрактор",
+  "name": "Force Barrier / Силовой Барьер",
   "type": "forcefield",
-  "folder": "AnN2qDXTrN7Qt3MS",
+  "folder": "UnFkx3aiaggUpvuw",
   "system": {
-    "description": "Высокотехнологичный купольный щит архео-происхождения.",
+    "description": "Редчайший щит экзодитских миров (карманная версия). Можно сменить принцип работы: на Сквозной −10 к рейтингу активации, на Дефлектор −20. Перегрузка: телепортирует владельца на 1d10 км в безопасное место; затем 12 смен работы + медитация.",
     "notes": "",
-    "shieldNature": "technological",
+    "shieldNature": "warp",
     "shieldType": "dome",
     "ratingMin": 1,
-    "ratingMax": 75,
-    "overloadThreshold": 10,
+    "ratingMax": 80,
+    "overloadThreshold": 20,
     "currentRating": 0,
     "isSpecialRating": false,
     "equipped": false,
     "status": "inactive",
     "quality": "common",
     "availability": 5,
-    "weight": 5
+    "weight": 0
   },
-  "_id": "d3UgC6uD8WjDVekP",
+  "_id": "EZfBlKxvJJENCtjX",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
   "effects": [],
   "sort": 0,
@@ -38,5 +38,5 @@
     "modifiedTime": 1782752979845,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!d3UgC6uD8WjDVekP"
+  "_key": "!items!EZfBlKxvJJENCtjX"
 }

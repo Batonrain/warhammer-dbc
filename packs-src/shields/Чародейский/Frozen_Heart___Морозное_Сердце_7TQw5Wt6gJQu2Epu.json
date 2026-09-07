@@ -1,24 +1,24 @@
 {
-  "name": "Rosarius Pontifex / Розарий Понтифекса",
+  "name": "Frozen Heart / Морозное Сердце",
   "type": "forcefield",
-  "folder": "AnN2qDXTrN7Qt3MS",
+  "folder": "IRQ8ooDLYqL9rtA6",
   "system": {
-    "description": "Высший розарий Экклезиархии с максимальным рейтингом.",
+    "description": "Чародейский дефлектор. Крайне редкий артефакт варп-природы.",
     "notes": "",
-    "shieldNature": "technological",
-    "shieldType": "dome",
+    "shieldNature": "warp",
+    "shieldType": "deflector",
     "ratingMin": 1,
-    "ratingMax": 99,
-    "overloadThreshold": 40,
+    "ratingMax": 25,
+    "overloadThreshold": 1,
     "currentRating": 0,
     "isSpecialRating": false,
     "equipped": false,
     "status": "inactive",
     "quality": "common",
-    "availability": 5,
-    "weight": 5
+    "availability": 3,
+    "weight": 0.5
   },
-  "_id": "WVn1pb5Ma2Ai5Wef",
+  "_id": "7TQw5Wt6gJQu2Epu",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
   "effects": [],
   "sort": 0,
@@ -38,5 +38,5 @@
     "modifiedTime": 1782752979845,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!WVn1pb5Ma2Ai5Wef"
+  "_key": "!items!7TQw5Wt6gJQu2Epu"
 }

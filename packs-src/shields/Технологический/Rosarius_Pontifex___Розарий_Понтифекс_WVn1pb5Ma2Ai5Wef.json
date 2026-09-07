@@ -1,24 +1,24 @@
 {
-  "name": "Force Barrier / Психосиловой Барьер",
+  "name": "Rosarius Pontifex / Розарий Понтифекс",
   "type": "forcefield",
-  "folder": "UnFkx3aiaggUpvuw",
+  "folder": "AnN2qDXTrN7Qt3MS",
   "system": {
-    "description": "Редчайший щит экзодитских миров (карманная версия). Можно сменить принцип работы: на Сквозной −10 к рейтингу активации, на Дефлектор −20. Перегрузка: телепортирует владельца на 1d10 км в безопасное место; затем 12 смен работы + медитация.",
+    "description": "Высший розарий Экклезиархии с максимальным рейтингом.",
     "notes": "",
-    "shieldNature": "warp",
+    "shieldNature": "technological",
     "shieldType": "dome",
     "ratingMin": 1,
-    "ratingMax": 80,
-    "overloadThreshold": 20,
+    "ratingMax": 99,
+    "overloadThreshold": 40,
     "currentRating": 0,
     "isSpecialRating": false,
     "equipped": false,
     "status": "inactive",
     "quality": "common",
     "availability": 5,
-    "weight": 0
+    "weight": 5
   },
-  "_id": "EZfBlKxvJJENCtjX",
+  "_id": "WVn1pb5Ma2Ai5Wef",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
   "effects": [],
   "sort": 0,
@@ -38,5 +38,5 @@
     "modifiedTime": 1782752979845,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!EZfBlKxvJJENCtjX"
+  "_key": "!items!WVn1pb5Ma2Ai5Wef"
 }
