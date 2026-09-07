@@ -1,0 +1,35 @@
+{
+  "name": "Пальцевое / Digital",
+  "type": "weaponProperty",
+  "img": "icons/svg/sword.svg",
+  "folder": "xxMPmGqXM8wjzNqb",
+  "system": {
+    "description": "Умещается в перстень. Надевается на каждый палец руки, кроме большого, руки не занимает — можно стрелять одновременно с оружием в этой же руке и из нескольких перстней сразу.",
+    "reminder": "💍 Пальцевое: перстень, руку не занимает",
+    "category": "ranged",
+    "hasRating": false,
+    "hasRating2": false,
+    "autoKey": "digital",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал (собственное описание Пальцевого оружия: «Умещается в перстень…»)"
+  },
+  "_id": "4sQBNX8f8iCUZwYW",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "4Q6l1C4FQOMQVofr": 3
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1788730823306,
+    "modifiedTime": 1788730823306,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!4sQBNX8f8iCUZwYW"
+}

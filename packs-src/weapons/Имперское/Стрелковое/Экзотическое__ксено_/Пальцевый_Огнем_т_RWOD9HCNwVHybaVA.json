@@ -37,6 +37,9 @@
       },
       {
         "key": "linger"
+      },
+      {
+        "key": "digital"
       }
     ],
     "needsRecharge": false,

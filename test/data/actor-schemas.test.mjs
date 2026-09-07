@@ -265,6 +265,11 @@ const DEVIATIONS = {
     // Постоянный модификатор Навыка (wdbc-q4wb) — поле на листе рядом с Итогом,
     // заведено гораздо позже template.json; входит в total (rules/character.mjs).
     ...Object.fromEntries(Object.keys(SKILLS_DEF).map(k => [`skills.${k}.mod`, 0])),
+    // «Цена задана вручную» (wdbc-rcr9) — защита вписанной ГМом цены от
+    // пересчёта по Склонностям, тот же приём, что у Талантов. Заведено гораздо
+    // позже template.json.
+    ...Object.fromEntries(Object.keys(CHARACTERISTICS).map(k => [`characteristics.${k}.costManual`, false])),
+    ...Object.fromEntries(Object.keys(SKILLS_DEF).map(k => [`skills.${k}.costManual`, false])),
     ...OWN_DEVIATIONS[type]
   }]))
 };

@@ -23,6 +23,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "./skills.mjs";
 import { SKILL_RANKS } from "./characteristics.mjs";
 import { matchSpec, specCovers } from "./skill-specializations.mjs";
 import { itemsNamed } from "../rules/req-atom.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 
 /** Сокращения характеристик из требований → ключи системы. */
 const CHAR_ALIASES = {
@@ -165,6 +166,18 @@ function parseAtom(raw) {
     return { kind: "unknown", raw };
   }
 
+  // «Метка Слаанеш», «Метка Нургла» — требование Божественных Дисциплин и
+  // трёх ритуалов (wdbc-k1q4). Метка НЕ равна Покровительству: книга держит
+  // их в одной таблице разными строками («метку бога демона +30» против
+  // «покровительство (но не метку) +20»), и психосилы спрашивают именно её.
+  m = /^метк[аиуы]\s+(\S+)$/i.exec(text);
+  if (m) {
+    const key = PATRON_ALIASES[norm(m[1])];
+    // Незнакомого бога оставляем прозой — как и у Покровительства ниже.
+    if (key) return { kind: "mark", key, raw };
+    return { kind: "unknown", raw };
+  }
+
   // «Покровительство Кхорна» (Таланты Дредноутов, Книга Машин стр. 58).
   m = /^покровительство\s+(\S+)$/i.exec(text);
   if (m) {
@@ -280,6 +293,10 @@ function checkAtom(actor, atom) {
       return fit.some(e => rankBonus(e.rank) >= atom.bonus);
     }
     case "patron": return norm(sys.patronGod) === atom.key;
+    // Метка Бога — возможность mark.<бог>, которую выдаёт Черта из
+    // packs-src/traits/Метки_Богов (wdbc-f7fn). Спрашиваем возможность, а не
+    // имя предмета: тогда любой другой источник той же Метки засчитается сам.
+    case "mark": return hasRuleFlag(actor, `mark.${atom.key}`);
     case "talent": return hasTalent(actor, atom);
     default: return null;                      // проза — не проверяем
   }
@@ -314,4 +331,29 @@ export function checkRequirement(actor, str) {
     unmet: detail.filter(d => d.state === "fail").map(d => d.raw),
     parts: detail
   };
+}
+
+/** Подписи Богов для сообщений — те же, что в требованиях книги. */
+export const MARK_LABELS = {
+  khorne: "Кхорна", nurgle: "Нургла", tzeentch: "Тзинча",
+  slaanesh: "Слаанеш", undivided: "Неделимого"
+};
+
+/**
+ * Ключи Меток Богов, которые требует строка требований (wdbc-k1q4).
+ *
+ * Нужна отдельно от checkRequirement, потому что Метка — единственная часть
+ * требования, которую книга проверяет НЕ ТОЛЬКО при покупке: «Если псайкер
+ * теряет Метку, он также лишается возможности использовать психосилы,
+ * требующие её, но не забывает их». Пороги PR и Характеристик так не
+ * работают — их проверяют один раз при изучении.
+ */
+export function requiredMarks(str) {
+  const out = [];
+  for (const part of parseRequirement(str)) {
+    for (const alt of part.alts ?? []) {
+      if (alt?.kind === "mark" && !out.includes(alt.key)) out.push(alt.key);
+    }
+  }
+  return out;
 }

@@ -33,7 +33,8 @@
       ],
       "charBonuses": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 231)"
   },
   "_id": "dxtoNADwNWiUKO2f",
   "effects": [],

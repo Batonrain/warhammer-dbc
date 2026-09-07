@@ -139,6 +139,17 @@
 }
 .warhammer-dbc .psy-power-name { font-weight: 600; color: #e7eefb; }
 .warhammer-dbc .psy-discipline-sub { font-size: 0.72em; color: color-mix(in srgb, var(--pc) 55%, #8a97ab); margin-top: 1px; }
+/* Книжное требование психосилы и пометка «Метки нет» (wdbc-k1q4). Гейт на
+   манифестации был и раньше, но игрок узнавал о нём только нажав кнопку —
+   причина есть, а нащупать её надо. Поэтому строка стоит там, где игрок
+   выбирает силу, а не там, где уже получил отказ. */
+.warhammer-dbc .psy-requirement { font-size: 0.7em; color: color-mix(in srgb, var(--pc) 45%, #8a97ab); margin-top: 1px; font-style: italic; }
+.warhammer-dbc .psy-mark-missing {
+  font-size: 0.68em; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  color: #ff9a9a; background: rgba(255, 110, 110, .16);
+  border: 1px solid rgba(255, 110, 110, .45); border-radius: 3px;
+  padding: 0 4px; margin-left: 4px; white-space: nowrap; cursor: help;
+}
 .warhammer-dbc .psy-type-chip {
   display: inline-block; font-size: 0.72em; padding: 1px 8px; border-radius: 10px; white-space: nowrap;
   color: color-mix(in srgb, var(--pc) 70%, #cfe); background: rgba(0,0,0,0.3);

@@ -29,6 +29,7 @@ export class WeaponModData extends foundry.abstract.TypeDataModel {
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       effects: new SchemaField({
         attackMod:      new NumberField({ initial: 0, nullable: false, label: "Меткость" }),
         damageMod:      new NumberField({ initial: 0, nullable: false, label: "Урон" }),

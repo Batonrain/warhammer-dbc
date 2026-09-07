@@ -32,6 +32,7 @@ export class ArmorModData extends foundry.abstract.TypeDataModel {
       weight:       new NumberField({ initial: 0, nullable: false, label: "Вес" }),
       availability: new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       quality:      new StringField({ initial: "common", label: "Качество" }),
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       // Модификация вживлена/встроена в носителя, а не лежит отдельным
       // предметом в Разгрузке (wdbc-e2lt) — itemSizeStr() трактует "0" как
       // «места не занимает» (module/constants/rig.mjs).

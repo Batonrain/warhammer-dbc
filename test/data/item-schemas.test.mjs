@@ -127,6 +127,10 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "ranged", modGroup: "other",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      // «Книга-источник» (wdbc-eu1d): у модификаций поля не было вовсе, и на
+      // вопрос «из какой она книги» ответить было нечем — источник писали в
+      // заметки текстом.
+      bookSource: "",
       infoguard: 0,
       effects: {
         attackMod: 0, damageMod: 0, penMod: 0, rangeMod: 0, rangeMult: 1,
@@ -147,6 +151,7 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "armor", modGroup: "general",
       requirement: "", installedOn: "", weight: 0, availability: 0, quality: "common",
+      bookSource: "",
       infoguard: 0,
       // Модификация вживлена, не лежит в Разгрузке отдельно (wdbc-e2lt).
       itemSize: "0",
@@ -350,6 +355,9 @@ const TYPES = {
       balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
       damage: "", damageType: "impact", penetration: 0, quality: "common",
+      // Строка «Книга» одна на предмет и его модификацию: лист оружия рисует
+      // и weapon, и weaponMod (wdbc-eu1d).
+      bookSource: "",
       availability: 0, weight: 0, quantity: 1, attackBonus: 0, special: "", equipped: false,
       loadedAmmoId: "", weaponProps: [], needsRecharge: false, rechargeTurnsRemaining: 0, prismaCharge: 0, legacyWeapon: false,
       sacred: false,
@@ -402,6 +410,7 @@ const TYPES = {
       largeBase: false,
       head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0,
       quality: "common", availability: 0, weight: 0, properties: [],
+      bookSource: "",
       strengthBonus: 0, wpBonus: 0, drukhari: false, fieldMode: "",
       isRig: false, rig: { comfort: "normal", backSlot: false, slots: [], magLocks: [] },
       history: {
@@ -424,6 +433,10 @@ const TYPES = {
     defaults: {
       description: "", notes: "", cost: 0, discipline: "", subtype: "",
       powerType: "attack", extraTypes: [], shootSubtype: "", prRequired: 1,
+      // Полное книжное требование строкой (wdbc-k1q4): у Божественных
+      // Дисциплин оно из трёх частей («Метка Слаанеш, PR 4+, T 40+»), а
+      // prRequired несёт только PR.
+      requirement: "",
       testChar: "wp", testMod: 0, action: "half", range: "",
       sustainable: false, sustainCost: 1, sustainAction: "free",
       damage: "", damageType: "energy", penetration: 0, weaponProps: [],

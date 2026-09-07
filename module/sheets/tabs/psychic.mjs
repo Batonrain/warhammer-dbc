@@ -7,6 +7,7 @@ import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
@@ -62,9 +63,33 @@ export function sarcophagusBlocksPsychicPowers(actor) {
   return !hasOsirisMatrix(dread?.items ?? []);
 }
 
+/**
+ * Метка Бога, которой не хватает для этой психосилы (wdbc-k1q4), — или null.
+ *
+ * Книга держит Метку отдельным гейтом от Покровительства и проверяет её НЕ
+ * ТОЛЬКО при изучении: «Если псайкер теряет Метку, он также лишается
+ * возможности использовать психосилы, требующие её, но не забывает их и может
+ * в будущем вернуть к ним доступ, если получит Метку обратно» (корбук,
+ * «V. ПСАЙКАНА → МЕХАНИКА»). Поэтому проверка стоит на манифестации, а не
+ * только на карточке: пороги PR и Характеристик так себя не ведут.
+ */
+export function missingMarkForPower(actor, item) {
+  for (const key of requiredMarks(item?.system?.requirement)) {
+    if (!hasRuleFlag(actor, `mark.${key}`)) return { key, label: MARK_LABELS[key] || key };
+  }
+  return null;
+}
+
 export function showManifestDialog(actor, item) {
   if (sarcophagusBlocksPsychicPowers(actor)) {
     ui.notifications.warn("Саркофаг Дредноута: манифестация психосил заблокирована (нужна Матрица Осирис).");
+    return;
+  }
+  const noMark = missingMarkForPower(actor, item);
+  if (noMark) {
+    ui.notifications.warn(
+      `«${item.name}» требует Метку ${noMark.label}. Без Метки психосила не манифестируется — ` +
+      "она не забыта, доступ вернётся вместе с Меткой (корбук, Псайкана).");
     return;
   }
   const sys      = item.system;

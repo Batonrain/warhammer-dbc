@@ -188,6 +188,16 @@
     <input type="number" name="system.attackBonus" value="{{system.attackBonus}}" class="wr-input-xs"/>
   </div>
 
+  {{!-- Книга-источник (wdbc-eu1d). Вне веток по типу: этот файл рисует и сам
+        предмет, и его модификацию, а строка у обоих одинаковая. Строкой
+        внутри уже открытой секции, а не своей секцией: рядом стоят такие же
+        строки «Особое»/«Атака». --}}
+  <div class="weapon-row">
+    <label class="wr-label">Книга</label>
+    <input type="text" name="system.bookSource" value="{{system.bookSource}}"
+           class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+  </div>
+
   {{> "systems/warhammer-dbc/templates/item/parts/infoguard.hbs"}}
 
   {{!-- ── Особые свойства оружия ──────────────────────────────────────────── --}}

@@ -13,6 +13,7 @@ import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
 import { attackIsMelee } from "./weapon-profiles.mjs";
+import { ammoIsFree } from "../rules/ammo-free.mjs";
 import { attackCard, jamCard }                      from "./attack-card.mjs";
 import { rollScatter }                               from "./scatter.mjs";
 import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
@@ -105,7 +106,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // «В рукопашной оно МОЖЕТ использоваться как рукопашное», это не default.
   // Решение «рукопашная ли это атака» одно на окно и на бросок
   // (combat/weapon-profiles.mjs::attackIsMelee, wdbc-bs0q): выбранный ПРОФИЛЬ
-  // важен наравне с классом оружия, иначе «Удар в упор» катился бы тестом по
+  // важен наравне с классом оружия, иначе «Ударить оружием» катилось бы тестом по
   // WS, но считался стрельбой — без прибавки S.b к урону и с кнопками защиты
   // из стрелковой ветки.
   const isMelee = attackIsMelee(sys, { forceMelee: opts.forceMelee, profile: opts.profile });
@@ -357,7 +358,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Рука Смерти (wdbc-hftn, стр. 46): сросшееся дальнобойное генерирует
   // боеприпасы из метаболизма носителя — вместо нового класса расходуемого
   // ресурса (которого в системе нет вовсе) магазин просто не расходуется.
-  const infiniteAmmo = isFusedByHandOfDeath(item);
+  // Оба книжных источника «выстрел не тратит патрон» — Рука Смерти и Дар
+  // «Рука-Пушка» — живут в rules/ammo-free.mjs, см. его шапку.
+  const infiniteAmmo = ammoIsFree(item, actor);
   if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
     ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.

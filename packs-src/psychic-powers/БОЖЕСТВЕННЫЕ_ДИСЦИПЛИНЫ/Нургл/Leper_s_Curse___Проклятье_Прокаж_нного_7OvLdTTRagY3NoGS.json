@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "requirement": "Метка Нургла, PR 4+, Nurgle's Rot"
   },
   "_id": "7OvLdTTRagY3NoGS",
   "effects": [],

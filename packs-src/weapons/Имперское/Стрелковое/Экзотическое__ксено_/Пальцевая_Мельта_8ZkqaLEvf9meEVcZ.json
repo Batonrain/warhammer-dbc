@@ -31,6 +31,9 @@
     "weaponProps": [
       {
         "key": "melta"
+      },
+      {
+        "key": "digital"
       }
     ],
     "needsRecharge": false,

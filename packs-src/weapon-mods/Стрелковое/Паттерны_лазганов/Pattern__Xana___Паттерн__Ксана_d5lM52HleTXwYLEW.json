@@ -37,7 +37,8 @@
       ],
       "removeProps": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": ""
   },
   "_id": "d5lM52HleTXwYLEW",
   "effects": [],

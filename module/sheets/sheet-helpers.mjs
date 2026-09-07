@@ -18,8 +18,7 @@ import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constant
 import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
-import { charAptitudeSet, resolveSkillCat } from "../constants/advancement.mjs";
-import { isFriendlySpecialty }                       from "../rules/friendly-specialties.mjs";
+import { charAptitudeSet } from "../constants/advancement.mjs";
 import { canClearJam }                                from "../combat/weapon-properties.mjs";
 import { ASPIRATION_TABLES } from "../constants/aspirations.mjs";
 import { aspirationOptions, aspirationByKey } from "../apps/aspirations.mjs";
@@ -45,6 +44,8 @@ import { SHIELD_STATUS }                             from "../constants/shields.
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
 import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/condition-mirrors.mjs";
 import { aptBindingContext } from "../rules/aptitude-binding.mjs";
+import { skillAdvanceCat, advanceCatSource } from "../rules/advance-category.mjs";
+import { missingMarkForPower } from "./tabs/psychic.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -430,7 +431,12 @@ export function buildGetData(actor) {
       isGranted: (sk.grantedRank ?? "untrained") !== "untrained",
       total: sk.total ?? -20,
       cost:  sk.cost  ?? 0,
-      aptCat: resolveSkillCat(key, "", [def.char, def.apt2], _skApts, actor),
+      // Цена вписана руками (wdbc-rcr9) — см. chars в character-context.mjs.
+      costManual: !!sk.costManual,
+      // Общая с ценой точка расчёта (wdbc-gafj) — см. chars в
+      // character-context.mjs.
+      aptCat: skillAdvanceCat(actor, def, { skillKey: key }, _skApts),
+      aptSourceText: advanceCatSource(actor, "skill", key)?.text ?? "",
       // Привязка Склонностей (wdbc-1pvq): что показать в подсказке и надо ли
       // пометить строку как переопределённую. Кликом по значку Д/Н/В её
       // меняют — отдельной колонки под это нет намеренно, вкладка и так
@@ -450,7 +456,8 @@ export function buildGetData(actor) {
       // Отношение группы к склонностям (стр. 24) — по [char группы, apt2].
       // Общие знания и Ремесло всегда Дружественные (стр. 58, 61).
       alwaysAlly: !!def.alwaysAlly,
-      aptCat: def.alwaysAlly ? "ally" : resolveSkillCat(groupKey, "", [def.char, def.apt2], _skApts, actor),
+      aptCat: skillAdvanceCat(actor, def, { group: groupKey }, _skApts),
+      aptSourceText: advanceCatSource(actor, "group", groupKey)?.text ?? "",
       entries: entries.map((e, i) => {
         const charKey = e.char || def.char;
         return {
@@ -458,9 +465,10 @@ export function buildGetData(actor) {
           charAbbr: CHARACTERISTICS[charKey]?.abbr ?? charKey,
           grantedRank: e.grantedRank ?? "untrained",
           isGranted: (e.grantedRank ?? "untrained") !== "untrained",
-          aptCat: def.alwaysAlly ? "ally"
-            : isFriendlySpecialty(actor, groupKey, e.specialty) ? "ally"
-            : resolveSkillCat(groupKey, e.specialty, [charKey, def.apt2], _skApts, actor),
+          aptCat: skillAdvanceCat(actor, def,
+            { group: groupKey, specialty: e.specialty, entryChar: charKey }, _skApts),
+          aptSourceText: advanceCatSource(actor, "group", groupKey,
+            { specialty: e.specialty })?.text ?? "",
           charOptions: GS_CHAR_KEYS.map(k => ({
             key: k, abbr: CHARACTERISTICS[k]?.abbr ?? k.toUpperCase(), selected: k === charKey
           }))
@@ -1104,6 +1112,11 @@ export function buildGetData(actor) {
       testAbbr:     _psyAbbr[s.testChar] ?? (s.testChar || "").toUpperCase(),
       threshold,
       prRequired:   s.prRequired ?? 0,
+      // Полное книжное требование и «а Метки-то нет» (wdbc-k1q4). Гейт на
+      // манифестации был, но игрок узнавал о нём только нажав кнопку: причина
+      // есть, а нащупать её надо. Здесь она видна в самой строке силы.
+      requirement:  s.requirement || "",
+      missingMark:  missingMarkForPower(actor, i)?.label ?? "",
       cost:         s.cost ?? 0,
       disciplineLabel: PSY_DISCIPLINES[s.discipline]?.label ?? "",
       subtype:      s.subtype || "",
