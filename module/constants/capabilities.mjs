@@ -99,6 +99,16 @@ export const CAPABILITIES = {
     source: "Модификации брони «Гексаграмматические Печати» / «Руническая Кольчуга»",
     reader: "module/combat/damage.mjs — ветка warpSoak в applyDamageToActor, armorAP = absorption[loc] целиком"
   },
+  // ── Регенерация аблативных пулов (wdbc-dnoj) ──────────────────────────────
+  "armour.fleshmetalRegen": {
+    label: "+1 аблативная Рана и +1 Ablative-брони в час, до их максимума",
+    source: "Модификация брони «Укрепление Плотеметаллом»: «+1 аблативная Рана/час и " +
+            "Ablative-броня +1/час (не ломается при 0)». Верхнего предела книга не " +
+            "называет — потолком выбран стартовый максимум пула (решение владельца " +
+            "07.09.2026), иначе за сутки простоя набегало бы +24 и дальше без конца.",
+    reader: "module/rules/fleshmetal-regen.mjs — planFleshmetalRegen; зовётся из " +
+            "хука updateWorldTime в module/hooks.mjs"
+  },
   // ── Крайне миролюбив (wdbc-gzuf) ──────────────────────────────────────────
   "pacifism.requiresAttackToRage": {
     label: "Не может войти в Ярость, пока не атакован в этом бою — иначе тест Воли−20 или отказ",
