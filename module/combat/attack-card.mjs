@@ -109,6 +109,8 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-sanctified="${wp.sanctified ? 1 : 0}"
       data-power-field="${wp.powerField ? 1 : 0}"
       data-corrosive="${wp.corrosiveRating ?? 0}"
+    data-entropy="${wp.entropyRating ?? 0}"
+      data-entropy="${wp.entropyRating ?? 0}"
       data-crippling="${wp.cripplingRating ?? 0}"
       data-piercing="${wp.piercing ? 1 : 0}"
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"

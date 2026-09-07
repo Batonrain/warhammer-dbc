@@ -697,6 +697,9 @@ export function registerHooks() {
           // applyDamageToActor (combat/damage.mjs), где уже известны и актор,
           // и место попадания, и непоглощённый урон.
           corrosiveRating: parseInt(ds.corrosive || "0"),
+          // Касание Энтропии (wdbc-1rno) — снимает AP ДО расчёта поглощения, в
+          // отличие от Разъедающего выше, поэтому едет отдельным числом.
+          entropyRating:   parseInt(ds.entropy || "0"),
           cripplingRating: parseInt(ds.crippling || "0"),
           piercing:        ds.piercing === "1",
           // Haywire(0) — валидный рейтинг («привязан к цели»), поэтому наличие
@@ -840,6 +843,7 @@ export function registerHooks() {
             sanctified:   ds.sanctified   === "1",
             powerField:   ds.powerField   === "1",
             corrosiveRating: parseInt(ds.corrosive || "0"),
+            entropyRating:   parseInt(ds.entropy || "0"),
             cripplingRating: parseInt(ds.crippling || "0"),
             piercing:        ds.piercing === "1",
             haywireActive:   ds.haywire != null && ds.haywire !== "",
