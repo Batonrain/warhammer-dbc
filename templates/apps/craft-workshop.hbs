@@ -81,7 +81,7 @@
               </select>
             </label>
             {{/if}}
-            <label><span class="wh-craft-lbl">Модификатор ГМа (±)</span><input type="number" name="gmmod" value="{{p.gmMod}}" class="wh-craft-num"/></label>
+            <label><span class="wh-craft-lbl">Модификатор ГМа (±)</span><input type="number" name="gmmod" value="{{blankZero p.gmMod}}" placeholder="0" class="wh-craft-num"/></label>
           </div>
           <div class="wh-craft-toggles">
             <label class="wh-craft-check"><input type="checkbox" name="improve" {{#if p.improve}}checked{{/if}}/> Улучшение (−20, Банк /2)</label>
