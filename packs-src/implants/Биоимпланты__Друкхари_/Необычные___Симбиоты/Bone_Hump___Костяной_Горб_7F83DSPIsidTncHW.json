@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Двойной удар",
+        "note": "вторая Реакция, можно бить одну цель дважды"
+      },
+      {
+        "label": "Усиленные шипы",
+        "note": "S 60, Unnatural S(4), DNW(5)"
+      },
+      {
+        "label": "Костяной защитник",
+        "note": "пассивен: Parry+2, Таланты Bodyguard/Blade Reader/Deflect Shot/Blade Shield, T.b Реакций, но не атакует"
+      },
+      {
+        "label": "Боевой горб",
+        "note": "Таланты Frenzy/Furious Assault/Reckless Charge/Overpower, ярость свободным действием"
+      }
+    ]
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "7F83DSPIsidTncHW",

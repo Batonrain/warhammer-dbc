@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Кровавый доспех",
+        "note": "+½ (окр.▼) T.b AP"
+      },
+      {
+        "label": "Вампирический всплеск",
+        "note": "при I/R/X непогл. уроне цель vs Обескровливание, при провале +1 рана себе"
+      },
+      {
+        "label": "Алхимическая лава",
+        "note": "E(Fl) урон ½, иммунитет к экстрем. холоду/жаре, при ранении Blast(2) 1d10+T.b E(Fl) Pen 4 Flame на себя без вреда"
+      },
+      {
+        "label": "Кровавый танец",
+        "note": "психосилы Red Harvest/Blood Forge/Blood Shards/Graveyard/Exanguinate, Чернокнижник PR ½ (окр.▼) T.b"
+      }
+    ]
   },
   "folder": "MVwzimCMiFagXpH6",
   "_id": "vbFCBaQoRUzqxiko",

@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Массовая галлюцинация",
+        "note": "дальность 30+T.b×5 м"
+      },
+      {
+        "label": "Избирательный кошмар",
+        "note": "одна цель, Hallucinogenic 3"
+      },
+      {
+        "label": "Воспроизводитель",
+        "note": "до 2 атак/сутки"
+      },
+      {
+        "label": "Кольцевой выброс",
+        "note": "Spray → Blast(T.b), стрельба навесом"
+      }
+    ]
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "lIeHVN7JMgoQazxN",

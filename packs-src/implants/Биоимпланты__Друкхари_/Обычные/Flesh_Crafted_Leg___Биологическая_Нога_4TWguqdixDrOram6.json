@@ -37,7 +37,33 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Unnatural S",
+        "note": "4) (усиливает Ногу Гладиатора до S(5)"
+      },
+      {
+        "label": "скрытая полость 2×1",
+        "note": "Awareness−20"
+      },
+      {
+        "label": "выдвижной коготь",
+        "note": "Best.Q монож"
+      },
+      {
+        "label": "цепкие присоски",
+        "note": "+20 Карабканье, +20 против сдвига, ходьба по стенам/потолку ½ SPD"
+      },
+      {
+        "label": "Талант Preternatural Speed",
+        "note": "или +2 SPD, если есть"
+      },
+      {
+        "label": "идеальная маскировка",
+        "note": ""
+      }
+    ]
   },
   "folder": "BNlIBu7Dewa9PnWE",
   "_id": "4TWguqdixDrOram6",

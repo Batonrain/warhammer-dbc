@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Избирательное действие",
+        "note": "убрать Spray, Hallucinogenic до 3"
+      },
+      {
+        "label": "Токсичные споры",
+        "note": "Toxic(0)"
+      },
+      {
+        "label": "Двойной эффект",
+        "note": "два броска Hallucinogenic, страдает от обоих"
+      },
+      {
+        "label": "Регенеративные споры",
+        "note": "раз в 48−T.b ч Blast(T.b) на 1 мин — органики внутри +1 рана/10 с, но Hallucinogenic(7)"
+      }
+    ]
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "IStI7klwwZEQyqiT",
