@@ -21,6 +21,9 @@ import { RITUAL_TYPES_MAP, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY
          lookupAversion, buildRitualSkills, ritualSkillOption, ritualDegrees, charAbbr,
          applyRitualItem } from "../constants/rituals.mjs";
 import { getPhenomenon, getPeril } from "../constants/psyker-tables.mjs";
+import { WARP_GODS_MAP } from "../constants/veil.mjs";
+import { MARK_LABELS } from "../constants/talent-requirements.mjs";
+import { hasRuleFlag } from "../rules/flags.mjs";
 import { veilShift } from "../constants/scene-nexus.mjs";
 import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
@@ -40,6 +43,27 @@ export function psykerMaxBonus(actor) {
   return actor?.system?.psyker ? 2 * (actor.system.psyker.rating || 0) : 0;
 }
 
+/**
+ * Две строки таблицы «Модификаторы Призыва», которые система знает про лист
+ * сама (корбук, «VI. МИСТИКА → РИТУАЛЫ»): «Персонаж имеет метку бога демона
+ * +30» и «Персонаж имеет покровительство (но не метку) бога демона +20».
+ * Книга держит их взаимоисключающими прямым текстом, поэтому Покровительство
+ * при наличии Метки не считается вовсе.
+ *
+ * Метка спрашивается возможностью `mark.<бог>` (её выдаёт Черта из
+ * packs-src/traits/Метки_Богов), а не полем `patronGod`: это разные сущности,
+ * и вся разница между +30 и +20 именно в них.
+ * @returns {{god:string, mark:boolean, patronage:boolean}|null} null — бог
+ *   демона не назван, обе строки остаются ручными.
+ */
+export function autoSummonMods(actor, god) {
+  if (!god || !WARP_GODS_MAP[god]) return null;
+  const mark = hasRuleFlag(actor, `mark.${god}`);
+  return { god, mark, patronage: !mark && actor?.system?.patronGod === god };
+}
+
+const summonModValue = key => RITUAL_SUMMON_MODS.find(m => m.key === key)?.value || 0;
+
 /** Начальное состояние броска для предмета-Ритуала: путь проведения из книги. */
 export function newRitualState(actor, item, buildSkills = buildRitualSkills) {
   return {
@@ -52,7 +76,9 @@ export function newRitualState(actor, item, buildSkills = buildRitualSkills) {
     // Демон, объявленный ГМом за столом (Бестиарий игроку не виден,
     // ownership.PLAYER:"NONE") — имя ищет и токен на сцене создаёт ГМ
     // (module/apps/demon-summon.mjs), Inf уходит модификатором в порог.
-    demonName: "", demonInf: 0,
+    // Бог демона называется там же и нужен не для поиска, а для двух строк
+    // Модификаторов Призыва, которые считаются по листу (autoSummonMods).
+    demonName: "", demonInf: 0, demonGod: "",
     ...applyRitualItem(actor, item, buildSkills)
   };
 }
@@ -80,7 +106,27 @@ export function ritualThreshold(R, actor, item) {
   // ритуала принесли в жертву») — не больше, чем их вообще участвовало.
   const sacrificed = Math.min(Math.max(0, R.assistSacrificed || 0), R.assistants || 0);
   const assistTotal = sacrificed * (R.assistBonus || 0);
-  const summonTotal = RITUAL_SUMMON_MODS.reduce((s, m) => s + (R.summon?.[m.key] ? m.value : 0), 0);
+  // Метка/Покровительство бога демона считаются по листу, если бог назван.
+  // Авто-строка только ДОБАВЛЯЕТ: Метку из источника, которого система пока
+  // не знает, ГМ по-прежнему может отметить руками. А вот сложить обе строки
+  // нельзя никогда — книга пишет «покровительство (но не метку)», то есть с
+  // Меткой это +30, а не +50 (раньше две отмеченные пилюли давали +50).
+  const auto = isSummonLike ? autoSummonMods(actor, R.demonGod) : null;
+  const marked = !!(auto?.mark || R.summon?.mark);
+  const summonOn = key => key === "patronage"
+    ? (!marked && !!(auto?.patronage || R.summon?.patronage))
+    : (key === "mark" ? marked : !!R.summon?.[key]);
+  // Авто-строки выводятся отдельно и с именем Бога: игрок не отмечал их сам и
+  // должен видеть, откуда взялись +30/+20.
+  const autoMark  = !!auto?.mark;
+  const autoPatron = !!(auto?.patronage && summonOn("patronage"));
+  const summonTotal = RITUAL_SUMMON_MODS.reduce((s, m) => {
+    if (!summonOn(m.key)) return s;
+    if ((m.key === "mark" && autoMark) || (m.key === "patronage" && autoPatron)) return s;
+    return s + m.value;
+  }, 0);
+  const autoTotal = (autoMark ? summonModValue("mark") : 0) + (autoPatron ? summonModValue("patronage") : 0);
+  const godLabel = auto ? (MARK_LABELS[auto.god] || WARP_GODS_MAP[auto.god]?.label || auto.god) : "";
   const famVal = isCurse ? (CURSE_FAMILIARITY.find(f => f.key === R.curseFam)?.value || 0) : 0;
   const sympTotal = isCurse ? CURSE_SYMPATHY.reduce((s, m) => s + (R.curseSymp?.[m.key] ? m.value : 0), 0) : 0;
   const prMax = psykerMaxBonus(actor);
@@ -91,13 +137,15 @@ export function ritualThreshold(R, actor, item) {
   // только если ритуалист вписал Inf (демона называет ГМ, см. demonInf выше).
   const demonMod = isSummonLike ? -(Number(R.demonInf) || 0) : 0;
 
-  const threshold = baseVal + (R.gmMod || 0) + assistTotal + summonTotal + famVal + sympTotal + prBonus + numMod + extraTotal + demonMod;
+  const threshold = baseVal + (R.gmMod || 0) + assistTotal + summonTotal + autoTotal + famVal + sympTotal + prBonus + numMod + extraTotal + demonMod;
 
   const rows = [
     { label: skillOpt ? `${skillOpt.label} (${charAbbr(testChar)})` : "— навык —", val: baseVal, primary: true },
     { label: "Сложность ритуала", val: R.gmMod || 0 },
     ...(assistTotal ? [{ label: `Жертва ассистентов ×${sacrificed}`, val: assistTotal }] : []),
     ...(summonTotal ? [{ label: "Модификаторы призыва", val: summonTotal }] : []),
+    ...(autoMark ? [{ label: `Метка ${godLabel}`, val: summonModValue("mark") }] : []),
+    ...(autoPatron ? [{ label: `Покровительство ${godLabel} (без Метки)`, val: summonModValue("patronage") }] : []),
     ...(isCurse && famVal ? [{ label: "Знакомство с целью", val: famVal }] : []),
     ...(isCurse && sympTotal ? [{ label: "Симпатия", val: sympTotal }] : []),
     ...(prBonus ? [{ label: "Псайкер (+2×PR)", val: prBonus }] : []),
@@ -111,6 +159,11 @@ export function ritualThreshold(R, actor, item) {
   return {
     isCurse, isSummonLike, testChar,
     rows, threshold, thresholdSigned: sgn(threshold), prMax,
+    // Какие строки Призыва реально сработали и какие из них поставила система
+    // сама — диалогу, чтобы подсветить пилюли, а не повторять у себя правило
+    // «покровительство, но не метку» вторым экземпляром.
+    summonOn: RITUAL_SUMMON_MODS.filter(m => summonOn(m.key)).map(m => m.key),
+    summonAuto: [...(autoMark ? ["mark"] : []), ...(autoPatron ? ["patronage"] : [])],
     reqOk: req.ok, reqFailed: req.failed
   };
 }
