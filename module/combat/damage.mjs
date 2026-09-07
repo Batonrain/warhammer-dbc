@@ -18,6 +18,7 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
+import { processNurglingInfestation } from "./nurgling-infestation.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
 import { activeAblativeArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
@@ -552,6 +553,10 @@ export async function applyDamageToActor(actor, damageData) {
   // Enjoyment/Наслаждение (wdbc-sk8s): Непоглощённый Урон / Критический
   // Эффект от атаки — 1 Боли раз за бой, без траты Реакции.
   if (netDamage > 0) await maybeGrantEnjoymentPain(actor);
+
+  // Заражение Нурглингами (wdbc-1rno, Дар Нургла): тот же момент — сколько
+  // слуг вылезло из свежей раны, считается по величине непоглощённого урона.
+  await processNurglingInfestation(actor, netDamage);
 
   // ── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ────────
   // Гейт capability weaponPropertyImmunity.<key> — Мутации/Дары («Пылающее
