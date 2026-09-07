@@ -1783,7 +1783,8 @@ export const CAPABILITIES = {
   },
   "dualWield.core.independentTargeting": {
     label: "Цели стрельбы персонажа с двух оружий могут быть на расстоянии более 10м друг от друга.",
-    source: "Independent Targeting / Независимое Прицеливание", reader: ""
+    source: "Independent Targeting / Независимое Прицеливание",
+    reader: "module/rules/dual-wield.mjs — targetSpreadExceeded (снимает предел 10 м между целями пары; окно атаки убирает строку о разлёте)"
   },
   "dualWield.core.maineGauche": {
     label: "Вооружённый двумя оружиями, одно из которых нож, и не использовав этот нож для атаки в предыдущий Ход,",
