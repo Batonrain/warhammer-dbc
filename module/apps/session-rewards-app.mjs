@@ -8,7 +8,8 @@
 //  конец сессии — это одно действие, а не два в разных углах экрана. Раньше та
 //  кнопка сразу звала triggerSessionEnd(); теперь она открывает это окно, а
 //  triggerSessionEnd() вызывается отсюда, ПОСЛЕ наград (галочка «закончить
-//  сессию», по умолчанию включена). Порядок принципиален: восполнение ставит
+//  сессию» — она включена только у этого входа, см. openSessionRewards и
+//  wdbc-f4q0). Порядок принципиален: восполнение ставит
 //  Очки Бесчестия на максимум, и награда, выданная после него, пропала бы
 //  молча. Запасной вход — пункт системных Настроек (warhammer-dbc.mjs,
 //  game.settings.registerMenu), как «Обновить мир».
@@ -72,9 +73,16 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
     this.picks = { party: {}, personal: {}, xpOverride: {}, corruption: {}, infamy: {} };
     this.chosen = null;   // Set id выбранных актёров; null — ещё не трогали
     /** Доводить ли конец сессии до конца (откат разовых + восполнение пулов).
-     *  По умолчанию да: окно открывается кнопкой «⏻ Сессия» календаря, и до
-     *  появления окна эта кнопка делала ровно это — терять её нельзя. */
-    this.endSession = true;
+     *
+     *  Зависит от ТОЧКИ ВХОДА, а не от конструктора. Кнопка «⏻ Сессия»
+     *  календаря до появления этого окна делала ровно откат — она и открывает
+     *  окно с включённой галочкой. А пункт системных Настроек к концу сессии
+     *  отношения не имеет: оттуда окно открывают выдать награду посреди игры,
+     *  и включённая галочка одним нажатием вернула бы всему миру потраченные
+     *  разовые способности и полные Очки Судьбы (wdbc-f4q0). */
+    this.endSession = options.endSession === true;
+    /** Раздача уже идёт — второй клик по кнопке игнорируется (см. _apply). */
+    this.applying = false;
   }
 
   /** Кандидаты: игровые персонажи мира, у которых есть опыт. */
@@ -174,50 +182,95 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
     on(".wh-sr-apply", "click", () => this._apply());
   }
 
-  /** Раздать. Пишет опыт, Порчу и Бесчестие и кладёт одну карточку в чат. */
+  /**
+   * Раздать — обёртка вокруг самой раздачи.
+   *
+   * Отвечает за две вещи, без которых раздача опасна (wdbc-mxm2):
+   *
+   * 1. ОДИН РАЗ. Раздача идёт заметное время — по await на каждого персонажа
+   *    плюс бросок кубов, и всё это время окно открыто, а кнопка нажимается.
+   *    Второй клик выдал бы всё заново: двойной опыт, две записи в журнале,
+   *    два конца сессии. Отменить записанный опыт нечем, поэтому сторожит флаг
+   *    на приложении, а не только disabled в разметке — тот снимается
+   *    перерисовкой.
+   * 2. НЕ МОЛЧА. Обработчик клика выбрасывает промис, и без своего catch любая
+   *    ошибка записи уходила бы в необработанный промис: окно остаётся
+   *    открытым, в чате пусто, и выглядит это как «кнопка не работает».
+   */
   async _apply() {
+    if (this.applying) return;
+    this.applying = true;
+    const button = this.element?.querySelector(".wh-sr-apply");
+    if (button) button.disabled = true;
+    try {
+      await this._distribute();
+    } catch (err) {
+      console.error("Warhammer DBC | Итоги Сессии — раздача оборвалась", err);
+      ui.notifications?.error(
+        `Раздача оборвалась: ${err?.message ?? err}. Часть персонажей могла уже получить награду — проверьте журнал опыта, прежде чем раздавать снова.`);
+      if (button) button.disabled = false;
+    } finally {
+      this.applying = false;
+    }
+  }
+
+  /** Собственно запись: опыт, Порча и Бесчестие плюс одна карточка в чат. */
+  async _distribute() {
     const actors = this.selectedActors;
     const rows = buildRewardRows(actors.map(a => ({ id: a.id, name: a.name })), this.picks);
     const byId = new Map(actors.map(a => [a.id, a]));
     const lines = [];
     const rolls = [];
+    const failed = [];
 
     for (const row of rows) {
       const actor = byId.get(row.id);
       if (!actor) continue;
       const parts = [];
 
-      if (row.xp > 0) {
-        const exp = actor.system.experience ?? {};
-        const log = Array.isArray(exp.log) ? foundry.utils.deepClone(exp.log) : [];
-        log.push({ at: Date.now(), amount: row.xp, kind: "session", reason: "Итоги Сессии" });
-        await actor.update({
-          "system.experience.total":   (Number(exp.total) || 0) + row.xp,
-          "system.experience.current": (Number(exp.current) || 0) + row.xp,
-          "system.experience.log":     log
-        });
-        parts.push(`<b>${row.xp}</b> опыта`);
-      }
+      // Сбой на одном персонаже не должен лишать награды остальных: раньше
+      // исключение обрывало весь список, и половина партии молча оставалась ни
+      // с чем. Теперь неудачник называется по имени, а раздача идёт дальше.
+      try {
+        if (row.xp > 0) {
+          const exp = actor.system.experience ?? {};
+          const log = Array.isArray(exp.log) ? foundry.utils.deepClone(exp.log) : [];
+          log.push({ at: Date.now(), amount: row.xp, kind: "session", reason: "Итоги Сессии" });
+          await actor.update({
+            "system.experience.total":   (Number(exp.total) || 0) + row.xp,
+            "system.experience.current": (Number(exp.current) || 0) + row.xp,
+            "system.experience.log":     log
+          });
+          parts.push(`<b>${row.xp}</b> опыта`);
+        }
 
-      const cor = await this._amount(row.corruption, rolls);
-      if (cor !== null) {
-        const now = Number(actor.system.corruption?.value) || 0;
-        await actor.update({ "system.corruption.value": Math.max(0, now + cor) });
-        parts.push(`Порча ${cor >= 0 ? "+" : ""}${cor}`);
-      }
+        const cor = await this._amount(row.corruption, rolls);
+        if (cor !== null) {
+          const now = Number(actor.system.corruption?.value) || 0;
+          await actor.update({ "system.corruption.value": Math.max(0, now + cor) });
+          parts.push(`Порча ${cor >= 0 ? "+" : ""}${cor}`);
+        }
 
-      const inf = await this._amount(row.infamy, rolls);
-      if (inf !== null) {
-        const base = Number(actor.system.characteristics?.inf?.base) || 0;
-        const gain = infamyGain(actor, inf);
-        await actor.update({ [INFAMY_PATH]: Math.max(0, base + gain) });
-        // Обрезанную прибавку называем честно: «+2 (потолок)» вместо «+5».
-        const clipped = gain !== inf ? " (потолок)" : "";
-        parts.push(`Бесчестие ${gain >= 0 ? "+" : ""}${gain}${clipped}`);
+        const inf = await this._amount(row.infamy, rolls);
+        if (inf !== null) {
+          const base = Number(actor.system.characteristics?.inf?.base) || 0;
+          const gain = infamyGain(actor, inf);
+          await actor.update({ [INFAMY_PATH]: Math.max(0, base + gain) });
+          // Обрезанную прибавку называем честно: «+2 (потолок)» вместо «+5».
+          const clipped = gain !== inf ? " (потолок)" : "";
+          parts.push(`Бесчестие ${gain >= 0 ? "+" : ""}${gain}${clipped}`);
+        }
+      } catch (err) {
+        console.error(`Warhammer DBC | Итоги Сессии — не начислено «${row.name}»`, err);
+        failed.push(row.name);
+        continue;
       }
 
       if (parts.length) lines.push(`<li><b>${esc(row.name)}</b>: ${parts.join(", ")}</li>`);
     }
+
+    if (failed.length) ui.notifications?.error(
+      `Не удалось начислить: ${failed.join(", ")}. Остальным раздача прошла.`);
 
     if (!lines.length && !this.endSession) {
       ui.notifications?.warn("Нечего раздавать: ни у кого не выбрано ни опыта, ни Порчи, ни Бесчестия.");
@@ -255,7 +308,15 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
   }
 }
 
-/** Открыть окно из макроса или консоли. */
-export function openSessionRewards() {
-  return new SessionRewardsApp().render(true);
+/**
+ * Открыть окно.
+ *
+ * @param {object}  [options]
+ * @param {boolean} [options.endSession=false] сразу отметить «закончить
+ *   сессию». Ставит только кнопка «⏻ Сессия» календаря — она и означает конец
+ *   сессии. Пункт Настроек и вызов из макроса открывают окно со снятой
+ *   галочкой: оттуда его открывают раздать награду посреди игры.
+ */
+export function openSessionRewards(options = {}) {
+  return new SessionRewardsApp(options).render(true);
 }

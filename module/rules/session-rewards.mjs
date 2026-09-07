@@ -104,14 +104,27 @@ export const INFAMY_PATH = "system.characteristics.inf.base";
 export const INFAMY_CAP = 100;
 
 /**
- * Сколько ещё можно прибавить к Бесчестию, не пробив потолок.
+ * ПОСТОЯННОЕ Бесчестие — то, от чего считается потолок награды.
  *
- * Считается по ИТОГУ характеристики, а не по базе: сверх базы есть ещё
- * Продвижение и надбавки, и потолок по базе разрешил бы перебор.
+ * Не база: сверх неё есть Продвижение, Улучшение, надбавки Черт и имплантов —
+ * всё это остаётся с персонажем навсегда и в потолок входит. Но и не готовый
+ * `total`: в него (rules/character.mjs) замешаны три ВРЕМЕННЫХ слагаемых —
+ * наркотики, ручной Мод. к Итогу и дебафф Голода/Жажды. Считать потолок от
+ * них значило бы, что под стимулятором персонаж «уже на потолке» и заслуженной
+ * награды не получит, а раненый наоборот получит сверх потолка, и перебор
+ * вылезет, когда рана заживёт (wdbc-xlh1).
+ *
+ * Броня в этот список не входит намеренно: armorCharBonus знает только Силу и
+ * Волю (character.mjs), к Влиянию надетая броня не прибавляет вовсе.
  */
+export function permanentInfamy(actor) {
+  const inf = actor?.system?.characteristics?.inf ?? {};
+  return int(inf.total) - int(inf.drugMod) - int(inf.charDamage) + int(inf.vitalMod);
+}
+
+/** Сколько ещё можно прибавить к Бесчестию, не пробив потолок. */
 export function infamyRoom(actor) {
-  const total = int(actor?.system?.characteristics?.inf?.total);
-  return Math.max(0, INFAMY_CAP - total);
+  return Math.max(0, INFAMY_CAP - permanentInfamy(actor));
 }
 
 /**

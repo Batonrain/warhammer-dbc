@@ -369,7 +369,7 @@ export function refreshCalendarWidget() {
       // сперва окно наград (опыт, Порча, Бесчестие), и уже его кнопка «Раздать»
       // добирает откат и восполнение пулов. Порядок важен: восполнение ставит
       // Очки Бесчестия на максимум, и награда, выданная ПОСЛЕ него, пропала бы.
-      else if (act === "session") openSessionRewards();
+      else if (act === "session") openSessionRewards({ endSession: true });
     }));
   } catch (e) { console.warn("warhammer-dbc | imperial calendar widget", e); }
 }

@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from "vitest";
 import { partyXp, actorXp, parseRewardAmount, buildRewardRows,
-  infamyRoom, infamyGain, INFAMY_PATH, INFAMY_CAP }
+  infamyRoom, infamyGain, permanentInfamy, INFAMY_PATH, INFAMY_CAP }
   from "../../module/rules/session-rewards.mjs";
 import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS }
   from "../../module/constants/session-rewards.mjs";
@@ -119,6 +119,39 @@ describe("Бесчестие наградой — характеристика, 
   it("у актора без характеристик прибавка упирается в полный потолок", () => {
     expect(infamyRoom({})).toBe(INFAMY_CAP);
     expect(infamyGain({}, 5)).toBe(5);
+  });
+});
+
+describe("потолок Бесчестия считается от постоянной части (wdbc-xlh1)", () => {
+  /** Итог характеристики с разложением на постоянное и временное. */
+  const inf = (fields) => ({ system: { characteristics: { inf: fields } } });
+
+  it("наркотик не съедает запас до потолка", () => {
+    // Постоянное Бесчестие 90, стимулятор даёт +10 → total 100. Считать
+    // потолок от итога значило бы «уже на потолке» и отказ в награде.
+    const doped = inf({ total: 100, drugMod: 10 });
+    expect(permanentInfamy(doped)).toBe(90);
+    expect(infamyRoom(doped)).toBe(10);
+    expect(infamyGain(doped, 5)).toBe(5);
+  });
+
+  it("ручной Мод. к Итогу не раздвигает потолок", () => {
+    // Влияние срезано на 20 вручную: итог 80, но постоянного всё те же 100.
+    const hurt = inf({ total: 80, charDamage: -20 });
+    expect(permanentInfamy(hurt)).toBe(100);
+    expect(infamyGain(hurt, 5)).toBe(0);
+  });
+
+  it("дебафф Голода/Жажды тоже не раздвигает потолок", () => {
+    // vitalMod вычитается из итога, значит обратно прибавляется здесь.
+    const hungry = inf({ total: 95, vitalMod: 5 });
+    expect(permanentInfamy(hungry)).toBe(100);
+    expect(infamyGain(hungry, 3)).toBe(0);
+  });
+
+  it("без временных модификаторов постоянное равно итогу", () => {
+    expect(permanentInfamy(inf({ total: 40 }))).toBe(40);
+    expect(infamyRoom(inf({ total: 40 }))).toBe(60);
   });
 });
 
