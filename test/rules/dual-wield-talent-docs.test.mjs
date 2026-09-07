@@ -18,6 +18,8 @@ import { itemHasKey } from "../../module/rules/item-marker.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
 import { CAP_TWO_WEAPON, CAP_AMBIDEXTROUS, CAP_INDEPENDENT_TARGETING }
   from "../../module/rules/dual-wield.mjs";
+import { CAP_CROSSBLOCK, CAP_GUN_GUARD, CAP_POUNDER, CAP_SAVAGE }
+  from "../../module/rules/dual-wield-talents.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const DIR  = path.join(ROOT, "packs-src/talents/Два_оружия");
@@ -54,13 +56,28 @@ describe("Таланты ветки «Два оружия» в паке несу
   });
 });
 
+describe("Таланты ветки за пределами штрафа (wdbc-pb60) тоже несут свои ключи", () => {
+  // Ровно та же ловушка, из-за которой заведён весь этот файл: код написан,
+  // тесты зелёные, а предмет в компендиуме ключа не несёт — и за столом
+  // Талант не делает ничего.
+  it.each([
+    ["Крестовой Блок",     CAP_CROSSBLOCK, "Crossblock / Крестовой Блок"],
+    ["Винтовочная Гарда",  CAP_GUN_GUARD,  "Gun Guard / Винтовочная Гарда"],
+    ["Молотильщик",        CAP_POUNDER,    "Pounder / Молотильщик"],
+    ["Дикарь",             CAP_SAVAGE,     "Savage / Дикарь"]
+  ])("%s даёт свой ключ ровно одним документом", (_label, key, name) => {
+    expect(byKey(key).map(t => t.name)).toEqual([name]);
+  });
+});
+
 describe("реестр возможностей называет читателя", () => {
   it("у механизированных ключей ветки reader не пустой", () => {
     // Пустой reader — честная пометка «правило записано, кода за ним нет».
     // Для этих ключей код есть, и запись обязана на него указывать: иначе
     // следующая ревизия ветки снова примет живой ключ за мёртвый.
-    for (const key of [CAP_TWO_WEAPON, CAP_AMBIDEXTROUS, CAP_INDEPENDENT_TARGETING]) {
-      expect(CAPABILITIES[key]?.reader, `${key} без читателя`).toContain("dual-wield.mjs");
+    for (const key of [CAP_TWO_WEAPON, CAP_AMBIDEXTROUS, CAP_INDEPENDENT_TARGETING,
+                       CAP_CROSSBLOCK, CAP_GUN_GUARD, CAP_POUNDER, CAP_SAVAGE]) {
+      expect(CAPABILITIES[key]?.reader, `${key} без читателя`).toContain("dual-wield");
     }
   });
 });
