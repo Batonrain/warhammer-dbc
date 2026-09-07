@@ -31,7 +31,7 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
-import { isUnseenBeggarItem, betterThanPoorEquipped } from "../rules/unseen-beggar.mjs";
+import { betterThanPoorEquipped, UNSEEN_BEGGAR } from "../rules/unseen-beggar.mjs";
 import { QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
@@ -163,6 +163,20 @@ async function onCapabilitySpend(event, target) {
   if (key === "aura.touchedByFates") {
     const applied = await applyTouchedByFates(this.actor);
     if (!applied) return false;
+  }
+  // Незримый Нищий (wdbc-1rno): книга разрешает наложить чары, ТОЛЬКО пока
+  // надето одно Poor.Q. Полудействие цены уже лежит в данных записи, а вот
+  // это условие игрок иначе проверяет глазами по всему инвентарю и ошибается
+  // ровно на том предмете, о котором забыл. Тот же приём, что у Локуса
+  // Фанатизма выше: предусловие ДО списания — иначе полудействие сгорело бы
+  // впустую.
+  if (key === UNSEEN_BEGGAR) {
+    const blockers = betterThanPoorEquipped(this.actor.items);
+    if (blockers.length) {
+      ui.notifications.warn(`Незримый Нищий: чары требуют только снаряжения Poor.Q. Мешают: ${
+        blockers.map(b => `${b.name} (${QUALITY_LABELS[b.quality] || b.quality})`).join(", ")}.`);
+      return false;
+    }
   }
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
 }
@@ -664,18 +678,7 @@ function onMutgiftRoll(event) {
 // только на общее поле system.active + isItemActive().
 async function onMutgiftToggleActive(event, target) {
   event.preventDefault(); event.stopPropagation();
-  const item = this.actor.items.get(target.dataset.itemId);
-  // Незримый Нищий (wdbc-1rno): чары накладываются, только пока НАДЕТО одно
-  // Poor.Q. Гейт стоит на включении, не на выключении — развеять чары книга
-  // разрешает всегда, и запертый «включённым» Дар был бы хуже отсутствующего.
-  if (item && !item.system?.active && isUnseenBeggarItem(item)) {
-    const blockers = betterThanPoorEquipped(this.actor.items);
-    if (blockers.length) {
-      return ui.notifications.warn(`Незримый Нищий: чары требуют только снаряжения Poor.Q. Мешают: ${
-        blockers.map(b => `${b.name} (${QUALITY_LABELS[b.quality] || b.quality})`).join(", ")}.`);
-    }
-  }
-  await toggleGearModActive(item);
+  await toggleGearModActive(this.actor.items.get(target.dataset.itemId));
 }
 
 // ── Раса, Прошлое и легион ── (apps/races.mjs держит применение, лист даёт
