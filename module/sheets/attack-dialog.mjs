@@ -56,6 +56,8 @@ import { coverBonusForShot }                  from "../combat/cover.mjs";
 import { weaponProfiles, attackIsMelee }         from "../combat/weapon-profiles.mjs";
 import { isIntegralAttack }                    from "../combat/equipped-melee.mjs";
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
+import { canDualWield, offHandCandidates, dualWieldMods }
+  from "../rules/dual-wield.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -985,12 +987,27 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     </div>` : "";
   const techSectionsHtml = `${maneuverBlockHtml}${stanceBlockHtml}${baseBlockHtml}${gripBlockHtml}${profileBlockHtml}`;
 
+  // ── Обе руки одним действием (wdbc-3jlm, Талант «Два Оружия») ───────────
+  // Строка появляется только у того, кто это умеет И у кого есть что взять во
+  // вторую руку: пустой выпадающий список хуже отсутствующего.
+  const dualCandidates = canDualWield(actor) ? offHandCandidates(actor, item) : [];
+  const dualWieldHtml = dualCandidates.length ? `
+    <div class="av-row" title="Атаки с обеих рук — ОДНА атака, занимающая наибольшее действие из двух (стр. 62). Обе получают −20; Таланты ветки «Два оружия» этот штраф уменьшают.">
+      <label class="attack-mod-check">
+        <input type="checkbox" id="atk-dual-wield"/> Обе руки
+      </label>
+      <select id="atk-off-hand" class="av-input">
+        ${dualCandidates.map(it => `<option value="${esc(it.id)}">${esc(it.name)}</option>`).join("")}
+      </select>
+    </div>` : "";
+
   // Не <form>: содержимое DialogV2 уже лежит внутри его собственной формы, а
   // вложенная форма недопустима — браузер её выбросит вместе с оформлением.
   // Сборка разметки вынесена в sheets/attack/markup.mjs (wdbc-uh56): второй
   // односторонний шов — значения только входят, наружу идёт одна строка.
   const content = buildAttackContent({
     actor,
+    dualWieldHtml,
     aimHtml,
     aimingPills,
     ammoCondHtml,
@@ -1087,7 +1104,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // (f.mountPenalty — штраф Избирательной атаки по зоне пары): это два
       // разных мода одной верховой атаки, см. комментарий у readAttackForm.
       { label: "Штраф стрельбы с седла", value: f.mountRangedMod },
-      { label: "Атака всем телом",     value: f.extraBonus }
+      { label: "Атака всем телом",     value: f.extraBonus },
+      // Парное оружие (wdbc-3jlm): −20 книги минус скидки Талантов ветки.
+      // Отдельной строкой, а не в «Доп. мод»: игрок должен видеть, что это
+      // посчитала система, и на сколько её убавили его Таланты.
+      { label: "Парное оружие",        value: f.dualWield
+        ? dualWieldMods(actor, item, actor.items.get(f.offHandId)).pair : 0 }
     ];
     const base         = baseParts.reduce((n, p) => n + (Number(p.value) || 0), 0);
     const rawModsSum    = modParts.reduce((n, p) => n + (Number(p.value) || 0), 0);

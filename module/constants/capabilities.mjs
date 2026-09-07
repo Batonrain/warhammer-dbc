@@ -1755,15 +1755,15 @@ export const CAPABILITIES = {
   },
   "dualWield.core.ambidextrous": {
     label: "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
-    source: "Ambidextrous / Амбидекстр", reader: ""
+    source: "Ambidextrous / Амбидекстр", reader: "module/rules/dual-wield.mjs — dualWieldMods (снимает штраф неосновной руки, −10 к парному)"
   },
   "dualWield.core.bladeDancer": {
     label: "Персонаж уменьшает штраф за парные мечи на 10.",
-    source: "Blade Dancer / Танцор с Клинками", reader: ""
+    source: "Blade Dancer / Танцор с Клинками", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре мечей)"
   },
   "dualWield.core.brawler": {
     label: "Персонаж уменьшает штраф за парное оружие для атак кулаками на 10.",
-    source: "Brawler / Боксёр", reader: ""
+    source: "Brawler / Боксёр", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре кулаков)"
   },
   "dualWield.core.crossblock": {
     label: "Вооружённый двумя рукопашными оружиями с Балансом не ниже 0, персонаж может Парировать атаки существ на 1 Размер больше обычного и суммирует…",
@@ -1771,7 +1771,7 @@ export const CAPABILITIES = {
   },
   "dualWield.core.fanOfKnives": {
     label: "Персонаж уменьшает штраф за парное метательное оружие на 10.",
-    source: "Fan of Knives / Веер Ножей", reader: ""
+    source: "Fan of Knives / Веер Ножей", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре метательного)"
   },
   "dualWield.core.gunGuard": {
     label: "Вооружённый рукопашным оружием с Балансом не ниже −1 и винтовкой, выстрелы из неё в рукопашной не получают бонуса +30 на Избегание.",
@@ -1779,7 +1779,7 @@ export const CAPABILITIES = {
   },
   "dualWield.core.gunslinger": {
     label: "Персонаж уменьшает штраф за парные пистолеты на 10.",
-    source: "Gunslinger / Македонец", reader: ""
+    source: "Gunslinger / Македонец", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре пистолетов)"
   },
   "dualWield.core.independentTargeting": {
     label: "Цели стрельбы персонажа с двух оружий могут быть на расстоянии более 10м друг от друга.",
@@ -1799,15 +1799,15 @@ export const CAPABILITIES = {
   },
   "dualWield.core.sidearm": {
     label: "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — пистолет, а второе — рукопашное.",
-    source: "Sidearm / Запасной Ствол", reader: ""
+    source: "Sidearm / Запасной Ствол", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на пистолет + рукопашное)"
   },
   "dualWield.core.sideblade": {
     label: "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — нож.",
-    source: "Sideblade / Запасной Клинок", reader: ""
+    source: "Sideblade / Запасной Клинок", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10, если одно из двух — нож)"
   },
   "dualWield.core.twoWeaponWielder": {
     label: "Персонаж может совершать атаки с обеих рук как одну атаку, занимающую наибольшее действие из двух, но эти атаки получают −20.",
-    source: "Two Weapon Wielder / Два Оружия", reader: ""
+    source: "Two Weapon Wielder / Два Оружия", reader: "module/rules/dual-wield.mjs — canDualWield (галочка «Обе руки» в окне атаки); module/sheets/attack/dialog.mjs — одно действие на пару и второй бросок"
   },
   // ── Пси-стойкость
   "psyResist.core.aetherCocoon": {

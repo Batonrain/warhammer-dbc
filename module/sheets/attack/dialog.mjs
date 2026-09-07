@@ -21,6 +21,8 @@ import { spendActionPoints, apCostForActionType, spendReaction } from "../../com
 import { deathDanceNextCost, markDeathDanceUsed } from "../../combat/death-dance.mjs";
 import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
+import { dualWieldMods, dualWieldActionType } from "../../rules/dual-wield.mjs";
+import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 
 export function openAttackDialog(ctx) {
   const {
@@ -97,6 +99,15 @@ export function openAttackDialog(ctx) {
             return false;
           }
 
+          // Вторая рука (wdbc-3jlm): предмет, отмеченный в окне галочкой
+          // «Обе руки». Берётся ДО списания ОД — от него зависит, каким
+          // действием считать пару.
+          const dualOff = f.dualWield ? (actor.items.get(f.offHandId) ?? null) : null;
+          // Вторая рука бьёт Стандартной Атакой / одиночным выстрелом, то есть
+          // Полудействием: приём, база и режим огня из окна относятся к
+          // основному оружию и на неё не переносятся.
+          const offActionType = () => "Полудействие";
+
           // Экономика действий (стр. 12, wdbc-niv7): рукопашная атака тратит
           // ОД по actionType выбранной Базы (MELEE_BASES) — Натиск/Полная
           // Атака и т.п. уже несут это поле. Стрелковые режимы (стр. 32,
@@ -113,9 +124,17 @@ export function openAttackDialog(ctx) {
               return false;
             }
           } else {
-            const apCost = isMelee
-              ? apCostForActionType(sel.bDef.actionType)
-              : apCostForActionType(f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
+            const ownActionType = isMelee
+              ? sel.bDef.actionType
+              : (f.rofMode === "suppression" ? "Полное действие" : "Полудействие");
+            // Обе руки одним действием (wdbc-3jlm): пара ударов занимает
+            // НАИБОЛЬШЕЕ действие из двух, а не два своих. Ровно в этом смысл
+            // Таланта «Два Оружия», и ровно этого не было: после Натиска
+            // второй удар упирался в «не хватает ОД», хотя по книге входил в
+            // то же действие.
+            const apCost = apCostForActionType(dualOff
+              ? dualWieldActionType(ownActionType, offActionType(dualOff))
+              : ownActionType);
             if (!await spendActionPoints(actor, apCost, { physical: true })) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
@@ -223,6 +242,28 @@ export function openAttackDialog(ctx) {
                     : "")
             }
           );
+
+          // Вторая рука — тем же действием, отдельным броском (wdbc-3jlm).
+          // Своих ОД не тратит: они уже списаны наибольшим действием выше.
+          // Модификаторы окна к ней НЕ переносятся: прицеливание, режим огня,
+          // приём и хват относятся к оружию основной руки. Своё получает
+          // только парный штраф и штраф неосновной руки.
+          if (dualOff) {
+            const dw = dualWieldMods(actor, item, dualOff);
+            const offMelee = attackIsMelee(dualOff.system, {});
+            await _executeAttackRoll(
+              actor, dualOff, offMelee ? "ws" : "bs",
+              thresholdOf(f) + dw.offHand,
+              offMelee ? "melee" : "single",
+              undefined,
+              {
+                attackNote: `Вторая рука (${dw.pair} за пару`
+                  + (dw.offHand ? `, ${dw.offHand} за неосновную руку` : ", неосновная рука без штрафа")
+                  + (dw.reductions.length ? `; убавили: ${dw.reductions.map(r => r.label).join(", ")}` : "")
+                  + ")"
+              }
+            );
+          }
           return true;
         }
       },
