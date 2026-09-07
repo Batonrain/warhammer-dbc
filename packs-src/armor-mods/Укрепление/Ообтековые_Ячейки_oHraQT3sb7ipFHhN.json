@@ -29,7 +29,8 @@
       "addProps": [],
       "charBonuses": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": ""
   },
   "_id": "oHraQT3sb7ipFHhN",
   "effects": [
