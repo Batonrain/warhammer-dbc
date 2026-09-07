@@ -31,10 +31,22 @@ import { recoilItemMultiplier } from "../../module/combat/recoil-item-bonuses.mj
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const DIR = path.join(ROOT, "packs-src/weapons/Имперское/Рукопашное/Экзотическое__тех__");
 
-const weaponDoc = (file) => JSON.parse(fs.readFileSync(path.join(DIR, file), "utf8"));
+/**
+ * Документ пака по идентификатору, а не по имени файла.
+ *
+ * Имя файла в packs-src выводится из имени документа (tools/pack-file-name.mjs),
+ * то есть меняется вместе с ним: дописали к «Метеоритный Молот» английскую
+ * половину (wdbc-o30i) — и жёстко прописанный путь перестал существовать.
+ * Идентификатор при переименовании не меняется, поэтому ищем по нему.
+ */
+const weaponDoc = (id) => {
+  const file = fs.readdirSync(DIR).find(f => f.endsWith(`_${id}.json`));
+  if (!file) throw new Error(`в ${DIR} нет документа с id ${id}`);
+  return JSON.parse(fs.readFileSync(path.join(DIR, file), "utf8"));
+};
 
-const BASE = "Метеоритный_Молот_Ap5YcNQmlSr6B5bI.json";
-const POWER = "Силовой_Метеоритный_Молот_zoamY59yr3OSlraV.json";
+const BASE = "Ap5YcNQmlSr6B5bI";
+const POWER = "zoamY59yr3OSlraV";
 
 /** Актор с этим оружием; equipped решает, действует ли запись Конструктора. */
 function wielder(doc, { equipped = true } = {}) {
