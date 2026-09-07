@@ -34,6 +34,8 @@ import { processMiddleOfTheHuntRoundStart } from "./combat/middle-of-the-hunt.mj
 import { snapshotStanceForRoundStart } from "./rules/determination-to-fight.mjs";
 import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
 import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
+import { processTurnStateShieldsTurnEnd, clearTurnStateShields } from "./combat/turn-state-shield.mjs";
+import { processVultureTurnStart } from "./combat/vulture.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -1726,6 +1728,11 @@ function _attachFateContextMenu(message, html) {
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);
+    // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
+    // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
+    for (const combatant of combat.combatants ?? []) {
+      if (combatant.actor) await clearTurnStateShields(combatant.actor);
+    }
   });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
@@ -1830,6 +1837,10 @@ function _attachFateContextMenu(message, html) {
         // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
         // следующего Хода, если весь этот Ход ушёл на движение.
         await processJustTheLightTurnEnd(prevActor);
+        // Щит Праздности/Дар Нургла (wdbc-1rno): не перегружающийся щит-
+        // дефлектор 1-77 (1-99), если Ход закончен с непотраченным
+        // полудействием — тот же такт, что и Лишь Свет выше.
+        await processTurnStateShieldsTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
@@ -1845,6 +1856,13 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Щит по состоянию Хода (combat/turn-state-shield.mjs) живёт ровно
+      // «до начала своего следующего Хода» — снимается тем же тактом.
+      await clearTurnStateShields(nextCombatant.actor);
+      // Стервятник/Дар Нургла (wdbc-1rno): временное Очко Бесчестия за три
+      // умирающих/трупа в 7 м — начисляется и сгорает тем же тактом, поэтому
+      // нужен токен носителя, а не только актор.
+      await processVultureTurnStart(nextCombatant.actor, nextCombatant.token);
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
       await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);
