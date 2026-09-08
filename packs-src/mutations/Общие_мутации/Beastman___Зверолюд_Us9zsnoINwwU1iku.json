@@ -124,6 +124,82 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "beastman-bite",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.uKUYswX8k0nK3U5F",
+              "sourceName": "Bite / Укус (X)",
+              "sourceHasRating": true,
+              "rating": 1,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "beastman-digitigrade",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.fhVhZ7K5XS77irv9",
+              "sourceName": "Digitigrade / Двусоставный (X)",
+              "sourceHasRating": true,
+              "rating": 1,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "beastman-natural-weapons",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.SvLCLe1hbxSaWy3s",
+              "sourceName": "Natural Weapons / Естественное Оружие",
+              "sourceHasRating": true,
+              "rating": 1,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "beastman-unnatural-s",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.rSU3EzCeVbGZU8mv",
+              "sourceName": "Unnatural Strength / Сверхъестественная Сила (X)",
+              "sourceHasRating": true,
+              "rating": 1,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "beastman-unnatural-t",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.jY9DymS8AVjRrTsp",
+              "sourceName": "Unnatural Toughness / Сверхъестественная Стойкость (X)",
+              "sourceHasRating": true,
+              "rating": 1,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "beastman-cloven-one",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.NOaPE0AYhvLGTVPI",
+              "sourceName": "Cloven One / Копытный",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }
