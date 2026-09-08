@@ -1,0 +1,37 @@
+{
+  "name": "Sanctified / Освящённые",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "jGHG1Q1rkY3fSkfV",
+  "system": {
+    "key": "sanctified",
+    "parentKey": "word-bearers",
+    "alsoIn": [],
+    "aliases": [
+      "Sanctified"
+    ],
+    "isLore": true,
+    "description": "<p><strong>Геносемя.</strong> Нет мутаций.</p>\n<p><strong>Культура.</strong> «Храм Битвы» — даёт Common Lore (War)+20, Forbidden Lore (Daemons)+10, Forbidden Lore (Heresy)+10 и Linguistics (Chaos Glyphs и True Tongue). Перебросы любых тестов ритуалов, в которых жертвы приносятся в полноценном бою. Позволяет проводить контрмеры против срывов ритуалов Веры даже без Таланта Mastery, если срыв вызван смертью участников или назначенных жертв.</p>\n<p><strong>Проклятье.</strong> Нет проклятья.</p>",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnSanctified00",
+  "effects": [],
+  "sort": 4089000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnSanctified00"
+}

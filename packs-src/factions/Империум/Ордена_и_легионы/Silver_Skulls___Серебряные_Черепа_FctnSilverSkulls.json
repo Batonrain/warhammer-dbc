@@ -1,0 +1,37 @@
+{
+  "name": "Silver Skulls / Серебряные Черепа",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "5VFQG4e4cZyybRoZ",
+  "system": {
+    "key": "silver-skulls",
+    "parentKey": "ultramarines",
+    "alsoIn": [],
+    "aliases": [
+      "Silver Skulls"
+    ],
+    "isLore": true,
+    "description": "<p><strong>Геносемя.</strong> Бископея/Оолитическая Почка — +20 на операции бионики, ×4 восстановление (химерическое геносемя Жиллимана и Пертурабо).</p>\n<p><strong>Культура.</strong> «Рейдеры Укреплений» — Logic, Tech-Use и Combat Formation, Reposition, Sure Strike, Litany of Cleaning, Iron Discipline дружественны; Inquiry и Whirlwind of Death, Storm of Lead, Beloved Leader, Peer враждебны. Hunker Down, Mind Killer.</p>\n<p><strong>Проклятье.</strong> Нет проклятья.</p>",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnSilverSkulls",
+  "effects": [],
+  "sort": 4088000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnSilverSkulls"
+}
