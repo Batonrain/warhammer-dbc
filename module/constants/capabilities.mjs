@@ -6330,9 +6330,9 @@ export const CAPABILITIES = {
     reader: "module/combat/eternal-warrior.mjs (wdbc-sk8s) — eternalWarriorEligible/eternalWarriorFreeSaveAvailable/markEternalWarriorUsed; module/sheets/tabs/death.mjs::_resolveFateSave(eternalWarrior). «Дистанция Натиска до убийцы» не отслеживается движком — путь FLAT (1 Очко Бесчестия) подтверждается самим игроком флажком в диалоге, не автоопределением."
   },
   "gift.khorne.eyeOfChallenge": {
-    label: "+1 Бесчестия: выделить 4 сильнейших воинов в поле зрения, узнать WS/S/Parry/Берсерк-Таланты одного — не бросить вызов за минуту = 2d10+8 урона в W",
+    label: "Выбор 4 сильнейших воинов из всех видимых — решение ГМа за столом, не смоделировано, capability покрывает эту половину. Вторая половина реализована (wdbc-1rno) двумя записями kind:\"script\" на этом же предмете: «сконцентрироваться на цели» (цена 1 Бесчестие) проверяет поле зрения (isTokenInSight), честно читает WS/S/Parry-ранг/владение Талантами группы «Берсерк» реального актора цели (talentGroupOf) и запускает 60-секундный срок; «вызов брошен» снимает срок без штрафа (сам факт вызова — событие за столом, как у Challenge of Honour). Истёкший срок — 2d10+8 непоглощаемого урона чемпиону — снимает module/combat/eye-of-challenge.mjs::processEyeOfChallengeDeadline на updateWorldTime/updateCombat (hooks.mjs)",
     source: "Дар Кхорн (Eye of Challenge)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Кхорн/Eye_of_Challenge___Око_Вызова_bgJDJagGDH4WqPZH.json (entries eyeOfChallenge-reveal/eyeOfChallenge-confirm) + module/combat/eye-of-challenge.mjs, hooks.mjs (updateWorldTime/updateCombat)"
   },
   "gift.khorne.fatherOfBattle": {
     label: "Полудействие: само видение (следующее действие к цели) — чистая ГМ-подсказка за столом, движку сверять не с чем, capability покрывает эту половину. Вторая половина реализована (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка «▶ Запустить» спрашивает честное подтверждение обоих условий книги (путь пройден целиком без отклонений, миссия вообще давала Бесчестие) и при согласии поднимает Очко Бесчестия в пуле сверх обычного",

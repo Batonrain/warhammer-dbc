@@ -26,6 +26,7 @@
 import { woundLossUpdates } from "../rules/wounds.mjs";
 import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
+import { talentGroupOf } from "../rules/duplicate-grants.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -42,6 +43,9 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `actorFactionKeys`/`anySameOrDescendant`/`getFactionIndex`
  *    (rules/factions.mjs) — фильтр по фракции («Имперцы» = потомки ключа
  *    "imperium" в дереве Фракций).
+ *  - `talentGroupOf` (rules/duplicate-grants.mjs) — функциональная Группа
+ *    Таланта по имени (Око Вызова: «владение Талантами группы Берсерк»),
+ *    читает статическую TALENT_LIBRARY, см. её же шапку про namespace.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -59,14 +63,14 @@ export async function executeItemCode(item, code, event, extra = {}) {
   const fn = new AsyncFunction(
     "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
     "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
-    "actorFactionKeys", "anySameOrDescendant", "getFactionIndex",
+    "actorFactionKeys", "anySameOrDescendant", "getFactionIndex", "talentGroupOf",
     ...extraNames,
     code
   );
   await fn(
     item, actor, token, speaker, game, ui, ChatMessage, event ?? null,
     woundLossUpdates, isTokenInSight, tokensThatCanSee,
-    actorFactionKeys, anySameOrDescendant, getFactionIndex,
+    actorFactionKeys, anySameOrDescendant, getFactionIndex, talentGroupOf,
     ...extraNames.map(k => extra[k])
   );
 }
