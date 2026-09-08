@@ -116,7 +116,7 @@
               "sourceName": "Digitigrade / Двусоставный (X)",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": true,
-              "rating": 1,
+              "rating": "2",
               "specialization": "",
               "skillScope": "plain",
               "skillKey": "",
