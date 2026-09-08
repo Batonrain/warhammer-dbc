@@ -425,7 +425,10 @@ export const CAPABILITIES = {
     source: "Gun Arm / Дар «Рука-Пушка» (корбук, Элитные архетипы, 400 хр): " +
             "«…и оно больше не тратит стандартные боеприпасы при выстреле». " +
             "Классы pistol и basic — «пистолет или винтовка (в т.ч. длинная)» книги.",
-    reader: "module/combat/attack.mjs — infiniteAmmo"
+    reader: "module/rules/gun-arm.mjs — gunArmAppliesTo; module/rules/ammo-free.mjs — ammoIsFree; " +
+            "module/combat/attack.mjs — infiniteAmmo. Действует ТОЛЬКО на оружие с меткой " +
+            "flags.warhammer-dbc.gunArmSource (какое именно вросло — выбирает ГМ кнопкой на листе Дара, " +
+            "module/apps/gun-arm.mjs): возможность висит на акторе, а книга говорит про один ствол (wdbc-spsd)"
   },
   "weapon.oneHandedWarriorPath": {
     label: "Стрела Кхейна: стрельба одной рукой, дальность при этом не режется",

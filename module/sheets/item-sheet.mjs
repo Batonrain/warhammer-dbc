@@ -23,6 +23,7 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
@@ -1070,6 +1071,12 @@ export class WarhammerItemSheet
       context.diseaseGodOptions = DISEASE_GODS;
     }
 
+    // ── Дар «Рука-Пушка»: какое оружие вросло в предплечье (wdbc-spsd).
+    // Пусто у остальных Талантов — isGunArmGift проверяет ключ Возможности.
+    if (this.item.type === "talent") {
+      context.gunArmHtml = gunArmButtonHtml(this.item, this.item.parent);
+    }
+
     // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
     // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
@@ -1857,6 +1864,13 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useTrance(actor, this.item);
+    });
+
+    // ── Дар «Рука-Пушка»: выбор вросшего оружия (wdbc-spsd) ────────────────
+    on(".gun-arm-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useGunArm(actor, this.item);
     });
 
     // ── Мутация «Рука Смерти»: слияние с выбранным оружием (wdbc-hftn) ──────
