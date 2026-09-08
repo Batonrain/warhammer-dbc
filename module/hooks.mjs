@@ -59,6 +59,9 @@ import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
+import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
+  from "./rules/fleshmetal-regen.mjs";
+import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
@@ -1762,6 +1765,21 @@ function _attachFateContextMenu(message, html) {
       // Молча исчезнувшее Состояние ГМ считает багом, а не сроком — говорим.
       if (swept.expired.length) {
         await postConditionCard(actor, swept.expired.map(conditionExpiryLine));
+      }
+
+      // «Укрепление Плотеметаллом» (wdbc-dnoj): +1 аблативная Рана и +1
+      // Ablative-брони в час, до их максимума. Тем же тактом и по той же
+      // причине, что сроки выше — час это игровое время, а не Раунд, и вне
+      // боя Раундов не бывает вовсе. План считает чистый модуль, здесь
+      // только запись; null оттуда значит «часа ещё не прошло», и никакого
+      // update на этого актора не будет.
+      if (hasFleshmetalFlag(actor, FLESHMETAL_CAPABILITY)) {
+        const lastAt = actor.getFlag("warhammer-dbc", FLESHMETAL_FLAG) ?? null;
+        const plan = planFleshmetalRegen(actor.system, lastAt, game.time.worldTime);
+        if (plan) {
+          if (Object.keys(plan.update).length) await actor.update(plan.update);
+          await actor.setFlag("warhammer-dbc", FLESHMETAL_FLAG, plan.flagAt);
+        }
       }
     }
   });

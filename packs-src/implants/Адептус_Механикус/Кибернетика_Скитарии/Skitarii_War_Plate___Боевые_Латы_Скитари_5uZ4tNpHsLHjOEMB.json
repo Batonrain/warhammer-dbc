@@ -4,10 +4,10 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R:1. Базовый комплект имплантов Скитарии; включает комплект брони, интегрированный в плоть. Снятие требует операции, как замена бионики; посекционно можно снимать для ремонта.",
-    "notes": "",
+    "notes": "07.09.2026 (wdbc-tuh4): собственные apHead/apBody/apArms/apLegs обнулены. Было 6/7/7/5 — и это складывалось ПОВЕРХ комплекта брони, который имплант теперь выдаёт предметом: живая проверка показала на листе 12/14/12/10 вместо 6/7/5/5. Источник брони теперь один — предмет «Skitarii War Plate» из пака armor. Заодно снято расхождение: в старых полях руки стояли 7, тогда как текст самого импланта и таблица корбука (стр. 269) дают 5.",
     "category": "skitarii",
     "quality": "common",
-    "effect": "<p><b>Броня 6/7/7/5/5</b> (голова/тело/руки/ноги), свойства: Conductive, Sealed, Void; модификации Insulated, Thermal, Foam Sealant, Thrusters, Cooler, Transteel. Интегрирована в плоть.</p><p><b>Атомантическое Укрепление:</b> не перегружающийся технологический дефлектор (рейтинг 1–10). Если AP какой-либо части опускается до 0 — щит теряется, пока часть не починена.</p><p><b>Мантия Искателя:</b> смена бионических конечностей за 3 мин без теста; в комплекте пара бионических рук и ног (Good.Q). <b>Актуаторные Банки:</b> иммунитет к Усталости от бега/марша; работают как Потенциа-Коил на 1⚡ (заряжаются Электу-Индукторами). <b>Мозжечковые Анализаторы Путей:</b> трудный ландшафт как обычный, без штрафов в рукопашной и вождении. <b>Черепные Цепи</b> и <b>Ноосферный Фид.</b> <b>Катехизисы Командования:</b> считается сервитором/роботом для Binary Dominion; обязан выполнять команды Механикус, даже смертельные.</p>",
+    "effect": "<p><b>Броня 6/7/5/5</b> (голова/тело/руки/ноги), свойства: Conductive, Sealed, Void; модификации Insulated, Thermal, Foam Sealant, Thrusters, Cooler, Transteel. Интегрирована в плоть.</p><p><b>Атомантическое Укрепление:</b> не перегружающийся технологический дефлектор (рейтинг 1–10). Если AP какой-либо части опускается до 0 — щит теряется, пока часть не починена.</p><p><b>Мантия Искателя:</b> смена бионических конечностей за 3 мин без теста; в комплекте пара бионических рук и ног (Good.Q). <b>Актуаторные Банки:</b> иммунитет к Усталости от бега/марша; работают как Потенциа-Коил на 1⚡ (заряжаются Электу-Индукторами). <b>Мозжечковые Анализаторы Путей:</b> трудный ландшафт как обычный, без штрафов в рукопашной и вождении. <b>Черепные Цепи</b> и <b>Ноосферный Фид.</b> <b>Катехизисы Командования:</b> считается сервитором/роботом для Binary Dominion; обязан выполнять команды Механикус, даже смертельные.</p>",
     "installed": "всё тело",
     "linkedWeapon": "",
     "effects": {
@@ -16,10 +16,10 @@
       "charBonuses": [],
       "charValueBonuses": [],
       "armourAll": 0,
-      "apHead": 6,
-      "apBody": 7,
-      "apArms": 7,
-      "apLegs": 5,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
       "fearRating": 0,
       "sizeMod": 0,
       "initMod": 0,
@@ -41,89 +41,7 @@
   },
   "folder": "dMKBivuVGVBXhhlU",
   "_id": "5uZ4tNpHsLHjOEMB",
-  "effects": [
-    {
-      "name": "Skitarii War Plate / Боевые Латы Скитарии (перенесено)",
-      "system": {
-        "changes": [
-          {
-            "key": "system.armorBonus.head",
-            "type": "add",
-            "value": 6,
-            "phase": "initial",
-            "priority": 0
-          },
-          {
-            "key": "system.armorBonus.body",
-            "type": "add",
-            "value": 7,
-            "phase": "initial",
-            "priority": 0
-          },
-          {
-            "key": "system.armorBonus.leftArm",
-            "type": "add",
-            "value": 7,
-            "phase": "initial",
-            "priority": 0
-          },
-          {
-            "key": "system.armorBonus.rightArm",
-            "type": "add",
-            "value": 7,
-            "phase": "initial",
-            "priority": 0
-          },
-          {
-            "key": "system.armorBonus.leftLeg",
-            "type": "add",
-            "value": 5,
-            "phase": "initial",
-            "priority": 0
-          },
-          {
-            "key": "system.armorBonus.rightLeg",
-            "type": "add",
-            "value": 5,
-            "phase": "initial",
-            "priority": 0
-          }
-        ]
-      },
-      "_id": "CJQwf9WyQbHyf9qR",
-      "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
-      "type": "base",
-      "disabled": false,
-      "start": null,
-      "duration": {
-        "value": null,
-        "units": "seconds",
-        "expiry": null,
-        "expired": false
-      },
-      "description": "",
-      "origin": null,
-      "tint": "#ffffff",
-      "transfer": true,
-      "statuses": [],
-      "showIcon": 1,
-      "folder": null,
-      "sort": 0,
-      "flags": {},
-      "_stats": {
-        "coreVersion": "14.365",
-        "systemId": "warhammer-dbc",
-        "systemVersion": "0.1.0",
-        "createdTime": 1786122011200,
-        "modifiedTime": 1786122011200,
-        "lastModifiedBy": "4Q6l1C4FQOMQVofr",
-        "compendiumSource": null,
-        "duplicateSource": null,
-        "exportSource": null
-      },
-      "_key": "!items.effects!5uZ4tNpHsLHjOEMB.CJQwf9WyQbHyf9qR"
-    }
-  ],
+  "effects": [],
   "sort": 0,
   "ownership": {
     "default": 0,
@@ -142,6 +60,56 @@
               "kind": "capability",
               "capabilityKey": "talents.skitarii",
               "label": "Skitarii War Plate / Боевые Латы Скитарии"
+            }
+          ]
+        },
+        {
+          "id": "skitariiWarPlate1",
+          "operator": "AND",
+          "entries": [
+            {
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "ws",
+              "field": "total",
+              "op": "add",
+              "value": 1,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "ignoreTerrainProps": [],
+              "equipMode": "direct",
+              "equipQty": 1,
+              "label": "Комплект брони Скитарии (6/7/5/5)",
+              "code": "",
+              "id": "skitariiWarPlateE",
+              "kind": "equipment",
+              "equipCategoryPack": "armor",
+              "equipWeaponType": "x3vbtW2ZuzQfcPFG",
+              "equipMaxAvailability": 3,
+              "equipQuality": "good",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.armor.Item.542KovBL6cRd2pXD",
+              "equipSourceName": "Skitarii War Plate / Боевые Латы Скитарии",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/armor.svg"
             }
           ]
         }

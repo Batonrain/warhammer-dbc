@@ -99,6 +99,16 @@ export const CAPABILITIES = {
     source: "Модификации брони «Гексаграмматические Печати» / «Руническая Кольчуга»",
     reader: "module/combat/damage.mjs — ветка warpSoak в applyDamageToActor, armorAP = absorption[loc] целиком"
   },
+  // ── Регенерация аблативных пулов (wdbc-dnoj) ──────────────────────────────
+  "armour.fleshmetalRegen": {
+    label: "+1 аблативная Рана и +1 Ablative-брони в час, до их максимума",
+    source: "Модификация брони «Укрепление Плотеметаллом»: «+1 аблативная Рана/час и " +
+            "Ablative-броня +1/час (не ломается при 0)». Верхнего предела книга не " +
+            "называет — потолком выбран стартовый максимум пула (решение владельца " +
+            "07.09.2026), иначе за сутки простоя набегало бы +24 и дальше без конца.",
+    reader: "module/rules/fleshmetal-regen.mjs — planFleshmetalRegen; зовётся из " +
+            "хука updateWorldTime в module/hooks.mjs"
+  },
   // ── Крайне миролюбив (wdbc-gzuf) ──────────────────────────────────────────
   "pacifism.requiresAttackToRage": {
     label: "Не может войти в Ярость, пока не атакован в этом бою — иначе тест Воли−20 или отказ",
@@ -1745,59 +1755,65 @@ export const CAPABILITIES = {
   },
   "dualWield.core.ambidextrous": {
     label: "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
-    source: "Ambidextrous / Амбидекстр", reader: ""
+    source: "Ambidextrous / Амбидекстр", reader: "module/rules/dual-wield.mjs — dualWieldMods (снимает штраф неосновной руки, −10 к парному)"
   },
   "dualWield.core.bladeDancer": {
     label: "Персонаж уменьшает штраф за парные мечи на 10.",
-    source: "Blade Dancer / Танцор с Клинками", reader: ""
+    source: "Blade Dancer / Танцор с Клинками", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре мечей)"
   },
   "dualWield.core.brawler": {
     label: "Персонаж уменьшает штраф за парное оружие для атак кулаками на 10.",
-    source: "Brawler / Боксёр", reader: ""
+    source: "Brawler / Боксёр", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре кулаков)"
   },
   "dualWield.core.crossblock": {
-    label: "Вооружённый двумя рукопашными оружиями с Балансом не ниже 0, персонаж может Парировать атаки существ на 1 Размер больше обычного и суммирует…",
-    source: "Crossblock / Крестовой Блок", reader: ""
+    label: "Вооружённый двумя рукопашными оружиями с Балансом не ниже 0, персонаж суммирует бонусы на Парирование от свойств, Качества и модификаций обоих оружий, но, парируя обоими, не может использовать Counter Attack и Riposte. Смоделировано (wdbc-pb60). НЕ смоделирован «Размер на 1 больше обычного»: предела Размера при Парировании в системе нет вовсе, поэтому гасить нечего — карточка Парирования напоминает о ступени столу.",
+    source: "Crossblock / Крестовой Блок",
+    reader: "module/rules/dual-wield-talents.mjs — crossblockPair; module/combat/defense.mjs — parryProfile (сумма бонусов) и _performParry (прячет кнопку Контратаки)"
   },
   "dualWield.core.fanOfKnives": {
     label: "Персонаж уменьшает штраф за парное метательное оружие на 10.",
-    source: "Fan of Knives / Веер Ножей", reader: ""
+    source: "Fan of Knives / Веер Ножей", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре метательного)"
   },
   "dualWield.core.gunGuard": {
-    label: "Вооружённый рукопашным оружием с Балансом не ниже −1 и винтовкой, выстрелы из неё в рукопашной не получают бонуса +30 на Избегание.",
-    source: "Gun Guard / Винтовочная Гарда", reader: ""
+    label: "Вооружённый рукопашным оружием с Балансом не ниже −1 и винтовкой, выстрелы из неё в рукопашной не дают цели бонуса на Избегание. Смоделировано (wdbc-pb60) — гасится и +30 Винтовки, и +10 Карабина.",
+    source: "Gun Guard / Винтовочная Гарда",
+    reader: "module/rules/dual-wield-talents.mjs — gunGuardCancelsDodgeBonus; module/combat/attack.mjs — meleeShotDodgeBonus"
   },
   "dualWield.core.gunslinger": {
     label: "Персонаж уменьшает штраф за парные пистолеты на 10.",
-    source: "Gunslinger / Македонец", reader: ""
+    source: "Gunslinger / Македонец", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре пистолетов)"
   },
   "dualWield.core.independentTargeting": {
     label: "Цели стрельбы персонажа с двух оружий могут быть на расстоянии более 10м друг от друга.",
-    source: "Independent Targeting / Независимое Прицеливание", reader: ""
+    source: "Independent Targeting / Независимое Прицеливание",
+    reader: "module/rules/dual-wield.mjs — targetSpreadExceeded (снимает предел 10 м между целями пары; окно атаки убирает строку о разлёте)"
   },
   "dualWield.core.maineGauche": {
-    label: "Вооружённый двумя оружиями, одно из которых нож, и не использовав этот нож для атаки в предыдущий Ход,",
-    source: "Maine-Gauche / Мэн-Гош", reader: ""
+    label: "Вооружённый двумя оружиями, одно из которых нож, и не использовав этот нож для атаки в предыдущий Ход, персонаж может перебрасывать тесты на Парирование этим ножом. Смоделировано (wdbc-pb60): переброс с выбором лучшего происходит сам, а «чем бил в прошлый Ход» система помнит (module/rules/turn-flags.mjs — список attackedThisTurn переезжает в attackedPrevTurn на старте своего Хода).",
+    source: "Maine-Gauche / Мэн-Гош",
+    reader: "module/rules/dual-wield-talents.mjs — maineGaucheParryReroll; module/combat/defense.mjs — _performParry"
   },
   "dualWield.core.pounder": {
-    label: "Вооружённый парой топоров, булав, молотов или их комбинацией, когда противник успешно Парирует каждое попадание этого оружия,",
-    source: "Pounder / Молотильщик", reader: ""
+    label: "Вооружённый парой топоров, булав, молотов или их комбинацией: успешно Парировавший теряет все неиспользованные Успехи и парирует второе оружие отдельным тестом. Смоделировано частично (wdbc-pb60) — карточка попадания напоминает об этом защищающемуся; само обнуление не считается, «неиспользованных Успехов защиты» система не хранит.",
+    source: "Pounder / Молотильщик",
+    reader: "module/rules/dual-wield-talents.mjs — pounderPair; module/combat/attack.mjs + attack-card.mjs — примечание notes.pounder"
   },
   "dualWield.core.savage": {
-    label: "Вооружённый парными когтями, персонаж может перебрасывать одну неудачную атаку ими в Ход и получает +2 Успеха при успешной атаке.",
-    source: "Savage / Дикарь", reader: ""
+    label: "Вооружённый парными когтями, персонаж может перебрасывать одну неудачную атаку ими в Ход и получает +2 Успеха при успешной атаке. Смоделирована вторая половина (wdbc-pb60): +2 к степени удачной атаки когтем из пары. Переброс раз в Ход не смоделирован — учёта «раз в Ход» на самой атаке пока нет.",
+    source: "Savage / Дикарь",
+    reader: "module/rules/dual-wield-talents.mjs — savageExtraHits; module/combat/attack.mjs — надбавка к deg"
   },
   "dualWield.core.sidearm": {
     label: "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — пистолет, а второе — рукопашное.",
-    source: "Sidearm / Запасной Ствол", reader: ""
+    source: "Sidearm / Запасной Ствол", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на пистолет + рукопашное)"
   },
   "dualWield.core.sideblade": {
     label: "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — нож.",
-    source: "Sideblade / Запасной Клинок", reader: ""
+    source: "Sideblade / Запасной Клинок", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10, если одно из двух — нож)"
   },
   "dualWield.core.twoWeaponWielder": {
     label: "Персонаж может совершать атаки с обеих рук как одну атаку, занимающую наибольшее действие из двух, но эти атаки получают −20.",
-    source: "Two Weapon Wielder / Два Оружия", reader: ""
+    source: "Two Weapon Wielder / Два Оружия", reader: "module/rules/dual-wield.mjs — canDualWield (галочка «Обе руки» в окне атаки); module/sheets/attack/dialog.mjs — одно действие на пару и второй бросок"
   },
   // ── Пси-стойкость
   "psyResist.core.aetherCocoon": {
@@ -6332,7 +6348,7 @@ export const CAPABILITIES = {
   },
   "gift.khorne.livingWeapon": {
     label: "Полудействие+1 Бесчестия: до конца боя оружие/импровизированное оружие в руке нельзя выбить, +10 WS, Баланс до 0, Pen до Cor.b, теряет Primitive/получает Reinforced (импровизированное: без штрафа −20, +1 кубик, ×2 S.b). Disarm-часть подключена под combat.cannotBeDisarmed (wdbc-egll), гейтится system.activatable/active (isItemActive) — кнопка на листе включает/выключает предмет целиком, полудействие/1 Бесчестие на вход и конец боя/сцены на выход — вручную. +10 WS/Баланс/Pen/Reinforced-Primitive — ещё не заведены (нужен профиль оружия в руке, отдельная работа).",
-    source: "Дар Кхорн (Living Weapon)",
+    source: "Living Weapon / Живое Оружие (Дар Кхорна, packs-src/mutations/Дары_Богов/Кхорн)",
     reader: "module/data/item/mutation.mjs (activatable/active) + module/apps/effects.mjs::isItemActive case \"mutation\" — только capabilityKey combat.cannotBeDisarmed, остальное ещё не читается"
   },
   "gift.khorne.priestOfBloodshed": {
@@ -7552,7 +7568,9 @@ export const INITIATIVE_CHAR_KEYS = Object.keys(CHARACTERISTICS)
 for (const key of INITIATIVE_CHAR_KEYS) {
   CAPABILITIES[INITIATIVE_CHAR_PREFIX + key] = {
     label: `Инициатива считается по ${CHARACTERISTICS[key].abbr}.b, а не по Ag.b`,
-    source: "Таланты «Боевое Построение» (Int) и «Чувство Боя» (Per), корбук стр. 62",
+    source: key === "int" ? "Combat Formation / Боевое Построение (корбук стр. 62)"
+          : key === "per" ? "Combat Sense / Чувство Боя (корбук стр. 62)"
+          : "нет книжного носителя: ключ заведён про запас, ставится эффектом ГМа (корбук стр. 62 даёт только Int и Per)",
     reader: "module/rules/initiative.mjs initiativeCharKey() — выбирает лучшую из разрешённых"
   };
 }

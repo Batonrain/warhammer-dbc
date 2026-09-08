@@ -544,6 +544,12 @@ export function attackCard({
       notes.maximal
         ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : "",
       notes.off ? `<div class="roll-wprop-note">${notes.off}</div>` : "",
+      // Молотильщик (стр. 62, wdbc-pb60) — напоминание защищающемуся: успешное
+      // Парирование этого удара сжигает его неиспользованные Успехи, а второе
+      // оружие пары приходится парировать отдельным тестом. Сама эта цена
+      // считается за столом (у Парирования нет понятия «оставшиеся Успехи
+      // защиты», которое можно было бы обнулить), поэтому строка, а не расчёт.
+      notes.pounder ? `<div class="roll-wprop-note">${notes.pounder}</div>` : "",
       corNotes,
       band ? `<div class="roll-wprop-note">Дистанция: ${band.label}${band.dice ? ` (+${band.dice}d10 урона)` : ""}${band.dmg ? ` (+${band.dmg} урона)` : ""}${band.pen ? ` (+${band.pen} Проб.)` : ""}</div>` : "",
       wp.devastatingRating ? `<div class="roll-wprop-note">Опустошительное (${wp.devastatingRating}): по Орде +${wp.devastatingRating} урона в Магнитуду</div>` : "",
