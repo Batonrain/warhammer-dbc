@@ -238,8 +238,12 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // 2 из 10 субмутаций (when.submutations, тот же приём, что у Tentacle):
     // суб.6 «Щупальце» — Трейт Multiple Arms(+1) + testMod Athletics+10;
     // суб.8 «Зубастый» — kind:"integralAttack" на новый предмет-оружие
-    // Toothy Tongue/Зубастый Язык (1d5 Rending, Pen 0). 58 → 57. Порог
-    // подтянут до фактического счёта.
-    expect(stubOnly.length).toBeLessThanOrEqual(57);
+    // Toothy Tongue/Зубастый Язык (1d5 Rending, Pen 0). 58 → 57.
+    // 08.09.2026 продолжение (Общие Мутации): Multiple Eyes/Множественные
+    // Глаза → 3 из 10 субмутаций: суб.2 «Фасетчатые Глаза» — testMod
+    // Awareness+20; суб.3 «Паучьи Глаза» — Талант Independent Targeting;
+    // суб.5 «Обычные» — 2 testMod Awareness (+10/+20, не складываются). 57 →
+    // 56. Порог подтянут до фактического счёта.
+    expect(stubOnly.length).toBeLessThanOrEqual(56);
   });
 });
