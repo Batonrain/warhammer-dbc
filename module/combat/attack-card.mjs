@@ -109,6 +109,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-sanctified="${wp.sanctified ? 1 : 0}"
       data-power-field="${wp.powerField ? 1 : 0}"
       data-corrosive="${wp.corrosiveRating ?? 0}"
+      data-entropy="${wp.entropyRating ?? 0}"
       data-crippling="${wp.cripplingRating ?? 0}"
       data-piercing="${wp.piercing ? 1 : 0}"
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
@@ -188,6 +189,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-melee="${isMelee ? 1 : 0}"
     data-burst="${burst ? 1 : 0}"
     data-corrosive="${wp.corrosiveRating ?? 0}"
+    data-entropy="${wp.entropyRating ?? 0}"
     data-crippling="${wp.cripplingRating ?? 0}"
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
@@ -562,6 +564,12 @@ export function attackCard({
       notes.maximal
         ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : "",
       notes.off ? `<div class="roll-wprop-note">${notes.off}</div>` : "",
+      // Молотильщик (стр. 62, wdbc-pb60) — напоминание защищающемуся: успешное
+      // Парирование этого удара сжигает его неиспользованные Успехи, а второе
+      // оружие пары приходится парировать отдельным тестом. Сама эта цена
+      // считается за столом (у Парирования нет понятия «оставшиеся Успехи
+      // защиты», которое можно было бы обнулить), поэтому строка, а не расчёт.
+      notes.pounder ? `<div class="roll-wprop-note">${notes.pounder}</div>` : "",
       corNotes,
       band ? `<div class="roll-wprop-note">Дистанция: ${band.label}${band.dice ? ` (+${band.dice}d10 урона)` : ""}${band.dmg ? ` (+${band.dmg} урона)` : ""}${band.pen ? ` (+${band.pen} Проб.)` : ""}</div>` : "",
       wp.devastatingRating ? `<div class="roll-wprop-note">Опустошительное (${wp.devastatingRating}): по Орде +${wp.devastatingRating} урона в Магнитуду</div>` : "",

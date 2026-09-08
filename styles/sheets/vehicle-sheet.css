@@ -40,6 +40,10 @@
 .warhammer-dbc .veh-panel-title { font-size: 0.8em; letter-spacing: 0.06em; font-weight: bold; color: var(--wh-panel-mid);
   border-bottom: 1px solid var(--wh-border-light); padding-bottom: 3px; margin-bottom: 6px; }
 .warhammer-dbc .veh-hint { font-size: 0.78em; font-style: italic; color: var(--wh-panel-mid); line-height: 1.35; margin-top: 6px; }
+/* Полное книжное правило Ходовой висит подсказкой на этой же строке
+   (wdbc-6wzt): на листе места мало, а правило длинное — восемь пунктов. */
+.warhammer-dbc .veh-hint[title] { cursor: help; }
+.warhammer-dbc .veh-hint-more { font-style: normal; opacity: .75; white-space: nowrap; }
 
 /* Броня */
 .warhammer-dbc .veh-armour-grid { display: flex; gap: 6px; }

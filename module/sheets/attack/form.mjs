@@ -78,6 +78,11 @@ export function readAttackForm(form, ammoConds) {
     autoSuccess: all(".atk-mod-cb[data-autosuccess]:checked").length > 0,
     char:       el("#atk-char")?.value,
     modifier:   parseInt(el("#atk-modifier")?.value) || 0,
+    // Обе руки одним действием (wdbc-3jlm). Само число штрафа форма не
+    // считает — она только сообщает выбор; штраф собирает rules/dual-wield.mjs
+    // по Талантам и паре оружия, а вписывает его в порог attack-dialog.mjs.
+    dualWield:  on("#atk-dual-wield"),
+    offHandId:  el("#atk-off-hand")?.value || "",
     dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
     coverMod:   parseInt(el("#atk-cover")?.value) || 0,
     // Штраф стрельбы с седла (wdbc-8nz6) — раньше нигде не применялся к

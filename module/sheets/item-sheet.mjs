@@ -23,6 +23,7 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
 import { iconOfBlasphemyButtonHtml, activateIconOfBlasphemy } from "../apps/icon-of-blasphemy.mjs";
@@ -32,6 +33,7 @@ import { daemonbloodButtonHtml, useDaemonblood }     from "../apps/daemonblood.m
 import { kingsPlateButtonHtml, useKingsPlate }       from "../apps/kings-plate.mjs";
 import { bloodShieldButtonHtml, useBloodShieldKill, useBloodShieldLose } from "../apps/blood-shield.mjs";
 import { tirelessWarriorButtonHtml, useTirelessWarriorKill } from "../apps/tireless-warrior.mjs";
+import { breathOfLifeButtonHtml, useBreathOfLife }   from "../apps/breath-of-life.mjs";
 import { eternalWarButtonHtml, useEternalWarStart, useEternalWarEnd } from "../apps/eternal-war.mjs";
 import { tentacleHandFormButtonHtml, toggleTentacleHandForm } from "../apps/tentacle-hand-form.mjs";
 import { addictionPanelHtml, useSatisfyAddiction }   from "../apps/addiction.mjs";
@@ -1070,6 +1072,12 @@ export class WarhammerItemSheet
       context.diseaseGodOptions = DISEASE_GODS;
     }
 
+    // ── Дар «Рука-Пушка»: какое оружие вросло в предплечье (wdbc-spsd).
+    // Пусто у остальных Талантов — isGunArmGift проверяет ключ Возможности.
+    if (this.item.type === "talent") {
+      context.gunArmHtml = gunArmButtonHtml(this.item, this.item.parent);
+    }
+
     // ── Мутация: кнопки динамических источников Аблативных Ран (wdbc-w8ws) —
     // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
@@ -1088,6 +1096,8 @@ export class WarhammerItemSheet
       context.vampiricHtml  = vampiricPanelHtml(this.item);
       // «Tireless Warrior» (wdbc-1rno) — пусто у остальных Мутаций/Даров.
       context.tirelessWarriorHtml = tirelessWarriorButtonHtml(this.item, this.item.parent);
+      // «Дыхание Жизни» (wdbc-1rno) — пусто у остальных Мутаций/Даров.
+      context.breathOfLifeHtml = breathOfLifeButtonHtml(this.item, this.item.parent);
     }
 
     // ── Психосила «Daemonblood»: Кровавая Жертва (wdbc-173l) — каждая
@@ -1859,6 +1869,13 @@ export class WarhammerItemSheet
       if (actor) await useTrance(actor, this.item);
     });
 
+    // ── Дар «Рука-Пушка»: выбор вросшего оружия (wdbc-spsd) ────────────────
+    on(".gun-arm-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useGunArm(actor, this.item);
+    });
+
     // ── Мутация «Рука Смерти»: слияние с выбранным оружием (wdbc-hftn) ──────
     on(".hand-of-death-btn", "click", async ev => {
       ev.preventDefault();
@@ -1940,6 +1957,13 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useTirelessWarriorKill(actor, this.item);
+    });
+
+    // ── Дар Нургл «Дыхание Жизни»: воскрешение трупа ценой своих Ран ───────
+    on(".breath-of-life-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBreathOfLife(actor, this.item);
     });
 
     // ── Талант «The Eternal War»: дуэль с Кровожадом/ХС (wdbc-173l) ─────────

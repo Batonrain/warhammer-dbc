@@ -22,6 +22,7 @@
 import { newRitualState, ritualThreshold, castRitual } from "../apps/ritual-cast.mjs";
 import { RITUAL_TYPES_MAP, RITUAL_SUMMON_MODS, CURSE_FAMILIARITY, CURSE_SYMPATHY, SUMMON_FORMS,
          ritualPathOptions, buildRitualSkills } from "../constants/rituals.mjs";
+import { WARP_GODS } from "../constants/veil.mjs";
 import { isHerdSpiritsRitual } from "../apps/herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 
@@ -53,6 +54,9 @@ function readRitualForm(form, paths) {
     numMod: parseInt(el("#rit-num-mod")?.value) || 0,
     demonName: (el("#rit-demon-name")?.value || "").trim(),
     demonInf: Math.max(0, parseInt(el("#rit-demon-inf")?.value) || 0),
+    // Бог демона нужен не для поиска в Бестиарии, а для двух строк
+    // Модификаторов Призыва, которые считаются по листу ритуалиста.
+    demonGod: el("#rit-demon-god")?.value || "",
     summon, curseSymp, extraSel
   };
 }
@@ -127,6 +131,13 @@ export async function showRitualCastDialog(actor, item) {
         <label class="wv-rit-lbl" title="−Inf демона идёт штрафом на тест (напр. Призыв Демонического Владыки)">Inf</label>
         <input type="number" id="rit-demon-inf" class="wv-rit-xs" value="0" min="0"/>
         ${base.type === "summon" ? `<span class="wv-hint">При успехе ГМ разместит токен на сцене.</span>` : ""}
+      </div>
+      <div class="wv-rit-row">
+        <label class="wv-rit-lbl" title="Назовите Бога демона — Метку и Покровительство система посчитает по листу сама (+30 / +20)">Бог</label>
+        <select id="rit-demon-god" class="wv-rit-wide">
+          <option value="">— не назван —</option>
+          ${WARP_GODS.map(g => `<option value="${g.key}">${esc(g.label)}</option>`).join("")}
+        </select>
       </div>
     </div>` : (isHerdSpirits ? `
     <div class="wv-block">
@@ -253,8 +264,18 @@ export async function showRitualCastDialog(actor, item) {
         display.textContent = d.threshold;
         rowsEl.innerHTML = breakdownRows(d.rows);
         if (gmModEl) gmModEl.textContent = sgn(R.gmMod || 0);
-        form.querySelectorAll("[data-summon], [data-symp], [data-extra]").forEach(cb => {
+        form.querySelectorAll("[data-symp], [data-extra]").forEach(cb => {
           cb.closest(".wv-rit-mod")?.classList.toggle("on", cb.checked);
+        });
+        // Метка/Покровительство бога демона могут гореть без галочки — их
+        // ставит система по листу; и они взаимоисключающие. Правило живёт в
+        // ritualThreshold, сюда приходит уже готовый ответ (d.summonOn/
+        // d.summonAuto), чтобы не завести второй его экземпляр в разметке.
+        form.querySelectorAll("[data-summon]").forEach(cb => {
+          const pill = cb.closest(".wv-rit-mod");
+          if (!pill) return;
+          pill.classList.toggle("on", d.summonOn.includes(cb.dataset.summon));
+          pill.classList.toggle("auto", d.summonAuto.includes(cb.dataset.summon));
         });
       };
       form.addEventListener("change", update);
