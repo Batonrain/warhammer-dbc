@@ -109,6 +109,7 @@ import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs"
 import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
+import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
@@ -387,6 +388,18 @@ Hooks.once("init", () => {
     hint: "Сверяет предметы актёров с текущими данными компендиумов и позволяет выборочно подтянуть изменившиеся поля.",
     icon: "fa-solid fa-rotate",
     type: ContentSyncApp,
+    restricted: true
+  });
+
+  // «Итоги Сессии» — раздача опыта по книжной таблице корбука, плюс
+  // необязательные Порча и Бесчестие (wdbc-ce8e,
+  // module/apps/session-rewards-app.mjs).
+  game.settings.registerMenu("warhammer-dbc", "sessionRewardsMenu", {
+    name: "Итоги Сессии",
+    label: "Итоги Сессии",
+    hint: "Раздать опыт за сессию по таблице корбука — каждому персонажу своё число, а не одну сумму на всех. Отдельно и по желанию — Порча и Бесчестие, числом или броском.",
+    icon: "fa-solid fa-award",
+    type: SessionRewardsApp,
     restricted: true
   });
 
