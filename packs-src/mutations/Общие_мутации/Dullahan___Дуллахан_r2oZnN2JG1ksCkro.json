@@ -124,6 +124,18 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "dullahan-size",
+              "kind": "characteristic",
+              "charKey": "sizeNoSpd",
+              "op": "add",
+              "value": -2,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }
