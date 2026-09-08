@@ -9,8 +9,8 @@ import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
 import {
   crossblockPair, pounderPair, savagePair, savageExtraHits, gunGuardCancelsDodgeBonus,
-  maineGaucheParryReroll,
-  CAP_CROSSBLOCK, CAP_POUNDER, CAP_SAVAGE, CAP_GUN_GUARD, CAP_MAINE_GAUCHE
+  maineGaucheParryReroll, allGunsBlazingMod,
+  CAP_CROSSBLOCK, CAP_POUNDER, CAP_SAVAGE, CAP_GUN_GUARD, CAP_MAINE_GAUCHE, CAP_ALL_GUNS_BLAZING
 } from "../../module/rules/dual-wield-talents.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -175,5 +175,40 @@ describe("Мэн-Гош — переброс Парирования ножом",
   it("без Таланта переброса нет", () => {
     const knife = weapon({ cat: "Нож" });
     expect(maineGaucheParryReroll(hero([weapon({ cat: "Меч" }), knife]), knife, [])).toBe(false);
+  });
+});
+
+describe("Огонь из Всех Орудий — модификатор теста Подавления цели", () => {
+  it("обе руки короткой очередью — Подавление+0", () => {
+    const a = hero([], CAP_ALL_GUNS_BLAZING);
+    expect(allGunsBlazingMod(a, "semi", "semi")).toBe(0);
+  });
+
+  it("одна короткая, другая длинная — Подавление+0 (штраф только за ДВЕ длинные)", () => {
+    const a = hero([], CAP_ALL_GUNS_BLAZING);
+    expect(allGunsBlazingMod(a, "semi", "full")).toBe(0);
+    expect(allGunsBlazingMod(a, "full", "semi")).toBe(0);
+  });
+
+  it("обе руки длинной очередью — Подавление−20", () => {
+    const a = hero([], CAP_ALL_GUNS_BLAZING);
+    expect(allGunsBlazingMod(a, "full", "full")).toBe(-20);
+  });
+
+  it("хотя бы одна рука бьёт не очередью (Одиночный) — Талант не срабатывает", () => {
+    const a = hero([], CAP_ALL_GUNS_BLAZING);
+    expect(allGunsBlazingMod(a, "single", "full")).toBeNull();
+    expect(allGunsBlazingMod(a, "full", "single")).toBeNull();
+    expect(allGunsBlazingMod(a, "single", "single")).toBeNull();
+  });
+
+  it("рукопашный режим второй руки — не очередь, Талант не срабатывает", () => {
+    const a = hero([], CAP_ALL_GUNS_BLAZING);
+    expect(allGunsBlazingMod(a, "full", "melee")).toBeNull();
+  });
+
+  it("без Таланта — null даже при двух длинных очередях", () => {
+    const a = hero([]);
+    expect(allGunsBlazingMod(a, "full", "full")).toBeNull();
   });
 });

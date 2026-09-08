@@ -83,6 +83,10 @@ export function readAttackForm(form, ammoConds) {
     // по Талантам и паре оружия, а вписывает его в порог attack-dialog.mjs.
     dualWield:  on("#atk-dual-wield"),
     offHandId:  el("#atk-off-hand")?.value || "",
+    // Режим огня второй руки (wdbc-pb60, «Огонь из Всех Орудий»): свой
+    // независимый контрол, по умолчанию «Одиночный» — то же поведение, что
+    // было жёстко зашито раньше, просто теперь явное и переключаемое.
+    offRofMode: el("#atk-off-rof")?.value || "single",
     dmgBonus:   parseInt(el("#atk-dmg-bonus")?.value) || 0,
     coverMod:   parseInt(el("#atk-cover")?.value) || 0,
     // Штраф стрельбы с седла (wdbc-8nz6) — раньше нигде не применялся к

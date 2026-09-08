@@ -199,6 +199,40 @@ describe("карточка атаки", () => {
     expect(card({ hitLocLabel: "Торс" })).not.toContain("wh-compress-btn");
   });
 
+  // wdbc-8dyp: Избирательная атака в руку/ногу (стр. 35) называет часть тела
+  // БЕЗ стороны — AIM_LOCATIONS (combat/attack-outcome.mjs) даёт «Рука»/
+  // «Нога»/«Сочленение / Шея»/«Глаз (Голова)». Раньше кнопка не появлялась
+  // вовсе: COMPRESSIBLE_LOCATIONS сравнивался с «Рука» напрямую и не совпадал.
+  // Текст самой мутации не отличает прицельное попадание от случайного
+  // («Когда он получает попадание в конечность или голову...») — кнопка
+  // должна быть, и нести УЖЕ нормализованную (сторонюю) метку, ту же
+  // конвенцию, что LOCATION_TO_ARMOR в combat/damage.mjs («Рука» → правая).
+  it("Сжатие: Избирательная атака в руку — кнопка есть, несёт «П. Рука»", () => {
+    const html = card({ hitLocLabel: "Рука" });
+    expect(html).toContain("wh-compress-btn");
+    expect(html).toContain('data-location="П. Рука"');
+    expect(html).toContain("Сжатие (П. Рука)");
+  });
+
+  it("Сжатие: Избирательная атака в ногу — кнопка есть, несёт «П. Нога»", () => {
+    const html = card({ hitLocLabel: "Нога" });
+    expect(html).toContain("wh-compress-btn");
+    expect(html).toContain('data-location="П. Нога"');
+    expect(html).toContain("Сжатие (П. Нога)");
+  });
+
+  it("Сжатие: Избирательная атака в Сочленение/Шею или Глаз — нормализуется в Голову", () => {
+    expect(card({ hitLocLabel: "Сочленение / Шея" })).toContain('data-location="Голова"');
+    expect(card({ hitLocLabel: "Глаз (Голова)" })).toContain('data-location="Голова"');
+  });
+
+  it("Сжатие: случайное попадание уже со стороной — метка не меняется, заметки о дефолте нет", () => {
+    const html = card({ hitLocLabel: "Л. Нога" });
+    expect(html).toContain('data-location="Л. Нога"');
+    expect(html).toContain("Сжатие (Л. Нога)");
+    expect(html).not.toContain("не называет сторону");
+  });
+
   it("Сжатие: цель — техника — кнопки нет, даже если бы локация совпала", () => {
     const html = card({ hitLocLabel: "Голова", defense: { targetIsVehicle: true } });
     expect(html).not.toContain("wh-compress-btn");

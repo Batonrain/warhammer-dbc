@@ -19,7 +19,7 @@
 
 import { _degWord } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { isCompressibleLocation } from "../rules/compression.mjs";
+import { isCompressibleLocation, normalizeCompressibleLocation } from "../rules/compression.mjs";
 import { testCardHtml, statLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 /** Знак перед числом модификатора: −10 печатается как есть, +10 — со знаком. */
@@ -224,12 +224,19 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   неизрасходованных Успехов с ДРУГИХ атак этого же противника в этом Ходу
  *   (стр. 12), уже посчитанный вызывающей стороной (module/combat/attack.mjs
  *   — она одна касается документов Foundry, этот модуль их не читает).
- * @param {string} [hitLocLabel]  метка HIT_LOCATIONS этой атаки (constants/
- *   combat.mjs) — кнопка Сжатия (rules/compression.mjs) показывается, только
- *   если это конечность/голова, не Торс. Доступность самой мутации у
- *   ЗАЩИЩАЮЩЕГОСЯ актора (тот на момент рендера карточки ещё не выбран)
- *   проверяется позже, в combat/defense.mjs::_performCompression — не здесь,
- *   этот модуль документов Foundry не касается (см. шапку файла).
+ * @param {string} [hitLocLabel]  метка места попадания этой атаки: либо
+ *   HIT_LOCATIONS случайного попадания (constants/combat.mjs, уже со
+ *   стороной), либо AIM_LOCATIONS Избирательной атаки (combat/attack-
+ *   outcome.mjs, стр. 35 — БЕЗ стороны: «Рука»/«Нога»/«Сочленение / Шея»/
+ *   «Глаз (Голова)»). Кнопка Сжатия (rules/compression.mjs) показывается,
+ *   только если это конечность/голова, не Торс — normalizeCompressibleLocation
+ *   сводит обе формы к канонической стороне ПЕРЕД тем, как класть её в
+ *   data-location/текст кнопки (wdbc-8dyp: иначе Избирательная атака в руку
+ *   не давала кнопки вовсе — COMPRESSIBLE_LOCATIONS сравнивался с «Рука»
+ *   напрямую). Доступность самой мутации у ЗАЩИЩАЮЩЕГОСЯ актора (тот на
+ *   момент рендера карточки ещё не выбран) проверяется позже, в
+ *   combat/defense.mjs::_performCompression — не здесь, этот модуль
+ *   документов Foundry не касается (см. шапку файла).
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
@@ -237,6 +244,11 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
+  // Избирательная атака называет часть тела без стороны («Рука», «Нога»,
+  // «Сочленение / Шея», «Глаз (Голова)») — Сжатие хранит и втягивает
+  // конкретную сторону, поэтому кнопка несёт НОРМАЛИЗОВАННУЮ метку
+  // (rules/compression.mjs), а не сырую hitLocLabel (wdbc-8dyp).
+  const compressLocation = normalizeCompressibleLocation(hitLocLabel);
   // Очередь/Быстрая/Молниеносная Атака дают больше одного попадания за
   // атаку — кнопки несут их число, чтобы Уклонение/Парирование/Вираж снимали
   // по одному попаданию за степень успеха, а не всю атаку разом (стр. 12).
@@ -306,9 +318,9 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
                title="Техника: Operate − Размер×10">Вираж</button>`
           : ""}
         ${canCompress
-          ? `<button class="wh-compress-btn" type="button" data-location="${hitLocLabel}" data-attacker-uuid="${attackerUuid}"
-               title="Мутация Compression/Сжатие: вместо Уклонения — Реакцией втянуть ${hitLocLabel} в торс, нивелируя ЭТО попадание">
-               Сжатие (${hitLocLabel})
+          ? `<button class="wh-compress-btn" type="button" data-location="${compressLocation}" data-attacker-uuid="${attackerUuid}"
+               title="Мутация Compression/Сжатие: вместо Уклонения — Реакцией втянуть ${compressLocation} в торс, нивелируя ЭТО попадание${compressLocation !== hitLocLabel ? ` (Избирательная атака не называет сторону — засчитывается как ${compressLocation}, как и для брони этого попадания)` : ""}">
+               Сжатие (${compressLocation})
              </button>`
           : ""}
         ${poolBtn}
@@ -388,6 +400,8 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
  * @param {object}   [d.ammo]        блок боеприпасов (только стрелковое), либо null
  * @param {object}   [d.defense]     { dodgeMod, parryMod, targetIsVehicle, note }
  * @param {object}   [d.suppression] { testMod, hits, cap } — Подавление, либо null
+ * @param {object}   [d.allGunsBlazing] { testMod } — Огонь из Всех Орудий
+ *                                       (wdbc-pb60), либо null
  * @param {object}   [d.notes]       текстовые примечания карточки (см. ниже)
  * @param {object}   [d.blocks]      готовые блоки: props, quality, splinter, targetEffects, dice,
  *                                    counterAttack (Встречная атака, wdbc-2wy7 — module/combat/counter-attack.mjs)
@@ -410,7 +424,7 @@ export function attackCard({
   // владение Талантом + не потрачен в этом Раунде), карточка только рисует.
   assassinStrike = false,
   sbEff = 0, sbHalf = false, taintedAdd = 0, vehicleSide = "",
-  ammo = null, band = null, suppression = null,
+  ammo = null, band = null, suppression = null, allGunsBlazing = null,
   corVal = 0, corEffects = [],
   soulBurnActorId = null,
   // Данные для урона по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый
@@ -480,6 +494,18 @@ export function attackCard({
       ГМ распределяет <b>${suppression.hits}</b> попадан${suppression.hits === 1 ? "ие" : suppression.hits < 5 ? "ия" : "ий"} в торс
       по случайным целям в секторе (нечётные Успехи, максимум RoF ${suppression.cap})
       <button class="wh-suppression-test-btn" type="button" data-test-mod="${suppression.testMod}">
+        ${rollIcon("target","#ff9a4d")}Тест Подавления — выбранный токен цели
+      </button>
+    </div>` : "";
+
+  // Огонь из Всех Орудий (стр. 62, wdbc-pb60): обе атаки парного выстрела —
+  // очереди по одной цели, цель проходит тест Подавления с тем же модификатором,
+  // что и обычная Стрельба на Подавление — но без «попаданий в сектор»: это
+  // обычная выцеленная атака парой оружия, не выстрел по площади.
+  const allGunsBlazingHtml = allGunsBlazing ? `<div class="roll-suppression">
+      Огонь из Всех Орудий: обе очереди пары — по одной цели —
+      тест Подавление (${allGunsBlazing.testMod >= 0 ? "+" : ""}${allGunsBlazing.testMod})
+      <button class="wh-all-guns-blazing-btn" type="button" data-test-mod="${allGunsBlazing.testMod}">
         ${rollIcon("target","#ff9a4d")}Тест Подавления — выбранный токен цели
       </button>
     </div>` : "";
@@ -558,6 +584,7 @@ export function attackCard({
       wp.wreckerRating ? `<div class="roll-wprop-note">Крушитель (${wp.wreckerRating}): +${wp.wreckerRating}d10 по земле/камню/рокриту/стеклу, AP таких укрытий вдвое меньше</div>` : "",
       wp.ordnance ? `<div class="roll-wprop-note">Артиллерия: все прочие атаки стрелка до начала его следующего Хода получают ${wp.otherAttacksMod}</div>` : "",
       suppressionHtml,
+      allGunsBlazingHtml,
       notes.allOut
         ? `<div class="roll-allout-note">Атака всем телом — Уклонение недоступно до следующего хода</div>` : "",
       notes.recharge

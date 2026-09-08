@@ -9,9 +9,7 @@
 //  держал эффект в голове.
 //
 //  Здесь только условия и числа — чистые функции без Foundry и без интерфейса.
-//  Кто зовёт и куда подключено («Огонь из Всех Орудий» ещё не подключён — ему
-//  нужен режим огня второй руки в окне атаки, которого пока нет: вторая рука
-//  всегда стреляет одиночным; остался в wdbc-pb60):
+//  Кто зовёт и куда подключено:
 //
 //   • Крестовой Блок — module/combat/defense.mjs: parryProfile суммирует бонусы
 //     Парирования ОБОИХ оружий, _performParry прячет кнопку Контратаки.
@@ -25,6 +23,9 @@
 //     парными когтями).
 //   • Винтовочная Гарда — module/combat/attack.mjs (цель НЕ получает +30/+10
 //     на Уклонение от выстрела в рукопашной).
+//   • Огонь из Всех Орудий — module/sheets/attack-dialog.mjs (свой выбор
+//     режима огня второй руки, по умолчанию Одиночный) + module/combat/
+//     attack.mjs и attack-card.mjs (кнопка теста Подавления цели, wdbc-pb60).
 //
 //  ── Почему проверка «чем вооружён» живёт здесь, а не в каждом месте ────────
 //  Все шесть требуют определённой ПАРЫ в руках («две рукопашные с Балансом
@@ -43,6 +44,7 @@ export const CAP_MAINE_GAUCHE     = "dualWield.core.maineGauche";
 export const CAP_POUNDER          = "dualWield.core.pounder";
 export const CAP_SAVAGE           = "dualWield.core.savage";
 export const CAP_GUN_GUARD        = "dualWield.core.gunGuard";
+export const CAP_ALL_GUNS_BLAZING = "dualWield.core.allGunsBlazing";
 
 /** +2 Успеха к успешной атаке парными когтями (Дикарь). */
 export const SAVAGE_EXTRA_HITS = 2;
@@ -145,4 +147,31 @@ export function gunGuardCancelsDodgeBonus(actor, firedWeapon) {
   if (!hasRuleFlag(actor, CAP_GUN_GUARD)) return false;
   if (!firedWeapon || cls(firedWeapon) === "melee" || cls(firedWeapon) === "pistol") return false;
   return heldWeapons(actor).some(w => cls(w) === "melee" && balanceOf(w) >= -1);
+}
+
+/** Режимы стрельбы, которые книга считает «очередью» для этого Таланта. */
+const BURST_ROF_MODES = new Set(["semi", "full"]);
+
+/**
+ * Огонь из Всех Орудий: «делая две атаки короткой/длинной очередью по одной
+ * цели, та проходит тест на Подавление+0. Если обе атаки длинной очередью —
+ * Подавление−20».
+ *
+ * До wdbc-pb60 условие не могло сработать в принципе: вторая рука в окне
+ * атаки всегда стреляла Одиночным (module/sheets/attack-dialog.mjs жёстко
+ * подставлял "single"). Теперь режим второй руки — отдельный выбор в окне,
+ * и это правило читает оба режима, которые реально выбрал игрок.
+ *
+ * @param {object} actor
+ * @param {string} mainRofMode режим стрельбы основной руки ("single"/"semi"/"full"/...)
+ * @param {string} offRofMode  режим стрельбы неосновной руки
+ * @returns {?number} модификатор теста Подавления цели (0 или −20), либо
+ *   `null` — Талант не сработал (нет возможности, или хотя бы одна из атак
+ *   не очередь): в этом случае обычный тест Подавления не проводится вовсе,
+ *   это не то же самое, что модификатор 0.
+ */
+export function allGunsBlazingMod(actor, mainRofMode, offRofMode) {
+  if (!hasRuleFlag(actor, CAP_ALL_GUNS_BLAZING)) return null;
+  if (!BURST_ROF_MODES.has(mainRofMode) || !BURST_ROF_MODES.has(offRofMode)) return null;
+  return (mainRofMode === "full" && offRofMode === "full") ? -20 : 0;
 }
