@@ -9,6 +9,7 @@
 {{!--   • «Зависимость»/«Вампирическая Зависимость» (wdbc-1rno) — состояние    --}}
 {{!--     утоления по игровому времени, кнопка «Утолить».                     --}}
 {{!--   • «Tireless Warrior» (wdbc-1rno) — кнопка «Убил рукопашной».           --}}
+{{!--   • «Дыхание Жизни» (wdbc-1rno) — кнопка «Вдохнуть жизнь» в цель.        --}}
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 {{#if (eq item.type "mutation")}}
 
@@ -81,6 +82,13 @@
 <div class="item-section">
   <div class="item-section-title">НЕУТОМИМЫЙ ВОИН</div>
   {{{tirelessWarriorHtml}}}
+</div>
+{{/if}}
+
+{{#if breathOfLifeHtml}}
+<div class="item-section">
+  <div class="item-section-title">ДЫХАНИЕ ЖИЗНИ</div>
+  {{{breathOfLifeHtml}}}
 </div>
 {{/if}}
 {{/if}}{{!-- /mutation --}}

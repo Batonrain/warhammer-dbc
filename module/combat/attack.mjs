@@ -30,6 +30,7 @@ import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair }
                                                       from "../rules/dual-wield-talents.mjs";
 import { attackedThisTurn }                           from "../rules/turn-flags.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
+import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
@@ -168,6 +169,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const prisma = prismaFireBonus(item, wp);
   wp.prismaAtMax = prisma.atMax;
   wp.prismaCharge = prisma.charge;
+  // Касание Энтропии (wdbc-1rno, Дар Нургла): безоружные и природные атаки
+  // носителя съедают AP места попадания ДО урона. Считается здесь, где ещё
+  // известны и атакующий, и оружие; применяется в damage.mjs (там известно
+  // место попадания). 0 у всех прочих — атрибут карточки просто пустеет.
+  wp.entropyRating = attackEntropyRating(actor, item);
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)

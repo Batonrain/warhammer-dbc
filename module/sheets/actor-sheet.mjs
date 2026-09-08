@@ -31,6 +31,8 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
+import { betterThanPoorEquipped, UNSEEN_BEGGAR } from "../rules/unseen-beggar.mjs";
+import { QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
@@ -161,6 +163,20 @@ async function onCapabilitySpend(event, target) {
   if (key === "aura.touchedByFates") {
     const applied = await applyTouchedByFates(this.actor);
     if (!applied) return false;
+  }
+  // Незримый Нищий (wdbc-1rno): книга разрешает наложить чары, ТОЛЬКО пока
+  // надето одно Poor.Q. Полудействие цены уже лежит в данных записи, а вот
+  // это условие игрок иначе проверяет глазами по всему инвентарю и ошибается
+  // ровно на том предмете, о котором забыл. Тот же приём, что у Локуса
+  // Фанатизма выше: предусловие ДО списания — иначе полудействие сгорело бы
+  // впустую.
+  if (key === UNSEEN_BEGGAR) {
+    const blockers = betterThanPoorEquipped(this.actor.items);
+    if (blockers.length) {
+      ui.notifications.warn(`Незримый Нищий: чары требуют только снаряжения Poor.Q. Мешают: ${
+        blockers.map(b => `${b.name} (${QUALITY_LABELS[b.quality] || b.quality})`).join(", ")}.`);
+      return false;
+    }
   }
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
 }
