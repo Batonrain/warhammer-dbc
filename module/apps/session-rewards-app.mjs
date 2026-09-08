@@ -36,7 +36,7 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS } from "../constants/session-rewards.mjs";
-import { buildRewardRows, infamyRoom, infamyGain, INFAMY_PATH }
+import { buildRewardRows, parseRewardAmount, infamyRoom, infamyGain, INFAMY_PATH }
   from "../rules/session-rewards.mjs";
 import { triggerSessionEnd } from "./game-session.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -170,6 +170,23 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
       this.picks.infamy[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
       this.render();
     });
+    // Пока печатаешь — без this.render() (wdbc-9jkq): полная перерисовка на
+    // каждую нажатую клавишу увела бы фокус из поля прямо во время набора.
+    // "change" выше остаётся подстраховкой на блюре: досчитывает то же самое
+    // полным рендером на случай вставки без события "input" в редких
+    // браузерах, и в это время поле уже не в фокусе — терять нечего.
+    on(".wh-sr-override", "input", ev => {
+      this.picks.xpOverride[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
+      this._recalcTotal();
+    });
+    on(".wh-sr-cor", "input", ev => {
+      this.picks.corruption[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
+      this._recalcBad(ev.currentTarget);
+    });
+    on(".wh-sr-inf", "input", ev => {
+      this.picks.infamy[ev.currentTarget.dataset.actor] = ev.currentTarget.value;
+      this._recalcBad(ev.currentTarget);
+    });
     on(".wh-sr-who", "change", ev => {
       const id = ev.currentTarget.dataset.actor;
       if (ev.currentTarget.checked) this.chosen.add(id); else this.chosen.delete(id);
@@ -180,6 +197,25 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
       this.render();
     });
     on(".wh-sr-apply", "click", () => this._apply());
+  }
+
+  /** Итог опыта на "input" поля Опыта — без перерисовки окна (wdbc-9jkq).
+   *  Только партийные/личные категории и это же поле влияют на сумму, так что
+   *  пересчёт по всем строкам достаточно дёшев, чтобы гнать на каждую клавишу. */
+  _recalcTotal() {
+    const rows = buildRewardRows(
+      this.selectedActors.map(a => ({ id: a.id, name: a.name })), this.picks);
+    const total = rows.reduce((n, r) => n + r.xp, 0);
+    const totalEl = this.element?.querySelector(".wh-sr-total");
+    if (totalEl) totalEl.textContent = String(total);
+  }
+
+  /** Подсветка непонятого ввода в поле Порчи/Бесчестия — на "input", без
+   *  перерисовки: сама подсветка висит на этом же элементе, трогать больше
+   *  нечего (wdbc-9jkq). */
+  _recalcBad(input) {
+    const bad = !!input.value && !parseRewardAmount(input.value);
+    input.classList.toggle("wh-sr-bad", bad);
   }
 
   /**
