@@ -28,6 +28,14 @@
 // Battle — capability-ключ остаётся просто зонтиком без цены, reader в
 // capabilities.mjs честно непустой (описывает script). Этот тест по-прежнему
 // проверяет только тех, кто ОСТАЛСЯ на связке «просто кнопка списания».
+//
+// 08.09.2026 продолжение: Akashic Library/Библиотека Акаши тем же путём —
+// «критический успех в тесте Знания» остаётся самоподтверждением (движку
+// нечего перепроверять), а вот расплата (тест Cor+10 → Порча + урон) теперь
+// РЕАЛЬНАЯ запись kind:"script" со своей ценой, capability-ключ без цены.
+// Wish Granter/Исполнитель Желаний — тот же путь: манифестация психосилы
+// остаётся отыгрышем, а расплата (2d10+9 урона, если ГМ подтвердил «помогло
+// загадавшему больше») — реальный script с честным DialogV2.confirm.
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -48,9 +56,7 @@ const ROOT = path.resolve(import.meta.dirname, "../..");
 const PAID = [
   { key: "gift.khorne.redSun" },
   { key: "gift.khorne.theHunter" },
-  { key: "gift.tzeentch.akashicLibrary" },
   { key: "gift.tzeentch.hiddenThreat" },
-  { key: "gift.tzeentch.wishGranter" },
   { key: "gift.tzeentch.sundering" },
   { key: "rune.beastmanShaman.boneRuneEtching.slaaneshVariant",
     system: { patronGod: "slaanesh" } }

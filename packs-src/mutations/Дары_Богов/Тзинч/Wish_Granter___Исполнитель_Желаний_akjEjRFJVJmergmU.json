@@ -124,8 +124,22 @@
                 "negate": false,
                 "conditions": []
               },
-              "capabilityCostPool": "infamy",
+              "capabilityCostPool": "",
               "capabilityCostAmount": 1
+            },
+            {
+              "id": "wishGranter-manifest",
+              "kind": "script",
+              "label": "Исполнитель Желаний — манифестация психосилы",
+              "code": "// Wish Granter / Исполнитель Желаний (Дар Тзинча, wdbc-1rno).\n// Книга: автоманифестация любой психосилы (эPR9/9 Успехов), исполняющей\n// чужое высказанное желание буквально — САМА манифестация не автоматизирована\n// (какая психосила и как именно она исполняет желание — целиком отыгрыш за\n// столом, движку нечего перепроверять). А вот расплата — \"если манифестация\n// помогает загадавшему больше, чем самому чемпиону (по усмотрению ГМа)\" —\n// после честного ответа ГМа реальный расчёт: 2d10+9 непоглощаемого урона в W.\nconst helped = await foundry.applications.api.DialogV2.confirm({\n  window: { title: \"Исполнитель Желаний\" },\n  content: \"<p>Манифестация помогла загадавшему желание БОЛЬШЕ, чем самому чемпиону (решение ГМа)?</p>\"\n});\nif (helped) {\n  const roll = await new Roll(\"2d10+9\").evaluate();\n  await actor.update(woundLossUpdates(actor.system, roll.total));\n  await ChatMessage.create(ChatMessage.applyRollMode({\n    speaker,\n    content: `<div class=\"wh-roll-result\">\n      <div class=\"roll-header\">Исполнитель Желаний — ${actor.name}</div>\n      <div class=\"roll-threshold\">Желание помогло загадавшему больше — <b>${roll.total}</b> непоглощаемого урона в Раны.</div>\n    </div>`,\n    rolls: [roll]\n  }, game.settings.get(\"core\", \"rollMode\")));\n} else {\n  await ChatMessage.create(ChatMessage.applyRollMode({\n    speaker,\n    content: `<div class=\"wh-roll-result\">\n      <div class=\"roll-header\">Исполнитель Желаний — ${actor.name}</div>\n      <div class=\"roll-threshold\">Желание исполнено буквой без ущерба чемпиону — расплаты нет.</div>\n    </div>`\n  }, game.settings.get(\"core\", \"rollMode\")));\n}",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

@@ -81,7 +81,7 @@
               "modCharBonus": "inf",
               "rerollWho": "self",
               "capabilityKey": "gift.tzeentch.akashicLibrary",
-              "capabilityCostPool": "infamy",
+              "capabilityCostPool": "",
               "capabilityCostAmount": 1,
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
@@ -122,6 +122,20 @@
               "weaponPropNewValue2": "0",
               "label": "",
               "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "akashicLibrary-use",
+              "kind": "script",
+              "label": "Библиотека Акаши — критический успех в тесте Знания",
+              "code": "// Akashic Library / Библиотека Акаши (Дар Тзинча, wdbc-1rno).\n// Книга: чемпион выбирает Критически преуспеть в любом тесте Знания (до/после\n// броска, даже без владения) за 1 Очко Бесчестия — сам успех объявляется\n// игроком (не бросок, движку нечего перепроверять: КАКОЙ тест Знания и что\n// именно узнано — реплика за столом), а вот расплата сразу после — реальный\n// тест Cor+10, честно посчитанный: провал = 1 Порчи + 1d5 непоглощаемого E\n// Dmg в голову.\nconst cor = Number(actor.system?.corruption?.value) || 0;\nconst target = cor + 10;\nconst roll = await new Roll(\"1d100\").evaluate();\nconst failed = roll.total > target;\nlet line;\nif (failed) {\n  const dmgRoll = await new Roll(\"1d5\").evaluate();\n  await actor.update({\n    ...woundLossUpdates(actor.system, dmgRoll.total),\n    \"system.corruption.value\": cor + 1\n  });\n  line = `<b>Провал</b> — отблески безумного сознания Бога: +1 Порчи, <b>${dmgRoll.total}</b> непоглощаемого урона в голову.`;\n} else {\n  line = \"<b>Успех</b> — обошлось без расплаты.\";\n}\nawait ChatMessage.create(ChatMessage.applyRollMode({\n  speaker,\n  content: `<div class=\"wh-roll-result\">\n    <div class=\"roll-header\">Библиотека Акаши — ${actor.name}</div>\n    <div class=\"roll-threshold\">Критический успех в тесте Знания получен без броска (даже без владения).</div>\n    <div class=\"roll-threshold\">Тест Cor+10 — порог <b>${target}</b> (Cor ${cor}), бросок <b>${roll.total}</b></div>\n    <div class=\"roll-threshold\">${line}</div>\n  </div>`,\n  rolls: [roll]\n}, game.settings.get(\"core\", \"rollMode\")));",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
               "when": {
                 "negate": false,
                 "conditions": []
