@@ -63,6 +63,7 @@ import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
+import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
@@ -1769,6 +1770,10 @@ function _attachFateContextMenu(message, html) {
       // 2d10+8 урона в Раны чемпиону. Тот же такт, что временные выдачи Черт
       // выше — оба живут по worldTime, а не по Раунду.
       await processEyeOfChallengeDeadline(actor, game.time.worldTime);
+      // Пожиратель Варпа/Общая Мутация (wdbc-1rno): раз в календарный месяц
+      // тест Cor+10 или 1 Порчи, если насыщений было меньше 4 — та же
+      // worldTime-плоскость, что и temp-grant выше, просто месячный масштаб.
+      await processWarpEaterMonthCheck(actor, game.time.worldTime);
       // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
       // по той же причине, что временные выдачи Черт выше: они привязаны к
       // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно

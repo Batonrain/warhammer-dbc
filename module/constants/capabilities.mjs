@@ -6983,9 +6983,9 @@ export const CAPABILITIES = {
     reader: "module/rules/vampiric-dependency.mjs — тест T+0 (−10 за предыдущий месяц воздержания), провал даёт 1 Порчи; apps/vampiric-dependency.mjs::useVampiricTest, кнопка «Утолить»"
   },
   "mutation.warpEater": {
-    label: "Раз в месяц тест Cor+10 или 1 Порча, избегается 4 уникальными по субмутации эмоциональными триггерами в месяц — ранее ошибочно классифицирована как чисто нарративная",
+    label: "Реализовано (wdbc-1rno): кнопка kind:\"script\" на этом же предмете («насытился») считает до 4 насыщений за календарный месяц (incrementThrottleCount, unit:\"month\") — конкретный эмоциональный триггер по субмутации (d10, зафиксирован при получении) движку не проверить, честное самоподтверждение игрока. module/rules/warp-eater.mjs::processWarpEaterMonthCheck на updateWorldTime (hooks.mjs) сам считает конец каждого календарного месяца: насыщений ≥4 — Порчи нет, иначе форсированный тест Cor+10 (провал = +1 Порчи)",
     source: "Мутация: Warp Eater (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Warp_Eater___Пожиратель_Варпа_CNYjlSI5fXnnaqYI.json (entry warpEater-feed) + module/rules/warp-eater.mjs, hooks.mjs (updateWorldTime)"
   },
   "mutation.warpTouched": {
     label: "10 субмутаций дают психологические W-тесты/эффекты (ложь/правдивость/клептомания/вспыльчивость и др.) — база не даёт эффекта без субмутации, не автоматизировано",

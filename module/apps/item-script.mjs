@@ -27,6 +27,7 @@ import { woundLossUpdates } from "../rules/wounds.mjs";
 import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
 import { talentGroupOf } from "../rules/duplicate-grants.mjs";
+import { incrementThrottleCount } from "../rules/cooldown.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -46,6 +47,10 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `talentGroupOf` (rules/duplicate-grants.mjs) — функциональная Группа
  *    Таланта по имени (Око Вызова: «владение Талантами группы Берсерк»),
  *    читает статическую TALENT_LIBRARY, см. её же шапку про namespace.
+ *  - `incrementThrottleCount` (rules/cooldown.mjs) — счётчик «до N раз за
+ *    unit» (Пожиратель Варпа: кнопка «насытился» до 4 раз в месяц), пишет
+ *    ту же плоскость флага, что читает throttleCount/isThrottleCountAvailable
+ *    в модульном коде — самодеятельная копия здесь дала бы разные форматы.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -64,6 +69,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
     "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
     "actorFactionKeys", "anySameOrDescendant", "getFactionIndex", "talentGroupOf",
+    "incrementThrottleCount",
     ...extraNames,
     code
   );
@@ -71,6 +77,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     item, actor, token, speaker, game, ui, ChatMessage, event ?? null,
     woundLossUpdates, isTokenInSight, tokensThatCanSee,
     actorFactionKeys, anySameOrDescendant, getFactionIndex, talentGroupOf,
+    incrementThrottleCount,
     ...extraNames.map(k => extra[k])
   );
 }

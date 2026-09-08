@@ -228,8 +228,13 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // что у Iconoclast), Eye of Challenge → две записи kind:"script" (реальное
     // чтение WS/S/Parry-ранга/Берсерк-Талантов настоящего актора цели +
     // 60-секундный срок с реальным штрафом 2d10+8 урона через новый
-    // module/combat/eye-of-challenge.mjs). 61 → 59. Порог подтянут до
+    // module/combat/eye-of-challenge.mjs). 61 → 59.
+    // 08.09.2026 продолжение (Общие Мутации): Warp Eater/Пожиратель Варпа →
+    // kind:"script" «насытился» (incrementThrottleCount, unit:"month", до 4
+    // раз) + module/rules/warp-eater.mjs::processWarpEaterMonthCheck на
+    // updateWorldTime — форсированный тест Cor+10 в конце календарного
+    // месяца, если насыщений не хватило. 59 → 58. Порог подтянут до
     // фактического счёта.
-    expect(stubOnly.length).toBeLessThanOrEqual(59);
+    expect(stubOnly.length).toBeLessThanOrEqual(58);
   });
 });
