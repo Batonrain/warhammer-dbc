@@ -14,8 +14,12 @@
 // в тесте не воспроизвести, а вопрос всё равно один — «вся ли работа в ветке
 // моя».
 
-import { describe, it, expect } from "vitest";
-import { absorptionVerdict, isNoiseOnly } from "../../tools/pr-absorbed.mjs";
+import { describe, it, expect, afterEach } from "vitest";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { absorptionVerdict, isNoiseOnly, patchIdOf } from "../../tools/pr-absorbed.mjs";
 
 /** Коммит ветки: свой узнаётся по patch-id, не по SHA. */
 const commit = (sha, patchId, files = ["module/x.mjs"], extra = {}) =>
@@ -85,5 +89,69 @@ describe("шум трекера не делает ветку ни своей, н
     const v = absorptionVerdict([commit("шум", "pz", [".beads/issues.jsonl"])], ["p1"]);
     expect(v.absorbed).toBe(false);
     expect(v.reason).toContain("нет ни одного твоего");
+  });
+});
+
+describe("несосчитанный patch-id (wdbc-s1m6)", () => {
+  it("коммит без patch-id блокирует закрытие, даже если остальное — моё", () => {
+    const v = absorptionVerdict(
+      [commit("a", "p1"), commit("книга", null, ["packs-src/books/core.json"], { patchIdError: "ENOBUFS" })],
+      ["p1"]);
+    expect(v.absorbed).toBe(false);
+  });
+
+  it("это «не знаю», а не «чужой» — иначе в отчёте видно чужую работу, которой нет", () => {
+    // Так и выглядел сбой 08.09.2026: инструмент падал на книжном диффе.
+    // Собственная поломка не должна читаться как «сосед накоммитил в ветку».
+    const v = absorptionVerdict(
+      [commit("книга", null, ["packs-src/books/core.json"], { patchIdError: "ENOBUFS" })], ["p1"]);
+    expect(v.foreign).toEqual([]);
+    expect(v.unchecked.map(c => c.sha)).toEqual(["книга"]);
+    expect(v.reason).toContain("patch-id не посчитался");
+  });
+});
+
+describe("patch-id считается по-настоящему", () => {
+  let dir = null;
+  afterEach(() => { if (dir) rmSync(dir, { recursive: true, force: true }); dir = null; });
+
+  /**
+   * Репозиторий, в котором ВТОРОЙ коммит добавляет файл на `mb` мегабайт.
+   * Второй, а не первый: у корневого коммита `git diff-tree` без `--root`
+   * молчит, и дифф вышел бы пустым вместо большого.
+   * @returns {[string, string]} папка и SHA большого коммита
+   */
+  const repoWithBigCommit = mb => {
+    dir = mkdtempSync(join(tmpdir(), "wdbc-absorbed-"));
+    const gitq = (...args) => execFileSync("git", args, { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    gitq("init", "-q");
+    gitq("config", "user.email", "test@example.com");
+    gitq("config", "user.name", "test");
+    writeFileSync(join(dir, "README.md"), "начало\n");
+    gitq("add", "-A");
+    gitq("commit", "-qm", "начало");
+    // Строки разные: одинаковые git сжал бы, и до буфера дифф бы не дорос.
+    const lines = [];
+    for (let i = 0; lines.length * 40 < mb * 1024 * 1024; i++) lines.push(`  "строка-${i}": "значение ${i} ${"я".repeat(20)}",`);
+    writeFileSync(join(dir, "book.json"), lines.join("\n"));
+    gitq("add", "-A");
+    gitq("commit", "-qm", "книга");
+    return [dir, gitq("rev-parse", "HEAD").trim()];
+  };
+
+  it("дифф больше буфера по умолчанию (1 МБ) считается, а не падает с ENOBUFS", () => {
+    // Ровно поломка wdbc-s1m6: на книжных PR (#407, #418, #420) инструмент
+    // крашился и не отвечал ни 0, ни 1 — то есть шаг 11 их не проверял вообще.
+    const [cwd, sha] = repoWithBigCommit(3);
+    const { patchId, error } = patchIdOf(sha, cwd);
+    expect(error).toBe(null);
+    expect(patchId).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  it("несуществующий коммит — ошибка словами, без падения процесса", () => {
+    const [cwd] = repoWithBigCommit(0.01);
+    const { patchId, error } = patchIdOf("такогокоммитанет", cwd);
+    expect(patchId).toBe(null);
+    expect(error).toBeTruthy();
   });
 });
