@@ -14,7 +14,7 @@ function mockItem() {
 }
 
 describe("executeItemCode — стандартные помощники в области видимости кода", () => {
-  it("woundLossUpdates/isTokenInSight/tokensThatCanSee/факции/talentGroupOf/incrementThrottleCount — все переданы", async () => {
+  it("woundLossUpdates/isTokenInSight/tokensThatCanSee/факции/talentGroupOf/incrementThrottleCount/tokensWithinRadius — все переданы", async () => {
     const item = mockItem();
     // `seen` передан как extra-помощник (не глобальная переменная) — объект
     // общий по ссылке, поэтому мутации внутри кода видны и снаружи.
@@ -28,12 +28,14 @@ describe("executeItemCode — стандартные помощники в об�
       seen.getFactionIndex = typeof getFactionIndex;
       seen.talentGroupOf = typeof talentGroupOf;
       seen.incrementThrottleCount = typeof incrementThrottleCount;
+      seen.tokensWithinRadius = typeof tokensWithinRadius;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
       tokensThatCanSee: "function", actorFactionKeys: "function",
       anySameOrDescendant: "function", getFactionIndex: "function",
-      talentGroupOf: "function", incrementThrottleCount: "function"
+      talentGroupOf: "function", incrementThrottleCount: "function",
+      tokensWithinRadius: "function"
     });
   });
 

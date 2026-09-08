@@ -28,6 +28,7 @@ import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
 import { talentGroupOf } from "../rules/duplicate-grants.mjs";
 import { incrementThrottleCount } from "../rules/cooldown.mjs";
+import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -51,6 +52,9 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    unit» (Пожиратель Варпа: кнопка «насытился» до 4 раз в месяц), пишет
  *    ту же плоскость флага, что читает throttleCount/isThrottleCountAvailable
  *    в модульном коде — самодеятельная копия здесь дала бы разные форматы.
+ *  - `tokensWithinRadius` (rules/aoe-target.mjs) — разовый снимок «все токены
+ *    сцены в радиусе N м от кастера» (Красное Солнце: нимб радиусом 16 м),
+ *    та же чистая формула дистанции, что уже используют живые Ауры.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -69,7 +73,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "item", "actor", "token", "speaker", "game", "ui", "ChatMessage", "event",
     "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
     "actorFactionKeys", "anySameOrDescendant", "getFactionIndex", "talentGroupOf",
-    "incrementThrottleCount",
+    "incrementThrottleCount", "tokensWithinRadius",
     ...extraNames,
     code
   );
@@ -77,7 +81,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     item, actor, token, speaker, game, ui, ChatMessage, event ?? null,
     woundLossUpdates, isTokenInSight, tokensThatCanSee,
     actorFactionKeys, anySameOrDescendant, getFactionIndex, talentGroupOf,
-    incrementThrottleCount,
+    incrementThrottleCount, tokensWithinRadius,
     ...extraNames.map(k => extra[k])
   );
 }

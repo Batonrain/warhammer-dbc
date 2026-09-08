@@ -6370,9 +6370,9 @@ export const CAPABILITIES = {
     reader: "5 записей weaponPropertyImmunityInRage.{crippling,piercing,haywire,shocking,snare}"
   },
   "gift.khorne.redSun": {
-    label: "В Ярости+1 Бесчестия: нимб над головой до конца Ярости — видящие его в 16м проходят W+0 или впадают в Ярость, не могут выйти из неё, пока видят нимб",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете (цена 1 Бесчестие, только в Ярости): реальный скан сцены (tokensWithinRadius 16м + isTokenInSight на каждого кандидата, тот же приём, что у Иконы Богохульства) и W+0 тест на каждого видящего нимб, при провале — реальное впадение в Ярость (system.inRage). «Не может пытаться выйти, пока видит нимб» — срок действия состояния, не число, отыгрывается за столом",
     source: "Дар Кхорн (Red Sun)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Кхорн/Red_Sun___Красное_Солнце_TmfhLnait1zVvya9.json (entry redSun-ignite) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.khorne.theHunter": {
     label: "Полное действие+1 Бесчестия, видя псайкера: призыв Гончей Плоти в Истинной Форме, атакующей ближайшего псайкера, возвращается в Варп после убийства",

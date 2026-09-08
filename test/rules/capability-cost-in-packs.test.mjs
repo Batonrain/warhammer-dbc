@@ -36,6 +36,9 @@
 // Wish Granter/Исполнитель Желаний — тот же путь: манифестация психосилы
 // остаётся отыгрышем, а расплата (2d10+9 урона, если ГМ подтвердил «помогло
 // загадавшему больше») — реальный script с честным DialogV2.confirm.
+// Red Sun/Красное Солнце — тот же путь: реальный скан сцены (tokensWithinRadius
+// + isTokenInSight, тот же приём, что у Иконы Богохульства) и W+0 тест на
+// каждого видящего нимб в 16м, с реальным впадением в Ярость при провале.
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -54,7 +57,6 @@ const ROOT = path.resolve(import.meta.dirname, "../..");
  * даёт ни возможности, ни цены — это правильно, а не поломка.
  */
 const PAID = [
-  { key: "gift.khorne.redSun" },
   { key: "gift.khorne.theHunter" },
   { key: "gift.tzeentch.hiddenThreat" },
   { key: "gift.tzeentch.sundering" },
