@@ -6520,9 +6520,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.confessorOfDesires": {
-    label: "Спрошенный о сокровенных желаниях проходит W-60 (как от психосилы) или честно отвечает не осознавая влияния; прошедший тест — иммунен 6 дней",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка «▶ Запустить» катает за таргетнутую цель тест W-60, при успехе честно ставит цели 6-дневный иммунитет (worldTime-флаг), при провале — только чат-заметка (сам факт вопроса о желаниях — реплика за столом)",
     source: "Дар Слаанеш (Confessor of Desires)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Слаанеш/Confessor_of_Desires___Исповедник_Желани_NINdxH8ZJnJ95Cqh.json (entry confessorOfDesires-ask) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.slaanesh.countenanceOfSlaanesh": {
     label: "Базовый +10 ко всем социальным тестам механизирован отдельной записью kind:\"testMod\" (modScope:social) на этом же предмете — capability покрывает ТОЛЬКО остаток: доп. +30 конкретно с последователями Слаанеш (нет распознавания цели), признание авторитета демонами Слаанеш ниже Герольда при Inf 30+, полудействие+1 Бесчестия на Страх 3 (Кхорниты впадают в Ярость вместо Шока) — не смоделированы",
@@ -6530,9 +6530,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.cuttingWords": {
-    label: "Победа в тесте социального взаимодействия — 1d5+Успехи непоглощаемого R Dmg в торс проигравшему (кровавые стигматы)",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка спрашивает число Успехов только что выигранного теста социального взаимодействия (шкалой книги 0…5+, честное самоподтверждение — какой именно это был тест, движку не проверить) и катает 1d5+Успехи непоглощаемого урона в торс таргетнутому проигравшему",
     source: "Дар Слаанеш (Cutting Words)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Слаанеш/Cutting_Words___Острые_Слова_EGIB4g3mXfBrznpf.json (entry cuttingWords-strike) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.slaanesh.danceOfDeception": {
     label: "Финт через Acrobatics(A)+0 или Trade(Dancer)(A)+20 вместо WS+0; +1 Бесчестия — Финт свободным действием",
