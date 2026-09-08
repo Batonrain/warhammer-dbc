@@ -188,6 +188,23 @@ export function applyDamageDiceMods(formula, auto) {
   return f.replace(/\d+d\d+/, term);
 }
 
+/**
+ * Клин Распыления (стр. 168): «Оно заклинивает на броске 9 первого кубика на
+ * урон, 8-9, если оно Unreliable или хуже, и не заклинивает, если Reliable
+ * или лучше». У Spray нет броска на попадание (см. attack-outcome.mjs::
+ * attackHitOutcome), поэтому и общий порог по d100 (jamThreshold ниже) к нему
+ * неприменим — клин ищется на кубике урона уже после попадания.
+ *
+ * @param {object} auto  свёрнутые свойства оружия (aggregateAuto)
+ * @returns {number|null} минимальная грань d10, на которой клинит; null — не клинит
+ */
+export function sprayJamFace(auto) {
+  const s = auto?.reliabilityScore || 0;
+  if (s >=  1) return null;   // Надёжное и лучше — не клинит
+  if (s <= -1) return 8;      // Ненадёжное и хуже — 8-9
+  return 9;                   // обычное — только 9
+}
+
 /** Порог заклинивания по числовой Надёжности. null → клина нет. */
 export function jamThreshold(auto) {
   const s = auto.reliabilityScore || 0;
