@@ -109,14 +109,27 @@
 }
 .wh-cal-w-event-eta { font-size: 0.66em; color: #9a86c9; flex: 0 0 auto; }
 
-/* ── Строка «Сессия/Сцена» — тёплая золотая гамма, тема Судьбы ── */
+/* ── Строка «Сессия/Сцена» — тёплая золотая гамма, тема Судьбы ──
+   wdbc-frkm: обе кнопки стояли впритык (4px) с одинаковым видом, и «Сцена»
+   слева оказывалась на пути курсора к «Сессия» — уже был промах живьём
+   (wdbc-b4mb). «Сцена» мгновенна и без окна подтверждения, «Сессия» открывает
+   окно Итогов — развели их и по месту (flex: 0 0 auto + margin-left: auto
+   разгоняют кнопки к разным краям строки, а не только добавляют gap), и по
+   цвету/весу: «Сцена» — приглушённая серая, «Сессия» — прежняя яркая золотая. */
 .wh-cal-w-session-row { margin-top: 4px; padding-top: 4px; border-top: 1px dashed rgba(230,175,90,0.35); }
 .wh-cal-w-session-btn {
-  flex: 1; height: 1.9em; line-height: 1; padding: 0 4px; border-radius: 4px;
-  border: 1px solid rgba(230,175,90,0.4); background: rgba(40,28,8,0.5); color: #ffe3a8;
+  flex: 0 0 auto; height: 1.9em; line-height: 1; padding: 0 10px; border-radius: 4px;
   cursor: pointer; font-size: 0.78em; font-weight: 700; letter-spacing: 0.02em;
 }
-.wh-cal-w-session-btn:hover { background: rgba(230,175,90,0.5); color: #fff6e0; }
+.wh-cal-w-session-btn[data-session-act="scene"] {
+  border: 1px solid rgba(140,140,160,0.35); background: rgba(26,26,34,0.45); color: #a4a4bc;
+}
+.wh-cal-w-session-btn[data-session-act="scene"]:hover { background: rgba(140,140,160,0.35); color: #d8d8ea; }
+.wh-cal-w-session-btn[data-session-act="session"] {
+  margin-left: auto;
+  border: 1px solid rgba(230,175,90,0.4); background: rgba(40,28,8,0.5); color: #ffe3a8;
+}
+.wh-cal-w-session-btn[data-session-act="session"]:hover { background: rgba(230,175,90,0.5); color: #fff6e0; }
 
 /* ══════════════════ ДИАЛОГ НАСТРОЕК ══════════════════ */
 
