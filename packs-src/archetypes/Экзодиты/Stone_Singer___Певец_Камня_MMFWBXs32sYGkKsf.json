@@ -23,7 +23,7 @@
     "psykerClass": "Певец Камня",
     "grantsWarPlate": false,
     "grantsImplants": false,
-    "description": "",
+    "description": "<p>Вы – начинающий мировой певец, известный также как певец камня. Ваши таинства чаще используются в боевых практиках.</p>",
     "notes": "",
     "trait": {
       "name": "Knowing Forests / Знание Лесов",
