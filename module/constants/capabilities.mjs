@@ -3493,7 +3493,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.arhimag.savantImmaterial": {
     label: "Известен обширным арсеналом психосил и скоростью их освоения. Изучая любую психосилу,",
-    source: "Savant Immaterial / Савант Иммматериал", reader: ""
+    source: "Savant Immaterial / Савант Имматериал", reader: ""
   },
   "elite.elitnyeArhetipy.arhimag.unlimitedPower": {
     label: "Невероятная мистическая сила пробивает контрмеры оппонентов. При манифестации психосилы,",
@@ -4971,7 +4971,7 @@ export const CAPABILITIES = {
   },
   "trait.clovenOne": {
     label: "+20 vs Трудный Ландшафт.",
-    source: "Cloven One / Раздвоенный", reader: ""
+    source: "Cloven One / Копытный", reader: ""
   },
   "trait.coldKiller": {
     label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
@@ -5084,7 +5084,7 @@ export const CAPABILITIES = {
   },
   "trait.geneSplice": {
     label: "Выбор адаптаций.",
-    source: "Gene-Splice / Гено-Сплайс", reader: ""
+    source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
     label: "Сопротивление ментальным эффектам.",
@@ -5968,7 +5968,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.malagra.malagraCortex": {
     label: "Кортикальные импланты экранированы гексаграмматическими кодами и защищают разум от вторжения чужой воли.",
-    source: "Malagra Cortex / Кортекс Малагра", reader: ""
+    source: "Malagra Cortex / Кортекс Малагры", reader: ""
   },
   "trait.elitnyeArhetipy.malagra.paragonCoil": {
     label: "Комплекс электромагнитных имплантов окутывает его мантией магнитного поля и нимбом сияния. Оснащён Люминен Конденсаторами, Маглев Спиралями,",
