@@ -144,6 +144,21 @@ describe("карточка атаки", () => {
   // defenseSection (Уклонение/Парирование) относится только к первоначальной
   // цели атакующего броска, кнопка отмены живёт в applyDamageSection рядом
   // с шаблоном/уроном, по разу на каждый отмеченный шаблоном токен.
+  // wdbc-8n2c (живая проверка): рейтинг Касания Энтропии считается в attack.mjs,
+  // а применяет его damage.mjs, читая data-entropy С КНОПКИ ПРИМЕНЕНИЯ УРОНА
+  // (hooks.mjs::ds.entropy). Атрибут стоял только в атрибутах зоны «Остаётся»,
+  // из-за чего в живой игре Дар не срабатывал вовсе — тест держит оба места.
+  it("Касание Энтропии: рейтинг едет на кнопке применения урона, а не только в зоне «Остаётся»", () => {
+    const html = card({ wp: { entropyRating: 2 } });
+    const applyBtn = html.match(/<button class="wh-apply-dmg-btn[^>]*>/)[0];
+    expect(applyBtn).toContain('data-entropy="2"');
+  });
+
+  it("без Дара на кнопке применения урона стоит нулевой рейтинг Энтропии", () => {
+    const applyBtn = card().match(/<button class="wh-apply-dmg-btn[^>]*>/)[0];
+    expect(applyBtn).toContain('data-entropy="0"');
+  });
+
   it("Распыление стрелковой атаки — кнопка теста на отмену", () => {
     const html = card({ isMelee: false, wp: { spray: true } });
     expect(html).toContain("wh-spray-cancel-btn");
