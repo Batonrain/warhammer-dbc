@@ -136,7 +136,9 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "submutations": ["6"],
+                "submutations": [
+                  "6"
+                ],
                 "negateSub": false
               }
             },
@@ -151,7 +153,9 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "submutations": ["6"],
+                "submutations": [
+                  "6"
+                ],
                 "negateSub": false
               }
             },
@@ -165,7 +169,9 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "submutations": ["8"],
+                "submutations": [
+                  "8"
+                ],
                 "negateSub": false
               }
             }
