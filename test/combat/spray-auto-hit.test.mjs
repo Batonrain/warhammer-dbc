@@ -13,7 +13,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, weaponFor, setTargets } from "../support/combat-fixtures.mjs";
 import { _executeAttackRoll } from "../../module/combat/attack.mjs";
 import { attackHitOutcome } from "../../module/combat/attack-outcome.mjs";
-import { sprayJamFace, jamThreshold } from "../../module/combat/weapon-properties.mjs";
+import { sprayJamFace, sprayJams, jamThreshold } from "../../module/combat/weapon-properties.mjs";
 
 const card = () => captured.chat.at(-1)?.content ?? "";
 
@@ -78,6 +78,22 @@ describe("sprayJamFace", () => {
   it("Надёжное и лучше не клинит вовсе", () => {
     expect(sprayJamFace({ reliabilityScore: 1 })).toBeNull();
     expect(sprayJamFace({ reliabilityScore: 2 })).toBeNull();
+  });
+
+  // Найдено живой проверкой (wdbc-8n2c): книга называет грани «9» и «8-9», а
+  // не «9+» — там, где имеется в виду «и выше», она пишет диапазон до десятки
+  // (Выгорание «7-10»). Первая версия сравнивала через >= и клинила на 10.
+  it("выпавшая десятка Распыление НЕ заклинивает", () => {
+    expect(sprayJams(10, { reliabilityScore: 0 })).toBe(false);
+    expect(sprayJams(10, { reliabilityScore: -1 })).toBe(false);
+  });
+
+  it("названные книгой грани клинят", () => {
+    expect(sprayJams(9, { reliabilityScore: 0 })).toBe(true);
+    expect(sprayJams(8, { reliabilityScore: 0 })).toBe(false);
+    expect(sprayJams(8, { reliabilityScore: -1 })).toBe(true);
+    expect(sprayJams(9, { reliabilityScore: -1 })).toBe(true);
+    expect(sprayJams(9, { reliabilityScore: 1 })).toBe(false);
   });
 
   it("это не тот же порог, что общий клин по d100", () => {
@@ -147,6 +163,17 @@ describe("клин Распыления (стр. 168)", () => {
     expect(weapon.system.jammed).toBe(true);
     expect(card()).toContain("Оружие заклинило");
     expect(hits()).toEqual([{ index: 1, damage: 14, location: "Голова" }]);   // 50 → реверс 05
+  });
+
+  it("десятка на первом кубике урона не клинит (грань 9, не «9 и выше»)", async () => {
+    const weapon = weaponFor({ range: 20, weaponProps: flamerProps() });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [50, 10, 3];   // третий куб — d5 Экстремального урона от десятки
+
+    await _executeAttackRoll(actor, weapon, "bs", 45, "single", null, {});
+
+    expect(weapon.system.jammed).toBe(false);
+    expect(hits()).toHaveLength(1);
   });
 
   it("восьмёрка обычное Распыление не клинит", async () => {

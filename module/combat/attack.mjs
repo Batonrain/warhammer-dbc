@@ -7,7 +7,7 @@ import { MELEE_STANCES }                           from "../constants/combat.mjs
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
-         jamThreshold, sprayJamFace, buildPropertyChatBlock,
+         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
          buildTargetEffectButtons }                 from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice,
@@ -475,11 +475,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
       // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
       // брошенному, а не оставленному Рвущим), и только у первого попадания.
-      const sprayFace = (i === 0 && !isMelee && wp.spray) ? sprayJamFace(wp) : null;
-      if (sprayFace !== null) {
+      if (i === 0 && !isMelee && wp.spray && sprayJamFace(wp) !== null) {
         const firstDie = (dmgRoll.terms ?? [])
           .find(t => t.faces && Array.isArray(t.results) && t.results.length)?.results?.[0]?.result ?? null;
-        if (firstDie !== null && firstDie >= sprayFace) sprayJam = { face: firstDie, at: sprayFace };
+        if (sprayJams(firstDie, wp)) sprayJam = { face: firstDie, at: sprayJamFace(wp) };
       }
       let deflagrateHit = false;
       if (dmgRoll.terms) {

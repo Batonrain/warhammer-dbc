@@ -195,14 +195,27 @@ export function applyDamageDiceMods(formula, auto) {
  * attackHitOutcome), поэтому и общий порог по d100 (jamThreshold ниже) к нему
  * неприменим — клин ищется на кубике урона уже после попадания.
  *
+ * Названные грани буквальны: 9 (и 8 у Ненадёжного), но НЕ 10. Книга там, где
+ * имеет в виду «и выше», пишет диапазон до десятки прямо — Выгорание
+ * срабатывает «на 7-10», Экстремальный урон «на X+». Здесь диапазон назван
+ * «9» и «8-9», значит выпавшая десятка оружие не заклинивает. Найдено живой
+ * проверкой (wdbc-8n2c): первая версия сравнивала через `>=` и клинила на 10.
+ *
  * @param {object} auto  свёрнутые свойства оружия (aggregateAuto)
- * @returns {number|null} минимальная грань d10, на которой клинит; null — не клинит
+ * @returns {number|null} минимальная грань d10, с которой клинит; null — не клинит
  */
 export function sprayJamFace(auto) {
   const s = auto?.reliabilityScore || 0;
   if (s >=  1) return null;   // Надёжное и лучше — не клинит
   if (s <= -1) return 8;      // Ненадёжное и хуже — 8-9
   return 9;                   // обычное — только 9
+}
+
+/** Клинит ли Распыление на этой грани первого кубика урона (9 или 8-9, не 10). */
+export function sprayJams(face, auto) {
+  const from = sprayJamFace(auto);
+  const f = Number(face);
+  return from !== null && Number.isFinite(f) && f >= from && f <= 9;
 }
 
 /** Порог заклинивания по числовой Надёжности. null → клина нет. */
