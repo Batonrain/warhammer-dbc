@@ -1800,6 +1800,23 @@ export class WarhammerCharacterSheet
         const el = ev.currentTarget;                       // до await, см. wdbc-odgs
         const scope = el.dataset.aptScope;
         const key   = el.dataset.aptKey;
+        // Специализация Группового Навыка (wdbc-fzbu): привязка пишется В
+        // ЗАПИСЬ, а не по ключу Группы, — иначе правка одной специализации
+        // накрыла бы все остальные, притом что у специализации привязка своя
+        // («Навигация (Варп) — это Воля, а не Интеллект группы»).
+        if (scope === "groupEntry") {
+          const index = parseInt(el.dataset.aptIndex);
+          const data  = (this.actor.system?.groupSkills?.[key] ?? [])[index];
+          if (!data) return;
+          const def   = GROUP_SKILLS_DEF[key];
+          // Книжная привязка специализации считается от ЕЁ Характеристики,
+          // если она своя (Ремесло), иначе от Характеристики группы.
+          const book  = [data.char || def?.char, def?.apt2].filter(Boolean);
+          const title = `${def?.label || key}: ${data.specialty || "(без названия)"}`;
+          await showAptitudeBindingDialog(this.actor, "skill", key, title, book,
+            { group: key, index, data });
+          return;
+        }
         // Запасной вариант — сам ключ, а НЕ атрибут title: там лежит целая
         // подсказка («Склонности: … — нажмите, чтобы поменять привязку»), и в
         // заголовок окна она попадала бы мусором. Срабатывает только на
