@@ -233,8 +233,13 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // kind:"script" «насытился» (incrementThrottleCount, unit:"month", до 4
     // раз) + module/rules/warp-eater.mjs::processWarpEaterMonthCheck на
     // updateWorldTime — форсированный тест Cor+10 в конце календарного
-    // месяца, если насыщений не хватило. 59 → 58. Порог подтянут до
-    // фактического счёта.
-    expect(stubOnly.length).toBeLessThanOrEqual(58);
+    // месяца, если насыщений не хватило. 59 → 58.
+    // 08.09.2026 продолжение (Общие Мутации): Strange Tongue/Странный Язык →
+    // 2 из 10 субмутаций (when.submutations, тот же приём, что у Tentacle):
+    // суб.6 «Щупальце» — Трейт Multiple Arms(+1) + testMod Athletics+10;
+    // суб.8 «Зубастый» — kind:"integralAttack" на новый предмет-оружие
+    // Toothy Tongue/Зубастый Язык (1d5 Rending, Pen 0). 58 → 57. Порог
+    // подтянут до фактического счёта.
+    expect(stubOnly.length).toBeLessThanOrEqual(57);
   });
 });
