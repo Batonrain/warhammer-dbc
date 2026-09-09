@@ -74,6 +74,10 @@ describe("перенос Элитных архетипов в компендиу
   });
 });
 
+// wdbc-b6fd (08.09.2026): run({write:true}) без --force отказывает — см.
+// отдельный test/tools/elite-archetypes-write-guard.test.mjs (эта проверка
+// живёт там, не здесь: ей нужен vi.mock("node:fs"), который сломал бы
+// system.json-чтение выше в этом файле).
 describe("объявление библиотеки", () => {
   it("тип предмета объявлен", () => {
     expect(Object.keys(system.documentTypes.Item)).toContain("eliteArchetype");
