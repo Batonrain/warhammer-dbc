@@ -196,20 +196,27 @@ function ruleFromEntry(item, entry, groupId = null) {
   if (entry?.kind === "testMod") {
     const target = scopeTarget(entry.modScope, entry, id, "Модификатор теста");
     if (target === null) return null;
-    // Три режима значения: плоское число, «бонус своей характеристики» и
-    // «ополовинить штраф». Второй нужен там, где числа в данных быть не может:
-    // «+Inf герольда» у каждого Герольда своё (Локус Цепей). modCharBonusMultiplier
-    // — для «+2×PR»/«+5×PR» (wdbc-jw81, Психосилы) — множитель selfCharBonus,
-    // читаемый effectValue() (module/rules/resolve-test.mjs); опущен/1 — как раньше.
-    // halvePenalty даёт ту же галочку диалога, что Особенности Происхождения
-    // (kind:"penaltyMul", resolve-test.mjs::rollModsFromRules) — по решению
-    // пользователя автоматической тихой отмены штрафа в системе нет нигде,
-    // галочка всегда предлагается игроку, а не применяется молча (wdbc-gzuf).
+    // Четыре режима значения: плоское число, «бонус своей характеристики»,
+    // «бонус характеристики ХОЗЯИНА» и «ополовинить штраф». Второй нужен там,
+    // где числа в данных быть не может: «+Inf герольда» у каждого Герольда
+    // своё (Локус Цепей). Третий (masterCharBonus, wdbc-1rno шаг F) — тот же
+    // приём, но для Черты, висящей на Миньоне/демоне, а число берётся с
+    // ЛИСТА ХОЗЯИНА (actor.system.masterUuid) — «Инфернальный Оруженосец
+    // считает Завесу на Cor.b ПЕРСОНАЖА тоньше»: без него любая подобная
+    // формулировка книги нечем было бы посчитать вообще, characteristics{}
+    // Конструктора не знает других акторов, кроме несущего Черту.
+    // modCharBonusMultiplier — для «+2×PR»/«+5×PR» (wdbc-jw81, Психосилы) —
+    // множитель self/masterCharBonus, читаемый effectValue() (module/rules/
+    // resolve-test.mjs); опущен/1 — как раньше. halvePenalty даёт ту же
+    // галочку диалога, что Особенности Происхождения (kind:"penaltyMul",
+    // resolve-test.mjs::rollModsFromRules) — по решению пользователя
+    // автоматической тихой отмены штрафа в системе нет нигде, галочка всегда
+    // предлагается игроку, а не применяется молча (wdbc-gzuf).
     const effect = entry.modValueMode === "halvePenalty"
       ? { kind: "penaltyMul", target, factor: 0.5 }
-      : entry.modValueMode === "charBonus"
+      : (entry.modValueMode === "charBonus" || entry.modValueMode === "masterCharBonus")
       ? { kind: "rollBonus", target, valueFrom: {
-          selfCharBonus: entry.modCharBonus || "inf",
+          [entry.modValueMode === "masterCharBonus" ? "masterCharBonus" : "selfCharBonus"]: entry.modCharBonus || "inf",
           // "> 1" пропускал бы дробные множители вроде 0.5 («½Cor.b», wdbc-1rno) —
           // условие теперь "!== 1", 1 по-прежнему опускается (то же значение, что default).
           ...(Number(entry.modCharBonusMultiplier) && Number(entry.modCharBonusMultiplier) !== 1

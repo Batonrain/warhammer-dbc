@@ -33,7 +33,7 @@ import { defaultSpawnDemonFn } from "./demon-summon.mjs";
 import { defaultBindArmigerWeaponFn } from "./armiger-weapon.mjs";
 import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
-import { hasDominator } from "../rules/dominator.mjs";
+import { hasDominator, isOwnArmiger } from "../rules/dominator.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, testCardHtml, outcomeHtml } from "../helpers/test-card.mjs";
@@ -282,7 +282,8 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
  */
 export async function castRitual(R, actor, {
   item = null, confirmUnmet = confirmUnmetRequirements, veilShiftFn = defaultVeilShiftFn,
-  spawnDemonFn = defaultSpawnDemonFn, bindWeaponFn = defaultBindArmigerWeaponFn
+  spawnDemonFn = defaultSpawnDemonFn, bindWeaponFn = defaultBindArmigerWeaponFn,
+  isOwnArmigerFn = isOwnArmiger
 } = {}) {
   if (!actor) { ui.notifications?.warn("Ритуал: не выбран Ритуалист."); return null; }
   const d = ritualThreshold(R, actor, item);
@@ -295,6 +296,13 @@ export async function castRitual(R, actor, {
   // подтверждены выше (ritualThreshold/confirmUnmet) — noTest снимает только
   // сам бросок и Порог, не право персонажа провести ритуал вообще.
   if (item?.system?.noTest) return castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn });
+  // wdbc-1rno, шаг E: «автоматически побеждает во всех тестах Владычества
+  // против него [своего Оруженосца]» — не свойство ЭТОГО предмета-ритуала
+  // (Владычество разыгрывается обычными книжными ритуалами, см. Rite of
+  // Audacity), а свойство ЦЕЛИ, названной в R.demonName. Гейт требований и
+  // Порог с Модификаторами Призыва тут ни при чём — своего демона обязывать
+  // себе подчиниться незачем никаким тестом вовсе.
+  if (R.type === "dominion" && isOwnArmigerFn(actor, R.demonName)) return castAutoWinDominion(R, actor);
   // Общий сбор модификаторов (wdbc-ct65.3): Порог ритуала считался целиком
   // ритуальной арифметикой (ritualThreshold), мимо реестра правил — Усталость
   // Ритуалиста и его Черты в него не попадали.
@@ -405,6 +413,27 @@ async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn }) {
     threshold: `<div class="roll-threshold">${esc(actor.name)} — ритуал не требует теста, результат гарантирован.</div>`,
     outcome: outcomeHtml(true, "Ритуал проведён"),
     sections: [demonHtml]
+  }), { sound: false });
+
+  return { success: true, deg: 1, threshold: null, roll: null };
+}
+
+/**
+ * Автопобеда во Владычестве против своего же демона-Оруженосца (wdbc-1rno,
+ * шаг E) — вызывается ТОЛЬКО из castRitual выше, когда R.type==="dominion" и
+ * isOwnArmiger(actor, R.demonName) подтвердил цель. В отличие от
+ * castNoTestRitual, это не свойство предмета (обычный ритуал Владычества
+ * остаётся обычным против чужого демона) — только результат гарантирован
+ * для ЭТОЙ конкретной цели, ни Порог, ни требования ритуала не отменяются
+ * этой веткой (они уже проверены в castRitual выше, до этой точки).
+ * @returns {Promise<{success:true, deg:1, threshold:null, roll:null}>}
+ */
+async function castAutoWinDominion(R, actor) {
+  await postTestCard(actor, testCardHtml({
+    icon: `${veilIcon("ritual")} `, title: `Ритуал: ${esc(R.name || RITUAL_TYPES_MAP[R.type]?.label || R.type)}`,
+    classes: "wh-ritual-card",
+    threshold: `<div class="roll-threshold">${esc(actor.name)} — Владычество над собственным Оруженосцем не требует теста, победа гарантирована.</div>`,
+    outcome: outcomeHtml(true, `Владычество подтверждено${R.demonName ? ` — ${esc(R.demonName)}` : ""}`)
   }), { sound: false });
 
   return { success: true, deg: 1, threshold: null, roll: null };

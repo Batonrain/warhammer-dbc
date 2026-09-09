@@ -18,9 +18,30 @@
 import { currentScene } from "../constants/scene-nexus.mjs";
 
 const BESTIARY_PACK = "warhammer-dbc.bestiary";
+const TRAITS_PACK = "warhammer-dbc.traits";
+// packs-src/traits/Thinner_Veil...json — не книжная Черта под своим
+// названием, а реализация одной строки Дара «Инфернальный Оруженосец»
+// (wdbc-1rno, шаг F): «...считает Завесу на Cor.b персонажа тоньше». Отдана
+// демону автоматически при призыве, а не покупается — искать по точному id,
+// не по имени (в отличие от Бестиария, здесь неоднозначности быть не должно).
+const VEIL_THINNER_TRAIT_ID = "ArmigerVeilThinX1a";
 
-/** "English Name / Русское Имя" → русская часть, как в doombc-english-names-project. */
-function ruName(name) {
+/** Данные Черты «Тоньше Завесы» для вставки в data.items нового Актора. */
+async function veilThinnerTraitData() {
+  const pack = game.packs?.get(TRAITS_PACK);
+  const doc = pack ? await pack.getDocument(VEIL_THINNER_TRAIT_ID).catch(() => null) : null;
+  if (!doc) return null;
+  const data = doc.toObject();
+  delete data._id;
+  return data;
+}
+
+/**
+ * "English Name / Русское Имя" → русская часть, как в doombc-english-names-
+ * project. Экспортирована — тем же сравнением по имени module/apps/
+ * armiger-weapon.mjs находит СВОЕГО демона-Оруженосца (wdbc-1rno, шаг E).
+ */
+export function ruName(name) {
   const parts = String(name || "").split(" / ");
   return (parts.length > 1 ? parts.at(-1) : name).trim();
 }
@@ -63,7 +84,18 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
 
   const data = src.toObject();
   delete data._id;
-  if (asMinion && ritualistUuid) data.system = { ...(data.system ?? {}), masterUuid: ritualistUuid };
+  if (asMinion && ritualistUuid) {
+    data.system = { ...(data.system ?? {}), masterUuid: ritualistUuid };
+    // Тот же флаг, что у оружия из module/apps/armiger-weapon.mjs — «связан
+    // ИМЕННО ритуалом без теста» (wdbc-1rno). module/rules/dominator.mjs
+    // читает его для автопобеды во Владычестве против своего же Оруженосца
+    // (шаг E) — не любой Миньон, а конкретно этот путь связывания.
+    data.flags = { ...(data.flags ?? {}), "warhammer-dbc": { ...(data.flags?.["warhammer-dbc"] ?? {}), armigerBound: true } };
+    // Шаг F: «считает Завесу на Cor.b персонажа тоньше» — Черта, а не сразу
+    // готовый эффект, ровно так же, как остальные выдачи Конструктора.
+    const traitData = await veilThinnerTraitData();
+    if (traitData) data.items = [...(data.items ?? []), traitData];
+  }
   const actor = await Actor.create(data);
   if (!actor) return { ok: false, reason: "Не удалось создать Актора демона." };
 

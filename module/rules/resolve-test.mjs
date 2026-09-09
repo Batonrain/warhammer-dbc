@@ -188,10 +188,15 @@ function effectAppliesTo(target, ctx) {
  * и значение считается на каждый бросок.
  *
  * Источники: `targetCharBonus`/`selfCharBonus` (бонус характеристики цели или
- * самого бросающего) и `targetSize`/`selfSize` (Размер цели или бросающего —
- * стр. 30, «Проворный» и таблица Размера дают +10/−10 за каждую ступень).
- * Неизвестный источник не превращается молча в ноль, а жалуется: правило,
- * тихо давшее «+0», ищется днями.
+ * самого бросающего), `masterCharBonus` (бонус характеристики ХОЗЯИНА
+ * бросающего — wdbc-1rno шаг F: Инфернальный Оруженосец «считает Завесу на
+ * Cor.b ПЕРСОНАЖА тоньше» — Черта висит на демоне, число берётся с листа его
+ * Хозяина; ctx.masterActor резолвит вызывающий код ДО этого конвейера, тут
+ * никаких fromUuid — тот же приём, что и targetActor) и `targetSize`/
+ * `selfSize` (Размер цели или бросающего — стр. 30, «Проворный» и таблица
+ * Размера дают +10/−10 за каждую ступень). Неизвестный источник не
+ * превращается молча в ноль, а жалуется: правило, тихо давшее «+0», ищется
+ * днями.
  *
  * `formula` (wdbc-1rno, modValueMode:"formula" у kind:"testMod") — та же
  * mech-formula.mjs нотация, что у полей «Значение»/«Рейтинг» Конструктора
@@ -208,7 +213,7 @@ function effectValue(effect, ctx, ruleId) {
   if (effect.formula != null) return mechFormulaTotalSafe(effect.formula, mechRollData(ctx?.actor));
   if (!effect.valueFrom) return Number(effect.value) || 0;
 
-  const { targetCharBonus, selfCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
+  const { targetCharBonus, selfCharBonus, masterCharBonus, targetSize, selfSize, multiplier = 1 } = effect.valueFrom;
   // Своя характеристика: «+Inf герольда на тесты Нестабильности» (Локус Цепей).
   // Числа в данных быть не может — Бесчестие у каждого своё.
   // "pr" — не характеристика: Психосилы/Техночудеса скалируются собственным
@@ -237,6 +242,23 @@ function effectValue(effect, ctx, ruleId) {
   if (targetCharBonus) {
     const bonus = ctx?.targetActor?.system?.characteristics?.[targetCharBonus]?.bonus ?? 0;
     // «|| 0» убирает минус ноль: без цели галочка иначе подписывалась бы «−0».
+    return bonus * multiplier || 0;
+  }
+  // masterCharBonus — та же тройка "pr"/"cor"/характеристика, что у
+  // selfCharBonus выше, только с ctx.masterActor вместо ctx.actor. Нет
+  // Хозяина (masterActor не резолвлен вызывающим кодом) — бонус 0, а не
+  // ошибка: демон без Хозяина просто не получает эту прибавку, как и книга
+  // не даёт её никому, кроме связанного демона-Оруженосца.
+  if (masterCharBonus === "pr") {
+    const pr = Number(ctx?.masterActor?.system?.psyker?.currentRating) || 0;
+    return pr * multiplier || 0;
+  }
+  if (masterCharBonus === "cor") {
+    const cb = Number(ctx?.masterActor?.system?.corruptionBonus) || 0;
+    return Math.ceil(cb * multiplier) || 0;
+  }
+  if (masterCharBonus) {
+    const bonus = ctx?.masterActor?.system?.characteristics?.[masterCharBonus]?.bonus ?? 0;
     return bonus * multiplier || 0;
   }
   if (selfSize)   return sizeOf(ctx?.actor) * multiplier || 0;

@@ -720,6 +720,54 @@ describe("проведение ритуала (castRitual)", () => {
       expect(captured.rolls.length).toBe(1);
     });
 
+    // wdbc-1rno, шаг E: «автоматически побеждает во всех тестах Владычества
+    // против него [своего Оруженосца]» — это НЕ свойство предмета-noTest
+    // (обычный ритуал Владычества против своей же цели), поэтому тесты без
+    // item вовсе, только с isOwnArmigerFn.
+    describe("автопобеда во Владычестве против своего Оруженосца (isOwnArmigerFn)", () => {
+      it("своя цель — не бросает, автоуспех, без предмета вовсе", async () => {
+        const isOwnArmigerFn = () => true;
+        const res = await castRitual(baseR({ type: "dominion", demonName: "Кровопускатель" }), actor(), { isOwnArmigerFn });
+
+        expect(res).toEqual({ success: true, deg: 1, threshold: null, roll: null });
+        expect(captured.rolls).toEqual([]);
+        expect(captured.chat[0].content).toContain("не требует теста");
+        expect(captured.chat[0].content).toContain("Кровопускатель");
+      });
+
+      it("чужая цель (isOwnArmigerFn:false) — обычный бросок, как раньше", async () => {
+        captured.dice = [1];
+        const isOwnArmigerFn = () => false;
+        const res = await castRitual(baseR({ gmMod: 50, type: "dominion", demonName: "Чужой демон" }), actor(), { isOwnArmigerFn });
+
+        expect(res.roll).toBe(1);
+        expect(captured.rolls.length).toBe(1);
+      });
+
+      it("тип не dominion — isOwnArmigerFn не спрашивается вовсе", async () => {
+        let called = false;
+        const isOwnArmigerFn = () => { called = true; return true; };
+        captured.dice = [1];
+
+        await castRitual(baseR({ gmMod: 50, type: "summon" }), actor(), { isOwnArmigerFn });
+        expect(called).toBe(false);
+      });
+
+      it("требования не выполнены и отклонены — автопобеда всё равно не спасает от гейта", async () => {
+        const item = { id: "r1", getFlag: (_s, k) => (k === "req"
+          ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "reqRace", raceKey: "drukhari" }] }]
+          : undefined) };
+        const confirmUnmet = async () => false;
+        const isOwnArmigerFn = () => true;
+
+        const res = await castRitual(baseR({ type: "dominion", demonName: "Кровопускатель" }), actor(),
+          { item, confirmUnmet, isOwnArmigerFn });
+
+        expect(res).toBeNull();
+        expect(captured.chat).toEqual([]);
+      });
+    });
+
     // wdbc-1rno, шаг D: тот же ритуал, второй книжный исход — демон вселяется
     // в оружие Ритуалиста, а не встаёт Миньоном (Инфернальный Оруженосец —
     // «может тем же ритуалом призвать его в своё оружие»).

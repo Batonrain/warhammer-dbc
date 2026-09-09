@@ -139,6 +139,69 @@ describe("поиск и создание демона на сцене (spawnDemo
       expect(res.ok).toBe(true);
       expect(createdActors[0].system?.masterUuid).toBeUndefined();
     });
+
+    // wdbc-1rno, шаг E: тот же флаг, что у демон-оружия (module/apps/
+    // armiger-weapon.mjs) — module/rules/dominator.mjs::isOwnArmiger по нему
+    // отличает СВОЕГО Оруженосца от любого другого купленного Миньона.
+    it("asMinion+ritualistUuid — актор получает флаг armigerBound", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.canvas.scene = stubScene();
+
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+
+      expect(createdActors[0].flags?.["warhammer-dbc"]?.armigerBound).toBe(true);
+    });
+
+    it("без asMinion — флаг armigerBound не проставляется", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.canvas.scene = stubScene();
+
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1");
+
+      expect(createdActors[0].flags?.["warhammer-dbc"]?.armigerBound).toBeUndefined();
+    });
+
+    // wdbc-1rno, шаг F: «...считает Завесу на Cor.b персонажа тоньше» —
+    // выдаётся Чертой (packs-src/traits/Thinner_Veil...), а не готовым
+    // эффектом, ровно как остальные выдачи Конструктора.
+    it("asMinion — актор получает Черту «Тоньше Завесы» из пака traits", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.game.packs.set("warhammer-dbc.traits", {
+        getDocument: async id => (id === "ArmigerVeilThinX1a"
+          ? { toObject: () => ({ _id: "ArmigerVeilThinX1a", type: "trait", name: "Thinner Veil" }) } : null)
+      });
+      globalThis.canvas.scene = stubScene();
+
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+
+      expect(createdActors[0].items).toEqual([{ type: "trait", name: "Thinner Veil" }]);
+    });
+
+    it("нет пака traits или Черта не найдена — призыв не падает, просто без Черты", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.canvas.scene = stubScene();
+
+      const res = await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+
+      expect(res.ok).toBe(true);
+      expect(createdActors[0].items ?? []).toEqual([]);
+    });
+
+    it("Бестиарный демон с УЖЕ имеющимися предметами не теряет их — Черта дописывается", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary",
+        bestiaryPack([{ _id: "d1", name: "Кровопускатель", items: [{ type: "weapon", name: "Адский Клинок" }] }]));
+      globalThis.game.packs.set("warhammer-dbc.traits", {
+        getDocument: async id => (id === "ArmigerVeilThinX1a"
+          ? { toObject: () => ({ _id: "ArmigerVeilThinX1a", type: "trait", name: "Thinner Veil" }) } : null)
+      });
+      globalThis.canvas.scene = stubScene();
+
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+
+      expect(createdActors[0].items).toEqual([
+        { type: "weapon", name: "Адский Клинок" }, { type: "trait", name: "Thinner Veil" }
+      ]);
+    });
   });
 });
 

@@ -965,6 +965,8 @@ export function describeMechEntry(entry) {
         : (CHARACTERISTICS[entry.modCharBonus]?.label || entry.modCharBonus);
       const val = entry.modValueMode === "charBonus"
         ? `+${mult}Бонус ${bonusOf}${entry.modCharBonus === "cor" ? " (окр.▲)" : ""}`
+        : entry.modValueMode === "masterCharBonus"
+        ? `+${mult}Бонус ${bonusOf} ХОЗЯИНА${entry.modCharBonus === "cor" ? " (окр.▲)" : ""}`
         : entry.modValueMode === "halvePenalty"
         ? "½ штрафа (вкл. необученность)"
         : entry.modValueMode === "formula"
@@ -1174,7 +1176,7 @@ function isEntryComplete(e) {
       if (e.modScope === "char")  return !!e.rerollChar;
       if (e.modScope === "skill") return !!e.skillKey;
       if (e.modValueMode === "halvePenalty") return !!e.modScope;
-      if (e.modValueMode === "charBonus") return !!e.modCharBonus;
+      if (e.modValueMode === "charBonus" || e.modValueMode === "masterCharBonus") return !!e.modCharBonus;
       if (e.modValueMode === "formula") return !!e.modScope && formulaOk(e.value);
       return !!e.modScope && numOk(e.value);
     case "failDegMod":
@@ -2980,7 +2982,8 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
   if (ent.kind === "testMod") {
     const scopeOpts = REROLL_SCOPES
       .map(([v, l]) => `<option value="${v}" ${ent.modScope === v ? "selected" : ""}>${esc(l)}</option>`).join("");
-    const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
+    const modeOpts = [["flat", "число"], ["formula", "формула (½Cor и т.п.)"], ["charBonus", "бонус характеристики"],
+      ["masterCharBonus", "бонус характеристики ХОЗЯИНА (system.masterUuid)"], ["halvePenalty", "ополовинить штраф (½, вкл. необученность)"]]
       .map(([v, l]) => `<option value="${v}" ${ent.modValueMode === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     const charSel = (cls, val, extra = []) => `<select class="${cls}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${
       [...Object.entries(CHARACTERISTICS).map(([k, c]) => [k, c.label || k]), ...extra].map(([k, l]) =>
@@ -2995,7 +2998,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // «Бонус характеристики» умеет и Пси-Рейтинг с множителем («+3×PR»,
     // Психосилы, wdbc-jw81): без этих двух полей запись из пака показывалась
     // бы неверно и затиралась первым же кликом по селекту.
-    const valueField = ent.modValueMode === "charBonus"
+    const valueField = (ent.modValueMode === "charBonus" || ent.modValueMode === "masterCharBonus")
       ? charSel("mech-mod-char", ent.modCharBonus, [["pr", "Пси-Рейтинг"], ["cor", "Порча (Cor.b)"]])
         + `<input type="number" class="mech-mod-char-mult" min="0.1" step="0.1" title="множитель бонуса (1 — как есть; 0.5 — «½Cor.b», книга всегда округляет вверх)"
                   value="${esc(ent.modCharBonusMultiplier || 1)}" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>×`
