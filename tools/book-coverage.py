@@ -15,26 +15,30 @@ import sys, os, re, json, zipfile, io
 from html import unescape
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC = r"D:\tRPG\Warhammer\Самоделки"
-DL = r"C:\Users\Derbius\Downloads"
+# Единственный источник оригиналов (решение владельца, 09.09.2026) — books/
+# в корне репозитория, не публикуется (.gitignore). Раньше пути были
+# разбросаны по внешним папкам (D:\tRPG\Warhammer\Самоделки, ~/Downloads) —
+# владелец сводит все актуальные версии сюда, старые внешние копии больше
+# не источник истины, даже если ещё лежат на диске.
+BOOKS_DIR = os.path.join(ROOT, "books")
 
 SOURCES = {
-    "aeldari-branches": (SRC, "Книга Аэльдари_ Ответвления.zip"),
-    "aeldari":          (SRC, "Книга Аэльдари.zip"),
-    "battles":          (SRC, "Книга Битв.zip"),
-    "chaos":            (SRC, "DoomBC_S_Chaos.pdf"),
-    "core":             (SRC, "DoomBC_Core .pdf"),
-    "daemonic-shells":  (SRC, "Книга Демонических Оболочек.pdf"),
-    "diseases":         (SRC, "Книга Болезней.zip"),
-    "divinations-book": (SRC, "Родные миры и Предсказания.zip"),
-    "eldar-vehicles":   (SRC, "Книга Эльдар_ Техника.zip"),
-    "machines":         (SRC, "DoomBC_Machines.pdf"),
-    "necrons":          (SRC, "Книга Некрон.zip"),
-    "origins-book":     (SRC, "Родные миры и Предсказания.zip"),
-    "power-armour":     (SRC, "Силовая броня_ без шлема и особенности.zip"),
-    "toad-psykers":     (SRC, "Жабья Книга Псайкеров.pdf"),
-    "tyranids":         (SRC, "Тираниды DBC.zip"),
-    "void":             (DL,  "Книга Пустоты v.2 (1).docx"),
+    "aeldari-branches": (BOOKS_DIR, "Книга Аэльдари_ Ответвления.zip"),
+    "aeldari":          (BOOKS_DIR, "Книга Аэльдари.zip"),
+    "battles":          (BOOKS_DIR, "Книга Битв.zip"),
+    "chaos":            (BOOKS_DIR, "DoomBC_S_Chaos.pdf"),
+    "core":             (BOOKS_DIR, "DoomBC_Core .pdf"),
+    "daemonic-shells":  (BOOKS_DIR, "Книга Демонических Оболочек.pdf"),
+    "diseases":         (BOOKS_DIR, "Книга Болезней.zip"),
+    "divinations-book": (BOOKS_DIR, "Родные миры и Предсказания.zip"),
+    "eldar-vehicles":   (BOOKS_DIR, "Книга Эльдар_ Техника.zip"),
+    "machines":         (BOOKS_DIR, "DoomBC_Machines.pdf"),
+    "necrons":          (BOOKS_DIR, "Книга Некрон.zip"),
+    "origins-book":     (BOOKS_DIR, "Родные миры и Предсказания.zip"),
+    "power-armour":     (BOOKS_DIR, "Силовая броня_ без шлема и особенности.zip"),
+    "toad-psykers":     (BOOKS_DIR, "Жабья Книга Псайкеров.pdf"),
+    "tyranids":         (BOOKS_DIR, "Тираниды DBC.zip"),
+    "void":             (BOOKS_DIR, "Книга Пустоты v.2 (1).docx"),
 }
 
 CORPUS = []
