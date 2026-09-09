@@ -15,30 +15,36 @@ import sys, os, re, json, zipfile, io
 from html import unescape
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# Единственный источник оригиналов (решение владельца, 09.09.2026) — books/
+# Единственный источник оригиналов (решение владельца, 09.09.2026) — sources/
 # в корне репозитория, не публикуется (.gitignore). Раньше пути были
 # разбросаны по внешним папкам (D:\tRPG\Warhammer\Самоделки, ~/Downloads) —
 # владелец сводит все актуальные версии сюда, старые внешние копии больше
-# не источник истины, даже если ещё лежат на диске.
-BOOKS_DIR = os.path.join(ROOT, "books")
+# не источник истины, даже если ещё лежат на диске. Формат по умолчанию —
+# .md (markdown-экспорт Google Docs, «Формат → Markdown»): надёжнее .pdf
+# (см. находку 09.09.2026, wdbc-xsxy — текстовый поиск по PDF дал
+# ложноотрицательный результат из-за устаревшего снимка документа), таблицы
+# со статблоками проверены глазами — .md передаёт их не хуже HTML/ZIP.
+# .pdf остаётся для трёх книг, которые владелец не редактирует (Core/
+# Chaos/Machines) — раз не меняются, разница форматов не имеет значения.
+SOURCES_DIR = os.path.join(ROOT, "sources")
 
 SOURCES = {
-    "aeldari-branches": (BOOKS_DIR, "Книга Аэльдари_ Ответвления.zip"),
-    "aeldari":          (BOOKS_DIR, "Книга Аэльдари.zip"),
-    "battles":          (BOOKS_DIR, "Книга Битв.zip"),
-    "chaos":            (BOOKS_DIR, "DoomBC_S_Chaos.pdf"),
-    "core":             (BOOKS_DIR, "DoomBC_Core .pdf"),
-    "daemonic-shells":  (BOOKS_DIR, "Книга Демонических Оболочек.pdf"),
-    "diseases":         (BOOKS_DIR, "Книга Болезней.zip"),
-    "divinations-book": (BOOKS_DIR, "Родные миры и Предсказания.zip"),
-    "eldar-vehicles":   (BOOKS_DIR, "Книга Эльдар_ Техника.zip"),
-    "machines":         (BOOKS_DIR, "DoomBC_Machines.pdf"),
-    "necrons":          (BOOKS_DIR, "Книга Некрон.zip"),
-    "origins-book":     (BOOKS_DIR, "Родные миры и Предсказания.zip"),
-    "power-armour":     (BOOKS_DIR, "Силовая броня_ без шлема и особенности.zip"),
-    "toad-psykers":     (BOOKS_DIR, "Жабья Книга Псайкеров.pdf"),
-    "tyranids":         (BOOKS_DIR, "Тираниды DBC.zip"),
-    "void":             (BOOKS_DIR, "Книга Пустоты v.2 (1).docx"),
+    "aeldari-branches": (SOURCES_DIR, "Книга Аэльдари_ Ответвления.md"),
+    "aeldari":          (SOURCES_DIR, "Книга Аэльдари.md"),
+    "battles":          (SOURCES_DIR, "Книга Битв.md"),
+    "chaos":            (SOURCES_DIR, "DoomBC_S_Chaos.pdf"),
+    "core":             (SOURCES_DIR, "DoomBC_Core .pdf"),
+    "daemonic-shells":  (SOURCES_DIR, "Книга Демонических Оболочек.md"),
+    "diseases":         (SOURCES_DIR, "Книга Болезней.md"),
+    "divinations-book": (SOURCES_DIR, "Предсказания.md"),
+    "eldar-vehicles":   (SOURCES_DIR, "Книга Эльдар_ Техника.md"),
+    "machines":         (SOURCES_DIR, "DoomBC_Machines.pdf"),
+    "necrons":          (SOURCES_DIR, "Книга Некронов.md"),
+    "origins-book":     (SOURCES_DIR, "Родные миры.md"),
+    "power-armour":     (SOURCES_DIR, "Силовая броня_ без шлема и особенности.md"),
+    "toad-psykers":     (SOURCES_DIR, "Книга Псайкеров.md"),
+    "tyranids":         (SOURCES_DIR, "Книга Тиранидов.md"),
+    "void":             (SOURCES_DIR, "Книга Пустоты.md"),
 }
 
 CORPUS = []
@@ -109,6 +115,26 @@ def src_docx(path):
     return [(os.path.basename(path), "\n".join(buf))]
 
 
+MD_IMAGE_DATA = re.compile(r"^\[image\d+\]:\s*<data:[^>]*>\s*$", re.MULTILINE)
+
+
+def src_md(path):
+    """[(метка, текст)] — markdown-экспорт Google Docs, файл целиком одним куском.
+
+    Синтаксис markdown (`#`, `|`, `*`, `-`, `[]()`…) не зачищается отдельно:
+    WORD (regex ниже) и так берёт только буквенно-цифровые последовательности,
+    той же логикой, что strip_html убирает HTML-теги для .zip источников.
+
+    Картинки экспортируются встроенным base64 в отдельных строках-сносках
+    (`[image7]: <data:image/png;base64,...>`) — без зачистки их base64-мусор
+    read как «слова» и топит замер покрытия в сотнях тысяч ложных слов
+    (проверено 09.09.2026 на aeldari-branches: 42 картинки исказили счёт
+    источника почти в шесть раз)."""
+    text = open(path, encoding="utf-8", errors="replace").read()
+    text = MD_IMAGE_DATA.sub(" ", text)
+    return [(os.path.basename(path), text)]
+
+
 def load_source(slug):
     folder, name = SOURCES[slug]
     path = os.path.join(folder, name)
@@ -121,6 +147,8 @@ def load_source(slug):
         return src_zip(path), path
     if ext == ".docx":
         return src_docx(path), path
+    if ext == ".md":
+        return src_md(path), path
     raise SystemExit(f"неизвестный тип источника: {path}")
 
 
