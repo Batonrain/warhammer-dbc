@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Усиленный разряд",
+        "note": "2d10+T.b×3, цель −T.b×5 против Shocking"
+      },
+      {
+        "label": "Цепная дуга",
+        "note": "Arc(10−T.b/T.b)"
+      },
+      {
+        "label": "Электрический щит",
+        "note": "сопротивление E(Fl), +30 против Shocking"
+      },
+      {
+        "label": "Питание",
+        "note": "движение >10 ч/день = сыт"
+      }
+    ]
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "rr0FfJILnSXW1Bzh",

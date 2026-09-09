@@ -42,6 +42,18 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       linkedWeapon:  new StringField({ initial: "", label: "Связанное оружие" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      // Варианты бонусного эффекта качества Best.Q (wdbc-ukpu). Книга Аэльдари:
+      // Ответвления, «АРСЕНАЛ ДРУКХАРИ»: Best.Q-биоимплант даёт один эффект на
+      // выбор, каждый следующий поднимает Редкость на 1. До этого поля список
+      // лежал сплошным текстом внутри system.effect — выбирать было не из
+      // чего, и ни показать список, ни спросить выбор было нечем.
+      //
+      // Заполняется разбором того же текста (tools/bestq-implant-options.mjs),
+      // а не руками: текст остаётся источником правды, поле — его структурой.
+      bestQualityEffects: new ArrayField(new SchemaField({
+        label: new StringField({ initial: "", label: "Название" }),
+        note:  new StringField({ initial: "", label: "Пояснение" })
+      }), { label: "Варианты эффекта Best.Q" }),
       // Директивы автоматизации Техночудес (Кибернетика Механикум). Раньше жили
       // ТОЛЬКО в таблице по имени (constants/implant-mechanics.mjs) — переименование
       // импланта в паке молча обнуляло Энергию/Компенсатор/Технофокус (wdbc-9bzv).

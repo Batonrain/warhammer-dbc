@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Бескостный",
+        "note": "Полным действием получать/убирать Трейт Amorphous"
+      },
+      {
+        "label": "Кнут-позвоночник",
+        "note": "+30 Dodge"
+      },
+      {
+        "label": "Резиновая кожа",
+        "note": "+2 T.b против I, R, X и подтипов"
+      },
+      {
+        "label": "Акробатический гений",
+        "note": "+30 Acrobatics, 1/раунд переброс Acrobatics/Dodge, игнор трудного ландшафта"
+      }
+    ]
   },
   "folder": "LgfOMhOI1IHZXldl",
   "_id": "pvI9iCmq644GNsTR",

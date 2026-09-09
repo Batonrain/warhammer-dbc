@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Звуковой архив",
+        "note": "до 5 записей"
+      },
+      {
+        "label": "Громкоговоритель",
+        "note": "бонусы Best.Q Loud Hailer"
+      },
+      {
+        "label": "Идеальная имитация",
+        "note": "даже звуки иного диапазона"
+      },
+      {
+        "label": "Эхолокация",
+        "note": "Трейт Sonar Senses"
+      }
+    ]
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "82rV4BFmHzqGVgoc",

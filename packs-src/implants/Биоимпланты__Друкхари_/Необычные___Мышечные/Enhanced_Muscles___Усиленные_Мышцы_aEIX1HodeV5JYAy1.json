@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Нечеловеческая сила",
+        "note": "Трейт Unnatural S(+2)"
+      },
+      {
+        "label": "Железный хват",
+        "note": "+20 Захват/Борьба, нельзя вырвать предмет, безоружные Mighty"
+      },
+      {
+        "label": "Усиленные удары",
+        "note": "безоружные 2d10+S.b, Pen S.b, Reinforced"
+      },
+      {
+        "label": "Мышечная броня",
+        "note": "+3 к эфф. T.b торса и конечностей"
+      }
+    ]
   },
   "folder": "yBiDuo3FMEuOjtsV",
   "_id": "aEIX1HodeV5JYAy1",

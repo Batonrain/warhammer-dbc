@@ -100,6 +100,9 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "mechanicus", quality: "common",
       effect: "", installed: "", linkedWeapon: "", bookSource: "",
+      // Варианты бонусного эффекта Best.Q (wdbc-ukpu) — у обычного импланта
+      // пусто, заполнены только 79 биоимплантов Друкхари.
+      bestQualityEffects: [],
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         apHead: 0, apBody: 0, apArms: 0, apLegs: 0,

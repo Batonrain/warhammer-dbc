@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Диагност",
+        "note": "состояние цели по ритму, Medicae(P)+10"
+      },
+      {
+        "label": "Сонар страха",
+        "note": "Unnatural Senses(60) против запуганных"
+      },
+      {
+        "label": "Допросист",
+        "note": "фокус на одном существе: +20 Deceive/Interrogate/Intimidate"
+      },
+      {
+        "label": "Заглушка",
+        "note": "свободным действием отключать чувствительность"
+      }
+    ]
   },
   "folder": "etJvVu2vXLYA2Du4",
   "_id": "ligMq88asMhTBJnu",
