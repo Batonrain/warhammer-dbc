@@ -49,7 +49,7 @@
           "entries": [
             {
               "id": "3a69e2deb43149a5",
-              "kind": "reqPatron",
+              "kind": "reqCapability",
               "skillScope": "plain",
               "skillKey": "",
               "specKey": "",
@@ -62,8 +62,8 @@
               "rating": "",
               "raceKey": "",
               "archetypeName": "",
-              "patronKey": "khorne",
-              "capabilityKey": ""
+              "patronKey": "",
+              "capabilityKey": "mark.khorne"
             }
           ]
         },

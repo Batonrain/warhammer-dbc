@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const SYSTEM = "warhammer-dbc";
 let errors;
@@ -137,7 +138,7 @@ describe("rulesFromItemMechanics: что НЕ должно давать прав
 // capability-заглушками с честной причиной в capabilities.mjs).
 describe("wdbc-u0by: реальные pack-файлы «Преимущество» → reroll", () => {
   const readMechanics = path => {
-    const data = JSON.parse(readFileSync(path, "utf8"));
+    const data = packDocByFileHint(path);
     return data.flags["warhammer-dbc"].mechanics;
   };
   const asItem = (name, mechanics) => ({ id: name, name, flags: { [SYSTEM]: { mechanics } } });
