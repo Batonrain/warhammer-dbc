@@ -36,7 +36,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS } from "../constants/session-rewards.mjs";
-import { buildRewardRows, parseRewardAmount, infamyRoom, infamyGain, INFAMY_PATH }
+import { buildRewardRows, parseRewardAmount, infamyRoom, infamyGain, INFAMY_PATH,
+         sessionXpWithFastLearner }
   from "../rules/session-rewards.mjs";
 import { triggerSessionEnd } from "./game-session.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -270,14 +271,27 @@ export class SessionRewardsApp extends HandlebarsApplicationMixin(ApplicationV2)
       try {
         if (row.xp > 0) {
           const exp = actor.system.experience ?? {};
+          // «Ловит на Лету» (Fast Learner X): «+X% к стартовому опыту и опыту
+          // ЗА СЕССИЮ» (module/rules/character.mjs, system.fastLearnerBonus).
+          // Раньше процент читал только promptStatAdd — а раздача переехала
+          // сюда, и Черта перестала работать на своём главном пути (wdbc-045).
+          // Округление вверх — то же, что в apps/stat-log.mjs, чтобы одна и та
+          // же Черта не давала разные числа из двух окон.
+          const pct  = Number(actor.system?.fastLearnerBonus) || 0;
+          const gain = sessionXpWithFastLearner(actor, row.xp);
           const log = Array.isArray(exp.log) ? foundry.utils.deepClone(exp.log) : [];
-          log.push({ at: Date.now(), amount: row.xp, kind: "session", reason: "Итоги Сессии" });
+          log.push({ at: Date.now(), amount: gain, kind: "session", reason: "Итоги Сессии" });
+          // system.experience.current не пишется: оно производное
+          // (character.mjs — total минус потраченное) и пересчитывается на
+          // каждом prepareDerivedData, так что запись сюда лишь оставляла бы
+          // в базе число, которое тут же перетирается.
           await actor.update({
-            "system.experience.total":   (Number(exp.total) || 0) + row.xp,
-            "system.experience.current": (Number(exp.current) || 0) + row.xp,
-            "system.experience.log":     log
+            "system.experience.total": (Number(exp.total) || 0) + gain,
+            "system.experience.log":   log
           });
-          parts.push(`<b>${row.xp}</b> опыта`);
+          parts.push(gain !== row.xp
+            ? `<b>${gain}</b> опыта (${row.xp} +${pct}% «Ловит на Лету»)`
+            : `<b>${gain}</b> опыта`);
         }
 
         const cor = await this._amount(row.corruption, rolls);

@@ -9,10 +9,11 @@
 
 import "../support/foundry-stub.mjs";
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { minionsPanelContext, minionsOfActor } from "../../module/sheets/tabs/minions-panel.mjs";
 import { applyMinionSlot, minionSlotLabel } from "../../module/apps/minion-talent.mjs";
 import { minionSlotOf } from "../../module/rules/minion-build.mjs";
+import { clearRuleSources, registerRuleSource } from "../../module/rules/sources.mjs";
 
 const talent = (group, tier, id) => ({
   id, type: "talent", name: "Minion of Chaos / Миньон Хаоса",
@@ -122,5 +123,43 @@ describe("покупка Таланта Миньона", () => {
 
     expect(obj.flags["warhammer-dbc"].migratedEffect).toBe(true);
     expect(obj.flags["warhammer-dbc"].minionSlot.group).toBe("human");
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Блок для того, кому он и нужен (wdbc-8t8)
+//
+//  «Контролировать как Миньона без траты слотов Миньонов» — это Инфернальный
+//  Оруженосец, Таланта под такого слугу нет и не будет. Пока блок показывался
+//  только при Таланте или уже привязанном слуге, выходил замкнутый круг: зона
+//  дропа появлялась после привязки, а привязать было нечем.
+// ════════════════════════════════════════════════════════════════════════════
+
+describe("блок МИНЬОНЫ у чемпиона с Даром вместо Таланта", () => {
+  afterEach(() => clearRuleSources());
+
+  /** Актор без Талантов-слотов и без слуг, но с возможностью Дара. */
+  const withGift = cap => {
+    clearRuleSources();
+    registerRuleSource("test", () => [{
+      id: cap, label: cap, when: {}, effects: [{ kind: "grantFlag", target: cap }]
+    }]);
+    return { uuid: "Actor.champion", items: [], system: {} };
+  };
+
+  it("Инфернальный Оруженосец открывает блок и зону дропа", () => {
+    const ctx = minionsPanelContext(withGift("gift.khorne.infernalArmiger"), []);
+    expect(ctx.hasMinionTalent, "перетащить слугу некуда — фича недоступна").toBe(true);
+  });
+
+  it("любой из четырёх Богов — то же самое", () => {
+    for (const god of ["nurgle", "slaanesh", "tzeentch"])
+      expect(minionsPanelContext(withGift(`gift.${god}.infernalArmiger`), []).hasMinionTalent).toBe(true);
+  });
+
+  it("без Таланта, слуг и Дара блока по-прежнему нет", () => {
+    clearRuleSources();
+    registerRuleSource("test", () => []);
+    expect(minionsPanelContext({ uuid: "Actor.plain", items: [], system: {} }, []).hasMinionTalent).toBe(false);
   });
 });

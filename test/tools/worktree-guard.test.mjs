@@ -3,8 +3,8 @@
 // СТОРОЖ МЕСТА ДЛЯ WORKTREE (wdbc-ncm7).
 //
 // 08.09.2026 прошлые сессии заводили git worktree прямо в
-// Data/systems/warhammer-dbc/../ (cwd сессии) вместо
-// C:/Users/Derbius/AppData/Local/Temp/claude/. Foundry сканирует Data/systems,
+// Data/systems/warhammer-dbc/../ (cwd сессии) вместо временной папки ВНЕ
+// репозитория (%TEMP%/claude/ или /tmp/claude/). Foundry сканирует Data/systems,
 // находит там system.json с id "warhammer-dbc" в папке с другим именем и на
 // каждом старте пишет "Invalid system ... detected in directory ...".
 //
