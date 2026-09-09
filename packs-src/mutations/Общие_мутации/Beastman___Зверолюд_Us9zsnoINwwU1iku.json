@@ -131,7 +131,7 @@
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.uKUYswX8k0nK3U5F",
               "sourceName": "Bite / Укус (X)",
               "sourceHasRating": true,
-              "rating": 1,
+              "rating": 2,
               "label": "",
               "when": {
                 "negate": false,
@@ -170,7 +170,7 @@
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.rSU3EzCeVbGZU8mv",
               "sourceName": "Unnatural Strength / Сверхъестественная Сила (X)",
               "sourceHasRating": true,
-              "rating": 1,
+              "rating": 2,
               "label": "",
               "when": {
                 "negate": false,
@@ -183,7 +183,7 @@
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.jY9DymS8AVjRrTsp",
               "sourceName": "Unnatural Toughness / Сверхъестественная Стойкость (X)",
               "sourceHasRating": true,
-              "rating": 1,
+              "rating": 2,
               "label": "",
               "when": {
                 "negate": false,
