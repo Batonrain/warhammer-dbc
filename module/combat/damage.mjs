@@ -188,15 +188,19 @@ const LOCATION_TO_ARMOR = {
  *   { blocked: false, overloaded: false }     — щит не сработал
  *   null                                      — нет активного щита
  */
-async function _rollActiveShield(actor, { skipWarp = false } = {}) {
+async function _rollActiveShield(actor, { skipWarp = false, melee = false } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
-  // (skipWarp) пропускает чародейские (варп-природные) щиты.
+  // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
+  // (wdbc-1rno, combat/turn-state-shield.mjs) даёт щит ТОЛЬКО от стрелковых
+  // атак/взрывов — рукопашное попадание такой щит вообще не рассматривает
+  // (не «не срабатывает», а не участвует в выборе самого мощного вовсе).
   const shieldItem = actor.items.contents
     .filter(i =>
       i.type === "forcefield" &&
       i.system.equipped &&
       i.system.status === "active" &&
-      !(skipWarp && (i.system.shieldNature || "technological") === "warp")
+      !(skipWarp && (i.system.shieldNature || "technological") === "warp") &&
+      !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly"))
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
 
@@ -385,7 +389,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;

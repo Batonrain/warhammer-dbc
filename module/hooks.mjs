@@ -1896,7 +1896,8 @@ function _attachFateContextMenu(message, html) {
     const nextCombatant = combat.combatant;
     const prevId = _lastTurnCombatant.get(combat.id);
     if (prevId && prevId !== nextCombatant?.id) {
-      const prevActor = combat.combatants.get(prevId)?.actor;
+      const prevCombatant = combat.combatants.get(prevId);
+      const prevActor = prevCombatant?.actor;
       if (prevActor) {
         await applyTurnEndStanceEffects(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
@@ -1912,10 +1913,12 @@ function _attachFateContextMenu(message, html) {
         // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
         // следующего Хода, если весь этот Ход ушёл на движение.
         await processJustTheLightTurnEnd(prevActor);
-        // Щит Праздности/Дар Нургла (wdbc-1rno): не перегружающийся щит-
-        // дефлектор 1-77 (1-99), если Ход закончен с непотраченным
-        // полудействием — тот же такт, что и Лишь Свет выше.
-        await processTurnStateShieldsTurnEnd(prevActor);
+        // Щит Праздности/Дар Нургла и Кровопомазанник/Дар Кхорна (wdbc-1rno):
+        // не перегружающийся щит-дефлектор до начала следующего своего Хода —
+        // тот же такт, что и Лишь Свет выше. Кровопомазаннику нужен токен
+        // (геометрия рукопашного контакта, combat/free-attack.mjs), Щиту
+        // Праздности — нет, поэтому передаётся всегда, вторым необязательным.
+        await processTurnStateShieldsTurnEnd(prevActor, prevCombatant.token);
       }
     }
     if (nextCombatant?.actor) {
