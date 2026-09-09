@@ -98,7 +98,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     const fp = await packFingerprintInfo(abs(p.dir));
     const decision = stampAfterPackUnpack(stamp, p.name, fp);
     if (decision.action === "write") {
-      writeStamp(Date.now(), decision.packs);
+      // Время отметки НЕ двигаем (только отпечатки): tools/pack.mjs отсеивает
+      // паки по времени ДО того, как считать отпечатки, — подними его до
+      // «сейчас», и любой ДРУГОЙ пак, который правили в игре раньше, перестанет
+      // быть подозреваемым, а следующая общая сборка снесёт его базу молча.
+      // Свой пак предфильтр всё равно пройдёт (его mtime только что стал
+      // «сейчас»), и совпадение отпечатка снимет подозрение уже честно.
+      writeStamp(stamp?.when ?? stamp ?? Date.now(), decision.packs);
       console.log(`отметка синхронизации обновлена: ${p.name}`);
     } else {
       console.log(`отметка синхронизации НЕ обновлена: ${decision.reason}`);

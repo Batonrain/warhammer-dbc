@@ -86,7 +86,7 @@
                 <span class="wh-craft-lbl">Ассистент (для Талантов)</span>
                 <select name="assistant-actor" class="wh-craft-select">
                   <option value="">— не указан —</option>
-                  {{#each p.assistantChoices as |a|}}<option value="{{a.id}}" {{#if (eq a.id ../p.assistantId)}}selected{{/if}}>{{a.name}}</option>{{/each}}
+                  {{#each p.assistantChoices as |a|}}<option value="{{a.id}}" {{#if (eq a.id p.assistantId)}}selected{{/if}}>{{a.name}}</option>{{/each}}
                 </select>
               </label>
               {{/if}}

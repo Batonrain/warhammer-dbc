@@ -25,6 +25,7 @@
 
 import { hasRuleFlag } from "./flags.mjs";
 import { itemIs }     from "./item-marker.mjs";
+import { isIntegralAttack } from "../combat/equipped-melee.mjs";
 
 /** −20 за пару (сам Талант «Два Оружия»). */
 export const PAIR_PENALTY = -20;
@@ -108,7 +109,8 @@ export function dualWieldActionType(a, b) {
  */
 export function offHandCandidates(actor, main) {
   return [...(actor?.items ?? [])].filter(it =>
-    it?.type === "weapon" && it.id !== main?.id && it.system?.equipped);
+    it?.type === "weapon" && it.id !== main?.id && it.system?.equipped &&
+    !isIntegralAttack(it));
 }
 
 // ════════════════════════════════════════════════════════════════════════════

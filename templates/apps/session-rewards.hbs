@@ -23,7 +23,7 @@
         <label class="wh-sr-lbl">{{c.label}}</label>
         <select class="wh-sr-party" data-cat="{{c.key}}">
           {{#each c.steps as |s|}}
-          <option value="{{s.value}}" {{#if (eq s.value ../c.chosen)}}selected{{/if}}>{{s.label}}</option>
+          <option value="{{s.value}}" {{#if (eq s.value c.chosen)}}selected{{/if}}>{{s.label}}</option>
           {{/each}}
         </select>
       </div>
@@ -52,7 +52,7 @@
             <td>
               <select class="wh-sr-personal" data-actor="{{r.id}}" data-cat="{{c.key}}">
                 {{#each c.steps as |s|}}
-                <option value="{{s.value}}" {{#if (eq s.value (lookup ../../r.personal c.key))}}selected{{/if}}>{{s.label}}</option>
+                <option value="{{s.value}}" {{#if (eq s.value (lookup r.personal c.key))}}selected{{/if}}>{{s.label}}</option>
                 {{/each}}
               </select>
             </td>

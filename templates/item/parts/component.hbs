@@ -191,7 +191,7 @@
         {{else if p.def.ratingOptions}}
         <span class="shipprop-set">
           {{#each p.def.ratingOptions as |o|}}
-          <label class="shipprop-set-opt"><input type="checkbox" class="shipprop-rating-set" data-key="{{../p.key}}" data-field="rating" value="{{o.value}}" {{#if (codeIncludes ../p.rating o.value)}}checked{{/if}}/>{{o.label}}</label>
+          <label class="shipprop-set-opt"><input type="checkbox" class="shipprop-rating-set" data-key="{{p.key}}" data-field="rating" value="{{o.value}}" {{#if (codeIncludes p.rating o.value)}}checked{{/if}}/>{{o.label}}</label>
           {{/each}}
         </span>
         {{else if p.def.rating}}
@@ -202,7 +202,7 @@
         <select class="shipprop-rating-select" data-key="{{p.key}}" data-field="rating2" title="Рейтинг Y">
           <option value="">—</option>
           {{#each p.def.rating2Options as |o|}}
-          <option value="{{o.value}}" {{#if (eq ../p.rating2 o.value)}}selected{{/if}}>{{o.label}}</option>
+          <option value="{{o.value}}" {{#if (eq p.rating2 o.value)}}selected{{/if}}>{{o.label}}</option>
           {{/each}}
         </select>
         {{else if p.def.rating2}}

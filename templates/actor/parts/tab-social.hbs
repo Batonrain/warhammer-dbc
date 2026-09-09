@@ -332,7 +332,7 @@
           <tbody><tr>
             {{#each r.mods as |m|}}
             <td>
-              <select class="social-relation-mod" data-index="{{../r.idx}}" data-skill="{{m.key}}" title="{{m.title}}">
+              <select class="social-relation-mod" data-index="{{r.idx}}" data-skill="{{m.key}}" title="{{m.title}}">
                 {{#each m.options as |o|}}<option value="{{o.value}}" {{#if o.selected}}selected{{/if}}>{{o.label}}</option>{{/each}}
               </select>
             </td>

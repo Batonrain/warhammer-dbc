@@ -147,6 +147,17 @@ describe("что предлагать во вторую руку", () => {
     expect(offHandCandidates(actor, main).map(i => i.id)).toEqual(["off"]);
   });
 
+  // Кулак, Пинок и Удар головой — надетое оружие типа weapon, но в руку их не
+  // берут: character-wizard уже исключает их из жертвы по этому же флагу.
+  // Шапка offHandCandidates обещала фильтр с самого начала, а кода не было.
+  it("врождённые атаки во вторую руку не предлагаются", () => {
+    const main = sword("main");
+    const fist = knife("fist");
+    fist.getFlag = (ns, key) => key === "integralAttack";
+    const actor = { items: [main, fist, knife("off")] };
+    expect(offHandCandidates(actor, main).map(i => i.id)).toEqual(["off"]);
+  });
+
   it("пустой лист не роняет отбор", () => {
     expect(offHandCandidates(null, null)).toEqual([]);
   });
