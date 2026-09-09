@@ -14,6 +14,7 @@ import { postTestCard } from "../helpers/test-card.mjs";
 import { whenEditable, onTab, filePicker } from "./v2-helpers.mjs";
 import { onConvertToHorde } from "../apps/horde-convert.mjs";
 import { onMinionCreate } from "../apps/minion-creator.mjs";
+import { masterWithinVeilRange } from "../rules/armiger-veil-range.mjs";
 
 // Действия листа демона; всё общее — от листа персонажа: ApplicationV2 склеивает
 // DEFAULT_OPTIONS по цепочке классов, поэтому его карта действий здесь в силе.
@@ -206,7 +207,19 @@ export class WarhammerDaemonSheet extends WarhammerCharacterSheet {
 
     const wp = this.actor.system.characteristics?.wp?.total ?? 0;
     const rating = this.actor.system.instabilityRating ?? 1;
-    const ctx = { actor: this.actor, kind: "instability" };
+    // masterActor (wdbc-1rno, шаг F) — резолвится здесь, а не в самом
+    // конвейере (resolve-test.mjs обязан считаться без Foundry): демон-
+    // Оруженосец без Хозяина (masterUuid пуст/не резолвится), а также вне
+    // радиуса Cor м от него (masterWithinVeilRange — «если не отходит
+    // дальше») просто не получает бонус — effectValue() читает ctx.masterActor
+    // как есть, без бонуса это null.
+    const masterUuid = this.actor.system.masterUuid;
+    let masterActor = null;
+    try {
+      const raw = masterUuid ? fromUuidSync(masterUuid) : null;
+      if (raw && masterWithinVeilRange(this.actor, raw)) masterActor = raw;
+    } catch { /* не резолвился — молча без бонуса */ }
+    const ctx = { actor: this.actor, kind: "instability", masterActor };
     // autoMods наравне с галочками (wdbc-kuun/ct65): штрафы состояния тела —
     // такие же правила реестра, просто без выбора. Раньше здесь брались
     // только mods, и Усталость демона в его тесты не доезжала вовсе.

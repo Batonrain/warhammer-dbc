@@ -10,7 +10,8 @@ import {
   mountRitualMods, rollMountProperty, possessionFlags
 } from "../../module/constants/mount-possession.mjs";
 import {
-  possessionOf, isPossessed, spliceBonus, mountRangedPenalty, mountSelectiveMod
+  possessionOf, isPossessed, spliceBonus, mountRangedPenalty, mountSelectiveMod,
+  mountRangedApBonus, mountRamExtraDie, mountAutoTerrain
 } from "../../module/rules/mount.mjs";
 
 /** Скакун с записанным результатом осквернения. */
@@ -84,5 +85,27 @@ describe("что система считает сама", () => {
     expect(isPossessed(plain)).toBe(false);
     expect(possessionOf(plain)).toBe(null);
     expect(spliceBonus(plain)).toBe(0);
+  });
+});
+
+// wdbc-1rno, «Рыцарь Бога»: три фиксированных книжных свойства, которые
+// вселение задаёт НАПРЯМУЮ (module/apps/demon-mount.mjs), а не случайной
+// таблицей выше — своя структура флага не заводится, читаются той же
+// possessionOf()/тем же mountPossession, что и Осквернение.
+describe("Рыцарь Бога — фиксированные свойства (не случайная таблица)", () => {
+  it("apRanged (Рыцарь Кхорна, +8 AP от стрелковых атак) читается как число", () => {
+    expect(mountRangedApBonus(possessed({ apRanged: 8 }))).toBe(8);
+    expect(mountRangedApBonus(possessed({}))).toBe(0);
+    expect(mountRangedApBonus({ type: "character", items: [], system: {} })).toBe(0);
+  });
+
+  it("ramExtraDie (Рыцарь Кхорна, доп. кубик Тарана) читается булевым", () => {
+    expect(mountRamExtraDie(possessed({ ramExtraDie: true }))).toBe(true);
+    expect(mountRamExtraDie(possessed({}))).toBe(false);
+  });
+
+  it("autoTerrain (Рыцарь Нургла, авто-Трудный Ландшафт) читается булевым", () => {
+    expect(mountAutoTerrain(possessed({ autoTerrain: true }))).toBe(true);
+    expect(mountAutoTerrain(possessed({}))).toBe(false);
   });
 });

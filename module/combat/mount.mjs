@@ -41,7 +41,8 @@ import {
   MOUNT_SPEEDS, MOUNT_SKID, MOUNT_TERRAIN_MOD, STAY_MOD, BIKE_REPAIR, SELECTIVE_MODS,
   mountTraits, isBike, riderControl, testMod, turnOptions, skidInfo,
   fallFromSaddle, acrobaticsStayMod, spliceBonus, hasTalent, passengerCount,
-  hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue, BLADES_TIER_USES} from "../rules/mount.mjs";
+  hitTarget, mountSpd, mountSelectiveMod, mountControlSkill, skillValue, BLADES_TIER_USES,
+  mountAutoTerrain} from "../rules/mount.mjs";
 
 const sgn = n => `${n >= 0 ? "+" : ""}${n}`;
 
@@ -421,6 +422,17 @@ export async function showMountTerrainDialog(rider) {
   const ctx = await mountContext(rider);
   if (!ctx) return;
   const { mount, control, traits, bike } = ctx;
+
+  // Рыцарь Нургла (wdbc-1rno): вселение демона-скакуна Паланкина Нургла в
+  // технику/скакуна даёт «автоматически проходить тесты на Трудный Ландшафт»
+  // — книжная гарантия, не число сверху; теста нет вовсе, диалог не открывается.
+  if (mountAutoTerrain(mount)) {
+    return postCard(rider, {
+      icon: rollIcon("burst", "#b0a080"),
+      title: `Трудный Ландшафт верхом — ${esc(rider.name)}`,
+      outcome: `<span class="roll-success">${esc(mount.name)} одержим демоном Рыцаря Нургла — Трудный Ландшафт проходится автоматически, тест не нужен.</span>`
+    });
+  }
 
   // Вездеход снимает верховой штраф −20; Талант «Рысь» снимает сам тест, если
   // скакун прошёл не больше SPD за Ход.

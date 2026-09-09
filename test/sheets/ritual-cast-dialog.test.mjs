@@ -179,6 +179,157 @@ describe("диалог «Провести ритуал»", () => {
     expect(captured.chat[0].content).toContain("−Inf");
   });
 
+  // wdbc-1rno, шаг B/C: у ритуалов с фиксированным демоном (Инфернальный
+  // Оруженосец и т.п.) имя называет не ГМ за столом, а сам предмет
+  // (item.system.demonName) — поле не должно быть пустым текстовым инпутом,
+  // иначе readRitualForm молча стирает R.demonName пустой строкой при отправке
+  // формы, и castNoTestRitual решает, что демона называть некому. fakeForm —
+  // синтетическая заглушка формы (не настоящий DOM), поэтому здесь значение
+  // скрытого поля подставлено явно — ровно то, что живой браузер отдал бы из
+  // атрибута value= сам, без участия игрока; markup-тест ниже проверяет, что
+  // этот value= действительно печатается в разметку.
+  it("демон, фиксированный Даром (item.system.demonName) — доезжает до карточки без правки формы", async () => {
+    const promise = showRitualCastDialog(actor(), item({
+      failureType: "summon", noTest: true, demonName: "Кровопускатель", asMinion: true
+    }));
+    await captured.press("cast", fakeForm({ "#rit-assistants": "0", "#rit-demon-name": "Кровопускатель" }));
+    await promise;
+
+    expect(captured.chat[0].content).toContain("Кровопускатель");
+    expect(captured.chat[0].content).toContain("Привязан Миньоном без слота");
+  });
+
+  it("демон, фиксированный Даром — редактируемого поля имени в разметке нет", () => {
+    showRitualCastDialog(actor(), item({ failureType: "summon", noTest: true, demonName: "Кровопускатель" }));
+    expect(captured.dialog.content).not.toContain("placeholder=\"напр. Кровожад\"");
+    expect(captured.dialog.content).toContain("Кровопускатель");
+  });
+
+  // wdbc-1rno, шаг D: второй Ритуал-предмет Инфернального Оруженосца
+  // (item.system.asWeapon) — вселение в оружие Ритуалиста вместо Миньона.
+  describe("asWeapon — вселение демона в оружие Ритуалиста", () => {
+    // Настоящий actor.items — EmbeddedCollection (Map с array-методами):
+    // диалогу нужен .filter (список выбора), castNoTestRitual — .get(id).
+    const actorWithWeapons = (weapons = []) => {
+      const items = [...weapons];
+      items.get = id => weapons.find(w => w.id === id);
+      return { ...actor(), items };
+    };
+
+    it("список оружия Ритуалиста показан в диалоге", () => {
+      const weapons = [{ id: "w1", type: "weapon", name: "Цепной Клинок" }, { id: "w2", type: "weapon", name: "Болтер" }];
+      showRitualCastDialog(actorWithWeapons(weapons), item({
+        failureType: "summon", noTest: true, asWeapon: true, demonName: "Кровопускатель", demonGod: "khorne"
+      }));
+
+      expect(captured.dialog.content).toContain("id=\"rit-target-weapon\"");
+      expect(captured.dialog.content).toContain("Цепной Клинок");
+      expect(captured.dialog.content).toContain("Болтер");
+    });
+
+    it("на листе нет оружия — подсказка вместо списка", () => {
+      showRitualCastDialog(actorWithWeapons([]), item({
+        failureType: "summon", noTest: true, asWeapon: true, demonName: "Кровопускатель"
+      }));
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-weapon\"");
+      expect(captured.dialog.content).toContain("Оруженосец останется в Истинной Форме");
+    });
+
+    it("не asWeapon — блока «Оружие-сосуд» нет вовсе", () => {
+      showRitualCastDialog(actorWithWeapons([{ id: "w1", type: "weapon", name: "Клинок" }]),
+        item({ failureType: "summon", noTest: true, asMinion: true, demonName: "Кровопускатель" }));
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-weapon\"");
+      expect(captured.dialog.content).not.toContain("Оружие-сосуд");
+    });
+
+    it("выбранное оружие доезжает до карточки, а не Миньон", async () => {
+      const weapons = [{ id: "w1", type: "weapon", name: "Цепной Клинок" }];
+      const promise = showRitualCastDialog(actorWithWeapons(weapons), item({
+        failureType: "summon", noTest: true, asWeapon: true, demonName: "Кровопускатель", demonGod: "khorne"
+      }));
+      // fakeForm — синтетическая заглушка формы (см. пояснение у теста с
+      // фиксированным demonName выше): значения скрытых полей demon-name/god
+      // подставлены явно, ровно как их отдал бы живой DOM.
+      await captured.press("cast", fakeForm({
+        "#rit-assistants": "0", "#rit-target-weapon": "w1",
+        "#rit-demon-name": "Кровопускатель", "#rit-demon-god": "khorne"
+      }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("Оруженосец вселён в оружие");
+      expect(captured.chat[0].content).toContain("Цепной Клинок");
+      expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      expect(captured.chat[0].content).not.toContain("токен размещён");
+    });
+  });
+
+  // wdbc-1rno, «Рыцарь Бога»: третий книжный исход того же noTest-ритуала
+  // (item.system.asMount) — вселение демона в уже имеющегося скакуна/технику
+  // персонажа (actor.system.mount.uuid, панель «ВЕРХОМ»), а не в Миньона/оружие.
+  // showRitualCastDialog становится настоящей async-функцией на этой ветке
+  // (await fromUuid) — нужен один тик (flush), прежде чем читать captured.dialog.
+  describe("asMount — вселение демона в скакуна/технику персонажа", () => {
+    const flush = () => new Promise(r => setTimeout(r, 0));
+    const realFromUuid = globalThis.fromUuid;
+    afterEach(() => { globalThis.fromUuid = realFromUuid; });
+
+    const actorWithMount = (mount) => {
+      const a = actor();
+      a.system.mount = mount ? { uuid: "Actor.mount-1" } : undefined;
+      globalThis.fromUuid = async uuid => (uuid === "Actor.mount-1" ? mount : null);
+      return a;
+    };
+
+    it("текущий скакун с панели «ВЕРХОМ» показан в диалоге", async () => {
+      const promise = showRitualCastDialog(actorWithMount({ uuid: "Actor.mount-1", name: "Джаггернаут" }), item({
+        failureType: "summon", noTest: true, asMount: true, demonName: "Джаггернаут", demonGod: "khorne"
+      }));
+      await flush();
+
+      expect(captured.dialog.content).toContain("id=\"rit-target-mount\"");
+      expect(captured.dialog.content).toContain("Джаггернаут");
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0" }));
+      await promise;
+    });
+
+    it("нет скакуна на панели «ВЕРХОМ» — подсказка вместо строки скакуна", async () => {
+      const promise = showRitualCastDialog(actorWithMount(null), item({
+        failureType: "summon", noTest: true, asMount: true, demonName: "Джаггернаут"
+      }));
+      await flush();
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-mount\"");
+      expect(captured.dialog.content).toContain("Истинной Форме");
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0" }));
+      await promise;
+    });
+
+    it("не asMount — блока «Скакун/техника-сосуд» нет вовсе", async () => {
+      showRitualCastDialog(actor(), item({ failureType: "summon", noTest: true, asMinion: true, demonName: "Кровопускатель" }));
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-mount\"");
+      expect(captured.dialog.content).not.toContain("Скакун/техника-сосуд");
+    });
+
+    it("выбранный скакун доезжает до карточки, а не Миньон/оружие", async () => {
+      const promise = showRitualCastDialog(actorWithMount({ uuid: "Actor.mount-1", name: "Джаггернаут" }), item({
+        failureType: "summon", noTest: true, asMount: true, demonName: "Джаггернаут", demonGod: "khorne"
+      }));
+      await flush();
+      await captured.press("cast", fakeForm({
+        "#rit-assistants": "0", "#rit-target-mount": "Actor.mount-1",
+        "#rit-demon-name": "Джаггернаут", "#rit-demon-god": "khorne"
+      }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("вселён в скакуна/технику");
+      expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      expect(captured.chat[0].content).not.toContain("токен размещён");
+    });
+  });
+
   it("не summon-like тип — блока «Демон» нет и подписи демона в карточке не будет", async () => {
     const promise = showRitualCastDialog(actor(), item({ failureType: "exorcism", testMod: 50 }));
     captured.dice = [1];

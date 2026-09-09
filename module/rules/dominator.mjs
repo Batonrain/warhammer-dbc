@@ -13,7 +13,32 @@
 
 import { itemHasName } from "./predicates.mjs";
 import { hasAbility } from "./ability-by-key.mjs";
+import { ruName } from "../apps/demon-summon.mjs";
 
 export function hasDominator(actor) {
   return hasAbility(actor, "ability.dominator", "Dominator", "talent");
+}
+
+/**
+ * Свой демон-Оруженосец (wdbc-1rno, шаг E: Инфернальный Оруженосец —
+ * «автоматически побеждает во всех тестах Владычества против него»).
+ *
+ * Владычество (RITUAL_TYPES_MAP.dominion) в движке — обычный ритуал-предмет
+ * через общий castRitual, а не отдельный контест с известной целью: демона
+ * называет тем же свободным полем «Демон», что и у призыва (R.demonName).
+ * Единственный способ узнать «это МОЙ Оруженосец» — сверить это имя с
+ * актором-Миньоном, привязанным ИМЕННО ритуалом без теста (armigerBound,
+ * тот же флаг, что у демон-оружия — module/apps/armiger-weapon.mjs), у
+ * которого масterUuid — сам кастующий. Обычный купленный Миньон (без этого
+ * флага) под правило не подпадает — книга говорит конкретно про демона-
+ * патрона, а не про любого слугу вообще.
+ */
+export function isOwnArmiger(actor, demonName) {
+  if (!actor?.uuid || !demonName) return false;
+  const needle = ruName(demonName).trim().toLowerCase();
+  if (!needle) return false;
+  return !!game.actors?.find(a =>
+    a?.system?.masterUuid === actor.uuid &&
+    a?.getFlag?.("warhammer-dbc", "armigerBound") &&
+    (ruName(a.name).toLowerCase() === needle || String(a.name || "").toLowerCase() === needle));
 }

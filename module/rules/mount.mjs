@@ -481,6 +481,39 @@ export function spliceBonus(mount) {
   return wb ? wb * 5 : 0;
 }
 
+/**
+ * Рыцарь Кхорна (wdbc-1rno): вселение демона-скакуна в технику/скакуна даёт
+ * +8 AP от СТРЕЛКОВЫХ атак — фиксированное число книги, не случайная таблица
+ * Осквернения, поэтому отдельное поле mountPossession.apRanged, а не одно из
+ * перечисленных в constants/mount-possession.mjs (та таблица — только для
+ * ГМ-инструмента «Осквернение», rollMountProperty). Читается module/combat/
+ * damage.mjs при !melee, до расчёта поглощения.
+ */
+export function mountRangedApBonus(mount) {
+  return num(possessionOf(mount)?.apRanged);
+}
+
+/**
+ * Рыцарь Кхорна (wdbc-1rno): «доп. кубик урона на рукопашные атаки и урон от
+ * Тарана» одержимого скакуна/машины. Рукопашная часть бьёт по урону
+ * embedded-оружия скакуна при вселении (module/apps/demon-mount.mjs), Таран —
+ * читает этот же флаг (module/combat/vehicle.mjs::_resolveRam).
+ */
+export function mountRamExtraDie(mount) {
+  return !!possessionOf(mount)?.ramExtraDie;
+}
+
+/**
+ * Рыцарь Нургла (wdbc-1rno): вселение демона-скакуна даёт «автоматически
+ * проходить тесты на Трудный Ландшафт» верхом — фиксированная книжная
+ * гарантия, не число. Читается module/combat/mount.mjs::showMountTerrainDialog
+ * ДО открытия диалога с броском: тест не нужен вовсе, не просто «дают
+ * авто-Успех» — книга не даёт даже одного Успеха сверху, только «проходит».
+ */
+export function mountAutoTerrain(mount) {
+  return !!possessionOf(mount)?.autoTerrain;
+}
+
 // ── Руки и действия ───────────────────────────────────────────────────────
 
 /**

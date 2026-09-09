@@ -115,6 +115,44 @@ describe("значение от бонуса Порчи (wdbc-1rno — «½Cor.b
   });
 });
 
+// wdbc-1rno, шаг F: Инфернальный Оруженосец — «Кровопускатель считает Завесу
+// на Cor.b ПЕРСОНАЖА тоньше» — Черта висит на демоне, число берётся с листа
+// его Хозяина (ctx.masterActor), не с самого демона. ctx.masterActor уже
+// резолвлен вызывающим кодом (module/sheets/daemon-sheet.mjs) — тот же приём,
+// что и у ctx.targetActor, здесь никакого fromUuid.
+describe("значение от характеристики ХОЗЯИНА (masterCharBonus, wdbc-1rno шаг F)", () => {
+  const rule = { id: "r", label: "Тоньше Завесы", when: {}, effects: [
+    { kind: "rollBonus", target: "instability", valueFrom: { masterCharBonus: "cor" } }
+  ] };
+
+  it("берётся Cor.b ХОЗЯИНА (masterActor), а не самого демона (actor)", () => {
+    const actor = { system: { corruptionBonus: 1 } };
+    const masterActor = { system: { corruptionBonus: 7 } };
+    expect(rollModsFromRules([rule], { kind: "instability", actor, masterActor })[0].value).toBe(7);
+  });
+
+  it("нет masterActor (демон без Хозяина, или контекст его не резолвил) — ноль, без падения", () => {
+    const actor = { system: { corruptionBonus: 5 } };
+    expect(rollModsFromRules([rule], { kind: "instability", actor })[0].value).toBe(0);
+  });
+
+  it("обычная характеристика Хозяина (не pr/cor) — тот же путь, что selfCharBonus", () => {
+    const ruleInf = { id: "r2", label: "Инф Хозяина", when: {}, effects: [
+      { kind: "rollBonus", target: "instability", valueFrom: { masterCharBonus: "inf" } }
+    ] };
+    const masterActor = { system: { characteristics: { inf: { bonus: 4 } } } };
+    expect(rollModsFromRules([ruleInf], { kind: "instability", masterActor })[0].value).toBe(4);
+  });
+
+  it("masterCharBonus:\"pr\" — Пси-Рейтинг Хозяина, не демона", () => {
+    const rulePr = { id: "r3", label: "PR Хозяина", when: {}, effects: [
+      { kind: "rollBonus", target: "instability", valueFrom: { masterCharBonus: "pr" } }
+    ] };
+    const masterActor = { system: { psyker: { currentRating: 3 } } };
+    expect(rollModsFromRules([rulePr], { kind: "instability", masterActor })[0].value).toBe(3);
+  });
+});
+
 describe("запись Конструктора «Модификатор теста»", () => {
   it("плоское число превращается в rollBonus нужной области", () => {
     const rules = rulesFromItemMechanics([item("Локус Цепей", [testMod()])]);
@@ -163,5 +201,24 @@ describe("запись Конструктора «Модификатор тес�
   it("незаполненная область отбрасывается с жалобой", () => {
     expect(rulesFromItemMechanics([item("И", [testMod({ modScope: "char", rerollChar: "" })])])).toEqual([]);
     expect(errors).toHaveBeenCalled();
+  });
+
+  // wdbc-1rno, шаг F.
+  it("режим «бонус характеристики ХОЗЯИНА» пишет masterCharBonus, а не selfCharBonus", () => {
+    const rules = rulesFromItemMechanics([item("Тоньше Завесы", [
+      testMod({ modValueMode: "masterCharBonus", modCharBonus: "cor" })
+    ])]);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "instability", valueFrom: { masterCharBonus: "cor" } }
+    ]);
+  });
+
+  it("masterCharBonus тоже поддерживает modCharBonusMultiplier", () => {
+    const rules = rulesFromItemMechanics([item("Тоньше Завесы", [
+      testMod({ modValueMode: "masterCharBonus", modCharBonus: "cor", modCharBonusMultiplier: 0.5 })
+    ])]);
+    expect(rules[0].effects).toEqual([
+      { kind: "rollBonus", target: "instability", valueFrom: { masterCharBonus: "cor", multiplier: 0.5 } }
+    ]);
   });
 });

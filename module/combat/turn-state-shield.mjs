@@ -37,12 +37,22 @@
 
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasActionEconomy, effectiveActionPointsMax } from "./action-economy.mjs";
+import { attackedThisTurn } from "../rules/turn-flags.mjs";
+import { enemyContactTokenDocs } from "./free-attack.mjs";
 
 const NS = "warhammer-dbc";
 const ITEM_FLAG = "turnStateShield";
+// «Не перегружающийся» касается ЛЮБОГО попадания у Щита Праздности, но
+// Кровопомазанник (ниже) книга ограничивает «от стрелковых атак/взрывов» —
+// этот флаг на самом выданном предмете читает combat/damage.mjs::
+// _rollActiveShield, чтобы отличить один случай от другого без нового поля
+// схемы forcefield.mjs (общей для десятков непричастных предметов).
+export const RANGED_ONLY_FLAG = "turnStateShieldRangedOnly";
 
 /** Возможность «Щит Праздности» (Дар Нургла, d100 44..47). */
 export const SHIELD_OF_SLOTH = "gift.nurgle.shieldOfSloth";
+/** Возможность «Кровопомазанник» (Дар Кхорна). */
+export const BLOOD_ANOINTED = "gift.khorne.bloodAnointed";
 
 /**
  * Рейтинг Щита Праздности по остатку ОД на конец Хода — null, если не положен.
@@ -61,7 +71,7 @@ export function shieldOfSlothRating(apLeft, apMax) {
 }
 
 /** Выдаёт не перегружающийся чародейский щит-дефлектор с меткой источника. */
-async function grantTurnStateShield(actor, { key, name, rating }) {
+async function grantTurnStateShield(actor, { key, name, rating, rangedOnly = false }) {
   await actor.createEmbeddedDocuments("Item", [{
     name,
     type: "forcefield",
@@ -72,7 +82,7 @@ async function grantTurnStateShield(actor, { key, name, rating }) {
       currentRating: rating, isSpecialRating: false,
       equipped: true, status: "active", quality: "common", availability: 0, weight: 0
     },
-    flags: { [NS]: { [ITEM_FLAG]: key } }
+    flags: { [NS]: { [ITEM_FLAG]: key, ...(rangedOnly ? { [RANGED_ONLY_FLAG]: true } : {}) } }
   }]);
 }
 
@@ -90,19 +100,77 @@ export async function clearTurnStateShields(actor) {
 }
 
 /**
- * Конец Хода актора: Щит Праздности, если Ход закончился с непотраченным
- * полудействием. Старый щит снимается перед выдачей — иначе два подряд
- * ленивых Хода оставили бы на акторе две копии.
+ * Кровопомазанник (Дар Кхорна, wdbc-1rno): «если в свой предыдущий Ход не
+ * стрелял и либо был связан в рукопашной, либо шёл к противнику — щит-
+ * дефлектор 1-44 (1-88 в крови) от стрелковых атак/взрывов».
+ *
+ * «Не стрелял» — ни одно оружие из attackedThisTurn не оказалось нерукопашным
+ * (weaponClass читается с самого предмета, книга не разбирает «стрелял мимо»
+ * отдельно от «стрелял и попал» — сам факт атаки уже снимает щит).
+ *
+ * «Связан в рукопашной» — Базовый/Глубокий контакт с враждебным токеном
+ * личного масштаба на конец Хода (тот же приём измерения, что у Свободной
+ * Атаки, combat/free-attack.mjs::enemyContactTokenDocs) — реальная геометрия
+ * сцены, не декларация.
+ *
+ * НЕ проверяется «шёл в направлении к противнику» — движок не хранит
+ * позицию НАЧАЛА Хода отдельно от текущей, посчитать «стало ближе к кому из
+ * противников» здесь нечем (честная граница, см. capabilities.mjs). Персонаж,
+ * весь Ход шедший к врагу, но не дошедший до контакта, щита не получит —
+ * это реальный, а не гипотетический пробел.
+ *
+ * «Измазан кровью» (эскалация 44→88) тоже не проверяется — состояние
+ * не отслеживается нигде в системе, книга не даёт для него ни триггера,
+ * ни числа для автоопределения.
+ *
+ * @param {Actor} actor
+ * @param {?TokenDocument} tokenDoc  токен actor на сцене, для геометрии контакта
+ * @returns {?number} null — условие не выполнено
  */
-export async function processTurnStateShieldsTurnEnd(actor) {
-  if (!actor || !hasActionEconomy(actor)) return;
-  if (!hasRuleFlag(actor, SHIELD_OF_SLOTH)) return;
-  const rating = shieldOfSlothRating(actor.system?.actionPoints?.value, effectiveActionPointsMax(actor));
-  if (rating == null) return;
-  await clearTurnStateShields(actor);
-  await grantTurnStateShield(actor, {
-    key: SHIELD_OF_SLOTH,
-    name: `Щит Праздности (1-${rating}/−)`,
-    rating
+export function bloodAnointedRating(actor, tokenDoc) {
+  const shotThisTurn = attackedThisTurn(actor).some(id => {
+    const item = actor?.items?.get?.(id);
+    return item && (item.system?.weaponClass || "melee") !== "melee";
   });
+  if (shotThisTurn) return null;
+  const engaged = tokenDoc ? enemyContactTokenDocs(tokenDoc).length > 0 : false;
+  if (!engaged) return null;
+  return 44;
+}
+
+/**
+ * Конец Хода актора: Щит Праздности (непотраченное полудействие) и
+ * Кровопомазанник (не стрелял + связан в рукопашной) — оба через один
+ * примитив, оба «до начала следующего своего Хода». Старый щит снимается
+ * перед выдачей — иначе два подряд Хода, оба удовлетворяющих условию,
+ * оставили бы на акторе две копии.
+ */
+export async function processTurnStateShieldsTurnEnd(actor, tokenDoc = null) {
+  if (!actor || !hasActionEconomy(actor)) return;
+
+  if (hasRuleFlag(actor, SHIELD_OF_SLOTH)) {
+    const rating = shieldOfSlothRating(actor.system?.actionPoints?.value, effectiveActionPointsMax(actor));
+    if (rating != null) {
+      await clearTurnStateShields(actor);
+      await grantTurnStateShield(actor, {
+        key: SHIELD_OF_SLOTH,
+        name: `Щит Праздности (1-${rating}/−)`,
+        rating
+      });
+      return;
+    }
+  }
+
+  if (hasRuleFlag(actor, BLOOD_ANOINTED)) {
+    const rating = bloodAnointedRating(actor, tokenDoc);
+    if (rating != null) {
+      await clearTurnStateShields(actor);
+      await grantTurnStateShield(actor, {
+        key: BLOOD_ANOINTED,
+        name: `Щит Кровопомазанника (1-${rating}/− от стрелковых)`,
+        rating,
+        rangedOnly: true
+      });
+    }
+  }
 }

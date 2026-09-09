@@ -63,6 +63,7 @@ import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
+import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
 import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
@@ -306,6 +307,25 @@ export function registerHooks() {
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
         await _performSprayCancel(actor);
+      });
+    });
+
+    // Дестабилизация формы демона (wdbc-1rno) — кнопка на карточке, видной
+    // только ГМу (module/combat/demon-destabilize.mjs::processDestabilizeTick),
+    // подтверждение перед необратимым удалением актора.
+    html.querySelectorAll(".wh-destabilize-delete-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        if (!game.user.isGM) return;
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Актор уже удалён или не найден."); return; }
+        const ok = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Изгнать демона в Варп" },
+          content: `<p>Удалить актора <b>${esc(actor.name)}</b>? Действие необратимо.</p>`,
+          yes: { label: "Удалить" }, no: { label: "Отмена" }
+        });
+        if (ok) await actor.delete();
       });
     });
 
@@ -1814,7 +1834,7 @@ function _attachFateContextMenu(message, html) {
         await processEyeOfChallengeDeadline(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
   });
-  Hooks.on("updateWorldTime", async () => {
+  Hooks.on("updateWorldTime", async (worldTime, dt) => {
     if (!game.user.isGM) return;
     for (const actor of game.actors ?? []) {
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
@@ -1826,6 +1846,10 @@ function _attachFateContextMenu(message, html) {
       // тест Cor+10 или 1 Порчи, если насыщений было меньше 4 — та же
       // worldTime-плоскость, что и temp-grant выше, просто месячный масштаб.
       await processWarpEaterMonthCheck(actor, game.time.worldTime);
+      // Дестабилизация формы демона (wdbc-1rno, Рыцарь Бога): нужен именно
+      // dt хука (не пересчитанный самим worldTime) — пока Хозяин верхом,
+      // срок сдвигается на РОВНО прошедшее время, а не сбрасывается заново.
+      await processDestabilizeTick(actor, game.time.worldTime, dt);
       // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
       // по той же причине, что временные выдачи Черт выше: они привязаны к
       // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно
@@ -1909,7 +1933,8 @@ function _attachFateContextMenu(message, html) {
     const nextCombatant = combat.combatant;
     const prevId = _lastTurnCombatant.get(combat.id);
     if (prevId && prevId !== nextCombatant?.id) {
-      const prevActor = combat.combatants.get(prevId)?.actor;
+      const prevCombatant = combat.combatants.get(prevId);
+      const prevActor = prevCombatant?.actor;
       if (prevActor) {
         await applyTurnEndStanceEffects(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
@@ -1925,10 +1950,12 @@ function _attachFateContextMenu(message, html) {
         // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
         // следующего Хода, если весь этот Ход ушёл на движение.
         await processJustTheLightTurnEnd(prevActor);
-        // Щит Праздности/Дар Нургла (wdbc-1rno): не перегружающийся щит-
-        // дефлектор 1-77 (1-99), если Ход закончен с непотраченным
-        // полудействием — тот же такт, что и Лишь Свет выше.
-        await processTurnStateShieldsTurnEnd(prevActor);
+        // Щит Праздности/Дар Нургла и Кровопомазанник/Дар Кхорна (wdbc-1rno):
+        // не перегружающийся щит-дефлектор до начала следующего своего Хода —
+        // тот же такт, что и Лишь Свет выше. Кровопомазаннику нужен токен
+        // (геометрия рукопашного контакта, combat/free-attack.mjs), Щиту
+        // Праздности — нет, поэтому передаётся всегда, вторым необязательным.
+        await processTurnStateShieldsTurnEnd(prevActor, prevCombatant.token);
       }
     }
     if (nextCombatant?.actor) {

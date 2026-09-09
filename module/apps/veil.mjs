@@ -30,7 +30,7 @@ import { ritualThreshold, castRitual, psykerMaxBonus } from "./ritual-cast.mjs";
 import { TAROT_DECK, SUITS, SUIT_HINTS, TAROT_SPREADS, TAROT_GUIDE,
          cardByN, cardTitle, cardSuitLine, cardImgSrc } from "../constants/tarot.mjs";
 import { DW_GODS, DW_GODS_MAP, DEMON_INF_FORMULAS, VESSEL_RESONANCE, VESSEL_RESONANCE_GROUPS,
-         DEMON_WEAPON_COMMON, rollDemonProperty, propsFromRow } from "../constants/demon-weapon.mjs";
+         DEMON_WEAPON_COMMON, rollDemonProperty, propsFromRow, addFlatDamage } from "../constants/demon-weapon.mjs";
 import { MOUNT_POSSESSION_COMMON, mountRitualMods, rollMountProperty, possessionFlags }
   from "../constants/mount-possession.mjs";
 import { MOUNT_ACTOR_TYPES, isPossessed } from "../rules/mount.mjs";
@@ -77,20 +77,6 @@ export function _newRitual() {
 // ── Таро: пустые слоты по спреду ──────────────────────────────────────────
 export function _tarotSlots(spreadKey) {
   return (TAROT_SPREADS[spreadKey]?.positions || []).map(() => ({ cardN: null, reversed: false }));
-}
-
-// Прибавить плоский бонус к строке урона: "1d10+4" → +N к хвостовому «+K», иначе допишет.
-function _addFlatDamage(dmg, n) {
-  const s = String(dmg || "").trim();
-  if (!n) return s;
-  const m = s.match(/^(.*?)([+-]\s*\d+)\s*$/);
-  if (m) {
-    const base = m[1].trim();
-    const cur = parseInt(m[2].replace(/\s+/g, ""), 10) || 0;
-    const nv = cur + n;
-    return nv === 0 ? base : `${base}${nv > 0 ? "+" : ""}${nv}`;
-  }
-  return s ? `${s}+${n}` : `+${n}`;
 }
 
 // ── Осквернение (крафт демон-оружия): исходное состояние ──────────────────
@@ -626,7 +612,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     for (const g of generated) for (const p of propsFromRow(g.prop, wb)) addProp(p);
 
     // +W.b к Dmg и Pen (Dmg — правим строку, Pen — число).
-    const newDamage = _addFlatDamage(preDamage, wb);
+    const newDamage = addFlatDamage(preDamage, wb);
     const newPen    = prePen + wb;
 
     const propertiesStore = generated.map(g => ({ god: g.god, godLabel: (DW_GODS_MAP[g.god]?.label || "Неделимый"), name: g.name, text: g.text, roll: g.total }));

@@ -28,7 +28,7 @@ export class RitualData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, NumberField, ArrayField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ArrayField, SchemaField, BooleanField } = foundry.data.fields;
     const num = label => new NumberField({ initial: 0, integer: true, nullable: false, label });
     return {
       description:    new HTMLField({ initial: "", label: "Описание" }),
@@ -40,6 +40,57 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       // failureType — движковый тип (RITUAL_TYPES): summon/dominion/binding/
       // exorcism/curse/circle/gate/blessing/other. Пустое — не заполнено.
       failureType:    new StringField({ initial: "", label: "Тип провала" }),
+
+      // wdbc-1rno: несколько книжных Даров (Инфернальный Оруженосец, Рыцарь
+      // Бога) дают персонажу ГОТОВЫЙ ритуал «простым Х-минутным ритуалом, не
+      // требующим тестов» — не вариация обычного ритуала с низким Порогом, а
+      // отдельный движковый путь: castRitual (apps/ritual-cast.mjs) при
+      // noTest:true пропускает бросок и Порог целиком, считает автоуспехом.
+      // demonName/demonInf — тот же смысл, что у R.demonName/demonInf в
+      // ritual-cast-dialog.mjs (кого призывать, для строки −Inf в Пороге у
+      // обычных ритуалов), но здесь ФИКСИРОВАН на предмете: игрок не вписывает
+      // имя демона вручную (Инфернальный Оруженосец — конкретный демон, не
+      // случайный), applyRitualItem подставляет их в R по умолчанию.
+      // asMinion — призванный демон получает system.masterUuid этого
+      // ритуалиста (module/apps/demon-summon.mjs::spawnDemonOnScene) —
+      // «контролировать как Миньона без траты слотов Миньонов».
+      // asWeapon — та же проза «тем же ритуалом» даёт ВТОРОЙ исход: демон
+      // вселяется в оружие ритуалиста, а не встаёт Миньоном (Инфернальный
+      // Оруженосец — «может тем же ритуалом призвать его в своё оружие»).
+      // Отдельный предмет-ритуал на мутацию (не флаг выбора у одного), т.к.
+      // диалогу нужно по-разному собирать форму (выбор оружия вместо ничего).
+      // demonGod — только для asWeapon/asMount: бог-сосуд для system.
+      // daemonWeapon.god / flags.mountPossession.god и подписи в карточке
+      // (module/apps/armiger-weapon.mjs, module/apps/demon-mount.mjs); у
+      // asMinion не нужен вовсе (Миньон не спрашивает Бога демона нигде).
+      // veilThinner — ТОЛЬКО у Инфернального Оруженосца («считает Завесу на
+      // Cor.b персонажа тоньше», шаг F): грант demon-summon.mjs::
+      // veilThinnerTraitData. У Рыцаря Бога тот же asMinion, но книга не даёт
+      // ему этой строки — поэтому отдельный флаг, не часть asMinion.
+      // asMount — третий исход (wdbc-1rno, «Рыцарь Бога»): «...может тем же
+      // ритуалом вселить [демона-скакуна] в ездовое животное или персональный
+      // транспорт» — не отдельный новый Актор (как asMinion), не предмет на
+      // Ритуалисте (как asWeapon), а фиксированные книжные бонусы поверх УЖЕ
+      // имеющегося скакуна/машины персонажа (module/apps/demon-mount.mjs::
+      // bindDemonMount), выбранного диалогом (обычно — текущий скакун с
+      // панели «ВЕРХОМ», actor.system.mount.uuid). Ритуал без теста — книга
+      // не даёт оснований для случайной таблицы Осквернения (constants/
+      // mount-possession.mjs), бонусы у каждого Бога фиксированы явным числом.
+      // startDestabilize — ТОЛЬКО у Рыцаря Бога (не у Оруженосца, у него книга
+      // о дестабилизации не пишет вовсе): призванный в Истинную Форму демон
+      // получает реальный тикающий срок дестабилизации (module/rules/
+      // demon-destabilize.mjs::destabilizeDurationSeconds, module/combat/
+      // demon-destabilize.mjs::startDestabilizeCountdown), который стоит,
+      // пока Хозяин ездит на нём верхом.
+      noTest:         new BooleanField({ initial: false, label: "Без теста (автоуспех)" }),
+      asMinion:       new BooleanField({ initial: false, label: "Призванный — Миньон без слота" }),
+      asWeapon:       new BooleanField({ initial: false, label: "Призванный — в оружие (Демоническое Оружие)" }),
+      asMount:        new BooleanField({ initial: false, label: "Призванный — в скакуна/технику (одержимость)" }),
+      veilThinner:    new BooleanField({ initial: false, label: "Демон считает Завесу тоньше на Cor.b Хозяина" }),
+      startDestabilize: new BooleanField({ initial: false, label: "Запускает срок дестабилизации демона" }),
+      demonName:      new StringField({ initial: "", label: "Демон (фиксированный)" }),
+      demonInf:       num("Inf демона (фиксированный)"),
+      demonGod:       new StringField({ initial: "", label: "Бог демона (для asWeapon)" }),
       // «Запись (N)» из книжной строки «Требования:» — номер конкретной
       // ВАРИАЦИИ ритуала (стр. «Определение вариации», core.json: «нужно
       // накладывать именно ту же вариацию Записи»), НЕ игровой порог, который

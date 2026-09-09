@@ -1,0 +1,53 @@
+{
+  "name": "Summon the Bound Armiger / Призыв Связанного Оруженосца (Слаанеш)",
+  "type": "ritual",
+  "img": "icons/svg/book.svg",
+  "folder": "p6l9DMaZHahXOvrt",
+  "system": {
+    "description": "<p>Ритуал, которым чемпион Слаанеш вызывает в реальность демона-оруженосца, дарованного ему его Покровителем, — часть Дара Infernal Armiger / Инфернальный Оруженосец, а не отдельно поименованный книгой ритуал.</p>",
+    "notes": "",
+    "source": "Дар Слаанеш (Infernal Armiger / Инфернальный Оруженосец)",
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)",
+    "ritualType": "summon",
+    "record": 0,
+    "assistMin": 0,
+    "assistMax": 0,
+    "procedure": "Простой ритуал в Истинной Форме, не требующий тестов — только 10 минут времени.",
+    "result": "Демон-оруженосец (Демонетка) появляется в реальности рядом с чемпионом и переходит под его контроль как Миньон без траты слотов Миньонов.",
+    "cost": "Нет.",
+    "failureCost": "",
+    "testSkillScope": "",
+    "testSkillKey": "",
+    "testSpecialty": "",
+    "testChar": "int",
+    "testMod": 0,
+    "failureType": "summon",
+    "aversionPerFail": 5,
+    "noTest": true,
+    "asMinion": true,
+    "demonName": "Демонетка",
+    "demonInf": 0,
+    "veilThinner": true
+  },
+  "_id": "ArmigerSlaanQ3c1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {}
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ArmigerSlaanQ3c1"
+}

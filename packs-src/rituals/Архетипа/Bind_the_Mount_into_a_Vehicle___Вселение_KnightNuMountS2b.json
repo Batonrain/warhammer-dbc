@@ -1,0 +1,54 @@
+{
+  "name": "Bind the Mount into a Vehicle / Вселение Скакуна в Технику (Нургл)",
+  "type": "ritual",
+  "img": "icons/svg/book.svg",
+  "folder": "p6l9DMaZHahXOvrt",
+  "system": {
+    "description": "<p>Тот же ритуал призыва демона-скакуна Нургл — второй книжный исход: демон вселяется не в Истинную Форму, а в уже имеющегося у чемпиона скакуна или персональный транспорт (любую машину, которую он пилотирует единолично, вплоть до Рыцаря). Часть Дара Knight of Nurgle / Рыцарь Нургла.</p>",
+    "notes": "",
+    "source": "Дар Нургл (Knight of Nurgle)",
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)",
+    "ritualType": "summon",
+    "record": 0,
+    "assistMin": 0,
+    "assistMax": 0,
+    "procedure": "Простой ритуал, не требующий тестов — только 5 минут времени.",
+    "result": "Паланкин Нургла вселяется в скакуна/технику чемпиона, давая +7 Ран или Структуры и автоматическое прохождение тестов на Трудный Ландшафт.",
+    "cost": "Нет.",
+    "failureCost": "",
+    "testSkillScope": "",
+    "testSkillKey": "",
+    "testSpecialty": "",
+    "testChar": "int",
+    "testMod": 0,
+    "failureType": "summon",
+    "aversionPerFail": 5,
+    "noTest": true,
+    "asMinion": false,
+    "asMount": true,
+    "demonName": "Паланкин Нургла",
+    "demonInf": 0,
+    "demonGod": "nurgle"
+  },
+  "_id": "KnightNuMountS2b",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {}
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!KnightNuMountS2b"
+}
