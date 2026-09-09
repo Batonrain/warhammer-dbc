@@ -39,6 +39,11 @@
 // Red Sun/Красное Солнце — тот же путь: реальный скан сцены (tokensWithinRadius
 // + isTokenInSight, тот же приём, что у Иконы Богохульства) и W+0 тест на
 // каждого видящего нимб в 16м, с реальным впадением в Ярость при провале.
+// 09.09.2026 продолжение: The Hunter/Загонщик — тот же путь: реальный гейт
+// видимого псайкера (module/rules/the-hunter.mjs::nearestVisiblePsyker) и
+// реальный призыв Гончей Плоти (module/combat/the-hunter.mjs::
+// spawnHunterHound — метка+синхронизация инициативы), capability-ключ без
+// цены, цена — на самой записи kind:"script".
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -57,7 +62,6 @@ const ROOT = path.resolve(import.meta.dirname, "../..");
  * даёт ни возможности, ни цены — это правильно, а не поломка.
  */
 const PAID = [
-  { key: "gift.khorne.theHunter" },
   { key: "gift.tzeentch.hiddenThreat" },
   { key: "gift.tzeentch.sundering" },
   { key: "rune.beastmanShaman.boneRuneEtching.slaaneshVariant",

@@ -82,6 +82,7 @@ import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/a
 import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-settings.mjs";
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
+import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { bindDemonMount } from "./module/apps/demon-mount.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
@@ -758,6 +759,14 @@ Hooks.once("ready", () => {
         const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "",
           { asMinion: !!data.asMinion, veilThinner: !!data.veilThinner, startDestabilize: !!data.startDestabilize });
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
+        return;
+      }
+      if (data.action === "summonHunterHound") {
+        // Загонщик/The Hunter (wdbc-1rno, Кхорн) — тот же приём, что
+        // summonDemon выше: Бестиарий скрыт от игрока, спавн+метка+синк
+        // инициативы делает активный ГМ (module/combat/the-hunter.mjs).
+        const res = await spawnHunterHound(String(data.championUuid ?? ""), String(data.itemId ?? ""));
+        if (!res.ok) console.warn("Warhammer DBC | Загонщик:", res.reason);
         return;
       }
       if (data.action === "bindArmigerWeapon") {

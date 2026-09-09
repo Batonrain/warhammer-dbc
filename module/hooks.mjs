@@ -77,6 +77,8 @@ import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { registerBloodFlameKill, clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
+import { huntReturnToWarpButtonHtml } from "./combat/the-hunter.mjs";
+import { isHunterHoundActor } from "./rules/the-hunter.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
@@ -1044,10 +1046,37 @@ export function registerHooks() {
         // оружия/без него (registerBloodFlameKill сама проверяет флаг).
         const weapon = el.dataset.weaponUuid ? await fromUuid(el.dataset.weaponUuid).catch(() => null) : null;
         if (weapon) await registerBloodFlameKill(weapon);
+        // Загонщик/The Hunter (wdbc-1rno): weapon.parent — это АКТОР, чьим
+        // естественным оружием (Когти/Укус/Хвост) нанесён удар. Если это
+        // Гончая Плоти, призванная именно Загонщиком (HUNTER_HOUND_FLAG),
+        // добыча книжно поймана — кнопка возврата в Варп появляется сама,
+        // без отдельной ручной процедуры (см. разбор пробела, 09.09.2026).
+        const killer = weapon?.parent ?? weapon?.actor ?? null;
+        const warpBtn = isHunterHoundActor(killer) ? huntReturnToWarpButtonHtml(killer) : "";
         await postTestCard(actor, {
           icon: rollIcon("skull", "#ff6b6b"), title: `Смерть констатирована — ${esc(actor.name)}`,
-          outcome: `<div class="roll-outcome"><span class="roll-failure">Кардиомонитор остановлен — доступно Спасение/Воскрешение на вкладке Тело.</span></div>`
+          outcome: `<div class="roll-outcome"><span class="roll-failure">Кардиомонитор остановлен — доступно Спасение/Воскрешение на вкладке Тело.</span></div>`,
+          lines: [warpBtn]
         }, { sound: false });
+      });
+    });
+
+    // Загонщик/The Hunter (wdbc-1rno) — «убив добычу, возвращается в Варп»:
+    // кнопка появляется в карточке «Констатировать смерть» сама (см. выше),
+    // удаление — тот же паттерн подтверждения, что у демона-дестабилизации.
+    html.querySelectorAll(".wh-hunter-warp-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        if (!game.user.isGM) return;
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Актор уже удалён или не найден."); return; }
+        const ok = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Гончая возвращается в Варп" },
+          content: `<p>Удалить актора <b>${esc(actor.name)}</b>? Действие необратимо.</p>`,
+          yes: { label: "Удалить" }, no: { label: "Отмена" }
+        });
+        if (ok) await actor.delete();
       });
     });
 

@@ -306,6 +306,14 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // щит-дефлектор 1-44 от стрелковых/взрывов, если не стрелял и связан в
     // рукопашной (combat/turn-state-shield.mjs::bloodAnointedRating).
     // Фактический счёт объединённого дерева (обе серии разом) — 39.
-    expect(stubOnly.length).toBeLessThanOrEqual(39);
+    // 09.09.2026 продолжение: The Hunter/Загонщик (Кхорн) — реализован
+    // kind:"script" (цена 1 Бесчестие + 2 ОД полного действия): гейт
+    // видимого псайкера (module/rules/the-hunter.mjs::nearestVisiblePsyker),
+    // реальный призыв Гончей Плоти с меткой и синхронизацией инициативы
+    // «сразу после чемпиона» (module/combat/the-hunter.mjs::spawnHunterHound),
+    // «возвращается в Варп» — кнопка сама в карточке «Констатировать смерть»,
+    // если убийца именно эта Гончая. reader у gift.khorne.theHunter больше
+    // не пуст → выпадает из stub-only. 39 → 38.
+    expect(stubOnly.length).toBeLessThanOrEqual(38);
   });
 });
