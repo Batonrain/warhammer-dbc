@@ -78,3 +78,45 @@ export function turnStartFlagClears(actor) {
   }
   return upd;
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+//  МЕТКА, КОТОРУЮ НЕ ГАСЯТ, А ПЕРЕКЛАДЫВАЮТ (wdbc-pb60, Мэн-Гош)
+//
+//  Талант «Мэн-Гош» спрашивает не «бил ли ножом В ЭТОМ Ходу», а «бил ли им в
+//  ПРЕДЫДУЩИЙ». Значит одного флага со сроком «до начала своего Хода» мало:
+//  значение нужно на Ход дольше, чем живёт сама метка.
+//
+//  Отсюда пара: `attackedThisTurn` копится по ходу боя (attack.mjs дописывает
+//  туда id оружия каждой атакой), а на старте своего Хода переезжает в
+//  `attackedPrevTurn` и обнуляется. В общий реестр выше `attackedThisTurn` не
+//  входит намеренно: там гасят, а здесь переносят, и слепое гашение стёрло бы
+//  ответ на вопрос Таланта до того, как его успели задать.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Оружие, которым актор атаковал в свой ПРЕДЫДУЩИЙ Ход. */
+export function attackedPrevTurn(actor) {
+  const v = flagValue(actor, "attackedPrevTurn");
+  return Array.isArray(v) ? v.map(String) : [];
+}
+
+/** Оружие, которым актор уже атаковал в ЭТОМ Ходу. */
+export function attackedThisTurn(actor) {
+  const v = flagValue(actor, "attackedThisTurn");
+  return Array.isArray(v) ? v.map(String) : [];
+}
+
+/**
+ * Патч для actor.update: перенести список этого Хода в «прошлый Ход».
+ * Вливается в тот же один update, что и гашение флагов выше.
+ */
+export function turnStartAttackCarryOver(actor) {
+  const now = attackedThisTurn(actor);
+  const prev = attackedPrevTurn(actor);
+  const upd = {};
+  // Ничего не менялось — не пишем: лишний update это раунд-трип в базу и
+  // перерисовка листов у всех клиентов.
+  if (now.length) upd[`flags.${FLAG_SCOPE}.attackedPrevTurn`] = now;
+  else if (prev.length) upd[`flags.${FLAG_SCOPE}.-=attackedPrevTurn`] = null;
+  if (now.length) upd[`flags.${FLAG_SCOPE}.-=attackedThisTurn`] = null;
+  return upd;
+}

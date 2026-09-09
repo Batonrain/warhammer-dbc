@@ -14,6 +14,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { runMechScriptEntry } from "../../module/apps/mechanics.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const DIR = path.resolve(import.meta.dirname, "../../packs-src/mutations/Дары_Богов/Кхорн");
 
@@ -28,7 +29,7 @@ const FILES = {
 };
 
 function loadDoc(key) {
-  return JSON.parse(fs.readFileSync(path.join(DIR, FILES[key]), "utf8"));
+  return packDocByFileHint(path.join(DIR, FILES[key]));
 }
 
 function scriptEntryOf(doc) {
