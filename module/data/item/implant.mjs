@@ -41,6 +41,13 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       installed:     new StringField({ initial: "", label: "Куда установлен" }),
       linkedWeapon:  new StringField({ initial: "", label: "Связанное оружие" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" }),
+      // Редкость (wdbc-ukpu, шаг 1б — решение владельца 07.09.2026): у Best.Q
+      // биоимпланта каждый дополнительный эффект сверх первого поднимает её
+      // на 1 (книга: «Редкость Best.Q-<импланта> повышается на 1 за каждый
+      // дополнительный эффект»). Без этого поля «+1 к Редкости» было нечему
+      // прибавлять — то же поле и тот же общий .availability-select
+      // обработчик (item-sheet.mjs), что уже несёт weapon/armor/ammunition.
+      availability:  new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
       // Варианты бонусного эффекта качества Best.Q (wdbc-ukpu). Книга Аэльдари:
       // Ответвления, «АРСЕНАЛ ДРУКХАРИ»: Best.Q-биоимплант даёт один эффект на
