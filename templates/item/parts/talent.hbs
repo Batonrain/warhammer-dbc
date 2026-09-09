@@ -155,6 +155,14 @@
   {{{eternalWarHtml}}}
 </div>
 {{/if}}
+
+{{!-- Дар «Рука-Пушка»: какое оружие вросло в предплечье (wdbc-spsd). --}}
+{{#if gunArmHtml}}
+<div class="item-section">
+  <div class="item-section-title">РУКА-ПУШКА</div>
+  {{{gunArmHtml}}}
+</div>
+{{/if}}
 {{/if}}
 
 {{!-- Способность --}}
@@ -239,12 +247,5 @@
     <input type="number" name="system.cost" value="{{system.cost}}" min="0" class="wr-input-xs"/>
   </div>
 </div>
-
-{{#if gunArmHtml}}
-<div class="item-section">
-  <div class="item-section-title">РУКА-ПУШКА</div>
-  {{{gunArmHtml}}}
-</div>
-{{/if}}
 
 {{/if}}
