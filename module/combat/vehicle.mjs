@@ -11,7 +11,7 @@ import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE, VEHICLE_BREAKAGES } from "../constants/vehicle.mjs";
 import { DAMAGE_TYPES }    from "../constants/items.mjs";
-import { ablativeDamage }  from "../rules/mount.mjs";
+import { ablativeDamage, mountRamExtraDie }  from "../rules/mount.mjs";
 import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
   from "../rules/dreadnought.mjs";
 import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
@@ -218,9 +218,16 @@ export async function showRamDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-async function _resolveRam(actor, fast, targetBigger) {
+export async function _resolveRam(actor, fast, targetBigger) {
   const frontAP = Number(actor.system.armour?.front) || 0;
-  const roll    = await new Roll(fast ? "1d10 + 1d10" : "1d10").evaluate();
+  // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в эту технику, даёт
+  // «доп. кубик урона... на урон от Тарана» — фиксированный лишний 1d10,
+  // складывается с «+1d10 за скорость ≥1,5 SPD», не заменяет его.
+  const ramBonus = mountRamExtraDie(actor);
+  const dice = ["1d10"];
+  if (fast) dice.push("1d10");
+  if (ramBonus) dice.push("1d10");
+  const roll    = await new Roll(dice.join(" + ")).evaluate();
   const dmg     = frontAP + roll.total;
 
   const applyBtn = `
@@ -249,10 +256,11 @@ async function _resolveRam(actor, fast, targetBigger) {
     : `<div class="roll-threshold" style="font-size:0.82em;">Цель ≤ машины: её отбрасывает на &lt;Урон до поглощения / 10 × (1 + Размер машины − Размер цели)&gt; м; меньшую на 1+ Размер — тест или сбита с ног.</div>`;
 
   // Строка броска здесь своя: это бросок УРОНА («2×1d10: 12»), а не теста.
+  const diceLabel = `${dice.length}×1d10`;
   await postTestCard(actor, {
     icon: rollIcon("burst","#ff8a3a"), title: `Таран — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b>${fast ? " (1d10+1d10)" : " (1d10)"} = <b>${dmg}</b></div>`,
-    lines: [`<div class="roll-dice">${rollIcon("dice","#6fe6ff")}${fast ? "2×1d10" : "1d10"}: <b>${roll.total}</b></div>`],
+    threshold: `<div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b> (${diceLabel}${ramBonus ? " — Рыцарь Кхорна: доп. кубик" : ""}) = <b>${dmg}</b></div>`,
+    lines: [`<div class="roll-dice">${rollIcon("dice","#6fe6ff")}${diceLabel}: <b>${roll.total}</b></div>`],
     sections: [bigNote, defenseBtns, applyBtn]
   }, { rolls: [roll] });
 }

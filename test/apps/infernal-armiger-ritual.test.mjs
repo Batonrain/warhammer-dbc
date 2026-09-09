@@ -55,6 +55,13 @@ describe.each(GODS)("Инфернальный Оруженосец ($god): ри�
     expect(ritual.system.failureType).toBe("summon");
   });
 
+  // wdbc-1rno, шаг F: veilThinner — ТОЛЬКО у Инфернального Оруженосца, не у
+  // любого asMinion (Рыцарь Бога тем же путём НЕ должен получать эту Черту).
+  it("veilThinner включён — демон получит Черту «Тоньше Завесы» при призыве", () => {
+    const ritual = packDocById(RITUALS_DIR, ritualId);
+    expect(ritual.system.veilThinner).toBe(true);
+  });
+
   it("демон реально существует в Бестиарии под тем же именем (findBestiaryActor его найдёт)", () => {
     const bestiaryHint = BESTIARY_BY_GOD[god];
     const daemon = packDocById(`${BESTIARY_DIR}/${bestiaryHint.dir}`, bestiaryHint.id);

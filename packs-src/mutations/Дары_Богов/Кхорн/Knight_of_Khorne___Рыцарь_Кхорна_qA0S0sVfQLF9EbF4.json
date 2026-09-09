@@ -124,6 +124,32 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "knightOfKhorne-ritual",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.KnightKhorneR1ax",
+              "equipSourceName": "Summon the Bound Mount / Призыв Связанного Скакуна (Кхорн)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "knightOfKhorne-ritual-mount",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.KnightKhMountS1a",
+              "equipSourceName": "Bind the Mount into a Vehicle / Вселение Скакуна в Технику (Кхорн)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

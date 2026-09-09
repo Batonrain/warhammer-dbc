@@ -267,6 +267,9 @@ export function applyRitualItem(actor, item, buildSkills) {
     noTest: !!s.noTest,
     asMinion: !!s.asMinion,
     asWeapon: !!s.asWeapon,
+    asMount: !!s.asMount,
+    veilThinner: !!s.veilThinner,
+    startDestabilize: !!s.startDestabilize,
     ...(s.demonName ? { demonName: s.demonName } : {}),
     ...(s.demonInf ? { demonInf: Number(s.demonInf) || 0 } : {}),
     ...(s.demonGod ? { demonGod: s.demonGod } : {})

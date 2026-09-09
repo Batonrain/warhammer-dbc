@@ -10,7 +10,7 @@ import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
-import { ablativeDamage } from "../rules/mount.mjs";
+import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
@@ -461,6 +461,12 @@ export async function applyDamageToActor(actor, damageData) {
         flags: absorption.propFlags?.[armorKey],
         wornAP: absorption.wornOnly?.[armorKey]
       });
+      // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в технику/скакуна,
+      // даёт «+8 AP от стрелковых атак» — ТОЛЬКО против !melee, книга не
+      // распространяет его на рукопашный урон. Число фиксировано Даром на
+      // flags.warhammer-dbc.mountPossession.apRanged (module/apps/demon-mount.mjs),
+      // читается тем же геттером, что и остальные свойства одержимых скакунов.
+      if (!melee) armorAP += mountRangedApBonus(actor);
       // Касание Энтропии (wdbc-1rno, Дар Нургла): безоружная/природная атака
       // разъедает AP места попадания «до нанесения урона» — то есть ЭТОМУ же
       // попаданию, в отличие от Разъедающего (оно применяется после расчёта

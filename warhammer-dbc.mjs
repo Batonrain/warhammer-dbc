@@ -83,6 +83,7 @@ import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-set
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
+import { bindDemonMount } from "./module/apps/demon-mount.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
@@ -755,7 +756,7 @@ Hooks.once("ready", () => {
         // создание Актора/Токена делает активный ГМ. asMinion (wdbc-1rno) —
         // призванный сразу привязывается Миньоном без слота к ритуалисту.
         const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "",
-          { asMinion: !!data.asMinion });
+          { asMinion: !!data.asMinion, veilThinner: !!data.veilThinner, startDestabilize: !!data.startDestabilize });
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }
@@ -765,6 +766,15 @@ Hooks.once("ready", () => {
         // игрока Бестиария, связывание пишет активный ГМ.
         const res = await bindArmigerWeapon(data.weaponUuid, String(data.demonName ?? "").slice(0, 200), data.god || "undivided");
         if (!res.ok) console.warn("Warhammer DBC | Демон-Оруженосец в оружие:", res.reason);
+        return;
+      }
+      if (data.action === "bindDemonMount") {
+        // Демон-скакун Рыцаря Бога в скакуна/технику (module/apps/demon-mount.mjs,
+        // wdbc-1rno) — тот же приём: Inf демона узнаётся из скрытого от игрока
+        // Бестиария, вселение пишет активный ГМ.
+        const riderActor = data.riderUuid ? await fromUuid(data.riderUuid).catch(() => null) : null;
+        const res = await bindDemonMount(data.mountUuid, riderActor, String(data.demonName ?? "").slice(0, 200), data.god || "undivided");
+        if (!res.ok) console.warn("Warhammer DBC | Демон-скакун Рыцаря Бога в скакуна/технику:", res.reason);
         return;
       }
       if (data.action === "vehicleStations") {
