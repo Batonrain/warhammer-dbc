@@ -104,7 +104,7 @@ describe("hudData: гейт кнопки ОГОНЬ/УДАР (wdbc-jpls, тот 
 });
 
 describe("hudData: выбранный профиль решает, рукопашная ли это атака (wdbc-vxs3)", () => {
-  // Выбор профиля в HUD липкий (флаг hudProfile на предмете), и «Удар в упор»
+  // Выбор профиля в HUD липкий (флаг hudProfile на предмете), и «Ударить оружием»
   // у ствола — рукопашная атака: окно атаки открывается рукопашное, S.b идёт в
   // урон, Приёмы стоят ОД. Значит и кнопка, и её гейт обязаны знать о профиле,
   // а не судить по одному классу оружия.
@@ -114,14 +114,14 @@ describe("hudData: выбранный профиль решает, рукопа�
     expect(profileIdx(weaponItem({ weaponClass: "basic" }))).toBeGreaterThanOrEqual(0);
   });
 
-  it("выбран «Удар в упор» — кнопка становится УДАР, а не ОГОНЬ", () => {
+  it("выбран «Ударить оружием» — кнопка становится УДАР, а не ОГОНЬ", () => {
     const weapon = weaponItem({ weaponClass: "basic", hudProfile: profileIdx(weaponItem()) });
     const actor = hudActor({ items: [weapon], actionPoints: { value: 2, max: 2 } });
     const hand = hudData(actor).hands.find(h => h.slot === "main");
     expect(hand.isMelee).toBe(true);
   });
 
-  it("выбран «Удар в упор» при 0 ОД в бою — кнопка заблокирована с причиной", () => {
+  it("выбран «Ударить оружием» при 0 ОД в бою — кнопка заблокирована с причиной", () => {
     globalThis.game.combat = { started: true };
     const weapon = weaponItem({ weaponClass: "basic", hudProfile: profileIdx(weaponItem()) });
     const actor = hudActor({ items: [weapon], actionPoints: { value: 0, max: 2 } });
