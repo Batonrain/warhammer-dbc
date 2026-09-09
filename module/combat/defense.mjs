@@ -18,6 +18,8 @@ import { danceOfFireAdvantage } from "../rules/dodge-advantage.mjs";
 import { oneAgainstAHundredAdvantage } from "../rules/one-against-a-hundred.mjs";
 import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
+import { activeSwarm, consumeSwarmScreamer } from "../rules/ethereal-swarm.mjs";
+import { degreesOfSuccess } from "../constants/craft.mjs";
 import { determinationToFightParryBonus } from "../rules/determination-to-fight.mjs";
 import { canParryPsychic, psychicParryOutcome, hasBladeShield } from "./blade-shield.mjs";
 import { crossblockPair, CROSSBLOCK_SIZE_STEPS, maineGaucheParryReroll }
@@ -652,4 +654,45 @@ export async function _performExtendBodyPart(actor, location) {
     icon: rollIcon("shield"), title: `Сжатие — ${esc(actor.name)}`,
     outcome: `<span class="roll-success">Раскладывает ${location} обратно (полудействие).</span>`
   }, { sound: false });
+}
+
+/**
+ * Ethereal Swarm / Эфирная Стая (wdbc-1rno, Дар Тзинч) — реактивное
+ * поглощение ОДНОГО попадания призрачным Крикуном: тест Cor+0, НЕ через
+ * spendReaction (книга прямо оговаривает «не тратит Реакций», в отличие от
+ * Сжатия). Стая призывается отдельной kind:"script" записью самого предмета
+ * (rules/ethereal-swarm.mjs::summonSwarm) — здесь только чтение остатка и
+ * бросок.
+ */
+export async function _performEtherealSwarm(actor, attackerUuid = "") {
+  const worldTime = game.time.worldTime;
+  const swarm = activeSwarm(actor, worldTime);
+  if (!swarm) {
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content: `
+        <div class="wh-roll-result">
+          <div class="roll-header">${rollIcon("warp")}Эфирная Стая — ${esc(actor.name)}</div>
+          <div class="roll-outcome">
+            <span class="roll-failure">${rollIcon("ban","#ff6b6b")}Стая не призвана, пуста или истёк срок.</span>
+          </div>
+        </div>`
+    }, game.settings.get("core", "rollMode")));
+  }
+
+  const cor = Number(actor.system?.corruption?.value) || 0;
+  const roll = await new Roll("1d100").evaluate();
+  const rv = roll.total;
+  const success = rv <= cor;
+  const dof = Math.abs(degreesOfSuccess(rv, cor));
+  if (success) await consumeSwarmScreamer(actor);
+
+  await postTestCard(actor, {
+    icon: rollIcon("warp"), title: `Эфирная Стая — ${esc(actor.name)}`,
+    threshold: thresholdLine({ label: "Cor", base: cor, threshold: cor }),
+    rv,
+    outcome: success
+      ? `<span class="roll-success">Успех — Крикун (осталось ${swarm.count - 1}) принимает попадание на себя и изгоняется в Варп. Попадание нивелировано.</span>`
+      : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}, Крикун не успевает обрести реальность. Попадание проходит как обычно.</span>`
+  }, { rolls: [roll] });
 }

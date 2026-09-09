@@ -6648,7 +6648,7 @@ export const CAPABILITIES = {
   "gift.tzeentch.etherealSwarm": {
     label: "Полное действие: Inf.b призрачных Крикунов на Cor.b минут; получив попадание (после Избегания, до урона/щитов) — тест Cor+0 как реакция без траты Реакций: Успех переносит попадание на Крикуна, изгоняя его",
     source: "Дар Тзинч (Ethereal Swarm)",
-    reader: ""
+    reader: "module/rules/ethereal-swarm.mjs — состояние стаи; призыв — своя kind:\"script\" запись предмета (2 ОД); поглощение попадания — module/combat/defense.mjs::_performEtherealSwarm, кнопка в attack-card.mjs (только если у цели есть непустой остаток)"
   },
   "gift.tzeentch.falseWitness": {
     label: "Автослышит и распознаёт любую ложь (не честное заблуждение) в радиусе Cor м; +1 Бесчестия увеличивает радиус до Cor км до конца сцены",
@@ -6989,9 +6989,14 @@ export const CAPABILITIES = {
     reader: "packs-src/mutations/Общие_мутации/Warp_Eater___Пожиратель_Варпа_CNYjlSI5fXnnaqYI.json (entry warpEater-feed) + module/rules/warp-eater.mjs, hooks.mjs (updateWorldTime)"
   },
   "mutation.warpTouched": {
-    label: "10 субмутаций дают психологические W-тесты/эффекты (ложь/правдивость/клептомания/вспыльчивость и др.) — база не даёт эффекта без субмутации, не автоматизировано",
+    label: "9 из 10 субмутаций дают психологические W-тесты/эффекты (ложь/правдивость/клептомания/одиночество/брезгливость/недоверие к лечению и др.) + субмутация 1 (рейтинг Страха 3 ко всем врагам в Ярости, не игнорируется) — упирается в тот же пробел, что 4 гейтнутые субмутации Heart of Steel: _executeFearRoll (combat/fear.mjs) не знает категорию ИСТОЧНИКА Страха, только числовой рейтинг. Субмутация 8 (Вспыльчивость) вынесена отдельным ключом — см. mutation.warpTouched.quickToAnger",
     source: "Мутация: Warp-Touched (Общие мутации)",
     reader: ""
+  },
+  "mutation.warpTouched.quickToAnger": {
+    label: "Субмутация 8 (Вспыльчивость): при получении атаки — тест W+0, провал вгоняет в Ярость",
+    source: "Мутация: Warp-Touched, субмутация 8 (Общие мутации)",
+    reader: "module/rules/quick-to-anger.mjs::rollQuickToAngerTest — hasRuleFlag-гейт и вызов в module/combat/damage.mjs::applyDamageToActor (тот же хук, что Pacifism)"
   },
   "mutation.wrappedInChaos": {
     label: "10 субмутаций дают разные эффекты дыма (телепорт в тени, фантомные копии, дымовая завеса, штрафы на попадание и др.) — база не даёт эффекта без субмутации, не автоматизировано",

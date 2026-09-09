@@ -240,7 +240,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
-                          isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
+                          swarm = null, isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
@@ -325,6 +325,12 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           : ""}
         ${poolBtn}
         ${poolRecoilBtn}
+        ${swarm && swarm.count > 0
+          ? `<button class="wh-swarm-btn" type="button" data-attacker-uuid="${attackerUuid}"
+               title="Дар «Эфирная Стая»/Ethereal Swarm: тест Cor+0 (не Реакция) — Успех переносит ЭТО попадание на призрачного Крикуна (осталось ${swarm.count}), изгоняя его.">
+               👻 Эфирная Стая (${swarm.count})
+             </button>`
+          : ""}
       </div>
       ${note && (dodgeMod !== 0 || parryMod !== 0 || cannotDodge)
         ? `<div class="roll-defense-note">${note}</div>` : ""}
@@ -439,6 +445,11 @@ export function attackCard({
   // Остаток пула неизрасходованных Успехов защиты с ДРУГИХ атак этого же
   // противника в этом Ходу (стр. 12) — null, если пула нет или он пуст.
   pool = null,
+  // Ethereal Swarm / Эфирная Стая (wdbc-1rno, rules/ethereal-swarm.mjs) —
+  // {count, expiresAt} у ЦЕЛИ этой атаки, null если Стая не призвана/пуста/
+  // истекла. Считается вызывающей стороной (attack.mjs) — этот модуль,
+  // как и для pool выше, документов Foundry не касается.
+  swarm = null,
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
@@ -622,7 +633,7 @@ export function attackCard({
       // две кнопки сразу — легко сжечь Реакцию там, где платить не надо
       // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
       (hit && !isSprayAuto)
-        ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
+        ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, swarm, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),

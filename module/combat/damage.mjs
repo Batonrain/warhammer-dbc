@@ -17,6 +17,7 @@ import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
+import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
 import { entropyArmourLoss } from "./touch-of-entropy.mjs";
 import { processNurglingInfestation } from "./nurgling-infestation.mjs";
@@ -327,6 +328,12 @@ export async function applyDamageToActor(actor, damageData) {
   // в Ярость читает флаг там же — module/combat/pacifism.mjs.
   if (hasRuleFlag(actor, PACIFISM_CAPABILITY) && !actor.getFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG)) {
     await actor.setFlag("warhammer-dbc", PACIFISM_ATTACKED_FLAG, true);
+  }
+  // Warp-Touched/Затронутый Варпом, субмутация 8 «Вспыльчивость» (wdbc-5inv):
+  // тот же хук, что Pacifism выше — единая точка «персонаж получил атаку».
+  // Уже в Ярости — тест не нужен (rules/quick-to-anger.mjs).
+  if (hasRuleFlag(actor, QUICK_TO_ANGER_CAPABILITY) && !actor.system.inRage) {
+    await rollQuickToAngerTest(actor);
   }
   // Техника: урон сразу в Структуру. Сторона брони пришла из окна атаки
   // (damageData.side), часть машины — из авто-места попадания (damageData.hitLocation).
