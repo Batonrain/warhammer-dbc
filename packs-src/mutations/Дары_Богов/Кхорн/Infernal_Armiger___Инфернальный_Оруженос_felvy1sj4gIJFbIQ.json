@@ -138,6 +138,19 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "infernalArmiger-ritual-weapon",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.ArmigerKhWeapQ1a",
+              "equipSourceName": "Bind the Armiger into a Weapon / Вселение Оруженосца в Оружие (Кхорн)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

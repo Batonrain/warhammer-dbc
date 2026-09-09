@@ -30,6 +30,7 @@ import { checkRequirements, getItemRequirements } from "./mechanics.mjs";
 import { veilIcon } from "../constants/veil-icons.mjs";
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { defaultSpawnDemonFn } from "./demon-summon.mjs";
+import { defaultBindArmigerWeaponFn } from "./armiger-weapon.mjs";
 import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator } from "../rules/dominator.mjs";
@@ -281,7 +282,7 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
  */
 export async function castRitual(R, actor, {
   item = null, confirmUnmet = confirmUnmetRequirements, veilShiftFn = defaultVeilShiftFn,
-  spawnDemonFn = defaultSpawnDemonFn
+  spawnDemonFn = defaultSpawnDemonFn, bindWeaponFn = defaultBindArmigerWeaponFn
 } = {}) {
   if (!actor) { ui.notifications?.warn("Ритуал: не выбран Ритуалист."); return null; }
   const d = ritualThreshold(R, actor, item);
@@ -293,7 +294,7 @@ export async function castRitual(R, actor, {
   // ритуалом, НЕ требующим тестов». Требования к ритуалисту уже проверены/
   // подтверждены выше (ritualThreshold/confirmUnmet) — noTest снимает только
   // сам бросок и Порог, не право персонажа провести ритуал вообще.
-  if (item?.system?.noTest) return castNoTestRitual(R, actor, { spawnDemonFn });
+  if (item?.system?.noTest) return castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn });
   // Общий сбор модификаторов (wdbc-ct65.3): Порог ритуала считался целиком
   // ритуальной арифметикой (ritualThreshold), мимо реестра правил — Усталость
   // Ритуалиста и его Черты в него не попадали.
@@ -371,14 +372,31 @@ export async function castRitual(R, actor, {
  * ритуала называет его отдельно, механикой не считается).
  * @returns {Promise<{success:true, deg:1, threshold:null, roll:null}>}
  */
-async function castNoTestRitual(R, actor, { spawnDemonFn }) {
+async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn }) {
   // Токен демона — та же логика, что в основном пути: только "summon" и
   // только если ритуалист (тут — сам предмет) назвал демона. asMinion
   // (Инфернальный Оруженосец/Рыцарь Бога — «без траты слотов Миньонов»)
   // проставляет system.masterUuid созданному демону.
-  if (R.type === "summon" && R.demonName) await spawnDemonFn(R.demonName, actor.uuid, { asMinion: !!R.asMinion });
+  if (R.type === "summon" && R.demonName && !R.asWeapon) {
+    await spawnDemonFn(R.demonName, actor.uuid, { asMinion: !!R.asMinion });
+  }
+  // asWeapon (шаг D той же серии) — тот же ритуал, второй книжный исход:
+  // демон вселяется в оружие Ритуалиста, а не встаёт Миньоном. R.weaponId —
+  // id предмета-оружия на самом Ритуалисте, выбранного в диалоге проведения
+  // (module/sheets/ritual-cast-dialog.mjs); нет выбранного оружия — вселять
+  // некуда, ритуал всё равно засчитан (проведён), но без демона в вещи.
+  let weaponHtml = "";
+  if (R.type === "summon" && R.demonName && R.asWeapon) {
+    const weapon = R.weaponId ? actor.items?.get(R.weaponId) : null;
+    if (weapon) {
+      const res = await bindWeaponFn(weapon.uuid, R.demonName, R.demonGod);
+      weaponHtml = `<div class="roll-threshold" style="font-size:0.85em;">Оруженосец вселён в оружие: <b>${esc(weapon.name)}</b>${res?.ok === false ? ` — ${esc(res.reason || "не осквернено")}` : ""}</div>`;
+    } else {
+      weaponHtml = `<div class="roll-threshold" style="font-size:0.85em;">Оружие для вселения не выбрано — Оруженосец остаётся в Истинной Форме.</div>`;
+    }
+  }
   const demonHtml = R.demonName
-    ? `<div class="roll-threshold" style="font-size:0.85em;">Демон: <b>${esc(R.demonName)}</b>${R.type === "summon" ? " — токен размещён на сцене." : ""}${R.asMinion ? " Привязан Миньоном без слота." : ""}</div>`
+    ? `<div class="roll-threshold" style="font-size:0.85em;">Демон: <b>${esc(R.demonName)}</b>${R.type === "summon" && !R.asWeapon ? " — токен размещён на сцене." : ""}${R.asMinion && !R.asWeapon ? " Привязан Миньоном без слота." : ""}</div>${weaponHtml}`
     : "";
 
   await postTestCard(actor, testCardHtml({

@@ -266,8 +266,10 @@ export function applyRitualItem(actor, item, buildSkills) {
     // единственный источник это же поле, второго пути их выставить нет).
     noTest: !!s.noTest,
     asMinion: !!s.asMinion,
+    asWeapon: !!s.asWeapon,
     ...(s.demonName ? { demonName: s.demonName } : {}),
-    ...(s.demonInf ? { demonInf: Number(s.demonInf) || 0 } : {})
+    ...(s.demonInf ? { demonInf: Number(s.demonInf) || 0 } : {}),
+    ...(s.demonGod ? { demonGod: s.demonGod } : {})
   };
 }
 

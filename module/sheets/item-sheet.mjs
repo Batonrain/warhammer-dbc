@@ -85,7 +85,7 @@ import { factionRosterContext, originTreeContext,
                                                      from "../apps/faction-roster.mjs";
 import { ritualTestContext }                         from "./tabs/rituals.mjs";
 import { onTab, whenEditable, linesToArray }         from "./v2-helpers.mjs";
-import { relayItemUpdate }                           from "../helpers/utils.mjs";
+import { relayItemUpdate, esc }                       from "../helpers/utils.mjs";
 
 // Метка типа (в PSY это строки, в TECH — объекты {label})
 function _typeLabel(map, key) {
@@ -330,8 +330,15 @@ function onWpropRemove(event, target) {
   return this.item.update({ "system.weaponProps": props });
 }
 
-/** Освободить демона: снять осквернение (стать Руническим Оружием). */
+/**
+ * Освободить демона: снять осквернение (стать Руническим Оружием) — общий
+ * путь. Оружие Инфернального Оруженосца (wdbc-1rno, шаг D) связано БЕЗ
+ * ритуала Осквернения (флаг armigerBound на предмете, module/apps/
+ * armiger-weapon.mjs) — книга для НЕГО пишет прямо: «оружие ВСЕГДА
+ * уничтожается, без шанса стать Руническим», без d10.
+ */
 async function onWmsRelease() {
+  if (this.item.getFlag?.("warhammer-dbc", "armigerBound")) return onArmigerWeaponRelease.call(this);
   const dw = this.item.system.daemonWeapon || {};
   const hasSnap = Array.isArray(dw.preProps);
   const doRelease = async () => {
@@ -373,6 +380,19 @@ async function onWmsRelease() {
     yes: { label: "Освободить" }, no: { label: "Отмена" }
   });
   if (ok) await doRelease();
+}
+
+/** Изгнание демона-Оруженосца из оружия (wdbc-1rno, шаг D) — см. onWmsRelease. */
+async function onArmigerWeaponRelease() {
+  const ok = await foundry.applications.api.DialogV2.confirm({
+    window: { title: "Изгнать демона-Оруженосца" },
+    content: "<p>Оруженосец покидает оружие. Оружие <b>всегда уничтожается</b> — Демоны-Оруженосцы, в отличие от прочих демонов Осквернения, не оставляют Рунического эха.</p>",
+    yes: { label: "Изгнать" }, no: { label: "Отмена" }
+  });
+  if (!ok) return;
+  const name = esc(this.item.name);
+  await this.item.delete();
+  ChatMessage.create({ content: `<div class="wh-poss-card" style="--gc:#b477ff"><div class="wh-poss-card-h">Демон-Оруженосец изгнан</div><div class="wh-poss-card-r"><b>${name}</b> уничтожено вместе с демоном.</div></div>` });
 }
 
 // ── Психосила: доп. профили атаки и вариации броска ──

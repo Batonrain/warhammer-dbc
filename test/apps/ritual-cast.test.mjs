@@ -719,6 +719,63 @@ describe("проведение ритуала (castRitual)", () => {
       expect(res.roll).toBe(1);
       expect(captured.rolls.length).toBe(1);
     });
+
+    // wdbc-1rno, шаг D: тот же ритуал, второй книжный исход — демон вселяется
+    // в оружие Ритуалиста, а не встаёт Миньоном (Инфернальный Оруженосец —
+    // «может тем же ритуалом призвать его в своё оружие»).
+    describe("asWeapon — тот же ритуал вселяет демона в оружие, а не в Миньона", () => {
+      const actorWithWeapon = (weapon) => {
+        const a = actor(); a.uuid = "Actor.act-1";
+        a.items = new Map(weapon ? [["w1", weapon]] : []); // как настоящая EmbeddedCollection — Map, .get() + итерируема
+        return a;
+      };
+
+      it("зовёт bindWeaponFn с uuid выбранного оружия, не зовёт spawnDemonFn", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const weapon = { id: "w1", name: "Цепной Клинок", uuid: "Item.w1" };
+        const spawnCalls = [], bindCalls = [];
+        const spawnDemonFn = async (...args) => spawnCalls.push(args);
+        const bindWeaponFn = async (...args) => { bindCalls.push(args); return { ok: true }; };
+
+        const res = await castRitual(
+          baseR({ type: "summon", demonName: "Кровопускатель", demonGod: "khorne", asWeapon: true, weaponId: "w1" }),
+          actorWithWeapon(weapon), { item, spawnDemonFn, bindWeaponFn });
+
+        expect(res.success).toBe(true);
+        expect(spawnCalls).toEqual([]);
+        expect(bindCalls).toEqual([["Item.w1", "Кровопускатель", "khorne"]]);
+        expect(captured.chat[0].content).toContain("Оруженосец вселён в оружие");
+        expect(captured.chat[0].content).toContain("Цепной Клинок");
+        expect(captured.chat[0].content).not.toContain("токен размещён");
+        expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      });
+
+      it("оружие не выбрано (weaponId не указывает на предмет актора) — ритуал всё равно проведён, демон никуда не вселён", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindCalls = [];
+        const bindWeaponFn = async (...args) => bindCalls.push(args);
+
+        const res = await castRitual(
+          baseR({ type: "summon", demonName: "Кровопускатель", asWeapon: true }),
+          actorWithWeapon(null), { item, bindWeaponFn });
+
+        expect(res.success).toBe(true);
+        expect(bindCalls).toEqual([]);
+        expect(captured.chat[0].content).toContain("не выбрано");
+      });
+
+      it("bindWeaponFn сообщает об отказе (уже демоническое) — причина видна в карточке", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const weapon = { id: "w1", name: "Цепной Клинок", uuid: "Item.w1" };
+        const bindWeaponFn = async () => ({ ok: false, reason: "Это оружие уже демоническое." });
+
+        await castRitual(
+          baseR({ type: "summon", demonName: "Кровопускатель", asWeapon: true, weaponId: "w1" }),
+          actorWithWeapon(weapon), { item, bindWeaponFn });
+
+        expect(captured.chat[0].content).toContain("уже демоническое");
+      });
+    });
   });
 });
 

@@ -205,6 +205,66 @@ describe("диалог «Провести ритуал»", () => {
     expect(captured.dialog.content).toContain("Кровопускатель");
   });
 
+  // wdbc-1rno, шаг D: второй Ритуал-предмет Инфернального Оруженосца
+  // (item.system.asWeapon) — вселение в оружие Ритуалиста вместо Миньона.
+  describe("asWeapon — вселение демона в оружие Ритуалиста", () => {
+    // Настоящий actor.items — EmbeddedCollection (Map с array-методами):
+    // диалогу нужен .filter (список выбора), castNoTestRitual — .get(id).
+    const actorWithWeapons = (weapons = []) => {
+      const items = [...weapons];
+      items.get = id => weapons.find(w => w.id === id);
+      return { ...actor(), items };
+    };
+
+    it("список оружия Ритуалиста показан в диалоге", () => {
+      const weapons = [{ id: "w1", type: "weapon", name: "Цепной Клинок" }, { id: "w2", type: "weapon", name: "Болтер" }];
+      showRitualCastDialog(actorWithWeapons(weapons), item({
+        failureType: "summon", noTest: true, asWeapon: true, demonName: "Кровопускатель", demonGod: "khorne"
+      }));
+
+      expect(captured.dialog.content).toContain("id=\"rit-target-weapon\"");
+      expect(captured.dialog.content).toContain("Цепной Клинок");
+      expect(captured.dialog.content).toContain("Болтер");
+    });
+
+    it("на листе нет оружия — подсказка вместо списка", () => {
+      showRitualCastDialog(actorWithWeapons([]), item({
+        failureType: "summon", noTest: true, asWeapon: true, demonName: "Кровопускатель"
+      }));
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-weapon\"");
+      expect(captured.dialog.content).toContain("Оруженосец останется в Истинной Форме");
+    });
+
+    it("не asWeapon — блока «Оружие-сосуд» нет вовсе", () => {
+      showRitualCastDialog(actorWithWeapons([{ id: "w1", type: "weapon", name: "Клинок" }]),
+        item({ failureType: "summon", noTest: true, asMinion: true, demonName: "Кровопускатель" }));
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-weapon\"");
+      expect(captured.dialog.content).not.toContain("Оружие-сосуд");
+    });
+
+    it("выбранное оружие доезжает до карточки, а не Миньон", async () => {
+      const weapons = [{ id: "w1", type: "weapon", name: "Цепной Клинок" }];
+      const promise = showRitualCastDialog(actorWithWeapons(weapons), item({
+        failureType: "summon", noTest: true, asWeapon: true, demonName: "Кровопускатель", demonGod: "khorne"
+      }));
+      // fakeForm — синтетическая заглушка формы (см. пояснение у теста с
+      // фиксированным demonName выше): значения скрытых полей demon-name/god
+      // подставлены явно, ровно как их отдал бы живой DOM.
+      await captured.press("cast", fakeForm({
+        "#rit-assistants": "0", "#rit-target-weapon": "w1",
+        "#rit-demon-name": "Кровопускатель", "#rit-demon-god": "khorne"
+      }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("Оруженосец вселён в оружие");
+      expect(captured.chat[0].content).toContain("Цепной Клинок");
+      expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      expect(captured.chat[0].content).not.toContain("токен размещён");
+    });
+  });
+
   it("не summon-like тип — блока «Демон» нет и подписи демона в карточке не будет", async () => {
     const promise = showRitualCastDialog(actor(), item({ failureType: "exorcism", testMod: 50 }));
     captured.dice = [1];

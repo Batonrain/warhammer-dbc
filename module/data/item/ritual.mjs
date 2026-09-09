@@ -54,10 +54,20 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       // asMinion — призванный демон получает system.masterUuid этого
       // ритуалиста (module/apps/demon-summon.mjs::spawnDemonOnScene) —
       // «контролировать как Миньона без траты слотов Миньонов».
+      // asWeapon — та же проза «тем же ритуалом» даёт ВТОРОЙ исход: демон
+      // вселяется в оружие ритуалиста, а не встаёт Миньоном (Инфернальный
+      // Оруженосец — «может тем же ритуалом призвать его в своё оружие»).
+      // Отдельный предмет-ритуал на мутацию (не флаг выбора у одного), т.к.
+      // диалогу нужно по-разному собирать форму (выбор оружия вместо ничего).
+      // demonGod — только для asWeapon: бог-сосуд для system.daemonWeapon.god
+      // и подписи в карточке (module/apps/armiger-weapon.mjs); у asMinion не
+      // нужен вовсе (Миньон не спрашивает Бога демона нигде).
       noTest:         new BooleanField({ initial: false, label: "Без теста (автоуспех)" }),
       asMinion:       new BooleanField({ initial: false, label: "Призванный — Миньон без слота" }),
+      asWeapon:       new BooleanField({ initial: false, label: "Призванный — в оружие (Демоническое Оружие)" }),
       demonName:      new StringField({ initial: "", label: "Демон (фиксированный)" }),
       demonInf:       num("Inf демона (фиксированный)"),
+      demonGod:       new StringField({ initial: "", label: "Бог демона (для asWeapon)" }),
       // «Запись (N)» из книжной строки «Требования:» — номер конкретной
       // ВАРИАЦИИ ритуала (стр. «Определение вариации», core.json: «нужно
       // накладывать именно ту же вариацию Записи»), НЕ игровой порог, который

@@ -16,10 +16,14 @@ import { packDocById } from "../support/pack-doc.mjs";
 import { applyRitualItem } from "../../module/constants/rituals.mjs";
 
 const GODS = [
-  { god: "Кхорн",   dir: "packs-src/mutations/Дары_Богов/Кхорн",   mutationId: "felvy1sj4gIJFbIQ", ritualId: "ArmigerKhorneQ1a", demon: "Кровопускатель" },
-  { god: "Нургл",   dir: "packs-src/mutations/Дары_Богов/Нургл",   mutationId: "ai4mBT9bhVwZqx8t", ritualId: "ArmigerNurgleQ2b", demon: "Чумонос" },
-  { god: "Слаанеш", dir: "packs-src/mutations/Дары_Богов/Слаанеш", mutationId: "Ot9gweExln1toPnn", ritualId: "ArmigerSlaanQ3c1", demon: "Демонетка" },
-  { god: "Тзинч",   dir: "packs-src/mutations/Дары_Богов/Тзинч",   mutationId: "dhnszZq38C0nRzNH", ritualId: "ArmigerTzeenQ4d2", demon: "Розовый Ужас" }
+  { god: "Кхорн",   dir: "packs-src/mutations/Дары_Богов/Кхорн",   mutationId: "felvy1sj4gIJFbIQ",
+    ritualId: "ArmigerKhorneQ1a", weaponRitualId: "ArmigerKhWeapQ1a", demon: "Кровопускатель", godKey: "khorne" },
+  { god: "Нургл",   dir: "packs-src/mutations/Дары_Богов/Нургл",   mutationId: "ai4mBT9bhVwZqx8t",
+    ritualId: "ArmigerNurgleQ2b", weaponRitualId: "ArmigerNuWeapQ2b", demon: "Чумонос", godKey: "nurgle" },
+  { god: "Слаанеш", dir: "packs-src/mutations/Дары_Богов/Слаанеш", mutationId: "Ot9gweExln1toPnn",
+    ritualId: "ArmigerSlaanQ3c1", weaponRitualId: "ArmigerSlWeapQ3c", demon: "Демонетка", godKey: "slaanesh" },
+  { god: "Тзинч",   dir: "packs-src/mutations/Дары_Богов/Тзинч",   mutationId: "dhnszZq38C0nRzNH",
+    ritualId: "ArmigerTzeenQ4d2", weaponRitualId: "ArmigerTzWeapQ4d", demon: "Розовый Ужас", godKey: "tzeentch" }
 ];
 
 const RITUALS_DIR = "packs-src/rituals/Архетипа";
@@ -36,7 +40,7 @@ describe.each(GODS)("Инфернальный Оруженосец ($god): ри�
   const entries = mutation.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 
   it("Мутация несёт запись kind:\"equipment\" (direct), ссылающуюся на реальный Ритуал", () => {
-    const entry = entries.find(e => e.kind === "equipment");
+    const entry = entries.find(e => e.kind === "equipment" && e.id === "infernalArmiger-ritual");
     expect(entry, "нет entry kind:equipment у Мутации").toBeTruthy();
     expect(entry.equipMode).toBe("direct");
     expect(entry.equipSourceUuid).toBe(`Compendium.warhammer-dbc.rituals.Item.${ritualId}`);
@@ -66,5 +70,41 @@ describe.each(GODS)("Инфернальный Оруженосец ($god): ри�
     expect(applied.asMinion).toBe(true);
     expect(applied.demonName).toBe(demon);
     expect(applied.type).toBe("summon");
+  });
+});
+
+// wdbc-1rno, шаг D: «...может тем же ритуалом призвать его в своё оружие,
+// превратив его в Демоническое Оружие» — второй Ритуал-предмет на ту же
+// Мутацию (asWeapon вместо asMinion), тот же noTest-путь.
+describe.each(GODS)("Инфернальный Оруженосец ($god): ритуал вселения в оружие", ({ dir, mutationId, weaponRitualId, demon, godKey }) => {
+  const mutation = packDocById(dir, mutationId);
+  const entries = mutation.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
+
+  it("Мутация несёт вторую запись kind:\"equipment\" (direct), ссылающуюся на Ритуал вселения в оружие", () => {
+    const entry = entries.find(e => e.kind === "equipment" && e.id === "infernalArmiger-ritual-weapon");
+    expect(entry, "нет entry infernalArmiger-ritual-weapon у Мутации").toBeTruthy();
+    expect(entry.equipMode).toBe("direct");
+    expect(entry.equipSourceUuid).toBe(`Compendium.warhammer-dbc.rituals.Item.${weaponRitualId}`);
+  });
+
+  it("Ритуал вселения в оружие реально существует: без теста, asWeapon (не asMinion), верный демон и Бог", () => {
+    const ritual = packDocById(RITUALS_DIR, weaponRitualId);
+    expect(ritual.type).toBe("ritual");
+    expect(ritual.system.noTest).toBe(true);
+    expect(ritual.system.asWeapon).toBe(true);
+    expect(ritual.system.asMinion).toBe(false);
+    expect(ritual.system.demonName).toBe(demon);
+    expect(ritual.system.demonGod).toBe(godKey);
+    expect(ritual.system.failureType).toBe("summon");
+  });
+
+  it("applyRitualItem передаёт asWeapon/demonGod дальше в R", () => {
+    const ritual = packDocById(RITUALS_DIR, weaponRitualId);
+    const applied = applyRitualItem(null, { ...ritual, system: ritual.system }, () => []);
+
+    expect(applied.noTest).toBe(true);
+    expect(applied.asWeapon).toBe(true);
+    expect(applied.demonName).toBe(demon);
+    expect(applied.demonGod).toBe(godKey);
   });
 });

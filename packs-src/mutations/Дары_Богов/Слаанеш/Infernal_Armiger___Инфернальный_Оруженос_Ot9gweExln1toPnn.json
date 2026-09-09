@@ -138,6 +138,19 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "infernalArmiger-ritual-weapon",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.ArmigerSlWeapQ3c",
+              "equipSourceName": "Bind the Armiger into a Weapon / Вселение Оруженосца в Оружие (Слаанеш)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

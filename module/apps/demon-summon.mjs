@@ -25,8 +25,12 @@ function ruName(name) {
   return (parts.length > 1 ? parts.at(-1) : name).trim();
 }
 
-/** Точное (без учёта регистра) совпадение по русской или полной подписи. */
-async function findBestiaryActor(name) {
+/**
+ * Точное (без учёта регистра) совпадение по русской или полной подписи.
+ * Экспортирована — тем же поиском пользуется module/apps/armiger-weapon.mjs
+ * (демон-Оруженосец в оружие), не дублируя обход индекса Бестиария.
+ */
+export async function findBestiaryActor(name) {
   const pack = game.packs?.get(BESTIARY_PACK);
   if (!pack) return null;
   const index = await pack.getIndex();
