@@ -26,13 +26,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { LEGIONS } from "../module/constants/legions.mjs";
+import { hasRuleText } from "./rule-text-fields.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const FACTIONS = path.join(ROOT, "packs-src/factions");
-
-/** Поля, где вообще может жить текст правила (перечень из тикета wdbc-i4y2). */
-const TEXT_FIELDS =
-  ["description", "benefit", "effect", "notes", "special", "reminder", "afterEffect"];
 
 /** Русское название карточки отличается от названия в legions.mjs. */
 const ALIASES = { "осквернители": "насильники" };
@@ -100,8 +97,7 @@ export function run({ dry = false } = {}) {
     if (doc?.type !== "faction" || !doc.system) continue;
 
     const ours = OURS.test(String(doc.system.description || "").trim());
-    const hasText = !ours && TEXT_FIELDS.some(k =>
-      String(doc.system[k] || "").replace(/<[^>]+>/g, "").trim());
+    const hasText = !ours && hasRuleText(doc);
 
     const key = norm(russianName(doc.name));
     const rec = idx.get(ALIASES[key] || key);
