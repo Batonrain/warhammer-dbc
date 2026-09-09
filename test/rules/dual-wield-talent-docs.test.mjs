@@ -18,7 +18,8 @@ import { itemHasKey } from "../../module/rules/item-marker.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
 import { CAP_TWO_WEAPON, CAP_AMBIDEXTROUS, CAP_INDEPENDENT_TARGETING }
   from "../../module/rules/dual-wield.mjs";
-import { CAP_CROSSBLOCK, CAP_GUN_GUARD, CAP_POUNDER, CAP_SAVAGE, CAP_MAINE_GAUCHE }
+import { CAP_CROSSBLOCK, CAP_GUN_GUARD, CAP_POUNDER, CAP_SAVAGE, CAP_MAINE_GAUCHE,
+         CAP_ALL_GUNS_BLAZING }
   from "../../module/rules/dual-wield-talents.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
@@ -65,7 +66,8 @@ describe("Таланты ветки за пределами штрафа (wdbc-p
     ["Винтовочная Гарда",  CAP_GUN_GUARD,  "Gun Guard / Винтовочная Гарда"],
     ["Молотильщик",        CAP_POUNDER,    "Pounder / Молотильщик"],
     ["Дикарь",             CAP_SAVAGE,     "Savage / Дикарь"],
-    ["Мэн-Гош",            CAP_MAINE_GAUCHE, "Maine-Gauche / Мэн-Гош"]
+    ["Мэн-Гош",            CAP_MAINE_GAUCHE, "Maine-Gauche / Мэн-Гош"],
+    ["Огонь из Всех Орудий", CAP_ALL_GUNS_BLAZING, "All Guns Blazing / Огонь из Всех Орудий"]
   ])("%s даёт свой ключ ровно одним документом", (_label, key, name) => {
     expect(byKey(key).map(t => t.name)).toEqual([name]);
   });
@@ -78,7 +80,7 @@ describe("реестр возможностей называет читател�
     // следующая ревизия ветки снова примет живой ключ за мёртвый.
     for (const key of [CAP_TWO_WEAPON, CAP_AMBIDEXTROUS, CAP_INDEPENDENT_TARGETING,
                        CAP_CROSSBLOCK, CAP_GUN_GUARD, CAP_POUNDER, CAP_SAVAGE,
-                       CAP_MAINE_GAUCHE]) {
+                       CAP_MAINE_GAUCHE, CAP_ALL_GUNS_BLAZING]) {
       expect(CAPABILITIES[key]?.reader, `${key} без читателя`).toContain("dual-wield");
     }
   });

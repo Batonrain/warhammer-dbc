@@ -23,6 +23,7 @@ import { markRoundCapabilityUsed } from "../../apps/game-session.mjs";
 import { AUTO_HIT_CAPABILITY, FULL_ATTACK_CAPABILITY, readAttackForm } from "./form.mjs";
 import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
          SPEC_LABELS, TARGET_SPREAD_LIMIT_M } from "../../rules/dual-wield.mjs";
+import { allGunsBlazingMod } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 
@@ -292,17 +293,27 @@ export function openAttackDialog(ctx) {
           if (dualOff) {
             const dw = dualWieldMods(actor, item, dualOff);
             const offMelee = attackIsMelee(dualOff.system, {});
+            // Режим огня второй руки (wdbc-pb60, «Огонь из Всех Орудий»): свой
+            // контрол в окне («Режим огня (2-я рука)»), по умолчанию Одиночный
+            // — раньше здесь стояло жёсткое "single" всегда, и условие Таланта
+            // «обе руки бьют очередью» не могло выполниться в принципе.
+            const offRofMode = offMelee ? "melee" : (f.offRofMode || "single");
+            // Модификатор теста Подавления цели — считается ДО броска: обе
+            // атаки пары нужны для условия, а второй карточке они обе уже
+            // известны (f.rofMode — первая рука, offRofMode — вторая).
+            const agbMod = allGunsBlazingMod(actor, f.rofMode, offRofMode);
             await _executeAttackRoll(
               actor, dualOff, offMelee ? "ws" : "bs",
               thresholdOf(f) + dw.offHand,
-              offMelee ? "melee" : "single",
+              offRofMode,
               undefined,
               {
                 attackNote: `Обе руки: вторая рука, пара с «${item.name}» —`
                   + ` ОД уже списаны первой карточкой (${dw.pair} за пару`
                   + (dw.offHand ? `, ${dw.offHand} за неосновную руку` : ", неосновная рука без штрафа")
                   + (dw.reductions.length ? `; убавили: ${dw.reductions.map(r => r.label).join(", ")}` : "")
-                  + ")"
+                  + ")",
+                allGunsBlazingMod: agbMod
               }
             );
           }
@@ -322,6 +333,9 @@ export function openAttackDialog(ctx) {
       const badgesEl        = form.querySelector("#atk-badges");
       const noteEl          = form.querySelector("#atk-gripnote");
       const dualNoteEl      = form.querySelector("#atk-dual-note");
+      const offHandEl       = form.querySelector("#atk-off-hand");
+      const offRofEl        = form.querySelector("#atk-off-rof");
+      const offRofRowEl     = form.querySelector("#atk-off-rof-row");
       const stanceNoteEl    = form.querySelector("#atk-stance-note");
       const baseNoteEl      = form.querySelector("#atk-base-note");
       const maneuverNoteEl  = form.querySelector("#atk-maneuver-note");
@@ -460,6 +474,27 @@ export function openAttackDialog(ctx) {
         form.addEventListener("change", refreshDeathDance);
         form.addEventListener("input",  refreshDeathDance);
         refreshDeathDance();
+      }
+
+      // Режим огня второй руки (wdbc-pb60): список вариантов зависит от того,
+      // КАКОЕ оружие сейчас выбрано в «Обе руки» — у мечей своего режима нет
+      // вовсе, у пистолета/винтовки набор зависит от rof_semi/rof_full именно
+      // ЭТОГО предмета. Опции лежат заранее посчитанными в data-rof каждого
+      // <option> #atk-off-hand (attack-dialog.mjs::offRofOptionsFor) — здесь
+      // только пересборка #atk-off-rof при смене выбора, без похода в актора.
+      const refreshOffRof = () => {
+        if (!offHandEl || !offRofEl) return;
+        let choices = [];
+        try { choices = JSON.parse(offHandEl.selectedOptions[0]?.dataset?.rof || "[]"); }
+        catch { choices = []; }
+        if (offRofRowEl) offRofRowEl.style.display = choices.length ? "" : "none";
+        const prevValue = offRofEl.value;
+        offRofEl.innerHTML = choices.map(o => `<option value="${o.value}">${o.label}</option>`).join("");
+        if (choices.some(o => o.value === prevValue)) offRofEl.value = prevValue;
+      };
+      if (offHandEl) {
+        offHandEl.addEventListener("change", refreshOffRof);
+        refreshOffRof();
       }
 
       // Один слушатель на форму вместо списка селекторов: события всплывают,

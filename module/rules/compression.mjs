@@ -37,14 +37,46 @@ export const COMPRESSIBLE_LOCATIONS = ["Голова", "П. Рука", "Л. Ру
 /** «Конечности» в узком книжном смысле пункта «сжав ВСЕ конечности» — без Головы. */
 const ARM_LEG_LOCATIONS = ["П. Рука", "Л. Рука", "П. Нога", "Л. Нога"];
 
-export function isCompressibleLocation(label) {
-  return COMPRESSIBLE_LOCATIONS.includes(label);
+/**
+ * Метки Избирательной атаки (AIM_LOCATIONS, combat/attack-outcome.mjs,
+ * стр. 35) БЕЗ стороны — там атакующий сам называет часть тела («Рука», не
+ * «Правая Рука»), книга стороны для Избирательной не вводит вовсе (таблица
+ * штрафов стр. 35: Торс/Нога/Рука/Голова/Сочленение/Глаз — без «П.»/«Л.»).
+ * Мутация же («Когда он получает попадание в конечность или голову... может
+ * ... втянуть эту часть тела» — текст мутации не отличает случайное
+ * попадание от Избирательного) хранит втянутые части СО СТОРОНОЙ, как и
+ * HIT_LOCATIONS случайного попадания (wdbc-8dyp).
+ *
+ * Сторона для «Рука»/«Нога» здесь НЕ спрашивается диалогом — проект уже
+ * решил тот же вопрос для брони этого же попадания (combat/damage.mjs,
+ * LOCATION_TO_ARMOR: «Рука» → rightArm, «Нога» → rightLeg, т.е. по
+ * умолчанию правая), это тот же выбор стороны для того же попадания, а не
+ * второй, — здесь используется та же конвенция, чтобы Сжатие не спорило
+ * с тем, какая рука/нога у этого попадания «на самом деле» пострадала бы
+ * от брони, если бы игрок не сжался. «Сочленение / Шея» и «Глаз (Голова)» —
+ * оба фактически попадание в голову (там же, LOCATION_TO_ARMOR: оба → head;
+ * стр. 35: «Попадание в глаз — это попадание в голову»).
+ */
+const UNSIDED_TO_COMPRESSIBLE = {
+  "Рука":              "П. Рука",
+  "Нога":              "П. Нога",
+  "Сочленение / Шея":  "Голова",
+  "Глаз (Голова)":     "Голова"
+};
+
+/** Метка попадания → каноническая метка COMPRESSIBLE_LOCATIONS (см. UNSIDED_TO_COMPRESSIBLE). */
+export function normalizeCompressibleLocation(label) {
+  return UNSIDED_TO_COMPRESSIBLE[label] ?? label;
 }
 
-/** Новый список втянутых частей после добавления одной (без дублей). */
+export function isCompressibleLocation(label) {
+  return COMPRESSIBLE_LOCATIONS.includes(normalizeCompressibleLocation(label));
+}
+
+/** Новый список втянутых частей после добавления одной (без дублей, метка нормализуется). */
 export function retractPart(parts, location) {
   const set = new Set(parts ?? []);
-  if (isCompressibleLocation(location)) set.add(location);
+  if (isCompressibleLocation(location)) set.add(normalizeCompressibleLocation(location));
   return [...set];
 }
 
