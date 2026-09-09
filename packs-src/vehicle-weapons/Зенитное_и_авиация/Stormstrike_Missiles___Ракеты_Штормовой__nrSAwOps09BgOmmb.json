@@ -26,7 +26,12 @@
     "special": "",
     "equipped": false,
     "loadedAmmoId": "",
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "concussive",
+        "rating": 4
+      }
+    ],
     "needsRecharge": false,
     "legacyWeapon": false,
     "sacred": false,

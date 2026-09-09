@@ -23,10 +23,14 @@
     "availability": 2,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Перебрасывает промахи по другим самолётам.",
     "equipped": false,
     "loadedAmmoId": "",
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "imprecise"
+      }
+    ],
     "needsRecharge": false,
     "legacyWeapon": false,
     "sacred": false,

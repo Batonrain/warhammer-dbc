@@ -1,0 +1,37 @@
+{
+  "name": "Red Talons / Красные Когти",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "5VFQG4e4cZyybRoZ",
+  "system": {
+    "key": "red-talons",
+    "parentKey": "iron-hands",
+    "alsoIn": [],
+    "aliases": [
+      "Red Talons"
+    ],
+    "isLore": true,
+    "description": "<p><strong>Геносемя.</strong> Нет мутаций.</p>\n<p><strong>Культура.</strong> «Окровавленные Когти» — Athletics и Tech-Use и Таланты Iron Jaw, Resistance, Never Die, Wrestler, Crushing Blow и Mighty Shot дружественны; Acrobatics и Charm и Таланты Sprint, Blade Reader, Reaper, Precise Blow, Sharpshooter и Mind Killer враждебны. Раз за сцену или бой — переброс любого теста S, T или W.</p>\n<p><strong>Проклятье.</strong> «Презрение к Слабости» — как у Железных Рук; Перфекционизм неизлечим.</p>",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnRedTalons000",
+  "effects": [],
+  "sort": 4086000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnRedTalons000"
+}
