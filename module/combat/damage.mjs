@@ -18,6 +18,8 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
+import { entropyArmourLoss } from "./touch-of-entropy.mjs";
+import { processNurglingInfestation } from "./nurgling-infestation.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
 import { activeAblativeArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
@@ -371,6 +373,7 @@ export async function applyDamageToActor(actor, damageData) {
     melee = false,      // Рукопашная атака — нужно свойству брони Rods (Стержни)
     frontArcHit = false, // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
     corrosiveRating = 0, // Разъедающее (X): −X AP в месте попадания (wdbc-plsf)
+    entropyRating = 0,   // Касание Энтропии: −X AP места попадания ДО поглощения (wdbc-1rno)
     cripplingRating = 0, // Калечащее (X): рана с шипами (wdbc-plsf)
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
@@ -406,6 +409,8 @@ export async function applyDamageToActor(actor, damageData) {
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
   let coverBonus = 0;
+  // Касание Энтропии: сколько AP съедено этим попаданием — для подписи в карточке.
+  let entropyLost = 0;
   // Подпись в карточке: пришёл ли AP от ОБЪЯВЛЕННОГО Отскока или от ручного
   // поля Укрытия на листе — писать «Отскок» про второе было бы враньём.
   let coverFromRecoil = false;
@@ -456,6 +461,23 @@ export async function applyDamageToActor(actor, damageData) {
         flags: absorption.propFlags?.[armorKey],
         wornAP: absorption.wornOnly?.[armorKey]
       });
+      // Касание Энтропии (wdbc-1rno, Дар Нургла): безоружная/природная атака
+      // разъедает AP места попадания «до нанесения урона» — то есть ЭТОМУ же
+      // попаданию, в отличие от Разъедающего (оно применяется после расчёта
+      // поглощения, ниже). Потеря стойкая и копится в тот же накопитель
+      // system.armorCorrosion, который чинит кнопка ремонта: книга говорит
+      // «исправляются сменой ремонта (тест не нужен)» — дословно она.
+      // Остаток рейтинга сверх наличного AP просто пропадает: превращать его
+      // в урон, как делает Разъедающее, книга здесь не разрешает.
+      if (entropyRating > 0) {
+        const apNow = Math.max(0, Number(absorption.armorOnly?.[armorKey]) || 0);
+        entropyLost = entropyArmourLoss(apNow, entropyRating);
+        if (entropyLost > 0) {
+          const existing = Number(system.armorCorrosion?.[armorKey]) || 0;
+          await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + entropyLost });
+          armorAP = Math.max(0, armorAP - entropyLost);
+        }
+      }
       // Защитные Руны (Runes of Protection, wdbc-tejb): +AP этой локации ДО
       // Копья/Пробития — читает WP/бPR актора, сама решает, применяться ли
       // (пропускает, если у брони этой локации нет свойства).
@@ -553,10 +575,19 @@ export async function applyDamageToActor(actor, damageData) {
   // Эффект от атаки — 1 Боли раз за бой, без траты Реакции.
   if (netDamage > 0) await maybeGrantEnjoymentPain(actor);
 
+  // Заражение Нурглингами (wdbc-1rno, Дар Нургла): тот же момент — сколько
+  // слуг вылезло из свежей раны, считается по величине непоглощённого урона.
+  await processNurglingInfestation(actor, netDamage);
+
   // ── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ────────
   // Гейт capability weaponPropertyImmunity.<key> — Мутации/Дары («Пылающее
   // Тело», «Щит Чистоты» и т.п.) дают его через Механику (kind: "capability").
   const propEffectNotes = [];
+  // Касание Энтропии сработала ВЫШЕ, до расчёта поглощения (см. там) — здесь
+  // только подпись, чтобы игрок видел, почему броня вдруг не удержала.
+  if (entropyLost > 0) {
+    propEffectNotes.push(`<div class="dmg-tb-note">🜁 Касание Энтропии: −${entropyLost} AP брони (${hitLocation}) ещё до поглощения</div>`);
+  }
   if (corrosiveRating > 0 && !hasWeaponPropertyImmunity(actor, "corrosive")) {
     propEffectNotes.push(await _applyCorrosive(actor, armorKey, hitLocation, corrosiveRating));
   }

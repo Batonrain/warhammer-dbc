@@ -56,7 +56,10 @@ function fakeActor({ type = "character", flags = {}, uuid = "Actor.stub", name =
 function token({ id, x = 0, y = 0, width = 2, height = 2, disposition = HOSTILE, actor = null, name = id } = {}) {
   const uuid = `Scene.s.Token.${id}`;
   const doc = { id, x, y, width, height, disposition, actor, name, uuid };
-  doc.object = { id, uuid };
+  // setTarget — тот же метод, что у настоящего Token: Foundry v14 убрала
+  // User#updateTokenTargets, и таргет ставится только так (см. combat/aim.mjs).
+  doc.object = { id, uuid, targetedBy: null,
+    setTarget(state, opts = {}) { this.targetedBy = state ? { opts } : null; } };
   return { document: doc };
 }
 
@@ -166,15 +169,18 @@ describe("resolveFreeAttackClick: клик по кнопке в чате", () =>
     globalThis.game.combat = { started: true, round: 1 };
     const reactor = fakeActor({ type: "character", reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 } });
     const moverDoc = token({ id: "m", name: "Беглец" }).document;
-    let targeted = null;
     globalThis.fromUuid = async uuid => (uuid === reactor.uuid ? reactor : (uuid === moverDoc.uuid ? moverDoc : null));
-    globalThis.game.user = { id: "u1", updateTokenTargets: async ids => { targeted = ids; } };
+    globalThis.game.user = { id: "u1" };
 
     await resolveFreeAttackClick(reactor.uuid, moverDoc.uuid);
 
     expect(reactor.system.reactions.value).toBe(0);
     expect(reactor.getFlag("warhammer-dbc", `usageLimits.${FREE_ATTACK_CAPABILITY}`)?.round).toBe(1);
-    expect(targeted).toEqual(["m"]);
+    // Цель назначена через Token#setTarget: на game.user.updateTokenTargets
+    // (метода в v14 нет) клик падал ПОСЛЕ списания Реакции — реагирующий
+    // платил, а цель не выбиралась. Прежняя версия этого теста мокала
+    // несуществующий метод и потому ошибку не видела.
+    expect(moverDoc.object.targetedBy).toEqual({ opts: { user: globalThis.game.user, releaseOthers: true } });
   });
 
   it("нет Реакции — предупреждает и не тратит Раунд", async () => {

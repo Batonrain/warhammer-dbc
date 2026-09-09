@@ -16,7 +16,7 @@ describe("findTechImperative", () => {
   });
 
   it("прочие Техночудеса — null", () => {
-    expect(findTechImperative({ name: "Noospheric Uplink / Ноосферный Аплинк" })).toBeNull();
+    expect(findTechImperative({ name: "Noospheric Uplink / Ноосферное Подключение" })).toBeNull();
   });
 });
 
