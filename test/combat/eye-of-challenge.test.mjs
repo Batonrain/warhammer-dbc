@@ -5,10 +5,7 @@
 
 import "../support/foundry-stub.mjs";
 import { captured } from "../support/foundry-stub.mjs";
-import fs   from "node:fs";
-import path from "node:path";
-
-const root = path.resolve(import.meta.dirname, "../..");
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
@@ -162,8 +159,8 @@ describe("срок Ока Вызова в бою считается Раунда
 
 describe("срок Ока Вызова живёт в одном месте", () => {
   it("скрипты предмета зовут модуль, а не пишут флаг и «+60» руками", () => {
-    const doc = JSON.parse(fs.readFileSync(path.join(root,
-      "packs-src/mutations/Дары_Богов/Кхорн/Eye_of_Challenge___Око_Вызова_bgJDJagGDH4WqPZH.json"), "utf8"));
+    const doc = packDocByFileHint(
+      "packs-src/mutations/Дары_Богов/Кхорн/Eye_of_Challenge___Око_Вызова_bgJDJagGDH4WqPZH.json");
     const code = doc.flags["warhammer-dbc"].mechanics
       .flatMap(g => g.entries).map(e => e.code).filter(Boolean).join("\n");
     expect(code).toContain("startEyeOfChallenge(actor");

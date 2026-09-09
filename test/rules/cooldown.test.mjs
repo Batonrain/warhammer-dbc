@@ -308,11 +308,22 @@ describe("throttleCount / isThrottleCountAvailable / incrementThrottleCount — 
     expect(throttleCount(doc, "flag", "battle")).toBe(0);
   });
 
-  it("без документа/без Combat (round/battle) ничего не пишет", async () => {
-    await expect(incrementThrottleCount(null, "flag", "session", 3)).resolves.toBeUndefined();
+  // Возвращаемое значение — ответ «засчитано ли» (wdbc-3bl): его читает тот,
+  // кто отчитывается игроку. Пожиратель Варпа писал «Насыщение засчитано» и на
+  // пятом за месяц, когда счётчик уже стоял на четырёх.
+  it("без документа/без Combat (round/battle) ничего не пишет и отвечает «не засчитано»", async () => {
+    await expect(incrementThrottleCount(null, "flag", "session", 3)).resolves.toBe(false);
     const doc = docWithFlags();
-    await incrementThrottleCount(doc, "flag", "round", 3);
+    await expect(incrementThrottleCount(doc, "flag", "round", 3)).resolves.toBe(false);
     expect(doc.getFlag("warhammer-dbc", "usageLimits.flag")).toBeUndefined();
+  });
+
+  it("засчитанное использование отвечает true, исчерпанный запас — false", async () => {
+    const doc = docWithFlags();
+    await expect(incrementThrottleCount(doc, "flag", "session", 2)).resolves.toBe(true);
+    await expect(incrementThrottleCount(doc, "flag", "session", 2)).resolves.toBe(true);
+    await expect(incrementThrottleCount(doc, "flag", "session", 2)).resolves.toBe(false);
+    expect(throttleCount(doc, "flag", "session")).toBe(2);
   });
 
   it("метка одной записи не трогает другую", async () => {

@@ -2152,3 +2152,52 @@ requirements.mjs`) — отдельный от «Покровительство 
 `min-height: var(--button-size)` ≈ 28px (`styles/base/common.css`), и любая
 заданная высота ниже него не применяется. По всему проекту так молча теряются
 высоты примерно полусотни кнопок — заведено отдельной задачей.
+
+## Журнал: сессии 08–09.09.2026 (стопка PR #401–#438 и её ревью)
+
+Что появилось в архитектуре — чтобы следующий читатель не искал это по коммитам.
+
+**Четырнадцать новых модулей правил и боя.** `module/rules/`: `session-rewards.mjs`
+(опыт за сессию по книжной таблице), `dual-wield.mjs` и `dual-wield-talents.mjs`
+(атака двумя оружиями и пятнадцать Талантов ветки), `gun-arm.mjs` (какое оружие
+вросло в предплечье), `fleshmetal-regen.mjs`, `breath-of-life.mjs`,
+`unseen-beggar.mjs`, `perfect-host.mjs`, `turn-flags.mjs`, `vulture.mjs`,
+`irradiated.mjs`, `nurgling-infestation.mjs`, `touch-of-entropy.mjs`;
+`module/combat/`: `turn-state-shield.mjs`, `attack-outcome.mjs` (исход попадания
+чистой функцией — там же авто-попадание Распыления), `eye-of-challenge.mjs`.
+
+**Новые поля схем:** `implant.bestQualityEffects` (варианты эффекта Best.Q стали
+данными, wdbc-ukpu), `creature.bookSource` (книга-источник существа, wdbc-7pjs).
+`template.json` не возвращался.
+
+**Оружейная часть порога атаки — одна функция на обе руки**
+(`module/combat/attack-threshold.mjs::weaponThresholdPart`, wdbc-rhr). Вторая
+рука катилась против порога ПЕРВОГО оружия: своя характеристика, Бонус оружия,
+Свойства, Модификации, Качество и Тренировка теперь считаются тем же кодом, что
+и у основного, а обстановка (укрытие, стойка цели, приём, прицеливание) остаётся
+общей на атаку.
+
+**Одна точка записи Очков Бесчестия** — `module/apps/infamy-points.mjs::
+changeActorInfamy`/`actorInfamyPath` (wdbc-0b2): пул у Демон-Принца в
+`system.dp.ip`, у Хаосита в `system.fate.value`, и скрипты предметов писали
+`fate.value` руками. Заодно область видимости `executeItemCode` расширена
+адресно: скриптам паков отданы `changeActorInfamy`/`actorInfamyValue`/
+`actorInfamyMax` и `startEyeOfChallenge`/`clearEyeOfChallenge`/
+`eyeOfChallengeInfo` — до этого срок Ока Вызова и «минута» жили в двух местах
+(wdbc-lhd).
+
+**Сроки, которые в бою не идут по часам** (wdbc-6dk). Боевой Раунд в этой
+системе игровое время НЕ двигает: `CONFIG.time.roundTime` не задан, `worldTime`
+меняют только виджет «Летоисчисление» и авто-течение. Поэтому у Ока Вызова
+теперь два срока сразу — по времени и по Раунду того же боя
+(`deadlineAt` + `combatId`/`deadlineRound`). Это общий образец для любого
+книжного «в течение минуты/часа»: вне боя работает первый, в бою — второй.
+
+**Сторож на блок-параметры шаблонов** — `test/templates/block-param-depth.test.mjs`
+(wdbc-b5f). В Handlebars `../` поднимается по контексту, а не по блок-параметрам,
+поэтому `../c.chosen` внутри вложенного `each` всегда `undefined`. Так молча
+ломались и подсветка выбранного в списках, и `data-key`/`data-index` у кнопок —
+то есть не только вид, но и обработчики.
+
+**Разовые миграции:** `module/migrations/gun-arm-source.mjs` (пометить вросшее
+оружие там, где выбор однозначен, wdbc-vkt).

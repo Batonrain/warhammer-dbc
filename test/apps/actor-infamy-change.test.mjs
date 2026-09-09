@@ -15,6 +15,7 @@ import { describe, it, expect } from "vitest";
 import fs   from "node:fs";
 import path from "node:path";
 import { changeActorInfamy, actorInfamyPath } from "../../module/apps/infamy-points.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
@@ -59,8 +60,8 @@ describe("скрипты предметов видят движок Бесчес
   });
 
   it("«Отец Битвы» пишет пул через движок, а не в fate.value руками", () => {
-    const doc  = JSON.parse(fs.readFileSync(path.join(root,
-      "packs-src/mutations/Дары_Богов/Кхорн/Father_of_Battle___Отец_Битвы_pQ0ypCOCEl4SDqJf.json"), "utf8"));
+    const doc = packDocByFileHint(
+      "packs-src/mutations/Дары_Богов/Кхорн/Father_of_Battle___Отец_Битвы_pQ0ypCOCEl4SDqJf.json");
     const code = doc.flags["warhammer-dbc"].mechanics
       .flatMap(g => g.entries).map(e => e.code).filter(Boolean).join("\n");
     expect(code).toContain("changeActorInfamy(actor, 1)");
