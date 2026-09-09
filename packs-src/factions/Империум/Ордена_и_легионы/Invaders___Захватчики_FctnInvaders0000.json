@@ -1,0 +1,37 @@
+{
+  "name": "Invaders / Захватчики",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "5VFQG4e4cZyybRoZ",
+  "system": {
+    "key": "invaders",
+    "parentKey": "imperial-fists",
+    "alsoIn": [],
+    "aliases": [
+      "Invaders"
+    ],
+    "isLore": true,
+    "description": "<p><strong>Геносемя.</strong> Как у Имперских Кулаков. Прогеноиды — совместимость с «почти-людьми» миров смерти.</p>\n<p><strong>Культура.</strong> «Ксено-Охотники» — Awareness, Tech-Use и Lightning Reflexes, Quick Store, Blade Reader, True Grit, Tracking Aim, Sure Shot дружественны; Charm, Deceive и Hunker Down, Reaper, Dragoon, Storm of Lead, Pity the Weak враждебны. Forbidden Lore (Xenos (Eldar +2))+10, Hatred (Eldar), Unshakeable Will, Mind Killer.</p>\n<p><strong>Проклятье.</strong> «Злой Рок» — проклятье Хрустальных Провидцев Идхарэ: случайные опасности всегда нацеливаются на вас.</p>",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnInvaders0000",
+  "effects": [],
+  "sort": 4085000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnInvaders0000"
+}

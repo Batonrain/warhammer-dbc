@@ -5,7 +5,7 @@
   "folder": "ge02p3qhn0YeWFAZ",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "МЕХАНИЗИРОВАНО 07.09.2026 (wdbc-3jlm): запись «Возможность» (dualWield.core.bladeDancer). Читает module/rules/dual-wield.mjs — штраф парной атаки и «наибольшее действие из двух»; окно атаки показывает галочку «Обе руки» и отдельную строку штрафа в разборе порога. Прежняя заметка «Не смоделировано» относилась ко времени, когда механизма не существовало.",
     "benefit": "Персонаж уменьшает штраф за парные мечи на 10.",
     "tier": 3,
     "requirement": "WS 40, Two Weapon Wielder (Melee)",
@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "bladeDancer1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "bladeDancerE",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "dualWield.core.bladeDancer",
+              "label": "Парный штраф −10 на паре мечей"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

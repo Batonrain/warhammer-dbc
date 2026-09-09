@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Избирательный ужас",
+        "note": "исключить до I.b существ"
+      },
+      {
+        "label": "Усиленная паника",
+        "note": "Fear(3)"
+      },
+      {
+        "label": "Инфразвуковой удар",
+        "note": "всем кроме себя в радиусе 1d5+2 X, Pen 4, Shocking"
+      },
+      {
+        "label": "Аура страха",
+        "note": "пассивно +10 Intimidate, Fear(+1)"
+      }
+    ]
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "APh0sXgv5FNbeEbW",

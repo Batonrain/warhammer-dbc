@@ -109,6 +109,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-sanctified="${wp.sanctified ? 1 : 0}"
       data-power-field="${wp.powerField ? 1 : 0}"
       data-corrosive="${wp.corrosiveRating ?? 0}"
+      data-entropy="${wp.entropyRating ?? 0}"
       data-crippling="${wp.cripplingRating ?? 0}"
       data-piercing="${wp.piercing ? 1 : 0}"
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
@@ -188,6 +189,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-melee="${isMelee ? 1 : 0}"
     data-burst="${burst ? 1 : 0}"
     data-corrosive="${wp.corrosiveRating ?? 0}"
+    data-entropy="${wp.entropyRating ?? 0}"
     data-crippling="${wp.cripplingRating ?? 0}"
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
@@ -393,6 +395,9 @@ function ammoBlock({ name = "", mods = "", magCur = "?", magMax = "?", spent = 0
 export function attackCard({
   actorName = "", weaponName = "", wp = {},
   threshold = 0, rv = 0, modeLine = "", hit = false, deg = 0,
+  // Почему исход не от броска (attack-outcome.mjs::attackHitOutcome):
+  // "spray" — Распыление попадает автоматически, броска на попадание нет.
+  autoHit = "",
   // Отброшенные перебросом кубы: без них потраченный Локус выглядит как
   // «мастер что-то посчитал», а не как использованная возможность.
   rerollDropped = [],
@@ -423,8 +428,13 @@ export function attackCard({
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
+  // Распыление (стр. 168): броска на попадание нет — печатать «Попадание — 1
+  // Успех» на глазах у выпавшего d100 значит врать про то, чего не бросали.
+  const isSprayAuto = autoHit === "spray";
   const outcomeLine = outcomeHtml(hit, hit
-    ? `Попадание — ${deg} ${_degWord(deg)}${hitCountNote}`
+    ? (isSprayAuto
+        ? `Авто-попадание (Распыление) — по всем в конусе${hitCountNote}`
+        : `Попадание — ${deg} ${_degWord(deg)}${hitCountNote}`)
     : `Промах — ${deg} ${_degWord(deg)}`);
 
   // Бонус Силы в рукопашной: Могучее ×2, Сдержанное 0, Обратный хват ½.
@@ -507,13 +517,21 @@ export function attackCard({
     // Место строки Порога здесь занимает статлиния: Порог, Режим и Бросок
     // читаются в ряд, а приписка про отброшенные перебросом кубы висит на
     // ячейке Броска.
-    threshold: statLine([
-      { label: "Порог", value: threshold },
-      { label: "Режим", value: modeLine },
-      { label: "Бросок", value: rv,
-        note: rerollDropped.length
-          ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : "" }
-    ]),
+    threshold: statLine(isSprayAuto
+      // У Распыления Порог и Бросок не участвуют в исходе вовсе — на их месте
+      // то, что для потока и решает: режим и накрытый конус.
+      ? [
+          { label: "Режим", value: modeLine },
+          { label: "Шаблон", value: `конус 30°, ${weaponRange}м` },
+          { label: "Попадание", value: "авто" }
+        ]
+      : [
+          { label: "Порог", value: threshold },
+          { label: "Режим", value: modeLine },
+          { label: "Бросок", value: rv,
+            note: rerollDropped.length
+              ? `<em class="roll-reroll-note"> (переброс, отброшено ${rerollDropped.join(", ")})</em>` : "" }
+        ]),
     critLine,
     outcome: outcomeLine,
     sections: [
@@ -529,6 +547,8 @@ export function attackCard({
       notes.shelter ? `<div class="roll-wprop-note horde-shelter-note">🛡️ ${notes.shelter}</div>` : "",
       // Огрин и человеческое оружие (wdbc-flai): бросок 1d10 после атаки.
       notes.ogrynBreak ? `<div class="roll-wprop-note">${notes.ogrynBreak}</div>` : "",
+      // Клин Распыления (стр. 168): по первому кубику урона, попадания в силе.
+      notes.sprayJam ? `<div class="roll-allout-note">${notes.sprayJam}</div>` : "",
       locShift ? locShiftSection(locShift, actorName) : "",
       gorget ? gorgetSection(gorget) : "",
       notes.aim ? `<div class="roll-aim-note">Прицел: <b>${notes.aim}</b></div>` : "",
@@ -544,6 +564,12 @@ export function attackCard({
       notes.maximal
         ? `<div class="roll-allout-note">Максимальный режим: +1d10 урона, +2 Проб., Взрыв(2), ×2 расход, Перезарядка.</div>` : "",
       notes.off ? `<div class="roll-wprop-note">${notes.off}</div>` : "",
+      // Молотильщик (стр. 62, wdbc-pb60) — напоминание защищающемуся: успешное
+      // Парирование этого удара сжигает его неиспользованные Успехи, а второе
+      // оружие пары приходится парировать отдельным тестом. Сама эта цена
+      // считается за столом (у Парирования нет понятия «оставшиеся Успехи
+      // защиты», которое можно было бы обнулить), поэтому строка, а не расчёт.
+      notes.pounder ? `<div class="roll-wprop-note">${notes.pounder}</div>` : "",
       corNotes,
       band ? `<div class="roll-wprop-note">Дистанция: ${band.label}${band.dice ? ` (+${band.dice}d10 урона)` : ""}${band.dmg ? ` (+${band.dmg} урона)` : ""}${band.pen ? ` (+${band.pen} Проб.)` : ""}</div>` : "",
       wp.devastatingRating ? `<div class="roll-wprop-note">Опустошительное (${wp.devastatingRating}): по Орде +${wp.devastatingRating} урона в Магнитуду</div>` : "",

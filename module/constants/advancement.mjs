@@ -107,13 +107,15 @@ export function resolveCharCat(charKey, charApts, actor) {
   const patron = () => charPatronCat(charKey, actor.system?.patronGod, actor.system?.patronStereotype);
   return mode === "patronage" ? patron() : mixedCat(apt(), patron());
 }
-export function resolveSkillCat(skillKey, specialty, itemApts, charApts, actor) {
+export function resolveSkillCat(skillKey, specialty, itemApts, charApts, actor, entryApts = null) {
   // itemApts остаётся ЗАПАСНЫМ вариантом, а не игнорируется: специализации
   // групповых Навыков считают первую Склонность у самой специализации
   // («Навигация (Варп) — это Воля, а не Интеллект группы»), и вывести её
   // здесь из одного ключа Навыка нечем. Переопределение, если оно есть,
   // сильнее и того, и другого.
-  const apt = () => aptitudeCat(charApts, objectAptitudes(actor, "skill", skillKey, itemApts));
+  // entryApts — своя привязка специализации Группового Навыка (wdbc-fzbu),
+  // сильнее записи актора по ключу группы; см. rules/aptitude-binding.mjs.
+  const apt = () => aptitudeCat(charApts, objectAptitudes(actor, "skill", skillKey, itemApts, entryApts));
   const mode = actor ? effectivePricingMode(actor) : "aptitude";
   if (mode === "aptitude" || !skillKey) return apt();
   const patron = () => skillPatronCat(skillKey, specialty, actor.system?.patronGod);
@@ -138,7 +140,7 @@ export function charCostXP(stepIndex, charKey, charApts, cultCat = null, opts = 
   return CHAR_COST[cat][clampIdx(stepIndex, 4)];
 }
 export function skillCostXP(rankIndex, itemApts, charApts, cultCat = null, opts = {}) {
-  const cat = cultCat || resolveSkillCat(opts.skillKey, opts.specialty, itemApts, charApts, opts.actor);
+  const cat = cultCat || resolveSkillCat(opts.skillKey, opts.specialty, itemApts, charApts, opts.actor, opts.entryApts);
   return SKILL_COST[cat][clampIdx(rankIndex, 3)];
 }
 

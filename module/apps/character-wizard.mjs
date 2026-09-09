@@ -129,6 +129,33 @@ function nextQuality(q) {
   return ITEM_QUALITY_LIST[i + 1];
 }
 
+/**
+ * Что можно пожертвовать за 3 модификации (стр. 24) — «оружие, броня,
+ * кибернетика».
+ *
+ * ДВА ИСКЛЮЧЕНИЯ, и оба про вещи, которые предметами являются, а снаряжением —
+ * нет:
+ *
+ * • Интегральные атаки (Кулак, Пинок, Удар головой — flags.warhammer-dbc.
+ *   integralAttack, wdbc-6ry7): их нельзя реально удалить, preDeleteItem
+ *   блокирует удаление, пока жив источник. Без исключения игрок получал три
+ *   модификации бесплатно, а «пожертвованная» врождённая атака оставалась.
+ *
+ * • Импланты Астартес (category "astartes") — это девятнадцать органов
+ *   геносемени: Оккулоб, Ухо Лимана, Прогеноиды, Чёрный Панцирь и прочие.
+ *   Они не покупаются и не снимаются, это части тела космодесантника.
+ *   Предлагать сдать Прогеноидные Железы в обмен на прицел к болтеру —
+ *   бессмыслица, а список из-за них раздувался на два десятка строк
+ *   (жалоба владельца 07.09.2026). Остальная кибернетика и биоимпланты
+ *   остаются: они как раз покупаются за Редкость и жертвуются законно.
+ */
+export function sacrificeCandidates(items) {
+  return [...(items ?? [])].filter(it =>
+    ["weapon", "armor", "cybernetic", "implant"].includes(it?.type)
+    && !it.getFlag?.("warhammer-dbc", "integralAttack")
+    && it.system?.category !== "astartes");
+}
+
 export const WIZARD_STEPS = [
   { id: "origin",          label: "Происхождение" },
   { id: "characteristics", label: "Характеристики" },
@@ -813,7 +840,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * Хвост прежнего _confirmArchetype: Черта архетипа, импланты, флаги
-   * психайкера/техножреца, Таланты-развилки (уже выбраны прямо в форме шага
+   * псайкера/техножреца, Таланты-развилки (уже выбраны прямо в форме шага
    * через talentPicks — здесь только собираем и создаём предметы, без
    * диалога), Навыки культуры легиона, бросок стартовых Ран по формуле
    * архетипа (один раз, снимок _wasEmpty.wounds с Этапа 1).
@@ -1842,13 +1869,9 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async _sacrificeEquip() {
     if (this._confirmingEquipShop) return;
-    // Интегральные атаки (Кулак/Пинок/Удар головой и т.п., flags.warhammer-
-    // dbc.integralAttack) исключены из кандидатов (wdbc-6ry7): их нельзя
-    // реально удалить (preDeleteItem в warhammer-dbc.mjs блокирует, пока жив
-    // источник) — без исключения игрок получал 3 модификации бесплатно,
-    // а «пожертвованная» врождённая атака оставалась на месте.
-    const candidates = this.actor.items.filter(it =>
-      ["weapon", "armor", "cybernetic", "implant"].includes(it.type) && !it.getFlag?.("warhammer-dbc", "integralAttack"));
+    // Отбор кандидатов и обе причины исключений — в sacrificeCandidates
+    // (чистая функция наверху файла, проверяется тестом).
+    const candidates = sacrificeCandidates(this.actor.items);
     if (!candidates.length) { ui.notifications.warn("На листе нет оружия/брони/кибернетики для жертвы."); return; }
     this._confirmingEquipShop = true;
     this.render(false);
@@ -1888,7 +1911,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const result = await foundry.applications.api.DialogV2.wait({
       window: { title: "Очки Снаряжения" },
       classes: ["warhammer-dbc", "wh-holo"],
-      content: `<form><div class="atk-dlg-row"><b>${esc(promptLabel)}</b> — отметьте ${need > 1 ? `до ${need}` : "один"}:</div>${rows}</form>`,
+      // Список прокручивается САМ, а не растит окно (жалоба владельца
+      // 07.09.2026): у космодесантника предметов под сорок, окно вырастало
+      // выше экрана, и верх списка — вместе с подписью, что вообще нужно
+      // выбрать, — уезжал за край без возможности вернуться.
+      content: `<form><div class="atk-dlg-row"><b>${esc(promptLabel)}</b> — отметьте ${need > 1 ? `до ${need}` : "один"}:</div>`
+             + `<div class="pick-owned-list" style="max-height:55vh;overflow-y:auto;">${rows}</div></form>`,
       rejectClose: false,
       buttons: [
         { action: "ok", label: "Готово", default: true,

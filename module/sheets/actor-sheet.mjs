@@ -31,6 +31,8 @@ import { activatePsychicListeners, activateNavigatorPower, executePsychotest,
          wirePsyManifestPreview } from "./tabs/psychic.mjs";
 import { activateTechListeners, activateTechMiracle, techGenResource } from "./tabs/tech.mjs";
 import { activateGearListeners, toggleGearModActive } from "./tabs/gear.mjs";
+import { betterThanPoorEquipped, UNSEEN_BEGGAR } from "../rules/unseen-beggar.mjs";
+import { QUALITY_LABELS } from "../constants/ship-quality.mjs";
 import { craftTabContext, activateCraftListeners } from "./tabs/craft.mjs";
 import { activateRitualListeners } from "./tabs/rituals.mjs";
 import { activateAspirationListeners } from "./tabs/aspirations.mjs";
@@ -161,6 +163,20 @@ async function onCapabilitySpend(event, target) {
   if (key === "aura.touchedByFates") {
     const applied = await applyTouchedByFates(this.actor);
     if (!applied) return false;
+  }
+  // Незримый Нищий (wdbc-1rno): книга разрешает наложить чары, ТОЛЬКО пока
+  // надето одно Poor.Q. Полудействие цены уже лежит в данных записи, а вот
+  // это условие игрок иначе проверяет глазами по всему инвентарю и ошибается
+  // ровно на том предмете, о котором забыл. Тот же приём, что у Локуса
+  // Фанатизма выше: предусловие ДО списания — иначе полудействие сгорело бы
+  // впустую.
+  if (key === UNSEEN_BEGGAR) {
+    const blockers = betterThanPoorEquipped(this.actor.items);
+    if (blockers.length) {
+      ui.notifications.warn(`Незримый Нищий: чары требуют только снаряжения Poor.Q. Мешают: ${
+        blockers.map(b => `${b.name} (${QUALITY_LABELS[b.quality] || b.quality})`).join(", ")}.`);
+      return false;
+    }
   }
   return spendCapabilityCost(this.actor, cost, target.dataset.label);
 }
@@ -1800,6 +1816,23 @@ export class WarhammerCharacterSheet
         const el = ev.currentTarget;                       // до await, см. wdbc-odgs
         const scope = el.dataset.aptScope;
         const key   = el.dataset.aptKey;
+        // Специализация Группового Навыка (wdbc-fzbu): привязка пишется В
+        // ЗАПИСЬ, а не по ключу Группы, — иначе правка одной специализации
+        // накрыла бы все остальные, притом что у специализации привязка своя
+        // («Навигация (Варп) — это Воля, а не Интеллект группы»).
+        if (scope === "groupEntry") {
+          const index = parseInt(el.dataset.aptIndex);
+          const data  = (this.actor.system?.groupSkills?.[key] ?? [])[index];
+          if (!data) return;
+          const def   = GROUP_SKILLS_DEF[key];
+          // Книжная привязка специализации считается от ЕЁ Характеристики,
+          // если она своя (Ремесло), иначе от Характеристики группы.
+          const book  = [data.char || def?.char, def?.apt2].filter(Boolean);
+          const title = `${def?.label || key}: ${data.specialty || "(без названия)"}`;
+          await showAptitudeBindingDialog(this.actor, "skill", key, title, book,
+            { group: key, index, data });
+          return;
+        }
         // Запасной вариант — сам ключ, а НЕ атрибут title: там лежит целая
         // подсказка («Склонности: … — нажмите, чтобы поменять привязку»), и в
         // заголовок окна она попадала бы мусором. Срабатывает только на

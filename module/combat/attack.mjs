@@ -1,16 +1,17 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-import { testOutcome, criticalOutcome } from "../rules/roll-outcome.mjs";
+import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
-         jamThreshold, buildPropertyChatBlock,
+         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
          buildTargetEffectButtons }                 from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
-         attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
+         attackPenetration, damageFormulaFor, bonusDamageDice,
+         attackHitOutcome }                          from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
 import { attackIsMelee } from "./weapon-profiles.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
@@ -26,7 +27,11 @@ import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
+import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair }
+                                                      from "../rules/dual-wield-talents.mjs";
+import { attackedThisTurn }                           from "../rules/turn-flags.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
+import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
@@ -165,6 +170,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const prisma = prismaFireBonus(item, wp);
   wp.prismaAtMax = prisma.atMax;
   wp.prismaCharge = prisma.charge;
+  // Касание Энтропии (wdbc-1rno, Дар Нургла): безоружные и природные атаки
+  // носителя съедают AP места попадания ДО урона. Считается здесь, где ещё
+  // известны и атакующий, и оружие; применяется в damage.mjs (там известно
+  // место попадания). 0 у всех прочих — атрибут карточки просто пустеет.
+  wp.entropyRating = attackEntropyRating(actor, item);
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
@@ -220,18 +230,33 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // 1, независимо от броска. d100 всё равно катается (нужен ChatMessage) и
   // проверяется на Критический Провал/Успех (criticalOutcome ниже читает rv
   // сам), но исход и степень отсюда не берутся вовсе.
-  const { success: hit, deg } = opts.fixedSuccessDeg != null
-    ? { success: true, deg: opts.fixedSuccessDeg }
-    : testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
+  // Распыление (стр. 168, wdbc-p06s): броска на попадание у Spray нет вовсе —
+  // поток попадает автоматически по всем в конусе, а отменяет попадание сама
+  // цель тестом A+0 (кнопка в карточке). Решает это attackHitOutcome, чтобы
+  // правило проверялось тестом без Foundry.
+  const { success: hit, deg: rolledDeg, auto: autoHitKind } = attackHitOutcome({
+    rv, threshold, isMelee, wp,
+    forceHit: opts.forceHit, fixedSuccessDeg: opts.fixedSuccessDeg
+  });
+  // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
+  // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
+  // попаданий (Быстрая/Молниеносная), и остаточные Успехи приёмов.
+  const savageBonus = (hit && isMelee) ? savageExtraHits(actor, item) : 0;
+  const deg = rolledDeg + savageBonus;
   // Крит-диапазон (натуральные 1-5/96-100, стр. 25) — не путать с «Критическим
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от
   // оружия. Расширяется правилом kind:"critRangeMod", см. attack-dialog.mjs.
-  const critLine = critLineHtml(criticalOutcome(rv, opts.crit));
+  // Крит-диапазон читается по броску АТАКИ — у Распыления его нет (d100 всё
+  // равно катается: он нужен ChatMessage и анимации кубов), поэтому строка
+  // Критического Успеха/Провала для Spray не печатается вовсе.
+  const critLine = autoHitKind === "spray" ? "" : critLineHtml(criticalOutcome(rv, opts.crit));
 
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
+  // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
+  // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
   const jamAt    = jamThreshold(wp);
-  const jammed   = !isMelee && jamAt !== null && rv >= jamAt;
+  const jammed   = !isMelee && !wp.spray && jamAt !== null && rv >= jamAt;
   if (jammed) {
     // wdbc-vwfk: раньше заклинивание было только строкой в чате, без
     // последствий — теперь пишет реальное состояние предмета (weaponClass
@@ -434,6 +459,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const damageRolls = [];
   const allRolls    = [roll];
 
+  // Клин Распыления (стр. 168): решается ПЕРВЫМ кубиком урона, а не броском
+  // атаки — { face, at } первого попадания, либо null, если не заклинило.
+  let sprayJam = null;
+
   // Взрывное «под цель» (Избирательная, −20, attack-dialog.mjs): промах не
   // пропадает бесследно — взрыв смещается по розе смещения (module/combat/
   // scatter.mjs), и может всё ещё задеть исходную цель или тех, кто рядом.
@@ -456,6 +485,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         const second = await new Roll(dmgFormula).evaluate();
         allRolls.push(second);
         if (second.total > dmgRoll.total) dmgRoll = second;
+      }
+      // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
+      // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
+      // брошенному, а не оставленному Рвущим), и только у первого попадания.
+      if (i === 0 && !isMelee && wp.spray && sprayJamFace(wp) !== null) {
+        const firstDie = (dmgRoll.terms ?? [])
+          .find(t => t.faces && Array.isArray(t.results) && t.results.length)?.results?.[0]?.result ?? null;
+        if (sprayJams(firstDie, wp)) sprayJam = { face: firstDie, at: sprayJamFace(wp) };
       }
       let deflagrateHit = false;
       if (dmgRoll.terms) {
@@ -585,8 +622,41 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (wdbc-ai0o) — rechargeTurnsRemaining:1 читает combat/recharge.mjs на
   // старте следующего Хода носителя: тот Ход остаётся заблокирован, снимается
   // только на Ходе ПОСЛЕ него.
+  // Бонус цели на Уклонение от выстрела в рукопашной (стр. 40): Винтовка +30,
+  // Карабин +10. Талант «Винтовочная Гарда» (стр. 62, wdbc-pb60) гасит его
+  // целиком, если в другой руке рукопашное оружие с Балансом не ниже −1 —
+  // считается один раз здесь, потому что ниже тот же бонус нужен и обычной
+  // кнопке Уклонения, и её recoil-варианту.
+  const meleeShotDodgeBonus = techOpts.targetDodgeMod
+    ?? ((opts.meleeShot && !gunGuardCancelsDodgeBonus(actor, item)) ? (wp.carbine ? 10 : 30) : 0);
+
+  // Молотильщик (стр. 62, wdbc-pb60): пара топоров/булав/молотов — успешно
+  // Парировавший теряет все неиспользованные Успехи и парирует второе оружие
+  // отдельным тестом. Строка в карточке, а не расчёт: «неиспользованных
+  // Успехов защиты» система не хранит, а второй тест назначает стол.
+  const pounderWeapon = isMelee ? pounderPair(actor) : null;
+  const pounderNote = (pounderWeapon && hit)
+    ? "🔨 Молотильщик: успешно Парировавший этот удар теряет все неиспользованные Успехи "
+      + "и парирует второе оружие пары отдельным тестом (если остались Реакции)."
+    : "";
+
+  // Чем актор атаковал в этом Ходу (wdbc-pb60): Мэн-Гош даёт переброс
+  // Парирования ножом, которым НЕ били в предыдущий Ход, и без этого следа
+  // ответить на его вопрос нечем. Список переезжает на Ход назад в
+  // resetActionEconomy (rules/turn-flags.mjs::turnStartAttackCarryOver).
+  if (item?.id && typeof actor.setFlag === "function") {
+    const already = attackedThisTurn(actor);
+    if (!already.includes(String(item.id)))
+      await actor.setFlag("warhammer-dbc", "attackedThisTurn", [...already, String(item.id)]);
+  }
+
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);
   if (needsRecharge) await item.update({ "system.needsRecharge": true, "system.rechargeTurnsRemaining": 1 });
+
+  // Клин Распыления пишется ПОСЛЕ выстрела: в отличие от обычного клина
+  // (jamCard выше, вместо атаки) поток уже поразил цели, и заклинило оружие на
+  // этом же кубике урона — карточка атаки остаётся полной, только с пометкой.
+  if (sprayJam) await item.update({ "system.jammed": true });
 
   // Просмотр кубов (#7) — стандартные «коробочки» Foundry, разворачиваемые кликом
   const renderedDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
@@ -596,6 +666,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     content: attackCard({
       actorName: actor.name, weaponName: item.name, wp,
       threshold, rv, hit, deg, hitsCount, hits, rerollDropped, critLine,
+      // Почему исход не от броска: "spray" — авто-попадание Распыления.
+      autoHit: autoHitKind,
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
@@ -641,9 +713,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // recoil-специфичным знаком Императива вместо обычного (null, если у
         // защищающегося нет активного Evasion/Fortress Imperative — тогда
         // defenseSection не рендерит декларацию «планирую Отскочить» вовсе).
-        dodgeMod: (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor),
+        // Винтовочная Гарда (стр. 62, wdbc-pb60): с рукопашным оружием Баланса
+        // не ниже −1 в другой руке выстрел в рукопашной НЕ даёт цели бонуса
+        // вовсе — ни +30 винтовки, ни +10 Карабина.
+        dodgeMod: meleeShotDodgeBonus + evasionImperativeBonus(defenderActor),
         dodgeModRecoil: hasEvasionRecoilImperative(defenderActor)
-          ? (techOpts.targetDodgeMod ?? (opts.meleeShot ? (wp.carbine ? 10 : 30) : 0)) + evasionImperativeBonus(defenderActor, { planningRecoil: true })
+          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true })
           : null,
         parryMod: techOpts.targetParryMod ?? 0,
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
@@ -668,11 +743,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         mount:     opts.mountNote || "",
         allOut:    !!opts.isAllOut,
         off:       offNote,
+        pounder:   pounderNote,
         maximal:   maximalOn,
         recharge:  needsRecharge,
         // Поломка человеческого оружия в руках Огрина (wdbc-flai): пустая
         // строка, когда бросок не требовался вовсе.
-        ogrynBreak: ogrynBreakNote(ogrynBreak, item.name)
+        ogrynBreak: ogrynBreakNote(ogrynBreak, item.name),
+        // Клин Распыления (стр. 168) — попадания в силе, оружие заклинило.
+        sprayJam: sprayJam
+          ? `⚙️ Оружие заклинило: первый кубик урона — <b>${sprayJam.face}</b> (клин на ${sprayJam.at}${sprayJam.at === 8 ? "-9" : ""}). Требуется действие на устранение Клина.`
+          : ""
       },
       blocks: {
         props:         buildPropertyChatBlock(wProps),

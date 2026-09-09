@@ -37,7 +37,21 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Регенерация покрова",
+        "note": "Regeneration(1)"
+      },
+      {
+        "label": "Хитиновые когти",
+        "note": "Deadly Natural Weapons(3, Когти)"
+      },
+      {
+        "label": "Камуфляжные пластины",
+        "note": "+20 Stealth неподвижно, +10 в медленном движении"
+      }
+    ]
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "OXO63RVohaYRONSW",

@@ -23,10 +23,15 @@
     "availability": 1,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Из орудия можно сделать до 3 выстрелов в Ход, в т.ч. по разным целям.",
     "equipped": false,
     "loadedAmmoId": "",
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": 3
+      }
+    ],
     "needsRecharge": false,
     "legacyWeapon": false,
     "sacred": false,

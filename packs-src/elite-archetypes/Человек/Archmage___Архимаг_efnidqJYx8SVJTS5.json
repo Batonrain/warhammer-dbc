@@ -28,7 +28,7 @@
       "Savant Immaterial / Савант Имматериал",
       "Unlimited Power / Безграничная Сила"
     ],
-    "description": "",
+    "description": "<p>Культы Тзинча почти всегда строятся вокруг практики колдовства и формируются, как общества с запутанной многоуровневой иерархией. На вершине этой пирамиды неизменно стоит группа из самых могучих чародеев и искусных манипуляторов в культе. Хотя локальные титулы для таких мастеров бесконечно разнообразны, от Магистров Имматериал К'Сала, до Высших Пиромантов Горящей Гробницы, до Освобожденных Чародеев Сортиариуса, для Галактики они известны как Архимаги.</p>",
     "notes": "",
     "bookSource": "DoomBC — Основная книга"
   },
@@ -1124,7 +1124,7 @@
               "equipMode": "direct",
               "equipQty": 1,
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.MxqM6xjeJSbDElqm",
-              "equipSourceName": "Психосиловой Посох",
+              "equipSourceName": "Force Staff / Психосиловой Посох",
               "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",

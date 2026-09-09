@@ -400,7 +400,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "остаток надежды",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {

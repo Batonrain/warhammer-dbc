@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Кислотный плевок",
+        "note": "1/час T.b м, 2d10 C, Pen 4, Corrosive(3), Independent, Precise"
+      },
+      {
+        "label": "Авто-регенерация",
+        "note": "5 кг биомассы → +2d10 ран/мин"
+      },
+      {
+        "label": "Токсичная кровь",
+        "note": "иммунитет к Corrosive, снимает Crippling/Piercing в конце хода; при ранении брызги — все в 2 м А−10 или Corrosive(3)"
+      },
+      {
+        "label": "Феромонный контроль",
+        "note": "+20 социальные вдыхающим запах, +40 соблазнение"
+      }
+    ]
   },
   "folder": "MVwzimCMiFagXpH6",
   "_id": "7JRoTEerjmYBj45y",

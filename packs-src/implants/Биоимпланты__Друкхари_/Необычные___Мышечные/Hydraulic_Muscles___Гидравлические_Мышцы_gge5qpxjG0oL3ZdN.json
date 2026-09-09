@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Гидравлический удар",
+        "note": "1/день одна атака получает Mighty и переброс всех кубиков урона"
+      },
+      {
+        "label": "Жидкостная броня",
+        "note": "+2 AP всем частям"
+      },
+      {
+        "label": "Усиленная гидравлика",
+        "note": "Unnatural S до 6"
+      },
+      {
+        "label": "Сокрушающий удар",
+        "note": "безоружные Concussive(0)"
+      }
+    ]
   },
   "folder": "yBiDuo3FMEuOjtsV",
   "_id": "gge5qpxjG0oL3ZdN",

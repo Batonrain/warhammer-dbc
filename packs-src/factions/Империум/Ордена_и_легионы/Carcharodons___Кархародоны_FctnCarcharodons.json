@@ -1,0 +1,37 @@
+{
+  "name": "Carcharodons / Кархародоны",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "5VFQG4e4cZyybRoZ",
+  "system": {
+    "key": "carcharodons",
+    "parentKey": "raven-guard",
+    "alsoIn": [],
+    "aliases": [
+      "Carcharodons"
+    ],
+    "isLore": true,
+    "description": "<p><strong>Геносемя.</strong> Оссмодула — все зубы заострённые и треугольные, непригодные для жевания, но дают Трейт Bite (2); выбитые вырастают заново за 1d5 дней. Оккулоб — радужки и белки глаз чёрные. Меланохром — кожа серая и грубая, волосы белые; 50% шанс (1-5 на 1d10) полного облысения после имплантации; защиты от радиации не даёт. Мукраноид и Железа Бетчера — не работают.</p>\n<p><strong>Культура.</strong> «Красная Десятина» — Intimidate и Stealth и Таланты Flesh Render, Reaper, Cleave, Grind и Whirlwind of Death дружественны; Charm и Inquiry и Таланты Combat Formation, Hunker Down, Tenacity, Radiant Presence и Peer враждебны. Даёт Linguistics (High Gothic) и Таланты Cold Fury и Frenzy, а также +10 на все атаки по целям под Запугиванием, Шоком, Паникой или Подавлением.</p>\n<p><strong>Проклятье.</strong> «Пепельная Слепота» — как у Гвардии Ворона, но тест W−10 вместо W+10. При перманентном проклятии персонаж лишается способности говорить вслух (но может жестами или телепатически).</p>",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnCarcharodons",
+  "effects": [],
+  "sort": 4090000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnCarcharodons"
+}

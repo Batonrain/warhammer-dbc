@@ -96,6 +96,12 @@
         актора со своей шапкой (Хозяин, Тип, Сила, Лояльность), а перечень слуг
         Хозяина — блок «МИНЬОНЫ» на вкладке СОЦИУМ. --}}
 
+  {{!-- Книга-источник (wdbc-7pjs): у существ Бестиария её негде было указать
+        вовсе, и ГМ не мог проверить числа существа по книге. Строка стоит на
+        «Записях», а не в шапке: у игрового персонажа она почти всегда пустая
+        и место в шапке занимать ей незачем. --}}
+  <div class="notes-section-panel" data-collapse-key="notes-booksource"> <div class="panel-title" data-action="panelCollapse">КНИГА-ИСТОЧНИК</div> <div class="bio-grid"> <label>Книга<input type="text" name="system.bookSource" value="{{system.bookSource}}" placeholder="напр. Основная книга, стр. 128"/></label> </div> </div>
+
   <div class="notes-section-panel" data-collapse-key="notes-records"> <div class="panel-title" data-action="panelCollapse">ЗАПИСИ</div> <prose-mirror name="system.notes" class="notes-textarea" toggled value="{{system.notes}}">{{{notesEnriched}}}</prose-mirror> </div>
 
   {{!-- Только ГМ: то, что видит владелец Ограниченного зрения на этом акторе

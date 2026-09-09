@@ -37,7 +37,25 @@
       "equipped": false,
       "status": "inactive"
     },
-    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)"
+    "bookSource": "Книга Аэльдари: Ответвления, БИОИМПЛАНТЫ (стр. 149)",
+    "bestQualityEffects": [
+      {
+        "label": "Паралитический яд",
+        "note": "при провале T также урон в WS и A"
+      },
+      {
+        "label": "Концентрированный выброс",
+        "note": "1/день на час Toxic(3)"
+      },
+      {
+        "label": "Универсальный яд",
+        "note": "Toxic(0) против Machine, Toxic(−1) против Stuff of Nightmares"
+      },
+      {
+        "label": "Ядовитое облако",
+        "note": "1/день Blast(T.b) 1d10+T.b×2 Pen 4 Toxic(1) на себя, иммунен; 24−T.b ч"
+      }
+    ]
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "M9VGcOb8WVer7e8h",

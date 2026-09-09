@@ -1,0 +1,37 @@
+{
+  "name": "Emperor's Spears / Копья Императора",
+  "type": "faction",
+  "img": "icons/svg/aura.svg",
+  "folder": "5VFQG4e4cZyybRoZ",
+  "system": {
+    "key": "emperors-spears",
+    "parentKey": "ultramarines",
+    "alsoIn": [],
+    "aliases": [
+      "Emperor's Spears"
+    ],
+    "isLore": true,
+    "description": "<p><strong>Геносемя.</strong> Нет мутаций.</p>\n<p><strong>Культура.</strong> «Смерть с Небес» — Operate (Aeronautica) и Catfall, Raptor, Flying Kick дружественны. +10 на стрелковые атаки по целям ниже; +10 на рукопашные в Ход спуска на высоту ниже. Good.Q Гравишют Легиона в ранце брони.</p>\n<p><strong>Проклятье.</strong> Нет проклятья.</p>",
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, «Ордена и банды»"
+  },
+  "_id": "FctnEmperorsSpea",
+  "effects": [],
+  "sort": 4087000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!FctnEmperorsSpea"
+}

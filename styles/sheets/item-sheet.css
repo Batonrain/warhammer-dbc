@@ -1269,3 +1269,10 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc .infoguard-value {
   font-size: 0.85em; color: var(--wh-text-light, var(--wh-text));
 }
+
+/* Варианты бонусного эффекта Best.Q у биоимпланта (wdbc-ukpu): список читается
+   строками, а не одним абзацем со скобками внутри скобок. */
+.warhammer-dbc .implant-bestq-list {
+  margin: 2px 0 0; padding-left: 20px; font-size: 0.85em; line-height: 1.35;
+}
+.warhammer-dbc .implant-bestq-list li { margin: 1px 0; }

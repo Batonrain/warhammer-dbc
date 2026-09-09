@@ -70,7 +70,7 @@
             ▶ Запустить{{#if c.costLabel}} (− {{c.costLabel}}){{/if}}
           </button>
           {{else if c.cost}}
-          <button type="button" class="cap-spend-btn" data-action="capabilitySpend" data-key="{{c.key}}" data-label="{{c.label}}"
+          <button type="button" class="cap-spend-btn" data-action="capabilitySpend" data-key="{{c.key}}" data-label="{{#if c.sources}}{{c.sources}}{{else}}{{c.label}}{{/if}}"
                   {{#if c.spendGate.disabled}}disabled{{/if}}
                   title="{{#if c.spendGate.title}}{{c.spendGate.title}}{{else}}Списать {{c.costLabel}}{{/if}}">
             − {{c.costLabel}}

@@ -462,7 +462,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "Владыка Разложения",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {

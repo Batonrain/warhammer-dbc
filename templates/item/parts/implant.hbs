@@ -41,6 +41,22 @@
   <textarea name="system.effect" class="item-textarea" placeholder="Что даёт имплант...">{{system.effect}}</textarea>
 </div>
 
+{{!-- Варианты бонусного эффекта Best.Q (wdbc-ukpu). Тот же список, что внутри
+      текста «Эффект», но по строке на вариант: одним абзацем из четырёх
+      вариантов со скобками внутри скобок читать его невозможно. Выбор пока не
+      делается — для «+1 к Редкости за каждый доп.» у импланта нет самого поля
+      Редкости, см. тикет. --}}
+{{#if system.bestQualityEffects.length}}
+<div class="item-section">
+  <div class="item-section-title">BEST.Q — ЭФФЕКТ НА ВЫБОР</div>
+  <ol class="implant-bestq-list">
+    {{#each system.bestQualityEffects}}
+    <li><b>{{this.label}}</b>{{#if this.note}} — {{this.note}}{{/if}}</li>
+    {{/each}}
+  </ol>
+</div>
+{{/if}}
+
 {{#if susAnHealHtml}}
 <div class="item-section">
   {{{susAnHealHtml}}}

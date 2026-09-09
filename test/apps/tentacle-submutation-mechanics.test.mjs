@@ -23,12 +23,13 @@ import path from "node:path";
 
 import { parseSubmutations } from "../../module/rules/submutations.mjs";
 import { entryWhenOk } from "../../module/rules/mech-when.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const TENTACLE_PATH = path.join(ROOT,
   "packs-src/mutations/Общие_мутации/Tentacle___Щупальце_nUfrCbj7cIAEWope.json");
 
-const tentacle = JSON.parse(fs.readFileSync(TENTACLE_PATH, "utf8"));
+const tentacle = packDocByFileHint(TENTACLE_PATH);
 const submutations = parseSubmutations(tentacle.system.benefit);
 const mechEntries = tentacle.flags["warhammer-dbc"].mechanics.flatMap(g => g.entries);
 const withSub = mechEntries.filter(e => (e.when?.submutations ?? []).length);

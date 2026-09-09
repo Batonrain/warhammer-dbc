@@ -424,10 +424,9 @@ export const LEGIONS = [
                 hostileSkills: ["Charm", "Deceive"], hostileTalents: ["Scanning Advance", "Cold Fury", "Deadeye Shot", "Target Selection", "Bolter Drill", "Meditation"],
                 grantSkills: [], grantTalents: ["Frenzy", "Hatred (Word Bearers)", "Mental Rage"] } }),
       C("ironsnakes", "Железные Змеи", {
-        geneseed: "Оссмодула — на 10–15% выше обычного десантника (Размер 1).",
+        geneseed: "Оссмодула — на 10–15% выше обычного десантника (всё ещё в пределах Размера 1).",
         culture: "«Фаланга» — Double Team, Quick Store. Good.Q копьё Легиона с модификацией Моно, Абордажный щит и система Маг-перчатки для брони как старт.",
         curse: "Нет проклятья." ,
-        effects: { sizeMod: 1 },
         cult: { friendlySkills: [], friendlyTalents: [],
                 hostileSkills: [], hostileTalents: [],
                 grantSkills: [], grantTalents: ["Double Team", "Quick Store"] } }),
@@ -743,10 +742,9 @@ export const LEGIONS = [
     ] }),
 
   L("XX", "Альфа Легион", {
-    geneseed: "Оссмодула — на 10–25% выше обычного десантника (Размер 1).",
+    geneseed: "Оссмодула — на 10–25% выше обычного десантника (всё ещё в пределах Размера 1).",
     culture: "«Головы Гидры» — Command, Deceive и Paranoia, Bodyguard, Disarm, Takedown, On This Mark, Target Selection, Iron Discipline, Bring It Down, Mimic, Neural Triggers дружественны; группа «Берсерк» враждебна. Deceive, Linguistics (Battle Cant), Combat Formation, Double Team.",
-    curse: "Нет проклятья. Банды Альфа-Легиона следуют общей доктрине легиона.",
-    effects: { sizeMod: 1 } })
+    curse: "Нет проклятья. Банды Альфа-Легиона следуют общей доктрине легиона." })
 ];
 
 export function getLegion(id) { return LEGIONS.find(l => l.id === id) || null; }

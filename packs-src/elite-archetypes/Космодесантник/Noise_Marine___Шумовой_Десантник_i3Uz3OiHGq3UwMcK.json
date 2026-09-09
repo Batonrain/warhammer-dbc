@@ -28,7 +28,7 @@
       "Dirge of Despair / Песнь Отчаянья",
       "Wall of Discord / Стена Диссонанса"
     ],
-    "description": "",
+    "description": "<p>Чувства космодесантника намного острее, чем у обычного человека. Их тело и разум отточены до совершенства для ведения войны. Слишком сильные впечатления и переживания во время битвы могут подорвать индоктринацию и физическую подготовку некоторых боевых братьев. Они могут потерять контроль над собой в разнузданной жажде битвы, без команд или приказов, удовлетворяя свои желания в беспричинной резне. Эти падшие космические десантники в конце концов посвящают себя служению</p>",
     "notes": "",
     "bookSource": "DoomBC — Основная книга"
   },
@@ -966,7 +966,7 @@
               "equipMode": "direct",
               "equipQty": 1,
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.voZ4MVRhkn4PrCDG",
-              "equipSourceName": "Звуковой Бластер",
+              "equipSourceName": "Sonic Blaster / Звуковой Бластер",
               "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",

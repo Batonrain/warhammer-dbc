@@ -17,7 +17,8 @@ import { formatImperialDateParts, formatClock, currentEnabledPhases, DEFAULT_CAL
   SECONDS_PER_HOUR, SECONDS_PER_YEAR, SECONDS_PER_FRACTION_UNIT, imperialToWorldTime,
   SCREEN_FONT_PRESETS, screenFontStack }
   from "../constants/imperial-calendar.mjs";
-import { triggerNewScene, triggerSessionEnd, showFateTurnBanner } from "./game-session.mjs";
+import { triggerNewScene, showFateTurnBanner } from "./game-session.mjs";
+import { openSessionRewards } from "./session-rewards-app.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { filePicker } from "../sheets/v2-helpers.mjs";
 
@@ -135,7 +136,7 @@ function _widgetHTML() {
   </div>
   <div class="wh-cal-w-controls wh-cal-w-session-row">
     <button type="button" class="wh-cal-w-session-btn" data-session-act="scene" title="Новая сцена — откатить разовые-за-сцену эффекты">🎬 Сцена</button>
-    <button type="button" class="wh-cal-w-session-btn" data-session-act="session" title="Конец сессии — откатить разовые-за-сессию эффекты, восполнить Судьбу/Бесчестие">⏻ Сессия</button>
+    <button type="button" class="wh-cal-w-session-btn" data-session-act="session" title="Конец сессии — окно Итогов: опыт, Порча, Бесчестие, потом откат разовых и восполнение Судьбы/Бесчестия">⏻ Сессия</button>
   </div>` : "";
 
   // Заголовок под датой: если GM включил хотя бы одно обозначение вахт
@@ -364,7 +365,11 @@ export function refreshCalendarWidget() {
       if (!game.user.isGM) return;
       const act = ev.currentTarget.dataset.sessionAct;
       if (act === "scene") triggerNewScene();
-      else if (act === "session") triggerSessionEnd();
+      // «Сессия» — это весь конец сессии целиком, а не только откат разовых:
+      // сперва окно наград (опыт, Порча, Бесчестие), и уже его кнопка «Раздать»
+      // добирает откат и восполнение пулов. Порядок важен: восполнение ставит
+      // Очки Бесчестия на максимум, и награда, выданная ПОСЛЕ него, пропала бы.
+      else if (act === "session") openSessionRewards({ endSession: true });
     }));
   } catch (e) { console.warn("warhammer-dbc | imperial calendar widget", e); }
 }

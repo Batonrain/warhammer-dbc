@@ -9,7 +9,9 @@
 //  2. Дар «Рука-Пушка» (wdbc-6tzk, корбук, Элитные архетипы, 400 хр): втянутый
 //     в предплечье пистолет или винтовка «больше не тратит стандартные
 //     боеприпасы при выстреле». Классы pistol и basic — это и есть «пистолет
-//     или винтовка (в т.ч. длинная)» книги (стр. 171).
+//     или винтовка (в т.ч. длинная)» книги (стр. 171). ОДНО оружие, а не
+//     любое: какое именно вросло — помечено на нём самом (rules/gun-arm.mjs,
+//     wdbc-spsd).
 //
 //  Вынесено из середины расчёта атаки (combat/attack.mjs) отдельной чистой
 //  функцией: правило книжное, проверяется без Foundry и уже имеет два
@@ -18,10 +20,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
-import { hasRuleFlag } from "./flags.mjs";
+import { gunArmAppliesTo, GUN_ARM_CLASSES } from "./gun-arm.mjs";
 
-/** Классы оружия, которые Дар «Рука-Пушка» втягивает в предплечье. */
-export const GUN_ARM_CLASSES = ["pistol", "basic"];
+export { GUN_ARM_CLASSES };
 
 /**
  * Тратит ли этот выстрел патроны из магазина.
@@ -35,6 +36,7 @@ export function ammoIsFree(item, actor) {
   // Без актора спрашивать возможность не у кого: Дар — свойство стрелка, а не
   // предмета (оружие в компендиуме или в боковой панели ничьё).
   if (!actor) return false;
-  return GUN_ARM_CLASSES.includes(item?.system?.weaponClass)
-      && hasRuleFlag(actor, "weapon.noStandardAmmo");
+  // Дар действует на ОДНО вросшее оружие, а не на любой пистолет в рюкзаке
+  // (wdbc-spsd) — какое именно, помечено на самом оружии, см. rules/gun-arm.mjs.
+  return gunArmAppliesTo(item, actor);
 }
