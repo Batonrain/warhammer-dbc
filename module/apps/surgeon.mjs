@@ -38,6 +38,8 @@ const ICONS = {
   leg:    IC(`<path d="M6 2.5V8l3.5 5.5" stroke-width="1.6"/><circle cx="6" cy="2.5" r="1.3" fill="currentColor" stroke="none"/><path d="M9.5 13.5H13"/>`),
   tent:   IC(`<path d="M2.5 13.5C5 13.5 5 9 8 9s3-4.5 5.5-6"/><circle cx="13.5" cy="3" r="1.6" fill="currentColor" stroke="none"/><circle cx="8" cy="9" r="1" fill="currentColor" stroke="none"/>`),
   chip:   IC(`<rect x="4" y="4" width="8" height="8" rx="1"/><path d="M4 7H2M4 9H2M12 7h2M12 9h2M7 4V2M9 4V2M7 12v2M9 12v2"/><rect x="6.5" y="6.5" width="3" height="3" fill="currentColor" stroke="none"/>`),
+  // Силуэт — для имплантов «на всё тело» (комплекты брони, вживлённые в плоть).
+  body:   IC(`<circle cx="8" cy="3.2" r="1.7"/><path d="M8 5v5M4.5 6.3 8 5.4l3.5.9M6 14l1-4M10 14l-1-4"/>`),
 };
 
 // Слоты по системам тела (kind из classifyImplant → система). null = «прочее».
@@ -51,6 +53,15 @@ const SYSTEMS = [
   { id: "arms",    label: "Руки",              icon: ICONS.arm,   kinds: ["arm"], sideable: true },
   { id: "legs",    label: "Ноги",              icon: ICONS.leg,   kinds: ["leg"], sideable: true },
   { id: "mech",    label: "Механодендриты",    icon: ICONS.tent,  kinds: ["mechadendrite"] },
+  // «Всё тело» — комплекты, вживлённые целиком (Боевые Латы Скитарии).
+  // Слот заведён 07.09.2026 по wdbc-tuh4: classifyImplant давно возвращал
+  // kind:"fullbody", а системы под него не было — такой имплант не показывался
+  // в Хирургеоне НИ В ОДНОМ слоте, включая «Прочее». Флаг «хирургически
+  // установлен» ставит только это окно, поэтому имплант навсегда оставался
+  // неактивным, и всё, что он выдаёт (у Лат — комплект брони), тут же
+  // откатывалось назад syncGrantedEquipment. Отсюда жалоба «не работают латы
+  // скитариев»: числа в карточке были верные, поставить их было некуда.
+  { id: "fullbody", label: "Всё тело",          icon: ICONS.body,  kinds: ["fullbody"] },
   { id: "other",   label: "Прочее",            icon: ICONS.chip,  kinds: [null, "torso"] },
 ];
 

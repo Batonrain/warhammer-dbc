@@ -317,6 +317,12 @@
 .wv-rit-mod.neg .wv-rit-modv { color: var(--wv-red); }
 .wv-rit-mod.on.pos { box-shadow: inset 3px 0 0 var(--wv-holy); }
 .wv-rit-mod.on.neg { box-shadow: inset 3px 0 0 var(--wv-red); }
+/* Строку поставила система по листу (Метка/Покровительство бога демона) —
+   галочка тут ни при чём, и игрок должен видеть, что считать её не надо. */
+.wv-rit-mod.auto { background: rgba(180,119,255,0.16); }
+.wv-rit-mod.auto > span:last-child::after {
+  content: " · по листу"; opacity: 0.7; font-style: italic;
+}
 
 .wv-rit-summary { border-color: var(--wv-violet2); }
 .wv-rit-break { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }

@@ -5,7 +5,7 @@
   "folder": "ge02p3qhn0YeWFAZ",
   "system": {
     "description": "",
-    "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+    "notes": "МЕХАНИЗИРОВАНО 07.09.2026 (wdbc-3jlm): запись «Возможность» (dualWield.core.independentTargeting). Читает module/rules/dual-wield.mjs — targetSpreadExceeded: снимает книжный предел «цели пары не дальше 10 м друг от друга», из-за чего в окне атаки под галочкой «Обе руки» пропадает строка о разлёте целей. Прежняя заметка «Не смоделировано» относилась ко времени, когда механизма не существовало.",
     "benefit": "Цели стрельбы персонажа с двух оружий могут быть на расстоянии более 10м друг от друга.",
     "tier": 2,
     "requirement": "BS 40, Two Weapon Wielder (Ranged)",
@@ -38,7 +38,22 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "independentTargeting1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "independentTargetingE",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "dualWield.core.independentTargeting",
+              "label": "Цели парной атаки могут быть дальше 10 м друг от друга"
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

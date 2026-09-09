@@ -1,4 +1,4 @@
-import { CHASSIS_TYPES, CHASSIS_NOTES, VEHICLE_TYPES, CREW_ROLES,
+import { CHASSIS_TYPES, CHASSIS_NOTES, CHASSIS_FULL_NOTES, VEHICLE_TYPES, CREW_ROLES,
          MOUNT_TYPES, MOUNT_NOTES, ARMOUR_SIDES,
          VEHICLE_HIT_LOCATIONS, VEHICLE_AIM_TARGETS,
          CREW_ACTIONS, VEHICLE_CRITS, VEHICLE_CRIT_LABEL,
@@ -196,6 +196,9 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
 
     context.chassisTypes  = CHASSIS_TYPES;
     context.chassisNote   = CHASSIS_NOTES[sys.chassis?.type] || "";
+    // Полное книжное правило — в подсказку, а не в строку листа: строка и так
+    // длинная, а места на листе мало (правило владельца про плотность).
+    context.chassisFullNote = (CHASSIS_FULL_NOTES[sys.chassis?.type] || []).join("\n");
     context.vehicleTypes  = VEHICLE_TYPES;
     context.armourSides   = ARMOUR_SIDES;
     context.crewRoles     = CREW_ROLES;

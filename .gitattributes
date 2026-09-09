@@ -7,3 +7,10 @@
 *.md    text eol=lf
 *.yml   text eol=lf
 
+# SVG — такой же текстовый исходник: assets/conditions/*.svg собираются
+# генератором (tools/build-condition-icons.mjs) и сверяются с ним дословно
+# (test/tools/condition-icons-sync.test.mjs). Без этой строки checkout на
+# Windows (core.autocrlf=true) разворачивает их с CRLF, генератор пишет LF —
+# и сторож краснеет на ровном месте у всех, кто работает не на Linux.
+*.svg   text eol=lf
+

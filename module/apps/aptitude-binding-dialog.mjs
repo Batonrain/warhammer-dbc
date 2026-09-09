@@ -11,7 +11,8 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { APTITUDES } from "../constants/characteristics.mjs";
-import { objectAptitudes, isAptitudeBindingOverridden, setBindingPatch }
+import { objectAptitudes, isAptitudeBindingOverridden, setBindingPatch,
+         entryAptitudeOverride, setEntryBinding }
   from "../rules/aptitude-binding.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { recalcAllAdvanceCosts } from "../sheets/tabs/advance.mjs";
@@ -27,10 +28,15 @@ const SCOPE_LABEL = { char: "Характеристика", skill: "Навык" 
  * @param {string} title     как объект называется на листе
  * @param {string[]} bookApts книжная привязка — для кнопки «вернуть как в книге»
  */
-export async function showAptitudeBindingDialog(actor, scope, key, title, bookApts = []) {
+export async function showAptitudeBindingDialog(actor, scope, key, title, bookApts = [], entry = null) {
   if (!actor || !SCOPE_LABEL[scope] || !key) return null;
-  const current = objectAptitudes(actor, scope, key, bookApts);
-  const overridden = isAptitudeBindingOverridden(actor, scope, key);
+  // entry — запись специализации Группового Навыка (wdbc-fzbu): её привязка
+  // хранится на самой записи и сильнее записи по ключу Группы. Диалог тот же,
+  // разное только место записи и что означает «вернуть как в книге»: у
+  // специализации это «считать по Группе», а не сразу по книге.
+  const entryApts = entry ? entryAptitudeOverride(entry.data) : null;
+  const current = objectAptitudes(actor, scope, key, bookApts, entryApts);
+  const overridden = entry ? !!entryApts : isAptitudeBindingOverridden(actor, scope, key);
 
   const options = (selected) => Object.entries(APTITUDES)
     .map(([k, label]) => `<option value="${esc(k)}"${k === selected ? " selected" : ""}>${esc(label)}</option>`)
@@ -62,7 +68,7 @@ export async function showAptitudeBindingDialog(actor, scope, key, title, bookAp
           first:  button.form.querySelector(".apt-first")?.value || "",
           second: button.form.querySelector(".apt-second")?.value || ""
         }) },
-      { action: "book", label: "Вернуть как в книге", icon: "fas fa-rotate-left" },
+      { action: "book", label: entry ? "Считать по Группе" : "Вернуть как в книге", icon: "fas fa-rotate-left" },
       { action: "cancel", label: "Отмена" }
     ]
   });
@@ -80,11 +86,23 @@ export async function showAptitudeBindingDialog(actor, scope, key, title, bookAp
       "Нужны две РАЗНЫЕ — иначе объект не сможет стать Дружественным ни одному персонажу.");
     return null;
   }
-  // «Вернуть как в книге» снимает запись, а не пишет книжные значения копией:
-  // иначе правка книги/таблицы позже до этого актора уже не дошла бы.
-  const patch = result === "book"
-    ? setBindingPatch(scope, key, [])
-    : setBindingPatch(scope, key, [result.first, result.second]);
+  const chosen = result === "book" ? [] : [result.first, result.second];
+
+  // Специализация Группового Навыка пишется В ЗАПИСЬ, а не по ключу Группы:
+  // иначе правка одной специализации накрыла бы все остальные (wdbc-fzbu).
+  // Массив записей отправляется целиком — так же, как его пишет весь
+  // остальной код групп (sheets/tabs/advance.mjs::writeEntries).
+  let patch;
+  if (entry) {
+    const list = foundry.utils.deepClone(actor.system?.groupSkills?.[entry.group] ?? []);
+    if (!list[entry.index]) return null;
+    list[entry.index] = setEntryBinding(list[entry.index], chosen);
+    patch = { [`system.groupSkills.${entry.group}`]: list };
+  } else {
+    // «Вернуть как в книге» снимает запись, а не пишет книжные значения копией:
+    // иначе правка книги/таблицы позже до этого актора уже не дошла бы.
+    patch = setBindingPatch(scope, key, chosen);
+  }
   if (!Object.keys(patch).length) return patch;
   await actor.update(patch);
   // Цена Продвижения ХРАНИТСЯ полем (system.characteristics.<key>.cost и

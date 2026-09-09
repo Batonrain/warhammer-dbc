@@ -136,7 +136,7 @@
         </div>
         {{#if autonomous}}<div class="veh-autopilot" title="Автопилот заменяет экипаж: стреляет своим BS, водит с Пределом Operate, замечает с Awareness">
           🤖 Автопилот — BS <b>{{autonomous.bs}}</b> · Operate <b>{{autonomous.operate}}</b> · Awareness <b>{{autonomous.aware}}</b></div>{{/if}}
-        <div class="veh-hint">{{chassisNote}}</div>
+        <div class="veh-hint"{{#if chassisFullNote}} title="{{chassisFullNote}}"{{/if}}>{{chassisNote}}{{#if chassisFullNote}} <span class="veh-hint-more">▾ полное правило</span>{{/if}}</div>
       </div>
 
       <div class="veh-panel">
