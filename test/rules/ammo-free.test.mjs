@@ -10,6 +10,10 @@
 // Вторая половина Дара («одной рукой без штрафов») была сделана раньше
 // возможностью weapon.oneHandedRifle, а эта — нет, и патроны у Одержимого
 // продолжали расходоваться (wdbc-6tzk).
+//
+// С wdbc-spsd Дар действует не на любой пистолет носителя, а на ОДИН вросший
+// в предплечье — он несёт метку gunArmSource. Проверки ниже эту метку ставят;
+// сам выбор оружия и его отсутствие проверяет test/rules/gun-arm.test.mjs.
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
@@ -32,8 +36,12 @@ function hero(withGift) {
   return { system: {}, items: [] };
 }
 
-const gun = (weaponClass, extra = {}) =>
-  ({ name: "Тест", type: "weapon", system: { weaponClass, ...extra }, getFlag: () => undefined });
+/** Оружие; grafted — несёт метку «вросло в предплечье» (wdbc-spsd). */
+const gun = (weaponClass, { grafted = true, ...extra } = {}) => ({
+  name: "Тест", type: "weapon", system: { weaponClass, ...extra },
+  flags: grafted ? { "warhammer-dbc": { gunArmSource: "gift-1" } } : {},
+  getFlag: (scope, key) => (grafted && key === "gunArmSource" ? "gift-1" : undefined)
+});
 
 describe("ammoIsFree — Дар «Рука-Пушка»", () => {
   it("пистолет и винтовка у носителя Дара патроны не тратят", () => {
@@ -58,6 +66,7 @@ describe("ammoIsFree — Дар «Рука-Пушка»", () => {
   it("мусор вместо оружия или актора не роняет расчёт", () => {
     expect(ammoIsFree(null, hero(true))).toBe(false);
     expect(ammoIsFree(gun("pistol"), null)).toBe(false);
+    expect(ammoIsFree(gun("pistol", { grafted: false }), hero(true))).toBe(false);
     expect(ammoIsFree({}, hero(true))).toBe(false);
   });
 });

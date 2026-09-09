@@ -7,13 +7,13 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const SYSTEM = "warhammer-dbc";
 
 describe("Hermaphrodite: +30 Обаяние механизирован (wdbc-1rno)", () => {
   it("kind:\"testMod\" даёт rollBonus skill:charm +30", () => {
-    const data = JSON.parse(readFileSync(
-      "packs-src/mutations/Дары_Богов/Слаанеш/Hermaphrodite___Гермафродит_KFkKkRuN2SKahOEh.json", "utf8"));
+    const data = packDocByFileHint("packs-src/mutations/Дары_Богов/Слаанеш/Hermaphrodite___Гермафродит_KFkKkRuN2SKahOEh.json");
     const mechanics = data.flags[SYSTEM].mechanics;
     expect(mechanics.length).toBeGreaterThan(1); // capability-заглушка + новая testMod-группа
 

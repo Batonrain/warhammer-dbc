@@ -22,19 +22,18 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
+import { packDocById } from "../support/pack-doc.mjs";
 import { hasRuleFlag } from "../../module/rules/flags.mjs";
 import { CAPABILITIES } from "../../module/constants/capabilities.mjs";
 import { recoilItemMultiplier } from "../../module/combat/recoil-item-bonuses.mjs";
 
-const ROOT = path.resolve(import.meta.dirname, "../..");
-const DIR = path.join(ROOT, "packs-src/weapons/Имперское/Рукопашное/Экзотическое__тех__");
+const DIR = "packs-src/weapons/Имперское/Рукопашное/Экзотическое__тех__";
 
-const weaponDoc = (file) => JSON.parse(fs.readFileSync(path.join(DIR, file), "utf8"));
+/** Документ по идентификатору: имя файла меняется вместе с именем документа. */
+const weaponDoc = (id) => packDocById(DIR, id);
 
-const BASE = "Метеоритный_Молот_Ap5YcNQmlSr6B5bI.json";
-const POWER = "Силовой_Метеоритный_Молот_zoamY59yr3OSlraV.json";
+const BASE = "Ap5YcNQmlSr6B5bI";
+const POWER = "zoamY59yr3OSlraV";
 
 /** Актор с этим оружием; equipped решает, действует ли запись Конструктора. */
 function wielder(doc, { equipped = true } = {}) {

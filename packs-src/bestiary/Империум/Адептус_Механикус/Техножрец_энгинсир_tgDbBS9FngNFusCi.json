@@ -845,7 +845,7 @@
       "_key": "!actors.items!tgDbBS9FngNFusCi.Knax0A5fxQyrYKxJ"
     },
     {
-      "name": "Respirator Unit / Респиратор",
+      "name": "Respirator Unit / Респираторный Блок",
       "type": "implant",
       "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
       "system": {
@@ -905,7 +905,7 @@
       "_key": "!actors.items!tgDbBS9FngNFusCi.JFXUxtiWiDi6xZAm"
     },
     {
-      "name": "Potentia Coil / Потенциа Коил",
+      "name": "Potentia Coil / Катушка Потенции",
       "type": "implant",
       "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
       "system": {

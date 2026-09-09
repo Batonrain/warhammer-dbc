@@ -70,15 +70,62 @@ export function aptitudeBindingOverride(actor, scope, key) {
 }
 
 /**
+ * Переопределение, записанное НА ЗАПИСИ специализации Группового Навыка
+ * (wdbc-fzbu), — или null.
+ *
+ * У специализации привязка своя («Навигация (Варп) — это Воля, а не Интеллект
+ * группы»), поэтому одной записи по ключу группы мало: она накрыла бы все
+ * специализации разом. Хранится не отдельным ключом «группа/название», а полем
+ * самой записи (system.groupSkills.<группа>[i].aptitudes) — там же, где у неё
+ * уже лежат ранг, цена и модификатор. Это заодно снимает вопрос, что делать со
+ * свободным текстом названия в пути документа Foundry: точка в «Ремесло (др.
+ * Механикус)» разложила бы путь на вложенные объекты.
+ *
+ * Отбраковка пустого — та же, что у aptitudeBindingOverride выше и по той же
+ * причине.
+ */
+export function entryAptitudeOverride(entry) {
+  const raw = entry?.aptitudes;
+  if (!Array.isArray(raw)) return null;
+  const apts = raw.map(a => String(a ?? "").trim()).filter(Boolean);
+  return apts.length ? apts : null;
+}
+
+/**
+ * Копия записи специализации с новой привязкой — или без неё, если список
+ * пуст. Исходную запись не трогает: writeEntries пишет массив целиком, и
+ * правка на месте прошла бы мимо клонирования у вызывающего.
+ *
+ * Пустой список СНИМАЕТ поле, а не пишет пустой массив, — та же причина, что
+ * у setBindingPatch ниже.
+ */
+export function setEntryBinding(entry, aptitudes) {
+  const next = { ...(entry || {}) };
+  const list = (Array.isArray(aptitudes) ? aptitudes : [])
+    .map(a => String(a ?? "").trim()).filter(Boolean);
+  if (list.length) next.aptitudes = list;
+  else delete next.aptitudes;
+  return next;
+}
+
+/**
  * Две Склонности объекта с учётом переопределения.
+ *
+ * Приоритет: своя привязка специализации → привязка объекта на акторе →
+ * книжная. Средняя ступень намеренно НЕ пропускается для специализации без
+ * своей записи: «поменять привязку у всей Группы Знаний» — законное действие
+ * за столом, и специализация без собственной правки обязана его слушаться.
  *
  * @param {object} actor  актор (без него — всегда книжная привязка)
  * @param {"char"|"skill"} scope
  * @param {string} key    ключ Характеристики или Навыка
  * @param {string[]} bookApts книжная привязка от вызывающего — см. шапку
  *   про отсутствие импортов
+ * @param {string[]|null} [entryApts] привязка записи специализации
+ *   (entryAptitudeOverride) — сильнее записи актора
  */
-export function objectAptitudes(actor, scope, key, bookApts = []) {
+export function objectAptitudes(actor, scope, key, bookApts = [], entryApts = null) {
+  if (Array.isArray(entryApts) && entryApts.length) return [...entryApts];
   const override = aptitudeBindingOverride(actor, scope, key);
   if (override) return override;
   return Array.isArray(bookApts) ? [...bookApts] : [];
@@ -114,14 +161,21 @@ export function setBindingPatch(scope, key, aptitudes) {
  *
  * @param {Function} labelOf  ключ Склонности → её подпись (APTITUDES)
  */
-export function aptBindingContext(actor, scope, key, bookApts = [], labelOf = null) {
-  const apts = objectAptitudes(actor, scope, key, bookApts);
+export function aptBindingContext(actor, scope, key, bookApts = [], labelOf = null, entryApts = null) {
+  const apts = objectAptitudes(actor, scope, key, bookApts, entryApts);
   const name = labelOf || (a => a);
+  const own  = Array.isArray(entryApts) && entryApts.length > 0;
   return {
     aptScope: scope,
     aptKey: key,
     aptBound: apts,
     aptBoundLabel: apts.map(a => name(a)).filter(Boolean).join(" + "),
-    aptOverridden: isAptitudeBindingOverridden(actor, scope, key)
+    // Переопределено — если правка есть у самой строки ИЛИ у объекта, по
+    // которому строка считается: игроку важно, что показанная пара не книжная,
+    // а не то, в каком из двух мест она записана.
+    aptOverridden: own || isAptitudeBindingOverridden(actor, scope, key),
+    // Своя правка именно у этой специализации — отличается от унаследованной
+    // от Группы: «вернуть как в книге» у них снимает разные записи.
+    aptEntryOverridden: own
   };
 }

@@ -43,7 +43,7 @@ import { _buildAmmoModString, shortLabel }           from "../helpers/utils.mjs"
 import { SHIELD_STATUS }                             from "../constants/shields.mjs";
 import { CONDITIONS_DEF }                            from "../constants/conditions.mjs";
 import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/condition-mirrors.mjs";
-import { aptBindingContext } from "../rules/aptitude-binding.mjs";
+import { aptBindingContext, entryAptitudeOverride } from "../rules/aptitude-binding.mjs";
 import { skillAdvanceCat, advanceCatSource } from "../rules/advance-category.mjs";
 import { missingMarkForPower } from "./tabs/psychic.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
@@ -458,17 +458,30 @@ export function buildGetData(actor) {
       alwaysAlly: !!def.alwaysAlly,
       aptCat: skillAdvanceCat(actor, def, { group: groupKey }, _skApts),
       aptSourceText: advanceCatSource(actor, "group", groupKey)?.text ?? "",
+      // Привязку Группы целиком тоже можно менять (wdbc-fzbu) — значок в
+      // заголовке группы такая же кнопка, как у обычного Навыка.
+      ...aptBindingContext(actor, "skill", groupKey, [def.char, def.apt2], a => APTITUDES[a] || a),
       entries: entries.map((e, i) => {
-        const charKey = e.char || def.char;
+        const charKey  = e.char || def.char;
+        // Своя привязка специализации сильнее записи по ключу Группы: у
+        // «Навигация (Варп)» она Воля, а не Интеллект группы (wdbc-fzbu).
+        const entryApts = entryAptitudeOverride(e);
         return {
           ...e, index: i, groupKey,
           charAbbr: CHARACTERISTICS[charKey]?.abbr ?? charKey,
           grantedRank: e.grantedRank ?? "untrained",
           isGranted: (e.grantedRank ?? "untrained") !== "untrained",
           aptCat: skillAdvanceCat(actor, def,
-            { group: groupKey, specialty: e.specialty, entryChar: charKey }, _skApts),
+            { group: groupKey, specialty: e.specialty, entryChar: charKey, entryApts }, _skApts),
           aptSourceText: advanceCatSource(actor, "group", groupKey,
             { specialty: e.specialty })?.text ?? "",
+          ...aptBindingContext(actor, "skill", groupKey, [charKey, def.apt2],
+            a => APTITUDES[a] || a, entryApts),
+          // Своя область у строки специализации: обработчик листа должен
+          // писать привязку В ЗАПИСЬ, а не по ключу Группы (иначе правка одной
+          // специализации накрыла бы все остальные — тот самый случай, из-за
+          // которого тикет и заведён).
+          aptScope: "groupEntry",
           charOptions: GS_CHAR_KEYS.map(k => ({
             key: k, abbr: CHARACTERISTICS[k]?.abbr ?? k.toUpperCase(), selected: k === charKey
           }))
