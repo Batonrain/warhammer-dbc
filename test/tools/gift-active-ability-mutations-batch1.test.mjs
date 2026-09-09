@@ -13,6 +13,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { runMechScriptEntry } from "../../module/apps/mechanics.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const DIR = path.resolve(import.meta.dirname, "../../packs-src/mutations/Общие_мутации");
 
@@ -22,7 +23,7 @@ const FILES = {
 };
 
 function loadDoc(key) {
-  return JSON.parse(fs.readFileSync(path.join(DIR, FILES[key]), "utf8"));
+  return packDocByFileHint(path.join(DIR, FILES[key]));
 }
 
 function scriptEntryOf(doc) {
@@ -77,7 +78,7 @@ describe("Общие мутации, партия 1 — обе несут ров
 
 describe("Illusion of Normality — НЕ мигрирована (пассивная, без активации)", () => {
   it("остаётся kind:\"capability\" с прежним capabilityKey", () => {
-    const doc = JSON.parse(fs.readFileSync(path.join(DIR, "Illusion_of_Normality___Иллюзия_Нормальн_1GO1WxLJ6dhOw8n1.json"), "utf8"));
+    const doc = packDocByFileHint(path.join(DIR, "Illusion_of_Normality___Иллюзия_Нормальн_1GO1WxLJ6dhOw8n1.json"));
     const entry = doc.flags["warhammer-dbc"].mechanics[0].entries[0];
     expect(entry.kind).toBe("capability");
     expect(entry.capabilityKey).toBe("mutation.illusionOfNormality");

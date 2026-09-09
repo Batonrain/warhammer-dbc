@@ -163,8 +163,13 @@ export async function resolveFreeAttackClick(reactorUuid, moverUuid) {
 
   const moverTokenDoc = await fromUuid(moverUuid).catch(() => null);
   const moverToken = moverTokenDoc?.object;
+  // Foundry v14 убрала User#updateTokenTargets — на ней клик по кнопке падал
+  // TypeError'ом ПОСЛЕ списания Реакции: реагирующий платил, а цель не
+  // назначалась и уведомление «нанесите приём» не появлялось вовсе (найдено
+  // живой проверкой). Таргет ставится тем же способом, что и везде в системе
+  // (combat/aim.mjs, module/hooks.mjs): Token#setTarget с releaseOthers.
   if (moverToken && canvas?.ready) {
-    await game.user.updateTokenTargets([moverToken.id]);
+    moverToken.setTarget(true, { user: game.user, releaseOthers: true });
   }
   ui.notifications.info(`${reactor.name}: Реакция потрачена — нанесите рукопашный приём +0 по ${moverTokenDoc?.name ?? "цели"} со своего листа.`);
 }

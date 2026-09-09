@@ -58,6 +58,72 @@ const BASELINE_PATH = "contentSync.baseline";
 export const MECH_PATH = "@mechanics";
 const MECH_BASELINE_PATH = "contentSync.mechanicsBaseline";
 
+// ────────────────────────────────────────────────────────────────────────────
+//  ActiveEffect предмета (wdbc-9aj9) — третье виртуальное «поле», наравне с
+//  system и Механикой.
+//
+//  Почему понадобилось. Сверка сравнивала только system.* и Механику, а
+//  встроенную коллекцию эффектов не смотрела вовсе — и любая поломка, осевшая
+//  в эффекте, «Обновить мир» не лечила и даже не показывала: окно рапортовало,
+//  что расхождений нет. Так вышло с Боевыми Латами Скитарии: одноразовая
+//  миграция (module/migrations/item-effects.mjs) перенесла очки брони в
+//  ActiveEffect на предмете, пак потом починили, у нового персонажа всё верно,
+//  а у старого броня по-прежнему задваивалась — 12/14/12/10 вместо 6/7/5/5.
+//
+//  ЧТО СРАВНИВАЕТСЯ, а что нет. Только содержательная часть эффекта: имя,
+//  changes, перенос на актора и статусы. Остальное — состояние конкретной
+//  копии, и сравнивать его значило бы завалить окно ложными строками:
+//    • `disabled` ведёт syncItemEffectsDisabled (module/apps/effects.mjs) по
+//      надетости предмета — у снятого предмета он всегда разойдётся с паком;
+//    • `_id`, `origin`, `_stats`, `sort` уникальны для копии;
+//    • эффекты с флагом `mechEntry` ведёт сам Конструктор
+//      (syncMechanicsEffects) — их в паке может не быть вовсе, и трогать их
+//      отсюда значило бы драться с ним за одну и ту же коллекцию.
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Виртуальный путь «поля» эффектов предмета. */
+export const EFFECTS_PATH = "@effects";
+const EFFECTS_BASELINE_PATH = "contentSync.effectsBaseline";
+
+/** Список эффектов документа: настоящая коллекция Foundry или простой массив. */
+function effectDocs(doc) {
+  const raw = doc?.effects;
+  return Array.isArray(raw) ? raw : (raw?.contents ?? []);
+}
+
+/** Флаг эффекта — у документа Foundry он за getFlag, у слепка пака в data. */
+function effectFlag(fx, key) {
+  return fx?.getFlag?.(FLAG, key) ?? fx?.flags?.[FLAG]?.[key];
+}
+
+/** Одна правка эффекта без служебных полей. */
+function normalizeChange(c) {
+  return {
+    key: String(c?.key ?? ""),
+    type: String(c?.type ?? c?.mode ?? ""),
+    value: c?.value ?? "",
+    phase: String(c?.phase ?? ""),
+    priority: Number(c?.priority) || 0
+  };
+}
+
+/**
+ * Содержательный слепок эффектов документа — то, что вообще имеет смысл
+ * сверять с паком. Порядок эффектов в коллекции не значим (он зависит от
+ * порядка создания копии), поэтому список сортируется по имени.
+ */
+export function effectsOf(doc) {
+  return effectDocs(doc)
+    .filter(fx => !effectFlag(fx, "mechEntry"))
+    .map(fx => ({
+      name: String(fx?.name ?? ""),
+      transfer: fx?.transfer !== false,
+      statuses: [...(fx?.statuses ?? [])].map(String).sort(),
+      changes: (fx?.system?.changes ?? fx?.changes ?? []).map(normalizeChange)
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+}
+
 /** Механика документа (предмета актёра или документа пака) — всегда массив. */
 function mechanicsOf(doc) {
   const arr = doc?.flags?.[FLAG]?.mechanics;
@@ -66,7 +132,9 @@ function mechanicsOf(doc) {
 
 /** Подпись поля для окна: у виртуального поля Механики она человеческая. */
 export function fieldLabel(path) {
-  return path === MECH_PATH ? "МЕХАНИКА (Конструктор)" : path;
+  if (path === MECH_PATH)    return "МЕХАНИКА (Конструктор)";
+  if (path === EFFECTS_PATH) return "Эффекты предмета (ActiveEffect)";
+  return path;
 }
 
 /**
@@ -74,6 +142,7 @@ export function fieldLabel(path) {
  * занял бы весь экран и ничего бы не сказал: показываем сводку по записям.
  */
 export function describeValue(path, value) {
+  if (path === EFFECTS_PATH) return describeEffects(value);
   if (path !== MECH_PATH) return null;
   const groups = Array.isArray(value) ? value : [];
   const labels = [];
@@ -89,6 +158,21 @@ export function describeValue(path, value) {
   return labels.length > 4
     ? `${labels.length} записей: ${head}…`
     : `${labels.length} ${labels.length === 1 ? "запись" : "записи"}: ${head}`;
+}
+
+/**
+ * Эффекты для окна: имя эффекта и что именно он правит. Полный JSON занял бы
+ * весь экран, а важно ровно одно — какие поля меняются и на сколько.
+ */
+function describeEffects(value) {
+  const list = Array.isArray(value) ? value : [];
+  if (!list.length) return "—";
+  return list.map(fx => {
+    const what = (fx.changes || [])
+      .map(c => `${c.key} ${c.type === "add" ? "+" : ""}${c.value}`)
+      .join(", ");
+    return `${fx.name}${what ? ` (${what})` : ""}`;
+  }).join("; ");
 }
 
 /**
@@ -148,6 +232,11 @@ function baselineFor(item, path) {
     const stored = item.flags?.[FLAG]?.contentSync?.mechanicsBaseline;
     return Array.isArray(stored) ? stored : mechanicsOf(item);
   }
+  if (path === EFFECTS_PATH) {
+    const stored = item.flags?.[FLAG]?.contentSync?.effectsBaseline;
+    return Array.isArray(stored) ? stored : effectsOf(item);
+  }
+
   const stored = item.flags?.[FLAG]?.contentSync?.baseline;
   if (stored && Object.prototype.hasOwnProperty.call(stored, path)) return stored[path];
   return item.system?.[path];
@@ -155,7 +244,9 @@ function baselineFor(item, path) {
 
 /** Значение поля на предмете актёра или в документе пака. */
 function valueAt(doc, path) {
-  return path === MECH_PATH ? mechanicsOf(doc) : doc?.system?.[path];
+  if (path === MECH_PATH)    return mechanicsOf(doc);
+  if (path === EFFECTS_PATH) return effectsOf(doc);
+  return doc?.system?.[path];
 }
 
 /**
@@ -166,13 +257,34 @@ function valueAt(doc, path) {
 export function diffItemAgainstPack(item, packDoc) {
   if (!packDoc) return [];
   const out = [];
-  // Механика идёт последней и на равных правах с полями system (wdbc-lddr).
-  for (const path of [...Object.keys(packDoc.system || {}), MECH_PATH]) {
+  // Механика и эффекты идут последними и на равных правах с полями system
+  // (wdbc-lddr, wdbc-9aj9).
+  for (const path of [...Object.keys(packDoc.system || {}), MECH_PATH, EFFECTS_PATH]) {
     const packVal = valueAt(packDoc, path);
     const baseVal = baselineFor(item, path);
     if (sameValue(packVal, baseVal)) continue;
     const actorVal = valueAt(item, path);
-    const status = sameValue(actorVal, baseVal) ? "clean" : "conflict";
+    let status = sameValue(actorVal, baseVal) ? "clean" : "conflict";
+
+    // Эффекты БЕЗ сохранённой опоры — всегда «решает ГМ», даже когда по
+    // формуле выходит «чисто» (wdbc-9aj9, найдено живой проверкой).
+    //
+    // Опора у поля без своего снимка берётся равной текущему значению, и тогда
+    // любое расхождение с паком автоматически считается «чистым» — то есть
+    // «актёр не правил». Для полей system это приемлемо: их правит ГМ через
+    // лист, и снимок опоры у старых предметов уже проставлен миграцией. Для
+    // эффектов снимка нет ни у одного предмета в мире, а правка руками —
+    // штатный способ работы с шаблонными Чертами вида «Сверхъестественная
+    // Сила (X)»: в паке лежит дефолтный +1, а ГМ вписывает степень конкретного
+    // персонажа. Замер на живом мире: у двух персонажей стояло верное +2, и
+    // строка предлагала «безопасно» откатить его на паковый +1.
+    //
+    // Утверждать «актёр не правил», когда сравнивать не с чем, значит врать.
+    // Один прогон с применением проставит опору, и дальше поле заработает как
+    // все остальные.
+    if (path === EFFECTS_PATH && !Array.isArray(item.flags?.[FLAG]?.contentSync?.effectsBaseline))
+      status = "conflict";
+
     out.push({ path, baseVal, actorVal, packVal, status });
   }
   return out;
@@ -238,10 +350,18 @@ export async function buildLiveSyncReport() {
  * та же строка просто предложится снова при следующем прогоне.
  */
 export async function applySyncReport(report, selectedKeys) {
-  const byActor = new Map(); // actorId -> Map(itemId -> updateObj)
+  const byActor = new Map();   // actorId -> Map(itemId -> updateObj)
+  const effectJobs = [];       // {actorId, itemId, packUuid} — своя механика применения
   for (const row of report.rows) {
     for (const entry of row.entries) {
       if (!selectedKeys.has(entry.entryKey)) continue;
+      // Эффекты — встроенная коллекция, а не поле: их не «записать» вместе с
+      // system одним updateEmbeddedDocuments. Собираем отдельным списком и
+      // применяем ниже пересозданием, тем же приёмом, что миграция эффектов.
+      if (row.path === EFFECTS_PATH) {
+        effectJobs.push({ actorId: entry.actorId, itemId: entry.itemId, packUuid: row.packUuid });
+        continue;
+      }
       const actorUpdates = byActor.get(entry.actorId) || new Map();
       byActor.set(entry.actorId, actorUpdates);
       const upd = actorUpdates.get(entry.itemId) || { _id: entry.itemId };
@@ -264,5 +384,49 @@ export async function applySyncReport(report, selectedKeys) {
     await actor.updateEmbeddedDocuments("Item", list);
     applied += list.length;
   }
-  return { actors: byActor.size, items: applied };
+
+  const touched = new Set(byActor.keys());
+  for (const job of effectJobs) {
+    const actor = game.actors.get(job.actorId);
+    const item  = actor?.items?.get(job.itemId);
+    const packDoc = item ? await fromUuid(job.packUuid) : null;
+    if (!item || !packDoc) continue;
+    await replaceItemEffects(item, packDoc);
+    touched.add(job.actorId);
+    applied += 1;
+  }
+  return { actors: touched.size, items: applied };
+}
+
+/**
+ * Заменяет содержательные эффекты предмета на эффекты документа пака.
+ *
+ * Эффекты Конструктора (флаг `mechEntry`) не трогаются вовсе: их ведёт
+ * syncMechanicsEffects, и удалять их отсюда значило бы драться с ним за одну
+ * коллекцию. Всё остальное — включая перенесённые старой миграцией эффекты,
+ * ради которых сверка и научилась их видеть, — сносится и создаётся заново по
+ * паку: точечно править ActiveEffect нечем, у эффекта нет «поля», это документ.
+ */
+export async function replaceItemEffects(item, packDoc) {
+  const stale = effectDocs(item).filter(fx => !effectFlag(fx, "mechEntry")).map(fx => fx.id);
+  if (stale.length) await item.deleteEmbeddedDocuments("ActiveEffect", stale);
+
+  const fresh = effectDocs(packDoc)
+    .filter(fx => !effectFlag(fx, "mechEntry"))
+    .map(fx => {
+      const data = fx.toObject ? fx.toObject() : foundry.utils.deepClone(fx);
+      // Свой _id копии: id документа пака в другой коллекции ничего не значит и
+      // может столкнуться с уже существующим.
+      delete data._id;
+      delete data._key;
+      return data;
+    });
+  if (fresh.length) await item.createEmbeddedDocuments("ActiveEffect", fresh);
+
+  // Опора двигается на новое значение — как у любого другого поля. Плоский
+  // путь с точками, а не setFlag: setFlag кладёт ключ в объект как есть
+  // (`{flags:{scope:{"contentSync.effectsBaseline":…}}}`), и вложенность из
+  // точки в нём не разворачивается.
+  await item.update({ [`flags.${FLAG}.${EFFECTS_BASELINE_PATH}`]: effectsOf(packDoc) });
+  return { removed: stale.length, added: fresh.length };
 }

@@ -54,9 +54,10 @@ export function charAdvanceCat(actor, charKey, charApts) {
  * @param {string} [ctx.specialty]  название специализации
  * @param {string} [ctx.skillKey]   ключ обычного Навыка
  * @param {string} [ctx.entryChar]  своя Характеристика записи Группы
+ * @param {string[]} [ctx.entryApts] своя привязка Склонностей записи (wdbc-fzbu)
  * @param {Set|Array} charApts      Склонности персонажа
  */
-export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillKey = "", entryChar = "" } = {}, charApts) {
+export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillKey = "", entryChar = "", entryApts = null } = {}, charApts) {
   if (def?.alwaysAlly) return "ally";
   if (group && isFriendlySpecialty(actor, group, specialty)) return "ally";
   const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
@@ -64,7 +65,7 @@ export function skillAdvanceCat(actor, def, { group = "", specialty = "", skillK
       // cultureCat матчит по-английски (CULT.friendlySkills/hostileSkills в
       // legions.mjs) — def?.label русский и никогда бы не совпал (wdbc-ko14).
       ?? cultureCat("skill", def?.en || def?.label || def?.name || "", "", cultFxOf(actor))
-      ?? resolveSkillCat(group || skillKey, specialty, itemApts, charApts, actor);
+      ?? resolveSkillCat(group || skillKey, specialty, itemApts, charApts, actor, entryApts);
 }
 
 const ALIGN_WORD = { ally: "Дружественный", enemy: "Враждебный" };
