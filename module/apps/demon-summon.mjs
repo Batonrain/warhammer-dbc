@@ -42,9 +42,15 @@ async function findBestiaryActor(name) {
  * сцене — рядом с токеном ритуалиста, если он выбран на холсте, иначе в
  * центре сцены. Только ГМ: вызывающий код сам решает прямой вызов/релей
  * (см. defaultSpawnDemonFn ниже).
- * @returns {Promise<{ok:boolean, reason?:string, actorName?:string}>}
+ *
+ * `asMinion` (wdbc-1rno, Инфернальный Оруженосец/Рыцарь Бога — «контролировать
+ * как Миньона без траты слотов Миньонов»): созданный демон сразу получает
+ * system.masterUuid = ritualistUuid, попадая в панель МИНЬОНЫ вызывателя
+ * (module/sheets/tabs/minions-panel.mjs) без единого купленного Таланта-слота.
+ * Без ritualistUuid ставить некому — молча игнорируется, не бросает.
+ * @returns {Promise<{ok:boolean, reason?:string, actorName?:string, actorUuid?:string}>}
  */
-export async function spawnDemonOnScene(name, ritualistUuid = "") {
+export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = false } = {}) {
   const src = await findBestiaryActor(name);
   if (!src) return { ok: false, reason: `Демон «${name}» не найден в Бестиарии — разместите токен вручную.` };
 
@@ -53,6 +59,7 @@ export async function spawnDemonOnScene(name, ritualistUuid = "") {
 
   const data = src.toObject();
   delete data._id;
+  if (asMinion && ritualistUuid) data.system = { ...(data.system ?? {}), masterUuid: ritualistUuid };
   const actor = await Actor.create(data);
   if (!actor) return { ok: false, reason: "Не удалось создать Актора демона." };
 
@@ -69,7 +76,7 @@ export async function spawnDemonOnScene(name, ritualistUuid = "") {
 
   const tokenDoc = await actor.getTokenDocument({ x, y });
   await scene.createEmbeddedDocuments("Token", [tokenDoc.toObject()]);
-  return { ok: true, actorName: actor.name };
+  return { ok: true, actorName: actor.name, actorUuid: actor.uuid };
 }
 
 /**
@@ -77,10 +84,10 @@ export async function spawnDemonOnScene(name, ritualistUuid = "") {
  * action:"summonDemon"). Не бросает: результат уходит уведомлением ГМу
  * (нет активного ГМа — предупреждение игроку, без токена).
  */
-export async function defaultSpawnDemonFn(name, ritualistUuid) {
+export async function defaultSpawnDemonFn(name, ritualistUuid, { asMinion = false } = {}) {
   if (!name) return;
   if (game.user?.isGM) {
-    const res = await spawnDemonOnScene(name, ritualistUuid);
+    const res = await spawnDemonOnScene(name, ritualistUuid, { asMinion });
     if (!res.ok) ui.notifications?.warn(res.reason);
     return;
   }
@@ -89,5 +96,5 @@ export async function defaultSpawnDemonFn(name, ritualistUuid) {
     return;
   }
   game.socket?.emit("system.warhammer-dbc",
-    { action: "summonDemon", userId: game.user?.id, name, ritualistUuid });
+    { action: "summonDemon", userId: game.user?.id, name, ritualistUuid, asMinion });
 }

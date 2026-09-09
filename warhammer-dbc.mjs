@@ -751,8 +751,10 @@ Hooks.once("ready", () => {
       if (data.action === "summonDemon") {
         // Токен призванного демона (module/apps/demon-summon.mjs) — игрок не
         // читает Бестиарий (ownership.PLAYER:"NONE"), поиск по имени и
-        // создание Актора/Токена делает активный ГМ.
-        const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "");
+        // создание Актора/Токена делает активный ГМ. asMinion (wdbc-1rno) —
+        // призванный сразу привязывается Миньоном без слота к ритуалисту.
+        const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "",
+          { asMinion: !!data.asMinion });
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
         return;
       }

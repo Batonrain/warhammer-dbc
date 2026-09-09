@@ -29,6 +29,8 @@ function stubScene({ createdTokens = [] } = {}) {
   };
 }
 
+let createdActors;
+
 beforeEach(() => {
   resetCaptured();
   globalThis.game.user = {};
@@ -36,7 +38,15 @@ beforeEach(() => {
   globalThis.game.packs = new Map();
   globalThis.canvas = { scene: null, tokens: { placeables: [] } };
   globalThis.game.scenes = { current: null };
-  globalThis.Actor.create = async data => ({ ...data, name: data.name, getTokenDocument: async ({ x, y }) => ({ toObject: () => ({ name: data.name, x, y }) }) });
+  createdActors = [];
+  globalThis.Actor.create = async data => {
+    const actor = {
+      ...data, name: data.name, uuid: `Actor.${data.name}`,
+      getTokenDocument: async ({ x, y }) => ({ toObject: () => ({ name: data.name, x, y }) })
+    };
+    createdActors.push(actor);
+    return actor;
+  };
   globalThis.fromUuid = async () => null;
 });
 
@@ -49,7 +59,7 @@ describe("поиск и создание демона на сцене (spawnDemo
 
     const res = await spawnDemonOnScene("Кровожад");
 
-    expect(res).toEqual({ ok: true, actorName: "Bloodthirster / Кровожад" });
+    expect(res).toEqual({ ok: true, actorName: "Bloodthirster / Кровожад", actorUuid: "Actor.Bloodthirster / Кровожад" });
     expect(created.length).toBe(1);
   });
 
@@ -97,6 +107,39 @@ describe("поиск и создание демона на сцене (spawnDemo
 
     expect(created[0]).toMatchObject({ x: 600, y: 700 }); // +grid (100) от ритуалиста
   });
+
+  // wdbc-1rno: Инфернальный Оруженосец/Рыцарь Бога — «контролировать как
+  // Миньона без траты слотов Миньонов».
+  describe("asMinion — призванный демон привязывается Миньоном без слота", () => {
+    it("ritualistUuid проставляется в system.masterUuid созданного Актора", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.canvas.scene = stubScene();
+
+      const res = await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+
+      expect(res.ok).toBe(true);
+      expect(createdActors[0].system?.masterUuid).toBe("Actor.champion-1");
+    });
+
+    it("без asMinion (по умолчанию) masterUuid не проставляется", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.canvas.scene = stubScene();
+
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1");
+
+      expect(createdActors[0].system?.masterUuid).toBeUndefined();
+    });
+
+    it("asMinion без ritualistUuid — не ставит masterUuid (некому)", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+      globalThis.canvas.scene = stubScene();
+
+      const res = await spawnDemonOnScene("Кровопускатель", "", { asMinion: true });
+
+      expect(res.ok).toBe(true);
+      expect(createdActors[0].system?.masterUuid).toBeUndefined();
+    });
+  });
 });
 
 describe("маршрутизация вызова (defaultSpawnDemonFn)", () => {
@@ -122,8 +165,24 @@ describe("маршрутизация вызова (defaultSpawnDemonFn)", () => 
 
     expect(emitted).toEqual([{
       channel: "system.warhammer-dbc",
-      data: { action: "summonDemon", userId: "user-1", name: "Кровожад", ritualistUuid: "Actor.rit-1" }
+      data: { action: "summonDemon", userId: "user-1", name: "Кровожад", ritualistUuid: "Actor.rit-1", asMinion: false }
     }]);
+  });
+
+  it("asMinion:true доезжает и до прямого вызова, и до сокет-релея", async () => {
+    globalThis.game.user = { isGM: true };
+    globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
+    globalThis.canvas.scene = stubScene();
+
+    await defaultSpawnDemonFn("Кровопускатель", "Actor.rit-1", { asMinion: true });
+    expect(createdActors[0]?.system?.masterUuid).toBe("Actor.rit-1");
+
+    globalThis.game.user = { isGM: false, id: "user-1" };
+    globalThis.game.users.activeGM = { id: "gm-1" };
+    const emitted = [];
+    globalThis.game.socket = { emit: (channel, data) => emitted.push({ channel, data }) };
+    await defaultSpawnDemonFn("Кровопускатель", "Actor.rit-1", { asMinion: true });
+    expect(emitted[0].data.asMinion).toBe(true);
   });
 
   it("не ГМ, нет активного ГМа — предупреждает, не бросает и не шлёт сокет", async () => {

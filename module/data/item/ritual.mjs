@@ -28,7 +28,7 @@ export class RitualData extends foundry.abstract.TypeDataModel {
 
   /** @override */
   static defineSchema() {
-    const { HTMLField, StringField, NumberField, ArrayField, SchemaField } = foundry.data.fields;
+    const { HTMLField, StringField, NumberField, ArrayField, SchemaField, BooleanField } = foundry.data.fields;
     const num = label => new NumberField({ initial: 0, integer: true, nullable: false, label });
     return {
       description:    new HTMLField({ initial: "", label: "Описание" }),
@@ -40,6 +40,24 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       // failureType — движковый тип (RITUAL_TYPES): summon/dominion/binding/
       // exorcism/curse/circle/gate/blessing/other. Пустое — не заполнено.
       failureType:    new StringField({ initial: "", label: "Тип провала" }),
+
+      // wdbc-1rno: несколько книжных Даров (Инфернальный Оруженосец, Рыцарь
+      // Бога) дают персонажу ГОТОВЫЙ ритуал «простым Х-минутным ритуалом, не
+      // требующим тестов» — не вариация обычного ритуала с низким Порогом, а
+      // отдельный движковый путь: castRitual (apps/ritual-cast.mjs) при
+      // noTest:true пропускает бросок и Порог целиком, считает автоуспехом.
+      // demonName/demonInf — тот же смысл, что у R.demonName/demonInf в
+      // ritual-cast-dialog.mjs (кого призывать, для строки −Inf в Пороге у
+      // обычных ритуалов), но здесь ФИКСИРОВАН на предмете: игрок не вписывает
+      // имя демона вручную (Инфернальный Оруженосец — конкретный демон, не
+      // случайный), applyRitualItem подставляет их в R по умолчанию.
+      // asMinion — призванный демон получает system.masterUuid этого
+      // ритуалиста (module/apps/demon-summon.mjs::spawnDemonOnScene) —
+      // «контролировать как Миньона без траты слотов Миньонов».
+      noTest:         new BooleanField({ initial: false, label: "Без теста (автоуспех)" }),
+      asMinion:       new BooleanField({ initial: false, label: "Призванный — Миньон без слота" }),
+      demonName:      new StringField({ initial: "", label: "Демон (фиксированный)" }),
+      demonInf:       num("Inf демона (фиксированный)"),
       // «Запись (N)» из книжной строки «Требования:» — номер конкретной
       // ВАРИАЦИИ ритуала (стр. «Определение вариации», core.json: «нужно
       // накладывать именно ту же вариацию Записи»), НЕ игровой порог, который

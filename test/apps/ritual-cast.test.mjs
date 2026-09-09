@@ -104,6 +104,34 @@ describe("подстановка ритуала-предмета (applyRitualIte
     expect(applied.gmMod).toBe(0);
   });
 
+  // wdbc-1rno: Дары вроде Инфернального Оруженосца дают ГОТОВЫЙ ритуал на
+  // конкретного демона — noTest/asMinion/demonName/demonInf фиксированы на
+  // предмете, игрок их не вписывает (в отличие от обычного «Призыва»).
+  it("noTest/asMinion/demonName/demonInf переезжают из предмета в R", () => {
+    const applied = applyRitualItem(scholar, ritual({
+      noTest: true, asMinion: true, demonName: "Кровопускатель", demonInf: 35
+    }), skillsOf);
+
+    expect(applied.noTest).toBe(true);
+    expect(applied.asMinion).toBe(true);
+    expect(applied.demonName).toBe("Кровопускатель");
+    expect(applied.demonInf).toBe(35);
+  });
+
+  it("noTest/asMinion по умолчанию false, а не отсутствуют", () => {
+    const applied = applyRitualItem(scholar, ritual({}), skillsOf);
+
+    expect(applied.noTest).toBe(false);
+    expect(applied.asMinion).toBe(false);
+  });
+
+  it("незаполненные demonName/demonInf не подставляются поверх умолчаний R", () => {
+    const applied = applyRitualItem(scholar, ritual({}), skillsOf);
+
+    expect(applied.demonName).toBeUndefined();
+    expect(applied.demonInf).toBeUndefined();
+  });
+
   // Контентный тип предмета не определяет движковый сам по себе: у одной
   // категории книги встречаются и blessing, и summon, и binding.
   it("контентный тип ритуала (ritualType) движковый не подставляет", () => {
@@ -635,6 +663,62 @@ describe("проведение ритуала (castRitual)", () => {
     expect(res.success).toBe(false);
     expect(captured.chat[0].content).toContain("Что Посеешь");
     expect(captured.rolls.length).toBe(1);
+  });
+
+  // wdbc-1rno: Инфернальный Оруженосец/Рыцарь Бога — «простым N-минутным
+  // ритуалом, НЕ требующим тестов». item.system.noTest снимает бросок целиком.
+  describe("ритуал без теста (item.system.noTest)", () => {
+    it("не бросает кубы — всегда автоуспех", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+      const res = await castRitual(baseR({ type: "summon" }), actor(), { item });
+
+      expect(res).toEqual({ success: true, deg: 1, threshold: null, roll: null });
+      expect(captured.rolls).toEqual([]);
+      expect(captured.chat[0].content).toContain("не требует теста");
+    });
+
+    it("зовёт spawnDemonFn с asMinion, если R.asMinion — демон привязывается Миньоном без слота", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+      const calls = [];
+      const spawnDemonFn = async (name, ritualistUuid, opts) => calls.push({ name, ritualistUuid, opts });
+      const a = actor(); a.uuid = "Actor.act-1";
+
+      await castRitual(baseR({ type: "summon", demonName: "Кровопускатель", asMinion: true }), a, { item, spawnDemonFn });
+
+      expect(calls).toEqual([{ name: "Кровопускатель", ritualistUuid: "Actor.act-1", opts: { asMinion: true } }]);
+      expect(captured.chat[0].content).toContain("Привязан Миньоном без слота");
+    });
+
+    it("без demonName — ничего не спавнит, но всё равно автоуспех", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+      const calls = [];
+      const spawnDemonFn = async (...args) => calls.push(args);
+
+      const res = await castRitual(baseR({ type: "summon" }), actor(), { item, spawnDemonFn });
+
+      expect(res.success).toBe(true);
+      expect(calls).toEqual([]);
+    });
+
+    it("требования не выполнены и отклонены подтверждением — даже без теста ритуал не проводится", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: (_s, k) => (k === "req"
+        ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "reqRace", raceKey: "drukhari" }] }]
+        : undefined) };
+      const confirmUnmet = async () => false;
+
+      const res = await castRitual(baseR({ type: "summon" }), actor(), { item, confirmUnmet });
+
+      expect(res).toBeNull();
+      expect(captured.chat).toEqual([]);
+    });
+
+    it("noTest без указания item — идёт обычным путём с броском (нечего проверять)", async () => {
+      captured.dice = [1];
+      const res = await castRitual(baseR({ gmMod: 50, type: "summon" }), actor());
+
+      expect(res.roll).toBe(1);
+      expect(captured.rolls.length).toBe(1);
+    });
   });
 });
 

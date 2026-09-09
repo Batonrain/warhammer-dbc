@@ -289,6 +289,11 @@ export async function castRitual(R, actor, {
     const proceed = await confirmUnmet(actor, d.reqFailed);
     if (!proceed) return null;
   }
+  // wdbc-1rno: Инфернальный Оруженосец/Рыцарь Бога — «простым N-минутным
+  // ритуалом, НЕ требующим тестов». Требования к ритуалисту уже проверены/
+  // подтверждены выше (ritualThreshold/confirmUnmet) — noTest снимает только
+  // сам бросок и Порог, не право персонажа провести ритуал вообще.
+  if (item?.system?.noTest) return castNoTestRitual(R, actor, { spawnDemonFn });
   // Общий сбор модификаторов (wdbc-ct65.3): Порог ритуала считался целиком
   // ритуальной арифметикой (ritualThreshold), мимо реестра правил — Усталость
   // Ритуалиста и его Черты в него не попадали.
@@ -356,4 +361,33 @@ export async function castRitual(R, actor, {
   }), { rolls: allRolls });
 
   return { success, deg, threshold, roll: rv };
+}
+
+/**
+ * Ритуал без теста (wdbc-1rno) — вызывается ТОЛЬКО из castRitual выше, когда
+ * item.system.noTest установлен: требования к ритуалисту уже проверены/
+ * подтверждены там же. Ни Порога, ни броска книга для такого ритуала не
+ * даёт вовсе — результат гарантирован, единственная цена — время (проза
+ * ритуала называет его отдельно, механикой не считается).
+ * @returns {Promise<{success:true, deg:1, threshold:null, roll:null}>}
+ */
+async function castNoTestRitual(R, actor, { spawnDemonFn }) {
+  // Токен демона — та же логика, что в основном пути: только "summon" и
+  // только если ритуалист (тут — сам предмет) назвал демона. asMinion
+  // (Инфернальный Оруженосец/Рыцарь Бога — «без траты слотов Миньонов»)
+  // проставляет system.masterUuid созданному демону.
+  if (R.type === "summon" && R.demonName) await spawnDemonFn(R.demonName, actor.uuid, { asMinion: !!R.asMinion });
+  const demonHtml = R.demonName
+    ? `<div class="roll-threshold" style="font-size:0.85em;">Демон: <b>${esc(R.demonName)}</b>${R.type === "summon" ? " — токен размещён на сцене." : ""}${R.asMinion ? " Привязан Миньоном без слота." : ""}</div>`
+    : "";
+
+  await postTestCard(actor, testCardHtml({
+    icon: `${veilIcon("ritual")} `, title: `Ритуал: ${esc(R.name || RITUAL_TYPES_MAP[R.type]?.label || R.type)}`,
+    classes: "wh-ritual-card",
+    threshold: `<div class="roll-threshold">${esc(actor.name)} — ритуал не требует теста, результат гарантирован.</div>`,
+    outcome: outcomeHtml(true, "Ритуал проведён"),
+    sections: [demonHtml]
+  }), { sound: false });
+
+  return { success: true, deg: 1, threshold: null, roll: null };
 }
