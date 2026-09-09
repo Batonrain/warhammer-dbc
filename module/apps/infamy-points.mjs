@@ -27,6 +27,22 @@ export function actorInfamyValue(actor) {
   return Math.max(0, Number(raw) || 0);
 }
 
+/**
+ * Максимум пула Очков Бесчестия — тот же геттер, что actor-sheet.mjs
+ * `_infamyMax`/demon-prince-sheet.mjs/hud.mjs: у Демон-Принца и Хаосита
+ * (alignment "heretic") это Inf.b, СЧИТАЕТСЯ, а не читается из
+ * system.fate.max. У всех прочих system.fate.max — их собственная Судьба
+ * (ручное число персонажа), и это разные вещи не по ошибке: комментарий у
+ * actor-sheet.mjs::_infamyMax прямо называет расхождение с fate.max багом,
+ * а не альтернативной механикой. Нужен местам, которые считают пул не через
+ * лист (wdbc-k1hc — game-session.mjs::refillFatePools).
+ */
+export function actorInfamyMax(actor) {
+  if (actor?.type === "demonPrince" || actor?.system?.alignment === "heretic")
+    return Math.max(0, Number(actor?.system?.characteristics?.inf?.bonus) || 0);
+  return Math.max(0, Number(actor?.system?.fate?.max) || 0);
+}
+
 // Контекст для общего партиала infamy-strip.hbs.
 export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) {
   // Сохранённое значение может превышать новый максимум (Inf.b упал, старые

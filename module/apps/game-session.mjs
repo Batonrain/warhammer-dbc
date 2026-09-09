@@ -36,6 +36,7 @@ import {
   isCapabilityAvailable, markCapabilityUsed,
   isRuleUsageUsed as cooldownIsRuleUsageUsed, markRuleUsageUsed as cooldownMarkRuleUsageUsed
 } from "../rules/cooldown.mjs";
+import { actorInfamyMax } from "./infamy-points.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -154,14 +155,25 @@ export async function resetUsageLimit(scope) {
   return n;
 }
 
-/** Восполнить Очки Судьбы/Бесчестия всем акторам (system.fate + Демон-Принц system.dp.ip). */
-async function refillFatePools() {
+/**
+ * Восполнить Очки Судьбы/Бесчестия всем акторам (system.fate + Демон-Принц
+ * system.dp.ip).
+ *
+ * Максимум Хаосита (alignment "heretic") — Inf.b, не хранимый
+ * system.fate.max (wdbc-k1hc, тот же разбор, что у actor-sheet.mjs::
+ * _infamyMax/hud.mjs): восполнение до fate.max откатывало пул Бесчестия не к
+ * реальному потолку персонажа, а к постороннему числу (Судьба обычного
+ * Персонажа для Хаосита самой роли не играет). actorInfamyMax считает нужный
+ * максимум по типу/alignment сама.
+ */
+export async function refillFatePools() {
   for (const actor of game.actors) {
     const upd = {};
-    const max = Number(actor.system.fate?.max);
-    if (Number.isFinite(max) && max > 0) upd["system.fate.value"] = max;
     if (actor.type === "demonPrince") {
-      upd["system.dp.ip"] = Math.max(0, Number(actor.system.characteristics?.inf?.bonus) || 0);
+      upd["system.dp.ip"] = actorInfamyMax(actor);
+    } else {
+      const max = actorInfamyMax(actor);
+      if (max > 0) upd["system.fate.value"] = max;
     }
     if (Object.keys(upd).length) await actor.update(upd);
   }

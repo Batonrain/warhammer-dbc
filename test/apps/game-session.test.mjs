@@ -9,7 +9,7 @@
 import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
-import { isRoundCapabilityAvailable, markRoundCapabilityUsed, resetUsageLimit } from "../../module/apps/game-session.mjs";
+import { isRoundCapabilityAvailable, markRoundCapabilityUsed, resetUsageLimit, refillFatePools } from "../../module/apps/game-session.mjs";
 
 /** Актор с минимальным getFlag/setFlag — как у настоящего Foundry-документа. */
 function actorWithFlags() {
@@ -158,5 +158,62 @@ describe("resetUsageLimit", () => {
     globalThis.game.actors = [actor];
     await resetUsageLimit("scene");
     expect(item.getFlag("warhammer-dbc", "usageLimits").slowReload.used).toBe(true);
+  });
+});
+
+// ── refillFatePools — «⏻ Конец сессии» восполняет Судьбу/Бесчестие ─────────
+// wdbc-k1hc: у Хаосита (alignment "heretic") максимум пула — Inf.b, а не их
+// собственный system.fate.max (тот у Хаосита посторонний, к делу не
+// относится). Восполнение до fate.max откатывало бы пул не к реальному
+// потолку персонажа.
+
+function actorWithUpdate(type, system) {
+  const doc = { type, system: JSON.parse(JSON.stringify(system)), updates: [] };
+  doc.update = async patch => {
+    doc.updates.push(patch);
+    for (const [path, value] of Object.entries(patch)) {
+      const parts = path.split(".").slice(1); // "system.fate.value" → ["fate","value"]
+      let cur = doc.system;
+      for (const p of parts.slice(0, -1)) { cur[p] ??= {}; cur = cur[p]; }
+      cur[parts.at(-1)] = value;
+    }
+  };
+  return doc;
+}
+
+describe("refillFatePools", () => {
+  it("Хаосит: pull восполняется до Inf.b, не до fate.max", async () => {
+    const actor = actorWithUpdate("character", {
+      alignment: "heretic", fate: { value: 0, max: 3 }, characteristics: { inf: { bonus: 4 } }
+    });
+    globalThis.game.actors = [actor];
+    await refillFatePools();
+    expect(actor.system.fate.value).toBe(4);
+  });
+
+  it("обычный лоялист: pull восполняется до собственного fate.max, как раньше", async () => {
+    const actor = actorWithUpdate("character", {
+      alignment: "loyalist", fate: { value: 0, max: 3 }, characteristics: { inf: { bonus: 4 } }
+    });
+    globalThis.game.actors = [actor];
+    await refillFatePools();
+    expect(actor.system.fate.value).toBe(3);
+  });
+
+  it("Демон-Принц: system.dp.ip восполняется до Inf.b, fate.value не трогается", async () => {
+    const actor = actorWithUpdate("demonPrince", {
+      fate: { value: 0, max: 9 }, dp: { ip: 0 }, characteristics: { inf: { bonus: 5 } }
+    });
+    globalThis.game.actors = [actor];
+    await refillFatePools();
+    expect(actor.system.dp.ip).toBe(5);
+    expect(actor.updates.some(u => "system.fate.value" in u)).toBe(false);
+  });
+
+  it("max 0 (нет Inf.b/fate.max) — update не вызывается вовсе", async () => {
+    const actor = actorWithUpdate("character", { alignment: "loyalist", fate: { value: 0, max: 0 } });
+    globalThis.game.actors = [actor];
+    await refillFatePools();
+    expect(actor.updates.length).toBe(0);
   });
 });
