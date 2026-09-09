@@ -39,6 +39,17 @@
   font-size: 0.74em; border: 1px solid var(--wh-border); border-radius: 10px;
 }
 
+/* Слуга без слота (wdbc-1rno) — та же плотность, что зона дропа ОТНОШЕНИЙ,
+   но однострочная: сюда не кладут карточки, только принимают дроп. */
+.warhammer-dbc .minion-drop-zone {
+  margin-top: 6px; padding: 4px 8px; font-size: 0.76em; text-align: center;
+  color: var(--wh-text-mid);
+  border: 1px dashed var(--wh-border); border-radius: 4px;
+}
+.warhammer-dbc .minion-drop-zone.minion-drop-hover {
+  border-color: var(--wh-accent); background: rgba(47, 158, 106, 0.08); color: var(--wh-text);
+}
+
 /* ── Диалог выбора при покупке Таланта ── */
 .wh-minion-slot .minion-slot-line { font-size: 0.82em; margin-top: 4px; }
 .wh-minion-slot .minion-slot-ok   { margin-top: 5px; font-size: 0.8em; color: #7fd6a2; }

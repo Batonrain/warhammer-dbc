@@ -124,6 +124,18 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "cuttingWords-strike",
+              "kind": "script",
+              "label": "Острые Слова — нанести урон проигравшему",
+              "code": "// Cutting Words / Острые Слова (Дар Слаанеш, wdbc-1rno).\n// Книга: победив в ЛЮБОМ тесте социального взаимодействия, чемпион может\n// нанести проигравшему 1d5+Успехи непоглощаемого R Dmg в торс (кровавые\n// стигматы). Сам тест мог быть обычным, встречным или расширенным — победа\n// и число Успехов уже показаны в карточке только что брошенного теста;\n// движку нечем это перепроверить (нет привязки \"этот тест был социальным\n// взаимодействием И только что выигран этим актором\"), поэтому число\n// Успехов вводит игрок честно, как в карточке, шкалой книги.\nconst targetDoc = game.user.targets?.first?.() ?? [...(game.user.targets ?? [])][0];\nconst targetActor = (targetDoc?.document ?? targetDoc)?.actor;\nif (!targetActor) {\n  ui.notifications?.warn(\"Острые Слова: выберите проигравшего тест.\");\n} else {\n  const STEPS = [[\"0\", \"0 Успехов\"], [\"1\", \"1 Успех\"], [\"2\", \"2 Успеха\"], [\"3\", \"3 Успеха\"], [\"4\", \"4 Успеха\"], [\"5\", \"5+ Успехов\"]];\n  const choice = await foundry.applications.api.DialogV2.wait({\n    window: { title: \"Острые Слова — число Успехов\" },\n    content: `<p>Сколько Успехов было на только что выигранном тесте социального взаимодействия против ${targetActor.name}?</p>`,\n    buttons: STEPS.map(([action, label]) => ({ action, label })),\n    rejectClose: false\n  });\n  if (choice !== null && choice !== undefined) {\n    const successes = Number(choice) || 0;\n    const roll = await new Roll(`1d5+${successes}`).evaluate();\n    await targetActor.update(woundLossUpdates(targetActor.system, roll.total));\n    await ChatMessage.create(ChatMessage.applyRollMode({\n      speaker,\n      content: `<div class=\"wh-roll-result\">\n        <div class=\"roll-header\">Острые Слова — ${actor.name} → ${targetActor.name}</div>\n        <div class=\"roll-threshold\">1d5+${successes} Успехов — <b>${roll.total}</b> непоглощаемого урона в торс (кровавые стигматы).</div>\n      </div>`,\n      rolls: [roll]\n    }, game.settings.get(\"core\", \"rollMode\")));\n  }\n}",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

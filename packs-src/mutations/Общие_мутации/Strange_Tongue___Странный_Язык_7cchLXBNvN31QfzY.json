@@ -124,6 +124,56 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "strangeTongue-sub6-arm",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.b2B8zxbhoK961wEf",
+              "sourceName": "Multiple Arms / Многорукий (X)",
+              "sourceHasRating": true,
+              "rating": 1,
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "6"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "strangeTongue-sub6-grapple",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "athletics",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Щупальце-язык: приём Захват и тесты в Борьбе (не любой тест Athletics)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "6"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "strangeTongue-sub8-bite",
+              "kind": "integralAttack",
+              "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.sTn9BiteFangXq2K",
+              "equipSourceName": "Toothy Tongue / Зубастый Язык",
+              "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "8"
+                ],
+                "negateSub": false
+              }
             }
           ]
         }

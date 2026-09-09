@@ -1761,8 +1761,9 @@ export class WarhammerCharacterSheet
     activatePathListeners(html, this.actor);
 
     // ── Миньоны (стр. 111-113) ─────────────────────────────────────────────
-    // Карточки слуг в блоке «МИНЬОНЫ» на вкладке СОЦИУМ: клик открывает лист.
-    activateMinionPanelListeners(html);
+    // Карточки слуг в блоке «МИНЬОНЫ» на вкладке СОЦИУМ: клик открывает лист;
+    // зона дропа назначает перетащенного актора слугой без слота (wdbc-1rno).
+    activateMinionPanelListeners(html, this.actor);
 
     // ── СОЦИУМ: Отношения (правка и дроп), переходы на предметы и акторов ──
     activateSocialListeners(html, this.actor, {

@@ -124,6 +124,72 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "multipleEyes-sub2-awareness",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "awareness",
+              "modValueMode": "flat",
+              "value": 20,
+              "label": "Фасетчатые Глаза: тесты Awareness, полагающиеся на зрение (не любой тест Awareness)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "2"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "multipleEyes-sub3-talent",
+              "kind": "talent",
+              "sourceUuid": "Compendium.warhammer-dbc.talents.Item.PeJ0gu0aK5lEGDCy",
+              "sourceName": "Independent Targeting / Независимое Прицеливание",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "3"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "multipleEyes-sub5-vision",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "awareness",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Обычные: тесты зрения (не любой тест Awareness)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "5"
+                ],
+                "negateSub": false
+              }
+            },
+            {
+              "id": "multipleEyes-sub5-distance",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "awareness",
+              "modValueMode": "flat",
+              "value": 20,
+              "label": "Обычные: определение расстояний/размеров на глаз (вместо +10 выше)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "5"
+                ],
+                "negateSub": false
+              }
             }
           ]
         }

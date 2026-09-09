@@ -124,6 +124,18 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "confessorOfDesires-ask",
+              "kind": "script",
+              "label": "Исповедник Желаний — спросить о сокровенных желаниях",
+              "code": "// Confessor of Desires / Исповедник Желаний (Дар Слаанеш, wdbc-1rno).\n// Книга: цель проходит тест W-60 (как от психосилы) или честно отвечает на\n// вопрос о сокровенных желаниях, не осознавая влияния. Прошедший тест\n// осознаёт голос и получает иммунитет к нему на 6 дней. Сам факт \"спросить о\n// желаниях\" — реплика за столом, движку сверять не с чем: кнопка начинается\n// с того, что цель уже выбрана обычным таргетингом Foundry.\nconst targetDoc = game.user.targets?.first?.() ?? [...(game.user.targets ?? [])][0];\nconst targetActor = (targetDoc?.document ?? targetDoc)?.actor;\nif (!targetActor) {\n  ui.notifications?.warn(\"Исповедник Желаний: выберите одну цель.\");\n} else {\n  const DAY_SECONDS = 86400; // constants/imperial-calendar.mjs::SECONDS_PER_DAY — скрипты не импортируют модули\n  const immuneUntil = Number(targetActor.getFlag(\"warhammer-dbc\", \"confessorOfDesiresImmuneUntil\")) || 0;\n  if (game.time.worldTime < immuneUntil) {\n    const daysLeft = Math.ceil((immuneUntil - game.time.worldTime) / DAY_SECONDS);\n    ui.notifications?.info(`Исповедник Желаний: ${targetActor.name} уже осознаёт влияние голоса — иммунитет ещё ${daysLeft} дн.`);\n  } else {\n    const wp = Number(targetActor.system?.characteristics?.wp?.total) || 0;\n    const threshold = wp - 60;\n    const roll = await new Roll(\"1d100\").evaluate();\n    const success = roll.total <= threshold;\n    let line;\n    if (success) {\n      await targetActor.setFlag(\"warhammer-dbc\", \"confessorOfDesiresImmuneUntil\", game.time.worldTime + 6 * DAY_SECONDS);\n      line = `<b>Успех</b> — ${targetActor.name} осознаёт противоестественное влияние и получает иммунитет на 6 дней.`;\n    } else {\n      line = `<b>Провал</b> — честно отвечает на вопрос о сокровенных желаниях, не осознавая влияния (считает, что рассказал добровольно).`;\n    }\n    await ChatMessage.create(ChatMessage.applyRollMode({\n      speaker,\n      content: `<div class=\"wh-roll-result\">\n        <div class=\"roll-header\">Исповедник Желаний — ${actor.name} → ${targetActor.name}</div>\n        <div class=\"roll-threshold\">Тест W-60 — порог <b>${threshold}</b> (W ${wp}), бросок <b>${roll.total}</b></div>\n        <div class=\"roll-threshold\">${line}</div>\n      </div>`,\n      rolls: [roll]\n    }, game.settings.get(\"core\", \"rollMode\")));\n  }\n}",
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

@@ -2,9 +2,13 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  Блок «МИНЬОНЫ» на вкладке СОЦИУМ (корбук стр. 111-113).
 //
-//  Блока нет вовсе, пока не куплен хотя бы один Талант «Миньон Хаоса»: слуг
-//  даёт Талант, и пустая панель у того, кто их не покупал, только занимала бы
-//  место.
+//  Блока нет вовсе, пока не куплен хотя бы один Талант «Миньон Хаоса» И нет
+//  уже привязанного слуги: слуг обычно даёт Талант, и пустая панель у того,
+//  кто их не покупал, только занимала бы место. Но некоторые находки дают
+//  слугу БЕЗ траты слота вовсе (wdbc-1rno, Инфернальный Оруженосец/Рыцарь
+//  Бога — «контролировать как Миньона без траты слотов Миньонов») — такой
+//  слуга приходит уже привязанным (system.masterUuid), Таланта под него нет
+//  и не будет, и панель обязана показать его всё равно.
 //
 //  В шапке блока — сколько Миньонов какой группы есть и каков максимум:
 //  наименьший бонус Характеристики по имеющимся группам (стр. 111). Кнопка «+»
@@ -21,14 +25,42 @@ import { minionSlots, slotUsage, minionCapacity, groupTally } from "../../rules/
 /**
  * Клик по карточке слуги открывает его лист. Обработчик живёт здесь, рядом с
  * панелью: прежде он был общим с панелями «Записей», а тех больше нет.
+ *
+ * Зона дропа (wdbc-1rno) — тем же приёмом, что ОТНОШЕНИЯ (tabs/social.mjs):
+ * перетащенный актор со сцены/боковой панели становится слугой БЕЗ слота —
+ * пишет system.masterUuid на САМОМ перетащенном акторе, не на Хозяине. Нужна
+ * для находок вроде Инфернального Оруженосца («контролировать как Миньона
+ * без траты слотов») — Таланта под такого слугу нет и не будет. Чужого слугу
+ * (уже привязан к другому Хозяину) не перехватывает молча.
  */
-export function activateMinionPanelListeners(html, root = null) {
+export function activateMinionPanelListeners(html, actor, root = null) {
   const el = root ?? (html?.jquery ? html[0] : html);
   el?.querySelectorAll?.(".minion-open-link").forEach(node => node.addEventListener("click", async ev => {
     ev.preventDefault();
     const doc = await fromUuid(ev.currentTarget.dataset.uuid).catch(() => null);
     doc?.sheet?.render(true);
   }));
+
+  const zone = el?.querySelector?.(".minion-drop-zone");
+  if (!zone || !actor?.uuid) return;
+  zone.addEventListener("dragover", ev => { ev.preventDefault(); zone.classList.add("minion-drop-hover"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("minion-drop-hover"));
+  zone.addEventListener("drop", async ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    zone.classList.remove("minion-drop-hover");
+    let data = null;
+    try { data = JSON.parse(ev.dataTransfer.getData("text/plain")); } catch { /* не наш дроп */ }
+    if (!data?.uuid) return;
+    const doc = await fromUuid(data.uuid).catch(() => null);
+    const target = doc?.documentName === "Token" ? doc.actor : doc;
+    if (!target || target.documentName !== "Actor") return;
+    if (target.uuid === actor.uuid) return ui.notifications?.warn("Нельзя назначить актора миньоном самому себе.");
+    if (target.system?.masterUuid && target.system.masterUuid !== actor.uuid) {
+      return ui.notifications?.warn(`${target.name} уже слуга другого Хозяина.`);
+    }
+    await target.update({ "system.masterUuid": actor.uuid });
+  });
 }
 
 /** Акторы, чей Хозяин — этот актор. Ссылку хранит слуга, а не Хозяин. */
@@ -54,16 +86,18 @@ function minionRow(minion) {
 }
 
 /**
- * Контекст блока. `hasMinionTalent` решает, показывать ли его вообще;
- * `freeSlots` — сколько Талантов ждут своего слугу, и есть ли смысл в «+».
+ * Контекст блока. `hasMinionTalent` (несмотря на имя — «есть, что показать»)
+ * решает, показывать ли его вообще: Талант ИЛИ уже привязанный слуга без
+ * слота (wdbc-1rno); `freeSlots` — сколько Талантов ждут своего слугу, и есть
+ * ли смысл в «+».
  */
 export function minionsPanelContext(actor, actors = []) {
   const items = [...(actor?.items ?? [])];
   const slots = minionSlots(items);
-  if (!slots.length) return { hasMinionTalent: false, minionRows: [], freeSlots: [] };
-
   const minions = minionsOfActor(actor, actors)
     .sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
+  if (!slots.length && !minions.length) return { hasMinionTalent: false, minionRows: [], freeSlots: [] };
+
   const { free, extra } = slotUsage(items, minions);
 
   // Потолок считается по группам, которые у Хозяина уже есть, и по тем, на
@@ -87,7 +121,11 @@ export function minionsPanelContext(actor, actors = []) {
         ? `${MINION_GROUPS[slot.group]?.label || slot.group}, ${MINION_TIERS[slot.tier]?.label || slot.tier}`
         : "Миньон не выбран"
     })),
-    // Слуги, под которых Таланта нет: заведены руками или Талант продан.
-    minionExtra: extra.length
+    // Слуги, под которых Таланта нет: заведены руками, Талант продан, или
+    // Дар выдал слугу без слота (wdbc-1rno) — не ошибка, просто счётчик.
+    minionExtra: extra.length,
+    // Для зоны дропа в шаблоне (data-actor-uuid) — activateMinionPanelListeners
+    // читает его же напрямую с актора, здесь только для рендера атрибута.
+    actorUuid: actor?.uuid || ""
   };
 }

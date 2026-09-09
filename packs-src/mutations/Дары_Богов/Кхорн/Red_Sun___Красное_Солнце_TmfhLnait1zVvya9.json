@@ -124,8 +124,22 @@
                 "negate": false,
                 "conditions": []
               },
-              "capabilityCostPool": "infamy",
+              "capabilityCostPool": "",
               "capabilityCostAmount": 1
+            },
+            {
+              "id": "redSun-ignite",
+              "kind": "script",
+              "label": "Красное Солнце — зажечь нимб",
+              "code": "// Red Sun / Красное Солнце (Дар Кхорна, wdbc-1rno). Только в Ярости.\n// Книга: нимб над головой до конца Ярости; любой персонаж в 16м, видящий\n// нимб, проходит W+0 или впадает в Ярость и не может пытаться выйти, пока\n// видит нимб. Тот же приём геометрии/W-теста, что уже работает у Иконы\n// Богохульства (module/apps/item-script.mjs::tokensThatCanSee не подходит —\n// та отвечает \"кто видит ЦЕЛЬ\", здесь нужно \"кто в 16м видит КАСТЕРА\",\n// поэтому радиус — tokensWithinRadius, видимость — isTokenInSight на каждого\n// кандидата отдельно). «Не может пытаться выйти, пока видит нимб» — срок\n// действия состояния, не число, отыгрывается за столом.\nconst casterTokenDoc = token?.document ?? token;\nif (!actor.system?.inRage) {\n  ui.notifications?.warn(\"Красное Солнце: работает только в Ярости.\");\n} else if (!casterTokenDoc?.parent) {\n  ui.notifications?.warn(\"Красное Солнце: у персонажа нет токена на текущей сцене.\");\n} else {\n  const scene = casterTokenDoc.parent;\n  const RADIUS_M = 16;\n  const nearby = tokensWithinRadius(casterTokenDoc, RADIUS_M);\n  const seers = nearby.filter(t => isTokenInSight(t, casterTokenDoc, scene.grid));\n  const lines = [];\n  for (const seerDoc of seers) {\n    const seerActor = seerDoc.actor;\n    const wp = Number(seerActor.system?.characteristics?.wp?.total) || 0;\n    const roll = await new Roll(\"1d100\").evaluate();\n    const success = roll.total <= wp;\n    let note = success ? \"тест пройден\" : \"провал\";\n    if (!success && \"inRage\" in (seerActor.system || {})) {\n      await seerActor.update({ \"system.inRage\": true });\n      note += \" — впадает в Ярость (не может пытаться выйти, пока видит нимб — отыграть вручную)\";\n    }\n    lines.push(`${seerActor.name}: W ${wp} vs ${roll.total} — ${note}`);\n  }\n  await ChatMessage.create(ChatMessage.applyRollMode({\n    speaker,\n    content: `<div class=\"wh-roll-result\">\n      <div class=\"roll-header\">Красное Солнце — ${actor.name}</div>\n      <div class=\"roll-threshold\">Нимб загорается до конца Ярости.</div>\n      <div class=\"roll-threshold\">${seers.length ? lines.join(\"<br>\") : \"Никто не видит нимб в пределах 16м.\"}</div>\n    </div>`\n  }, game.settings.get(\"core\", \"rollMode\")));\n}",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

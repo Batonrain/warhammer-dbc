@@ -33,10 +33,11 @@ const minion = (group, tier, name = "Слуга") => ({
 });
 
 describe("блок «МИНЬОНЫ»", () => {
-  it("без Таланта блока нет вовсе", () => {
+  it("без Таланта и без уже привязанного слуги блока нет вовсе", () => {
     const ctx = minionsPanelContext(master([{ type: "talent", name: "Дуэлист" }]), []);
     expect(ctx.hasMinionTalent).toBe(false);
     expect(ctx.minionRows).toEqual([]);
+    expect(ctx.actorUuid).toBeUndefined();
   });
 
   it("Талант куплен, слуги нет — блок есть, «+» доступна", () => {
@@ -79,6 +80,27 @@ describe("блок «МИНЬОНЫ»", () => {
     const mine = minion("beast", "lesser", "Мой");
     const alien = { uuid: "Actor.x", name: "Чужой", system: { masterUuid: "Actor.other" } };
     expect(minionsOfActor(master(), [mine, alien]).map(a => a.name)).toEqual(["Мой"]);
+  });
+
+  // wdbc-1rno: Инфернальный Оруженосец/Рыцарь Бога дают слугу БЕЗ Таланта на
+  // слот вовсе — блок обязан показать его, даже когда freeSlots/minionCapacity
+  // не считаются ни по одной группе (Талантов нет совсем).
+  it("нет Таланта, но слуга уже привязан без слота — блок есть", () => {
+    const m = master([{ type: "talent", name: "Дуэлист" }]);
+    const ctx = minionsPanelContext(m, [minion("daemon", "lesser", "Оруженосец")]);
+    expect(ctx.hasMinionTalent).toBe(true);
+    expect(ctx.minionCount).toBe(1);
+    expect(ctx.freeSlots).toHaveLength(0);
+    expect(ctx.minionRows[0].name).toBe("Оруженосец");
+    // Не считается "лишним" (extra) в упрекающем смысле — просто нет слота,
+    // под который его можно было бы сопоставить: тот же путь, что у слуги,
+    // заведённого руками, честно посчитан в minionExtra, без иной семантики.
+    expect(ctx.minionExtra).toBe(1);
+  });
+
+  it("контекст несёт uuid Хозяина для зоны дропа в шаблоне", () => {
+    const ctx = minionsPanelContext(master([talent("beast", "lesser", "t1")]), []);
+    expect(ctx.actorUuid).toBe("Actor.master");
   });
 });
 
