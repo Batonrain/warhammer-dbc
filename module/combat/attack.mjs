@@ -1,16 +1,17 @@
 import { CHARACTERISTICS }                         from "../constants/characteristics.mjs";
 import { pickReroll } from "../rules/reroll-pick.mjs";
-import { testOutcome, criticalOutcome } from "../rules/roll-outcome.mjs";
+import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { critLineHtml } from "../rules/test-kind-widget.mjs";
 import { WEAPON_CLASSES, DAMAGE_TYPES }            from "../constants/items.mjs";
 import { MELEE_STANCES }                           from "../constants/combat.mjs";
 import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
-         jamThreshold, buildPropertyChatBlock,
+         jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
          buildTargetEffectButtons }                 from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
-         attackPenetration, damageFormulaFor, bonusDamageDice } from "./attack-outcome.mjs";
+         attackPenetration, damageFormulaFor, bonusDamageDice,
+         attackHitOutcome }                          from "./attack-outcome.mjs";
 import { effectiveDamage, mergeExtraProps, weaponOffEffects } from "./attack-weapon.mjs";
 import { attackIsMelee } from "./weapon-profiles.mjs";
 import { ammoIsFree } from "../rules/ammo-free.mjs";
@@ -229,9 +230,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // 1, независимо от броска. d100 всё равно катается (нужен ChatMessage) и
   // проверяется на Критический Провал/Успех (criticalOutcome ниже читает rv
   // сам), но исход и степень отсюда не берутся вовсе.
-  const { success: hit, deg: rolledDeg } = opts.fixedSuccessDeg != null
-    ? { success: true, deg: opts.fixedSuccessDeg }
-    : testOutcome(rv, threshold, { autoSuccess: !!opts.forceHit });
+  // Распыление (стр. 168, wdbc-p06s): броска на попадание у Spray нет вовсе —
+  // поток попадает автоматически по всем в конусе, а отменяет попадание сама
+  // цель тестом A+0 (кнопка в карточке). Решает это attackHitOutcome, чтобы
+  // правило проверялось тестом без Foundry.
+  const { success: hit, deg: rolledDeg, auto: autoHitKind } = attackHitOutcome({
+    rv, threshold, isMelee, wp,
+    forceHit: opts.forceHit, fixedSuccessDeg: opts.fixedSuccessDeg
+  });
   // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
   // попаданий (Быстрая/Молниеносная), и остаточные Успехи приёмов.
@@ -241,11 +247,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Результатом/Эффектом» ниже: тот триггерится свойством Extreme оружия по
   // граням урона, этот — только по натуральному броску атаки, независимо от
   // оружия. Расширяется правилом kind:"critRangeMod", см. attack-dialog.mjs.
-  const critLine = critLineHtml(criticalOutcome(rv, opts.crit));
+  // Крит-диапазон читается по броску АТАКИ — у Распыления его нет (d100 всё
+  // равно катается: он нужен ChatMessage и анимации кубов), поэтому строка
+  // Критического Успеха/Провала для Spray не печатается вовсе.
+  const critLine = autoHitKind === "spray" ? "" : critLineHtml(criticalOutcome(rv, opts.crit));
 
   // ── Заклинивание (только для дальнобойного оружия со свойством надёжности) ──
+  // Распыление клинит не по броску атаки, а по первому кубику урона (стр. 168,
+  // sprayJamFace) — общий порог по d100 к нему неприменим, см. sprayJam ниже.
   const jamAt    = jamThreshold(wp);
-  const jammed   = !isMelee && jamAt !== null && rv >= jamAt;
+  const jammed   = !isMelee && !wp.spray && jamAt !== null && rv >= jamAt;
   if (jammed) {
     // wdbc-vwfk: раньше заклинивание было только строкой в чате, без
     // последствий — теперь пишет реальное состояние предмета (weaponClass
@@ -448,6 +459,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const damageRolls = [];
   const allRolls    = [roll];
 
+  // Клин Распыления (стр. 168): решается ПЕРВЫМ кубиком урона, а не броском
+  // атаки — { face, at } первого попадания, либо null, если не заклинило.
+  let sprayJam = null;
+
   // Взрывное «под цель» (Избирательная, −20, attack-dialog.mjs): промах не
   // пропадает бесследно — взрыв смещается по розе смещения (module/combat/
   // scatter.mjs), и может всё ещё задеть исходную цель или тех, кто рядом.
@@ -470,6 +485,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         const second = await new Roll(dmgFormula).evaluate();
         allRolls.push(second);
         if (second.total > dmgRoll.total) dmgRoll = second;
+      }
+      // Клин Распыления (стр. 168): 9 у обычного, 8-9 у Ненадёжного и хуже,
+      // никогда у Надёжного и лучше — по ПЕРВОМУ кубику на урон (первому
+      // брошенному, а не оставленному Рвущим), и только у первого попадания.
+      if (i === 0 && !isMelee && wp.spray && sprayJamFace(wp) !== null) {
+        const firstDie = (dmgRoll.terms ?? [])
+          .find(t => t.faces && Array.isArray(t.results) && t.results.length)?.results?.[0]?.result ?? null;
+        if (sprayJams(firstDie, wp)) sprayJam = { face: firstDie, at: sprayJamFace(wp) };
       }
       let deflagrateHit = false;
       if (dmgRoll.terms) {
@@ -630,6 +653,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const needsRecharge = !isMelee && (wp.recharge || maximalOn);
   if (needsRecharge) await item.update({ "system.needsRecharge": true, "system.rechargeTurnsRemaining": 1 });
 
+  // Клин Распыления пишется ПОСЛЕ выстрела: в отличие от обычного клина
+  // (jamCard выше, вместо атаки) поток уже поразил цели, и заклинило оружие на
+  // этом же кубике урона — карточка атаки остаётся полной, только с пометкой.
+  if (sprayJam) await item.update({ "system.jammed": true });
+
   // Просмотр кубов (#7) — стандартные «коробочки» Foundry, разворачиваемые кликом
   const renderedDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
 
@@ -638,6 +666,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     content: attackCard({
       actorName: actor.name, weaponName: item.name, wp,
       threshold, rv, hit, deg, hitsCount, hits, rerollDropped, critLine,
+      // Почему исход не от броска: "spray" — авто-попадание Распыления.
+      autoHit: autoHitKind,
       modeLine: (isMelee && rofMode === "melee") ? "Рукопашная" : rofLabel,
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
@@ -718,7 +748,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         recharge:  needsRecharge,
         // Поломка человеческого оружия в руках Огрина (wdbc-flai): пустая
         // строка, когда бросок не требовался вовсе.
-        ogrynBreak: ogrynBreakNote(ogrynBreak, item.name)
+        ogrynBreak: ogrynBreakNote(ogrynBreak, item.name),
+        // Клин Распыления (стр. 168) — попадания в силе, оружие заклинило.
+        sprayJam: sprayJam
+          ? `⚙️ Оружие заклинило: первый кубик урона — <b>${sprayJam.face}</b> (клин на ${sprayJam.at}${sprayJam.at === 8 ? "-9" : ""}). Требуется действие на устранение Клина.`
+          : ""
       },
       blocks: {
         props:         buildPropertyChatBlock(wProps),

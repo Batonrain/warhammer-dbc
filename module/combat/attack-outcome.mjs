@@ -11,6 +11,37 @@
 import { HIT_LOCATIONS }                          from "../constants/combat.mjs";
 import { resolveCharFormula }                     from "../helpers/utils.mjs";
 import { applyDamageDiceMods }                    from "./weapon-properties.mjs";
+import { testOutcome }                            from "../rules/roll-outcome.mjs";
+
+/**
+ * Исход попадания атаки — всё, что решает «попал ли», кроме самого d100.
+ *
+ * Распыление (стр. 168): «Оно попадает автоматически» — броска НА ПОПАДАНИЕ у
+ * Spray нет вовсе. Поток накрывает всех в конусе 30°, а отменяет попадание уже
+ * сама цель тестом A+0 (кнопка «Тест на отмену» в карточке, wdbc-p06s) — до
+ * этой функции огнемёт мог промазать обычным провалом BS, чего книга не знает.
+ * Степень при этом ровно 1, как у Локуса Неизбежности: она нужна только счёту
+ * попаданий очереди (hitCount ниже), а по книге поток бьёт каждую цель один
+ * раз, независимо от того, что выпало на d100.
+ *
+ * Рукопашной это не касается: Spray — стрелковое свойство (cat: "ranged"),
+ * и у гипотетического рукопашного профиля с ним броска не отменяем.
+ *
+ * @param {number}  rv                результат d100
+ * @param {number}  threshold         порог теста
+ * @param {boolean} [isMelee]
+ * @param {object}  [wp]              свёрнутые свойства оружия (aggregateAuto)
+ * @param {boolean} [forceHit]        авто-успех «минимум 1 Успех» (Беспомощная цель)
+ * @param {number}  [fixedSuccessDeg] РОВНО столько Успехов (Локус Неизбежности)
+ * @returns {{success: boolean, deg: number, auto: string}} auto — почему исход
+ *   не от броска: "spray" | "fixed" | "" (карточка печатает это игроку).
+ */
+export function attackHitOutcome({ rv, threshold, isMelee = false, wp = {},
+                                   forceHit = false, fixedSuccessDeg = null } = {}) {
+  if (fixedSuccessDeg != null) return { success: true, deg: fixedSuccessDeg, auto: "fixed" };
+  if (!isMelee && wp?.spray)   return { success: true, deg: 1, auto: "spray" };
+  return { ...testOutcome(rv, threshold, { autoSuccess: !!forceHit }), auto: "" };
+}
 
 /** Подписи режимов стрельбы в карточке. */
 const ROF_LABELS = {
