@@ -5,8 +5,8 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  COMPRESSIBLE_LOCATIONS, isCompressibleLocation, retractPart, extendPart,
-  isPartCompressed, hasCompressedHead, allLimbsCompressed
+  COMPRESSIBLE_LOCATIONS, isCompressibleLocation, normalizeCompressibleLocation,
+  retractPart, extendPart, isPartCompressed, hasCompressedHead, allLimbsCompressed
 } from "../../module/rules/compression.mjs";
 
 describe("isCompressibleLocation", () => {
@@ -15,6 +15,36 @@ describe("isCompressibleLocation", () => {
   });
   it("Голова/руки/ноги — можно", () => {
     for (const loc of COMPRESSIBLE_LOCATIONS) expect(isCompressibleLocation(loc)).toBe(true);
+  });
+});
+
+// wdbc-8dyp: Избирательная атака (стр. 35) называет часть тела БЕЗ стороны
+// (AIM_LOCATIONS, combat/attack-outcome.mjs) — «Рука»/«Нога»/«Сочленение /
+// Шея»/«Глаз (Голова)». Раньше это НЕ входило в COMPRESSIBLE_LOCATIONS
+// (там только метки со стороной) — кнопка Сжатия не появлялась на прицельный
+// удар по конечности, хотя книжный текст мутации не отличает прицельное
+// попадание от случайного.
+describe("normalizeCompressibleLocation — метки Избирательной атаки без стороны (wdbc-8dyp)", () => {
+  it("«Рука»/«Нога» без стороны нормализуются в П. Рука/П. Нога (та же конвенция, что LOCATION_TO_ARMOR в combat/damage.mjs)", () => {
+    expect(normalizeCompressibleLocation("Рука")).toBe("П. Рука");
+    expect(normalizeCompressibleLocation("Нога")).toBe("П. Нога");
+  });
+  it("«Сочленение / Шея» и «Глаз (Голова)» — попадание в голову (стр. 35: «попадание в глаз — это попадание в голову»)", () => {
+    expect(normalizeCompressibleLocation("Сочленение / Шея")).toBe("Голова");
+    expect(normalizeCompressibleLocation("Глаз (Голова)")).toBe("Голова");
+  });
+  it("уже сторонние метки и Торс проходят как есть", () => {
+    for (const loc of [...COMPRESSIBLE_LOCATIONS, "Торс"]) {
+      expect(normalizeCompressibleLocation(loc)).toBe(loc);
+    }
+  });
+});
+
+describe("isCompressibleLocation — метки Избирательной атаки теперь тоже дают кнопку", () => {
+  it("Рука/Нога/Сочленение/Глаз — компрессируемы после нормализации", () => {
+    for (const loc of ["Рука", "Нога", "Сочленение / Шея", "Глаз (Голова)"]) {
+      expect(isCompressibleLocation(loc)).toBe(true);
+    }
   });
 });
 
@@ -37,6 +67,22 @@ describe("retractPart / extendPart", () => {
   it("undefined-список не роняет функции", () => {
     expect(retractPart(undefined, "Голова")).toEqual(["Голова"]);
     expect(extendPart(undefined, "Голова")).toEqual([]);
+  });
+
+  // wdbc-8dyp: если location пришёл без стороны (attack-card.mjs уже
+  // нормализует перед этим сам, но retractPart остаётся защищённой сама по
+  // себе — экспортирована и может быть вызвана напрямую), в список
+  // попадает КАНОНИЧЕСКАЯ метка, а не сырая — иначе «сжав ВСЕ конечности»
+  // (allLimbsCompressed, ищет именно «П. Рука»/«Л. Рука»/«П. Нога»/«Л. Нога»)
+  // никогда не сработала бы после Избирательной атаки.
+  it("нормализует метку без стороны перед сохранением", () => {
+    expect(retractPart([], "Рука")).toEqual(["П. Рука"]);
+    expect(retractPart([], "Нога")).toEqual(["П. Нога"]);
+    expect(retractPart([], "Сочленение / Шея")).toEqual(["Голова"]);
+    expect(retractPart([], "Глаз (Голова)")).toEqual(["Голова"]);
+  });
+  it("нормализованная и уже сторонняя метка не дублируются", () => {
+    expect(retractPart(["П. Рука"], "Рука")).toEqual(["П. Рука"]);
   });
 });
 

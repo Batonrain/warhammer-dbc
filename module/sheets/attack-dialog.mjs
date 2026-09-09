@@ -991,13 +991,41 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // Строка появляется только у того, кто это умеет И у кого есть что взять во
   // вторую руку: пустой выпадающий список хуже отсутствующего.
   const dualCandidates = canDualWield(actor) ? offHandCandidates(actor, item) : [];
+
+  // Режим огня второй руки (wdbc-pb60, «Огонь из Всех Орудий»): раньше вторая
+  // рука ВСЕГДА стреляла Одиночным — это жёстко стояло в коде (module/sheets/
+  // attack/dialog.mjs), и условие книги «обе руки бьют очередью» не могло
+  // выполниться в принципе. Вариант (а) — молча повторять режим первой руки —
+  // отвергнут: он задним числом менял бы расход патронов и число попаданий у
+  // всех, кто уже играет парой пистолетов Одиночными выстрелами. Вместо этого
+  // — свой, независимый выпадающий список, по умолчанию «Одиночный» (то же
+  // поведение, что и раньше, просто теперь явное и переключаемое).
+  // Список опций — по данным САМОГО оружия во второй руке (rof_semi/rof_full),
+  // тем же способом, каким выше считаются rofModes первой руки, но без бонусов
+  // (та часть штрафов на вторую руку по-прежнему не переносится — см. sheets/
+  // attack/dialog.mjs). Рукопашное оружие своего режима не выбирает вовсе —
+  // execution всегда бьёт им как рукопашным.
+  const offRofOptionsFor = w => {
+    if (!w || w.system?.weaponClass === "melee") return [];
+    const s = w.system || {};
+    const opts = [{ value: "single", label: "Одиночный" }];
+    if ((Number(s.rof_semi) || 0) > 0) opts.push({ value: "semi", label: `Короткая очередь (${s.rof_semi})` });
+    if ((Number(s.rof_full) || 0) > 0) opts.push({ value: "full", label: `Длинная очередь (${s.rof_full})` });
+    return opts;
+  };
   const dualWieldHtml = dualCandidates.length ? `
     <div class="av-row" title="Атаки с обеих рук — ОДНА атака, занимающая наибольшее действие из двух (стр. 62). Обе получают −20; Таланты ветки «Два оружия» этот штраф уменьшают.">
       <label class="attack-mod-check">
         <input type="checkbox" id="atk-dual-wield"/> Обе руки
       </label>
       <select id="atk-off-hand" class="av-input">
-        ${dualCandidates.map(it => `<option value="${esc(it.id)}">${esc(it.name)}</option>`).join("")}
+        ${dualCandidates.map(it => `<option value="${esc(it.id)}" data-rof='${esc(JSON.stringify(offRofOptionsFor(it)))}'>${esc(it.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="av-row" id="atk-off-rof-row" title="Режим огня второй руки — по умолчанию Одиночный, первую руку не копирует (Огонь из Всех Орудий, стр. 62, wdbc-pb60).">
+      <span class="av-sec-lbl">Режим огня (2-я рука)</span>
+      <select id="atk-off-rof" class="av-input">
+        ${offRofOptionsFor(dualCandidates[0]).map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("")}
       </select>
     </div>
     <div class="av-opt-note" id="atk-dual-note"></div>` : "";

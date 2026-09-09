@@ -557,6 +557,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         hits: Math.min(Math.ceil(deg / 2), supCap), cap: supCap }
     : null;
 
+  // Огонь из Всех Орудий (стр. 62, wdbc-pb60): обе атаки парного выстрела —
+  // очереди по одной цели → цель проходит тест Подавления (модификатор уже
+  // посчитан снаружи, module/rules/dual-wield-talents.mjs::allGunsBlazingMod
+  // — он один знает режимы ОБЕИХ рук, эта функция видит только свою). Не
+  // путать с suppression выше: та рождается из режима «Стрельба на
+  // Подавление» ЭТОГО выстрела, а этот — из пары обычных очередей.
+  const allGunsBlazing = (opts.allGunsBlazingMod != null)
+    ? { testMod: opts.allGunsBlazingMod } : null;
+
   // ── «Прячась в Орде» ─────────────────────────────────────────────────────
   // Цель стоит внутри союзной Орды (токены наложены), и не-Избирательный
   // выстрел половиной попаданий уходит в толпу: одиночный — по чётности броска,
@@ -682,7 +691,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         spent:  ammoSpent, special: ammoSpecial,
         condLabels: opts.ammoCondLabels || [], warning: ammoWarning
       },
-      band, suppression, corVal, corEffects: sys.corEffects || [],
+      band, suppression, allGunsBlazing, corVal, corEffects: sys.corEffects || [],
       // Урон по Орде: Rng нужен Распылению, burst — Таланту «Свинцовый Дождь»,
       // uuid — чтобы найти Таланты и Размер стрелка.
       weaponRange: Number(sys.range) || 0,

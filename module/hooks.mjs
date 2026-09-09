@@ -1007,6 +1007,19 @@ export function registerHooks() {
         await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление" });
       });
     });
+    // Огонь из Всех Орудий (стр. 62, wdbc-pb60): обе очереди пары по одной
+    // цели — та же механика теста Подавления, что и у Стрельбы на Подавление
+    // выше, только модификатор и повод другие (module/rules/dual-wield-
+    // talents.mjs::allGunsBlazingMod, посчитан заранее в attack.mjs).
+    html.querySelectorAll(".wh-all-guns-blazing-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
+        if (!actor) return;
+        const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий" });
+      });
+    });
     html.querySelectorAll(".wh-suppression-recovery-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
