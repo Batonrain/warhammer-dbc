@@ -252,6 +252,10 @@ const DEVIATIONS = {
     // гораздо позже template.json, см. rules/cover-locations.mjs.
     cover: { ap: 0, head: false, leftArm: false, rightArm: false,
              body: false, leftLeg: false, rightLeg: false },
+    // Книга-источник существа (wdbc-7pjs): у предметов поле было у полутора
+    // десятков типов, у акторов — ни у одного, и открыв демона из Бестиария,
+    // ГМ не мог узнать, из какой он книги. Заведено гораздо позже template.json.
+    "bookSource": "",
     // Аблативные Раны (wdbc-smy7, напр. Дар Нургла «Абсурдно Толстый») —
     // отдельный пул ПЕРЕД обычными Ранами, заведён гораздо позже template.json.
     "wounds.ablative": 0,

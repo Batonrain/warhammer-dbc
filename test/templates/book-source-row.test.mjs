@@ -21,7 +21,7 @@ import { describe, it, expect } from "vitest";
 import fs   from "node:fs";
 import path from "node:path";
 
-import { ITEM_DATA_MODELS } from "../../module/data/index.mjs";
+import { ITEM_DATA_MODELS, ACTOR_DATA_MODELS } from "../../module/data/index.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
@@ -43,6 +43,30 @@ const schemaHasField = type =>
 const partHasInput = file =>
   fs.readFileSync(path.join(root, "templates/item/parts", file), "utf8")
     .includes('name="system.bookSource"');
+
+// Акторы (wdbc-7pjs): у существ Бестиария поля не было вовсе, теперь есть в
+// общей части схемы существа. Связь схемы и листа здесь та же самая, и без
+// присмотра оставлять её нельзя по той же причине — поле, которое некуда
+// ввести, недостижимо.
+const CREATURE_TYPES = ["character", "daemon", "demonPrince"];
+
+/** Часть листа, общая для всех трёх типов существ: вкладка «Записи». */
+const NOTES_PART = "templates/actor/parts/tab-notes.hbs";
+
+describe("книга-источник на листе существа", () => {
+  it("поле есть в схеме каждого существа", () => {
+    for (const type of CREATURE_TYPES) {
+      const Model = ACTOR_DATA_MODELS[type];
+      expect(Model, type).toBeTruthy();
+      expect(Object.hasOwn(new Model({}).toObject(), "bookSource"), type).toBe(true);
+    }
+  });
+
+  it("на листе есть куда его ввести", () => {
+    const src = fs.readFileSync(path.join(root, NOTES_PART), "utf8");
+    expect(src).toContain('name="system.bookSource"');
+  });
+});
 
 describe("книга-источник на листе предмета", () => {
 

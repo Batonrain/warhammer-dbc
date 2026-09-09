@@ -400,7 +400,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "презрение к колдунам и трусам",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {

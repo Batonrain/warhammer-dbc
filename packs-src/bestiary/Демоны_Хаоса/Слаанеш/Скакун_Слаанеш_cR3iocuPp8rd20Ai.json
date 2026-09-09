@@ -392,7 +392,8 @@
     "trueName": "",
     "trueNameKnown": false,
     "portfolio": "скорость и грация",
-    "isDaemon": true
+    "isDaemon": true,
+    "bookSource": "DoomBC — Хаос"
   },
   "items": [
     {
