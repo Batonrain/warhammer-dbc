@@ -179,6 +179,32 @@ describe("диалог «Провести ритуал»", () => {
     expect(captured.chat[0].content).toContain("−Inf");
   });
 
+  // wdbc-1rno, шаг B/C: у ритуалов с фиксированным демоном (Инфернальный
+  // Оруженосец и т.п.) имя называет не ГМ за столом, а сам предмет
+  // (item.system.demonName) — поле не должно быть пустым текстовым инпутом,
+  // иначе readRitualForm молча стирает R.demonName пустой строкой при отправке
+  // формы, и castNoTestRitual решает, что демона называть некому. fakeForm —
+  // синтетическая заглушка формы (не настоящий DOM), поэтому здесь значение
+  // скрытого поля подставлено явно — ровно то, что живой браузер отдал бы из
+  // атрибута value= сам, без участия игрока; markup-тест ниже проверяет, что
+  // этот value= действительно печатается в разметку.
+  it("демон, фиксированный Даром (item.system.demonName) — доезжает до карточки без правки формы", async () => {
+    const promise = showRitualCastDialog(actor(), item({
+      failureType: "summon", noTest: true, demonName: "Кровопускатель", asMinion: true
+    }));
+    await captured.press("cast", fakeForm({ "#rit-assistants": "0", "#rit-demon-name": "Кровопускатель" }));
+    await promise;
+
+    expect(captured.chat[0].content).toContain("Кровопускатель");
+    expect(captured.chat[0].content).toContain("Привязан Миньоном без слота");
+  });
+
+  it("демон, фиксированный Даром — редактируемого поля имени в разметке нет", () => {
+    showRitualCastDialog(actor(), item({ failureType: "summon", noTest: true, demonName: "Кровопускатель" }));
+    expect(captured.dialog.content).not.toContain("placeholder=\"напр. Кровожад\"");
+    expect(captured.dialog.content).toContain("Кровопускатель");
+  });
+
   it("не summon-like тип — блока «Демон» нет и подписи демона в карточке не будет", async () => {
     const promise = showRitualCastDialog(actor(), item({ failureType: "exorcism", testMod: 50 }));
     captured.dice = [1];
