@@ -127,11 +127,18 @@ export function textAssertsDeath(text) {
  * Спасения/Воскрешения, module/rules/death-save.mjs). Применяющий клик —
  * не здесь: combat/ не должен тянуть слой листа (см. шапку файла), кнопку
  * разбирает module/hooks.mjs, который уже стоит поверх обоих слоёв.
+ *
+ * weaponUuid (wdbc-1rno, Кровавое Пламя) — необязательный: оружие, которым
+ * нанесён именно этот удар, уже известно на карточке урона (attack-card.mjs::
+ * itemUuid) — несётся дальше как data-атрибут, чтобы клик мог засчитать
+ * «убитого этим оружием» (module/combat/blood-flame.mjs::
+ * registerBloodFlameKill), не как условие появления самой кнопки.
  */
-export function deathButtonHtml(text, actorUuid) {
+export function deathButtonHtml(text, actorUuid, weaponUuid = "") {
   if (!actorUuid || !textAssertsDeath(text)) return "";
   return `<div class="wh-crit-pills">
     <button type="button" class="wh-crit-death-btn" data-actor-uuid="${esc(actorUuid)}"
+      data-weapon-uuid="${esc(weaponUuid || "")}"
       title="Книга прямо описывает смерть цели">
       ${rollIcon("skull", "#ff6b6b")} Констатировать смерть</button>
   </div>`;

@@ -6308,7 +6308,7 @@ export const CAPABILITIES = {
   "gift.khorne.bloodFlame": {
     label: "Полудействие+1R себе: рукопашное оружие получает Power Field+Flame, +2 Dmg за убийство (макс +8), ломается после боя",
     source: "Дар Кхорн (Blood Flame)",
-    reader: ""
+    reader: "module/apps/blood-flame.mjs::activateBloodFlame (кнопка на листе Дара) / module/rules/blood-flame.mjs::bloodFlameDamageBonus (читает module/combat/attack.mjs на каждый бросок урона) / module/combat/blood-flame.mjs::registerBloodFlameKill (module/hooks.mjs, кнопка «Констатировать смерть»)/clearBloodFlameBuffs (module/hooks.mjs::deleteCombat — ломает оружие)"
   },
   "gift.khorne.bronzeMyrmidon": {
     label: "Попадания в сочленения/визоры = попадания в конечности/голову (себе и скакуну/технике при верховой/пилотируемой) — редиректа попаданий в локацию в системе нет, гейтить нечем (Трейт Machine(+½Cor.b) в Ярости вынесен отдельной записью kind:trait/when.requireRage, wdbc-wyr3)",

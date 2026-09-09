@@ -279,6 +279,15 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // в 16м + isTokenInSight на каждого кандидата (тот же приём, что у Иконы
     // Богохульства) и W+0 тест, при провале — реальное впадение в Ярость. 50 →
     // 49. Порог подтянут до фактического счёта.
-    expect(stubOnly.length).toBeLessThanOrEqual(49);
+    // 09.09.2026 продолжение: Blood Flame/Кровавое Пламя (Кхорн) — полностью
+    // смоделирована, вне Конструктора (тот же приём, что у Hand of Death):
+    // module/apps/blood-flame.mjs (выбор оружия, самоурон, Power Field/
+    // Flame), module/rules/blood-flame.mjs (бонус урона за убитых, читает
+    // module/combat/attack.mjs), module/combat/blood-flame.mjs (убийство
+    // засчитывается через новую кнопку «Констатировать смерть» —
+    // weaponUuid протянут через боевой конвейер до deathButtonHtml; конец
+    // боя ломает оружие, в отличие от Reformation Song). reader у
+    // gift.khorne.bloodFlame больше не пуст → выпадает из stub-only. 49 → 48.
+    expect(stubOnly.length).toBeLessThanOrEqual(48);
   });
 });

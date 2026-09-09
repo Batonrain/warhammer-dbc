@@ -75,6 +75,7 @@ import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
+import { registerBloodFlameKill, clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
@@ -681,6 +682,10 @@ export function registerHooks() {
           hitLocation:  ds.hitLocation || "Торс",
           side:         ds.vehicleSide || "",   // сторона брони техники (из окна атаки)
           weaponName:   ds.weaponName  || "",
+          // Кровавое Пламя (wdbc-1rno): «убил этим оружием» — deathButtonHtml
+          // несёт weaponUuid дальше, module/combat/blood-flame.mjs читает его
+          // по клику «Констатировать смерть».
+          weaponUuid:   ds.weaponUuid  || "",
           attackerName: ds.attacker    || "",
           attackerUuid: ds.attackerUuid || "",
           felling:      parseInt(ds.felling || "0"),
@@ -1014,6 +1019,11 @@ export function registerHooks() {
         }
         el.disabled = true;
         await setDeceased(actor, true);
+        // Кровавое Пламя (wdbc-1rno): если удар нанесён оружием с горящим
+        // Пламенем, засчитать ему убитого — молча выходит для любого другого
+        // оружия/без него (registerBloodFlameKill сама проверяет флаг).
+        const weapon = el.dataset.weaponUuid ? await fromUuid(el.dataset.weaponUuid).catch(() => null) : null;
+        if (weapon) await registerBloodFlameKill(weapon);
         await postTestCard(actor, {
           icon: rollIcon("skull", "#ff6b6b"), title: `Смерть констатирована — ${esc(actor.name)}`,
           outcome: `<div class="roll-outcome"><span class="roll-failure">Кардиомонитор остановлен — доступно Спасение/Воскрешение на вкладке Тело.</span></div>`
@@ -1769,6 +1779,10 @@ function _attachFateContextMenu(message, html) {
     // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
     // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
     await clearReformationSongBuffs(combat);
+    // Кровавое Пламя (wdbc-1rno): в отличие от Reformation Song выше, книга
+    // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
+    // делает (не только снимает временные свойства).
+    await clearBloodFlameBuffs(combat);
     // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
     await clearHexMarkedPreyMarks(combat);
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
