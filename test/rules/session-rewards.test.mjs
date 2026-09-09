@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from "vitest";
 import { partyXp, actorXp, parseRewardAmount, buildRewardRows,
-  infamyRoom, infamyGain, permanentInfamy, INFAMY_PATH, INFAMY_CAP }
+  infamyRoom, infamyGain, permanentInfamy, INFAMY_PATH, INFAMY_CAP , sessionXpWithFastLearner }
   from "../../module/rules/session-rewards.mjs";
 import { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS }
   from "../../module/constants/session-rewards.mjs";
@@ -181,5 +181,35 @@ describe("итоговые строки на персонажа", () => {
     expect(row.corruption).toBeNull();
     expect(row.infamy).toBeNull();
     expect(row.xp).toBe(100);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  «Ловит на Лету» и опыт за сессию (wdbc-045)
+//
+//  Книга даёт Черте «+X% к стартовому опыту и опыту ЗА СЕССИЮ». Процент читал
+//  только promptStatAdd (окно ручной выдачи), а раздача переехала в «Итоги
+//  Сессии» — и Черта перестала работать ровно на том пути, ради которого она
+//  и существует: персонаж молча получал на пятую часть меньше обещанного.
+// ════════════════════════════════════════════════════════════════════════════
+
+describe("«Ловит на Лету» в опыте за сессию", () => {
+  const hero = pct => ({ system: { fastLearnerBonus: pct } });
+
+  it("без Черты опыт не меняется", () => {
+    expect(sessionXpWithFastLearner(hero(0), 750)).toBe(750);
+    expect(sessionXpWithFastLearner({}, 750)).toBe(750);
+  });
+
+  it("+20% к опыту за сессию", () => {
+    expect(sessionXpWithFastLearner(hero(20), 750)).toBe(900);
+  });
+
+  it("округление вверх — то же, что в окне ручной выдачи", () => {
+    expect(sessionXpWithFastLearner(hero(10), 355)).toBe(391);   // 390.5 → 391
+  });
+
+  it("нечего умножать — нечего и прибавлять", () => {
+    expect(sessionXpWithFastLearner(hero(50), 0)).toBe(0);
   });
 });

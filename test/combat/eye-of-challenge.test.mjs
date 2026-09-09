@@ -5,6 +5,8 @@
 
 import "../support/foundry-stub.mjs";
 import { captured } from "../support/foundry-stub.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
+
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   eyeOfChallengeInfo, startEyeOfChallenge, clearEyeOfChallenge,
@@ -104,5 +106,66 @@ describe("processEyeOfChallengeDeadline", () => {
     await processEyeOfChallengeDeadline(actor, 60);
     expect(actor.system.wounds.value).toBe(7);
     expect(actor.system.wounds.critical).toBe(0);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Срок в БОЮ (wdbc-6dk) и единственный источник правды (wdbc-lhd)
+//
+//  Боевые Раунды в этой системе игровое время не двигают: CONFIG.time.roundTime
+//  не задан, worldTime меняют только виджет «Летоисчисление» и авто-течение.
+//  Пока срок жил только в секундах, «не бросил вызов за минуту» в бою не
+//  срабатывал вовсе — штраф прилетал позже, когда ГМ перематывал время после
+//  боя, по уже подлеченному чемпиону.
+// ════════════════════════════════════════════════════════════════════════════
+
+describe("срок Ока Вызова в бою считается Раундами", () => {
+  const combat = (id, round) => ({ id, round });
+
+  it("в бою запоминается Раунд срока — минута это десять Раундов", async () => {
+    const actor = mockActor();
+    await startEyeOfChallenge(actor, { targetName: "Цель", worldTime: 0, combat: combat("c1", 3) });
+    const info = eyeOfChallengeInfo(actor);
+    expect(info.deadlineRound).toBe(13);
+    expect(info.combatId).toBe("c1");
+  });
+
+  it("десятый Раунд того же боя — срок истёк, хотя время стоит", async () => {
+    const actor = mockActor();
+    await startEyeOfChallenge(actor, { targetName: "Цель", worldTime: 0, combat: combat("c1", 1) });
+    const info = eyeOfChallengeInfo(actor);
+    expect(isEyeOfChallengeExpired(info, { worldTime: 0, combat: combat("c1", 10) })).toBe(false);
+    expect(isEyeOfChallengeExpired(info, { worldTime: 0, combat: combat("c1", 11) })).toBe(true);
+  });
+
+  it("Раунды ЧУЖОГО боя срок не двигают", async () => {
+    const actor = mockActor();
+    await startEyeOfChallenge(actor, { targetName: "Цель", worldTime: 0, combat: combat("c1", 1) });
+    const info = eyeOfChallengeInfo(actor);
+    expect(isEyeOfChallengeExpired(info, { worldTime: 0, combat: combat("c2", 99) })).toBe(false);
+  });
+
+  it("вне боя работает прежний срок по времени", async () => {
+    const actor = mockActor();
+    await startEyeOfChallenge(actor, { targetName: "Цель", worldTime: 1000 });
+    const info = eyeOfChallengeInfo(actor);
+    expect(info.deadlineRound).toBe(null);
+    expect(isEyeOfChallengeExpired(info, { worldTime: 1059, combat: null })).toBe(false);
+    expect(isEyeOfChallengeExpired(info, { worldTime: 1060, combat: null })).toBe(true);
+    // и голое число, как звали раньше
+    expect(isEyeOfChallengeExpired(info, 1060)).toBe(true);
+  });
+});
+
+describe("срок Ока Вызова живёт в одном месте", () => {
+  it("скрипты предмета зовут модуль, а не пишут флаг и «+60» руками", () => {
+    const doc = packDocByFileHint(
+      "packs-src/mutations/Дары_Богов/Кхорн/Eye_of_Challenge___Око_Вызова_bgJDJagGDH4WqPZH.json");
+    const code = doc.flags["warhammer-dbc"].mechanics
+      .flatMap(g => g.entries).map(e => e.code).filter(Boolean).join("\n");
+    expect(code).toContain("startEyeOfChallenge(actor");
+    expect(code).toContain("clearEyeOfChallenge(actor)");
+    expect(code, "своя копия срока вернулась").not.toContain("worldTime + 60");
+    expect(code, "флаг пишется мимо модуля").not.toMatch(/setFlag\([^)]*eyeOfChallenge/);
   });
 });

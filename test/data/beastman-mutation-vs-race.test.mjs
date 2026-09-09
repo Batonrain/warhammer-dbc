@@ -11,11 +11,8 @@
 // вдвое слабее, и на листе это меньше Силы в уроне и меньше поглощения.
 
 import { describe, it, expect } from "vitest";
-import fs   from "node:fs";
-import path from "node:path";
-
-const root = path.resolve(import.meta.dirname, "../..");
-const read = p => JSON.parse(fs.readFileSync(path.join(root, p), "utf8"));
+import { packDocByFileHint } from "../support/pack-doc.mjs";
+const read = packDocByFileHint;
 
 const MUTATION = "packs-src/mutations/Общие_мутации/Beastman___Зверолюд_Us9zsnoINwwU1iku.json";
 const RACE     = "packs-src/races/Люди/Beastman___Зверолюд_aCWwJQUQSDbx1uEo.json";

@@ -21,6 +21,24 @@
 
 import { MINION_GROUPS, MINION_TIERS } from "../../constants/minions.mjs";
 import { minionSlots, slotUsage, minionCapacity, groupTally } from "../../rules/minion-build.mjs";
+import { hasRuleFlag } from "../../rules/flags.mjs";
+
+/**
+ * Возможности, которые дают слугу БЕЗ слота Таланта: четыре Инфернальных
+ * Оруженосца (по одному на Бога). Пока блок показывался только при Таланте
+ * или УЖЕ привязанном слуге, у такого чемпиона выходил замкнутый круг: зона
+ * дропа появлялась лишь после того, как слуга привязан, а привязать его было
+ * нечем — лист Миньона умеет только открыть Хозяина (wdbc-8t8).
+ */
+const SLOTLESS_MINION_CAPS = [
+  "gift.khorne.infernalArmiger", "gift.nurgle.infernalArmiger",
+  "gift.slaanesh.infernalArmiger", "gift.tzeentch.infernalArmiger"
+];
+
+/** Может ли этот актор держать слугу без слота Таланта. */
+export function canHoldSlotlessMinion(actor) {
+  return SLOTLESS_MINION_CAPS.some(cap => hasRuleFlag(actor, cap));
+}
 
 /**
  * Клик по карточке слуги открывает его лист. Обработчик живёт здесь, рядом с
@@ -59,6 +77,13 @@ export function activateMinionPanelListeners(html, actor, root = null) {
     if (target.system?.masterUuid && target.system.masterUuid !== actor.uuid) {
       return ui.notifications?.warn(`${target.name} уже слуга другого Хозяина.`);
     }
+    // Поле masterUuid есть только у существ (module/data/actor/_creature.mjs):
+    // технику, корабль или Орду Foundry молча выбросит из update, и игрок
+    // увидит «ничего не произошло» без объяснения причины.
+    if (!("masterUuid" in (target.system ?? {}))) {
+      return ui.notifications?.warn(
+        `${target.name} не может быть слугой: Хозяин назначается существам, а не технике или кораблю.`);
+    }
     await target.update({ "system.masterUuid": actor.uuid });
   });
 }
@@ -87,16 +112,18 @@ function minionRow(minion) {
 
 /**
  * Контекст блока. `hasMinionTalent` (несмотря на имя — «есть, что показать»)
- * решает, показывать ли его вообще: Талант ИЛИ уже привязанный слуга без
- * слота (wdbc-1rno); `freeSlots` — сколько Талантов ждут своего слугу, и есть
- * ли смысл в «+».
+ * решает, показывать ли его вообще: Талант, уже привязанный слуга без слота
+ * (wdbc-1rno) ИЛИ возможность держать слугу без слота — Инфернальный
+ * Оруженосец (wdbc-8t8); `freeSlots` — сколько Талантов ждут своего слугу, и
+ * есть ли смысл в «+».
  */
 export function minionsPanelContext(actor, actors = []) {
   const items = [...(actor?.items ?? [])];
   const slots = minionSlots(items);
   const minions = minionsOfActor(actor, actors)
     .sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
-  if (!slots.length && !minions.length) return { hasMinionTalent: false, minionRows: [], freeSlots: [] };
+  if (!slots.length && !minions.length && !canHoldSlotlessMinion(actor))
+    return { hasMinionTalent: false, minionRows: [], freeSlots: [] };
 
   const { free, extra } = slotUsage(items, minions);
 

@@ -69,6 +69,31 @@ export function infamyContext(actor, godKey, { ip, ipMax, showCounter = true }) 
   };
 }
 
+/**
+ * Где лежит пул Очков Бесчестия этого актора. Тот же выбор, что делают
+ * actor-sheet.mjs::_infamyPath и demon-prince-sheet.mjs, — но по типу актора,
+ * а не по классу листа: нужен местам без листа (скрипты предметов).
+ */
+export function actorInfamyPath(actor) {
+  return actor?.type === "demonPrince" ? "system.dp.ip" : "system.fate.value";
+}
+
+/**
+ * Начислить/списать Очки Бесчестия, не зная, где у этого актора пул и какой у
+ * него потолок (wdbc-0b2). До этой функции скрипты предметов писали прямо в
+ * system.fate.value — у Демон-Принца это поле схема содержит, но лист не
+ * показывает, и начисление уходило в никуда.
+ *
+ * @returns {Promise<{before:number, after:number, max:number, changed:boolean}>}
+ */
+export async function changeActorInfamy(actor, delta) {
+  const max    = actorInfamyMax(actor);
+  const before = actorInfamyValue(actor);
+  const after  = Math.max(0, Math.min(max, before + (Number(delta) || 0)));
+  if (after !== before) await actor.update({ [actorInfamyPath(actor)]: after });
+  return { before, after, max, changed: after !== before };
+}
+
 export async function changeInfamy(actor, ipFullPath, ipMax, delta) {
   const cur = Math.max(0, Number(foundry.utils.getProperty(actor, ipFullPath)) || 0);
   await actor.update({ [ipFullPath]: Math.max(0, Math.min(ipMax, cur + delta)) });

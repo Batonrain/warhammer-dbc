@@ -140,5 +140,19 @@ export function infamyGain(actor, amount) {
   return Math.min(int(amount), infamyRoom(actor));
 }
 
+/**
+ * Опыт за сессию с учётом Черты «Ловит на Лету» (Fast Learner X): книга даёт
+ * «+X% к стартовому опыту и опыту ЗА СЕССИЮ», процент живёт на акторе как
+ * system.fastLearnerBonus (module/rules/character.mjs). Округление вверх — то
+ * же, что у apps/stat-log.mjs::promptStatAdd: одна Черта не должна давать
+ * разные числа из двух окон (wdbc-045).
+ */
+export function sessionXpWithFastLearner(actor, xp) {
+  const amount = int(xp);
+  const pct = Number(actor?.system?.fastLearnerBonus) || 0;
+  if (amount <= 0 || pct <= 0) return amount;
+  return Math.ceil(amount * (1 + pct / 100));
+}
+
 /** Категории — для отрисовки формы, в порядке книги. */
 export { XP_CATEGORIES, PARTY_KEYS, EACH_KEYS };

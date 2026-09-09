@@ -124,7 +124,7 @@ function main() {
       ? `    это git worktree — убрать: git worktree remove "${path}"`
       : `    НЕ зарегистрирован как git worktree (осиротевшая копия?) — проверь содержимое и удали руками, если это точно мусор`);
   }
-  console.error(`\nНовый worktree под сессию — не сюда: относительный путь ляжет прямо в эту же папку (cwd сессии — Data/systems/${OWN_DIR_NAME}). Абсолютный путь вида C:/Users/Derbius/AppData/Local/Temp/claude/<имя> — источник истины см. .claude/skills/dbc-workflow/SKILL.md, раздел «Git и трекер».`);
+  console.error(`\nНовый worktree под сессию — не сюда: относительный путь ляжет прямо в эту же папку (cwd сессии — Data/systems/${OWN_DIR_NAME}). Нужен абсолютный путь во временной папке ВНЕ репозитория (Windows — %TEMP%/claude/<имя>, Linux/macOS — /tmp/claude/<имя>) — источник истины см. .claude/skills/dbc-workflow/SKILL.md, раздел «Git и трекер».`);
   return 1;
 }
 

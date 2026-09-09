@@ -1770,9 +1770,11 @@ function _attachFateContextMenu(message, html) {
     if (!game.user.isGM || changed?.round === undefined) return;
     for (const combatant of combat.combatants ?? []) {
       if (combatant.actor) await clearExpiredTempGrants(combatant.actor, { worldTime: game.time.worldTime, combat });
-      // Око Вызова (wdbc-1rno): смена Раунда в бою тоже двигает worldTime
-      // почти всегда (трекер боя) — та же логика, что temp-grant выше.
-      if (combatant.actor) await processEyeOfChallengeDeadline(combatant.actor, game.time.worldTime);
+      // Око Вызова (wdbc-1rno): в бою срок меряется РАУНДАМИ — боевой Раунд
+      // в этой системе игровое время не двигает (CONFIG.time.roundTime не
+      // задан), и по одному worldTime срок в бою не истекал вовсе (wdbc-6dk).
+      if (combatant.actor)
+        await processEyeOfChallengeDeadline(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
   });
   Hooks.on("updateWorldTime", async () => {
@@ -1782,7 +1784,7 @@ function _attachFateContextMenu(message, html) {
       // Око Вызова/Дар Кхорна (wdbc-1rno): не брошенный за минуту вызов —
       // 2d10+8 урона в Раны чемпиону. Тот же такт, что временные выдачи Черт
       // выше — оба живут по worldTime, а не по Раунду.
-      await processEyeOfChallengeDeadline(actor, game.time.worldTime);
+      await processEyeOfChallengeDeadline(actor, { worldTime: game.time.worldTime, combat: game.combat });
       // Пожиратель Варпа/Общая Мутация (wdbc-1rno): раз в календарный месяц
       // тест Cor+10 или 1 Порчи, если насыщений было меньше 4 — та же
       // worldTime-плоскость, что и temp-grant выше, просто месячный масштаб.

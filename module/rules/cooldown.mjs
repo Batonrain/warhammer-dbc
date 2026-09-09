@@ -191,16 +191,24 @@ export function isThrottleCountAvailable(doc, flag, unit, max) {
   return throttleCount(doc, flag, unit) < (Number(max) || 0);
 }
 
-/** Списывает одно использование счётчика — тихо не превышает max. */
+/**
+ * Списывает одно использование счётчика — тихо не превышает max.
+ *
+ * @returns {Promise<boolean>} засчитано ли использование. Ответ нужен тем, кто
+ * отчитывается игроку: Пожиратель Варпа писал «Насыщение засчитано» и на
+ * пятом за месяц, когда счётчик уже стоял на четырёх и списание молча не
+ * происходило (wdbc-3bl).
+ */
 export async function incrementThrottleCount(doc, flag, unit, max) {
-  if (!doc) return;
+  if (!doc) return false;
   const used = throttleCount(doc, flag, unit);
-  if (used >= (Number(max) || 0)) return;
+  if (used >= (Number(max) || 0)) return false;
   const patch = { scope: unit, count: used + 1 };
   if (unit === "round" || unit === "battle" || unit === "day" || unit === "month") {
     const current = liveValue(unit);
-    if (current === undefined) return;
+    if (current === undefined) return false;
     patch[unit] = current;
   }
   await doc.setFlag("warhammer-dbc", `usageLimits.${usageKey(flag)}`, patch);
+  return true;
 }

@@ -616,7 +616,13 @@ export function attackCard({
     <button class="wh-mount-hit-btn" type="button" data-roll="${rv}" title="Цель верхом: по книжной формуле (дубль/чётность) определяет, попало по всаднику или скакуну — бросок уже в карточке, перепечатывать не нужно">
       🐎 Верховое попадание (выберите токен цели)
     </button>` : "",
-      hit ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
+      // Распыление (стр. 168): книга даёт против потока ОДНУ защиту — тест
+      // A+0 (кнопка ниже), Реакция не тратится. Обычные Уклонение/Парирование
+      // рисовались потому, что hit у Spray теперь всегда true, и цель видела
+      // две кнопки сразу — легко сжечь Реакцию там, где платить не надо
+      // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
+      (hit && !isSprayAuto)
+        ? defenseSection(defense, { wp, attackerUuid, hitsCount, pool, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),

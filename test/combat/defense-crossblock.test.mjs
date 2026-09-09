@@ -88,6 +88,7 @@ describe("Крестовой Блок: цена — нет Контратаки 
     const main = melee({ id: "w1" });
     const off  = melee({ id: "w2", name: "Кинжал", props: defensive() });
     const actor = hero([main, off], CAP_CROSSBLOCK, COUNTER_ATTACK_CAPABILITY);
+    captured.confirmAnswer = true;                 // «Обоими»
     await _performParry(actor, 0, "Actor.attacker-1");
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Парирование успешно");
@@ -95,11 +96,29 @@ describe("Крестовой Блок: цена — нет Контратаки 
     expect(card).toContain("Контратака и Ответный Удар в этом Парировании недоступны");
   });
 
-  it("бонуса второго оружия нет — Контратака остаётся доступной", async () => {
+  // Книга говорит «ЕСЛИ он парирует обоими» — это выбор, и цена берётся за сам
+  // выбор, а не за величину бонуса (wdbc-2hg). Пока бонус второго оружия
+  // суммировался сам, боец с парой клинков терял Контратаку в каждом
+  // Парировании и отказаться не мог.
+  it("выбрал парировать одним — Контратака остаётся, бонуса второго нет", async () => {
     const main = melee({ id: "w1" });
-    const off  = melee({ id: "w2", name: "Кинжал" });
+    const off  = melee({ id: "w2", name: "Кинжал", props: defensive() });
     const actor = hero([main, off], CAP_CROSSBLOCK, COUNTER_ATTACK_CAPABILITY);
+    captured.confirmAnswer = false;                // «Одним»
     await _performParry(actor, 0, "Actor.attacker-1");
-    expect(captured.chat.at(-1).content).toContain("wh-counter-attack-btn");
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("wh-counter-attack-btn");
+    expect(card).not.toContain("Крестовой Блок");
+  });
+
+  it("платить нечем (Таланта Контратаки нет) — вопроса нет, парируем обоими", async () => {
+    const main = melee({ id: "w1" });
+    const off  = melee({ id: "w2", name: "Кинжал", props: defensive() });
+    const actor = hero([main, off], CAP_CROSSBLOCK);
+    captured.dialog = null;
+    captured.confirmAnswer = false;                // ответ не должен спрашиваться
+    await _performParry(actor, 0, "Actor.attacker-1");
+    expect(captured.dialog, "лишний вопрос там, где выбора нет").toBe(null);
+    expect(captured.chat.at(-1).content).toContain("Крестовой Блок");
   });
 });

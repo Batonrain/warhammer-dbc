@@ -17,8 +17,18 @@
 //   • не трогает документы, у которых уже есть хоть какой-то текст правила;
 //   • не выдумывает: не нашлось строки-заголовка — оставляет пустым.
 //
-//    node tools/card-description-from-book.mjs --dry [пак]
-//    node tools/card-description-from-book.mjs [пак]
+//  ГЛАВНОЕ ОГРАНИЧЕНИЕ — ДВЕ КОЛОНКИ (wdbc-86h). Книга свёрстана в две
+//  колонки: заголовки идут парой, абзацы — парой следом. Разбор ищет имя
+//  отдельной строкой и берёт следующие длинные строки, поэтому на развороте
+//  он способен прихватить абзац СОСЕДА. Так 25 карточек получили чужое
+//  описание, и чинили их потом руками (PR #431). Отличить свой абзац от
+//  соседнего по одному тексту нечем — значит инструмент и не должен решать
+//  это молча: по умолчанию он ПОКАЗЫВАЕТ, что предлагает, а пишет только по
+//  явному --write, и каждая запись из нескольких абзацев помечается «глазами»
+//  — её надо сверить с разворотом книги.
+//
+//    node tools/card-description-from-book.mjs [пак]           # показать
+//    node tools/card-description-from-book.mjs --write [пак]   # записать
 // ════════════════════════════════════════════════════════════════════════
 
 import fs from "node:fs";
@@ -92,7 +102,7 @@ export function findProse(pages, russianName) {
   return hits[0];
 }
 
-export function run({ dry = false, packs = DEFAULT_PACKS } = {}) {
+export function run({ dry = true, packs = DEFAULT_PACKS } = {}) {
   const pages = bookPages();
   const filled = [], skipped = [];
   for (const pack of packs) {
@@ -117,9 +127,15 @@ export function run({ dry = false, packs = DEFAULT_PACKS } = {}) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {
-  const dry = process.argv.includes("--dry");
+  // Пишем только по явному --write: молчаливая запись — это и есть тот путь,
+  // которым 25 карточек получили описание соседа по колонке.
+  const dry = !process.argv.includes("--write");
   const pack = process.argv.slice(2).find(a => !a.startsWith("--"));
   const { filled, skipped } = run({ dry, packs: pack ? [pack] : DEFAULT_PACKS });
-  for (const f of filled) console.log(`+ ${f.name}  ←  ${f.from} (${f.paras} абз.)`);
-  console.log(`\n${dry ? "будет заполнено" : "заполнено"}: ${filled.length} | не нашлось: ${skipped.length}`);
+  for (const f of filled)
+    console.log(`+ ${f.name}  ←  ${f.from} (${f.paras} абз.)${f.paras > 1 ? "  ← ГЛАЗАМИ: сверить с разворотом" : ""}`);
+  const risky = filled.filter(f => f.paras > 1).length;
+  console.log(`\n${dry ? "будет заполнено" : "заполнено"}: ${filled.length} | не нашлось: ${skipped.length}`
+    + (risky ? ` | из них ${risky} с несколькими абзацами — сверить с книгой (две колонки, wdbc-86h)` : ""));
+  if (dry) console.log("ничего не записано: запись — только с --write");
 }

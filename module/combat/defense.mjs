@@ -208,7 +208,7 @@ export async function _performSprayCancel(actor) {
  * @param {number} extraMod        модификатор приёма/ситуации
  * @param {?object} [weaponOverride] чем парируем, если не «надетое рукопашное»
  */
-export function parryProfile(actor, extraMod = 0, weaponOverride = null) {
+export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCrossblock = true } = {}) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -246,7 +246,11 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null) {
   //
   // Баланс второго оружия сюда НЕ входит: балансом отвечает то оружие, которым
   // отбиваешь, и книга перечисляет именно свойства/Качество/модификации.
-  const crossblock = crossblockPair(actor);
+  // Парировать обоими — ВЫБОР игрока (wdbc-2hg): книга говорит «если он
+  // парирует обоими», и цена этого выбора — Контратака с Ответным Ударом.
+  // Пока бонус второго оружия суммировался сам, отказаться было нельзя: боец
+  // с парой клинков терял Контратаку в каждом Парировании, не выбирая.
+  const crossblock = useCrossblock ? crossblockPair(actor) : null;
   const crossWeapon = crossblock
     ? [crossblock.main, crossblock.off].find(w => w?.id !== meleeWeapon?.id)
     : null;
@@ -301,9 +305,38 @@ function _bladeShieldRefusal(actor, why) {
   });
 }
 
+/**
+ * Спросить, парировать ли обоими оружиями (Крестовой Блок, стр. 62).
+ *
+ * Вопрос задаётся, только если есть ЧТО терять: пара сложилась и Контратака
+ * у бойца есть и доступна в этом Раунде. Иначе «обоими» ничего не стоит —
+ * берём его молча, как и раньше.
+ *
+ * @returns {Promise<boolean>} парировать ли обоими
+ */
+export async function askCrossblock(actor) {
+  if (!crossblockPair(actor)) return true;
+  const canCounter = hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
+                  && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY);
+  if (!canCounter) return true;
+  const both = await foundry.applications.api.DialogV2.confirm({
+    window: { title: "Крестовой Блок" },
+    content: "<p>Парировать <b>обоими</b> оружиями?</p>"
+      + "<p>Да — бонусы обоих сложены и можно парировать существ на ступень Размера крупнее, "
+      + "но Контратака и Ответный Удар в этом Парировании недоступны (стр. 62).<br>"
+      + "Нет — парируете одним, Контратака остаётся.</p>",
+    yes: { label: "Обоими" }, no: { label: "Одним" }
+  }).catch(() => true);
+  return both !== false;
+}
+
 export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false, isMelee = true) {
+  // Крестовой Блок платит Контратакой (стр. 62), поэтому спрашивается ДО
+  // броска — и только когда цена реальна: Талант Контратаки есть и доступен в
+  // этом Раунде. Нечем платить — выгода бесплатна, и спрашивать не о чем.
+  const useCrossblock = await askCrossblock(actor);
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =
-    parryProfile(actor, extraMod);
+    parryProfile(actor, extraMod, null, { useCrossblock });
 
   // ── Парирование СТРЕЛЬБЫ — только Талантом «Щит Клинков» (wdbc-3e2x) ──────
   // Корбук, стр. 62: «Реакция персонажа столь стремительна, что он способен
@@ -442,7 +475,9 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // Counter Attack и Riposte». Бонус второго оружия и есть парирование обоими,
   // поэтому кнопка Контратаки при нём не показывается, а вместо неё в карточку
   // идёт строка с причиной — иначе игрок решит, что Талант «пропал».
-  const crossblockUsed = !!crossblock?.bonus;
+  // Цена — за само парирование обоими, а не за величину бонуса: пара без
+  // Защитного даёт 0 к порогу, но предел Размера поднимает так же.
+  const crossblockUsed = !!crossblock;
   const counterAttackHtml = (parried && meleeWeapon && !crossblockUsed
       && hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
       && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY))
@@ -457,10 +492,14 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // Что именно даёт Крестовой Блок сверх суммы бонусов — и чего он стоит.
   // Предел Размера книга поднимает на ступень, но самого предела Размера при
   // Парировании в системе нет вовсе, поэтому это напоминание столу, а не расчёт.
+  // Строка печатается только при парировании ОБОИМИ: и выгода (сумма бонусов,
+  // предел Размера), и цена (Контратака) — это одно и то же решение. Раньше
+  // при нулевом бонусе второго оружия строка обещала выгоду, не взяв цены.
   const crossblockNote = crossblock
-    ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок: бонусы обоих оружий сложены`
-      + `${crossblockUsed ? ` (+${crossblock.bonus} от «${esc(crossblock.weapon.name)}»), Контратака и Ответный Удар в этом Парировании недоступны` : ""}`
-      + `. Можно Парировать существ на ${CROSSBLOCK_SIZE_STEPS} ступень Размера крупнее обычного (решает стол).</div>`
+    ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок: парируете обоими`
+      + `${crossblock.bonus ? ` (+${crossblock.bonus} от «${esc(crossblock.weapon.name)}»)` : " (бонусов второго оружия нет)"}`
+      + `, Контратака и Ответный Удар в этом Парировании недоступны.`
+      + ` Можно Парировать существ на ${CROSSBLOCK_SIZE_STEPS} ступень Размера крупнее обычного (решает стол).</div>`
     : "";
 
   await postTestCard(actor, {

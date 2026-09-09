@@ -408,7 +408,14 @@ export async function applySyncReport(report, selectedKeys) {
  * паку: точечно править ActiveEffect нечем, у эффекта нет «поля», это документ.
  */
 export async function replaceItemEffects(item, packDoc) {
-  const stale = effectDocs(item).filter(fx => !effectFlag(fx, "mechEntry")).map(fx => fx.id);
+  const old = effectDocs(item).filter(fx => !effectFlag(fx, "mechEntry"));
+  // Погашенный эффект — это штатный способ ВЫКЛЮЧИТЬ механику предмета
+  // (module/migrations/item-effects.mjs: «чтобы механику выключить, эффект
+  // гасят»). В сверку `disabled` намеренно не входит (см. шапку блока), и
+  // пересоздание по паку возвращало погашенное включённым: ГМ выключил
+  // правило руками, а «Обновить мир» включало его обратно (wdbc-0ky).
+  const wasDisabled = new Set(old.filter(fx => fx.disabled).map(fx => String(fx.name ?? fx.label ?? "")));
+  const stale = old.map(fx => fx.id);
   if (stale.length) await item.deleteEmbeddedDocuments("ActiveEffect", stale);
 
   const fresh = effectDocs(packDoc)
@@ -419,9 +426,17 @@ export async function replaceItemEffects(item, packDoc) {
       // может столкнуться с уже существующим.
       delete data._id;
       delete data._key;
+      if (wasDisabled.has(String(data.name ?? data.label ?? ""))) data.disabled = true;
       return data;
     });
   if (fresh.length) await item.createEmbeddedDocuments("ActiveEffect", fresh);
+
+  // Предмет остался вовсе без эффектов, а флаг «механика перенесена» на нём
+  // стоит — актор из-за флага не читает и старое system.effects
+  // (module/rules/character.mjs), и предмет потерял бы механику совсем.
+  // Флаг снимается: старое поле снова в деле, пока эффекты не вернутся.
+  if (!fresh.length && (item.getFlag?.(FLAG, "migratedEffect") ?? item.flags?.[FLAG]?.migratedEffect))
+    await item.update({ [`flags.${FLAG}.-=migratedEffect`]: null });
 
   // Опора двигается на новое значение — как у любого другого поля. Плоский
   // путь с точками, а не setFlag: setFlag кладёт ключ в объект как есть

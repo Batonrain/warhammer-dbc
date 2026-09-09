@@ -29,6 +29,9 @@ import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules
 import { talentGroupOf } from "../rules/duplicate-grants.mjs";
 import { incrementThrottleCount } from "../rules/cooldown.mjs";
 import { tokensWithinRadius } from "../rules/aoe-target.mjs";
+import { changeActorInfamy, actorInfamyValue, actorInfamyMax } from "./infamy-points.mjs";
+import { startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo }
+  from "../combat/eye-of-challenge.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -55,6 +58,14 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `tokensWithinRadius` (rules/aoe-target.mjs) — разовый снимок «все токены
  *    сцены в радиусе N м от кастера» (Красное Солнце: нимб радиусом 16 м),
  *    та же чистая формула дистанции, что уже используют живые Ауры.
+ *  - `changeActorInfamy`/`actorInfamyValue`/`actorInfamyMax`
+ *    (apps/infamy-points.mjs) — Очки Бесчестия по типу актора: у Демон-Принца
+ *    пул лежит в system.dp.ip, у Хаосита — в system.fate.value. Скрипт,
+ *    писавший fate.value руками, у Демон-Принца начислял в никуда (wdbc-0b2).
+ *  - `startEyeOfChallenge`/`clearEyeOfChallenge`/`eyeOfChallengeInfo`
+ *    (combat/eye-of-challenge.mjs) — срок Ока Вызова. Скрипты писали флаг и
+ *    «+60» руками, а штраф считает модуль: срок жил в двух местах, и правка
+ *    минуты в одном из них тесты бы подтвердили, а игра — нет (wdbc-lhd).
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -74,6 +85,8 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "woundLossUpdates", "isTokenInSight", "tokensThatCanSee",
     "actorFactionKeys", "anySameOrDescendant", "getFactionIndex", "talentGroupOf",
     "incrementThrottleCount", "tokensWithinRadius",
+    "changeActorInfamy", "actorInfamyValue", "actorInfamyMax",
+    "startEyeOfChallenge", "clearEyeOfChallenge", "eyeOfChallengeInfo",
     ...extraNames,
     code
   );
@@ -82,6 +95,8 @@ export async function executeItemCode(item, code, event, extra = {}) {
     woundLossUpdates, isTokenInSight, tokensThatCanSee,
     actorFactionKeys, anySameOrDescendant, getFactionIndex, talentGroupOf,
     incrementThrottleCount, tokensWithinRadius,
+    changeActorInfamy, actorInfamyValue, actorInfamyMax,
+    startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo,
     ...extraNames.map(k => extra[k])
   );
 }

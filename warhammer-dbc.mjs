@@ -107,6 +107,7 @@ import { migrateVehicleTraitEffects } from "./module/migrations/vehicle-trait-ef
 import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs";
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
+import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -464,6 +465,11 @@ Hooks.once("init", () => {
 
   // Версия простановки «надето» носимому снаряжению существующих акторов (одноразовая, wdbc-9h7g)
   game.settings.register("warhammer-dbc", "gearEquippedVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия простановки вросшего оружия Дару «Рука-Пушка» (одноразовая, wdbc-vkt)
+  game.settings.register("warhammer-dbc", "gunArmSourceVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -855,7 +861,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -939,6 +945,18 @@ Hooks.once("ready", async () => {
     await migrateGearEquipped();
     await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Надетое снаряжение:", e); }
+});
+
+// ── Одноразовая простановка: вросшее оружие Дара «Рука-Пушка» (wdbc-vkt) ─────
+// Ручной перезапуск: game.warhammerDBC.migrateGunArmSource()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "gunArmSourceVersion") || 0) >= VERSION) return;
+  try {
+    await migrateGunArmSource();
+    await game.settings.set("warhammer-dbc", "gunArmSourceVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Рука-Пушка:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────
