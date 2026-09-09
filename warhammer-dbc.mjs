@@ -108,6 +108,7 @@ import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs"
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
+import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -470,6 +471,11 @@ Hooks.once("init", () => {
 
   // Версия простановки вросшего оружия Дару «Рука-Пушка» (одноразовая, wdbc-vkt)
   game.settings.register("warhammer-dbc", "gunArmSourceVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия правки Размера Геносемени легиона у уже созданных Черт (одноразовая, wdbc-nesq)
+  game.settings.register("warhammer-dbc", "legionGeneSeedSizeVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -861,7 +867,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -957,6 +963,18 @@ Hooks.once("ready", async () => {
     await migrateGunArmSource();
     await game.settings.set("warhammer-dbc", "gunArmSourceVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Рука-Пушка:", e); }
+});
+
+// ── Одноразовая правка: Размер Геносемени легиона у уже созданных Черт (wdbc-nesq) ──
+// Ручной перезапуск: game.warhammerDBC.migrateLegionGeneSeedSize()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "legionGeneSeedSizeVersion") || 0) >= VERSION) return;
+  try {
+    await migrateLegionGeneSeedSize();
+    await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────
