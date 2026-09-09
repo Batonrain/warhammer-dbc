@@ -14,10 +14,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const asItem = (name, mechanics) => ({ id: name, name, flags: { [SYSTEM]: { mechanics } } });
-const readMechanics = path => JSON.parse(readFileSync(path, "utf8")).flags[SYSTEM].mechanics;
+const readMechanics = path => packDocByFileHint(path).flags[SYSTEM].mechanics;
 
 describe("Лик Богов: базовый социальный бонус механизирован (wdbc-1rno)", () => {
   it("Слаанеш: kind:\"testMod\" даёт rollBonus target:social +10", () => {

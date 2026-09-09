@@ -31,7 +31,7 @@ import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
 import { determinationToFightApBonus } from "../rules/determination-to-fight.mjs";
 import { isStunnedOrDazed } from "../rules/predicates.mjs";
-import { turnStartFlagClears } from "../rules/turn-flags.mjs";
+import { turnStartFlagClears, turnStartAttackCarryOver } from "../rules/turn-flags.mjs";
 
 /** Типы акторов, несущих экономику действий (общая часть — _creature.mjs). */
 export const ACTION_ECONOMY_ACTOR_TYPES = ["character", "daemon", "demonPrince", "minion"];
@@ -120,6 +120,9 @@ export async function resetActionEconomy(actor) {
   // такого срока добавляется строкой в реестр и здесь ничего дописывать не
   // надо. Патч вливается в общий update — по-прежнему один раунд-трип на всё.
   Object.assign(upd, turnStartFlagClears(actor));
+  // Список «чем атаковал» не гасится, а переезжает на Ход назад: Мэн-Гош
+  // спрашивает про ПРЕДЫДУЩИЙ Ход (rules/turn-flags.mjs).
+  Object.assign(upd, turnStartAttackCarryOver(actor));
   if (Object.keys(upd).length) await actor.update(upd);
 }
 

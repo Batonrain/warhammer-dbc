@@ -10,6 +10,7 @@ import { describe, it, expect, vi } from "vitest";
 import fs from "node:fs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
 import { isKnownCapability } from "../../module/constants/capabilities.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const ITEMS = [
   {
@@ -27,7 +28,7 @@ const ITEMS = [
 ];
 
 describe.each(ITEMS)("$file несёт возможность $capabilityKey", ({ file, capabilityKey }) => {
-  const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+  const doc = packDocByFileHint(file);
 
   it("имя возможности известно реестру (constants/capabilities.mjs)", () => {
     expect(isKnownCapability(capabilityKey)).toBe(true);

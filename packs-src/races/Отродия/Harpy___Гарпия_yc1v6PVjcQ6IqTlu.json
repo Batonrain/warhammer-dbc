@@ -172,7 +172,7 @@
               "sourceName": "Unnatural Agility (X) / Сверхъестественная Ловкость (X)",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": true,
-              "rating": 3,
+              "rating": "2",
               "specialization": "",
               "skillScope": "plain",
               "skillKey": "",

@@ -29,6 +29,7 @@ export function buildAttackContent(v) {
     autoCoverMod,
     autoHitAvailable,
     autoMountRangedMod,
+    dualWieldHtml,
     badgesHtml,
     bandHtml,
     charKey,
@@ -94,6 +95,7 @@ return `
       <label>Доп. мод</label>
       <input id="atk-modifier" class="av-input av-num" type="number" value="${presetModifier}"/>
     </div>
+    ${dualWieldHtml}
     <div class="av-row">
       <label>Бонус урона</label>
       <input id="atk-dmg-bonus" class="av-input av-num" type="number" value="0"

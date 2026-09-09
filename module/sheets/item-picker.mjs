@@ -18,6 +18,8 @@ import { masteryTargets, masteryAptitudes } from "../rules/mastery-targets.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { isPossessed, hasEliteArchetype } from "../rules/predicates.mjs";
 import { isMinionTalent } from "../rules/minion-build.mjs";
+import { itemIs } from "../rules/item-marker.mjs";
+import { CAP_TWO_WEAPON, SPEC_LABELS } from "../rules/dual-wield.mjs";
 import { promptMinionSlot, applyMinionSlot } from "../apps/minion-talent.mjs";
 import { centerPicker, pickerPos } from "./picker-ui.mjs";
 import { arsenalSpecKind, arsenalSpecOptions } from "../constants/weapon-categories.mjs";
@@ -257,7 +259,17 @@ export function promptDynamicAptTalent(actor, doc, kind, charApts) {
  * смог бы сравнить владение с категорией конкретного оружия.
  */
 export function promptArsenalSpec(doc, kind) {
-  const opts = arsenalSpecOptions(kind);
+  return promptSpecChoice(doc, arsenalSpecOptions(kind));
+}
+
+/**
+ * Выбор ОДНОЙ специализации Таланта из готового списка. Общий для Weapon/
+ * Melee Training (категории оружия) и для «Два Оружия» (сторона Таланта):
+ * шаблон пака хранит все варианты через запятую, и без выбора эта строка
+ * скопировалась бы на лист целиком — то есть механика не смогла бы сравнить
+ * купленное с тем, что нужно на конкретную атаку.
+ */
+export function promptSpecChoice(doc, opts) {
   const rows = opts.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
   return new Promise(resolve => {
     new Dialog({
@@ -457,6 +469,18 @@ export async function openItemPicker(actor, kind) {
             const category = await promptArsenalSpec(d, arsenalSpecKind(d.name));
             if (!category) return;                   // отмена — ничего не покупаем
             obj.system.specialization = category;
+            obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
+              talentCategory(actor, d.name, d.folder),
+              { name: d.name, patron: actor.system.patronGod });
+          } else if (itemIs(d, "talent", CAP_TWO_WEAPON, "Two Weapon Wielder")) {
+            // «Два Оружия» (стр. 62, wdbc-3jlm): Талант берётся отдельно на
+            // рукопашную и на стрелковую руку — пара клинков требует одной
+            // стороны, пара пистолетов другой, клинок с пистолетом обеих.
+            // Без выбора на лист уехал бы перечень «Melee, Ranged» целиком, и
+            // окно атаки не могло бы сказать, какой стороны не хватает.
+            const side = await promptSpecChoice(d, Object.values(SPEC_LABELS));
+            if (!side) return;                       // отмена — ничего не покупаем
+            obj.system.specialization = side;
             obj.system.cost = talentCostXP(d.system.tier, d.system.aptitudes || [], charApts,
               talentCategory(actor, d.name, d.folder),
               { name: d.name, patron: actor.system.patronGod });
