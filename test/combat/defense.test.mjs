@@ -689,8 +689,11 @@ describe("_performParry: стрельба в упор — Базовый кон�
 
 // wdbc-1rno (09.09.2026): стр. 12 — «Парирование атаки персонажа, который на
 // 1 Размер больше, требует Навык Parry, продвинутый на +10, на 2 – +20, на
-// 3 – +30, на 4+ – вообще невозможно.» Раньше Размер вообще не входил в
-// формулу Парирования (module/rules/parry-size.mjs — новый расчёт).
+// 3 – +30, на 4+ – вообще невозможно.» Это УСЛОВИЕ, допускающее сам тест
+// (нужный Ранг Навыка Parry уже вложен заранее), а НЕ штраф к порогу броска —
+// раньше Размер вообще не входил в формулу Парирования (module/rules/
+// parry-size.mjs — новый расчёт, поправлено после первой версии,
+// принимавшей книжный текст за модификатор порога).
 describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
   function setupSizeAttacker(size) {
     const attackerUuid = "Actor.attacker-1";
@@ -698,46 +701,90 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     return attackerUuid;
   }
 
-  it("атакующий на 1 Размер больше — штраф −10 в пороге", async () => {
+  it("атакующий на 1 Размер больше, защищающийся нетренирован — тест не предпринимается", async () => {
     const attackerUuid = setupSizeAttacker(4);
     const sword = equippedMelee({ balance: 0 });
-    const actor = attacker({ items: [sword], size: 3 });
+    const actor = attacker({ items: [sword], size: 3 }); // rank по умолчанию untrained
     await _performParry(actor, 0, attackerUuid);
     const html = captured.chat.at(-1).content;
-    expect(html).toContain("Размер противника -10");
+    expect(html).toContain("требует Навык «Парирование», продвинутый минимум до «Тренированное» (+10)");
+    expect(html).not.toContain("Порог");
   });
 
-  it("атакующий на 3 Размера больше — штраф −30, но ещё возможно", async () => {
+  it("атакующий на 1 Размер больше, Навык Parry Тренированное (+10) — тест разрешён, без штрафа к порогу", async () => {
+    const attackerUuid = setupSizeAttacker(4);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "trained" } } });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Порог");
+    expect(html).not.toContain("требует Навык");
+    expect(html).not.toContain("Размер противника"); // штрафа к порогу больше нет вовсе
+  });
+
+  it("атакующий на 2 Размера больше, Тренированное (+10) недостаточно — тест не предпринимается, требует Опытный (+20)", async () => {
+    const attackerUuid = setupSizeAttacker(5);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "trained" } } });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("требует Навык «Парирование», продвинутый минимум до «Опытный» (+20)");
+    expect(html).not.toContain("Порог");
+  });
+
+  it("атакующий на 2 Размера больше, Опытный (+20) — тест разрешён", async () => {
+    const attackerUuid = setupSizeAttacker(5);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "veteran" } } });
+    await _performParry(actor, 0, attackerUuid);
+    expect(captured.chat.at(-1).content).toContain("Порог");
+  });
+
+  it("атакующий на 3 Размера больше, Опытный (+20) недостаточно — требует Ветеран (+30)", async () => {
     const attackerUuid = setupSizeAttacker(6);
     const sword = equippedMelee({ balance: 0 });
-    const actor = attacker({ items: [sword], size: 3 });
+    const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "veteran" } } });
     await _performParry(actor, 0, attackerUuid);
-    expect(captured.chat.at(-1).content).toContain("Размер противника -30");
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("требует Навык «Парирование», продвинутый минимум до «Ветеран» (+30)");
+    expect(html).not.toContain("Порог");
   });
 
-  it("атакующий на 4 Размера больше — Парирование вообще невозможно, бросок не делается", async () => {
+  it("атакующий на 3 Размера больше, Ветеран (+30) — тест разрешён, ещё не «вообще невозможно»", async () => {
+    const attackerUuid = setupSizeAttacker(6);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "expert" } } });
+    await _performParry(actor, 0, attackerUuid);
+    expect(captured.chat.at(-1).content).toContain("Порог");
+  });
+
+  it("атакующий на 4 Размера больше — вообще невозможно, никакой Ранг не спасает", async () => {
     const attackerUuid = setupSizeAttacker(7);
     const sword = equippedMelee({ balance: 0 });
-    const actor = attacker({ items: [sword], size: 3 });
+    const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "expert" } } });
     await _performParry(actor, 0, attackerUuid);
     const html = captured.chat.at(-1).content;
     expect(html).toContain("вообще невозможно");
     expect(html).not.toContain("Порог");
   });
 
-  it("атакующий НЕ крупнее — без штрафа, строка про Размер не появляется", async () => {
+  it("атакующий НЕ крупнее — Ранг не важен, тест как обычно", async () => {
     const attackerUuid = setupSizeAttacker(3);
     const sword = equippedMelee({ balance: 0 });
-    const actor = attacker({ items: [sword], size: 3 });
+    const actor = attacker({ items: [sword], size: 3 }); // untrained, но разницы Размеров нет
     await _performParry(actor, 0, attackerUuid);
-    expect(captured.chat.at(-1).content).not.toContain("Размер противника");
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Порог");
+    expect(html).not.toContain("требует Навык");
   });
 
-  it("неизвестный attackerUuid (fromUuid не резолвит) — Размер атакующего 0, штрафа нет", async () => {
+  it("неизвестный attackerUuid (fromUuid не резолвит) — Размер атакующего 0, гейт не блокирует", async () => {
     globalThis.fromUuid = async () => null;
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3 });
     await _performParry(actor, 0, "Actor.unknown");
-    expect(captured.chat.at(-1).content).not.toContain("Размер противника");
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Порог");
+    expect(html).not.toContain("требует Навык");
   });
 });

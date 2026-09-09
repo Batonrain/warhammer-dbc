@@ -23,7 +23,7 @@ import { canParryPsychic, psychicParryOutcome, hasBladeShield } from "./blade-sh
 import { crossblockPair, CROSSBLOCK_SIZE_STEPS, maineGaucheParryReroll }
   from "../rules/dual-wield-talents.mjs";
 import { attackedPrevTurn } from "../rules/turn-flags.mjs";
-import { parrySizePenalty } from "../rules/parry-size.mjs";
+import { parrySizeGate } from "../rules/parry-size.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
 import { contactType } from "../rules/tactical-map.mjs";
 import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
@@ -213,11 +213,14 @@ export async function _performSprayCancel(actor) {
  * @param {?object} [weaponOverride] чем парируем, если не «надетое рукопашное»
  * @param {object} [opts]
  * @param {boolean} [opts.useCrossblock=true] спрашивается ДО вызова (askCrossblock)
- * @param {number}  [opts.sizeMod=0]  штраф по Разнице Размеров (стр. 12,
- *   module/rules/parry-size.mjs) — считает вызывающая сторона (_performParry),
- *   ей нужен резолв атакующего актора по attackerUuid, которого здесь нет.
+ *
+ * Разница Размеров (стр. 12, module/rules/parry-size.mjs) сюда НЕ входит —
+ * это условие, допускающее сам тест («требует Навык Parry, продвинутый на
+ * +10/+20/+30»), а не штраф к его порогу. Гейт проверяет вызывающая сторона
+ * (_performParry) ДО вызова parryProfile, ей нужен резолв атакующего актора
+ * по attackerUuid, которого здесь нет.
  */
-export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCrossblock = true, sizeMod = 0 } = {}) {
+export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCrossblock = true } = {}) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
   const parrySkill = actor.system.skills?.parry;
   const rankBonus  = SKILL_RANKS[parrySkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -266,7 +269,7 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
   const crossBonus = crossWeapon ? weaponParryPropBonus(actor, crossWeapon) : 0;
 
   const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod
-                  + ruleMods.total + dtfBonus + crossBonus + sizeMod;
+                  + ruleMods.total + dtfBonus + crossBonus;
 
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
@@ -279,8 +282,6 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCr
   modParts.push(...ruleMods.parts);
   if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
   if (crossBonus !== 0)  modParts.push(`Крестовой Блок: «${crossWeapon.name}» +${crossBonus}`);
-  // Разница Размеров (стр. 12, wdbc-1rno) — atакующий крупнее: −10/ступень.
-  if (sizeMod !== 0)     modParts.push(`Размер противника ${sizeMod}`);
 
   return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp,
            crossblock: crossblock ? { weapon: crossWeapon, bonus: crossBonus,
@@ -380,14 +381,26 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // РЕАЛЬНАЯ (после вопроса игроку) готовность биться обоими, что идёт в
   // parryProfile ниже, не повторный независимый вопрос "есть ли пара".
   const crossblockActive = useCrossblock && !!crossblockPair(actor);
-  const sizePenalty = parrySizePenalty(attackerSize, defenderSize, crossblockActive ? CROSSBLOCK_SIZE_STEPS : 0);
-  if (sizePenalty.impossible) {
+  // Разница Размеров (стр. 12) — условие, допускающее сам тест («требует
+  // Навык Parry, продвинутый на +10/+20/+30»), не штраф к порогу: сверяется с
+  // уже вложенным Рангом ДО построения профиля Парирования (parrySize.mjs).
+  const parryRankBonus = SKILL_RANKS[actor.system.skills?.parry?.rank ?? "untrained"]?.bonus ?? -20;
+  const sizeGate = parrySizeGate(attackerSize, defenderSize, parryRankBonus,
+                                 crossblockActive ? CROSSBLOCK_SIZE_STEPS : 0);
+  if (sizeGate.impossible) {
     return _bladeShieldRefusal(actor,
-      `Противник крупнее на ${sizePenalty.steps} ${sizePenalty.steps === 1 ? "ступень" : "ступени"} Размера — Парирование вообще невозможно (стр. 12).`);
+      `Противник крупнее на ${sizeGate.steps} ${sizeGate.steps === 1 ? "ступень" : "ступени"} Размера — Парирование вообще невозможно (стр. 12).`);
+  }
+  if (!sizeGate.allowed) {
+    const requiredRankKey = sizeGate.requiredBonus === 10 ? "trained"
+                           : sizeGate.requiredBonus === 20 ? "veteran" : "expert";
+    const requiredLabel = SKILL_RANKS[requiredRankKey]?.label ?? `+${sizeGate.requiredBonus}`;
+    return _bladeShieldRefusal(actor,
+      `Противник крупнее на ${sizeGate.steps} ${sizeGate.steps === 1 ? "ступень" : "ступени"} Размера — Парирование требует Навык «Парирование», продвинутый минимум до «${requiredLabel}» (+${sizeGate.requiredBonus}) (стр. 12).`);
   }
 
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =
-    parryProfile(actor, extraMod, null, { useCrossblock, sizeMod: sizePenalty.mod });
+    parryProfile(actor, extraMod, null, { useCrossblock });
 
   // ── Парирование СТРЕЛЬБЫ ───────────────────────────────────────────────
   // Стр. 12: «работает только от атак в ближнем бою, в т.ч. выстрелов в
