@@ -6331,14 +6331,14 @@ export const CAPABILITIES = {
     reader: "module/combat/eternal-warrior.mjs (wdbc-sk8s) — eternalWarriorEligible/eternalWarriorFreeSaveAvailable/markEternalWarriorUsed; module/sheets/tabs/death.mjs::_resolveFateSave(eternalWarrior). «Дистанция Натиска до убийцы» не отслеживается движком — путь FLAT (1 Очко Бесчестия) подтверждается самим игроком флажком в диалоге, не автоопределением."
   },
   "gift.khorne.eyeOfChallenge": {
-    label: "+1 Бесчестия: выделить 4 сильнейших воинов в поле зрения, узнать WS/S/Parry/Берсерк-Таланты одного — не бросить вызов за минуту = 2d10+8 урона в W",
+    label: "Выбор 4 сильнейших воинов из всех видимых — решение ГМа за столом, не смоделировано, capability покрывает эту половину. Вторая половина реализована (wdbc-1rno) двумя записями kind:\"script\" на этом же предмете: «сконцентрироваться на цели» (цена 1 Бесчестие) проверяет поле зрения (isTokenInSight), честно читает WS/S/Parry-ранг/владение Талантами группы «Берсерк» реального актора цели (talentGroupOf) и запускает 60-секундный срок; «вызов брошен» снимает срок без штрафа (сам факт вызова — событие за столом, как у Challenge of Honour). Истёкший срок — 2d10+8 непоглощаемого урона чемпиону — снимает module/combat/eye-of-challenge.mjs::processEyeOfChallengeDeadline на updateWorldTime/updateCombat (hooks.mjs)",
     source: "Дар Кхорн (Eye of Challenge)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Кхорн/Eye_of_Challenge___Око_Вызова_bgJDJagGDH4WqPZH.json (entries eyeOfChallenge-reveal/eyeOfChallenge-confirm) + module/combat/eye-of-challenge.mjs, hooks.mjs (updateWorldTime/updateCombat)"
   },
   "gift.khorne.fatherOfBattle": {
-    label: "Полудействие: видение указывает следующее действие к цели; выполнение по видению без отклонений даёт +1 Бесчестия сверх обычного",
+    label: "Полудействие: само видение (следующее действие к цели) — чистая ГМ-подсказка за столом, движку сверять не с чем, capability покрывает эту половину. Вторая половина реализована (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка «▶ Запустить» спрашивает честное подтверждение обоих условий книги (путь пройден целиком без отклонений, миссия вообще давала Бесчестие) и при согласии поднимает Очко Бесчестия в пуле сверх обычного",
     source: "Дар Кхорн (Father of Battle)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Кхорн/Father_of_Battle___Отец_Битвы_pQ0ypCOCEl4SDqJf.json, запись kind:\"script\" (id fatherOfBattle-script) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.khorne.handOfKhorne": {
     label: "Основная рука: +8 AP, ×2 S.b в атаках ею, +2 Размера при парировании этой рукой; стрелковые атаки этой рукой автопровальны — см. также ОТЛОЖЕНО в памяти (слишком составной/локальный для текущих полей)",
@@ -6371,9 +6371,9 @@ export const CAPABILITIES = {
     reader: "5 записей weaponPropertyImmunityInRage.{crippling,piercing,haywire,shocking,snare}"
   },
   "gift.khorne.redSun": {
-    label: "В Ярости+1 Бесчестия: нимб над головой до конца Ярости — видящие его в 16м проходят W+0 или впадают в Ярость, не могут выйти из неё, пока видят нимб",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете (цена 1 Бесчестие, только в Ярости): реальный скан сцены (tokensWithinRadius 16м + isTokenInSight на каждого кандидата, тот же приём, что у Иконы Богохульства) и W+0 тест на каждого видящего нимб, при провале — реальное впадение в Ярость (system.inRage). «Не может пытаться выйти, пока видит нимб» — срок действия состояния, не число, отыгрывается за столом",
     source: "Дар Кхорн (Red Sun)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Кхорн/Red_Sun___Красное_Солнце_TmfhLnait1zVvya9.json (entry redSun-ignite) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.khorne.theHunter": {
     label: "Полное действие+1 Бесчестия, видя псайкера: призыв Гончей Плоти в Истинной Форме, атакующей ближайшего псайкера, возвращается в Варп после убийства",
@@ -6521,9 +6521,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.confessorOfDesires": {
-    label: "Спрошенный о сокровенных желаниях проходит W-60 (как от психосилы) или честно отвечает не осознавая влияния; прошедший тест — иммунен 6 дней",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка «▶ Запустить» катает за таргетнутую цель тест W-60, при успехе честно ставит цели 6-дневный иммунитет (worldTime-флаг), при провале — только чат-заметка (сам факт вопроса о желаниях — реплика за столом)",
     source: "Дар Слаанеш (Confessor of Desires)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Слаанеш/Confessor_of_Desires___Исповедник_Желани_NINdxH8ZJnJ95Cqh.json (entry confessorOfDesires-ask) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.slaanesh.countenanceOfSlaanesh": {
     label: "Базовый +10 ко всем социальным тестам механизирован отдельной записью kind:\"testMod\" (modScope:social) на этом же предмете — capability покрывает ТОЛЬКО остаток: доп. +30 конкретно с последователями Слаанеш (нет распознавания цели), признание авторитета демонами Слаанеш ниже Герольда при Inf 30+, полудействие+1 Бесчестия на Страх 3 (Кхорниты впадают в Ярость вместо Шока) — не смоделированы",
@@ -6531,9 +6531,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.cuttingWords": {
-    label: "Победа в тесте социального взаимодействия — 1d5+Успехи непоглощаемого R Dmg в торс проигравшему (кровавые стигматы)",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка спрашивает число Успехов только что выигранного теста социального взаимодействия (шкалой книги 0…5+, честное самоподтверждение — какой именно это был тест, движку не проверить) и катает 1d5+Успехи непоглощаемого урона в торс таргетнутому проигравшему",
     source: "Дар Слаанеш (Cutting Words)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Слаанеш/Cutting_Words___Острые_Слова_EGIB4g3mXfBrznpf.json (entry cuttingWords-strike) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.slaanesh.danceOfDeception": {
     label: "Финт через Acrobatics(A)+0 или Trade(Dancer)(A)+20 вместо WS+0; +1 Бесчестия — Финт свободным действием",
@@ -6626,9 +6626,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.tzeentch.akashicLibrary": {
-    label: "+1 Бесчестия: Критический успех в любом тесте Знания (даже без владения, до/после броска), затем Cor+10 или 1 Порча + 1d5 непогл. E Dmg в голову",
+    label: "Критический успех в тесте Знания — самоподтверждение игрока (какой тест и что узнано — реплика за столом, движку нечего перепроверять), capability покрывает эту половину без цены. Расплата реализована (wdbc-1rno) записью kind:\"script\" на этом же предмете (цена 1 Бесчестие): реальный тест Cor+10, провал = 1 Порчи + 1d5 непоглощаемого E Dmg в голову (woundLossUpdates)",
     source: "Дар Тзинч (Akashic Library)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Тзинч/Akashic_Library___Библиотека_Акаши_fmzZfu6MqEF65ZJS.json (entry akashicLibrary-use) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.tzeentch.countenanceOfTzeentch": {
     label: "Базовый +10 Обман/Проницательность механизирован двумя записями kind:\"testMod\" на этом же предмете — capability покрывает ТОЛЬКО остаток: доп. +30 против союзников (нет распознавания цели), признание авторитета демонами Тзинча ниже Герольда при Inf 30+, полудействие+1 Бесчестия на Страх 3 — не смоделированы",
@@ -6731,9 +6731,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.tzeentch.wishGranter": {
-    label: "+1 Бесчестия: автоманифестация любой психосилы (даже незнакомой) на эPR9/9 Успехов, исполняющей чужое высказанное желание буквально; если помогает загадавшему больше, чем чемпиону — 2d10+9 урона в W",
+    label: "Автоманифестация психосилы, исполняющей чужое желание, остаётся отыгрышем — какая психосила и как именно она исполняет желание, движку нечего перепроверять, capability покрывает эту половину без цены. Расплата реализована (wdbc-1rno) записью kind:\"script\" на этом же предмете (цена 1 Бесчестие): честный DialogV2.confirm «помогло ли загадавшему больше, чем чемпиону» (решение ГМа), при «да» — реальные 2d10+9 непоглощаемого урона в Раны (woundLossUpdates)",
     source: "Дар Тзинч (Wish Granter)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Тзинч/Wish_Granter___Исполнитель_Желаний_akjEjRFJVJmergmU.json (entry wishGranter-manifest) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
 
   // ── Общие мутации (wdbc-1rno) — активные/переключаемые способности,
@@ -6784,9 +6784,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.dullahan": {
-    label: "Размер −2 (SPD как у Размера 0), все попадания — в голову, волосы-щупальца = Multiple Arms(6) c платой 2 конечности на стойку/4 на ходьбу, регенерируют мгновенно — составной эффект, не кодируется частично (см. память)",
+    label: "Реализована (wdbc-1rno) ровно половина: «Размер −2, но SPD как у Размера 0» — kind:\"characteristic\" charKey:\"sizeNoSpd\" (тот же приём, что Absurdly Fat/Абсурдно Толстый, wdbc-w8ws: sizeModNoSpd входит в sizeTotal, но rules/character.mjs не пускает его в calcMovement). НЕ смоделировано намеренно: «все попадания — в голову» (своей hit-локации, отдельной от головы, в системе нет — редиректа попаданий по локации нет вовсе, тот же честный пробел, что у Bronze Myrmidon); волосы-щупальца = Multiple Arms(6) — ЛОЖНО прибавило бы полный бюджет из 6 рук для удержания оружия (module/rules/hands.mjs: rating Трейта — уже ПОЛНОЕ число рук, статичное), тогда как книга режет НЕТТО-остаток до 4 стоя и до 2 при ходьбе — заниженный рейтинг (2 или 4) обманул бы в другую сторону, а точного динамического вычета в системе нет; регенерация волос — косметика, ничего не задевает",
     source: "Мутация: Dullahan (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Dullahan___Дуллахан_r2oZnN2JG1ksCkro.json (entry dullahan-size)"
   },
 
   // ── Общие мутации, партия 2 (wdbc-1rno) — заглушка данными, reader пуст сознательно ──
@@ -6864,9 +6864,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.beastman": {
-    label: "Все Трейты расы Зверолюда кроме 4 названных, Навыки Lore/Trade на ступень ниже (мин. +0), становится полноценным Зверолюдом — комплексная замена расы, вне полей Конструктора",
+    label: "Реализована (wdbc-1rno) выдача 6 из 10 книжных Трейтов расы Зверолюда — прямые kind:\"trait\"-гранты по имени (Bite/Укус, Digitigrade/Двусоставный, Natural Weapons/Естественное Оружие, Unnatural Strength/Сверхъестественная Сила, Unnatural Toughness/Сверхъестественная Стойкость, Cloven One/Копытный). Bite и Natural Weapons — те же описательные Трейты без отдельного оружия-профиля, что и у нативных Зверолюдов через расовый чарген (не новый пробел этой мутации, паритет с расой). НЕ реализовано намеренно: 4 названных исключения (The Quick and The Dead/Fast Learner/Aversion to Order/Stepchildren of the Gods) книга явно запрещает — правильно не выдавать; понижение уже вложенных Навыков групп Lore/Trade на ступень (до мин. +0) требует перебора СПЕЦИАЛИЗАЦИЙ актора и правки уже установленных рангов — риск испортить данные персонажа при ошибке в этой логике выше пользы точечного скрипта, оставлено честным текстом; «становится полноценным Зверолюдом» (субрасы, дети) — статус персонажа, не число",
     source: "Мутация: Beastman (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Beastman___Зверолюд_Us9zsnoINwwU1iku.json (entries beastman-bite/beastman-digitigrade/beastman-natural-weapons/beastman-unnatural-s/beastman-unnatural-t/beastman-cloven-one)"
   },
   "mutation.blessedFits": {
     label: "Переброшенный на Очко Бесчестия тест, оказавшийся провалом — Оглушение на 1 Раунд; полный Раунд в Оглушении возвращает потраченное Очко Бесчестия",
@@ -6939,9 +6939,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.multipleEyes": {
-    label: "10 субмутаций дают разные доп. глаза с разными эффектами (Navigate(Warp) пилотирование, +20 Awareness, круговой обзор, Independent Targeting и др.) — база сама не даёт эффекта без субмутации, не автоматизировано",
+    label: "10 субмутаций (when.submutations). Реализованы 3 из 10 (wdbc-1rno): суб.2 «Фасетчатые Глаза» — testMod Awareness+20 (честная подпись «полагающиеся на зрение», не любой тест — тот же приём, что у Countenance-серии; угол Караула вдвое и снижение штрафа −50→−30 за попадание в глаза НЕ смоделированы — своей hit-локации «глаза», отдельной от головы, в системе нет); суб.3 «Паучьи Глаза» — Талант Independent Targeting (круговой обзор — не число, честно остаётся текстом); суб.5 «Обычные» — 2 testMod Awareness (+10 общий тест зрения / +20 определение расстояний и размеров, не складываются — игрок отмечает применимый). Остальные 7 не смоделированы: суб.1 Navigate(Warp)-пилотирование корабля через Варп (иная подсистема — Навигация корабля, не боевой Awareness), суб.4/6/7/8/9/10 — целевые/активные способности без готового вида записи (нож-самоповреждение → временный доп. глаз, яд-Вектор, оружие-глаз по факту убийства, орбитальные глаза и т.п.)",
     source: "Мутация: Multiple Eyes (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Multiple_Eyes___Множественные_Глаза_QNkitLzwFw8vE4Gn.json (entries multipleEyes-sub2-awareness/multipleEyes-sub3-talent/multipleEyes-sub5-vision/multipleEyes-sub5-distance)"
   },
   "mutation.organOfChaos": {
     label: "Трейт Unnatural Characteristic(+1) на характеристику по выбору ГМа (случайный демон/орган) + малая способность по решению ГМа — характеристика определяется на месте выдачи, вне фиксированных полей Конструктора",
@@ -6959,9 +6959,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "mutation.strangeTongue": {
-    label: "10 субмутаций дают разные способности языка (Parasite, нюх +20, метательный захват, укус, огнемётная атака и др.) — база не даёт эффекта без субмутации, не автоматизировано",
+    label: "10 субмутаций (when.submutations, тот же приём, что у Tentacle/Щупальце). Реализованы 2 из 10 (wdbc-1rno): суб.6 «Щупальце» — Трейт Multiple Arms(+1) + testMod Athletics+10 (честная подпись «не любой тест Athletics», игрок сам решает применимость — тот же принцип, что у Countenance-серии); суб.8 «Зубастый» — kind:\"integralAttack\" на новый предмет-оружие Toothy Tongue/Зубастый Язык (1d5 Rending, Pen 0). Остальные 8 не смоделированы: суб.1 Parasite (Трейт есть в паке, но «не может говорить, пока...» — состояние-переключатель без готового вида записи), суб.2-3 нюх (условие «активно принюхивается» не гейтится), суб.4-5 подтягивание предмета языком (утилитарное действие без числа для боя), суб.7 яд на 3 атаки (счётчик зарядов не поддержан ни одним видом записи), суб.9 огнемётная стрелковая атака (аналог Ranged Attack/Стрелковая Атака, не заведена — кандидат на будущий заход), суб.10 высасывание крови у Оглушённого/Беспомощного в Захвате (целевой скрипт, не начат)",
     source: "Мутация: Strange Tongue (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Strange_Tongue___Странный_Язык_7cchLXBNvN31QfzY.json (entries strangeTongue-sub6-arm/strangeTongue-sub6-grapple/strangeTongue-sub8-bite) + packs-src/weapons/Интегральные_атаки/Toothy_Tongue___Зубастый_Язык_sTn9BiteFangXq2K.json"
   },
   "mutation.synesthesia": {
     label: "−20 его соц. взаимодействия/Командование — kind:\"testMod\", modScope:\"social\". −20 Scrutiny ПРОТИВ персонажа — теперь тоже смоделировано (wdbc-1rno, module/rules/library/synesthesia.mjs, источник \"synesthesia\") — ctx.targetActor доехал до обычных тестов Навыка (module/sheets/actor-sheet.mjs::_showSkillRollDialog). −10 доп. на Избирательные атаки по персонажу — НЕ смоделировано: Избирательная атака выбирается в attack-dialog.mjs уже ПОСЛЕ отрисовки галочек правил (аим-дропдаун читается на кнопке «Бросок»), общий реестр туда не успевает — нужна отдельная точка внутри attack-dialog.mjs. Штраф Stealth — на усмотрение ГМа, книга не даёт числа.",
@@ -6984,9 +6984,9 @@ export const CAPABILITIES = {
     reader: "module/rules/vampiric-dependency.mjs — тест T+0 (−10 за предыдущий месяц воздержания), провал даёт 1 Порчи; apps/vampiric-dependency.mjs::useVampiricTest, кнопка «Утолить»"
   },
   "mutation.warpEater": {
-    label: "Раз в месяц тест Cor+10 или 1 Порча, избегается 4 уникальными по субмутации эмоциональными триггерами в месяц — ранее ошибочно классифицирована как чисто нарративная",
+    label: "Реализовано (wdbc-1rno): кнопка kind:\"script\" на этом же предмете («насытился») считает до 4 насыщений за календарный месяц (incrementThrottleCount, unit:\"month\") — конкретный эмоциональный триггер по субмутации (d10, зафиксирован при получении) движку не проверить, честное самоподтверждение игрока. module/rules/warp-eater.mjs::processWarpEaterMonthCheck на updateWorldTime (hooks.mjs) сам считает конец каждого календарного месяца: насыщений ≥4 — Порчи нет, иначе форсированный тест Cor+10 (провал = +1 Порчи)",
     source: "Мутация: Warp Eater (Общие мутации)",
-    reader: ""
+    reader: "packs-src/mutations/Общие_мутации/Warp_Eater___Пожиратель_Варпа_CNYjlSI5fXnnaqYI.json (entry warpEater-feed) + module/rules/warp-eater.mjs, hooks.mjs (updateWorldTime)"
   },
   "mutation.warpTouched": {
     label: "10 субмутаций дают психологические W-тесты/эффекты (ложь/правдивость/клептомания/вспыльчивость и др.) — база не даёт эффекта без субмутации, не автоматизировано",
