@@ -241,12 +241,25 @@ const ANY_SPEC = new Set(["любой", "любая", "любое", "любых"
 // предмета («Frenzy» из «Frenzy / Бешенство») — на билингвальных предметах,
 // записанных «Рус / Eng», совпадение молча терялось; itemHasName проверяет
 // обе половины.
+// Психосилы ищутся наравне с Талантами и Чертами: книга пишет требование
+// просто именем, без указания, ЧЕМ эта строка является («Метка Нургла, PR 1+,
+// Nurgle's Rot» — а Nurgle's Rot психосила, не Талант), и разборщик читает
+// любое бесскобочное имя как kind:"talent". Пока сверка смотрела только среди
+// talent/trait, у псайкера с этой силой требование показывало «не выполнено».
+// Ценой ошибки в другую сторону: 11 имён в паках носят и Талант/Черта, и
+// психосила («Эмпат», «Бдительность», «Нейронист»…), так что персонаж с
+// одноимённой психосилой формально закроет требование Таланта. Ни одно
+// требование в packs-src сейчас на эти 11 имён не ссылается (замер
+// 07.09.2026), а ложное «не выполнено» на честно изученной силе — вред
+// прямо сейчас, поэтому цена принята сознательно.
+const REQ_ITEM_TYPES = ["talent", "trait", "psychicPower"];
+
 function hasTalent(actor, atom) {
   const wanted = (atom.base || atom.name || "").trim();
   if (!wanted) return false;
   const rawSpec = norm(atom.spec || "");
   const spec   = ANY_SPEC.has(rawSpec) ? "" : rawSpec;
-  const hits = itemsNamed(actor, wanted, ["talent", "trait"]);
+  const hits = itemsNamed(actor, wanted, REQ_ITEM_TYPES);
   if (!hits.length) return false;
   if (!spec) return true;
   return hits.some(i => {

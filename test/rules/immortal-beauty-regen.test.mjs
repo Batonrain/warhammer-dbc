@@ -12,13 +12,13 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { entryWhenOk } from "../../module/rules/mech-when.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const SYSTEM = "warhammer-dbc";
 const actorWith = tier => ({ system: { wounds: { tier } } });
 
 describe("Immortal Beauty: Regeneration(1) по тиру Ран (wdbc-1rno)", () => {
-  const doc = JSON.parse(readFileSync(
-    "packs-src/mutations/Дары_Богов/Слаанеш/Immortal_Beauty___Бессмертная_Красота_sBzuRTFAO2ZN2Kmt.json", "utf8"));
+  const doc = packDocByFileHint("packs-src/mutations/Дары_Богов/Слаанеш/Immortal_Beauty___Бессмертная_Красота_sBzuRTFAO2ZN2Kmt.json");
   const mechanics = doc.flags[SYSTEM].mechanics;
   const regenGroup = mechanics.find(g => g.entries.some(e => e.kind === "trait"));
   const entry = regenGroup?.entries.find(e => e.kind === "trait");

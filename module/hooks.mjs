@@ -34,6 +34,9 @@ import { processMiddleOfTheHuntRoundStart } from "./combat/middle-of-the-hunt.mj
 import { snapshotStanceForRoundStart } from "./rules/determination-to-fight.mjs";
 import { processSnapshotTurnEnd } from "./combat/snapshot.mjs";
 import { processJustTheLightTurnEnd } from "./combat/just-the-light.mjs";
+import { processTurnStateShieldsTurnEnd, clearTurnStateShields } from "./combat/turn-state-shield.mjs";
+import { processVultureTurnStart } from "./combat/vulture.mjs";
+import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
@@ -59,6 +62,9 @@ import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
+import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
+  from "./rules/fleshmetal-regen.mjs";
+import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
 import { recalcAllAdvanceCosts } from "./sheets/tabs/advance.mjs";
 import { absorbPainDamage } from "./sheets/tabs/pain.mjs";
 import { processConditionTurnStart, processConditionTurnEnd } from "./combat/condition-ticks.mjs";
@@ -694,6 +700,9 @@ export function registerHooks() {
           // applyDamageToActor (combat/damage.mjs), где уже известны и актор,
           // и место попадания, и непоглощённый урон.
           corrosiveRating: parseInt(ds.corrosive || "0"),
+          // Касание Энтропии (wdbc-1rno) — снимает AP ДО расчёта поглощения, в
+          // отличие от Разъедающего выше, поэтому едет отдельным числом.
+          entropyRating:   parseInt(ds.entropy || "0"),
           cripplingRating: parseInt(ds.crippling || "0"),
           piercing:        ds.piercing === "1",
           // Haywire(0) — валидный рейтинг («привязан к цели»), поэтому наличие
@@ -837,6 +846,7 @@ export function registerHooks() {
             sanctified:   ds.sanctified   === "1",
             powerField:   ds.powerField   === "1",
             corrosiveRating: parseInt(ds.corrosive || "0"),
+            entropyRating:   parseInt(ds.entropy || "0"),
             cripplingRating: parseInt(ds.crippling || "0"),
             piercing:        ds.piercing === "1",
             haywireActive:   ds.haywire != null && ds.haywire !== "",
@@ -1726,6 +1736,11 @@ function _attachFateContextMenu(message, html) {
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);
+    // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
+    // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
+    for (const combatant of combat.combatants ?? []) {
+      if (combatant.actor) await clearTurnStateShields(combatant.actor);
+    }
   });
 
   // Временные выдачи Черт с ограниченным сроком (rules/temp-grant.mjs,
@@ -1762,6 +1777,21 @@ function _attachFateContextMenu(message, html) {
       // Молча исчезнувшее Состояние ГМ считает багом, а не сроком — говорим.
       if (swept.expired.length) {
         await postConditionCard(actor, swept.expired.map(conditionExpiryLine));
+      }
+
+      // «Укрепление Плотеметаллом» (wdbc-dnoj): +1 аблативная Рана и +1
+      // Ablative-брони в час, до их максимума. Тем же тактом и по той же
+      // причине, что сроки выше — час это игровое время, а не Раунд, и вне
+      // боя Раундов не бывает вовсе. План считает чистый модуль, здесь
+      // только запись; null оттуда значит «часа ещё не прошло», и никакого
+      // update на этого актора не будет.
+      if (hasFleshmetalFlag(actor, FLESHMETAL_CAPABILITY)) {
+        const lastAt = actor.getFlag("warhammer-dbc", FLESHMETAL_FLAG) ?? null;
+        const plan = planFleshmetalRegen(actor.system, lastAt, game.time.worldTime);
+        if (plan) {
+          if (Object.keys(plan.update).length) await actor.update(plan.update);
+          await actor.setFlag("warhammer-dbc", FLESHMETAL_FLAG, plan.flagAt);
+        }
       }
     }
   });
@@ -1830,6 +1860,10 @@ function _attachFateContextMenu(message, html) {
         // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
         // следующего Хода, если весь этот Ход ушёл на движение.
         await processJustTheLightTurnEnd(prevActor);
+        // Щит Праздности/Дар Нургла (wdbc-1rno): не перегружающийся щит-
+        // дефлектор 1-77 (1-99), если Ход закончен с непотраченным
+        // полудействием — тот же такт, что и Лишь Свет выше.
+        await processTurnStateShieldsTurnEnd(prevActor);
       }
     }
     if (nextCombatant?.actor) {
@@ -1845,6 +1879,17 @@ function _attachFateContextMenu(message, html) {
       // начала следующего Хода» — снимается тут же, тем же тактом, что и
       // сброс ОД/Реакций.
       await clearDreadWailWeaponBuff(nextCombatant.actor);
+      // Щит по состоянию Хода (combat/turn-state-shield.mjs) живёт ровно
+      // «до начала своего следующего Хода» — снимается тем же тактом.
+      await clearTurnStateShields(nextCombatant.actor);
+      // Стервятник/Дар Нургла (wdbc-1rno): временное Очко Бесчестия за три
+      // умирающих/трупа в 7 м — начисляется и сгорает тем же тактом, поэтому
+      // нужен токен носителя, а не только актор.
+      await processVultureTurnStart(nextCombatant.actor, nextCombatant.token);
+      // Облучённый/Дар Нургла (wdbc-1rno): попадание Рад(1d10) от каждого
+      // носителя Дара в 3 м — книга бьёт им «в начале своего Хода» жертвы,
+      // тот же такт и та же геометрия, что у Стервятника выше.
+      await processIrradiatedTurnStart(nextCombatant.actor, nextCombatant.token);
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
       await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);

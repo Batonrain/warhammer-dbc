@@ -46,7 +46,7 @@ export function charImpCost(actor, charKey, improvement, grantedImp) {
  * entryChar — своя Характеристика записи Группы Навыков (Operate (Voidship) —
  * Интеллект), она же меняет склонности, а значит и категорию цены.
  */
-export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, specialty, skillKey) {
+export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, specialty, skillKey, entryApts = null) {
   const apts     = charAptitudeSet(actor.system.aptitudes);
   const itemApts = [entryChar || def?.char, def?.apt2].filter(Boolean);
   const steps    = SKILL_RANK_STEPS[rank] ?? 0;
@@ -57,10 +57,10 @@ export function skillCumCost(actor, def, rank, entryChar, grantedRank, group, sp
   // как Дружественная на Родном мире (Исследовательская станция), и расовый/
   // субрасовый override (Африэль/Эльданар/Серый Человек, wdbc-zk69) — тот
   // встаёт ПЕРЕД культурой легиона, см. resolveAptitudeOverride.
-  const cat = skillAdvanceCat(actor, def, { group, specialty, skillKey, entryChar }, apts);
+  const cat = skillAdvanceCat(actor, def, { group, specialty, skillKey, entryChar, entryApts }, apts);
   // Ключ для Бога Навыка (patronage.mjs, skillGodOf) — у группового ключ группы
   // (forbiddenLore и т.п.), у обычного — его собственный (dodge и т.п.).
-  const opts = { actor, skillKey: group || skillKey, specialty };
+  const opts = { actor, skillKey: group || skillKey, specialty, entryApts };
   for (let i = Math.max(floor, 0); i < steps; i++) sum += skillCostXP(i, itemApts, apts, cat, opts);
   return sum;
 }
@@ -118,7 +118,7 @@ export async function recalcAllAdvanceCosts(actor) {
     upd[`system.groupSkills.${gk}`] = entries.map(e => ({
       ...e,
       cost: (e?.rank && e.rank !== "untrained" && !e.costManual)
-        ? skillCumCost(actor, def, e.rank, e.char, e.grantedRank || "untrained", gk, e.specialty)
+        ? skillCumCost(actor, def, e.rank, e.char, e.grantedRank || "untrained", gk, e.specialty, null, e.aptitudes)
         : (e.cost || 0)
     }));
   }
@@ -162,7 +162,7 @@ export async function setGroupEntryField(actor, group, index, field, value) {
   if (entry) {
     if (field === "rank") {
       entry.rank = value;
-      entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty);
+      entry.cost = skillCumCost(actor, GROUP_SKILLS_DEF[group], value, entry.char, entry.grantedRank || "untrained", group, entry.specialty, null, entry.aptitudes);
       // Цену поставила эта ветка, а не ГМ (wdbc-rcr9) — см. recalcAllAdvanceCosts.
       entry.costManual = false;
     } else if (field === "cost") {
@@ -410,7 +410,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
       if (!e) return;
       e.costManual = false;
       e.cost = (e.rank && e.rank !== "untrained")
-        ? skillCumCost(actor, GROUP_SKILLS_DEF[key], e.rank, e.char, e.grantedRank || "untrained", key, e.specialty)
+        ? skillCumCost(actor, GROUP_SKILLS_DEF[key], e.rank, e.char, e.grantedRank || "untrained", key, e.specialty, null, e.aptitudes)
         : 0;
       await actor.update({ [`system.groupSkills.${key}`]: entries });
     }
@@ -524,7 +524,7 @@ export function activateAdvanceListeners(html, actor, { addGroupSkill, jq = glob
     if (!on && rank === "untrained")
       return ui.notifications.warn("Сначала выберите ранг навыка, потом помечайте его как выданный.");
     e.grantedRank = on ? "untrained" : rank;
-    e.cost = skillCumCost(actor, GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank, gk, e.specialty);
+    e.cost = skillCumCost(actor, GROUP_SKILLS_DEF[gk], rank, e.char, e.grantedRank, gk, e.specialty, null, e.aptitudes);
     e.costManual = false;
     actor.update({ [`system.groupSkills.${gk}`]: entries });
   });

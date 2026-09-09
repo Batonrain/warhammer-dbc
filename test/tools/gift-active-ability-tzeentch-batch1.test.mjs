@@ -13,26 +13,25 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, afterEach } from "vitest";
-import fs from "node:fs";
-import path from "node:path";
 import { runMechScriptEntry } from "../../module/apps/mechanics.mjs";
+import { packDocById } from "../support/pack-doc.mjs";
 
-const DIR = path.resolve(import.meta.dirname, "../../packs-src/mutations/Дары_Богов/Тзинч");
+const DIR = "packs-src/mutations/Дары_Богов/Тзинч";
 
-const FILES = {
-  cauldronOfFlesh:   "Cauldron_of_Flesh___Кот_л_Плоти_ju41pinF1NCOmzVj.json",
-  flameOfSouls:       "Flame_of_Souls___Пламя_Душ_7zXiJnjBINAGFHxb.json",
-  gatekeeper:         "Gatekeeper___Привратник_qkngN9Hac4D3l73D.json",
-  geniusOfLoki:       "Genius_of_Loki___Гений_Локи_K2eTFPqsLDEITh79.json",
-  hyperanalich:       "Hyperanalich___Гипераналих_SxH6wGylDY2GFpXv.json",
-  nineThousandFaces:  "Nine_Thousand_Faces___Девять_Тысяч_Лиц_lPXvgbB3spqdwo7z.json",
-  pathchanger:        "Pathchanger___Изменяющий_Пути_mpiCAQbKumcNB13W.json",
-  thiefOfFate:        "Thief_of_Fate___Вор_Судьбы_Olxzbl4P59icsara.json"
+// По идентификаторам, а не по именам файлов: имя файла выводится из имени
+// документа и меняется вместе с ним (см. test/support/pack-doc.mjs).
+const IDS = {
+  cauldronOfFlesh:   "ju41pinF1NCOmzVj",
+  flameOfSouls:      "7zXiJnjBINAGFHxb",
+  gatekeeper:        "qkngN9Hac4D3l73D",
+  geniusOfLoki:      "K2eTFPqsLDEITh79",
+  hyperanalich:      "SxH6wGylDY2GFpXv",
+  nineThousandFaces: "lPXvgbB3spqdwo7z",
+  pathchanger:       "mpiCAQbKumcNB13W",
+  thiefOfFate:       "Olxzbl4P59icsara"
 };
 
-function loadDoc(key) {
-  return JSON.parse(fs.readFileSync(path.join(DIR, FILES[key]), "utf8"));
-}
+const loadDoc = (key) => packDocById(DIR, IDS[key]);
 
 function scriptEntryOf(doc) {
   for (const group of doc.flags["warhammer-dbc"].mechanics) {
@@ -74,7 +73,7 @@ afterEach(() => {
 });
 
 describe("Дары Тзинча, партия 1 — все 8 несут ровно одну валидную kind:\"script\" запись", () => {
-  it.each(Object.keys(FILES))("%s", key => {
+  it.each(Object.keys(IDS))("%s", key => {
     const { entry } = scriptEntryOf(loadDoc(key));
     expect(entry).toBeTruthy();
     expect(entry.code?.trim()).not.toBe("");

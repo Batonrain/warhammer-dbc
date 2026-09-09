@@ -355,7 +355,7 @@ export const ELITE_ARCHETYPES = [
     freeTalents: "",
     gear: "Force Staff",
     traits: ["Mastery of Form / Мастерство Формы", "Magus Supreme / Высший Магус", "Wizard Staff / Чародейский Посох"],
-    talents: ["Inner Eye / Внутренний Глаз", "Exemptus / Экземптус", "Mystic Feint / Мистический Финт", "Mirror Soul / Зеркальная Душа", "Savant Immaterial / Савант Иммматериал", "Unlimited Power / Безграничная Сила"]
+    talents: ["Inner Eye / Внутренний Глаз", "Exemptus / Экземптус", "Mystic Feint / Мистический Финт", "Mirror Soul / Зеркальная Душа", "Savant Immaterial / Савант Имматериал", "Unlimited Power / Безграничная Сила"]
   },
 
   // ═══ Псайкеры и оккультисты (стр. 137-142) ═══
@@ -471,7 +471,7 @@ export const ELITE_ARCHETYPES = [
     freeTalents: "",
     gear: "",
     freeTraits: "Unnatural I (4), Unnatural P (4)",
-    traits: ["Astral Converter / Астральный Конвертер", "Digital Ghost / Цифровой Призрак", "Paragon Coil / Совершенная Катушка", "Malagra Cortex / Кортекс Малагра"],
+    traits: ["Astral Converter / Астральный Конвертер", "Digital Ghost / Цифровой Призрак", "Paragon Coil / Совершенная Катушка", "Malagra Cortex / Кортекс Малагры"],
     talents: ["Fell Discharge / Жестокая Разрядка", "Prescontax / Пресконтакс", "Iovex / Йовекс", "Rogoex / Рогоекс", "Magnetomorphosis / Магнитоморфоз", "Venefactor / Вэнефактор"]
   },
 
