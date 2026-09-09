@@ -5,10 +5,18 @@
 // skill-roll.test.mjs): DialogV2.wait запоминается заглушкой, кнопка жмётся
 // через captured.press(action, fakeForm(...)).
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { afterEach, describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured, fakeForm } from "../support/foundry-stub.mjs";
+import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
 const { showRitualCastDialog } = await import("../../module/sheets/ritual-cast-dialog.mjs");
+
+const savedRuleSources = getRuleSources();
+/** Метки актора приходят возможностями из реестра — реестр возвращаем как был. */
+function restoreRuleSources() {
+  clearRuleSources();
+  for (const [key, fn] of savedRuleSources) registerRuleSource(key, fn);
+}
 
 beforeEach(() => { resetCaptured(); globalThis.game.user = {}; });
 
@@ -178,5 +186,84 @@ describe("диалог «Провести ритуал»", () => {
     await promise;
 
     expect(captured.chat[0].content).not.toContain("Демон:");
+  });
+
+  // Корбук, «VI. МИСТИКА → РИТУАЛЫ»: «метку бога демона +30», «покровительство
+  // (но не метку) бога демона +20». Раньше обе строки игрок отмечал сам, хотя
+  // и Метка, и Покровительство лежат у него же на листе (wdbc-k1q4).
+  describe("Бог демона: Метка и Покровительство считаются по листу", () => {
+    afterEach(restoreRuleSources);
+
+    const marked = god => {
+      clearRuleSources();
+      registerRuleSource("test", () => [{
+        id: `mark.${god}`, label: `Метка ${god}`, when: {},
+        effects: [{ kind: "grantFlag", target: `mark.${god}` }]
+      }]);
+      return actor();
+    };
+
+    it("в блоке «Демон» есть выбор Бога", () => {
+      showRitualCastDialog(actor(), item({ failureType: "summon" }));
+      expect(captured.dialog.content).toContain("id=\"rit-demon-god\"");
+      expect(captured.dialog.content).toContain("Кхорн");
+    });
+
+    it("Метка названного бога даёт +30 без единой галочки", async () => {
+      const promise = showRitualCastDialog(marked("khorne"), item({ failureType: "summon", testMod: 0 }));
+      captured.dice = [1, 50];
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0", "#rit-demon-god": "khorne" }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("Метка Кхорна: +30");
+    });
+
+    it("Покровительство без Метки даёт +20 и названо своей строкой", async () => {
+      clearRuleSources();
+      registerRuleSource("test", () => []);
+      const a = actor();
+      a.system.patronGod = "nurgle";
+      const promise = showRitualCastDialog(a, item({ failureType: "summon", testMod: 0 }));
+      captured.dice = [1, 50];
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0", "#rit-demon-god": "nurgle" }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("Покровительство Нургла (без Метки): +20");
+    });
+
+    // Три ритуала корбука Метку ТРЕБУЮТ (Двор Первого Круга, Укрощение
+    // Бронзового Скакуна, Трансформация Диска) — в паке это возможность
+    // mark.<бог>, и без неё окно обязано назвать её словами, а не «Требования
+    // не выполнены» без причины.
+    it("ритуал с требованием Метки называет её в окне, если Метки нет", () => {
+      clearRuleSources();
+      registerRuleSource("test", () => []);
+      const rit = item({ failureType: "summon" });
+      rit.getFlag = (_scope, key) => (key === "req"
+        ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "reqCapability", capabilityKey: "mark.khorne" }] }]
+        : undefined);
+      showRitualCastDialog(actor(), rit);
+
+      expect(captured.dialog.content).toContain("Требования не выполнены");
+      expect(captured.dialog.content).toContain("Метка Кхорна");
+    });
+
+    it("Метка враждебного Бога даёт −20 сама — по матрице отношений корбука", async () => {
+      const promise = showRitualCastDialog(marked("slaanesh"), item({ failureType: "summon", testMod: 0 }));
+      captured.dice = [1, 50];
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0", "#rit-demon-god": "khorne" }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("Враждебный Бог: Слаанеш: -20");
+    });
+
+    it("Бог не назван — ничего не подставляется", async () => {
+      const promise = showRitualCastDialog(marked("khorne"), item({ failureType: "summon", testMod: 0 }));
+      captured.dice = [1, 50];
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0" }));
+      await promise;
+
+      expect(captured.chat[0].content).not.toContain("Метка Кхорна");
+    });
   });
 });

@@ -99,6 +99,16 @@ export const CAPABILITIES = {
     source: "Модификации брони «Гексаграмматические Печати» / «Руническая Кольчуга»",
     reader: "module/combat/damage.mjs — ветка warpSoak в applyDamageToActor, armorAP = absorption[loc] целиком"
   },
+  // ── Регенерация аблативных пулов (wdbc-dnoj) ──────────────────────────────
+  "armour.fleshmetalRegen": {
+    label: "+1 аблативная Рана и +1 Ablative-брони в час, до их максимума",
+    source: "Модификация брони «Укрепление Плотеметаллом»: «+1 аблативная Рана/час и " +
+            "Ablative-броня +1/час (не ломается при 0)». Верхнего предела книга не " +
+            "называет — потолком выбран стартовый максимум пула (решение владельца " +
+            "07.09.2026), иначе за сутки простоя набегало бы +24 и дальше без конца.",
+    reader: "module/rules/fleshmetal-regen.mjs — planFleshmetalRegen; зовётся из " +
+            "хука updateWorldTime в module/hooks.mjs"
+  },
   // ── Крайне миролюбив (wdbc-gzuf) ──────────────────────────────────────────
   "pacifism.requiresAttackToRage": {
     label: "Не может войти в Ярость, пока не атакован в этом бою — иначе тест Воли−20 или отказ",
@@ -415,7 +425,10 @@ export const CAPABILITIES = {
     source: "Gun Arm / Дар «Рука-Пушка» (корбук, Элитные архетипы, 400 хр): " +
             "«…и оно больше не тратит стандартные боеприпасы при выстреле». " +
             "Классы pistol и basic — «пистолет или винтовка (в т.ч. длинная)» книги.",
-    reader: "module/combat/attack.mjs — infiniteAmmo"
+    reader: "module/rules/gun-arm.mjs — gunArmAppliesTo; module/rules/ammo-free.mjs — ammoIsFree; " +
+            "module/combat/attack.mjs — infiniteAmmo. Действует ТОЛЬКО на оружие с меткой " +
+            "flags.warhammer-dbc.gunArmSource (какое именно вросло — выбирает ГМ кнопкой на листе Дара, " +
+            "module/apps/gun-arm.mjs): возможность висит на акторе, а книга говорит про один ствол (wdbc-spsd)"
   },
   "weapon.oneHandedWarriorPath": {
     label: "Стрела Кхейна: стрельба одной рукой, дальность при этом не режется",
@@ -1745,59 +1758,65 @@ export const CAPABILITIES = {
   },
   "dualWield.core.ambidextrous": {
     label: "Персонаж не получает штраф −20 за использование оружия в неосновной руке и уменьшает штраф за парное оружие на 10.",
-    source: "Ambidextrous / Амбидекстр", reader: ""
+    source: "Ambidextrous / Амбидекстр", reader: "module/rules/dual-wield.mjs — dualWieldMods (снимает штраф неосновной руки, −10 к парному)"
   },
   "dualWield.core.bladeDancer": {
     label: "Персонаж уменьшает штраф за парные мечи на 10.",
-    source: "Blade Dancer / Танцор с Клинками", reader: ""
+    source: "Blade Dancer / Танцор с Клинками", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре мечей)"
   },
   "dualWield.core.brawler": {
     label: "Персонаж уменьшает штраф за парное оружие для атак кулаками на 10.",
-    source: "Brawler / Боксёр", reader: ""
+    source: "Brawler / Боксёр", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре кулаков)"
   },
   "dualWield.core.crossblock": {
-    label: "Вооружённый двумя рукопашными оружиями с Балансом не ниже 0, персонаж может Парировать атаки существ на 1 Размер больше обычного и суммирует…",
-    source: "Crossblock / Крестовой Блок", reader: ""
+    label: "Вооружённый двумя рукопашными оружиями с Балансом не ниже 0, персонаж суммирует бонусы на Парирование от свойств, Качества и модификаций обоих оружий, но, парируя обоими, не может использовать Counter Attack и Riposte. Смоделировано (wdbc-pb60). НЕ смоделирован «Размер на 1 больше обычного»: предела Размера при Парировании в системе нет вовсе, поэтому гасить нечего — карточка Парирования напоминает о ступени столу.",
+    source: "Crossblock / Крестовой Блок",
+    reader: "module/rules/dual-wield-talents.mjs — crossblockPair; module/combat/defense.mjs — parryProfile (сумма бонусов) и _performParry (прячет кнопку Контратаки)"
   },
   "dualWield.core.fanOfKnives": {
     label: "Персонаж уменьшает штраф за парное метательное оружие на 10.",
-    source: "Fan of Knives / Веер Ножей", reader: ""
+    source: "Fan of Knives / Веер Ножей", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре метательного)"
   },
   "dualWield.core.gunGuard": {
-    label: "Вооружённый рукопашным оружием с Балансом не ниже −1 и винтовкой, выстрелы из неё в рукопашной не получают бонуса +30 на Избегание.",
-    source: "Gun Guard / Винтовочная Гарда", reader: ""
+    label: "Вооружённый рукопашным оружием с Балансом не ниже −1 и винтовкой, выстрелы из неё в рукопашной не дают цели бонуса на Избегание. Смоделировано (wdbc-pb60) — гасится и +30 Винтовки, и +10 Карабина.",
+    source: "Gun Guard / Винтовочная Гарда",
+    reader: "module/rules/dual-wield-talents.mjs — gunGuardCancelsDodgeBonus; module/combat/attack.mjs — meleeShotDodgeBonus"
   },
   "dualWield.core.gunslinger": {
     label: "Персонаж уменьшает штраф за парные пистолеты на 10.",
-    source: "Gunslinger / Македонец", reader: ""
+    source: "Gunslinger / Македонец", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на паре пистолетов)"
   },
   "dualWield.core.independentTargeting": {
     label: "Цели стрельбы персонажа с двух оружий могут быть на расстоянии более 10м друг от друга.",
-    source: "Independent Targeting / Независимое Прицеливание", reader: ""
+    source: "Independent Targeting / Независимое Прицеливание",
+    reader: "module/rules/dual-wield.mjs — targetSpreadExceeded (снимает предел 10 м между целями пары; окно атаки убирает строку о разлёте)"
   },
   "dualWield.core.maineGauche": {
-    label: "Вооружённый двумя оружиями, одно из которых нож, и не использовав этот нож для атаки в предыдущий Ход,",
-    source: "Maine-Gauche / Мэн-Гош", reader: ""
+    label: "Вооружённый двумя оружиями, одно из которых нож, и не использовав этот нож для атаки в предыдущий Ход, персонаж может перебрасывать тесты на Парирование этим ножом. Смоделировано (wdbc-pb60): переброс с выбором лучшего происходит сам, а «чем бил в прошлый Ход» система помнит (module/rules/turn-flags.mjs — список attackedThisTurn переезжает в attackedPrevTurn на старте своего Хода).",
+    source: "Maine-Gauche / Мэн-Гош",
+    reader: "module/rules/dual-wield-talents.mjs — maineGaucheParryReroll; module/combat/defense.mjs — _performParry"
   },
   "dualWield.core.pounder": {
-    label: "Вооружённый парой топоров, булав, молотов или их комбинацией, когда противник успешно Парирует каждое попадание этого оружия,",
-    source: "Pounder / Молотильщик", reader: ""
+    label: "Вооружённый парой топоров, булав, молотов или их комбинацией: успешно Парировавший теряет все неиспользованные Успехи и парирует второе оружие отдельным тестом. Смоделировано частично (wdbc-pb60) — карточка попадания напоминает об этом защищающемуся; само обнуление не считается, «неиспользованных Успехов защиты» система не хранит.",
+    source: "Pounder / Молотильщик",
+    reader: "module/rules/dual-wield-talents.mjs — pounderPair; module/combat/attack.mjs + attack-card.mjs — примечание notes.pounder"
   },
   "dualWield.core.savage": {
-    label: "Вооружённый парными когтями, персонаж может перебрасывать одну неудачную атаку ими в Ход и получает +2 Успеха при успешной атаке.",
-    source: "Savage / Дикарь", reader: ""
+    label: "Вооружённый парными когтями, персонаж может перебрасывать одну неудачную атаку ими в Ход и получает +2 Успеха при успешной атаке. Смоделирована вторая половина (wdbc-pb60): +2 к степени удачной атаки когтем из пары. Переброс раз в Ход не смоделирован — учёта «раз в Ход» на самой атаке пока нет.",
+    source: "Savage / Дикарь",
+    reader: "module/rules/dual-wield-talents.mjs — savageExtraHits; module/combat/attack.mjs — надбавка к deg"
   },
   "dualWield.core.sidearm": {
     label: "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — пистолет, а второе — рукопашное.",
-    source: "Sidearm / Запасной Ствол", reader: ""
+    source: "Sidearm / Запасной Ствол", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10 на пистолет + рукопашное)"
   },
   "dualWield.core.sideblade": {
     label: "Персонаж уменьшает штраф за парное оружие на 10, если одно из них — нож.",
-    source: "Sideblade / Запасной Клинок", reader: ""
+    source: "Sideblade / Запасной Клинок", reader: "module/rules/dual-wield.mjs — dualWieldMods (−10, если одно из двух — нож)"
   },
   "dualWield.core.twoWeaponWielder": {
     label: "Персонаж может совершать атаки с обеих рук как одну атаку, занимающую наибольшее действие из двух, но эти атаки получают −20.",
-    source: "Two Weapon Wielder / Два Оружия", reader: ""
+    source: "Two Weapon Wielder / Два Оружия", reader: "module/rules/dual-wield.mjs — canDualWield (галочка «Обе руки» в окне атаки); module/sheets/attack/dialog.mjs — одно действие на пару и второй бросок"
   },
   // ── Пси-стойкость
   "psyResist.core.aetherCocoon": {
@@ -3477,7 +3496,7 @@ export const CAPABILITIES = {
   },
   "elite.elitnyeArhetipy.arhimag.savantImmaterial": {
     label: "Известен обширным арсеналом психосил и скоростью их освоения. Изучая любую психосилу,",
-    source: "Savant Immaterial / Савант Иммматериал", reader: ""
+    source: "Savant Immaterial / Савант Имматериал", reader: ""
   },
   "elite.elitnyeArhetipy.arhimag.unlimitedPower": {
     label: "Невероятная мистическая сила пробивает контрмеры оппонентов. При манифестации психосилы,",
@@ -4955,7 +4974,7 @@ export const CAPABILITIES = {
   },
   "trait.clovenOne": {
     label: "+20 vs Трудный Ландшафт.",
-    source: "Cloven One / Раздвоенный", reader: ""
+    source: "Cloven One / Копытный", reader: ""
   },
   "trait.coldKiller": {
     label: "При нанесении Экстремального Урона бросает d5 дважды на Критический Результат 2 и берёт лучший.",
@@ -5068,7 +5087,7 @@ export const CAPABILITIES = {
   },
   "trait.geneSplice": {
     label: "Выбор адаптаций.",
-    source: "Gene-Splice / Гено-Сплайс", reader: ""
+    source: "Gene-Splice / Ген-Сплайс", reader: ""
   },
   "trait.hardAsStone": {
     label: "Сопротивление ментальным эффектам.",
@@ -5952,7 +5971,7 @@ export const CAPABILITIES = {
   },
   "trait.elitnyeArhetipy.malagra.malagraCortex": {
     label: "Кортикальные импланты экранированы гексаграмматическими кодами и защищают разум от вторжения чужой воли.",
-    source: "Malagra Cortex / Кортекс Малагра", reader: ""
+    source: "Malagra Cortex / Кортекс Малагры", reader: ""
   },
   "trait.elitnyeArhetipy.malagra.paragonCoil": {
     label: "Комплекс электромагнитных имплантов окутывает его мантией магнитного поля и нимбом сияния. Оснащён Люминен Конденсаторами, Маглев Спиралями,",
@@ -6281,7 +6300,7 @@ export const CAPABILITIES = {
   // ── Дары Богов Хаоса (wdbc-1rno) — активные/условные способности без
   // подходящего поля Конструктора, заглушка данными, reader пуст сознательно ──
   "gift.khorne.bloodAnointed": {
-    label: "Не перегружающийся щит-дефлектор 1-44 (1-88 в крови) от стрелковых атак/взрывов, если не стрелял и связан/шёл к врагу",
+    label: "Не перегружающийся щит-дефлектор 1-44 (1-88 в крови) от стрелковых атак/взрывов, если не стрелял и связан/шёл к врагу. РАЗБЛОКИРОВАНО НАПОЛОВИНУ (wdbc-1rno): прошлый заход записал сюда «нет примитива щит-дефлектор X-Y» — это неверно, примитив есть и теперь оформлен как module/combat/turn-state-shield.mjs (выданный Item type:\"forcefield\" со сроком «до начала своего следующего Хода», так уже работает Щит Праздности). Осталось ровно две вещи, обе про ТРИГГЕР, не про щит: (1) «только от стрелковых атак и взрывов» — damageData уже несёт признак melee, нужен фильтр по метке на самом щите в _rollActiveShield; (2) «не стрелял И (связан в рукопашной ИЛИ шёл к врагу)» — «не стрелял» читается (rules/turn-flags.mjs::attackedThisTurn + weaponClass), а «связан»/«шёл К ВРАГУ» движок не знает: movedThisTurn есть, направления движения нет. Расширять «шёл к врагу» до «двигался вообще» нельзя — это ровно тот случай, который книга исключает (отход под обстрелом). «Измазан кровью» (порог 1-88) состоянием тоже не является",
     source: "Дар Кхорн (Blood-Anointed)",
     reader: ""
   },
@@ -6332,7 +6351,7 @@ export const CAPABILITIES = {
   },
   "gift.khorne.livingWeapon": {
     label: "Полудействие+1 Бесчестия: до конца боя оружие/импровизированное оружие в руке нельзя выбить, +10 WS, Баланс до 0, Pen до Cor.b, теряет Primitive/получает Reinforced (импровизированное: без штрафа −20, +1 кубик, ×2 S.b). Disarm-часть подключена под combat.cannotBeDisarmed (wdbc-egll), гейтится system.activatable/active (isItemActive) — кнопка на листе включает/выключает предмет целиком, полудействие/1 Бесчестие на вход и конец боя/сцены на выход — вручную. +10 WS/Баланс/Pen/Reinforced-Primitive — ещё не заведены (нужен профиль оружия в руке, отдельная работа).",
-    source: "Дар Кхорн (Living Weapon)",
+    source: "Living Weapon / Живое Оружие (Дар Кхорна, packs-src/mutations/Дары_Богов/Кхорн)",
     reader: "module/data/item/mutation.mjs (activatable/active) + module/apps/effects.mjs::isItemActive case \"mutation\" — только capabilityKey combat.cannotBeDisarmed, остальное ещё не читается"
   },
   "gift.khorne.priestOfBloodshed": {
@@ -6381,14 +6400,14 @@ export const CAPABILITIES = {
     reader: "module/rules/wounds.mjs (ablativeAbsorb/applyWoundLoss/woundLossUpdates), module/combat/ablative-wounds.mjs (processAblativeWoundsTurnStart), module/apps/mechanics.mjs (characteristicEffectKey charKey:\"sizeNoSpd\" → system.sizeModNoSpd), module/rules/character.mjs (traitSizeModNoSpd, не идёт в calcMovement)"
   },
   "gift.nurgle.blackPhysician": {
-    label: "Полное действие+1R себе: заражает до 3 трупов в 2м, оживают зомби (Раны×2, теряют Навыки/Таланты кроме оружейных), контроль до Cor.b зомби",
+    label: "Автоматизировано то, что считается (wdbc-1rno), записью kind:\"script\" ценой 2 ОД: 1 непоглощаемый R Dmg себе через общую арифметику потери Ран (woundLossUpdates), список подходящих тел в 2 м (порог «Раны −5 и ниже», тот же, что у Стервятника — понятия смерти в системе нет) с отсечкой по трём, и предел контроля Cor.b. НЕ выполняется движком само превращение трупов в зомби (A и I до 10, Раны ×2, снятие Навыков и не-оружейных Талантов): это разрушительная правка чужих акторов, а «призыва существа вне слотов Миньонов» в системе всё равно нет — карточка называет цели и правила, зомби готовит МИ",
     source: "Дар Нургл (Black Physician)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Нургл/Black_Physician…json, запись kind:\"script\" (id blackPhysician-bleed, capabilityCostPool \"action\" ×2) — исполняется module/apps/item-script.mjs::executeItemCode (woundLossUpdates входит в его стандартные помощники), цена списывается module/combat/capability-cost.mjs"
   },
   "gift.nurgle.breathOfLife": {
-    label: "Раны чемпиона падают до 0, труп (умерший ≤3 дня назад) оживает с 0 Ран; повторно недоступно, пока свои Раны не вылечены полностью",
+    label: "Реализовано (wdbc-1rno) кнопкой «Вдохнуть жизнь» на листе Дара: цель берётся штатным таргетингом, Раны носителя уходят в 0 (и НЕ поднимаются, если уже были ниже — прямая оговорка книги), цель встаёт с 0 Ран со снятыми отрицательными, кнопка запирается до полного излечения Ран носителя. НЕ проверяется: «труп умер не более 3 дней назад» (понятия смерти и её времени в системе нет вовсе, разбор в шапке combat/deadly-effectiveness.mjs) и выбор Тзинчита/Слаанешита «остаться мёртвым либо потерять покровительство» — это решение игрока цели, не движка; оба уходят текстом в карточку",
     source: "Дар Нургл (Breath of Life)",
-    reader: ""
+    reader: "module/rules/breath-of-life.mjs (чистая арифметика: woundsFullyHealed/breathOfLifeAvailable/breathOfLifeSelfWounds/revivedCorpseUpdate) + module/apps/breath-of-life.mjs::useBreathOfLife (кнопка), подключение — module/sheets/item-sheet.mjs + templates/item/parts/mutation.hbs"
   },
   "gift.nurgle.cancerousHealing": {
     label: "Полное действие: касание раненого (текущая цель game.user.targets) — диалог «Цель согласна»; без согласия — полноценная безоружная атака (showAttackDialogNoWeapon: WS/база/стойка/усталость, Уклонение/Парирование цели), эффект по кнопке в чат-карточке ПОСЛЕ подтверждённого попадания, не автоматически. Лечит Кровотечение/Crippling, даёт аблативные Раны = недостающим; −2 A/−2 S (Значение, .totalFx — сверено с книгой) за каждую, считает только СВОЮ долю пула",
@@ -6411,9 +6430,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.gazeOfInevitability": {
-    label: "Видящие глаза чемпиона комбинируют Избегание с W-10 или теряют все Реакции; полное действие: сфокусированный взор W-30 на одну цель на тот же эффект",
+    label: "Реализована половина «сфокусированного взора» (wdbc-1rno): запись kind:\"script\" ценой 2 ОД (полное действие) на этом же Даре — цель берётся штатным таргетингом, проверяется, что она ВИДИТ глаза чемпиона (дальность + сектор обзора токена, rules/vision-target.mjs — то же геометрическое приближение без стен и темноты, что у Иконы Богохульства), кидается тест W−30, провал обнуляет все Реакции цели (и универсальные, и «только на Избегание»). НЕ реализована ПАССИВНАЯ половина: «все, видящие глаза чемпиона, комбинируют Избегание с W−10 или теряют все Реакции» — это второй тест ВНУТРИ чужого Избегания на каждую попытку, то есть крюк в общем конвейере защиты (combat/defense.mjs, evasion-pool.mjs), а не кнопка; отдельная работа",
     source: "Дар Нургл (Gaze of Inevitability)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Нургл/Gaze_of_Inevitability…json, запись kind:\"script\" (id gazeOfInevitability-focus, capabilityCostPool \"action\" ×2) — исполняется module/apps/item-script.mjs::executeItemCode, цена списывается module/combat/capability-cost.mjs, всплывает на панели «ВОЗМОЖНОСТИ СЕЙЧАС» (rules/item-rules.mjs пускает туда script с ценой)"
   },
   "gift.nurgle.heraldOfHumility": {
     label: "−10 на все встречные тесты врагам в радиусе ½Cor(окр.▲)м механизировано (kind:\"aura\", auraAffects:\"enemies\" → клонирует Черту-шаблон «Aura of Humility», modScope:\"opposed\" −10). НЕ смоделировано: эскалация до −30 конкретно на тесты социальных требований сдаться/подчиниться (нет разреза встречных тестов по цели требования) и иммунитет Тзинчитов (иммунитет ауры завязан на имя Черты/Таланта у цели, а не на Покровительство — у Тзинчитов нет общей опознавательной Черты)",
@@ -6421,14 +6440,14 @@ export const CAPABILITIES = {
     reader: "module/apps/mechanics.mjs::syncAuraFlag + module/regions/auras.mjs (kind:\"aura\" клонирует packs-src/traits/Aura_of_Humility на врагов в радиусе; kind:\"testMod\" modScope:\"opposed\" value:-10 внутри неё читается module/rules/item-rules.mjs как обычный живой модификатор встречного теста); auraRadius:\"ceil(corv/2)\" — module/rules/mech-formula.mjs (новый ключ formulas «corv», сырое значение Порчи)"
   },
   "gift.nurgle.iconoclast": {
-    label: "Уничтожение произведения искусства: тест Cor∓30 (по качеству) восстанавливает 1 Очко Бесчестия",
+    label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка «▶ Запустить» на листе Дара спрашивает качество уничтоженного произведения шкалой книги (+30…−30), сама кидает тест Cor±X и при Успехе поднимает Очко Бесчестия в пуле. Сам факт уничтожения предмета искусства движку неизвестен (событие за столом) — кнопка начинается с момента, когда оно уже случилось; выбор модификатора по качеству книга прямо отдаёт МИ. Записи kind:\"script\" без цены и без частоты намеренно не всплывают на панель «ВОЗМОЖНОСТИ СЕЙЧАС» (rules/item-rules.mjs) — у этого Дара книга не даёт ни того, ни другого",
     source: "Дар Нургл (Iconoclast)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Нургл/Iconoclast___Иконокласт_dsPYJTttPRnf2c8e.json, запись kind:\"script\" (id iconoclast-script) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.nurgle.irradiated": {
-    label: "Аура 3м: попадание Rad(1d10) всем в начале их Хода, Cor.b Dmg в пробитие; сам иммунен к радиации; вкусивший плоти/крови получает иммунитет на 7 дней (тест T+0 или 1d5 Порчи без покровительства Нургла)",
+    label: "Реализовано (wdbc-1rno): в начале Хода каждой жертвы в 3 м от носителя кидается Рад(1d10); попадание «пробивает», если Cor.b НОСИТЕЛЯ минус поглощение торса жертвы (AP+T.b) ≥ выпавшего рейтинга — тогда тест T+0, провал даёт +1 уровень Радиации. Ран это попадание не наносит: книга даёт Cor.b только «в расчёте пробития брони». Несколько носителей рядом бьют независимо. Иммунитет самого носителя — записью kind:\"condition\" condMode:\"immunity\" на этом же Даре, её уважает любой путь наложения Состояния. НЕ смоделировано: «вкусивший плоти или крови чемпиона получает неуязвимость к радиации на 7 дней» — поедание чужой плоти событием движка не является",
     source: "Дар Нургл (Irradiated)",
-    reader: ""
+    reader: "module/combat/irradiated.mjs::processIrradiatedTurnStart (такт начала Хода жертвы — module/hooks.mjs::updateCombat, та же геометрия tokensWithinRadius, что у Стервятника); арифметика пробития — radAuraOutcome (чистая); иммунитет носителя — packs-src/mutations/Дары_Богов/Нургл/Irradiated…json, запись id irradiated-immunity, читается module/rules/condition-guards.mjs::isImmuneToCondition"
   },
   "gift.nurgle.knightOfNurgle": {
     label: "Демонический скакун (Паланкин Нургла) в услужении — призыв ритуалом, вселение в технику даёт +7 Ран/Структуры и автопрохождение тестов Трудного Ландшафта",
@@ -6441,14 +6460,14 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.nurglingInfestation": {
-    label: "Получив непоглощённый урон — манифестирует дружественного Нурглинга (1d5 при уроне 3+, 1d10 при 7+) в Истинной Форме",
+    label: "Механизирован СЧЁТ (wdbc-1rno): пропущенный удар по носителю сам кидает количество Нурглингов по порогам книги (1 при уроне 1-2, 1d5 при 3+, 1d10 при 7+) и объявляет его карточкой в тот же момент, когда непоглощённый урон посчитан. НЕ смоделирована САМА ВЫСТАВКА токенов: «призыва существа вне слотов Миньонов» в системе нет вовсе (слоты считаются по Талантам-источникам, module/apps/minion-creator.mjs — отдельная архитектура), Нурглинги уже лежат готовыми NPC в Бестиарии и ставятся МИ вручную. Лимита «раз за бой» книга не даёт — Дар и задуман как нарастающий ком",
     source: "Дар Нургл (Nurgling Infestation)",
-    reader: ""
+    reader: "module/combat/nurgling-infestation.mjs::processNurglingInfestation — врезка в module/combat/damage.mjs::applyDamageToActor сразу за maybeGrantEnjoymentPain (тот же момент «непоглощённый урон известен»); формула порогов — nurglingCountFormula (чистая)"
   },
   "gift.nurgle.perfectHost": {
-    label: "Не страдает от симптомов своих болезней, не может быть излечен от них; может заражаться болезнями, не действующими на его вид; переносимые болезни делят общие векторы заражения",
+    label: "Из четырёх обещаний книги механизировано одно — единственное, у которого в системе есть что запрещать (wdbc-1rno): кнопка «снять болезнь» (✕ в списке БОЛЕЗНИ) отказывает носителю с объяснением, «не может быть вылечен». Три остальных опираются на то, чего в системе нет, и остаются честным текстом Дара: «не страдает от симптомов» — симптомы Болезни это свободная строка (module/data/item/disease.mjs), движок их не применяет, гасить нечего; «может заражаться болезнями, не действующими на его вид» — проверки видовой применимости нет вовсе, снимать нечего; «все болезни делят векторы» — векторы тоже текст, и заражение других персонажей движок не моделирует",
     source: "Дар Нургл (Perfect Host)",
-    reader: ""
+    reader: "module/rules/perfect-host.mjs (константа ключа + разбор, почему остальные три половины нечем читать) — гейт стоит в module/sheets/tabs/diseases.mjs::activateDiseaseListeners на .disease-remove-btn"
   },
   "gift.nurgle.plagueShepherd": {
     label: "Команда/Брифинг: подчинённые с patronGod:\"nurgle\" (кому вообще доходят Команды) дополнительно получают Успехи аблативных Ран, не складывая с прошлой командой. Сам+все подчинённые заражены → Короткая/Детальная Команда РЕАЛЬНО списывают меньше ОД (module/combat/action-economy.mjs): Полудействие→Свободное, Полное→Полудействие; попутно Короткая/Детальная Команда вообще стали списывать ОД у отдающего (раньше не списывали ни у кого)",
@@ -6461,9 +6480,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.shieldOfSloth": {
-    label: "Закончил Ход с непотраченным полудействием: не перегружающийся щит-дефлектор 1-77 до начала следующего Хода (1-99, если не потратил действий вовсе)",
+    label: "Реализовано полностью (wdbc-1rno): Ход, законченный с непотраченным полудействием (≥ 1 ОД), выдаёт не перегружающийся чародейский щит-дефлектор 1-77 до начала своего следующего Хода; Ход без единого потраченного ОД — 1-99. Щит катится штатным конвейером урона. НЕ смоделировано: сложение с другими щитами — _rollActiveShield берёт только самый мощный активный (ограничение конвейера, та же честная граница, что у Preservation/Защиты)",
     source: "Дар Нургл (Shield of Sloth)",
-    reader: ""
+    reader: "module/combat/turn-state-shield.mjs::processTurnStateShieldsTurnEnd (выдача на конце Хода) / clearTurnStateShields (снятие на начале следующего Хода и на deleteCombat), оба такта — module/hooks.mjs::updateCombat; сам бросок щита — module/combat/damage.mjs::_rollActiveShield (выданный Item type:\"forcefield\", overloadThreshold 0)"
   },
   "gift.nurgle.theEqualizer": {
     label: "Атакующий/встречный противник с более высокой базовой Характеристикой для теста должен перебрасывать Успехи",
@@ -6471,19 +6490,19 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.nurgle.touchOfEntropy": {
-    label: "Безоружные/природные атаки снижают AP места попадания на ½Cor.b (окр.▲) до урона, или Качество парировавшего оружия на 1 (ломает при AP=0/Qual<Poor.Q); чинится сменой ремонта без теста",
+    label: "Первая половина реализована (wdbc-1rno): безоружные и природные атаки носителя (предметы с флагом integralAttack — им заведены и Кулак/Пинок, и Хвост/Клыки) съедают ½Cor.b (окр.▲) AP места попадания ДО расчёта поглощения, то есть облегчают ЭТО же попадание; потеря стойкая, копится в тот же system.armorCorrosion, что чинит кнопка ремонта («исправляется сменой ремонта без теста» — дословно она). Остаток рейтинга сверх наличного AP пропадает: превращать его в урон, как делает Разъедающее, книга здесь не разрешает — потому это и НЕ свойство Corrosive, хотя выглядит как оно (у Corrosive ещё и срок другой: он применяется ПОСЛЕ поглощения). НЕ смоделирована вторая половина альтернативы: «−1 Качество оружия, которым его успешно парировали» — Парирование не проходит через конвейер урона вовсе (встречный тест без попадания, combat/defense.mjs), и повесить туда порчу чужого предмета негде без отдельного крюка «чем именно парировали»",
     source: "Дар Нургл (Touch of Entropy)",
-    reader: ""
+    reader: "module/combat/touch-of-entropy.mjs (чистые: touchOfEntropyRating/attackEntropyRating/entropyArmourLoss) — рейтинг считается в module/combat/attack.mjs (там известны атакующий и оружие), едет через data-entropy карточки атаки (combat/attack-card.mjs → module/hooks.mjs) и применяется в module/combat/damage.mjs сразу за resolveArmorAbsorptionAP, до Рун/Укрытия/Пробития"
   },
   "gift.nurgle.unseenBeggar": {
-    label: "Нося только снаряжение Poor.Q — полудействие накладывает морок «ещё один нищий» на всех наблюдателей с душой, полудействие снимает",
+    label: "Механизировано ПРЕДУСЛОВИЕ (wdbc-1rno): цена в полудействие (1 ОД) у этой записи была заведена данными и раньше — кнопка «Потратить» на панели «ВОЗМОЖНОСТИ СЕЙЧАС»; теперь она ещё и отказывает, если надето хоть что-то Качеством лучше Poor.Q, называя виновников поимённо, и делает это ДО списания — иначе полудействие сгорало бы впустую. «Снаряжение» — надетое (system.equipped) среди типов с Качеством: armor/weapon/gear/forcefield; вживлённые импланты намеренно не считаются (книга говорит «носит», а имплант полудействием не снять), ненадетое в рюкзаке — тоже. НЕ смоделирована сама иллюзия «ещё один нищий, не стоящий внимания»: это поведение наблюдателей, а не состояние актора (тот же уровень, что у Иконы Богохульства), и снятие чар вторым полудействием отдельной кнопкой не заведено",
     source: "Дар Нургл (Unseen Beggar)",
-    reader: ""
+    reader: "module/rules/unseen-beggar.mjs (чистая: betterThanPoorEquipped/unseenBeggarGateOk) — предусловие стоит в module/sheets/actor-sheet.mjs в обработчике траты Возможности, рядом со спец-случаем Локуса Фанатизма; сама цена — module/combat/capability-cost.mjs (capabilityCostPool \"action\")"
   },
   "gift.nurgle.vulture": {
-    label: "3+ персонажа с −5 Ран/меньше или свежих трупа боя в радиусе 7м — 1 Очко Бесчестия в начале своего Хода (сгорает к следующему)",
+    label: "Реализовано (wdbc-1rno): три и более тела с Ранами −5 и ниже в радиусе 7 м в начале своего Хода дают одно ВРЕМЕННОЕ Очко Бесчестия (rules/temp-infamy.mjs, отдельно от общего пула), сгорающее в начале следующего Хода, если не потрачено. НЕ смоделировано: «свежие трупы» отдельной сущностью — понятия «смерть» в системе нет вовсе (разбор в шапке combat/deadly-effectiveness.mjs), на практике труп на сцене это токен с глубоко отрицательными Ранами и порог проходит; оговорка «но не от эффектов, что уничтожают тела или головы» — решение стола",
     source: "Дар Нургл (Vulture)",
-    reader: ""
+    reader: "module/combat/vulture.mjs::processVultureTurnStart (такт начала Хода — module/hooks.mjs::updateCombat); порог «−5 Ран и ниже» = system.wounds.critical ≥ 5 (rules/wound-tier.mjs), радиус — rules/aoe-target.mjs::tokensWithinRadius, валюта — rules/temp-infamy.mjs (второй потребитель примитива, первым был Глас Божий)"
   },
   "gift.nurgle.weepingRot": {
     label: "Реализовано полностью (wdbc-1rno) четырьмя записями weaponPropertyImmunity.{flame,crippling,corrosive,toxic} (module/combat/weapon-properties.mjs::hasWeaponPropertyImmunity) — «яды через раны» = свойство Toxic, добавлено этой находкой. Сам ключ gift.nurgle.weepingRot остаётся пустой заглушкой-«зонтиком» без своего читателя — вся механика уже доставлена другими ключами, читать нечего. Нюанс «снаряжение всё равно страдает от Corrosive» не автоматизирован (считается по актору целиком, не отдельно предмет/носитель).",
@@ -7552,7 +7571,9 @@ export const INITIATIVE_CHAR_KEYS = Object.keys(CHARACTERISTICS)
 for (const key of INITIATIVE_CHAR_KEYS) {
   CAPABILITIES[INITIATIVE_CHAR_PREFIX + key] = {
     label: `Инициатива считается по ${CHARACTERISTICS[key].abbr}.b, а не по Ag.b`,
-    source: "Таланты «Боевое Построение» (Int) и «Чувство Боя» (Per), корбук стр. 62",
+    source: key === "int" ? "Combat Formation / Боевое Построение (корбук стр. 62)"
+          : key === "per" ? "Combat Sense / Чувство Боя (корбук стр. 62)"
+          : "нет книжного носителя: ключ заведён про запас, ставится эффектом ГМа (корбук стр. 62 даёт только Int и Per)",
     reader: "module/rules/initiative.mjs initiativeCharKey() — выбирает лучшую из разрешённых"
   };
 }

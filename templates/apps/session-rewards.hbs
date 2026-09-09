@@ -1,0 +1,92 @@
+<div class="wh-sr">
+
+  <div class="wh-sr-body">
+
+    {{!-- Кто получает. По умолчанию отмечены персонажи с игроком-владельцем. --}}
+    <div class="wh-sr-block">
+      <div class="wh-sr-title">КТО ПОЛУЧАЕТ</div>
+      <div class="wh-sr-who-list">
+        {{#each candidates as |a|}}
+        <label class="wh-sr-who-item" title="{{a.name}}">
+          <input type="checkbox" class="wh-sr-who" data-actor="{{a.id}}" {{#if a.on}}checked{{/if}}/>
+          {{a.name}}
+        </label>
+        {{/each}}
+      </div>
+    </div>
+
+    {{!-- Партийные категории книги: одно число всем. --}}
+    <div class="wh-sr-block">
+      <div class="wh-sr-title">ОПЫТ ВСЕЙ ПАРТИИ <span class="wh-sr-dim">— корбук, «Продвижение → Опыт»</span></div>
+      {{#each partyCats as |c|}}
+      <div class="wh-sr-row" title="{{c.hint}}">
+        <label class="wh-sr-lbl">{{c.label}}</label>
+        <select class="wh-sr-party" data-cat="{{c.key}}">
+          {{#each c.steps as |s|}}
+          <option value="{{s.value}}" {{#if (eq s.value ../c.chosen)}}selected{{/if}}>{{s.label}}</option>
+          {{/each}}
+        </select>
+      </div>
+      {{/each}}
+    </div>
+
+    {{!-- По персонажу: личные категории, итог и необязательные Порча/Бесчестие. --}}
+    <div class="wh-sr-block">
+      <div class="wh-sr-title">ПО ПЕРСОНАЖАМ</div>
+      {{#if anyRows}}
+      <table class="wh-sr-table">
+        <thead>
+          <tr>
+            <th>Персонаж</th>
+            {{#each eachCats as |c|}}<th title="{{c.hint}}">{{c.label}}</th>{{/each}}
+            <th title="Вписанное сюда число заменяет расчёт целиком">Опыт</th>
+            <th title="Число или бросок: 3, 1d5, 1д5. Пусто — не начислять.">Порча</th>
+            <th title="Число или бросок. Растит характеристику Бесчестие (Inf), потолок 100.">Бесчестие</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each rows as |r|}}
+          <tr>
+            <td class="wh-sr-name">{{r.name}}<span class="wh-sr-dim"> · сейчас {{r.xpNow}} xp</span></td>
+            {{#each ../eachCats as |c|}}
+            <td>
+              <select class="wh-sr-personal" data-actor="{{r.id}}" data-cat="{{c.key}}">
+                {{#each c.steps as |s|}}
+                <option value="{{s.value}}" {{#if (eq s.value (lookup ../../r.personal c.key))}}selected{{/if}}>{{s.label}}</option>
+                {{/each}}
+              </select>
+            </td>
+            {{/each}}
+            <td class="wh-sr-xp">
+              <input type="text" class="wh-sr-override" data-actor="{{r.id}}"
+                     value="{{r.override}}" placeholder="{{r.xp}}"/>
+            </td>
+            <td>
+              <input type="text" class="wh-sr-cor{{#if r.corBad}} wh-sr-bad{{/if}}" data-actor="{{r.id}}"
+                     value="{{r.corruptionRaw}}" placeholder="—" title="сейчас {{r.corNow}}"/>
+            </td>
+            <td>
+              <input type="text" class="wh-sr-inf{{#if r.infBad}} wh-sr-bad{{/if}}" data-actor="{{r.id}}"
+                     value="{{r.infamyRaw}}" placeholder="—" title="сейчас Inf {{r.infNow}}, до потолка ещё {{r.infRoom}}"/>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+      {{else}}
+      <div class="wh-sr-dim">Никто не отмечен — отметьте, кому раздавать.</div>
+      {{/if}}
+    </div>
+
+  </div>
+
+  <div class="wh-sr-toolbar">
+    <span class="wh-sr-dim">Всего опыта к раздаче: <b>{{total}}</b></span>
+    <label class="wh-sr-end" title="То же, что делала кнопка «Сессия» раньше: откатить разовые-за-сцену и за-сессию, восполнить Очки Судьбы и Бесчестия до максимума, объявить конец сессии в чате.">
+      <input type="checkbox" class="wh-sr-endsession" {{#if endSession}}checked{{/if}}/>
+      закончить сессию
+    </label>
+    <button type="button" class="wh-sr-apply">{{applyLabel}}</button>
+  </div>
+
+</div>

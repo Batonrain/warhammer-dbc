@@ -20,6 +20,9 @@ import { testOutcome } from "../rules/roll-outcome.mjs";
 import { retractPart, extendPart, allLimbsCompressed } from "../rules/compression.mjs";
 import { determinationToFightParryBonus } from "../rules/determination-to-fight.mjs";
 import { canParryPsychic, psychicParryOutcome, hasBladeShield } from "./blade-shield.mjs";
+import { crossblockPair, CROSSBLOCK_SIZE_STEPS, maineGaucheParryReroll }
+  from "../rules/dual-wield-talents.mjs";
+import { attackedPrevTurn } from "../rules/turn-flags.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -227,17 +230,30 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null) {
   // себе означает «в рукопашном бою», условие свойства выполнено безусловно)
   const parryProps    = resolveWeaponPropsList(withWitchsEdge(meleeWeapon, mergeWeaponPropEntries(meleeWeapon, modFx)));
   const pwp            = aggregateAuto(parryProps);
-  const defensiveBonus = pwp.defensive    ? 15 : 0;
-  const duelingBonus   = pwp.duelingParry ? 10 : 0;
-  const stepBonus      = pwp.stepByStep   ? 10 : 0;
-  const defBonus       = defensiveBonus + duelingBonus + stepBonus;
+  const { defensive: defensiveBonus, dueling: duelingBonus, step: stepBonus, total: defBonus } =
+    parryPropBonuses(pwp);
   // Тот же общий сбор, что у _performDodge (wdbc-ct65.1).
   const ruleMods = collectTestMods(actor, { kind: "skill", skill: "parry", char: "ws" });
   // Determination To Fight/Решительность Сражаться (wdbc-1rno): +30 при
   // отрицательных Ранах + прошлый раунд в Защитной Стойке.
   const dtfBonus = determinationToFightParryBonus(actor);
 
-  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod + ruleMods.total + dtfBonus;
+  // Крестовой Блок (стр. 62, wdbc-pb60): с двумя рукопашными Баланса не ниже 0
+  // персонаж «суммирует бонусы на Парирование от свойств, Качества и
+  // модификаций ОБОИХ оружий». Считается тем же расчётом, что и у первого
+  // оружия — иначе второе место правды, и Защитное второй руки однажды
+  // разошлось бы с Защитным первой.
+  //
+  // Баланс второго оружия сюда НЕ входит: балансом отвечает то оружие, которым
+  // отбиваешь, и книга перечисляет именно свойства/Качество/модификации.
+  const crossblock = crossblockPair(actor);
+  const crossWeapon = crossblock
+    ? [crossblock.main, crossblock.off].find(w => w?.id !== meleeWeapon?.id)
+    : null;
+  const crossBonus = crossWeapon ? weaponParryPropBonus(actor, crossWeapon) : 0;
+
+  const threshold = wsTotal + rankBonus + (balanceMod ?? 0) + stBonus + defBonus + extraMod
+                  + ruleMods.total + dtfBonus + crossBonus;
 
   const modParts = [];
   if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
@@ -249,8 +265,32 @@ export function parryProfile(actor, extraMod = 0, weaponOverride = null) {
   if (extraMod !== 0)    modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
   modParts.push(...ruleMods.parts);
   if (dtfBonus !== 0)    modParts.push(`Решительность Сражаться +${dtfBonus}`);
+  if (crossBonus !== 0)  modParts.push(`Крестовой Блок: «${crossWeapon.name}» +${crossBonus}`);
 
-  return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp };
+  return { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp,
+           crossblock: crossblock ? { weapon: crossWeapon, bonus: crossBonus,
+                                      sizeSteps: CROSSBLOCK_SIZE_STEPS } : null };
+}
+
+/**
+ * Бонусы к Парированию от свойств оружия: Защитное +15, Дуэлянтское +10, Шаг За
+ * Шагом +10. Одно место правды на оба оружия — Крестовой Блок считает второе
+ * тем же расчётом, а не своей копией, иначе они однажды разойдутся.
+ */
+function parryPropBonuses(props) {
+  const defensive = props?.defensive    ? 15 : 0;
+  const dueling   = props?.duelingParry ? 10 : 0;
+  const step      = props?.stepByStep   ? 10 : 0;
+  return { defensive, dueling, step, total: defensive + dueling + step };
+}
+
+/** Тот же бонус, но для оружия, которое ещё не разобрано (второе в Крестовом Блоке). */
+export function weaponParryPropBonus(actor, weapon) {
+  if (!weapon) return 0;
+  const modFx = getModEffects(actor, weapon);
+  const props = aggregateAuto(resolveWeaponPropsList(
+    withWitchsEdge(weapon, mergeWeaponPropEntries(weapon, modFx))));
+  return parryPropBonuses(props).total;
 }
 
 /** Отказ Парирования стрельбы: почему нельзя. Реакция при этом не тратится. */
@@ -262,7 +302,7 @@ function _bladeShieldRefusal(actor, why) {
 }
 
 export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false, isMelee = true) {
-  const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp } =
+  const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =
     parryProfile(actor, extraMod);
 
   // ── Парирование СТРЕЛЬБЫ — только Талантом «Щит Клинков» (wdbc-3e2x) ──────
@@ -318,7 +358,12 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // roll×2 + pickReroll, что у Уклонения выше.
   const dancerAdvantage = danceOfFireAdvantage(actor, burst);
   const hordeAdvantage  = oneAgainstAHundredAdvantage(actor, attackerIsHorde);
-  const selfAdvantage   = dancerAdvantage || hordeAdvantage;
+  // Мэн-Гош (стр. 62, wdbc-pb60): «перебрасывать тесты на Парирование ЭТИМ
+  // ножом», если им не били в предыдущий Ход. Переброс с выбором лучшего — то
+  // же самое, что делают два Преимущества выше, поэтому считается тем же
+  // приёмом, а не отдельной веткой.
+  const maineGauche     = maineGaucheParryReroll(actor, meleeWeapon, attackedPrevTurn(actor));
+  const selfAdvantage   = dancerAdvantage || hordeAdvantage || maineGauche;
   const rolled = [];
   for (let i = 0; i < (selfAdvantage ? 2 : 1); i++) rolled.push(await new Roll("1d100").evaluate());
   const picked   = pickReroll(rolled.map(r => r.total), "keepBest");
@@ -347,7 +392,14 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const leftover = passed && isMelee ? deg - negated : 0;
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
-  if (picked.dropped.length) modParts.push(`${dancerAdvantage ? "Танец Среди Огня" : "Один Против Сотни"}: Преимущество, отброшено ${picked.dropped.join(", ")}`);
+  if (picked.dropped.length) {
+    // Книга называет это по-разному, и подпись должна называть так же: у
+    // Танца и Сотни это Преимущество, у Мэн-Гоша — переброс.
+    modParts.push(
+      dancerAdvantage ? `Танец Среди Огня: Преимущество, отброшено ${picked.dropped.join(", ")}`
+      : hordeAdvantage ? `Один Против Сотни: Преимущество, отброшено ${picked.dropped.join(", ")}`
+      : `Мэн-Гош: переброс ножом, отброшено ${picked.dropped.join(", ")}`);
+  }
 
   let outcomeHtml;
   if (!passed) {
@@ -385,7 +437,13 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // выбору игрока, поэтому кнопка, а не авто-атака. Без активного Combat
   // isRoundCapabilityAvailable считает её всегда доступной (раунд отследить
   // нечем) — тот же приём, что у Локуса Сокрушения.
-  const counterAttackHtml = (parried && meleeWeapon
+  //
+  // Крестовой Блок (стр. 62): «если парирует обоими — не может использовать
+  // Counter Attack и Riposte». Бонус второго оружия и есть парирование обоими,
+  // поэтому кнопка Контратаки при нём не показывается, а вместо неё в карточку
+  // идёт строка с причиной — иначе игрок решит, что Талант «пропал».
+  const crossblockUsed = !!crossblock?.bonus;
+  const counterAttackHtml = (parried && meleeWeapon && !crossblockUsed
       && hasRuleFlag(actor, COUNTER_ATTACK_CAPABILITY)
       && isRoundCapabilityAvailable(actor, COUNTER_ATTACK_CAPABILITY))
     ? `<div class="roll-defense-section">
@@ -396,6 +454,15 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
        </div>`
     : "";
 
+  // Что именно даёт Крестовой Блок сверх суммы бонусов — и чего он стоит.
+  // Предел Размера книга поднимает на ступень, но самого предела Размера при
+  // Парировании в системе нет вовсе, поэтому это напоминание столу, а не расчёт.
+  const crossblockNote = crossblock
+    ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок: бонусы обоих оружий сложены`
+      + `${crossblockUsed ? ` (+${crossblock.bonus} от «${esc(crossblock.weapon.name)}»), Контратака и Ответный Удар в этом Парировании недоступны` : ""}`
+      + `. Можно Парировать существ на ${CROSSBLOCK_SIZE_STEPS} ступень Размера крупнее обычного (решает стол).</div>`
+    : "";
+
   await postTestCard(actor, {
     icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
     threshold: thresholdLine({ label: "WS", base: wsTotal, parts: modParts, threshold }),
@@ -403,7 +470,7 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
       ? `<div style="font-size:0.82em;color:#5a4a30;margin-bottom:2px;">Оружие: ${esc(meleeWeapon.name)} (Баланс ${balance >= 0 ? "+" : ""}${balance})</div>`
       : ""],
     rv, outcome: outcomeHtml,
-    sections: [leftoverNote, powerFieldNote, counterAttackHtml]
+    sections: [leftoverNote, powerFieldNote, crossblockNote, counterAttackHtml]
   }, { rolls: [roll] });
 }
 

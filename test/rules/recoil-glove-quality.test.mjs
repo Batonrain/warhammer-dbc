@@ -19,12 +19,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
+import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "../..");
 const GLOVE_PATH = path.join(ROOT,
   "packs-src/gear/Разное/Recoil_Glove___Откатная_Перчатка_tb5aWcIQDP9tzw8N.json");
 
-const glove = JSON.parse(fs.readFileSync(GLOVE_PATH, "utf8"));
+const glove = packDocByFileHint(GLOVE_PATH);
 
 /** Предмет-перчатка ровно с данными пака, но заданной ступени качества. */
 const gloveOfQuality = quality => ({

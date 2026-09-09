@@ -51,6 +51,8 @@ import { backfillMinionAptSource } from "./module/apps/minion-talent.mjs";
 import { syncCyberneticExcellenceArms } from "./module/apps/cybernetic-excellence.mjs";
 import { isCyberneticExcellence } from "./module/rules/cybernetic-excellence.mjs";
 import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
+import { cleanupGunArm } from "./module/apps/gun-arm.mjs";
+import { isGunArmGift } from "./module/rules/gun-arm.mjs";
 import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
 import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
   from "./module/apps/cancerous-healing.mjs";
@@ -107,6 +109,7 @@ import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs"
 import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
+import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
 import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
@@ -385,6 +388,18 @@ Hooks.once("init", () => {
     hint: "Сверяет предметы актёров с текущими данными компендиумов и позволяет выборочно подтянуть изменившиеся поля.",
     icon: "fa-solid fa-rotate",
     type: ContentSyncApp,
+    restricted: true
+  });
+
+  // «Итоги Сессии» — раздача опыта по книжной таблице корбука, плюс
+  // необязательные Порча и Бесчестие (wdbc-ce8e,
+  // module/apps/session-rewards-app.mjs).
+  game.settings.registerMenu("warhammer-dbc", "sessionRewardsMenu", {
+    name: "Итоги Сессии",
+    label: "Итоги Сессии",
+    hint: "Раздать опыт за сессию по таблице корбука — каждому персонажу своё число, а не одну сумму на всех. Отдельно и по желанию — Порча и Бесчестие, числом или броском.",
+    icon: "fa-solid fa-award",
+    type: SessionRewardsApp,
     restricted: true
   });
 
@@ -1718,6 +1733,10 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   const actor = item.parent;
   if (!(actor instanceof Actor)) return;
   if (isHandOfDeathItem(item)) { await cleanupHandOfDeath(actor, item.id); return; }
+  // Дар «Рука-Пушка» (wdbc-spsd): та же беда с обратной стороны — метка
+  // «вросло» остаётся на оружии, и вернувшийся другим предметом Дар начал бы
+  // действовать на него сам собой, без выбора ГМа.
+  if (isGunArmGift(item)) { await cleanupGunArm(actor, item.id); return; }
   if (item.type === "weapon" && item.getFlag("warhammer-dbc", "handOfDeathSource")) {
     const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
     if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });
