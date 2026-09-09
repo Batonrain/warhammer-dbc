@@ -125,6 +125,19 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "infernalArmiger-ritual",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.ArmigerNurgleQ2b",
+              "equipSourceName": "Summon the Bound Armiger / Призыв Связанного Оруженосца (Нургл)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

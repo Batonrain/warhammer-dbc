@@ -125,6 +125,19 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "infernalArmiger-ritual",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.ArmigerSlaanQ3c1",
+              "equipSourceName": "Summon the Bound Armiger / Призыв Связанного Оруженосца (Слаанеш)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }
