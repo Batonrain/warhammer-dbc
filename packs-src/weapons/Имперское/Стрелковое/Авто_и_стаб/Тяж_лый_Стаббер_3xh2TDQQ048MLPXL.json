@@ -3,7 +3,7 @@
   "type": "weapon",
   "folder": "k26nnNHjR0DQDnhj",
   "system": {
-    "description": "",
+    "description": "<p>– Пилот Кентавра не может стрелять из орудия машины в тот же Ход, когда он водит. Когда он стреляет из него, пилот считает машину Open Topped (½). Один из пассажиров может использовать это орудие сам.</p>",
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "solid",
