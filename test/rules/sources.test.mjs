@@ -32,6 +32,29 @@ describe("источник homeworld", () => {
   });
 });
 
+// Уравнитель/The Equalizer (wdbc-1rno) — юнит-покрытие самой функции в
+// test/rules/opposed-target-reroll.test.mjs, здесь только факт регистрации
+// источника под правильным ключом и то, что реестр реально его зовёт.
+describe("источник opposedTarget (Уравнитель, wdbc-1rno)", () => {
+  const char = total => ({ total, bonus: Math.floor(total / 10) });
+  const equalizerHolder = ws => ({
+    system: { characteristics: { ws: char(ws) } },
+    items: [{ name: "The Equalizer", flags: { "warhammer-dbc": { mechanics: [{ id: "g1", operator: "AND", entries: [
+      { id: "eq1", kind: "reroll", rerollScope: "attack", rerollMode: "keepWorst", rerollWho: "opponent" }
+    ] }] } } }]
+  });
+
+  it("зарегистрирован", () => {
+    expect(getRuleSources().some(([k]) => k === "opposedTarget")).toBe(true);
+  });
+
+  it("вызывается с (actor, ctx) и достаёт правило с targetActor", () => {
+    const attacker = { system: { characteristics: { ws: char(55) } } };
+    const rules = source("opposedTarget")(attacker, { targetActor: equalizerHolder(40), char: "ws" });
+    expect(rules).toHaveLength(1);
+  });
+});
+
 describe("источник daemonInevitability (Локус Неизбежности, wdbc-smc)", () => {
   const actorWithFlag = value => ({ getFlag: (ns, key) => (key === "inevitabilityPenalty" ? value : undefined) });
 
