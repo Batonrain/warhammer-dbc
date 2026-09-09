@@ -74,6 +74,7 @@ import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { setDeceased } from "./sheets/tabs/body.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
@@ -995,6 +996,28 @@ export function registerHooks() {
         await applyCritEffectPill(actor, {
           key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1"
         });
+      });
+    });
+
+    // Констатировать смерть по крит-строке, которая прямо это утверждает
+    // (wdbc-1rno, 09.09.2026, deathButtonHtml) — тот же флаг
+    // flags.warhammer-dbc.deceased, что и ручная галочка на вкладке Тело
+    // (module/sheets/tabs/body.mjs::setDeceased), только по факту чтения
+    // конкретной книжной строки, а не отдельного похода на другую вкладку.
+    html.querySelectorAll(".wh-crit-death-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Констатировать смерть может владелец цели (или ГМ).");
+        }
+        el.disabled = true;
+        await setDeceased(actor, true);
+        await postTestCard(actor, {
+          icon: rollIcon("skull", "#ff6b6b"), title: `Смерть констатирована — ${esc(actor.name)}`,
+          outcome: `<div class="roll-outcome"><span class="roll-failure">Кардиомонитор остановлен — доступно Спасение/Воскрешение на вкладке Тело.</span></div>`
+        }, { sound: false });
       });
     });
 
