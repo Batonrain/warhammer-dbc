@@ -210,9 +210,13 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "submutations": ["8"],
+                "submutations": [
+                  "8"
+                ],
                 "negateSub": false,
-                "patronGod": ["khorne"],
+                "patronGod": [
+                  "khorne"
+                ],
                 "negatePatronGod": false
               }
             }
