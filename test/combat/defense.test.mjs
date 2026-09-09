@@ -620,3 +620,124 @@ describe("_performParry: стрельба (wdbc-3e2x)", () => {
     expect(captured.chat.at(-1).content).toContain("снимает все 3");
   });
 });
+
+// wdbc-1rno (09.09.2026): стр. 12 — «Парирование работает только от атак в
+// ближнем бою, в т.ч. выстрелов в рукопашной». В Базовом/Глубоком контакте со
+// стрелком парировать может ЛЮБОЙ, без Таланта «Щит Клинков» (тот остаётся
+// нужен только для дистанции) — той же геометрией, что Свободная Атака
+// (module/combat/free-attack.mjs::enemyContactTokenDocs).
+describe("_performParry: стрельба в упор — Базовый контакт (wdbc-1rno)", () => {
+  /** Токен-заглушка: те же поля, что читает tokenRect (x/y/width/height). */
+  function tokenFor(actorObj, { x = 0, y = 0, width = 1, height = 1 } = {}) {
+    return { document: { x, y, width, height, actor: actorObj } };
+  }
+
+  beforeEach(() => {
+    globalThis.canvas = { grid: { size: 1 }, tokens: { placeables: [] }, ready: true };
+  });
+
+  /** Защищающийся + подставной стрелок в canvas.tokens.placeables на заданном расстоянии. */
+  function setupContactScene({ distance = 0, attackerUuid = "Actor.attacker-1" } = {}) {
+    const actor = attacker({ items: [] });
+    actor.uuid = "Actor.defender-1";
+    const shooter = { uuid: attackerUuid, system: {} };
+    globalThis.fromUuid = async uuid => (uuid === attackerUuid ? shooter : null);
+    const myToken = tokenFor(actor, { x: 0, y: 0 });
+    const enemyToken = tokenFor(shooter, { x: distance, y: 0 });
+    actor.getActiveTokens = (linked, document) => document ? [myToken.document] : [myToken];
+    shooter.getActiveTokens = (linked, document) => document ? [enemyToken.document] : [enemyToken];
+    globalThis.canvas.tokens.placeables = [myToken, enemyToken];
+    return { actor, attackerUuid };
+  }
+
+  it("вплотную к стрелку (x=1, база 1×1) — Парирование доступно без Таланта", async () => {
+    const { actor, attackerUuid } = setupContactScene({ distance: 1 });
+    await _performParry(actor, 0, attackerUuid, 1, false, false, false);
+    const html = captured.chat.at(-1).content;
+    expect(html).not.toContain("Щит Клинков");
+    expect(html).toContain("Порог");
+  });
+
+  it("контакт: успех снимает попадания ПО СТЕПЕНИ (как рукопашная), не режется до 1", async () => {
+    captured.dice = [10]; // Untrained Parry (WS 45 −20) → порог 25, бросок 10 → 2 степени
+    const { actor, attackerUuid } = setupContactScene({ distance: 1 });
+    await _performParry(actor, 0, attackerUuid, 3, false, false, false);
+    const html = captured.chat.at(-1).content;
+    // Не «снимает 1 из 3» (потолок дистанционного Щита Клинков) — контакт
+    // работает как обычная рукопашная, снимает по числу степеней.
+    expect(html).toContain("снимает 2 из 3");
+    expect(html).not.toContain("снимает 1 из 3");
+  });
+
+  it("далеко от стрелка (x=5) — без Таланта тот же отказ, что и раньше", async () => {
+    const { actor, attackerUuid } = setupContactScene({ distance: 5 });
+    await _performParry(actor, 0, attackerUuid, 1, false, false, false);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Щит Клинков");
+    expect(html).not.toContain("Порог");
+  });
+
+  it("нет токена защищающегося на сцене — контакт не определить, работает как раньше (отказ)", async () => {
+    const actor = attacker({ items: [] });
+    actor.uuid = "Actor.defender-1";
+    globalThis.fromUuid = async uuid => (uuid === "Actor.attacker-1" ? { uuid, system: {} } : null);
+    // canvas.tokens.placeables пуст — ни у кого нет токена.
+    await _performParry(actor, 0, "Actor.attacker-1", 1, false, false, false);
+    expect(captured.chat.at(-1).content).toContain("Щит Клинков");
+  });
+});
+
+// wdbc-1rno (09.09.2026): стр. 12 — «Парирование атаки персонажа, который на
+// 1 Размер больше, требует Навык Parry, продвинутый на +10, на 2 – +20, на
+// 3 – +30, на 4+ – вообще невозможно.» Раньше Размер вообще не входил в
+// формулу Парирования (module/rules/parry-size.mjs — новый расчёт).
+describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
+  function setupSizeAttacker(size) {
+    const attackerUuid = "Actor.attacker-1";
+    globalThis.fromUuid = async uuid => (uuid === attackerUuid ? { uuid, system: { size } } : null);
+    return attackerUuid;
+  }
+
+  it("атакующий на 1 Размер больше — штраф −10 в пороге", async () => {
+    const attackerUuid = setupSizeAttacker(4);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3 });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("Размер противника -10");
+  });
+
+  it("атакующий на 3 Размера больше — штраф −30, но ещё возможно", async () => {
+    const attackerUuid = setupSizeAttacker(6);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3 });
+    await _performParry(actor, 0, attackerUuid);
+    expect(captured.chat.at(-1).content).toContain("Размер противника -30");
+  });
+
+  it("атакующий на 4 Размера больше — Парирование вообще невозможно, бросок не делается", async () => {
+    const attackerUuid = setupSizeAttacker(7);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3 });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("вообще невозможно");
+    expect(html).not.toContain("Порог");
+  });
+
+  it("атакующий НЕ крупнее — без штрафа, строка про Размер не появляется", async () => {
+    const attackerUuid = setupSizeAttacker(3);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3 });
+    await _performParry(actor, 0, attackerUuid);
+    expect(captured.chat.at(-1).content).not.toContain("Размер противника");
+  });
+
+  it("неизвестный attackerUuid (fromUuid не резолвит) — Размер атакующего 0, штрафа нет", async () => {
+    globalThis.fromUuid = async () => null;
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 3 });
+    await _performParry(actor, 0, "Actor.unknown");
+    expect(captured.chat.at(-1).content).not.toContain("Размер противника");
+  });
+});

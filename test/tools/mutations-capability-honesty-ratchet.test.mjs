@@ -288,6 +288,13 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // weaponUuid протянут через боевой конвейер до deathButtonHtml; конец
     // боя ломает оружие, в отличие от Reformation Song). reader у
     // gift.khorne.bloodFlame больше не пуст → выпадает из stub-only. 49 → 48.
-    expect(stubOnly.length).toBeLessThanOrEqual(48);
+    // 09.09.2026 продолжение: Hand of Khorne/Длань Кхорна (Кхорн) — тоже
+    // полностью смоделирована вне Конструктора (module/rules/hand-of-khorne.mjs,
+    // module/apps/hand-of-khorne.mjs — выбор руки, kind:"armour" +8 AP;
+    // читается в module/combat/attack.mjs — ×2 S.b, автопровал стрельбы — и
+    // module/combat/defense.mjs — +2 Размера атакующего при Парировании,
+    // попутно родившем настоящую формулу Разницы Размеров, module/rules/
+    // parry-size.mjs, и контакт-парирование выстрела в упор). 48 → 47.
+    expect(stubOnly.length).toBeLessThanOrEqual(47);
   });
 });

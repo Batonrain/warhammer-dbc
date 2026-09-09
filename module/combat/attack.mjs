@@ -35,6 +35,7 @@ import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
+import { handOfKhorneStrengthMultiplier, handOfKhorneBlocksRangedAttack } from "../rules/hand-of-khorne.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
@@ -235,9 +236,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // поток попадает автоматически по всем в конусе, а отменяет попадание сама
   // цель тестом A+0 (кнопка в карточке). Решает это attackHitOutcome, чтобы
   // правило проверялось тестом без Foundry.
+  // Длань Кхорна (wdbc-1rno): «стрелковые атаки этой рукой автоматически
+  // проваливаются» — читается с самого оружия атаки (module/rules/
+  // hand-of-khorne.mjs::isHandOfKhorneWeapon, занимает ли оно бронзовую руку
+  // ПРЯМО СЕЙЧАС), не с actor/item отдельным флагом.
+  const handOfKhorneForceFail = !isMelee && handOfKhorneBlocksRangedAttack(item);
   const { success: hit, deg: rolledDeg, auto: autoHitKind } = attackHitOutcome({
     rv, threshold, isMelee, wp,
-    forceHit: opts.forceHit, fixedSuccessDeg: opts.fixedSuccessDeg
+    forceHit: opts.forceHit, forceFail: handOfKhorneForceFail, fixedSuccessDeg: opts.fixedSuccessDeg
   });
   // Дикарь (стр. 62, wdbc-pb60): парными когтями — «+2 Успеха при успешной
   // атаке». Прибавляется к СТЕПЕНИ, а не к порогу: от степени зависят и число
@@ -430,7 +436,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
 
   // Бонус Силы в рукопашной: Могучее ×2, Сдержанное = 0, Обратный хват ½
   const sbHalf = !!opts.gripSbHalf;
-  const sbEff  = meleeStrengthBonus({ sb, wp, sbHalf });
+  // Длань Кхорна (wdbc-1rno): «удваивает S.b в расчёте атак ЕЮ» — отдельный
+  // множитель поверх Могучего/Сдержанного/Обратного хвата (читает саму эту
+  // атаку, module/rules/hand-of-khorne.mjs::isHandOfKhorneWeapon), не
+  // заменяет их: тот же принцип, что у stacking модификаторов урона выше.
+  const sbEff  = meleeStrengthBonus({ sb, wp, sbHalf }) * (isMelee ? handOfKhorneStrengthMultiplier(item) : 1);
   // Порча: +Cor.b владельца к урону
   const taintedAdd = wp.taintedCorB ? (actor.system.corruptionBonus ?? 0) : 0;
 

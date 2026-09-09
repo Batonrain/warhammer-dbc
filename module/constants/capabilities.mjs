@@ -6341,9 +6341,9 @@ export const CAPABILITIES = {
     reader: "packs-src/mutations/Дары_Богов/Кхорн/Father_of_Battle___Отец_Битвы_pQ0ypCOCEl4SDqJf.json, запись kind:\"script\" (id fatherOfBattle-script) — исполняется module/apps/item-script.mjs::executeItemCode"
   },
   "gift.khorne.handOfKhorne": {
-    label: "Основная рука: +8 AP, ×2 S.b в атаках ею, +2 Размера при парировании этой рукой; стрелковые атаки этой рукой автопровальны — см. также ОТЛОЖЕНО в памяти (слишком составной/локальный для текущих полей)",
+    label: "Основная рука: +8 AP, ×2 S.b в атаках ею, +2 Размера при парировании этой рукой; стрелковые атаки этой рукой автопровальны",
     source: "Дар Кхорн (Hand of Khorne)",
-    reader: ""
+    reader: "module/apps/hand-of-khorne.mjs::chooseHandOfKhorneHand (кнопка на листе Дара, выбор руки + запись kind:\"armour\" +8 AP) / module/rules/hand-of-khorne.mjs::isHandOfKhorneWeapon (читает module/combat/attack.mjs — ×2 S.b, автопровал стрельбы; module/combat/defense.mjs — +2 Размера атакующего при Парировании)"
   },
   "gift.khorne.knightOfKhorne": {
     label: "Демонический скакун (Джаггернаут Кхорна) в услужении — призыв ритуалом, Демоническое Владычество, вселение в технику даёт +8 AP от стрельбы и доп. кубик урона в ближнем бою/Таране",
