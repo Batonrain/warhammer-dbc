@@ -17,9 +17,9 @@
       {{#each r.choices as |c|}}
       <label class="apt-chip">
         {{#if ../many}}
-        <input type="checkbox" class="wiz-mech-spec-check" data-key="{{../key}}" data-idx="{{c.idx}}" {{#if c.picked}}checked{{/if}} {{#if ../r.skipped}}disabled{{/if}}/>
+        <input type="checkbox" class="wiz-mech-spec-check" data-key="{{../key}}" data-idx="{{c.idx}}" {{#if c.picked}}checked{{/if}} {{#if r.skipped}}disabled{{/if}}/>
         {{else}}
-        <input type="radio" class="wiz-mech-spec-radio" name="mech-spec-{{../key}}" value="{{c.idx}}" data-key="{{../key}}" {{#if c.checked}}checked{{/if}} {{#if ../r.skipped}}disabled{{/if}}/>
+        <input type="radio" class="wiz-mech-spec-radio" name="mech-spec-{{../key}}" value="{{c.idx}}" data-key="{{../key}}" {{#if c.checked}}checked{{/if}} {{#if r.skipped}}disabled{{/if}}/>
         {{/if}}
         {{c.label}}
       </label>

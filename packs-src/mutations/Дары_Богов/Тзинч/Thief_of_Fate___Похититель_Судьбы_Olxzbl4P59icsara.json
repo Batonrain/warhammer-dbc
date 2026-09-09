@@ -126,8 +126,8 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Вор Судьбы",
-              "code": "await ChatMessage.create(ChatMessage.applyRollMode({\n  speaker,\n  content: `<div class=\"wh-roll-result\">\n    <div class=\"roll-header\">Вор Судьбы — ${actor.name}</div>\n    <div class=\"roll-threshold\">Чемпион чувствует трату Очков Бесчестия/Судьбы в радиусе Cor м. Реакция: тест Inf+0 — Успех отменяет эффект засечённой траты и восстанавливает 1 ранее потраченное Очко Бесчестия чемпиона; Провал — тест W+0 или потеря 1 Очка Бесчестия.</div>\n  </div>`\n}, game.settings.get(\"core\", \"rollMode\")));",
+              "label": "Похититель Судьбы",
+              "code": "await ChatMessage.create(ChatMessage.applyRollMode({\n  speaker,\n  content: `<div class=\"wh-roll-result\">\n    <div class=\"roll-header\">Похититель Судьбы — ${actor.name}</div>\n    <div class=\"roll-threshold\">Чемпион чувствует трату Очков Бесчестия/Судьбы в радиусе Cor м. Реакция: тест Inf+0 — Успех отменяет эффект засечённой траты и восстанавливает 1 ранее потраченное Очко Бесчестия чемпиона; Провал — тест W+0 или потеря 1 Очка Бесчестия.</div>\n  </div>`\n}, game.settings.get(\"core\", \"rollMode\")));",
               "scriptThrottleUnit": "",
               "scriptThrottleMax": 1,
               "when": {

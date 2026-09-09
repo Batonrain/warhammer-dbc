@@ -26,6 +26,7 @@ import { dualWieldMods, dualWieldActionType, missingSpecs, targetSpreadExceeded,
 import { allGunsBlazingMod } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
+import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -298,13 +299,23 @@ export function openAttackDialog(ctx) {
             // — раньше здесь стояло жёсткое "single" всегда, и условие Таланта
             // «обе руки бьют очередью» не могло выполниться в принципе.
             const offRofMode = offMelee ? "melee" : (f.offRofMode || "single");
+            // Порог второй руки (wdbc-rhr): её собственная характеристика,
+            // Бонус оружия, Свойства, Модификации, Качество и Тренировка — до
+            // этого сюда уходил порог ПЕРВОГО оружия целиком, и меч в левой
+            // руке катился по навыку стрельбы с бонусами пистолета. Обстановка
+            // (укрытие, стойка цели, приём, прицеливание) считается на атаку
+            // целиком и остаётся общей, поэтому меняется только оружейная
+            // часть — разницей, а не пересчётом всего порога.
+            const offChar = offMelee ? "ws" : "bs";
+            const offPart = weaponThresholdPart(actor, dualOff, offChar)
+                          - weaponThresholdPart(actor, item, f.char);
             // Модификатор теста Подавления цели — считается ДО броска: обе
             // атаки пары нужны для условия, а второй карточке они обе уже
             // известны (f.rofMode — первая рука, offRofMode — вторая).
             const agbMod = allGunsBlazingMod(actor, f.rofMode, offRofMode);
             await _executeAttackRoll(
               actor, dualOff, offMelee ? "ws" : "bs",
-              thresholdOf(f) + dw.offHand,
+              thresholdOf(f) + dw.offHand + offPart,
               offRofMode,
               undefined,
               {
