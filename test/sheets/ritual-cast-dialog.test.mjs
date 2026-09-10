@@ -265,6 +265,71 @@ describe("диалог «Провести ритуал»", () => {
     });
   });
 
+  // wdbc-1rno, «Рыцарь Бога»: третий книжный исход того же noTest-ритуала
+  // (item.system.asMount) — вселение демона в уже имеющегося скакуна/технику
+  // персонажа (actor.system.mount.uuid, панель «ВЕРХОМ»), а не в Миньона/оружие.
+  // showRitualCastDialog становится настоящей async-функцией на этой ветке
+  // (await fromUuid) — нужен один тик (flush), прежде чем читать captured.dialog.
+  describe("asMount — вселение демона в скакуна/технику персонажа", () => {
+    const flush = () => new Promise(r => setTimeout(r, 0));
+    const realFromUuid = globalThis.fromUuid;
+    afterEach(() => { globalThis.fromUuid = realFromUuid; });
+
+    const actorWithMount = (mount) => {
+      const a = actor();
+      a.system.mount = mount ? { uuid: "Actor.mount-1" } : undefined;
+      globalThis.fromUuid = async uuid => (uuid === "Actor.mount-1" ? mount : null);
+      return a;
+    };
+
+    it("текущий скакун с панели «ВЕРХОМ» показан в диалоге", async () => {
+      const promise = showRitualCastDialog(actorWithMount({ uuid: "Actor.mount-1", name: "Джаггернаут" }), item({
+        failureType: "summon", noTest: true, asMount: true, demonName: "Джаггернаут", demonGod: "khorne"
+      }));
+      await flush();
+
+      expect(captured.dialog.content).toContain("id=\"rit-target-mount\"");
+      expect(captured.dialog.content).toContain("Джаггернаут");
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0" }));
+      await promise;
+    });
+
+    it("нет скакуна на панели «ВЕРХОМ» — подсказка вместо строки скакуна", async () => {
+      const promise = showRitualCastDialog(actorWithMount(null), item({
+        failureType: "summon", noTest: true, asMount: true, demonName: "Джаггернаут"
+      }));
+      await flush();
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-mount\"");
+      expect(captured.dialog.content).toContain("Истинной Форме");
+      await captured.press("cast", fakeForm({ "#rit-assistants": "0" }));
+      await promise;
+    });
+
+    it("не asMount — блока «Скакун/техника-сосуд» нет вовсе", async () => {
+      showRitualCastDialog(actor(), item({ failureType: "summon", noTest: true, asMinion: true, demonName: "Кровопускатель" }));
+
+      expect(captured.dialog.content).not.toContain("id=\"rit-target-mount\"");
+      expect(captured.dialog.content).not.toContain("Скакун/техника-сосуд");
+    });
+
+    it("выбранный скакун доезжает до карточки, а не Миньон/оружие", async () => {
+      const promise = showRitualCastDialog(actorWithMount({ uuid: "Actor.mount-1", name: "Джаггернаут" }), item({
+        failureType: "summon", noTest: true, asMount: true, demonName: "Джаггернаут", demonGod: "khorne"
+      }));
+      await flush();
+      await captured.press("cast", fakeForm({
+        "#rit-assistants": "0", "#rit-target-mount": "Actor.mount-1",
+        "#rit-demon-name": "Джаггернаут", "#rit-demon-god": "khorne"
+      }));
+      await promise;
+
+      expect(captured.chat[0].content).toContain("вселён в скакуна/технику");
+      expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      expect(captured.chat[0].content).not.toContain("токен размещён");
+    });
+  });
+
   it("не summon-like тип — блока «Демон» нет и подписи демона в карточке не будет", async () => {
     const promise = showRitualCastDialog(actor(), item({ failureType: "exorcism", testMod: 50 }));
     captured.dice = [1];

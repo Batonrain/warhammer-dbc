@@ -33,12 +33,9 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { hasRuleText } from "./rule-text-fields.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-
-/** Поля, где вообще может жить текст правила (перечень из тикета). */
-export const TEXT_FIELDS =
-  ["description", "benefit", "effect", "notes", "special", "reminder", "afterEffect"];
 
 /** Паки, где книга заведомо даёт прозу. */
 export const DEFAULT_PACKS = ["elite-archetypes", "factions", "archetypes"];
@@ -110,9 +107,7 @@ export function run({ dry = true, packs = DEFAULT_PACKS } = {}) {
       let doc;
       try { doc = JSON.parse(fs.readFileSync(file, "utf8")); } catch { continue; }
       if (!doc?.system) continue;
-      const hasText = TEXT_FIELDS.some(k =>
-        String(doc.system[k] || "").replace(/<[^>]+>/g, "").trim());
-      if (hasText) continue;
+      if (hasRuleText(doc)) continue;
 
       const russian = String(doc.name || "").split("/").pop().trim();
       const hit = findProse(pages, russian);

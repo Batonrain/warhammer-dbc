@@ -31,7 +31,12 @@ PYTHONIOENCODING=utf-8 python tools/book-pdf-diff.py <slug> --pages=400-420 --ou
 **2. Глазами — только подозрительные страницы.**
 
 ```bash
-python C:\Users\Derbius\.claude\tools\pdfshot.py <файл.pdf> <страницы> [--dpi=200] [--half=top|bottom] [--crop=x0,y0,x1,y1] [--out=ДИР]
+# pdfshot.py — ВНЕШНИЙ инструмент, его нет в репозитории (в tools/ лежат
+# pdf-text.py и pdf-art.py). Путь у каждого свой: Windows —
+# %USERPROFILE%/.claude/tools/pdfshot.py, Linux/macOS —
+# ~/.claude/tools/pdfshot.py. Если файла нет — скажи об этом вызвавшей
+# сессии и работай по текстовому слою, не подставляй чужой путь.
+python <путь к pdfshot.py> <файл.pdf> <страницы> [--dpi=200] [--half=top|bottom] [--crop=x0,y0,x1,y1] [--out=ДИР]
 ```
 
 Картинка стоит контекста — не рендерить главы пачками. Порядок: сначала картинка (понять структуру и границы блока), потом текстовый слой той же страницы (скопировать формулировку точно, без опечатки распознавания).

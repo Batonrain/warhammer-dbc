@@ -80,12 +80,17 @@ export async function defaultBindArmigerWeaponFn(weaponUuid, demonName, god) {
   if (game.user?.isGM) {
     const res = await bindArmigerWeapon(weaponUuid, demonName, god);
     if (!res.ok) ui.notifications?.warn(res.reason);
-    return;
+    // Результат нужен карточке ритуала (apps/ritual-cast.mjs) — она читает
+    // res?.ok, и без возврата печатала «Оруженосец вселён в оружие» даже при
+    // отказе, а сам отказ видел только нажавший, всплывашкой (wdbc-his).
+    return res;
   }
   if (!game.users?.activeGM) {
     ui.notifications?.warn("Нет активного Мастера — оружие не осквернено, свяжите демона вручную во вкладке «Осквернение».");
-    return;
+    return { ok: false, reason: "Нет активного Мастера." };
   }
   game.socket?.emit("system.warhammer-dbc",
     { action: "bindArmigerWeapon", userId: game.user?.id, weaponUuid, demonName, god });
+  // За сокетом результат недоступен по устройству: вселение выполнит ГМ у себя.
+  return { ok: true, relayed: true };
 }

@@ -23,6 +23,8 @@ import { implantMech }                               from "../constants/implant-
 import { susAnHealButtonHtml, useSusAnHeal }         from "../apps/sus-an-heal.mjs";
 import { tranceButtonHtml, useTrance }               from "../apps/armour-history-trance.mjs";
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
+import { bloodFlameButtonHtml, useBloodFlame }       from "../apps/blood-flame.mjs";
+import { handOfKhorneButtonHtml, useHandOfKhorne }   from "../apps/hand-of-khorne.mjs";
 import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
@@ -989,8 +991,13 @@ export class WarhammerItemSheet
       context.system.notes || "", { relativeTo: this.item, secrets: this.item.isOwner });
 
     context.system.balanceStr      = String(context.system.balance      ?? "0");
-    // availabilityStr всегда строка для корректного сравнения в HBS
-    context.system.availabilityStr = String(context.system.availability ?? "0");
+    // availabilityStr всегда строка для корректного сравнения в HBS.
+    // null (только у impland, wdbc-wc3 — «в книге не указано») даёт пустую
+    // строку: в шаблоне ей соответствует отдельный вариант «—», а не «0
+    // Дефицит». У weapon/armor/ammunition поле не обнуляемое, для них ничего
+    // не меняется.
+    context.system.availabilityStr =
+      context.system.availability == null ? "" : String(context.system.availability);
     context.system.weaponTypesRaw  = (context.system.weaponTypes || []).join(", ");
 
     // ── Друкхарийская броня с генератором поля: режимы и их доступность ────────
@@ -1103,6 +1110,11 @@ export class WarhammerItemSheet
     // пусто у остальных Мутаций (isXItem проверяет имя, не capabilityKey).
     if (this.item.type === "mutation") {
       context.handOfDeathHtml = handOfDeathButtonHtml(this.item, this.item.parent);
+      // Кровавое Пламя (wdbc-1rno) — выбор своего рукопашного R-оружия,
+      // тот же принцип, что у Руки Смерти выше.
+      context.bloodFlameHtml = bloodFlameButtonHtml(this.item, this.item.parent);
+      // Длань Кхорна (wdbc-1rno) — выбор руки, тот же принцип, что выше.
+      context.handOfKhorneHtml = handOfKhorneButtonHtml(this.item, this.item.parent);
       // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
       context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
@@ -1902,6 +1914,20 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfDeath(actor, this.item);
+    });
+
+    // ── Дар «Кровавое Пламя»: разжечь на выбранном оружии (wdbc-1rno) ───────
+    on(".blood-flame-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useBloodFlame(actor, this.item);
+    });
+
+    // ── Дар «Длань Кхорна»: выбор руки (wdbc-1rno) ───────────────────────────
+    on(".hand-of-khorne-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useHandOfKhorne(actor, this.item);
     });
 
     // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────
@@ -2940,7 +2966,10 @@ export class WarhammerItemSheet
     // Для других предметов — ручной handler через класс .availability-select
     if (this.item.type !== "drug") {
       on(".availability-select", "change", ev => {
-        this.item.update({ "system.availability": parseInt(ev.currentTarget.value) });
+        // Пустое значение — вариант «— не указано» (wdbc-wc3): пишем null, а
+        // не 0, иначе «в книге не сказано» превратилось бы в «Дефицит».
+        const raw = ev.currentTarget.value;
+        this.item.update({ "system.availability": raw === "" ? null : parseInt(raw) });
       });
     } else {
       // Для drug: принудительно конвертируем строку в число при сохранении

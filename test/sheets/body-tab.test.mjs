@@ -43,7 +43,8 @@ function actor({ vitals = {}, items = [] } = {}) {
     updates: [],
     flags,
     update: async data => { a.updates.push(data); return data; },
-    setFlag: async (_scope, key, value) => { flags[key] = value; return value; }
+    setFlag: async (_scope, key, value) => { flags[key] = value; return value; },
+    getFlag: (_scope, key) => flags[key]
   };
   return a;
 }
@@ -107,6 +108,72 @@ describe("body tab helpers", () => {
   });
 
   it("setDeceased пишет флаг констатации смерти", async () => {
+    const a = actor();
+
+    await setDeceased(a, true);
+
+    expect(a.flags.deceased).toBe(true);
+  });
+});
+
+// wdbc-t4m/wdbc-665: setDeceased — ЕДИНСТВЕННАЯ точка, где система признаёт
+// смерть (ручная галочка на вкладке Тело и кнопка в крит-строке приходят
+// сюда). Раньше зачёт убийства Кровавому Пламени висел на обработчике кнопки:
+// обычная смерть счётчик не трогала вовсе, а второй клик по тому же трупу
+// давал ещё одно убийство (кнопку видят и ГМ, и владелец цели, каждый на
+// своём клиенте, а el.disabled живёт до перерисовки карточки).
+describe("setDeceased засчитывает убийство Кровавому Пламени", () => {
+  const NS = "warhammer-dbc";
+
+  function burningWeapon() {
+    const store = { bloodFlameActive: true, bloodFlameKills: 0 };
+    return {
+      uuid: "Item.weapon-1", type: "weapon", name: "Цепной топор",
+      getFlag: (_s, k) => store[k],
+      setFlag: async (_s, k, v) => { store[k] = v; },
+      _store: store
+    };
+  }
+
+  it("обычная смерть (галочка на вкладке Тело) — убийство засчитано", async () => {
+    const weapon = burningWeapon();
+    globalThis.fromUuid = async uuid => (uuid === weapon.uuid ? weapon : null);
+    const a = actor();
+    a.flags.lastDamageWeaponUuid = weapon.uuid;
+
+    await setDeceased(a, true);
+
+    expect(weapon._store.bloodFlameKills).toBe(1);
+  });
+
+  it("повторная констатация того же трупа убийство НЕ удваивает", async () => {
+    const weapon = burningWeapon();
+    globalThis.fromUuid = async uuid => (uuid === weapon.uuid ? weapon : null);
+    const a = actor();
+    a.flags.lastDamageWeaponUuid = weapon.uuid;
+
+    await setDeceased(a, true);
+    await setDeceased(a, true);
+    await setDeceased(a, true);
+
+    expect(weapon._store.bloodFlameKills).toBe(1);
+  });
+
+  it("воскресили и убили снова — засчитывается второе убийство", async () => {
+    const weapon = burningWeapon();
+    globalThis.fromUuid = async uuid => (uuid === weapon.uuid ? weapon : null);
+    const a = actor();
+    a.flags.lastDamageWeaponUuid = weapon.uuid;
+
+    await setDeceased(a, true);
+    await setDeceased(a, false);
+    await setDeceased(a, true);
+
+    expect(weapon._store.bloodFlameKills).toBe(2);
+  });
+
+  it("умер не от оружия (падение, яд) — счётчику нечего засчитывать", async () => {
+    globalThis.fromUuid = async () => null;
     const a = actor();
 
     await setDeceased(a, true);

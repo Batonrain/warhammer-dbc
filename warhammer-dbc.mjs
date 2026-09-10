@@ -54,6 +54,8 @@ import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
 import { cleanupGunArm } from "./module/apps/gun-arm.mjs";
 import { isGunArmGift } from "./module/rules/gun-arm.mjs";
 import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
+import { cleanupBloodFlame } from "./module/combat/blood-flame.mjs";
+import { isBloodFlameItem } from "./module/rules/blood-flame.mjs";
 import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
   from "./module/apps/cancerous-healing.mjs";
 import { reconcileFlayedToFit } from "./module/apps/flayed.mjs";
@@ -82,7 +84,9 @@ import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/a
 import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-settings.mjs";
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
+import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
+import { bindDemonMount } from "./module/apps/demon-mount.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
@@ -109,6 +113,8 @@ import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs"
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
+import { migrateImplantAvailability } from "./module/migrations/implant-availability.mjs";
+import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -475,6 +481,17 @@ Hooks.once("init", () => {
     scope: "world", config: false, type: Number, default: 0
   });
 
+  // Версия правки Размера Геносемени легиона у уже созданных Черт (одноразовая, wdbc-nesq)
+  game.settings.register("warhammer-dbc", "legionGeneSeedSizeVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия доливки книжных Доступности/вариантов Best.Q биоимплантам, выданным
+  // до PR #452 (одноразовая, wdbc-wc3)
+  game.settings.register("warhammer-dbc", "implantAvailabilityVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
   // Версия довыдачи носителей Механики Стремлениям, выбранным до автоматизации (одноразовая)
   game.settings.register("warhammer-dbc", "aspirationGrantsVersion", {
     scope: "world", config: false, type: Number, default: 0
@@ -756,8 +773,16 @@ Hooks.once("ready", () => {
         // создание Актора/Токена делает активный ГМ. asMinion (wdbc-1rno) —
         // призванный сразу привязывается Миньоном без слота к ритуалисту.
         const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "",
-          { asMinion: !!data.asMinion });
+          { asMinion: !!data.asMinion, veilThinner: !!data.veilThinner, startDestabilize: !!data.startDestabilize });
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
+        return;
+      }
+      if (data.action === "summonHunterHound") {
+        // Загонщик/The Hunter (wdbc-1rno, Кхорн) — тот же приём, что
+        // summonDemon выше: Бестиарий скрыт от игрока, спавн+метка+синк
+        // инициативы делает активный ГМ (module/combat/the-hunter.mjs).
+        const res = await spawnHunterHound(String(data.championUuid ?? ""), String(data.itemId ?? ""));
+        if (!res.ok) console.warn("Warhammer DBC | Загонщик:", res.reason);
         return;
       }
       if (data.action === "bindArmigerWeapon") {
@@ -766,6 +791,15 @@ Hooks.once("ready", () => {
         // игрока Бестиария, связывание пишет активный ГМ.
         const res = await bindArmigerWeapon(data.weaponUuid, String(data.demonName ?? "").slice(0, 200), data.god || "undivided");
         if (!res.ok) console.warn("Warhammer DBC | Демон-Оруженосец в оружие:", res.reason);
+        return;
+      }
+      if (data.action === "bindDemonMount") {
+        // Демон-скакун Рыцаря Бога в скакуна/технику (module/apps/demon-mount.mjs,
+        // wdbc-1rno) — тот же приём: Inf демона узнаётся из скрытого от игрока
+        // Бестиария, вселение пишет активный ГМ.
+        const riderActor = data.riderUuid ? await fromUuid(data.riderUuid).catch(() => null) : null;
+        const res = await bindDemonMount(data.mountUuid, riderActor, String(data.demonName ?? "").slice(0, 200), data.god || "undivided");
+        if (!res.ok) console.warn("Warhammer DBC | Демон-скакун Рыцаря Бога в скакуна/технику:", res.reason);
         return;
       }
       if (data.action === "vehicleStations") {
@@ -873,7 +907,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -969,6 +1003,30 @@ Hooks.once("ready", async () => {
     await migrateGunArmSource();
     await game.settings.set("warhammer-dbc", "gunArmSourceVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Рука-Пушка:", e); }
+});
+
+// ── Одноразовая правка: Размер Геносемени легиона у уже созданных Черт (wdbc-nesq) ──
+// Ручной перезапуск: game.warhammerDBC.migrateLegionGeneSeedSize()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "legionGeneSeedSizeVersion") || 0) >= VERSION) return;
+  try {
+    await migrateLegionGeneSeedSize();
+    await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
+});
+
+// ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
+// Ручной перезапуск: game.warhammerDBC.migrateImplantAvailability()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "implantAvailabilityVersion") || 0) >= VERSION) return;
+  try {
+    await migrateImplantAvailability();
+    await game.settings.set("warhammer-dbc", "implantAvailabilityVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Доливка полей биоимплантов:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────
@@ -1786,6 +1844,11 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   // «вросло» остаётся на оружии, и вернувшийся другим предметом Дар начал бы
   // действовать на него сам собой, без выбора ГМа.
   if (isGunArmGift(item)) { await cleanupGunArm(actor, item.id); return; }
+  // Дар «Кровавое Пламя» (wdbc-t4m): флаги горения и добавленные Power Field/
+  // Flame лежат на ОРУЖИИ, а Дар — отдельный предмет. Без уборки снятие Дара
+  // оставляло оружие силовым, пламенным и с накопленным бонусом урона
+  // навсегда — снять это было нечем, кроме ручной правки предмета.
+  if (isBloodFlameItem(item)) { await cleanupBloodFlame(actor, item.id); return; }
   if (item.type === "weapon" && item.getFlag("warhammer-dbc", "handOfDeathSource")) {
     const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
     if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });

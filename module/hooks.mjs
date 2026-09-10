@@ -78,6 +78,10 @@ import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart }
   from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
+import { setDeceased } from "./sheets/tabs/body.mjs";
+import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
+import { huntReturnToWarpButtonHtml } from "./combat/the-hunter.mjs";
+import { isHunterHoundActor } from "./rules/the-hunter.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
 import { clearBeastmanShamanTempEffects, clearHexMarkedPreyMarks } from "./combat/beastman-shaman.mjs";
@@ -423,7 +427,7 @@ export function registerHooks() {
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         await _performParry(actor, extraMod,
-          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee);
+          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, ds.attackerWeaponUuid || "");
       });
     });
 
@@ -754,6 +758,10 @@ export function registerHooks() {
           hitLocation:  ds.hitLocation || "Торс",
           side:         ds.vehicleSide || "",   // сторона брони техники (из окна атаки)
           weaponName:   ds.weaponName  || "",
+          // Кровавое Пламя (wdbc-1rno): «убил этим оружием» — deathButtonHtml
+          // несёт weaponUuid дальше, module/combat/blood-flame.mjs читает его
+          // по клику «Констатировать смерть».
+          weaponUuid:   ds.weaponUuid  || "",
           attackerName: ds.attacker    || "",
           attackerUuid: ds.attackerUuid || "",
           felling:      parseInt(ds.felling || "0"),
@@ -1069,6 +1077,62 @@ export function registerHooks() {
         await applyCritEffectPill(actor, {
           key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1"
         });
+      });
+    });
+
+    // Констатировать смерть по крит-строке, которая прямо это утверждает
+    // (wdbc-1rno, 09.09.2026, deathButtonHtml) — тот же флаг
+    // flags.warhammer-dbc.deceased, что и ручная галочка на вкладке Тело
+    // (module/sheets/tabs/body.mjs::setDeceased), только по факту чтения
+    // конкретной книжной строки, а не отдельного похода на другую вкладку.
+    html.querySelectorAll(".wh-crit-death-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) {
+          return ui.notifications.warn("Констатировать смерть может владелец цели (или ГМ).");
+        }
+        el.disabled = true;
+        // Убийство Кровавому Пламени засчитывает сама setDeceased (sheets/
+        // tabs/body.mjs) — единственная точка, где система признаёт смерть, и
+        // только на переходе «был жив → мёртв». Раньше зачёт висел здесь, и
+        // (а) обычная смерть его не давала вовсе, (б) второй клик по тому же
+        // трупу давал ещё одно убийство: кнопку видят и ГМ, и владелец цели,
+        // каждый на своём клиенте, а el.disabled живёт до перерисовки карточки.
+        await setDeceased(actor, true);
+        const weapon = el.dataset.weaponUuid ? await fromUuid(el.dataset.weaponUuid).catch(() => null) : null;
+        // Загонщик/The Hunter (wdbc-1rno): weapon.parent — это АКТОР, чьим
+        // естественным оружием (Когти/Укус/Хвост) нанесён удар. Если это
+        // Гончая Плоти, призванная именно Загонщиком (HUNTER_HOUND_FLAG),
+        // добыча книжно поймана — кнопка возврата в Варп появляется сама,
+        // без отдельной ручной процедуры (см. разбор пробела, 09.09.2026).
+        const killer = weapon?.parent ?? weapon?.actor ?? null;
+        const warpBtn = isHunterHoundActor(killer) ? huntReturnToWarpButtonHtml(killer) : "";
+        await postTestCard(actor, {
+          icon: rollIcon("skull", "#ff6b6b"), title: `Смерть констатирована — ${esc(actor.name)}`,
+          outcome: `<div class="roll-outcome"><span class="roll-failure">Кардиомонитор остановлен — доступно Спасение/Воскрешение на вкладке Тело.</span></div>`,
+          lines: [warpBtn]
+        }, { sound: false });
+      });
+    });
+
+    // Загонщик/The Hunter (wdbc-1rno) — «убив добычу, возвращается в Варп»:
+    // кнопка появляется в карточке «Констатировать смерть» сама (см. выше),
+    // удаление — тот же паттерн подтверждения, что у демона-дестабилизации.
+    html.querySelectorAll(".wh-hunter-warp-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        if (!game.user.isGM) return;
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Актор уже удалён или не найден."); return; }
+        const ok = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Гончая возвращается в Варп" },
+          content: `<p>Удалить актора <b>${esc(actor.name)}</b>? Действие необратимо.</p>`,
+          yes: { label: "Удалить" }, no: { label: "Отмена" }
+        });
+        if (ok) await actor.delete();
       });
     });
 
@@ -1831,6 +1895,10 @@ function _attachFateContextMenu(message, html) {
     // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
     // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
     await clearReformationSongBuffs(combat);
+    // Кровавое Пламя (wdbc-1rno): в отличие от Reformation Song выше, книга
+    // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
+    // делает (не только снимает временные свойства).
+    await clearBloodFlameBuffs(combat);
     // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
     await clearHexMarkedPreyMarks(combat);
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
@@ -1860,6 +1928,12 @@ function _attachFateContextMenu(message, html) {
       // задан), и по одному worldTime срок в бою не истекал вовсе (wdbc-6dk).
       if (combatant.actor)
         await processEyeOfChallengeDeadline(combatant.actor, { worldTime: game.time.worldTime, combat });
+      // Дестабилизация формы демона (wdbc-1rno, Рыцарь Бога) — по той же
+      // причине: при Завесе ниже единицы книжный срок задан в РАУНДАХ, а
+      // Раунд worldTime не двигает. dt здесь ноль — время и правда не шло,
+      // сдвигать «паузой верхом» нечего.
+      if (combatant.actor)
+        await processDestabilizeTick(combatant.actor, game.time.worldTime, 0, combat);
     }
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
@@ -1877,7 +1951,7 @@ function _attachFateContextMenu(message, html) {
       // Дестабилизация формы демона (wdbc-1rno, Рыцарь Бога): нужен именно
       // dt хука (не пересчитанный самим worldTime) — пока Хозяин верхом,
       // срок сдвигается на РОВНО прошедшее время, а не сбрасывается заново.
-      await processDestabilizeTick(actor, game.time.worldTime, dt);
+      await processDestabilizeTick(actor, game.time.worldTime, dt, game.combat ?? null);
       // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
       // по той же причине, что временные выдачи Черт выше: они привязаны к
       // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно
@@ -1966,7 +2040,8 @@ function _attachFateContextMenu(message, html) {
     const nextCombatant = combat.combatant;
     const prevId = _lastTurnCombatant.get(combat.id);
     if (prevId && prevId !== nextCombatant?.id) {
-      const prevActor = combat.combatants.get(prevId)?.actor;
+      const prevCombatant = combat.combatants.get(prevId);
+      const prevActor = prevCombatant?.actor;
       if (prevActor) {
         await applyTurnEndStanceEffects(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
@@ -1982,10 +2057,12 @@ function _attachFateContextMenu(message, html) {
         // Just the Light/Лишь Свет (wdbc-1rno): щит-дефлектор до начала
         // следующего Хода, если весь этот Ход ушёл на движение.
         await processJustTheLightTurnEnd(prevActor);
-        // Щит Праздности/Дар Нургла (wdbc-1rno): не перегружающийся щит-
-        // дефлектор 1-77 (1-99), если Ход закончен с непотраченным
-        // полудействием — тот же такт, что и Лишь Свет выше.
-        await processTurnStateShieldsTurnEnd(prevActor);
+        // Щит Праздности/Дар Нургла и Кровопомазанник/Дар Кхорна (wdbc-1rno):
+        // не перегружающийся щит-дефлектор до начала следующего своего Хода —
+        // тот же такт, что и Лишь Свет выше. Кровопомазаннику нужен токен
+        // (геометрия рукопашного контакта, combat/free-attack.mjs), Щиту
+        // Праздности — нет, поэтому передаётся всегда, вторым необязательным.
+        await processTurnStateShieldsTurnEnd(prevActor, prevCombatant.token);
       }
     }
     if (nextCombatant?.actor) {

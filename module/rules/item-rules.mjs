@@ -188,7 +188,19 @@ function ruleFromEntry(item, entry, groupId = null) {
         // Избегание» (Локус Кровопролития), «заставить цель соблазнения
         // перебросить встречный тест» (Локус Очарования). Без пометки демон
         // перебрасывал бы собственный бросок, то есть ровно наоборот.
-        who: entry.rerollWho === "target" ? "target" : "self"
+        //
+        // who:"opponent" — обратное направление (Уравнитель, Дар Нургла):
+        // запись живёт на ЗАЩИЩАЮЩЕМСЯ и навязывает переброс АТАКУЮЩЕМУ на его
+        // же броске. Своей пометки у него не было, и он сваливался в "self" —
+        // то есть попадал к атакующему в список ДОБРОВОЛЬНЫХ перебросов
+        // радиокнопкой, по умолчанию снятой. Наказание, предложенное
+        // наказуемому на выбор, за столом не срабатывает никогда, а заодно
+        // вытесняло из единственного слота собственный полезный переброс
+        // атакующего. Отдельное значение нужно, чтобы sheets/attack/dialog.mjs
+        // применил его без спроса — тем же приёмом, что forcedDefenceReroll.
+        who: entry.rerollWho === "target"   ? "target"
+           : entry.rerollWho === "opponent" ? "opponent"
+           : "self"
       }]
     };
   }
@@ -362,6 +374,73 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
   for (const item of items || []) {
     if (!isActive(item)) continue;
     for (const group of mechanicsOf(item)) walk(item, group.entries, group.operator, group.id);
+  }
+  return out;
+}
+
+/**
+ * Переброс, который ДРУГОЙ актор навязывает МНЕ прямо на моём броске —
+ * «Уравнитель» (wdbc-1rno, Дар Нургла): «противник, чья БАЗОВАЯ Характеристика
+ * для этой атаки выше моей, должен перебрасывать Успехи».
+ *
+ * Направление обратное тому, что уже есть у Локуса Кровопролития/Очарования
+ * (`rerollWho:"target"` — СВОЙ бросок навязывает переброс чужому, доставка
+ * вручную через attack-dialog.mjs/attack-card.mjs). Здесь запись живёт на
+ * ЗАЩИЩАЮЩЕМСЯ (`ctx.targetActor`), а сработать обязана НА БРОСКЕ атакующего
+ * без ручной галочки последнего — обычный источник "items"
+ * (rulesFromItemMechanics) читает только СОБСТВЕННЫЕ предметы актора, поэтому
+ * нужен отдельный источник (registerRuleSource, sources.mjs), читающий чужие.
+ *
+ * `rerollWho:"opponent"` — третье значение поля (третье, не второе: не путать
+ * с "target"), с иной семантикой и путём доставки. Сравнение характеристик —
+ * фиксированное поведение самого маркера, не отдельный предикат (dbc-workflow:
+ * «не вводить предикат там, где хватает значения») — им Дар и назван.
+ *
+ * Сравниваются БАЗОВЫЕ значения (`total`, книжное WS/BS/… «45»), не Бонус
+ * (`bonus`, «4») — ровно так, как написано в книге («базовая Характеристика»).
+ * Строго «выше» (`>`), не «не ниже» — при равных Характеристиках книга
+ * переброса не даёт.
+ *
+ * Работает только там, где `ctx.char` уже известен на момент сбора правил
+ * (Атака — attack-dialog.mjs, обычный тест Характеристики/Навыка). Общий
+ * встречный тест (`rerollScope:"opposed"`) сюда осознанно не входит: «Вид
+ * теста» игрок выбирает УЖЕ в диалоге, после того как ctx собран (test-kind.mjs),
+ * и опоздавшего внутрь «встречный» опереться не на что — честный пробел,
+ * отмечен в capabilities.mjs у оставшегося capability-ключа записи.
+ */
+export function opposedTargetRerollRules(actor, ctx = {}, isActive = () => true) {
+  const target = ctx?.targetActor;
+  const charKey = String(ctx?.char || "").trim();
+  if (!target || !actor || !charKey) return [];
+  const mine   = Number(actor.system?.characteristics?.[charKey]?.total) || 0;
+  const theirs = Number(target.system?.characteristics?.[charKey]?.total) || 0;
+  if (!(mine > theirs)) return [];
+
+  const out = [];
+  // Тот же обход, что у rulesFromItemMechanics выше, и по тем же причинам:
+  // ИЛИ-ветка не просматривается (выбор в ней делается один раз диалогом при
+  // выдаче, переигрывать его на каждом броске нельзя — иначе сработала бы
+  // невыбранная половина «выбери одно из двух»).
+  const walk = (item, entries, operator) => {
+    if (operator === "OR") return;
+    for (const entry of entries || []) {
+      if (entry?.kind === "group" && entry.group) {
+        walk(item, entry.group.entries, entry.group.operator);
+        continue;
+      }
+      if (entry?.kind !== "reroll" || entry.rerollWho !== "opponent") continue;
+      if (!entryWhenOk(target, entry, item)) continue;
+      const rule = ruleFromEntry(item, entry);
+      if (rule) out.push(rule);
+    }
+  };
+  for (const item of target.items ?? []) {
+    // Тот же рубильник, что гасит выдачи и эффекты предмета: не вживлённый
+    // имплант и снятая модификация правил не дают (шапка этого файла).
+    // Передаётся параметром, как и у rulesFromItemMechanics: прямой импорт
+    // apps/effects.mjs сюда завёл бы круговую зависимость.
+    if (!isActive(item)) continue;
+    for (const group of mechanicsOf(item)) walk(item, group.entries, group.operator);
   }
   return out;
 }

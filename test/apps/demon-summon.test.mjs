@@ -40,9 +40,17 @@ beforeEach(() => {
   globalThis.game.scenes = { current: null };
   createdActors = [];
   globalThis.Actor.create = async data => {
+    const flags = {};
     const actor = {
       ...data, name: data.name, uuid: `Actor.${data.name}`,
-      getTokenDocument: async ({ x, y }) => ({ toObject: () => ({ name: data.name, x, y }) })
+      getTokenDocument: async ({ x, y }) => ({ toObject: () => ({ name: data.name, x, y }) }),
+      // wdbc-1rno, Рыцарь Бога: startDestabilizeCountdown читает/пишет флаги
+      // на только что созданном Акторе — нужны и остальным существующим
+      // тестам этого файла не мешают (методы просто не вызываются без опции).
+      getFlag: (scope, key) => flags[`${scope}.${key}`],
+      setFlag: async (scope, key, value) => { flags[`${scope}.${key}`] = value; },
+      unsetFlag: async (scope, key) => { delete flags[`${scope}.${key}`]; },
+      _flags: flags
     };
     createdActors.push(actor);
     return actor;
@@ -172,16 +180,33 @@ describe("поиск и создание демона на сцене (spawnDemo
       });
       globalThis.canvas.scene = stubScene();
 
-      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true, veilThinner: true });
 
       expect(createdActors[0].items).toEqual([{ type: "trait", name: "Thinner Veil" }]);
+    });
+
+    // wdbc-1rno: Черта «Тоньше Завесы» — ТОЛЬКО Инфернальный Оруженосец
+    // (veilThinner:true передан явно), не любой asMinion (Рыцарь Бога тем же
+    // путём НЕ должен её получать).
+    it("asMinion:true БЕЗ veilThinner — Черта НЕ выдаётся, хотя пак traits доступен", async () => {
+      globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Джаггернаут" }]));
+      globalThis.game.packs.set("warhammer-dbc.traits", {
+        getDocument: async id => (id === "ArmigerVeilThinX1a"
+          ? { toObject: () => ({ _id: "ArmigerVeilThinX1a", type: "trait", name: "Thinner Veil" }) } : null)
+      });
+      globalThis.canvas.scene = stubScene();
+
+      await spawnDemonOnScene("Джаггернаут", "Actor.champion-1", { asMinion: true });
+
+      expect(createdActors[0].items ?? []).toEqual([]);
+      expect(createdActors[0].flags?.["warhammer-dbc"]?.armigerBound).toBe(true); // это остаётся общим
     });
 
     it("нет пака traits или Черта не найдена — призыв не падает, просто без Черты", async () => {
       globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{ _id: "d1", name: "Кровопускатель" }]));
       globalThis.canvas.scene = stubScene();
 
-      const res = await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+      const res = await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true, veilThinner: true });
 
       expect(res.ok).toBe(true);
       expect(createdActors[0].items ?? []).toEqual([]);
@@ -196,12 +221,80 @@ describe("поиск и создание демона на сцене (spawnDemo
       });
       globalThis.canvas.scene = stubScene();
 
-      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+      await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true, veilThinner: true });
 
       expect(createdActors[0].items).toEqual([
         { type: "weapon", name: "Адский Клинок" }, { type: "trait", name: "Thinner Veil" }
       ]);
     });
+  });
+});
+
+// wdbc-1rno, Рыцарь Бога: демон, призванный в Истинную Форму, получает
+// реальный тикающий срок дестабилизации (module/rules/demon-destabilize.mjs,
+// module/combat/demon-destabilize.mjs) — Оруженосец тем же путём (asMinion
+// без startDestabilize) его НЕ получает вовсе (см. соседний describe выше).
+describe("startDestabilize — Рыцарь Бога запускает срок дестабилизации", () => {
+  it("startDestabilize:true — актор получает флаг destabilize с дедлайном", async () => {
+    globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{
+      _id: "d1", name: "Джаггернаут",
+      system: { characteristics: { wp: { bonus: 4 }, inf: { bonus: 2 } } }
+    }]));
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 1000 };
+    captured.nextRoll = 5; // 1d10 = 5 → 5 + 2×4 − 2 = 11 Раундов (Завеса 0 → 6с/ед.)
+
+    await spawnDemonOnScene("Джаггернаут", "Actor.champion-1", { asMinion: true, startDestabilize: true });
+
+    expect(createdActors[0]._flags["warhammer-dbc.destabilize"])
+      .toEqual({ deadlineAt: 1000 + 11 * 6, combatId: null, deadlineRound: null });
+  });
+
+  it("без startDestabilize (по умолчанию, Оруженосец) — флаг destabilize не ставится", async () => {
+    globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{
+      _id: "d1", name: "Кровопускатель",
+      system: { characteristics: { wp: { bonus: 4 }, inf: { bonus: 0 } } }
+    }]));
+    globalThis.canvas.scene = stubScene();
+
+    await spawnDemonOnScene("Кровопускатель", "Actor.champion-1", { asMinion: true });
+
+    expect(createdActors[0]._flags["warhammer-dbc.destabilize"]).toBeUndefined();
+  });
+
+  it("минимум брошенного применяется (книга «мин. 2») — низкий бросок не даёт срок короче минимума", async () => {
+    globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{
+      _id: "d1", name: "Джаггернаут",
+      system: { characteristics: { wp: { bonus: 0 }, inf: { bonus: 10 } } }
+    }]));
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 0 };
+    captured.nextRoll = 1; // 1 + 0 − 10 = −9 → минимум 2
+
+    await spawnDemonOnScene("Джаггернаут", "Actor.champion-1", { startDestabilize: true });
+
+    expect(createdActors[0]._flags["warhammer-dbc.destabilize"])
+      .toEqual({ deadlineAt: 2 * 6, combatId: null, deadlineRound: null });
+  });
+
+  it("defaultSpawnDemonFn доносит startDestabilize и до прямого вызова, и до сокет-релея", async () => {
+    globalThis.game.user = { isGM: true };
+    globalThis.game.packs.set("warhammer-dbc.bestiary", bestiaryPack([{
+      _id: "d1", name: "Джаггернаут", system: { characteristics: { wp: { bonus: 2 }, inf: { bonus: 0 } } }
+    }]));
+    globalThis.canvas.scene = stubScene();
+    globalThis.game.time = { worldTime: 0 };
+    captured.nextRoll = 3;
+
+    await defaultSpawnDemonFn("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+    expect(createdActors[0]?._flags["warhammer-dbc.destabilize"]).toBeTruthy();
+
+    globalThis.game.user = { isGM: false, id: "user-1" };
+    globalThis.game.users.activeGM = { id: "gm-1" };
+    const emitted = [];
+    globalThis.game.socket = { emit: (channel, data) => emitted.push({ channel, data }) };
+    await defaultSpawnDemonFn("Джаггернаут", "Actor.rit-1", { startDestabilize: true });
+    expect(emitted[0].data.startDestabilize).toBe(true);
   });
 });
 
@@ -228,7 +321,7 @@ describe("маршрутизация вызова (defaultSpawnDemonFn)", () => 
 
     expect(emitted).toEqual([{
       channel: "system.warhammer-dbc",
-      data: { action: "summonDemon", userId: "user-1", name: "Кровожад", ritualistUuid: "Actor.rit-1", asMinion: false }
+      data: { action: "summonDemon", userId: "user-1", name: "Кровожад", ritualistUuid: "Actor.rit-1", asMinion: false, veilThinner: false, startDestabilize: false }
     }]);
   });
 

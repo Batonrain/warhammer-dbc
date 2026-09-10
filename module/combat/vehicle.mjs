@@ -11,7 +11,7 @@ import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE, VEHICLE_BREAKAGES } from "../constants/vehicle.mjs";
 import { DAMAGE_TYPES }    from "../constants/items.mjs";
-import { ablativeDamage }  from "../rules/mount.mjs";
+import { ablativeDamage, mountRamExtraDie, mountRangedApBonus }  from "../rules/mount.mjs";
 import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
   from "../rules/dreadnought.mjs";
 import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
@@ -238,9 +238,20 @@ export async function showRamDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-async function _resolveRam(actor, fast, targetBigger) {
+// _resolveRam экспортируется ТОЛЬКО ради теста (test/combat/knight-of-god-
+// mount.mjs — доп. кубик урона Тарана у одержимого скакуна): внутри системы
+// её зовёт лишь этот файл. Подчёркивание в имени и есть пометка «внутренняя»,
+// но без этой строки экспорт выглядел бы полноценным API (wdbc-e9e).
+export async function _resolveRam(actor, fast, targetBigger) {
   const frontAP = Number(actor.system.armour?.front) || 0;
-  const roll    = await new Roll(fast ? "1d10 + 1d10" : "1d10").evaluate();
+  // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в эту технику, даёт
+  // «доп. кубик урона... на урон от Тарана» — фиксированный лишний 1d10,
+  // складывается с «+1d10 за скорость ≥1,5 SPD», не заменяет его.
+  const ramBonus = mountRamExtraDie(actor);
+  const dice = ["1d10"];
+  if (fast) dice.push("1d10");
+  if (ramBonus) dice.push("1d10");
+  const roll    = await new Roll(dice.join(" + ")).evaluate();
   const dmg     = frontAP + roll.total;
 
   const applyBtn = `
@@ -269,10 +280,11 @@ async function _resolveRam(actor, fast, targetBigger) {
     : `<div class="roll-threshold" style="font-size:0.82em;">Цель ≤ машины: её отбрасывает на &lt;Урон до поглощения / 10 × (1 + Размер машины − Размер цели)&gt; м; меньшую на 1+ Размер — тест или сбита с ног.</div>`;
 
   // Строка броска здесь своя: это бросок УРОНА («2×1d10: 12»), а не теста.
+  const diceLabel = `${dice.length}×1d10`;
   await postTestCard(actor, {
     icon: rollIcon("burst","#ff8a3a"), title: `Таран — ${esc(actor.name)}`,
-    threshold: `<div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b>${fast ? " (1d10+1d10)" : " (1d10)"} = <b>${dmg}</b></div>`,
-    lines: [`<div class="roll-dice">${rollIcon("dice","#6fe6ff")}${fast ? "2×1d10" : "1d10"}: <b>${roll.total}</b></div>`],
+    threshold: `<div class="roll-threshold">Урон I(Cr): Лоб.AP <b>${frontAP}</b> + <b>${roll.total}</b> (${diceLabel}${ramBonus ? " — Рыцарь Кхорна: доп. кубик" : ""}) = <b>${dmg}</b></div>`,
+    lines: [`<div class="roll-dice">${rollIcon("dice","#6fe6ff")}${diceLabel}: <b>${roll.total}</b></div>`],
     sections: [bigNote, defenseBtns, applyBtn]
   }, { rolls: [roll] });
 }
@@ -374,7 +386,14 @@ export async function applyDamageToVehicle(actor, damageData) {
   // той же природы, что мод «Аблативная» — теряет 1 заряд с ЛЮБОГО
   // засчитанного попадания «от мины», а не по очкам поглощённого урона.
   const mineAblative = fromMine ? (Number(actor.system.structure?.ablative) || 0) : 0;
-  const ap = ((tf.daemonicAbsorb && !daemonicVulnerable) ? apCeramite + tf.daemonicAbsorb : apCeramite) + mineAblative;
+  // Рыцарь Кхорна (wdbc-1rno): «+8 AP от стрелковых атак» одержимому скакуну.
+  // Ритуал «Вселение Скакуна в Технику» прямо рассчитан на машину (apps/
+  // demon-mount.mjs отдельно обрабатывает mount.type === "vehicle"), но урон по
+  // технике уходит сюда РАНЬШЕ, чем combat/damage.mjs успевает добавить бонус —
+  // без этой строки обещанные книгой +8 машине не доставались вовсе.
+  const mountAP = damageData.melee ? 0 : mountRangedApBonus(actor);
+  const ap = ((tf.daemonicAbsorb && !daemonicVulnerable) ? apCeramite + tf.daemonicAbsorb : apCeramite)
+             + mineAblative + mountAP;
   const effAP   = Math.max(0, ap - (Number(penetration) || 0));
   const rawNet  = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
   // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой

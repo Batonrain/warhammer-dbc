@@ -158,8 +158,19 @@ export function promptBestQChoice(item) {
  * ведут себя одинаково.
  */
 export async function runBestQChoice(item) {
+  // Гейт стоит ЗДЕСЬ, в общей точке, а не у каждого входа: их два, и они не
+  // знают друг о друге — хук updateItem (warhammer-dbc.mjs) и кнопка листа
+  // (sheets/item-sheet.mjs). ГМ ставит Качество «Высшее» дропдауном, хук
+  // открывает окно; лист тем временем перерисовался, chosenEffects ещё пуст,
+  // кнопка «Выбрать эффект(ы)» видна — второе окно. Оба «Принять» брали базой
+  // ТЕКУЩУЮ Доступность, и она поднималась дважды, а chosenEffects
+  // перезаписывался вторым выбором (wdbc-wc3).
+  if (!needsBestQChoice(item)) return false;
   const counts = await promptBestQChoice(item);
   if (!counts) return false;
+  // Проверка повторно ПОСЛЕ диалога: пока игрок думал, второе окно могло уже
+  // записать выбор — тогда наша база Доступности устарела на единицу.
+  if (!needsBestQChoice(item)) return false;
   const update = bestQChoiceUpdate(item.system?.bestQualityEffects || [], counts, item.system?.availability);
   if (!update) return false;
   await item.update(update);

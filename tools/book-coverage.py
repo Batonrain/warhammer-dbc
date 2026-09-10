@@ -109,20 +109,24 @@ def src_docx(path):
     return [(os.path.basename(path), "\n".join(buf))]
 
 
-MD_IMAGE_REF = re.compile(r"^\[image\d+\]:\s*<data:image/[^>]*>\s*$", re.MULTILINE)
+MD_IMAGE_DATA = re.compile(r"^\[image\d+\]:\s*<data:[^>]*>\s*$", re.MULTILINE)
 
 
 def src_md(path):
-    """[(метка, текст)] — обычный markdown-экспорт (sources/*.md), файл целиком.
+    """[(метка, текст)] — markdown-экспорт Google Docs, файл целиком одним куском.
 
-    Google Docs → Markdown зашивает каждую картинку строкой-определением
-    `[imageN]: <data:image/png;base64,ОГРОМНАЯ_СТРОКА>` — без вырезания она
-    даёт до 56% "слов" источника (проверено на aeldari-branches), и покрытие
-    книги обваливается вчетверо от реального.
-    """
-    with open(path, encoding="utf-8") as f:
-        text = f.read()
-    return [(os.path.basename(path), MD_IMAGE_REF.sub("", text))]
+    Синтаксис markdown (`#`, `|`, `*`, `-`, `[]()`…) не зачищается отдельно:
+    WORD (regex ниже) и так берёт только буквенно-цифровые последовательности,
+    той же логикой, что strip_html убирает HTML-теги для .zip источников.
+
+    Картинки экспортируются встроенным base64 в отдельных строках-сносках
+    (`[image7]: <data:image/png;base64,...>`) — без зачистки их base64-мусор
+    read как «слова» и топит замер покрытия в сотнях тысяч ложных слов
+    (проверено 09.09.2026 на aeldari-branches: 42 картинки исказили счёт
+    источника почти в шесть раз)."""
+    text = open(path, encoding="utf-8", errors="replace").read()
+    text = MD_IMAGE_DATA.sub(" ", text)
+    return [(os.path.basename(path), text)]
 
 
 def load_source(slug):

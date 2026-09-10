@@ -235,6 +235,28 @@ describe("baseHandsFromTraits / maxHands", () => {
     const a = actor([], { lostHandsCount: 5 });
     expect(maxHands(a)).toBe(0);
   });
+
+  // Конструктор «МЕХАНИКА» дедуплицирует только Таланты, поэтому мутация и её
+  // субмутация («Странные Руки» + «Призрачные Руки») кладут на актора ДВЕ
+  // отдельные Черты Multiple Arms. Рейтинг — итоговое число рук, значит из
+  // двух верно большее; при чтении первой попавшейся сильная субмутация молча
+  // проигрывала слабой базовой записи, и лишних рук игрок не получал.
+  it("две Черты Multiple Arms (2 и 4) — берётся большая", () => {
+    const a = actor([
+      trait("Multiple Arms (2) / Многорукий (2)", 2),
+      trait("Multiple Arms (4) / Многорукий (4)", 4)
+    ]);
+    expect(baseHandsFromTraits(a)).toBe(4);
+    expect(maxHands(a)).toBe(4);
+  });
+
+  it("порядок Черт не важен — большая всё равно побеждает", () => {
+    const a = actor([
+      trait("Multiple Arms (4) / Многорукий (4)", 4),
+      trait("Multiple Arms (2) / Многорукий (2)", 2)
+    ]);
+    expect(baseHandsFromTraits(a)).toBe(4);
+  });
 });
 
 describe("handsOccupied / canEquipInHands", () => {

@@ -11,8 +11,8 @@
 //  Сложность/testMod, Отвращение/Провал) READ-ONLY, полей выбора
 //  Ритуалиста/пресета/предмета нет (актор и предмет уже даны кнопкой):
 //  редактируются только ситуативные модификаторы конкретного проведения.
-//  Решение пользователя 29.08.2026, план — C:\Users\Derbius\.claude\plans\
-//  dazzling-weaving-taco.md.
+//  Решение пользователя 29.08.2026 (план — в личных заметках автора правки,
+//  вне репозитория).
 //
 //  Сама математика/бросок — module/apps/ritual-cast.mjs (ritualThreshold/
 //  castRitual), тот же приём диалога с живым порогом, что и у Навыка/Атаки:
@@ -62,6 +62,9 @@ function readRitualForm(form, paths) {
     // wdbc-1rno, шаг D: оружие-сосуд для вселения (item.system.asWeapon) —
     // id предмета на самом Ритуалисте, выбранного в диалоге.
     weaponId: el("#rit-target-weapon")?.value || "",
+    // wdbc-1rno, «Рыцарь Бога»: скакун/техника-сосуд для вселения
+    // (item.system.asMount) — UUID Актора, не предмет (module/apps/demon-mount.mjs).
+    mountUuid: el("#rit-target-mount")?.value || "",
     summon, curseSymp, extraSel
   };
 }
@@ -184,6 +187,26 @@ export async function showRitualCastDialog(actor, item) {
       </div>` : `<span class="wv-hint">На листе нет оружия — Оруженосец останется в Истинной Форме.</span>`}
     </div>` : "";
 
+  // wdbc-1rno, «Рыцарь Бога»: «...может тем же ритуалом вселить [демона] в
+  // ездовое животное или персональный транспорт» — item.system.asMount.
+  // Сосуд — не предмет на Ритуалисте (как оружие выше), а отдельный Актор:
+  // берём текущего скакуна с панели «ВЕРХОМ» (actor.system.mount.uuid), тот
+  // же, что читает module/rules/mount.mjs::mountOf. Выбора из списка нет:
+  // книга говорит про «личный транспорт, который он пилотирует единолично» —
+  // это и есть уже назначенный скакун/техника, второго источника в системе нет.
+  const currentMount = s.asMount && actor.system?.mount?.uuid
+    ? await fromUuid(actor.system.mount.uuid).catch(() => null) : null;
+  const mountBlock = s.asMount ? `
+    <div class="wv-block">
+      <div class="wv-block-title">Скакун/техника-сосуд</div>
+      ${currentMount ? `
+      <div class="wv-rit-row">
+        <label class="wv-rit-lbl">Сейчас верхом на</label>
+        <span class="wv-rit-wide"><b>${esc(currentMount.name)}</b></span>
+      </div>
+      <input type="hidden" id="rit-target-mount" value="${esc(currentMount.uuid)}"/>` : `<span class="wv-hint">На панели «ВЕРХОМ» не назначен скакун/техника — демон останется в Истинной Форме.</span>`}
+    </div>` : "";
+
   const curseBlock = d0.isCurse ? `
     <div class="wv-block">
       <div class="wv-block-title">Проклятье — знакомство и симпатия</div>
@@ -238,6 +261,7 @@ export async function showRitualCastDialog(actor, item) {
           ${summonBlock}
           ${demonBlock}
           ${weaponBlock}
+          ${mountBlock}
           ${curseBlock}
         </div>
 

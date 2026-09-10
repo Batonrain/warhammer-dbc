@@ -101,9 +101,10 @@ const TYPES = {
       description: "", notes: "", category: "mechanicus", quality: "common",
       effect: "", installed: "", linkedWeapon: "", bookSource: "",
       // Редкость (wdbc-ukpu, шаг 1б) — у Best.Q биоимпланта каждый доп.
-      // эффект сверх первого поднимает её на 1; заполнение по книге и
-      // сам диалог выбора остаются следующим шагом.
-      availability: 0,
+      // эффект сверх первого поднимает её на 1. Умолчание — null, а не 0
+      // (wdbc-wc3): 0 это книжный «Дефицит», а не «не заполнено», и книга
+      // даёт Доступность только 79 биоимплантам Друкхари из 303 имплантов.
+      availability: null,
       // Варианты бонусного эффекта Best.Q (wdbc-ukpu) — у обычного импланта
       // пусто, заполнены только 79 биоимплантов Друкхари.
       bestQualityEffects: [],
@@ -608,7 +609,8 @@ const TYPES = {
       description: "", notes: "", source: "", bookSource: "",
       ritualType: "summon", failureType: "", record: 0, assistMin: 0, assistMax: 0,
       aversionPerFail: 5,
-      noTest: false, asMinion: false, asWeapon: false, demonName: "", demonInf: 0, demonGod: "",
+      noTest: false, asMinion: false, asWeapon: false, asMount: false, veilThinner: false, startDestabilize: false,
+      demonName: "", demonInf: 0, demonGod: "",
       procedure: "", result: "", cost: "", failureCost: "",
       testSkillScope: "", testSkillKey: "", testSpecialty: "",
       testChar: "int", testMod: 0,

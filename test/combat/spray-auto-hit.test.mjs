@@ -63,6 +63,27 @@ describe("attackHitOutcome", () => {
     expect(attackHitOutcome({ rv: 98, threshold: 45, wp: {}, forceHit: true }))
       .toEqual({ success: true, deg: 1, auto: "" });
   });
+
+  // Длань Кхорна (wdbc-1rno): «стрелковые атаки этой рукой автоматически
+  // проваливаются» — forceFail игнорирует и удачный бросок, и forceHit,
+  // старше даже Распыления (проверяется тем же порядком if-цепочки).
+  it("Длань Кхорна (forceFail) — провал даже на удачном броске", () => {
+    expect(attackHitOutcome({ rv: 5, threshold: 90, wp: {}, forceFail: true }))
+      .toEqual({ success: false, deg: 1, auto: "forceFail" });
+  });
+
+  it("forceFail старше forceHit — беспомощная цель не спасает бронзовую руку от провала", () => {
+    expect(attackHitOutcome({ rv: 5, threshold: 90, wp: {}, forceHit: true, forceFail: true }).success).toBe(false);
+  });
+
+  it("forceFail старше Распыления", () => {
+    expect(attackHitOutcome({ rv: 5, threshold: 90, wp: { spray: true }, forceFail: true }))
+      .toEqual({ success: false, deg: 1, auto: "forceFail" });
+  });
+
+  it("fixedSuccessDeg (Локус Неизбежности) старше forceFail — тот же порядок, что и Распыления", () => {
+    expect(attackHitOutcome({ rv: 5, threshold: 90, wp: {}, forceFail: true, fixedSuccessDeg: 1 }).auto).toBe("fixed");
+  });
 });
 
 describe("sprayJamFace", () => {

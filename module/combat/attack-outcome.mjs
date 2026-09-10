@@ -32,13 +32,18 @@ import { testOutcome }                            from "../rules/roll-outcome.mj
  * @param {boolean} [isMelee]
  * @param {object}  [wp]              свёрнутые свойства оружия (aggregateAuto)
  * @param {boolean} [forceHit]        авто-успех «минимум 1 Успех» (Беспомощная цель)
+ * @param {boolean} [forceFail]       авто-провал независимо от броска (Длань
+ *   Кхорна, wdbc-1rno: «стрелковые атаки этой рукой автоматически
+ *   проваливаются» — d100 всё равно катается выше по конвейеру, но исход
+ *   отсюда не берётся вовсе, той же формой, что и forceHit).
  * @param {number}  [fixedSuccessDeg] РОВНО столько Успехов (Локус Неизбежности)
  * @returns {{success: boolean, deg: number, auto: string}} auto — почему исход
- *   не от броска: "spray" | "fixed" | "" (карточка печатает это игроку).
+ *   не от броска: "spray" | "fixed" | "forceFail" | "" (карточка печатает это игроку).
  */
 export function attackHitOutcome({ rv, threshold, isMelee = false, wp = {},
-                                   forceHit = false, fixedSuccessDeg = null } = {}) {
+                                   forceHit = false, forceFail = false, fixedSuccessDeg = null } = {}) {
   if (fixedSuccessDeg != null) return { success: true, deg: fixedSuccessDeg, auto: "fixed" };
+  if (forceFail)               return { success: false, deg: 1, auto: "forceFail" };
   if (!isMelee && wp?.spray)   return { success: true, deg: 1, auto: "spray" };
   return { ...testOutcome(rv, threshold, { autoSuccess: !!forceHit }), auto: "" };
 }

@@ -366,10 +366,15 @@ export function rerollsFromRules(rules, ctx = {}) {
         console.error(`Warhammer DBC | правило «${rule?.id ?? "без id"}»: перебросу нужно не меньше двух бросков, задано ${effect.rolls}`);
         continue;
       }
-      // who — чей бросок: свой или навязанный цели. Диалог показывает игроку
-      // только свои; чужие уезжают на кнопки защиты в карточке атаки.
-      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls,
-                 who: effect.who === "target" ? "target" : "self" });
+      // who — чей это бросок. Три значения, и все три нужны разным потребителям:
+      //   "self"     — свой добровольный переброс, диалог предлагает галочкой;
+      //   "target"   — навязан ЦЕЛИ, уезжает на кнопки защиты в карточке атаки;
+      //   "opponent" — навязан МНЕ противником (Уравнитель, Дар Нургла),
+      //                применяется без спроса в sheets/attack/dialog.mjs.
+      // Схлопывать "opponent" в "self" нельзя: тогда наказание попадает в
+      // список добровольных перебросов наказуемого, снятым по умолчанию.
+      const who = effect.who === "target" || effect.who === "opponent" ? effect.who : "self";
+      out.push({ ruleId: rule.id, label: effect.label ?? rule.label ?? rule.id, mode, rolls, who });
     }
   }
   return out;

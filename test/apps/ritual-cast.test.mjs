@@ -685,7 +685,8 @@ describe("проведение ритуала (castRitual)", () => {
 
       await castRitual(baseR({ type: "summon", demonName: "Кровопускатель", asMinion: true }), a, { item, spawnDemonFn });
 
-      expect(calls).toEqual([{ name: "Кровопускатель", ritualistUuid: "Actor.act-1", opts: { asMinion: true } }]);
+      expect(calls).toEqual([{ name: "Кровопускатель", ritualistUuid: "Actor.act-1",
+        opts: { asMinion: true, veilThinner: false, startDestabilize: false } }]);
       expect(captured.chat[0].content).toContain("Привязан Миньоном без слота");
     });
 
@@ -822,6 +823,101 @@ describe("проведение ритуала (castRitual)", () => {
           actorWithWeapon(weapon), { item, bindWeaponFn });
 
         expect(captured.chat[0].content).toContain("уже демоническое");
+      });
+    });
+
+    // wdbc-1rno, «Рыцарь Бога»: третий книжный исход того же ритуала — демон
+    // вселяется в УЖЕ ИМЕЮЩЕГОСЯ скакуна/технику персонажа, а не встаёт новым
+    // Актором-Миньоном (asMinion) и не привязывается к предмету на Ритуалисте
+    // (asWeapon у Оруженосца) — сосуд выбирается по UUID (R.mountUuid), с
+    // фолбэком на текущий скакун с панели «ВЕРХОМ» (actor.system.mount.uuid).
+    describe("asMount — тот же ритуал вселяет демона в скакуна/технику, а не в Миньона", () => {
+      it("зовёт bindMountFn с R.mountUuid, не зовёт spawnDemonFn", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const spawnCalls = [], bindCalls = [];
+        const spawnDemonFn = async (...args) => spawnCalls.push(args);
+        const bindMountFn = async (...args) => { bindCalls.push(args); return { ok: true, mountName: "Джаггернаут" }; };
+        const a = actor(); a.uuid = "Actor.act-1";
+
+        const res = await castRitual(
+          baseR({ type: "summon", demonName: "Джаггернаут", demonGod: "khorne", asMount: true, mountUuid: "Actor.mount-1" }),
+          a, { item, spawnDemonFn, bindMountFn });
+
+        expect(res.success).toBe(true);
+        expect(spawnCalls).toEqual([]);
+        expect(bindCalls).toEqual([["Actor.mount-1", a, "Джаггернаут", "khorne"]]);
+        expect(captured.chat[0].content).toContain("вселён в скакуна/технику");
+        expect(captured.chat[0].content).toContain("Джаггернаут");
+        expect(captured.chat[0].content).not.toContain("токен размещён");
+        expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      });
+
+      // wdbc-his: defaultBindDemonMountFn возвращал undefined во всех ветках,
+      // поэтому res всегда был undefined — карточка печатала «вселён» даже при
+      // отказе, а имя скакуна в неё не попадало вовсе. Отказ видел только
+      // нажавший, всплывашкой.
+      it("отказ вселения виден В КАРТОЧКЕ, а не только всплывашкой", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindMountFn = async () => ({ ok: false, reason: "Этот скакун уже одержим." });
+        const a = actor(); a.uuid = "Actor.act-1";
+
+        await castRitual(
+          baseR({ type: "summon", demonName: "Джаггернаут", demonGod: "khorne", asMount: true, mountUuid: "Actor.mount-1" }),
+          a, { item, bindMountFn });
+
+        expect(captured.chat.at(-1).content).toContain("уже одержим");
+      });
+
+      it("передано Мастеру сокетом — карточка не утверждает успех", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindMountFn = async () => ({ ok: true, relayed: true });
+        const a = actor(); a.uuid = "Actor.act-1";
+
+        await castRitual(
+          baseR({ type: "summon", demonName: "Джаггернаут", demonGod: "khorne", asMount: true, mountUuid: "Actor.mount-1" }),
+          a, { item, bindMountFn });
+
+        const card = captured.chat.at(-1).content;
+        expect(card).toContain("передан Мастеру");
+        expect(card).not.toContain("вселён в скакуна");
+      });
+
+      it("без R.mountUuid — берёт actor.system.mount.uuid (текущий скакун с панели «ВЕРХОМ»)", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindCalls = [];
+        const bindMountFn = async (...args) => { bindCalls.push(args); return { ok: true }; };
+        const a = actor(); a.uuid = "Actor.act-1"; a.system.mount = { uuid: "Actor.current-mount" };
+
+        await castRitual(
+          baseR({ type: "summon", demonName: "Джаггернаут", asMount: true }),
+          a, { item, bindMountFn });
+
+        expect(bindCalls[0][0]).toBe("Actor.current-mount");
+      });
+
+      it("ни R.mountUuid, ни текущего скакуна нет — ритуал всё равно проведён, демон никуда не вселён", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindCalls = [];
+        const bindMountFn = async (...args) => bindCalls.push(args);
+
+        const res = await castRitual(
+          baseR({ type: "summon", demonName: "Джаггернаут", asMount: true }),
+          actor(), { item, bindMountFn });
+
+        expect(res.success).toBe(true);
+        expect(bindCalls).toEqual([]);
+        expect(captured.chat[0].content).toContain("не выбраны");
+      });
+
+      it("bindMountFn сообщает об отказе (уже одержим) — причина видна в карточке", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindMountFn = async () => ({ ok: false, reason: "Этот скакун уже одержим." });
+
+        await castRitual(
+          baseR({ type: "summon", demonName: "Джаггернаут", asMount: true, mountUuid: "Actor.mount-1" }),
+          actor(), { item, bindMountFn });
+
+        expect(captured.chat[0].content).toContain("уже одержим");
       });
     });
   });

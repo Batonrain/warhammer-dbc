@@ -97,7 +97,25 @@ export function eliteDocs() {
   ];
 }
 
-export function run({ write = false } = {}) {
+// wdbc-b6fd (08.09.2026): ELITE_ARCHETYPES знает 58 архетипов, а
+// packs-src/elite-archetypes несёт уже 88 карточек — 30 добавлены помимо
+// этого генератора. arch.name — только русская половина, а карточки пака
+// названы двуязычно («Insorcist / Инзорцист») — packFileName(arch.name, id)
+// строит ДРУГОЙ путь у 57 из 58, поэтому --write не перезапишет
+// существующие файлы, а создаст рядом вторые с тем же _id (дубль документа
+// в паке). doc.system.description здесь всегда "" — у 56 из 88 карточек
+// описание непустое (перенесено из книги), --write его бы стёрло.
+// Пока это не починено (дотянуть генератор до двуязычных имён + сохранения
+// description + всех 88 записей), --write отказывает без --force.
+export function run({ write = false, force = false } = {}) {
+  if (write && !force) {
+    throw new Error(
+      "elite-archetypes-to-pack.mjs --write остановлен (wdbc-b6fd): генератор разошёлся с " +
+      "packs-src/elite-archetypes (число записей, латиница/двуязычие в имени файла, стирание " +
+      "непустых description) — запуск создаст дубли документов и затрёт часть описаний. Либо " +
+      "дотянуть генератор до текущего состояния пака, либо --force, если риск осознанно принят."
+    );
+  }
   const all = eliteDocs();
   if (write) {
     for (const { path, doc } of all) {
@@ -110,6 +128,6 @@ export function run({ write = false } = {}) {
 }
 
 if (process.argv[1]?.endsWith("elite-archetypes-to-pack.mjs")) {
-  const res = run({ write: process.argv.includes("--write") });
+  const res = run({ write: process.argv.includes("--write"), force: process.argv.includes("--force") });
   console.log(`Элитных архетипов: ${res.archetypes}, папок: ${res.folders}`);
 }

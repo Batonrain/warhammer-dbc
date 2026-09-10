@@ -133,7 +133,11 @@ describe("runBestQChoice: полный цикл спросить+записат�
     const updates = [];
     return {
       name: "Flesh-Crafted Arm",
-      system: { bestQualityEffects: OPTIONS, availability: 2, chosenEffects: [], ...overrides },
+      // quality:"best" — не деталь фикстуры, а условие самого случая:
+      // runBestQChoice теперь сам сверяется с needsBestQChoice (wdbc-wc3),
+      // а тот, как и раньше, требует именно Высшего Качества. Прежняя
+      // фикстура была недоописана относительно реальных данных.
+      system: { quality: "best", bestQualityEffects: OPTIONS, availability: 2, chosenEffects: [], ...overrides },
       update: async data => { updates.push(data); return data; },
       _updates: updates
     };
@@ -168,5 +172,62 @@ describe("runBestQChoice: полный цикл спросить+записат�
     captured.dialog.buttons.ok.callback(fakeHtml({}, { ".bestq-count": counts }));
     expect(await promise).toBe(false);
     expect(item._updates).toHaveLength(0);
+  });
+});
+
+// wdbc-wc3: входов в диалог два, и они не знают друг о друге — хук updateItem
+// (warhammer-dbc.mjs) и кнопка листа (sheets/item-sheet.mjs). ГМ ставит
+// Качество «Высшее» дропдауном, хук открывает окно; лист тем временем
+// перерисовался, chosenEffects ещё пуст, кнопка видна — второе окно. Оба
+// «Принять» брали базой ТЕКУЩУЮ Доступность, и она поднималась дважды.
+describe("runBestQChoice: гейт от второго окна", () => {
+  function fakeItem(overrides = {}) {
+    const updates = [];
+    const item = {
+      name: "Flesh-Crafted Arm",
+      system: { quality: "best", bestQualityEffects: OPTIONS, availability: 2, chosenEffects: [], ...overrides },
+      update: async data => {
+        updates.push(data);
+        Object.assign(item.system, {
+          chosenEffects: data["system.chosenEffects"] ?? item.system.chosenEffects,
+          availability:  data["system.availability"]  ?? item.system.availability
+        });
+        return data;
+      },
+      _updates: updates
+    };
+    return item;
+  }
+
+  const accept = () => {
+    const counts = [{ dataset: { idx: "0" }, value: "1" }, { dataset: { idx: "1" }, value: "1" },
+                    { dataset: { idx: "2" }, value: "0" }];
+    captured.dialog.buttons.ok.callback(fakeHtml({}, { ".bestq-count": counts }));
+  };
+
+  it("выбор уже сделан — диалог не открывается вовсе", async () => {
+    const item = fakeItem({ chosenEffects: [{ label: "Unnatural S", note: "" }] });
+    expect(await runBestQChoice(item)).toBe(false);
+    expect(item._updates).toHaveLength(0);
+  });
+
+  it("Качество не «Высшее» — диалога нет", async () => {
+    const item = fakeItem({ quality: "common" });
+    expect(await runBestQChoice(item)).toBe(false);
+    expect(item._updates).toHaveLength(0);
+  });
+
+  it("второй проход поверх первого Доступность не поднимает дважды", async () => {
+    const item = fakeItem();
+
+    const first = runBestQChoice(item);
+    accept();
+    expect(await first).toBe(true);
+    expect(item.system.availability).toBe(3);   // база 2, два эффекта → +1
+
+    // Второе окно: хук и кнопка листа сработали почти одновременно.
+    expect(await runBestQChoice(item)).toBe(false);
+    expect(item.system.availability).toBe(3);
+    expect(item._updates).toHaveLength(1);
   });
 });

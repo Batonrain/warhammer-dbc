@@ -39,11 +39,11 @@ SCOPED_AGENTS = {
     # вызывается как `python`, не `node` — старый паттерн никогда не
     # совпадал, тоже исправлено.
     "book-proofreader": COMMON_ALLOW + [
-        r"^python3?\s+.*pdfshot\.py(\s|$)",
-        r"^python3?\s+.*pdf-text\.py(\s|$)",
-        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+.*book-pdf-diff\.py(\s|$)",
-        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+.*book-coverage\.py(\s|$)",
-        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+.*book-holes\.py(\s|$)",
+        r"^python3?\s+(?!-)\S*pdfshot\.py(\s|$)",
+        r"^python3?\s+(?!-)\S*pdf-text\.py(\s|$)",
+        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+(?!-)\S*book-pdf-diff\.py(\s|$)",
+        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+(?!-)\S*book-coverage\.py(\s|$)",
+        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+(?!-)\S*book-holes\.py(\s|$)",
         r"^npx\s+vitest\s+run(\s|$)",
         r"^npm\s+test(\s|$)",
         r"^npm\s+run\s+lint(\s|$)",
@@ -55,6 +55,13 @@ SCOPED_AGENTS = {
 }
 
 
+# Между интерпретатором и именем скрипта стоит `(?!-)\S*`, а не `.*`
+# (wdbc-e9e): `.*` пускало произвольные флаги, и `python3 -c "код"
+# book-coverage.py` проходило аллоулист — python выполнял бы код из -c, а имя
+# скрипта досталось бы ему просто аргументом. `\S*` не оставляет места
+# отдельному аргументу (в нём нет пробела), а lookahead отсекает слипшийся
+# `-cbook-coverage.py`. Разбиение по `;`/`|` кавычки уважает, так что спрятать
+# второй сегмент внутри строки тоже нельзя.
 def split_segments(cmd):
     segments = []
     current = []

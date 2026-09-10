@@ -124,8 +124,22 @@
                 "negate": false,
                 "conditions": []
               },
-              "capabilityCostPool": "infamy",
+              "capabilityCostPool": "",
               "capabilityCostAmount": 1
+            },
+            {
+              "id": "theHunter-summon",
+              "kind": "script",
+              "label": "Загонщик — призвать Гончую Плоти",
+              "capabilityCostPool": "infamy",
+              "capabilityCostAmount": 1,
+              "scriptThrottleUnit": "",
+              "scriptThrottleMax": 0,
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
+              "code": "// The Hunter / Загонщик (Дар Кхорна, wdbc-1rno, стр. 453-460). Книга:\n// «Если в пределах видимости чемпиона есть псайкер, он может за полное\n// действие потратить Очко Бесчестия и призвать Гончую Плоти в Истинной\n// Форме. Гончая действует в его инициативу и нападает на ближайшего\n// псайкера. Убив свою добычу, гончая возвращается в Варп.»\n//\n// Разбор пробела (09.09.2026, решение пользователя): автоатак ни для\n// одного существа в системе нет — «нападает на ближайшего псайкера»\n// реализовано как подсказка в карточке призыва (module/combat/\n// the-hunter.mjs::spawnHunterHound, там же и сама Гончая, и синхронизация\n// инициативы «сразу после чемпиона»), реальную атаку ведёт игрок/ГМ\n// вручную. «Возвращается в Варп» привязано к кнопке «Констатировать\n// смерть» (module/hooks.mjs) — появляется сама, когда добыча подтверждена\n// убитой именно этой Гончей.\n//\n// Throw (не ui.notifications.warn + return, как у Красного Солнца) —\n// намеренно: capabilityCostPool списывается ПОСЛЕ успешного выполнения\n// кода (runMechScriptEntry), а непройденный гейт видимости псайкера/ОД не\n// должен стоить Очка Бесчестия впустую.\nconst championToken = token?.document ?? token;\nif (!championToken?.parent) {\n  throw new Error(\"У чемпиона нет токена на текущей сцене.\");\n}\nif (!nearestVisiblePsyker(championToken)) {\n  throw new Error(\"В пределах видимости нет псайкера — Загонщика применить нельзя.\");\n}\nconst FULL_ACTION_AP = 2;\nif (!canSpendActionPoints(actor, FULL_ACTION_AP)) {\n  throw new Error(\"Не хватает Очков Действия (нужно 2, полное действие).\");\n}\nif (!(await spendActionPoints(actor, FULL_ACTION_AP))) {\n  throw new Error(\"Не удалось списать Очки Действия.\");\n}\nawait defaultSpawnHunterHoundFn(actor.uuid, item.id);"
             }
           ]
         }

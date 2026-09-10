@@ -12,6 +12,7 @@ import { on } from "../../helpers/utils.mjs";
 import { showDeathSaveDialog, doResurrect } from "./death.mjs";
 import { VITAL_TIME_FIELD } from "../../constants/vitals.mjs";
 import { satisfyAddiction, setAddictionSubstance } from "../../rules/addiction.mjs";
+import { registerBloodFlameKill, LAST_DAMAGE_WEAPON_FLAG } from "../../combat/blood-flame.mjs";
 
 /** Переключить фигуру муж./жен. Значение приходит из data-атрибута кнопки. */
 export async function toggleBodyType(actor, current) {
@@ -42,8 +43,28 @@ export async function satisfyVital(actor, key) {
   await actor.update(update);
 }
 
+/**
+ * Единственная точка, где система признаёт смерть: и ручная галочка на вкладке
+ * Тело, и кнопка «Констатировать смерть» в крит-строке приходят сюда.
+ *
+ * Поэтому здесь же засчитывается убийство Кровавому Пламени («+2 урона за
+ * каждого убитого этим оружием»), а не в обработчике одной кнопки: та рисуется
+ * только при крите с текстом, прямо утверждающим смерть, так что обычная смерть
+ * счётчик не трогала вовсе. Оружие берётся с самой жертвы — конвейер урона
+ * помечает её последним ранившим оружием (combat/damage.mjs).
+ *
+ * Зачёт идёт ТОЛЬКО на переходе «был жив → мёртв»: кнопку видят и ГМ, и
+ * владелец цели, каждый на своём клиенте, а защита `el.disabled` живёт лишь до
+ * следующей перерисовки карточки — два клика по одному трупу давали +4 урона
+ * вместо +2, и откатить это было нечем.
+ */
 export async function setDeceased(actor, deceased) {
+  const was = !!actor?.getFlag?.("warhammer-dbc", "deceased");
   await actor.setFlag("warhammer-dbc", "deceased", deceased);
+  if (!deceased || was) return;
+  const uuid = actor.getFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG);
+  const weapon = uuid ? await fromUuid(uuid).catch(() => null) : null;
+  if (weapon) await registerBloodFlameKill(weapon);
 }
 
 // wdbc-ycgk.1: полный ре-рендер листа вставляет .bc-death-actions уже в

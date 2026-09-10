@@ -46,6 +46,11 @@
 // поглощение попадания Крикуном (тест Cor+0, без траты Реакции) — кнопка в
 // карточке атаки (combat/defense.mjs::_performEtherealSwarm), рендерится,
 // только если у цели есть непустой/неистёкший остаток стаи.
+// 09.09.2026 продолжение: The Hunter/Загонщик — тот же путь: реальный гейт
+// видимого псайкера (module/rules/the-hunter.mjs::nearestVisiblePsyker) и
+// реальный призыв Гончей Плоти (module/combat/the-hunter.mjs::
+// spawnHunterHound — метка+синхронизация инициативы), capability-ключ без
+// цены, цена — на самой записи kind:"script".
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -64,7 +69,6 @@ const ROOT = path.resolve(import.meta.dirname, "../..");
  * даёт ни возможности, ни цены — это правильно, а не поломка.
  */
 const PAID = [
-  { key: "gift.khorne.theHunter" },
   { key: "gift.tzeentch.hiddenThreat" },
   { key: "gift.tzeentch.sundering" },
   { key: "rune.beastmanShaman.boneRuneEtching.slaaneshVariant",
