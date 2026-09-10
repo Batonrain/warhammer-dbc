@@ -430,6 +430,21 @@ describe("пометка эффектов Конструктора", () => {
 
     expect(await adoptMechanicsEffects(item)).toBe(0);
   });
+
+  it("записи внутри вложенной ИЛИ-подгруппы (выбор Родного мира) тоже получают метку", async () => {
+    // wdbc-b0kt: Инф+3 «Священного Воспитания» лежит не в group[0].entries, а в
+    // group[0].entries[0].group.entries — той же вложенности, что и настоящий
+    // выбор ветки Родного мира в паке.
+    const nested = { id: "e-inf", kind: "characteristic", charKey: "inf", field: "total", op: "add", value: 3 };
+    const mechNested = [{ id: "g1", operator: "OR", entries: [
+      { id: "g1a", kind: "group", group: { operator: "AND", entries: [nested] } }] }];
+    const name = describeMechEntry(nested);
+    const item = itemDoc({ flags: { mechanics: mechNested }, fx: [{ name, system: { changes: [
+      { key: "system.characteristics.inf.totalFx", type: "add", value: 3, phase: "initial", priority: 0 }] } }] });
+
+    expect(await adoptMechanicsEffects(item)).toBe(1);
+    expect(item.effects[0].getFlag("warhammer-dbc", "mechEntry")).toBe("e-inf");
+  });
 });
 
 describe("снятие механики, задвоенной Конструктором", () => {

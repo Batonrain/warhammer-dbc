@@ -129,9 +129,16 @@ const MIGRATED_SUFFIX = " (перенесено)";
  */
 function mechanicsKeys(item) {
   const keys = new Set();
-  for (const group of item.getFlag(SYSTEM, "mechanics") ?? [])
-    for (const entry of group.entries ?? [])
+  // Ветка выбора (Родной мир, Предсказание) кладёт свои записи не в group.entries
+  // верхнего уровня, а в entry.group.entries вложенной kind:"group" — без
+  // рекурсии её записи здесь никогда не встречались (wdbc-b0kt).
+  const walk = entries => {
+    for (const entry of entries ?? []) {
+      if (entry.kind === "group" && entry.group) { walk(entry.group.entries); continue; }
       if (entry.kind === "characteristic") keys.add(characteristicEffectKey(entry));
+    }
+  };
+  for (const group of item.getFlag(SYSTEM, "mechanics") ?? []) walk(group.entries);
   return keys;
 }
 
@@ -379,9 +386,15 @@ export async function repairEffectPhases(item) {
  */
 export async function adoptMechanicsEffects(item) {
   const byName = new Map();
-  for (const group of item.getFlag(SYSTEM, "mechanics") ?? [])
-    for (const entry of group.entries ?? [])
+  // См. mechanicsKeys выше: ветка выбора прячет записи в entry.group.entries,
+  // рекурсия обязательна (wdbc-b0kt).
+  const walk = entries => {
+    for (const entry of entries ?? []) {
+      if (entry.kind === "group" && entry.group) { walk(entry.group.entries); continue; }
       if (DURABLE_MECH_KINDS.has(entry.kind)) byName.set(describeMechEntry(entry), entry.id);
+    }
+  };
+  for (const group of item.getFlag(SYSTEM, "mechanics") ?? []) walk(group.entries);
   if (!byName.size) return 0;
 
   let tagged = 0;
