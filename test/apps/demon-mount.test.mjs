@@ -195,7 +195,7 @@ describe("Рыцарь Слаанеш — только пометка одерж
     await bindDemonMount("Actor.mount", fakeRider(), "Скакун Слаанеш", "slaanesh");
     const set = mount._updates.find(u => u["flags.warhammer-dbc.mountPossession"]);
     expect(Object.keys(set["flags.warhammer-dbc.mountPossession"]).sort())
-      .toEqual(["binding", "demonInf", "demonName", "demonWb", "god", "properties", "subdued"]);
+      .toEqual(["binding", "demonInf", "demonName", "demonWb", "god", "pre", "properties", "subdued"]);
   });
 });
 
@@ -257,5 +257,75 @@ describe("маршрутизация вызова (defaultBindDemonMountFn)", ()
     globalThis.game.user = { isGM: true };
     await defaultBindDemonMountFn("", fakeRider(), "", "khorne");
     expect(captured.warnings).toEqual([]);
+  });
+});
+
+// wdbc-his: три находки ревью по вселению.
+describe("снимок «как было» и правильная база Структуры", () => {
+  it("Нургл + байк с Чертой «Коляска»: +7 к ХРАНИМОЙ Структуре, а не к пересчитанной", async () => {
+    const mount = fakeMount({ type: "vehicle", structure: { value: 15, max: 15 } });
+    // rules/vehicle.mjs каждый пересчёт прибавляет Коляску прямо в рабочую
+    // копию: хранимое 10, в памяти 15. Читая память, мы записали бы 22.
+    mount._source = { system: { structure: { value: 10, max: 10 } } };
+    globalThis.fromUuid = async () => mount;
+
+    await bindDemonMount("Actor.mount", fakeRider(), "Паланкин Нургла", "nurgle");
+
+    expect(mount.system.structure.max).toBe(17);   // 10 + 7, не 15 + 7
+  });
+
+  it("без Черты «Коляска» (хранимое = пересчитанному) результат прежний", async () => {
+    const mount = fakeMount({ type: "vehicle", structure: { value: 12, max: 12 } });
+    mount._source = { system: { structure: { value: 12, max: 12 } } };
+    globalThis.fromUuid = async () => mount;
+    await bindDemonMount("Actor.mount", fakeRider(), "Паланкин Нургла", "nurgle");
+    expect(mount.system.structure.max).toBe(19);
+  });
+
+  it("снимок несёт исходный урон оружия — откат по нему, а не вычитанием кубика", async () => {
+    const weapon = fakeWeapon({ weaponClass: "melee", damage: "1d10+3" });
+    const mount = fakeMount({ items: [weapon] });
+    globalThis.fromUuid = async () => mount;
+
+    await bindDemonMount("Actor.mount", fakeRider(), "Джаггернаут", "khorne");
+
+    const set = mount._updates.find(u => u["flags.warhammer-dbc.mountPossession"]);
+    expect(set["flags.warhammer-dbc.mountPossession"].pre.damage).toEqual({ [weapon.id]: "1d10+3" });
+    expect(weapon.system.damage).toBe("2d10+3");
+  });
+
+  it("снимок несёт исходный максимум Ран живого скакуна", async () => {
+    const mount = fakeMount({ type: "character", wounds: { value: 30, max: 30 } });
+    globalThis.fromUuid = async () => mount;
+    await bindDemonMount("Actor.mount", fakeRider(), "Паланкин Нургла", "nurgle");
+    const set = mount._updates.find(u => u["flags.warhammer-dbc.mountPossession"]);
+    expect(set["flags.warhammer-dbc.mountPossession"].pre.woundsMax).toBe(30);
+  });
+});
+
+describe("маршрутизация возвращает результат вызывающему", () => {
+  it("ГМ: результат bindDemonMount доходит до карточки ритуала", async () => {
+    globalThis.game.user = { isGM: true };
+    const mount = fakeMount();
+    globalThis.fromUuid = async () => mount;
+    const res = await defaultBindDemonMountFn("Actor.mount", fakeRider(), "Джаггернаут", "khorne");
+    expect(res).toMatchObject({ ok: true, mountName: "Джаггернаут" });
+  });
+
+  it("ГМ, скакун уже одержим: карточка узнаёт про отказ, а не печатает успех", async () => {
+    globalThis.game.user = { isGM: true };
+    const mount = fakeMount();
+    mount.flags["warhammer-dbc"] = { mountPossession: { god: "khorne" } };
+    globalThis.fromUuid = async () => mount;
+    const res = await defaultBindDemonMountFn("Actor.mount", fakeRider(), "Джаггернаут", "khorne");
+    expect(res.ok).toBe(false);
+    expect(res.reason).toContain("уже одержим");
+  });
+
+  it("нет активного Мастера — тоже отказ, а не молчаливое undefined", async () => {
+    globalThis.game.user = { isGM: false };
+    globalThis.game.users = { activeGM: null };
+    const res = await defaultBindDemonMountFn("Actor.mount", fakeRider(), "Джаггернаут", "khorne");
+    expect(res.ok).toBe(false);
   });
 });

@@ -479,6 +479,46 @@ describe("снятие механики, задвоенной Конструкт
     expect(item.effects).toEqual([]);
   });
 
+  // wdbc-b0kt/wdbc-e9e: рекурсию во вложенные группы получили ОБЕ функции
+  // (adoptMechanicsEffects и mechanicsKeys), а тест был только у первой.
+  // mechanicsKeys — более опасная половина: её читают carriedKeys (не даёт
+  // переносу завести второй эффект поверх записи Конструктора) и
+  // dropMechanicsDuplicates (снимает уже задвоенное). Ветку выбора Родного
+  // мира/Предсказания Конструктор кладёт в entry.group.entries, и без рекурсии
+  // её записи не встречались здесь никогда — то есть бонус считался дважды.
+  it("запись во ВЛОЖЕННОЙ группе тоже узнаётся: задвоенный бонус снимается", async () => {
+    const inner = { id: "e-nested", kind: "characteristic", charKey: "s", field: "total", op: "add", value: 3 };
+    const item = itemDoc({ type: "homeworld", name: "Добывающий мир",
+      flags: { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "g1a", kind: "group", group: { operator: "OR", entries: [inner] } }] }] },
+      fx: [migrated("Добывающий", "system.characteristics.s.totalFx")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(1);
+    expect(item.effects).toEqual([]);
+  });
+
+  it("вложенность глубже одного уровня тоже обходится", async () => {
+    const inner = { id: "e-deep", kind: "characteristic", charKey: "t", field: "total", op: "add", value: 3 };
+    const item = itemDoc({ type: "homeworld", name: "Глубокий",
+      flags: { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "g1a", kind: "group", group: { operator: "OR", entries: [
+          { id: "g1b", kind: "group", group: { operator: "AND", entries: [inner] } }] } }] }] },
+      fx: [migrated("Глубокий", "system.characteristics.t.totalFx")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(1);
+  });
+
+  it("ключа из вложенной группы нет — эффект остаётся нетронутым", async () => {
+    const inner = { id: "e-nested", kind: "characteristic", charKey: "s", field: "total", op: "add", value: 3 };
+    const item = itemDoc({ type: "homeworld", name: "Другой",
+      flags: { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "g1a", kind: "group", group: { operator: "OR", entries: [inner] } }] }] },
+      fx: [migrated("Другой", "system.characteristics.fel.totalFx")] });
+
+    expect(await dropMechanicsDuplicates(item)).toBe(0);
+    expect(item.effects).toHaveLength(1);
+  });
+
   it("часть, которой в Конструкторе нет, остаётся", async () => {
     const item = itemDoc({ type: "trait", name: "Черта",
       flags: { mechanics: mechanics(["s", 3]) },

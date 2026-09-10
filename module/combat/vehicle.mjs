@@ -218,6 +218,10 @@ export async function showRamDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
+// _resolveRam экспортируется ТОЛЬКО ради теста (test/combat/knight-of-god-
+// mount.mjs — доп. кубик урона Тарана у одержимого скакуна): внутри системы
+// её зовёт лишь этот файл. Подчёркивание в имени и есть пометка «внутренняя»,
+// но без этой строки экспорт выглядел бы полноценным API (wdbc-e9e).
 export async function _resolveRam(actor, fast, targetBigger) {
   const frontAP = Number(actor.system.armour?.front) || 0;
   // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в эту технику, даёт

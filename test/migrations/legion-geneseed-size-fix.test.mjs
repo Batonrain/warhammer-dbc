@@ -31,6 +31,10 @@ function trait({ id = "t1", name, source = "Легион", sizeMod = 0,
   return {
     id, name, type: "trait", effects,
     system: { source, effects: { sizeMod } },
+    // getFlag нужен самой миграции только через geneSeedEffectSizeMod (там
+    // читаются item.effects), но фикстура держит его: Foundry-документ всегда
+    // его имеет, а без него любая будущая проверка флага здесь упала бы на
+    // «не функция», а не на смысле теста.
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     async update(data) {
       if (Object.hasOwn(data, "system.effects.sizeMod")) this.system.effects.sizeMod = data["system.effects.sizeMod"];

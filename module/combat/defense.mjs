@@ -398,16 +398,32 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   const parryRankBonus = SKILL_RANKS[actor.system.skills?.parry?.rank ?? "untrained"]?.bonus ?? -20;
   const sizeGate = parrySizeGate(attackerSize, defenderSize, parryRankBonus,
                                  crossblockActive ? CROSSBLOCK_SIZE_STEPS : 0);
+  // Склонение по последней цифре: 1 ступень, 2-4 ступени, 5+ ступеней
+  // (и 11-14 — ступеней). Раньше было «крупнее на 5 ступени».
+  const stepWord = n => {
+    const t = n % 100, o = n % 10;
+    if (t >= 11 && t <= 14) return "ступеней";
+    if (o === 1) return "ступень";
+    if (o >= 2 && o <= 4) return "ступени";
+    return "ступеней";
+  };
   if (sizeGate.impossible) {
     return _bladeShieldRefusal(actor,
-      `Противник крупнее на ${sizeGate.steps} ${sizeGate.steps === 1 ? "ступень" : "ступени"} Размера — Парирование вообще невозможно (стр. 12).`);
+      `Противник крупнее на ${sizeGate.steps} ${stepWord(sizeGate.steps)} Размера — Парирование вообще невозможно (стр. 12).`);
   }
   if (!sizeGate.allowed) {
-    const requiredRankKey = sizeGate.requiredBonus === 10 ? "trained"
-                           : sizeGate.requiredBonus === 20 ? "veteran" : "expert";
-    const requiredLabel = SKILL_RANKS[requiredRankKey]?.label ?? `+${sizeGate.requiredBonus}`;
+    // Ранга выше «Ветеран» (+30) в системе нет (constants/characteristics.mjs::
+    // SKILL_RANKS), а при Крестовом Блоке предел «вообще невозможно» поднят на
+    // ступень, и requiredBonus доходит до 40. Раньше 40 молча сваливался в
+    // «expert» и печаталось «требует Ветеран (+40)» — ранга с таким числом не
+    // существует. Честнее сказать, что не дотягивает и максимальный.
+    const byBonus = Object.values(SKILL_RANKS).find(r => r.bonus === sizeGate.requiredBonus);
+    const top = Object.values(SKILL_RANKS).reduce((a, b) => (b.bonus > a.bonus ? b : a));
+    const need = byBonus
+      ? `требует Навык «Парирование», продвинутый минимум до «${byBonus.label}» (+${sizeGate.requiredBonus})`
+      : `недостижимо: нужен Ранг Парирования +${sizeGate.requiredBonus}, а выше «${top.label}» (+${top.bonus}) Рангов нет`;
     return _bladeShieldRefusal(actor,
-      `Противник крупнее на ${sizeGate.steps} ${sizeGate.steps === 1 ? "ступень" : "ступени"} Размера — Парирование требует Навык «Парирование», продвинутый минимум до «${requiredLabel}» (+${sizeGate.requiredBonus}) (стр. 12).`);
+      `Противник крупнее на ${sizeGate.steps} ${stepWord(sizeGate.steps)} Размера — Парирование ${need} (стр. 12).`);
   }
 
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =

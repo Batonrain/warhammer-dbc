@@ -44,7 +44,16 @@ const FLAG = "warhammer-dbc";
 
 export { isBloodFlameItem, isBloodFlameActive };
 
-/** Рукопашное оружие актора, наносящее урон R — годится для Кровавого Пламени. */
+/**
+ * Рукопашное оружие актора, наносящее урон R — годится для Кровавого Пламени.
+ *
+ * «thrown» наравне с «melee» — намеренно (wdbc-e9e): книга говорит «вооружён
+ * рукопашным оружием», а класс thrown в этой системе и есть рукопашное оружие,
+ * которым МОЖНО метнуть (топор, нож), а не отдельный дальнобойный класс — тот
+ * же критерий, что у sheet-helpers.mjs::combatMeleeWeapons, который кладёт
+ * melee и thrown в одну таблицу «БЛИЖНИЙ БОЙ». Развести их здесь значило бы
+ * запретить Дар владельцу метательного топора, который бьёт им в упор.
+ */
 function eligibleWeapons(actor) {
   return [...(actor?.items || [])].filter(i =>
     i.type === "weapon"
@@ -56,7 +65,7 @@ function eligibleWeapons(actor) {
 async function promptWeapon(actor) {
   const weapons = eligibleWeapons(actor);
   if (!weapons.length) {
-    ui.notifications?.warn("Нет рукопашного оружия с уроном R (Рвущий) — Кровавому Пламени не на чем гореть.");
+    ui.notifications?.warn("Нет рукопашного оружия с уроном R (Режущий) — Кровавому Пламени не на чем гореть.");
     return null;
   }
   const options = weapons.map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join("");
@@ -90,7 +99,7 @@ export async function activateBloodFlame(actor, weapon, sourceId = "") {
     return ui.notifications?.warn("⚠️ Кровавое Пламя — только рукопашное оружие.");
   }
   if (weapon.system?.damageType !== "rending") {
-    return ui.notifications?.warn("⚠️ Кровавое Пламя — только оружие с уроном R (Рвущий).");
+    return ui.notifications?.warn("⚠️ Кровавое Пламя — только оружие с уроном R (Режущий).");
   }
   if (weapon.system?.destroyed) {
     return ui.notifications?.warn("⚠️ Оружие уничтожено — сначала почините.");

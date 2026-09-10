@@ -31,7 +31,12 @@ skills: [dbc-content]
 Картинка страницы (основной способ, глазами через Read):
 
 ```bash
-python C:\Users\Derbius\.claude\tools\pdfshot.py <файл.pdf> <страницы> [--dpi=150] [--half=top|bottom] [--crop=x0,y0,x1,y1] [--out=ДИР]
+# pdfshot.py — ВНЕШНИЙ инструмент, его нет в репозитории (в tools/ лежат
+# pdf-text.py и pdf-art.py). Путь у каждого свой: Windows —
+# %USERPROFILE%/.claude/tools/pdfshot.py, Linux/macOS —
+# ~/.claude/tools/pdfshot.py. Если файла нет — скажи об этом вызвавшей
+# сессии и работай по текстовому слою, не подставляй чужой путь.
+python <путь к pdfshot.py> <файл.pdf> <страницы> [--dpi=150] [--half=top|bottom] [--crop=x0,y0,x1,y1] [--out=ДИР]
 ```
 
 Текст по колонкам — точная формулировка без риска опечатки в распознавании, **после** того как картинка уже показала структуру:

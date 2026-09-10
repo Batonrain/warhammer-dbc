@@ -818,3 +818,32 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     expect(html).toContain("+10");
   });
 });
+
+// wdbc-e9e: две мелочи в тексте отказа Парирования.
+describe("_performParry: текст отказа по Размеру", () => {
+  it("склонение: 1 ступень / 2 ступени / 5 ступеней", async () => {
+    const attackerUuid = "Actor.attacker-1";
+    const cases = [[1, "1 ступень"], [2, "2 ступени"], [3, "3 ступени"]];
+    for (const [diff, expected] of cases) {
+      globalThis.fromUuid = async uuid =>
+        (uuid === attackerUuid ? { uuid, system: { size: diff } } : null);
+      const sword = equippedMelee({ balance: 0 });
+      const actor = attacker({ items: [sword], size: 0 });   // untrained
+      await _performParry(actor, 0, attackerUuid);
+      expect(captured.chat.at(-1).content).toContain(expected);
+    }
+  });
+
+  it("недостижимое требование не выдумывает несуществующий Ранг «+40»", async () => {
+    // 4 ступени при Крестовом Блоке: предел «невозможно» поднят до 5, значит
+    // гейт не impossible, а requiredBonus = 40 — Ранга с таким бонусом нет.
+    const attackerUuid = "Actor.attacker-1";
+    globalThis.fromUuid = async uuid =>
+      (uuid === attackerUuid ? { uuid, system: { size: 4 } } : null);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 0, skills: { parry: { rank: "expert" } } });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).not.toContain("«Ветеран» (+40)");
+  });
+});

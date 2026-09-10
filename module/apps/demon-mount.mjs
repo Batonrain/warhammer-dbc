@@ -79,6 +79,16 @@ export async function bindDemonMount(mountUuid, riderActor, demonName, god = "un
 
   const update = { "flags.warhammer-dbc.mountPossession": mountPossession };
 
+  // Снимок «как было», собирается ДО единой правки (wdbc-his). Освобождение
+  // книга не описывает, но это не то же самое, что «данные нечем откатить»:
+  // без снимка ГМ, вселивший демона не в того скакуна, возвращает профиль
+  // только арифметикой на глаз. Тот же приём, что preProps/preDamage/prePen у
+  // apps/armiger-weapon.mjs — «возвращать по снимку, а не вычитанием».
+  const pre = { damage: {}, shieldIds: { mount: [], rider: [] } };
+  const stored = mount._source?.system ?? mount.system ?? {};
+  if (mount.type === "vehicle") pre.structureMax = Number(stored.structure?.max) || 0;
+  else                          pre.woundsMax    = Number(stored.wounds?.max)    || 0;
+
   if (god === "khorne") {
     // +8 AP от стрелковых атак — читается module/combat/damage.mjs (только
     // против !melee); доп. кубик урона Тарана — module/combat/vehicle.mjs.
@@ -89,13 +99,21 @@ export async function bindDemonMount(mountUuid, riderActor, demonName, god = "un
     // т.п.), не по оружию всадника: это атака самого скакуна/машины.
     const meleeWeapons = (mount.items ?? []).filter(i => i.type === "weapon" && (i.system?.weaponClass || MELEE_CLASS) === MELEE_CLASS);
     for (const w of meleeWeapons) {
+      pre.damage[w.id] = w.system.damage;   // «1d10+3» — вернуть по снимку, не вычитанием кубика
       await w.update({ "system.damage": addExtraDamageDie(w.system.damage) });
     }
   } else if (god === "nurgle") {
     // +7 Ран или Структуры (в зависимости от природы сосуда) — фикс 7,
     // не рандомное +10 Осквернения (module/apps/veil.mjs::_defileApplyMount).
     if (mount.type === "vehicle") {
-      const s = mount.system.structure ?? {};
+      // ХРАНИМОЕ значение (_source), а не пересчитанное: rules/vehicle.mjs
+      // каждый пересчёт прибавляет к system.structure.max Черту «Коляска (X)»
+      // прямо в рабочую копию («не персистится, пересчитывается заново»). Читая
+      // рабочую копию и записывая её обратно, мы бы вбили бонус Коляски в
+      // хранилище: байк 10 → в памяти 15 → записали 22 → следующий пересчёт 27,
+      // то есть +12 вместо книжных +7 (wdbc-his). У Ран этой беды нет —
+      // wounds.max редактируемая база, производное лежит в wounds.effectiveMax.
+      const s = mount._source?.system?.structure ?? mount.system.structure ?? {};
       update["system.structure.max"] = (Number(s.max) || 0) + 7;
       update["system.structure.value"] = (Number(s.value) || 0) + 7;
     } else {
@@ -115,11 +133,15 @@ export async function bindDemonMount(mountUuid, riderActor, demonName, god = "un
     // всаднику (module/data/item/forcefield.mjs), тот же профиль, что у
     // готовых Даров с похожей прозой (module/combat/preservation.mjs,
     // module/sheets/demon-prince-sheet.mjs::_buildGiftItems).
-    await mount.createEmbeddedDocuments("Item", [shieldItemData(`Чародейский Купол Тзинча (${mount.name})`)]);
+    const made = await mount.createEmbeddedDocuments("Item", [shieldItemData(`Чародейский Купол Тзинча (${mount.name})`)]);
+    pre.shieldIds.mount = (made ?? []).map(d => d?.id ?? d?._id).filter(Boolean);
     if (riderActor) {
-      await riderActor.createEmbeddedDocuments("Item", [shieldItemData(`Чародейский Купол Тзинча (${demonName || "Диск Тзинча"})`)]);
+      const madeRider = await riderActor.createEmbeddedDocuments("Item", [shieldItemData(`Чародейский Купол Тзинча (${demonName || "Диск Тзинча"})`)]);
+      pre.shieldIds.rider = (madeRider ?? []).map(d => d?.id ?? d?._id).filter(Boolean);
     }
   }
+
+  mountPossession.pre = pre;
 
   await mount.update(update);
   return { ok: true, mountName: mount.name };
@@ -131,12 +153,18 @@ export async function defaultBindDemonMountFn(mountUuid, riderActor, demonName, 
   if (game.user?.isGM) {
     const res = await bindDemonMount(mountUuid, riderActor, demonName, god);
     if (!res.ok) ui.notifications?.warn(res.reason);
-    return;
+    // Результат возвращается вызывающему (apps/ritual-cast.mjs::
+    // castNoTestRitual), иначе карточка ритуала печатает «демон вселён» даже
+    // при отказе, а имя скакуна в неё не попадает вовсе (wdbc-his).
+    return res;
   }
   if (!game.users?.activeGM) {
     ui.notifications?.warn("Нет активного Мастера — скакун/техника не осквернены, свяжите демона вручную во вкладке «Осквернение».");
-    return;
+    return { ok: false, reason: "Нет активного Мастера." };
   }
   game.socket?.emit("system.warhammer-dbc",
     { action: "bindDemonMount", userId: game.user?.id, mountUuid, riderUuid: riderActor?.uuid || "", demonName, god });
+  // За сокетом результат недоступен по устройству: вселение выполнит ГМ у
+  // себя. Карточке честнее сказать «передано Мастеру», чем утверждать успех.
+  return { ok: true, relayed: true };
 }

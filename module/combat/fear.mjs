@@ -99,6 +99,14 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
         <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${infamy ? ` −${infamy}` : ""} = ${total}):</div>
         <div class="roll-threshold">${row?.text ?? "—"}</div>
         ${critPillsHtml(shockPills, actor.uuid)}
+        ${/* Сегодня ни одна строка Шоковой таблицы смерть напрямую не
+             утверждает — это закреплено сторожем (test/combat/crit-effect-
+             parser.test.mjs, «Шоковая таблица: …только условная»), и вызов
+             ниже возвращает пустую строку. Он остаётся намеренно (wdbc-e9e):
+             SHOCK_TABLE — данные, а не код, и если в неё когда-нибудь попадёт
+             безусловно смертельная строка, кнопка появится сама. Обратное —
+             убрать вызов — означало бы, что такую строку заметят только за
+             столом. */""}
         ${row?.text ? deathButtonHtml(row.text, actor.uuid) : ""}</div>`;
       // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
       // выхода из Шока в начале Хода (rollShockRecovery ниже).

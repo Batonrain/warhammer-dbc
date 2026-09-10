@@ -401,7 +401,9 @@ async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn, bindMoun
     const weapon = R.weaponId ? actor.items?.get(R.weaponId) : null;
     if (weapon) {
       const res = await bindWeaponFn(weapon.uuid, R.demonName, R.demonGod);
-      weaponHtml = `<div class="roll-threshold" style="font-size:0.85em;">Оруженосец вселён в оружие: <b>${esc(weapon.name)}</b>${res?.ok === false ? ` — ${esc(res.reason || "не осквернено")}` : ""}</div>`;
+      // relayed — вселение ушло сокетом активному ГМу и выполнится у него;
+      // утверждать «вселён» здесь нечестно, результат нам недоступен.
+      weaponHtml = `<div class="roll-threshold" style="font-size:0.85em;">Оруженосец ${res?.relayed ? "передан Мастеру для вселения в оружие" : "вселён в оружие"}: <b>${esc(weapon.name)}</b>${res?.ok === false ? ` — ${esc(res.reason || "не осквернено")}` : ""}</div>`;
     } else {
       weaponHtml = `<div class="roll-threshold" style="font-size:0.85em;">Оружие для вселения не выбрано — Оруженосец остаётся в Истинной Форме.</div>`;
     }
@@ -416,7 +418,7 @@ async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn, bindMoun
     const mountUuid = R.mountUuid || actor.system?.mount?.uuid || "";
     if (mountUuid) {
       const res = await bindMountFn(mountUuid, actor, R.demonName, R.demonGod);
-      mountHtml = `<div class="roll-threshold" style="font-size:0.85em;">${esc(R.demonName)} вселён в скакуна/технику${res?.mountName ? `: <b>${esc(res.mountName)}</b>` : ""}${res?.ok === false ? ` — ${esc(res.reason || "не осквернено")}` : ""}</div>`;
+      mountHtml = `<div class="roll-threshold" style="font-size:0.85em;">${esc(R.demonName)} ${res?.relayed ? "передан Мастеру для вселения в скакуна/технику" : "вселён в скакуна/технику"}${res?.mountName ? `: <b>${esc(res.mountName)}</b>` : ""}${res?.ok === false ? ` — ${esc(res.reason || "не осквернено")}` : ""}</div>`;
     } else {
       mountHtml = `<div class="roll-threshold" style="font-size:0.85em;">Скакун/техника не выбраны — ${esc(R.demonName)} остаётся в Истинной Форме.</div>`;
     }
