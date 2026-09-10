@@ -278,6 +278,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `constants/demon-mechanics.mjs` (пантеон/ранги/формы манифестации),
   `demon-prince.mjs` (Дары, пары Трейтов), `demon-weapon.mjs` (Демонические
   Свойства оружия по пантеонам).
+- `combat/demon-destabilize.mjs` + `rules/demon-destabilize.mjs` —
+  дестабилизация формы демона: реальный тикающий срок вместо справочной
+  строки на листе.
+- `apps/armiger-weapon.mjs` — демон-Оруженосец, связанный не с токеном на
+  сцене (см. `apps/demon-summon.mjs`), а с `system.daemonWeapon` предмета-
+  оружия; `rules/armiger-veil-range.mjs` — Завеса вокруг него считается по
+  Порче ХОЗЯИНА, не своей.
 - Одержимость: `constants/possession.mjs`, `mount-possession.mjs` (демон в
   скакуне/байке), `sheets/tabs/possession.mjs`.
 - `rules/daemon-locus.mjs` (радиус Локуса Герольда), `daemonblood.mjs`
