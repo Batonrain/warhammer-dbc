@@ -85,8 +85,12 @@
               "ccOnUnarmedOrGrapple": true,
               "ccLabel": "Костяные шипы",
               "when": {
-                "quality": ["best"],
-                "chosenEffect": ["Костяные шипы"]
+                "quality": [
+                  "best"
+                ],
+                "chosenEffect": [
+                  "Костяные шипы"
+                ]
               }
             }
           ]
