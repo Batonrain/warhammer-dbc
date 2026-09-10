@@ -55,7 +55,8 @@
         "label": "Термальный сенсор",
         "note": "+20 P на живых/технику по теплу до 50 м"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "448Pu4IqK1Sfp9B8",

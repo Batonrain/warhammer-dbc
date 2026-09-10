@@ -51,7 +51,8 @@
         "label": "Мимикрия",
         "note": "+20 Stealth, поверхностная имитация внешности"
       }
-    ]
+    ],
+    "availability": 4
   },
   "folder": "MVwzimCMiFagXpH6",
   "_id": "bFqkxdUXw0YOysxE",

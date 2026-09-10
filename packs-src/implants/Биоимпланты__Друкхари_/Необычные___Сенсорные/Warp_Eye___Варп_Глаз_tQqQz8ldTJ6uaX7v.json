@@ -55,7 +55,8 @@
         "label": "Закрытие глаза",
         "note": "свободным действием отключать Warp Sight"
       }
-    ]
+    ],
+    "availability": 3
   },
   "folder": "etJvVu2vXLYA2Du4",
   "_id": "tQqQz8ldTJ6uaX7v",

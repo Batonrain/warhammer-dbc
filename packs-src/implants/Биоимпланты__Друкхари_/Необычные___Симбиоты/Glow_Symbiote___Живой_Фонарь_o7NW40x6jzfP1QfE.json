@@ -55,7 +55,8 @@
         "label": "Ослепительная вспышка",
         "note": "1/бой Blast(T.b) Blinding(1) на себя, +30 на свой тест"
       }
-    ]
+    ],
+    "availability": 1
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "o7NW40x6jzfP1QfE",

@@ -55,7 +55,8 @@
         "label": "Управляемая миграция",
         "note": "спячка в жертве до 31 дня, диагностика −30"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "lFEe7MupXo8IG3YY",

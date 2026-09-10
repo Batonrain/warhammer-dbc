@@ -55,7 +55,8 @@
         "label": "Эмоциональный мешок",
         "note": "хранит до T.b Очков Боли, тратить по 1 за Реакцию"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "WaFTI8qJwR9LzgNL",

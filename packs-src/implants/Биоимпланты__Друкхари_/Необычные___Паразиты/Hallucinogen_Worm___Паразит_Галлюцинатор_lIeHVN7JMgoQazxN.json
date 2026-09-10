@@ -55,7 +55,8 @@
         "label": "Кольцевой выброс",
         "note": "Spray → Blast(T.b), стрельба навесом"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "lIeHVN7JMgoQazxN",

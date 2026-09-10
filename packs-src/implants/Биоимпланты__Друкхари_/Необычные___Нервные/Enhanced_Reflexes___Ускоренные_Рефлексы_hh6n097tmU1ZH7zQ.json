@@ -55,7 +55,8 @@
         "label": "Нейро-стабилизатор",
         "note": "иммунитет к Оглушению от Shocking/E(Fl), +20 T против воздействий на нервную систему"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "XKZmnojxaxM0FOBr",
   "_id": "hh6n097tmU1ZH7zQ",
