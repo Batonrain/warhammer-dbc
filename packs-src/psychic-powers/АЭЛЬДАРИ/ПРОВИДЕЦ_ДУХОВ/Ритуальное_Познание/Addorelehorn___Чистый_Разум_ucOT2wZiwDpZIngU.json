@@ -1,0 +1,75 @@
+{
+  "name": "Addorelehorn / Чистый Разум",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "zYS0a0ovsKecy85U",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Leramtainn</strong></p><p><strong>Действие: </strong>Свободное действие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W+10. <strong>Дальность:</strong> Касание</p><p><strong>Тип: </strong>Изменение, Касание</p><p>Провидцы Кости должны уметь очищать разум психокостяных конструктов – их тела и иногда камни душ в них могут стать приютом для скрытой порчи, а раздробленный разум в камне душ, чувствительный к эмоциям, может стать пристанищем для Демонов Той–Что–Жаждет. Псайкер должен касаться психокостяного конструкта, чтобы применить на нем эту психосилу. Цель теряет 1d10+PR×2 Cor (Безумия). На одну и ту же цель эту психосилу можно применить лишь раз в неделю.</p><p>Псайкер с бPR 6 убирает 2d10+PR×2 Cor, с бPR 9 – 3d10+PR×3, а с бPR 12 – Весь, независимо от кол–ва, или превращает захваченный хаосом конструкт в чистый, снижая его Cor до 0 и давая ему 90 Безумия, которое снижается на 5d10+PR×3.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "spiritSeer",
+    "subtype": "Ритуальное Познание",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Leramtainn",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "free",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 3, Leramtainn\nДействие: Свободное действие. Поддержание: Нет.\nПсихотест: W+10. Дальность: Касание\nТип: Изменение, Касание\nПровидцы Кости должны уметь очищать разум психокостяных конструктов – их тела и иногда камни душ в них могут стать приютом для скрытой порчи, а раздробленный разум в камне душ, чувствительный к эмоциям, может стать пристанищем для Демонов Той–Что–Жаждет. Псайкер должен касаться психокостяного конструкта, чтобы применить на нем эту психосилу. Цель теряет 1d10+PR×2 Cor (Безумия). На одну и ту же цель эту психосилу можно применить лишь раз в неделю.\nПсайкер с бPR 6 убирает 2d10+PR×2 Cor, с бPR 9 – 3d10+PR×3, а с бPR 12 – Весь, независимо от кол–ва, или превращает захваченный хаосом конструкт в чистый, снижая его Cor до 0 и давая ему 90 Безумия, которое снижается на 5d10+PR×3.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ucOT2wZiwDpZIngU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ucOT2wZiwDpZIngU"
+}

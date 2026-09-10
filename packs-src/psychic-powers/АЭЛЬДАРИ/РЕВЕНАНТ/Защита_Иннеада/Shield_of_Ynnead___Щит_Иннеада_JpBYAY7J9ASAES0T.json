@@ -1,0 +1,78 @@
+{
+  "name": "Shield of Ynnead / Щит Иннеада",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "8C47cW6DrTo1767M",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6, Unchangeable</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Полное действие</p><p><strong>Психотест: </strong>W–40 <strong>Дальность: </strong>PR×10м</p><p><strong>Тип:</strong> Изменение (PR)</p><p>Псайкер взывает к силе Иннеада и наделяет себя и своих союзников защитой своего бога в форме силового барьера. Цели этой психосилы получают чародейский щит–купол 1–PR×3/PR, а псайкер получает щит купол 1–PR×5/PR. Рейтинг щита увеличивается до 1–PR×4/PR у всех существ если щит был создан на поле бывшей великой битвы и увеличивается до 1–PR×5/PR если щит был создан на поле идущей крупной, жестокой или кровавой битвы. Щит распадается если цель выходит из дальности действия щита или психосила развеивается.</p><p>При перегрузке щит просто пропадает, но цель может восстановить его самостоятельно, убив W.b псайкера живых существ с душами и преподнеся их Иннеаду.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Защита Иннеада",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Unchangeable",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6, Unchangeable\nДействие: Полное действие Поддержание: Полное действие\nПсихотест: W–40 Дальность: PR×10м\nТип: Изменение (PR)\nПсайкер взывает к силе Иннеада и наделяет себя и своих союзников защитой своего бога в форме силового барьера. Цели этой психосилы получают чародейский щит–купол 1–PR×3/PR, а псайкер получает щит купол 1–PR×5/PR. Рейтинг щита увеличивается до 1–PR×4/PR у всех существ если щит был создан на поле бывшей великой битвы и увеличивается до 1–PR×5/PR если щит был создан на поле идущей крупной, жестокой или кровавой битвы. Щит распадается если цель выходит из дальности действия щита или психосила развеивается.\nПри перегрузке щит просто пропадает, но цель может восстановить его самостоятельно, убив W.b псайкера живых существ с душами и преподнеся их Иннеаду.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "JpBYAY7J9ASAES0T",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JpBYAY7J9ASAES0T"
+}

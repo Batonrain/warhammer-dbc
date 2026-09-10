@@ -1,0 +1,78 @@
+{
+  "name": "Phoenix Rise / Восход Феникса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "Ep7LNwo2piwNXQw1",
+  "system": {
+    "description": "<p><strong>1200 xp | Требования: PR 13, Phoenix Revive</strong></p><p><strong>Действие: Д</strong>лительное Действие (3 Дня). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–100.<strong> Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Изменение (PR), Концентрация</p><p>Более сложная версия Воскрешения Феникса, Восход Феникса используется лишь самыми могущественными Провидцами. Наделенный властью и силой, Провидец способен воскресить умершего Эльдара через Камень Душ. Данная психосила требует постоянной концентрации от своего владельца, поэтому, отвлечение хотя–бы на пару минут насильно развеивает психосилу. Психосила получает бонус +10 за каждого Провидца, кто помогает в Психосиле, +20 если псайкер лично знал Эльдара в Камне Душ при жизни. При успехе, потоки варпа создают физическое материальное тело Эльдара с его характеристиками и переселяют душу из Камня Душ в новое тело – новое тело получает ритуальные мантии, эльдарский лазбластер пистолет и сюрикенную винтовку.</p>",
+    "notes": "",
+    "cost": 1200,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Феникса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 13,
+    "requirement": "PR 13, Phoenix Revive (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -100,
+    "action": "extended",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "1200 xp | Требования: PR 13, Phoenix Revive\nДействие: Длительное Действие (3 Дня). Поддержание: Нет.\nПсихотест: W–100. Дальность: PR×5 м\nТип: Изменение (PR), Концентрация\nБолее сложная версия Воскрешения Феникса, Восход Феникса используется лишь самыми могущественными Провидцами. Наделенный властью и силой, Провидец способен воскресить умершего Эльдара через Камень Душ. Данная психосила требует постоянной концентрации от своего владельца, поэтому, отвлечение хотя–бы на пару минут насильно развеивает психосилу. Психосила получает бонус +10 за каждого Провидца, кто помогает в Психосиле, +20 если псайкер лично знал Эльдара в Камне Душ при жизни. При успехе, потоки варпа создают физическое материальное тело Эльдара с его характеристиками и переселяют душу из Камня Душ в новое тело – новое тело получает ритуальные мантии, эльдарский лазбластер пистолет и сюрикенную винтовку.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "79hQ4Ta7ou0XXaBi",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!79hQ4Ta7ou0XXaBi"
+}

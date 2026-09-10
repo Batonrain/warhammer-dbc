@@ -1,0 +1,77 @@
+{
+  "name": "Weather Forecast / Прогноз Погоды",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KtlagOhJ0osDE8L7",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Empyrean Hunter</strong></p><p><strong>Действие: </strong>Длительное Действие (10 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>Psyniscience(P)–20.<strong> Дальность: </strong>PR×5 ПЕ</p><p><strong>Тип: </strong>Изменение</p><p>Пустотные Мечтатели не только навигаторы – но и славные исследователи Варпа. И особенно это проявляется в те моменты, когда необходимо составить безопасный маршрут даже в неспокойное время. За каждый успех, набранный в этой психосиле, псайкер может задать 1 вопрос ГМу, и ГМ должен ответить частично правдиво (или полностью правдиво по своему желанию) насчет ближайших событий в варпе. Он не обязан говорить напрямую, что будет шторм – он может сказать что потоки имматериума начинают сгущаться в нечто, что лишь ждет своего момента. Подобная психосила не может предсказать самые необычные явления варпа, но может облегчить путешествие, нивелировав предсказуемые (если их можно таковыми назвать) события варпа.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "voidDreamer",
+    "subtype": "Вглядеться В Бездну",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Empyrean Hunter",
+    "testChar": "psyniscience",
+    "testMod": -20,
+    "action": "extended",
+    "range": "PR×5 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "250 xp | Требования: PR 3, Empyrean Hunter\nДействие: Длительное Действие (10 Минут). Поддержание: Нет.\nПсихотест: Psyniscience(P)–20. Дальность: PR×5 ПЕ\nТип: Изменение\nПустотные Мечтатели не только навигаторы – но и славные исследователи Варпа. И особенно это проявляется в те моменты, когда необходимо составить безопасный маршрут даже в неспокойное время. За каждый успех, набранный в этой психосиле, псайкер может задать 1 вопрос ГМу, и ГМ должен ответить частично правдиво (или полностью правдиво по своему желанию) насчет ближайших событий в варпе. Он не обязан говорить напрямую, что будет шторм – он может сказать что потоки имматериума начинают сгущаться в нечто, что лишь ждет своего момента. Подобная психосила не может предсказать самые необычные явления варпа, но может облегчить путешествие, нивелировав предсказуемые (если их можно таковыми назвать) события варпа.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "bgwaawXydgpVgbgD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!bgwaawXydgpVgbgD"
+}

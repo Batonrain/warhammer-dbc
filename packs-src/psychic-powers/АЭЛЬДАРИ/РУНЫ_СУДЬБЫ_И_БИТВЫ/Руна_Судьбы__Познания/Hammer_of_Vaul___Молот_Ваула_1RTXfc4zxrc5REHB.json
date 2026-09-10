@@ -1,0 +1,78 @@
+{
+  "name": "Hammer of Vaul / Молот Ваула",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "4ySA3zoB81fcvoYw",
+  "system": {
+    "description": "<p><strong>700 xp | Требования: PR 9</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест:</strong> I–30/I–90.<strong> Дальность: </strong>Сам</p><p><strong>Тип: </strong>Вливание</p><p>Подобно древним последователям Ваула, Провидцы способны создавать великолепное оружие и снаряжение, как тому способны Мастера–Ремесленники, дабы не отвлекать их от иных дел. Уподобляясь древним Мастерам, Провидец кует и сотворяет, дабы достигнуть совершенства. Персонаж получает +PR×5 к любым тестам крафта, а также получает +PR успехов на все совершаемые им крафты. Если он работает как ассистент, он дает +PR×10 к тестам того, кого он ассистирует.</p><p>Персонаж может манифестировать эту психосилу во втором режиме, дабы прогнать через оружие или броню кратковременный поток ремесла и величия, дабы дать ему на бPR дней свойство Ремесленного оружия. Во втором режиме психосилу можно использовать лишь раз в неделю, а на одно и тоже снаряжение и оружие – только раз в месяц.</p>",
+    "notes": "",
+    "cost": 700,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Познания",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "int",
+    "testMod": -30,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "700 xp | Требования: PR 9\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: I–30/I–90. Дальность: Сам\nТип: Вливание\nПодобно древним последователям Ваула, Провидцы способны создавать великолепное оружие и снаряжение, как тому способны Мастера–Ремесленники, дабы не отвлекать их от иных дел. Уподобляясь древним Мастерам, Провидец кует и сотворяет, дабы достигнуть совершенства. Персонаж получает +PR×5 к любым тестам крафта, а также получает +PR успехов на все совершаемые им крафты. Если он работает как ассистент, он дает +PR×10 к тестам того, кого он ассистирует.\nПерсонаж может манифестировать эту психосилу во втором режиме, дабы прогнать через оружие или броню кратковременный поток ремесла и величия, дабы дать ему на бPR дней свойство Ремесленного оружия. Во втором режиме психосилу можно использовать лишь раз в неделю, а на одно и тоже снаряжение и оружие – только раз в месяц.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "1RTXfc4zxrc5REHB",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1RTXfc4zxrc5REHB"
+}

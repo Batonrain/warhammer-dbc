@@ -1,0 +1,78 @@
+{
+  "name": "Devastating Rain / Опустошительный Дождь",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "0lJWaiTfADAtQh5w",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 5</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–10.<strong> Дальность: </strong>PR×10 м</p><p><strong>Тип: </strong>Атака, Психический Взрыв ((PR+Успехи)×3)</p><p>Выпуская потоки имматериума в форме ужасающей мощи дождя, словно бы опустошительный дождь во время рождения Слаанеш или в ужасающие дни горечи и печали Эльдар, Провидец способен уничтожать вражеские армии и орды по мановению своей руки. Этот дождь из боли и слез способен вызвать как тепловые ожоги, так и химические.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×10 м</p></td><td><p>1d10+PR E(Fl)/C(Tx)</p></td><td><p>PR</p></td><td><p>Blast ((PR+Успехи)×3), Devastating (PR×2)</p></td></tr></table><p>Псайкер может выбрать тип урона E(Fl) или C(Tx). Если ситуация на поле битвы скверная для любой из сторон, то данная психосила получает дополнительный кубик урона. Существа, погибшие от этой атаки, умирают с агонией, создавая вокруг себя ауру PR×2 метров, внутри которой каждое существо должно пройти тест против Страха 2.</p><p>Эльдары и Друкхари, ставшие целью этой психосилы, получают на один кубик урона больше.</p>",
+    "notes": "Пробитие в книге = PR (переменное) — поле «Пробитие» принимает только фиксированное число, оставлено 0, реальное значение в тексте/таблице карточки. Тип урона в книге обозначен «1d10+PR E(Fl)/C(Tx)» — ближайший доступный в схеме тип подставлен приближённо, точная формула урона — в тексте/таблице карточки.",
+    "cost": 400,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Опустошения",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "blast",
+    "prRequired": 5,
+    "requirement": "PR 5 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR E(Fl)/C(Tx)",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "400 xp | Требования: PR 5\nДействие: Полудействие. Поддержание: Нет.\nПсихотест: W–10. Дальность: PR×10 м\nТип: Атака, Психический Взрыв ((PR+Успехи)×3)\nВыпуская потоки имматериума в форме ужасающей мощи дождя, словно бы опустошительный дождь во время рождения Слаанеш или в ужасающие дни горечи и печали Эльдар, Провидец способен уничтожать вражеские армии и орды по мановению своей руки. Этот дождь из боли и слез способен вызвать как тепловые ожоги, так и химические.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×10 м | 1d10+PR E(Fl)/C(Tx) | PR | Blast ((PR+Успехи)×3), Devastating (PR×2)\n[/ТАБЛИЦА]\nПсайкер может выбрать тип урона E(Fl) или C(Tx). Если ситуация на поле битвы скверная для любой из сторон, то данная психосила получает дополнительный кубик урона. Существа, погибшие от этой атаки, умирают с агонией, создавая вокруг себя ауру PR×2 метров, внутри которой каждое существо должно пройти тест против Страха 2.\nЭльдары и Друкхари, ставшие целью этой психосилы, получают на один кубик урона больше.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "PGp7iw9r4vd630Fe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!PGp7iw9r4vd630Fe"
+}

@@ -1,0 +1,77 @@
+{
+  "name": "Energy Collapse / Энергетический Коллапс",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KNlZUQRinNhUmsOe",
+  "system": {
+    "description": "<p><strong>450 xp | Требования: PR 5, Click of Energy</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–20 vss Tech–Use(I)–30.<strong> Дальность: </strong>Звездная Система/PR×10 ПЕ</p><p><strong>Тип: </strong>Изменение (PR), Сосредоточение</p><p>Собирая потоки Эмпиреев, Мечтатель Пустоты способен обрушить на недружественное судно энергетический коллапс. Подобный точечный удар способен испортить планы противнику. Один вражеский корабль не может подвергаться данной психосиле более 1–го раза за стратегический раунд. Псайкер выбирает один из узлов вражеского корабля (псайкеру необязательно о них знать – потоки варпа сообщают о них), и все тесты, совершаемые этим узлом, получают гарантированного 3 провала. Также, добавляется дополнительные два провала за каждые 5 свободной энергии у вражеского корабля. Дополнительный провал добавляется на судна Орков, но отнимается у кораблей Эльдар, Друкхари и Некронов. Техножрецы, Криптеки, Мекбои и иные существа, знающие как управлять технологиями, могут пройти тест Tech–Use(I)–30, дабы за каждый успех снизить число провалов на 1.</p>",
+    "notes": "Сопротивление цели — навык Tech-Use(I): resistChar не заполнен.",
+    "cost": 450,
+    "discipline": "voidDreamer",
+    "subtype": "Энергия Космоса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Click of Energy",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "extended",
+    "range": "Звездная Система/PR×10 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "450 xp | Требования: PR 5, Click of Energy\nДействие: Длительное Действие (30 Минут). Поддержание: Нет.\nПсихотест: W–20 vss Tech–Use(I)–30. Дальность: Звездная Система/PR×10 ПЕ\nТип: Изменение (PR), Сосредоточение\nСобирая потоки Эмпиреев, Мечтатель Пустоты способен обрушить на недружественное судно энергетический коллапс. Подобный точечный удар способен испортить планы противнику. Один вражеский корабль не может подвергаться данной психосиле более 1–го раза за стратегический раунд. Псайкер выбирает один из узлов вражеского корабля (псайкеру необязательно о них знать – потоки варпа сообщают о них), и все тесты, совершаемые этим узлом, получают гарантированного 3 провала. Также, добавляется дополнительные два провала за каждые 5 свободной энергии у вражеского корабля. Дополнительный провал добавляется на судна Орков, но отнимается у кораблей Эльдар, Друкхари и Некронов. Техножрецы, Криптеки, Мекбои и иные существа, знающие как управлять технологиями, могут пройти тест Tech–Use(I)–30, дабы за каждый успех снизить число провалов на 1.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "7umevgBgCP1vmLwL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!7umevgBgCP1vmLwL"
+}

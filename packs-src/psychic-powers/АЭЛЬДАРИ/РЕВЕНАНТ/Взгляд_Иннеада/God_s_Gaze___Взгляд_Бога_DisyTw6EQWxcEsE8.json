@@ -1,0 +1,78 @@
+{
+  "name": "God’s Gaze / Взгляд Бога",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "4ZxwiRS1UetZel3L",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Gaze of Doom</strong></p><p><strong>Действие: Полное действие Поддержание: Нет</strong></p><p><strong>Психотест: </strong>W–40 Дальность: PR×5м</p><p><strong>Тип: </strong>Атака, Психическое Дыхание, Стрельба</p><p>Становясь временным аватаром, проводником великой силы Иннеада, псайкер обращает против его врагов взгляд своего божества, способного стереть даже самых ужасающих противников в прах за считанные мгновения. Если псайкер провалил манифестацию психосилы, он получает Провалы×2 непоглощаемого E урона в голову от невероятной энергии, что прошла через него, выжигая его тело и душу. Если он преуспел в манифестации, он высвобождает из своей души психическое синее пламя, что покрывает огромный участок территории перед ним. Псайкер получает свойство Fear (4) против всех целей этой психосилы. Вместо обычного конуса 30° используется кунос 60°, а вместо теста A+0 используется тест A–30.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×5</p></td><td><p>PRd10+PR E</p></td><td><p>0</p></td><td><p>Felling (PR), Flame (2d10), Flush, Spray</p></td></tr></table><p>Свойство Flame от этого оружия имеет Warp Weapon, и если атака нанесла непоглощенный урон, то пламя автоматически поражает душу своей цели и горит 1 раунд, прежде чем потухнуть. Цели, что горят от свойства Flame этой психосилы, могут подвергаться Выжиганию Души псайкером, даже если те находятся вне его поля видимости.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Взгляд Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "breath",
+    "prRequired": 8,
+    "requirement": "PR 8, Gaze of Doom",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "PRd10+PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 8, Gaze of Doom\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–40 Дальность: PR×5м\nТип: Атака, Психическое Дыхание, Стрельба\nСтановясь временным аватаром, проводником великой силы Иннеада, псайкер обращает против его врагов взгляд своего божества, способного стереть даже самых ужасающих противников в прах за считанные мгновения. Если псайкер провалил манифестацию психосилы, он получает Провалы×2 непоглощаемого E урона в голову от невероятной энергии, что прошла через него, выжигая его тело и душу. Если он преуспел в манифестации, он высвобождает из своей души психическое синее пламя, что покрывает огромный участок территории перед ним. Псайкер получает свойство Fear (4) против всех целей этой психосилы. Вместо обычного конуса 30° используется кунос 60°, а вместо теста A+0 используется тест A–30.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×5 | PRd10+PR E | 0 | Felling (PR), Flame (2d10), Flush, Spray\n[/ТАБЛИЦА]\nСвойство Flame от этого оружия имеет Warp Weapon, и если атака нанесла непоглощенный урон, то пламя автоматически поражает душу своей цели и горит 1 раунд, прежде чем потухнуть. Цели, что горят от свойства Flame этой психосилы, могут подвергаться Выжиганию Души псайкером, даже если те находятся вне его поля видимости.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "DisyTw6EQWxcEsE8",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!DisyTw6EQWxcEsE8"
+}

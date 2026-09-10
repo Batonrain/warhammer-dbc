@@ -1,0 +1,77 @@
+{
+  "name": "Empyrean Hunter / Эмпиреев Охотник",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KtlagOhJ0osDE8L7",
+  "system": {
+    "description": "<p><strong>150 xp | Требования: PR 2</strong></p><p><strong>Действие: </strong>Длительное Действие (1 Час). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W+10.<strong> Дальность: </strong>PR×5 ПЕ</p><p><strong>Тип: </strong>Изменение</p><p>Пустотные Мечтатели специализируются на управлении пустотным судном в имматериуме в том случае, если корабль или целый флот не способен переместиться через Врата Паутины или найти их. Однако, перед этим, необходимо обнаружить наиболее эффективную точку для входа в имматериум. После того, как психосила была манифестирована, псайкер может лишь общаться краткими фразами, занятый поисками самой тонкой точки в материальном мире. В случае успеха, псайкер получает информацию о том, где находится эта точка в в радиусе психосилы, а также психический отголосок более выгодной точки, если такова есть, и ее предположительное местонахождение в системе.</p>",
+    "notes": "",
+    "cost": 150,
+    "discipline": "voidDreamer",
+    "subtype": "Вглядеться В Бездну",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "extended",
+    "range": "PR×5 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "150 xp | Требования: PR 2\nДействие: Длительное Действие (1 Час). Поддержание: Нет.\nПсихотест: W+10. Дальность: PR×5 ПЕ\nТип: Изменение\nПустотные Мечтатели специализируются на управлении пустотным судном в имматериуме в том случае, если корабль или целый флот не способен переместиться через Врата Паутины или найти их. Однако, перед этим, необходимо обнаружить наиболее эффективную точку для входа в имматериум. После того, как психосила была манифестирована, псайкер может лишь общаться краткими фразами, занятый поисками самой тонкой точки в материальном мире. В случае успеха, псайкер получает информацию о том, где находится эта точка в в радиусе психосилы, а также психический отголосок более выгодной точки, если такова есть, и ее предположительное местонахождение в системе.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "d5h0WV0S8NLoNehL",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!d5h0WV0S8NLoNehL"
+}

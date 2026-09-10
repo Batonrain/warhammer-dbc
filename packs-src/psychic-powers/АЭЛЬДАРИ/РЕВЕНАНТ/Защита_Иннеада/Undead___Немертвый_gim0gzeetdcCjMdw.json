@@ -1,0 +1,78 @@
+{
+  "name": "Undead / Немертвый",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "8C47cW6DrTo1767M",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Beyond Death</strong></p><p><strong>Действие:</strong> Полное действие <strong>Поддержание: </strong>Полное действие</p><p><strong>Психотест: </strong>W–50 <strong>Дальность: </strong>PR×5м</p><p><strong>Тип: </strong>Изменение</p><p>Псайкер заставляет существо пребывать в двух состояниях одновременно – жизни и смерти. Находясь в таком положении, существо способно пережить почти любое ранение и сражаться даже при невозможных травмах. Цель этой психосилы получает трейты From Beyond, Regeneration (PR), Stuff of Nightmares, Undying и Unnatural Toughness (PR). Вместо теста T для активации трейта Regeneration, цель психосилы может потратить три Мертвого Могущества и считать то что тест был пройден успешно. Цель игнорирует последствия всех критических эффектов независимо от их природы и урон в характеристики. Когда психосила развеивается, за каждый <strong>смертельный </strong>критический эффект цель получает 1 усталость.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Защита Иннеада",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Beyond Death",
+    "testChar": "wp",
+    "testMod": -50,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 8, Beyond Death\nДействие: Полное действие Поддержание: Полное действие\nПсихотест: W–50 Дальность: PR×5м\nТип: Изменение\nПсайкер заставляет существо пребывать в двух состояниях одновременно – жизни и смерти. Находясь в таком положении, существо способно пережить почти любое ранение и сражаться даже при невозможных травмах. Цель этой психосилы получает трейты From Beyond, Regeneration (PR), Stuff of Nightmares, Undying и Unnatural Toughness (PR). Вместо теста T для активации трейта Regeneration, цель психосилы может потратить три Мертвого Могущества и считать то что тест был пройден успешно. Цель игнорирует последствия всех критических эффектов независимо от их природы и урон в характеристики. Когда психосила развеивается, за каждый смертельный критический эффект цель получает 1 усталость.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "gim0gzeetdcCjMdw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gim0gzeetdcCjMdw"
+}

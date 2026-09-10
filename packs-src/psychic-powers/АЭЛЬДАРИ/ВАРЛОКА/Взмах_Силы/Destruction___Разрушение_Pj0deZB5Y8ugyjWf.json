@@ -1,0 +1,75 @@
+{
+  "name": "Destruction / Разрушение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "JW6ogf82lIZBt0E2",
+  "system": {
+    "description": "<p><strong>450 xp | Требования: PR 5, Strike</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Концентрируя силу Варпа в своем клинке, Варлок способен создать невероятной мощи взрыв, который уничтожает только врагов – независимо от их прочности тела и духа. Псайкер, после совершения атаки (но не обязательно попадая ею) может использовать приготовленную психосилу. На месте попадания центрируется шаблон Blast (WS.b+PR), который задевает только противников. Противники получают штраф 3×PR на избегание взрыва. Цели, не избежавшие взрыва, получают попадание:</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>–</p></td><td><p>2d10+2×PR E</p></td><td><p>PR</p></td><td><p>Blast (WS.b+PR)</p></td></tr></table>",
+    "notes": "Поле «Пробитие» оставлено 0 — книжное значение Pen переменное (=PR), а поле схемы принимает только фиксированное число; реальный Pen=PR см. в тексте/таблице выше. Урон (2d10+2×PR) и шаблон Blast(WS.b+PR) — только текстом, автоматической расстановки цели/шаблона нет.",
+    "cost": 450,
+    "discipline": "warlock",
+    "subtype": "Взмах Силы",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Strike",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+2*PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "450 xp | Требования: PR 5, Strike\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: Сам\nТип: Психический Клинок\nКонцентрируя силу Варпа в своем клинке, Варлок способен создать невероятной мощи взрыв, который уничтожает только врагов – независимо от их прочности тела и духа. Псайкер, после совершения атаки (но не обязательно попадая ею) может использовать приготовленную психосилу. На месте попадания центрируется шаблон Blast (WS.b+PR), который задевает только противников. Противники получают штраф 3×PR на избегание взрыва. Цели, не избежавшие взрыва, получают попадание:\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\n– | 2d10+2×PR E | PR | Blast (WS.b+PR)\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Pj0deZB5Y8ugyjWf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Pj0deZB5Y8ugyjWf"
+}

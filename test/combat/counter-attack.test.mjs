@@ -21,14 +21,40 @@ afterEach(() => resetCaptured());
 /** Предмет-armorMod с записью Механики kind:"counterAttack" (Шипы-подобный). */
 function ccItem({
   id = "spikes", name = "Шипы", installedOn = "host-1", activatable = false, active = false,
-  ccDamage = "1d5+S.b", ccPen = 2, ccDamageType = "rending", ccTearing = false,
+  ccDamage = "1d5+S.b", ccPen = 2, ccDamageType = "rending", ccTearing = false, ccShocking = false,
   ccOnMiss = true, ccOnUnarmedOrGrapple = true, ccLabel = "", when = undefined
 } = {}) {
-  const entry = { id: "e1", kind: "counterAttack", ccDamage, ccPen, ccDamageType, ccTearing, ccOnMiss, ccOnUnarmedOrGrapple, ccLabel, when };
+  const entry = { id: "e1", kind: "counterAttack", ccDamage, ccPen, ccDamageType, ccTearing, ccShocking, ccOnMiss, ccOnUnarmedOrGrapple, ccLabel, when };
   const flags = { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [entry] }] } };
   return {
     id, name, type: "armorMod",
     system: { installedOn, activatable, active },
+    flags,
+    getFlag: (scope, key) => flags[scope]?.[key]
+  };
+}
+
+/**
+ * Предмет-implant с записью kind:"counterAttack", гейтованной when.quality+
+ * when.chosenEffect (wdbc-jo51, Ribcage Carapace/Electric Arc) — тот же
+ * приём, что ccItem выше, но для implant, у которого «активен» не требует
+ * installedOn/activatable (implant всегда активен на акторе — isItemActive).
+ */
+function bestQCcImplant({
+  id = "ribcage", name = "Ribcage Carapace / Реберный Панцирь",
+  quality = "best", chosenEffects = [{ label: "Костяные шипы" }],
+  ccDamage = "1d10+S.b", ccPen = 2, ccDamageType = "rending", ccLabel = "Костяные шипы",
+  ccShocking = false, chosenEffectGate = ["Костяные шипы"]
+} = {}) {
+  const entry = {
+    id: "e1", kind: "counterAttack", ccDamage, ccPen, ccDamageType, ccTearing: false, ccShocking,
+    ccOnMiss: true, ccOnUnarmedOrGrapple: true, ccLabel,
+    when: { quality: ["best"], chosenEffect: chosenEffectGate }
+  };
+  const flags = { "warhammer-dbc": { installed: true, mechanics: [{ id: "g", operator: "AND", entries: [entry] }] } };
+  return {
+    id, name, type: "implant",
+    system: { quality, chosenEffects },
     flags,
     getFlag: (scope, key) => flags[scope]?.[key]
   };
@@ -121,6 +147,56 @@ describe("counterAttackEntriesForActor", () => {
   });
 });
 
+// ── Best.Q-биоимплант с гейтом when.quality+when.chosenEffect (wdbc-jo51) ──
+// Ribcage Carapace/Реберный Панцирь («Костяные шипы») и Electric Arc/
+// Электродуга («Электрическая броня») дают Встречную атаку ТОЛЬКО когда
+// игрок выбрал именно этот бонусный эффект Best.Q (apps/implant-bestq-choice.mjs)
+// — не безусловно, и не на Common/Good.Q копии того же импланта.
+describe("counterAttackEntriesForActor — Best.Q-имплант, гейт по выбранному эффекту", () => {
+  it("Best.Q и выбраны «Костяные шипы» — Встречная атака найдена", () => {
+    const w = wearer({ items: [bestQCcImplant()] });
+    const found = counterAttackEntriesForActor(w);
+    expect(found).toHaveLength(1);
+    expect(found[0].entry.ccLabel).toBe("Костяные шипы");
+  });
+
+  it("Best.Q, но выбран другой эффект («Самовосстановление») — не найдена", () => {
+    const w = wearer({ items: [bestQCcImplant({ chosenEffects: [{ label: "Самовосстановление" }] })] });
+    expect(counterAttackEntriesForActor(w)).toHaveLength(0);
+  });
+
+  it("Common.Q копия того же импланта (chosenEffects пуст) — не найдена", () => {
+    const w = wearer({ items: [bestQCcImplant({ quality: "common", chosenEffects: [] })] });
+    expect(counterAttackEntriesForActor(w)).toHaveLength(0);
+  });
+
+  it("Good.Q копия — не найдена, даже если chosenEffects почему-то не пуст (устаревшая правка Качества после выбора)", () => {
+    const w = wearer({ items: [bestQCcImplant({ quality: "good" })] });
+    expect(counterAttackEntriesForActor(w)).toHaveLength(0);
+  });
+
+  it("Best.Q без выбора вовсе (chosenEffects пуст) — не найдена", () => {
+    const w = wearer({ items: [bestQCcImplant({ chosenEffects: [] })] });
+    expect(counterAttackEntriesForActor(w)).toHaveLength(0);
+  });
+
+  it("Electric Arc: Best.Q + «Электрическая броня» — найдена, с той же формулой урона книги", () => {
+    const arc = bestQCcImplant({
+      id: "arc", name: "Electric Arc / Электродуга",
+      chosenEffects: [{ label: "Электрическая броня" }], chosenEffectGate: ["Электрическая броня"],
+      ccDamage: "1d10+T.b", ccPen: 4, ccDamageType: "energy", ccLabel: "Электрическая броня",
+      ccShocking: true
+    });
+    const w = wearer({ items: [arc] });
+    const found = counterAttackEntriesForActor(w);
+    expect(found).toHaveLength(1);
+    expect(found[0].entry.ccDamage).toBe("1d10+T.b");
+    expect(found[0].entry.ccPen).toBe(4);
+    expect(found[0].entry.ccDamageType).toBe("energy");
+    expect(found[0].entry.ccShocking).toBe(true);
+  });
+});
+
 describe("activeCounterAttackEntries — фильтр по триггеру записи", () => {
   it("оба условия запрошены — совпадает по ЛЮБОМУ подходящему полю записи", () => {
     const w = wearer({ items: [ccItem({ ccOnMiss: true, ccOnUnarmedOrGrapple: false })] });
@@ -209,5 +285,49 @@ describe("counterAttackSectionHtml", () => {
     expect(rolls).toHaveLength(2);
     expect(html).toContain("Шипы");
     expect(html).toContain("Цепные Бандольеры");
+  });
+});
+
+// ── Shocking (ccShocking, wdbc-z5mn, Electric Arc/Электродуга — «Электрическая
+// броня»): помимо кнопки урона, entry с ccShocking:true даёт кнопку эффекта
+// «Шокирующее» (та же запись WEAPON_PROPERTIES.shocking, что у обычного
+// оружия — тест T+0, иначе Оглушение на 1 раунд), нацеленную ПРЯМО на
+// known-атакующего (forceActor у buildTargetEffectButtons), без выбора
+// токена на сцене.
+describe("counterAttackSectionHtml — Shocking (ccShocking)", () => {
+  it("ccShocking:true — есть кнопка эффекта, нацеленная на known-атакующего", async () => {
+    const item = ccItem({ ccShocking: true });
+    const w = wearer({ items: [item] });
+    const attacker = { uuid: "Actor.attacker5", name: "Шокированный" };
+    const { html } = await counterAttackSectionHtml(w, attacker, { onMiss: true, onUnarmedOrGrapple: false });
+    expect(html).toContain("wh-wprop-apply-btn");
+    expect(html).toContain('data-wp-condition="stunned"');
+    expect(html).toContain('data-wp-force-actor-uuid="Actor.attacker5"');
+    expect(html).toContain("→ Шокированный");
+  });
+
+  it("ccShocking:false (по умолчанию) — кнопки эффекта нет, только урон/Уклонение", async () => {
+    const item = ccItem();
+    const w = wearer({ items: [item] });
+    const attacker = { uuid: "Actor.attacker6", name: "Невредимый" };
+    const { html } = await counterAttackSectionHtml(w, attacker, { onMiss: true, onUnarmedOrGrapple: false });
+    expect(html).not.toContain("wh-wprop-apply-btn");
+    expect(html).not.toContain('data-wp-condition="stunned"');
+  });
+
+  it("Electric Arc: Best.Q + «Электрическая броня» + ccShocking — обе кнопки разом (урон и Оглушение)", async () => {
+    const arc = bestQCcImplant({
+      id: "arc", name: "Electric Arc / Электродуга",
+      chosenEffects: [{ label: "Электрическая броня" }], chosenEffectGate: ["Электрическая броня"],
+      ccDamage: "1d10+T.b", ccPen: 4, ccDamageType: "energy", ccLabel: "Электрическая броня",
+      ccShocking: true
+    });
+    const w = wearer({ items: [arc], s: 40 });
+    const attacker = { uuid: "Actor.attacker7", name: "Обугленный" };
+    captured.dice = [5];
+    const { html } = await counterAttackSectionHtml(w, attacker, { onMiss: true, onUnarmedOrGrapple: false });
+    expect(html).toContain("wh-apply-dmg-btn");
+    expect(html).toContain("wh-wprop-apply-btn");
+    expect(html).toContain('data-wp-force-actor-uuid="Actor.attacker7"');
   });
 });

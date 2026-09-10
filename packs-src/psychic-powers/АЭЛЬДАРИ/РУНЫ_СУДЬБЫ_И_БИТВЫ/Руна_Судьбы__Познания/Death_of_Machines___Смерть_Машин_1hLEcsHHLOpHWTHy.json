@@ -1,0 +1,78 @@
+{
+  "name": "Death of Machines / Смерть Машин",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "4ySA3zoB81fcvoYw",
+  "system": {
+    "description": "<p><strong>700 xp | Требования: PR 9</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест:</strong> I–50.<strong> Дальность: </strong>PR×20 м</p><p><strong>Тип: </strong>Атака, Аура</p><p>Пропуская сквозь себя потоки Имматериума, проецируя их в качестве древних песен детей Азуриана, Провидец способен выпустить в форме яркой синей вспышки поток психической энергии, которая отключает почти всю технику вокруг, обходя даже великую защиту от нее. Подобным пользуются Провидцы, что часто сражаются с врагами, использующими высокотехнологическое оружие. На псайкере центрируется шаблон, к которому он и его союзники получают иммунитет.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×20 м</p></td><td><p>–</p></td><td><p>–</p></td><td><p>Haywire (PR×3, 2d10+5)</p></td></tr></table><p>Существа, способные видеть Ноосферу, в качестве реакции на эту психосилу могут пройти соревновательный тест против психосилы Logic(I)–20, и если успехи существа будет выше, чем успехи псайкера, то оно игнорирует психосилу. Оно может проходить этот тест за каждую технику, что оно видит. За технику тест может пройти лишь одно существо.</p>",
+    "notes": "Тип урона в книге обозначен «–» — ближайший доступный в схеме тип подставлен приближённо, точная формула урона — в тексте/таблице карточки.",
+    "cost": 700,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Познания",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "int",
+    "testMod": -50,
+    "action": "full",
+    "range": "PR×20 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "–",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "700 xp | Требования: PR 9\nДействие: Полное действие. Поддержание: Нет.\nПсихотест: I–50. Дальность: PR×20 м\nТип: Атака, Аура\nПропуская сквозь себя потоки Имматериума, проецируя их в качестве древних песен детей Азуриана, Провидец способен выпустить в форме яркой синей вспышки поток психической энергии, которая отключает почти всю технику вокруг, обходя даже великую защиту от нее. Подобным пользуются Провидцы, что часто сражаются с врагами, использующими высокотехнологическое оружие. На псайкере центрируется шаблон, к которому он и его союзники получают иммунитет.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×20 м | – | – | Haywire (PR×3, 2d10+5)\n[/ТАБЛИЦА]\nСущества, способные видеть Ноосферу, в качестве реакции на эту психосилу могут пройти соревновательный тест против психосилы Logic(I)–20, и если успехи существа будет выше, чем успехи псайкера, то оно игнорирует психосилу. Оно может проходить этот тест за каждую технику, что оно видит. За технику тест может пройти лишь одно существо.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "1hLEcsHHLOpHWTHy",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1hLEcsHHLOpHWTHy"
+}

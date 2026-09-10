@@ -1,0 +1,78 @@
+{
+  "name": "Whisper Of Doom / Шепот Погибели",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "UXeRoTjpJEnnOAaM",
+  "system": {
+    "description": "<p><strong>300 xp | Требования: PR 4, Word Of Doom</strong></p><p><strong>Действие:</strong> Полудействие<strong> Поддержание:</strong> Нет</p><p><strong>Психотест:</strong> W–10 <strong>Дальность:</strong> PR×15м</p><p><strong>Тип: </strong>Атака, Психический Взрыв (PR×3), Стрельба</p><p>Шепот Бога Смерти несет лишь погибель для тех, кто не способен познать всю суть Иннеада. Те, кто выступают против Иннари встретят свою смерть в холоде и отчаянии, когда шепот Иннеада вторгнется в их умы. Оставляя после себя лишь обледеневшие трупы, псайкер способен убивать орды врагов подобным образом, неся славу Иннеаду.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×15</p></td><td><p>1d10+PR E</p></td><td><p>0</p></td><td><p>Blast (PR×3)</p></td></tr></table><p>Когда псайкер выбирает область действия психосилы, эта область накрывается холодным ветром и инеем. Цели, что получили попадание в этой зоне, страдают от гипотермии (см. DoomBC, стр 353).</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "revenant",
+    "subtype": "Крещендо Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "blast",
+    "prRequired": 4,
+    "requirement": "PR 4, Word Of Doom",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×15м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp | Требования: PR 4, Word Of Doom\nДействие: Полудействие Поддержание: Нет\nПсихотест: W–10 Дальность: PR×15м\nТип: Атака, Психический Взрыв (PR×3), Стрельба\nШепот Бога Смерти несет лишь погибель для тех, кто не способен познать всю суть Иннеада. Те, кто выступают против Иннари встретят свою смерть в холоде и отчаянии, когда шепот Иннеада вторгнется в их умы. Оставляя после себя лишь обледеневшие трупы, псайкер способен убивать орды врагов подобным образом, неся славу Иннеаду.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×15 | 1d10+PR E | 0 | Blast (PR×3)\n[/ТАБЛИЦА]\nКогда псайкер выбирает область действия психосилы, эта область накрывается холодным ветром и инеем. Цели, что получили попадание в этой зоне, страдают от гипотермии (см. DoomBC, стр 353).",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "oDYfXjm4k7ZNmllo",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oDYfXjm4k7ZNmllo"
+}

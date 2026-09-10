@@ -1,0 +1,75 @@
+{
+  "name": "Emergency Raising / Экстренное Поднятие",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "zYS0a0ovsKecy85U",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Creation</strong></p><p><strong>Действие: </strong>Свободное действие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W+10. <strong>Дальность:</strong> PR×20</p><p><strong>Тип: </strong>Изменение</p><p>Во время боя может произойти много чего – и одно из самых неприятных, так это падение психокостяного конструкта. Экстренное вмешательство может спасти его от уничтожения, чем иногда пользуются Духовидцы. Псайкер может потратить 1 свою рану, чтобы вылечить 5 структуры у психокостяного конструкта. Псайкер за раз может тратить неограниченное количество своих ран при помощи данной психосилы (до тех пор, пока у него конечно они есть). Псайкер может уйти в отрицательное значение ран, получая критический E эффект.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "spiritSeer",
+    "subtype": "Ритуальное Познание",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Creation",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "free",
+    "range": "PR×20",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 3, Creation\nДействие: Свободное действие. Поддержание: Нет.\nПсихотест: W+10. Дальность: PR×20\nТип: Изменение\nВо время боя может произойти много чего – и одно из самых неприятных, так это падение психокостяного конструкта. Экстренное вмешательство может спасти его от уничтожения, чем иногда пользуются Духовидцы. Псайкер может потратить 1 свою рану, чтобы вылечить 5 структуры у психокостяного конструкта. Псайкер за раз может тратить неограниченное количество своих ран при помощи данной психосилы (до тех пор, пока у него конечно они есть). Псайкер может уйти в отрицательное значение ран, получая критический E эффект.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "oysfLWH9ge1BBOlK",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!oysfLWH9ge1BBOlK"
+}

@@ -1,0 +1,78 @@
+{
+  "name": "Dragon Scales / Чешуя Дракона",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "lJTQDtU5GCpLUxNH",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 6</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–20.<strong> Дальность: </strong>PR×10 м</p><p><strong>Тип: </strong>Длительное (PR Раундов), Изменение (PR)</p><p>Древние драконы на землях Эльдар были и угрозой, и оружием, которое применялось против недругов в старые времена. И эти древние дракона обладали невероятно прочной чешуей, способной выдержать даже самые смертельные попадания и травмы. Повторяя эту чешую на телах своих воинов, Провидцы способны укрепить их достаточно, дабы бросить бой врагу. Цели психосилы получают Natural Armour (+PR), а также снижают <strong>вдвое</strong> (окр.▼)<strong> </strong>весь E урон и иммунитет к E(Fl) урону и Горению. Также, цель получает иммунитет к экстремально высоким температурам. Эта психосила сопровождается появлением неприятной на ощупь, но твердой чешуи – в случае, если цель вступает в борьбу, Natural Armour от этого свойства работает против Заломить.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Битвы: Тела",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 6\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–20. Дальность: PR×10 м\nТип: Длительное (PR Раундов), Изменение (PR)\nДревние драконы на землях Эльдар были и угрозой, и оружием, которое применялось против недругов в старые времена. И эти древние дракона обладали невероятно прочной чешуей, способной выдержать даже самые смертельные попадания и травмы. Повторяя эту чешую на телах своих воинов, Провидцы способны укрепить их достаточно, дабы бросить бой врагу. Цели психосилы получают Natural Armour (+PR), а также снижают вдвое (окр.▼) весь E урон и иммунитет к E(Fl) урону и Горению. Также, цель получает иммунитет к экстремально высоким температурам. Эта психосила сопровождается появлением неприятной на ощупь, но твердой чешуи – в случае, если цель вступает в борьбу, Natural Armour от этого свойства работает против Заломить.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "OMLIeie06ISfCIEN",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!OMLIeie06ISfCIEN"
+}

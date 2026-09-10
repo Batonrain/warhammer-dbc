@@ -1,0 +1,78 @@
+{
+  "name": "Second Chance / Второй Шанс",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "YFUiVJaNfyIdwK2g",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 2</strong></p><p><strong>Действие: </strong>Реакция <strong>Поддержание:</strong> Нет</p><p><strong>Психотест: </strong>W+0. <strong>Дальность: </strong>PR×10м</p><p><strong>Тип:</strong> Изменение, Реагирование</p><p>Сила Иннеада способна отвергать саму смерть и оборачивать смертельные ранения в ничто. И в последний момент перед гибелью своего союзника, псайкер может дать ему второй шанс. Данная психосила используется в качестве реакции на получение критического эффекта или отрицательных ран. За каждый успех на манифестации психосилы союзник восстанавливает 1 рану. Также, это отменяет последствия критического эффекта до конца битвы, кроме перманентных. Цель получает иммунитет к этой психосиле до конца боя. Она не может быть манифестирована вне боя или стрессовой ситуации, которая приближает к смерти.</p>",
+    "notes": "",
+    "cost": 200,
+    "discipline": "revenant",
+    "subtype": "Воля Феникса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "reaction",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 2\nДействие: Реакция Поддержание: Нет\nПсихотест: W+0. Дальность: PR×10м\nТип: Изменение, Реагирование\nСила Иннеада способна отвергать саму смерть и оборачивать смертельные ранения в ничто. И в последний момент перед гибелью своего союзника, псайкер может дать ему второй шанс. Данная психосила используется в качестве реакции на получение критического эффекта или отрицательных ран. За каждый успех на манифестации психосилы союзник восстанавливает 1 рану. Также, это отменяет последствия критического эффекта до конца битвы, кроме перманентных. Цель получает иммунитет к этой психосиле до конца боя. Она не может быть манифестирована вне боя или стрессовой ситуации, которая приближает к смерти.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LU7hIYAXfkPLGK6n",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LU7hIYAXfkPLGK6n"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Ghost Warrior / Призрачный Воитель",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "bbGi7FvHL0CFAKE4",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 5, Creation</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–20. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Изменение</p><p>Используя психокость, Провидец Духов способен сотворить бездушный психокостяной конструкт – неровень обычным конструктам, что обладает камнями душ, однако, ими можно заткнуть дыры в рядах Эльдар или создавать целые отряды для сопровождения Провидца Духов на поле битвы без отвлечения сил Аспектов. Для использования данной психосилы, псайкеру необходимо 80 килограмм психокости. За 14 дней, псайкер должен скрафтить телесную оболочку по своему усмотрению, однако она всегда требует 125 успехов. Если псайкер не справился за 14 дней, то психосила развеивается, а психокость тратится в никуда. Если он смог набрать нужное число банков успеха, то он создает Обычного Миньона Машину (игнорируя обычные требования) со следующим профилем:</p><table><tr><td colspan=\"9\"><p><span style=\"color:#ffffff\">Призрачный Воитель</span><span style=\"color:#ffffff\">                                                                 </span><span style=\"color:#ffffff\">Размер: 1 | Раны: Wb×4</span></p></td></tr><tr><td><p><strong>WS</strong></p></td><td><p><strong>BS</strong></p></td><td><p><strong>S</strong></p></td><td><p><strong>T</strong></p></td><td><p><strong>A</strong></p></td><td><p><strong>I</strong></p></td><td><p><strong>P</strong></p></td><td><p><strong>W</strong></p></td><td><p><strong>F</strong></p></td></tr><tr><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>10</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>10</strong></p></td><td><p><strong>10</strong></p></td></tr></table><table><tr><td><p><strong>Броня: Оболочка (6/6/6/6)</strong></p></td><td><p><strong>T.b: X | Погл.: 6+3+X/6+3+X/6+3+X/6+3+X</strong></p></td></tr><tr><td><p><strong>SPD: X/X/X/X   Init: X</strong></p></td><td></td></tr></table><p>Где X в характеристиках – ½ W.b псайкера, создавшего Призрачного Воителя.</p><table><tr><td><table><tr><td><p><strong>Навыки</strong></p></td><td><p><strong>Мод</strong></p></td><td><p><strong>Пр</strong></p></td></tr><tr><td><p>Athletics</p></td><td><p>+0</p></td><td><p>X</p></td></tr><tr><td><p>Awareness</p></td><td><p>+0</p></td><td><p>X</p></td></tr><tr><td><p>Dodge</p></td><td><p>+0</p></td><td><p>X</p></td></tr><tr><td><p>Intimidate</p></td><td><p>+10</p></td><td><p>X</p></td></tr><tr><td><p>Logic</p></td><td><p>+0</p></td><td><p>X</p></td></tr><tr><td><p>Navigation (Surface)</p></td><td><p>+10</p></td><td><p>X</p></td></tr><tr><td><p>Parry</p></td><td><p>+0</p></td><td><p>X</p></td></tr><tr><td><p>Psyniscience</p></td><td><p>+0</p></td><td><p>X</p></td></tr></table></td><td><table><tr><td><p><strong>Таланты</strong></p></td><td><p><strong>Описание</strong></p></td></tr><tr><td><p><strong>Ambidextrous</strong></p></td><td><p><strong>–</strong>10 штраф за 2 оружия, нет штрафа за л. руку</p></td></tr><tr><td><p><strong>Bodyguard</strong></p></td><td><p>Можно парировать атаки по союзникам</p></td></tr><tr><td><p><strong>Deadeye Shot</strong></p></td><td><p>–10 штраф за Избирательный выстрел / Размер</p></td></tr><tr><td><p><strong>Deflect Shot</strong></p></td><td><p>Отбить медленный снаряд парированием</p></td></tr><tr><td><p><strong>Double Team</strong></p></td><td><p>Еще +10 за численное превосходство</p></td></tr><tr><td><p><strong>Hip Shooting</strong></p></td><td><p>Стрельба на полном ходу</p></td></tr><tr><td><p><strong>Iron Jaw</strong></p></td><td><p>Т+0, чтобы игнорировать Оглушение</p></td></tr><tr><td><p><strong>Scanning Advance</strong></p></td><td><p>Улучшенный Караул на медленном ходу</p></td></tr><tr><td><p><strong>Steady Footwork</strong></p></td><td><p>Нет штрафов к WS от ландшафта</p></td></tr><tr><td><p><strong>Target Selection</strong></p></td><td><p>Нет штрафа за стрельбу в рукопашную</p></td></tr><tr><td><p><strong>Tireless</strong></p></td><td><p>Нет штрафа от усталости для физ. действий</p></td></tr><tr><td><p><strong>Two Weapon Wielder (Both)</strong></p></td><td><p>Бой двумя оружиями со штрафом –20</p></td></tr><tr><td><p><strong>Unarmed Master</strong></p></td><td><p>Кулаки теряют свойство Primitive</p></td></tr><tr><td><p><strong>Unarmed Warrior</strong></p></td><td><p>D5 &gt; D10 в уроне кулаков</p></td></tr></table></td></tr></table><p><strong>Трейты:</strong> Brutal Charge (3), Fanatic, From Beyond, Machine (3), Regeneration (4), Size (1), Unnatural WS (2), Unnatural BS (2), Unnatural T (2), Unnatural S (4), Wraith Construct, Wraithbone Regeneration.</p><p><strong>Wraith Construct: </strong>Являясь простым бездушным конструктом, призрачный воитель вступает в бой без страха за свою жизнь и свое существование. Призрачный воитель подчиняется приказам своего командира/создателя беспрекословно, не беспокоясь за свою жизнь. Он не может самостоятельно создавать новую тактику или стратегию, потому за ними нужно постоянно следить. Он не нуждается в воздухе, воде и еде, иммунен к ослеплению, глухоте, кровотечению, обескровливанию, эффектам вакуума, удушья, радиации, экстремальной температуры, усталости, болезней и ядов (а также стимуляторов и лекарств), а Machine отображает его психокостяную природу. Из–за отсутствия у него электроники, призрачный воитель имеет иммунитет тк ЭМИ. Поскольку конструкт не обладает душой, он обладает полным иммунитетом к психосилам Телепатии и схожим с ними.</p><p>Призрачный Воитель не имеет сочленений. Лояльность Призрачного Воителя фиксировано 40. Призрачному Воителю можно поменять любое из его оружия если оно просто отдано ему – если оружие было установлено вместо руки (Уменьшая тип оружия Пистолет ← Винтовка ← Длинная Винтовка ← Тяжелое), то Псайкер должен провести крафт через Tech–Use(W)–20 и набрать 40 банков успеха чтобы снять старое и повесить новое оружие.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "spiritSeer",
+    "subtype": "Сотворение Бездушных",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Creation",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "400 xp | Требования: PR 5, Creation\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: Сам\nТип: Изменение\nИспользуя психокость, Провидец Духов способен сотворить бездушный психокостяной конструкт – неровень обычным конструктам, что обладает камнями душ, однако, ими можно заткнуть дыры в рядах Эльдар или создавать целые отряды для сопровождения Провидца Духов на поле битвы без отвлечения сил Аспектов. Для использования данной психосилы, псайкеру необходимо 80 килограмм психокости. За 14 дней, псайкер должен скрафтить телесную оболочку по своему усмотрению, однако она всегда требует 125 успехов. Если псайкер не справился за 14 дней, то психосила развеивается, а психокость тратится в никуда. Если он смог набрать нужное число банков успеха, то он создает Обычного Миньона Машину (игнорируя обычные требования) со следующим профилем:Призрачный Воитель                                                                 Размер: 1 | Раны: Wb×4 | WS | BS | S | T | A | I | P | W | F | X | X | X | X | X | 10 | X | 10 | 10\nБроня: Оболочка (6/6/6/6) | T.b: X | Погл.: 6+3+X/6+3+X/6+3+X/6+3+X | SPD: X/X/X/X   Init: X | Где X в характеристиках – ½ W.b псайкера, создавшего Призрачного Воителя.Навыки | Мод | Пр | Athletics | +0 | X | Awareness | +0 | X | Dodge | +0 | X | Intimidate | +10 | X | Logic | +0 | X | Navigation (Surface) | +10 | X | Parry | +0 | X | Psyniscience | +0 | X | Таланты | Описание | Ambidextrous | –10 штраф за 2 оружия, нет штрафа за л. руку | Bodyguard | Можно парировать атаки по союзникам | Deadeye Shot | –10 штраф за Избирательный выстрел / Размер | Deflect Shot | Отбить медленный снаряд парированием | Double Team | Еще +10 за численное превосходство | Hip Shooting | Стрельба на полном ходу | Iron Jaw | Т+0, чтобы игнорировать Оглушение | Scanning Advance | Улучшенный Караул на медленном ходу | Steady Footwork | Нет штрафов к WS от ландшафта | Target Selection | Нет штрафа за стрельбу в рукопашную | Tireless | Нет штрафа от усталости для физ. действий | Two Weapon Wielder (Both) | Бой двумя оружиями со штрафом –20 | Unarmed Master | Кулаки теряют свойство Primitive | Unarmed Warrior | D5 &gt; D10 в уроне кулаковТрейты: Brutal Charge (3), Fanatic, From Beyond, Machine (3), Regeneration (4), Size (1), Unnatural WS (2), Unnatural BS (2), Unnatural T (2), Unnatural S (4), Wraith Construct, Wraithbone Regeneration.\nWraith Construct: Являясь простым бездушным конструктом, призрачный воитель вступает в бой без страха за свою жизнь и свое существование. Призрачный воитель подчиняется приказам своего командира/создателя беспрекословно, не беспокоясь за свою жизнь. Он не может самостоятельно создавать новую тактику или стратегию, потому за ними нужно постоянно следить. Он не нуждается в воздухе, воде и еде, иммунен к ослеплению, глухоте, кровотечению, обескровливанию, эффектам вакуума, удушья, радиации, экстремальной температуры, усталости, болезней и ядов (а также стимуляторов и лекарств), а Machine отображает его психокостяную природу. Из–за отсутствия у него электроники, призрачный воитель имеет иммунитет тк ЭМИ. Поскольку конструкт не обладает душой, он обладает полным иммунитетом к психосилам Телепатии и схожим с ними.\nПризрачный Воитель не имеет сочленений. Лояльность Призрачного Воителя фиксировано 40. Призрачному Воителю можно поменять любое из его оружия если оно просто отдано ему – если оружие было установлено вместо руки (Уменьшая тип оружия Пистолет ← Винтовка ← Длинная Винтовка ← Тяжелое), то Псайкер должен провести крафт через Tech–Use(W)–20 и набрать 40 банков успеха чтобы снять старое и повесить новое оружие.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "A0gWKNlGct5HIQdH",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!A0gWKNlGct5HIQdH"
+}

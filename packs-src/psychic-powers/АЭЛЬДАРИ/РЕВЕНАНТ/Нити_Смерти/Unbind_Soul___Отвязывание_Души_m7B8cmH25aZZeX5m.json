@@ -1,0 +1,78 @@
+{
+  "name": "Unbind Soul / Отвязывание Души",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "VsKa4y1JPUDWsjOo",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6, Scissors</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Полудействие</p><p><strong>Психотест: </strong>W–30 vs W+0 <strong>Дальность: </strong>Ближний бой</p><p><strong>Тип:</strong> Атака, Рукопашное</p><p>Псайкер взмахом своей атаки отрубает связь души и тела своей жертвы, оставляя душу открытой и подсвечивая ее для всех атак. Дальность психосилы привязывается к рукопашной атаке персонажа. Персонаж должен сначала попасть рукопашной атакой и по желанию нанести урон или сразу манифестировать психосилу. Если цель провалила соревновательный тест, то ее душа отрывается от тела и подсвечивается в материальном мире, благодаря чему ее можно атаковать даже оружием без свойства Warp–Weapon. Это считается атакой в Сочленение со штрафом –40 и у души в качестве поглощения всего урона берется ее W.b и AP, защищающее от варп–урона. Демоны игнорируют штраф сочленения для атаки.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Нити Смерти",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Scissors",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "Ближний бой",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "wp",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6, Scissors\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–30 vs W+0 Дальность: Ближний бой\nТип: Атака, Рукопашное\nПсайкер взмахом своей атаки отрубает связь души и тела своей жертвы, оставляя душу открытой и подсвечивая ее для всех атак. Дальность психосилы привязывается к рукопашной атаке персонажа. Персонаж должен сначала попасть рукопашной атакой и по желанию нанести урон или сразу манифестировать психосилу. Если цель провалила соревновательный тест, то ее душа отрывается от тела и подсвечивается в материальном мире, благодаря чему ее можно атаковать даже оружием без свойства Warp–Weapon. Это считается атакой в Сочленение со штрафом –40 и у души в качестве поглощения всего урона берется ее W.b и AP, защищающее от варп–урона. Демоны игнорируют штраф сочленения для атаки.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "m7B8cmH25aZZeX5m",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!m7B8cmH25aZZeX5m"
+}

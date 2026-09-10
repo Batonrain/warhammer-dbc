@@ -1,0 +1,75 @@
+{
+  "name": "Crushing / Дробление",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "G0RNZVEx2LfpVdhN",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Emergency Raising</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×20</p><p><strong>Тип: </strong>Грань, Изменение (PR),  Психический Клинок (PR)</p><p>Обращая материю Варпа в нечто материальное, утяжеляя вес даже самого простого оружия, создавая не особо пробивающее, но могущественное оружие. Цели этой психосилы меняют свой тип рукопашного оружия на I или I(Cr), получают Concussive (3), Mighty  и +5 Dmg, но –4 Pen (мин. 0). Если кубик урона оружия превышает T.b цели, то она должна пройти тест T+10, или место удара становится неработоспособным на Провалы–1 (мин. 1) раундов. Этот эффект не распространяется на удары в тело и голову.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "spiritSeer",
+    "subtype": "Грань: Надёжный Удар",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Emergency Raising",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×20",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 3, Emergency Raising\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×20\nТип: Грань, Изменение (PR),  Психический Клинок (PR)\nОбращая материю Варпа в нечто материальное, утяжеляя вес даже самого простого оружия, создавая не особо пробивающее, но могущественное оружие. Цели этой психосилы меняют свой тип рукопашного оружия на I или I(Cr), получают Concussive (3), Mighty  и +5 Dmg, но –4 Pen (мин. 0). Если кубик урона оружия превышает T.b цели, то она должна пройти тест T+10, или место удара становится неработоспособным на Провалы–1 (мин. 1) раундов. Этот эффект не распространяется на удары в тело и голову.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6F1mdKFGjgfPebgJ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6F1mdKFGjgfPebgJ"
+}

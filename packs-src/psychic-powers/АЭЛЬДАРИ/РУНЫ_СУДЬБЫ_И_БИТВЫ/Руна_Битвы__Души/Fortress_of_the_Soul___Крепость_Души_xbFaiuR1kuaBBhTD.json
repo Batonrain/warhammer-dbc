@@ -1,0 +1,78 @@
+{
+  "name": "Fortress of the Soul / Крепость Души",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "Kmje1rHfkJJpNu1y",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 9</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Свободное действие.</p><p><strong>Психотест: </strong>W–30.<strong> Дальность: </strong>PR×10 м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Укрепляя душу, превращая ее в неприступную крепость, Провидец способен защитить своих союзников от вражеских психосил, даже если те обычно поражают физическое тело, а не разум или душу. Все цели психосилы получают запас <strong>Крепости</strong>, равный PR при манифестации психосилы. Когда на существо с запасом <strong>Крепости </strong>воздействуют <strong>любой </strong>психосилой, кроме <strong>непрямой</strong>, он может потратить <strong>запас</strong>, равный PR воздействующей на него психосилы (или весь, если PR равен или выше <strong>крепости</strong>), и <strong>проигнорировать </strong>психосилу, независимо от ее эффектов. Это не распространяется на психосилы, что дают псайкеру бонус к силе, множество ударов и подобное, но распространяется на атакующие психосилы, ауру и иное. Если это аура, то цель получает иммунитет к ней на W.b раундов.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Битвы: Души",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 9\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–30. Дальность: PR×10 м\nТип: Изменение (PR)\nУкрепляя душу, превращая ее в неприступную крепость, Провидец способен защитить своих союзников от вражеских психосил, даже если те обычно поражают физическое тело, а не разум или душу. Все цели психосилы получают запас Крепости, равный PR при манифестации психосилы. Когда на существо с запасом Крепости воздействуют любой психосилой, кроме непрямой, он может потратить запас, равный PR воздействующей на него психосилы (или весь, если PR равен или выше крепости), и проигнорировать психосилу, независимо от ее эффектов. Это не распространяется на психосилы, что дают псайкеру бонус к силе, множество ударов и подобное, но распространяется на атакующие психосилы, ауру и иное. Если это аура, то цель получает иммунитет к ней на W.b раундов.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "xbFaiuR1kuaBBhTD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!xbFaiuR1kuaBBhTD"
+}

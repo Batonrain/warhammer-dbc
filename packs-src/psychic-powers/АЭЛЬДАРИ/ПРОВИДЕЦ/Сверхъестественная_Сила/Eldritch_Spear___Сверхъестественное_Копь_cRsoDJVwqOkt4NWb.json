@@ -1,0 +1,77 @@
+{
+  "name": "Eldritch Spear / Сверхъестественное Копье",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "kFZPmFGZOjTHnKXN",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 6, Сверхъестественный Снаряд</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W–20 vss W–10. <strong>Дальность:</strong> PR×15 м</p><p><strong>Тип:</strong> Атака, Психический Снаряд, Психический Взрыв (бPR)</p><p>Провидец окунает свою руку в Варп, собирая энергии в одну руку. Итоговое количество энергии принимает облик копья, что после столкновения с любой из преград высвободит все могущество материи Варпа во врага, уничтожив почти любого. Соревновательный тест против этой психосилы является тестом против Страха с рейтингом 3. Если цель проваливает тест, то если в радиусе 15 метров от него есть союзники (относительно него), то они все должны пройти тест против страха с рейтингом 2. Успехи, набранные в этом тесте, превращаются в эPR в расчете свойств психосилы.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×15 м</p></td><td><p>2d10+8+PR E</p></td><td><p>PR</p></td><td><p>Blast (бPR)</p></td></tr></table>",
+    "notes": "Pen = PR (не константа) — поле «Пробитие» оставлено 0, формула только в тексте. Свойство Blast(бPR) не разложено в weaponProps.",
+    "cost": 400,
+    "discipline": "farseer",
+    "subtype": "Сверхъестественная Сила",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 6,
+    "requirement": "PR 6, Сверхъестественный Снаряд",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×15 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+8+PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "wp",
+    "resistMod": -10,
+    "effect": "400 xp | Требования: PR 6, Сверхъестественный Снаряд\nДействие: Полное действие. Поддержание: Нет.\nПсихотест: W–20 vss W–10. Дальность: PR×15 м\nТип: Атака, Психический Снаряд, Психический Взрыв (бPR)\nПровидец окунает свою руку в Варп, собирая энергии в одну руку. Итоговое количество энергии принимает облик копья, что после столкновения с любой из преград высвободит все могущество материи Варпа во врага, уничтожив почти любого. Соревновательный тест против этой психосилы является тестом против Страха с рейтингом 3. Если цель проваливает тест, то если в радиусе 15 метров от него есть союзники (относительно него), то они все должны пройти тест против страха с рейтингом 2. Успехи, набранные в этом тесте, превращаются в эPR в расчете свойств психосилы.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×15 м | 2d10+8+PR E | PR | Blast (бPR)\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "cRsoDJVwqOkt4NWb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cRsoDJVwqOkt4NWb"
+}

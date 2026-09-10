@@ -1,0 +1,23 @@
+{
+  "name": "ВАРЛОКА",
+  "type": "Item",
+  "folder": "LhAAFSmoYEMg2rVn",
+  "sorting": "m",
+  "_id": "QGDUHEI8lluY2Nzx",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!QGDUHEI8lluY2Nzx"
+}

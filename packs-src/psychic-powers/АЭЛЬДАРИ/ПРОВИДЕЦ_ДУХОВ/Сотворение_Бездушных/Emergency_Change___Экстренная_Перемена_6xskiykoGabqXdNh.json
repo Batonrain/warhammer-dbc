@@ -1,0 +1,75 @@
+{
+  "name": "Emergency Change / Экстренная Перемена",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "bbGi7FvHL0CFAKE4",
+  "system": {
+    "description": "<p><strong>450 xp | Требования: PR 6, Ghost Warrior</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–20. <strong>Дальность:</strong> PR×10 м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Провидцы Духов, обладающие призрачными воителями, рано или поздно обучаются их тонко контролировать и экстренно менять их снаряжение прямо на ходу. Если в радиусе 5 метров от любого вашего призрачного воителя есть любое эльдарское оружие, вы можете за еще одно Полудействие отсоединить старое и присоединить новое, так, словно бы вы прошли необходимый тест на крафт. Конструкт от этого получает 1d10 непоглощаемого I урона.</p>",
+    "notes": "",
+    "cost": 450,
+    "discipline": "spiritSeer",
+    "subtype": "Сотворение Бездушных",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Ghost Warrior",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "450 xp | Требования: PR 6, Ghost Warrior\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: PR×10 м\nТип: Изменение (PR)\nПровидцы Духов, обладающие призрачными воителями, рано или поздно обучаются их тонко контролировать и экстренно менять их снаряжение прямо на ходу. Если в радиусе 5 метров от любого вашего призрачного воителя есть любое эльдарское оружие, вы можете за еще одно Полудействие отсоединить старое и присоединить новое, так, словно бы вы прошли необходимый тест на крафт. Конструкт от этого получает 1d10 непоглощаемого I урона.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6xskiykoGabqXdNh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6xskiykoGabqXdNh"
+}

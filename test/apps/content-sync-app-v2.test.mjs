@@ -18,7 +18,7 @@ import { describe, it, expect } from "vitest";
 import "../support/foundry-stub.mjs";
 import { listenerRoot } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
-import { ContentSyncApp } from "../../module/apps/content-sync-app.mjs";
+import { ContentSyncApp, rowsNeedingExpansion } from "../../module/apps/content-sync-app.mjs";
 
 describeV2Sheet(ContentSyncApp, {
   sheet: "module/apps/content-sync-app.mjs",
@@ -72,6 +72,21 @@ describe("_onRender: разводка кнопок", () => {
     expect(app.selected.size).toBe(0);
   });
 
+  // wdbc-1ccm: массовое переключение группы должно сразу разворачивать её —
+  // иначе единственный видимый элемент управления свёрнутой группой с
+  // несколькими акторами — агрегатный toggle-row, и точечно поправить одну
+  // запись внутри (не трогая соседей) физически нечем, пока группа скрыта.
+  it("[data-act=toggle-row] (change) разворачивает свою группу, чтобы точечные data-entry стали доступны", () => {
+    const row = { key: "r1", entries: [{ entryKey: "i1::dmg" }, { entryKey: "i2::dmg" }, { entryKey: "i3::dmg" }] };
+    const app = appLike({ "[data-act=toggle-row]": [{ dataset: {} }] });
+    app.report = { rows: [row], unmatched: [] };
+    ContentSyncApp.prototype._onRender.call(app, {}, {});
+    expect(app.expanded.has("r1")).toBe(false);
+    const target = { dataset: { row: "r1" }, checked: true };
+    app.element.handlers["[data-act=toggle-row]:change"]({ currentTarget: target });
+    expect(app.expanded.has("r1")).toBe(true);
+  });
+
   // querySelector (в отличие от querySelectorAll) не оборачивает узел из
   // listenerRoot в addEventListener-заглушку — приходится давать её самим,
   // тем же форматом ключа "селектор:событие", что использует querySelectorAll.
@@ -102,5 +117,40 @@ describe("_onRender: разводка кнопок", () => {
     ContentSyncApp.prototype._onRender.call(app, {}, {});
     handlers["[data-act=apply]:click"]();
     expect(calls).toEqual([true]);
+  });
+});
+
+// wdbc-1ccm: чистая функция, определяющая, какие группы стоит развернуть по
+// умолчанию — без неё группа с конфликтными и чистыми записями вперемешку
+// оставалась бы свёрнутой до первого клика ГМа, и единственным видимым
+// элементом управления был бы toggle-row на всю группу разом.
+describe("rowsNeedingExpansion: чистая функция авто-раскрытия неоднородных групп", () => {
+  it("не трогает группу из одной записи (у соло-записи свой отдельный чекбокс)", () => {
+    const rows = [{ key: "r1", entries: [{ entryKey: "i1::dmg" }] }];
+    expect(rowsNeedingExpansion(rows, new Set(["i1::dmg"]))).toEqual(new Set());
+  });
+
+  it("не трогает группу, где выбраны ВСЕ записи", () => {
+    const rows = [{ key: "r1", entries: [{ entryKey: "i1::dmg" }, { entryKey: "i2::dmg" }] }];
+    expect(rowsNeedingExpansion(rows, new Set(["i1::dmg", "i2::dmg"]))).toEqual(new Set());
+  });
+
+  it("не трогает группу, где не выбрана НИ ОДНА запись", () => {
+    const rows = [{ key: "r1", entries: [{ entryKey: "i1::dmg" }, { entryKey: "i2::dmg" }] }];
+    expect(rowsNeedingExpansion(rows, new Set())).toEqual(new Set());
+  });
+
+  it("раскрывает группу, где выбрана только ЧАСТЬ записей (типично: конфликт вперемешку с чистыми)", () => {
+    const rows = [{ key: "r1", entries: [{ entryKey: "i1::dmg" }, { entryKey: "i2::dmg" }, { entryKey: "i3::dmg" }] }];
+    expect(rowsNeedingExpansion(rows, new Set(["i1::dmg"]))).toEqual(new Set(["r1"]));
+  });
+
+  it("обрабатывает несколько групп независимо", () => {
+    const rows = [
+      { key: "homogeneous", entries: [{ entryKey: "a::x" }, { entryKey: "b::x" }] },
+      { key: "mixed", entries: [{ entryKey: "c::x" }, { entryKey: "d::x" }] }
+    ];
+    const selected = new Set(["a::x", "b::x", "c::x"]);
+    expect(rowsNeedingExpansion(rows, selected)).toEqual(new Set(["mixed"]));
   });
 });

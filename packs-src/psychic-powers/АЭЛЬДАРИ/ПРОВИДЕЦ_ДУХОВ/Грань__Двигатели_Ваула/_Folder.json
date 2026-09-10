@@ -1,0 +1,23 @@
+{
+  "name": "Грань: Двигатели Ваула",
+  "type": "Item",
+  "folder": "hXniX9X0sT0Mat5N",
+  "sorting": "m",
+  "_id": "Jf27I8tqepgR8vM2",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!Jf27I8tqepgR8vM2"
+}

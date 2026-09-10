@@ -1,0 +1,77 @@
+{
+  "name": "Gift of Asuryan / Дар Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "80EvWJlPvblVjJWC",
+  "system": {
+    "description": "<p><strong>150 xp | Требования: PR 2</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание: </strong>Свободное действие.</p><p><strong>Психотест: </strong>W+10.<strong> Дальность: </strong>Сам</p><p><strong>Тип: </strong>Изменение</p><p>Обращая свою психическую мощь в благие намерения, Провидец способен излечивать тяжелые раны своих подчиненных и союзников. Пока псайкер поддерживает эту психосилу, он получает возможность проходить Medicae через W, залечивая раны своих подчиненных психическим усилием, а не физически. Применение данной психосилы позволяет использовать W.b вместо I.b в расчете первой помощи. Если псайкер проходит тест через W, это считается манифестацией психосилы Биомантии, получая соответствующие бонусы от PR и Рун Эльдар.</p>",
+    "notes": "",
+    "cost": 150,
+    "discipline": "farseer",
+    "subtype": "Сила Азуриана",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "150 xp | Требования: PR 2\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+10. Дальность: Сам\nТип: Изменение\nОбращая свою психическую мощь в благие намерения, Провидец способен излечивать тяжелые раны своих подчиненных и союзников. Пока псайкер поддерживает эту психосилу, он получает возможность проходить Medicae через W, залечивая раны своих подчиненных психическим усилием, а не физически. Применение данной психосилы позволяет использовать W.b вместо I.b в расчете первой помощи. Если псайкер проходит тест через W, это считается манифестацией психосилы Биомантии, получая соответствующие бонусы от PR и Рун Эльдар.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "GPQz7RkuTV6ktevF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!GPQz7RkuTV6ktevF"
+}

@@ -1,0 +1,78 @@
+{
+  "name": "Hide The Presence / Скрыть Присутствие",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "RONjDxhTGjbjyqiE",
+  "system": {
+    "description": "<p><strong>350 xp | Требования: PR 4</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–30.<strong> Дальность: </strong>PR×50 м</p><p><strong>Тип: </strong>Изменение (PR), Концентрация</p><p>Мастерски манипулируя чужими ощущениями, Провидец способен скрыть присутствие себя и своих союзников, не издавая ни звука, ни запаха, ни отсечиваясь в имматериуме. Неожиданный и смертоносный удар станет последним, что ощутит враг, прежде чем погибнуть в неведении. Цели психосилы становятся <strong>невидимыми </strong>во всех спектрах, не издают ни звука, ни запахов, не оставляет каких–либо следов, и соответственно, пропадают для всех внешних наблюдателей. Если цели начинают свой бой в таком состоянии, их первая атака всегда становятся Незримой, а в последующем, цели могут пройти тест на Awareness (P)–20, и в случае Успеха, сражаться с ним по правилам боя вслепую – психосила частично развеивается из–за агрессивных и резких действий. Псайкеры могут проходить тест Psyniscience(P)–20.</p>",
+    "notes": "",
+    "cost": 350,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Битвы: Сокрытия",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×50 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "350 xp | Требования: PR 4\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–30. Дальность: PR×50 м\nТип: Изменение (PR), Концентрация\nМастерски манипулируя чужими ощущениями, Провидец способен скрыть присутствие себя и своих союзников, не издавая ни звука, ни запаха, ни отсечиваясь в имматериуме. Неожиданный и смертоносный удар станет последним, что ощутит враг, прежде чем погибнуть в неведении. Цели психосилы становятся невидимыми во всех спектрах, не издают ни звука, ни запахов, не оставляет каких–либо следов, и соответственно, пропадают для всех внешних наблюдателей. Если цели начинают свой бой в таком состоянии, их первая атака всегда становятся Незримой, а в последующем, цели могут пройти тест на Awareness (P)–20, и в случае Успеха, сражаться с ним по правилам боя вслепую – психосила частично развеивается из–за агрессивных и резких действий. Псайкеры могут проходить тест Psyniscience(P)–20.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qG4QJZQEmdO1btN4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qG4QJZQEmdO1btN4"
+}

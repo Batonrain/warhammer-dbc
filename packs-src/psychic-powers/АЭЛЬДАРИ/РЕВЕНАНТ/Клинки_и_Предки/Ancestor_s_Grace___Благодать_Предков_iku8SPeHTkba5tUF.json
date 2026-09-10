@@ -1,0 +1,78 @@
+{
+  "name": "Ancestor’s Grace / Благодать Предков",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "QCuSQ7sb57EsmOdC",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Полудействие</p><p><strong>Психотест: </strong>W–30 <strong>Дальность: </strong>PR×20м</p><p><strong>Тип:</strong> Пантеон, Призыв, Эльдар</p><p>Псайкер взывает к духам умерших эльдар, позволяя тем лицезреть то, как еще живые эльдары борятся, вдохновляя их сражаться еще ярее. Псайкер призывает до PR духов умерших эльдар. У духов ограниченное поле видимости – 30°. В начале своего хода псайкер может передвинуть каждого духа в отдельности на до PR метров. Все иннари, попадающие в поле видимости хотя–бы одного из духов, получают +30 на тесты против Страха, Шока и Подавления, а также бонус +10 на все тесты Атаки и Избегания. Бонусы складываются от разных предков.</p><p><strong>Все </strong>духи пропадают если психосила развеяна или псайкер вышел из зоны поддержания хотя–бы одного духа.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Клинки и Предки",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–30 Дальность: PR×20м\nТип: Пантеон, Призыв, Эльдар\nПсайкер взывает к духам умерших эльдар, позволяя тем лицезреть то, как еще живые эльдары борятся, вдохновляя их сражаться еще ярее. Псайкер призывает до PR духов умерших эльдар. У духов ограниченное поле видимости – 30°. В начале своего хода псайкер может передвинуть каждого духа в отдельности на до PR метров. Все иннари, попадающие в поле видимости хотя–бы одного из духов, получают +30 на тесты против Страха, Шока и Подавления, а также бонус +10 на все тесты Атаки и Избегания. Бонусы складываются от разных предков.\nВсе духи пропадают если психосила развеяна или псайкер вышел из зоны поддержания хотя–бы одного духа.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "iku8SPeHTkba5tUF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!iku8SPeHTkba5tUF"
+}

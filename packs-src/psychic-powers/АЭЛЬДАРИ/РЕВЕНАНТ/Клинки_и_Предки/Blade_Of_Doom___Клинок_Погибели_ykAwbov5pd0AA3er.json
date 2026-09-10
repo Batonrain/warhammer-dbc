@@ -1,0 +1,78 @@
+{
+  "name": "Blade Of Doom / Клинок Погибели",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "QCuSQ7sb57EsmOdC",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 2</strong></p><p><strong>Действие:</strong> Свободное действие<strong> Поддержание: </strong>Свободное действие</p><p><strong>Психотест:</strong> W+10 <strong>Дальность:</strong> PR×10м</p><p><strong>Тип: </strong>Аура, Концентрация</p><p>Используя силу умерших врагов, дабы наделить свое рукопашное оружие большей силой, псайкер способен сразить сильнейших врагов. Пока психосила поддерживается, все союзники псайкера в ауре могут <strong>до </strong>нанесения урона, <strong>но после </strong>попадания добавить +1 Dmg, тратя по 1 Мертвому Могуществу. Можно тратить неограниченное количество Мертвого Могущества.</p>",
+    "notes": "",
+    "cost": 200,
+    "discipline": "revenant",
+    "subtype": "Клинки и Предки",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "free",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 2\nДействие: Свободное действие Поддержание: Свободное действие\nПсихотест: W+10 Дальность: PR×10м\nТип: Аура, Концентрация\nИспользуя силу умерших врагов, дабы наделить свое рукопашное оружие большей силой, псайкер способен сразить сильнейших врагов. Пока психосила поддерживается, все союзники псайкера в ауре могут до нанесения урона, но после попадания добавить +1 Dmg, тратя по 1 Мертвому Могуществу. Можно тратить неограниченное количество Мертвого Могущества.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ykAwbov5pd0AA3er",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ykAwbov5pd0AA3er"
+}

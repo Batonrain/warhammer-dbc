@@ -1,0 +1,23 @@
+{
+  "name": "Защита Иннеада",
+  "type": "Item",
+  "folder": "0zL8A3GlVRHFnnxF",
+  "sorting": "m",
+  "_id": "8C47cW6DrTo1767M",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!8C47cW6DrTo1767M"
+}

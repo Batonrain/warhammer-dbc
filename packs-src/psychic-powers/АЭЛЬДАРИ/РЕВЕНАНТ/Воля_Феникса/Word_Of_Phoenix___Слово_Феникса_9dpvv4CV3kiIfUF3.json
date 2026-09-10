@@ -1,0 +1,78 @@
+{
+  "name": "Word Of Phoenix / Слово Феникса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "YFUiVJaNfyIdwK2g",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Phoenix Wing</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Свободное действие</p><p><strong>Психотест: </strong>W–40 <strong>Дальность: </strong>PR×10м</p><p><strong>Тип:</strong> Аура, Изменение (PR)</p><p>Псайкер взывает к умершим душам и к силе древних фениксов из мифологии эльдар и тех, что были в реальности, поднимая совсем недавно погибших вновь на бой. Псайкер может выбрать до PR существ в ауре действия психосилы что умерли не позднее чем W.b часов назад и за каждое существо пройти отдельный психотест и при успехе воскрешая существо без очков судьбы/бесчестия, с 1 раной, но с 3d10 уроном во всех характеристиках из–за подобного воскрешения. Если же воскрешение провалилось, существо невозможно воскресить до тех пор пока оно не погибнет еще раз.</p><p>Псайкер с бPR 10 получает возможность воскрешать цели без ограничения по времени, имея лишь ограничение в состоянии тела возвращаемого – воскресить человека без сердца и мозга будет невозможно, но воскресить даже рубриканта или некрона вполне возможно.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Воля Феникса",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Phoenix Wing",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 8, Phoenix Wing\nДействие: Полное действие Поддержание: Свободное действие\nПсихотест: W–40 Дальность: PR×10м\nТип: Аура, Изменение (PR)\nПсайкер взывает к умершим душам и к силе древних фениксов из мифологии эльдар и тех, что были в реальности, поднимая совсем недавно погибших вновь на бой. Псайкер может выбрать до PR существ в ауре действия психосилы что умерли не позднее чем W.b часов назад и за каждое существо пройти отдельный психотест и при успехе воскрешая существо без очков судьбы/бесчестия, с 1 раной, но с 3d10 уроном во всех характеристиках из–за подобного воскрешения. Если же воскрешение провалилось, существо невозможно воскресить до тех пор пока оно не погибнет еще раз.\nПсайкер с бPR 10 получает возможность воскрешать цели без ограничения по времени, имея лишь ограничение в состоянии тела возвращаемого – воскресить человека без сердца и мозга будет невозможно, но воскресить даже рубриканта или некрона вполне возможно.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "9dpvv4CV3kiIfUF3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!9dpvv4CV3kiIfUF3"
+}

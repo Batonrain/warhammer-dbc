@@ -1,0 +1,75 @@
+{
+  "name": "Spirit Warrior / Духовный Воитель",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "bbGi7FvHL0CFAKE4",
+  "system": {
+    "description": "<p><strong>750 xp | Требования: PR 8, Ghost Warrior</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–20. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Изменение</p><p>Используя психокость, Провидец Духов способен сотворить бездушный психокостяной конструкт – но используя свой прошлый опыт, он способен создать более сложный конструкт, который может сравниться даже с некоторыми Мастерами. Для использования данной психосилы, псайкеру необходимо 200 килограмм психокости. За 14 дней, псайкер должен скрафтить телесную оболочку по своему усмотрению, однако она всегда требует 200 успехов. Если псайкер не справился за 14 дней, то психосила развеивается, а психокость тратится в никуда. Если он смог набрать нужное число банков успеха, то он создает Высшего Миньона Машину (игнорируя обычные требования) со следующим профилем:</p><table><tr><td colspan=\"9\"><p><span style=\"color:#ffffff\">Авангардный Воитель                                                                    Размер: 2 | Раны: W.b×6</span></p></td></tr><tr><td><p><strong>WS</strong></p></td><td><p><strong>BS</strong></p></td><td><p><strong>S</strong></p></td><td><p><strong>T</strong></p></td><td><p><strong>A</strong></p></td><td><p><strong>I</strong></p></td><td><p><strong>P</strong></p></td><td><p><strong>W</strong></p></td><td><p><strong>F</strong></p></td></tr><tr><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td><td><p><strong>X</strong></p></td></tr></table><table><tr><td><p><strong>Броня: Оболочка (7/7/7/7)</strong></p></td><td><p><strong>T.b: X | Погл.: 7+4+X/7+4+X/7+4+X/7+4+X</strong></p></td></tr><tr><td><p><strong>SPD: X/X/X/X   Init: X</strong></p></td><td></td></tr></table><p>Где X в характеристиках – ½ W.b псайкера, создавшего Призрачного Воителя.</p><table><tr><td><table><tr><td><p><strong>Навыки</strong></p></td><td><p><strong>Мод</strong></p></td><td><p><strong>Пр</strong></p></td></tr><tr><td><p>Athletics</p></td><td><p>+10</p></td><td><p>X</p></td></tr><tr><td><p>Awareness</p></td><td><p>+10</p></td><td><p>X</p></td></tr><tr><td><p>Dodge</p></td><td><p>+10</p></td><td><p>X</p></td></tr><tr><td><p>Intimidate</p></td><td><p>+20</p></td><td><p>X</p></td></tr><tr><td><p>Logic</p></td><td><p>+10</p></td><td><p>X</p></td></tr><tr><td><p>Navigation (Surface)</p></td><td><p>+20</p></td><td><p>X</p></td></tr><tr><td><p>Parry</p></td><td><p>+20</p></td><td><p>X</p></td></tr><tr><td><p>Psyniscience</p></td><td><p>+20</p></td><td><p>X</p></td></tr></table></td><td><table><tr><td><p><strong>Таланты</strong></p></td><td><p><strong>Описание</strong></p></td></tr><tr><td><p><strong>Ambidextrous</strong></p></td><td><p><strong>–</strong>10 штраф за 2 оружия, нет штрафа за л. руку</p></td></tr><tr><td><p><strong>Bodyguard</strong></p></td><td><p>Можно парировать атаки по союзникам</p></td></tr><tr><td><p><strong>Bulging Biceps</strong></p></td><td><p>Стрельба из тяж оружия без Закрепления</p></td></tr><tr><td><p><strong>Cleave</strong></p></td><td><p>Доп. атака с –10 после убийства</p></td></tr><tr><td><p><strong>Crushing Blow</strong></p></td><td><p>+½WS.b к рукопашному Dmg</p></td></tr><tr><td><p><strong>Deadeye Shot</strong></p></td><td><p>–10 штраф за Избирательный выстрел / Размер</p></td></tr><tr><td><p><strong>Deflect Shot</strong></p></td><td><p>Отбить медленный снаряд парированием</p></td></tr><tr><td><p><strong>Double Team</strong></p></td><td><p>Еще +10 за численное превосходство</p></td></tr><tr><td><p><strong>Hip Shooting</strong></p></td><td><p>Стрельба на полном ходу</p></td></tr><tr><td><p><strong>Iron Jaw</strong></p></td><td><p>Т+0, чтобы игнорировать Оглушение</p></td></tr><tr><td><p><strong>Scanning Advance</strong></p></td><td><p>Улучшенный Караул на медленном ходу</p></td></tr><tr><td><p><strong>Steady Footwork</strong></p></td><td><p>Нет штрафов к WS от ландшафта</p></td></tr><tr><td><p><strong>Target Selection</strong></p></td><td><p>Нет штрафа за стрельбу в рукопашную</p></td></tr><tr><td><p><strong>Tireless</strong></p></td><td><p>Нет штрафа от усталости для физ. действий</p></td></tr><tr><td><p><strong>True Grit</strong></p></td><td><p>–T.b к получаемым Отрицательным Ранам</p></td></tr><tr><td><p><strong>Two Weapon Wielder (Both)</strong></p></td><td><p>Бой двумя оружиями со штрафом –20</p></td></tr><tr><td><p><strong>Unarmed Master</strong></p></td><td><p>Кулаки теряют свойство Primitive</p></td></tr><tr><td><p><strong>Unarmed Warrior</strong></p></td><td><p>D5 &gt; D10 в уроне кулаков</p></td></tr><tr><td></td><td></td></tr></table></td></tr></table><p><strong>Трейты: </strong>Avant–Garde of the Soul, Brutal Charge (6), Fanatic, From Beyond, Machine (4), Regeneration (6), Size (2), Unnatural S (4), Unnatural T (4), Unnatural WS (4), Unnatural BS (4), Wraith Construct.</p><p><strong>The Avant–Garde of the Soul: </strong>Духовные Воители необычайны в своей сути – созданные наподобие Воинов Кхейна, данные конструкты могут уподобляться им и иметь схожесть с ними. Каждый Авангардный Воитель приписывается к одному из Аспектов, имея уровень знаний на пути Следующего. Помимо этого, их AP работает и против Warp Weapon, а их атаки имеют Sanctified и игнорируют свойство Phase.</p><p>Духовный Воитель не имеет сочлинений. Лояльность Духовного Воителя фиксировано 40. Персонаж может создать лишь 3 Авангардных Воителей. Авангардному Воителю можно поменять любое из его оружия если оно просто отдано ему – если оружие было установлено вместо руки (Уменьшая тип оружия Пистолет ← Винтовка ← Длинная Винтовка ← Тяжелое), то Провидец должен провести работу через Tech–Use(W)–20 и набрать 40 банков успеха чтобы снять старое и повесить новое оружие.</p><p>В Духовного Воителя может быть установлен Осколок Камня Душ. Авангардный Воитель останется бездушным конструктом, но получит +½ (окр.▲) Характеристик существа в Камне Душ, а также получает возможность самостоятельно тактически и стратегически мыслить. Помимо этого, если Осколок принадлежал Воину Аспекта со знанием Мастер, то и конструкт получает возможность использовать знания Мастера. Конструкт не может иметь ступень знаний Заблудившийся. Конструкт может использовать знания только Путей Воина.</p>",
+    "notes": "",
+    "cost": 750,
+    "discipline": "spiritSeer",
+    "subtype": "Сотворение Бездушных",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Ghost Warrior",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "750 xp | Требования: PR 8, Ghost Warrior\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: Сам\nТип: Изменение\nИспользуя психокость, Провидец Духов способен сотворить бездушный психокостяной конструкт – но используя свой прошлый опыт, он способен создать более сложный конструкт, который может сравниться даже с некоторыми Мастерами. Для использования данной психосилы, псайкеру необходимо 200 килограмм психокости. За 14 дней, псайкер должен скрафтить телесную оболочку по своему усмотрению, однако она всегда требует 200 успехов. Если псайкер не справился за 14 дней, то психосила развеивается, а психокость тратится в никуда. Если он смог набрать нужное число банков успеха, то он создает Высшего Миньона Машину (игнорируя обычные требования) со следующим профилем:Авангардный Воитель                                                                    Размер: 2 | Раны: W.b×6 | WS | BS | S | T | A | I | P | W | F | X | X | X | X | X | X | X | X | X\nБроня: Оболочка (7/7/7/7) | T.b: X | Погл.: 7+4+X/7+4+X/7+4+X/7+4+X | SPD: X/X/X/X   Init: X | Где X в характеристиках – ½ W.b псайкера, создавшего Призрачного Воителя.Навыки | Мод | Пр | Athletics | +10 | X | Awareness | +10 | X | Dodge | +10 | X | Intimidate | +20 | X | Logic | +10 | X | Navigation (Surface) | +20 | X | Parry | +20 | X | Psyniscience | +20 | X | Таланты | Описание | Ambidextrous | –10 штраф за 2 оружия, нет штрафа за л. руку | Bodyguard | Можно парировать атаки по союзникам | Bulging Biceps | Стрельба из тяж оружия без Закрепления | Cleave | Доп. атака с –10 после убийства | Crushing Blow | +½WS.b к рукопашному Dmg | Deadeye Shot | –10 штраф за Избирательный выстрел / Размер | Deflect Shot | Отбить медленный снаряд парированием | Double Team | Еще +10 за численное превосходство | Hip Shooting | Стрельба на полном ходу | Iron Jaw | Т+0, чтобы игнорировать Оглушение | Scanning Advance | Улучшенный Караул на медленном ходу | Steady Footwork | Нет штрафов к WS от ландшафта | Target Selection | Нет штрафа за стрельбу в рукопашную | Tireless | Нет штрафа от усталости для физ. действий | True Grit | –T.b к получаемым Отрицательным Ранам | Two Weapon Wielder (Both) | Бой двумя оружиями со штрафом –20 | Unarmed Master | Кулаки теряют свойство Primitive | Unarmed Warrior | D5 &gt; D10 в уроне кулаков |  | Трейты: Avant–Garde of the Soul, Brutal Charge (6), Fanatic, From Beyond, Machine (4), Regeneration (6), Size (2), Unnatural S (4), Unnatural T (4), Unnatural WS (4), Unnatural BS (4), Wraith Construct.\nThe Avant–Garde of the Soul: Духовные Воители необычайны в своей сути – созданные наподобие Воинов Кхейна, данные конструкты могут уподобляться им и иметь схожесть с ними. Каждый Авангардный Воитель приписывается к одному из Аспектов, имея уровень знаний на пути Следующего. Помимо этого, их AP работает и против Warp Weapon, а их атаки имеют Sanctified и игнорируют свойство Phase.\nДуховный Воитель не имеет сочлинений. Лояльность Духовного Воителя фиксировано 40. Персонаж может создать лишь 3 Авангардных Воителей. Авангардному Воителю можно поменять любое из его оружия если оно просто отдано ему – если оружие было установлено вместо руки (Уменьшая тип оружия Пистолет ← Винтовка ← Длинная Винтовка ← Тяжелое), то Провидец должен провести работу через Tech–Use(W)–20 и набрать 40 банков успеха чтобы снять старое и повесить новое оружие.\nВ Духовного Воителя может быть установлен Осколок Камня Душ. Авангардный Воитель останется бездушным конструктом, но получит +½ (окр.▲) Характеристик существа в Камне Душ, а также получает возможность самостоятельно тактически и стратегически мыслить. Помимо этого, если Осколок принадлежал Воину Аспекта со знанием Мастер, то и конструкт получает возможность использовать знания Мастера. Конструкт не может иметь ступень знаний Заблудившийся. Конструкт может использовать знания только Путей Воина.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "JvjWM0U06aHAT8ws",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!JvjWM0U06aHAT8ws"
+}

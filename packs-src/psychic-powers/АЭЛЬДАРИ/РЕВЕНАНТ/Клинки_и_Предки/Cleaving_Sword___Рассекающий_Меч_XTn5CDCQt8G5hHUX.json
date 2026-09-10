@@ -1,0 +1,78 @@
+{
+  "name": "Cleaving Sword / Рассекающий Меч",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "QCuSQ7sb57EsmOdC",
+  "system": {
+    "description": "<p><strong>300 xp | Требования: PR 4, Blade Of Doom</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Свободное действие</p><p><strong>Психотест: </strong>W–20 <strong>Дальность: </strong>PR×5м</p><p><strong>Тип: </strong>Изменение (PR), Психический Клинок</p><p>Наделяя рукопашное оружие способностью из осколков душ врагов, псайкер способен наделять оружие способностью ранить душу. Пока эта психосила поддерживается, цель может потратить <strong>3 </strong>Мертвого Могущества за каждый кубик урона <strong>рукопашного </strong>оружия, тем самым добавив <strong>одному </strong>попаданию свойство Warp Weapon.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "revenant",
+    "subtype": "Клинки и Предки",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Blade Of Doom",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp | Требования: PR 4, Blade Of Doom\nДействие: Полное действие Поддержание: Свободное действие\nПсихотест: W–20 Дальность: PR×5м\nТип: Изменение (PR), Психический Клинок\nНаделяя рукопашное оружие способностью из осколков душ врагов, псайкер способен наделять оружие способностью ранить душу. Пока эта психосила поддерживается, цель может потратить 3 Мертвого Могущества за каждый кубик урона рукопашного оружия, тем самым добавив одному попаданию свойство Warp Weapon.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "XTn5CDCQt8G5hHUX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!XTn5CDCQt8G5hHUX"
+}

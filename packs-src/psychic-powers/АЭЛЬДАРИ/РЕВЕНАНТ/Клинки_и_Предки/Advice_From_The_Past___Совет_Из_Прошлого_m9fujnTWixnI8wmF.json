@@ -1,0 +1,78 @@
+{
+  "name": "Advice From The Past / Совет Из Прошлого",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "QCuSQ7sb57EsmOdC",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 2</strong></p><p><strong>Действие: </strong>Полудействие <strong>Поддержание: </strong>Свободное действие</p><p><strong>Психотест:</strong> W+0 <strong>Дальность: </strong>PR×5м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Псайкер взывает к силе предков, запертых в камнях душ и тех, что ушли к Иннеаду. Пока психосила поддерживается, все цели психосилы могут <strong>один раз </strong>перебросить любой тест, кроме теста S, T или A, после чего психосила развеивается на цели.</p>",
+    "notes": "",
+    "cost": 200,
+    "discipline": "revenant",
+    "subtype": "Клинки и Предки",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 2\nДействие: Полудействие Поддержание: Свободное действие\nПсихотест: W+0 Дальность: PR×5м\nТип: Изменение (PR)\nПсайкер взывает к силе предков, запертых в камнях душ и тех, что ушли к Иннеаду. Пока психосила поддерживается, все цели психосилы могут один раз перебросить любой тест, кроме теста S, T или A, после чего психосила развеивается на цели.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "m9fujnTWixnI8wmF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!m9fujnTWixnI8wmF"
+}

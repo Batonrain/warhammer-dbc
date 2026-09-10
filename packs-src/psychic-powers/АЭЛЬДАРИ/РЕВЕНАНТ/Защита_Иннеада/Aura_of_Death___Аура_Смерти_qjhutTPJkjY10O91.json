@@ -1,0 +1,78 @@
+{
+  "name": "Aura of Death / Аура Смерти",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "8C47cW6DrTo1767M",
+  "system": {
+    "description": "<p><strong>300 xp | Требования: PR 4, Resilience Of A Deadman</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Свободное действие</p><p><strong>Психотест: </strong>W–20 <strong>Дальность: </strong>PR×3м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Псайкер становится проводником мертвой энергии и духа, что позволяет ему направлять поглощенную мертвую мощь своим союзникам. За Полудействие псайкер может принять или передать 1 Мертвое Могущество союзнику / от союзника внутри ауры психосилы. В качестве Полного действия псайкер может перенять от 1 союзника Мертвое Могущество и моментально передать его другому союзнику.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "revenant",
+    "subtype": "Защита Иннеада",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Resilience Of A Deadman",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×3м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp | Требования: PR 4, Resilience Of A Deadman\nДействие: Полное действие Поддержание: Свободное действие\nПсихотест: W–20 Дальность: PR×3м\nТип: Изменение (PR)\nПсайкер становится проводником мертвой энергии и духа, что позволяет ему направлять поглощенную мертвую мощь своим союзникам. За Полудействие псайкер может принять или передать 1 Мертвое Могущество союзнику / от союзника внутри ауры психосилы. В качестве Полного действия псайкер может перенять от 1 союзника Мертвое Могущество и моментально передать его другому союзнику.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qjhutTPJkjY10O91",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qjhutTPJkjY10O91"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "Раскрошить Разум",
+  "type": "Item",
+  "folder": "9fESxlWIztw1mbNO",
+  "sorting": "m",
+  "_id": "8GUxWk1h28LM2xFy",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!8GUxWk1h28LM2xFy"
+}

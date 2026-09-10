@@ -1,0 +1,78 @@
+{
+  "name": "Refusing Soul / Отказывающая Душа",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "Kmje1rHfkJJpNu1y",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 9</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Свободное действие.</p><p><strong>Психотест: </strong>W–30.<strong> Дальность: </strong>PR×10 м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Часто враг использует те психосилы, что гарантированно поражают тело, душу и разум. Однако, достигая глубокого понимания того, как работают психосилы и потоки Варпа, можно с легкостью изменить данный факт в свою пользу, дав шанс сопротивляться любому психическому воздействию. Цели этой психосилы могут инициализировать <strong>соревновательный </strong>тест против вражеской психосилы с типом Аура или Изменение. Цель считает свой тест за W+0, независимо от типа вражеской психосилы и ее источника.</p><p><strong>VII. ПРОЧЕЕ</strong></p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Битвы: Души",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 9\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–30. Дальность: PR×10 м\nТип: Изменение (PR)\nЧасто враг использует те психосилы, что гарантированно поражают тело, душу и разум. Однако, достигая глубокого понимания того, как работают психосилы и потоки Варпа, можно с легкостью изменить данный факт в свою пользу, дав шанс сопротивляться любому психическому воздействию. Цели этой психосилы могут инициализировать соревновательный тест против вражеской психосилы с типом Аура или Изменение. Цель считает свой тест за W+0, независимо от типа вражеской психосилы и ее источника.\nVII. ПРОЧЕЕ",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Q3jNh78UnHJXV4G7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Q3jNh78UnHJXV4G7"
+}

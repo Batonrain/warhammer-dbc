@@ -1,0 +1,75 @@
+{
+  "name": "Lost Sting / Потерянное Жало",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "Q4KWdYiEM1KTlLJC",
+  "system": {
+    "description": "<p><strong>350 xp | Требования: PR 6, Psychic Sting</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–10. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Ловко накрывая свое психосиловое оружие множеством иллюзий, Варлок способен скрывать его от вражеского взора, что дает ему серьезное тактическое превосходство во всех стычках. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Оружие накрывается слоем сотен иллюзий – это не делает оружие невидимым, но настолько мешает его увидеть, что оно получает свойство Незримое. Персонаж получает бонус +30 на все встречные тесты против Финты и Давления, а его тесты всегда успешны если у противника нет свойства Warp Sight, что частично позволяет видеть сквозь мрак иллюзий.</p>",
+    "notes": "",
+    "cost": 350,
+    "discipline": "warlock",
+    "subtype": "Жалящий Клинок",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Psychic Sting",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "350 xp | Требования: PR 6, Psychic Sting\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–10. Дальность: Сам\nТип: Психический Клинок\nЛовко накрывая свое психосиловое оружие множеством иллюзий, Варлок способен скрывать его от вражеского взора, что дает ему серьезное тактическое превосходство во всех стычках. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Оружие накрывается слоем сотен иллюзий – это не делает оружие невидимым, но настолько мешает его увидеть, что оно получает свойство Незримое. Персонаж получает бонус +30 на все встречные тесты против Финты и Давления, а его тесты всегда успешны если у противника нет свойства Warp Sight, что частично позволяет видеть сквозь мрак иллюзий.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "wvtzVJ3N5oYL1nRx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wvtzVJ3N5oYL1nRx"
+}

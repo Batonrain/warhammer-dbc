@@ -1,0 +1,77 @@
+{
+  "name": "All–Seeing Eye / Всевидящее Око",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "iCRCgExC8yjbKuGA",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–10.<strong> Дальность: </strong>Звездная Система</p><p><strong>Тип: </strong>Сосредоточение</p><p>Направляя свое сознание в потоки Имматериума, Пустотный Мечтатель способен из потоков Варпа узнать куда больше, чем авгурами или чем–то иным. Главное лишь уметь искать, верно? Независимо от результата психосилы, псайкер получает возможность действовать как авгур в радиусе <strong>всей </strong>системы, где находится корабль с ним. Он может совершать любые действия авгурии без шанса выдать себя как–либо, скрываясь в потоках Варпа. Он получает бонус +PR×3 на все тесты обнаружения при помощи этой психосилы. Если псайкер провалил психосилу, он все равно может наблюдать, но ГМ получает право искажать любую информацию и показывать псайкеру даже откровенный бред.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "voidDreamer",
+    "subtype": "Взирающее Сознание",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "extended",
+    "range": "Звездная Система",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "250 xp | Требования: PR 3\nДействие: Длительное Действие (30 Минут). Поддержание: Полудействие.\nПсихотест: W–10. Дальность: Звездная Система\nТип: Сосредоточение\nНаправляя свое сознание в потоки Имматериума, Пустотный Мечтатель способен из потоков Варпа узнать куда больше, чем авгурами или чем–то иным. Главное лишь уметь искать, верно? Независимо от результата психосилы, псайкер получает возможность действовать как авгур в радиусе всей системы, где находится корабль с ним. Он может совершать любые действия авгурии без шанса выдать себя как–либо, скрываясь в потоках Варпа. Он получает бонус +PR×3 на все тесты обнаружения при помощи этой психосилы. Если псайкер провалил психосилу, он все равно может наблюдать, но ГМ получает право искажать любую информацию и показывать псайкеру даже откровенный бред.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "glH4r6MJVshPhym0",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!glH4r6MJVshPhym0"
+}

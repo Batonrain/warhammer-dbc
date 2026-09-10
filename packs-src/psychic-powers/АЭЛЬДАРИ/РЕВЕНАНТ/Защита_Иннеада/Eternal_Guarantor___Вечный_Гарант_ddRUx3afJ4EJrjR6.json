@@ -1,0 +1,78 @@
+{
+  "name": "Eternal Guarantor / Вечный Гарант",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "8C47cW6DrTo1767M",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 5, Unchangeable</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Полудействие</p><p><strong>Психотест: </strong>W–30<strong> Дальность:</strong> PR×5м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Направляя силы Иннеада и пользуясь силой умерших как проводником, псайкер способен заставить силовой щит любого из своих союзников заработать в нужный момент времени. Пока эта психосила работает, цели психосилы могут <strong>снижать </strong>результат броска на активацию щита на –PR за каждое Мертвое Могущество, которое они желают потратить (например, у щита рейтинг 1–50 и выпало 70. При PR 5 у псайкера, цель психосилы должна потратить 4 Мертвого Могущества, чтобы результат стал 50 и щит сработал).</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "revenant",
+    "subtype": "Защита Иннеада",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Unchangeable",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 5, Unchangeable\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–30 Дальность: PR×5м\nТип: Изменение (PR)\nНаправляя силы Иннеада и пользуясь силой умерших как проводником, псайкер способен заставить силовой щит любого из своих союзников заработать в нужный момент времени. Пока эта психосила работает, цели психосилы могут снижать результат броска на активацию щита на –PR за каждое Мертвое Могущество, которое они желают потратить (например, у щита рейтинг 1–50 и выпало 70. При PR 5 у псайкера, цель психосилы должна потратить 4 Мертвого Могущества, чтобы результат стал 50 и щит сработал).",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ddRUx3afJ4EJrjR6",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ddRUx3afJ4EJrjR6"
+}

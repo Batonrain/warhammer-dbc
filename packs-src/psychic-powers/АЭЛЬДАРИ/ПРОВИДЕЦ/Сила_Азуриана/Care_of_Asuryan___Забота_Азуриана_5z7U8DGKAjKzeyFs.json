@@ -1,0 +1,77 @@
+{
+  "name": "Care of Asuryan / Забота Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "80EvWJlPvblVjJWC",
+  "system": {
+    "description": "<p><strong>300 xp | Требования: PR 4, Gift of Asuryan</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание: </strong>Свободное действие.</p><p><strong>Психотест: </strong>W+0.<strong> Дальность: </strong>PR×1 м</p><p><strong>Тип: </strong>Аура</p><p>Психическое эхо доброжелательности, что проявлял Азуриан к своим детям станет лечебным по воле и усилию Провидца. Персонаж центрирует на себя ауру, которая перемещается вместе с ним. Если союзник псайкера (или он сам) начинает свой ход в ауре, то до начала своего следующего хода он получает бонус +PR×5 на все тесты T и Medicae.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "farseer",
+    "subtype": "Сила Азуриана",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Gift of Asuryan",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×1 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp | Требования: PR 4, Gift of Asuryan\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×1 м\nТип: Аура\nПсихическое эхо доброжелательности, что проявлял Азуриан к своим детям станет лечебным по воле и усилию Провидца. Персонаж центрирует на себя ауру, которая перемещается вместе с ним. Если союзник псайкера (или он сам) начинает свой ход в ауре, то до начала своего следующего хода он получает бонус +PR×5 на все тесты T и Medicae.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "5z7U8DGKAjKzeyFs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!5z7U8DGKAjKzeyFs"
+}

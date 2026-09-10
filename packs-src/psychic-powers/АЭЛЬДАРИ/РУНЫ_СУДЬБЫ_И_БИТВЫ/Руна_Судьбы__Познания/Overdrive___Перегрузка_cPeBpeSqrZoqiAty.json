@@ -1,0 +1,78 @@
+{
+  "name": "Overdrive / Перегрузка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "4ySA3zoB81fcvoYw",
+  "system": {
+    "description": "<p><strong>700 xp | Требования: PR 9</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест:</strong> I–30.<strong> Дальность: </strong>Сам</p><p><strong>Тип: </strong>Вливание</p><p>Мудрость Провидцев не ограничивается только теми знаниями, что были переданы им от предшественников или Кристальных Провидцев, но и теми знаниями, что они добывают самолично – будь то простое прочтение или внимание к шепоткам Варпа… Данная психосила может быть манифестирована в том случае, если Провидец занимется исследованиями, обучением или чему–то подобному. Процесс обучения занимается в ½ (окр.▲) раз меньше времени (до минимума в 1 минуту), а если это чтение инфопластины, книги или чего–то подобного, процесс может занимать даже мгновения. Персонаж получает +PR×5 к тестам Logic, Tech–Use, Lore, Linguistics, Trade. Псайкер умножает получаемые им успехи при обучении в PR раз.</p><p>За каждый час под действием этой психосилы, персонаж должен пройти тест W+0 или получить 1 усталость.</p>",
+    "notes": "",
+    "cost": 700,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Познания",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "int",
+    "testMod": -30,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "700 xp | Требования: PR 9\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: I–30. Дальность: Сам\nТип: Вливание\nМудрость Провидцев не ограничивается только теми знаниями, что были переданы им от предшественников или Кристальных Провидцев, но и теми знаниями, что они добывают самолично – будь то простое прочтение или внимание к шепоткам Варпа… Данная психосила может быть манифестирована в том случае, если Провидец занимется исследованиями, обучением или чему–то подобному. Процесс обучения занимается в ½ (окр.▲) раз меньше времени (до минимума в 1 минуту), а если это чтение инфопластины, книги или чего–то подобного, процесс может занимать даже мгновения. Персонаж получает +PR×5 к тестам Logic, Tech–Use, Lore, Linguistics, Trade. Псайкер умножает получаемые им успехи при обучении в PR раз.\nЗа каждый час под действием этой психосилы, персонаж должен пройти тест W+0 или получить 1 усталость.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "cPeBpeSqrZoqiAty",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!cPeBpeSqrZoqiAty"
+}

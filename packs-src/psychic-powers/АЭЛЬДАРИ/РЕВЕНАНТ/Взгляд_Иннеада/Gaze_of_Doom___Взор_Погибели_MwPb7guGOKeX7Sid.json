@@ -1,0 +1,78 @@
+{
+  "name": "Gaze of Doom / Взор Погибели",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "4ZxwiRS1UetZel3L",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 5, Look of Death</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание:</strong> Нет</p><p><strong>Психотест: </strong>W–30. <strong>Дальность:</strong> PR×10м</p><p><strong>Тип: </strong>Атака, Изменение (бPR)</p><p>Смерть касается каждого и псайкер высвобождает эту силу в реальности, поражая обычно бессмертных существ и тех, кто наделен даром избегать погибель. Данная психосила действует только на существ с трейтами Daemonic, Stuff of Nightmares, Psyker и Warp Instability следующим образом:</p><p>• Существа с трейтом Daemonic должны пройти тест W–(10×Daemonic), и в случае провала теста, трейт перестает давать поглощение на Провалы раундов.</p><p>• Существа с трейтом Stuff of Nightmares должны пройти тест W–30 или T–30 на выбор существа, и в случае провала, он перестает защищать от критических эффектов, оглушения, усталости и ядов. Этот эффект длится Провалы раундов.</p><p>• Существа с трейтом Psyker должны пройти тест W–10–бPR×5 ( бPR цели), и в случае провала цель должна развеять по одной психосиле за каждый четный провал.</p><p>• Существа с трейтом Warp Instability должны пройти тест трейта со штрафом –PR×5 (псайкера).</p><p>Данные эффекты складываются, если у существа есть 2 или более вышеописанных трейтов.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "revenant",
+    "subtype": "Взгляд Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Look of Death",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 5, Look of Death\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–30. Дальность: PR×10м\nТип: Атака, Изменение (бPR)\nСмерть касается каждого и псайкер высвобождает эту силу в реальности, поражая обычно бессмертных существ и тех, кто наделен даром избегать погибель. Данная психосила действует только на существ с трейтами Daemonic, Stuff of Nightmares, Psyker и Warp Instability следующим образом:\n• Существа с трейтом Daemonic должны пройти тест W–(10×Daemonic), и в случае провала теста, трейт перестает давать поглощение на Провалы раундов.\n• Существа с трейтом Stuff of Nightmares должны пройти тест W–30 или T–30 на выбор существа, и в случае провала, он перестает защищать от критических эффектов, оглушения, усталости и ядов. Этот эффект длится Провалы раундов.\n• Существа с трейтом Psyker должны пройти тест W–10–бPR×5 ( бPR цели), и в случае провала цель должна развеять по одной психосиле за каждый четный провал.\n• Существа с трейтом Warp Instability должны пройти тест трейта со штрафом –PR×5 (псайкера).\nДанные эффекты складываются, если у существа есть 2 или более вышеописанных трейтов.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "MwPb7guGOKeX7Sid",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MwPb7guGOKeX7Sid"
+}

@@ -114,6 +114,30 @@
 // StringField initial "common"), а НЕ как «не пройдено»: пустое поле у старых
 // данных значит «обычное», а не «никакое».
 
+// ── Выбранный бонусный эффект Best.Q (when.chosenEffect/when.negateChosenEffect) ─
+// Десятый независимый гейт (wdbc-jo51): список подписей ИЗ СОБСТВЕННОГО
+// system.bestQualityEffects ПРЕДМЕТА (implant-bestq-choice.mjs, wdbc-ukpu) —
+// та же форма, что у субмутации (список подписей своего же предмета, ИЛИ
+// между вариантами), но источник другой: не одна текущая строка
+// (item.system.submutation.label), а МУЛЬТИМНОЖЕСТВО уже взятых эффектов
+// (item.system.chosenEffects — можно взять один и тот же вариант повторно,
+// см. bestQChoiceUpdate). Нужен там, где Best.Q Био-импланта Друкхари даёт
+// на выбор несколько эффектов, и только ОДИН из них должен включать запись
+// Конструктора (Ribcage Carapace: «Костяные шипы» → Встречная атака; Electric
+// Arc: «Электрическая броня» → Встречная атака) — остальные три варианта у
+// каждого импланта не завязаны на код вовсе, это чисто текстовые механики.
+// Гейт смотрит на item.system.chosenEffects: нет предмета (предпросмотр вне
+// владельца) — условие пройдено, тот же принцип, что у субмутации/качества
+// выше. Выбор ещё не сделан (chosenEffects пуст) — это НЕ «пока не решено»,
+// как у субмутации (та рано или поздно выпадает), а законное постоянное
+// состояние Common/Good.Q-экземпляра или Best.Q без выбора — гейт просто не
+// проходит, никакого спецкейса под negate не нужно.
+// Практически этот гейт почти всегда стоит РЯДОМ с when.quality:["best"]
+// (тот же предмет, оба гейта складываются по «И» умолчанию) — так исключён
+// редкий случай «эффект выбран на Best.Q, потом Качество вручную понижено
+// назад» (chosenEffects при этом не чистится, книга такой откат не описывает,
+// решение осторожное: гасить эффект по обоим условиям, а не только по одному).
+
 import { itemHasName, PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
@@ -150,6 +174,11 @@ export function whenQuality(when) {
 /** Заполненные ключи тира Ран из entry.when.woundTier. */
 export function whenWoundTier(when) {
   return (when?.woundTier || []).filter(Boolean);
+}
+
+/** Заполненные подписи выбранных бонусных эффектов Best.Q из entry.when.chosenEffect. */
+export function whenChosenEffect(when) {
+  return (when?.chosenEffect || []).filter(Boolean);
 }
 
 const normSpec = s => String(s ?? "").trim().toLowerCase();
@@ -214,9 +243,10 @@ export function entryWhenOk(actor, entry, item = null) {
   const condKeys = whenCondition(entry?.when);
   const quals = whenQuality(entry?.when);
   const preds = whenPredicates(entry?.when);
+  const chosenEffects = whenChosenEffect(entry?.when);
   if (!conditions.length && !subs.length && !talentSpec && !tiers.length && !requireRage
       && !patronGods.length && !requireSealedArmour && !condKeys.length && !quals.length
-      && !preds.length) return true;
+      && !preds.length && !chosenEffects.length) return true;
 
   let geneOk = true;
   if (conditions.length && actor) {
@@ -288,6 +318,13 @@ export function entryWhenOk(actor, entry, item = null) {
   let predOk = true;
   if (preds.length && actor) predOk = preds.every(([key, value]) => predicateOk(key, actor, value));
 
+  let chosenOk = true;
+  if (chosenEffects.length && item) {
+    const taken = new Set((item.system?.chosenEffects || []).map(e => e?.label).filter(Boolean));
+    const matches = chosenEffects.some(label => taken.has(label));
+    chosenOk = entry.when.negateChosenEffect ? !matches : matches;
+  }
+
   let condOk = true;
   if (condKeys.length && actor) {
     const matches = PREDICATES.hasCondition(actor, {}, condKeys);
@@ -298,7 +335,7 @@ export function entryWhenOk(actor, entry, item = null) {
   // существующая запись поведения не меняет.
   if (!entry?.when?.anyOf) {
     return geneOk && subOk && talentOk && tierOk && rageOk && patronOk && sealedOk && condOk
-        && qualOk && predOk;
+        && qualOk && predOk && chosenOk;
   }
 
   // when.anyOf — «достаточно одного гейта» (wdbc-n48f). Без него способность
@@ -317,7 +354,8 @@ export function entryWhenOk(actor, entry, item = null) {
     [requireSealedArmour, sealedOk],
     [condKeys.length, condOk],
     [quals.length, qualOk],
-    [preds.length, predOk]
+    [preds.length, predOk],
+    [chosenEffects.length, chosenOk]
   ].filter(([on]) => on);
 
   return configured.some(([, ok]) => ok);

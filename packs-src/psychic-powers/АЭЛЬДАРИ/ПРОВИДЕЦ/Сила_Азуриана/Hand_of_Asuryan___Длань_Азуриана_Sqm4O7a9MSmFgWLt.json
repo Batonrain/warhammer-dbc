@@ -1,0 +1,77 @@
+{
+  "name": "Hand of Asuryan / Длань Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "80EvWJlPvblVjJWC",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 10, Force of Asuryan, Asuryan’s Patience</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–30.<strong> Дальность: </strong>PR×3 м</p><p><strong>Тип: </strong>Аура</p><p>Используя свои силы, Провидец отыскивает далекое, но все еще живое психическое эхо Азуриана в глубинах Имматериума, дабы использовать его для защиты себя и своих подчиненных. Ощутив благодать Верховного Бога, ни один из его Детей не падет, пока идет сражение. Все существа, союзные псайкеру, получают трейты Regeneration (+3) и <strong>Undying</strong>. Пока данная психосила действует,  все цели этой психосилы могут использовать W+3×PR псайкера, что манифестировал эту психосилу. Псайкер снижает стоимость манифестации всех психосил из категории Силы Азуриана на 1 (Полное действие → Полудействие → Свободное действие) до тех пор, пока он поддерживает эту психосилу. Псайкер получает +2 Очка Судьбы, +1 ОД и +1 Реакцию, пользуясь благодатью Азуриана. После рассеивания психосилы, ее нельзя манифестировать в течении 3–ех недель.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "farseer",
+    "subtype": "Сила Азуриана",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 10,
+    "requirement": "PR 10, Force of Asuryan, Asuryan’s Patience",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×3 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 10, Force of Asuryan, Asuryan’s Patience\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–30. Дальность: PR×3 м\nТип: Аура\nИспользуя свои силы, Провидец отыскивает далекое, но все еще живое психическое эхо Азуриана в глубинах Имматериума, дабы использовать его для защиты себя и своих подчиненных. Ощутив благодать Верховного Бога, ни один из его Детей не падет, пока идет сражение. Все существа, союзные псайкеру, получают трейты Regeneration (+3) и Undying. Пока данная психосила действует,  все цели этой психосилы могут использовать W+3×PR псайкера, что манифестировал эту психосилу. Псайкер снижает стоимость манифестации всех психосил из категории Силы Азуриана на 1 (Полное действие → Полудействие → Свободное действие) до тех пор, пока он поддерживает эту психосилу. Псайкер получает +2 Очка Судьбы, +1 ОД и +1 Реакцию, пользуясь благодатью Азуриана. После рассеивания психосилы, ее нельзя манифестировать в течении 3–ех недель.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Sqm4O7a9MSmFgWLt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Sqm4O7a9MSmFgWLt"
+}

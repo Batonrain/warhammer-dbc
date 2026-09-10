@@ -1,0 +1,78 @@
+{
+  "name": "See The Threads / Узреть Нити",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "VsKa4y1JPUDWsjOo",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 2</strong></p><p><strong>Действие: </strong>Полудействие <strong>Поддержание: </strong>Свободное действие</p><p><strong>Психотест:</strong> W+10<strong> Дальность:</strong> PR×3м</p><p><strong>Тип:</strong> Аура</p><p>Каждое существо привязано к своему телу душой, и некоторые псайкеры способны видеть эти нити души. Направляя потоки варпа, псайкер создает зону где от души врага можно отрезать кусочек даже без его погибели. Пока эта психосила поддерживается, условием активации трейта Power Of Souls внутри <strong>ауры </strong>психосилы становится не смерть врага, а получение им непоглощенного урона, но тест получения Мертвого Могущества усложняется до W+0.</p>",
+    "notes": "",
+    "cost": 200,
+    "discipline": "revenant",
+    "subtype": "Нити Смерти",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "PR×3м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 2\nДействие: Полудействие Поддержание: Свободное действие\nПсихотест: W+10 Дальность: PR×3м\nТип: Аура\nКаждое существо привязано к своему телу душой, и некоторые псайкеры способны видеть эти нити души. Направляя потоки варпа, псайкер создает зону где от души врага можно отрезать кусочек даже без его погибели. Пока эта психосила поддерживается, условием активации трейта Power Of Souls внутри ауры психосилы становится не смерть врага, а получение им непоглощенного урона, но тест получения Мертвого Могущества усложняется до W+0.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "C0aYJFFpuGitVPtd",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!C0aYJFFpuGitVPtd"
+}

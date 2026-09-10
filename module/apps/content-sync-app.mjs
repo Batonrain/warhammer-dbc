@@ -8,11 +8,37 @@
 //  вся группа: у одноимённого поля разные актёры могут разойтись по-разному
 //  (кто-то чисто, кто-то в конфликте). Строка-заголовок группы — просто
 //  раскрывашка со сводным чекбоксом «отметить всё в группе» для удобства.
+//
+//  wdbc-1ccm: у свёрнутой группы единственный элемент управления в DOM —
+//  агрегатный toggle-row чекбокс; отдельные data-entry чекбоксы каждой записи
+//  рендерятся только когда group.expanded. ГМ, желавший поправить ОДНУ запись
+//  внутри свёрнутой группы, физически не мог — переключался весь toggle-row.
+//  Починка: любое использование toggle-row сразу разворачивает свою группу
+//  (см. обработчик ниже), так что результат массового переключения виден
+//  тут же и отдельные записи сразу доступны для точечной правки — не нужно
+//  отдельно вспоминать про маленькую стрелку «▸ N акт.».
 // ════════════════════════════════════════════════════════════════════════
 
 import { buildLiveSyncReport, applySyncReport, fieldLabel, describeValue } from "./content-sync.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
+
+// wdbc-1ccm: группы, которые стоит показать развёрнутыми сразу, а не
+// свёрнутыми за агрегатным toggle-row. У группы с >1 записью, где выбор
+// неоднороден (часть entryKey в selected, часть нет — типично «чистые» уже
+// отмечены, «конфликтные» ещё нет), единственным видимым в свёрнутом виде
+// элементом управления был бы toggle-row, а его переключение молча стёрло бы
+// это различие вместо того, чтобы дать ГМу решить по каждой записи отдельно.
+// Чистая функция — не зависит от rendering/DOM, тестируется напрямую.
+export function rowsNeedingExpansion(rows, selected) {
+  const keys = new Set();
+  for (const row of rows) {
+    if (row.entries.length <= 1) continue;
+    const checkedCount = row.entries.filter(e => selected.has(e.entryKey)).length;
+    if (checkedCount > 0 && checkedCount < row.entries.length) keys.add(row.key);
+  }
+  return keys;
+}
 
 function fmtVal(v, path) {
   // Механика Конструктора (wdbc-lddr) — дерево групп и записей: её JSON занял
@@ -64,6 +90,9 @@ export class ContentSyncApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (entry.status === "clean") this.selected.add(entry.entryKey);
       }
     }
+    // Конфликт вперемешку с чистыми записями внутри одной группы — раскрыть
+    // сразу, до первого клика ГМа (wdbc-1ccm).
+    this.expanded = rowsNeedingExpansion(this.report.rows, this.selected);
   }
 
   _rowVM(row) {
@@ -138,6 +167,11 @@ export class ContentSyncApp extends HandlebarsApplicationMixin(ApplicationV2) {
         if (e.currentTarget.checked) this.selected.add(entry.entryKey);
         else this.selected.delete(entry.entryKey);
       }
+      // wdbc-1ccm: разворачиваем группу сразу после массового переключения —
+      // ГМ должен увидеть, какие именно записи затронуты, и иметь возможность
+      // тут же снять/поставить одну из них, не трогая соседние (data-entry
+      // ниже, per-entry обработчик уже это умеет).
+      this.expanded.add(rowKey);
       this.render(false);
     });
 

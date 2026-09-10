@@ -1,0 +1,77 @@
+{
+  "name": "Eldritch Missile / Сверхъестественный Снаряд",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "kFZPmFGZOjTHnKXN",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 3</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W–10/W–30 vss W+0. <strong>Дальность:</strong> PR×15 м</p><p><strong>Тип:</strong> Атака, Психический Снаряд/Обстрел</p><p>Окуная свои руки в Варп, Провидец достает чистую энергию Эмпиреев, что будет обращена в физический снаряд, что поразит и душу, и тело врага. Соревновательный тест против этой психосилы является тестом против Страха с рейтингом 2. Если цель проваливает тест, то если в радиусе 15 метров от него есть союзники (относительно него), то они все должны пройти тест против страха с рейтингом 1.</p><p>Данная психосила может быть манифестирована во втором режиме, дабы поменять тип Психический Снаряд на Психический Обстрел.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×15 м</p></td><td><p>1d10+5+PR E</p></td><td><p>4</p></td><td><p>–</p></td></tr></table>",
+    "notes": "Второй режим манифестации (Психический Обстрел вместо Снаряда) — только текстом, shootSubtype хранит только первый режим.",
+    "cost": 200,
+    "discipline": "farseer",
+    "subtype": "Сверхъестественная Сила",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 3,
+    "requirement": "PR 3",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "PR×15 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+5+PR",
+    "damageType": "energy",
+    "penetration": 4,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "wp",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 3\nДействие: Полудействие. Поддержание: Нет.\nПсихотест: W–10/W–30 vss W+0. Дальность: PR×15 м\nТип: Атака, Психический Снаряд/Обстрел\nОкуная свои руки в Варп, Провидец достает чистую энергию Эмпиреев, что будет обращена в физический снаряд, что поразит и душу, и тело врага. Соревновательный тест против этой психосилы является тестом против Страха с рейтингом 2. Если цель проваливает тест, то если в радиусе 15 метров от него есть союзники (относительно него), то они все должны пройти тест против страха с рейтингом 1.\nДанная психосила может быть манифестирована во втором режиме, дабы поменять тип Психический Снаряд на Психический Обстрел.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×15 м | 1d10+5+PR E | 4 | –\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "tPXmhqwlIEMWgYbX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!tPXmhqwlIEMWgYbX"
+}

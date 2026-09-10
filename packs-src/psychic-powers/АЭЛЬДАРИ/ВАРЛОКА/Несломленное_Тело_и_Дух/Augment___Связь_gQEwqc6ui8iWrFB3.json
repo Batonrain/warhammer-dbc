@@ -1,0 +1,75 @@
+{
+  "name": "Augment / Связь",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "MoUrLijnN3gLSOSP",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 4, Фокус Телепатии</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×1 км</p><p><strong>Тип: </strong>Вливание, Изменение (PR+1)</p><p>Используя телепатические техники и Мастерство, Варлок способен использовать чужие тела и разум, дабы манифестировать свои психосилы, не находясь даже на поле битвы. Если псайкер связан телепатически (например через психосилу Мысленная Связь) и делится с целью этой психосилы сектором обзора, то он может манифестировать любые психосилы от лица цели, сохраняя весь свой PR и бонусы. Он может избрать цель этой психосилы, чтобы она была полностью иммунна ко всем психосилам, которым он будет манифестировать, или сделать ее центром психосил (например, ауры или психосилы с радиусом Сам, или Призыва). Поддержание психосилы псайкер может либо взять на себя, либо переложить на цели этой психосилы.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "warlock",
+    "subtype": "Несломленное Тело и Дух",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Фокус Телепатии",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×1 км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "400 xp | Требования: PR 4, Фокус Телепатии\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×1 км\nТип: Вливание, Изменение (PR+1)\nИспользуя телепатические техники и Мастерство, Варлок способен использовать чужие тела и разум, дабы манифестировать свои психосилы, не находясь даже на поле битвы. Если псайкер связан телепатически (например через психосилу Мысленная Связь) и делится с целью этой психосилы сектором обзора, то он может манифестировать любые психосилы от лица цели, сохраняя весь свой PR и бонусы. Он может избрать цель этой психосилы, чтобы она была полностью иммунна ко всем психосилам, которым он будет манифестировать, или сделать ее центром психосил (например, ауры или психосилы с радиусом Сам, или Призыва). Поддержание психосилы псайкер может либо взять на себя, либо переложить на цели этой психосилы.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "gQEwqc6ui8iWrFB3",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gQEwqc6ui8iWrFB3"
+}
