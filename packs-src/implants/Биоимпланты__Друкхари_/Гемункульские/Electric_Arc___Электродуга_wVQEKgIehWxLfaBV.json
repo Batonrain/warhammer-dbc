@@ -55,7 +55,8 @@
         "label": "Электрическая регенерация",
         "note": "при E(El) +1d10 ран; 1/час полное исцеление от мощного источника"
       }
-    ]
+    ],
+    "availability": 4
   },
   "folder": "MVwzimCMiFagXpH6",
   "_id": "wVQEKgIehWxLfaBV",

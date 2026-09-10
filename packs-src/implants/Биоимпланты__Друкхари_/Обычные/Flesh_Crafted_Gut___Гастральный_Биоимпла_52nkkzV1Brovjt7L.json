@@ -59,7 +59,8 @@
         "label": "Кислотный вздох",
         "note": "1/день струя кислоты 5 м, 1d10+3+T.b C, Pen 4"
       }
-    ]
+    ],
+    "availability": 1
   },
   "folder": "BNlIBu7Dewa9PnWE",
   "_id": "52nkkzV1Brovjt7L",

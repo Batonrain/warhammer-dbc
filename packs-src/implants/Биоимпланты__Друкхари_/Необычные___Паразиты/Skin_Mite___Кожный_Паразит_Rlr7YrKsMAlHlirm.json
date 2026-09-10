@@ -55,7 +55,8 @@
         "label": "Регенеративная колония",
         "note": "1/сутки +1d5+T.b ран"
       }
-    ]
+    ],
+    "availability": 1
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "Rlr7YrKsMAlHlirm",

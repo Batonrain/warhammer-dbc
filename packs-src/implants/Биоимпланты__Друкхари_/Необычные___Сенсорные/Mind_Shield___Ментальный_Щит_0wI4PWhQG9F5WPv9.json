@@ -55,7 +55,8 @@
         "label": "Ментальный камуфляж",
         "note": "для пси-чувств — пустота; +20 Stealth против варп-чувств, −20 на обнаружение"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "etJvVu2vXLYA2Du4",
   "_id": "0wI4PWhQG9F5WPv9",

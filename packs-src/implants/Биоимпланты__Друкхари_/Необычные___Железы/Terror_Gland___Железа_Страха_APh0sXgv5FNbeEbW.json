@@ -55,7 +55,8 @@
         "label": "Аура страха",
         "note": "пассивно +10 Intimidate, Fear(+1)"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "APh0sXgv5FNbeEbW",

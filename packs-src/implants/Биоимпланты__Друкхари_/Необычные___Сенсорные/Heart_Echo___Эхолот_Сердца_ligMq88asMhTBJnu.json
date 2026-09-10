@@ -55,7 +55,8 @@
         "label": "Заглушка",
         "note": "свободным действием отключать чувствительность"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "etJvVu2vXLYA2Du4",
   "_id": "ligMq88asMhTBJnu",

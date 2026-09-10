@@ -55,7 +55,8 @@
         "label": "Боевой червь",
         "note": "в бою: попасть в Голову и пробить AP — жертва −10 всем, −30 I/W, пока червь не вернётся"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "L7gyWu6JQQSRsgKN",

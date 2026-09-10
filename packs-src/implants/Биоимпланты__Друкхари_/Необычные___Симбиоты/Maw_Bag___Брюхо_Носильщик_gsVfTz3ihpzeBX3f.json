@@ -55,7 +55,8 @@
         "label": "Регенеративная смесь",
         "note": "переваривание органики → +1d5 ран 1/день"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "gsVfTz3ihpzeBX3f",
