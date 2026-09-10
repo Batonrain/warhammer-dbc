@@ -1276,3 +1276,11 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
   margin: 2px 0 0; padding-left: 20px; font-size: 0.85em; line-height: 1.35;
 }
 .warhammer-dbc .implant-bestq-list li { margin: 1px 0; }
+.warhammer-dbc .implant-bestq-chosen { margin-top: 6px; font-size: 0.85em; }
+.warhammer-dbc .implant-bestq-chosen-chip {
+  display: inline-block; margin: 2px 4px 0 0; padding: 1px 6px;
+  border: 1px solid var(--wh-border, #555); border-radius: 3px;
+}
+.warhammer-dbc .implant-bestq-choose { margin-top: 6px; }
+.warhammer-dbc .bestq-choice-row { margin-bottom: 6px; }
+.warhammer-dbc .bestq-count-summary { margin-top: 8px; font-weight: bold; }

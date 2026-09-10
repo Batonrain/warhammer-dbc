@@ -73,6 +73,7 @@ import { specOptions }                               from "../constants/skill-sp
 import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-builder.mjs";
 import { RITUAL_ITEM_TYPES, RITUAL_TYPES }            from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
+import { runBestQChoice }                            from "../apps/implant-bestq-choice.mjs";
 import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
          TARGET_FEATURES, PATRON_ANY, addTarget, removeTargetAt } from "../rules/talent-targets.mjs";
 import { RACES, SUBRACES }                           from "../constants/races.mjs";
@@ -2923,6 +2924,11 @@ export class WarhammerItemSheet
     on(".armor-type-select", "change", ev => {
       this.item.update({ "system.armorType": ev.currentTarget.value });
     });
+
+    // ── Best.Q-биоимплант: ручной вызов диалога выбора эффекта (wdbc-ukpu) ──
+    // Тот же путь, что и автоматический хук получения (warhammer-dbc.mjs) —
+    // кнопка видна, пока system.chosenEffects пуст (implant.hbs).
+    on(".implant-bestq-choose", "click", () => runBestQChoice(this.item));
 
     // ── Особые свойства оружия ─────────────────────────────────────────────────
     on(".wprop-add-select", "change", async ev => {
