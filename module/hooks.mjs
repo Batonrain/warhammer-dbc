@@ -422,7 +422,7 @@ export function registerHooks() {
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
         await _performParry(actor, extraMod,
-          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee);
+          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, ds.attackerWeaponUuid || "");
       });
     });
 

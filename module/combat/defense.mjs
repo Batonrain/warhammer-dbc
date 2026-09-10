@@ -25,6 +25,10 @@ import { canParryPsychic, psychicParryOutcome, hasBladeShield } from "./blade-sh
 import { crossblockPair, CROSSBLOCK_SIZE_STEPS, maineGaucheParryReroll }
   from "../rules/dual-wield-talents.mjs";
 import { attackedPrevTurn } from "../rules/turn-flags.mjs";
+import { parrySizeGate } from "../rules/parry-size.mjs";
+import { tokenRect } from "./horde-tokens.mjs";
+import { contactType } from "../rules/tactical-map.mjs";
+import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -209,6 +213,14 @@ export async function _performSprayCancel(actor) {
  * @param {object} actor
  * @param {number} extraMod        модификатор приёма/ситуации
  * @param {?object} [weaponOverride] чем парируем, если не «надетое рукопашное»
+ * @param {object} [opts]
+ * @param {boolean} [opts.useCrossblock=true] спрашивается ДО вызова (askCrossblock)
+ *
+ * Разница Размеров (стр. 12, module/rules/parry-size.mjs) сюда НЕ входит —
+ * это условие, допускающее сам тест («требует Навык Parry, продвинутый на
+ * +10/+20/+30»), а не штраф к его порогу. Гейт проверяет вызывающая сторона
+ * (_performParry) ДО вызова parryProfile, ей нужен резолв атакующего актора
+ * по attackerUuid, которого здесь нет.
  */
 export function parryProfile(actor, extraMod = 0, weaponOverride = null, { useCrossblock = true } = {}) {
   const wsTotal    = actor.system.characteristics.ws?.total ?? 0;
@@ -299,7 +311,7 @@ export function weaponParryPropBonus(actor, weapon) {
   return parryPropBonuses(props).total;
 }
 
-/** Отказ Парирования стрельбы: почему нельзя. Реакция при этом не тратится. */
+/** Отказ Парирования: почему нельзя. Реакция при этом не тратится. */
 function _bladeShieldRefusal(actor, why) {
   return postTestCard(actor, {
     icon: rollIcon("sword"), title: `Парирование — ${esc(actor.name)}`, actorUuid: actor.uuid,
@@ -332,29 +344,80 @@ export async function askCrossblock(actor) {
   return both !== false;
 }
 
-export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false, isMelee = true) {
+/**
+ * Защищающийся в Базовом/Глубоком контакте со стрелком (module/rules/
+ * tactical-map.mjs::contactType, тот же геометрический расчёт, что у
+ * Свободной Атаки, module/combat/free-attack.mjs) — стр. 12: «Парирование
+ * работает только от атак в ближнем бою, в т.ч. выстрелов в рукопашной»,
+ * отдельно от Таланта «Щит Клинков» (стр. 62, парирует С ЛЮБОЙ дистанции).
+ * Без токена хотя бы у одной стороны решить нечем — не Парирование, а Талант
+ * должен решать (consistent с прежним поведением до контакта).
+ */
+function _inMeleeContactWithAttacker(actor, attackerActor) {
+  const myToken = actor?.getActiveTokens?.(false, true)?.[0];
+  const atkToken = attackerActor?.getActiveTokens?.(false, true)?.[0];
+  if (!myToken || !atkToken) return false;
+  const rectA = tokenRect(myToken), rectB = tokenRect(atkToken);
+  if (!rectA || !rectB) return false;
+  return contactType(rectA, rectB) !== "none";
+}
+
+export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "") {
+  // Резолв атакующего — нужен и для Разницы Размеров (стр. 12, ЛЮБОЙ
+  // Парирование), и для контакта при стрельбе ниже. Неизвестный/нерезолвящийся
+  // attackerUuid — Размер атакующего считается 0 (нет штрафа), тот же честный
+  // дефолт, что у остальных cross-actor резолвов этого файла.
+  const attackerActor  = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const attackerWeapon = attackerWeaponUuid ? await fromUuid(attackerWeaponUuid).catch(() => null) : null;
+
   // Крестовой Блок платит Контратакой (стр. 62), поэтому спрашивается ДО
   // броска — и только когда цена реальна: Талант Контратаки есть и доступен в
   // этом Раунде. Нечем платить — выгода бесплатна, и спрашивать не о чем.
   const useCrossblock = await askCrossblock(actor);
+
+  // Длань Кхорна (wdbc-1rno): +2 эффективного Размера атакующего, когда бьёт
+  // именно этой рукой — не своё поле на акторе, читается с оружия атаки.
+  const attackerSize = (Number(attackerActor?.system?.size) || 0) + handOfKhorneAttackSizeBonus(attackerWeapon);
+  const defenderSize  = Number(actor?.system?.size) || 0;
+  // Крестовой Блок поднимает предел «невозможно» на ступень (стр. 62) — та же
+  // РЕАЛЬНАЯ (после вопроса игроку) готовность биться обоими, что идёт в
+  // parryProfile ниже, не повторный независимый вопрос "есть ли пара".
+  const crossblockActive = useCrossblock && !!crossblockPair(actor);
+  // Разница Размеров (стр. 12) — условие, допускающее сам тест («требует
+  // Навык Parry, продвинутый на +10/+20/+30»), не штраф к порогу: сверяется с
+  // уже вложенным Рангом ДО построения профиля Парирования (parrySize.mjs).
+  const parryRankBonus = SKILL_RANKS[actor.system.skills?.parry?.rank ?? "untrained"]?.bonus ?? -20;
+  const sizeGate = parrySizeGate(attackerSize, defenderSize, parryRankBonus,
+                                 crossblockActive ? CROSSBLOCK_SIZE_STEPS : 0);
+  if (sizeGate.impossible) {
+    return _bladeShieldRefusal(actor,
+      `Противник крупнее на ${sizeGate.steps} ${sizeGate.steps === 1 ? "ступень" : "ступени"} Размера — Парирование вообще невозможно (стр. 12).`);
+  }
+  if (!sizeGate.allowed) {
+    const requiredRankKey = sizeGate.requiredBonus === 10 ? "trained"
+                           : sizeGate.requiredBonus === 20 ? "veteran" : "expert";
+    const requiredLabel = SKILL_RANKS[requiredRankKey]?.label ?? `+${sizeGate.requiredBonus}`;
+    return _bladeShieldRefusal(actor,
+      `Противник крупнее на ${sizeGate.steps} ${sizeGate.steps === 1 ? "ступень" : "ступени"} Размера — Парирование требует Навык «Парирование», продвинутый минимум до «${requiredLabel}» (+${sizeGate.requiredBonus}) (стр. 12).`);
+  }
+
   const { wsTotal, meleeWeapon, balance, balanceMod, threshold, modParts, pwp, crossblock } =
     parryProfile(actor, extraMod, null, { useCrossblock });
 
-  // ── Парирование СТРЕЛЬБЫ — только Талантом «Щит Клинков» (wdbc-3e2x) ──────
-  // Корбук, стр. 62: «Реакция персонажа столь стремительна, что он способен
-  // перехватывать клинком пули и лучи. Если персонаж вооружен оружием с
-  // Балансом 1 и выше, он может парировать им стрелковую атаку.» До этой
-  // правки кнопка Парирования на карточке стрельбы работала у КОГО УГОДНО и с
-  // любым балансом — система была щедрее книги.
-  //
-  // Проверяется здесь, а не при отрисовке карточки: карточку пишет атакующий,
-  // и на момент её сборки неизвестно, кто будет отбиваться (тот же приём, что
-  // у Сжатия). Реакция при отказе не тратится — действие недоступно, а не
-  // провалено.
-  if (!isMelee) {
+  // ── Парирование СТРЕЛЬБЫ ───────────────────────────────────────────────
+  // Стр. 12: «работает только от атак в ближнем бою, в т.ч. выстрелов в
+  // рукопашной» — Базовый/Глубокий контакт со стрелком разрешает парировать
+  // ВСЕМ, без Таланта, как обычную рукопашную атаку (полная шкала степеней
+  // ниже). Стр. 62 («Щит Клинков», wdbc-3e2x): «может перехватывать клинком
+  // пули и лучи» С ЛЮБОЙ дистанции — отдельная, более сильная возможность,
+  // требует Баланс 1+ и режет степень до 1 (книга: «Успех ВСЕГДА блокирует
+  // только одно попадание» — это про парирование БЕЗ контакта дистанционно,
+  // не про общее правило рукопашной).
+  const contactParry = !isMelee && _inMeleeContactWithAttacker(actor, attackerActor);
+  if (!isMelee && !contactParry) {
     if (!hasBladeShield(actor)) {
       return _bladeShieldRefusal(actor,
-        "Парировать стрелковую атаку может только персонаж с Талантом «Щит Клинков» (стр. 62).");
+        "Стрелковую атаку без Базового контакта со стрелком может парировать только персонаж с Талантом «Щит Клинков» (стр. 62).");
     }
     if (balance < 1) {
       return _bladeShieldRefusal(actor,
@@ -414,9 +477,10 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
   // каждую степень, не больше их числа («Избегание множественных попаданий»).
   // Стр. 62: «Успех на этом тесте парирования ВСЕГДА блокирует только одно
   // попадание, независимо от количества Успехов» — это про Парирование
-  // СТРЕЛЬБЫ. В рукопашной работает общее правило стр. 12 (по попаданию за
-  // степень), поэтому степень режется только в стрелковой ветке.
-  const effectiveDeg = isMelee ? deg : Math.min(deg, 1);
+  // СТРЕЛЬБЫ дистанционно, «Щитом Клинков». В рукопашной, включая парирование
+  // выстрела В КОНТАКТЕ (contactParry — та же строка стр. 12, что и разрешает
+  // сам приём выше), работает общее правило стр. 12 (по попаданию за степень).
+  const effectiveDeg = (isMelee || contactParry) ? deg : Math.min(deg, 1);
   const { total: totalHits, negated, remaining } = negatedHits(passed, effectiveDeg, hitsCount);
   const parried = passed;
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
@@ -492,16 +556,15 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
     : "";
 
   // Что именно даёт Крестовой Блок сверх суммы бонусов — и чего он стоит.
-  // Предел Размера книга поднимает на ступень, но самого предела Размера при
-  // Парировании в системе нет вовсе, поэтому это напоминание столу, а не расчёт.
-  // Строка печатается только при парировании ОБОИМИ: и выгода (сумма бонусов,
-  // предел Размера), и цена (Контратака) — это одно и то же решение. Раньше
-  // при нулевом бонусе второго оружия строка обещала выгоду, не взяв цены.
+  // Предел Размера (стр. 12, wdbc-1rno) — теперь настоящий расчёт
+  // (module/rules/parry-size.mjs, crossblockActive выше), не напоминание
+  // столу. Строка печатается только при парировании ОБОИМИ: и выгода (сумма
+  // бонусов, предел Размера), и цена (Контратака) — одно и то же решение.
   const crossblockNote = crossblock
     ? `<div class="roll-defense-note">${rollIcon("sword")}Крестовой Блок: парируете обоими`
       + `${crossblock.bonus ? ` (+${crossblock.bonus} от «${esc(crossblock.weapon.name)}»)` : " (бонусов второго оружия нет)"}`
       + `, Контратака и Ответный Удар в этом Парировании недоступны.`
-      + ` Можно Парировать существ на ${CROSSBLOCK_SIZE_STEPS} ступень Размера крупнее обычного (решает стол).</div>`
+      + ` Предел «Парирование невозможно» по Размеру поднят на ${CROSSBLOCK_SIZE_STEPS} ступень.</div>`
     : "";
 
   await postTestCard(actor, {
