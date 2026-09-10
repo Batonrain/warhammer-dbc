@@ -39,6 +39,13 @@
 // Red Sun/Красное Солнце — тот же путь: реальный скан сцены (tokensWithinRadius
 // + isTokenInSight, тот же приём, что у Иконы Богохульства) и W+0 тест на
 // каждого видящего нимб в 16м, с реальным впадением в Ярость при провале.
+//
+// 10.09.2026: Ethereal Swarm/Эфирная Стая — тот же путь, выбыл из списка "AP"
+// ниже. Призыв (Inf.b Крикунов на Cor.b минут) — РЕАЛЬНАЯ kind:"script"
+// запись (module/rules/ethereal-swarm.mjs), цена в 2 ОД переехала на неё;
+// поглощение попадания Крикуном (тест Cor+0, без траты Реакции) — кнопка в
+// карточке атаки (combat/defense.mjs::_performEtherealSwarm), рендерится,
+// только если у цели есть непустой/неистёкший остаток стаи.
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -132,7 +139,7 @@ describe("цена Очком Бесчестия лежит в данных, а 
     // полное действие и больше ничего. Смешанные («Полудействие+1 Бесчестия»)
     // сюда не входят: поле цены одно, вторая половина потерялась бы молча.
     const AP = { "gift.khorne.fatherOfBattle": 1, "gift.nurgle.unseenBeggar": 1,
-                 "gift.tzeentch.etherealSwarm": 2, "mutation.janus": 1 };
+                 "mutation.janus": 1 };
     for (const [key, amount] of Object.entries(AP)) {
       const doc = carrierOf(key);
       expect(doc, `ни один документ packs-src не выдаёт ${key}`).toBeTruthy();
@@ -148,8 +155,7 @@ describe("цена Очком Бесчестия лежит в данных, а 
     // Поле цены одно. Если кто-то попробует дать записи и Бесчестие, и ОД,
     // вторая молча затрёт первую — а за столом заплатят один раз не тем.
     const paidKeys = new Set(PAID.map(p => p.key));
-    for (const key of ["gift.khorne.fatherOfBattle", "gift.nurgle.unseenBeggar",
-                       "gift.tzeentch.etherealSwarm", "mutation.janus"])
+    for (const key of ["gift.khorne.fatherOfBattle", "gift.nurgle.unseenBeggar", "mutation.janus"])
       expect(paidKeys.has(key), `${key} назначена и в Бесчестии, и в ОД`).toBe(false);
   });
 

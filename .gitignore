@@ -39,3 +39,8 @@ __pycache__/
 # Локальная отметка "pr-reviewer прошёл чисто на этом дереве" (worktree-local,
 # не история — git-scribe сверяет свежесть перед пушем, см. .claude/tools/state-hash.sh)
 /.agents/last-clean-review.json
+
+# Рабочие материалы вне репозитория: исходники книг для транскрибации и
+# дизайн-мокапы (skill doombc-mockup) — большие, локальные, не для публикации
+/sources/
+/design-mockups/

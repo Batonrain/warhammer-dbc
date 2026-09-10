@@ -279,6 +279,25 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // в 16м + isTokenInSight на каждого кандидата (тот же приём, что у Иконы
     // Богохульства) и W+0 тест, при провале — реальное впадение в Ярость. 50 →
     // 49. Порог подтянут до фактического счёта.
-    expect(stubOnly.length).toBeLessThanOrEqual(49);
+    // 10.09.2026: Ethereal Swarm/Эфирная Стая (кластер Тзинч) — тот же путь
+    // миграции, что Eye of Challenge/Akashic Library/Wish Granter/Red Sun:
+    // призыв Inf.b Крикунов на Cor.b минут стал реальной kind:"script"
+    // записью (module/rules/ethereal-swarm.mjs), поглощение попадания
+    // (тест Cor+0, без траты Реакции — новая кнопка «Эфирная Стая» в
+    // карточке атаки, рендерится только если у цели есть непустой остаток)
+    // — combat/defense.mjs::_performEtherealSwarm. Капабилити-ключ остался
+    // зонтиком без цены (цена в 2 ОД переехала на script, см.
+    // test/rules/capability-cost-in-packs.test.mjs). 49 → 48.
+    // 10.09.2026 продолжение (Общие Мутации, кластер субмутационных таблиц
+    // wdbc-5inv): Warp-Touched/Затронутый Варпом, субмутация 8 «Вспыльчивость»
+    // (khorne) — реальный тест W+0 на получение атаки, провал вгоняет в
+    // Ярость (module/rules/quick-to-anger.mjs, хук в module/combat/damage.mjs::
+    // applyDamageToActor — та же единая точка, что уже взводит флаг Pacifism).
+    // Новый capabilityKey mutation.warpTouched.quickToAnger рядом со старым
+    // зонтиком mutation.warpTouched (остальные 9 субмутаций — психологические
+    // W-тесты без числового эффекта или упираются в тот же пробел, что 4
+    // гейтнутые субмутации Heart of Steel: _executeFearRoll не знает
+    // категорию источника Страха). 48 → 47.
+    expect(stubOnly.length).toBeLessThanOrEqual(47);
   });
 });

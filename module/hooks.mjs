@@ -1,4 +1,4 @@
-import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend }              from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
@@ -333,6 +333,22 @@ export function registerHooks() {
         const location = ev.currentTarget.dataset.location || "";
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         await _performCompression(actor, location, attackerUuid);
+      });
+    });
+
+    // Эфирная Стая (Дар Тзинч, wdbc-1rno) — реактивное поглощение попадания
+    // призрачным Крикуном: тест Cor+0, НЕ Реакция (см. rules/ethereal-
+    // swarm.mjs). Кнопка рендерится, только если у выбранного на сцене
+    // защищающегося уже есть непустой/неистёкший остаток (attack-card.mjs::
+    // defenseSection), доступность самого призыва здесь не перепроверяется —
+    // это уже сделано на этапе рендера карточки (attack.mjs).
+    html.querySelectorAll(".wh-swarm-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
+        await _performEtherealSwarm(actor, attackerUuid);
       });
     });
 

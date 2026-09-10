@@ -25,6 +25,7 @@ import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
+import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
 import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair }
@@ -602,6 +603,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         canRecoil: !isMelee && evasionPoolEntry.successes >= 2 && recoilPoolRemaining(defenderActor) > 0 }
     : null;
 
+  // Ethereal Swarm / Эфирная Стая (wdbc-1rno, rules/ethereal-swarm.mjs) —
+  // тот же принцип, что evasionPool выше: считается здесь (документы Foundry
+  // цели уже под рукой), attack-card.mjs только рисует готовое число.
+  const etherealSwarm = hit && defenderActor
+    ? activeSwarm(defenderActor, game.time?.worldTime) : null;
+
   // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/
   // grapple.mjs) — состояние conditions.grappling, как у Оглушения/Беспомощного.
   // Не блокирует построение карточки: чат-сообщение о связывании уходит своим,
@@ -706,6 +713,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       itemUuid: item.uuid || "",
       hordeHits,
       pool: evasionPool,
+      swarm: etherealSwarm,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {
