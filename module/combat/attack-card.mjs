@@ -238,7 +238,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   combat/defense.mjs::_performCompression — не здесь, этот модуль
  *   документов Foundry не касается (см. шапку файла).
  */
-export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
+export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", hitsCount = 1, pool = null,
                           swarm = null, isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
@@ -316,6 +316,16 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
         ${targetIsVehicle
           ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
                title="Техника: Operate − Размер×10">Вираж</button>`
+          : ""}
+        ${targetIsWalker
+          ? `<button class="wh-walker-parry-btn" type="button" data-extra-mod="${parryMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
+               title="Шагоход (Книга Машин): Парирует рукопашным орудием машины тестом WS ПИЛОТА со штрафом −Размер×10. Реакцию тратит пилот.">
+               Парирование (Шагоход)
+             </button>
+             <button class="wh-walker-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
+               title="Шагоход (Книга Машин): Уклонение пилота со штрафом −Размер×10, ВСЕГДА комбинированное с Operate−10 машины — один бросок против наименьшего Предела.">
+               Уклонение (Шагоход)
+             </button>`
           : ""}
         ${canCompress
           ? `<button class="wh-compress-btn" type="button" data-location="${compressLocation}" data-attacker-uuid="${attackerUuid}"

@@ -52,14 +52,21 @@ export async function _noReactionCard(actor, label) {
   }, rollMode));
 }
 
-export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false, burst = false, attackerIsHorde = false) {
-  // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
-  // потерянной ноги (книга не требует «обеих», в отличие от полной
-  // неподвижности при потере ОБЕИХ ног, см. rules/character.mjs). Реакция не
-  // тратится — Уклонение физически недоступно, а не просто провалено.
-  if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
-    return _noReactionCard(actor, "Уклонение (нет ног)");
-  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
+/**
+ * Порог Уклонения и всё, из чего он сложился, — ОДИН расчёт на всех, кто
+ * Уклоняется (wdbc-6wzt). Ровно та же причина, по которой рядом живёт
+ * parryProfile: у Уклонения появился второй вызывающий — Шагоход
+ * (combat/walker.mjs, книжный п.5 «Уклонение со штрафом −Размер×10,
+ * комбинированное с Operate−10»), и копия этого стека модификаторов означала
+ * бы второе место, где живут Усталость, Клонирующее Поле и записи реестра
+ * правил.
+ *
+ * Реакцию НЕ тратит и карточек не пишет: это делает вызывающий.
+ *
+ * @param {object} actor
+ * @param {number} extraMod модификатор приёма/ситуации
+ */
+export function dodgeProfile(actor, extraMod = 0) {
   const agTotal    = actor.system.characteristics.ag?.total ?? 0;
   const dodgeSkill = actor.system.skills?.dodge;
   const rankBonus  = SKILL_RANKS[dodgeSkill?.rank ?? "untrained"]?.bonus ?? -20;
@@ -75,6 +82,26 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   // сюда не доезжало вовсе: путь этой кнопки шёл мимо реестра правил.
   const ruleMods  = collectTestMods(actor, { kind: "skill", skill: "dodge", char: "ag" });
   const threshold = agTotal + rankBonus + stBonus + extraMod + cloneBonus + ruleMods.total;
+
+  const modParts = [];
+  if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
+  if (stBonus   !== 0)   modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
+  if (extraMod  !== 0)   modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
+  if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
+  modParts.push(...ruleMods.parts);
+
+  return { agTotal, rankBonus, stBonus, cloneBonus, ruleMods, threshold, modParts };
+}
+
+export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false, burst = false, attackerIsHorde = false) {
+  // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
+  // потерянной ноги (книга не требует «обеих», в отличие от полной
+  // неподвижности при потере ОБЕИХ ног, см. rules/character.mjs). Реакция не
+  // тратится — Уклонение физически недоступно, а не просто провалено.
+  if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
+    return _noReactionCard(actor, "Уклонение (нет ног)");
+  if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
+  const { agTotal, threshold, modParts } = dodgeProfile(actor, extraMod);
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить
@@ -109,12 +136,6 @@ export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hits
   const leftover = passed ? deg - negated : 0;
   const banked = leftover > 0 && await addEvasionSurplus(actor, attackerUuid, leftover, extraMod);
 
-  const modParts = [];
-  if (rankBonus !== -20) modParts.push(`навык ${rankBonus >= 0 ? "+" : ""}${rankBonus}`);
-  if (stBonus   !== 0)   modParts.push(`стойка ${stBonus >= 0 ? "+" : ""}${stBonus}`);
-  if (extraMod  !== 0)   modParts.push(`приём ${extraMod >= 0 ? "+" : ""}${extraMod}`);
-  if (cloneBonus !== 0)  modParts.push(`клон-поле +${cloneBonus}`);
-  modParts.push(...ruleMods.parts);
   if (picked.dropped.length) {
     modParts.push(forcedReroll
       ? `навязанный переброс, отброшено ${picked.dropped.join(", ")}`
