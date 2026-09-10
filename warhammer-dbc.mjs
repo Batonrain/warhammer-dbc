@@ -113,6 +113,7 @@ import { migrateCharDamageSign } from "./module/migrations/char-damage-sign.mjs"
 import { migrateTechPowerCosts } from "./module/migrations/tech-power-costs.mjs";
 import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
+import { migrateImplantAvailability } from "./module/migrations/implant-availability.mjs";
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
@@ -482,6 +483,12 @@ Hooks.once("init", () => {
 
   // Версия правки Размера Геносемени легиона у уже созданных Черт (одноразовая, wdbc-nesq)
   game.settings.register("warhammer-dbc", "legionGeneSeedSizeVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия доливки книжных Доступности/вариантов Best.Q биоимплантам, выданным
+  // до PR #452 (одноразовая, wdbc-wc3)
+  game.settings.register("warhammer-dbc", "implantAvailabilityVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -900,7 +907,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1008,6 +1015,18 @@ Hooks.once("ready", async () => {
     await migrateLegionGeneSeedSize();
     await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
   } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
+});
+
+// ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
+// Ручной перезапуск: game.warhammerDBC.migrateImplantAvailability()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "implantAvailabilityVersion") || 0) >= VERSION) return;
+  try {
+    await migrateImplantAvailability();
+    await game.settings.set("warhammer-dbc", "implantAvailabilityVersion", VERSION);
+  } catch (e) { console.error("Warhammer DBC | Доливка полей биоимплантов:", e); }
 });
 
 // ── Одноразовая довыдача: Стремления, выбранные до автоматизации бонусов ──────

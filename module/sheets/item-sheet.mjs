@@ -991,8 +991,13 @@ export class WarhammerItemSheet
       context.system.notes || "", { relativeTo: this.item, secrets: this.item.isOwner });
 
     context.system.balanceStr      = String(context.system.balance      ?? "0");
-    // availabilityStr всегда строка для корректного сравнения в HBS
-    context.system.availabilityStr = String(context.system.availability ?? "0");
+    // availabilityStr всегда строка для корректного сравнения в HBS.
+    // null (только у impland, wdbc-wc3 — «в книге не указано») даёт пустую
+    // строку: в шаблоне ей соответствует отдельный вариант «—», а не «0
+    // Дефицит». У weapon/armor/ammunition поле не обнуляемое, для них ничего
+    // не меняется.
+    context.system.availabilityStr =
+      context.system.availability == null ? "" : String(context.system.availability);
     context.system.weaponTypesRaw  = (context.system.weaponTypes || []).join(", ");
 
     // ── Друкхарийская броня с генератором поля: режимы и их доступность ────────
@@ -2930,7 +2935,10 @@ export class WarhammerItemSheet
     // Для других предметов — ручной handler через класс .availability-select
     if (this.item.type !== "drug") {
       on(".availability-select", "change", ev => {
-        this.item.update({ "system.availability": parseInt(ev.currentTarget.value) });
+        // Пустое значение — вариант «— не указано» (wdbc-wc3): пишем null, а
+        // не 0, иначе «в книге не сказано» превратилось бы в «Дефицит».
+        const raw = ev.currentTarget.value;
+        this.item.update({ "system.availability": raw === "" ? null : parseInt(raw) });
       });
     } else {
       // Для drug: принудительно конвертируем строку в число при сохранении

@@ -47,7 +47,13 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       // дополнительный эффект»). Без этого поля «+1 к Редкости» было нечему
       // прибавлять — то же поле и тот же общий .availability-select
       // обработчик (item-sheet.mjs), что уже несёт weapon/armor/ammunition.
-      availability:  new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
+      // nullable/initial:null, а не 0 (wdbc-wc3): 0 — это КНИЖНОЕ значение
+      // «Дефицит», а не «не заполнено». Книга даёт Доступность 79 биоимплантам
+      // Друкхари (двум из них — ровно 0), а у остальных 224 имплантов —
+      // кибернетики Механикум, органов Геносемени и прочих — её нет вовсе.
+      // С initial:0 лист утверждал у них «0 Дефицит»: не книжное значение, а
+      // заглушка, по которой игрок не должен ориентироваться при закупке.
+      availability:  new NumberField({ initial: null, integer: true, nullable: true, label: "Доступность" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
       // Варианты бонусного эффекта качества Best.Q (wdbc-ukpu). Книга Аэльдари:
       // Ответвления, «АРСЕНАЛ ДРУКХАРИ»: Best.Q-биоимплант даёт один эффект на
