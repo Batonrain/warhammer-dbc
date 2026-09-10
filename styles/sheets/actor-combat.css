@@ -971,6 +971,7 @@
   flex: none;
   width: 22px;
   height: 22px;
+  min-height: 0; /* пол ядра Foundry ~28px иначе растягивает квадрат в прямоугольник (wdbc-0weu) */
   line-height: 1;
   padding: 0;
   border: 1px solid var(--wh-border);

@@ -134,6 +134,107 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "eyesOfChaos-sub6-interrogate",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "interrogate",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Взор Пыток (субмутация 6, slaanesh): +10 Interrogate",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "6"
+                ],
+                "negateSub": false,
+                "patronGod": [
+                  "slaanesh"
+                ],
+                "negatePatronGod": false
+              }
+            },
+            {
+              "id": "eyesOfChaos-sub7-charm",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "charm",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Взор Очага (субмутация 7, nurgle): +10 Charm",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "7"
+                ],
+                "negateSub": false,
+                "patronGod": [
+                  "nurgle"
+                ],
+                "negatePatronGod": false
+              }
+            },
+            {
+              "id": "eyesOfChaos-sub8-intimidate",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "intimidate",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Взор Гнева (субмутация 8, khorne): +10 Intimidate",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "8"
+                ],
+                "negateSub": false,
+                "patronGod": [
+                  "khorne"
+                ],
+                "negatePatronGod": false
+              }
+            },
+            {
+              "id": "eyesOfChaos-sub9-scrutiny",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "scrutiny",
+              "modValueMode": "flat",
+              "value": 10,
+              "label": "Взор Обмана (субмутация 9, tzeentch): +10 Scrutiny",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "9"
+                ],
+                "negateSub": false,
+                "patronGod": [
+                  "tzeentch"
+                ],
+                "negatePatronGod": false
+              }
+            },
+            {
+              "id": "eyesOfChaos-sub10-sight",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.kYwoc0XZcFa0aUfF",
+              "sourceName": "Sight Beyond Barriers / Взор сквозь Преграды (X)",
+              "sourceHasRating": true,
+              "rating": "P.b",
+              "label": "Взор сквозь Преграды (субмутация 10): видит сквозь преграды на P.b м",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "10"
+                ],
+                "negateSub": false
+              }
             }
           ]
         }

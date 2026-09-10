@@ -27,10 +27,30 @@ SCOPED_AGENTS = {
         r"^gh\s+pr\s+view(\s|$)",
         r"^gh\s+pr\s+list(\s|$)",
     ],
+    # 10.09.2026 (wdbc-51si): .claude/agents/book-proofreader.md переписан
+    # 08.09.2026 (после закрытия wdbc-bus 01.09.2026) под протокол «замер
+    # book-pdf-diff.py/book-coverage.py/book-holes.py → правка → npx vitest
+    # → bd comment/close», но аллоулист остался старым — агент физически не
+    # мог выполнить свой же документированный регламент (воспроизведено
+    # вживую тремя независимыми сессиями 10.09.2026). Добавлены ровно те
+    # команды, что book-proofreader.md называет обязательными шагами — все
+    # читают/собирают/тестируют либо только пишут в трекер по своей же
+    # находке, ни одна не пишет в код мимо Edit/Write. pdf-text.py
+    # вызывается как `python`, не `node` — старый паттерн никогда не
+    # совпадал, тоже исправлено.
     "book-proofreader": COMMON_ALLOW + [
         r"^python3?\s+.*pdfshot\.py(\s|$)",
-        r"^node\s+.*pdf-text\.py(\s|$)",
+        r"^python3?\s+.*pdf-text\.py(\s|$)",
+        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+.*book-pdf-diff\.py(\s|$)",
+        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+.*book-coverage\.py(\s|$)",
+        r"^(?:[A-Z_][A-Z0-9_]*=\S+\s+)*python3?\s+.*book-holes\.py(\s|$)",
+        r"^npx\s+vitest\s+run(\s|$)",
+        r"^npm\s+test(\s|$)",
+        r"^npm\s+run\s+lint(\s|$)",
         r"^bd\s+create\s+-t\s+bug(\s|$)",
+        r"^bd\s+comment(\s|$)",
+        r"^bd\s+close(\s|$)",
+        r"^bd\s+update(\s|$)",
     ],
 }
 

@@ -18,7 +18,7 @@
     "rof_full": 5,
     "damage": "1d10+2",
     "damageType": "rending",
-    "penetration": 4,
+    "penetration": 2,
     "quality": "common",
     "availability": 0,
     "weight": 0,
@@ -28,8 +28,11 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
+        "key": "reliable"
+      },
+      {
         "key": "toxic",
-        "rating": 4
+        "rating": 2
       }
     ],
     "needsRecharge": false,

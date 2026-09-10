@@ -352,6 +352,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `apps/surgeon.mjs` (Хирургикон) + `surgeon-plan.mjs` (парная имплантация).
 - `rules/cybernetic-excellence.mjs` + `apps/cybernetic-excellence.mjs`
   (синхронизация Трейта «Многорукий» с покупками Таланта).
+- `apps/implant-bestq-choice.mjs` (wdbc-ukpu, 10.09.2026) — диалог выбора
+  бонусного эффекта Best.Q-биоимплантов Друкхари при смене Качества на
+  Высшее: `system.bestQualityEffects` (варианты из книги, `tools/bestq-
+  implant-options.mjs`) → выбор пишется в `system.chosenEffects`, каждый
+  доп. эффект (включая повтор) поднимает `system.availability` на 1.
+  Хуки в `warhammer-dbc.mjs` (`createItem`/`updateItem`), кнопка на листе —
+  страховка на случай отменённого диалога.
 - `migrations/gene-seed-cleanup.mjs` — чистка снятой системы Органов Геносемени.
 
 ## 17. Миньоны, Орды, Отряды, Формирования, Командование

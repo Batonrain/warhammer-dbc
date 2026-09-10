@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "monofilament",
-    "range": 70,
+    "range": 140,
     "balance": 0,
     "reload": "2",
     "magazineCur": 5,
@@ -23,14 +23,10 @@
     "availability": 2,
     "weight": 0,
     "attackBonus": 0,
-    "special": "Провал Monofilament → +1 к свойству. Смертельный урон → паралич 12−T.b ч.",
+    "special": "Своб. действие: Spray → Arcing + Blast(2), физ. избегание −10. Провал Monofilament → +1 к свойству. Смертельный урон → паралич 12−T.b ч.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
-      {
-        "key": "blast",
-        "rating": 2
-      },
       {
         "key": "eldarRazorSharp"
       },

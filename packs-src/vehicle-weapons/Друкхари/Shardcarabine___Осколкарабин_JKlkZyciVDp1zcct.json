@@ -1,26 +1,26 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Shardcarabine / Осколкарабин",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
   "system": {
     "description": "",
     "notes": "",
-    "weaponClass": "heavy",
+    "weaponClass": "basic",
     "weaponType": "splinter",
-    "range": 200,
+    "range": 120,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "½",
+    "magazineCur": 150,
+    "magazineMax": 150,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
+    "rof_semi": 4,
+    "rof_full": 6,
     "damage": "1d10+2",
     "damageType": "rending",
     "penetration": 2,
     "quality": "common",
-    "availability": 0,
+    "availability": 1,
     "weight": 0,
     "attackBonus": 0,
     "special": "",
@@ -28,14 +28,18 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
+        "key": "carbine"
+      },
+      {
         "key": "reliable"
+      },
+      {
+        "key": "storm",
+        "rating": 2
       },
       {
         "key": "toxic",
         "rating": 2
-      },
-      {
-        "key": "twinLinked"
       }
     ],
     "needsRecharge": false,
@@ -66,7 +70,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "JKlkZyciVDp1zcct",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +79,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "74686f8f-03af-4e39-8cf4-9c9dcd782cd5",
+      "label": "Shardcarabine / Осколкарабин",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -105,9 +109,9 @@
         "video": {
           "dbSection": "range",
           "menuType": "weapon",
-          "animation": "dagger",
+          "animation": "missile",
           "variant": "01",
-          "color": "white",
+          "color": "blue",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +311,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!JKlkZyciVDp1zcct"
 }

@@ -5,6 +5,11 @@
 // мутации Multiple Eyes/Множественные Глаза заведены Механикой самого
 // предмета — тот же приём when.submutations, что у Tentacle/Щупальце
 // и Strange Tongue/Странный Язык.
+//
+// wdbc-5inv (10.09.2026): субмутация 1 (Псевдонавигатор) добавлена честной
+// capability-заглушкой без читателя — навигация корабля через Варп не
+// смоделирована в системе (играется мастером), тот же паттерн, что Rootbound
+// у Extra Arm-7.
 
 import { describe, it, expect } from "vitest";
 import { parseSubmutations } from "../../module/rules/submutations.mjs";
@@ -17,8 +22,9 @@ const mechEntries = multipleEyes.flags["warhammer-dbc"].mechanics.flatMap(g => g
 const withSub = mechEntries.filter(e => (e.when?.submutations ?? []).length);
 
 describe("Multiple Eyes/Множественные Глаза: Механика субмутаций 2, 3 и 5 — данные согласованы", () => {
-  it("в таблице СУБМУТАЦИИ реально есть строки 2, 3 и 5", () => {
+  it("в таблице СУБМУТАЦИИ реально есть строки 1, 2, 3 и 5", () => {
     const labels = submutations.entries.map(e => e.label);
+    expect(labels).toContain("1");
     expect(labels).toContain("2");
     expect(labels).toContain("3");
     expect(labels).toContain("5");
@@ -30,8 +36,14 @@ describe("Multiple Eyes/Множественные Глаза: Механика 
     expect(offenders).toEqual([]);
   });
 
-  it("нашлись ровно 4 записи Механики, гейтованные субмутацией (2: testMod; 3: talent; 5: 2×testMod)", () => {
-    expect(withSub).toHaveLength(4);
+  it("нашлись ровно 5 записей Механики, гейтованные субмутацией (1: capability; 2: testMod; 3: talent; 5: 2×testMod)", () => {
+    expect(withSub).toHaveLength(5);
+  });
+
+  it("1 (Псевдонавигатор) — честная capability-заглушка без читателя", () => {
+    const e = withSub.find(x => x.when.submutations.includes("1"));
+    expect(e.kind).toBe("capability");
+    expect(e.capabilityKey).toBe("mutation.multipleEyes.pseudoNavigator");
   });
 
   it("2 (Фасетчатые Глаза) даёт +20 Awareness", () => {

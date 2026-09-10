@@ -190,6 +190,20 @@
                 ],
                 "negateSub": false
               }
+            },
+            {
+              "id": "multipleEyes-sub1-pseudonavigator",
+              "kind": "capability",
+              "capabilityKey": "mutation.multipleEyes.pseudoNavigator",
+              "label": "Псевдонавигатор (субмутация 1): пилотирование корабля через Варп при Navigate (Warp) — навигация Варпа не смоделирована в системе, играется мастером",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "1"
+                ],
+                "negateSub": false
+              }
             }
           ]
         }

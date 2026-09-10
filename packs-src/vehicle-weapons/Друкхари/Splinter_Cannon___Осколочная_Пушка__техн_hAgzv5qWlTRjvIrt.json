@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "splinter",
-    "range": 100,
+    "range": 300,
     "balance": 0,
     "reload": "½",
     "magazineCur": 120,
@@ -16,9 +16,9 @@
     "rof_single": 1,
     "rof_semi": 3,
     "rof_full": 5,
-    "damage": "1d10+3",
+    "damage": "1d10+4",
     "damageType": "rending",
-    "penetration": 4,
+    "penetration": 2,
     "quality": "common",
     "availability": 2,
     "weight": 0,
@@ -33,10 +33,10 @@
       },
       {
         "key": "toxic",
-        "rating": 4
+        "rating": 2
       },
       {
-        "key": "veryReliable"
+        "key": "reliable"
       }
     ],
     "needsRecharge": false,

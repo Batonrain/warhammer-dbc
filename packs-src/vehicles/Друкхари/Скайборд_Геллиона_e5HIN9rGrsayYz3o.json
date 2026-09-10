@@ -8,9 +8,9 @@
     "vehicleType": "skimmer",
     "origin": "",
     "commander": "",
-    "manoeuvrability": 50,
+    "manoeuvrability": 60,
     "operate": 0,
-    "size": 0,
+    "size": 1,
     "chassis": {
       "type": "skimmer",
       "spd": 36,
@@ -20,13 +20,13 @@
       "unnaturalS": 0
     },
     "armour": {
-      "front": 12,
-      "side": 12,
+      "front": 10,
+      "side": 10,
       "rear": 10
     },
     "structure": {
-      "value": 10,
-      "max": 10,
+      "value": 15,
+      "max": 15,
       "critical": 0
     },
     "ammoReloads": 10,
@@ -42,7 +42,7 @@
       }
     ],
     "damageStates": [],
-    "notes": "<p><b>Друкхари.</b> Гравидоска банд Геллионов — лёгкая, дешёвая, стремительная (SPD 36, Ман +50). <b>Крючковые Цепи</b> удерживают пилота. Крылья бьют при Налёте/Таране.</p>",
+    "notes": "<p><b>Друкхари.</b> Гравидоска банд Геллионов — лёгкая, дешёвая, стремительная (SPD 36, Ман +60). <b>Крючковые Цепи</b> удерживают пилота. Крылья бьют при Налёте/Таране.</p>",
     "gmNotes": "",
     "availability": -2
   },
@@ -60,7 +60,7 @@
         "corEffects": [],
         "weaponClass": "heavy",
         "weaponType": "splinter",
-        "range": 200,
+        "range": 150,
         "balance": 0,
         "grips": "",
         "profileLabel": "",
@@ -71,11 +71,11 @@
         "rof_single": 1,
         "rof_semi": 3,
         "rof_full": 5,
-        "damage": "1d10+4",
+        "damage": "1d10+2",
         "damageType": "rending",
-        "penetration": 4,
+        "penetration": 2,
         "quality": "common",
-        "availability": -2,
+        "availability": -1,
         "weight": 0,
         "attackBonus": 0,
         "special": "",
@@ -83,11 +83,17 @@
         "loadedAmmoId": "",
         "weaponProps": [
           {
-            "key": "twinLinked"
+            "key": "hefty"
+          },
+          {
+            "key": "reliable"
           },
           {
             "key": "toxic",
-            "rating": 4
+            "rating": 2
+          },
+          {
+            "key": "twinLinked"
           }
         ],
         "needsRecharge": false,

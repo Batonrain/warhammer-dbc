@@ -1,15 +1,17 @@
 {
-  "name": "Life Sustainer Aetheric System (Cruisers+) / СЖО Эйфорическая система (Крейсеры+)",
+  "name": "Collegia Nobilite / Коллегиа Нобилите",
   "type": "component",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
-  "folder": "UvIRsfMZaRX3tfdH",
+  "folder": "WCbxb3KwJ4Yu1hww",
   "system": {
-    "kind": "lifeSustainer",
-    "power": 5,
+    "kind": "occulum",
+    "power": 3,
     "space": 3,
-    "sp": 1,
-    "rarity": 1,
+    "sp": 4,
+    "rarity": 2,
     "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
     "hulls": "Лёгкие крейсеры, Крейсеры, Линейные крейсеры, Гранд-крейсеры, Линкоры",
     "aspects": "Особое",
     "description": "",
@@ -17,6 +19,7 @@
     "essential": true,
     "external": false,
     "damaged": false,
+    "status": "intact",
     "lcBonus": 0,
     "pcBonus": 0,
     "modChar": "",
@@ -46,12 +49,12 @@
       "arc": ""
     }
   },
-  "_id": "3YYkgLtVnX5ea22x",
+  "_id": "jL26K54Vr4enXbQp",
   "effects": [],
   "sort": 0,
   "ownership": {
     "default": 0,
-    "ezwAfZRyYM6SLFHL": 3
+    "TcTwVVgsrGiUR4X7": 3
   },
   "flags": {},
   "_stats": {
@@ -61,9 +64,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1782040606538,
-    "modifiedTime": 1782752981064,
+    "createdTime": 1787488664143,
+    "modifiedTime": 1787488664143,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!3YYkgLtVnX5ea22x"
+  "_key": "!items!jL26K54Vr4enXbQp"
 }

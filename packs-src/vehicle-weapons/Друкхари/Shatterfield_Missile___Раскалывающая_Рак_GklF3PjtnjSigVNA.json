@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Shatterfield Missile / Раскалывающая Ракета",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,35 +7,33 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
-    "range": 200,
+    "weaponType": "launcher",
+    "range": 600,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "5",
+    "magazineCur": 1,
+    "magazineMax": 1,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+11",
+    "damageType": "impact",
+    "penetration": 5,
     "quality": "common",
-    "availability": 0,
+    "availability": 4,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Все цели в Blast: T−30 или заморозка на Провалы раундов (Беспомощны, T.b не действует против I/I(Cr), AP×½ окр.▼) — затем урон ракеты.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
+        "key": "blast",
+        "rating": 7
       },
       {
-        "key": "toxic",
+        "key": "proven",
         "rating": 2
-      },
-      {
-        "key": "twinLinked"
       }
     ],
     "needsRecharge": false,
@@ -66,7 +64,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "GklF3PjtnjSigVNA",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +73,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "38d18d47-6db8-4914-a026-d8a2e6ab5993",
+      "label": "Shatterfield Missile / Раскалывающая Ракета",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +102,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +305,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!GklF3PjtnjSigVNA"
 }
