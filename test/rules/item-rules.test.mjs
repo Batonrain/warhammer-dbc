@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { rulesFromItemMechanics } from "../../module/rules/item-rules.mjs";
+import { rollModsFromRules } from "../../module/rules/resolve-test.mjs";
 import { packDocByFileHint } from "../support/pack-doc.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -303,5 +304,64 @@ describe("rulesFromItemMechanics: гейт по Геносемени (entry.when
     const w = { negate: true, conditions: [{ legion: "VII" }, { legion: "X", chapter: "stardragons" }, { legion: "XIX" }] };
     expect(rulesFromItemMechanics([item("И", [gated(w)])], () => true, stardragon)).toEqual([]);
     expect(rulesFromItemMechanics([item("И", [gated(w)])], () => true, ironlord)).toHaveLength(1);
+  });
+});
+
+// wdbc-7khe: «Тонкая работа» — +20 на тесты Trade, требующие точности
+// (Странные Руки, субмутация 9 «Костлявые Руки»). Книжное условие «требующие
+// точности» решает игрок за столом, не код (список специализаций Ремесла,
+// которые считать «точными», пришлось бы поддерживать и спорить о каждой) —
+// поэтому величина всегда едет обычной testMod-записью, гейтованной
+// when.submutations на строку 9, а «применить здесь или нет» решает игрок
+// галочкой ОБЫЧНОГО модификатора правила в диалоге (rules/roll-mods.mjs::
+// ruleRollModsHtml, actor-sheet.mjs::_ruleRollModsHtml) — тем же путём, что
+// «ополовинить штраф» Особенностей Происхождения: система не решает молча,
+// применим бонус или нет, галочка всегда предлагается, снимается вручную.
+// Отдельного гейта/чекбокса «Тонкая работа» в коде заводить не пришлось:
+// modScope:"skill" + skillKey:"trade" уже матчится ТОЛЬКО с ctx.group==="trade"
+// (effectAppliesTo, resolve-test.mjs — тот же приём, что и у Cartograph/Forgery
+// Kit, wdbc-5dyh, resolve-test.test.mjs) — чекбокс появляется в диалоге только
+// на бросках именно группы Ремесло, и только у актора, чья Мутация сейчас
+// несёт нужную субмутацию (entryWhenOk, mech-when.mjs).
+describe("rulesFromItemMechanics + rollModsFromRules: «Тонкая работа» — testMod гейтованный when.submutations (wdbc-7khe)", () => {
+  const fineWorkTradeMod = (subs) => ({
+    id: "bonyHandsFineWork", kind: "testMod", modScope: "skill", skillKey: "trade",
+    modValueMode: "flat", value: 20, label: "Тонкая работа (Костлявые Руки)",
+    when: { submutations: subs }
+  });
+  const bonyHands = (submutationLabel) => ({
+    id: "strangeHands", name: "Странные Руки",
+    system: { submutation: { label: submutationLabel } },
+    flags: { [SYSTEM]: { mechanics: [{ id: "g1", operator: "AND", entries: [fineWorkTradeMod(["9"])] }] } }
+  });
+
+  it("субмутация 9 (Костлявые Руки) выпала — запись даёт правило testMod +20 на skill:trade", () => {
+    const rules = rulesFromItemMechanics([bonyHands("9")]);
+    expect(rules).toHaveLength(1);
+    expect(rules[0].effects[0]).toEqual({ kind: "rollBonus", target: "skill:trade", value: 20 });
+  });
+
+  it("выпала другая субмутация — записи нет вовсе, откуда бы бонусу ни взяться", () => {
+    expect(rulesFromItemMechanics([bonyHands("2-3")])).toEqual([]);
+  });
+
+  it("субмутация ещё не выбрана — записи нет (та же логика, что у прочих субмутаций мутации)", () => {
+    expect(rulesFromItemMechanics([bonyHands("")])).toEqual([]);
+  });
+
+  it("бонус — опциональная галочка (не auto): требует, чтобы игрок отметил чекбокс на этом броске", () => {
+    const rules = rulesFromItemMechanics([bonyHands("9")]);
+    const mods = rollModsFromRules(rules, { group: "trade", specialty: "Armourer" });
+    expect(mods).toEqual([{ ruleId: "item.Странные Руки.bonyHandsFineWork",
+      label: "Тонкая работа (Костлявые Руки)", value: 20, halvePenalty: false }]);
+    // auto:true — список ситуативных штрафов тела/снаряжения, эта запись туда
+    // не едет: игрок решает сам, применим ли бонус здесь, как и «ополовинить штраф».
+    expect(rollModsFromRules(rules, { group: "trade", specialty: "Armourer" }, { auto: true })).toEqual([]);
+  });
+
+  it("чекбокс — только для Ремесла: другой групповой Навык (или голый skill) бонус не видит", () => {
+    const rules = rulesFromItemMechanics([bonyHands("9")]);
+    expect(rollModsFromRules(rules, { group: "navigation", specialty: "Surface" })).toEqual([]);
+    expect(rollModsFromRules(rules, { skill: "commerce" })).toEqual([]);
   });
 });
