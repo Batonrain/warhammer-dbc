@@ -16,6 +16,7 @@ import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
+import { performWalkerParry, performWalkerDodge, standUpFromTipOver } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
@@ -482,6 +483,41 @@ export function registerHooks() {
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         await _performSwerve(actor, extraMod, hitsCount, attackerUuid);
+      });
+    });
+
+    // Парирование и Уклонение ШАГОХОДА (wdbc-6wzt, п.5 книжного правила
+    // Ходовой): в отличие от Виража считает не машина, а пилот — но выбирается
+    // на сцене всё равно токен МАШИНЫ, она и защищается. Кто именно бросает,
+    // находит combat/walker.mjs по местам экипажа. dataset снимается ДО await
+    // по той же причине, что у Уклонения выше.
+    html.querySelectorAll(".wh-walker-parry-btn, .wh-walker-dodge-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const isParry = el.classList.contains("wh-walker-parry-btn");
+        const ds = { ...el.dataset };
+        const actor = requireControlledActor("⚠️ Выберите токен Шагохода на сцене!");
+        if (!actor) return;
+        const opts = {
+          extraMod: parseInt(ds.extraMod || "0"),
+          hitsCount: parseInt(ds.hitsCount || "1"),
+          attackerUuid: ds.attackerUuid || ""
+        };
+        await (isParry ? performWalkerParry(actor, opts) : performWalkerDodge(actor, opts));
+      });
+    });
+
+    // «Встать» после Опрокидывания — кнопка приклеена к карточке самого
+    // Опрокидывания, поэтому машина берётся по uuid из карточки, а не с
+    // выбранного токена (тот же приём, что у Контратаки и Отскока).
+    html.querySelectorAll(".wh-walker-standup-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.vehicleUuid;
+        const vehicle = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!vehicle) return ui.notifications.warn("⚠️ Машина карточки не найдена.");
+        await standUpFromTipOver(vehicle);
       });
     });
 
