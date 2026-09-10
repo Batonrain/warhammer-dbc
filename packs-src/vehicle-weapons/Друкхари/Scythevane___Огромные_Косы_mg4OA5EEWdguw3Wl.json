@@ -18,17 +18,25 @@
     "rof_full": 0,
     "damage": "3d10+10",
     "damageType": "rending",
-    "penetration": 9,
+    "penetration": 14,
     "quality": "common",
     "availability": 3,
     "weight": 0,
     "attackBonus": 0,
-    "special": "Досягаемость 0–3. За каждые 5 м Налёта +4 Dmg/+3 Pen; после 15 м — Melta против техники.",
+    "special": "Досягаемость 0–3. Заменяет профиль Тарана (получает его бонусы). За каждые 5 м Тарана +1 Dmg/+2 Pen. Непоглощённый урон вызывает Кровотечение.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
+        "key": "extreme",
+        "rating": 9
+      },
+      {
         "key": "powerField"
+      },
+      {
+        "key": "proven",
+        "rating": 5
       },
       {
         "key": "reinforced"

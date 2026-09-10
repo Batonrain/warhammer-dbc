@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Void Lance / Пустотное Копьё",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,20 +7,20 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
-    "range": 200,
+    "weaponType": "darklight",
+    "range": 350,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "2",
+    "magazineCur": 32,
+    "magazineMax": 32,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+25",
+    "damageType": "blast",
+    "penetration": 10,
     "quality": "common",
-    "availability": 0,
+    "availability": 4,
     "weight": 0,
     "attackBonus": 0,
     "special": "",
@@ -28,14 +28,19 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
+        "key": "extreme",
+        "rating": 7
       },
       {
-        "key": "toxic",
-        "rating": 2
+        "key": "felling",
+        "rating": 6
       },
       {
-        "key": "twinLinked"
+        "key": "lance"
+      },
+      {
+        "key": "proven",
+        "rating": 4
       }
     ],
     "needsRecharge": false,
@@ -66,7 +71,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "jCUrj0JlTmvqw4OF",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +80,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "53c4c60d-29be-4019-98b4-3848e73afe64",
+      "label": "Void Lance / Пустотное Копьё",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +109,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +312,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!jCUrj0JlTmvqw4OF"
 }

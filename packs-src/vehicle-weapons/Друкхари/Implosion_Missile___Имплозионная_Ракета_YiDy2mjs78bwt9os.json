@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Implosion Missile / Имплозионная Ракета",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,35 +7,29 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
-    "range": 200,
+    "weaponType": "launcher",
+    "range": 600,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "5",
+    "magazineCur": 1,
+    "magazineMax": 1,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "",
+    "damageType": "impact",
+    "penetration": 0,
     "quality": "common",
-    "availability": 0,
+    "availability": 4,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Все в Blast: тест S−(15×Размер)−(3×AP торса), провал/невозможность сопротивляться → Провалы×3 непоглощаемого I(Cr) в торс/структуру. Уничтоженные этим взрывом — сминаются и распадаются на слои/освежёвываются, без возможности опознания.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
-      },
-      {
-        "key": "toxic",
-        "rating": 2
-      },
-      {
-        "key": "twinLinked"
+        "key": "blast",
+        "rating": 15
       }
     ],
     "needsRecharge": false,
@@ -66,7 +60,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "YiDy2mjs78bwt9os",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +69,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "5434eef9-afb7-4b1d-8435-6810d3bea7ad",
+      "label": "Implosion Missile / Имплозионная Ракета",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +98,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +301,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!YiDy2mjs78bwt9os"
 }

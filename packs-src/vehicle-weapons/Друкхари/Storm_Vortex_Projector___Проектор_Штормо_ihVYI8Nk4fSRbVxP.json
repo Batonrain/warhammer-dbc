@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Storm Vortex Projector / Проектор Штормовой Вихрь",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,35 +7,40 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
-    "range": 200,
+    "weaponType": "plasma",
+    "range": 300,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
-    "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 5,
+    "rof_full": 8,
+    "damage": "2d10+9",
+    "damageType": "energy",
+    "penetration": 8,
     "quality": "common",
-    "availability": 0,
+    "availability": 3,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Профиль «Высвобождение Энергии» (базовые цифры). Профиль «Выстрел Лучом» вместо него: 300м, S/3/–, 5d10+10 E, Pen16, ∞, Felling(8), Haywire(0,4d5), Lance, Proven(4), Shocking (нет Blast). Тесты Shocking против Проектора получают −30. После «Высвобождения Энергии» пилот может держать шаблон Linger(X) с его характеристиками — пока не снимет все шаблоны, другие профили Проектора недоступны. Может выводить технику из строя на 1 час вместо уничтожения (кроме Одержимых/Демонических оболочек) — для взятия пленных или спасения падающего судна.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
+        "key": "blast",
+        "rating": 8
       },
       {
-        "key": "toxic",
-        "rating": 2
+        "key": "haywire",
+        "rating": 8
       },
       {
-        "key": "twinLinked"
+        "key": "proven",
+        "rating": 4
+      },
+      {
+        "key": "shocking"
       }
     ],
     "needsRecharge": false,
@@ -66,7 +71,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "ihVYI8Nk4fSRbVxP",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +80,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "aab26c21-9715-4b61-938c-ae04c9e7faf1",
+      "label": "Storm Vortex Projector / Проектор Штормовой Вихрь",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +109,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +312,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!ihVYI8Nk4fSRbVxP"
 }
