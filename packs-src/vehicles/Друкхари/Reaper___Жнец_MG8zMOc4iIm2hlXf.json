@@ -1,18 +1,18 @@
 {
-  "name": "Адский Клинок",
+  "name": "Reaper / Жнец",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/art/doombc-machines/adskiy-klinok.webp",
-  "folder": "jZY32SR34Yij7h3k",
+  "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+  "folder": "jFXbvWNfuKBhDMkk",
   "system": {
-    "vehicleClass": "Hell Blade",
-    "vehicleType": "aircraft",
+    "vehicleClass": "Reaper",
+    "vehicleType": "skimmer",
     "origin": "",
     "commander": "",
     "manoeuvrability": 30,
     "operate": 0,
-    "size": 1,
+    "size": 3,
     "chassis": {
-      "type": "plane",
+      "type": "skimmer",
       "spd": 30,
       "spdDamage": 0,
       "manoeuvreDamage": 0,
@@ -20,13 +20,13 @@
       "unnaturalS": 0
     },
     "armour": {
-      "front": 20,
-      "side": 20,
-      "rear": 20
+      "front": 28,
+      "side": 28,
+      "rear": 24
     },
     "structure": {
-      "value": 20,
-      "max": 20,
+      "value": 35,
+      "max": 35,
       "critical": 0
     },
     "ammoReloads": 10,
@@ -34,63 +34,97 @@
     "traits": "",
     "stations": [
       {
-        "id": "f0XrZEzyREOrnNPl",
+        "id": "r3GkomOfJqA5dY8S",
         "role": "pilot",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "tG9il5nB7ojRJyeV",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "BWyAdeM4YhFwXXpw",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "G887CwVFrqj2IzsY",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "YiK3tTNDGwU5Fcfz",
+        "role": "passenger",
+        "uuid": "",
+        "name": "",
+        "img": ""
+      },
+      {
+        "id": "HCiHcVHRqKOiJ52S",
+        "role": "passenger",
         "uuid": "",
         "name": "",
         "img": ""
       }
     ],
     "damageStates": [],
-    "notes": "<p><b>Хаос — авиация.</b> Знаменитый истребитель Хаоса, убийственно быстр и подвижен. <b>Инфернальное Ядро</b> — не нуждается в топливе/боеприпасах; <b>Пространственный Скачок</b> (варп-телепорт). В ядре — малый демон (оболочка для вселения демона посильнее: +10 BS, +5 A).</p>",
+    "notes": "<p><b>Друкхари.</b> Скоростной боевой скиммер на шасси Опустошителя — вместо трёх башен один тяжёлый Проектор Штормовой Вихрь (профили «Луч» и «Высвобождение Энергии», подробности в special оружия). <b>Мерцающие Поля</b>.</p>",
     "gmNotes": "",
-    "availability": 2
+    "availability": 3
   },
   "items": [
     {
-      "name": "Twin Hellstorm Autocannon / Спаренная Автопушка Адский Шторм",
+      "name": "Storm Vortex Projector / Проектор Штормовой Вихрь",
       "type": "weapon",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "folder": null,
       "system": {
         "description": "",
         "notes": "",
-        "rangeBands": [],
-        "offProfile": {},
-        "gripProps2h": [],
-        "corEffects": [],
         "weaponClass": "heavy",
-        "weaponType": "solid",
+        "weaponType": "plasma",
         "range": 300,
         "balance": 0,
-        "grips": "",
-        "profileLabel": "",
-        "profiles": [],
         "reload": "–",
         "magazineCur": 0,
         "magazineMax": 0,
-        "rof_single": 1,
-        "rof_semi": 3,
-        "rof_full": 0,
-        "damage": "3d10+8",
-        "damageType": "impact",
-        "penetration": 5,
+        "rof_single": 0,
+        "rof_semi": 5,
+        "rof_full": 8,
+        "damage": "2d10+9",
+        "damageType": "energy",
+        "penetration": 8,
         "quality": "common",
-        "availability": 2,
+        "availability": 3,
         "weight": 0,
         "attackBonus": 0,
-        "special": "Боезапас: ∞ (энергия/подача)",
+        "special": "Профиль «Высвобождение Энергии» (базовые цифры). Профиль «Выстрел Лучом» вместо него: 300м, S/3/–, 5d10+10 E, Pen16, ∞, Felling(8), Haywire(0,4d5), Lance, Proven(4), Shocking (нет Blast). Тесты Shocking против Проектора получают −30. После «Высвобождения Энергии» пилот может держать шаблон Linger(X) с его характеристиками — пока не снимет все шаблоны, другие профили Проектора недоступны. Может выводить технику из строя на 1 час вместо уничтожения (кроме Одержимых/Демонических оболочек) — для взятия пленных или спасения падающего судна.",
         "equipped": false,
         "loadedAmmoId": "",
         "weaponProps": [
           {
-            "key": "razorSharp"
+            "key": "blast",
+            "rating": 8
           },
           {
-            "key": "reliable"
+            "key": "haywire",
+            "rating": 8
           },
           {
-            "key": "storm",
-            "rating": 2
+            "key": "proven",
+            "rating": 4
+          },
+          {
+            "key": "shocking"
           }
         ],
         "needsRecharge": false,
@@ -113,122 +147,28 @@
         "vehicleMount": {
           "isMounted": true,
           "operator": "gunner",
-          "stationId": "f0XrZEzyREOrnNPl",
+          "stationId": "r3GkomOfJqA5dY8S",
           "mount": "hull",
           "hArc": "−10°..+10°",
           "vArc": "−10°..+10°",
           "standard": true,
           "reloads": 10,
-          "slotId": "n3nwCOvYx7CcmkWC",
+          "slotId": "rzXVIT0UQXee4R2F",
           "options": [
-            "Twin Hellstorm Autocannon / Спаренная Автопушка Адский Шторм"
+            "Storm Vortex Projector / Проектор Штормовой Вихрь"
           ]
         },
-        "drukhari": false
-      },
-      "_id": "Cax1MbtU5rvmbg6f",
-      "effects": [],
-      "folder": null,
-      "sort": 0,
-      "ownership": {
-        "default": 0
-      },
-      "flags": {},
-      "_stats": {
-        "compendiumSource": null,
-        "duplicateSource": null,
-        "exportSource": null,
-        "coreVersion": "14.365",
-        "systemId": "warhammer-dbc",
-        "systemVersion": "0.1.0",
-        "lastModifiedBy": null,
-        "createdTime": null,
-        "modifiedTime": null
-      },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.Cax1MbtU5rvmbg6f"
-    },
-    {
-      "name": "Twin Hellstorm Autocannon / Спаренная Автопушка Адский Шторм",
-      "type": "weapon",
-      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
-      "system": {
-        "description": "",
-        "notes": "",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
         "corEffects": [],
-        "weaponClass": "heavy",
-        "weaponType": "solid",
-        "range": 300,
-        "balance": 0,
         "grips": "",
         "profileLabel": "",
         "profiles": [],
-        "reload": "–",
-        "magazineCur": 0,
-        "magazineMax": 0,
-        "rof_single": 1,
-        "rof_semi": 3,
-        "rof_full": 0,
-        "damage": "3d10+8",
-        "damageType": "impact",
-        "penetration": 5,
-        "quality": "common",
-        "availability": 2,
-        "weight": 0,
-        "attackBonus": 0,
-        "special": "Боезапас: ∞ (энергия/подача)",
-        "equipped": false,
-        "loadedAmmoId": "",
-        "weaponProps": [
-          {
-            "key": "razorSharp"
-          },
-          {
-            "key": "reliable"
-          },
-          {
-            "key": "storm",
-            "rating": 2
-          }
-        ],
-        "needsRecharge": false,
-        "legacyWeapon": false,
-        "sacred": false,
-        "daemonWeapon": {
-          "bound": false,
-          "god": "",
-          "demonName": "",
-          "binding": 0,
-          "demonWb": 0,
-          "demonInf": 0,
-          "subdued": false,
-          "runic": false,
-          "properties": [],
-          "preProps": [],
-          "preDamage": "",
-          "prePen": 0
-        },
-        "vehicleMount": {
-          "isMounted": true,
-          "operator": "gunner",
-          "stationId": "f0XrZEzyREOrnNPl",
-          "mount": "hull",
-          "hArc": "−10°..+10°",
-          "vArc": "−10°..+10°",
-          "standard": true,
-          "reloads": 10,
-          "slotId": "jbbWKy0lacN8d2kM",
-          "options": [
-            "Twin Hellstorm Autocannon / Спаренная Автопушка Адский Шторм"
-          ]
-        },
         "drukhari": false
       },
-      "_id": "yWpLUrLiny2u2ued",
+      "_id": "XFQnIcSuQK1ET1z2",
       "effects": [],
-      "folder": null,
       "sort": 0,
       "ownership": {
         "default": 0
@@ -245,7 +185,7 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.yWpLUrLiny2u2ued"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.XFQnIcSuQK1ET1z2"
     },
     {
       "name": "Продвинутые Системы Управления / Advanced Controls",
@@ -266,7 +206,7 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -296,7 +236,7 @@
           "advancedControls": true
         }
       },
-      "_id": "fDzyc0gosfdPqNJZ",
+      "_id": "sB9TgyHeuNnA6tqA",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -315,7 +255,7 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.fDzyc0gosfdPqNJZ"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.sB9TgyHeuNnA6tqA"
     },
     {
       "name": "Продвинутые Прицельные Системы / Advanced Targeting",
@@ -336,7 +276,7 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -366,7 +306,7 @@
           "advancedControls": false
         }
       },
-      "_id": "Xgsii8So3nLtIkdb",
+      "_id": "3PsuEh4odOkaYbFV",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -385,16 +325,16 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.Xgsii8So3nLtIkdb"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.3PsuEh4odOkaYbFV"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Саморемонт / Damage Control",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
-        "description": "Экипаж и пассажиры не могут атаковать личным оружием без люка/двери/бойницы, их нельзя атаковать снаружи без особых чувств, и они получают полное укрытие от атак снаружи, равное АР той стороны, с которой их атакуют.",
+        "description": "При Экстремальном Уроне Командир или водитель могут заставить атакующего перебросить кубик Критического Эффекта. Каждый член экипажа может раз в Ход тушить Пожар или Горящих членов экипажа свободным действием.",
         "notes": "",
-        "benefit": "Экипаж защищён от атак снаружи.",
+        "benefit": "Переброс крит. урона, легче тушение.",
         "availability": 0,
         "hasRating": false,
         "rating": 0,
@@ -406,7 +346,66 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "K2Zmn8hBGRN35aKY",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.K2Zmn8hBGRN35aKY"
+    },
+    {
+      "name": "Тормоза Падения / Fall Breaks",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Скиммер с системой экстренного торможения. При Крушении на Низкой высоте водитель может считать это Крушением с Приземной высоты, но сразу после приземления машина получает поломку «Ходовая Часть Повреждена». Не более 1 раза за бой/сцену (длительная перезарядка).",
+        "notes": "",
+        "benefit": "Крушение с Низкой высоты как с Приземной.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -428,19 +427,11 @@
           "sidecarStructure": false,
           "voidShields": false,
           "volatile": false,
-          "fallBreaks": false,
-          "orbitalDeployment": false,
-          "onslaught": false,
-          "multiTargeter": false,
-          "advancedTargeting": false,
-          "advancedControls": false,
-          "sideHatches": false,
-          "assaultRamp": false,
-          "enclosed": true,
-          "sealed": false
+          "fallBreaks": true,
+          "orbitalDeployment": false
         }
       },
-      "_id": "GLqwZNhhSed0vGWM",
+      "_id": "lhPegplrpHtaTLWm",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -459,7 +450,7 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.GLqwZNhhSed0vGWM"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.lhPegplrpHtaTLWm"
     },
     {
       "name": "Быстрая / Fast",
@@ -480,7 +471,7 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 3,
@@ -499,7 +490,7 @@
           "flickerfield": false
         }
       },
-      "_id": "M1nkdDuXa2bs3SKg",
+      "_id": "9cnbqej9rMRVJXdF",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -518,102 +509,28 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.M1nkdDuXa2bs3SKg"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.9cnbqej9rMRVJXdF"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Открытая / Open Topped",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
-        "description": "Запечатана от внешней среды, давление внутри повышено. Экипаж не страдает от газов; при пересечении водоёмов по дну вода не проникает; даже при уроне разница давлений выталкивает ядовитые газы (но не воду) из пробоин. Теряется от Крит. Эффектов, снимающих Enclosed, и временно — при открывании люков/дверей/рамп/бойниц.",
+        "description": "Экипаж и пассажиры могут стрелять из личного оружия, оставаясь в едущей машине. Избирательные атаки могут выцеливать экипаж/пассажиров, атаки по площади задевают их (по настоящему Размеру). Экипаж грузится/выгружается полудействием и совершает Обзор свободным действием. Рейтинг (X): 0 — нет укрытия; ½ — укрытие в торс/ноги; 1 — полное укрытие (кроме Раунда атаки); E — как Enclosed.",
         "notes": "",
-        "benefit": "Защита от газов и жидкостей.",
+        "benefit": "Можно атаковать из машины.",
         "availability": 0,
-        "hasRating": false,
+        "hasRating": true,
         "rating": 0,
         "hasRating2": false,
         "rating2": 0,
         "hasRating3": false,
         "rating3": 0,
         "effects": {
-          "openTopped": false,
+          "openTopped": true,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
-          "noMove": false,
-          "swerveDisabled": false,
-          "fullMoveSpdMult": 0,
-          "smallMoveOnly": false,
-          "ignoreDifficultTerrain": false,
-          "critHalved": false,
-          "trackHitsToHull": false,
-          "siege": false,
-          "reloadRapid": false,
-          "commandBonus": 0,
-          "repairBonus": 0,
-          "deflectorShield": false,
-          "deflectorDaemonic": false,
-          "ignoreCrewCrits": false,
-          "autonomous": false,
-          "flickerfield": false,
-          "amphibious": false,
-          "ceramitePlating": false,
-          "sidecarStructure": false,
-          "voidShields": false,
-          "volatile": false,
-          "fallBreaks": false,
-          "orbitalDeployment": false,
-          "onslaught": false,
-          "multiTargeter": false,
-          "advancedTargeting": false,
-          "advancedControls": false,
-          "sideHatches": false,
-          "assaultRamp": false,
-          "enclosed": false,
-          "sealed": true
-        }
-      },
-      "_id": "VLfX18IhwsdJZybP",
-      "effects": [],
-      "folder": null,
-      "sort": 0,
-      "ownership": {
-        "default": 0
-      },
-      "flags": {},
-      "_stats": {
-        "compendiumSource": null,
-        "duplicateSource": null,
-        "exportSource": null,
-        "coreVersion": "14.365",
-        "systemId": "warhammer-dbc",
-        "systemVersion": "0.1.0",
-        "lastModifiedBy": null,
-        "createdTime": null,
-        "modifiedTime": null
-      },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.VLfX18IhwsdJZybP"
-    },
-    {
-      "name": "Векторные Двигатели / Vector Thrusters",
-      "type": "vehicleTrait",
-      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
-      "system": {
-        "description": "В конце любого Движения машина может за свободное движение повернуться ещё на 90° в любую сторону.",
-        "notes": "",
-        "benefit": "Доп. поворот в конце движения.",
-        "availability": 0,
-        "hasRating": false,
-        "rating": 0,
-        "hasRating2": false,
-        "rating2": 0,
-        "hasRating3": false,
-        "rating3": 0,
-        "effects": {
-          "openTopped": false,
-          "manoeuvreMod": 0,
-          "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -632,7 +549,7 @@
           "flickerfield": false
         }
       },
-      "_id": "E6CVV6yg7PKlMSfq",
+      "_id": "qgQzeK6XOTgAUYEX",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -651,16 +568,16 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.E6CVV6yg7PKlMSfq"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.qgQzeK6XOTgAUYEX"
     },
     {
-      "name": "Космолет / Voidcraft",
+      "name": "Мерцающие Поля / Flickerfield",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
-        "description": "Самолёт способен летать в космосе так же, как в атмосфере.",
+        "description": "Друкхарийское мерцающее поле мешает вести огонь. Любые стрелковые атаки по машине дальше дистанции «в упор» получают −20. Размер машины в расчёте бонусов противника на стрельбу по ней уменьшается на −2, и размер не влияет на её скрытность.",
         "notes": "",
-        "benefit": "Способен к полёту вне атмосферы.",
+        "benefit": "−20 стрелкам издали; Size −2 против неё.",
         "availability": 0,
         "hasRating": false,
         "rating": 0,
@@ -672,7 +589,7 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -688,10 +605,10 @@
           "deflectorDaemonic": false,
           "ignoreCrewCrits": false,
           "autonomous": false,
-          "flickerfield": false
+          "flickerfield": true
         }
       },
-      "_id": "0dVpeeoo7AdXFgd4",
+      "_id": "KWCoe1j4TY2gLN7X",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -710,77 +627,18 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.0dVpeeoo7AdXFgd4"
-    },
-    {
-      "name": "Вертикальный Взлёт / VTOL",
-      "type": "vehicleTrait",
-      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
-      "system": {
-        "description": "Самолёт способен зависать на месте: не обязан совершать минимальное движение в Ход, может двигаться на Приземной высоте как Скиммер, приземляться без полосы и опускаться на Приземную высоту за полудействие.",
-        "notes": "",
-        "benefit": "Может зависать как Скиммер.",
-        "availability": 0,
-        "hasRating": false,
-        "rating": 0,
-        "hasRating2": false,
-        "rating2": 0,
-        "hasRating3": false,
-        "rating3": 0,
-        "effects": {
-          "openTopped": false,
-          "manoeuvreMod": 0,
-          "spdMod": 0,
-          "spdDamageReduce": 0,
-          "noMove": false,
-          "swerveDisabled": false,
-          "fullMoveSpdMult": 0,
-          "smallMoveOnly": false,
-          "ignoreDifficultTerrain": false,
-          "critHalved": false,
-          "trackHitsToHull": false,
-          "siege": false,
-          "reloadRapid": false,
-          "commandBonus": 0,
-          "repairBonus": 0,
-          "deflectorShield": false,
-          "deflectorDaemonic": false,
-          "ignoreCrewCrits": false,
-          "autonomous": false,
-          "flickerfield": false
-        }
-      },
-      "_id": "5ssTZicA3zAgfXmY",
-      "effects": [],
-      "folder": null,
-      "sort": 0,
-      "ownership": {
-        "default": 0
-      },
-      "flags": {},
-      "_stats": {
-        "compendiumSource": null,
-        "duplicateSource": null,
-        "exportSource": null,
-        "coreVersion": "14.365",
-        "systemId": "warhammer-dbc",
-        "systemVersion": "0.1.0",
-        "lastModifiedBy": null,
-        "createdTime": null,
-        "modifiedTime": null
-      },
-      "_key": "!actors.items!xKinNDrpcgEOOQJj.5ssTZicA3zAgfXmY"
+      "_key": "!actors.items!MG8zMOc4iIm2hlXf.KWCoe1j4TY2gLN7X"
     }
   ],
-  "_id": "xKinNDrpcgEOOQJj",
+  "_id": "MG8zMOc4iIm2hlXf",
   "prototypeToken": {
-    "name": "Адский Клинок",
+    "name": "Жнец",
     "displayName": 30,
     "actorLink": false,
     "width": 1,
     "height": 1,
     "texture": {
-      "src": "systems/warhammer-dbc/assets/art/doombc-machines/adskiy-klinok.webp",
+      "src": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
@@ -879,9 +737,9 @@
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1783869241261,
-    "modifiedTime": 1783869241261,
+    "createdTime": 1783871637359,
+    "modifiedTime": 1783871637359,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!actors!xKinNDrpcgEOOQJj"
+  "_key": "!actors!MG8zMOc4iIm2hlXf"
 }
