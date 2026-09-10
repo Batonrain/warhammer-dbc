@@ -4,7 +4,7 @@ import { HIT_LOCATIONS }  from "../constants/combat.mjs";
 import { DAMAGE_TYPES }   from "../constants/items.mjs";
 import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
-import { parseCritEffectPills, critPillsHtml } from "./crit-effect-parser.mjs";
+import { parseCritEffectPills, critPillsHtml, deathButtonHtml } from "./crit-effect-parser.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
@@ -668,12 +668,16 @@ export async function applyDamageToActor(actor, damageData) {
 
   // wdbc-xql6: типовые фразы крит-строки («Оглушена на NdX Раундов» и т.п.)
   // распознаются в кликабельные пилюли — актор цели уже известен здесь.
+  // wdbc-1rno (09.09.2026): рядом — кнопка «Констатировать смерть», когда
+  // сама книжная строка прямо утверждает смерть цели (не через
+  // CONDITIONS_DEF — deathButtonHtml читает flags.warhammer-dbc.deceased).
   const critPills = critEffect ? parseCritEffectPills(critEffect) : [];
   const critLine = gotCritical ? `
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
       ${critPillsHtml(critPills, actor.uuid)}
+      ${critEffect ? deathButtonHtml(critEffect, actor.uuid) : ""}
     </div>` : "";
 
   // Пометка — щит не сработал (для информации в сообщении)

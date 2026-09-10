@@ -15,7 +15,7 @@ import { rollD100WithReroll }                      from "../rules/test-kind-widg
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { autoTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
-import { parseCritEffectPills, critPillsHtml }     from "./crit-effect-parser.mjs";
+import { parseCritEffectPills, critPillsHtml, deathButtonHtml } from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
 
@@ -98,7 +98,8 @@ export async function _executeFearRoll(actor, ratingKey, type, infamy, mod, prop
       shockHtml = `<div class="roll-damage-section">
         <div class="roll-damage-label">Шок (${sRoll.total}${dof > 1 ? ` +${10 * (dof - 1)}` : ""}${infamy ? ` −${infamy}` : ""} = ${total}):</div>
         <div class="roll-threshold">${row?.text ?? "—"}</div>
-        ${critPillsHtml(shockPills, actor.uuid)}</div>`;
+        ${critPillsHtml(shockPills, actor.uuid)}
+        ${row?.text ? deathButtonHtml(row.text, actor.uuid) : ""}</div>`;
       // Персистентное состояние «в Шоке» (стр. 53) — снимается тестом
       // выхода из Шока в начале Хода (rollShockRecovery ниже).
       await actor.update(conditionApplyFields("shocked", null, actor));
