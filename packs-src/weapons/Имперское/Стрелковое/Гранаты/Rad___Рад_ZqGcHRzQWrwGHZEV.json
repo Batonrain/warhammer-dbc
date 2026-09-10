@@ -1,36 +1,40 @@
 {
-  "name": "Пика",
+  "name": "Rad / Рад",
   "type": "weapon",
-  "folder": "s14rS6kOxu0zhVPg",
+  "folder": "CiKyTXQv7N6C3J3A",
   "system": {
     "description": "",
     "notes": "",
-    "weaponClass": "melee",
-    "weaponType": "lowtech",
-    "range": 8,
-    "balance": -2,
-    "grips": "2р",
-    "profileLabel": "Копьё",
+    "weaponClass": "thrown",
+    "weaponType": "grenade",
+    "range": 0,
+    "balance": 0,
+    "grips": "1р",
+    "profileLabel": "",
     "profiles": [],
     "reload": "–",
-    "magazineCur": 0,
-    "magazineMax": 0,
+    "magazineCur": 1,
+    "magazineMax": 1,
     "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d10+2",
-    "damageType": "rending",
+    "damage": "1d5+4",
+    "damageType": "impact",
     "penetration": 0,
     "quality": "common",
-    "availability": -3,
-    "weight": 3.2,
+    "availability": 2,
+    "weight": 0.5,
     "attackBonus": 0,
-    "special": "Копьё; Хват 2р; Досягаемость 8",
+    "special": "Rad: 2d10. Версия Легиона: 1d5+6 X(Fr), Blast (4), Rad (2d10+2), Legion (R 3). Метание: Rng S.b×3 м, RoF S/–/–; вместо перезарядки — экипировка другой гранаты из инвентаря. При S.b 8+: либо считать S.b до 7 в расчёте Rng, либо бросать 1d5 — на «1» граната ломается от чрезмерной силы и не детонирует.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "primitive"
+        "key": "blast",
+        "rating": 3
+      },
+      {
+        "key": "rad"
       }
     ],
     "needsRecharge": false,
@@ -59,11 +63,10 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    },
-    "meleeCategory": "Копьё"
+    }
   },
-  "_id": "k7q4GZkUkK5o8Cfe",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
+  "_id": "ZqGcHRzQWrwGHZEV",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -71,12 +74,9 @@
     "Bh2eMXBlRSXAdCgx": 3
   },
   "flags": {
-    "warhammer-dbc": {
-      "gripsAuto": true
-    },
     "autoanimations": {
-      "id": "76d75684-b643-4fb4-9784-6a803c762930",
-      "label": "Пика",
+      "id": "79fa325d-88ee-4bc3-94df-a300803b81cb",
+      "label": "Рад",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -100,14 +100,14 @@
         "enable": false,
         "playWhen": "0"
       },
-      "menu": "melee",
+      "menu": "range",
       "primary": {
         "video": {
-          "dbSection": "melee",
+          "dbSection": "range",
           "menuType": "weapon",
-          "animation": "arrow",
-          "variant": "regular",
-          "color": "random",
+          "animation": "bomb",
+          "variant": "01",
+          "color": "black",
           "enableCustom": false,
           "customPath": ""
         },
@@ -304,8 +304,8 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1784645463257,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!k7q4GZkUkK5o8Cfe"
+  "_key": "!items!ZqGcHRzQWrwGHZEV"
 }

@@ -1,49 +1,45 @@
 {
-  "name": "Болт Винтовка Сорокопут",
+  "name": "Combi Grav / Комби-Грав",
   "type": "weapon",
-  "folder": "TQQsWi6Gc81MFTKy",
+  "folder": "cHwiIsG6VZt9ZiIR",
   "system": {
     "description": "",
     "notes": "",
-    "rangeBands": [],
-    "offProfile": {},
-    "gripProps2h": [],
-    "corEffects": [],
     "weaponClass": "basic",
-    "weaponType": "bolt",
-    "range": 250,
+    "weaponType": "grav",
+    "range": 80,
     "balance": 0,
     "grips": "2р",
     "profileLabel": "",
     "profiles": [],
-    "reload": "1",
-    "magazineCur": 24,
-    "magazineMax": 24,
+    "reload": "10",
+    "magazineCur": 1,
+    "magazineMax": 1,
     "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "2d10+6",
-    "damageType": "blast",
-    "penetration": 6,
+    "damage": "",
+    "damageType": "impact",
+    "penetration": 15,
     "quality": "common",
-    "availability": 4,
-    "weight": 17,
+    "availability": 3,
+    "weight": 6,
     "attackBonus": 0,
-    "special": "Моды: Scope, Silencer. Legion: P",
+    "special": "",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "accurate"
+        "key": "combi"
+      },
+      {
+        "key": "grav"
+      },
+      {
+        "key": "imprecise"
       },
       {
         "key": "legion"
-      },
-      {
-        "key": "precise"
-      },
-      {
-        "key": "tearing"
       }
     ],
     "needsRecharge": false,
@@ -72,10 +68,9 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    },
-    "drukhari": false
+    }
   },
-  "_id": "mGhCc3rqfWaoWlOR",
+  "_id": "2uyVW4nvIFKST0o4",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
   "effects": [],
   "sort": 0,
@@ -85,8 +80,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "90a938c5-e21a-4230-add6-b954fd2de028",
-      "label": "Болт Винтовка Сорокопут",
+      "id": "9e92edd5-cc18-478b-9ef1-714808e34e58",
+      "label": "Комби-Грав",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -114,10 +109,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "bolt",
-          "variant": "physical",
-          "color": "orange",
+          "menuType": "generic",
+          "animation": "energystrand",
+          "variant": "01",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -310,12 +305,12 @@
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "14.365",
+    "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1786352733938,
-    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+    "modifiedTime": 1784645463257,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!mGhCc3rqfWaoWlOR"
+  "_key": "!items!2uyVW4nvIFKST0o4"
 }

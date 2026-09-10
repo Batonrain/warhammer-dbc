@@ -1,42 +1,34 @@
 {
-  "name": "Адский Клинок",
+  "name": "Heavy Stubber / Тяжёлый Стаббер",
   "type": "weapon",
-  "folder": "j8OSYXyeON53Ort1",
+  "folder": "k26nnNHjR0DQDnhj",
   "system": {
-    "description": "",
+    "description": "<p>– Пилот Кентавра не может стрелять из орудия машины в тот же Ход, когда он водит. Когда он стреляет из него, пилот считает машину Open Topped (½). Один из пассажиров может использовать это орудие сам.</p>",
     "notes": "",
-    "weaponClass": "melee",
-    "weaponType": "exotic",
-    "range": 5,
-    "balance": 2,
-    "grips": "2р (1р, Бл, Мх)",
-    "profileLabel": "Меч",
+    "weaponClass": "heavy",
+    "weaponType": "solid",
+    "range": 120,
+    "balance": 0,
+    "grips": "2р",
+    "profileLabel": "",
     "profiles": [],
-    "reload": "–",
-    "magazineCur": 0,
-    "magazineMax": 0,
-    "rof_single": 0,
+    "reload": "2",
+    "magazineCur": 200,
+    "magazineMax": 200,
+    "rof_single": 1,
     "rof_semi": 0,
-    "rof_full": 0,
-    "damage": "1d10+3",
-    "damageType": "rending",
-    "penetration": 10,
+    "rof_full": 10,
+    "damage": "1d10+8",
+    "damageType": "impact",
+    "penetration": 3,
     "quality": "common",
-    "availability": 4,
-    "weight": 0,
+    "availability": 1,
+    "weight": 35,
     "attackBonus": 0,
-    "special": "Меч; Хват 2р [1р, Бл, Мх]; Досягаемость 2–5",
+    "special": "",
     "equipped": false,
     "loadedAmmoId": "",
-    "weaponProps": [
-      {
-        "key": "extreme",
-        "rating": 8
-      },
-      {
-        "key": "powerField"
-      }
-    ],
+    "weaponProps": [],
     "needsRecharge": false,
     "legacyWeapon": false,
     "sacred": false,
@@ -64,10 +56,10 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Меч"
+    "rangeBands": []
   },
-  "_id": "SzNKtbEl5GyXiZBa",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
+  "_id": "3xh2TDQQ048MLPXL",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,12 +67,9 @@
     "Bh2eMXBlRSXAdCgx": 3
   },
   "flags": {
-    "warhammer-dbc": {
-      "gripsAuto": true
-    },
     "autoanimations": {
-      "id": "913b505e-cbcc-488d-8462-dcd7c2817018",
-      "label": "Адский Клинок",
+      "id": "bb4ded39-c630-4307-830f-f52ebbee3343",
+      "label": "Тяжёлый Стаббер",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,14 +93,14 @@
         "enable": false,
         "playWhen": "0"
       },
-      "menu": "melee",
+      "menu": "range",
       "primary": {
         "video": {
-          "dbSection": "melee",
+          "dbSection": "range",
           "menuType": "weapon",
-          "animation": "sword",
-          "variant": "01",
-          "color": "white",
+          "animation": "bullet",
+          "variant": "1",
+          "color": "orange",
           "enableCustom": false,
           "customPath": ""
         },
@@ -308,8 +297,8 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784646561800,
+    "modifiedTime": 1785247480399,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!SzNKtbEl5GyXiZBa"
+  "_key": "!items!3xh2TDQQ048MLPXL"
 }

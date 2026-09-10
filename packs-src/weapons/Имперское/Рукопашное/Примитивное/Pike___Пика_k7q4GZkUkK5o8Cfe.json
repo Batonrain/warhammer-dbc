@@ -1,16 +1,16 @@
 {
-  "name": "Ограждающий Посох",
+  "name": "Pike / Пика",
   "type": "weapon",
-  "folder": "vCSlPFBhpeAbFSas",
+  "folder": "s14rS6kOxu0zhVPg",
   "system": {
     "description": "",
     "notes": "",
     "weaponClass": "melee",
-    "weaponType": "psychic",
-    "range": 4,
-    "balance": 1,
-    "grips": "2р (1р)",
-    "profileLabel": "Посох",
+    "weaponType": "lowtech",
+    "range": 8,
+    "balance": -2,
+    "grips": "2р",
+    "profileLabel": "Копьё",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
@@ -18,22 +18,19 @@
     "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d10+1",
-    "damageType": "impact",
+    "damage": "1d10+2",
+    "damageType": "rending",
     "penetration": 0,
     "quality": "common",
-    "availability": 5,
-    "weight": 1,
+    "availability": -3,
+    "weight": 3.2,
     "attackBonus": 0,
-    "special": "Посох; Хват 2р [1р]; Досягаемость 2–4. Является психофокусом.",
+    "special": "Копьё; Хват 2р; Досягаемость 8",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "force"
-      },
-      {
-        "key": "imprecise"
+        "key": "primitive"
       }
     ],
     "needsRecharge": false,
@@ -63,10 +60,10 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Посох"
+    "meleeCategory": "Копьё"
   },
-  "_id": "3Yy0hWXGpFMWE9Td",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",
+  "_id": "k7q4GZkUkK5o8Cfe",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -78,8 +75,8 @@
       "gripsAuto": true
     },
     "autoanimations": {
-      "id": "7f38f44a-50fc-468a-b0bf-5b32c73cfb71",
-      "label": "Ограждающий Посох",
+      "id": "76d75684-b643-4fb4-9784-6a803c762930",
+      "label": "Пика",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -108,9 +105,9 @@
         "video": {
           "dbSection": "melee",
           "menuType": "weapon",
-          "animation": "lasersword",
-          "variant": "01",
-          "color": "blue",
+          "animation": "arrow",
+          "variant": "regular",
+          "color": "random",
           "enableCustom": false,
           "customPath": ""
         },
@@ -310,5 +307,5 @@
     "modifiedTime": 1784646561800,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!3Yy0hWXGpFMWE9Td"
+  "_key": "!items!k7q4GZkUkK5o8Cfe"
 }
