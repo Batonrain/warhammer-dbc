@@ -79,6 +79,16 @@ export async function _performSwerve(actor, extraMod = 0, hitsCount = 1, attacke
 // ─── Тест Трудного Ландшафта ──────────────────────────────────────────────────
 // Operate+0 со штрафом ландшафта (+ мод манёвра). Провалы → непоглощаемый урон в
 // Ходовую; 5+ Провалов или Крит.Провал → машина останавливается.
+//
+// Шагоход (wdbc-6wzt, Книга Машин: «Трудный Ландшафт замедляет Шагоходы как
+// пехоту, но не повреждает») — исключение из общего правила выше: замедление
+// (двойная стоимость хода) уже считает движок канваса безусловно для ЛЮБОГО
+// токена в зоне (region-behavior "difficulty:2", regions/difficult-terrain.mjs)
+// — отдельного расчёта не требует. А вот «не повреждает» код до этого тикета
+// нарушал: Провал наносил урон Ходовой той же формулой, что колёсной/гусеничной
+// технике. Ниже — только эта одна поправка (пропуск урона), тест и диалог
+// остаются те же (Operate пилота), другого готового теста для Шагохода в
+// правиле не указано.
 export async function showTerrainDialog(actor) {
   if (actor.type !== "vehicle") return;
   const operate = Number(actor.system.operate) || 0;
@@ -112,8 +122,10 @@ export async function showTerrainDialog(actor) {
         <div class="atk-dlg-row"><label>Доп. мод:</label><input id="tr-mod" type="number" value="0"/></div>
         ${amphRow}
         <div class="atk-range-info" style="font-size:0.82em;">
-          Провал → Провалы непоглощаемого урона в Ходовую. 5+ Провалов / Крит.Провал → остановка.
-          Если суммарный штраф ≥ 0 — проезд безопасен без теста${der.walker ? " (Шагоход не замедляется)" : ""}.
+          ${der.walker
+            ? "Провал → машина спотыкается (5+ Провалов / Крит.Провал → остановка); Шагоход движется как пехота и Ходовую при этом НЕ повреждает."
+            : "Провал → Провалы непоглощаемого урона в Ходовую. 5+ Провалов / Крит.Провал → остановка."}
+          Если суммарный штраф ≥ 0 — проезд безопасен без теста.
         </div>
       </form>`,
     buttons: {
@@ -124,7 +136,7 @@ export async function showTerrainDialog(actor) {
           const man = parseInt(html.find("#tr-man").val()) || 0;
           const md  = parseInt(html.find("#tr-mod").val()) || 0;
           const amph = amphibious && html.find("#tr-amph").is(":checked");
-          await _resolveTerrain(actor, op, ter, man, md, amph);
+          await _resolveTerrain(actor, op, ter, man, md, amph, der.walker);
         } },
       cancel: { label: "Отмена" }
     },
@@ -132,7 +144,7 @@ export async function showTerrainDialog(actor) {
   }, { classes: ["dialog", "wh-attack-dialog"], width: 420 }).render(true);
 }
 
-async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amphibiousWater = false) {
+async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amphibiousWater = false, isWalker = false) {
   // Амфибия по воде: неглубокая вода не считается Трудным Ландшафтом вовсе.
   if (amphibiousWater) {
     return postTestCard(actor, {
@@ -163,6 +175,14 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
   let body;
   if (passed) {
     body = `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Ходовая не повреждена.</span></div>`;
+  } else if (isWalker) {
+    // Шагоход (wdbc-6wzt): движется как пехота — Провал не наносит урон
+    // Ходовой вовсе (в отличие от колёсной/гусеничной ниже), только сбивает
+    // темп движения.
+    body = `
+      <div class="roll-outcome"><span class="roll-failure">Провал — ${dop} ${_degWord(dop)}${critFail ? " (Крит.Провал!)" : ""}. Шагоход спотыкается.</span></div>
+      <div class="roll-allout-note">Ходовая не повреждена — Шагоход движется как пехота, урон от Трудного Ландшафта на него не распространяется.</div>
+      ${stopped ? `<div class="roll-allout-note">Машина останавливается, зайдя наполовину в область Трудного Ландшафта.</div>` : ""}`;
   } else {
     body = `
       <div class="roll-outcome"><span class="roll-failure">Провал — ${dop} ${_degWord(dop)}${critFail ? " (Крит.Провал!)" : ""}.</span></div>
