@@ -45,6 +45,11 @@
     {{/unless}}
     {{#if isYnnari}}
       <div class="header-cell fate-cell"> <label title="Максимум = W.b × 3 (авторасчёт)">Мёртвое Могущество</label> <div class="fate-values"> <input type="number" name="system.deadMight.value" value="{{system.deadMight.value}}" min="0" max="{{system.deadMight.max}}"/> <span>/</span> <input type="number" value="{{system.deadMight.max}}" readonly title="W.b × 3"/> </div> </div> {{/if}}
+    {{!-- Руны Сигиллитов (wdbc-fsl9): ячейка видна только носителю Черты
+          «Магия Сигиллитов» — признак приходит возможностью из реестра
+          (character-context.mjs), а не сравнением расы. --}}
+    {{#if hasSigilliteRunes}}
+      <div class="header-cell fate-cell"> <label title="Максимум = 20 + «Библиотека Рун» (I.b + ступени Forbidden Lore (Archeotech)), до 3 взятий">Руны</label> <div class="fate-values"> <input type="number" name="system.sigilliteRunes.value" value="{{system.sigilliteRunes.value}}" min="0" max="{{system.sigilliteRunes.max}}"/> <span>/</span> <input type="number" value="{{system.sigilliteRunes.max}}" readonly title="Авторасчёт: 20 + Библиотека Рун"/> </div> </div> {{/if}}
     </div>
   </div> </div> </header>
 {{!-- «Мастер»/«В Орду» жили здесь и в window.controls дублем — оба варианта

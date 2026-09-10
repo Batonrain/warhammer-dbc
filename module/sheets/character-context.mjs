@@ -18,6 +18,7 @@ import { aptBindingContext }                    from "../rules/aptitude-binding.
 import { charAdvanceCat, advanceCatSource }     from "../rules/advance-category.mjs";
 
 import { fateTerm }                              from "../helpers/utils.mjs";
+import { hasRuneMagic }                          from "../rules/sigillite-runes.mjs";
 import { raceEntries, raceDef, subracesOf,
          isAeldariRace, raceGroupList,
          subraceEntries }                        from "../apps/race-library.mjs";
@@ -361,6 +362,11 @@ export function characterContext(actor) {
                   img: "icons/svg/oak.svg", applied: false } : null);
   context.isAeldari = isAeldariRace(system.race);
   context.isYnnari  = system.race === "ynnari";
+  // Руны Сигиллитов (wdbc-fsl9) — ячейка в шапке рядом с Судьбой/Мёртвым
+  // Могуществом, и по тому же принципу: показываем ТОЛЬКО носителю. Признак
+  // не расовый (Элитный Архетип доступен любой расе), а возможность из
+  // реестра — тот же приём, что hasRuleFlag вместо system.race === "…".
+  context.hasSigilliteRunes = hasRuneMagic(actor);
   // Фактор Прибыли (Вольный Торговец): бонус = ФП ÷ 10 (как у характеристик)
   context.profitFactorBonus = Math.floor((Number(system.aspirations?.profitFactor) || 0) / 10);
   // Иннари: выбор «Прошлого» (бывшей расы) и её бонусы + Черты Иннари.

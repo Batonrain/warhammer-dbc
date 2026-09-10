@@ -74,6 +74,8 @@ import { processConditionTurnStart, processConditionTurnEnd } from "./combat/con
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
+import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart }
+  from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
 import { showHerdSpiritsAllocationDialog } from "./apps/herd-spirits-summon.mjs";
@@ -1904,6 +1906,11 @@ function _attachFateContextMenu(message, html) {
     // разделяемое состояние боя (тот же принцип, что и у остальных
     // updateCombat/combatStart обработчиков выше).
     if (game.user.isGM) await processLastActorCombatStart(combat);
+    // Руны Сигиллитов (wdbc-fsl9): «В начале боя персонаж стартует с бPR
+    // рун» — установка пула, не прибавка. Пишет разделяемое состояние, значит
+    // только ГМ, как и соседи по этому хуку. У актора без Черты «Магия
+    // Сигиллитов» функция молча выходит.
+    if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -1970,6 +1977,10 @@ function _attachFateContextMenu(message, html) {
       await processConditionTurnStart(nextCombatant.actor);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
+      // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
+      // тактом, что и регенерация Аблативных Ран выше.
+      await processSigilliteRunesTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.
