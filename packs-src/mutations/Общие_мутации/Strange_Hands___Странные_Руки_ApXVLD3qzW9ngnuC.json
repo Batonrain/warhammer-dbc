@@ -121,6 +121,27 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "strangeHands-sub10-ghostArms",
+              "kind": "trait",
+              "sourceUuid": "Compendium.warhammer-dbc.traits.Item.b2B8zxbhoK961wEf",
+              "sourceName": "Multiple Arms / Многорукий (X)",
+              "sourceHasRating": true,
+              "rating": 2,
+              "label": "Призрачные Руки (субмутация 10, tzeentch): +2 к рейтингу Multiple Arms сверх базового +2 (итог +4)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "10"
+                ],
+                "negateSub": false,
+                "patronGod": [
+                  "tzeentch"
+                ],
+                "negatePatronGod": false
+              }
             }
           ]
         }

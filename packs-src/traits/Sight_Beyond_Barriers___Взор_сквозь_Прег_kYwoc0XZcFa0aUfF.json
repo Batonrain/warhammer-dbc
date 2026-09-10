@@ -1,0 +1,53 @@
+{
+  "name": "Sight Beyond Barriers / Взор сквозь Преграды (X)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "system": {
+    "description": "Варп-зрение мутации «Eyes of Chaos / Глаза Хаоса» (субмутация 10) снимает свой обычный запрет видеть сквозь преграды на дальность X м.",
+    "notes": "Рейтинг X = P.b (бонус Perception) — выдаётся с формулой в поле «Рейтинг» записи Конструктора (mech-formula.mjs), не фиксированным числом: пересчитывается заново при каждом применении Механики от текущего Per персонажа.",
+    "benefit": "Видит сквозь преграды обычному зрению на дальность до X м.",
+    "source": "Мутация: Eyes of Chaos (Общие мутации), субмутация 10",
+    "hasRating": true,
+    "rating": 10,
+    "hasRating2": false,
+    "rating2": 0,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "charValueBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "initMod": 0,
+      "speedMod": 0
+    },
+    "requirement": "",
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Мутации», стр. 440-452)"
+  },
+  "_id": "kYwoc0XZcFa0aUfF",
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786400000000,
+    "modifiedTime": 1786400000000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!kYwoc0XZcFa0aUfF"
+}
