@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality } from "../../module/rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../../module/rules/mech-when.mjs";
 
 const actorWithItems = (items = [], geneSeed = {}) => ({
   system: { geneSeed, bio: { age: 0 } },
@@ -334,5 +334,66 @@ describe("entryWhenOk: Качество предмета (wdbc-9k2q)", () => {
   it("whenQuality: пустой список без quality", () => {
     expect(whenQuality({})).toEqual([]);
     expect(whenQuality({ quality: ["good", ""] })).toEqual(["good"]);
+  });
+});
+
+// ── Десятый гейт: «Когда выбранный эффект Best.Q» (wdbc-jo51) ─────────────
+// Гейт смотрит на САМ ПРЕДМЕТ (item.system.chosenEffects — мультимножество
+// уже взятых Best.Q-вариантов, apps/implant-bestq-choice.mjs), а не на
+// актора — как у Качества/субмутации выше.
+const implantWithChoices = (labels = []) =>
+  ({ type: "implant", system: { chosenEffects: labels.map(label => ({ label, note: "" })) } });
+
+describe("entryWhenOk: выбранный эффект Best.Q (wdbc-jo51)", () => {
+  const spikesOrArmour = { when: { chosenEffect: ["Костяные шипы", "Электрическая броня"] } };
+
+  it("выбранный эффект из списка — true (Ribcage Carapace: «Костяные шипы» взят)", () => {
+    expect(entryWhenOk(null, spikesOrArmour, implantWithChoices(["Костяные шипы"]))).toBe(true);
+  });
+
+  it("взят другой вариант того же импланта — false", () => {
+    expect(entryWhenOk(null, spikesOrArmour, implantWithChoices(["Самовосстановление"]))).toBe(false);
+  });
+
+  it("Best.Q, но выбор ещё не сделан (chosenEffects пуст) — false, без спецкейса под negate", () => {
+    expect(entryWhenOk(null, spikesOrArmour, implantWithChoices([]))).toBe(false);
+    expect(entryWhenOk(null, { when: { chosenEffect: ["X"], negateChosenEffect: true } },
+                       implantWithChoices([]))).toBe(true);
+  });
+
+  it("Common/Good.Q копия — chosenEffects так и остаётся пуст, гейт не пропускает", () => {
+    const commonImplant = { type: "implant", system: { quality: "common", chosenEffects: [] } };
+    expect(entryWhenOk(null, spikesOrArmour, commonImplant)).toBe(false);
+  });
+
+  it("повторный выбор того же варианта (мультимножество) — всё ещё true", () => {
+    expect(entryWhenOk(null, spikesOrArmour, implantWithChoices(["Костяные шипы", "Костяные шипы"]))).toBe(true);
+  });
+
+  it("нет предмета (предпросмотр вне владельца) — условие пройдено", () => {
+    expect(entryWhenOk(actorWithItems(), spikesOrArmour)).toBe(true);
+    expect(entryWhenOk(null, spikesOrArmour)).toBe(true);
+  });
+
+  it("negateChosenEffect переворачивает смысл", () => {
+    const entry = { when: { chosenEffect: ["Костяные шипы"], negateChosenEffect: true } };
+    expect(entryWhenOk(null, entry, implantWithChoices(["Костяные шипы"]))).toBe(false);
+    expect(entryWhenOk(null, entry, implantWithChoices(["Самовосстановление"]))).toBe(true);
+  });
+
+  it("складывается с Качеством через И (as-написано у Реберного Панциря/Электродуги)", () => {
+    const entry = { when: { quality: ["best"], chosenEffect: ["Костяные шипы"] } };
+    const bestWithSpikes = { type: "implant", system: { quality: "best", chosenEffects: [{ label: "Костяные шипы" }] } };
+    const bestWithOther  = { type: "implant", system: { quality: "best", chosenEffects: [{ label: "Живые полости" }] } };
+    const downgraded     = { type: "implant", system: { quality: "common", chosenEffects: [{ label: "Костяные шипы" }] } };
+    expect(entryWhenOk(null, entry, bestWithSpikes)).toBe(true);
+    expect(entryWhenOk(null, entry, bestWithOther)).toBe(false);
+    // Качество вручную понижено после выбора (chosenEffects не чистится) — гейт всё равно гасит запись.
+    expect(entryWhenOk(null, entry, downgraded)).toBe(false);
+  });
+
+  it("whenChosenEffect: пустой список без chosenEffect", () => {
+    expect(whenChosenEffect({})).toEqual([]);
+    expect(whenChosenEffect({ chosenEffect: ["X", ""] })).toEqual(["X"]);
   });
 });

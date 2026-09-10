@@ -7,6 +7,7 @@
 
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { esc } from "../helpers/utils.mjs";
 
 /**
  * Иммунитет к свойству оружия (wdbc-plsf): capability
@@ -297,8 +298,15 @@ export function buildPropertyChatBlock(props) {
  * потребитель на 04.09.2026: Гиперрост (module/rules/hyper-growth.mjs)
  * отличает свой тик яда от чужого Toxic именно по имени боеприпаса в
  * hooks.mjs::_applyWeaponPropEffect.
+ *
+ * forceActor (wdbc-z5mn) — цель эффекта уже известна на 100% (Встречная
+ * атака, module/combat/counter-attack.mjs: «целью» Shocking становится
+ * атакующий, не защищающийся) — тот же приём, что data-force-target у кнопки
+ * урона (hooks.mjs, wh-apply-dmg-btn): кнопка несёт data-wp-force-actor-uuid,
+ * и _applyWeaponPropEffect резолвит актора по uuid вместо requireControlledActor,
+ * не спрашивая игрока выцелить токен на сцене заново.
  */
-export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false, ammoName = "" } = {}) {
+export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, hadUnsoaked = false, ammoName = "", forceActor = null } = {}) {
   if (!hit) return "";
   const btns = [];
 
@@ -351,7 +359,8 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
         `data-wp-min-dop="${te.conditionMinDoP ?? 1}"`,
         `data-wp-vehicle-flat="${te.vehicleFlatDamage ? 1 : 0}"`,
         `data-wp-armor-pen="${te.armorPenDamage ? 1 : 0}"`,
-        `data-wp-ammo-name="${ammoName}"`
+        `data-wp-ammo-name="${ammoName}"`,
+        `data-wp-force-actor-uuid="${forceActor?.uuid ?? ""}"`
       ].join(" ");
 
       const testStr = te.testChar
@@ -366,9 +375,10 @@ export function buildTargetEffectButtons(props, { hit, netDamageKnown = false, h
   }
 
   if (!btns.length) return "";
+  const hint = forceActor ? `→ ${esc(forceActor.name ?? "")}` : "— выберите токен цели";
   return `
     <div class="roll-wprop-effects">
-      <div class="roll-section-head">Эффекты свойств <span class="roll-head-hint">— выберите токен цели</span></div>
+      <div class="roll-section-head">Эффекты свойств <span class="roll-head-hint">${hint}</span></div>
       ${btns.join("")}
     </div>`;
 }

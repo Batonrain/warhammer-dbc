@@ -225,7 +225,7 @@
 //      (flags.warhammer-dbc.cohesionApplied={squadUuid,amount} на предмете).
 //      Откат при УДАЛЕНИИ предмета — отдельно, в Hooks.on("deleteItem",...),
 //      т.к. предмета уже не будет к моменту, когда reconcile мог бы его найти.
-//    counterAttack: { ccDamage, ccPen, ccDamageType, ccTearing,
+//    counterAttack: { ccDamage, ccPen, ccDamageType, ccTearing, ccShocking,
 //                      ccOnMiss, ccOnUnarmedOrGrapple, ccLabel }
 //      → ВСТРЕЧНАЯ АТАКА (wdbc-2wy7, Шипы/Цепные Бандольеры, стр. брони): пока
 //      предмет на акторе и активен (armorMod — установлен и, если включаемый,
@@ -242,9 +242,15 @@
 //      урона оружия, module/helpers/utils.mjs::resolveCharFormula), ccTearing —
 //      свойство Рвущее через тот же движок, что у обычного оружия (module/
 //      combat/weapon-properties.mjs::applyDamageDiceMods) — заново формулу и
-//      Рвущее не пишем. ccOnMiss/ccOnUnarmedOrGrapple — независимые галочки:
-//      можно оставить любую одну или обе разом (та же гибкость вкл/выкл, что
-//      у остальных живых записей).
+//      Рвущее не пишем. ccShocking (wdbc-z5mn, Electric Arc/Электродуга —
+//      «Электрическая броня») — свойство Шокирующее: та же запись
+//      WEAPON_PROPERTIES.shocking (module/constants/weapon-properties.mjs —
+//      тест T+0, иначе Оглушение на 1 раунд), что у обычного оружия, не копия
+//      правила; кнопка эффекта бьёт по known-атакующему тем же приёмом, что
+//      кнопка урона (forceActor у buildTargetEffectButtons, module/combat/
+//      weapon-properties.mjs — см. counter-attack.mjs). ccOnMiss/
+//      ccOnUnarmedOrGrapple — независимые галочки: можно оставить любую одну
+//      или обе разом (та же гибкость вкл/выкл, что у остальных живых записей).
 //      НЕ покрывает: провал/победа в самих тестах раздела «Борьба» (Заломить/
 //      Пересилить/Вырваться/Выкрутиться/Перехватить Контроль, module/combat/
 //      grapple.mjs — ALL_TESTS) — те идут через встречный module/combat/
@@ -307,7 +313,7 @@ import { applyConditionWithDuration } from "../combat/condition-effects.mjs";
 import { DURATION_UNITS, durationLabel, conditionEntryTerm, conditionHasLevelInput }
   from "../rules/condition-duration.mjs";
 import { buildLegionOptions, buildChapterOptions, getLegion, getChapter } from "../constants/legions.mjs";
-import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality } from "../rules/mech-when.mjs";
+import { entryWhenOk, whenConditions, whenSubmutations, whenTalentSpec, whenWoundTier, whenPatronGod, whenCondition, whenQuality, whenChosenEffect } from "../rules/mech-when.mjs";
 import { TIER_LABELS as WOUND_TIER_LABELS } from "../rules/wound-tier.mjs";
 import { parseSubmutations } from "../rules/submutations.mjs";
 import { mechFormulaTotal, mechFormulaTotalSafe, mechRollData } from "../rules/mech-formula.mjs";
@@ -756,7 +762,7 @@ export function blankMechEntry(kind = "characteristic") {
     // момент атаки против владельца (module/combat/counter-attack.mjs), при
     // получении предмета ничего не делает. ccDamage — формула урона (кубы +
     // S.b/T.b/…, тот же парсер, что у оружия — см. CC_DAMAGE_HINT).
-    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccTearing: false,
+    ccDamage: "1d5", ccPen: 0, ccDamageType: "rending", ccTearing: false, ccShocking: false,
     ccOnMiss: true, ccOnUnarmedOrGrapple: true, ccLabel: "",
     // reroll — «Переброс»: живой запрос, читается в момент броска
     // (module/rules/item-rules.mjs), при получении предмета ничего не делает.
@@ -938,8 +944,9 @@ export function describeMechEntry(entry) {
       if (entry.ccOnUnarmedOrGrapple) triggers.push("безоружная атака/Захват против владельца");
       const dt = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType;
       const tear = entry.ccTearing ? ", Рвущее" : "";
+      const shock = entry.ccShocking ? ", Шокирующее" : "";
       const label = entry.ccLabel ? `«${entry.ccLabel}» ` : "";
-      return `Встречная атака: ${label}${entry.ccDamage} ${dt}, Проб. ${entry.ccPen ?? 0}${tear} — ${
+      return `Встречная атака: ${label}${entry.ccDamage} ${dt}, Проб. ${entry.ccPen ?? 0}${tear}${shock} — ${
         triggers.length ? triggers.join(" / ") : "(триггер не выбран)"}`;
     }
     case "capability": {
@@ -1269,6 +1276,10 @@ function describeMechWhen(when, item = null) {
   if (quals.length) {
     const names = quals.map(k => ITEM_QUALITY[k]?.abbr || k);
     parts.push(`Качество ${when?.negateQuality ? "≠" : "="} ${names.join(" или ")}`);
+  }
+  const chosenLabels = whenChosenEffect(when);
+  if (chosenLabels.length) {
+    parts.push(`Выбранный эффект Best.Q ${when?.negateChosenEffect ? "≠" : "="} ${chosenLabels.join(" или ")}`);
   }
   // Связка видна в сводке: «ИЛИ» между условиями меняет смысл записи целиком,
   // и молчать о нём в описании значит показывать не то, что записано.
@@ -2924,6 +2935,7 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       <input type="number" class="mech-cc-pen" min="0" value="${esc(ent.ccPen ?? 0)}"
              title="Пробитие" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-tearing" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccTearing ? "checked" : ""} ${dis}/> Рвущее</label>
+      <label class="mech-cc-check"><input type="checkbox" class="mech-cc-shocking" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccShocking ? "checked" : ""} ${dis}/> Шокирующее (тест T+0, иначе Оглушение на 1 раунд атакующему)</label>
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-miss" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnMiss ? "checked" : ""} ${dis}/> при промахе противника (рукопашная)</label>
       <label class="mech-cc-check"><input type="checkbox" class="mech-cc-on-unarmed" data-group-id="${groupId}" data-entry-id="${ent.id}" ${ent.ccOnUnarmedOrGrapple ? "checked" : ""} ${dis}/> при безоружной атаке/Захвате против владельца</label>
       <input type="text" class="mech-cc-label" placeholder="подпись в карточке (по умолчанию — имя предмета)" value="${esc(ent.ccLabel || "")}"
@@ -3601,6 +3613,30 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <div class="grant-when-qual-list">${qualBoxes}</div>
   </div>`;
 
+  // «Когда выбранный эффект Best.Q» (wdbc-jo51) — десятый независимый гейт:
+  // список подписей ИЗ СОБСТВЕННОГО system.bestQualityEffects предмета
+  // (implant-bestq-choice.mjs, wdbc-ukpu), между вариантами ИЛИ — та же
+  // разметка, что у субмутации выше, но список берётся не из таблицы
+  // мутации, а из bestQualityEffects Био-импланта Друкхари. Рендерится,
+  // только когда у предмета вообще есть такой список (не у любого implant —
+  // только у Best.Q-имплантов с вариантами).
+  const bestQOptions = Array.isArray(item?.system?.bestQualityEffects) ? item.system.bestQualityEffects : [];
+  const chosenHtml = bestQOptions.length ? (() => {
+    const chosen = new Set(w.chosenEffect || []);
+    const boxes = bestQOptions.map(o => `<label class="grant-when-chosen-row">
+      <input type="checkbox" class="grant-when-chosen" ${d} data-chosen-label="${esc(o.label)}" ${chosen.has(o.label) ? "checked" : ""} ${dis}/>
+      <span>${esc(o.label)}</span>
+    </label>`).join("");
+    return `<div class="grant-entry-when grant-entry-when-chosen">
+      <span class="grant-when-label" title="Выбранный игроком бонусный эффект Best.Q (system.chosenEffects) этого же предмета">Когда выбранный эффект Best.Q</span>
+      <label class="grant-when-negate-label">
+        <input type="checkbox" class="grant-when-chosen-negate" ${d} ${w.negateChosenEffect ? "checked" : ""} ${dis}/> не
+      </label>
+      <span>=</span>
+      <div class="grant-when-chosen-list">${boxes}</div>
+    </div>`;
+  })() : "";
+
   return `<div class="grant-entry-when">
     <span class="grant-when-label">Когда Геносемя</span>
     <label class="grant-when-negate-label">
@@ -3609,7 +3645,7 @@ function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
     <span>=</span>
     <div class="grant-when-rows">${rows}</div>
     ${canEdit ? `<button type="button" class="grant-when-row-add" data-action="grantWhenAdd" ${d} title="Добавить ещё вариант (ИЛИ)">➕</button>` : ""}
-  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${anyOfHtml}`;
+  </div>${subHtml}${talentHtml}${tierHtml}${rageHtml}${patronHtml}${sealedArmourHtml}${condHtml}${qualHtml}${chosenHtml}${anyOfHtml}`;
 }
 
 /**

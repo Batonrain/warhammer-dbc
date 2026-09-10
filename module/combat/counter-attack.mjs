@@ -20,6 +20,17 @@
 //  Рвущее — на будущее можно передать ему и provenRating, если у записи
 //  когда-нибудь заведут Проверенное.
 //
+//  Shocking (ccShocking, wdbc-z5mn, Electric Arc/Электродуга — «Электрическая
+//  броня») — свойство Оглушения, буквально та же запись WEAPON_PROPERTIES.shocking
+//  (module/constants/weapon-properties.mjs: тест T+0, иначе Оглушение на 1
+//  раунд), что и у обычного оружия — не копия правила. Разница только в цели:
+//  обычно targetEffect бьёт по цели, выцеленной на сцене (buildTargetEffectButtons,
+//  module/combat/weapon-properties.mjs), а здесь целью становится АТАКУЮЩИЙ —
+//  тот же known-атакующий, что получает кнопку урона выше. forceActor
+//  (buildTargetEffectButtons) и data-wp-force-actor-uuid (hooks.mjs,
+//  _applyWeaponPropEffect) — тот же приём, что data-force-target у кнопки
+//  урона: резолвит актора по uuid, не требуя целиться заново.
+//
 //  НЕ покрывает провал/победу в тестах раздела «Борьба» (Заломить/Пересилить/
 //  Вырваться/Выкрутиться/Перехватить Контроль, module/combat/grapple.mjs —
 //  ALL_TESTS): те симметричный встречный тест через module/combat/
@@ -33,7 +44,7 @@ import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { resolveCharFormula, esc } from "../helpers/utils.mjs";
-import { applyDamageDiceMods } from "./weapon-properties.mjs";
+import { applyDamageDiceMods, resolveWeaponPropsList, buildTargetEffectButtons } from "./weapon-properties.mjs";
 import { DAMAGE_TYPES } from "../constants/items.mjs";
 
 /**
@@ -147,6 +158,17 @@ export async function counterAttackSectionHtml(defenderActor, attackerActor, tri
           <div class="roll-defense-note">Парирование против встречной атаки недоступно (стр. брони).</div>
         </div>
       </div>`);
+
+    // Shocking (ccShocking, wdbc-z5mn) — та же запись WEAPON_PROPERTIES.shocking,
+    // что у обычного оружия (тест T+0, иначе Оглушение на 1 раунд), но целью
+    // становится АТАКУЮЩИЙ, а не выцеленный на сцене токен — forceActor
+    // (buildTargetEffectButtons) кладёт его uuid на кнопку напрямую.
+    if (entry.ccShocking && attackerActor) {
+      sections.push(buildTargetEffectButtons(
+        resolveWeaponPropsList([{ key: "shocking" }]),
+        { hit: true, forceActor: attackerActor }
+      ));
+    }
   }
   return { html: sections.join(""), rolls };
 }
