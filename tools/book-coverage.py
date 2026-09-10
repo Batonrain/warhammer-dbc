@@ -13,6 +13,7 @@
 # ════════════════════════════════════════════════════════════════════════
 import sys, os, re, json, zipfile, io
 from html import unescape
+from collections import Counter
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # 10.09.2026, прямое указание владельца: источником истины всегда считать то,
@@ -184,6 +185,23 @@ def shingles(ws):
     return {tuple(ws[i:i + N]) for i in range(len(ws) - N + 1)}
 
 
+TABLE_NOISE_RATIO = 0.85  # см. wdbc-tdgx
+
+
+def table_order_overlap(hole_ws, tgt_counts):
+    """Доля слов дыры, которые всё же есть где-то в целевом тексте, без учёта
+    порядка. Высокая доля при провале шингла — подозрение на переставленную
+    таблицу (PDF читает многопрофильную ячейку оружия колонка за колонкой,
+    packs-src хранит её строка за строкой), а не на настоящую пропажу: у
+    настоящей пропажи своя лексика (имена, термины), которой в целевом
+    тексте попросту нет вообще, и доля будет низкой."""
+    if not hole_ws:
+        return 0.0
+    c = Counter(hole_ws)
+    matched = sum(min(n, tgt_counts.get(w, 0)) for w, n in c.items())
+    return matched / len(hole_ws)
+
+
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     opts = {a.split("=")[0]: (a.split("=", 1)[1] if "=" in a else True)
@@ -207,9 +225,20 @@ def main():
         book, tgt_text = load_target(slug)
         if opts.get("--corpus") == "all":
             tgt_text = tgt_text + chr(10) + CORPUS[0]
-        tgt = shingles(words(tgt_text))
+        tgt_words_list = words(tgt_text)
+        tgt = shingles(tgt_words_list)
+        # wdbc-tdgx: многопрофильная ячейка оружия (Копьё+Посох в одной строке
+        # таблицы) читается PDF-экстрактором КОЛОНКА ЗА КОЛОНКОЙ, а packs-src
+        # хранит её СТРОКА ЗА СТРОКОЙ — тот же контент, другой порядок слов,
+        # ни один 6-словный шингл не совпадёт. Мультимножество (Counter) слов
+        # не зависит от порядка — если почти все слова "дыры" всё же где-то
+        # есть в целевом тексте, это подозрение на перестановку таблицы, а не
+        # потерю: настоящая пропажа несёт свою лексику (имена, термины),
+        # которой в целевом тексте попросту нет вообще.
+        tgt_counts = Counter(tgt_words_list)
 
         rows, total_src, covered, holes, hole_words = [], 0, 0, [], 0
+        table_noise, table_noise_words = 0, 0
         for label, text in chunks:
             ws = words(text)
             total_src += len(ws)
@@ -230,18 +259,26 @@ def main():
                 while j < len(mark) and not mark[j]:
                     j += 1
                 if j - i >= hole_min:
-                    holes.append((label, j - i, " ".join(ws[i:j])))
-                    hole_words += j - i
+                    hole_ws = ws[i:j]
+                    ratio = table_order_overlap(hole_ws, tgt_counts)
+                    if ratio >= TABLE_NOISE_RATIO:
+                        table_noise += 1
+                        table_noise_words += j - i
+                    else:
+                        holes.append((label, j - i, " ".join(hole_ws), ratio))
+                        hole_words += j - i
                 i = j
         pct = 100.0 * covered / total_src if total_src else 0.0
         tgt_words = len(words(tgt_text))
-        print(f"{slug:<18} {total_src:>9} {tgt_words:>9} {pct:>8.1f}% {len(holes):>5} {hole_words:>12}")
+        noise_note = f"  (+{table_noise} подозрений на порядок таблицы, {table_noise_words} слов)" if table_noise else ""
+        print(f"{slug:<18} {total_src:>9} {tgt_words:>9} {pct:>8.1f}% {len(holes):>5} {hole_words:>12}{noise_note}")
         if dump:
             with open(os.path.join(dump, slug + ".txt"), "w", encoding="utf-8") as f:
                 f.write(f"# {slug} — исходник {path}\n")
-                f.write(f"# покрытие {pct:.1f}%  дыр {len(holes)}  слов в дырах {hole_words}\n\n")
-                for label, n, txt in sorted(holes, key=lambda h: -h[1]):
-                    f.write(f"--- {label}  ({n} слов)\n{txt}\n\n")
+                f.write(f"# покрытие {pct:.1f}%  дыр {len(holes)}  слов в дырах {hole_words}"
+                        f"  подозрений на порядок таблицы {table_noise} ({table_noise_words} слов)\n\n")
+                for label, n, txt, ratio in sorted(holes, key=lambda h: -h[1]):
+                    f.write(f"--- {label}  ({n} слов, перекрытие лексики {ratio:.0%})\n{txt}\n\n")
 
 
 if __name__ == "__main__":
