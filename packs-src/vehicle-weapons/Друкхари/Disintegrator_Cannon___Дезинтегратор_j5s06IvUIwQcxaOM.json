@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "plasma",
-    "range": 150,
+    "range": 500,
     "balance": 0,
     "reload": "5",
     "magazineCur": 60,
@@ -16,23 +16,20 @@
     "rof_single": 0,
     "rof_semi": 5,
     "rof_full": 8,
-    "damage": "1d10+16",
+    "damage": "2d10+16",
     "damageType": "energy",
-    "penetration": 11,
+    "penetration": 12,
     "quality": "common",
-    "availability": 4,
+    "availability": 3,
     "weight": 0,
     "attackBonus": 0,
-    "special": "Погибший испаряется на атомы. В Рейдере/Опустошителе — R1 (интегрировано).",
+    "special": "В Рейдере/Опустошителе — R1 (интегрировано), вне них — Surge(15)+Recharge+Very Unreliable.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
         "key": "blast",
         "rating": 6
-      },
-      {
-        "key": "maximal"
       },
       {
         "key": "reliable"

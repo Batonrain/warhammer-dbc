@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Haywire Blaster / Бластер Помех",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,35 +7,29 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
+    "weaponType": "exotic",
     "range": 200,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "4",
+    "magazineCur": 15,
+    "magazineMax": 15,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
     "quality": "common",
-    "availability": 0,
+    "availability": 3,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Haywire (4, 4d5): при выбросе 9+ техника получает 5d5 непоглощаемого E урона. Следующие 3 раунда при любом действии техники — бросок 1d10, при 5+ ещё 3d5 непоглощаемого E урона и попадание Haywire (3, 3d5).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
-      },
-      {
-        "key": "toxic",
-        "rating": 2
-      },
-      {
-        "key": "twinLinked"
+        "key": "haywire",
+        "rating": 4
       }
     ],
     "needsRecharge": false,
@@ -66,7 +60,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "fEbhRQhNCsfm6eDq",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +69,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "14eead6e-b5ac-4a30-8dac-0ee021bbc7e6",
+      "label": "Haywire Blaster / Бластер Помех",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -105,9 +99,9 @@
         "video": {
           "dbSection": "range",
           "menuType": "weapon",
-          "animation": "dagger",
+          "animation": "missile",
           "variant": "01",
-          "color": "white",
+          "color": "blue",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +301,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!fEbhRQhNCsfm6eDq"
 }

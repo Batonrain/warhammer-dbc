@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Void Mine / Пустотная Мина",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,35 +7,32 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
-    "range": 200,
+    "weaponType": "launcher",
+    "range": 0,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "–",
+    "magazineCur": 4,
+    "magazineMax": 4,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "8d10+25",
+    "damageType": "blast",
+    "penetration": 20,
     "quality": "common",
-    "availability": 0,
+    "availability": 5,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Сбрасывается на точку под самолётом (даже с Высокой высоты), не более 1/Ход. Силовой купол не выпускает наружу (вход — свободен, но неизбегаемое попадание при входе), игнорирует все щиты кроме пустотных. Каждый кубик урона может дать экстрим/крит отдельно. Шаблон держится ~5d10 раундов, не смещается. Реквизиция мины — отдельно, как R4.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
+        "key": "blast",
+        "rating": 10
       },
       {
-        "key": "toxic",
-        "rating": 2
-      },
-      {
-        "key": "twinLinked"
+        "key": "lance"
       }
     ],
     "needsRecharge": false,
@@ -66,7 +63,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "L7AyfS0xM35Lvm8j",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +72,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "3f6d0623-b9a4-4c63-8534-153279c35ad2",
+      "label": "Void Mine / Пустотная Мина",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +101,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +304,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!L7AyfS0xM35Lvm8j"
 }

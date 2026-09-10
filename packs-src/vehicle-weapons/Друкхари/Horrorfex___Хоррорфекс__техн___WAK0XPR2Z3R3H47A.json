@@ -8,11 +8,11 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "launcher",
-    "range": 300,
+    "range": 600,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 1,
-    "magazineMax": 1,
+    "reload": "2",
+    "magazineCur": 12,
+    "magazineMax": 12,
     "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
@@ -20,13 +20,16 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
-    "availability": 4,
+    "availability": 3,
     "weight": 0,
     "attackBonus": 0,
-    "special": "Ускоренные гранаты: +2d10+14 I(Cr), Pen 0, Primitive к взрыву.",
+    "special": "Ускорение гранаты перед взрывом: на Короткой доп. 1d10+12 I(Cr) Pen 0 Primitive, в Упор — 2d10+12 I(Cr) Pen 0 Primitive.",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
+      {
+        "key": "arcing"
+      },
       {
         "key": "imprecise"
       }

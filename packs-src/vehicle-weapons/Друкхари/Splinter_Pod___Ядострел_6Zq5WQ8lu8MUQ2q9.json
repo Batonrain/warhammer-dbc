@@ -8,7 +8,7 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "splinter",
-    "range": 200,
+    "range": 150,
     "balance": 0,
     "reload": "1",
     "magazineCur": 240,
@@ -16,11 +16,11 @@
     "rof_single": 1,
     "rof_semi": 3,
     "rof_full": 5,
-    "damage": "1d10+4",
+    "damage": "1d10+2",
     "damageType": "rending",
-    "penetration": 4,
+    "penetration": 2,
     "quality": "common",
-    "availability": -2,
+    "availability": -1,
     "weight": 0,
     "attackBonus": 0,
     "special": "",
@@ -28,11 +28,17 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "twinLinked"
+        "key": "hefty"
+      },
+      {
+        "key": "reliable"
       },
       {
         "key": "toxic",
-        "rating": 4
+        "rating": 2
+      },
+      {
+        "key": "twinLinked"
       }
     ],
     "needsRecharge": false,

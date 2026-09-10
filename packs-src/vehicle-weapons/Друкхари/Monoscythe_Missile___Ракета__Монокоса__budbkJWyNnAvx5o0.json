@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Monoscythe Missile / Ракета «Монокоса»",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -7,35 +7,33 @@
     "description": "",
     "notes": "",
     "weaponClass": "heavy",
-    "weaponType": "splinter",
-    "range": 200,
+    "weaponType": "launcher",
+    "range": 600,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "5",
+    "magazineCur": 1,
+    "magazineMax": 1,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
-    "damageType": "rending",
-    "penetration": 2,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "2d10+10",
+    "damageType": "energy",
+    "penetration": 7,
     "quality": "common",
-    "availability": 0,
+    "availability": 4,
     "weight": 0,
     "attackBonus": 0,
-    "special": "",
+    "special": "Автоматически попадает в Сочленение шеи (или аналог у техники).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "reliable"
+        "key": "blast",
+        "rating": 5
       },
       {
-        "key": "toxic",
-        "rating": 2
-      },
-      {
-        "key": "twinLinked"
+        "key": "proven",
+        "rating": 4
       }
     ],
     "needsRecharge": false,
@@ -66,7 +64,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "budbkJWyNnAvx5o0",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +73,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "6a0f0375-a937-44ad-bf0f-6033d38e1e5b",
+      "label": "Monoscythe Missile / Ракета «Монокоса»",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +102,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +305,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!budbkJWyNnAvx5o0"
 }

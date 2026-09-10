@@ -1,5 +1,5 @@
 {
-  "name": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+  "name": "Splinterstorm Cannon / Осколкоштормовая Пушка",
   "type": "weapon",
   "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
   "folder": "Hx1CHZdNIMF025Ko",
@@ -8,19 +8,19 @@
     "notes": "",
     "weaponClass": "heavy",
     "weaponType": "splinter",
-    "range": 200,
+    "range": 300,
     "balance": 0,
-    "reload": "1",
-    "magazineCur": 240,
-    "magazineMax": 240,
+    "reload": "½",
+    "magazineCur": 120,
+    "magazineMax": 120,
     "rof_single": 1,
-    "rof_semi": 3,
-    "rof_full": 5,
-    "damage": "1d10+2",
+    "rof_semi": 4,
+    "rof_full": 8,
+    "damage": "1d10+6",
     "damageType": "rending",
-    "penetration": 2,
+    "penetration": 4,
     "quality": "common",
-    "availability": 0,
+    "availability": 3,
     "weight": 0,
     "attackBonus": 0,
     "special": "",
@@ -28,14 +28,15 @@
     "loadedAmmoId": "",
     "weaponProps": [
       {
+        "key": "storm",
+        "rating": 5
+      },
+      {
         "key": "reliable"
       },
       {
         "key": "toxic",
-        "rating": 2
-      },
-      {
-        "key": "twinLinked"
+        "rating": 3
       }
     ],
     "needsRecharge": false,
@@ -66,7 +67,7 @@
       "reloads": 10
     }
   },
-  "_id": "qDJV2BjzQzBP9cXE",
+  "_id": "kdSYudcgABEXsIln",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -75,8 +76,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "eb89128e-f40b-4a86-b9e1-d523fba413aa",
-      "label": "Twin Splinter Rifle / Сдвоенная Осколочная Винтовка",
+      "id": "d1301d4a-d400-48e5-9b23-77162c8e7660",
+      "label": "Splinterstorm Cannon / Осколкоштормовая Пушка",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -104,10 +105,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "dagger",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "white",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -307,5 +308,5 @@
     "modifiedTime": 1783871637776,
     "lastModifiedBy": "ezwAfZRyYM6SLFHL"
   },
-  "_key": "!items!qDJV2BjzQzBP9cXE"
+  "_key": "!items!kdSYudcgABEXsIln"
 }
