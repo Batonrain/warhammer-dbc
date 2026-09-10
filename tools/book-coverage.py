@@ -15,26 +15,29 @@ import sys, os, re, json, zipfile, io
 from html import unescape
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SRC = r"D:\tRPG\Warhammer\Самоделки"
-DL = r"C:\Users\Derbius\Downloads"
+# 10.09.2026, прямое указание владельца: источником истины всегда считать то,
+# что лежит в репозитории (sources/), а не личные внешние копии — те могут
+# отсутствовать на конкретной машине (см. wdbc-qptj, "ИСХОДНИК НЕ НАЙДЕН") или
+# быть более старой/другой ревизией документа (см. wdbc-hfa1/wdbc-sgw0).
+SRC = os.path.join(ROOT, "sources")
 
 SOURCES = {
-    "aeldari-branches": (SRC, "Книга Аэльдари_ Ответвления.zip"),
-    "aeldari":          (SRC, "Книга Аэльдари.zip"),
-    "battles":          (SRC, "Книга Битв.zip"),
+    "aeldari-branches": (SRC, "Книга Аэльдари_ Ответвления.md"),
+    "aeldari":          (SRC, "Книга Аэльдари.md"),
+    "battles":          (SRC, "Книга Битв.md"),
     "chaos":            (SRC, "DoomBC_S_Chaos.pdf"),
     "core":             (SRC, "DoomBC_Core .pdf"),
-    "daemonic-shells":  (SRC, "Книга Демонических Оболочек.pdf"),
-    "diseases":         (SRC, "Книга Болезней.zip"),
-    "divinations-book": (SRC, "Родные миры и Предсказания.zip"),
-    "eldar-vehicles":   (SRC, "Книга Эльдар_ Техника.zip"),
+    "daemonic-shells":  (SRC, "Книга Демонических Оболочек.md"),
+    "diseases":         (SRC, "Книга Болезней.md"),
+    "divinations-book": (SRC, "Предсказания.md"),
+    "eldar-vehicles":   (SRC, "Книга Эльдар_ Техника.md"),
     "machines":         (SRC, "DoomBC_Machines.pdf"),
-    "necrons":          (SRC, "Книга Некрон.zip"),
-    "origins-book":     (SRC, "Родные миры и Предсказания.zip"),
-    "power-armour":     (SRC, "Силовая броня_ без шлема и особенности.zip"),
-    "toad-psykers":     (SRC, "Жабья Книга Псайкеров.pdf"),
-    "tyranids":         (SRC, "Тираниды DBC.zip"),
-    "void":             (DL,  "Книга Пустоты v.2 (1).docx"),
+    "necrons":          (SRC, "Книга Некронов.md"),
+    "origins-book":     (SRC, "Родные миры.md"),
+    "power-armour":     (SRC, "Силовая броня_ без шлема и особенности.md"),
+    "toad-psykers":     (SRC, "Книга Псайкеров.md"),
+    "tyranids":         (SRC, "Книга Тиранидов.md"),
+    "void":             (SRC, "Книга Пустоты.md"),
 }
 
 CORPUS = []
@@ -105,6 +108,22 @@ def src_docx(path):
     return [(os.path.basename(path), "\n".join(buf))]
 
 
+MD_IMAGE_REF = re.compile(r"^\[image\d+\]:\s*<data:image/[^>]*>\s*$", re.MULTILINE)
+
+
+def src_md(path):
+    """[(метка, текст)] — обычный markdown-экспорт (sources/*.md), файл целиком.
+
+    Google Docs → Markdown зашивает каждую картинку строкой-определением
+    `[imageN]: <data:image/png;base64,ОГРОМНАЯ_СТРОКА>` — без вырезания она
+    даёт до 56% "слов" источника (проверено на aeldari-branches), и покрытие
+    книги обваливается вчетверо от реального.
+    """
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    return [(os.path.basename(path), MD_IMAGE_REF.sub("", text))]
+
+
 def load_source(slug):
     folder, name = SOURCES[slug]
     path = os.path.join(folder, name)
@@ -117,6 +136,8 @@ def load_source(slug):
         return src_zip(path), path
     if ext == ".docx":
         return src_docx(path), path
+    if ext == ".md":
+        return src_md(path), path
     raise SystemExit(f"неизвестный тип источника: {path}")
 
 
