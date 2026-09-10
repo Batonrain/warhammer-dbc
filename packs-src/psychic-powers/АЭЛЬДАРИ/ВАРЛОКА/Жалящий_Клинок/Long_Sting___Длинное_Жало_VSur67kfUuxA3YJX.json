@@ -1,0 +1,75 @@
+{
+  "name": "Long Sting / Длинное Жало",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "Q4KWdYiEM1KTlLJC",
+  "system": {
+    "description": "<p><strong>350 xp | Требования: PR 6, Psychic Sting</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–10. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Вливая психическую силу в свое оружие, Варлок способен в неожиданный для противника момент удлинять клинок для совершения быстрого, точного и безопасного удара. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Перед любой атакой персонаж может увеличить максимальное Rng атаки на PR, атакуя на безопасном для себя расстоянии. Существа, не обладающие Warp Sight, получают штраф –30 на Физическое избегание этой атаки, а тесты ее парирования автоматически проваливаются. Если атака сталкивается с любым препятствием, кроме брони (но не броней техники), то оно получает свойство Warp Weapon, что позволяет атаковать противников, находясь за преградой, за стеной или над/под противником.</p>",
+    "notes": "",
+    "cost": 350,
+    "discipline": "warlock",
+    "subtype": "Жалящий Клинок",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Psychic Sting",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "350 xp | Требования: PR 6, Psychic Sting\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–10. Дальность: Сам\nТип: Психический Клинок\nВливая психическую силу в свое оружие, Варлок способен в неожиданный для противника момент удлинять клинок для совершения быстрого, точного и безопасного удара. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Перед любой атакой персонаж может увеличить максимальное Rng атаки на PR, атакуя на безопасном для себя расстоянии. Существа, не обладающие Warp Sight, получают штраф –30 на Физическое избегание этой атаки, а тесты ее парирования автоматически проваливаются. Если атака сталкивается с любым препятствием, кроме брони (но не броней техники), то оно получает свойство Warp Weapon, что позволяет атаковать противников, находясь за преградой, за стеной или над/под противником.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "VSur67kfUuxA3YJX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VSur67kfUuxA3YJX"
+}

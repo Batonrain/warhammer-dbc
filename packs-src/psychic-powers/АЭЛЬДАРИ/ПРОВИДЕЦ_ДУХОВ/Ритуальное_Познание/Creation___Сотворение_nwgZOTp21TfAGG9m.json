@@ -1,0 +1,75 @@
+{
+  "name": "Creation / Сотворение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "zYS0a0ovsKecy85U",
+  "system": {
+    "description": "<p><strong>150 xp | Требования: PR 1</strong></p><p><strong>Действие: </strong>Свободное действие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+10. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Вливание</p><p>Каждый из Провидцев Духа обучается работать с Психокостью в той или иной мере, дабы обслуживать психокостяные конструкты, которые есть на Мире–Корабле. Среди подобного находится и навык изменения психокости и ремонта уже существующей. Пока псайкер поддерживает эту психосилу, он получает трейт Bonesinger, получает бонус +20 на все крафты и призывы психокости, а также дает бонус +10 в случае, если он ассистирует в крафте с участием психокости. Персонаж получает бонус +30 на ремонт конструкций и конструктов из психокости.</p>",
+    "notes": "",
+    "cost": 150,
+    "discipline": "spiritSeer",
+    "subtype": "Ритуальное Познание",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "requirement": "PR 1",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "free",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "150 xp | Требования: PR 1\nДействие: Свободное действие. Поддержание: Свободное действие.\nПсихотест: W+10. Дальность: Сам\nТип: Вливание\nКаждый из Провидцев Духа обучается работать с Психокостью в той или иной мере, дабы обслуживать психокостяные конструкты, которые есть на Мире–Корабле. Среди подобного находится и навык изменения психокости и ремонта уже существующей. Пока псайкер поддерживает эту психосилу, он получает трейт Bonesinger, получает бонус +20 на все крафты и призывы психокости, а также дает бонус +10 в случае, если он ассистирует в крафте с участием психокости. Персонаж получает бонус +30 на ремонт конструкций и конструктов из психокости.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "nwgZOTp21TfAGG9m",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nwgZOTp21TfAGG9m"
+}

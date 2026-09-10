@@ -1,0 +1,78 @@
+{
+  "name": "Phoenix Revive / Воскрешение Феникса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "Ep7LNwo2piwNXQw1",
+  "system": {
+    "description": "<p><strong>700 xp | Требования: PR 9, полная ветка Руны Исцеления/Руны Владыки</strong></p><p><strong>Действие: </strong>Длительное Действие (5 минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–40.<strong> Дальность: </strong>Касание</p><p><strong>Тип: </strong>Изменение, Касание</p><p>Мастера использования Рун Судьбы способны <strong>воскрешать </strong>только умерших союзников, восстанавливая их тела, дабы они могли продолжить свое служение Миру–Кораблю. Подобно древним фениксам, умерший воскреснет в почти полном состоянии и силе. Если применить ее на персонажа, умершего не более W.b дней назад, чья голова не была уничтожена Критическим Эффектом. Если же голова была уничтожена, то эту психосилу можно применить лишь на персонажа, умершего не более W.b часов назад. Цель поднимается с 0 ранами, и получает 3d10 урона во все характеристики, но не ниже 15. Данная жертва получает иммунитет к любым болезням на W.b дней.</p>",
+    "notes": "",
+    "cost": 700,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Феникса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9, полная ветка Руны Исцеления/Руны Владыки (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "extended",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "700 xp | Требования: PR 9, полная ветка Руны Исцеления/Руны Владыки\nДействие: Длительное Действие (5 минут). Поддержание: Нет.\nПсихотест: W–40. Дальность: Касание\nТип: Изменение, Касание\nМастера использования Рун Судьбы способны воскрешать только умерших союзников, восстанавливая их тела, дабы они могли продолжить свое служение Миру–Кораблю. Подобно древним фениксам, умерший воскреснет в почти полном состоянии и силе. Если применить ее на персонажа, умершего не более W.b дней назад, чья голова не была уничтожена Критическим Эффектом. Если же голова была уничтожена, то эту психосилу можно применить лишь на персонажа, умершего не более W.b часов назад. Цель поднимается с 0 ранами, и получает 3d10 урона во все характеристики, но не ниже 15. Данная жертва получает иммунитет к любым болезням на W.b дней.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LAjVNytltc8auBcf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LAjVNytltc8auBcf"
+}

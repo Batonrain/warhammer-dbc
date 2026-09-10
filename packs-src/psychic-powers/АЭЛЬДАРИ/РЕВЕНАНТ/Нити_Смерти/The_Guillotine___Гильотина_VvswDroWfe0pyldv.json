@@ -1,0 +1,78 @@
+{
+  "name": "The Guillotine / Гильотина",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "VsKa4y1JPUDWsjOo",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Soulfalling</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Нет</p><p><strong>Психотест:</strong> W–40 <strong>Дальность:</strong> PR×5м</p><p><strong>Тип: </strong>Атака, Психический Снаряд, Незримое</p><p>Направляя все могущество в один удар, псайкер разрубает душу противника на кусочки. Если цель погибла от этой психосилы, она считается погибшей от Выжигания Души, и дает 15 Мертвого Могущества псайкеру, которое он может распределить между всеми своими союзниками.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×5 м</p></td><td><p>2d10+PR×3 E</p></td><td><p>6</p></td><td><p>Warp Weapon</p></td></tr></table>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Нити Смерти",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 8,
+    "requirement": "PR 8, Soulfalling",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "2d10+PR*3",
+    "damageType": "energy",
+    "penetration": 6,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 8, Soulfalling\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–40 Дальность: PR×5м\nТип: Атака, Психический Снаряд, Незримое\nНаправляя все могущество в один удар, псайкер разрубает душу противника на кусочки. Если цель погибла от этой психосилы, она считается погибшей от Выжигания Души, и дает 15 Мертвого Могущества псайкеру, которое он может распределить между всеми своими союзниками.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×5 м | 2d10+PR×3 E | 6 | Warp Weapon\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "VvswDroWfe0pyldv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VvswDroWfe0pyldv"
+}

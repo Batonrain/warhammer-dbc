@@ -1,0 +1,77 @@
+{
+  "name": "Asuryan Patience / Терпение Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "80EvWJlPvblVjJWC",
+  "system": {
+    "description": "<p><strong>650 xp | Требования: PR 7, Children of Asuryan</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Свободное действие.</p><p><strong>Психотест: </strong>W–20.<strong> Дальность: </strong>PR×3 м</p><p><strong>Тип: </strong>Изменение (PR+1)</p><p>Провидец способен даровать своим союзникам то терпение, что имел Азуриан в отношение всего Пантеона, и особенно, к своим детям. И те, кто пользуются этим терпением, способны сражаться даже тогда, когда остальные падут. Псайкер выбирает до PR существ, включая себя, которые становятся целями этой психосилы. Цели психосилы снижают получаемые критические эффекты и отрицательные раны на PR псайкера, до минимума в 0. Цели психосилы <strong>игнорируют </strong>Экстремальный Урон, свойства Crippling и Piercing.</p>",
+    "notes": "",
+    "cost": 650,
+    "discipline": "farseer",
+    "subtype": "Сила Азуриана",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Children of Asuryan",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×3 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "650 xp | Требования: PR 7, Children of Asuryan\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: PR×3 м\nТип: Изменение (PR+1)\nПровидец способен даровать своим союзникам то терпение, что имел Азуриан в отношение всего Пантеона, и особенно, к своим детям. И те, кто пользуются этим терпением, способны сражаться даже тогда, когда остальные падут. Псайкер выбирает до PR существ, включая себя, которые становятся целями этой психосилы. Цели психосилы снижают получаемые критические эффекты и отрицательные раны на PR псайкера, до минимума в 0. Цели психосилы игнорируют Экстремальный Урон, свойства Crippling и Piercing.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "VdtoL3ysaEjwmdBp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VdtoL3ysaEjwmdBp"
+}

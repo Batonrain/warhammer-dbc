@@ -1,0 +1,77 @@
+{
+  "name": "Sutherinaneath / Катастрофическая Неудача",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "QujvTdGGbsc03ipM",
+  "system": {
+    "description": "<p><strong>1250 xp | Требования: PR 10, Multiplying Failure</strong></p><p><strong>Действие: </strong>Длительное Действие (?). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>Psyniscience(P)–100.<strong> Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Аура,<strong> </strong>Длительное (PR), Реагирование</p><p>Некоторые Провидцы способны обрекать противников на катастрофическую неудачу, что может изменить ход всей битвы, и даже войны. Псайкер, что манифестирует данную психосилу, сам определяет сколько он будет ее поддерживать, но за каждый раунд он получает бонус +10 на манифестацию психосилы. Если псайкер успешно провел манифестацию психосилы, он получает ½  (окр.▲, мин 2) Успехи зарядов. В качестве реакции на чужое действие, псайкер может потратить 1 заряд и превратить любой вражеский тест в <strong>Критический Провал </strong>без возможности его перебросить. Данную психосилу можно манифестировать лишь раз в день.</p>",
+    "notes": "",
+    "cost": 1250,
+    "discipline": "farseer",
+    "subtype": "Неминуемый Рок",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 10,
+    "requirement": "PR 10, Multiplying Failure",
+    "testChar": "psyniscience",
+    "testMod": -100,
+    "action": "extended",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "1250 xp | Требования: PR 10, Multiplying Failure\nДействие: Длительное Действие (?). Поддержание: Нет.\nПсихотест: Psyniscience(P)–100. Дальность: PR×5 м\nТип: Аура, Длительное (PR), Реагирование\nНекоторые Провидцы способны обрекать противников на катастрофическую неудачу, что может изменить ход всей битвы, и даже войны. Псайкер, что манифестирует данную психосилу, сам определяет сколько он будет ее поддерживать, но за каждый раунд он получает бонус +10 на манифестацию психосилы. Если псайкер успешно провел манифестацию психосилы, он получает ½  (окр.▲, мин 2) Успехи зарядов. В качестве реакции на чужое действие, псайкер может потратить 1 заряд и превратить любой вражеский тест в Критический Провал без возможности его перебросить. Данную психосилу можно манифестировать лишь раз в день.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ppnEMCxOWlL07ehf",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ppnEMCxOWlL07ehf"
+}

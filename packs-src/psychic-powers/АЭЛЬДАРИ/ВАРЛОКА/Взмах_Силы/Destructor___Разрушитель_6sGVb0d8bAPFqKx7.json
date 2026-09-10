@@ -1,0 +1,75 @@
+{
+  "name": "Destructor / Разрушитель",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "JW6ogf82lIZBt0E2",
+  "system": {
+    "description": "<p><strong>650 xp | Требования: PR 7, Destruction</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–20. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Вплетая в свой клинок множество нитей и могущество Варпа, Варлок способен разрушать вражеские укрепления и технику также легко, как вражескую пехоту. Если псайкер совершает атаку по укреплению, или по технике, то его Pen увеличивается на 5×PR для этой атаки. Если его Pen превышает AP укрепления, то атака полностью разрушает укрепление. Если его Pen превышает AP техники, то оставшийся Pen после AP превращается в Dmg и удваивается. Данное свойство распространяется против Облитераторов, Центурионов, но не против Терминаторов или иных подобных им.</p>",
+    "notes": "",
+    "cost": 650,
+    "discipline": "warlock",
+    "subtype": "Взмах Силы",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Destruction",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "650 xp | Требования: PR 7, Destruction\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: Сам\nТип: Психический Клинок\nВплетая в свой клинок множество нитей и могущество Варпа, Варлок способен разрушать вражеские укрепления и технику также легко, как вражескую пехоту. Если псайкер совершает атаку по укреплению, или по технике, то его Pen увеличивается на 5×PR для этой атаки. Если его Pen превышает AP укрепления, то атака полностью разрушает укрепление. Если его Pen превышает AP техники, то оставшийся Pen после AP превращается в Dmg и удваивается. Данное свойство распространяется против Облитераторов, Центурионов, но не против Терминаторов или иных подобных им.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6sGVb0d8bAPFqKx7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6sGVb0d8bAPFqKx7"
+}

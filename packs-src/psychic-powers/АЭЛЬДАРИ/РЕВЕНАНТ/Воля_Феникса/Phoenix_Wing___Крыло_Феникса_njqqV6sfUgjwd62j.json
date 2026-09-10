@@ -1,0 +1,78 @@
+{
+  "name": "Phoenix Wing / Крыло Феникса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "YFUiVJaNfyIdwK2g",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 5, Ynnead’s Gift</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание:</strong> Полное действие</p><p><strong>Психотест: </strong>W–30 <strong>Дальность:</strong> PR×10м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Словно бы получая силу древних фениксов из легенд эльдар, цели этой психосилы по благодати псайкера становятся почти бессмертными. Цели данной психосилы получают трейт Regeneration (PR). Психосилы, оружие со свойствами Force, Sanctified или Warp Weapon, естественное оружие персонажей с Daemonic, Демонические и Руническое оружие при нанесении непоглощенного урона отключают трейт Regeneration. Псайкер может нанести себе 1 непоглощенный E урон в голову как от психосилы, чтобы активировать трейт Regeneration за союзника.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "revenant",
+    "subtype": "Воля Феникса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Ynnead’s Gift",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 5, Ynnead’s Gift\nДействие: Полное действие Поддержание: Полное действие\nПсихотест: W–30 Дальность: PR×10м\nТип: Изменение (PR)\nСловно бы получая силу древних фениксов из легенд эльдар, цели этой психосилы по благодати псайкера становятся почти бессмертными. Цели данной психосилы получают трейт Regeneration (PR). Психосилы, оружие со свойствами Force, Sanctified или Warp Weapon, естественное оружие персонажей с Daemonic, Демонические и Руническое оружие при нанесении непоглощенного урона отключают трейт Regeneration. Псайкер может нанести себе 1 непоглощенный E урон в голову как от психосилы, чтобы активировать трейт Regeneration за союзника.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "njqqV6sfUgjwd62j",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!njqqV6sfUgjwd62j"
+}

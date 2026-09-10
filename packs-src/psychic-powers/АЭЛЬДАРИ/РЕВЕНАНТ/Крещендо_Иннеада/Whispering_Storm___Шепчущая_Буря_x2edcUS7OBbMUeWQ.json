@@ -1,0 +1,78 @@
+{
+  "name": "Whispering Storm / Шепчущая Буря",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "UXeRoTjpJEnnOAaM",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Choir of the Death</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Нет</p><p><strong>Психотест:</strong> W–40 vs W–50 <strong>Дальность: </strong>PR×10м</p><p><strong>Тип: </strong>Атака, Длительное (PR), Психический Взрыв (PR)</p><p>Выпуская в материальный мир разрушительную бурю мрака, смерти и холода, псайкер способен уничтожать целые армии врага используя силы умерших иннари и эльдар. Все существа, попавшие в зону действия психосилы должны пройти соревновательный тест против психосилы, иначе их тела покрываются потусторонним холодом, давая цели Гипотермию. Гипотермия длится PR раундов. Независимо от остальных условий, существа получают следующее попадание:</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×10</p></td><td><p>1d10+PR×3 X</p></td><td><p>0</p></td><td><p>Blast (PR)</p></td></tr></table><p>Буря длится PR раундов. Попадание бури снижает все AP брони целей на 1. Вся территория в зоне ауры покрывается льдом и инеем, превращая это в Трудный Ландшафт–30. Если существо погибает в буре, оно дает +1 эPR в расчете эффектов Шепчущей Бури, вплоть до +10. 10 Магнитуд орды считается за 1 умершего.</p>",
+    "notes": "Тип урона в книжной таблице — «X», нестандартная буква (не E/I/R схемы) — подставлен ближайший «Энергетический», реальный тип урона см. в тексте/таблице карточки.",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Крещендо Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "blast",
+    "prRequired": 8,
+    "requirement": "PR 8, Choir of the Death",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR*3",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "wp",
+    "resistMod": -50,
+    "effect": "800 xp | Требования: PR 8, Choir of the Death\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–40 vs W–50 Дальность: PR×10м\nТип: Атака, Длительное (PR), Психический Взрыв (PR)\nВыпуская в материальный мир разрушительную бурю мрака, смерти и холода, псайкер способен уничтожать целые армии врага используя силы умерших иннари и эльдар. Все существа, попавшие в зону действия психосилы должны пройти соревновательный тест против психосилы, иначе их тела покрываются потусторонним холодом, давая цели Гипотермию. Гипотермия длится PR раундов. Независимо от остальных условий, существа получают следующее попадание:\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×10 | 1d10+PR×3 X | 0 | Blast (PR)\n[/ТАБЛИЦА]\nБуря длится PR раундов. Попадание бури снижает все AP брони целей на 1. Вся территория в зоне ауры покрывается льдом и инеем, превращая это в Трудный Ландшафт–30. Если существо погибает в буре, оно дает +1 эPR в расчете эффектов Шепчущей Бури, вплоть до +10. 10 Магнитуд орды считается за 1 умершего.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "x2edcUS7OBbMUeWQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!x2edcUS7OBbMUeWQ"
+}

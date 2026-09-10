@@ -1,0 +1,77 @@
+{
+  "name": "Decline / Падение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "QujvTdGGbsc03ipM",
+  "system": {
+    "description": "<p><strong>100 xp | Требования: PR 3</strong></p><p><strong>Действие: </strong>Реакция/Свободное действие. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>Psyniscience(P)+10/<strong> </strong>Psyniscience(P)+10 vs W+10.<strong> Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Изменение (бPR–4), Длительное (1), Реагирование</p><p>Провидец способен обрекать вражескую удачу в неудачу, которая будет преследовать врага несколько драгоценных секунд, обрекая почти все начинания врага на малые неудачи. Цель этой психосилы получает ½ PR  (окр.▲) <strong>провалов </strong>на все свои тесты, потенциально превращая успешный тест в неудачу. Псайкер может манифестировать эту психосилу до бPR–4 (мин. 1) раз за раунд, но только на разные цели.</p><p>Также, данную психосилу можно манифестировать во втором режиме (за Свободное действие), начав соревновательный тест с видимым противником. При успехе, псайкер может перед эффектом любого действия противника объявить об активации психосилы и добавить к этому действию провалы, как при обычном использовании психосилы.</p>",
+    "notes": "Два режима манифестации (Реакция без сопротивления цели / Свободное действие со встречным Psyniscience(P)+10 vs W+10) — структурно хранится только первый режим, тест сопротивления не заполнен.",
+    "cost": 100,
+    "discipline": "farseer",
+    "subtype": "Неминуемый Рок",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3",
+    "testChar": "psyniscience",
+    "testMod": 10,
+    "action": "reaction",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "100 xp | Требования: PR 3\nДействие: Реакция/Свободное действие. Поддержание: Нет.\nПсихотест: Psyniscience(P)+10/ Psyniscience(P)+10 vs W+10. Дальность: PR×5 м\nТип: Изменение (бPR–4), Длительное (1), Реагирование\nПровидец способен обрекать вражескую удачу в неудачу, которая будет преследовать врага несколько драгоценных секунд, обрекая почти все начинания врага на малые неудачи. Цель этой психосилы получает ½ PR  (окр.▲) провалов на все свои тесты, потенциально превращая успешный тест в неудачу. Псайкер может манифестировать эту психосилу до бPR–4 (мин. 1) раз за раунд, но только на разные цели.\nТакже, данную психосилу можно манифестировать во втором режиме (за Свободное действие), начав соревновательный тест с видимым противником. При успехе, псайкер может перед эффектом любого действия противника объявить об активации психосилы и добавить к этому действию провалы, как при обычном использовании психосилы.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "WRGRZBI7hLtCojLE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!WRGRZBI7hLtCojLE"
+}

@@ -1,0 +1,78 @@
+{
+  "name": "Denial of Death / Отрицание Гибели",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "YFUiVJaNfyIdwK2g",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6, Gift Of Life</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Нет</p><p><strong>Психотест: </strong>W–30 <strong>Дальность: </strong>Касание</p><p><strong>Тип:</strong> Длительное (PR Дней), Изменение, Касание</p><p>Своей дланью псайкер удерживает тело от распада, гниения и повреждений, позволяя его сохранить до нужного момента, также сохраняя и душу. Эта психосила может быть манифестирована также через трату реакции если в базовом контакте с псайкером кто–то погибает. Пока психосила работает, тело существа перестает гнить, кровоточить или подвергаться хоть каким–то внешним процессам, кроме повреждений оружием и лечению, а душа (если она есть) запирается внутри тела. После развеивания психосилы тело начинает подвергаться обычным биологическим процессам. Одно тело и душа получает иммунитет на месяц после манифестации психосилы.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Воля Феникса",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Gift Of Life",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6, Gift Of Life\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–30 Дальность: Касание\nТип: Длительное (PR Дней), Изменение, Касание\nСвоей дланью псайкер удерживает тело от распада, гниения и повреждений, позволяя его сохранить до нужного момента, также сохраняя и душу. Эта психосила может быть манифестирована также через трату реакции если в базовом контакте с псайкером кто–то погибает. Пока психосила работает, тело существа перестает гнить, кровоточить или подвергаться хоть каким–то внешним процессам, кроме повреждений оружием и лечению, а душа (если она есть) запирается внутри тела. После развеивания психосилы тело начинает подвергаться обычным биологическим процессам. Одно тело и душа получает иммунитет на месяц после манифестации психосилы.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "qKBV6HxMoP8SBLuV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!qKBV6HxMoP8SBLuV"
+}

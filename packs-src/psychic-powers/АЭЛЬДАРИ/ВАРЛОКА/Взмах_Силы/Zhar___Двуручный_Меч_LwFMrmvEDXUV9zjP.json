@@ -1,0 +1,75 @@
+{
+  "name": "Zhar / Двуручный Меч",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "JW6ogf82lIZBt0E2",
+  "system": {
+    "description": "<p><strong>1100 xp | Требования: PR 12, Destructor, Trade (Weaponsmith)+30</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–50. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Некоторые Мастера клинка среди Варлоков способны повторять могущество любого ремесленного оружия, что однажды они использовали. Эти Мастера своего дела способны в одиночку переломить исход целой битвы. Если псайкер ранее владел и пользовался в течении месяца или больше любым рукопашным оружием, он может применить его свойства на своем нынешнем оружии, получая его особые свойства и уникальные свойства из описания. Персонаж может применить на одно оружие эффект 3–ех оружия, <strong>включая </strong>эффекты Оружия Наследия, Ремесленного Оружия или Демонического Оружия.</p>",
+    "notes": "",
+    "cost": 1100,
+    "discipline": "warlock",
+    "subtype": "Взмах Силы",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 12,
+    "requirement": "PR 12, Destructor, Trade (Weaponsmith)+30",
+    "testChar": "wp",
+    "testMod": -50,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "1100 xp | Требования: PR 12, Destructor, Trade (Weaponsmith)+30\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–50. Дальность: Сам\nТип: Психический Клинок\nНекоторые Мастера клинка среди Варлоков способны повторять могущество любого ремесленного оружия, что однажды они использовали. Эти Мастера своего дела способны в одиночку переломить исход целой битвы. Если псайкер ранее владел и пользовался в течении месяца или больше любым рукопашным оружием, он может применить его свойства на своем нынешнем оружии, получая его особые свойства и уникальные свойства из описания. Персонаж может применить на одно оружие эффект 3–ех оружия, включая эффекты Оружия Наследия, Ремесленного Оружия или Демонического Оружия.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LwFMrmvEDXUV9zjP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LwFMrmvEDXUV9zjP"
+}

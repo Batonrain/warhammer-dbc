@@ -1,0 +1,78 @@
+{
+  "name": "Storm of Whispers / Шторм Шепотов",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "UXeRoTjpJEnnOAaM",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6, Whisper Of Doom</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Полудействие</p><p><strong>Психотест: </strong>W–30 vs W+0 <strong>Дальность: </strong>PR×20м</p><p><strong>Тип:</strong> Атака, Психический Взрыв (PR×3), Стрельба</p><p>Псайкер начинает шептать обвинения, проклятия и оскорбления, к которым присоединяется шторм умерших эльдар, сводя целей с ума. Эта атака не наносит урон, но все цели, попавшие в шаблон взрыва считаются псайкера источником Страха без определенного значения. Сложность теста против Страха от психосилы равняется –PR×2. Шаблон после атаки сохраняется и продолжает существовать до тех пор, пока псайкер его поддерживает. Псайкер может перемещать шаблон на до PR×2 метров в любую сторону. Существа, прошедшие тест, не получают иммунитет против страха и должны проходить тест против страха до тех пор, пока они начинают свой ход внутри Шторма Шепотов.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Крещендо Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "blast",
+    "prRequired": 6,
+    "requirement": "PR 6, Whisper Of Doom",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "wp",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6, Whisper Of Doom\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–30 vs W+0 Дальность: PR×20м\nТип: Атака, Психический Взрыв (PR×3), Стрельба\nПсайкер начинает шептать обвинения, проклятия и оскорбления, к которым присоединяется шторм умерших эльдар, сводя целей с ума. Эта атака не наносит урон, но все цели, попавшие в шаблон взрыва считаются псайкера источником Страха без определенного значения. Сложность теста против Страха от психосилы равняется –PR×2. Шаблон после атаки сохраняется и продолжает существовать до тех пор, пока псайкер его поддерживает. Псайкер может перемещать шаблон на до PR×2 метров в любую сторону. Существа, прошедшие тест, не получают иммунитет против страха и должны проходить тест против страха до тех пор, пока они начинают свой ход внутри Шторма Шепотов.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "09BPeUQVdvqHd7F7",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!09BPeUQVdvqHd7F7"
+}

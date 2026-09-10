@@ -1,0 +1,77 @@
+{
+  "name": "Energy Surge / Скачок Энергии",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KNlZUQRinNhUmsOe",
+  "system": {
+    "description": "<p><strong>650 xp | Требования: PR 7, Energy Collapse</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–30.<strong> Дальность: </strong>Звездная Система/PR×10 ПЕ</p><p><strong>Тип: </strong>Атака, Изменение, Сосредоточение</p><p>Сосредотачивая свое психическое могущество при помощи психокостяного корабля, Пустотный Мечтатель способен обратить против недруга не просто потоки имматериума – а сконцентрированный луч, способный нанести смертельные повреждения для вражеского корабля. Эта психосила совершает атаку в космическом масштабе против вражеского корабля и не может быть применена на земле. Эта психосила атакует вражеское судно со следующим профилем, давая возможность атаковать в любом направлении:</p><table><tr><td><p><strong>ОРУДИЕ</strong></p></td><td><p><strong>СВОЙСТВА</strong></p></td><td><p><strong>S</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Crit</strong></p></td><td><p><strong>Rng</strong></p></td></tr><tr><td><p>Луч Энергии</p></td><td><p>Penetrating (Armour)</p></td><td><p>4</p></td><td><p>1d5+½ (окр.▲) PR</p></td><td><p>8</p></td><td><p>PR</p></td></tr></table><p>За каждые 3 успеха психосила наносит дополнительное попадание. Психосила кратковременно отнимает у своего корабля 1d5 Энергии, потенциально отключая один или больше узлов до начала следующего раунда.</p>",
+    "notes": "Атака корабельного масштаба (профиль S/Dmg/Crit/Rng по правилам звёздных боёв, не по правилам обычного оружия) — Pen/Dmg тут ориентировочные, детали только текстом.",
+    "cost": 650,
+    "discipline": "voidDreamer",
+    "subtype": "Энергия Космоса",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Energy Collapse",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "Звездная Система/PR×10 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d5+PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "650 xp | Требования: PR 7, Energy Collapse\nДействие: Длительное Действие (30 Минут). Поддержание: Нет.\nПсихотест: W–30. Дальность: Звездная Система/PR×10 ПЕ\nТип: Атака, Изменение, Сосредоточение\nСосредотачивая свое психическое могущество при помощи психокостяного корабля, Пустотный Мечтатель способен обратить против недруга не просто потоки имматериума – а сконцентрированный луч, способный нанести смертельные повреждения для вражеского корабля. Эта психосила совершает атаку в космическом масштабе против вражеского корабля и не может быть применена на земле. Эта психосила атакует вражеское судно со следующим профилем, давая возможность атаковать в любом направлении:\n[ТАБЛИЦА]\nОРУДИЕ | СВОЙСТВА | S | Dmg | Crit | Rng\nЛуч Энергии | Penetrating (Armour) | 4 | 1d5+½ (окр.▲) PR | 8 | PR\n[/ТАБЛИЦА]\nЗа каждые 3 успеха психосила наносит дополнительное попадание. Психосила кратковременно отнимает у своего корабля 1d5 Энергии, потенциально отключая один или больше узлов до начала следующего раунда.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "yrahFsmblH4alS7a",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!yrahFsmblH4alS7a"
+}

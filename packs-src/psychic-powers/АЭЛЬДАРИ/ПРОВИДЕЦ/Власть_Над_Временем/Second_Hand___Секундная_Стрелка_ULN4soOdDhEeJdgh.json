@@ -1,0 +1,77 @@
+{
+  "name": "Second Hand / Секундная Стрелка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "xv1PxigqBtcyDUYc",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 4, Часы Тикают</strong></p><p><strong>Действие: </strong>Свободное. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W+20/<strong> </strong>Psyniscience(T)–10.<strong> Дальность: </strong>PR×3 м</p><p><strong>Тип: </strong>Вливание, Изменение (бPR)</p><p>Легкая манипуляция со временем способна спасти жизнь кому–либо. Добавив одну, лишнюю секунду в действии, Провидец способен разрушить план любого противника, или дать время среагировать на неожиданную атаку. Псайкер может выбрать, будет ли психосила действовать только на него, или только на его союзников, которых он должен выбрать перед манифестацией – это меняет тип теста. Существа, под действием этой психосилы, <strong>могут </strong>перебрасывать тесты Физического Избегания, или увернуться от <strong>Незримой </strong>атаки. Все существа, что ощущают поток времени, способны осознать то, что эти возможности вызваны растягиванием времени, что дает малое преимущество над противниками.</p>",
+    "notes": "Выбор цели (сам псайкер ИЛИ союзники) меняет тип теста на Psyniscience(T) — тест хранит только режим «на себя»/W+20.",
+    "cost": 250,
+    "discipline": "farseer",
+    "subtype": "Власть Над Временем",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Часы Тикают",
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "free",
+    "range": "PR×3 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "250 xp | Требования: PR 4, Часы Тикают\nДействие: Свободное. Поддержание: Полудействие.\nПсихотест: W+20/ Psyniscience(T)–10. Дальность: PR×3 м\nТип: Вливание, Изменение (бPR)\nЛегкая манипуляция со временем способна спасти жизнь кому–либо. Добавив одну, лишнюю секунду в действии, Провидец способен разрушить план любого противника, или дать время среагировать на неожиданную атаку. Псайкер может выбрать, будет ли психосила действовать только на него, или только на его союзников, которых он должен выбрать перед манифестацией – это меняет тип теста. Существа, под действием этой психосилы, могут перебрасывать тесты Физического Избегания, или увернуться от Незримой атаки. Все существа, что ощущают поток времени, способны осознать то, что эти возможности вызваны растягиванием времени, что дает малое преимущество над противниками.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ULN4soOdDhEeJdgh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ULN4soOdDhEeJdgh"
+}

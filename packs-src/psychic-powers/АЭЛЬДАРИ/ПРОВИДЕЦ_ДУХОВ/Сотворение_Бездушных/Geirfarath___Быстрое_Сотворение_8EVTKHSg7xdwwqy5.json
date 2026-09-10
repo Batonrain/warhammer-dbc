@@ -1,0 +1,75 @@
+{
+  "name": "Geirfarath / Быстрое Сотворение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "bbGi7FvHL0CFAKE4",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Spirit Warrior</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание:</strong> Полудействие.</p><p><strong>Психотест:</strong> W–20. <strong>Дальность:</strong> PR×30 м</p><p><strong>Тип: </strong>Призыв</p><p>Некоторые Духовидцы способны создавать на поле битвы из сырой психокости целые произведения искусства – Призрачных Воителей в полной боевой готовности. Однако, за это всегда есть цена. Псайкер, обладающий хотя–бы 20 килограмм сырой психокости, может манифестировать эту психосилу и при успехе незамедлительно призвать Призрачного Воителя с любым <strong>Обычным </strong>Силовым Оружием в руках и Сюрикенным/Лазерным оружием до R2. После того как конструкт появился, псайкер получает 3d10 урона в W, что не влияют на его конструктов и на этого. Псайкер может использовать эту психосилу до тех пор, пока у него есть W и психокость, а также лимит места для миньонов.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "spiritSeer",
+    "subtype": "Сотворение Бездушных",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Spirit Warrior",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×30 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "800 xp | Требования: PR 8, Spirit Warrior\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–20. Дальность: PR×30 м\nТип: Призыв\nНекоторые Духовидцы способны создавать на поле битвы из сырой психокости целые произведения искусства – Призрачных Воителей в полной боевой готовности. Однако, за это всегда есть цена. Псайкер, обладающий хотя–бы 20 килограмм сырой психокости, может манифестировать эту психосилу и при успехе незамедлительно призвать Призрачного Воителя с любым Обычным Силовым Оружием в руках и Сюрикенным/Лазерным оружием до R2. После того как конструкт появился, псайкер получает 3d10 урона в W, что не влияют на его конструктов и на этого. Псайкер может использовать эту психосилу до тех пор, пока у него есть W и психокость, а также лимит места для миньонов.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "8EVTKHSg7xdwwqy5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!8EVTKHSg7xdwwqy5"
+}

@@ -1,0 +1,78 @@
+{
+  "name": "Soul Blade / Клинок Души",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "QCuSQ7sb57EsmOdC",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6, Cleaving Sword</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Полудействие</p><p><strong>Психотест: </strong>W–30<strong> Дальность:</strong> PR×5м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Псайкер привязывает рукопашное оружие своих союзников к их душам, отдавая предпочтение духовному мастерству, нежели физическому. Цели данной психосилы могут использовать W вместо WS в любых тестах связанным с управлением рукопашным оружием. Помимо этого, цели получают бонус Y×5 ко всем рукопашным тестам (включая приемы), где Y – кол–во Мертвого Могущества, которым обладает цель.</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Клинки и Предки",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Cleaving Sword",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6, Cleaving Sword\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–30 Дальность: PR×5м\nТип: Изменение (PR)\nПсайкер привязывает рукопашное оружие своих союзников к их душам, отдавая предпочтение духовному мастерству, нежели физическому. Цели данной психосилы могут использовать W вместо WS в любых тестах связанным с управлением рукопашным оружием. Помимо этого, цели получают бонус Y×5 ко всем рукопашным тестам (включая приемы), где Y – кол–во Мертвого Могущества, которым обладает цель.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "I7hcl571Vfq66rSk",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!I7hcl571Vfq66rSk"
+}

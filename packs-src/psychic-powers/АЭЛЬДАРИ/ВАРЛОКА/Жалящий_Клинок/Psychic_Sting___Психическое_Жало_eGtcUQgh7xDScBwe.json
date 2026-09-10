@@ -1,0 +1,75 @@
+{
+  "name": "Psychic Sting / Психическое Жало",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "Q4KWdYiEM1KTlLJC",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 5, Force Blade</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–10. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Концентрируя свою психическую силу на наконечники оружия, Варлок способен наносить точечные и смертоносные удары, разящие ядом, что поражает душу, а не тело. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Персонаж может совершить атаку в сочленение с дополнительным штрафом –20, и в случае успеха, проигнорировать вражеское поглощение, заставляя врага проходить тест против Toxic (3, 2d10), где вместо T противник должен проходить тест против W. Это считается психосилой, но не ядом. Если цель проваливает тест, то вместо постоянного урона, она получает непоглощаемый урон от яда единожды, и затем парализуется на 1d3 раундов, становясь Беспомощной.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "warlock",
+    "subtype": "Жалящий Клинок",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Force Blade",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 5, Force Blade\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–10. Дальность: Сам\nТип: Психический Клинок\nКонцентрируя свою психическую силу на наконечники оружия, Варлок способен наносить точечные и смертоносные удары, разящие ядом, что поражает душу, а не тело. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Персонаж может совершить атаку в сочленение с дополнительным штрафом –20, и в случае успеха, проигнорировать вражеское поглощение, заставляя врага проходить тест против Toxic (3, 2d10), где вместо T противник должен проходить тест против W. Это считается психосилой, но не ядом. Если цель проваливает тест, то вместо постоянного урона, она получает непоглощаемый урон от яда единожды, и затем парализуется на 1d3 раундов, становясь Беспомощной.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "eGtcUQgh7xDScBwe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eGtcUQgh7xDScBwe"
+}

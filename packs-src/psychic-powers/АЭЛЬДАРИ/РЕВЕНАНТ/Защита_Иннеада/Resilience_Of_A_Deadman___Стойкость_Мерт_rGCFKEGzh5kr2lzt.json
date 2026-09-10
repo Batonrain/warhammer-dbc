@@ -1,0 +1,78 @@
+{
+  "name": "Resilience Of A Deadman / Стойкость Мертвеца",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "8C47cW6DrTo1767M",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 2</strong></p><p><strong>Действие:</strong> Полудействие<strong> Поддержание: </strong>Свободное действие</p><p><strong>Психотест:</strong> W+10 <strong>Дальность:</strong> PR×10м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Псайкер наделяет своих союзников прочностью за каждую получаемую ими рану, позволяя им сражаться все дальше и дальше. Цели этой психосилы получают +½ (окр.▲) PR AP за каждое состояние персонажа – Легко раненный, Тяжело раненный и Критически раненный (если у псайкера 2 PR и цель психосилы критически ранена, то она получает +3 AP).</p>",
+    "notes": "",
+    "cost": 200,
+    "discipline": "revenant",
+    "subtype": "Защита Иннеада",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 2\nДействие: Полудействие Поддержание: Свободное действие\nПсихотест: W+10 Дальность: PR×10м\nТип: Изменение (PR)\nПсайкер наделяет своих союзников прочностью за каждую получаемую ими рану, позволяя им сражаться все дальше и дальше. Цели этой психосилы получают +½ (окр.▲) PR AP за каждое состояние персонажа – Легко раненный, Тяжело раненный и Критически раненный (если у псайкера 2 PR и цель психосилы критически ранена, то она получает +3 AP).",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "rGCFKEGzh5kr2lzt",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!rGCFKEGzh5kr2lzt"
+}

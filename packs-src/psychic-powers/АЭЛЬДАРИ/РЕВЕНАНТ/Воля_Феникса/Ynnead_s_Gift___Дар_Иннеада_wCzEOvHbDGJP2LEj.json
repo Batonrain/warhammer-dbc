@@ -1,0 +1,78 @@
+{
+  "name": "Ynnead’s Gift / Дар Иннеада",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "YFUiVJaNfyIdwK2g",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 4, Second Chance</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание: </strong>Нет</p><p><strong>Психотест: </strong>W–20<strong> Дальность: </strong>Касание</p><p><strong>Тип: </strong>Изменение, Касание</p><p>Псайкер направляет могущество Иннеада, излечивая своих союзников от самых тяжелых ранений и травм при помощи силы мертвых, что позволяет живым сражаться дальше. Псайкер может потратить до 10 Мертвого Могущества, чтобы соответственно отменить один критический эффект на цели психосилы, если этот эффект не является смертью (чтобы лишить цель критического эффекта 5–го уровня, то необходимо потратить 5 Мертвого Могущества).</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "revenant",
+    "subtype": "Воля Феникса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Second Chance",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "Касание",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "400 xp | Требования: PR 4, Second Chance\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–20 Дальность: Касание\nТип: Изменение, Касание\nПсайкер направляет могущество Иннеада, излечивая своих союзников от самых тяжелых ранений и травм при помощи силы мертвых, что позволяет живым сражаться дальше. Псайкер может потратить до 10 Мертвого Могущества, чтобы соответственно отменить один критический эффект на цели психосилы, если этот эффект не является смертью (чтобы лишить цель критического эффекта 5–го уровня, то необходимо потратить 5 Мертвого Могущества).",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "wCzEOvHbDGJP2LEj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wCzEOvHbDGJP2LEj"
+}

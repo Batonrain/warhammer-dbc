@@ -1,0 +1,77 @@
+{
+  "name": "Force of Asuryan / Могущество Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "80EvWJlPvblVjJWC",
+  "system": {
+    "description": "<p><strong>650 xp | Требования: PR 7, Children of Asuryan</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Свободное действие.</p><p><strong>Психотест: </strong>W–20.<strong> Дальность: </strong>PR×3 м</p><p><strong>Тип: </strong>Изменение (PR+1)</p><p>Попавшие под милосердие Азуриана, его дети и воины способны выстоять перед любой угрозой и опасностью, и воевать ранее невиданной силой и гневом, что присуща только тем, кто посвятил свою жизнь Кхейну. Псайкер выбирает до PR существ, включая себя, которые становятся целями этой психосилы. Цели психосилы получают трейты Auto–Stabilized, Brutal Charge (PR) и Sturdy. Цели получают бонус PR×3 к S и T. Цели не получают усталость, а если у них она уже была, то каждый ход она снижается на 1.</p>",
+    "notes": "",
+    "cost": 650,
+    "discipline": "farseer",
+    "subtype": "Сила Азуриана",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Children of Asuryan",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×3 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "650 xp | Требования: PR 7, Children of Asuryan\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: PR×3 м\nТип: Изменение (PR+1)\nПопавшие под милосердие Азуриана, его дети и воины способны выстоять перед любой угрозой и опасностью, и воевать ранее невиданной силой и гневом, что присуща только тем, кто посвятил свою жизнь Кхейну. Псайкер выбирает до PR существ, включая себя, которые становятся целями этой психосилы. Цели психосилы получают трейты Auto–Stabilized, Brutal Charge (PR) и Sturdy. Цели получают бонус PR×3 к S и T. Цели не получают усталость, а если у них она уже была, то каждый ход она снижается на 1.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "QeJfm3LWnqKRU44w",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!QeJfm3LWnqKRU44w"
+}

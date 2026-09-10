@@ -1,0 +1,77 @@
+{
+  "name": "Gaze of the Abyss / Взор Бездны",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "RArmKuf6NzDFU1iw",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 3, Empyrean Hunter</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W+0 vss P–20. <strong>Дальность:</strong> PR×15 м</p><p><strong>Тип:</strong> Атака, Психический Снаряд</p><p>Взирая в бездну, Мечтатель Пустоты способен выпустить из нее абсолютно темный снаряд, что способен нанести душевные травмы и лишить зрения своего недруга. Данная атака начинает свой путь из рук псайкера темно–черным пятном. После попадания, существо обладающее зрением, должно пройти соревновательный тест, где за каждый четный провал он получает Ослепление на 1 раунд. Использование данной атаки на существе, ослепленной данной атакой, увеличивает длительность ослепления на 1 раунд.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×15 м</p></td><td><p>1d10+PR×2 E</p></td><td><p>P.b</p></td><td><p>Warp Weapon</p></td></tr></table>",
+    "notes": "Pen = П.бонус (не константа) — поле «Пробитие» оставлено 0, формула только в тексте.",
+    "cost": 200,
+    "discipline": "voidDreamer",
+    "subtype": "Око Бездны",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 3,
+    "requirement": "PR 3, Empyrean Hunter",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×15 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d10+PR*2",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "per",
+    "resistMod": -20,
+    "effect": "200 xp | Требования: PR 3, Empyrean Hunter\nДействие: Полудействие. Поддержание: Нет.\nПсихотест: W+0 vss P–20. Дальность: PR×15 м\nТип: Атака, Психический Снаряд\nВзирая в бездну, Мечтатель Пустоты способен выпустить из нее абсолютно темный снаряд, что способен нанести душевные травмы и лишить зрения своего недруга. Данная атака начинает свой путь из рук псайкера темно–черным пятном. После попадания, существо обладающее зрением, должно пройти соревновательный тест, где за каждый четный провал он получает Ослепление на 1 раунд. Использование данной атаки на существе, ослепленной данной атакой, увеличивает длительность ослепления на 1 раунд.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×15 м | 1d10+PR×2 E | P.b | Warp Weapon\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "uIX4H3W1aimeucQ1",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!uIX4H3W1aimeucQ1"
+}

@@ -1,0 +1,77 @@
+{
+  "name": "Trample On / Протоптать",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KtlagOhJ0osDE8L7",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Empyrean Hunter</strong></p><p><strong>Действие: </strong>Длительное Действие (10 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–10.<strong> Дальность: </strong>PR×5 ПЕ</p><p><strong>Тип: </strong>Изменение, Сосредоточение</p><p>Правильно трактуя уже пройденные пути другими кораблями, Пустотный Мечтатель способен стать подобно паразиту, перемещаясь через имперские пути, не тратя слишком много сил на создание новых. После того, как психосила была манифестирована, псайкер получает информацию о уже готовых путях из системы, где находится судно, на чьем борту он находится. Если же пути не входят в радиус действия психосилы, он получает предположительное местонахождение таковых путей. Подобным образом, можно избежать лишних рисков в варп–путешествии.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "voidDreamer",
+    "subtype": "Вглядеться В Бездну",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Empyrean Hunter",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "extended",
+    "range": "PR×5 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "250 xp | Требования: PR 3, Empyrean Hunter\nДействие: Длительное Действие (10 Минут). Поддержание: Нет.\nПсихотест: W–10. Дальность: PR×5 ПЕ\nТип: Изменение, Сосредоточение\nПравильно трактуя уже пройденные пути другими кораблями, Пустотный Мечтатель способен стать подобно паразиту, перемещаясь через имперские пути, не тратя слишком много сил на создание новых. После того, как психосила была манифестирована, псайкер получает информацию о уже готовых путях из системы, где находится судно, на чьем борту он находится. Если же пути не входят в радиус действия психосилы, он получает предположительное местонахождение таковых путей. Подобным образом, можно избежать лишних рисков в варп–путешествии.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "gZNQQuErEE9xIv78",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!gZNQQuErEE9xIv78"
+}

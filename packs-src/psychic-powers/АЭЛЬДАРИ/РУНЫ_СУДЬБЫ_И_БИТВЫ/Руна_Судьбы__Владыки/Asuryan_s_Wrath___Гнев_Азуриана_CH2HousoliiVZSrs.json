@@ -1,0 +1,78 @@
+{
+  "name": "Asuryan’s Wrath / Гнев Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "WNG6KIoX06pu5hRW",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 5</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W+0.<strong> Дальность: </strong>PR×10 м</p><p><strong>Тип: </strong>Изменение (PR), Концентрация</p><p>Гнев Азуриана всегда был жесток и беспощаден к каждому, кто ощутил его на себе. И могущество Провидца способно пробудить этот гнев вновь – жестокий, но великий. Цели данной психосилы покрываются еле заметным багряным сиянием. Цель входит в контролируемую ярость, получая от нее лишь положительные бонусы, но не штрафы. Она автоматически проходит тесты против иных источников ярости, и может по своей воле выходить из ярости, игнорируя внешние условия. За каждое убийство, совершенное персонажем, он получает +1 Dmg ко всем рукопашным атакам.</p><p>Если цель сражается против врага в ярости, цель может перебрасывать все рукопашные тесты против врага, выбирая наиболее благоприятные исходы.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Владыки",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "400 xp | Требования: PR 5\nДействие: Полудействие. Поддержание: Полудействие.\nПсихотест: W+0. Дальность: PR×10 м\nТип: Изменение (PR), Концентрация\nГнев Азуриана всегда был жесток и беспощаден к каждому, кто ощутил его на себе. И могущество Провидца способно пробудить этот гнев вновь – жестокий, но великий. Цели данной психосилы покрываются еле заметным багряным сиянием. Цель входит в контролируемую ярость, получая от нее лишь положительные бонусы, но не штрафы. Она автоматически проходит тесты против иных источников ярости, и может по своей воле выходить из ярости, игнорируя внешние условия. За каждое убийство, совершенное персонажем, он получает +1 Dmg ко всем рукопашным атакам.\nЕсли цель сражается против врага в ярости, цель может перебрасывать все рукопашные тесты против врага, выбирая наиболее благоприятные исходы.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "CH2HousoliiVZSrs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!CH2HousoliiVZSrs"
+}

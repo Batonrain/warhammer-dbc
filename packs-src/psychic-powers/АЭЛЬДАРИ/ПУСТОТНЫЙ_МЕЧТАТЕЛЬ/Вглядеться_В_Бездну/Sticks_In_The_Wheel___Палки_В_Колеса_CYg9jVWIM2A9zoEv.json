@@ -1,0 +1,77 @@
+{
+  "name": "Sticks In The Wheel / Палки В Колеса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KtlagOhJ0osDE8L7",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 4, Empyrean Hunter</strong></p><p><strong>Действие: </strong>Длительное Действие (10 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W+0.<strong> Дальность: </strong>PR×5 ПЕ</p><p><strong>Тип: </strong>Изменение, Сосредоточение</p><p>Дабы помешать недругам преследовать судно, на котором он находится, Пустотный Мечтатель способен заметать за собой следы и обращать информацию врага против него же. После того как судно вышло из имматериума, псайкер может начать манифестацию этой психосилы. При успехе, псайкер заметает варп–следы в зависимости от числа успехов. В случае, если он набрал всего 1 успех, то следы становятся размытыми, но это не помешает хорошему навигатору или капитану продолжить преследование, а при 5 или больше успехов – след расстворяется в потоках имматериума, вынуждая недруга прокладывать маршрут для преследования заново, чего хватает для того, чтобы отступить еще дальше, или что–бы враг был сильно замедлен.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "voidDreamer",
+    "subtype": "Вглядеться В Бездну",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Empyrean Hunter",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "extended",
+    "range": "PR×5 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "250 xp | Требования: PR 4, Empyrean Hunter\nДействие: Длительное Действие (10 Минут). Поддержание: Нет.\nПсихотест: W+0. Дальность: PR×5 ПЕ\nТип: Изменение, Сосредоточение\nДабы помешать недругам преследовать судно, на котором он находится, Пустотный Мечтатель способен заметать за собой следы и обращать информацию врага против него же. После того как судно вышло из имматериума, псайкер может начать манифестацию этой психосилы. При успехе, псайкер заметает варп–следы в зависимости от числа успехов. В случае, если он набрал всего 1 успех, то следы становятся размытыми, но это не помешает хорошему навигатору или капитану продолжить преследование, а при 5 или больше успехов – след расстворяется в потоках имматериума, вынуждая недруга прокладывать маршрут для преследования заново, чего хватает для того, чтобы отступить еще дальше, или что–бы враг был сильно замедлен.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "CYg9jVWIM2A9zoEv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!CYg9jVWIM2A9zoEv"
+}

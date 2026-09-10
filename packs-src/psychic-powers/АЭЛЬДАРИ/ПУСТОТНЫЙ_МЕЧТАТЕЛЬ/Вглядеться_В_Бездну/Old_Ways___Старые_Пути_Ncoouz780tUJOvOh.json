@@ -1,0 +1,77 @@
+{
+  "name": "Old Ways / Старые Пути",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KtlagOhJ0osDE8L7",
+  "system": {
+    "description": "<p><strong>100 xp | Требования: PR 1</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W+40/Forbidden Lore (SercamBelach)+40.<strong> Дальность: </strong>PR×5 ПЕ</p><p><strong>Тип: </strong>Изменение</p><p>Помимо аварийного способа – использования варп–перелетов, Пустотные Мечтатели способны к более безопасному варианту, а именно к активации Врат Паутины. Хотя обычно это могут делать и капитаны кораблей, но власть Пустотных Мечтателей над своим разумом делает их более благоприятным вариантом. Для использования данной психосилы, персонаж<strong> обязан </strong>быть эльдаром – душевно, физически и интеллектуально. Псайкер получает возможность кратковременно открывать врата в Паутину, если те, конечно, работают.</p>",
+    "notes": "Второй режим теста — Forbidden Lore (SercamBelach)+40 — не заполнен (testChar принимает только характеристики/psyniscience).",
+    "cost": 100,
+    "discipline": "voidDreamer",
+    "subtype": "Вглядеться В Бездну",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "requirement": "PR 1",
+    "testChar": "wp",
+    "testMod": 40,
+    "action": "full",
+    "range": "PR×5 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "100 xp | Требования: PR 1\nДействие: Полное действие. Поддержание: Нет.\nПсихотест: W+40/Forbidden Lore (SercamBelach)+40. Дальность: PR×5 ПЕ\nТип: Изменение\nПомимо аварийного способа – использования варп–перелетов, Пустотные Мечтатели способны к более безопасному варианту, а именно к активации Врат Паутины. Хотя обычно это могут делать и капитаны кораблей, но власть Пустотных Мечтателей над своим разумом делает их более благоприятным вариантом. Для использования данной психосилы, персонаж обязан быть эльдаром – душевно, физически и интеллектуально. Псайкер получает возможность кратковременно открывать врата в Паутину, если те, конечно, работают.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Ncoouz780tUJOvOh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Ncoouz780tUJOvOh"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "A Call to Battle / Воззвание к Битве",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "bbGi7FvHL0CFAKE4",
+  "system": {
+    "description": "<p><strong>450 xp | Требования: PR 6, Ghost Warrior</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–30. <strong>Дальность:</strong> PR×10 м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Провидец Духов способен разогнать свои конструкты, пожертвовав их психической мощью и устойчивостью, дабы дать противникам последний отпор, либо же наоборот, напасть на противников с еще большей силой, дабы прорвать их оборону. Псайкер выбирает определенное кол–во психокостяных конструктов, которые получают бонус к WS, BS, A и S, равный их ½ W  (окр.▲), а также они получают дополнительное ОД и Реакцию в ход, а их трейт Regeneration увеличивается на T.b. За каждый раунд в этом режиме, конструкт получает 1 неснижаемую усталость, и если у него накопится T.b+W.b усталости, то он выйдет из строя на 24 часа. Усталость снимается только в том случае, если конструкт находится во сне – за 6 часов сна снимается 1 усталость. За каждый непоглощенный урон от психосил, демонического оружия, оружия со свойством Warp Weapon или от последователей хаоса, конструкт получает 1 Cor.</p>",
+    "notes": "",
+    "cost": 450,
+    "discipline": "spiritSeer",
+    "subtype": "Сотворение Бездушных",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Ghost Warrior",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "450 xp | Требования: PR 6, Ghost Warrior\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–30. Дальность: PR×10 м\nТип: Изменение (PR)\nПровидец Духов способен разогнать свои конструкты, пожертвовав их психической мощью и устойчивостью, дабы дать противникам последний отпор, либо же наоборот, напасть на противников с еще большей силой, дабы прорвать их оборону. Псайкер выбирает определенное кол–во психокостяных конструктов, которые получают бонус к WS, BS, A и S, равный их ½ W  (окр.▲), а также они получают дополнительное ОД и Реакцию в ход, а их трейт Regeneration увеличивается на T.b. За каждый раунд в этом режиме, конструкт получает 1 неснижаемую усталость, и если у него накопится T.b+W.b усталости, то он выйдет из строя на 24 часа. Усталость снимается только в том случае, если конструкт находится во сне – за 6 часов сна снимается 1 усталость. За каждый непоглощенный урон от психосил, демонического оружия, оружия со свойством Warp Weapon или от последователей хаоса, конструкт получает 1 Cor.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "VA5I6ZUAgQXgR8qS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!VA5I6ZUAgQXgR8qS"
+}

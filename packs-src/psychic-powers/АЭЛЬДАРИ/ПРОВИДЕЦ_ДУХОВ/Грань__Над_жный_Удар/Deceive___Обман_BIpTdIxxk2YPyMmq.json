@@ -1,0 +1,75 @@
+{
+  "name": "Deceive / Обман",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "G0RNZVEx2LfpVdhN",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Emergency Raising</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PRx×20</p><p><strong>Тип: </strong>Грань, Изменение (PR),  Психический Клинок (PR)</p><p>Вместо каких–либо серьезных техник или усилия боевых навыков, Духовидец может направить свои умения дабы превратить психокостяных конструктов в воинов хитрости, но не силы или обороны. Цели этой психосилы могут менять стойки и хваты неограниченное количество раз, даже после совершения атаки. Совершая Финт или Давление, конструкт получает бонус +20, а противник штраф –10 на сопротивление. Персонаж удваивает Rng своего рукопашного оружия в расчете свойств стойки Частокол, а также может применять ее используя оружия с типом Меч, если он имеет как основной Двуручный хват и использует его, а не какой–либо другой хват.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "spiritSeer",
+    "subtype": "Грань: Надёжный Удар",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Emergency Raising",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PRx×20",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 3, Emergency Raising\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PRx×20\nТип: Грань, Изменение (PR),  Психический Клинок (PR)\nВместо каких–либо серьезных техник или усилия боевых навыков, Духовидец может направить свои умения дабы превратить психокостяных конструктов в воинов хитрости, но не силы или обороны. Цели этой психосилы могут менять стойки и хваты неограниченное количество раз, даже после совершения атаки. Совершая Финт или Давление, конструкт получает бонус +20, а противник штраф –10 на сопротивление. Персонаж удваивает Rng своего рукопашного оружия в расчете свойств стойки Частокол, а также может применять ее используя оружия с типом Меч, если он имеет как основной Двуручный хват и использует его, а не какой–либо другой хват.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "BIpTdIxxk2YPyMmq",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!BIpTdIxxk2YPyMmq"
+}

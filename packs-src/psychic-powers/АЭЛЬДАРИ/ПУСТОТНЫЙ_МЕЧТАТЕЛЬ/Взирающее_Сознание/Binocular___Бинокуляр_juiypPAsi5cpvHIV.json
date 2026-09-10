@@ -1,0 +1,77 @@
+{
+  "name": "Binocular / Бинокуляр",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "iCRCgExC8yjbKuGA",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 5, All–Seeing Eye</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–20.<strong> Дальность: </strong>Звездная Система</p><p><strong>Тип: </strong>Сосредоточение</p><p>В отличии от разнонаправленного осмотра слабо обученных Пустотных Мечтателей, профессионалы своего дела знают, как детально осмотреть любой объект в системе, дабы знать, что от него можно ожидать. Псайкер повторяет действие психосилы All–Seeing Eye, однако, она действует в узком конусе 30°. Он получает бонус +PR×5 на все тесты авгурии, а также может детально осматривать объекты, попадающие в действие психосилы. Таким образом он может узнать примерную численность жителей на станции, вооружение станции, слой брони и так далее.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "voidDreamer",
+    "subtype": "Взирающее Сознание",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, All–Seeing Eye",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "extended",
+    "range": "Звездная Система",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "400 xp | Требования: PR 5, All–Seeing Eye\nДействие: Длительное Действие (30 Минут). Поддержание: Полудействие.\nПсихотест: W–20. Дальность: Звездная Система\nТип: Сосредоточение\nВ отличии от разнонаправленного осмотра слабо обученных Пустотных Мечтателей, профессионалы своего дела знают, как детально осмотреть любой объект в системе, дабы знать, что от него можно ожидать. Псайкер повторяет действие психосилы All–Seeing Eye, однако, она действует в узком конусе 30°. Он получает бонус +PR×5 на все тесты авгурии, а также может детально осматривать объекты, попадающие в действие психосилы. Таким образом он может узнать примерную численность жителей на станции, вооружение станции, слой брони и так далее.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "juiypPAsi5cpvHIV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!juiypPAsi5cpvHIV"
+}

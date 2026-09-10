@@ -1,0 +1,75 @@
+{
+  "name": "Iannthu / Множественная Армия",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "2wNOvpPihGjprloo",
+  "system": {
+    "description": "<p><strong>1250 xp | Требования: PR 13, Executioner</strong></p><p><strong>Действие: </strong>Длительное Действие (4). <strong>Поддержание:</strong> Полное действие.</p><p><strong>Психотест:</strong> W–50. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Длительное (PR), Призыв</p><p>Немногие Варлоки способны создавать множество копий самого себя – и еще меньше способны это сделать за треть минуты прямо на поле битвы. Псайкер, манифестировавший эту психосилу, лишается возможности получать дополнительные ОД пока психосила действует. Пока психосила поддерживается, псайкер вначале каждого своего хода получает бесплатное Полное Движение. Эта психосила работает как психосила Палач, вызывая вместо 1–ой копии – W.b копий. Эти копии подчиняются таким же правилам, как и при обычной психосиле Палач.</p><p>Как только эта психосила развеивается, псайкер получает предпоследнюю усталость, снимаемую только отдыхом, а также 3d10 урона в W, I и F от невероятного ментального перенапряжения.</p>",
+    "notes": "",
+    "cost": 1250,
+    "discipline": "warlock",
+    "subtype": "Палач",
+    "powerType": "duration",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 13,
+    "requirement": "PR 13, Executioner",
+    "testChar": "wp",
+    "testMod": -50,
+    "action": "extended",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "full",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "1250 xp | Требования: PR 13, Executioner\nДействие: Длительное Действие (4). Поддержание: Полное действие.\nПсихотест: W–50. Дальность: Сам\nТип: Длительное (PR), Призыв\nНемногие Варлоки способны создавать множество копий самого себя – и еще меньше способны это сделать за треть минуты прямо на поле битвы. Псайкер, манифестировавший эту психосилу, лишается возможности получать дополнительные ОД пока психосила действует. Пока психосила поддерживается, псайкер вначале каждого своего хода получает бесплатное Полное Движение. Эта психосила работает как психосила Палач, вызывая вместо 1–ой копии – W.b копий. Эти копии подчиняются таким же правилам, как и при обычной психосиле Палач.\nКак только эта психосила развеивается, псайкер получает предпоследнюю усталость, снимаемую только отдыхом, а также 3d10 урона в W, I и F от невероятного ментального перенапряжения.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "FoiVoP1n9wDKcMEw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FoiVoP1n9wDKcMEw"
+}

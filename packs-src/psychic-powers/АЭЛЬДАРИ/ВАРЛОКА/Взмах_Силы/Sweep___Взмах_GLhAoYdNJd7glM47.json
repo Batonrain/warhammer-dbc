@@ -1,0 +1,75 @@
+{
+  "name": "Sweep / Взмах",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "JW6ogf82lIZBt0E2",
+  "system": {
+    "description": "<p><strong>150 xp | Требования: PR 2</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W+20. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Концентрируя свою психическую силу в клинке, Варлок способен следующей атакой накрыть сразу нескольких врагов, поражая их волной чистой энергии варпа. Следующая атака рукопашным психосиловым оружием, попавшим под действие этой психосилы получает свойство Spray с радиусом действия 15 метров и конусом 90°. Если цели инициализируют любые соревновательные тесты, персонаж может как участвовать в них по отдельности в каждом (Если это тратит Реакцию или что–то иное, то персонаж тратит лишь 1 на всех целей), или отказываться от тестов против определенных целей. Атака получает свойство Devastating (+3) за каждые 10 магнитуды орды.</p><p>Использование данной психосилы с бPR 6 и выше позволяет добавить Flush к Spray.</p>",
+    "notes": "",
+    "cost": 150,
+    "discipline": "warlock",
+    "subtype": "Взмах Силы",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 20,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "150 xp | Требования: PR 2\nДействие: Полудействие. Поддержание: Нет.\nПсихотест: W+20. Дальность: Сам\nТип: Психический Клинок\nКонцентрируя свою психическую силу в клинке, Варлок способен следующей атакой накрыть сразу нескольких врагов, поражая их волной чистой энергии варпа. Следующая атака рукопашным психосиловым оружием, попавшим под действие этой психосилы получает свойство Spray с радиусом действия 15 метров и конусом 90°. Если цели инициализируют любые соревновательные тесты, персонаж может как участвовать в них по отдельности в каждом (Если это тратит Реакцию или что–то иное, то персонаж тратит лишь 1 на всех целей), или отказываться от тестов против определенных целей. Атака получает свойство Devastating (+3) за каждые 10 магнитуды орды.\nИспользование данной психосилы с бPR 6 и выше позволяет добавить Flush к Spray.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "GLhAoYdNJd7glM47",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!GLhAoYdNJd7glM47"
+}
