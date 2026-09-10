@@ -32,6 +32,9 @@ import { tokensWithinRadius } from "../rules/aoe-target.mjs";
 import { changeActorInfamy, actorInfamyValue, actorInfamyMax } from "./infamy-points.mjs";
 import { startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo }
   from "../combat/eye-of-challenge.mjs";
+import { canSpendActionPoints, spendActionPoints } from "../combat/action-economy.mjs";
+import { nearestVisiblePsyker } from "../rules/the-hunter.mjs";
+import { defaultSpawnHunterHoundFn } from "../combat/the-hunter.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -66,6 +69,16 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    (combat/eye-of-challenge.mjs) — срок Ока Вызова. Скрипты писали флаг и
  *    «+60» руками, а штраф считает модуль: срок жил в двух местах, и правка
  *    минуты в одном из них тесты бы подтвердили, а игра — нет (wdbc-lhd).
+ *  - `canSpendActionPoints`/`spendActionPoints` (combat/action-economy.mjs) —
+ *    цена в ОД отдельно от цены в пуле Бесчестия/Судьбы/Боли (kind:"script"
+ *    несёт только ОДИН capabilityCostPool на запись, а Загонщик книжно
+ *    платит ОБА — 2 ОД «полное действие» И 1 Очко Бесчестия, wdbc-1rno).
+ *  - `nearestVisiblePsyker` (rules/the-hunter.mjs) — «в пределах видимости
+ *    псайкер» (Загонщик, стр. 453-460), геометрия та же, что у Иконы
+ *    Богохульства/Красного Солнца (dальность+сектор без стен).
+ *  - `defaultSpawnHunterHoundFn` (combat/the-hunter.mjs) — призыв Гончей
+ *    Плоти (ГМ напрямую/сокет-релей, Бестиарий скрыт от игрока, тот же
+ *    приём, что defaultSpawnDemonFn).
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -87,6 +100,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "incrementThrottleCount", "tokensWithinRadius",
     "changeActorInfamy", "actorInfamyValue", "actorInfamyMax",
     "startEyeOfChallenge", "clearEyeOfChallenge", "eyeOfChallengeInfo",
+    "canSpendActionPoints", "spendActionPoints", "nearestVisiblePsyker", "defaultSpawnHunterHoundFn",
     ...extraNames,
     code
   );
@@ -97,6 +111,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     incrementThrottleCount, tokensWithinRadius,
     changeActorInfamy, actorInfamyValue, actorInfamyMax,
     startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo,
+    canSpendActionPoints, spendActionPoints, nearestVisiblePsyker, defaultSpawnHunterHoundFn,
     ...extraNames.map(k => extra[k])
   );
 }

@@ -15,7 +15,10 @@
 //  Раны/состояния (тот же принцип, что у выдачи Миньона, apps/minion-creator.mjs).
 // ════════════════════════════════════════════════════════════════════════
 
-import { currentScene } from "../constants/scene-nexus.mjs";
+import { currentScene, readVeilForScene } from "../constants/scene-nexus.mjs";
+import { veilTotal } from "../constants/veil.mjs";
+import { destabilizeDurationSeconds } from "../rules/demon-destabilize.mjs";
+import { startDestabilizeCountdown } from "../combat/demon-destabilize.mjs";
 
 const BESTIARY_PACK = "warhammer-dbc.bestiary";
 const TRAITS_PACK = "warhammer-dbc.traits";
@@ -71,11 +74,27 @@ export async function findBestiaryActor(name) {
  * `asMinion` (wdbc-1rno, Инфернальный Оруженосец/Рыцарь Бога — «контролировать
  * как Миньона без траты слотов Миньонов»): созданный демон сразу получает
  * system.masterUuid = ritualistUuid, попадая в панель МИНЬОНЫ вызывателя
- * (module/sheets/tabs/minions-panel.mjs) без единого купленного Таланта-слота.
- * Без ritualistUuid ставить некому — молча игнорируется, не бросает.
+ * (module/sheets/tabs/minions-panel.mjs) без единого купленного Таланта-слота,
+ * и флаг armigerBound (module/rules/dominator.mjs::isOwnArmiger — автопобеда
+ * во Владычестве против СВОЕГО демона, общий для обоих Даров). Без
+ * ritualistUuid ставить некому — молча игнорируется, не бросает.
+ *
+ * `veilThinner` — ТОЛЬКО Инфернальный Оруженосец («считает Завесу на Cor.b
+ * персонажа тоньше», wdbc-1rno шаг F): грант Черты «Тоньше Завесы», НЕ у
+ * Рыцаря Бога — тот же asMinion, но книга не даёт ему этой строки, поэтому
+ * это отдельный флаг, а не часть asMinion.
+ *
+ * `startDestabilize` — ТОЛЬКО Рыцарь Бога (не Оруженосец — тот бессрочный
+ * слуга, книга о дестабилизации для него не пишет вовсе): призванный демон
+ * в Истинной Форме нестабилен, книга даёт ему срок «1d10+2×W.b−Inf.b
+ * (мин. 2) Раундов» до изгнания в Варп, растущий по ступеням истончения
+ * Завесы (module/rules/demon-destabilize.mjs). W.b/Inf.b берутся с только
+ * что созданного Актора демона (тех же полей, что читает module/apps/
+ * armiger-weapon.mjs у demonInf), Завеса — с ТЕКУЩЕЙ сцены (та же функция,
+ * что module/apps/ritual-cast.mjs и module/sheets/daemon-sheet.mjs).
  * @returns {Promise<{ok:boolean, reason?:string, actorName?:string, actorUuid?:string}>}
  */
-export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = false } = {}) {
+export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = false, veilThinner = false, startDestabilize = false } = {}) {
   const src = await findBestiaryActor(name);
   if (!src) return { ok: false, reason: `Демон «${name}» не найден в Бестиарии — разместите токен вручную.` };
 
@@ -91,13 +110,30 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
     // читает его для автопобеды во Владычестве против своего же Оруженосца
     // (шаг E) — не любой Миньон, а конкретно этот путь связывания.
     data.flags = { ...(data.flags ?? {}), "warhammer-dbc": { ...(data.flags?.["warhammer-dbc"] ?? {}), armigerBound: true } };
-    // Шаг F: «считает Завесу на Cor.b персонажа тоньше» — Черта, а не сразу
-    // готовый эффект, ровно так же, как остальные выдачи Конструктора.
-    const traitData = await veilThinnerTraitData();
-    if (traitData) data.items = [...(data.items ?? []), traitData];
+    // Шаг F (только Инфернальный Оруженосец): «считает Завесу на Cor.b
+    // персонажа тоньше» — Черта, а не сразу готовый эффект, ровно так же,
+    // как остальные выдачи Конструктора.
+    if (veilThinner) {
+      const traitData = await veilThinnerTraitData();
+      if (traitData) data.items = [...(data.items ?? []), traitData];
+    }
   }
   const actor = await Actor.create(data);
   if (!actor) return { ok: false, reason: "Не удалось создать Актора демона." };
+
+  // wdbc-1rno, Рыцарь Бога: срок дестабилизации Истинной Формы — только
+  // здесь, не у Оруженосца (см. докстринг выше). W.b/Inf.b — уже готовые
+  // числа на только что созданном Акторе (бестиарные статблоки хранят
+  // characteristics.*.bonus напрямую, не производным полем).
+  if (startDestabilize) {
+    const wb = Number(actor.system?.characteristics?.wp?.bonus) || 0;
+    const infB = Number(actor.system?.characteristics?.inf?.bonus) || 0;
+    const roll = await new Roll("1d10").evaluate();
+    const rollTotal = roll.total + 2 * wb - infB;
+    const veil = veilTotal(readVeilForScene(scene));
+    const duration = destabilizeDurationSeconds(rollTotal, veil, { minRoll: 2 });
+    await startDestabilizeCountdown(actor, game.time?.worldTime ?? 0, duration);
+  }
 
   let x = scene.dimensions?.width ? scene.dimensions.width / 2 : 1000;
   let y = scene.dimensions?.height ? scene.dimensions.height / 2 : 1000;
@@ -120,10 +156,10 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
  * action:"summonDemon"). Не бросает: результат уходит уведомлением ГМу
  * (нет активного ГМа — предупреждение игроку, без токена).
  */
-export async function defaultSpawnDemonFn(name, ritualistUuid, { asMinion = false } = {}) {
+export async function defaultSpawnDemonFn(name, ritualistUuid, { asMinion = false, veilThinner = false, startDestabilize = false } = {}) {
   if (!name) return;
   if (game.user?.isGM) {
-    const res = await spawnDemonOnScene(name, ritualistUuid, { asMinion });
+    const res = await spawnDemonOnScene(name, ritualistUuid, { asMinion, veilThinner, startDestabilize });
     if (!res.ok) ui.notifications?.warn(res.reason);
     return;
   }
@@ -132,5 +168,5 @@ export async function defaultSpawnDemonFn(name, ritualistUuid, { asMinion = fals
     return;
   }
   game.socket?.emit("system.warhammer-dbc",
-    { action: "summonDemon", userId: game.user?.id, name, ritualistUuid, asMinion });
+    { action: "summonDemon", userId: game.user?.id, name, ritualistUuid, asMinion, veilThinner, startDestabilize });
 }

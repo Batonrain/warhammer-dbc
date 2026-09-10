@@ -26,7 +26,8 @@
     "noTest": true,
     "asMinion": true,
     "demonName": "Кровопускатель",
-    "demonInf": 0
+    "demonInf": 0,
+    "veilThinner": true
   },
   "_id": "ArmigerKhorneQ1a",
   "effects": [],

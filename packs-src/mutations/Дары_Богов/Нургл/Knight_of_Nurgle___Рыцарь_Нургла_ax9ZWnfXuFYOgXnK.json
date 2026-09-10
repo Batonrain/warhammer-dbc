@@ -124,6 +124,32 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "knightOfNurgle-ritual",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.KnightNurgleR2bx",
+              "equipSourceName": "Summon the Bound Mount / Призыв Связанного Скакуна (Нургл)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "knightOfNurgle-ritual-mount",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.KnightNuMountS2b",
+              "equipSourceName": "Bind the Mount into a Vehicle / Вселение Скакуна в Технику (Нургл)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

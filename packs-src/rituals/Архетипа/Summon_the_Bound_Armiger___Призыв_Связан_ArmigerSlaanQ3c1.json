@@ -26,7 +26,8 @@
     "noTest": true,
     "asMinion": true,
     "demonName": "Демонетка",
-    "demonInf": 0
+    "demonInf": 0,
+    "veilThinner": true
   },
   "_id": "ArmigerSlaanQ3c1",
   "effects": [],

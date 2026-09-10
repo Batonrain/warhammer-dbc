@@ -31,6 +31,7 @@ import { veilIcon } from "../constants/veil-icons.mjs";
 import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { defaultSpawnDemonFn } from "./demon-summon.mjs";
 import { defaultBindArmigerWeaponFn } from "./armiger-weapon.mjs";
+import { defaultBindDemonMountFn } from "./demon-mount.mjs";
 import { isHerdSpiritsRitual } from "./herd-spirits-summon.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { hasDominator, isOwnArmiger } from "../rules/dominator.mjs";
@@ -283,7 +284,7 @@ async function ritualFailure(R, failures, prMax, allRolls, veilShiftFn) {
 export async function castRitual(R, actor, {
   item = null, confirmUnmet = confirmUnmetRequirements, veilShiftFn = defaultVeilShiftFn,
   spawnDemonFn = defaultSpawnDemonFn, bindWeaponFn = defaultBindArmigerWeaponFn,
-  isOwnArmigerFn = isOwnArmiger
+  bindMountFn = defaultBindDemonMountFn, isOwnArmigerFn = isOwnArmiger
 } = {}) {
   if (!actor) { ui.notifications?.warn("Ритуал: не выбран Ритуалист."); return null; }
   const d = ritualThreshold(R, actor, item);
@@ -295,7 +296,7 @@ export async function castRitual(R, actor, {
   // ритуалом, НЕ требующим тестов». Требования к ритуалисту уже проверены/
   // подтверждены выше (ritualThreshold/confirmUnmet) — noTest снимает только
   // сам бросок и Порог, не право персонажа провести ритуал вообще.
-  if (item?.system?.noTest) return castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn });
+  if (item?.system?.noTest) return castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn, bindMountFn });
   // wdbc-1rno, шаг E: «автоматически побеждает во всех тестах Владычества
   // против него [своего Оруженосца]» — не свойство ЭТОГО предмета-ритуала
   // (Владычество разыгрывается обычными книжными ритуалами, см. Rite of
@@ -380,13 +381,15 @@ export async function castRitual(R, actor, {
  * ритуала называет его отдельно, механикой не считается).
  * @returns {Promise<{success:true, deg:1, threshold:null, roll:null}>}
  */
-async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn }) {
+async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn, bindMountFn }) {
   // Токен демона — та же логика, что в основном пути: только "summon" и
   // только если ритуалист (тут — сам предмет) назвал демона. asMinion
   // (Инфернальный Оруженосец/Рыцарь Бога — «без траты слотов Миньонов»)
-  // проставляет system.masterUuid созданному демону.
-  if (R.type === "summon" && R.demonName && !R.asWeapon) {
-    await spawnDemonFn(R.demonName, actor.uuid, { asMinion: !!R.asMinion });
+  // проставляет system.masterUuid созданному демону. asWeapon/asMount —
+  // третий/второй книжные исходы того же ритуала (ниже) — демон НЕ встаёт
+  // отдельным Актором-Миньоном вовсе, поэтому оба исключены здесь.
+  if (R.type === "summon" && R.demonName && !R.asWeapon && !R.asMount) {
+    await spawnDemonFn(R.demonName, actor.uuid, { asMinion: !!R.asMinion, veilThinner: !!R.veilThinner, startDestabilize: !!R.startDestabilize });
   }
   // asWeapon (шаг D той же серии) — тот же ритуал, второй книжный исход:
   // демон вселяется в оружие Ритуалиста, а не встаёт Миньоном. R.weaponId —
@@ -403,8 +406,23 @@ async function castNoTestRitual(R, actor, { spawnDemonFn, bindWeaponFn }) {
       weaponHtml = `<div class="roll-threshold" style="font-size:0.85em;">Оружие для вселения не выбрано — Оруженосец остаётся в Истинной Форме.</div>`;
     }
   }
+  // asMount (wdbc-1rno, «Рыцарь Бога») — третий книжный исход: демон
+  // вселяется в УЖЕ ИМЕЮЩЕГОСЯ скакуна/технику персонажа, не встаёт новым
+  // Актором. R.mountUuid — из диалога (обычно текущий скакун с панели
+  // «ВЕРХОМ»); нет выбранного/найденного — вселять некуда, тем же приёмом,
+  // что asWeapon выше.
+  let mountHtml = "";
+  if (R.type === "summon" && R.demonName && R.asMount) {
+    const mountUuid = R.mountUuid || actor.system?.mount?.uuid || "";
+    if (mountUuid) {
+      const res = await bindMountFn(mountUuid, actor, R.demonName, R.demonGod);
+      mountHtml = `<div class="roll-threshold" style="font-size:0.85em;">${esc(R.demonName)} вселён в скакуна/технику${res?.mountName ? `: <b>${esc(res.mountName)}</b>` : ""}${res?.ok === false ? ` — ${esc(res.reason || "не осквернено")}` : ""}</div>`;
+    } else {
+      mountHtml = `<div class="roll-threshold" style="font-size:0.85em;">Скакун/техника не выбраны — ${esc(R.demonName)} остаётся в Истинной Форме.</div>`;
+    }
+  }
   const demonHtml = R.demonName
-    ? `<div class="roll-threshold" style="font-size:0.85em;">Демон: <b>${esc(R.demonName)}</b>${R.type === "summon" && !R.asWeapon ? " — токен размещён на сцене." : ""}${R.asMinion && !R.asWeapon ? " Привязан Миньоном без слота." : ""}</div>${weaponHtml}`
+    ? `<div class="roll-threshold" style="font-size:0.85em;">Демон: <b>${esc(R.demonName)}</b>${R.type === "summon" && !R.asWeapon && !R.asMount ? " — токен размещён на сцене." : ""}${R.asMinion && !R.asWeapon && !R.asMount ? " Привязан Миньоном без слота." : ""}</div>${weaponHtml}${mountHtml}`
     : "";
 
   await postTestCard(actor, testCardHtml({

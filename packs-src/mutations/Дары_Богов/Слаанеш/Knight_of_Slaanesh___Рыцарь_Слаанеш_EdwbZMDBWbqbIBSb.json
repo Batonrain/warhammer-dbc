@@ -124,6 +124,32 @@
                 "negate": false,
                 "conditions": []
               }
+            },
+            {
+              "id": "knightOfSlaanesh-ritual",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.KnightSlaanR3c1x",
+              "equipSourceName": "Summon the Bound Mount / Призыв Связанного Скакуна (Слаанеш)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "knightOfSlaanesh-ritual-mount",
+              "kind": "equipment",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.KnightSlMountS3c",
+              "equipSourceName": "Bind the Mount into a Vehicle / Вселение Скакуна в Технику (Слаанеш)",
+              "label": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         },

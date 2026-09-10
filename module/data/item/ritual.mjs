@@ -59,12 +59,35 @@ export class RitualData extends foundry.abstract.TypeDataModel {
       // Оруженосец — «может тем же ритуалом призвать его в своё оружие»).
       // Отдельный предмет-ритуал на мутацию (не флаг выбора у одного), т.к.
       // диалогу нужно по-разному собирать форму (выбор оружия вместо ничего).
-      // demonGod — только для asWeapon: бог-сосуд для system.daemonWeapon.god
-      // и подписи в карточке (module/apps/armiger-weapon.mjs); у asMinion не
-      // нужен вовсе (Миньон не спрашивает Бога демона нигде).
+      // demonGod — только для asWeapon/asMount: бог-сосуд для system.
+      // daemonWeapon.god / flags.mountPossession.god и подписи в карточке
+      // (module/apps/armiger-weapon.mjs, module/apps/demon-mount.mjs); у
+      // asMinion не нужен вовсе (Миньон не спрашивает Бога демона нигде).
+      // veilThinner — ТОЛЬКО у Инфернального Оруженосца («считает Завесу на
+      // Cor.b персонажа тоньше», шаг F): грант demon-summon.mjs::
+      // veilThinnerTraitData. У Рыцаря Бога тот же asMinion, но книга не даёт
+      // ему этой строки — поэтому отдельный флаг, не часть asMinion.
+      // asMount — третий исход (wdbc-1rno, «Рыцарь Бога»): «...может тем же
+      // ритуалом вселить [демона-скакуна] в ездовое животное или персональный
+      // транспорт» — не отдельный новый Актор (как asMinion), не предмет на
+      // Ритуалисте (как asWeapon), а фиксированные книжные бонусы поверх УЖЕ
+      // имеющегося скакуна/машины персонажа (module/apps/demon-mount.mjs::
+      // bindDemonMount), выбранного диалогом (обычно — текущий скакун с
+      // панели «ВЕРХОМ», actor.system.mount.uuid). Ритуал без теста — книга
+      // не даёт оснований для случайной таблицы Осквернения (constants/
+      // mount-possession.mjs), бонусы у каждого Бога фиксированы явным числом.
+      // startDestabilize — ТОЛЬКО у Рыцаря Бога (не у Оруженосца, у него книга
+      // о дестабилизации не пишет вовсе): призванный в Истинную Форму демон
+      // получает реальный тикающий срок дестабилизации (module/rules/
+      // demon-destabilize.mjs::destabilizeDurationSeconds, module/combat/
+      // demon-destabilize.mjs::startDestabilizeCountdown), который стоит,
+      // пока Хозяин ездит на нём верхом.
       noTest:         new BooleanField({ initial: false, label: "Без теста (автоуспех)" }),
       asMinion:       new BooleanField({ initial: false, label: "Призванный — Миньон без слота" }),
       asWeapon:       new BooleanField({ initial: false, label: "Призванный — в оружие (Демоническое Оружие)" }),
+      asMount:        new BooleanField({ initial: false, label: "Призванный — в скакуна/технику (одержимость)" }),
+      veilThinner:    new BooleanField({ initial: false, label: "Демон считает Завесу тоньше на Cor.b Хозяина" }),
+      startDestabilize: new BooleanField({ initial: false, label: "Запускает срок дестабилизации демона" }),
       demonName:      new StringField({ initial: "", label: "Демон (фиксированный)" }),
       demonInf:       num("Inf демона (фиксированный)"),
       demonGod:       new StringField({ initial: "", label: "Бог демона (для asWeapon)" }),

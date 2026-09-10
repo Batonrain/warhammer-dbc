@@ -26,7 +26,8 @@
     "noTest": true,
     "asMinion": true,
     "demonName": "Чумонос",
-    "demonInf": 0
+    "demonInf": 0,
+    "veilThinner": true
   },
   "_id": "ArmigerNurgleQ2b",
   "effects": [],

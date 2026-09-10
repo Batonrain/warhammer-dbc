@@ -26,7 +26,8 @@
     "noTest": true,
     "asMinion": true,
     "demonName": "Розовый Ужас",
-    "demonInf": 0
+    "demonInf": 0,
+    "veilThinner": true
   },
   "_id": "ArmigerTzeenQ4d2",
   "effects": [],

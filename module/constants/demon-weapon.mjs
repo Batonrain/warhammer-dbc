@@ -89,6 +89,19 @@ export function addFlatDamage(dmg, n) {
   return s ? `${s}+${n}` : `+${n}`;
 }
 
+// Прибавить кубик к строке урона: "1d10+4" → "2d10+4" (тот же счётчик кубика,
+// без домысливания). Нужна Рыцарю Кхорна (module/apps/demon-mount.mjs,
+// wdbc-1rno): «доп. кубик урона на рукопашные атаки» одержимого скакуна/
+// машины — не плоский +N, как у DEMON_WEAPON_COMMON, а именно кубик. Формулу
+// без явного «XdY» в начале не трогает (нечего бить) — возвращает как есть.
+export function addExtraDamageDie(dmg) {
+  const s = String(dmg || "").trim();
+  const m = s.match(/^(\d+)d(\d+)(.*)$/i);
+  if (!m) return s;
+  const count = parseInt(m[1], 10) || 1;
+  return `${count + 1}d${m[2]}${m[3]}`;
+}
+
 // Общие свойства демон-оружия (авто при осквернении).
 export const DEMON_WEAPON_COMMON = [
   "+W.b демона к Dmg и Pen оружия.",
