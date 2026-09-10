@@ -100,9 +100,16 @@ const TYPES = {
     defaults: {
       description: "", notes: "", category: "mechanicus", quality: "common",
       effect: "", installed: "", linkedWeapon: "", bookSource: "",
+      // Редкость (wdbc-ukpu, шаг 1б) — у Best.Q биоимпланта каждый доп.
+      // эффект сверх первого поднимает её на 1; заполнение по книге и
+      // сам диалог выбора остаются следующим шагом.
+      availability: 0,
       // Варианты бонусного эффекта Best.Q (wdbc-ukpu) — у обычного импланта
       // пусто, заполнены только 79 биоимплантов Друкхари.
       bestQualityEffects: [],
+      // Итог выбора игрока (wdbc-ukpu, шаг 3) — пусто, пока выбор не сделан
+      // (apps/implant-bestq-choice.mjs).
+      chosenEffects: [],
       effects: {
         charBonuses: [], charValueBonuses: [], armourAll: 0,
         apHead: 0, apBody: 0, apArms: 0, apLegs: 0,

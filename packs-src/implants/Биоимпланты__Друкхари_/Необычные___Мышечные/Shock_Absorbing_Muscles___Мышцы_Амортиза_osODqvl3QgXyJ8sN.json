@@ -55,7 +55,8 @@
         "label": "Амортизирующий удар",
         "note": "1/день при успешной рукопашной цель T−20 или сбита с ног и оглушена 1 раунд"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "yBiDuo3FMEuOjtsV",
   "_id": "osODqvl3QgXyJ8sN",

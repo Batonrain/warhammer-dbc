@@ -41,6 +41,13 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
       installed:     new StringField({ initial: "", label: "Куда установлен" }),
       linkedWeapon:  new StringField({ initial: "", label: "Связанное оружие" }),
       bookSource:    new StringField({ initial: "", label: "Книга-источник" }),
+      // Редкость (wdbc-ukpu, шаг 1б — решение владельца 07.09.2026): у Best.Q
+      // биоимпланта каждый дополнительный эффект сверх первого поднимает её
+      // на 1 (книга: «Редкость Best.Q-<импланта> повышается на 1 за каждый
+      // дополнительный эффект»). Без этого поля «+1 к Редкости» было нечему
+      // прибавлять — то же поле и тот же общий .availability-select
+      // обработчик (item-sheet.mjs), что уже несёт weapon/armor/ammunition.
+      availability:  new NumberField({ initial: 0, integer: true, nullable: false, label: "Доступность" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
       // Варианты бонусного эффекта качества Best.Q (wdbc-ukpu). Книга Аэльдари:
       // Ответвления, «АРСЕНАЛ ДРУКХАРИ»: Best.Q-биоимплант даёт один эффект на
@@ -54,6 +61,18 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
         label: new StringField({ initial: "", label: "Название" }),
         note:  new StringField({ initial: "", label: "Пояснение" })
       }), { label: "Варианты эффекта Best.Q" }),
+      // Итог выбора игрока (wdbc-ukpu, шаг 3): какие варианты bestQualityEffects
+      // фактически взяты на ЭТОМ экземпляре — включая повторы одного и того же
+      // варианта (книга у руки-хищника прямо разрешает взять один тип дважды,
+      // правило распространено на весь Best.Q арсенал). Пусто — значит выбор
+      // ещё не сделан; это же поле служит идемпотентностью диалога выбора
+      // (apps/implant-bestq-choice.mjs::needsBestQChoice) — отдельного флага
+      // "уже применено" не заводится, чтобы не разойтись с ним по смыслу
+      // (см. диагностику migratedEffect в mechanics-skill).
+      chosenEffects: new ArrayField(new SchemaField({
+        label: new StringField({ initial: "", label: "Название" }),
+        note:  new StringField({ initial: "", label: "Пояснение" })
+      }), { label: "Выбранные эффекты Best.Q" }),
       // Директивы автоматизации Техночудес (Кибернетика Механикум). Раньше жили
       // ТОЛЬКО в таблице по имени (constants/implant-mechanics.mjs) — переименование
       // импланта в паке молча обнуляло Энергию/Компенсатор/Технофокус (wdbc-9bzv).

@@ -55,7 +55,8 @@
         "label": "Каскадный резонанс",
         "note": "1/день всем укреплениям в T.b урон в AP, кроме целых"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "C6m0hkZ0aE09fmOS",

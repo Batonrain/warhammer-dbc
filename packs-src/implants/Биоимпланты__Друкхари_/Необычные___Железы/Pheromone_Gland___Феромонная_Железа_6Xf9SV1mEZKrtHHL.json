@@ -55,7 +55,8 @@
         "label": "Эмоциональный радар",
         "note": "+10 социальные в 10 м — чует настроение"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "6Xf9SV1mEZKrtHHL",

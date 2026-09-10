@@ -34,6 +34,20 @@
     <label class="wr-label">Книга</label>
     <input type="text" name="system.bookSource" value="{{system.bookSource}}"
            class="wr-input-md" placeholder="напр. Core, стр. 24"/>
+    <label class="wr-label" title="Best.Q: +1 за каждый дополнительный эффект сверх первого (wdbc-ukpu)">Доступность</label>
+    <select class="wr-select-avail availability-select">
+      <option value="-5" {{#if (eq system.availabilityStr "-5")}}selected{{/if}}>−5 Повсеместно</option>
+      <option value="-4" {{#if (eq system.availabilityStr "-4")}}selected{{/if}}>−4 Распространено</option>
+      <option value="-3" {{#if (eq system.availabilityStr "-3")}}selected{{/if}}>−3 Изобильно</option>
+      <option value="-2" {{#if (eq system.availabilityStr "-2")}}selected{{/if}}>−2 Обычно</option>
+      <option value="-1" {{#if (eq system.availabilityStr "-1")}}selected{{/if}}>−1 Средне</option>
+      <option value="0"  {{#if (eq system.availabilityStr "0")}}selected{{/if}}>0 Дефицит</option>
+      <option value="1"  {{#if (eq system.availabilityStr "1")}}selected{{/if}}>+1 Редко</option>
+      <option value="2"  {{#if (eq system.availabilityStr "2")}}selected{{/if}}>+2 Очень редко</option>
+      <option value="3"  {{#if (eq system.availabilityStr "3")}}selected{{/if}}>+3 Чрезвычайно редко</option>
+      <option value="4"  {{#if (eq system.availabilityStr "4")}}selected{{/if}}>+4 Почти уникально</option>
+      <option value="5"  {{#if (eq system.availabilityStr "5")}}selected{{/if}}>+5 Уникально</option>
+    </select>
   </div>
 </div>
 <div class="item-section">
@@ -43,9 +57,14 @@
 
 {{!-- Варианты бонусного эффекта Best.Q (wdbc-ukpu). Тот же список, что внутри
       текста «Эффект», но по строке на вариант: одним абзацем из четырёх
-      вариантов со скобками внутри скобок читать его невозможно. Выбор пока не
-      делается — для «+1 к Редкости за каждый доп.» у импланта нет самого поля
-      Редкости, см. тикет. --}}
+      вариантов со скобками внутри скобок читать его невозможно.
+      Выбор (module/apps/implant-bestq-choice.mjs) всплывает сам при получении
+      Best.Q-экземпляра актором; кнопка ниже — тот же путь вручную (например,
+      если диалог закрыли не выбрав, или Качество поставили "best" не через
+      обычный дропдаун-обработчик листа). После выбора (chosenEffects непуст)
+      кнопка скрывается — книга говорит «выбирается при выращивании», то есть
+      один раз; готового действия «сбросить выбор» нет (см. комментарий в
+      implant-bestq-choice.mjs — открытый вопрос, решён консервативно). --}}
 {{#if system.bestQualityEffects.length}}
 <div class="item-section">
   <div class="item-section-title">BEST.Q — ЭФФЕКТ НА ВЫБОР</div>
@@ -54,6 +73,16 @@
     <li><b>{{this.label}}</b>{{#if this.note}} — {{this.note}}{{/if}}</li>
     {{/each}}
   </ol>
+  {{#if system.chosenEffects.length}}
+  <div class="implant-bestq-chosen">
+    <b>Выбрано ({{system.chosenEffects.length}}):</b>
+    {{#each system.chosenEffects}}<span class="implant-bestq-chosen-chip">{{this.label}}</span>{{/each}}
+  </div>
+  {{else if (eq system.quality "best")}}
+  <button type="button" class="implant-bestq-choose">Выбрать эффект(ы) Best.Q</button>
+  {{else}}
+  <div class="trait-fx-hint">Выбор эффекта доступен при Качестве «Высшее (Best.Q)».</div>
+  {{/if}}
 </div>
 {{/if}}
 

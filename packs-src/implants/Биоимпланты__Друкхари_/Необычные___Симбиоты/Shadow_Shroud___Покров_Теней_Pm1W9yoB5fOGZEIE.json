@@ -55,7 +55,8 @@
         "label": "Теневое преломление",
         "note": "+20 Уворот в тусклом, +30 в тьме"
       }
-    ]
+    ],
+    "availability": 3
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "Pm1W9yoB5fOGZEIE",

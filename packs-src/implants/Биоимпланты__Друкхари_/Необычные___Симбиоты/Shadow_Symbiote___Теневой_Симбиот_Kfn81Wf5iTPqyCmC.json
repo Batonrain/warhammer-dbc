@@ -55,7 +55,8 @@
         "label": "Тёмный пророк",
         "note": "Трейт Dark Sight, видит сквозь варп-тьму, шлёт симбиота до 1 км — видит/слышит через него"
       }
-    ]
+    ],
+    "availability": 3
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "Kfn81Wf5iTPqyCmC",

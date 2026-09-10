@@ -55,7 +55,8 @@
         "label": "Фильтр-усилитель",
         "note": "все импланты теряют свой штраф T против ядов/болезней"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "L1aeZzFr346VcD01",
