@@ -1,0 +1,54 @@
+{
+  "name": "Bind the Armiger into a Weapon / Вселение Оруженосца в Оружие (Кхорн)",
+  "type": "ritual",
+  "img": "icons/svg/book.svg",
+  "folder": "p6l9DMaZHahXOvrt",
+  "system": {
+    "description": "<p>Тот же ритуал призыва демона-оруженосца Кхорн — второй книжный исход: демон вселяется не в Истинную Форму, а прямо в оружие чемпиона, превращая его в Демоническое Оружие. Часть Дара Infernal Armiger / Инфернальный Оруженосец.</p>",
+    "notes": "",
+    "source": "Дар Кхорн (Infernal Armiger / Инфернальный Оруженосец)",
+    "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)",
+    "ritualType": "summon",
+    "record": 0,
+    "assistMin": 0,
+    "assistMax": 0,
+    "procedure": "Тот же простой ритуал, не требующий тестов — 10 минут времени.",
+    "result": "Демон-оруженосец (Кровопускатель) вселяется в выбранное оружие чемпиона, превращая его в Демоническое Оружие (+W.b к Dmg/Pen, Reinforced, теряет Primitive/Sanctified). Изгнание демона из оружия всегда уничтожает его — Рунического шанса нет.",
+    "cost": "Нет.",
+    "failureCost": "",
+    "testSkillScope": "",
+    "testSkillKey": "",
+    "testSpecialty": "",
+    "testChar": "int",
+    "testMod": 0,
+    "failureType": "summon",
+    "aversionPerFail": 5,
+    "noTest": true,
+    "asMinion": false,
+    "asWeapon": true,
+    "demonName": "Кровопускатель",
+    "demonInf": 0,
+    "demonGod": "khorne"
+  },
+  "_id": "ArmigerKhWeapQ1a",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {}
+  },
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ArmigerKhWeapQ1a"
+}

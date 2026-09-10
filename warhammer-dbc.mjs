@@ -82,6 +82,7 @@ import { openSceneNexus, refreshSceneNexus, execSceneTeleport } from "./module/a
 import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-settings.mjs";
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
+import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
@@ -751,9 +752,19 @@ Hooks.once("ready", () => {
       if (data.action === "summonDemon") {
         // Токен призванного демона (module/apps/demon-summon.mjs) — игрок не
         // читает Бестиарий (ownership.PLAYER:"NONE"), поиск по имени и
-        // создание Актора/Токена делает активный ГМ.
-        const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "");
+        // создание Актора/Токена делает активный ГМ. asMinion (wdbc-1rno) —
+        // призванный сразу привязывается Миньоном без слота к ритуалисту.
+        const res = await spawnDemonOnScene(String(data.name ?? "").slice(0, 200), data.ritualistUuid || "",
+          { asMinion: !!data.asMinion });
         if (!res.ok) console.warn("Warhammer DBC | Призыв демона:", res.reason);
+        return;
+      }
+      if (data.action === "bindArmigerWeapon") {
+        // Демон-Оруженосец в оружие (module/apps/armiger-weapon.mjs, wdbc-1rno
+        // шаг D) — тот же приём: реальный Inf демона узнаётся из скрытого от
+        // игрока Бестиария, связывание пишет активный ГМ.
+        const res = await bindArmigerWeapon(data.weaponUuid, String(data.demonName ?? "").slice(0, 200), data.god || "undivided");
+        if (!res.ok) console.warn("Warhammer DBC | Демон-Оруженосец в оружие:", res.reason);
         return;
       }
       if (data.action === "vehicleStations") {

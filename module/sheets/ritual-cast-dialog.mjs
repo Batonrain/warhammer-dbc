@@ -55,8 +55,13 @@ function readRitualForm(form, paths) {
     demonName: (el("#rit-demon-name")?.value || "").trim(),
     demonInf: Math.max(0, parseInt(el("#rit-demon-inf")?.value) || 0),
     // Бог демона нужен не для поиска в Бестиарии, а для двух строк
-    // Модификаторов Призыва, которые считаются по листу ритуалиста.
+    // Модификаторов Призыва, которые считаются по листу ритуалиста (или,
+    // у фиксированного демона — asWeapon, тот же скрытый инпут, что и у
+    // demonName/demonInf выше).
     demonGod: el("#rit-demon-god")?.value || "",
+    // wdbc-1rno, шаг D: оружие-сосуд для вселения (item.system.asWeapon) —
+    // id предмета на самом Ритуалисте, выбранного в диалоге.
+    weaponId: el("#rit-target-weapon")?.value || "",
     summon, curseSymp, extraSel
   };
 }
@@ -120,7 +125,24 @@ export async function showRitualCastDialog(actor, item) {
   // подходит вовсе (module/apps/herd-spirits-summon.mjs, кнопка в карточке
   // после броска — распределение известно только по итогу успехов).
   const isHerdSpirits = isHerdSpiritsRitual(item);
-  const demonBlock = (d0.isSummonLike && !isHerdSpirits) ? `
+  // Инфернальный Оруженосец и т.п. (wdbc-1rno) называют демона не ГМ за
+  // столом, а сам предмет (item.system.demonName, книжное имя фиксировано
+  // Даром) — поле остаётся скрытым инпутом с готовым значением, а не пустым
+  // текстовым полем: иначе readRitualForm при отправке формы стирает
+  // R.demonName пустой строкой, и авто-призыв (castNoTestRitual) решает, что
+  // демона называть некому.
+  const demonFixed = !!(item?.system?.demonName);
+  const demonBlock = (d0.isSummonLike && !isHerdSpirits) ? (demonFixed ? `
+    <div class="wv-block">
+      <div class="wv-block-title">Демон</div>
+      <div class="wv-rit-row">
+        <label class="wv-rit-lbl">Демон</label>
+        <span class="wv-rit-wide"><b>${esc(base.demonName)}</b>${base.demonInf ? ` (Inf ${base.demonInf})` : ""} — назван Даром, не редактируется.</span>
+      </div>
+      <input type="hidden" id="rit-demon-name" value="${esc(base.demonName)}"/>
+      <input type="hidden" id="rit-demon-inf" value="${Number(base.demonInf) || 0}"/>
+      <input type="hidden" id="rit-demon-god" value="${esc(base.demonGod || "")}"/>
+    </div>` : `
     <div class="wv-block">
       <div class="wv-block-title">Демон</div>
       <div class="wv-rit-row">
@@ -139,11 +161,28 @@ export async function showRitualCastDialog(actor, item) {
           ${WARP_GODS.map(g => `<option value="${g.key}">${esc(g.label)}</option>`).join("")}
         </select>
       </div>
-    </div>` : (isHerdSpirits ? `
+    </div>`) : (isHerdSpirits ? `
     <div class="wv-block">
       <div class="wv-block-title">Духи Стада</div>
       <span class="wv-hint">При успехе число духов определят успехи броска — распределение (Минотавр/Тролль/Великан) ГМ проведёт отдельным диалогом из карточки в чате.</span>
     </div>` : "");
+
+  // wdbc-1rno, шаг D: «...может тем же ритуалом призвать его в своё оружие»
+  // (Инфернальный Оруженосец) — item.system.asWeapon помечает второй Ритуал-
+  // предмет мутации (не выбор внутри одного). Оружие своё, значит и список
+  // берётся с самого Ритуалиста — Бестиарий тут ни при чём.
+  const weapons = (actor.items ?? []).filter(i => i.type === "weapon");
+  const weaponBlock = s.asWeapon ? `
+    <div class="wv-block">
+      <div class="wv-block-title">Оружие-сосуд</div>
+      ${weapons.length ? `
+      <div class="wv-rit-row">
+        <label class="wv-rit-lbl">Оружие</label>
+        <select id="rit-target-weapon" class="wv-rit-wide">
+          ${weapons.map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join("")}
+        </select>
+      </div>` : `<span class="wv-hint">На листе нет оружия — Оруженосец останется в Истинной Форме.</span>`}
+    </div>` : "";
 
   const curseBlock = d0.isCurse ? `
     <div class="wv-block">
@@ -198,6 +237,7 @@ export async function showRitualCastDialog(actor, item) {
           ${extraBlock}
           ${summonBlock}
           ${demonBlock}
+          ${weaponBlock}
           ${curseBlock}
         </div>
 

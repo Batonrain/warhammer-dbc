@@ -257,7 +257,19 @@ export function applyRitualItem(actor, item, buildSkills) {
     gmMod: primary.gmMod,
     ...(s.failureType ? { type: s.failureType } : {}),
     aversionPerFail: Number(s.aversionPerFail) || 5,
-    extraMods: Array.isArray(s.extraMods) ? s.extraMods : []
+    extraMods: Array.isArray(s.extraMods) ? s.extraMods : [],
+    // wdbc-1rno: Дары, дающие ГОТОВЫЙ ритуал на конкретного демона (Инфернальный
+    // Оруженосец/Рыцарь Бога) — фиксируют его имя/Inf на предмете, не оставляют
+    // игроку вписывать вручную (см. схему RitualData за причиной). noTest/
+    // asMinion — булевы, попадают в R как есть, даже когда false (иначе
+    // castRitual не отличит «не заполнено» от «явно снято» — но у обоих полей
+    // единственный источник это же поле, второго пути их выставить нет).
+    noTest: !!s.noTest,
+    asMinion: !!s.asMinion,
+    asWeapon: !!s.asWeapon,
+    ...(s.demonName ? { demonName: s.demonName } : {}),
+    ...(s.demonInf ? { demonInf: Number(s.demonInf) || 0 } : {}),
+    ...(s.demonGod ? { demonGod: s.demonGod } : {})
   };
 }
 

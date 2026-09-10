@@ -6648,7 +6648,7 @@ export const CAPABILITIES = {
   "gift.tzeentch.etherealSwarm": {
     label: "Полное действие: Inf.b призрачных Крикунов на Cor.b минут; получив попадание (после Избегания, до урона/щитов) — тест Cor+0 как реакция без траты Реакций: Успех переносит попадание на Крикуна, изгоняя его",
     source: "Дар Тзинч (Ethereal Swarm)",
-    reader: "module/rules/ethereal-swarm.mjs — состояние стаи; призыв — своя kind:\"script\" запись предмета (2 ОД); поглощение попадания — module/combat/defense.mjs::_performEtherealSwarm, кнопка в attack-card.mjs (только если у цели есть непустой остаток)"
+    reader: ""
   },
   "gift.tzeentch.falseWitness": {
     label: "Автослышит и распознаёт любую ложь (не честное заблуждение) в радиусе Cor м; +1 Бесчестия увеличивает радиус до Cor км до конца сцены",
@@ -6671,24 +6671,24 @@ export const CAPABILITIES = {
   // 4 РАЗНЫХ текста). Похоже на баг импорта контента в packs-src (не тема Механики) —
   // флагнуто отдельной задачей, не правится здесь.
   "gift.khorne.infernalArmiger": {
-    label: "Демон-прислужник в услужении как Миньон без траты слотов, автопобеда во Владычестве, вселение в оружие делает его Демоническим (при возвышении Inf 60 демон становится возвышенным) — текст документа сейчас ошибочно говорит про Розового Ужаса Тзинча, должен про Кровопускателя (см. комментарий выше)",
+    label: "Реализовано (wdbc-1rno, шаги B-F): готовый Ритуал «Призыв Связанного Оруженосца (Кхорн)» — простым 10-минутным ритуалом без теста призывает Кровопускателя из Бестиария (сразу Миньоном без слота); второй Ритуал того же Дара вселяет его в выбранное оружие, превращая в Демоническое Оружие (+W.b Dmg/Pen, module/apps/armiger-weapon.mjs, без случайной таблицы Осквернения — нет броска, нет оснований для рандома), изгнание из оружия ВСЕГДА его уничтожает. Владычество против СВОЕГО Оруженосца — автопобеда без теста (module/rules/dominator.mjs::isOwnArmiger, сверка по имени+флагу armigerBound). Демон несёт Черту «Тоньше Завесы»: тест Нестабильности получает Cor.b ХОЗЯИНА (кросс-акторный modValueMode:\"masterCharBonus\", module/rules/resolve-test.mjs), но только пока Хозяин в пределах ПОЛНОЙ Порчи (Cor, не Cor.b) метров — module/rules/armiger-veil-range.mjs меряет по живым токенам сцены. НЕ реализовано: «при Inf 60 демон становится возвышенным» — статус-апгрейд, решение стола",
     source: "Дар Кхорн (Infernal Armiger)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Кхорн/Infernal_Armiger___Инфернальный_Оруженос_felvy1sj4gIJFbIQ.json (entries infernalArmiger-ritual/-ritual-weapon) + packs-src/rituals/Архетипа/Summon_the_Bound_Armiger___Призыв_Связан_ArmigerKhorneQ1a.json + Bind_the_Armiger_into_a_Weapon___Вселени_ArmigerKhWeapQ1a.json + packs-src/traits/Thinner_Veil__Master_s_Corruption____Тон_ArmigerVeilThinX1a.json"
   },
   "gift.nurgle.infernalArmiger": {
-    label: "Демон-прислужник в услужении как Миньон без траты слотов, автопобеда во Владычестве, вселение в оружие делает его Демоническим (при возвышении Inf 60 демон становится возвышенным) — текст документа сейчас ошибочно говорит про Розового Ужаса Тзинча, должен про Чумоноса (см. комментарий выше)",
+    label: "Реализовано (wdbc-1rno, шаги B-F): готовый Ритуал «Призыв Связанного Оруженосца (Нургл)» — простым 10-минутным ритуалом без теста призывает Чумоноса из Бестиария (сразу Миньоном без слота); второй Ритуал того же Дара вселяет его в выбранное оружие, превращая в Демоническое Оружие (+W.b Dmg/Pen, без случайной таблицы Осквернения — нет броска, нет оснований для рандома), изгнание из оружия ВСЕГДА его уничтожает. Владычество против СВОЕГО Оруженосца — автопобеда без теста (module/rules/dominator.mjs::isOwnArmiger). Демон несёт Черту «Тоньше Завесы»: тест Нестабильности получает Cor.b ХОЗЯИНА (кросс-акторный modValueMode:\"masterCharBonus\"), но только в пределах ПОЛНОЙ Порчи (Cor) метров от него (module/rules/armiger-veil-range.mjs). НЕ реализовано: «при Inf 60 демон становится возвышенным» — статус-апгрейд, решение стола",
     source: "Дар Нургл (Infernal Armiger)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Нургл/Infernal_Armiger___Инфернальный_Оруженос_ai4mBT9bhVwZqx8t.json (entries infernalArmiger-ritual/-ritual-weapon) + packs-src/rituals/Архетипа/Summon_the_Bound_Armiger___Призыв_Связан_ArmigerNurgleQ2b.json + Bind_the_Armiger_into_a_Weapon___Вселени_ArmigerNuWeapQ2b.json + packs-src/traits/Thinner_Veil__Master_s_Corruption____Тон_ArmigerVeilThinX1a.json"
   },
   "gift.slaanesh.infernalArmiger": {
-    label: "Демон-прислужник в услужении как Миньон без траты слотов, автопобеда во Владычестве, вселение в оружие делает его Демоническим (при возвышении Inf 60 демон становится возвышенным) — текст документа сейчас ошибочно говорит про Розового Ужаса Тзинча, должен про Демонетку (см. комментарий выше)",
+    label: "Реализовано (wdbc-1rno, шаги B-F): готовый Ритуал «Призыв Связанного Оруженосца (Слаанеш)» — простым 10-минутным ритуалом без теста призывает Демонетку из Бестиария (сразу Миньоном без слота); второй Ритуал того же Дара вселяет её в выбранное оружие, превращая в Демоническое Оружие (+W.b Dmg/Pen, без случайной таблицы Осквернения — нет броска, нет оснований для рандома), изгнание из оружия ВСЕГДА его уничтожает. Владычество против СВОЕГО Оруженосца — автопобеда без теста (module/rules/dominator.mjs::isOwnArmiger). Демон несёт Черту «Тоньше Завесы»: тест Нестабильности получает Cor.b ХОЗЯИНА (кросс-акторный modValueMode:\"masterCharBonus\"), но только в пределах ПОЛНОЙ Порчи (Cor) метров от него (module/rules/armiger-veil-range.mjs). НЕ реализовано: «при Inf 60 демон становится возвышенным» — статус-апгрейд, решение стола",
     source: "Дар Слаанеш (Infernal Armiger)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Слаанеш/Infernal_Armiger___Инфернальный_Оруженос_Ot9gweExln1toPnn.json (entries infernalArmiger-ritual/-ritual-weapon) + packs-src/rituals/Архетипа/Summon_the_Bound_Armiger___Призыв_Связан_ArmigerSlaanQ3c1.json + Bind_the_Armiger_into_a_Weapon___Вселени_ArmigerSlWeapQ3c.json + packs-src/traits/Thinner_Veil__Master_s_Corruption____Тон_ArmigerVeilThinX1a.json"
   },
   "gift.tzeentch.infernalArmiger": {
-    label: "Розовый Ужас в услужении как Миньон без траты слотов, автопобеда во Владычестве, вселение в оружие делает его Демоническим (при возвышении Inf 60 демон становится возвышенным)",
+    label: "Реализовано (wdbc-1rno, шаги B-F): готовый Ритуал «Призыв Связанного Оруженосца (Тзинч)» — простым 10-минутным ритуалом без теста призывает Розового Ужаса из Бестиария (сразу Миньоном без слота); второй Ритуал того же Дара вселяет его в выбранное оружие, превращая в Демоническое Оружие (+W.b Dmg/Pen, без случайной таблицы Осквернения — нет броска, нет оснований для рандома), изгнание из оружия ВСЕГДА его уничтожает. Владычество против СВОЕГО Оруженосца — автопобеда без теста (module/rules/dominator.mjs::isOwnArmiger). Демон несёт Черту «Тоньше Завесы»: тест Нестабильности получает Cor.b ХОЗЯИНА (кросс-акторный modValueMode:\"masterCharBonus\"), но только в пределах ПОЛНОЙ Порчи (Cor) метров от него (module/rules/armiger-veil-range.mjs). НЕ реализовано: «при Inf 60 демон становится возвышенным» — статус-апгрейд, решение стола; расщепление Ужаса на двух Синих Ужасов при вселении в оружие — отдельная неисследованная механика",
     source: "Дар Тзинч (Infernal Armiger)",
-    reader: ""
+    reader: "packs-src/mutations/Дары_Богов/Тзинч/Infernal_Armiger___Инфернальный_Оруженос_dhnszZq38C0nRzNH.json (entries infernalArmiger-ritual/-ritual-weapon) + packs-src/rituals/Архетипа/Summon_the_Bound_Armiger___Призыв_Связан_ArmigerTzeenQ4d2.json + Bind_the_Armiger_into_a_Weapon___Вселени_ArmigerTzWeapQ4d.json + packs-src/traits/Thinner_Veil__Master_s_Corruption____Тон_ArmigerVeilThinX1a.json"
   },
   "gift.tzeentch.knightOfTzeentch": {
     label: "Демонический скакун (Диск Тзинча) в услужении — призыв ритуалом, вселение в технику даёт себе и всаднику не перегружающийся чародейский щит-купол 1-50",
@@ -6989,14 +6989,9 @@ export const CAPABILITIES = {
     reader: "packs-src/mutations/Общие_мутации/Warp_Eater___Пожиратель_Варпа_CNYjlSI5fXnnaqYI.json (entry warpEater-feed) + module/rules/warp-eater.mjs, hooks.mjs (updateWorldTime)"
   },
   "mutation.warpTouched": {
-    label: "9 из 10 субмутаций дают психологические W-тесты/эффекты (ложь/правдивость/клептомания/одиночество/брезгливость/недоверие к лечению и др.) + субмутация 1 (рейтинг Страха 3 ко всем врагам в Ярости, не игнорируется) — упирается в тот же пробел, что 4 гейтнутые субмутации Heart of Steel: _executeFearRoll (combat/fear.mjs) не знает категорию ИСТОЧНИКА Страха, только числовой рейтинг. Субмутация 8 (Вспыльчивость) вынесена отдельным ключом — см. mutation.warpTouched.quickToAnger",
+    label: "10 субмутаций дают психологические W-тесты/эффекты (ложь/правдивость/клептомания/вспыльчивость и др.) — база не даёт эффекта без субмутации, не автоматизировано",
     source: "Мутация: Warp-Touched (Общие мутации)",
     reader: ""
-  },
-  "mutation.warpTouched.quickToAnger": {
-    label: "Субмутация 8 (Вспыльчивость): при получении атаки — тест W+0, провал вгоняет в Ярость",
-    source: "Мутация: Warp-Touched, субмутация 8 (Общие мутации)",
-    reader: "module/rules/quick-to-anger.mjs::rollQuickToAngerTest — hasRuleFlag-гейт и вызов в module/combat/damage.mjs::applyDamageToActor (тот же хук, что Pacifism)"
   },
   "mutation.wrappedInChaos": {
     label: "10 субмутаций дают разные эффекты дыма (телепорт в тени, фантомные копии, дымовая завеса, штрафы на попадание и др.) — база не даёт эффекта без субмутации, не автоматизировано",

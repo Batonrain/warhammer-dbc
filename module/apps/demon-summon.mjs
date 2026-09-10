@@ -18,15 +18,40 @@
 import { currentScene } from "../constants/scene-nexus.mjs";
 
 const BESTIARY_PACK = "warhammer-dbc.bestiary";
+const TRAITS_PACK = "warhammer-dbc.traits";
+// packs-src/traits/Thinner_Veil...json — не книжная Черта под своим
+// названием, а реализация одной строки Дара «Инфернальный Оруженосец»
+// (wdbc-1rno, шаг F): «...считает Завесу на Cor.b персонажа тоньше». Отдана
+// демону автоматически при призыве, а не покупается — искать по точному id,
+// не по имени (в отличие от Бестиария, здесь неоднозначности быть не должно).
+const VEIL_THINNER_TRAIT_ID = "ArmigerVeilThinX1a";
 
-/** "English Name / Русское Имя" → русская часть, как в doombc-english-names-project. */
-function ruName(name) {
+/** Данные Черты «Тоньше Завесы» для вставки в data.items нового Актора. */
+async function veilThinnerTraitData() {
+  const pack = game.packs?.get(TRAITS_PACK);
+  const doc = pack ? await pack.getDocument(VEIL_THINNER_TRAIT_ID).catch(() => null) : null;
+  if (!doc) return null;
+  const data = doc.toObject();
+  delete data._id;
+  return data;
+}
+
+/**
+ * "English Name / Русское Имя" → русская часть, как в doombc-english-names-
+ * project. Экспортирована — тем же сравнением по имени module/apps/
+ * armiger-weapon.mjs находит СВОЕГО демона-Оруженосца (wdbc-1rno, шаг E).
+ */
+export function ruName(name) {
   const parts = String(name || "").split(" / ");
   return (parts.length > 1 ? parts.at(-1) : name).trim();
 }
 
-/** Точное (без учёта регистра) совпадение по русской или полной подписи. */
-async function findBestiaryActor(name) {
+/**
+ * Точное (без учёта регистра) совпадение по русской или полной подписи.
+ * Экспортирована — тем же поиском пользуется module/apps/armiger-weapon.mjs
+ * (демон-Оруженосец в оружие), не дублируя обход индекса Бестиария.
+ */
+export async function findBestiaryActor(name) {
   const pack = game.packs?.get(BESTIARY_PACK);
   if (!pack) return null;
   const index = await pack.getIndex();
@@ -42,9 +67,15 @@ async function findBestiaryActor(name) {
  * сцене — рядом с токеном ритуалиста, если он выбран на холсте, иначе в
  * центре сцены. Только ГМ: вызывающий код сам решает прямой вызов/релей
  * (см. defaultSpawnDemonFn ниже).
- * @returns {Promise<{ok:boolean, reason?:string, actorName?:string}>}
+ *
+ * `asMinion` (wdbc-1rno, Инфернальный Оруженосец/Рыцарь Бога — «контролировать
+ * как Миньона без траты слотов Миньонов»): созданный демон сразу получает
+ * system.masterUuid = ritualistUuid, попадая в панель МИНЬОНЫ вызывателя
+ * (module/sheets/tabs/minions-panel.mjs) без единого купленного Таланта-слота.
+ * Без ritualistUuid ставить некому — молча игнорируется, не бросает.
+ * @returns {Promise<{ok:boolean, reason?:string, actorName?:string, actorUuid?:string}>}
  */
-export async function spawnDemonOnScene(name, ritualistUuid = "") {
+export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = false } = {}) {
   const src = await findBestiaryActor(name);
   if (!src) return { ok: false, reason: `Демон «${name}» не найден в Бестиарии — разместите токен вручную.` };
 
@@ -53,6 +84,18 @@ export async function spawnDemonOnScene(name, ritualistUuid = "") {
 
   const data = src.toObject();
   delete data._id;
+  if (asMinion && ritualistUuid) {
+    data.system = { ...(data.system ?? {}), masterUuid: ritualistUuid };
+    // Тот же флаг, что у оружия из module/apps/armiger-weapon.mjs — «связан
+    // ИМЕННО ритуалом без теста» (wdbc-1rno). module/rules/dominator.mjs
+    // читает его для автопобеды во Владычестве против своего же Оруженосца
+    // (шаг E) — не любой Миньон, а конкретно этот путь связывания.
+    data.flags = { ...(data.flags ?? {}), "warhammer-dbc": { ...(data.flags?.["warhammer-dbc"] ?? {}), armigerBound: true } };
+    // Шаг F: «считает Завесу на Cor.b персонажа тоньше» — Черта, а не сразу
+    // готовый эффект, ровно так же, как остальные выдачи Конструктора.
+    const traitData = await veilThinnerTraitData();
+    if (traitData) data.items = [...(data.items ?? []), traitData];
+  }
   const actor = await Actor.create(data);
   if (!actor) return { ok: false, reason: "Не удалось создать Актора демона." };
 
@@ -69,7 +112,7 @@ export async function spawnDemonOnScene(name, ritualistUuid = "") {
 
   const tokenDoc = await actor.getTokenDocument({ x, y });
   await scene.createEmbeddedDocuments("Token", [tokenDoc.toObject()]);
-  return { ok: true, actorName: actor.name };
+  return { ok: true, actorName: actor.name, actorUuid: actor.uuid };
 }
 
 /**
@@ -77,10 +120,10 @@ export async function spawnDemonOnScene(name, ritualistUuid = "") {
  * action:"summonDemon"). Не бросает: результат уходит уведомлением ГМу
  * (нет активного ГМа — предупреждение игроку, без токена).
  */
-export async function defaultSpawnDemonFn(name, ritualistUuid) {
+export async function defaultSpawnDemonFn(name, ritualistUuid, { asMinion = false } = {}) {
   if (!name) return;
   if (game.user?.isGM) {
-    const res = await spawnDemonOnScene(name, ritualistUuid);
+    const res = await spawnDemonOnScene(name, ritualistUuid, { asMinion });
     if (!res.ok) ui.notifications?.warn(res.reason);
     return;
   }
@@ -89,5 +132,5 @@ export async function defaultSpawnDemonFn(name, ritualistUuid) {
     return;
   }
   game.socket?.emit("system.warhammer-dbc",
-    { action: "summonDemon", userId: game.user?.id, name, ritualistUuid });
+    { action: "summonDemon", userId: game.user?.id, name, ritualistUuid, asMinion });
 }
