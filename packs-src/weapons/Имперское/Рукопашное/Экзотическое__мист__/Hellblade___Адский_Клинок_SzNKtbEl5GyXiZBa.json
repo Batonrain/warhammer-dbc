@@ -1,40 +1,40 @@
 {
-  "name": "Рад",
+  "name": "Hellblade / Адский Клинок",
   "type": "weapon",
-  "folder": "CiKyTXQv7N6C3J3A",
+  "folder": "j8OSYXyeON53Ort1",
   "system": {
     "description": "",
     "notes": "",
-    "weaponClass": "thrown",
-    "weaponType": "grenade",
-    "range": 0,
-    "balance": 0,
-    "grips": "1р",
-    "profileLabel": "",
+    "weaponClass": "melee",
+    "weaponType": "exotic",
+    "range": 5,
+    "balance": 2,
+    "grips": "2р (1р, Бл, Мх)",
+    "profileLabel": "Меч",
     "profiles": [],
     "reload": "–",
-    "magazineCur": 1,
-    "magazineMax": 1,
+    "magazineCur": 0,
+    "magazineMax": 0,
     "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d5+4",
-    "damageType": "impact",
-    "penetration": 0,
+    "damage": "1d10+3",
+    "damageType": "rending",
+    "penetration": 10,
     "quality": "common",
-    "availability": 2,
-    "weight": 0.5,
+    "availability": 4,
+    "weight": 0,
     "attackBonus": 0,
-    "special": "Rad: 2d10. Версия Легиона: 1d5+6 X(Fr), Blast (4), Rad (2d10+2), Legion (R 3). Метание: Rng S.b×3 м, RoF S/–/–; вместо перезарядки — экипировка другой гранаты из инвентаря. При S.b 8+: либо считать S.b до 7 в расчёте Rng, либо бросать 1d5 — на «1» граната ломается от чрезмерной силы и не детонирует.",
+    "special": "Меч; Хват 2р [1р, Бл, Мх]; Досягаемость 2–5",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "blast",
-        "rating": 3
+        "key": "extreme",
+        "rating": 8
       },
       {
-        "key": "rad"
+        "key": "powerField"
       }
     ],
     "needsRecharge": false,
@@ -63,10 +63,11 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Меч"
   },
-  "_id": "ZqGcHRzQWrwGHZEV",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",
+  "_id": "SzNKtbEl5GyXiZBa",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -74,9 +75,12 @@
     "Bh2eMXBlRSXAdCgx": 3
   },
   "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    },
     "autoanimations": {
-      "id": "79fa325d-88ee-4bc3-94df-a300803b81cb",
-      "label": "Рад",
+      "id": "913b505e-cbcc-488d-8462-dcd7c2817018",
+      "label": "Адский Клинок",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -100,14 +104,14 @@
         "enable": false,
         "playWhen": "0"
       },
-      "menu": "range",
+      "menu": "melee",
       "primary": {
         "video": {
-          "dbSection": "range",
+          "dbSection": "melee",
           "menuType": "weapon",
-          "animation": "bomb",
+          "animation": "sword",
           "variant": "01",
-          "color": "black",
+          "color": "white",
           "enableCustom": false,
           "customPath": ""
         },
@@ -304,8 +308,8 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784645463257,
+    "modifiedTime": 1784646561800,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!ZqGcHRzQWrwGHZEV"
+  "_key": "!items!SzNKtbEl5GyXiZBa"
 }

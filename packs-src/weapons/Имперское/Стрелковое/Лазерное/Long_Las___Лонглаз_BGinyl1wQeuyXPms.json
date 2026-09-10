@@ -1,45 +1,47 @@
 {
-  "name": "Комби-Грав",
+  "name": "Long-Las / Лонглаз",
   "type": "weapon",
-  "folder": "cHwiIsG6VZt9ZiIR",
+  "folder": "BX21qiV4lBwgKIQS",
   "system": {
     "description": "",
     "notes": "",
     "weaponClass": "basic",
-    "weaponType": "grav",
-    "range": 80,
+    "weaponType": "laser",
+    "range": 150,
     "balance": 0,
     "grips": "2р",
     "profileLabel": "",
     "profiles": [],
-    "reload": "10",
-    "magazineCur": 1,
-    "magazineMax": 1,
+    "reload": "1",
+    "magazineCur": 60,
+    "magazineMax": 60,
     "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "",
-    "damageType": "impact",
-    "penetration": 15,
+    "damage": "1d10+4",
+    "damageType": "energy",
+    "penetration": 2,
     "quality": "common",
-    "availability": 3,
-    "weight": 6,
+    "availability": -1,
+    "weight": 4.5,
     "attackBonus": 0,
-    "special": "",
+    "special": "Моды: Scope, Power Setting",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "combi"
+        "key": "accurate"
       },
       {
-        "key": "grav"
+        "key": "felling",
+        "rating": 4
       },
       {
-        "key": "imprecise"
+        "key": "reliable"
       },
       {
-        "key": "legion"
+        "key": "surge",
+        "rating": 2
       }
     ],
     "needsRecharge": false,
@@ -68,9 +70,10 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "rangeBands": []
   },
-  "_id": "2uyVW4nvIFKST0o4",
+  "_id": "BGinyl1wQeuyXPms",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
   "effects": [],
   "sort": 0,
@@ -80,8 +83,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "9e92edd5-cc18-478b-9ef1-714808e34e58",
-      "label": "Комби-Грав",
+      "id": "9f5673f1-a06d-4662-bb64-61b9d1ba6b4c",
+      "label": "Лонглаз",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -109,10 +112,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "generic",
-          "animation": "energystrand",
+          "menuType": "weapon",
+          "animation": "lasershot",
           "variant": "01",
-          "color": "purple",
+          "color": "red",
           "enableCustom": false,
           "customPath": ""
         },
@@ -308,9 +311,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1784645463257,
-    "modifiedTime": 1784645463257,
+    "createdTime": 1785247480179,
+    "modifiedTime": 1785247480179,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!2uyVW4nvIFKST0o4"
+  "_key": "!items!BGinyl1wQeuyXPms"
 }

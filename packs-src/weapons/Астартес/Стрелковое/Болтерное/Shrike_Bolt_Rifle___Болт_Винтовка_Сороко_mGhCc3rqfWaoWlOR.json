@@ -1,58 +1,49 @@
 {
-  "name": "Комби-Гравитон",
+  "name": "Shrike Bolt Rifle / Болт Винтовка Сорокопут",
   "type": "weapon",
-  "folder": "cHwiIsG6VZt9ZiIR",
+  "folder": "TQQsWi6Gc81MFTKy",
   "system": {
     "description": "",
     "notes": "",
+    "rangeBands": [],
+    "offProfile": {},
+    "gripProps2h": [],
+    "corEffects": [],
     "weaponClass": "basic",
-    "weaponType": "grav",
-    "range": 30,
+    "weaponType": "bolt",
+    "range": 250,
     "balance": 0,
     "grips": "2р",
     "profileLabel": "",
     "profiles": [],
-    "reload": "10",
-    "magazineCur": 1,
-    "magazineMax": 1,
+    "reload": "1",
+    "magazineCur": 24,
+    "magazineMax": 24,
     "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d10+4",
-    "damageType": "impact",
-    "penetration": 0,
+    "damage": "2d10+6",
+    "damageType": "blast",
+    "penetration": 6,
     "quality": "common",
-    "availability": 3,
-    "weight": 4,
+    "availability": 4,
+    "weight": 17,
     "attackBonus": 0,
-    "special": "",
+    "special": "Моды: Scope, Silencer. Legion: P",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "combi"
-      },
-      {
-        "key": "concussive",
-        "rating": 3
-      },
-      {
-        "key": "blast",
-        "rating": 5
-      },
-      {
-        "key": "grav"
-      },
-      {
-        "key": "linger",
-        "rating": 5
-      },
-      {
-        "key": "haywire",
-        "rating": 5
+        "key": "accurate"
       },
       {
         "key": "legion"
+      },
+      {
+        "key": "precise"
+      },
+      {
+        "key": "tearing"
       }
     ],
     "needsRecharge": false,
@@ -81,9 +72,10 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "drukhari": false
   },
-  "_id": "V3U5SG19wHUO0p4d",
+  "_id": "mGhCc3rqfWaoWlOR",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
   "effects": [],
   "sort": 0,
@@ -93,8 +85,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "98e11cef-c020-4462-b237-d6855ecd7568",
-      "label": "Комби-Гравитон",
+      "id": "90a938c5-e21a-4230-add6-b954fd2de028",
+      "label": "Болт Винтовка Сорокопут",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -122,10 +114,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "generic",
-          "animation": "energystrand",
-          "variant": "01",
-          "color": "purple",
+          "menuType": "weapon",
+          "animation": "bolt",
+          "variant": "physical",
+          "color": "orange",
           "enableCustom": false,
           "customPath": ""
         },
@@ -318,12 +310,12 @@
     "compendiumSource": null,
     "duplicateSource": null,
     "exportSource": null,
-    "coreVersion": "13.346",
+    "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784645463257,
-    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+    "modifiedTime": 1786352733938,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!V3U5SG19wHUO0p4d"
+  "_key": "!items!mGhCc3rqfWaoWlOR"
 }

@@ -1,47 +1,58 @@
 {
-  "name": "Лонглаз",
+  "name": "Combi Graviton / Комби-Гравитон",
   "type": "weapon",
-  "folder": "BX21qiV4lBwgKIQS",
+  "folder": "cHwiIsG6VZt9ZiIR",
   "system": {
     "description": "",
     "notes": "",
     "weaponClass": "basic",
-    "weaponType": "laser",
-    "range": 150,
+    "weaponType": "grav",
+    "range": 30,
     "balance": 0,
     "grips": "2р",
     "profileLabel": "",
     "profiles": [],
-    "reload": "1",
-    "magazineCur": 60,
-    "magazineMax": 60,
+    "reload": "10",
+    "magazineCur": 1,
+    "magazineMax": 1,
     "rof_single": 1,
     "rof_semi": 0,
     "rof_full": 0,
     "damage": "1d10+4",
-    "damageType": "energy",
-    "penetration": 2,
+    "damageType": "impact",
+    "penetration": 0,
     "quality": "common",
-    "availability": -1,
-    "weight": 4.5,
+    "availability": 3,
+    "weight": 4,
     "attackBonus": 0,
-    "special": "Моды: Scope, Power Setting",
+    "special": "",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "accurate"
+        "key": "combi"
       },
       {
-        "key": "felling",
-        "rating": 4
+        "key": "concussive",
+        "rating": 3
       },
       {
-        "key": "reliable"
+        "key": "blast",
+        "rating": 5
       },
       {
-        "key": "surge",
-        "rating": 2
+        "key": "grav"
+      },
+      {
+        "key": "linger",
+        "rating": 5
+      },
+      {
+        "key": "haywire",
+        "rating": 5
+      },
+      {
+        "key": "legion"
       }
     ],
     "needsRecharge": false,
@@ -70,10 +81,9 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    },
-    "rangeBands": []
+    }
   },
-  "_id": "BGinyl1wQeuyXPms",
+  "_id": "V3U5SG19wHUO0p4d",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",
   "effects": [],
   "sort": 0,
@@ -83,8 +93,8 @@
   },
   "flags": {
     "autoanimations": {
-      "id": "9f5673f1-a06d-4662-bb64-61b9d1ba6b4c",
-      "label": "Лонглаз",
+      "id": "98e11cef-c020-4462-b237-d6855ecd7568",
+      "label": "Комби-Гравитон",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -112,10 +122,10 @@
       "primary": {
         "video": {
           "dbSection": "range",
-          "menuType": "weapon",
-          "animation": "lasershot",
+          "menuType": "generic",
+          "animation": "energystrand",
           "variant": "01",
-          "color": "red",
+          "color": "purple",
           "enableCustom": false,
           "customPath": ""
         },
@@ -311,9 +321,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1785247480179,
-    "modifiedTime": 1785247480179,
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784645463257,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!BGinyl1wQeuyXPms"
+  "_key": "!items!V3U5SG19wHUO0p4d"
 }
