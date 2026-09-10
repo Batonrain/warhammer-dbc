@@ -85,8 +85,12 @@
               "ccOnUnarmedOrGrapple": true,
               "ccLabel": "Электрическая броня",
               "when": {
-                "quality": ["best"],
-                "chosenEffect": ["Электрическая броня"]
+                "quality": [
+                  "best"
+                ],
+                "chosenEffect": [
+                  "Электрическая броня"
+                ]
               }
             }
           ]
