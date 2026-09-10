@@ -3062,7 +3062,15 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— навык —</option>${opts}</select>`;
     }
-    const whoOpts = [["self", "свой бросок"], ["target", "навязать цели"]]
+    // "opponent" (wdbc-1rno, Уравнитель) — третье значение, ИНОЙ путь доставки,
+    // чем у "target": не «мой бросок навязывает переброс цели» (ручная
+    // проводка через attack-dialog.mjs/attack-card.mjs), а «чужой бросок ПО
+    // МНЕ сам получает переброс, если его базовая Характеристика для этого
+    // теста выше моей» (отдельный источник правил, item-rules.mjs::
+    // opposedTargetRerollRules) — сравнение зашито в само значение, не
+    // настраивается.
+    const whoOpts = [["self", "свой бросок"], ["target", "навязать цели"],
+      ["opponent", "противнику — если его Характеристика выше моей"]]
       .map(([v, l]) => `<option value="${v}" ${ent.rerollWho === v ? "selected" : ""}>${esc(l)}</option>`).join("");
     return `<select class="mech-reroll-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
       ${detail}

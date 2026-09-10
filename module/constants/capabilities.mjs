@@ -6486,7 +6486,7 @@ export const CAPABILITIES = {
     reader: "module/combat/turn-state-shield.mjs::processTurnStateShieldsTurnEnd (выдача на конце Хода) / clearTurnStateShields (снятие на начале следующего Хода и на deleteCombat), оба такта — module/hooks.mjs::updateCombat; сам бросок щита — module/combat/damage.mjs::_rollActiveShield (выданный Item type:\"forcefield\", overloadThreshold 0)"
   },
   "gift.nurgle.theEqualizer": {
-    label: "Атакующий/встречный противник с более высокой базовой Характеристикой для теста должен перебрасывать Успехи",
+    label: "Половина Дара смоделирована (wdbc-1rno): атакующий с более высокой базовой WS/BS перебрасывает Успехи — kind:\"reroll\", rerollWho:\"opponent\" на самой записи, module/rules/item-rules.mjs::opposedTargetRerollRules. НЕ смоделирована вторая половина — противник как ИНИЦИАТОР встречного теста (не атаки): «Вид теста» (module/rules/test-kind.mjs) игрок выбирает уже в диалоге, после того как ctx для сбора правил собран — движок на момент отбора не знает, что этот конкретный тест окажется встречным.",
     source: "Дар Нургл (The Equalizer)",
     reader: ""
   },

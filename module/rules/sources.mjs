@@ -19,7 +19,7 @@ import { HOMEWORLD_BY_KEY } from "../constants/homeworlds.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { CORE_RULES } from "./library/core.mjs";
 import { CONDITION_RULES } from "./library/conditions.mjs";
-import { rulesFromItemMechanics } from "./item-rules.mjs";
+import { rulesFromItemMechanics, opposedTargetRerollRules } from "./item-rules.mjs";
 import { isItemActive } from "../apps/effects.mjs";
 import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
@@ -107,6 +107,13 @@ registerRuleSource("homeworld", a =>
 // снятое оружие и вынутый имплант правил не дают — ровно так же, как не дают
 // эффектов. См. module/rules/item-rules.mjs.
 registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemActive, a));
+
+// Уравнитель/The Equalizer (wdbc-1rno, Дар Нургла): переброс, навязанный
+// МНЕ противником с более высокой БАЗОВОЙ Характеристикой — запись живёт на
+// защищающемся (ctx.targetActor), источник "items" выше её не видит, потому
+// что читает только собственные предметы актора-бросающего. См. заголовок
+// item-rules.mjs::opposedTargetRerollRules.
+registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx));
 
 // Adjutant/Адъютант (wdbc-sk8s) даёт способность не себе, а своему
 // Командиру — cross-actor проверка вне владельца Таланта, тем же приёмом,

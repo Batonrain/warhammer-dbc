@@ -307,6 +307,15 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // module/combat/defense.mjs — +2 Размера атакующего при Парировании,
     // попутно родившем настоящую формулу Разницы Размеров, module/rules/
     // parry-size.mjs, и контакт-парирование выстрела в упор). 44 → 43.
-    expect(stubOnly.length).toBeLessThanOrEqual(43);
+    // 09.09.2026 (wdbc-1rno): The Equalizer/Уравнитель — половина Дара
+    // смоделирована реальным kind:"reroll" (rerollWho:"opponent", НОВЫЙ
+    // третий маркер + новый источник правил item-rules.mjs::
+    // opposedTargetRerollRules/sources.mjs — атакующий с более высокой
+    // базовой WS/BS перебрасывает Успехи). Вторая половина (инициатор
+    // встречного теста, не атаки) осталась честной capability-заглушкой —
+    // «Вид теста» игрок выбирает уже в диалоге, после сбора правил, читать
+    // это на отборе не из чего (см. label ключа gift.nurgle.theEqualizer).
+    // 43 → 42.
+    expect(stubOnly.length).toBeLessThanOrEqual(42);
   });
 });
