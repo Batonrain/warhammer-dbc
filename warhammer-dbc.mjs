@@ -134,6 +134,7 @@ import { migrateAllItemEffects }       from "./module/migrations/item-effects.mj
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
 import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
 import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
+import { needsBestQChoice, runBestQChoice } from "./module/apps/implant-bestq-choice.mjs";
 
 // ─── Инициализация ────────────────────────────────────────────────────────────
 
@@ -1515,6 +1516,25 @@ Hooks.on("updateItem", (item, changes) => {
   if (!game.user.isGM || item.type !== "armor" || !item.parent) return;
   if (changes.system?.equipped === undefined && changes.system?.largeBase === undefined) return;
   syncTokenBaseSize(item.parent);
+});
+
+// Best.Q-биоимплант Друкхари (wdbc-ukpu, шаг 3): выбор бонусного эффекта при
+// получении — module/apps/implant-bestq-choice.mjs. Два случая создания
+// одного и того же результата (Качество уже "best" в момент попадания на
+// актора, или его выставили дропдауном ПОСЛЕ), поэтому два хука, тем же
+// приёмом, что и Кибернетическое Превосходство ниже (createItem+updateItem
+// на одну проверку). needsBestQChoice сам гейтует «выбор уже сделан» через
+// system.chosenEffects — второй показ диалога не грозит ни одному из хуков.
+Hooks.on("createItem", async (item, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (!(item.parent instanceof Actor) || !needsBestQChoice(item)) return;
+  await runBestQChoice(item);
+});
+Hooks.on("updateItem", async (item, changed, options, userId) => {
+  if (game.user.id !== userId) return;
+  if (changed?.system?.quality === undefined) return;
+  if (!(item.parent instanceof Actor) || !needsBestQChoice(item)) return;
+  await runBestQChoice(item);
 });
 
 // Кэш библиотек Происхождения и Предсказаний для дропдаунов в шапке листа.
