@@ -1,41 +1,45 @@
 {
-  "name": "Hellfire / Адское пламя",
+  "name": "Hunter-class Destroyer / Эсминец астартес типа «Охотник»",
   "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
-  "folder": "iXOvwOEpK2IF4XXq",
+  "folder": "aIu3pJTuNwSeYJoY",
   "system": {
-    "hullClass": "Линейные крейсеры",
-    "sp": 62,
+    "hullClass": "Рейдеры",
+    "sp": 33,
     "rarity": 0,
     "quality": "common",
     "qualityPicks": [],
     "qualityCustom": false,
-    "aspects": "Особое",
+    "aspects": "In-build: Пусковые установки десантных капсул «Шторм», 1/1",
     "description": "",
     "notes": "",
     "shipProps": [
       {
-        "key": "lowSpirit",
-        "rating": 5
+        "key": "inbuild"
+      },
+      {
+        "key": "voidShadow",
+        "rating": 0,
+        "rating2": 20
       }
     ],
     "hull": {
-      "spaceMax": 75,
+      "spaceMax": 36,
       "powerGen": 0,
-      "turnArc": "45°",
-      "weaponCapacity": "ЛБ3, ПБ3",
-      "hullIntegrity": 75
+      "turnArc": "90°",
+      "weaponCapacity": "1Н, 1НП",
+      "hullIntegrity": 29
     },
     "chars": {
-      "speed": 7,
-      "manoeuvrability": 0,
+      "speed": 11,
+      "manoeuvrability": 31,
       "detection": 10,
       "voidShields": 0,
-      "armour": 18,
+      "armour": 17,
       "turretRating": 2
     }
   },
-  "_id": "d2oceKZ3KZgEMKzw",
+  "_id": "DIiPfJ2YR3LmV0tT",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -50,9 +54,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1782051270642,
-    "modifiedTime": 1782752981064,
+    "createdTime": 1789081044058,
+    "modifiedTime": 1789081044058,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!d2oceKZ3KZgEMKzw"
+  "_key": "!items!DIiPfJ2YR3LmV0tT"
 }

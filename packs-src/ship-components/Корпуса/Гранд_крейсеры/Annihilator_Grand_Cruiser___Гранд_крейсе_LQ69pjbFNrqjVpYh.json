@@ -1,36 +1,40 @@
 {
-  "name": "Styx / Стикс",
+  "name": "Annihilator Grand Cruiser / Гранд-крейсер типа «Аннигилятор»",
   "type": "shipHull",
   "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
-  "folder": "iXOvwOEpK2IF4XXq",
+  "folder": "IHC1qrw10vbxBx6h",
   "system": {
-    "hullClass": "Линейные крейсеры",
-    "sp": 84,
+    "hullClass": "Гранд-крейсеры",
+    "sp": 76,
     "rarity": 0,
     "quality": "common",
     "qualityPicks": [],
     "qualityCustom": false,
-    "aspects": "",
+    "aspects": "In-build: Орудие «Аннигилятор» (НП), 2/14",
     "description": "",
     "notes": "",
-    "shipProps": [],
+    "shipProps": [
+      {
+        "key": "inbuild"
+      }
+    ],
     "hull": {
-      "spaceMax": 100,
+      "spaceMax": 86,
       "powerGen": 0,
       "turnArc": "45°",
-      "weaponCapacity": "Н1, НП1, ПБ2, ЛБ2",
-      "hullIntegrity": 80
+      "weaponCapacity": "2НП",
+      "hullIntegrity": 87
     },
     "chars": {
-      "speed": 7,
-      "manoeuvrability": 10,
-      "detection": 10,
+      "speed": 5,
+      "manoeuvrability": 8,
+      "detection": 8,
       "voidShields": 0,
-      "armour": 21,
-      "turretRating": 3
+      "armour": 22,
+      "turretRating": 2
     }
   },
-  "_id": "EncsEJH9MTkGJFbz",
+  "_id": "LQ69pjbFNrqjVpYh",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -45,9 +49,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1782051270642,
-    "modifiedTime": 1782752981064,
+    "createdTime": 1789081044058,
+    "modifiedTime": 1789081044058,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!EncsEJH9MTkGJFbz"
+  "_key": "!items!LQ69pjbFNrqjVpYh"
 }
