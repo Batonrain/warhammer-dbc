@@ -55,7 +55,8 @@
         "label": "Акробатический гений",
         "note": "+30 Acrobatics, 1/раунд переброс Acrobatics/Dodge, игнор трудного ландшафта"
       }
-    ]
+    ],
+    "availability": 3
   },
   "folder": "LgfOMhOI1IHZXldl",
   "_id": "pvI9iCmq644GNsTR",

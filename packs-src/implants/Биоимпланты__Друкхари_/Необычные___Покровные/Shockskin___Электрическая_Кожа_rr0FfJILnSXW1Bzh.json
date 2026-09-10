@@ -55,7 +55,8 @@
         "label": "Питание",
         "note": "движение >10 ч/день = сыт"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "rr0FfJILnSXW1Bzh",

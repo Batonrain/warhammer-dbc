@@ -55,7 +55,8 @@
         "label": "Паразитарная ферментация",
         "note": "отходы → спирт/топливо, выдавать касанием/поцелуем"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "rwwVVCuhrbpT97fw",

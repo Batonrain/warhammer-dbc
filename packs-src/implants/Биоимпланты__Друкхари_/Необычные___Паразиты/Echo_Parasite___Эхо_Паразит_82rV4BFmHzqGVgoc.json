@@ -55,7 +55,8 @@
         "label": "Эхолокация",
         "note": "Трейт Sonar Senses"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "82rV4BFmHzqGVgoc",

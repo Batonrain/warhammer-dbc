@@ -55,7 +55,8 @@
         "label": "Ядовитое облако",
         "note": "1/день Blast(T.b) 1d10+T.b×2 Pen 4 Toxic(1) на себя, иммунен; 24−T.b ч"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "M9VGcOb8WVer7e8h",

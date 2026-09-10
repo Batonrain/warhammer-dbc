@@ -55,7 +55,8 @@
         "label": "Слизистый щит",
         "note": "1/день Реакцией +4 AP одной части против одной атаки, затем кожа сохнет час"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "Ydn9tg97EpOzPNJu",

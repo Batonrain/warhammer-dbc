@@ -55,7 +55,8 @@
         "label": "Мышечная броня",
         "note": "+3 к эфф. T.b торса и конечностей"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "yBiDuo3FMEuOjtsV",
   "_id": "aEIX1HodeV5JYAy1",

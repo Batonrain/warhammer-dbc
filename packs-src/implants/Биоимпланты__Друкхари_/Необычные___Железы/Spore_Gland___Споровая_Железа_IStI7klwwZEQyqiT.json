@@ -55,7 +55,8 @@
         "label": "Регенеративные споры",
         "note": "раз в 48−T.b ч Blast(T.b) на 1 мин — органики внутри +1 рана/10 с, но Hallucinogenic(7)"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "IStI7klwwZEQyqiT",

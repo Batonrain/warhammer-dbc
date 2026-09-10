@@ -51,7 +51,8 @@
         "label": "Кальциевая броня",
         "note": "отрастить до T.b элементов брони, +2 AP в части тела"
       }
-    ]
+    ],
+    "availability": 4
   },
   "folder": "MVwzimCMiFagXpH6",
   "_id": "IxdahJFN4dLxfbpk",

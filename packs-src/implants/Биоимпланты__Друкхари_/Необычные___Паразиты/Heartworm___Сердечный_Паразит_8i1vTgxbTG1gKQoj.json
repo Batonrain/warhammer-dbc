@@ -55,7 +55,8 @@
         "label": "Автономная реанимация",
         "note": "при падении без сознания +1d10+T.b ран, спячка 30−T.b дней"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "1klilopUyy7dIsEP",
   "_id": "8i1vTgxbTG1gKQoj",
