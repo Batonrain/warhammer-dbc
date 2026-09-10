@@ -123,6 +123,27 @@
               }
             },
             {
+              "id": "strangeHands-sub9-boneHands",
+              "kind": "testMod",
+              "modScope": "skill",
+              "skillKey": "trade",
+              "modValueMode": "flat",
+              "value": 20,
+              "label": "Тонкая работа (субмутация 9, Костлявые Руки): +20 к тесту Ремесла (Trade)",
+              "when": {
+                "negate": false,
+                "conditions": [],
+                "submutations": [
+                  "9"
+                ],
+                "negateSub": false,
+                "patronGod": [
+                  "slaanesh"
+                ],
+                "negatePatronGod": false
+              }
+            },
+            {
               "id": "strangeHands-sub10-ghostArms",
               "kind": "trait",
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.b2B8zxbhoK961wEf",
