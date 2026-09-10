@@ -93,3 +93,40 @@ describe("mechFormulaTotal", () => {
     expect(mechFormulaTotal("pr", rd)).toBe(7);
   });
 });
+
+// «Сырые» значения характеристик — «<ключ>v», по образцу corv (wdbc-kcw).
+// Книга местами задаёт дальность голым значением: «на дальность до P метров»
+// у субмутации «Взор сквозь Преграды». Выразить это было нечем ни для одной
+// характеристики, кроме Порчи, и в данные уехало «P.b» — вдесятеро меньше.
+describe("сырые значения характеристик (<ключ>v)", () => {
+  const actor = {
+    system: {
+      characteristics: { per: { total: 42, bonus: 4 }, ws: { total: 55, bonus: 5 } },
+      corruption: { value: 7 }, corruptionBonus: 0
+    }
+  };
+
+  it("perv — значение из клетки характеристики, per — Бонус", () => {
+    const d = mechRollData(actor);
+    expect(d.perv).toBe(42);
+    expect(d.per).toBe(4);
+  });
+
+  it("формула «perv» даёт книжную дальность, «P.b» — прежний бонус", () => {
+    const d = mechRollData(actor);
+    expect(mechFormulaTotal("perv", d)).toBe(42);
+    expect(mechFormulaTotal("P.b", d)).toBe(4);
+  });
+
+  it("сырой ключ не съедается коротким при подстановке (perv, а не per + v)", () => {
+    const d = mechRollData(actor);
+    expect(mechFormulaTotal("ceil(perv/2)", d)).toBe(21);
+    expect(mechFormulaTotal("wsv", d)).toBe(55);
+    expect(mechFormulaTotal("ws", d)).toBe(5);
+  });
+
+  it("характеристики нет у актора — 0, без падения", () => {
+    const d = mechRollData({ system: { characteristics: {} } });
+    expect(mechFormulaTotal("felv", d)).toBe(0);
+  });
+});

@@ -4,8 +4,9 @@
 // боя/сцены (оружие ломается). Активация — test/apps/blood-flame.test.mjs.
 
 import { describe, it, expect } from "vitest";
-import { registerBloodFlameKill, clearBloodFlameBuffs } from "../../module/combat/blood-flame.mjs";
-import { ACTIVE_FLAG, KILLS_FLAG, ADDED_PROPS_FLAG } from "../../module/rules/blood-flame.mjs";
+import { registerBloodFlameKill, clearBloodFlameBuffs, breakBloodFlameOnSceneEnd, cleanupBloodFlame }
+  from "../../module/combat/blood-flame.mjs";
+import { ACTIVE_FLAG, KILLS_FLAG, ADDED_PROPS_FLAG, SOURCE_FLAG } from "../../module/rules/blood-flame.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -99,5 +100,74 @@ describe("clearBloodFlameBuffs — конец боя/сцены", () => {
   it("пустой/битый combat — не падает", async () => {
     await expect(clearBloodFlameBuffs(null)).resolves.toBeUndefined();
     await expect(clearBloodFlameBuffs({ combatants: [{ actor: null }] })).resolves.toBeUndefined();
+  });
+});
+
+// ── wdbc-t4m: три дыры одного Дара ────────────────────────────────────────
+
+function makeActor(items) {
+  const list = [...items];
+  list.get = id => list.find(i => i.id === id) ?? null;
+  return { name: "Чемпион", items: list };
+}
+
+describe("breakBloodFlameOnSceneEnd — книжное «или сцены»", () => {
+  it("конец сцены ломает горящее оружие у всех акторов мира", async () => {
+    const burning = makeWeapon({
+      flags: { [ACTIVE_FLAG]: true, [KILLS_FLAG]: 3, [ADDED_PROPS_FLAG]: ["powerField", "flame"] },
+      weaponProps: [{ key: "powerField" }, { key: "flame" }, { key: "balanced" }]
+    });
+    globalThis.game = { actors: [makeActor([burning])] };
+
+    await breakBloodFlameOnSceneEnd();
+
+    expect(burning.system.destroyed).toBe(true);
+    expect(burning.system.weaponProps).toEqual([{ key: "balanced" }]);
+    expect(burning.getFlag(NS, ACTIVE_FLAG)).toBeUndefined();
+    expect(burning.getFlag(NS, KILLS_FLAG)).toBeUndefined();
+  });
+
+  it("оружие без Пламени конец сцены не трогает", async () => {
+    const plain = makeWeapon({ weaponProps: [{ key: "balanced" }] });
+    globalThis.game = { actors: [makeActor([plain])] };
+    await breakBloodFlameOnSceneEnd();
+    expect(plain.system.destroyed).toBe(false);
+    expect(plain.system.weaponProps).toEqual([{ key: "balanced" }]);
+  });
+});
+
+describe("cleanupBloodFlame — сняли сам Дар", () => {
+  it("Пламя гаснет, свойства снимаются, но оружие НЕ ломается", async () => {
+    const burning = makeWeapon({
+      flags: { [ACTIVE_FLAG]: true, [KILLS_FLAG]: 2,
+               [ADDED_PROPS_FLAG]: ["powerField", "flame"], [SOURCE_FLAG]: "gift-1" },
+      weaponProps: [{ key: "powerField" }, { key: "flame" }]
+    });
+    const actor = makeActor([burning]);   // сам Дар уже удалён Foundry
+
+    await cleanupBloodFlame(actor, "gift-1");
+
+    expect(burning.getFlag(NS, ACTIVE_FLAG)).toBeUndefined();
+    expect(burning.system.weaponProps).toEqual([]);
+    // Поломка — цена за проведённый бой, а не за снятие Дара.
+    expect(burning.system.destroyed).toBe(false);
+  });
+
+  it("зажжено ДРУГИМ Даром — не трогается", async () => {
+    const burning = makeWeapon({
+      flags: { [ACTIVE_FLAG]: true, [ADDED_PROPS_FLAG]: ["flame"], [SOURCE_FLAG]: "gift-2" },
+      weaponProps: [{ key: "flame" }]
+    });
+    await cleanupBloodFlame(makeActor([burning]), "gift-1");
+    expect(burning.getFlag(NS, ACTIVE_FLAG)).toBe(true);
+  });
+
+  it("предмет с таким id ещё на акторе (удалили не его) — не трогается", async () => {
+    const burning = makeWeapon({
+      flags: { [ACTIVE_FLAG]: true, [ADDED_PROPS_FLAG]: [], [SOURCE_FLAG]: "gift-1" }
+    });
+    const gift = { id: "gift-1", type: "mutation", name: "Кровавое Пламя" };
+    await cleanupBloodFlame(makeActor([burning, gift]), "gift-1");
+    expect(burning.getFlag(NS, ACTIVE_FLAG)).toBe(true);
   });
 });

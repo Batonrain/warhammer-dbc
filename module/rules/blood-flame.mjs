@@ -18,6 +18,11 @@ const FLAG = "warhammer-dbc";
 export const ACTIVE_FLAG = "bloodFlameActive";
 export const KILLS_FLAG = "bloodFlameKills";
 export const ADDED_PROPS_FLAG = "bloodFlameAddedProps";
+// id предмета-Дара, которым зажжено это оружие. Нужен уборке при снятии Дара
+// (combat/blood-flame.mjs::cleanupBloodFlame): флаги горения лежат на ОРУЖИИ,
+// а Дар — отдельный предмет, и Foundry их связи не знает. Тот же приём, что
+// handOfDeathSource у apps/hand-of-death.mjs.
+export const SOURCE_FLAG = "bloodFlameSource";
 
 export const BLOOD_FLAME_KILL_CAP = 4;
 export const BLOOD_FLAME_DMG_PER_KILL = 2;

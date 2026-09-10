@@ -76,7 +76,7 @@ import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
-import { registerBloodFlameKill, clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
+import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
 import { huntReturnToWarpButtonHtml } from "./combat/the-hunter.mjs";
 import { isHunterHoundActor } from "./rules/the-hunter.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
@@ -1056,12 +1056,14 @@ export function registerHooks() {
           return ui.notifications.warn("Констатировать смерть может владелец цели (или ГМ).");
         }
         el.disabled = true;
+        // Убийство Кровавому Пламени засчитывает сама setDeceased (sheets/
+        // tabs/body.mjs) — единственная точка, где система признаёт смерть, и
+        // только на переходе «был жив → мёртв». Раньше зачёт висел здесь, и
+        // (а) обычная смерть его не давала вовсе, (б) второй клик по тому же
+        // трупу давал ещё одно убийство: кнопку видят и ГМ, и владелец цели,
+        // каждый на своём клиенте, а el.disabled живёт до перерисовки карточки.
         await setDeceased(actor, true);
-        // Кровавое Пламя (wdbc-1rno): если удар нанесён оружием с горящим
-        // Пламенем, засчитать ему убитого — молча выходит для любого другого
-        // оружия/без него (registerBloodFlameKill сама проверяет флаг).
         const weapon = el.dataset.weaponUuid ? await fromUuid(el.dataset.weaponUuid).catch(() => null) : null;
-        if (weapon) await registerBloodFlameKill(weapon);
         // Загонщик/The Hunter (wdbc-1rno): weapon.parent — это АКТОР, чьим
         // естественным оружием (Когти/Укус/Хвост) нанесён удар. Если это
         // Гончая Плоти, призванная именно Загонщиком (HUNTER_HOUND_FLAG),

@@ -1,0 +1,39 @@
+{
+  "name": "Гниль Нургла",
+  "type": "disease",
+  "img": "systems/warhammer-dbc/assets/item-icons/disease.svg",
+  "folder": "0kKcYQTtu03ApLFh",
+  "system": {
+    "diseaseType": "warp",
+    "severity": "",
+    "god": "nurgle",
+    "contagion": "",
+    "incubation": "3/7 часов (носитель/симптомы). Прижигание раны 3 Хода или ампутация за 1 мин предотвращает заражение.",
+    "symptoms": "Нельзя восстанавливать урон Т; прочие хар-ки восстанавливаются раз в 7 ч; последний уровень Усталости не снять. Каждое утро 1d5 урона Т. Т=0 → смерть, из трупа призывается Чумонос (до 7 дней; при Inf 50+ — Герольд Нургла). Покровительство Нургла игнорирует.",
+    "vectors": "Кожа-к-коже: Т+20; контакт жидкостей (кровь/слюна в кровь/слюну/глаза): Т−10.",
+    "cure": "Постельный режим в полноценном апотекарионе + 14 успехов расширенного Medicae−40 (тест раз в сутки).",
+    "active": false,
+    "description": "",
+    "notes": ""
+  },
+  "_id": "hfck3ePSodX4RmUD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782136900760,
+    "modifiedTime": 1782752981414,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!hfck3ePSodX4RmUD"
+}

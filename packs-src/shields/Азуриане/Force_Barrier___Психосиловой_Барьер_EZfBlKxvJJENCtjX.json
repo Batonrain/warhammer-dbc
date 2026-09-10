@@ -1,0 +1,42 @@
+{
+  "name": "Force Barrier / Психосиловой Барьер",
+  "type": "forcefield",
+  "folder": "UnFkx3aiaggUpvuw",
+  "system": {
+    "description": "Редчайший щит экзодитских миров (карманная версия). Можно сменить принцип работы: на Сквозной −10 к рейтингу активации, на Дефлектор −20. Перегрузка: телепортирует владельца на 1d10 км в безопасное место; затем 12 смен работы + медитация.",
+    "notes": "",
+    "shieldNature": "warp",
+    "shieldType": "dome",
+    "ratingMin": 1,
+    "ratingMax": 80,
+    "overloadThreshold": 20,
+    "currentRating": 0,
+    "isSpecialRating": false,
+    "equipped": false,
+    "status": "inactive",
+    "quality": "common",
+    "availability": 5,
+    "weight": 0
+  },
+  "_id": "EZfBlKxvJJENCtjX",
+  "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781949805492,
+    "modifiedTime": 1782752979845,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!EZfBlKxvJJENCtjX"
+}

@@ -246,7 +246,8 @@ describe("startDestabilize — Рыцарь Бога запускает срок
 
     await spawnDemonOnScene("Джаггернаут", "Actor.champion-1", { asMinion: true, startDestabilize: true });
 
-    expect(createdActors[0]._flags["warhammer-dbc.destabilize"]).toEqual({ deadlineAt: 1000 + 11 * 6 });
+    expect(createdActors[0]._flags["warhammer-dbc.destabilize"])
+      .toEqual({ deadlineAt: 1000 + 11 * 6, combatId: null, deadlineRound: null });
   });
 
   it("без startDestabilize (по умолчанию, Оруженосец) — флаг destabilize не ставится", async () => {
@@ -272,7 +273,8 @@ describe("startDestabilize — Рыцарь Бога запускает срок
 
     await spawnDemonOnScene("Джаггернаут", "Actor.champion-1", { startDestabilize: true });
 
-    expect(createdActors[0]._flags["warhammer-dbc.destabilize"]).toEqual({ deadlineAt: 2 * 6 });
+    expect(createdActors[0]._flags["warhammer-dbc.destabilize"])
+      .toEqual({ deadlineAt: 2 * 6, combatId: null, deadlineRound: null });
   });
 
   it("defaultSpawnDemonFn доносит startDestabilize и до прямого вызова, и до сокет-релея", async () => {

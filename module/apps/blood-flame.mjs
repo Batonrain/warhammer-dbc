@@ -33,7 +33,7 @@
 
 import {
   isBloodFlameItem, isBloodFlameActive,
-  ACTIVE_FLAG, KILLS_FLAG, ADDED_PROPS_FLAG
+  ACTIVE_FLAG, KILLS_FLAG, ADDED_PROPS_FLAG, SOURCE_FLAG
 } from "../rules/blood-flame.mjs";
 import { applyWoundLoss } from "../rules/wounds.mjs";
 import { esc } from "../helpers/utils.mjs";
@@ -84,7 +84,7 @@ async function promptWeapon(actor) {
 }
 
 /** Активация: самоурон + Power Field/Flame + флаги. */
-export async function activateBloodFlame(actor, weapon) {
+export async function activateBloodFlame(actor, weapon, sourceId = "") {
   if (!actor || !weapon) return;
   if (weapon.type !== "weapon" || (weapon.system?.weaponClass !== "melee" && weapon.system?.weaponClass !== "thrown")) {
     return ui.notifications?.warn("⚠️ Кровавое Пламя — только рукопашное оружие.");
@@ -108,7 +108,10 @@ export async function activateBloodFlame(actor, weapon) {
     ...(addedKeys.length ? { "system.weaponProps": [...props, ...addedKeys.map(key => ({ key }))] } : {}),
     [`flags.${FLAG}.${ACTIVE_FLAG}`]: true,
     [`flags.${FLAG}.${KILLS_FLAG}`]: 0,
-    [`flags.${FLAG}.${ADDED_PROPS_FLAG}`]: addedKeys
+    [`flags.${FLAG}.${ADDED_PROPS_FLAG}`]: addedKeys,
+    // Каким Даром зажжено — уборка при снятии Дара (combat/blood-flame.mjs::
+    // cleanupBloodFlame) иначе не знает, какое оружие гасить.
+    [`flags.${FLAG}.${SOURCE_FLAG}`]: sourceId || null
   });
 
   await postTestCard(actor, {
@@ -124,7 +127,7 @@ export async function useBloodFlame(actor, item) {
   const weaponId = await promptWeapon(actor);
   if (!weaponId) return;
   const weapon = actor.items.get(weaponId);
-  await activateBloodFlame(actor, weapon);
+  await activateBloodFlame(actor, weapon, item.id);
 }
 
 /** Кнопка/статус для листа предмета — пусто, если это не «Кровавое Пламя» или нет актора. */

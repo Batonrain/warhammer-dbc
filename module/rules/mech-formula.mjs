@@ -24,7 +24,15 @@
 //
 // Чистая функция, Foundry не нужен — проверяется test/rules/mech-formula.test.mjs.
 
-const KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf", "cor", "pr", "corv"];
+const CHAR_KEYS = ["ws", "bs", "s", "t", "ag", "int", "per", "wp", "fel", "inf"];
+// «Сырые» значения характеристик — «<ключ>v», по образцу уже существовавшего
+// «corv» (см. mechRollData ниже): книга местами задаёт дальности и радиусы
+// ГОЛЫМ значением, а не Бонусом — «на дальность до P метров» у субмутации
+// «Взор сквозь Преграды» (wdbc-kcw), «½Cor (окр.▲) м» у Herald of Humility.
+// Раньше выразить это было нечем ни для одной характеристики, кроме Порчи, и
+// авторы подставляли «P.b» — то есть урезали книжную дальность в ~10 раз.
+const RAW_KEYS = CHAR_KEYS.map(k => `${k}v`);
+const KEYS = [...CHAR_KEYS, "cor", "pr", "corv", ...RAW_KEYS];
 
 // Каноническая нотация системы — «X.b» (resolveCharFormula, module/helpers/
 // utils.mjs: WS.b, Cor.b, однобуквенные A/I/P/W/F как алиасы Ag/Int/Per/WP/Fel).
@@ -57,7 +65,13 @@ export function mechRollData(actor) {
     // файла), поэтому raw-значение получает отдельный ключ.
     corv: Number(actor?.system?.corruption?.value) || 0
   };
-  for (const k of KEYS) if (k !== "cor" && k !== "pr" && k !== "corv") data[k] = bonus(k);
+  for (const k of CHAR_KEYS) {
+    data[k] = bonus(k);
+    // «<ключ>v» — то же, что corv, но для характеристик: книжное «P метров»
+    // против «P.b метров». Берётся total (то, что игрок видит в клетке
+    // характеристики), а не бонус.
+    data[`${k}v`] = Number(c[k]?.total) || 0;
+  }
   return data;
 }
 

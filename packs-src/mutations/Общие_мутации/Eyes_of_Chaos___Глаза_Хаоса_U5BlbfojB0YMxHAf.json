@@ -225,8 +225,8 @@
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.kYwoc0XZcFa0aUfF",
               "sourceName": "Sight Beyond Barriers / Взор сквозь Преграды (X)",
               "sourceHasRating": true,
-              "rating": "P.b",
-              "label": "Взор сквозь Преграды (субмутация 10): видит сквозь преграды на P.b м",
+              "rating": "perv",
+              "label": "Взор сквозь Преграды (субмутация 10): видит сквозь преграды на P м (книжное «до P метров» — голое значение Per, не Бонус)",
               "when": {
                 "negate": false,
                 "conditions": [],

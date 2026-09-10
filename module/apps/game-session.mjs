@@ -37,6 +37,7 @@ import {
   isRuleUsageUsed as cooldownIsRuleUsageUsed, markRuleUsageUsed as cooldownMarkRuleUsageUsed
 } from "../rules/cooldown.mjs";
 import { actorInfamyMax } from "./infamy-points.mjs";
+import { breakBloodFlameOnSceneEnd } from "../combat/blood-flame.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -182,6 +183,9 @@ export async function refillFatePools() {
 export async function triggerNewScene() {
   if (!game.user.isGM) return;
   await resetUsageLimit("scene");
+  // Кровавое Пламя (Дар Кхорна): книга ломает оружие «по окончании боя ИЛИ
+  // СЦЕНЫ». Конец боя ловится по deleteCombat, конец сцены — здесь.
+  await breakBloodFlameOnSceneEnd();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("🎬 Новая сцена", BANNER_TEXT.scene)
@@ -196,6 +200,7 @@ export async function triggerSessionEnd() {
   // судьбы»): игроки увидят только одно объявление — про конец сессии.
   await resetUsageLimit("scene");
   await resetUsageLimit("session");
+  await breakBloodFlameOnSceneEnd();
   await refillFatePools();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },

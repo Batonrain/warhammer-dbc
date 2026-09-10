@@ -11,6 +11,7 @@ import { applyDamageToHorde }   from "./horde-damage.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
 import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
+import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
@@ -585,6 +586,15 @@ export async function applyDamageToActor(actor, damageData) {
 
   const { currentWounds, newWounds, newCritical, gotCritical } =
     await applyWoundLoss(actor, netDamage);
+
+  // Чем ранили в последний раз — читает sheets/tabs/body.mjs::setDeceased,
+  // чтобы засчитать убийство Кровавому Пламени в тот момент, когда система
+  // признаёт смерть (галочка на вкладке Тело ИЛИ кнопка в крит-строке), а не
+  // только по редкой крит-строке с явным глаголом смерти. Пишется на любом
+  // ранении: «последнее» и есть то, от которого умерли.
+  if (weaponUuid && netDamage > 0) {
+    await actor.setFlag("warhammer-dbc", LAST_DAMAGE_WEAPON_FLAG, weaponUuid);
+  }
 
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;

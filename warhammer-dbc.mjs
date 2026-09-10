@@ -54,6 +54,8 @@ import { cleanupHandOfDeath } from "./module/apps/hand-of-death.mjs";
 import { cleanupGunArm } from "./module/apps/gun-arm.mjs";
 import { isGunArmGift } from "./module/rules/gun-arm.mjs";
 import { isHandOfDeathItem } from "./module/rules/hand-of-death.mjs";
+import { cleanupBloodFlame } from "./module/combat/blood-flame.mjs";
+import { isBloodFlameItem } from "./module/rules/blood-flame.mjs";
 import { syncCancerousHealingPenalty, reconcileCancerousHealingAfterHeal, reconcileCancerousHealingToFit }
   from "./module/apps/cancerous-healing.mjs";
 import { reconcileFlayedToFit } from "./module/apps/flayed.mjs";
@@ -1823,6 +1825,11 @@ Hooks.on("deleteItem", async (item, options, userId) => {
   // «вросло» остаётся на оружии, и вернувшийся другим предметом Дар начал бы
   // действовать на него сам собой, без выбора ГМа.
   if (isGunArmGift(item)) { await cleanupGunArm(actor, item.id); return; }
+  // Дар «Кровавое Пламя» (wdbc-t4m): флаги горения и добавленные Power Field/
+  // Flame лежат на ОРУЖИИ, а Дар — отдельный предмет. Без уборки снятие Дара
+  // оставляло оружие силовым, пламенным и с накопленным бонусом урона
+  // навсегда — снять это было нечем, кроме ручной правки предмета.
+  if (isBloodFlameItem(item)) { await cleanupBloodFlame(actor, item.id); return; }
   if (item.type === "weapon" && item.getFlag("warhammer-dbc", "handOfDeathSource")) {
     const source = actor.items.get(item.getFlag("warhammer-dbc", "handOfDeathSource"));
     if (source) await source.update({ [`flags.warhammer-dbc.-=fusedWeaponId`]: null, [`flags.warhammer-dbc.-=fusedHand`]: null });
