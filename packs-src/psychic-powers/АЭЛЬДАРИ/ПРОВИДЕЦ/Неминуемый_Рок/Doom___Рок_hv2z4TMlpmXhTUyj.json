@@ -1,0 +1,77 @@
+{
+  "name": "Doom / Рок",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "QujvTdGGbsc03ipM",
+  "system": {
+    "description": "<p><strong>750 xp | Требования: PR 9, Multiplying Failure</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>Psyniscience(P)–30.<strong> Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Изменение (PR), Длительное (PR)</p><p>Обрекая противника не неудачу, Провидец способен даровать своим союзником невероятную удачу, что будет питаться подобно стервятнику на чужой неудаче. Провидец выбирает цели этой психосилы и манифестирует на них психосилу Падение, считая свои успехи за успехи на этой психосиле, а также увеличивая длительность психосилы на +3. Пока на противника действует Падение, все союзники псайкера получают +Провалы целей успехов на все свои тесты, направленные против них.</p>",
+    "notes": "",
+    "cost": 750,
+    "discipline": "farseer",
+    "subtype": "Неминуемый Рок",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9, Multiplying Failure",
+    "testChar": "psyniscience",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "750 xp | Требования: PR 9, Multiplying Failure\nДействие: Полное действие. Поддержание: Нет.\nПсихотест: Psyniscience(P)–30. Дальность: PR×5 м\nТип: Изменение (PR), Длительное (PR)\nОбрекая противника не неудачу, Провидец способен даровать своим союзником невероятную удачу, что будет питаться подобно стервятнику на чужой неудаче. Провидец выбирает цели этой психосилы и манифестирует на них психосилу Падение, считая свои успехи за успехи на этой психосиле, а также увеличивая длительность психосилы на +3. Пока на противника действует Падение, все союзники псайкера получают +Провалы целей успехов на все свои тесты, направленные против них.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "hv2z4TMlpmXhTUyj",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hv2z4TMlpmXhTUyj"
+}

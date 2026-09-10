@@ -1,0 +1,77 @@
+{
+  "name": "Eye Interference / Помехи Ока",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "iCRCgExC8yjbKuGA",
+  "system": {
+    "description": "<p><strong>550 xp | Требования: PR 7, Binocular</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–30.<strong> Дальность: </strong>Звездная Система</p><p><strong>Тип: </strong>Аура, Сосредоточение</p><p>Мастерски обманывая вражеские системы и авгуры, Пустотный Мечтатель может дать своему флоту серьезное преимущество над недругом, сокрыв свои корабли от его внимательного взора и наделив его иллюзорным чувством безопасности. Когда в системе любая система авгуров пытается совершить сканирование или уже сканирует, Пустотный Мечтатель может пройти тест на эту психосилу, и в случае 3+ успехов – подменить данные, которые получит противник на те, что захочет ему выдать Пустотный Мечтатель. Эти данные будут полностью правдивы для корабельных систем, даже если там будет сказан абсолютный бред – но как на это отреагирует экипаж уже остается на откуп ГМа.</p>",
+    "notes": "",
+    "cost": 550,
+    "discipline": "voidDreamer",
+    "subtype": "Взирающее Сознание",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Binocular",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "Звездная Система",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "550 xp | Требования: PR 7, Binocular\nДействие: Длительное Действие (30 Минут). Поддержание: Полудействие.\nПсихотест: W–30. Дальность: Звездная Система\nТип: Аура, Сосредоточение\nМастерски обманывая вражеские системы и авгуры, Пустотный Мечтатель может дать своему флоту серьезное преимущество над недругом, сокрыв свои корабли от его внимательного взора и наделив его иллюзорным чувством безопасности. Когда в системе любая система авгуров пытается совершить сканирование или уже сканирует, Пустотный Мечтатель может пройти тест на эту психосилу, и в случае 3+ успехов – подменить данные, которые получит противник на те, что захочет ему выдать Пустотный Мечтатель. Эти данные будут полностью правдивы для корабельных систем, даже если там будет сказан абсолютный бред – но как на это отреагирует экипаж уже остается на откуп ГМа.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "HUcxfL2fS9LPgeo9",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HUcxfL2fS9LPgeo9"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Farturetar / Оружие Войны",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "2wNOvpPihGjprloo",
+  "system": {
+    "description": "<p><strong>750 xp | Требования: PR 7, Executioner</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–20. <strong>Дальность:</strong> PR×20 м</p><p><strong>Тип: </strong>Вливание</p><p>Варлоки, что обучились техники палача, рано или поздно обучаются делить свое Мастерство меча с союзниками, и чаще всего, со своей психической копией. Пока псайкер поддерживает эту психосилу, он изменяет все психосилы с типом Психический Клинок на Психический Клинок (PR×2). Если психосилы с типом Психический Клинок имеют радиус Сам, то эти психосилы берут радиус этой психосилы. Однако, пока псайкер поддерживает эту психосилу, он может применять Психический Клинок только к Эльдарскому оружию.</p>",
+    "notes": "",
+    "cost": 750,
+    "discipline": "warlock",
+    "subtype": "Палач",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Executioner",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×20 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "750 xp | Требования: PR 7, Executioner\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–20. Дальность: PR×20 м\nТип: Вливание\nВарлоки, что обучились техники палача, рано или поздно обучаются делить свое Мастерство меча с союзниками, и чаще всего, со своей психической копией. Пока псайкер поддерживает эту психосилу, он изменяет все психосилы с типом Психический Клинок на Психический Клинок (PR×2). Если психосилы с типом Психический Клинок имеют радиус Сам, то эти психосилы берут радиус этой психосилы. Однако, пока псайкер поддерживает эту психосилу, он может применять Психический Клинок только к Эльдарскому оружию.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "pi5D9CWYarfQlZvT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pi5D9CWYarfQlZvT"
+}

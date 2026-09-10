@@ -1,0 +1,77 @@
+{
+  "name": "Psychic Winds / Психические Ветра",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "PKyUC7DR6cuUmUnU",
+  "system": {
+    "description": "<p><strong>350 xp | Требования: PR 5, Psychic Calm</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–20.<strong> Дальность: </strong>Звездная Система/PR×10 ПЕ</p><p><strong>Тип: </strong>Аура, Длительное (W.b Дней/Недель/Месяцев), Изменение, Призыв, Непрямое, Сосредоточение</p><p>Используя разум и душу для создания неконтролируемого психического ветра, способного сметать разум психически активных существ, и мешать общаться телепатически. Все психически активные существа, попавшие в ауру действия Психического Ветра, получают штраф –PR×2 к любым ментальным действиям. Любые астропатические сообщения, отправляемые из системы, остаются внутри нее и растворяются, а внешние сообщение – частично или полностью искажаются. Союзные цели неуязвимы к этой психосиле.</p>",
+    "notes": "",
+    "cost": 350,
+    "discipline": "voidDreamer",
+    "subtype": "Ветра Имматериума",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Psychic Calm",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "extended",
+    "range": "Звездная Система/PR×10 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "350 xp | Требования: PR 5, Psychic Calm\nДействие: Длительное Действие (30 Минут). Поддержание: Нет.\nПсихотест: W–20. Дальность: Звездная Система/PR×10 ПЕ\nТип: Аура, Длительное (W.b Дней/Недель/Месяцев), Изменение, Призыв, Непрямое, Сосредоточение\nИспользуя разум и душу для создания неконтролируемого психического ветра, способного сметать разум психически активных существ, и мешать общаться телепатически. Все психически активные существа, попавшие в ауру действия Психического Ветра, получают штраф –PR×2 к любым ментальным действиям. Любые астропатические сообщения, отправляемые из системы, остаются внутри нее и растворяются, а внешние сообщение – частично или полностью искажаются. Союзные цели неуязвимы к этой психосиле.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "EG404GFR7SlK4BGF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!EG404GFR7SlK4BGF"
+}

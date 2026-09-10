@@ -1,0 +1,75 @@
+{
+  "name": "De–Sting / Де–Жало",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "Q4KWdYiEM1KTlLJC",
+  "system": {
+    "description": "<p><strong>1250 xp | Требования: PR 10, Long Sting, Flexible Sting, Lost Sting, Light Sting</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–30. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Объединяя все практики Жалящего Клинка воедино, Варлок способен создать оружие, способно уничтожать даже самую крепкую вражескую броню и самых гордых вражеских чемпионов за считанные взмахи клинка. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Оружие псайкера покрывает яркое фиолетовое пламя, дающее штраф –30 на все тесты Stealth, но бонус +30 на все тесты Запугивания. Оружие персонажа получает свойство Distortion                                       (⅓ (окр.▲) бPR).</p>",
+    "notes": "",
+    "cost": 1250,
+    "discipline": "warlock",
+    "subtype": "Жалящий Клинок",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 10,
+    "requirement": "PR 10, Long Sting, Flexible Sting, Lost Sting, Light Sting",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "1250 xp | Требования: PR 10, Long Sting, Flexible Sting, Lost Sting, Light Sting\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–30. Дальность: Сам\nТип: Психический Клинок\nОбъединяя все практики Жалящего Клинка воедино, Варлок способен создать оружие, способно уничтожать даже самую крепкую вражескую броню и самых гордых вражеских чемпионов за считанные взмахи клинка. Данная психосила может быть наложена только на оружие типа Нож, Меч, Рапира, Сабля, Копье и Глефа, имеющие свойство Force. Оружие псайкера покрывает яркое фиолетовое пламя, дающее штраф –30 на все тесты Stealth, но бонус +30 на все тесты Запугивания. Оружие персонажа получает свойство Distortion                                       (⅓ (окр.▲) бPR).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "U4ZJMjum4CNfcCq5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!U4ZJMjum4CNfcCq5"
+}

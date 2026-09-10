@@ -1,0 +1,77 @@
+{
+  "name": "It Will Be / Так Оно И Будет",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "ze3R6hphirOZu4jz",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 5, Пророчество</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>Psyniscience(P)+0.<strong> Дальность: </strong>PR×3 м</p><p><strong>Тип:</strong> Изменение (PR)</p><p>То что есть, то и будет. Неизбежное предсказание Провидца сбудется в любом из случаев, как бы враг не пытался его испортить или избежать – никому не суждено от него скрыться. Данная психосила действует только на союзников Псайкера. После успешной манифестации психосилы, число успехов уменьшается вдвое (окр.▲). Пока психосила поддерживается, каждая цель психосилы в начале своего хода получает итоговое число успехов. Он может использовать эти успехи, дабы автоматически завершить любой тест с указанным числом успехов один раз. Если данная психосила манифестируется в месте, которое Провидец видел через Пророчество или Перст Указующий, то психосила получает +W.b успехов гарантированно. Данным способом нельзя проводить автоуспех Песен Кости, Техночудес и Психосил.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "farseer",
+    "subtype": "Провидение",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, Пророчество",
+    "testChar": "psyniscience",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×3 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 5, Пророчество\nДействие: Полудействие. Поддержание: Полудействие.\nПсихотест: Psyniscience(P)+0. Дальность: PR×3 м\nТип: Изменение (PR)\nТо что есть, то и будет. Неизбежное предсказание Провидца сбудется в любом из случаев, как бы враг не пытался его испортить или избежать – никому не суждено от него скрыться. Данная психосила действует только на союзников Псайкера. После успешной манифестации психосилы, число успехов уменьшается вдвое (окр.▲). Пока психосила поддерживается, каждая цель психосилы в начале своего хода получает итоговое число успехов. Он может использовать эти успехи, дабы автоматически завершить любой тест с указанным числом успехов один раз. Если данная психосила манифестируется в месте, которое Провидец видел через Пророчество или Перст Указующий, то психосила получает +W.b успехов гарантированно. Данным способом нельзя проводить автоуспех Песен Кости, Техночудес и Психосил.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "aRG7LKJMp41BFOP5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!aRG7LKJMp41BFOP5"
+}

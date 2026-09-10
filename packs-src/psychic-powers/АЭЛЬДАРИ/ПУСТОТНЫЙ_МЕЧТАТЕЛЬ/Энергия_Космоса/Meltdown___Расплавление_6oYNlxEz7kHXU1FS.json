@@ -1,0 +1,77 @@
+{
+  "name": "Meltdown / Расплавление",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KNlZUQRinNhUmsOe",
+  "system": {
+    "description": "<p><strong>650 xp | Требования: PR 7, Energy Collapse</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–30 vss Tech–Use(I)–50.<strong> Дальность: </strong>Звездная Система/PR×10 ПЕ</p><p><strong>Тип: </strong>Изменение, Сосредоточение</p><p>Направляя потоки имматериума и образуя из них энергию, Пустотный Мечтатель способен на длительный промежуток времени обезвредить один из вражеских узлов, дабы дать своим союзникам невероятное преимущество над недругом. Пустотный Мечтатель выбирает один узел, не являющийся Системой Жизнеобеспечения, Плазменным Двигателем или Мостиком. Технический экипаж на борту вражеского корабля должен пройти тест Tech–Use(I)–50, иначе потоки энергии отключают узел на этот и Следующий раунд, не давая совершать тесты, что опираются на этот узел.</p>",
+    "notes": "Сопротивление цели — навык Tech-Use(I): resistChar не заполнен.",
+    "cost": 650,
+    "discipline": "voidDreamer",
+    "subtype": "Энергия Космоса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Energy Collapse",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "Звездная Система/PR×10 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "650 xp | Требования: PR 7, Energy Collapse\nДействие: Длительное Действие (30 Минут). Поддержание: Нет.\nПсихотест: W–30 vss Tech–Use(I)–50. Дальность: Звездная Система/PR×10 ПЕ\nТип: Изменение, Сосредоточение\nНаправляя потоки имматериума и образуя из них энергию, Пустотный Мечтатель способен на длительный промежуток времени обезвредить один из вражеских узлов, дабы дать своим союзникам невероятное преимущество над недругом. Пустотный Мечтатель выбирает один узел, не являющийся Системой Жизнеобеспечения, Плазменным Двигателем или Мостиком. Технический экипаж на борту вражеского корабля должен пройти тест Tech–Use(I)–50, иначе потоки энергии отключают узел на этот и Следующий раунд, не давая совершать тесты, что опираются на этот узел.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6oYNlxEz7kHXU1FS",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6oYNlxEz7kHXU1FS"
+}

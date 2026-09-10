@@ -1,0 +1,77 @@
+{
+  "name": "Hour Hand / Часовая Стрелка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "xv1PxigqBtcyDUYc",
+  "system": {
+    "description": "<p><strong>750 xp | Требования: PR 9, Минутная Стрелка</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–40.<strong> Дальность: </strong>PR×5 км</p><p><strong>Тип: </strong>Аура, Изменение (PR×3)</p><p>Сложная из–за сути своей, манипуляция со временем способна отменить целый момент или фрагмент времени, вернувшись в относительное прошлое, предотвратив ужасающие события и дав шанс на изменение будущего. Псайкер, раз за сессию, может применить эффект этой психосилы, откатив все события на Успехи минут в соответствующем радиусе, сохраняя воспоминания у всех участников откаченных событий того, что произошло изменение потока времени – хотя сторонние наблюдатели, не знакомые с Хрономантией или этой психосилой, вскоре посчитают то, что это были ложные воспоминания. Псайкер может выбрать до PR×3 существ, которые не забудут то, что произошло – этот лимит пропадает, если персонаж выбирает Эльдар, Друкхари или Хрономантов.</p>",
+    "notes": "",
+    "cost": 750,
+    "discipline": "farseer",
+    "subtype": "Власть Над Временем",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9, Минутная Стрелка",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×5 км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "750 xp | Требования: PR 9, Минутная Стрелка\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–40. Дальность: PR×5 км\nТип: Аура, Изменение (PR×3)\nСложная из–за сути своей, манипуляция со временем способна отменить целый момент или фрагмент времени, вернувшись в относительное прошлое, предотвратив ужасающие события и дав шанс на изменение будущего. Псайкер, раз за сессию, может применить эффект этой психосилы, откатив все события на Успехи минут в соответствующем радиусе, сохраняя воспоминания у всех участников откаченных событий того, что произошло изменение потока времени – хотя сторонние наблюдатели, не знакомые с Хрономантией или этой психосилой, вскоре посчитают то, что это были ложные воспоминания. Псайкер может выбрать до PR×3 существ, которые не забудут то, что произошло – этот лимит пропадает, если персонаж выбирает Эльдар, Друкхари или Хрономантов.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "hhNPiuOYcHZkv2Xy",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!hhNPiuOYcHZkv2Xy"
+}

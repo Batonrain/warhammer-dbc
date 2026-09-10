@@ -1,0 +1,78 @@
+{
+  "name": "Fleeting Moment / Мимолетное Мгновение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "4ZxwiRS1UetZel3L",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 2</strong></p><p><strong>Действие:</strong> Полудействие<strong> Поддержание:</strong> Нет</p><p><strong>Психотест:</strong> W+0 <strong>Дальность:</strong> PR×15м</p><p><strong>Тип: </strong>Атака, Психический Снаряд, Незримое, Стрельба</p><p>На несчастного противника обрушивается мимолетное мгновение Иннеада, бога мертвых в пантеоне Эльдар. На слабые разумы это является разрушительным влиянием, в то время как сильные умы лишь слабо пострадают. За каждый нечетный провал цель получает следующее попадание:</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×15</p></td><td><p>1d5+бPR E</p></td><td><p>0</p></td><td><p>Warp Weapon</p></td></tr></table>",
+    "notes": "",
+    "cost": 200,
+    "discipline": "revenant",
+    "subtype": "Взгляд Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 2,
+    "requirement": "PR 2",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×15м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "1d5+бPR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 2\nДействие: Полудействие Поддержание: Нет\nПсихотест: W+0 Дальность: PR×15м\nТип: Атака, Психический Снаряд, Незримое, Стрельба\nНа несчастного противника обрушивается мимолетное мгновение Иннеада, бога мертвых в пантеоне Эльдар. На слабые разумы это является разрушительным влиянием, в то время как сильные умы лишь слабо пострадают. За каждый нечетный провал цель получает следующее попадание:\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×15 | 1d5+бPR E | 0 | Warp Weapon\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "1e5yjn7ywNgvTFIz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!1e5yjn7ywNgvTFIz"
+}

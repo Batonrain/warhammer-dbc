@@ -1,0 +1,78 @@
+{
+  "name": "Synchronizing the Will / Синхронизация Воли",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "5zXrvt1s61HtRRyS",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 6</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–20/W–30.<strong> Дальность: </strong>PR×40 м</p><p><strong>Тип: </strong>Изменение (PR×3)</p><p>Синхронизируя сознание себя и своих подчиненных, Провидец способен отдавать приказы, что забираются в самые глубины подсознания других Эльдар, давая им действовать куда яснее и точнее, нежели от устных приказов. Цели этой психосилы автоматически получают все бонусы от Командного Присутствия. В начале своего хода, псайкер получает возможность за Свободное действие отдать любую команду (короткую или длительную), отдавая команды через Command(W), считающийся как манифестация психосилы. Если у псайкера Command ниже +20, он получает Command+20. Независимо от того, способа цель слышать или нет, она получает приказ телепатически.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Битвы: Разума",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×40 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 6\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–20/W–30. Дальность: PR×40 м\nТип: Изменение (PR×3)\nСинхронизируя сознание себя и своих подчиненных, Провидец способен отдавать приказы, что забираются в самые глубины подсознания других Эльдар, давая им действовать куда яснее и точнее, нежели от устных приказов. Цели этой психосилы автоматически получают все бонусы от Командного Присутствия. В начале своего хода, псайкер получает возможность за Свободное действие отдать любую команду (короткую или длительную), отдавая команды через Command(W), считающийся как манифестация психосилы. Если у псайкера Command ниже +20, он получает Command+20. Независимо от того, способа цель слышать или нет, она получает приказ телепатически.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6J1thfzBkEEURGk5",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6J1thfzBkEEURGk5"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Force Blade / Психосиловой Клинок",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "4kGXZbTwzmnRW48J",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 4</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Нет/Свободное действие.</p><p><strong>Психотест:</strong> W–10. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Варлоки обладают тонким пониманием работы психосилового оружия из–за их специализации на рукопашном бою и поддержке. Тонко манипулируя своей силой, Варлок способен превратить даже самое простое оружие в психосиловое, которым он сможет разить. Если данная психосила была манифестирована на не–психосиловом оружии, то оно получает свойство Force, работая как эльдарское психокостяное оружие.</p><p>Если псайкер  использует эту психосилу на любое рукопашное оружие со свойством <strong>Force, </strong>то он наделяет его уникальными психическими свойствами, что может помочь ему в бою. Он может тратить Успехи психотеста, чтобы добавлять психосиловому оружию следующие свойства, каждое из которых стоит:</p><p><strong>1 У.: Balance +1, Blinding (+1), Defensive, Eldar Razor Sharp, Flame, Power Field, Tearing;</strong></p><p><strong>2 У.: Arc (8/–1/2d10), Crippling (2/+1), Eldar Precise, Devastating (+1), Dueling Weapon, Felling (2/+1), Proven (3/+1), Rad (+2), Shocking, Toxic (1/+1);</strong></p><p><strong>3 У.: Concussive(0/+1), Extreme (9/–1), Eldar Accurate, Flame (2d10), Lance, Step by Step, Vibro (+1), Warp Weapon, Wrecker (1/+1);</strong></p><p><strong>4 У.: Corrosive (3/+1), Grav, Hallucinogenic (0/+1), Haywire (0/+2), Resonant;</strong></p><p><strong>5 У.: Flame (3d10), Flexible, Mighty, Sanctified, Witch’s Edge.</strong></p><p>Свойства, рейтинг, можно улучшать, беря их вновь, но уже за 1 успех.</p><p>Меч, наделенный свойствами, начинает светиться фиолетово–синим светом, что дает штраф на тесты скрытности в размере –10. Этот штраф удваивается, если персонаж накладывает свойство Flame.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "warlock",
+    "subtype": "Отточенное Мастерство",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 4\nДействие: Полудействие. Поддержание: Нет/Свободное действие.\nПсихотест: W–10. Дальность: Сам\nТип: Психический Клинок\nВарлоки обладают тонким пониманием работы психосилового оружия из–за их специализации на рукопашном бою и поддержке. Тонко манипулируя своей силой, Варлок способен превратить даже самое простое оружие в психосиловое, которым он сможет разить. Если данная психосила была манифестирована на не–психосиловом оружии, то оно получает свойство Force, работая как эльдарское психокостяное оружие.\nЕсли псайкер  использует эту психосилу на любое рукопашное оружие со свойством Force, то он наделяет его уникальными психическими свойствами, что может помочь ему в бою. Он может тратить Успехи психотеста, чтобы добавлять психосиловому оружию следующие свойства, каждое из которых стоит:\n1 У.: Balance +1, Blinding (+1), Defensive, Eldar Razor Sharp, Flame, Power Field, Tearing;\n2 У.: Arc (8/–1/2d10), Crippling (2/+1), Eldar Precise, Devastating (+1), Dueling Weapon, Felling (2/+1), Proven (3/+1), Rad (+2), Shocking, Toxic (1/+1);\n3 У.: Concussive(0/+1), Extreme (9/–1), Eldar Accurate, Flame (2d10), Lance, Step by Step, Vibro (+1), Warp Weapon, Wrecker (1/+1);\n4 У.: Corrosive (3/+1), Grav, Hallucinogenic (0/+1), Haywire (0/+2), Resonant;\n5 У.: Flame (3d10), Flexible, Mighty, Sanctified, Witch’s Edge.\nСвойства, рейтинг, можно улучшать, беря их вновь, но уже за 1 успех.\nМеч, наделенный свойствами, начинает светиться фиолетово–синим светом, что дает штраф на тесты скрытности в размере –10. Этот штраф удваивается, если персонаж накладывает свойство Flame.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "NQzoJRKQ6jdvtrEe",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!NQzoJRKQ6jdvtrEe"
+}

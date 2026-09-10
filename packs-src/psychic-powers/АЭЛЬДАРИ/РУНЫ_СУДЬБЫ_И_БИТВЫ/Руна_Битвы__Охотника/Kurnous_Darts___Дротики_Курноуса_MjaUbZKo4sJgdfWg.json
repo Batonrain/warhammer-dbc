@@ -1,0 +1,78 @@
+{
+  "name": "Kurnous Darts / Дротики Курноуса",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "BYNm8UXq9gej1yhG",
+  "system": {
+    "description": "<p><strong>450 xp | Требования: PR 5</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>Survival(W)–30.<strong> Дальность: </strong>PR×10 м</p><p><strong>Тип: </strong>Атака, Психический Обстрел, Концентрация</p><p>Дротики Курноуса поражали слабые места добычи, поражая их серьезным парализующим и смертельным ядом, который был способен убить даже великих древних драконов на землях Эльдар. Повторяя смертоносные дротики, Провидец способен убивать противников мучительной смертью от яда.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×10 м</p></td><td><p>1d5+PR+(T.b×2) R</p></td><td><p>PR×2</p></td><td><p>Toxic (PR, 2d10+PR)</p></td></tr></table><p>Если цель должна была умереть от свойства Toxic, вместо этого она парализуется на 12–T.b (мин. 1) часов, способная все ощущать, но не действовать. Яд от данной психосилы действует на всех существ, включая демонов и машины.</p>",
+    "notes": "Пробитие в книге = PR×2 (переменное) — поле «Пробитие» принимает только фиксированное число, оставлено 0, реальное значение в тексте/таблице карточки.",
+    "cost": 450,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Битвы: Охотника",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "barrage",
+    "prRequired": 5,
+    "requirement": "PR 5 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "1d5+PR+(T.b*2)",
+    "damageType": "rending",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "450 xp | Требования: PR 5\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: Survival(W)–30. Дальность: PR×10 м\nТип: Атака, Психический Обстрел, Концентрация\nДротики Курноуса поражали слабые места добычи, поражая их серьезным парализующим и смертельным ядом, который был способен убить даже великих древних драконов на землях Эльдар. Повторяя смертоносные дротики, Провидец способен убивать противников мучительной смертью от яда.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×10 м | 1d5+PR+(T.b×2) R | PR×2 | Toxic (PR, 2d10+PR)\n[/ТАБЛИЦА]\nЕсли цель должна была умереть от свойства Toxic, вместо этого она парализуется на 12–T.b (мин. 1) часов, способная все ощущать, но не действовать. Яд от данной психосилы действует на всех существ, включая демонов и машины.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "MjaUbZKo4sJgdfWg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MjaUbZKo4sJgdfWg"
+}

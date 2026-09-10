@@ -1,0 +1,23 @@
+{
+  "name": "Несломленное Тело и Дух",
+  "type": "Item",
+  "folder": "QGDUHEI8lluY2Nzx",
+  "sorting": "m",
+  "_id": "MoUrLijnN3gLSOSP",
+  "description": "",
+  "sort": 0,
+  "color": null,
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null
+  },
+  "_key": "!folders!MoUrLijnN3gLSOSP"
+}

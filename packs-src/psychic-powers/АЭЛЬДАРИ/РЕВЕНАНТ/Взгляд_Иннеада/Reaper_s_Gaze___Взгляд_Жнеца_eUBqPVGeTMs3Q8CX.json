@@ -1,0 +1,78 @@
+{
+  "name": "Reaper's Gaze / Взгляд Жнеца",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "4ZxwiRS1UetZel3L",
+  "system": {
+    "description": "<p><strong>300 xp |  Требования: PR 4, Fleeting Moment</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Полудействие</p><p><strong>Психотест: </strong>W–20 <strong>Дальность: </strong>Сам / PR×20м (Д)</p><p><strong>Тип: </strong>Вливание</p><p>Псайкер наделяет себя даром Иннеада – возможность видеть души живых и мертвых, что может давать невероятное тактическое преимущество. Пока психосила поддерживается, псайкер может за успех в тесте пси–чутья увидеть чужие души в радиусе действия психосилы. Это может как раскрыть позицию других существ, нарушив их план на засаду, так и позволяет использовать психосилы с Warp Weapon с особой точностью – теперь псайкеру не нужно гадать где находится противник для применения психосилы, что обходит материальные рамки.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "revenant",
+    "subtype": "Взгляд Иннеада",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Fleeting Moment",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "Сам / PR×20м (Д)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp |  Требования: PR 4, Fleeting Moment\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–20 Дальность: Сам / PR×20м (Д)\nТип: Вливание\nПсайкер наделяет себя даром Иннеада – возможность видеть души живых и мертвых, что может давать невероятное тактическое преимущество. Пока психосила поддерживается, псайкер может за успех в тесте пси–чутья увидеть чужие души в радиусе действия психосилы. Это может как раскрыть позицию других существ, нарушив их план на засаду, так и позволяет использовать психосилы с Warp Weapon с особой точностью – теперь псайкеру не нужно гадать где находится противник для применения психосилы, что обходит материальные рамки.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "eUBqPVGeTMs3Q8CX",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!eUBqPVGeTMs3Q8CX"
+}

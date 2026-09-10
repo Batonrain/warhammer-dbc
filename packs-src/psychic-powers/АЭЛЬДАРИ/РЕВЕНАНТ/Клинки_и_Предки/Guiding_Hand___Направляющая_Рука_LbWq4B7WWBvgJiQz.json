@@ -1,0 +1,78 @@
+{
+  "name": "Guiding Hand / Направляющая Рука",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "QCuSQ7sb57EsmOdC",
+  "system": {
+    "description": "<p><strong>300 xp | Требования: PR 4, Advice From The Past</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Полудействие</p><p><strong>Психотест: </strong>W–20 <strong>Дальность: </strong>PR×20м</p><p><strong>Тип:</strong> Призыв</p><p>Псайкер вызывает душу умершего эльдара из рук Иннеада и воплощает его в психической форме в материальном мире, позволяя тому частично вернуться к живым и дать им совет или помочь в физических делах. Псайкер вызывает до PR психических духов эльдар в момент их смерти, но с восстановленным телом и снаряжением. ГМ может дать им ситуативные навыки и таланты, но в среднем они владеют навыками на уровне +10. Псайкер может вызвать лишь одного духа, но с навыком или навыками на уровне +30 и редкими талантами и знаниями. У духов PR ран и поглощения, но они не умеют сражаться, парировать, контратаковать, но могут уворачиваться. Они могут работать как ассистенты на сменах или самостоятельно устраивать смены, пока они в радиусе действия психосилы.</p><p><strong>Все </strong>духи пропадают если психосила развеяна или псайкер вышел из зоны поддержания хотя–бы одного духа.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "revenant",
+    "subtype": "Клинки и Предки",
+    "powerType": "summon",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Advice From The Past",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×20м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp | Требования: PR 4, Advice From The Past\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–20 Дальность: PR×20м\nТип: Призыв\nПсайкер вызывает душу умершего эльдара из рук Иннеада и воплощает его в психической форме в материальном мире, позволяя тому частично вернуться к живым и дать им совет или помочь в физических делах. Псайкер вызывает до PR психических духов эльдар в момент их смерти, но с восстановленным телом и снаряжением. ГМ может дать им ситуативные навыки и таланты, но в среднем они владеют навыками на уровне +10. Псайкер может вызвать лишь одного духа, но с навыком или навыками на уровне +30 и редкими талантами и знаниями. У духов PR ран и поглощения, но они не умеют сражаться, парировать, контратаковать, но могут уворачиваться. Они могут работать как ассистенты на сменах или самостоятельно устраивать смены, пока они в радиусе действия психосилы.\nВсе духи пропадают если психосила развеяна или псайкер вышел из зоны поддержания хотя–бы одного духа.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "LbWq4B7WWBvgJiQz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!LbWq4B7WWBvgJiQz"
+}

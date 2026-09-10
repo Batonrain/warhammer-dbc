@@ -1,0 +1,75 @@
+{
+  "name": "Wisdom of Asuryan / Мудрость Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "Jf27I8tqepgR8vM2",
+  "system": {
+    "description": "<p><strong>700 xp | Требования: PR 8, Wings of the Falcon, Vaul’s Resistance, Grace of Isha, Kurnous Hunting, Khaine’s Wrath</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×10 м</p><p><strong>Тип: </strong>Изменение (PR×2)</p><p>Используя накопленный опыт и мудрость, духовидец способен даровать технике или ее экипажу невиданную мудрость и познание в навыках, превращая даже не обученных пилотов аспекта Орлиных Пилотов в Мастеров своего дела. Псайкер выбирает своей целью технику, которая полностью создана из психокости. Экипаж данной техники повышает рейтинг всех навыков для управления техники на +2 ступени (с +0 до +20 например) и получает бонус PR ко всем своим тестам. Если техника не обладает экипажем, то духовидец может управлять техникой, словно бы занимая место всего экипажа. Действие данной техники идет всегда после хода духовидца.</p>",
+    "notes": "",
+    "cost": 700,
+    "discipline": "spiritSeer",
+    "subtype": "Грань: Двигатели Ваула",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Wings of the Falcon, Vaul’s Resistance, Grace of Isha, Kurnous Hunting, Khaine’s Wrath",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "700 xp | Требования: PR 8, Wings of the Falcon, Vaul’s Resistance, Grace of Isha, Kurnous Hunting, Khaine’s Wrath\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×10 м\nТип: Изменение (PR×2)\nИспользуя накопленный опыт и мудрость, духовидец способен даровать технике или ее экипажу невиданную мудрость и познание в навыках, превращая даже не обученных пилотов аспекта Орлиных Пилотов в Мастеров своего дела. Псайкер выбирает своей целью технику, которая полностью создана из психокости. Экипаж данной техники повышает рейтинг всех навыков для управления техники на +2 ступени (с +0 до +20 например) и получает бонус PR ко всем своим тестам. Если техника не обладает экипажем, то духовидец может управлять техникой, словно бы занимая место всего экипажа. Действие данной техники идет всегда после хода духовидца.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "pLJ7F8FzMx27CQqm",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!pLJ7F8FzMx27CQqm"
+}

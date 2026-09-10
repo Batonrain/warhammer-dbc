@@ -1,0 +1,77 @@
+{
+  "name": "Empty Order / Пустой Приказ",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "iCRCgExC8yjbKuGA",
+  "system": {
+    "description": "<p><strong>750 xp | Требования: PR 8, Eye Interference</strong></p><p><strong>Действие: </strong>Длительное Действие (30 Минут). <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W–30 vs Tech–Use(I)–30.<strong> Дальность: </strong>Звездная Система</p><p><strong>Тип: </strong>Сосредоточение</p><p>Психическое могущество Пустотного Мечтателя способно в любой, несчастный для врага, момент отменить его приказ, или наоборот, дать абсолютно новый приказ для вражеского судна. Создаваемый таким образом Хаос может серьезно навредить вражеской тактике, что даст союзникам Пустотного Мечтателя достаточно времени и простора для тактики. Если в обзоре Пустотного Мечтателя есть вражеское судно, он может манифестировать эту психосилу. Если он победил в ней, он может отдать одному из узлов какой–либо приказ (например – совершить выстрел из орудий). Таким образом <strong>нельзя </strong>отдать суицидальный приказ, вроде отключить Плазменные двигатели/подорвать их или что–то в этом роде.</p>",
+    "notes": "Сопротивление цели — навык Tech-Use(I): resistChar не заполнен.",
+    "cost": 750,
+    "discipline": "voidDreamer",
+    "subtype": "Взирающее Сознание",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Eye Interference",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "extended",
+    "range": "Звездная Система",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "750 xp | Требования: PR 8, Eye Interference\nДействие: Длительное Действие (30 Минут). Поддержание: Полудействие.\nПсихотест: W–30 vs Tech–Use(I)–30. Дальность: Звездная Система\nТип: Сосредоточение\nПсихическое могущество Пустотного Мечтателя способно в любой, несчастный для врага, момент отменить его приказ, или наоборот, дать абсолютно новый приказ для вражеского судна. Создаваемый таким образом Хаос может серьезно навредить вражеской тактике, что даст союзникам Пустотного Мечтателя достаточно времени и простора для тактики. Если в обзоре Пустотного Мечтателя есть вражеское судно, он может манифестировать эту психосилу. Если он победил в ней, он может отдать одному из узлов какой–либо приказ (например – совершить выстрел из орудий). Таким образом нельзя отдать суицидальный приказ, вроде отключить Плазменные двигатели/подорвать их или что–то в этом роде.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "fAheGkZFV0w7nXWb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!fAheGkZFV0w7nXWb"
+}

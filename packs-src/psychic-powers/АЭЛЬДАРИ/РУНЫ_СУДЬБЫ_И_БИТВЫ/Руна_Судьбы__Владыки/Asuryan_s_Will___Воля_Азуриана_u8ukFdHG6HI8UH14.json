@@ -1,0 +1,78 @@
+{
+  "name": "Asuryan’s Will / Воля Азуриана",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-runesFateBattle.svg",
+  "folder": "WNG6KIoX06pu5hRW",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 5</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Полудействие.</p><p><strong>Психотест: </strong>W+0.<strong> Дальность: </strong>Сам</p><p><strong>Тип: </strong>Вливание, Длительное (3 Хода), Концентрация</p><p>Воля Азуриана способна даровать психическое могущество, то древнее и утерянное, но невероятное, кратковременно усилив способности Провидца. Вместо попыток манипулировать варпом, Провидец навязывает свою жестокую волю потокам Имматериума, заставляя их принимать необходимую ему облик. Псайкер покрывается еле заметным синим сиянием. Псайкер получает Unnatural W (+PR) и на каждую психосилу +½ (окр.▲) бPR эPR. Раз в раунд псайкер может перебросить любую свою психосилу с бонусом +20, но гарантированно вызвать феномен с бонусом +10. Также, он получает бонус +W.b×3 на все соревновательные тесты W или I.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "runesFateBattle",
+    "subtype": "Руна Судьбы: Владыки",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5 (нет Фокуса Дисциплины, изучается только от другого эльдарского псайкера, либо создаётся самостоятельно)",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "400 xp | Требования: PR 5\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W+0. Дальность: Сам\nТип: Вливание, Длительное (3 Хода), Концентрация\nВоля Азуриана способна даровать психическое могущество, то древнее и утерянное, но невероятное, кратковременно усилив способности Провидца. Вместо попыток манипулировать варпом, Провидец навязывает свою жестокую волю потокам Имматериума, заставляя их принимать необходимую ему облик. Псайкер покрывается еле заметным синим сиянием. Псайкер получает Unnatural W (+PR) и на каждую психосилу +½ (окр.▲) бPR эPR. Раз в раунд псайкер может перебросить любую свою психосилу с бонусом +20, но гарантированно вызвать феномен с бонусом +10. Также, он получает бонус +W.b×3 на все соревновательные тесты W или I.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "u8ukFdHG6HI8UH14",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!u8ukFdHG6HI8UH14"
+}

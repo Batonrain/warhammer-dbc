@@ -1,0 +1,75 @@
+{
+  "name": "Force Shuriken / Психосиловой Сюрикен",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "4kGXZbTwzmnRW48J",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 4</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–10. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Вливание</p><p>Обращая свою силу в сюрикеновый пистолет, или иное малое оружие, Варлок может превратить даже малое оружие в смертоносное, что может решить судьбу дуэли. Псайкер, удерживающий в своих руках любое стрелковое оружие типа Пистолет может использовать эту психосилу на нем. Пока психосила поддерживается, пистолет получает свойства <strong>Force </strong>и <strong>Eldar Precise</strong>, если у него их раньше не было. Боезапас пистолета восстанавливается каждый ход на PR. RoF увеличивается на +PR. Персонаж может<strong> </strong>из него стрелять, даже находясь в рукопашной схватке с противником, но получая штраф –30 на это, пока он не получит талант Target Selection, или не будет иметь A 60 или W 60.</p><p>Пистолет под этой психосилой начинает светиться фиолетово–синим светом, что дает штраф на тесты скрытности в размере –10.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "warlock",
+    "subtype": "Отточенное Мастерство",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 4\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–10. Дальность: Сам\nТип: Вливание\nОбращая свою силу в сюрикеновый пистолет, или иное малое оружие, Варлок может превратить даже малое оружие в смертоносное, что может решить судьбу дуэли. Псайкер, удерживающий в своих руках любое стрелковое оружие типа Пистолет может использовать эту психосилу на нем. Пока психосила поддерживается, пистолет получает свойства Force и Eldar Precise, если у него их раньше не было. Боезапас пистолета восстанавливается каждый ход на PR. RoF увеличивается на +PR. Персонаж может из него стрелять, даже находясь в рукопашной схватке с противником, но получая штраф –30 на это, пока он не получит талант Target Selection, или не будет иметь A 60 или W 60.\nПистолет под этой психосилой начинает светиться фиолетово–синим светом, что дает штраф на тесты скрытности в размере –10.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "nEF7fEudVjjT31xU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!nEF7fEudVjjT31xU"
+}

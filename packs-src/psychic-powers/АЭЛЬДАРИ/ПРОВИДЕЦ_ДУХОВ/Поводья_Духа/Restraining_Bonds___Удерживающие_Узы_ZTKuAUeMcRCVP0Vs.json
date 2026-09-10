@@ -1,0 +1,75 @@
+{
+  "name": "Restraining Bonds / Удерживающие Узы",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "qBAcF6juCu17LCXH",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 5, The Guide's Order</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×10 м</p><p><strong>Тип: </strong>Изменение (PR×3)</p><p>Удерживая психокостяные конструкты стальной хваткой, Провидец Духов способен защищать конструкты от становления беспомощными или попадания под эффект чужих психосил. Все психокостяные конструкты под командованием Провидца Духа вместо получения эффектов Без Сознания, Беспомощный и Ступор получают эффект Оглушение, а если они получают Оглушение, то Провидец Духа может в свой ход за Свободное действие пройти тест W+10 (считается как Психотест) и в случае успеха вывести УспехиX3 конструктов из Оглушения. Конструкты проводят действие встать за Свободное действие.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "spiritSeer",
+    "subtype": "Поводья Духа",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "requirement": "PR 5, The Guide's Order",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "400 xp | Требования: PR 5, The Guide's Order\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×10 м\nТип: Изменение (PR×3)\nУдерживая психокостяные конструкты стальной хваткой, Провидец Духов способен защищать конструкты от становления беспомощными или попадания под эффект чужих психосил. Все психокостяные конструкты под командованием Провидца Духа вместо получения эффектов Без Сознания, Беспомощный и Ступор получают эффект Оглушение, а если они получают Оглушение, то Провидец Духа может в свой ход за Свободное действие пройти тест W+10 (считается как Психотест) и в случае успеха вывести УспехиX3 конструктов из Оглушения. Конструкты проводят действие встать за Свободное действие.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ZTKuAUeMcRCVP0Vs",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!ZTKuAUeMcRCVP0Vs"
+}

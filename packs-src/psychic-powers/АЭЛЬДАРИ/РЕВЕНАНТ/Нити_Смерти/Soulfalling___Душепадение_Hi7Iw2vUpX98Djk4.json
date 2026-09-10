@@ -1,0 +1,78 @@
+{
+  "name": "Soulfalling / Душепадение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "VsKa4y1JPUDWsjOo",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 5, Scissors</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Нет</p><p><strong>Психотест: </strong>W–30 vs W–20 <strong>Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Атака, Длительное (3), Психическое Дыхание, Незримое, Стрельба</p><p>Точным мановением своей руки, Ревенант выпускает из пальцев незаметную психическую волну, что разрезает нити живых существ, отрывая их души от тел в один момент, незримое мгновение. Цели, что не избежали попадание от данной психосилы, получают PR непоглощаемого E урона, что не опускает их раны ниже 0. За каждый провал на тесте псайкер может лишить существо 1 таланта или навыка на 3 раунда. Таланты 3–го уровня и навыки с +30 стоят 2 провала для снятия. Также, она получает штраф –10 на все Физические Действия и –30 на все Ментальные Действия. Независимо от того, преуспела цель или нет, все Иннари в начале своего хода считают цели, попавшие под действие психосилы, мертвыми – и могут в начале своего хода получать Мертвое Могущество по обычным правилам, но вместо 1 получая 3.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "revenant",
+    "subtype": "Нити Смерти",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "breath",
+    "prRequired": 5,
+    "requirement": "PR 5, Scissors",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "wp",
+    "resistMod": -20,
+    "effect": "500 xp | Требования: PR 5, Scissors\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–30 vs W–20 Дальность: PR×5 м\nТип: Атака, Длительное (3), Психическое Дыхание, Незримое, Стрельба\nТочным мановением своей руки, Ревенант выпускает из пальцев незаметную психическую волну, что разрезает нити живых существ, отрывая их души от тел в один момент, незримое мгновение. Цели, что не избежали попадание от данной психосилы, получают PR непоглощаемого E урона, что не опускает их раны ниже 0. За каждый провал на тесте псайкер может лишить существо 1 таланта или навыка на 3 раунда. Таланты 3–го уровня и навыки с +30 стоят 2 провала для снятия. Также, она получает штраф –10 на все Физические Действия и –30 на все Ментальные Действия. Независимо от того, преуспела цель или нет, все Иннари в начале своего хода считают цели, попавшие под действие психосилы, мертвыми – и могут в начале своего хода получать Мертвое Могущество по обычным правилам, но вместо 1 получая 3.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Hi7Iw2vUpX98Djk4",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Hi7Iw2vUpX98Djk4"
+}

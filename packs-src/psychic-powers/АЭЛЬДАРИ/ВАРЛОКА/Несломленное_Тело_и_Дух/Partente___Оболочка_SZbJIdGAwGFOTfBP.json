@@ -1,0 +1,75 @@
+{
+  "name": "Partente / Оболочка",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "MoUrLijnN3gLSOSP",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 4, Фокус Биомантии</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×20 м</p><p><strong>Тип: </strong>Вливание, Изменение (PR+1)</p><p>Варлоки, знающие о техника и таинствах Биомантии, способны укреплять тела своих союзников и подчиненных, укрепляя их и готовя их к сражению. Существа, выбранные целью для этой психосилы, должны обладать T 35, иначе они получают 1d10 непоглощаемого R урона при манифестации этой психосилы на них. Цели этой психосилы получают Unnatural T (+PR), PR Поглощения (считаясь как T.b) от всех типов урона и PR×2 Аблативных ран. Если психосила экстренно развеивается, и на существах остались аблативные раны, то оболочки детонируют, словно бы осколочная граната, центрируя на целях психосилы Следующий шаблон (цели психосилы и их союзники неуязвимы к этому шаблону. X в этом шаблоне равняется оставшимся аблативным ранам):</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>–</p></td><td><p>1d10+3×X X(Fr)</p></td><td><p>5</p></td><td><p>Blast (X), Crippling (½  (окр.▲) X)</p></td></tr></table>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "warlock",
+    "subtype": "Несломленное Тело и Дух",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Фокус Биомантии",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×20 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "400 xp | Требования: PR 4, Фокус Биомантии\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×20 м\nТип: Вливание, Изменение (PR+1)\nВарлоки, знающие о техника и таинствах Биомантии, способны укреплять тела своих союзников и подчиненных, укрепляя их и готовя их к сражению. Существа, выбранные целью для этой психосилы, должны обладать T 35, иначе они получают 1d10 непоглощаемого R урона при манифестации этой психосилы на них. Цели этой психосилы получают Unnatural T (+PR), PR Поглощения (считаясь как T.b) от всех типов урона и PR×2 Аблативных ран. Если психосила экстренно развеивается, и на существах остались аблативные раны, то оболочки детонируют, словно бы осколочная граната, центрируя на целях психосилы Следующий шаблон (цели психосилы и их союзники неуязвимы к этому шаблону. X в этом шаблоне равняется оставшимся аблативным ранам):\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\n– | 1d10+3×X X(Fr) | 5 | Blast (X), Crippling (½  (окр.▲) X)\n[/ТАБЛИЦА]",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "SZbJIdGAwGFOTfBP",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!SZbJIdGAwGFOTfBP"
+}

@@ -1,0 +1,75 @@
+{
+  "name": "Elehar / Разум",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "MoUrLijnN3gLSOSP",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 4, Фокус Телепатии</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×1 км</p><p><strong>Тип: </strong>Вливание, Изменение (PR+1)</p><p>Варлок способен укрепить разум своих союзников и подчиненных, и даже наделить их временным пониманием части своих психосил, дабы те могли помочь ему в сражении. Цели этой психосилы получают Unnatural W (+PR), а также W.b психосил псайкера, требующих бPR 3 или ниже для манифестации. Цели психосилы считают свой PR за W.b псайкера. Все цели психосилы получают бонус +5×W.b на сопротивление вражеским психосилам, одержимости и выжиганию души, и бонус +3×W.b на сопротивление песням кости.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "warlock",
+    "subtype": "Несломленное Тело и Дух",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Фокус Телепатии",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×1 км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "400 xp | Требования: PR 4, Фокус Телепатии\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×1 км\nТип: Вливание, Изменение (PR+1)\nВарлок способен укрепить разум своих союзников и подчиненных, и даже наделить их временным пониманием части своих психосил, дабы те могли помочь ему в сражении. Цели этой психосилы получают Unnatural W (+PR), а также W.b психосил псайкера, требующих бPR 3 или ниже для манифестации. Цели психосилы считают свой PR за W.b псайкера. Все цели психосилы получают бонус +5×W.b на сопротивление вражеским психосилам, одержимости и выжиганию души, и бонус +3×W.b на сопротивление песням кости.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "3RjrF1evrTUklj9K",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!3RjrF1evrTUklj9K"
+}

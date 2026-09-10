@@ -1,0 +1,77 @@
+{
+  "name": "On The Way / В Путь",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "KtlagOhJ0osDE8L7",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 4, Empyrean Hunter</strong></p><p><strong>Действие: </strong>Длительное Действие (10 Минут). <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>W–10.<strong> Дальность: </strong>PR×5 ПЕ</p><p><strong>Тип: </strong>Изменение, Сосредоточение</p><p>Разум Пустотного Мечтателя способен на то, на что неспособны многие другие псайкеры. Правильно используя свои силы, Пустотный Мечтатель способен создавать полноценные, новые маршруты в неизведанные сектора и регионы если то потребуется. За каждый успех, псайкер получает осколок маршрута, который он хочет создать – каждый маршрут требует 7 Осколков (соответственно 7 успехов), и псайкер может манифестировать данную психосилу множество раз, используя успехи от прошлого раза. Успехи сгорают в конце дня (или соответствующего аналога). Созданный подобным образом маршрут исчезает через бPR лет.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "voidDreamer",
+    "subtype": "Вглядеться В Бездну",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Empyrean Hunter",
+    "testChar": "wp",
+    "testMod": -10,
+    "action": "extended",
+    "range": "PR×5 ПЕ",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 4, Empyrean Hunter\nДействие: Длительное Действие (10 Минут). Поддержание: Нет.\nПсихотест: W–10. Дальность: PR×5 ПЕ\nТип: Изменение, Сосредоточение\nРазум Пустотного Мечтателя способен на то, на что неспособны многие другие псайкеры. Правильно используя свои силы, Пустотный Мечтатель способен создавать полноценные, новые маршруты в неизведанные сектора и регионы если то потребуется. За каждый успех, псайкер получает осколок маршрута, который он хочет создать – каждый маршрут требует 7 Осколков (соответственно 7 успехов), и псайкер может манифестировать данную психосилу множество раз, используя успехи от прошлого раза. Успехи сгорают в конце дня (или соответствующего аналога). Созданный подобным образом маршрут исчезает через бPR лет.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "g4Q5OP44jHVPW4Fw",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!g4Q5OP44jHVPW4Fw"
+}

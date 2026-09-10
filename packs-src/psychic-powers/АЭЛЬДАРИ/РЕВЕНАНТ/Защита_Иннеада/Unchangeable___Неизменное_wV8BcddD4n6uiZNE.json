@@ -1,0 +1,78 @@
+{
+  "name": "Unchangeable / Неизменное",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "8C47cW6DrTo1767M",
+  "system": {
+    "description": "<p><strong>400 xp | Требования: PR 4, Resilience Of A Deadman</strong></p><p><strong>Действие: </strong>Полное действие / Реакция <strong>Поддержание: </strong>Полудействие / Нет</p><p><strong>Психотест:</strong> W–20 <strong>Дальность: </strong>PR×5м</p><p><strong>Тип: </strong>Изменение (PR) / Изменение, Реагирование</p><p>Правильно направляя потоки Имматериума, псайкер способен защитить своего союзника от любых ранений и смерти – хоть один раз, но защитить. Эта психосила может быть манифестирована как на несколько целей, так и реакций на одну. Реакция может быть использована только на непоглощенный урон. Цели этой психосилы могут <strong>один раз, </strong>пока психосила поддерживается, снизить полученный непоглощенный урон на свое Мертвое Могущество, теряя столько же Мертвого Могущества.</p>",
+    "notes": "",
+    "cost": 400,
+    "discipline": "revenant",
+    "subtype": "Защита Иннеада",
+    "powerType": "other",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Resilience Of A Deadman",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×5м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "400 xp | Требования: PR 4, Resilience Of A Deadman\nДействие: Полное действие / Реакция Поддержание: Полудействие / Нет\nПсихотест: W–20 Дальность: PR×5м\nТип: Изменение (PR) / Изменение, Реагирование\nПравильно направляя потоки Имматериума, псайкер способен защитить своего союзника от любых ранений и смерти – хоть один раз, но защитить. Эта психосила может быть манифестирована как на несколько целей, так и реакций на одну. Реакция может быть использована только на непоглощенный урон. Цели этой психосилы могут один раз, пока психосила поддерживается, снизить полученный непоглощенный урон на свое Мертвое Могущество, теряя столько же Мертвого Могущества.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "wV8BcddD4n6uiZNE",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!wV8BcddD4n6uiZNE"
+}

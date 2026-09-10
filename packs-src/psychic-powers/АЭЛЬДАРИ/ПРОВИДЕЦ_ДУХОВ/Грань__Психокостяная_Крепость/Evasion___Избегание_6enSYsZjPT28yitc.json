@@ -1,0 +1,75 @@
+{
+  "name": "Evasion / Избегание",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "ydk4bfYYSNTazTp5",
+  "system": {
+    "description": "<p><strong>250 xp | Требования: PR 3, Emergency Raising</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> PR×20</p><p><strong>Тип: </strong>Грань, Изменение (PR)</p><p>Направляя конструктов – будь то нитями, психическими приказами, или дав им силами варпа большую мобильность, Духовидец подобным образом ускоряет Реакцию и ловкость конструктов ценою их навыков парирования. Цели психосилы получают +5×PR к тестам Dodge и +⅓ (окр.▲) реакций <strong>только </strong>на тесты Dodge. Цели данной психосилы не ограничены в числе совершаемых им отскоков, возвращая потраченное SPD. Также, если цель совершает отскок, находясь в рукопашном бою с противником, она автоматически преуспевает на тесте Вольта с A.b+3 успехами против каждой цели отдельно.</p>",
+    "notes": "",
+    "cost": 250,
+    "discipline": "spiritSeer",
+    "subtype": "Грань: Психокостяная Крепость",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Emergency Raising",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "PR×20",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "250 xp | Требования: PR 3, Emergency Raising\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: PR×20\nТип: Грань, Изменение (PR)\nНаправляя конструктов – будь то нитями, психическими приказами, или дав им силами варпа большую мобильность, Духовидец подобным образом ускоряет Реакцию и ловкость конструктов ценою их навыков парирования. Цели психосилы получают +5×PR к тестам Dodge и +⅓ (окр.▲) реакций только на тесты Dodge. Цели данной психосилы не ограничены в числе совершаемых им отскоков, возвращая потраченное SPD. Также, если цель совершает отскок, находясь в рукопашном бою с противником, она автоматически преуспевает на тесте Вольта с A.b+3 успехами против каждой цели отдельно.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "6enSYsZjPT28yitc",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!6enSYsZjPT28yitc"
+}

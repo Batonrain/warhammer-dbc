@@ -1,0 +1,77 @@
+{
+  "name": "Multiplying Failure / Приумножение Неудачи",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "QujvTdGGbsc03ipM",
+  "system": {
+    "description": "<p><strong>450 xp | Требования: PR 6, Your Days Are Numbered</strong></p><p><strong>Действие: </strong>Реакция. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>Psyniscience(P)–10.<strong> Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Изменение, Реагирование</p><p>Провидец способен изменить нити чужой судьбы, приумножив чужую неудачу, превращая мелкую ошибку в критический провал, что способен переменить ход всего сражения. Данная психосила может быть манифестирована только в качестве реакции на чужой провал. Псайкер проходит психотест, после чего делит свои успехи на три (окр.▲), но итоговое число всегда минимум 2). Итоговое число <strong>умножается </strong>на число вражеских провалов и превращается во вражеские провалы. Тест, который был изменен этой психосилой, <strong>нельзя перебрасывать</strong>. Если итоговое число провалов равняется 10 или выше – этот тест считается <strong>критически </strong>провалившимся и псайкер может выбрать драматичный эффект.</p>",
+    "notes": "",
+    "cost": 450,
+    "discipline": "farseer",
+    "subtype": "Неминуемый Рок",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 6,
+    "requirement": "PR 6, Your Days Are Numbered",
+    "testChar": "psyniscience",
+    "testMod": -10,
+    "action": "reaction",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "450 xp | Требования: PR 6, Your Days Are Numbered\nДействие: Реакция. Поддержание: Нет.\nПсихотест: Psyniscience(P)–10. Дальность: PR×5 м\nТип: Изменение, Реагирование\nПровидец способен изменить нити чужой судьбы, приумножив чужую неудачу, превращая мелкую ошибку в критический провал, что способен переменить ход всего сражения. Данная психосила может быть манифестирована только в качестве реакции на чужой провал. Псайкер проходит психотест, после чего делит свои успехи на три (окр.▲), но итоговое число всегда минимум 2). Итоговое число умножается на число вражеских провалов и превращается во вражеские провалы. Тест, который был изменен этой психосилой, нельзя перебрасывать. Если итоговое число провалов равняется 10 или выше – этот тест считается критически провалившимся и псайкер может выбрать драматичный эффект.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "MDPWF5coP7Dy0uMF",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!MDPWF5coP7Dy0uMF"
+}

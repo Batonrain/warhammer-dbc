@@ -1,0 +1,75 @@
+{
+  "name": "Vilith / Сбор Души",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "2wNOvpPihGjprloo",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 8, Farturetar</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–30. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Практикующие техники Палачей, Варлоки способны собирать жатву душ даже не пробивая броню, лишь частично касаясь вражеского тела. Псайкер может использовать Выжигание Души не после нанесения непоглощенного урона, а от факта попадания по противнику. Также, псайкер может добавить свойство Warp Weapon к своему оружию, но взамен лишая его одного кубика урона (или меняя 1d10 на 1d5, или 1d5 на гарантированную 1).</p>",
+    "notes": "",
+    "cost": 800,
+    "discipline": "warlock",
+    "subtype": "Палач",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 8,
+    "requirement": "PR 8, Farturetar",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "full",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "800 xp | Требования: PR 8, Farturetar\nДействие: Полное действие. Поддержание: Свободное действие.\nПсихотест: W–30. Дальность: Сам\nТип: Психический Клинок\nПрактикующие техники Палачей, Варлоки способны собирать жатву душ даже не пробивая броню, лишь частично касаясь вражеского тела. Псайкер может использовать Выжигание Души не после нанесения непоглощенного урона, а от факта попадания по противнику. Также, псайкер может добавить свойство Warp Weapon к своему оружию, но взамен лишая его одного кубика урона (или меняя 1d10 на 1d5, или 1d5 на гарантированную 1).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Q8asiyx4RgEliksQ",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!Q8asiyx4RgEliksQ"
+}

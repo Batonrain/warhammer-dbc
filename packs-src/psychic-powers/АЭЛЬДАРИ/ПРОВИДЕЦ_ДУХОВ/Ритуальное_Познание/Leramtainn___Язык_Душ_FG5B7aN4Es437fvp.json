@@ -1,0 +1,75 @@
+{
+  "name": "Leramtainn / Язык Душ",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-spiritSeer.svg",
+  "folder": "zYS0a0ovsKecy85U",
+  "system": {
+    "description": "<p><strong>150 xp | Требования: PR 1</strong></p><p><strong>Действие: </strong>Свободное действие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+40. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Вливание</p><p>Самая базовая психосила, известная любому Духовидцу и является необходимым минимумом для работы с психокостяными конструктами. Данная психосила позволяет псайкеру телепатически общаться с психокостяными конструктами, обладающими камнями душ внутри себя. Общение с психокостяными конструктами подобным образом не занимает слишком много времени, хотя для работы с психокостяными конструктами может и хватить обычной речи – но чаще всего конструкты не обладают слишком высокой способностью к общению, что компенсирует эта психосила, позволяя решать внутренние проблемы конструктов и узнавать их состояние.</p>",
+    "notes": "",
+    "cost": 150,
+    "discipline": "spiritSeer",
+    "subtype": "Ритуальное Познание",
+    "powerType": "infusion",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 1,
+    "requirement": "PR 1",
+    "testChar": "wp",
+    "testMod": 40,
+    "action": "free",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "150 xp | Требования: PR 1\nДействие: Свободное действие. Поддержание: Свободное действие.\nПсихотест: W+40. Дальность: Сам\nТип: Вливание\nСамая базовая психосила, известная любому Духовидцу и является необходимым минимумом для работы с психокостяными конструктами. Данная психосила позволяет псайкеру телепатически общаться с психокостяными конструктами, обладающими камнями душ внутри себя. Общение с психокостяными конструктами подобным образом не занимает слишком много времени, хотя для работы с психокостяными конструктами может и хватить обычной речи – но чаще всего конструкты не обладают слишком высокой способностью к общению, что компенсирует эта психосила, позволяя решать внутренние проблемы конструктов и узнавать их состояние.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "FG5B7aN4Es437fvp",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FG5B7aN4Es437fvp"
+}

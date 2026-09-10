@@ -1,0 +1,75 @@
+{
+  "name": "Caiyellman / Приносящий Смерть",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "2wNOvpPihGjprloo",
+  "system": {
+    "description": "<p><strong>300 xp | Требования: PR 4, Khalir</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W+0. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Оружие, наделенное Варлоком именем Приносящий Смерть исправно будет нести свое имя – нести быструю и неминуемую смерть каждому, кто вступит с Варлоком в рукопашную схватку. Пока псайкер использует рукопашное психосиловое оружие, оно увеличивает свой рейтинг критического успеха на W.b+PR (При 4 W.b и 4 PR критический рейтинг с 1–5 поднимется до 1–13). Если выпало критическое попадание, то Варлок может выбрать один из эффектов:</p><p>1. Атака становится <strong>Неизбегаемой.</strong></p><p>2. Все кубики урона атаки становятся 10, и каждый из кубиков наносит <strong>Экстремальный Урон</strong>.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "warlock",
+    "subtype": "Палач",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Khalir",
+    "testChar": "wp",
+    "testMod": 0,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "300 xp | Требования: PR 4, Khalir\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W+0. Дальность: Сам\nТип: Психический Клинок\nОружие, наделенное Варлоком именем Приносящий Смерть исправно будет нести свое имя – нести быструю и неминуемую смерть каждому, кто вступит с Варлоком в рукопашную схватку. Пока псайкер использует рукопашное психосиловое оружие, оно увеличивает свой рейтинг критического успеха на W.b+PR (При 4 W.b и 4 PR критический рейтинг с 1–5 поднимется до 1–13). Если выпало критическое попадание, то Варлок может выбрать один из эффектов:\n1. Атака становится Неизбегаемой.\n2. Все кубики урона атаки становятся 10, и каждый из кубиков наносит Экстремальный Урон.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "D49BiBfIY1DBWg3H",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!D49BiBfIY1DBWg3H"
+}

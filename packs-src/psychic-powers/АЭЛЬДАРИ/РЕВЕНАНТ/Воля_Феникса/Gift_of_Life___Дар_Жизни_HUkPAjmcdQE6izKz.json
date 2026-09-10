@@ -1,0 +1,78 @@
+{
+  "name": "Gift of Life / Дар Жизни",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "YFUiVJaNfyIdwK2g",
+  "system": {
+    "description": "<p><strong>300 xp |  Требования: PR 4, Second Chance</strong></p><p><strong>Действие: </strong>Полное действие <strong>Поддержание: </strong>Полудействие</p><p><strong>Психотест: </strong>W–20 <strong>Дальность: </strong>PR×10м</p><p><strong>Тип: </strong>Изменение (PR)</p><p>Направляя силу мертвых, псайкер способен обращать ранения своих союзников, словно при помощи игр со временем. Пока он поддерживает эту психосилу и применяет <strong>Исцеление </strong>за Мертвое Могущество, он может выбрать до PR целей психосилы и распространить на них эффекты <strong>Исцеления</strong>. Однако, если он применяет Исцеление как за Cor=20 – то он должен за каждую цель дополнительно доплатить 1 Мертвое Могущество (если цели находятся в радиусе действия психосилы, то вместо псайкера они могут отдать 1 Мертвое Могущество), а если Cor=60 – то должен доплатить 2 Мертвых Могущества.</p>",
+    "notes": "",
+    "cost": 300,
+    "discipline": "revenant",
+    "subtype": "Воля Феникса",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 4,
+    "requirement": "PR 4, Second Chance",
+    "testChar": "wp",
+    "testMod": -20,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "300 xp |  Требования: PR 4, Second Chance\nДействие: Полное действие Поддержание: Полудействие\nПсихотест: W–20 Дальность: PR×10м\nТип: Изменение (PR)\nНаправляя силу мертвых, псайкер способен обращать ранения своих союзников, словно при помощи игр со временем. Пока он поддерживает эту психосилу и применяет Исцеление за Мертвое Могущество, он может выбрать до PR целей психосилы и распространить на них эффекты Исцеления. Однако, если он применяет Исцеление как за Cor=20 – то он должен за каждую цель дополнительно доплатить 1 Мертвое Могущество (если цели находятся в радиусе действия психосилы, то вместо псайкера они могут отдать 1 Мертвое Могущество), а если Cor=60 – то должен доплатить 2 Мертвых Могущества.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "HUkPAjmcdQE6izKz",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!HUkPAjmcdQE6izKz"
+}

@@ -1,0 +1,77 @@
+{
+  "name": "Hand of the Abyss / Длань Бездны",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "RArmKuf6NzDFU1iw",
+  "system": {
+    "description": "<p><strong>900 xp | Требования: PR 9, Darkness of the Abyss</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание:</strong> Полудействие.</p><p><strong>Психотест:</strong> W–40 vss P–20. <strong>Дальность:</strong> PR×15 м</p><p><strong>Тип:</strong> Атака, Психический Снаряд</p><p>Становясь проводником тьмы и сил варпа, Мечтатель Пустоты способен выпустить ее в форме удушающей длани, способной убить даже серьезных соперников. После попадания, существо обладающее зрением, должно пройти соревновательный тест, где за каждый четный провал он получает Ослепление на 1 раунд. Использование данной атаки на существе, ослепленной данной атакой, увеличивает длительность ослепления на 1 раунд.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×15 м</p></td><td><p>1d5+PR×5 E</p></td><td><p>P.b×2</p></td><td><p>Wrecker (PR)</p></td></tr></table><p>Если существо не избежало попадание, то длань проводит Захват, считаясь Size 2. Длань считает свой S и WS за PR×5. Она имеет PR×3 Ран, PR Поглощения, Athletics+20, +PR×3 на все тесты, а также Unnatural S (PR). Длань действует перед или после псайкера его усмотрению. Длань получает +2 ОД на любые действия Борьбы, и может дважды совершать действие с типом Атака в свой ход. Если длань убивает свою жертву в захвате, то из нее рождается еще одна длань. Длань умеет перемещаться на бPR×2 метров и имеет 2 ОД на перемещение. Длань растворяется через 2 раунда, если она ни с кем не сражается. Длань неуязвима к E(Ls) урону и считается укрытием с 16 AP.</p>",
+    "notes": "Дальнейшее поведение призываемой «длани» (Size 2, свои характеристики/ОД, размножение при убийстве) не смоделировано — только текстом.",
+    "cost": 900,
+    "discipline": "voidDreamer",
+    "subtype": "Око Бездны",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "projectile",
+    "prRequired": 9,
+    "requirement": "PR 9, Darkness of the Abyss",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×15 м",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "half",
+    "damage": "1d5+PR*5",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "per",
+    "resistMod": -20,
+    "effect": "900 xp | Требования: PR 9, Darkness of the Abyss\nДействие: Полное действие. Поддержание: Полудействие.\nПсихотест: W–40 vss P–20. Дальность: PR×15 м\nТип: Атака, Психический Снаряд\nСтановясь проводником тьмы и сил варпа, Мечтатель Пустоты способен выпустить ее в форме удушающей длани, способной убить даже серьезных соперников. После попадания, существо обладающее зрением, должно пройти соревновательный тест, где за каждый четный провал он получает Ослепление на 1 раунд. Использование данной атаки на существе, ослепленной данной атакой, увеличивает длительность ослепления на 1 раунд.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×15 м | 1d5+PR×5 E | P.b×2 | Wrecker (PR)\n[/ТАБЛИЦА]\nЕсли существо не избежало попадание, то длань проводит Захват, считаясь Size 2. Длань считает свой S и WS за PR×5. Она имеет PR×3 Ран, PR Поглощения, Athletics+20, +PR×3 на все тесты, а также Unnatural S (PR). Длань действует перед или после псайкера его усмотрению. Длань получает +2 ОД на любые действия Борьбы, и может дважды совершать действие с типом Атака в свой ход. Если длань убивает свою жертву в захвате, то из нее рождается еще одна длань. Длань умеет перемещаться на бPR×2 метров и имеет 2 ОД на перемещение. Длань растворяется через 2 раунда, если она ни с кем не сражается. Длань неуязвима к E(Ls) урону и считается укрытием с 16 AP.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "2OeNjRjwaDOcxowR",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!2OeNjRjwaDOcxowR"
+}

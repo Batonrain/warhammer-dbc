@@ -1,0 +1,75 @@
+{
+  "name": "Iarstill / Меч",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-warlock.svg",
+  "folder": "JW6ogf82lIZBt0E2",
+  "system": {
+    "description": "<p><strong>700 xp | Требования: PR 9, Destructor, Trade (Weaponsmith)+20</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Свободное действие.</p><p><strong>Психотест:</strong> W–30. <strong>Дальность:</strong> Сам</p><p><strong>Тип: </strong>Психический Клинок</p><p>Используя Мастерство и познания в оружейном деле, Варлок способен изменять психический облик своего рукопашного оружия, наделяя его еще большим числом уникальных свойств, что отличит его от остальных. Если псайкер ранее владел и пользовался в течении месяца или больше любым рукопашным оружием R4 и ниже, он может применить его свойства на своем нынешнем мече, получая его особые свойства и уникальные свойства из описания. Псайкер может применять свойства двух или более оружия на одном клинке, но за каждое новое оружие псайкер получает штраф –30 на манифестацию этой психосилы.</p><p>Этой психосилой <strong>нельзя </strong>повторить уникальные свойства Оружия Наследия, Ремесленного Оружия и Демонического Оружия.</p>",
+    "notes": "",
+    "cost": 700,
+    "discipline": "warlock",
+    "subtype": "Взмах Силы",
+    "powerType": "psychicBlade",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 9,
+    "requirement": "PR 9, Destructor, Trade (Weaponsmith)+20",
+    "testChar": "wp",
+    "testMod": -30,
+    "action": "half",
+    "range": "Сам",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "700 xp | Требования: PR 9, Destructor, Trade (Weaponsmith)+20\nДействие: Полудействие. Поддержание: Свободное действие.\nПсихотест: W–30. Дальность: Сам\nТип: Психический Клинок\nИспользуя Мастерство и познания в оружейном деле, Варлок способен изменять психический облик своего рукопашного оружия, наделяя его еще большим числом уникальных свойств, что отличит его от остальных. Если псайкер ранее владел и пользовался в течении месяца или больше любым рукопашным оружием R4 и ниже, он может применить его свойства на своем нынешнем мече, получая его особые свойства и уникальные свойства из описания. Псайкер может применять свойства двух или более оружия на одном клинке, но за каждое новое оружие псайкер получает штраф –30 на манифестацию этой психосилы.\nЭтой психосилой нельзя повторить уникальные свойства Оружия Наследия, Ремесленного Оружия и Демонического Оружия.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "mnAMNvzDynN7vhol",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!mnAMNvzDynN7vhol"
+}

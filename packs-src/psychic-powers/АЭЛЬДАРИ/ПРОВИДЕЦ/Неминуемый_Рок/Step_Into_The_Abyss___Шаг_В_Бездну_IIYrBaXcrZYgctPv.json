@@ -1,0 +1,77 @@
+{
+  "name": "Step Into The Abyss / Шаг В Бездну",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-farseer.svg",
+  "folder": "QujvTdGGbsc03ipM",
+  "system": {
+    "description": "<p><strong>500 xp | Требования: PR 7, Multiplying Failure</strong></p><p><strong>Действие: </strong>Полное действие. <strong>Поддержание: </strong>Нет.</p><p><strong>Психотест: </strong>Psyniscience(P)–10.<strong> Дальность: </strong>PR×5 м</p><p><strong>Тип: </strong>Изменение (PR), Длительное (PR)</p><p>Используя завесу как фильтр, Провидец способен лишать противника удачи, оставляя только неудачу – независимо от того, идет битва на священных землях Мон–кей, или в демоническом царстве Ша’Эйл. Пока данная психосила действует, противник получает ко всем своим тестам провалы, равные значению Истончению Завесы (при этом отрицательная завеса все равно считается за провалы), умноженному на 2. Если данная психосила воздействует на Несвязанного или Демонического Псайкера, Демона или яро верующего во что–либо – то значение вместо умножения на 2, умножается на 3.</p>",
+    "notes": "",
+    "cost": 500,
+    "discipline": "farseer",
+    "subtype": "Неминуемый Рок",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 7,
+    "requirement": "PR 7, Multiplying Failure",
+    "testChar": "psyniscience",
+    "testMod": -10,
+    "action": "full",
+    "range": "PR×5 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "500 xp | Требования: PR 7, Multiplying Failure\nДействие: Полное действие. Поддержание: Нет.\nПсихотест: Psyniscience(P)–10. Дальность: PR×5 м\nТип: Изменение (PR), Длительное (PR)\nИспользуя завесу как фильтр, Провидец способен лишать противника удачи, оставляя только неудачу – независимо от того, идет битва на священных землях Мон–кей, или в демоническом царстве Ша’Эйл. Пока данная психосила действует, противник получает ко всем своим тестам провалы, равные значению Истончению Завесы (при этом отрицательная завеса все равно считается за провалы), умноженному на 2. Если данная психосила воздействует на Несвязанного или Демонического Псайкера, Демона или яро верующего во что–либо – то значение вместо умножения на 2, умножается на 3.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "IIYrBaXcrZYgctPv",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!IIYrBaXcrZYgctPv"
+}

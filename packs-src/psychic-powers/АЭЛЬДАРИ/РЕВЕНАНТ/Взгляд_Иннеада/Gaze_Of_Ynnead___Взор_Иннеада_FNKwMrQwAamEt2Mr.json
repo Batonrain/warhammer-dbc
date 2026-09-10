@@ -1,0 +1,78 @@
+{
+  "name": "Gaze Of Ynnead / Взор Иннеада",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-revenant.svg",
+  "folder": "4ZxwiRS1UetZel3L",
+  "system": {
+    "description": "<p><strong>800 xp | Требования: PR 6</strong></p><p><strong>Действие: </strong>Полное действие<strong> Поддержание:</strong> Нет</p><p><strong>Психотест: </strong>W–40 <strong>Дальность: </strong>PR×10м</p><p><strong>Тип:</strong> Атака, Психическое Дыхание, Стрельба, Концентрация</p><p>Псайкер становится проводником воли самого Иннеада, пропуская его силу через себя и обрушая ее на врагов в форме ужасающей синей вспышки.</p><table><tr><td><p><strong>Rng</strong></p></td><td><p><strong>Dmg</strong></p></td><td><p><strong>Pen</strong></p></td><td><p><strong>Свойства</strong></p></td></tr><tr><td><p>PR×10м</p></td><td><p>3d10+2×PR E</p></td><td><p>PR</p></td><td><p>Warp Weapon</p></td></tr></table><p>Неважные персонажи от <strong>попадания </strong>этой атаки моментально гибнут и рассыпаются в прах, стареют на глазах или без ранений падают наземь и больше не встают.</p>",
+    "notes": "Пробитие в книге = PR (переменное) — поле «Пробитие» принимает только фиксированное число, оставлено 0, реальное значение в тексте/таблице карточки.",
+    "cost": 800,
+    "discipline": "revenant",
+    "subtype": "Взгляд Иннеада",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "breath",
+    "prRequired": 6,
+    "requirement": "PR 6",
+    "testChar": "wp",
+    "testMod": -40,
+    "action": "full",
+    "range": "PR×10м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "3d10+2*PR",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "800 xp | Требования: PR 6\nДействие: Полное действие Поддержание: Нет\nПсихотест: W–40 Дальность: PR×10м\nТип: Атака, Психическое Дыхание, Стрельба, Концентрация\nПсайкер становится проводником воли самого Иннеада, пропуская его силу через себя и обрушая ее на врагов в форме ужасающей синей вспышки.\n[ТАБЛИЦА]\nRng | Dmg | Pen | Свойства\nPR×10м | 3d10+2×PR E | PR | Warp Weapon\n[/ТАБЛИЦА]\nНеважные персонажи от попадания этой атаки моментально гибнут и рассыпаются в прах, стареют на глазах или без ранений падают наземь и больше не встают.",
+    "isSustained": false,
+    "sustainedDegree": null,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "FNKwMrQwAamEt2Mr",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789516800000,
+    "modifiedTime": 1789516800000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!FNKwMrQwAamEt2Mr"
+}

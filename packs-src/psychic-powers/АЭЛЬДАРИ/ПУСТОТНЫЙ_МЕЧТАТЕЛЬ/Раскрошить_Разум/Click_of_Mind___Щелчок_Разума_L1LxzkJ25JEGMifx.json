@@ -1,0 +1,77 @@
+{
+  "name": "Click of Mind / Щелчок Разума",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-voidDreamer.svg",
+  "folder": "8GUxWk1h28LM2xFy",
+  "system": {
+    "description": "<p><strong>200 xp | Требования: PR 3, Trample On. Любой Scholastic/Forbidden Lore на уровне +10, или I 45</strong></p><p><strong>Действие: </strong>Полудействие. <strong>Поддержание:</strong> Нет.</p><p><strong>Психотест:</strong> W+10 <strong>Дальность:</strong> PR×10 м</p><p><strong>Тип: </strong>Атака, Изменение (бPR)</p><p>Тонко направляя потоки варпа и бездны в души и разум своих противников, Пустотный Мечтатель способен обратить их в кратковременное безумие, или ослабить их дух. Каждая выбранная цель псайкером получает 1 урон в I или W по его усмотрению – псайкер может выбирать одну и ту же цель несколько раз. После окончания действия психосилы, цель получает к ней иммунитет на 1d5 ходов. Если цель получила более 10 урона в одну из характеристик, она должна пройти тест W/I–10, или впасть в Бессознательное состояние на 1 раунд от перегрузки разума.</p>",
+    "notes": "Урон 1 в I ИЛИ W по выбору псайкера (произвольное число раз на одну цель) — не сведён к одной формуле charDamageFormula.",
+    "cost": 200,
+    "discipline": "voidDreamer",
+    "subtype": "Раскрошить Разум",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "requirement": "PR 3, Trample On. Любой Scholastic/Forbidden Lore на уровне +10, или I 45",
+    "testChar": "wp",
+    "testMod": 10,
+    "action": "half",
+    "range": "PR×10 м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "resistChar": "",
+    "resistMod": 0,
+    "effect": "200 xp | Требования: PR 3, Trample On. Любой Scholastic/Forbidden Lore на уровне +10, или I 45\nДействие: Полудействие. Поддержание: Нет.\nПсихотест: W+10 Дальность: PR×10 м\nТип: Атака, Изменение (бPR)\nТонко направляя потоки варпа и бездны в души и разум своих противников, Пустотный Мечтатель способен обратить их в кратковременное безумие, или ослабить их дух. Каждая выбранная цель псайкером получает 1 урон в I или W по его усмотрению – псайкер может выбирать одну и ту же цель несколько раз. После окончания действия психосилы, цель получает к ней иммунитет на 1d5 ходов. Если цель получила более 10 урона в одну из характеристик, она должна пройти тест W/I–10, или впасть в Бессознательное состояние на 1 раунд от перегрузки разума.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "L1LxzkJ25JEGMifx",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789689600000,
+    "modifiedTime": 1789689600000,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!L1LxzkJ25JEGMifx"
+}
