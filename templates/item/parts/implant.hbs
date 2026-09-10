@@ -57,10 +57,14 @@
 
 {{!-- Варианты бонусного эффекта Best.Q (wdbc-ukpu). Тот же список, что внутри
       текста «Эффект», но по строке на вариант: одним абзацем из четырёх
-      вариантов со скобками внутри скобок читать его невозможно. Поле Редкости
-      (system.availability) выше уже есть — сам диалог выбора при получении
-      (с ценой +1 за доп. эффект и правом взять один тип дважды) остаётся
-      следующим шагом тикета, здесь список пока только показан, не выбирается. --}}
+      вариантов со скобками внутри скобок читать его невозможно.
+      Выбор (module/apps/implant-bestq-choice.mjs) всплывает сам при получении
+      Best.Q-экземпляра актором; кнопка ниже — тот же путь вручную (например,
+      если диалог закрыли не выбрав, или Качество поставили "best" не через
+      обычный дропдаун-обработчик листа). После выбора (chosenEffects непуст)
+      кнопка скрывается — книга говорит «выбирается при выращивании», то есть
+      один раз; готового действия «сбросить выбор» нет (см. комментарий в
+      implant-bestq-choice.mjs — открытый вопрос, решён консервативно). --}}
 {{#if system.bestQualityEffects.length}}
 <div class="item-section">
   <div class="item-section-title">BEST.Q — ЭФФЕКТ НА ВЫБОР</div>
@@ -69,6 +73,16 @@
     <li><b>{{this.label}}</b>{{#if this.note}} — {{this.note}}{{/if}}</li>
     {{/each}}
   </ol>
+  {{#if system.chosenEffects.length}}
+  <div class="implant-bestq-chosen">
+    <b>Выбрано ({{system.chosenEffects.length}}):</b>
+    {{#each system.chosenEffects}}<span class="implant-bestq-chosen-chip">{{this.label}}</span>{{/each}}
+  </div>
+  {{else if (eq system.quality "best")}}
+  <button type="button" class="implant-bestq-choose">Выбрать эффект(ы) Best.Q</button>
+  {{else}}
+  <div class="trait-fx-hint">Выбор эффекта доступен при Качестве «Высшее (Best.Q)».</div>
+  {{/if}}
 </div>
 {{/if}}
 
