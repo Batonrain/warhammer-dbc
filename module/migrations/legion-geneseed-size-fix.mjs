@@ -20,6 +20,9 @@
 import { LEGIONS } from "../constants/legions.mjs";
 
 const PREFIX = "Геносемя: ";
+// Ключ ActiveEffect, которым миграция эффектов переносит sizeMod с Черты
+// (constants/effect-keys.mjs::legacyEffectsToChanges).
+const SIZE_KEY = "system.sizeMod";
 
 /** effName («<num> <name>» легиона/капитула) → текущий правильный sizeMod. */
 export function currentSizeModByEffName(legions = LEGIONS) {
@@ -48,8 +51,55 @@ export function geneSeedSizeMismatch(item, sizeModByEffName = currentSizeModByEf
   const effName = name.slice(PREFIX.length);
   if (!sizeModByEffName.has(effName)) return null;
   const correct = sizeModByEffName.get(effName);
-  const stored = Number(item.system?.effects?.sizeMod) || 0;
-  return stored !== correct ? { correct, stored } : null;
+  const legacy  = Number(item.system?.effects?.sizeMod) || 0;
+  const inEffect = geneSeedEffectSizeMod(item);
+  // Считать одно только легаси-поле мало: миграция эффектов (migrations/
+  // item-effects.mjs) гоняется у ГМа на КАЖДОЙ загрузке мира и уже перенесла
+  // sizeMod в embedded ActiveEffect с ключом system.sizeMod, пометив Черту
+  // флагом migratedEffect. С этого момента актор легаси-поле у такой Черты не
+  // читает вовсе (rules/character.mjs — `migratedEffect ? {} : system.effects`),
+  // а Размер приходит из эффекта (rules/character/movement.mjs). Правка одного
+  // поля была бы пустой операцией, которая при этом рапортует «выправлено».
+  if (legacy === correct && inEffect === correct) return null;
+  return { correct, stored: legacy, inEffect };
+}
+
+/**
+ * Сколько Размера Черта раздаёт через ActiveEffect — сумма changes с ключом
+ * system.sizeMod. Выключенные эффекты не считаются: актор их тоже не применяет.
+ */
+export function geneSeedEffectSizeMod(item) {
+  let total = 0;
+  for (const effect of item?.effects ?? []) {
+    if (effect.disabled) continue;
+    for (const c of effect.system?.changes ?? []) {
+      if (c?.key === SIZE_KEY) total += Number(c.value) || 0;
+    }
+  }
+  return total;
+}
+
+/**
+ * Привести ActiveEffect Черты к правильному Размеру: correct === 0 — снять
+ * записи вовсе (и сам эффект, если он от этого опустел, тем же приёмом, что
+ * migrations/item-effects.mjs::repairDeadArmourKeys); иначе — оставить ровно
+ * одну запись с верным числом.
+ */
+async function fixGeneSeedEffects(item, correct) {
+  const emptied = [];
+  let seen = false;
+  for (const effect of item.effects ?? []) {
+    const changes = effect.system?.changes ?? [];
+    if (!changes.some(c => c?.key === SIZE_KEY)) continue;
+    const keep = [];
+    for (const c of changes) {
+      if (c?.key !== SIZE_KEY) { keep.push(c); continue; }
+      if (correct !== 0 && !seen) { keep.push({ ...c, value: correct }); seen = true; }
+    }
+    if (keep.length) await effect.update({ "system.changes": keep });
+    else emptied.push(effect.id);
+  }
+  if (emptied.length) await item.deleteEmbeddedDocuments("ActiveEffect", emptied);
 }
 
 /** Правит расхождения у Черт «Геносемя» всех акторов мира. */
@@ -63,7 +113,11 @@ export async function migrateLegionGeneSeedSize() {
       for (const item of actor.items) {
         const mismatch = geneSeedSizeMismatch(item, sizeModByEffName);
         if (!mismatch) continue;
+        // Правятся ОБА хранилища: легаси-поле — чтобы hasLegacyEffects не
+        // завёл эффект заново на следующей загрузке мира, и сам ActiveEffect —
+        // потому что именно его читает актор у мигрированной Черты.
         await item.update({ "system.effects.sizeMod": mismatch.correct });
+        await fixGeneSeedEffects(item, mismatch.correct);
         fixed++;
       }
     }

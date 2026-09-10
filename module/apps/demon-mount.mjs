@@ -25,6 +25,9 @@
 
 import { findBestiaryActor } from "./demon-summon.mjs";
 import { addExtraDamageDie } from "../constants/demon-weapon.mjs";
+// Запасное значение W.b, если запись Бестиария не найдена: демон-скакун — та
+// же категория «Низшие демоны Богов», что и демон-Оруженосец.
+import { ARMIGER_DEMON_WB } from "./armiger-weapon.mjs";
 
 /** Демоны-скакуны книги — все низшие демонические звери (W.b неважен здесь: бонусы фиксированы числом, не формулой от W.b демона). */
 const MELEE_CLASS = "melee";
@@ -60,6 +63,15 @@ export async function bindDemonMount(mountUuid, riderActor, demonName, god = "un
 
   const mountPossession = {
     god, demonName, binding: 0, demonInf,
+    // demonWb обязателен: rules/mount.mjs::isPossessed считает скакуна
+    // одержимым ИМЕННО по этому полю, а от isPossessed зависят и строка
+    // одержимости в панели «ВЕРХОМ» (sheets/tabs/mount-panel.mjs), и книжное
+    // «скакун ходит в Инициативу всадника» (pairInitiative). Без него ритуал
+    // вселения оставался незаметным для листа, а у Слаанеш — где своей ветки
+    // бонусов нет — не давал вообще ничего. Пишут его оба соседних пути:
+    // constants/mount-possession.mjs::possessionFlags (ручное Осквернение) и
+    // apps/armiger-weapon.mjs (демон в оружии).
+    demonWb: Math.max(1, Number(src?.system?.characteristics?.wp?.bonus) || ARMIGER_DEMON_WB),
     // Демон-скакун Рыцаря Бога служит добровольно (проза Дара — «даёт в
     // услужение»), тот же subdued:true, что у демон-Оруженосца в оружии.
     subdued: true, properties: []

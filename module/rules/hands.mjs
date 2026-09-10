@@ -172,12 +172,22 @@ export async function setHeldHand(item, hand) {
 
 /**
  * Рейтинг Трейта Multiple Arms — уже ПОЛНОЕ число рук (raw «Multiple Arms
- * (4)» = четыре руки, не «+4»), см. apps/cybernetic-excellence.mjs:BASE_ARMS.
- * Трейта нет — обычные 2 руки.
+ * (4)» = четыре руки, не «+4»; текст самого Трейта: «общее число рук = X»),
+ * см. apps/cybernetic-excellence.mjs:BASE_ARMS. Трейта нет — обычные 2 руки.
+ *
+ * Берётся НАИБОЛЬШИЙ рейтинг, а не первый попавшийся: Конструктор «МЕХАНИКА»
+ * дедуплицирует только Таланты, а два источника Трейта (мутация + её
+ * субмутация, как «Странные Руки» + «Призрачные Руки») кладут на актора две
+ * отдельные записи. Раз рейтинг — ИТОГ, а не прибавка, верный ответ из двух
+ * «общих чисел рук» — большее; при первом попавшемся сильная субмутация
+ * молча проигрывала слабой базовой записи.
  */
 export function baseHandsFromTraits(actor) {
-  const trait = actor?.items ? [...actor.items].find(isMultipleArmsTrait) : null;
-  return trait ? (Number(trait.system?.rating) || BASE_HANDS) : BASE_HANDS;
+  const ratings = [...(actor?.items ?? [])]
+    .filter(isMultipleArmsTrait)
+    .map(t => Number(t.system?.rating) || 0)
+    .filter(n => n > 0);
+  return ratings.length ? Math.max(...ratings) : BASE_HANDS;
 }
 
 /** Сколько рук у актора доступно прямо сейчас: Трейт минус ампутации (0-31/32). */

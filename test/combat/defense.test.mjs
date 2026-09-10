@@ -787,4 +787,34 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     expect(html).toContain("Порог");
     expect(html).not.toContain("требует Навык");
   });
+
+  // Форма ЖИВЫХ данных, а не подставленная в тест напрямую: у Астартес/Огрина/
+  // Дредноута system.size == 0, а весь Размер приходит Чертой через
+  // ActiveEffect на system.sizeMod, который сводится в system.sizeTotal
+  // (rules/character/movement.mjs). Пока читался size, гейт не срабатывал ни
+  // разу — правило было мертво в игре при зелёных тестах, потому что все они
+  // писали size руками.
+  it("Размер от Черты (size 0, sizeTotal 2) — гейт видит его, а не только базу", async () => {
+    const attackerUuid = "Actor.attacker-1";
+    globalThis.fromUuid = async uuid =>
+      (uuid === attackerUuid ? { uuid, system: { size: 0, sizeTotal: 2 } } : null);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 0, sizeTotal: 0 });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("требует Навык «Парирование»");
+    expect(html).toContain("+20");
+  });
+
+  it("у техники своего sizeTotal нет — читается size (иначе Размер машины стал бы 0)", async () => {
+    const attackerUuid = "Actor.attacker-1";
+    globalThis.fromUuid = async uuid =>
+      (uuid === attackerUuid ? { uuid, system: { size: 4 } } : null);
+    const sword = equippedMelee({ balance: 0 });
+    const actor = attacker({ items: [sword], size: 0, sizeTotal: 3 });
+    await _performParry(actor, 0, attackerUuid);
+    const html = captured.chat.at(-1).content;
+    expect(html).toContain("требует Навык «Парирование»");
+    expect(html).toContain("+10");
+  });
 });

@@ -11,7 +11,7 @@ import { ARMOUR_SIDES, TERRAIN_TABLE, TERRAIN_MANEUVER_MODS,
          getVehicleCrit, LOCATION_LABEL_TO_KEY,
          REPAIR_CONDITIONS, REPAIR_PACE, VEHICLE_BREAKAGES } from "../constants/vehicle.mjs";
 import { DAMAGE_TYPES }    from "../constants/items.mjs";
-import { ablativeDamage, mountRamExtraDie }  from "../rules/mount.mjs";
+import { ablativeDamage, mountRamExtraDie, mountRangedApBonus }  from "../rules/mount.mjs";
 import { isDreadnought, pilotUuidOf, pilotDamageThreshold }
   from "../rules/dreadnought.mjs";
 import { applyWoundLoss, woundLossAfter } from "../rules/wounds.mjs";
@@ -362,7 +362,14 @@ export async function applyDamageToVehicle(actor, damageData) {
   // той же природы, что мод «Аблативная» — теряет 1 заряд с ЛЮБОГО
   // засчитанного попадания «от мины», а не по очкам поглощённого урона.
   const mineAblative = fromMine ? (Number(actor.system.structure?.ablative) || 0) : 0;
-  const ap = ((tf.daemonicAbsorb && !daemonicVulnerable) ? apCeramite + tf.daemonicAbsorb : apCeramite) + mineAblative;
+  // Рыцарь Кхорна (wdbc-1rno): «+8 AP от стрелковых атак» одержимому скакуну.
+  // Ритуал «Вселение Скакуна в Технику» прямо рассчитан на машину (apps/
+  // demon-mount.mjs отдельно обрабатывает mount.type === "vehicle"), но урон по
+  // технике уходит сюда РАНЬШЕ, чем combat/damage.mjs успевает добавить бонус —
+  // без этой строки обещанные книгой +8 машине не доставались вовсе.
+  const mountAP = damageData.melee ? 0 : mountRangedApBonus(actor);
+  const ap = ((tf.daemonicAbsorb && !daemonicVulnerable) ? apCeramite + tf.daemonicAbsorb : apCeramite)
+             + mineAblative + mountAP;
   const effAP   = Math.max(0, ap - (Number(penetration) || 0));
   const rawNet  = deflected ? 0 : Math.max(0, (Number(rawDamage) || 0) - effAP);
   // Аблативное Бронирование байка (стр. 478): пока Структура полна, любой

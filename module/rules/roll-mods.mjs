@@ -114,8 +114,11 @@ export function ruleRollModsHtml(actor, context, resolved = null) {
  * за столом, как и прежде.
  */
 export function ruleRerollsHtml(actor, context, resolved = null) {
-  // Только СВОИ перебросы: навязанные цели бросает она сама, у себя.
-  const rerolls = ((resolved ?? resolveTest({ actor, ...context })).rerolls || []).filter(r => r.who !== "target");
+  // Только ДОБРОВОЛЬНЫЕ свои перебросы. Навязанные цели (who:"target") бросает
+  // она сама, у себя; навязанные МНЕ противником (who:"opponent" — Уравнитель)
+  // применяются без спроса в sheets/attack/dialog.mjs и предлагать их
+  // наказуемому галочкой нельзя — он её просто не поставит.
+  const rerolls = ((resolved ?? resolveTest({ actor, ...context })).rerolls || []).filter(r => r.who === "self");
   if (!rerolls.length) return { html: "", rerolls };
   const rows = rerolls.map((r, i) => `
     <label class="attack-mod-check rule-reroll">

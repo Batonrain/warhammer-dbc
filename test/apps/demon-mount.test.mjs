@@ -11,6 +11,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { beforeEach, describe, it, expect } from "vitest";
 import { bindDemonMount, defaultBindDemonMountFn } from "../../module/apps/demon-mount.mjs";
+import { isPossessed } from "../../module/rules/mount.mjs";
 
 function bestiaryPack(entries) {
   return {
@@ -194,8 +195,26 @@ describe("Рыцарь Слаанеш — только пометка одерж
     await bindDemonMount("Actor.mount", fakeRider(), "Скакун Слаанеш", "slaanesh");
     const set = mount._updates.find(u => u["flags.warhammer-dbc.mountPossession"]);
     expect(Object.keys(set["flags.warhammer-dbc.mountPossession"]).sort())
-      .toEqual(["binding", "demonInf", "demonName", "god", "properties", "subdued"]);
+      .toEqual(["binding", "demonInf", "demonName", "demonWb", "god", "properties", "subdued"]);
   });
+});
+
+// Пометка одержимости должна быть в ТОМ виде, который система читает:
+// rules/mount.mjs::isPossessed смотрит именно demonWb, и от него зависят
+// строка одержимости в панели «ВЕРХОМ» и «скакун ходит в Инициативу
+// всадника». Без demonWb ритуал вселения был незаметен для листа, а у
+// Слаанеш (нет своей ветки бонусов) не давал вообще ничего.
+describe("вселение помечает скакуна одержимым так, как это читает система", () => {
+  for (const god of ["khorne", "nurgle", "slaanesh", "tzeentch"]) {
+    it(`${god}: isPossessed(скакун) === true после вселения`, async () => {
+      const mount = fakeMount();
+      globalThis.fromUuid = async () => mount;
+      await bindDemonMount("Actor.mount", fakeRider(), "Скакун", god);
+      const set = mount._updates.find(u => u["flags.warhammer-dbc.mountPossession"]);
+      const flags = { "warhammer-dbc": { mountPossession: set["flags.warhammer-dbc.mountPossession"] } };
+      expect(isPossessed({ flags })).toBe(true);
+    });
+  }
 });
 
 describe("маршрутизация вызова (defaultBindDemonMountFn)", () => {

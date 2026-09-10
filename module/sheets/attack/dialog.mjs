@@ -235,7 +235,14 @@ export function openAttackDialog(ctx) {
               // combat/attack.mjs. crit — расширение диапазона Критического
               // Успеха/Провала тем же правилом (kind:"critRangeMod"); сам
               // натуральный диапазон 1-5/96-100 применяется уже в attack.mjs.
-              reroll: f.reroll || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined),
+              // Переброс, НАВЯЗАННЫЙ атакующему целью (Уравнитель, Дар
+              // Нургла — who:"opponent"), старше и выбора игрока, и общего
+              // Кубика: он не предлагается, а применяется. Тот же приоритет
+              // «внешнее навязывание важнее своего», что у защиты —
+              // combat/defense.mjs::_performDodge, forcedReroll.
+              reroll: (resolvedAttack.rerolls || []).find(r => r.who === "opponent")
+                      || f.reroll
+                      || (oneVsHundred ? { mode: "keepBest", rolls: 2 } : undefined),
               crit: resolvedAttack.crit,
               forcedDefenceReroll,
               techniqueOpts: finalTechniqueOpts,

@@ -7,18 +7,39 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  currentSizeModByEffName, geneSeedSizeMismatch, migrateLegionGeneSeedSize
+  currentSizeModByEffName, geneSeedSizeMismatch, migrateLegionGeneSeedSize, geneSeedEffectSizeMod
 } from "../../module/migrations/legion-geneseed-size-fix.mjs";
 import { LEGIONS } from "../../module/constants/legions.mjs";
 
-function trait({ id = "t1", name, source = "Легион", sizeMod = 0 } = {}) {
+// effectSizeMod — Черта уже прошла миграцию эффектов (migrations/item-
+// effects.mjs): sizeMod переехал в embedded ActiveEffect с ключом
+// system.sizeMod, и актор читает ИМЕННО его, а не легаси-поле. Именно в этом
+// виде Черты и лежат во всех живых мирах, потому что migrateAllItemEffects
+// гоняется у ГМа на каждой загрузке.
+function trait({ id = "t1", name, source = "Легион", sizeMod = 0,
+                 effectSizeMod = null, extraChange = null } = {}) {
   const flags = {};
+  const effects = [];
+  if (effectSizeMod !== null) {
+    const changes = [{ key: "system.sizeMod", mode: "add", value: effectSizeMod, phase: "initial" }];
+    if (extraChange) changes.push(extraChange);
+    effects.push({
+      id: "eff1", disabled: false, system: { changes },
+      async update(data) { if (data["system.changes"]) this.system.changes = data["system.changes"]; }
+    });
+  }
   return {
-    id, name, type: "trait",
+    id, name, type: "trait", effects,
     system: { source, effects: { sizeMod } },
     getFlag: (scope, key) => flags[`${scope}.${key}`],
     async update(data) {
       if (Object.hasOwn(data, "system.effects.sizeMod")) this.system.effects.sizeMod = data["system.effects.sizeMod"];
+    },
+    async deleteEmbeddedDocuments(type, ids) {
+      for (const eid of ids) {
+        const i = effects.findIndex(e => e.id === eid);
+        if (i !== -1) effects.splice(i, 1);
+      }
     }
   };
 }
@@ -40,12 +61,12 @@ describe("currentSizeModByEffName", () => {
 describe("geneSeedSizeMismatch", () => {
   it("Черта с устаревшим sizeMod:1 (Альфа Легион) — расхождение найдено", () => {
     const item = trait({ name: "Геносемя: XX Альфа Легион", sizeMod: 1 });
-    expect(geneSeedSizeMismatch(item)).toEqual({ correct: 0, stored: 1 });
+    expect(geneSeedSizeMismatch(item)).toEqual({ correct: 0, stored: 1, inEffect: 0 });
   });
 
   it("Черта с устаревшим sizeMod:1 (Железные Змеи) — расхождение найдено", () => {
     const item = trait({ name: "Геносемя: XIII Железные Змеи", sizeMod: 1 });
-    expect(geneSeedSizeMismatch(item)).toEqual({ correct: 0, stored: 1 });
+    expect(geneSeedSizeMismatch(item)).toEqual({ correct: 0, stored: 1, inEffect: 0 });
   });
 
   it("уже правильный sizeMod:0 — расхождения нет", () => {
@@ -115,6 +136,57 @@ describe("migrateLegionGeneSeedSize", () => {
     expect(warned).toBe(true);
     expect(res).toBeUndefined();
     expect(bad.system.effects.sizeMod).toBe(1);
+  });
+
+  // ГЛАВНЫЙ случай живых миров: миграция эффектов уже перенесла sizeMod в
+  // ActiveEffect, и актор Размер берёт ОТТУДА. Правка одного легаси-поля
+  // Размер не меняла вовсе, но рапортовала «выправлено у Черт: N» — зелёные
+  // тесты при мёртвой миграции.
+  it("Черта уже мигрирована в ActiveEffect — снимается и запись эффекта", async () => {
+    const bad = trait({ name: "Геносемя: XX Альфа Легион", sizeMod: 1, effectSizeMod: 1 });
+    globalThis.game = { user: { isGM: true }, actors: [actorWith([bad])] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    const res = await migrateLegionGeneSeedSize();
+
+    expect(res.fixed).toBe(1);
+    expect(bad.system.effects.sizeMod).toBe(0);
+    expect(geneSeedEffectSizeMod(bad)).toBe(0);
+    expect(bad.effects).toHaveLength(0); // эффект опустел — удалён целиком
+  });
+
+  it("легаси-поле уже 0, а эффект всё ещё даёт +1 — расхождение всё равно найдено", async () => {
+    const bad = trait({ name: "Геносемя: XX Альфа Легион", sizeMod: 0, effectSizeMod: 1 });
+    expect(geneSeedSizeMismatch(bad)).toEqual({ correct: 0, stored: 0, inEffect: 1 });
+
+    globalThis.game = { user: { isGM: true }, actors: [actorWith([bad])] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+    const res = await migrateLegionGeneSeedSize();
+
+    expect(res.fixed).toBe(1);
+    expect(geneSeedEffectSizeMod(bad)).toBe(0);
+  });
+
+  it("в эффекте есть и другие changes — сносится только строка Размера, эффект живёт", async () => {
+    const other = { key: "system.armorBonus.body", mode: "add", value: 2, phase: "initial" };
+    const bad = trait({ name: "Геносемя: XX Альфа Легион", sizeMod: 1,
+                        effectSizeMod: 1, extraChange: other });
+    globalThis.game = { user: { isGM: true }, actors: [actorWith([bad])] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    await migrateLegionGeneSeedSize();
+
+    expect(bad.effects).toHaveLength(1);
+    expect(bad.effects[0].system.changes).toEqual([other]);
+  });
+
+  it("повторный прогон ничего не меняет (идемпотентность)", async () => {
+    const bad = trait({ name: "Геносемя: XX Альфа Легион", sizeMod: 1, effectSizeMod: 1 });
+    globalThis.game = { user: { isGM: true }, actors: [actorWith([bad])] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    expect((await migrateLegionGeneSeedSize()).fixed).toBe(1);
+    expect((await migrateLegionGeneSeedSize()).fixed).toBe(0);
   });
 
   it("ничего расходящегося — fixed:0, без ошибок", async () => {

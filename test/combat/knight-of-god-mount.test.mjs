@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { applyDamageToActor } from "../../module/combat/damage.mjs";
-import { _resolveRam } from "../../module/combat/vehicle.mjs";
+import { _resolveRam, applyDamageToVehicle } from "../../module/combat/vehicle.mjs";
 import { showMountTerrainDialog } from "../../module/combat/mount.mjs";
 
 function possessedActor({ god = "khorne", extra = {}, armorAP = 0, toughnessBonus = 0, wounds = 20 } = {}) {
@@ -58,6 +58,50 @@ describe("Рыцарь Кхорна: +8 AP от стрелковых атак", 
     delete actor.flags["warhammer-dbc"].mountPossession;
     await applyDamageToActor(actor, damage({ rawDamage: 10, melee: false }));
     expect(actor.system.wounds.value).toBe(12); // 10 − 2, флага нет
+  });
+});
+
+// Ритуал «Вселение Скакуна в Технику» книга адресует ИМЕННО машине, и
+// apps/demon-mount.mjs отдельно обрабатывает mount.type === "vehicle"
+// (Структура вместо Ран). Но урон по технике уходит в applyDamageToVehicle
+// РАНЬШЕ общего расчёта брони, поэтому проверять бонус только на
+// type:"character" мало — так он и остался недоставленным машине.
+describe("Рыцарь Кхорна: +8 AP доезжает и до ТЕХНИКИ, не только до живого скакуна", () => {
+  function possessedVehicle(extra = {}) {
+    const system = {
+      armour: { front: 10 },
+      structure: { value: 20, critical: 0, ablative: 0, ablativeMax: 0 },
+      derived: { traitFlags: {} }
+    };
+    return {
+      type: "vehicle", name: "Рейдер",
+      flags: { "warhammer-dbc": { mountPossession: { god: "khorne", demonName: "Джаггернаут", ...extra } } },
+      system,
+      getActiveTokens: () => [],
+      update: async data => {
+        if (data["system.structure.value"] !== undefined) system.structure.value = data["system.structure.value"];
+      }
+    };
+  }
+
+  it("стрелковая атака по одержимой машине — +8 к AP борта", async () => {
+    const actor = possessedVehicle({ apRanged: 8 });
+    // AP 10 + 8 = 18 против урона 15 → поглощено полностью.
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "front", melee: false });
+    expect(actor.system.structure.value).toBe(20);
+  });
+
+  it("рукопашная атака по одержимой машине — бонус НЕ применяется", async () => {
+    const actor = possessedVehicle({ apRanged: 8 });
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "front", melee: true });
+    expect(actor.system.structure.value).toBe(15); // 15 − AP10 = 5 в Структуру
+  });
+
+  it("не одержимая машина — бонуса нет", async () => {
+    const actor = possessedVehicle({ apRanged: 8 });
+    delete actor.flags["warhammer-dbc"].mountPossession;
+    await applyDamageToVehicle(actor, { rawDamage: 15, side: "front", melee: false });
+    expect(actor.system.structure.value).toBe(15);
   });
 });
 

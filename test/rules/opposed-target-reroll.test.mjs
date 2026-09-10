@@ -35,7 +35,7 @@ describe("opposedTargetRerollRules — Уравнитель", () => {
     const rules = opposedTargetRerollRules(attacker, { targetActor: defender, char: "ws" });
     expect(rules).toHaveLength(1);
     expect(rules[0].effects).toEqual([
-      { kind: "rollMode", target: "attack", mode: "keepWorst", rolls: 2, who: "self" }
+      { kind: "rollMode", target: "attack", mode: "keepWorst", rolls: 2, who: "opponent" }
     ]);
   });
 
@@ -95,14 +95,14 @@ describe("Уравнитель — сквозь весь конвейер (resol
     const defender = actorWithChar(40, [equalizerItem()]);
     const attacker = actorWithChar(55);
     const { rerolls } = resolveTest({ actor: attacker, targetActor: defender, kind: "attack", char: "ws", isMelee: true });
-    expect(rerolls.some(r => r.mode === "keepWorst" && r.who === "self")).toBe(true);
+    expect(rerolls.some(r => r.mode === "keepWorst" && r.who === "opponent")).toBe(true);
   });
 
   it("бой: атака по держателю Уравнителя с более НИЗКОЙ WS переброса не даёт", () => {
     const defender = actorWithChar(40, [equalizerItem()]);
     const attacker = actorWithChar(30);
     const { rerolls } = resolveTest({ actor: attacker, targetActor: defender, kind: "attack", char: "ws", isMelee: true });
-    expect(rerolls.some(r => r.mode === "keepWorst" && r.who === "self")).toBe(false);
+    expect(rerolls.some(r => r.mode === "keepWorst" && r.who === "opponent")).toBe(false);
   });
 
   // Вторая книжная половина Уравнителя («…или противник выступает атакующим
@@ -117,5 +117,60 @@ describe("Уравнитель — сквозь весь конвейер (resol
     const attacker = actorWithChar(55);
     const { rerolls } = resolveTest({ actor: attacker, targetActor: defender, kind: "skill", skill: "intimidate", char: "ws" });
     expect(rerolls.some(r => r.mode === "keepWorst" && r.who === "self")).toBe(false);
+  });
+});
+
+// ── Приём стопки #441-#462: три находки ревью ──────────────────────────────
+//
+// Все три об одном: правило книга НАВЯЗЫВАЕТ, а код предлагал его на выбор
+// тому, кого оно наказывает, и читал его с предметов, которые ещё/уже не
+// работают.
+
+function orGroupEqualizer() {
+  return {
+    name: "Выбор из двух",
+    flags: { "warhammer-dbc": { mechanics: [{ id: "g1", operator: "OR", entries: [
+      { id: "or1", kind: "reroll", rerollScope: "attack", rerollMode: "keepWorst",
+        rerollWho: "opponent", label: "Невыбранная половина" }
+    ] }] } }
+  };
+}
+
+describe("Уравнитель: правило не предлагается наказуемому, а применяется", () => {
+  it("who — «opponent», а не «self»: иначе он попадёт в список добровольных перебросов", () => {
+    const attacker = actorWithChar(55);
+    const defender = actorWithChar(40, [equalizerItem()]);
+    const rules = opposedTargetRerollRules(attacker, { targetActor: defender, char: "ws" });
+    expect(rules[0].effects[0].who).toBe("opponent");
+    expect(rules[0].effects[0].who).not.toBe("self");
+  });
+
+  it("выключенный предмет цели правил не даёт (не вживлённый имплант, снятая модификация)", () => {
+    const attacker = actorWithChar(55);
+    const defender = actorWithChar(40, [equalizerItem()]);
+    const active = opposedTargetRerollRules(attacker, { targetActor: defender, char: "ws" }, () => true);
+    const off    = opposedTargetRerollRules(attacker, { targetActor: defender, char: "ws" }, () => false);
+    expect(active).toHaveLength(1);
+    expect(off).toEqual([]);
+  });
+
+  it("ИЛИ-группа не просматривается: невыбранная половина «выбери одно из двух» не срабатывает", () => {
+    const attacker = actorWithChar(55);
+    const defender = actorWithChar(40, [orGroupEqualizer()]);
+    expect(opposedTargetRerollRules(attacker, { targetActor: defender, char: "ws" })).toEqual([]);
+  });
+});
+
+describe("Уравнитель не показывается атакующему галочкой", () => {
+  it("ruleRerollsHtml не рисует навязанный переброс среди добровольных", async () => {
+    const { ruleRerollsHtml } = await import("../../module/rules/roll-mods.mjs");
+    const attacker = actorWithChar(55);
+    const defender = actorWithChar(40, [equalizerItem()]);
+    const { html, rerolls } = ruleRerollsHtml(attacker,
+      { targetActor: defender, char: "ws", kind: "attack" });
+    // Ни строки выбора, ни самого блока «Перебросы» быть не должно: единственный
+    // переброс здесь — навязанный, его игрок не выбирает.
+    expect(rerolls).toEqual([]);
+    expect(html).toBe("");
   });
 });

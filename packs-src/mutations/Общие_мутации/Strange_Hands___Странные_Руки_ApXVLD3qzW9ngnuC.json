@@ -128,8 +128,8 @@
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.b2B8zxbhoK961wEf",
               "sourceName": "Multiple Arms / Многорукий (X)",
               "sourceHasRating": true,
-              "rating": 2,
-              "label": "Призрачные Руки (субмутация 10, tzeentch): +2 к рейтингу Multiple Arms сверх базового +2 (итог +4)",
+              "rating": "4",
+              "label": "Призрачные Руки (субмутация 10, tzeentch): общее число рук 4 (рейтинг Трейта — ИТОГ, не прибавка)",
               "when": {
                 "negate": false,
                 "conditions": [],

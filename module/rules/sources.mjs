@@ -113,7 +113,7 @@ registerRuleSource("items", a => rulesFromItemMechanics(a?.items ?? [], isItemAc
 // защищающемся (ctx.targetActor), источник "items" выше её не видит, потому
 // что читает только собственные предметы актора-бросающего. См. заголовок
 // item-rules.mjs::opposedTargetRerollRules.
-registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx));
+registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx, isItemActive));
 
 // Adjutant/Адъютант (wdbc-sk8s) даёт способность не себе, а своему
 // Командиру — cross-actor проверка вне владельца Таланта, тем же приёмом,

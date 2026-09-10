@@ -377,8 +377,17 @@ export async function _performParry(actor, extraMod = 0, attackerUuid = "", hits
 
   // Длань Кхорна (wdbc-1rno): +2 эффективного Размера атакующего, когда бьёт
   // именно этой рукой — не своё поле на акторе, читается с оружия атаки.
-  const attackerSize = (Number(attackerActor?.system?.size) || 0) + handOfKhorneAttackSizeBonus(attackerWeapon);
-  const defenderSize  = Number(actor?.system?.size) || 0;
+  //
+  // Размер берётся из sizeTotal, а НЕ из size: size — только база («0 =
+  // Человек»), а весь реальный Размер существ приходит Чертой «Size/Размер
+  // (X)»/«Hulking/Громила» через ActiveEffect на system.sizeMod, который
+  // rules/character/movement.mjs сводит в system.sizeTotal. По одному size у
+  // Астартес, Огрина и Дредноута читался бы 0 (это уже находили на живых
+  // данных, см. комментарий там же), и вся Разница Размеров не срабатывала бы
+  // ни разу. У техники своего sizeTotal нет — там size и есть итог, отсюда ??.
+  const sizeOf = a => Number(a?.system?.sizeTotal ?? a?.system?.size) || 0;
+  const attackerSize = sizeOf(attackerActor) + handOfKhorneAttackSizeBonus(attackerWeapon);
+  const defenderSize  = sizeOf(actor);
   // Крестовой Блок поднимает предел «невозможно» на ступень (стр. 62) — та же
   // РЕАЛЬНАЯ (после вопроса игроку) готовность биться обоими, что идёт в
   // parryProfile ниже, не повторный независимый вопрос "есть ли пара".
