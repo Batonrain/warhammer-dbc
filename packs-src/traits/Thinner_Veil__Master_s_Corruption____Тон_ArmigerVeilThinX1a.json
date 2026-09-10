@@ -1,15 +1,17 @@
 {
-  "name": "Infernal Armiger / Инфернальный Оруженосец",
-  "type": "mutation",
-  "img": "systems/warhammer-dbc/assets/item-icons/mutation.svg",
-  "folder": "zE3hBVdemaFVAHp8",
+  "name": "Thinner Veil (Master's Corruption) / Тоньше Завесы (Порча Хозяина)",
+  "type": "trait",
+  "img": "systems/warhammer-dbc/assets/item-icons/trait.svg",
+  "folder": null,
   "system": {
     "description": "",
-    "notes": "",
-    "benefit": "Патрон чемпиона даёт ему в услужение одного из своих низших демонов. Персонаж имеет в услужении Чумоноса. Он автоматически побеждает во всех тестах Владычества против него. Он может призвать его в Истинной Форме простым 10-минутным ритуалом, не требующим тестов, и контролировать его как Миньона без траты слотов Миньонов, при этом Чумонос считает Завесу на Cor.b персонажа тоньше, чем на самом деле, если не отходит от него дальше чем на Cor м. Он также может тем же ритуалом призвать его в своё оружие, превратив его в Демоническое Оружие. Если он изгоняет демона-оруженосца из своего оружия, оружие всегда уничтожается, без шанса стать Руническим.\n\nКогда персонаж достигает Inf 60, демон становится возвышенным.",
-    "source": "Дары Нургл, d100 95…100",
-    "roll": "95…100",
-    "god": "nurgle",
+    "notes": "Не книжная Черта под отдельным названием — реализация конкретной строки Дара «Инфернальный Оруженосец» (wdbc-1rno, шаг F): «...считает Завесу на Cor.b персонажа тоньше, чем на самом деле». Выдаётся демону-Оруженосцу автоматически при призыве (module/apps/demon-summon.mjs), не покупается и не показывается отдельно в Бестиарии.",
+    "benefit": "Демон считает Завесу тоньше, чем на самом деле, на Бонус Порчи (Cor.b) его Хозяина — прибавка идёт к его тестам Нестабильности.",
+    "source": "Инфернальный Оруженосец (Дар, все 4 Бога Хаоса)",
+    "hasRating": false,
+    "rating": 0,
+    "hasRating2": false,
+    "rating2": 0,
     "effects": {
       "charBonusStat": "",
       "charBonusValue": 0,
@@ -21,27 +23,25 @@
       "initMod": 0,
       "speedMod": 0
     },
-    "requirement": "",
     "bookSource": "DoomBC — Основная книга, VII. БЕСЧЕСТИЕ И ПОРЧА («Дары Богов», стр. 453-460)"
   },
-  "_id": "ai4mBT9bhVwZqx8t",
+  "_id": "ArmigerVeilThinX1a",
   "effects": [],
   "sort": 0,
   "ownership": {
-    "default": 0,
-    "Bh2eMXBlRSXAdCgx": 3
+    "default": 0
   },
   "flags": {
     "warhammer-dbc": {
       "migratedEffect": true,
       "mechanics": [
         {
-          "id": "8CRPzpPtctAi3CDi",
+          "id": "gArmigerVeilThin1",
           "operator": "AND",
           "entries": [
             {
-              "id": "infernalArmiger-cap",
-              "kind": "capability",
+              "id": "armigerVeilThinner-mod",
+              "kind": "testMod",
               "group": null,
               "corruptionValue": "1",
               "woundsValue": "1",
@@ -74,14 +74,6 @@
               "armourLocation": "body",
               "armourValue": 1,
               "ignoreTerrainProps": [],
-              "rerollScope": "all",
-              "rerollChar": "ag",
-              "rerollMode": "keepBest",
-              "modScope": "all",
-              "modValueMode": "flat",
-              "modCharBonus": "inf",
-              "rerollWho": "self",
-              "capabilityKey": "gift.nurgle.infernalArmiger",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",
@@ -103,9 +95,6 @@
               "loyaltyMinionType": "",
               "loyaltyOp": "add",
               "loyaltyValue": 1,
-              "auraRadius": "1",
-              "auraAffects": "allies",
-              "auraIncludesSelf": false,
               "weaponPropAction": "add",
               "weaponPropKey": "",
               "weaponPropLabel": "",
@@ -119,34 +108,11 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "",
+              "label": "Тоньше Завесы (Cor.b Хозяина)",
               "code": "",
-              "when": {
-                "negate": false,
-                "conditions": []
-              }
-            },
-            {
-              "id": "infernalArmiger-ritual",
-              "kind": "equipment",
-              "equipMode": "direct",
-              "equipQty": 1,
-              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.ArmigerNurgleQ2b",
-              "equipSourceName": "Summon the Bound Armiger / Призыв Связанного Оруженосца (Нургл)",
-              "label": "",
-              "when": {
-                "negate": false,
-                "conditions": []
-              }
-            },
-            {
-              "id": "infernalArmiger-ritual-weapon",
-              "kind": "equipment",
-              "equipMode": "direct",
-              "equipQty": 1,
-              "equipSourceUuid": "Compendium.warhammer-dbc.rituals.Item.ArmigerNuWeapQ2b",
-              "equipSourceName": "Bind the Armiger into a Weapon / Вселение Оруженосца в Оружие (Нургл)",
-              "label": "",
+              "modScope": "instability",
+              "modValueMode": "masterCharBonus",
+              "modCharBonus": "cor",
               "when": {
                 "negate": false,
                 "conditions": []
@@ -164,9 +130,9 @@
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1785233722339,
-    "modifiedTime": 1786122020660,
+    "createdTime": 1786285534944,
+    "modifiedTime": 1786285534944,
     "lastModifiedBy": "4Q6l1C4FQOMQVofr"
   },
-  "_key": "!items!ai4mBT9bhVwZqx8t"
+  "_key": "!items!ArmigerVeilThinX1a"
 }

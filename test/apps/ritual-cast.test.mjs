@@ -104,6 +104,34 @@ describe("подстановка ритуала-предмета (applyRitualIte
     expect(applied.gmMod).toBe(0);
   });
 
+  // wdbc-1rno: Дары вроде Инфернального Оруженосца дают ГОТОВЫЙ ритуал на
+  // конкретного демона — noTest/asMinion/demonName/demonInf фиксированы на
+  // предмете, игрок их не вписывает (в отличие от обычного «Призыва»).
+  it("noTest/asMinion/demonName/demonInf переезжают из предмета в R", () => {
+    const applied = applyRitualItem(scholar, ritual({
+      noTest: true, asMinion: true, demonName: "Кровопускатель", demonInf: 35
+    }), skillsOf);
+
+    expect(applied.noTest).toBe(true);
+    expect(applied.asMinion).toBe(true);
+    expect(applied.demonName).toBe("Кровопускатель");
+    expect(applied.demonInf).toBe(35);
+  });
+
+  it("noTest/asMinion по умолчанию false, а не отсутствуют", () => {
+    const applied = applyRitualItem(scholar, ritual({}), skillsOf);
+
+    expect(applied.noTest).toBe(false);
+    expect(applied.asMinion).toBe(false);
+  });
+
+  it("незаполненные demonName/demonInf не подставляются поверх умолчаний R", () => {
+    const applied = applyRitualItem(scholar, ritual({}), skillsOf);
+
+    expect(applied.demonName).toBeUndefined();
+    expect(applied.demonInf).toBeUndefined();
+  });
+
   // Контентный тип предмета не определяет движковый сам по себе: у одной
   // категории книги встречаются и blessing, и summon, и binding.
   it("контентный тип ритуала (ritualType) движковый не подставляет", () => {
@@ -635,6 +663,167 @@ describe("проведение ритуала (castRitual)", () => {
     expect(res.success).toBe(false);
     expect(captured.chat[0].content).toContain("Что Посеешь");
     expect(captured.rolls.length).toBe(1);
+  });
+
+  // wdbc-1rno: Инфернальный Оруженосец/Рыцарь Бога — «простым N-минутным
+  // ритуалом, НЕ требующим тестов». item.system.noTest снимает бросок целиком.
+  describe("ритуал без теста (item.system.noTest)", () => {
+    it("не бросает кубы — всегда автоуспех", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+      const res = await castRitual(baseR({ type: "summon" }), actor(), { item });
+
+      expect(res).toEqual({ success: true, deg: 1, threshold: null, roll: null });
+      expect(captured.rolls).toEqual([]);
+      expect(captured.chat[0].content).toContain("не требует теста");
+    });
+
+    it("зовёт spawnDemonFn с asMinion, если R.asMinion — демон привязывается Миньоном без слота", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+      const calls = [];
+      const spawnDemonFn = async (name, ritualistUuid, opts) => calls.push({ name, ritualistUuid, opts });
+      const a = actor(); a.uuid = "Actor.act-1";
+
+      await castRitual(baseR({ type: "summon", demonName: "Кровопускатель", asMinion: true }), a, { item, spawnDemonFn });
+
+      expect(calls).toEqual([{ name: "Кровопускатель", ritualistUuid: "Actor.act-1", opts: { asMinion: true } }]);
+      expect(captured.chat[0].content).toContain("Привязан Миньоном без слота");
+    });
+
+    it("без demonName — ничего не спавнит, но всё равно автоуспех", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+      const calls = [];
+      const spawnDemonFn = async (...args) => calls.push(args);
+
+      const res = await castRitual(baseR({ type: "summon" }), actor(), { item, spawnDemonFn });
+
+      expect(res.success).toBe(true);
+      expect(calls).toEqual([]);
+    });
+
+    it("требования не выполнены и отклонены подтверждением — даже без теста ритуал не проводится", async () => {
+      const item = { id: "r1", system: { noTest: true }, getFlag: (_s, k) => (k === "req"
+        ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "reqRace", raceKey: "drukhari" }] }]
+        : undefined) };
+      const confirmUnmet = async () => false;
+
+      const res = await castRitual(baseR({ type: "summon" }), actor(), { item, confirmUnmet });
+
+      expect(res).toBeNull();
+      expect(captured.chat).toEqual([]);
+    });
+
+    it("noTest без указания item — идёт обычным путём с броском (нечего проверять)", async () => {
+      captured.dice = [1];
+      const res = await castRitual(baseR({ gmMod: 50, type: "summon" }), actor());
+
+      expect(res.roll).toBe(1);
+      expect(captured.rolls.length).toBe(1);
+    });
+
+    // wdbc-1rno, шаг E: «автоматически побеждает во всех тестах Владычества
+    // против него [своего Оруженосца]» — это НЕ свойство предмета-noTest
+    // (обычный ритуал Владычества против своей же цели), поэтому тесты без
+    // item вовсе, только с isOwnArmigerFn.
+    describe("автопобеда во Владычестве против своего Оруженосца (isOwnArmigerFn)", () => {
+      it("своя цель — не бросает, автоуспех, без предмета вовсе", async () => {
+        const isOwnArmigerFn = () => true;
+        const res = await castRitual(baseR({ type: "dominion", demonName: "Кровопускатель" }), actor(), { isOwnArmigerFn });
+
+        expect(res).toEqual({ success: true, deg: 1, threshold: null, roll: null });
+        expect(captured.rolls).toEqual([]);
+        expect(captured.chat[0].content).toContain("не требует теста");
+        expect(captured.chat[0].content).toContain("Кровопускатель");
+      });
+
+      it("чужая цель (isOwnArmigerFn:false) — обычный бросок, как раньше", async () => {
+        captured.dice = [1];
+        const isOwnArmigerFn = () => false;
+        const res = await castRitual(baseR({ gmMod: 50, type: "dominion", demonName: "Чужой демон" }), actor(), { isOwnArmigerFn });
+
+        expect(res.roll).toBe(1);
+        expect(captured.rolls.length).toBe(1);
+      });
+
+      it("тип не dominion — isOwnArmigerFn не спрашивается вовсе", async () => {
+        let called = false;
+        const isOwnArmigerFn = () => { called = true; return true; };
+        captured.dice = [1];
+
+        await castRitual(baseR({ gmMod: 50, type: "summon" }), actor(), { isOwnArmigerFn });
+        expect(called).toBe(false);
+      });
+
+      it("требования не выполнены и отклонены — автопобеда всё равно не спасает от гейта", async () => {
+        const item = { id: "r1", getFlag: (_s, k) => (k === "req"
+          ? [{ id: "g", operator: "AND", entries: [{ id: "e", kind: "reqRace", raceKey: "drukhari" }] }]
+          : undefined) };
+        const confirmUnmet = async () => false;
+        const isOwnArmigerFn = () => true;
+
+        const res = await castRitual(baseR({ type: "dominion", demonName: "Кровопускатель" }), actor(),
+          { item, confirmUnmet, isOwnArmigerFn });
+
+        expect(res).toBeNull();
+        expect(captured.chat).toEqual([]);
+      });
+    });
+
+    // wdbc-1rno, шаг D: тот же ритуал, второй книжный исход — демон вселяется
+    // в оружие Ритуалиста, а не встаёт Миньоном (Инфернальный Оруженосец —
+    // «может тем же ритуалом призвать его в своё оружие»).
+    describe("asWeapon — тот же ритуал вселяет демона в оружие, а не в Миньона", () => {
+      const actorWithWeapon = (weapon) => {
+        const a = actor(); a.uuid = "Actor.act-1";
+        a.items = new Map(weapon ? [["w1", weapon]] : []); // как настоящая EmbeddedCollection — Map, .get() + итерируема
+        return a;
+      };
+
+      it("зовёт bindWeaponFn с uuid выбранного оружия, не зовёт spawnDemonFn", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const weapon = { id: "w1", name: "Цепной Клинок", uuid: "Item.w1" };
+        const spawnCalls = [], bindCalls = [];
+        const spawnDemonFn = async (...args) => spawnCalls.push(args);
+        const bindWeaponFn = async (...args) => { bindCalls.push(args); return { ok: true }; };
+
+        const res = await castRitual(
+          baseR({ type: "summon", demonName: "Кровопускатель", demonGod: "khorne", asWeapon: true, weaponId: "w1" }),
+          actorWithWeapon(weapon), { item, spawnDemonFn, bindWeaponFn });
+
+        expect(res.success).toBe(true);
+        expect(spawnCalls).toEqual([]);
+        expect(bindCalls).toEqual([["Item.w1", "Кровопускатель", "khorne"]]);
+        expect(captured.chat[0].content).toContain("Оруженосец вселён в оружие");
+        expect(captured.chat[0].content).toContain("Цепной Клинок");
+        expect(captured.chat[0].content).not.toContain("токен размещён");
+        expect(captured.chat[0].content).not.toContain("Привязан Миньоном");
+      });
+
+      it("оружие не выбрано (weaponId не указывает на предмет актора) — ритуал всё равно проведён, демон никуда не вселён", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const bindCalls = [];
+        const bindWeaponFn = async (...args) => bindCalls.push(args);
+
+        const res = await castRitual(
+          baseR({ type: "summon", demonName: "Кровопускатель", asWeapon: true }),
+          actorWithWeapon(null), { item, bindWeaponFn });
+
+        expect(res.success).toBe(true);
+        expect(bindCalls).toEqual([]);
+        expect(captured.chat[0].content).toContain("не выбрано");
+      });
+
+      it("bindWeaponFn сообщает об отказе (уже демоническое) — причина видна в карточке", async () => {
+        const item = { id: "r1", system: { noTest: true }, getFlag: () => undefined };
+        const weapon = { id: "w1", name: "Цепной Клинок", uuid: "Item.w1" };
+        const bindWeaponFn = async () => ({ ok: false, reason: "Это оружие уже демоническое." });
+
+        await castRitual(
+          baseR({ type: "summon", demonName: "Кровопускатель", asWeapon: true, weaponId: "w1" }),
+          actorWithWeapon(weapon), { item, bindWeaponFn });
+
+        expect(captured.chat[0].content).toContain("уже демоническое");
+      });
+    });
   });
 });
 

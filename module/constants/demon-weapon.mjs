@@ -72,6 +72,23 @@ export const DEMON_WEAPON_TABLES = {
   ]
 };
 
+// Прибавить плоский бонус к строке урона: "1d10+4" → +N к хвостовому «+K»,
+// иначе допишет. Общая для GM-крафта (Осквернение) и автопривязки без броска
+// (Инфернальный Оруженосец, module/apps/armiger-weapon.mjs) — оба дают одно
+// и то же «+W.b демона к Dmg» из DEMON_WEAPON_COMMON.
+export function addFlatDamage(dmg, n) {
+  const s = String(dmg || "").trim();
+  if (!n) return s;
+  const m = s.match(/^(.*?)([+-]\s*\d+)\s*$/);
+  if (m) {
+    const base = m[1].trim();
+    const cur = parseInt(m[2].replace(/\s+/g, ""), 10) || 0;
+    const nv = cur + n;
+    return nv === 0 ? base : `${base}${nv > 0 ? "+" : ""}${nv}`;
+  }
+  return s ? `${s}+${n}` : `+${n}`;
+}
+
 // Общие свойства демон-оружия (авто при осквернении).
 export const DEMON_WEAPON_COMMON = [
   "+W.b демона к Dmg и Pen оружия.",
