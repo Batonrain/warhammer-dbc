@@ -1877,6 +1877,12 @@ function _attachFateContextMenu(message, html) {
       // задан), и по одному worldTime срок в бою не истекал вовсе (wdbc-6dk).
       if (combatant.actor)
         await processEyeOfChallengeDeadline(combatant.actor, { worldTime: game.time.worldTime, combat });
+      // Дестабилизация формы демона (wdbc-1rno, Рыцарь Бога) — по той же
+      // причине: при Завесе ниже единицы книжный срок задан в РАУНДАХ, а
+      // Раунд worldTime не двигает. dt здесь ноль — время и правда не шло,
+      // сдвигать «паузой верхом» нечего.
+      if (combatant.actor)
+        await processDestabilizeTick(combatant.actor, game.time.worldTime, 0, combat);
     }
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
@@ -1894,7 +1900,7 @@ function _attachFateContextMenu(message, html) {
       // Дестабилизация формы демона (wdbc-1rno, Рыцарь Бога): нужен именно
       // dt хука (не пересчитанный самим worldTime) — пока Хозяин верхом,
       // срок сдвигается на РОВНО прошедшее время, а не сбрасывается заново.
-      await processDestabilizeTick(actor, game.time.worldTime, dt);
+      await processDestabilizeTick(actor, game.time.worldTime, dt, game.combat ?? null);
       // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
       // по той же причине, что временные выдачи Черт выше: они привязаны к
       // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно

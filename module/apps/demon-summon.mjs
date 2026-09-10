@@ -132,7 +132,11 @@ export async function spawnDemonOnScene(name, ritualistUuid = "", { asMinion = f
     const rollTotal = roll.total + 2 * wb - infB;
     const veil = veilTotal(readVeilForScene(scene));
     const duration = destabilizeDurationSeconds(rollTotal, veil, { minRoll: 2 });
-    await startDestabilizeCountdown(actor, game.time?.worldTime ?? 0, duration);
+    // combat/veilTotal — для второго, РАУНДНОГО срока: при Завесе ниже
+    // единицы книга меряет дестабилизацию Раундами, а они worldTime не
+    // двигают (см. startDestabilizeCountdown).
+    await startDestabilizeCountdown(actor, game.time?.worldTime ?? 0, duration,
+                                    { veilTotal: veil, combat: game.combat ?? null });
   }
 
   let x = scene.dimensions?.width ? scene.dimensions.width / 2 : 1000;

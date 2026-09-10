@@ -16,6 +16,8 @@
 // ════════════════════════════════════════════════════════════════════════
 
 import { esc } from "../helpers/utils.mjs";
+import { destabilizeRungSeconds } from "../rules/demon-destabilize.mjs";
+import { SECONDS_PER_ROUND } from "../rules/condition-duration.mjs";
 
 export const DESTABILIZE_FLAG = "destabilize";
 
@@ -37,12 +39,30 @@ export function isRiddenByMaster(demonActor) {
  * «Неограниченно» (Завеса истончена до предела) — флаг снимается/не ставится,
  * тикать нечему.
  */
-export async function startDestabilizeCountdown(actor, worldTime, durationSeconds) {
+export async function startDestabilizeCountdown(actor, worldTime, durationSeconds,
+                                                { veilTotal = 0, combat = null } = {}) {
   if (durationSeconds == null) {
     if (actor?.getFlag?.("warhammer-dbc", DESTABILIZE_FLAG)) await actor.unsetFlag("warhammer-dbc", DESTABILIZE_FLAG);
     return;
   }
-  await actor.setFlag("warhammer-dbc", DESTABILIZE_FLAG, { deadlineAt: Number(worldTime) + Number(durationSeconds) });
+  // Записываются ОБА срока — тот же приём и та же причина, что у Ока Вызова
+  // (combat/eye-of-challenge.mjs, wdbc-6dk): при Завесе ниже единицы книжный
+  // срок меряется РАУНДАМИ, а боевые Раунды в этой системе игровое время не
+  // двигают (CONFIG.time.roundTime не задан, worldTime меняют только виджет
+  // «Летоисчисление» и авто-течение). По одному worldTime срок в бою не
+  // истекал бы вовсе, а карточка «демон должен быть изгнан» прилетала бы ГМу
+  // потом — когда он после боя перематывает время на отдых, по бою, которого
+  // уже нет. На ступенях Минуты и выше второго срока нет и не нужно: те
+  // единицы worldTime и правда двигают.
+  const roundsRung = destabilizeRungSeconds(veilTotal) === SECONDS_PER_ROUND;
+  const round = Number(combat?.round);
+  await actor.setFlag("warhammer-dbc", DESTABILIZE_FLAG, {
+    deadlineAt: Number(worldTime) + Number(durationSeconds),
+    combatId: roundsRung && combat?.id ? combat.id : null,
+    deadlineRound: roundsRung && Number.isFinite(round)
+      ? round + Math.ceil(Number(durationSeconds) / SECONDS_PER_ROUND)
+      : null
+  });
 }
 
 /**
@@ -51,14 +71,25 @@ export async function startDestabilizeCountdown(actor, worldTime, durationSecond
  * если время вышло, — ГМу персональная карточка с кнопкой удаления (само
  * удаление не автоматическое, см. заголовок файла).
  */
-export async function processDestabilizeTick(actor, worldTime, dt) {
+export async function processDestabilizeTick(actor, worldTime, dt, combat = null) {
   const info = actor?.getFlag?.("warhammer-dbc", DESTABILIZE_FLAG);
   if (!info) return;
   if (isRiddenByMaster(actor)) {
-    await actor.setFlag("warhammer-dbc", DESTABILIZE_FLAG, { deadlineAt: Number(info.deadlineAt) + (Number(dt) || 0) });
+    // Сдвигается только срок по времени: Раунды при езде верхом и так не
+    // идут для этого демона — Хозяин в седле, а не в бою против него.
+    await actor.setFlag("warhammer-dbc", DESTABILIZE_FLAG, {
+      ...info, deadlineAt: Number(info.deadlineAt) + (Number(dt) || 0)
+    });
     return;
   }
-  if (Number(worldTime) < Number(info.deadlineAt)) return;
+  // Истёк, если прошло игровое время ИЛИ в ТОМ ЖЕ бою настал Раунд срока: в
+  // бою время стоит, а вне боя Раундов нет, поэтому нужны оба — по отдельности
+  // каждый молчит ровно там, где считает второй (см. startDestabilizeCountdown).
+  const round = Number(combat?.round);
+  const byRound = info.combatId && combat?.id === info.combatId
+                  && Number.isFinite(round) && Number.isFinite(Number(info.deadlineRound))
+                  && round >= Number(info.deadlineRound);
+  if (!byRound && Number(worldTime) < Number(info.deadlineAt)) return;
   await actor.unsetFlag("warhammer-dbc", DESTABILIZE_FLAG);
   await ChatMessage.create({
     whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
