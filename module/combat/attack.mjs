@@ -35,6 +35,7 @@ import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { attackEntropyRating } from "./touch-of-entropy.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
+import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
 import { triggerAttackAnimation }                     from "../integrations/autoanimations.mjs";
 import { assassinStrikeAvailable }                    from "./assassin-strike.mjs";
 import { evasionImperativeBonus, hasEvasionRecoilImperative } from "./imperative-bonuses.mjs";
@@ -444,7 +445,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // рукопашной всегда "melee" (база живёт в opts.baseKey из диалога) —
   // прежний гейт rofMode==="charge" не срабатывал никогда.
   const chargeBonus = (isMelee && opts.baseKey === "charge") ? brutalChargeDamageBonus(actor) : 0;
-  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg;
+  // Кровавое Пламя (wdbc-1rno): +2 Dmg за каждого убитого этим оружием с
+  // начала усиления, до +8 — читается заново на каждый бросок с самого
+  // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
+  const bloodFlameBonus = bloodFlameDamageBonus(item);
+  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
   const dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee

@@ -172,6 +172,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-hit-location="${d.loc}"
     data-vehicle-side="${vehicleSide}"
     data-weapon-name="${weaponName}"
+    data-weapon-uuid="${itemUuid}"
     data-attacker="${actorName}"
     data-attacker-uuid="${attackerUuid}"
     data-felling="${wp.fellingRating ?? 0}"

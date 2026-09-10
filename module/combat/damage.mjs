@@ -371,6 +371,7 @@ export async function applyDamageToActor(actor, damageData) {
     attackerName,    // строка
     attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf)
     weaponName,      // строка
+    weaponUuid = "", // Кровавое Пламя (wdbc-1rno): «убил этим оружием» — deathButtonHtml ниже
     felling = 0,     // Разящее (X): −X к Сверхъест. Стойкости цели
     primitive = false, // Примитивное: броня цели ×2 (макс +6)
     ignoreShield = false, // Омывание (Flush) / Варп-Оружие: игнор щита
@@ -677,7 +678,7 @@ export async function applyDamageToActor(actor, damageData) {
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
       ${critPillsHtml(critPills, actor.uuid)}
-      ${critEffect ? deathButtonHtml(critEffect, actor.uuid) : ""}
+      ${critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""}
     </div>` : "";
 
   // Пометка — щит не сработал (для информации в сообщении)

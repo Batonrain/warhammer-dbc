@@ -569,7 +569,11 @@ export function buildGetData(actor) {
       jammed:       !melee && !!s.jammed,
       canClearJam:  !melee && !!s.jammed && canClearJam(i),
       // Перезарядка (wdbc-ai0o): тот же гейт кнопки «Атака», что у jammed выше.
-      needsRecharge: !melee && !!s.needsRecharge
+      needsRecharge: !melee && !!s.needsRecharge,
+      // Уничтожено (wdbc-1rno, Кровавое Пламя — «бесполезно, пока не будет
+      // починено»): тот же гейт кнопки «Атака», книга не делает исключения
+      // по классу оружия, в отличие от jammed (только дальнобойное).
+      destroyed:    !!s.destroyed
     };
   };
 

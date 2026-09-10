@@ -291,6 +291,15 @@ describe("храповик: capability-заглушки в Мутациях/Да
     // Владычестве, вселение в оружие/скакуна и «Завеса тоньше» — остаются
     // честными пробелами до следующих шагов серии (D/E/F). 49 → 45. Порог
     // подтянут до фактического счёта.
-    expect(stubOnly.length).toBeLessThanOrEqual(45);
+    // 09.09.2026 продолжение: Blood Flame/Кровавое Пламя (Кхорн) — полностью
+    // смоделирована, вне Конструктора (тот же приём, что у Hand of Death):
+    // module/apps/blood-flame.mjs (выбор оружия, самоурон, Power Field/
+    // Flame), module/rules/blood-flame.mjs (бонус урона за убитых, читает
+    // module/combat/attack.mjs), module/combat/blood-flame.mjs (убийство
+    // засчитывается через новую кнопку «Констатировать смерть» —
+    // weaponUuid протянут через боевой конвейер до deathButtonHtml; конец
+    // боя ломает оружие, в отличие от Reformation Song). reader у
+    // gift.khorne.bloodFlame больше не пуст → выпадает из stub-only. 45 → 44.
+    expect(stubOnly.length).toBeLessThanOrEqual(44);
   });
 });
