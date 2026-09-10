@@ -74,7 +74,7 @@
 }
 .wh-surgeon .wh-surg-side-btn.is-on { background: var(--imp-col); border-color: var(--imp-col); color: #04140d; box-shadow: 0 0 5px -1px var(--imp-col); }
 .wh-surgeon .wh-surg-remove {
-  width: 17px; height: 17px; padding: 0; line-height: 1; flex: 0 0 auto;
+  width: 17px; height: 17px; min-height: 0; padding: 0; line-height: 1; flex: 0 0 auto;
   background: rgba(255,90,90,0.1); border: 1px solid rgba(255,90,90,0.4); border-radius: 2px;
   color: #ff8a8a; cursor: pointer;
 }
