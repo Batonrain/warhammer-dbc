@@ -55,7 +55,8 @@
         "label": "Симбиотическая регенерация",
         "note": "восстановление за 1 час без штрафов"
       }
-    ]
+    ],
+    "availability": 3
   },
   "folder": "etJvVu2vXLYA2Du4",
   "_id": "SP51ApxHOpm9brtK",

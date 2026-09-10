@@ -55,7 +55,8 @@
         "label": "Био-манипуляторы",
         "note": "T.b конечностей до 25 кг, перезарядка/щиты, не атакуют"
       }
-    ]
+    ],
+    "availability": 4
   },
   "folder": "MVwzimCMiFagXpH6",
   "_id": "fJySTJQehzGQFlFg",

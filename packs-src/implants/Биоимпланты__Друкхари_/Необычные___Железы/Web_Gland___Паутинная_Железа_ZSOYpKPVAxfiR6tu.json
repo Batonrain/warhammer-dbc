@@ -55,7 +55,8 @@
         "label": "Регенерация запаса",
         "note": "полностью за 1 час"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "ZSOYpKPVAxfiR6tu",

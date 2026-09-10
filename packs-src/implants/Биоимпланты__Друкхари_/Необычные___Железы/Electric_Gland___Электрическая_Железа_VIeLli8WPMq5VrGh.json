@@ -55,7 +55,8 @@
         "label": "Ускоренная перезарядка",
         "note": "раз в 10 мин"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "VIeLli8WPMq5VrGh",

@@ -55,7 +55,8 @@
         "label": "Железная кровь",
         "note": "+20 T против кровотечения/ядов, раны закрываются коркой"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "06m81ssqPAMY7ukj",

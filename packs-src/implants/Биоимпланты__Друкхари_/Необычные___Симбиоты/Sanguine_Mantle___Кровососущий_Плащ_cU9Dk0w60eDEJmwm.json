@@ -55,7 +55,8 @@
         "label": "Вампирическая связь",
         "note": "исцеление союзнику в 10 м"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "r3L1E0FleRYKkFs0",
   "_id": "cU9Dk0w60eDEJmwm",

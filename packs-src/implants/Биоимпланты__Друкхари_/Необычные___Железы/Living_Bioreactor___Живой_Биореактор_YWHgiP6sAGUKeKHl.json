@@ -55,7 +55,8 @@
         "label": "Горючий выхлоп",
         "note": "1/день облако 15 м, 1d10+T.b E(Fl), Flame(1d5+T.b), Spray"
       }
-    ]
+    ],
+    "availability": 3
   },
   "folder": "hF2KKmwrKnsur7c8",
   "_id": "YWHgiP6sAGUKeKHl",

@@ -51,7 +51,8 @@
         "label": "Камуфляжные пластины",
         "note": "+20 Stealth неподвижно, +10 в медленном движении"
       }
-    ]
+    ],
+    "availability": 2
   },
   "folder": "X0eiwlLb3y8mbEqM",
   "_id": "OXO63RVohaYRONSW",
