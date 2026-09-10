@@ -63,6 +63,7 @@ import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
+import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
 import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
@@ -304,6 +305,25 @@ export function registerHooks() {
         const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
         if (!actor) return;
         await _performSprayCancel(actor);
+      });
+    });
+
+    // Дестабилизация формы демона (wdbc-1rno) — кнопка на карточке, видной
+    // только ГМу (module/combat/demon-destabilize.mjs::processDestabilizeTick),
+    // подтверждение перед необратимым удалением актора.
+    html.querySelectorAll(".wh-destabilize-delete-btn").forEach(btn => {
+      btn.addEventListener("click", async ev => {
+        ev.preventDefault();
+        if (!game.user.isGM) return;
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor) { ui.notifications?.warn("Актор уже удалён или не найден."); return; }
+        const ok = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Изгнать демона в Варп" },
+          content: `<p>Удалить актора <b>${esc(actor.name)}</b>? Действие необратимо.</p>`,
+          yes: { label: "Удалить" }, no: { label: "Отмена" }
+        });
+        if (ok) await actor.delete();
       });
     });
 
@@ -1793,7 +1813,7 @@ function _attachFateContextMenu(message, html) {
         await processEyeOfChallengeDeadline(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
   });
-  Hooks.on("updateWorldTime", async () => {
+  Hooks.on("updateWorldTime", async (worldTime, dt) => {
     if (!game.user.isGM) return;
     for (const actor of game.actors ?? []) {
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
@@ -1805,6 +1825,10 @@ function _attachFateContextMenu(message, html) {
       // тест Cor+10 или 1 Порчи, если насыщений было меньше 4 — та же
       // worldTime-плоскость, что и temp-grant выше, просто месячный масштаб.
       await processWarpEaterMonthCheck(actor, game.time.worldTime);
+      // Дестабилизация формы демона (wdbc-1rno, Рыцарь Бога): нужен именно
+      // dt хука (не пересчитанный самим worldTime) — пока Хозяин верхом,
+      // срок сдвигается на РОВНО прошедшее время, а не сбрасывается заново.
+      await processDestabilizeTick(actor, game.time.worldTime, dt);
       // Сроки Состояний в минутах/часах/сутках (wdbc-uqco) — тем же тактом и
       // по той же причине, что временные выдачи Черт выше: они привязаны к
       // worldTime, а не к Раунду, и вне боя Раундов не бывает вовсе. Именно
