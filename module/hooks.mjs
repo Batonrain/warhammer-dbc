@@ -1228,8 +1228,19 @@ async function _applyShipHullDamage(dmg) {
 
 // ── Применение эффекта свойства оружия (Оглушающее, Ослепляющее и т.п.) ──────
 async function _applyWeaponPropEffect(ds) {
-  const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
-  if (!actor) return;
+  // forceActorUuid (wdbc-z5mn) — цель уже известна на 100% (Встречная атака:
+  // Shocking у Электродуги бьёт по нападающему, не по выбранному на сцене
+  // токену) — тот же приём, что data-force-target у кнопки урона выше:
+  // резолвим актора по uuid, не требуя от игрока целиться заново.
+  let actor;
+  if (ds.wpForceActorUuid) {
+    const doc = await fromUuid(ds.wpForceActorUuid).catch(() => null);
+    actor = doc?.actor ?? doc ?? null;
+    if (!actor) return ui.notifications.warn("⚠️ Цель эффекта не найдена (возможно, удалена).");
+  } else {
+    actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
+    if (!actor) return;
+  }
   const label     = ds.wpLabel    || "Эффект";
   const propKey   = ds.wpKey      || "";
   const kind      = ds.wpKind      || "";

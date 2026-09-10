@@ -2216,6 +2216,14 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.ccTearing = !!ev.currentTarget.checked; saveMech(arr); }
     });
+    // Шокирующее (ccShocking, wdbc-z5mn) — независимая галочка, тот же приём,
+    // что ccTearing выше: тест T+0/Оглушение по known-атакующему, module/
+    // combat/counter-attack.mjs.
+    on(".mech-cc-shocking", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.ccShocking = !!ev.currentTarget.checked; saveMech(arr); }
+    });
     on(".mech-cc-on-miss", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -2684,6 +2692,29 @@ export class WarhammerItemSheet
       if (!e) return;
       e.when = e.when || { negate: false, conditions: [] };
       e.when.negateQuality = !!ev.currentTarget.checked;
+      saveMech(arr);
+    });
+    // ── «Когда выбранный эффект Best.Q» (entry.when.chosenEffect/
+    // negateChosenEffect, wdbc-jo51) — десятый независимый гейт. Список
+    // подписей своего же предмета (system.bestQualityEffects), ключ берётся
+    // из data-chosen-label — тот же приём, что у субмутации выше.
+    on(".grant-when-chosen", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      const chosen = new Set(e.when.chosenEffect || []);
+      const label = ev.currentTarget.dataset.chosenLabel;
+      if (ev.currentTarget.checked) chosen.add(label); else chosen.delete(label);
+      e.when.chosenEffect = [...chosen];
+      saveMech(arr);
+    });
+    on(".grant-when-chosen-negate", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      e.when = e.when || { negate: false, conditions: [] };
+      e.when.negateChosenEffect = !!ev.currentTarget.checked;
       saveMech(arr);
     });
     // ── ТРЕБОВАНИЯ (Ритуал: к ритуалисту «req» и к ассистентам «assistReq») ──

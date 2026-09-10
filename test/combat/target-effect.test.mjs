@@ -169,6 +169,22 @@ describe("Challenge — Вызван (challenged) сразу на попадан
   });
 });
 
+describe("forceActor (wdbc-z5mn): цель эффекта уже известна (Встречная атака) — не выбор токена на сцене", () => {
+  it("без forceActor — атрибут явно пустой, подсказка зовёт выбрать токен", () => {
+    const html = buildTargetEffectButtons(props([{ key: "shocking" }]), { hit: true });
+    expect(html).toContain('data-wp-force-actor-uuid=""');
+    expect(html).toContain("выберите токен цели");
+  });
+
+  it("с forceActor — атрибут несёт uuid, подсказка называет актора по имени", () => {
+    const actor = { uuid: "Actor.forced1", name: "Нападающий" };
+    const html = buildTargetEffectButtons(props([{ key: "shocking" }]), { hit: true, forceActor: actor });
+    expect(html).toContain('data-wp-force-actor-uuid="Actor.forced1"');
+    expect(html).toContain("→ Нападающий");
+    expect(html).not.toContain("выберите токен цели");
+  });
+});
+
 describe("Corrosive/Crippling/Piercing/Haywire (wdbc-plsf) — больше не идут через эту кнопку", () => {
   // Раньше это были targetEffect.kind → текстовая заметка (roll-wprop-note).
   // Теперь применяются напрямую в combat/damage.mjs (applyDamageToActor), и
