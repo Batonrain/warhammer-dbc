@@ -38,6 +38,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
@@ -580,6 +581,20 @@ export function prepareCharacterDerived(actor, system) {
       system.deadMight.max = (chars.wp?.bonus ?? 0) * 3;
       if ((system.deadMight.value ?? 0) > system.deadMight.max)
         system.deadMight.value = system.deadMight.max;
+    }
+
+    // Руны Сигиллитов (wdbc-fsl9): 20 базово + за каждое взятие «Библиотеки
+    // Рун» (до 3) «+I.b и ещё +1 за ступень Forbidden Lore (Archeotech)» —
+    // формула, а не число, поэтому считается здесь, а не записью Конструктора
+    // (kind:"poolMax" знает закрытый список из двух целей). Тот же приём, что
+    // у «Бездонной Души» ниже: максимум растёт от ПОДСЧЁТА взятий Таланта.
+    //
+    // У актора без Черты «Магия Сигиллитов» runeMax отдаёт 0 — пул остаётся
+    // нулевым и на листе не значит ничего.
+    if (system.sigilliteRunes) {
+      system.sigilliteRunes.max = runeMax(actor);
+      if ((system.sigilliteRunes.value ?? 0) > system.sigilliteRunes.max)
+        system.sigilliteRunes.value = system.sigilliteRunes.max;
     }
 
     // ── Очки Боли (Друкхари) ───────────────────────────────────────────────

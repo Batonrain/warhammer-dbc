@@ -666,9 +666,22 @@ export const CAPABILITIES = {
   // ── Элитные Архетипы, заведённые в Фазе 1 — Сигиллиты (руны) и Шаман
   //    Зверолюдей (ритуалы Боли/Богов). Обе — полностью новые подсистемы,
   //    реализация масштаба отдельной сессии, не капалка.
+  //
+  //    Сигиллиты (wdbc-fsl9, 10.09.2026): экономика Рун РЕАЛЬНО заведена —
+  //    пул system.sigilliteRunes, максимум/начисление/цена/списание. Три
+  //    Таланта из шести подключены числами (Библиотека, Вычислитель, Рунный
+  //    Удар); Заготовленная Руна, Импровизированная Руна и Прометеев Огонь
+  //    остаются документацией — первому нужен выбор руны на бой, двум другим
+  //    нужен сам список изученных Рун, которого в системе ещё нет.
+  //
+  //    ВАЖНО: самих предметов (Элитный Архетип, Черта, шесть Талантов) в
+  //    packs-src на 10.09.2026 НЕТ ни одного — заведение контента описано
+  //    отдельной задачей. Пока Черты нет, ни одна из этих возможностей никому
+  //    не выдана, и вся ветка на столе молчит.
   "psychicPath.sigillites.runeMagic": {
     label: "Уникальный Путь Силы «Руны Сигиллитов» — своя экономика рун вместо обычных Психофокусов",
-    source: "Sigillite Magic / Магия Сигиллитов", reader: ""
+    source: "Sigillite Magic / Магия Сигиллитов",
+    reader: "module/rules/sigillite-runes.mjs (пул, максимум, цена), module/rules/sigillite-runes-combat.mjs (начисление по тактам боя, хуки в module/hooks.mjs), module/sheets/tabs/psychic.mjs (Путь PSY_PATHS.sigillite: виден только носителю, только Безопасный/Обычный режим, Феномен лишь на 99, Психофокус, списание Рун). НЕ смоделировано: −30 обнаружению манифестации и доп. −30 при варп-прорыве (теста обнаружения в системе нет), одновременное использование механик Инкантации/Медитации/Нечестивых Символов, доступ к Тауматургии, сам список изученных Рун и их покупка за 50 опыта."
   },
   "rune.sigillites.improvised": {
     label: "Может создавать любые руны ценой R Dmg в руку + урона S/A/W",
@@ -684,15 +697,18 @@ export const CAPABILITIES = {
   },
   "rune.sigillites.library": {
     label: "Лимит рун +I.b + бонус от Forbidden Lore (Archeotech), до 3 взятий",
-    source: "Rune Library / Библиотека Рун", reader: ""
+    source: "Rune Library / Библиотека Рун",
+    reader: "module/rules/sigillite-runes.mjs::runeMax — считается ПОДСЧЁТОМ взятий Таланта по имени (как «Бездонная Душа»), применяется в module/rules/character.mjs. Записью Конструктора kind:\"poolMax\" не выражается: у той закрытый список из двух целей, и формула «I.b + ступени навыка» ей не по зубам."
   },
   "rune.sigillites.calculator": {
     label: "Первый ход в бою даёт +I.b рун, до 3 взятий",
-    source: "Rune Calculator / Вычислитель Рун", reader: ""
+    source: "Rune Calculator / Вычислитель Рун",
+    reader: "module/rules/sigillite-runes-combat.mjs::processSigilliteRunesTurnStart — «раз за бой» через общий примитив rules/cooldown.mjs (unit \"battle\")."
   },
   "rune.sigillites.strike": {
     label: "Манифестация психосилы может тратить 4 руны за +1 эPR, повторно",
-    source: "Rune Strike / Рунный Удар", reader: ""
+    source: "Rune Strike / Рунный Удар",
+    reader: "module/sheets/tabs/psychic.mjs::showManifestDialog (выбор числа шагов) и ::executePsychotest (+эPR, цена, возврат I.b при провале); зажим по остатку Рун — module/rules/sigillite-runes.mjs::runeStrikeMax."
   },
 
   // ── Шаман Зверолюдей (wdbc-xxb7, DoomBC — Психокеры-Жабы, стр. 102-104) —
