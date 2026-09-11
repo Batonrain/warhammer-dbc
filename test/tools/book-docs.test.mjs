@@ -2,7 +2,8 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { bookDocuments, linkIndexFrom, readPackDocs, stableId } from "../../tools/book-docs.mjs";
+import { bookDocuments, bookDocIds, linkIndexFrom, readPackDocs, stableId } from "../../tools/book-docs.mjs";
+import { docsMissingInDb } from "../../tools/pack-drift.mjs";
 
 // Подставные паки-библиотеки: два предмета, актор и папка. Папка в индекс
 // попадать не должна — ссылка на неё не ведёт никуда.
@@ -127,5 +128,87 @@ describe("bookDocuments", () => {
 
   it("повторная сборка даёт те же идентификаторы", () => {
     expect(docs()[0]._id).toBe(docs()[0]._id);
+  });
+});
+
+// Сторож обратного рассинхрона для книг (wdbc-aje, тот же принцип, что и у
+// библиотек в tools/pack-drift.mjs): unpack строит книгу ЦЕЛИКОМ из того, что
+// нашлось в базе, поэтому глава или раздел, дописанные в исходник, но ещё не
+// собранные (npm run packs:build не гоняли), должны попасть в docsMissingInDb
+// раньше, чем unpack перезапишет исходник составом базы.
+describe("bookDocIds + docsMissingInDb: что пропало бы при извлечении книги", () => {
+  const book = { slug: "core", pack: "book-core" };
+  const oldSource = {
+    file: "DoomBC_Core.pdf",
+    title: "Основная книга",
+    entries: [
+      {
+        name: "II. МЕХАНИКА", pdfPage: 40,
+        pages: [
+          { name: "Тесты", pdfPage: 42, html: "<p>Второй.</p>" },
+          { name: "Движение", pdfPage: 41, html: "<p>Первый.</p>" }
+        ]
+      },
+      // Глава дописана в исходник, но npm run packs:build ещё не гоняли —
+      // в базе (dbDocs ниже) её нет вовсе.
+      {
+        name: "III. НОВАЯ ГЛАВА", pdfPage: 80,
+        pages: [{ name: "Раздел", pdfPage: 80, html: "<p>Новое.</p>" }]
+      }
+    ]
+  };
+
+  // То, что реально нашлось бы в LevelDB: только первая глава — как раз
+  // сборкой bookDocuments из СТАРОГО (без третьей главы) исходника.
+  const dbDocs = () => bookDocuments(book, { ...oldSource, entries: oldSource.entries.slice(0, 1) }, new Map());
+
+  it("id складываются из глав и разделов, по одному ключу на каждый", () => {
+    const ids = bookDocIds(book, oldSource);
+    // 2 главы + 3 раздела (2 + 1)
+    expect(ids.size).toBe(5);
+    expect([...ids.values()]).toContain("III. НОВАЯ ГЛАВА");
+    expect([...ids.values()]).toContain("III. НОВАЯ ГЛАВА → Раздел");
+  });
+
+  it("новая, ещё не собранная глава — пропала бы: docsMissingInDb её ловит", () => {
+    const oldIds = bookDocIds(book, oldSource);
+    const dbIds = bookDocIds(book, { ...oldSource, entries: oldSource.entries.slice(0, 1) });
+    const lost = docsMissingInDb(oldIds.keys(), dbIds.keys());
+    // Глава III и её единственный раздел — оба id новой главы.
+    expect(lost).toHaveLength(2);
+    const lostNames = lost.map(id => oldIds.get(id));
+    expect(lostNames).toContain("III. НОВАЯ ГЛАВА");
+    expect(lostNames).toContain("III. НОВАЯ ГЛАВА → Раздел");
+  });
+
+  it("новый раздел в СУЩЕСТВУЮЩЕЙ главе тоже ловится — не только целые главы", () => {
+    const withExtraPage = {
+      ...oldSource,
+      entries: [
+        {
+          ...oldSource.entries[0],
+          pages: [...oldSource.entries[0].pages, { name: "Добавленный раздел", pdfPage: 43, html: "<p>Третий.</p>" }]
+        }
+      ]
+    };
+    const oldIds = bookDocIds(book, withExtraPage);
+    const dbIds = bookDocIds(book, { ...oldSource, entries: [oldSource.entries[0]] });
+    const lost = docsMissingInDb(oldIds.keys(), dbIds.keys());
+    expect(lost.map(id => oldIds.get(id))).toEqual(["II. МЕХАНИКА → Добавленный раздел"]);
+  });
+
+  it("база полнее исходника (правки собраны) — терять нечего", () => {
+    const oldIds = bookDocIds(book, { ...oldSource, entries: oldSource.entries.slice(0, 1) });
+    const dbIds = bookDocIds(book, oldSource);
+    expect(docsMissingInDb(oldIds.keys(), dbIds.keys())).toEqual([]);
+  });
+
+  it("составы совпадают целиком — не сработал бы вовсе", () => {
+    const ids = bookDocIds(book, oldSource);
+    expect(docsMissingInDb(ids.keys(), ids.keys())).toEqual([]);
+  });
+
+  it("dbDocs() действительно не содержит третью главу — фикстура согласована сама с собой", () => {
+    expect(dbDocs().map(d => d.name)).toEqual(["II. МЕХАНИКА"]);
   });
 });
