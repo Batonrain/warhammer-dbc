@@ -51,6 +51,18 @@ export function actorFor({ items = [], ...system } = {}) {
         return !linked || (t.document ?? t).actorLink === true;
       });
       return document ? tokens.map(t => t.document ?? t) : tokens;
+    },
+    // wdbc-8zi (п.8): processPrismaTurnStart батчит правки нескольких
+    // предметов одним updateEmbeddedDocuments — заглушке нужен тот же метод,
+    // что настоящий Actor#updateEmbeddedDocuments("Item", [{_id, ...}]).
+    async updateEmbeddedDocuments(type, updates) {
+      if (type !== "Item") return updates;
+      for (const { _id, ...data } of updates) {
+        const item = list.get(_id);
+        if (!item) continue;
+        for (const [path, value] of Object.entries(data)) setPath(item, path, value);
+      }
+      return updates;
     }
   };
 }

@@ -402,18 +402,28 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
     ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
-    if (ammoSpent > 0 && !opts.skipAmmo) {
-      const curMag = sys.magazineCur || 0;
-      const newMag = Math.max(0, curMag - ammoSpent);
-      await item.update({ "system.magazineCur": newMag });
-      // Призма сбрасывается наполовину (окр. вниз) после ЛЮБОГО выстрела —
-      // тем же условием, что реальный расход патронов (не переброс/Судьба).
-      if (!opts.skipAmmo) await halvePrismaCharge(item, wp);
-      if (newMag === 0) {
-        ammoWarning = `<div class="roll-allout-note">Магазин пуст! Требуется перезарядка.</div>`;
-      } else if (newMag <= Math.ceil((sys.magazineMax || 1) * 0.25)) {
-        ammoWarning = `<div class="roll-ammo-low">Патроны на исходе: ${newMag}/${sys.magazineMax}</div>`;
+    if (!opts.skipAmmo) {
+      if (ammoSpent > 0) {
+        const curMag = sys.magazineCur || 0;
+        const newMag = Math.max(0, curMag - ammoSpent);
+        await item.update({ "system.magazineCur": newMag });
+        if (newMag === 0) {
+          ammoWarning = `<div class="roll-allout-note">Магазин пуст! Требуется перезарядка.</div>`;
+        } else if (newMag <= Math.ceil((sys.magazineMax || 1) * 0.25)) {
+          ammoWarning = `<div class="roll-ammo-low">Патроны на исходе: ${newMag}/${sys.magazineMax}</div>`;
+        }
       }
+      // Призма сбрасывается наполовину (окр. вниз) после ЛЮБОГО выстрела —
+      // wdbc-8zi (п.5): раньше висело внутри `ammoSpent > 0` — концептуально
+      // неверная связка (сброс должен зависеть от «это не переброс/Очко
+      // Судьбы», а не от того, потратился ли патрон), хотя на СЕГОДНЯШНЕМ
+      // составе свойств она и не давала наблюдаемого расхождения:
+      // prisma.extraAmmo = заряд×рейтинг уже входит в ammoSpent, так что при
+      // заряде>0 (единственный случай, где halvePrismaCharge вообще что-то
+      // меняет) ammoSpent и без него положителен. Разъезд стал бы реальным
+      // при любом будущем свойстве/режиме, зануляющем ammoMult или базовый
+      // расход, — на всякое такое незачем городить отдельный частный случай.
+      await halvePrismaCharge(item, wp);
     }
   }
 

@@ -25,7 +25,9 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 // Порог = Operate мехвода + swerveMod (−Размер×10, −10 для гусеничной) + extraMod.
 // При Успехе попадание становится промахом — как обычное Уклонение (стр. книги
 // про машины: «аналогично как с пешим Уклонением»), без сравнения степеней.
-export async function _performSwerve(actor, extraMod = 0, hitsCount = 1, attackerUuid = "") {
+// wdbc-8zi (п.6): объект опций — тот же приём, что у _performDodge/_performParry
+// (module/combat/defense.mjs), тем же именам полей.
+export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "" } = {}) {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }

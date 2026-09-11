@@ -1,6 +1,6 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
-import { performPoolSpend }              from "./combat/evasion-pool.mjs";
+import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
@@ -279,9 +279,7 @@ export function registerHooks() {
           const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid);
           if (handled !== null) return;
         }
-        await _performDodge(actor, extraMod,
-          ds.forceReroll || "", hitsCount, attackerUuid,
-          ds.melee === "1", burst, attackerIsHorde);
+        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde });
       });
     });
 
@@ -426,8 +424,7 @@ export function registerHooks() {
         // момент отрисовки карточки защищающийся ещё не выбран.
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
-        await _performParry(actor, extraMod,
-          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, ds.attackerWeaponUuid || "");
+        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "" });
       });
     });
 
@@ -488,7 +485,7 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performSwerve(actor, extraMod, hitsCount, attackerUuid);
+        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid });
       });
     });
 
@@ -1892,6 +1889,10 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+    // Пул неизрасходованных Успехов Избегания (wdbc-8zi) — валиден только
+    // «в течение Хода этого же боя», но флаг на защищающемся до этого не
+    // чистился и рос вечно — та же логика «до конца боя».
+    await clearEvasionPools(combat);
     // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
     // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
     await clearReformationSongBuffs(combat);

@@ -7,8 +7,19 @@
 // присутствие бандла из пяти доп. свойств.
 
 import { describe, it, expect } from "vitest";
-import { hasWitchsEdge, witchsEdgeExtraEntries, withWitchsEdge } from "../../module/combat/witchs-edge.mjs";
+import { hasWitchsEdge, witchsEdgeExtraEntries, withWitchsEdge, promptWitchsEdgeChoice } from "../../module/combat/witchs-edge.mjs";
 import { weaponFor } from "../support/combat-fixtures.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
+
+function flaggedItem(initial) {
+  const store = initial ? { "warhammer-dbc.witchsEdgeChoice": initial } : {};
+  return {
+    name: "Клинок",
+    getFlag: (scope, key) => store[`${scope}.${key}`],
+    setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; },
+    unsetFlag: async (scope, key) => { delete store[`${scope}.${key}`]; }
+  };
+}
 
 function withChoice(item, choice) {
   item.getFlag = (scope, key) => (scope === "warhammer-dbc" && key === "witchsEdgeChoice") ? choice : undefined;
@@ -46,6 +57,31 @@ describe("witchsEdgeExtraEntries", () => {
     const w = withChoice(weaponFor({ weaponProps: [{ key: "witchsEdge", rating: 0, rating2: 0 }] }), "bundle");
     const keys = witchsEdgeExtraEntries(w).map(e => e.key);
     expect(keys).toEqual(["force", "duelingWeapon", "reinforced", "powerField", "precise", "mighty"]);
+  });
+});
+
+describe("promptWitchsEdgeChoice: закрытие без выбора не оставляет стейл-флаг (wdbc-8zi)", () => {
+  it("close без выбора (крестик/Escape) сбрасывает выбор прошлого Encounter-а", async () => {
+    resetCaptured();
+    const item = flaggedItem("bundle"); // стейл выбор с прошлого боя
+    const promise = promptWitchsEdgeChoice({ name: "Герой" }, item);
+
+    await captured.dialog.close();
+
+    expect(await promise).toBeNull();
+    expect(item.getFlag("warhammer-dbc", "witchsEdgeChoice")).toBeUndefined();
+  });
+
+  it("выбор кнопкой сохраняется — Foundry всегда зовёт close() и после submit(), это не должно его стирать", async () => {
+    resetCaptured();
+    const item = flaggedItem();
+    const promise = promptWitchsEdgeChoice({ name: "Герой" }, item);
+
+    await captured.dialog.buttons.bundle.callback();
+    await captured.dialog.close(); // как настоящий Dialog.submit() (appv1/api/dialog-v1.mjs)
+
+    expect(await promise).toBe("bundle");
+    expect(item.getFlag("warhammer-dbc", "witchsEdgeChoice")).toBe("bundle");
   });
 });
 
