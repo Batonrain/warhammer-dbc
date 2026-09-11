@@ -93,6 +93,42 @@ export const CAPABILITIES = {
     source: "Дар Кхорн (Purity of Wrath)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
   },
+  // ── Полный иммунитет к урону по свойству/категории атаки (wdbc-1rno) ────
+  // В отличие от восьми weaponPropertyImmunity.* выше (гасят только ПОБОЧНЫЙ
+  // эффект попадания — горит/травится/оглушается/теряет AP, сам урон всё
+  // равно проходит), эти пять гасят урон целиком: combat/damage.mjs
+  // возвращается из applyDamageToActor до расчёта поглощения, попадание не
+  // причиняет ничего. Единственный источник на 11.09.2026 — Strange
+  // Invulnerability/Странная Неуязвимость (Общие мутации), 4 из 12
+  // субмутаций. weaponPropertyImmunity.blast/.spray переиспользуют namespace
+  // и генерик-ридер восьми старых ключей (это те же свойства оружия из
+  // module/constants/weapon-properties.mjs), но подключены к НОВОМУ гейту
+  // полного урона — держать в голове разницу семантики при чтении label.
+  "weaponPropertyImmunity.blast": {
+    label: "Полный иммунитет к урону от попаданий со свойством Blast (не только эффект)",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 2 «Око Бури»",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor, ранний return по damageData.blast"
+  },
+  "weaponPropertyImmunity.spray": {
+    label: "Полный иммунитет к урону от попаданий со свойством Spray (не только эффект)",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 2 «Око Бури»",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor, ранний return по damageData.spray"
+  },
+  "damageImmunity.meleeImpact": {
+    label: "Полный иммунитет к урону от рукопашного оружия, наносящего I (Ударный) Dmg",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 3 «Упругий» (книга: «тупого рукопашного оружия» — в системе тупое/дробящее оружие всегда несёт damageType impact)",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по melee && damageType===\"impact\""
+  },
+  "damageImmunity.meleeRending": {
+    label: "Полный иммунитет к урону от рукопашного оружия, наносящего R (Режущий) Dmg",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 5 «Текучая Плоть» (книга: «клинкового рукопашного оружия» — клинки в системе несут damageType rending)",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по melee && damageType===\"rending\""
+  },
+  "damageImmunity.rangedImpact": {
+    label: "Полный иммунитет к урону от стрелкового оружия, наносящего I (Ударный) Dmg",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 4 «Пуленепробиваемый»",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по !melee && damageType===\"impact\""
+  },
   // ── Модификации брони против Варп-Оружия (wdbc-sg57) ────────────────────
   "armor.apVsWarpFull": {
     label: "AP брони этой локации целиком (не игнорируется) против Варп-Оружия",
@@ -666,9 +702,22 @@ export const CAPABILITIES = {
   // ── Элитные Архетипы, заведённые в Фазе 1 — Сигиллиты (руны) и Шаман
   //    Зверолюдей (ритуалы Боли/Богов). Обе — полностью новые подсистемы,
   //    реализация масштаба отдельной сессии, не капалка.
+  //
+  //    Сигиллиты (wdbc-fsl9, 10.09.2026): экономика Рун РЕАЛЬНО заведена —
+  //    пул system.sigilliteRunes, максимум/начисление/цена/списание. Три
+  //    Таланта из шести подключены числами (Библиотека, Вычислитель, Рунный
+  //    Удар); Заготовленная Руна, Импровизированная Руна и Прометеев Огонь
+  //    остаются документацией — первому нужен выбор руны на бой, двум другим
+  //    нужен сам список изученных Рун, которого в системе ещё нет.
+  //
+  //    ВАЖНО: самих предметов (Элитный Архетип, Черта, шесть Талантов) в
+  //    packs-src на 10.09.2026 НЕТ ни одного — заведение контента описано
+  //    отдельной задачей. Пока Черты нет, ни одна из этих возможностей никому
+  //    не выдана, и вся ветка на столе молчит.
   "psychicPath.sigillites.runeMagic": {
     label: "Уникальный Путь Силы «Руны Сигиллитов» — своя экономика рун вместо обычных Психофокусов",
-    source: "Sigillite Magic / Магия Сигиллитов", reader: ""
+    source: "Sigillite Magic / Магия Сигиллитов",
+    reader: "module/rules/sigillite-runes.mjs (пул, максимум, цена), module/rules/sigillite-runes-combat.mjs (начисление по тактам боя, хуки в module/hooks.mjs), module/sheets/tabs/psychic.mjs (Путь PSY_PATHS.sigillite: виден только носителю, только Безопасный/Обычный режим, Феномен лишь на 99, Психофокус, списание Рун). НЕ смоделировано: −30 обнаружению манифестации и доп. −30 при варп-прорыве (теста обнаружения в системе нет), одновременное использование механик Инкантации/Медитации/Нечестивых Символов, доступ к Тауматургии, сам список изученных Рун и их покупка за 50 опыта."
   },
   "rune.sigillites.improvised": {
     label: "Может создавать любые руны ценой R Dmg в руку + урона S/A/W",
@@ -684,15 +733,18 @@ export const CAPABILITIES = {
   },
   "rune.sigillites.library": {
     label: "Лимит рун +I.b + бонус от Forbidden Lore (Archeotech), до 3 взятий",
-    source: "Rune Library / Библиотека Рун", reader: ""
+    source: "Rune Library / Библиотека Рун",
+    reader: "module/rules/sigillite-runes.mjs::runeMax — считается ПОДСЧЁТОМ взятий Таланта по имени (как «Бездонная Душа»), применяется в module/rules/character.mjs. Записью Конструктора kind:\"poolMax\" не выражается: у той закрытый список из двух целей, и формула «I.b + ступени навыка» ей не по зубам."
   },
   "rune.sigillites.calculator": {
     label: "Первый ход в бою даёт +I.b рун, до 3 взятий",
-    source: "Rune Calculator / Вычислитель Рун", reader: ""
+    source: "Rune Calculator / Вычислитель Рун",
+    reader: "module/rules/sigillite-runes-combat.mjs::processSigilliteRunesTurnStart — «раз за бой» через общий примитив rules/cooldown.mjs (unit \"battle\")."
   },
   "rune.sigillites.strike": {
     label: "Манифестация психосилы может тратить 4 руны за +1 эPR, повторно",
-    source: "Rune Strike / Рунный Удар", reader: ""
+    source: "Rune Strike / Рунный Удар",
+    reader: "module/sheets/tabs/psychic.mjs::showManifestDialog (выбор числа шагов) и ::executePsychotest (+эPR, цена, возврат I.b при провале); зажим по остатку Рун — module/rules/sigillite-runes.mjs::runeStrikeMax."
   },
 
   // ── Шаман Зверолюдей (wdbc-xxb7, DoomBC — Психокеры-Жабы, стр. 102-104) —

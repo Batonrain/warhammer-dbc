@@ -1,0 +1,57 @@
+{
+  "name": "Annihilator Grand Cruiser / Гранд-крейсер типа «Аннигилятор»",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "IHC1qrw10vbxBx6h",
+  "system": {
+    "hullClass": "Гранд-крейсеры",
+    "sp": 76,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Орудие «Аннигилятор» (НП), 2/14",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "inbuild"
+      }
+    ],
+    "hull": {
+      "spaceMax": 86,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "2НП",
+      "hullIntegrity": 87
+    },
+    "chars": {
+      "speed": 5,
+      "manoeuvrability": 8,
+      "detection": 8,
+      "voidShields": 0,
+      "armour": 22,
+      "turretRating": 2
+    }
+  },
+  "_id": "LQ69pjbFNrqjVpYh",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789081044058,
+    "modifiedTime": 1789081044058,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!LQ69pjbFNrqjVpYh"
+}

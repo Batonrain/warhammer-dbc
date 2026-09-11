@@ -988,8 +988,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "gearEquippedVersion") || 0) >= VERSION) return;
   try {
-    await migrateGearEquipped();
-    await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
+    const result = await migrateGearEquipped();
+    // wdbc-dyi: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
+    else console.warn("Warhammer DBC | Надетое снаряжение: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Надетое снаряжение:", e); }
 });
 

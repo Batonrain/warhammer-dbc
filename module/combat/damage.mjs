@@ -392,7 +392,9 @@ export async function applyDamageToActor(actor, damageData) {
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
     haywireRating = 0,   // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
     throughShot = false, // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
-    ignoreArmour = false // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
+    ignoreArmour = false, // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
+    blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
+    spray = false // Распыление: свойство присутствует (wdbc-1rno)
   } = damageData;
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
@@ -411,6 +413,18 @@ export async function applyDamageToActor(actor, damageData) {
   // локаций (rules/character.mjs::sealedFullSuit). Проверяется раньше щита
   // не нужно — если щит уже заблокировал попадание, сюда не дойдём вовсе.
   if (damageType === "chemical" && system.sealedFullSuit) return;
+
+  // Странная Неуязвимость (wdbc-1rno) — четыре субмутации дают ПОЛНЫЙ
+  // иммунитет к урону по категории атаки, не к побочному эффекту (в отличие
+  // от восьми weaponPropertyImmunity.* выше по файлу): «Око Бури» игнорирует
+  // попадания Blast/Spray целиком, «Упругий»/«Текучая Плоть»/«Пуленепробиваемый»
+  // игнорируют попадания рукопашного/стрелкового оружия по damageType
+  // (тупое = impact, клинковое = rending — книга не разбивает точнее).
+  if ((blast > 0 && hasWeaponPropertyImmunity(actor, "blast"))
+    || (spray && hasWeaponPropertyImmunity(actor, "spray"))) return;
+  if (melee && damageType === "impact" && hasRuleFlag(actor, "damageImmunity.meleeImpact")) return;
+  if (melee && damageType === "rending" && hasRuleFlag(actor, "damageImmunity.meleeRending")) return;
+  if (!melee && damageType === "impact" && hasRuleFlag(actor, "damageImmunity.rangedImpact")) return;
 
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";

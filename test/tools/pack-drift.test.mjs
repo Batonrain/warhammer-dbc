@@ -10,7 +10,7 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { docsMissingInDb, docIdsIn } from "../../tools/pack-drift.mjs";
+import { docsMissingInDb, docIdsIn, shouldStopOnDrift } from "../../tools/pack-drift.mjs";
 
 describe("docsMissingInDb: что пропало бы при извлечении", () => {
   it("документ есть в исходниках и нет в базе — он и пропал бы", () => {
@@ -68,5 +68,29 @@ describe("docIdsIn: состав каталога исходника", () => {
 
   it("несуществующий каталог — пусто, а не падение", () => {
     expect(docIdsIn(path.join(tmp, "нет-такого")).size).toBe(0);
+  });
+});
+
+describe("shouldStopOnDrift: своё согласие, отдельное от --force (wdbc-aje)", () => {
+  it("что-то пропало бы и --force-drift не дан — стоп", () => {
+    expect(shouldStopOnDrift(1, false)).toBe(true);
+  });
+
+  it("что-то пропало бы, --force-drift дан — можно перезаписывать", () => {
+    expect(shouldStopOnDrift(1, true)).toBe(false);
+  });
+
+  it("терять нечего — не важно, дан ли --force-drift", () => {
+    expect(shouldStopOnDrift(0, false)).toBe(false);
+    expect(shouldStopOnDrift(0, true)).toBe(false);
+  });
+
+  // Сигнатура намеренно не принимает --force (согласие сторожа
+  // незакоммиченных правок): у него другой смысл — «снеси мою мелкую
+  // правку», а не «сотри чужой закоммиченный контент, которого нет в базе».
+  // До разделения оба сторожа читали один и тот же --force, и согласие на
+  // первое молча давало согласие и на второе.
+  it("нечем передать сюда --force по ошибке — в сигнатуре его просто нет", () => {
+    expect(shouldStopOnDrift.length).toBe(2);
   });
 });

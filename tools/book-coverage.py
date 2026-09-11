@@ -16,36 +16,29 @@ from html import unescape
 from collections import Counter
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# Единственный источник оригиналов (решение владельца, 09.09.2026) — sources/
-# в корне репозитория, не публикуется (.gitignore). Раньше пути были
-# разбросаны по внешним папкам (D:\tRPG\Warhammer\Самоделки, ~/Downloads) —
-# владелец сводит все актуальные версии сюда, старые внешние копии больше
-# не источник истины, даже если ещё лежат на диске. Формат по умолчанию —
-# .md (markdown-экспорт Google Docs, «Формат → Markdown»): надёжнее .pdf
-# (см. находку 09.09.2026, wdbc-xsxy — текстовый поиск по PDF дал
-# ложноотрицательный результат из-за устаревшего снимка документа), таблицы
-# со статблоками проверены глазами — .md передаёт их не хуже HTML/ZIP.
-# .pdf остаётся для трёх книг, которые владелец не редактирует (Core/
-# Chaos/Machines) — раз не меняются, разница форматов не имеет значения.
-SOURCES_DIR = os.path.join(ROOT, "sources")
+# 10.09.2026, прямое указание владельца: источником истины всегда считать то,
+# что лежит в репозитории (sources/), а не личные внешние копии — те могут
+# отсутствовать на конкретной машине (см. wdbc-qptj, "ИСХОДНИК НЕ НАЙДЕН") или
+# быть более старой/другой ревизией документа (см. wdbc-hfa1/wdbc-sgw0).
+SRC = os.path.join(ROOT, "sources")
 
 SOURCES = {
-    "aeldari-branches": (SOURCES_DIR, "Книга Аэльдари_ Ответвления.md"),
-    "aeldari":          (SOURCES_DIR, "Книга Аэльдари.md"),
-    "battles":          (SOURCES_DIR, "Книга Битв.md"),
-    "chaos":            (SOURCES_DIR, "DoomBC_S_Chaos.pdf"),
-    "core":             (SOURCES_DIR, "DoomBC_Core .pdf"),
-    "daemonic-shells":  (SOURCES_DIR, "Книга Демонических Оболочек.md"),
-    "diseases":         (SOURCES_DIR, "Книга Болезней.md"),
-    "divinations-book": (SOURCES_DIR, "Предсказания.md"),
-    "eldar-vehicles":   (SOURCES_DIR, "Книга Эльдар_ Техника.md"),
-    "machines":         (SOURCES_DIR, "DoomBC_Machines.pdf"),
-    "necrons":          (SOURCES_DIR, "Книга Некронов.md"),
-    "origins-book":     (SOURCES_DIR, "Родные миры.md"),
-    "power-armour":     (SOURCES_DIR, "Силовая броня_ без шлема и особенности.md"),
-    "toad-psykers":     (SOURCES_DIR, "Книга Псайкеров.md"),
-    "tyranids":         (SOURCES_DIR, "Книга Тиранидов.md"),
-    "void":             (SOURCES_DIR, "Книга Пустоты.md"),
+    "aeldari-branches": (SRC, "Книга Аэльдари_ Ответвления.md"),
+    "aeldari":          (SRC, "Книга Аэльдари.md"),
+    "battles":          (SRC, "Книга Битв.md"),
+    "chaos":            (SRC, "DoomBC_S_Chaos.pdf"),
+    "core":             (SRC, "DoomBC_Core .pdf"),
+    "daemonic-shells":  (SRC, "Книга Демонических Оболочек.md"),
+    "diseases":         (SRC, "Книга Болезней.md"),
+    "divinations-book": (SRC, "Предсказания.md"),
+    "eldar-vehicles":   (SRC, "Книга Эльдар_ Техника.md"),
+    "machines":         (SRC, "DoomBC_Machines.pdf"),
+    "necrons":          (SRC, "Книга Некронов.md"),
+    "origins-book":     (SRC, "Родные миры.md"),
+    "power-armour":     (SRC, "Силовая броня_ без шлема и особенности.md"),
+    "toad-psykers":     (SRC, "Книга Псайкеров.md"),
+    "tyranids":         (SRC, "Книга Тиранидов.md"),
+    "void":             (SRC, "Книга Пустоты.md"),
 }
 
 CORPUS = []

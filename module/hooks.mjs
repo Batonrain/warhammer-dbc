@@ -16,6 +16,7 @@ import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
+import { performWalkerParry, performWalkerDodge, standUpFromTipOver } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
@@ -74,6 +75,8 @@ import { processConditionTurnStart, processConditionTurnEnd } from "./combat/con
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
+import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart }
+  from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
@@ -486,6 +489,41 @@ export function registerHooks() {
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         await _performSwerve(actor, extraMod, hitsCount, attackerUuid);
+      });
+    });
+
+    // Парирование и Уклонение ШАГОХОДА (wdbc-6wzt, п.5 книжного правила
+    // Ходовой): в отличие от Виража считает не машина, а пилот — но выбирается
+    // на сцене всё равно токен МАШИНЫ, она и защищается. Кто именно бросает,
+    // находит combat/walker.mjs по местам экипажа. dataset снимается ДО await
+    // по той же причине, что у Уклонения выше.
+    html.querySelectorAll(".wh-walker-parry-btn, .wh-walker-dodge-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const isParry = el.classList.contains("wh-walker-parry-btn");
+        const ds = { ...el.dataset };
+        const actor = requireControlledActor("⚠️ Выберите токен Шагохода на сцене!");
+        if (!actor) return;
+        const opts = {
+          extraMod: parseInt(ds.extraMod || "0"),
+          hitsCount: parseInt(ds.hitsCount || "1"),
+          attackerUuid: ds.attackerUuid || ""
+        };
+        await (isParry ? performWalkerParry(actor, opts) : performWalkerDodge(actor, opts));
+      });
+    });
+
+    // «Встать» после Опрокидывания — кнопка приклеена к карточке самого
+    // Опрокидывания, поэтому машина берётся по uuid из карточки, а не с
+    // выбранного токена (тот же приём, что у Контратаки и Отскока).
+    html.querySelectorAll(".wh-walker-standup-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.vehicleUuid;
+        const vehicle = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!vehicle) return ui.notifications.warn("⚠️ Машина карточки не найдена.");
+        await standUpFromTipOver(vehicle);
       });
     });
 
@@ -1396,7 +1434,7 @@ async function _applyWeaponPropEffect(ds) {
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
     // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
-    if (conditionsToApply.some(([cond]) => ENJOYMENT_CONDITIONS.has(cond))) {
+    if (conditionsToApply.some(cond => ENJOYMENT_CONDITIONS.has(cond))) {
       await maybeGrantEnjoymentPain(actor);
     }
     // Галлюцинации (Hallucinogenic (X), стр. 168, wdbc-r5o7.8): книга требует
@@ -1989,6 +2027,11 @@ function _attachFateContextMenu(message, html) {
     // разделяемое состояние боя (тот же принцип, что и у остальных
     // updateCombat/combatStart обработчиков выше).
     if (game.user.isGM) await processLastActorCombatStart(combat);
+    // Руны Сигиллитов (wdbc-fsl9): «В начале боя персонаж стартует с бPR
+    // рун» — установка пула, не прибавка. Пишет разделяемое состояние, значит
+    // только ГМ, как и соседи по этому хуку. У актора без Черты «Магия
+    // Сигиллитов» функция молча выходит.
+    if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -2058,6 +2101,10 @@ function _attachFateContextMenu(message, html) {
       await processConditionTurnStart(nextCombatant.actor);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
+      // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
+      // тактом, что и регенерация Аблативных Ран выше.
+      await processSigilliteRunesTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.

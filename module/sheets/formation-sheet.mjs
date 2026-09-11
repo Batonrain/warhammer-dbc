@@ -193,6 +193,28 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
     });
   }
 
+  /**
+   * Итоговый Порог приказа: база + Истощение + ручной модификатор +
+   * автоматические модификаторы реестра (wdbc-6ys). Единая точка для
+   * превью в диалоге (`_executeOrder`) и для реального броска
+   * (`_resolveOrder`) — раньше диалог складывал base+pen+mod сам, не зная
+   * про ruleMods.total из `_formationTestMods`, и показывал игроку не то
+   * число, против которого шёл бросок.
+   */
+  _orderThreshold(o, base, pen, mod) {
+    const ruleMods = this._formationTestMods(o?.test);
+    return { total: base + pen + mod + ruleMods.total, ruleMods };
+  }
+
+  /**
+   * Итоговый Порог ключевого события: та же логика, что у `_orderThreshold`
+   * (wdbc-6ys), но без Истощения — у ключевых событий его нет.
+   */
+  _keyEventThreshold(e, base, mod) {
+    const ruleMods = this._formationTestMods(e?.test);
+    return { total: base + mod + ruleMods.total, ruleMods };
+  }
+
   _commanderData() {
     const raw = this.actor.system.posts?.commander || {};
     const doc = this._resolve(raw.uuid);
@@ -565,7 +587,7 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
             const form = button.form;
             const base = parseInt(form.querySelector("#fm-base").value) || 0;
             const mod  = parseInt(form.querySelector("#fm-mod").value) || 0;
-            await this._resolveOrder(key, base + pen + mod);
+            await this._resolveOrder(key, this._orderThreshold(o, base, pen, mod).total);
           }
         },
         { action: "cancel", label: "Отмена" }
@@ -577,7 +599,7 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
         const upd = () => {
           const base = parseInt(baseIn.value) || 0;
           const mod  = parseInt(modIn.value) || 0;
-          form.querySelector("#fm-total").textContent = base + pen + mod;
+          form.querySelector("#fm-total").textContent = this._orderThreshold(o, base, pen, mod).total;
         };
         form.querySelector("#fm-variant").addEventListener("change", ev => {
           baseIn.value = ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0; upd();
@@ -589,11 +611,13 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
   }
 
   /** Бросок приказа и применение его последствий к состоянию формирования. */
-  async _resolveOrder(key, baseThreshold) {
+  async _resolveOrder(key, threshold) {
     const o = ORDERS[key];
     const d = this.actor.system.derived || {};
+    // Порог уже включает модификаторы реестра — их сложил диалог через
+    // _orderThreshold (единая формула для превью и броска, wdbc-6ys). Здесь
+    // ruleMods нужен только за подписями (Черты, Усталость) для карточки.
     const ruleMods = this._formationTestMods(o?.test);
-    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
     const deg = Math.abs(degreesOfSuccess(rv, threshold));
@@ -1019,6 +1043,7 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
       <div class="atk-dlg-row"><label>Тест:</label><select id="fm-variant">${opts}</select></div>
       <div class="atk-dlg-row"><label>Порог:</label><input id="fm-base" type="number" value="${this._testValue(variants[0]).value + (variants[0].mod ?? 0)}"/></div>
       <div class="atk-dlg-row"><label>Доп. модификатор:</label><input id="fm-mod" type="number" value="0"/></div>
+      <div class="atk-dlg-row atk-total-row"><label>Итоговый порог:</label><span id="fm-total">0</span></div>
       <div class="fm-dlg-src">${cmd.filled
         ? `Тест проходит <b>${esc(cmd.name)}</b>.`
         : `Командира нет — используется Выучка войск <b>${d.skillValue ?? 0}</b>.`}</div>
@@ -1036,25 +1061,36 @@ export class WarhammerFormationSheet extends WarhammerStructuralSheet {
             const form = button.form;
             const base = parseInt(form.querySelector("#fm-base").value) || 0;
             const mod  = parseInt(form.querySelector("#fm-mod").value) || 0;
-            await this._resolveKeyEvent(key, base + mod);
+            await this._resolveKeyEvent(key, this._keyEventThreshold(e, base, mod).total);
           }
         },
         { action: "cancel", label: "Отмена" }
       ],
       render: (event, dialog) => {
-        const form = dialog.element.querySelector("form") ?? dialog.element;
+        const form   = dialog.element.querySelector("form") ?? dialog.element;
+        const baseIn = form.querySelector("#fm-base");
+        const modIn  = form.querySelector("#fm-mod");
+        const upd = () => {
+          const base = parseInt(baseIn.value) || 0;
+          const mod  = parseInt(modIn.value) || 0;
+          form.querySelector("#fm-total").textContent = this._keyEventThreshold(e, base, mod).total;
+        };
         form.querySelector("#fm-variant").addEventListener("change", ev => {
-          form.querySelector("#fm-base").value = ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0;
+          baseIn.value = ev.currentTarget.selectedOptions[0]?.dataset.target ?? 0; upd();
         });
+        [baseIn, modIn].forEach(i => i.addEventListener("input", upd));
+        upd();
       }
     });
   }
 
   /** Разрешение ключевого события с применением его эффектов к формированию. */
-  async _resolveKeyEvent(key, baseThreshold) {
+  async _resolveKeyEvent(key, threshold) {
     const e = KEY_EVENTS[key];
+    // Порог уже включает модификаторы реестра — сложены диалогом через
+    // _keyEventThreshold (единая формула для превью и броска, wdbc-6ys).
+    // ruleMods здесь нужен только за подписями (Черты, Усталость) в карточке.
     const ruleMods = this._formationTestMods(e?.test);
-    const threshold = baseThreshold + ruleMods.total;
     const roll = await new Roll("1d100").evaluate();
     const rv = roll.total, ok = rv <= threshold;
     const deg = Math.abs(degreesOfSuccess(rv, threshold));

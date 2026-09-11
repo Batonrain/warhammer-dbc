@@ -27,6 +27,9 @@ import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { autoModsTotal, autoTestMods } from "../../rules/roll-mods.mjs";
 import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
+import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
+         runeStrikeMax, runeStrikeRefund, runeUpdate,
+         RUNE_STRIKE_COST } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
 
 /**
@@ -118,8 +121,39 @@ export function showManifestDialog(actor, item) {
     ? `<div class="pm-warn">тPR = 0 (все ${psy.sustain || 0} PR уходят на поддержание) — новые психосилы манифестировать нельзя.</div>`
     : (psy.sustain ? `<div class="pm-note">тPR ${maxPR} = бPR ${psy.rating || 0} − ${psy.sustain} на поддержание.</div>` : "");
 
-  const pathOptions = Object.entries(PSY_PATHS).map(([k, p]) =>
-    `<option value="${k}"${p.req ? ` title="${esc(p.req)}"` : ""}>${p.label}${p.req ? " *" : ""}</option>`).join("");
+  // Путь с полем `flag` (Руны Сигиллитов, wdbc-fsl9) виден только тому, кому
+  // возможность реально выдана. Все прочие Пути поля не несут, поэтому у
+  // псайкера без Черты список остаётся ровно прежним.
+  const pathOptions = Object.entries(PSY_PATHS)
+    .filter(([, p]) => !p.flag || hasRuleFlag(actor, p.flag))
+    .map(([k, p]) =>
+      `<option value="${k}"${p.req ? ` title="${esc(p.req)}"` : ""}>${p.label}${p.req ? " *" : ""}</option>`).join("");
+
+  // ── Руны Сигиллитов ───────────────────────────────────────────────────────
+  // Весь блок живёт под одним гейтом: нет Черты — нет ни строки в окне, ни
+  // единого лишнего символа в разметке диалога.
+  const runeMagic  = hasRuneMagic(actor);
+  const runeBase   = runeMagic ? runeCostForPower(item) : 0;
+  const runeHave   = runeMagic ? runeValue(actor) : 0;
+  const runeCap    = runeMagic ? runeMax(actor) : 0;
+  const strikeMax  = runeMagic ? runeStrikeMax(actor, item) : 0;
+  const runeBlock  = !runeMagic ? "" : `
+        <div class="pm-row">
+          <label title="бPR психосилы × 2 (стр. 101-102)">Руны</label>
+          <div class="pm-input pm-wide" style="border:none;background:none;">
+            цена <b id="pm-rune-cost">${runeBase}</b> · есть <b>${runeHave}</b> из <b>${runeCap}</b>
+          </div>
+        </div>
+        ${strikeMax > 0 ? `
+        <div class="pm-row">
+          <label title="Талант «Рунный Удар»: 4 Руны за +1 эPR, можно повторять">Рунный Удар</label>
+          <select id="psy-rune-strike" class="pm-input">
+            ${Array.from({ length: strikeMax + 1 }, (_, i) =>
+              `<option value="${i}">${i ? `+${i} эPR (${i * RUNE_STRIKE_COST} Рун)` : "— нет —"}</option>`).join("")}
+          </select>
+        </div>` : `<input type="hidden" id="psy-rune-strike" value="0"/>`}
+        ${runeHave < runeBase
+          ? `<div class="pm-warn">Рун не хватает: нужно ${runeBase}, есть ${runeHave}.</div>` : ""}`;
 
   const profiles = sys.profiles || [];
   const variants = sys.variants || [];
@@ -135,7 +169,8 @@ export function showManifestDialog(actor, item) {
     pushPhenValue: NATx.pushPhenValue || 0
   };
   const pathData = Object.fromEntries(Object.entries(PSY_PATHS).map(([k, p]) => [k, {
-    ePR: p.ePR || 0, testMod: p.testMod || 0, phenMod: p.phenMod || 0, dyn: p.dynamicTestMod || ""
+    ePR: p.ePR || 0, testMod: p.testMod || 0, phenMod: p.phenMod || 0, dyn: p.dynamicTestMod || "",
+    runeCost: !!p.runeCost
   }]));
   const dynBonus = { t: actor.system.characteristics?.t?.bonus ?? 0,
                      wp: actor.system.characteristics?.wp?.bonus ?? 0 };
@@ -149,7 +184,8 @@ export function showManifestDialog(actor, item) {
   // есть свои (ruleRollModsHtml ниже) и приезжают отдельным числом из
   // диалога — общий сбор сложил бы их второй раз.
   const fatigue = autoModsTotal(resolveTest({ actor, kind: "power", power: item, char: cast.key }).autoMods);
-  const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue };
+  const psyMeta = { charVal, charAbbr, powerMod, natData, pathData, dynBonus, variantMods, isEldar, fatigue,
+                    runeBase };
 
   // Правила реестра. Манифестация — такой же тест конвейера, как бросок навыка
   // и атака: вид теста «power», область эффекта «power» или «power:<имя>». Сама
@@ -211,6 +247,7 @@ export function showManifestDialog(actor, item) {
           <select id="psy-path" class="pm-input pm-wide">${pathOptions}</select>
         </div>
         <div class="pm-note" style="font-size:0.78em;">* — путь требует условия (наведите курсор на пункт списка); выбор не проверяется автоматически — сверьтесь сами.</div>
+        ${runeBlock}
         ${profiles.length ? `
         <div class="pm-row">
           <label>Профиль</label>
@@ -259,12 +296,29 @@ export function showManifestDialog(actor, item) {
             ruleMod += parseInt(cb.dataset.value) || 0;
             if (cb.dataset.halve === "1") halveRulePenalty = true;
           });
+          // Руны Сигиллитов: цена считается и проверяется ДО броска — иначе
+          // манифестация состоялась бы в долг. Проверка стоит только у
+          // носителя Черты: у всех прочих `runeMagic` ложно и ветка не
+          // выполняется вовсе.
+          const path = html.find("#psy-path").val() || "";
+          const runeStrike = parseInt(html.find("#psy-rune-strike").val()) || 0;
+          if (runeMagic && PSY_PATHS[path]?.runeCost) {
+            const need = runeCostTotal(item, runeStrike);
+            const have = runeValue(actor);
+            if (have < need) {
+              ui.notifications.warn(
+                `Рун не хватает: манифестация «${item.name}» стоит ${need} ` +
+                `(бPR психосилы × 2${runeStrike ? ` + ${runeStrike * RUNE_STRIKE_COST} за Рунный Удар` : ""}), ` +
+                `а у персонажа ${have}.`);
+              return;
+            }
+          }
           await executePsychotest(actor, item, {
-            ruleMod, halveRulePenalty,
+            ruleMod, halveRulePenalty, runeStrike,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
             mode:     html.find("#psy-mode").val()             || "normal",
-            path:     html.find("#psy-path").val()             || "",
+            path,
             modifier: parseInt(html.find("#psy-mod").val())    || 0,
             eldar:    isEldar,
             pushChoice: parseInt(html.find("#psy-push-bonus").val()) || 1,
@@ -310,6 +364,14 @@ export function wirePsyManifestPreview(html, m) {
     }
     const pd = m.pathData[path] || { ePR: 0, testMod: 0, phenMod: 0, dyn: "" };
     ePR += pd.ePR || 0;
+    // Рунный Удар (wdbc-fsl9): +1 эPR за каждые 4 Руны, и только когда Путь
+    // действительно платит Рунами — переключился на Медитацию, и надбавка
+    // исчезает вместе с ценой. Элементов нет ни у кого, кроме Сигиллита.
+    const strike = parseInt($("#psy-rune-strike")?.value) || 0;
+    if (pd.runeCost) ePR += strike;
+    const runeCostEl = $("#pm-rune-cost");
+    if (runeCostEl)
+      runeCostEl.textContent = pd.runeCost ? String((m.runeBase || 0) + strike * RUNE_STRIKE_COST) : "—";
     const pathTest = (pd.testMod || 0) + (pd.dyn ? (m.dynBonus[pd.dyn] || 0) : 0);
     const varMod = (varIdx >= 0) ? (m.variantMods[varIdx] || 0) : 0;
     // Галочки правил считаем тем же кодом, что и сам бросок (executePsychotest),
@@ -409,6 +471,18 @@ export async function executePsychotest(actor, item, opts) {
   // ── Бонусы Пути Силы ──────────────────────────────────────────────────────
   ePR     += PATH.ePR || 0;
   phenMod += PATH.phenMod || 0;
+  // Рунный Удар (wdbc-fsl9): «потратить дополнительно четыре руны, добавив ей
+  // +1 эPR в расчёте всех эффектов». Считается только на Пути, который Рунами
+  // и платит: иначе эPR рос бы бесплатно.
+  //
+  // Зажим по `runeStrikeMax` здесь, а не только в окне манифестации: окно —
+  // не единственный вход (HUD, макрос, старая точка вызова), и запрет,
+  // живущий только в разметке, обходится молча. Максимум сам учитывает и
+  // наличие Таланта, и остаток Рун после базовой цены.
+  const runeStrike = (PATH.runeCost && hasRuneMagic(actor))
+    ? Math.min(Math.max(0, Math.trunc(Number(opts.runeStrike) || 0)), runeStrikeMax(actor, item))
+    : 0;
+  ePR += runeStrike;
   const pathLabel = PATH.label || "";
   // Динамический бонус Пути от характеристики (Телесная Конверсия: +T.b)
   const pathDynMod = PATH.dynamicTestMod
@@ -505,6 +579,27 @@ export async function executePsychotest(actor, item, opts) {
   // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
   if (PATH.woundCost) {
     Object.assign(actorUpdates, woundLossUpdates(actor.system, PATH.woundCost));
+  }
+
+  // ── Цена в Рунах (wdbc-fsl9) ──────────────────────────────────────────────
+  // Списывается ПОСЛЕ броска, потому что размер возврата зависит от исхода:
+  // Rune Strike при провале возвращает I.b Рун (но не больше, чем на него же
+  // и потрачено — вернуть больше, чем заплатил, книга не обещает). Достаток
+  // Рун проверен ещё до открытия броска (showManifestDialog), здесь остаётся
+  // только запись. Ветка целиком под гейтом Черты.
+  let runeLine = "";
+  if (PATH.runeCost && hasRuneMagic(actor)) {
+    const cost   = runeCostTotal(item, runeStrike);
+    const refund = (!success && runeStrike > 0)
+      ? Math.min(runeStrikeRefund(actor), runeStrike * RUNE_STRIKE_COST) : 0;
+    const before = runeValue(actor);
+    const patch  = runeUpdate(actor, refund - cost);
+    if (patch) Object.assign(actorUpdates, patch);
+    const after = patch ? patch["system.sigilliteRunes.value"] : before;
+    runeLine = `<div class="roll-threshold">Руны: −<b>${cost}</b> (бPR психосилы × 2`
+      + (runeStrike ? `, из них ${runeStrike * RUNE_STRIKE_COST} на Рунный Удар +${runeStrike} эPR` : "")
+      + `)${refund ? `, возврат за провал +<b>${refund}</b>` : ""}`
+      + ` → осталось <b>${after}</b> из ${runeMax(actor)}</div>`;
   }
 
   // ── Авто-урон (для атакующих сил при успехе) ──────────────────────────────
@@ -604,7 +699,13 @@ export async function executePsychotest(actor, item, opts) {
   // ── Феномен / Прорыв ──────────────────────────────────────────────────────
   let phenomena = false;
   const isDouble = (rv % 11 === 0) || rv === 100;
-  if (PATH.phenOnly66) {
+  if (PATH.phenOnly99) {
+    // Руны Сигиллитов (стр. 101-102): «вызывает феномен только при выпадении
+    // 99». Безопасный режим Феноменов не даёт и здесь — это общее правило
+    // режима, а книжная оговорка Пути его только сужает, тем же приёмом, что
+    // у Рун Судьбы/Битвы ниже.
+    phenomena = (opts.mode === "normal") && rv === 99;
+  } else if (PATH.phenOnly66) {
     // Руны Судьбы/Битвы: Феномен только на броске 66 в Обычном режиме.
     phenomena = (opts.mode === "normal") && success && rv === 66;
   } else if (opts.eldar) {
@@ -749,6 +850,7 @@ export async function executePsychotest(actor, item, opts) {
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
       PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
       runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
+      runeLine,
       focusNote,
       `<div class="roll-dice">Психотест: <b>${rv}</b></div>`
     ],

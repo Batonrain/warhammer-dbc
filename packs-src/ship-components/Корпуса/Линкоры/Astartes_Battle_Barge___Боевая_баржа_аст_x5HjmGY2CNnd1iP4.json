@@ -32,18 +32,18 @@
       },
       {
         "key": "internalDefense",
-        "rating": 25
+        "rating": 5
       }
     ],
     "hull": {
-      "spaceMax": 135,
+      "spaceMax": 139,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "Н1, ПБ3, ЛБ3, НП1",
       "hullIntegrity": 135
     },
     "chars": {
-      "speed": 4,
+      "speed": 5,
       "manoeuvrability": -5,
       "detection": 10,
       "voidShields": 0,

@@ -664,7 +664,7 @@
       "img": "systems/warhammer-dbc/assets/item-icons/talent.svg",
       "system": {
         "description": "",
-        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "notes": "МЕХАНИЗИРОВАНО (wdbc-7zzr): запись Конструктора kind:\"capability\", capabilityKey:\"combat.initiativeExtraRoll\" — module/rules/initiative.mjs::initiativeRolls прибавляет один бросок к базовому, module/documents/combatant.mjs подменяет кубик формулы на «kh1». Броски складываются: у эльдара (три броска) с этим Талантом их четыре — ровно как сказано в Книге Аэльдари.",
         "benefit": "Персонаж бросает на Инициативу 2 раза и выбирает больший результат.",
         "tier": 1,
         "requirement": "Нет",
@@ -689,7 +689,26 @@
       },
       "effects": [],
       "sort": 0,
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "migratedEffect": true,
+          "mechanics": [
+            {
+              "id": "49qgFYHdBRSY5Td5",
+              "operator": "AND",
+              "entries": [
+                {
+                  "id": "3EoiTzc3LxRlw0yn",
+                  "kind": "capability",
+                  "group": null,
+                  "capabilityKey": "combat.initiativeExtraRoll",
+                  "label": "+1 бросок Инициативы"
+                }
+              ]
+            }
+          ]
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,

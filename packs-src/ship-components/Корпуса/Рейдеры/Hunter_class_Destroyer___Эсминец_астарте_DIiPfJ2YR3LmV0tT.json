@@ -1,0 +1,62 @@
+{
+  "name": "Hunter-class Destroyer / Эсминец астартес типа «Охотник»",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "aIu3pJTuNwSeYJoY",
+  "system": {
+    "hullClass": "Рейдеры",
+    "sp": 33,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Пусковые установки десантных капсул «Шторм», 1/1",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "inbuild"
+      },
+      {
+        "key": "voidShadow",
+        "rating": 0,
+        "rating2": 20
+      }
+    ],
+    "hull": {
+      "spaceMax": 36,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "1Н, 1НП",
+      "hullIntegrity": 29
+    },
+    "chars": {
+      "speed": 11,
+      "manoeuvrability": 31,
+      "detection": 10,
+      "voidShields": 0,
+      "armour": 17,
+      "turretRating": 2
+    }
+  },
+  "_id": "DIiPfJ2YR3LmV0tT",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789081044058,
+    "modifiedTime": 1789081044058,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!DIiPfJ2YR3LmV0tT"
+}

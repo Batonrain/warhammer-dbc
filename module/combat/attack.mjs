@@ -21,6 +21,7 @@ import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
+import { isWalkerVehicle }                            from "../rules/walker.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
@@ -305,6 +306,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   //    либо по указанной части при Избирательной атаке (aimTarget.vehiclePart).
   const targetIsVehicle = [...(game.user?.targets ?? [])]
     .some(t => (t.actor ?? t.document?.actor)?.type === "vehicle");
+  // Шагоход среди целей — отдельный вопрос: только у него книга даёт машине
+  // Парирование и Уклонение (wdbc-6wzt, rules/walker.mjs::isWalkerVehicle).
+  const targetIsWalker = [...(game.user?.targets ?? [])]
+    .some(t => isWalkerVehicle(t.actor ?? t.document?.actor));
   let vehPart = null;
   if (targetIsVehicle) {
     vehPart = aimTarget?.vehiclePart || vehicleHitLocation(locRoll).label;
@@ -757,7 +762,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
         forcedDefenceReroll: opts.forcedDefenceReroll || "",
-        targetIsVehicle, note: techOpts.chatNote
+        // Шагоход (wdbc-6wzt, п.5): у него, в отличие от прочей техники, есть
+        // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
+        // на карточке, потому что считает их ПИЛОТ, а не машина.
+        targetIsVehicle, targetIsWalker, note: techOpts.chatNote
       },
       notes: {
         shelter: shelter
