@@ -55,7 +55,7 @@ export const PA_TABLES = {
         // различающей Dodge по типу боя, поэтому применяется безусловно (wdbc-sg57).
         effect: "+5 к BS. Броня медленно реагирует на неожиданное: −10 на Dodge в ближнем бою.",
         mech: [
-          { id: "pa-h2a", kind: "testMod", modScope: "char", rerollChar: "bs", modValueMode: "flat", value: 5, label: "Неизбежность гнева" },
+          { id: "pa-h2a", kind: "characteristic", charKey: "bs", field: "total", op: "add", value: 5, label: "Неизбежность гнева" },
           { id: "pa-h2b", kind: "testMod", modScope: "skill", skillKey: "dodge", modValueMode: "flat", value: -10, label: "Неизбежность гнева" }
         ] },
       { min: 3, max: 3, name: "Твоя рука да станет бичом",
@@ -63,7 +63,7 @@ export const PA_TABLES = {
         // −5 BS «если носитель в шлеме» не смоделирован: нет отслеживаемого
         // состояния «шлем надет» вне helmetOff (см. wdbc-sg57 close reason).
         effect: "+5 к WS. Системы наведения своенравны: −5 к BS, если носитель в шлеме.",
-        mech: [{ id: "pa-h3a", kind: "testMod", modScope: "char", rerollChar: "ws", modValueMode: "flat", value: 5, label: "Твоя рука да станет бичом" }] },
+        mech: [{ id: "pa-h3a", kind: "characteristic", charKey: "ws", field: "total", op: "add", value: 5, label: "Твоя рука да станет бичом" }] },
       { min: 4, max: 4, name: "Наслаждение смертью",
         desc: "Некоторые воины просто созданы убивать. Эта броня олицетворяет их суть, и бесчисленные враги научились страшиться одного её вида.",
         effect: "Атаки, нанёсшие Критический урон, наносят дополнительно +2 урона; любая успешная атака по Орде снижает её Размер ещё на −1." },
@@ -73,7 +73,7 @@ export const PA_TABLES = {
       { min: 6, max: 6, name: "Твоя сила станет легендой",
         desc: "Этот доспех делает носителя настоящим титаном — о таких боевых братьях слагают легенды, будто они руками переворачивали танки.",
         effect: "Дополнительный +10 к S сверх обычного бонуса силовой брони.",
-        mech: [{ id: "pa-h6a", kind: "testMod", modScope: "char", rerollChar: "s", modValueMode: "flat", value: 10, label: "Твоя сила станет легендой" }] },
+        mech: [{ id: "pa-h6a", kind: "characteristic", charKey: "s", field: "total", op: "add", value: 10, label: "Твоя сила станет легендой" }] },
       { min: 7, max: 7, name: "Ужас да станет другом твоим",
         desc: "Энергетическая установка периодически издаёт звук, который путают с рычанием зверя; в бою он превращается в парализующий вой.",
         effect: "Трейт Fear (+1) против любого противника, вовлечённого с носителем в ближний бой." },
@@ -140,14 +140,17 @@ export const PA_TABLES = {
         // расчёта штрафа W от демонического присутствия нигде в системе нет
         // (тот же пробел, что у Рунических Вязей shieldOfRevulsion — wdbc-unku).
         effect: "Носитель навсегда получает +10 очков Порчи, но также получает сопротивление демоническому присутствию +10.",
-        corruption: 10,
+        // Единственный источник числа 10 — запись Конструктора ниже (pa-l1a).
+        // До wdbc-zmb рядом лежало ещё и поле corruption:10 — оно нигде не
+        // читалось (проверено по всей истории репозитория), но дублировало
+        // источник истины; убрано, чтобы будущий читатель не сложил оба.
         mech: [{ id: "pa-l1a", kind: "corruption", corruptionValue: "10", op: "add", label: "Порча Варпа" }] },
       { min: 2, max: 2, name: "Позор героя",
         desc: "Броню носил могущественный герой, однако он не выполнил свой долг: битва была проиграна, многие космодесантники погибли. Последующие владельцы так и не стали великими лидерами.",
         effect: "+5 к WS и BS, но −10 к тестам Command.",
         mech: [
-          { id: "pa-l2a", kind: "testMod", modScope: "char", rerollChar: "ws", modValueMode: "flat", value: 5, label: "Позор героя" },
-          { id: "pa-l2b", kind: "testMod", modScope: "char", rerollChar: "bs", modValueMode: "flat", value: 5, label: "Позор героя" },
+          { id: "pa-l2a", kind: "characteristic", charKey: "ws", field: "total", op: "add", value: 5, label: "Позор героя" },
+          { id: "pa-l2b", kind: "characteristic", charKey: "bs", field: "total", op: "add", value: 5, label: "Позор героя" },
           { id: "pa-l2c", kind: "testMod", modScope: "skill", skillKey: "command", modValueMode: "flat", value: -10, label: "Позор героя" }
         ] },
       { min: 3, max: 4, name: "Избранный Хаоса",
