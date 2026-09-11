@@ -107,6 +107,11 @@ export function readAttackForm(form, ammoConds) {
     mountPick:    el("#atk-mount")?.value || "",
     mountPenalty: el("#atk-aim")?.value
       ? (parseInt(el("#atk-mount option:checked")?.dataset?.penalty) || 0) : 0,
+    // Сторона брони техники и Избирательная атака в Корму (wdbc-kp1o) — сырые
+    // значения формы; итоговую сторону/штраф с учётом запрета Шагоходу в
+    // рукопашной (стр. Ходовой п.9) считает resolveVehicleSide в attack-dialog.mjs.
+    vehicleSide:       el("#atk-vehicle-side")?.value || "",
+    vehicleRearCalled: on("#atk-vehicle-rear-called"),
     aiming:     el(AIM)?.value || "none",
     aimBonus:   attr(AIM, "bonus"),
     // Отмеченные ситуативные: сумма — в порог, список — в сводку заголовка.

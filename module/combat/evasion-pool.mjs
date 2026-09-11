@@ -103,6 +103,24 @@ export function poolAffordableHits(entry, thisPenalty, hitsCount, actor = null) 
   return { hits, cost: hits * perHit, perHit };
 }
 
+/**
+ * Бой кончился — пул привязан к паре «Ход конкретного участника + атакующий»
+ * (currentTurnTag выше), но флаг переживал `deleteCombat` без чистки: до
+ * wdbc-8zi getEvasionPool всё равно не находил устаревшую запись (turnTag не
+ * совпадёт с новым боем/участником) — риска ложного зачёта не было, но флаг
+ * рос на защищающемся вечно (по записи на атакующего) и оставался виден в
+ * инспекторе флагов. Звать из module/hooks.mjs::deleteCombat, тем же приёмом,
+ * что clearAvatarOfSlaughterMarks/clearSongOfSwiftnessBuffs.
+ */
+export async function clearEvasionPools(combat) {
+  for (const combatant of combat?.combatants ?? []) {
+    const actor = combatant.actor;
+    if (actor?.getFlag?.("warhammer-dbc", FLAG_KEY)) {
+      await actor.unsetFlag("warhammer-dbc", FLAG_KEY);
+    }
+  }
+}
+
 async function spendFromPool(defender, attackerUuid, amount) {
   const tag = currentTurnTag();
   const pool = foundry.utils.deepClone(defender.getFlag("warhammer-dbc", FLAG_KEY) || {});

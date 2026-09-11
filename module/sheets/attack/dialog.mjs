@@ -90,6 +90,7 @@ export function openAttackDialog(ctx) {
     thresholdOf,
     thresholdParts,
     resolveSelectionSafe,
+    resolveVehicleSide,
     computeBaseOptions,
     computeGripOptions,
     computeManeuverOptions,
@@ -121,6 +122,10 @@ export function openAttackDialog(ctx) {
           }
 
           const sel = resolveSelectionSafe(f);
+          // Сторона брони техники (wdbc-kp1o) — считается тем же правилом,
+          // что и построчный штраф в окне (attack-dialog.mjs::resolveVehicleSide),
+          // чтобы бросок никогда не разошёлся с тем, что показал диалог.
+          const vsel = resolveVehicleSide(f);
 
           if (sel.blocked) {
             await ChatMessage.create({
@@ -289,7 +294,11 @@ export function openAttackDialog(ctx) {
                     : `Верхом: попадание в скакуна — ${mountPair.mount.name}`)
                 : (mountPair
                     ? `Верхом: не-Избирательная атака — попадание в скакуна (${mountPair.mount.name}), дубль на броске — во всадника (${mountPair.rider.name})`
-                    : "")
+                    : ""),
+              // Сторона брони техники (wdbc-kp1o): "" у не-техники (damage.mjs
+              // подставит "side" сам), иначе Лоб/Борт/Корма из окна — Избира-
+              // тельная атака в Корму (−20) уже свела её к "rear" выше.
+              vehicleSide: vsel.side
             }
           );
 
@@ -513,6 +522,27 @@ export function openAttackDialog(ctx) {
       if (offHandEl) {
         offHandEl.addEventListener("change", refreshOffRof);
         refreshOffRof();
+      }
+
+      // Сторона брони техники (wdbc-kp1o): Избирательная атака в Корму имеет
+      // смысл только «с Лба/Борта» (уже выбранную Корму не в кого целиться
+      // избирательно САМА В СЕБЯ) — при выборе Кормы галочка гасится и
+      // блокируется, а не просто перестаёт что-то давать молча. Шагоходу в
+      // рукопашной галочка уже пришла disabled из разметки (см. attack-
+      // dialog.mjs::rearCalledShotBlockedByWalker) — этот слушатель тот
+      // запрет не трогает (ранний return).
+      const vehicleSideEl = form.querySelector("#atk-vehicle-side");
+      const vehicleRearEl = form.querySelector("#atk-vehicle-rear-called");
+      const refreshVehicleRear = () => {
+        if (!vehicleSideEl || !vehicleRearEl || vehicleRearEl.dataset.lockedByWalker === "1") return;
+        const blocked = vehicleSideEl.value === "rear";
+        vehicleRearEl.disabled = blocked;
+        if (blocked) vehicleRearEl.checked = false;
+      };
+      if (vehicleSideEl && vehicleRearEl) {
+        if (vehicleRearEl.disabled) vehicleRearEl.dataset.lockedByWalker = "1";
+        vehicleSideEl.addEventListener("change", refreshVehicleRear);
+        refreshVehicleRear();
       }
 
       // Один слушатель на форму вместо списка селекторов: события всплывают,

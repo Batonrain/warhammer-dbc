@@ -733,7 +733,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
         roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Уклонение!",
           callback: async html => {
             const target = html.find("#md-target").val();
-            await resolveMountedDodge(rider, ctx, target, extraMod, hitsCount, attackerUuid);
+            await resolveMountedDodge(rider, ctx, target, { extraMod, hitsCount, attackerUuid });
             resolve(true);
           } },
         cancel: { label: "Отмена", callback: () => resolve(false) }
@@ -743,7 +743,9 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
   });
 }
 
-async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, attackerUuid = "") {
+// wdbc-8zi (п.6): объект опций для extraMod/hitsCount/attackerUuid — тот же
+// приём и порядок полей, что у _performDodge/_performParry/_performSwerve.
+async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "" } = {}) {
   // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
   // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
   if (!(await spendReaction(rider, { forDefense: true }))) return _noReactionCard(rider, "Уклонение");

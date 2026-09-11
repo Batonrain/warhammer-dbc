@@ -97,7 +97,14 @@ export function dodgeProfile(actor, extraMod = 0) {
   return { agTotal, rankBonus, stBonus, cloneBonus, ruleMods, threshold, modParts };
 }
 
-export async function _performDodge(actor, extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "", isMelee = false, burst = false, attackerIsHorde = false) {
+// wdbc-8zi (п.6): Уклонение/Парирование/Вираж/Уклонение верхом расходились
+// порядком одних и тех же позиционных hitsCount/attackerUuid — перестановка
+// двух вызовов молча меняла смысл (не давая ошибки типов), что уже путало
+// правку одного места без остальных. Объект опций делает порядок неважным.
+export async function _performDodge(actor, {
+  extraMod = 0, forcedReroll = "", hitsCount = 1, attackerUuid = "",
+  isMelee = false, burst = false, attackerIsHorde = false
+} = {}) {
   // Потеря ног (стр. 30-31, wdbc-r5o7.5): «нельзя Уклоняться» — хватает одной
   // потерянной ноги (книга не требует «обеих», в отличие от полной
   // неподвижности при потере ОБЕИХ ног, см. rules/character.mjs). Реакция не
@@ -383,7 +390,13 @@ function _inMeleeContactWithAttacker(actor, attackerActor) {
   return contactType(rectA, rectB) !== "none";
 }
 
-export async function _performParry(actor, extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false, attackerIsHorde = false, isMelee = true, attackerWeaponUuid = "") {
+// wdbc-8zi (п.6): тот же объект опций, что у _performDodge выше — раньше
+// hitsCount/attackerUuid стояли в другом порядке, чем там, и перепутать
+// вызов при правке было легко.
+export async function _performParry(actor, {
+  extraMod = 0, attackerUuid = "", hitsCount = 1, burst = false,
+  attackerIsHorde = false, isMelee = true, attackerWeaponUuid = ""
+} = {}) {
   // Резолв атакующего — нужен и для Разницы Размеров (стр. 12, ЛЮБОЙ
   // Парирование), и для контакта при стрельбе ниже. Неизвестный/нерезолвящийся
   // attackerUuid — Размер атакующего считается 0 (нет штрафа), тот же честный

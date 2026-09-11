@@ -302,9 +302,10 @@
 <div class="item-section">
   <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока поддерживается)</div>
   {{#if effectsMigrated}}
-  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Это поле актор больше не читает.</div>
-  {{else}}
+  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Ниже — остаток старого значения, только для просмотра, актор его больше не читает.</div>
+  {{/if}}
   <div class="weapon-props-section">
+    {{#unless effectsMigrated}}
     <div class="weapon-props-head">
       <label class="wr-label">Добавить</label>
       <select class="cbonus-add">
@@ -314,20 +315,25 @@
         {{/each}}
       </select>
     </div>
+    {{/unless}}
     {{#if charBonusesActive.length}}
     <div class="weapon-props-list">
       {{#each charBonusesActive as |cb|}}
       <div class="wprop-chip">
         <span class="wprop-name">{{cb.abbr}}</span>
-        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}" title="Прибавка к бонусу характеристики"/>
+        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}"
+               {{#if ../effectsMigrated}}disabled title="Не читается актором — значение из старого способа"{{else}}title="Прибавка к бонусу характеристики"{{/if}}/>
+        {{#unless ../effectsMigrated}}
         <button type="button" class="wprop-remove cbonus-remove" data-action="cbonusRemove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+        {{/unless}}
       </div>
       {{/each}}
     </div>
     {{/if}}
   </div>
+  {{#unless effectsMigrated}}
   <div class="drug-stat-hint">Бонусы применяются, пока психосила отмечена как поддерживаемая (галочка в бою/на вкладке ПСИ). Сверхъестественные характеристики задаются здесь как прибавка к бонусу (Unnatural).</div>
-  {{/if}}
+  {{/unless}}
 </div>
 
 {{!-- Прочие черты от силы (пока поддерживается) --}}
