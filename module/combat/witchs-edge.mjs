@@ -50,6 +50,12 @@ export function withWitchsEdge(item, entries) {
 /** Диалог выбора на одно оружие — сохраняет флаг на предмете. */
 export async function promptWitchsEdgeChoice(actor, item) {
   return new Promise(resolve => {
+    // Foundry вызывает Dialog.close ВСЕГДА, в т.ч. после клика по кнопке
+    // (submit() сам зовёт close() — appv1/api/dialog-v1.mjs) — поэтому нельзя
+    // просто сбрасывать флаг в close без разбора: он сотрёт то, что кнопка
+    // только что записала. chosen отличает «закрыли крестиком/Escape» от
+    // «нажали кнопку, потом дошло до close».
+    let chosen = false;
     new Dialog({
       title: `Колдовское Лезвие — ${item.name} (${actor.name})`,
       content: `<p>Выберите бонус на этот Encounter:</p>`,
@@ -57,6 +63,7 @@ export async function promptWitchsEdgeChoice(actor, item) {
         force: {
           label: "Force (если есть)",
           callback: async () => {
+            chosen = true;
             await item.setFlag(WITCHS_EDGE_FLAG_SCOPE, WITCHS_EDGE_FLAG_KEY, "force");
             resolve("force");
           }
@@ -64,13 +71,24 @@ export async function promptWitchsEdgeChoice(actor, item) {
         bundle: {
           label: "Dueling/Reinforced/Power Field/Precise/Mighty",
           callback: async () => {
+            chosen = true;
             await item.setFlag(WITCHS_EDGE_FLAG_SCOPE, WITCHS_EDGE_FLAG_KEY, "bundle");
             resolve("bundle");
           }
         }
       },
       default: "force",
-      close: () => resolve(null)
+      // Закрытие без выбора (крестик/Escape) — не оставлять флаг с выбором
+      // ПРОШЛОГО Encounter-а активным: witchsEdgeExtraEntries тогда молча
+      // применил бы устаревший бандл, хотя игрок в этот раз ничего не
+      // выбрал. Сбрасываем к «нет выбора» — witchsEdgeExtraEntries это
+      // трактует отсутствие флага как {key:"force"} (дефолт диалога), не
+      // как bundle.
+      close: async () => {
+        if (chosen) return;
+        await item.unsetFlag(WITCHS_EDGE_FLAG_SCOPE, WITCHS_EDGE_FLAG_KEY);
+        resolve(null);
+      }
     }).render(true);
   });
 }

@@ -22,15 +22,24 @@ function prismaRatingOf(item) {
  * +1 к заряду Призмы всем экипированным единицам оружия персонажа «в
  * руках» (упрощение: приравниваем к «Снаряжено»), до их рейтинга X.
  * Зовётся из hooks.mjs в начале Хода актора (тот же хук, что resetActionEconomy).
+ *
+ * wdbc-8zi (п.8): раньше был `item.update` внутри цикла — по одной записи в
+ * БД на каждую единицу оружия с Призмой, у бойца с несколькими такими
+ * стволами (двойной пистолет, крестовой Блок и т.п.) начало Хода писало
+ * несколько отдельных апдейтов подряд вместо одного. Собираем все правки и
+ * применяем разом через updateEmbeddedDocuments — тот же приём, что у
+ * tactical-map.mjs::syncTokenSizes.
  */
 export async function processPrismaTurnStart(actor) {
   const weapons = (actor?.items ?? []).filter(i => i.type === "weapon" && i.system?.equipped);
+  const updates = [];
   for (const item of weapons) {
     const max = prismaRatingOf(item);
     if (max <= 0) continue;
     const cur = Number(item.system.prismaCharge) || 0;
-    if (cur < max) await item.update({ "system.prismaCharge": Math.min(max, cur + 1) });
+    if (cur < max) updates.push({ _id: item.id, "system.prismaCharge": Math.min(max, cur + 1) });
   }
+  if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
 }
 
 /**

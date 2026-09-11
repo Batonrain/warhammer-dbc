@@ -575,8 +575,14 @@ export function fakeHtml(fields = {}, checks = {}) {
  * него `textContent`, и тест увидит написанное.
  */
 export function fakeForm(fields = {}, checks = {}) {
+  // addEventListener — заглушка: живой пересчёт окна атаки (wdbc-kp1o,
+  // sheets/attack/dialog.mjs::refreshVehicleRear) навешивает слушателя прямо
+  // на найденный элемент поля, а не только на форму целиком — без метода
+  // синтезированный объект падал бы "addEventListener is not a function"
+  // у любого простого (строка/true) значения поля, участвующего в такой
+  // подписке.
   const el = v => (v !== null && typeof v === "object")
-    ? v : { value: v, checked: v === true, dataset: {} };
+    ? v : { value: v, checked: v === true, dataset: {}, addEventListener: () => {} };
   return {
     addEventListener: () => {},
     querySelector:    sel => (sel in fields) ? el(fields[sel]) : (checks[sel]?.[0] ?? null),

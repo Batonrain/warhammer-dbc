@@ -89,7 +89,7 @@ describe("Крестовой Блок: цена — нет Контратаки 
     const off  = melee({ id: "w2", name: "Кинжал", props: defensive() });
     const actor = hero([main, off], CAP_CROSSBLOCK, COUNTER_ATTACK_CAPABILITY);
     captured.confirmAnswer = true;                 // «Обоими»
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Парирование успешно");
     expect(card).not.toContain("wh-counter-attack-btn");
@@ -105,7 +105,7 @@ describe("Крестовой Блок: цена — нет Контратаки 
     const off  = melee({ id: "w2", name: "Кинжал", props: defensive() });
     const actor = hero([main, off], CAP_CROSSBLOCK, COUNTER_ATTACK_CAPABILITY);
     captured.confirmAnswer = false;                // «Одним»
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
     const card = captured.chat.at(-1).content;
     expect(card).toContain("wh-counter-attack-btn");
     expect(card).not.toContain("Крестовой Блок");
@@ -117,7 +117,7 @@ describe("Крестовой Блок: цена — нет Контратаки 
     const actor = hero([main, off], CAP_CROSSBLOCK);
     captured.dialog = null;
     captured.confirmAnswer = false;                // ответ не должен спрашиваться
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
     expect(captured.dialog, "лишний вопрос там, где выбора нет").toBe(null);
     expect(captured.chat.at(-1).content).toContain("Крестовой Блок");
   });
