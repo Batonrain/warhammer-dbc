@@ -169,14 +169,20 @@ export function prepareCharacterDerived(actor, system) {
     let traitArmourAll = 0;
     // Пер-локационная броня от имплантов/черт (напр. Боевые Латы Скитарии 6/7/7/5/5)
     const traitArmorLoc = { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0 };
-    // Чёрный Панцирь (импланты Астартес): «БЕЗ БРОНИ считается как нагрудник
-    // с АР 4» — это ЗАМЕНА при отсутствии брони на торсе, а не складываемая
-    // надбавка (в отличие от обычной Естественной Брони выше). Раньше был
-    // заведён как складываемая запись Конструктора (kind:"armour") и давал
-    // +4 АР в торс ПОВЕРХ силовой брони (wdbc bug-report 2026-08-22). Флаг
-    // участвует ниже в best("body") — том же «лучшее из», что и у брони/щита,
-    // не в сумме traitArmorLoc/fxArmor.
-    let hasBlackCarapaceBackup = false;
+    // Броня-ЗАМЕНА (обобщено в wdbc-dg6 из хардкода под один только Чёрный
+    // Панцирь): предмет не добавляет AP к надетой броне, а САМ ЕЙ является —
+    // «лучшее из», как у брони/щита, а не складываемая надбавка (в отличие от
+    // обычной Естественной Брони traitArmorLoc/fxArmor выше и ниже). Участвует
+    // в best(k) ниже per-локационным Math.max, а не суммой.
+    //  - Чёрный Панцирь (импланты Астартес): «БЕЗ БРОНИ считается как
+    //    нагрудник с АР 4» — только торс. Раньше был заведён как складываемая
+    //    запись Конструктора (kind:"armour") и давал +4 АР в торс ПОВЕРХ
+    //    силовой брони (wdbc bug-report 2026-08-22).
+    //  - Warpforged Plate/Закалённые Варпом Латы (Элитный архетип Варп-Кузнец):
+    //    «не может снять доспех, но имеет AP 12/12/12/12» — все шесть локаций.
+    //    Раньше предмет нёс запечённый ActiveEffect system.armorBonus.<loc>
+    //    "add" +12, который так же складывался с надетой бронёй (wdbc-dg6).
+    const armorFloorLoc = { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0 };
     let traitFearRating = 0;
     let traitSizeMod = 0;
     // Размер, который НЕ идёт в SPD (wdbc-w8ws, Absurdly Fat/Абсурдно Толстый:
@@ -214,7 +220,12 @@ export function prepareCharacterDerived(actor, system) {
       // его эффекты не считаются, пока GM/игрок не переключит статус обратно.
       if (t === "implant" && item.getFlag("warhammer-dbc", "disabled")) continue;
       if (t === "implant" && (itemHasName(item, "Чёрный Панцирь") || itemHasName(item, "Black Carapace"))) {
-        hasBlackCarapaceBackup = true;
+        armorFloorLoc.body = Math.max(armorFloorLoc.body, 4);
+      }
+      // Warpforged Plate/Закалённые Варпом Латы (wdbc-dg6): та же «броня-
+      // замена», что Чёрный Панцирь, но на все шесть локаций сразу.
+      if (t === "trait" && (itemHasName(item, "Warpforged Plate") || itemHasName(item, "Закалённые Варпом Латы"))) {
+        for (const k of Object.keys(armorFloorLoc)) armorFloorLoc[k] = Math.max(armorFloorLoc[k], 12);
       }
       // Бионические конечности: +2 к эффективному Поглощению этой частью тела.
       // Сторона не выбрана (флаг снят) — бонус никуда не начислять: раньше
@@ -701,8 +712,7 @@ export function prepareCharacterDerived(actor, system) {
     const shieldAP = shieldArmorByLocation(actor);
     system.shieldArmor = shieldAP;
     const best = (k) => Math.max(
-      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0,
-      (k === "body" && hasBlackCarapaceBackup) ? 4 : 0
+      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0, armorFloorLoc[k] || 0
     );
     // Складываемая надбавка AP от эффектов (естественная броня Черт, броня
     // имплантов, что угодно ещё). Хранимое поле схемы — эффекты целятся в него
