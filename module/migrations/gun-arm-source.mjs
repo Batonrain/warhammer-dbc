@@ -41,22 +41,68 @@ export function gunArmDecision(items = []) {
   return { action: "skip" };
 }
 
-/** Проставляет метку тем, у кого выбор однозначен; остальных называет ГМу. */
+/**
+ * Простановка метки ОДНОМУ актору. Бросает исключение наружу — решение, что
+ * делать со сбоем (пропустить и продолжить остальных), принимает вызывающий
+ * код в migrateGunArmSource (тот же приём, что и в module/migrations/
+ * gear-equipped.mjs). Мутирует переданный массив `ask` вместо возврата, чтобы
+ * вызывающий код мог накапливать список по нескольким проходам (акторы +
+ * несвязанные токены).
+ *
+ * @returns {number} 1, если метка проставлена, иначе 0.
+ */
+async function migrateOneActorGunArmSource(actor, ask) {
+  const decision = gunArmDecision(actor.items);
+  if (decision.action === "mark") {
+    await actor.items.get(decision.weaponId)?.setFlag(FLAG, "gunArmSource", true);
+    return 1;
+  }
+  if (decision.action === "ask") ask.push(`${actor.name} (${decision.count})`);
+  return 0;
+}
+
+/**
+ * Проставляет метку тем, у кого выбор однозначен, среди акторов мира и
+ * несвязанных токенов сцен (wdbc-059h, по образцу gear-equipped/wdbc-dyi: у
+ * токена с actorLink:false Дар и оружие лежат в его собственной ActorDelta, а
+ * не в мировом Actor); остальных (несколько подходящих стволов) называет ГМу.
+ *
+ * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
+ * обработку следующих (было исправлено раньше самой миграцией, но версия
+ * штамповалась безусловно — не читая failed, — поэтому недомигрированные
+ * акторы не подхватывались повторным запуском; wdbc-059h).
+ */
 export async function migrateGunArmSource() {
   if (!game.user?.isGM) return;
   let marked = 0;
+  let failed = 0;
   const ask = [];
 
+  // Мировые акторы. Связанные токены (actorLink:true) используют тот же
+  // документ Actor — им отдельный проход не нужен.
   for (const actor of game.actors ?? []) {
     try {
-      const decision = gunArmDecision(actor.items);
-      if (decision.action === "mark") {
-        await actor.items.get(decision.weaponId)?.setFlag(FLAG, "gunArmSource", true);
-        marked++;
-      } else if (decision.action === "ask") {
-        ask.push(`${actor.name} (${decision.count})`);
+      marked += await migrateOneActorGunArmSource(actor, ask);
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Рука-Пушка: сбой на акторе «${actor?.name}» (${actor?.id}), пропущен:`, e);
+    }
+  }
+
+  // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
+  // прямо в ActorDelta токена.
+  for (const scene of game.scenes ?? []) {
+    for (const tokenDoc of scene.tokens?.contents ?? []) {
+      if (tokenDoc.actorLink) continue;
+      const actor = tokenDoc.actor;
+      if (!actor) continue;
+      try {
+        marked += await migrateOneActorGunArmSource(actor, ask);
+      } catch (e) {
+        failed++;
+        console.error(`Warhammer DBC | Рука-Пушка: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
       }
-    } catch (e) { console.error(`Warhammer DBC | Рука-Пушка (${actor?.name}):`, e); }
+    }
   }
 
   if (marked) {
@@ -66,5 +112,6 @@ export async function migrateGunArmSource() {
   }
   if (ask.length) ui.notifications?.warn(
     `Рука-Пушка: у кого несколько подходящих стволов — выберите вросший на листе Дара: ${ask.join(", ")}.`);
-  return { marked, ask };
+  if (failed) console.warn(`Warhammer DBC | Рука-Пушка: ${failed} акторов/токенов пропущено из-за ошибок — миграция повторится при следующей загрузке мира.`);
+  return { marked, ask, failed };
 }

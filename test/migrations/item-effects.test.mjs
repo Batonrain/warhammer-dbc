@@ -638,6 +638,51 @@ describe("миграция мира", () => {
 
     expect(lock).toEqual([]);
   });
+
+  // wdbc-059h: раньше двойной цикл по акторам/предметам был не защищён вовсе
+  // (ни try на весь цикл, ни поштучно) — сбойный предмет обрывал pass() и
+  // вместе с ним обработку ВСЕХ предметов после него, в т.ч. на других
+  // акторах. Эта миграция без версии-гейта (идёт заново на каждой загрузке),
+  // но постоянно сбойный предмет держал бы весь хвост списка недомигрированным
+  // на КАЖДОМ будущем запуске без изоляции.
+  it("сбой на одном предмете не прерывает перенос у остальных предметов и акторов", async () => {
+    const bad = itemDoc({ name: "Сбойная Черта", effects: { sizeMod: 1 } });
+    bad.getFlag = () => { throw new Error("boom on bad"); };
+    const goodSameActor = itemDoc({ name: "Аморфный", effects: { sizeMod: 1 } });
+    const goodOtherActor = itemDoc({ name: "Аморфный 2", effects: { sizeMod: 1 } });
+    goodSameActor.id = "item-good1";
+    goodOtherActor.id = "item-good2";
+
+    globalThis.game.actors = [
+      { name: "Персонаж 1", items: [bad, goodSameActor] },
+      { name: "Персонаж 2", items: [goodOtherActor] }
+    ];
+
+    const { migrated, failed } = await migrateAllItemEffects();
+
+    expect(failed).toBe(1);
+    expect(migrated).toBe(2);
+    expect(changesOf(goodSameActor)).toEqual(legacyEffectsToChanges({ sizeMod: 1 }));
+    expect(changesOf(goodOtherActor)).toEqual(legacyEffectsToChanges({ sizeMod: 1 }));
+    expect(bad.effects).toEqual([]); // не тронут, попробуется заново
+  });
+
+  it("сбой на одном документе пака не прерывает перенос у остальных документов того же пака", async () => {
+    const bad = itemDoc({ name: "Сбойный", effects: { sizeMod: 1 } });
+    bad.getFlag = () => { throw new Error("boom on bad doc"); };
+    const good = itemDoc({ name: "Мир-улей", effects: { charValueBonuses: [{ stat: "wp", value: 3 }] } });
+    good.id = "doc-good";
+    const lock = [];
+    globalThis.game.packs = new Map([["warhammer-dbc.homeworlds",
+      packStub(lock, { getDocuments: async () => [bad, good] })]]);
+
+    const { migrated, failed } = await migrateAllItemEffects();
+
+    expect(failed).toBe(1);
+    expect(migrated).toBe(1);
+    expect(changesOf(good)).toEqual(legacyEffectsToChanges({ charValueBonuses: [{ stat: "wp", value: 3 }] }));
+    expect(lock).toEqual([false, true]); // замок всё равно возвращён
+  });
 });
 
 describe("предметы packs-src", () => {
