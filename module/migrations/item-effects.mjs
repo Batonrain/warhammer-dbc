@@ -458,7 +458,7 @@ export async function repairCharValueEffectKeys(item) {
 
 /** Весь мир: предметы акторов и компендиумы библиотек. */
 export async function migrateAllItemEffects() {
-  let migrated = 0, repaired = 0, deduped = 0, adopted = 0;
+  let migrated = 0, repaired = 0, deduped = 0, adopted = 0, failed = 0;
 
   /** Порядок шагов важен — см. комментарии внутри. */
   async function pass(item) {
@@ -490,7 +490,24 @@ export async function migrateAllItemEffects() {
     if (await migrateItemEffects(item)) migrated++;
   }
 
-  for (const actor of game.actors) for (const item of actor.items) await pass(item);
+  // Ошибка на ОДНОМ предмете не должна останавливать перенос у остальных —
+  // раньше (wdbc-059h) весь двойной цикл был не защищён вовсе: сбойный
+  // предмет обрывал pass() и вместе с ним обработку ВСЕХ предметов после
+  // него (не только на этом акторе — на всех последующих акторах мира в
+  // этом же запуске). Гейта версии у этой миграции нет (она идёт на каждой
+  // загрузке, идемпотентно), поэтому «недомигрированное осталось бы
+  // навсегда» здесь не грозит — но постоянно сбойный предмет так и держал
+  // бы весь хвост списка недомигрированным на КАЖДОМ будущем запуске, пока
+  // ГМ не заметит и не почистит его вручную.
+  for (const actor of game.actors) {
+    for (const item of actor.items) {
+      try { await pass(item); }
+      catch (e) {
+        failed++;
+        console.error(`Warhammer DBC | Миграция эффектов: сбой на предмете «${item?.name}» (${item?.id}) актора «${actor?.name}», пропущен:`, e);
+      }
+    }
+  }
 
   // Компендиумы библиотек — та же логика, с разблокировкой пака. Замок
   // возвращается в finally: configure пишет в game.settings, то есть снятый
@@ -503,7 +520,13 @@ export async function migrateAllItemEffects() {
     const wasLocked = pack.locked;
     try {
       if (wasLocked) await pack.configure({ locked: false });
-      for (const doc of await pack.getDocuments()) await pass(doc);
+      for (const doc of await pack.getDocuments()) {
+        try { await pass(doc); }
+        catch (e) {
+          failed++;
+          console.error(`Warhammer DBC | Миграция эффектов: сбой на предмете «${doc?.name}» (${doc?.id}) пака '${packId}', пропущен:`, e);
+        }
+      }
     } catch (e) {
       console.error(`Warhammer DBC | Миграция эффектов '${packId}':`, e);
     } finally {
@@ -524,5 +547,6 @@ export async function migrateAllItemEffects() {
     ui.notifications?.info(`Warhammer DBC: убраны задвоенные бонусы — ${deduped}.`);
   }
   if (adopted) console.log(`Warhammer DBC | Помечено эффектов Конструктора: ${adopted}.`);
-  return { migrated, repaired, deduped, adopted };
+  if (failed) console.warn(`Warhammer DBC | Миграция эффектов: ${failed} предметов пропущено из-за ошибок — попробуются заново при следующей загрузке мира.`);
+  return { migrated, repaired, deduped, adopted, failed };
 }
