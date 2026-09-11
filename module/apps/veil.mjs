@@ -957,7 +957,13 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     el.querySelector("[data-act=clearlog]")?.addEventListener("click", async () => {
       const v = readVeil(scene); v.log = []; await writeVeil(scene, v);
     });
-    el.querySelector("[data-act=reset]")?.addEventListener("click", async () => {
+    // Селектор скопирован в границы своего контейнера (.wh-veil-app) — на
+    // общей странице «Сцена» (scene-settings.mjs) el общий для Окружения и
+    // Завесы, а у обеих кнопок одинаковый data-act=reset (wdbc-gyj: без
+    // .wh-veil-app querySelector на общем корне находил кнопку Окружения,
+    // которая идёт в разметке первой, и своя кнопка сброса Завесы не
+    // срабатывала вовсе).
+    el.querySelector(".wh-veil-app [data-act=reset]")?.addEventListener("click", async () => {
       await writeVeil(scene, defaultVeil());
     });
     el.querySelector("[data-act=announce]")?.addEventListener("click", () => this._announce());

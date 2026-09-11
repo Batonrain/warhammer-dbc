@@ -1396,7 +1396,7 @@ async function _applyWeaponPropEffect(ds) {
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
     // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
-    if (conditionsToApply.some(([cond]) => ENJOYMENT_CONDITIONS.has(cond))) {
+    if (conditionsToApply.some(cond => ENJOYMENT_CONDITIONS.has(cond))) {
       await maybeGrantEnjoymentPain(actor);
     }
     // Галлюцинации (Hallucinogenic (X), стр. 168, wdbc-r5o7.8): книга требует

@@ -146,15 +146,21 @@ function halvedEffects(effects, ruleId) {
  * копия в полную силу — иначе иммунитет к штрафу за потерю стоп молча снял бы
  * и штраф за потерю ног.
  *
+ * Вызывается ОДИН раз на ключ Состояния (см. collectMitigations) — не на
+ * каждую запись «Смягчение» отдельно (wdbc-vgx): иначе два независимых
+ * источника «половина штрафа Оглох» дали бы два независимых half-правила,
+ * которые в конвейере теста складываются как обычные модификаторы —
+ * −15 + −15 = −30, то есть ровно исходный полный штраф, хотя книга обещала
+ * хоть какое-то облегчение. `half` уже здесь — предвычисленный ПОБЕДИТЕЛЬ
+ * (ignore сильнее half, приоритет как в condition-guards.mjs::
+ * conditionMitigation, тот же вопрос «что действует, если источников
+ * несколько»), поэтому одной копии довольно.
+ *
  * @returns {?Array<object>} null, если смягчать нечего
  */
-function mitigationRules(item, entry, id) {
-  const key = String(entry.condKey || "").trim();
-  if (!key) return null;
+function mitigationRules(key, half, label, id) {
   const book = conditionRulesFor(key);
   if (!book.length) return null;   // у Состояния нет числового штрафа в реестре
-  const half = entry.condMitigate === "half";
-  const label = entry.label || item.name;
   const out = [{ id, label, when: {}, effects: [], overrides: book.map(r => r.id) }];
   for (const rule of book) {
     const keys = [].concat(rule.when?.hasCondition ?? []);
@@ -169,6 +175,51 @@ function mitigationRules(item, entry, id) {
     }
   }
   return out;
+}
+
+/**
+ * Записи «Смягчение» СО ВСЕХ активных предметов актора, сведённые ОДИН РАЗ
+ * на ключ Состояния — иначе mitigationRules() запускалась бы по разу на
+ * КАЖДУЮ запись (см. её комментарий) и давала бы либо удвоенную половину,
+ * либо half вопреки уже действующему ignore (wdbc-vgx).
+ *
+ * Приоритет между источниками тот же, что в condition-guards.mjs::
+ * conditionMitigation (полный иммунитет сильнее половины): "ignore", встреченный
+ * хоть раз, побеждает; при нескольких "half" без единого "ignore" остаётся
+ * первый встреченный — вторая и далее «половина» того же штрафа не добавляет
+ * ничего сверх первой (см. AGENTS.md/dbc-rules: «не складывать» повторяющийся
+ * эффект одного и того же рода).
+ *
+ * @returns {Map<string, {mode: "ignore"|"half", label: string, id: string}>}
+ */
+function collectMitigations(items, isActive, actor) {
+  const byKey = new Map();
+  const walk = (item, entries, operator) => {
+    if (operator === "OR") return;
+    for (const entry of entries || []) {
+      if (entry?.kind === "group" && entry.group) {
+        walk(item, entry.group.entries, entry.group.operator);
+        continue;
+      }
+      if (entry?.kind !== "condition" || (entry.condMode || "apply") !== "mitigate") continue;
+      const key = String(entry.condKey || "").trim();
+      if (!key) continue;
+      if (!entryWhenOk(actor, entry, item)) continue;
+      const mode = entry.condMitigate === "half" ? "half" : "ignore";
+      const prev = byKey.get(key);
+      // "ignore" перебивает уже отмеченный "half"; "half" второй источник не
+      // трогает первый — ни "half"→"half" (не складывать половины), ни
+      // "half"→"ignore" не должно НИЧЕГО терять из уже найденного "ignore".
+      if (!prev || (prev.mode === "half" && mode === "ignore")) {
+        byKey.set(key, { mode, label: entry.label || item.name, id: `item.${item.name}.${entry.id}` });
+      }
+    }
+  };
+  for (const item of items || []) {
+    if (!isActive(item)) continue;
+    for (const group of mechanicsOf(item)) walk(item, group.entries, group.operator);
+  }
+  return byKey;
 }
 
 /** Запись → правило. Неизвестный вид молча пропускается: он не про броски. */
@@ -255,10 +306,13 @@ function ruleFromEntry(item, entry, groupId = null) {
     return { id, label: entry.label || item.name, when: {}, effects: [{ kind: "failDegMod", target, value: Number(entry.value) || 0 }] };
   }
 
-  if (entry?.kind === "condition") {
-    if ((entry.condMode || "apply") !== "mitigate") return null;
-    return mitigationRules(item, entry, id);
-  }
+  // entry?.kind === "condition" сюда не доходит: «Смягчение» собирается не
+  // по одной записи, а по ключу Состояния СРАЗУ со всех предметов
+  // (collectMitigations + mitigationRules ниже, вызывается из
+  // rulesFromItemMechanics отдельным проходом) — иначе несколько записей
+  // «Смягчение» одного Состояния плодили бы независимые правила и либо
+  // суммировали бы половины штрафа обратно в целый, либо давали половину
+  // вопреки уже действующему полному иммунитету (wdbc-vgx).
 
   if (entry?.kind === "script" && entry.scriptTrigger) {
     // Автозапуск скрипта по исходу теста (wdbc-1rno) — «Полимат»: «Крит на
@@ -364,9 +418,12 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
         continue;
       }
       if (!entryWhenOk(actor, entry, item)) continue;
-      // Одна запись может дать НЕСКОЛЬКО правил: «Смягчение» Состояния
-      // (kind:"condition") возвращает вытесняющее правило плюс замены, см.
-      // mitigationRules. Остальные виды по-прежнему дают одно.
+      // «Смягчение» Состояния (kind:"condition") сюда не идёт — оно собирается
+      // отдельным агрегированным проходом ниже (collectMitigations), по ключу
+      // Состояния сразу со всех предметов, а не по каждой записи в отдельности
+      // (wdbc-vgx, см. комментарий у ruleFromEntry). Остальные виды по-прежнему
+      // дают одно правило (testMod/reroll/…) либо несколько (kind:"script").
+      if (entry?.kind === "condition") continue;
       const rule = ruleFromEntry(item, entry, groupId);
       if (rule) out.push(...[].concat(rule));
     }
@@ -374,6 +431,10 @@ export function rulesFromItemMechanics(items, isActive = () => true, actor = nul
   for (const item of items || []) {
     if (!isActive(item)) continue;
     for (const group of mechanicsOf(item)) walk(item, group.entries, group.operator, group.id);
+  }
+  for (const [key, { mode, label, id }] of collectMitigations(items, isActive, actor)) {
+    const rules = mitigationRules(key, mode === "half", label, id);
+    if (rules) out.push(...rules);
   }
   return out;
 }
