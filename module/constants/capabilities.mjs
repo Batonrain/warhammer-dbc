@@ -93,6 +93,42 @@ export const CAPABILITIES = {
     source: "Дар Кхорн (Purity of Wrath)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
   },
+  // ── Полный иммунитет к урону по свойству/категории атаки (wdbc-1rno) ────
+  // В отличие от восьми weaponPropertyImmunity.* выше (гасят только ПОБОЧНЫЙ
+  // эффект попадания — горит/травится/оглушается/теряет AP, сам урон всё
+  // равно проходит), эти пять гасят урон целиком: combat/damage.mjs
+  // возвращается из applyDamageToActor до расчёта поглощения, попадание не
+  // причиняет ничего. Единственный источник на 11.09.2026 — Strange
+  // Invulnerability/Странная Неуязвимость (Общие мутации), 4 из 12
+  // субмутаций. weaponPropertyImmunity.blast/.spray переиспользуют namespace
+  // и генерик-ридер восьми старых ключей (это те же свойства оружия из
+  // module/constants/weapon-properties.mjs), но подключены к НОВОМУ гейту
+  // полного урона — держать в голове разницу семантики при чтении label.
+  "weaponPropertyImmunity.blast": {
+    label: "Полный иммунитет к урону от попаданий со свойством Blast (не только эффект)",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 2 «Око Бури»",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor, ранний return по damageData.blast"
+  },
+  "weaponPropertyImmunity.spray": {
+    label: "Полный иммунитет к урону от попаданий со свойством Spray (не только эффект)",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 2 «Око Бури»",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor, ранний return по damageData.spray"
+  },
+  "damageImmunity.meleeImpact": {
+    label: "Полный иммунитет к урону от рукопашного оружия, наносящего I (Ударный) Dmg",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 3 «Упругий» (книга: «тупого рукопашного оружия» — в системе тупое/дробящее оружие всегда несёт damageType impact)",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по melee && damageType===\"impact\""
+  },
+  "damageImmunity.meleeRending": {
+    label: "Полный иммунитет к урону от рукопашного оружия, наносящего R (Режущий) Dmg",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 5 «Текучая Плоть» (книга: «клинкового рукопашного оружия» — клинки в системе несут damageType rending)",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по melee && damageType===\"rending\""
+  },
+  "damageImmunity.rangedImpact": {
+    label: "Полный иммунитет к урону от стрелкового оружия, наносящего I (Ударный) Dmg",
+    source: "Мутация: Strange Invulnerability / Странная Неуязвимость, субмутация 4 «Пуленепробиваемый»",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по !melee && damageType===\"impact\""
+  },
   // ── Модификации брони против Варп-Оружия (wdbc-sg57) ────────────────────
   "armor.apVsWarpFull": {
     label: "AP брони этой локации целиком (не игнорируется) против Варп-Оружия",

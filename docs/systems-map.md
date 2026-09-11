@@ -89,7 +89,16 @@
   попадание» (мод брони, Роба Чемпиона, Минный Плуг техники).
 - `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
-  поглощение, локация, критический эффект — центральный расчёт.
+  поглощение, локация, критический эффект — центральный расчёт. Полный
+  иммунитет к урону (не только к побочному эффекту попадания) — ранние
+  `return` в начале `applyDamageToActor`, рядом с `sealedFullSuit`: по
+  `damageType`+`melee` (`damageImmunity.meleeImpact/.meleeRending/.
+  rangedImpact`) и по свойству оружия Blast/Spray (переиспользует namespace
+  `weaponPropertyImmunity.*`, но с другим гейтом — wdbc-1rno, Strange
+  Invulnerability). НЕТ в системе: подвид урона в скобках из книги
+  (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx)) — `damageType` хранит только широкую
+  категорию, подвид нигде не читается (см. wdbc-q0q8, минимум 12 предметов
+  дают защиту от конкретного подвида только текстом).
 - `module/sheets/tabs/{death,healing,wounds}.mjs` — UI Смерти, Лечения,
   расчётов Ран на листе.
 - Именные: `apps/ablative-ap-shield.mjs` (Роба Чемпиона), `apps/
