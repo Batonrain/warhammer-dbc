@@ -420,10 +420,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Опрокидывание вместо сбивания с ног, поворот 180° вне Хода (Combat Master
   пилота — до ½WS.b раз) и «всё оружие за одно действие» считает пилот, а не
   машина. Дословный текст девяти книжных пунктов —
-  `constants/vehicle.mjs::CHASSIS_FULL_NOTES.walker`. НЕ реализован п.9
-  (запрет Избирательной атаки −20 в Корму): у персонажа нет самого выбора
-  стороны брони при атаке по технике (`combat/attack.mjs` всегда шлёт
-  `side:"side"`).
+  `constants/vehicle.mjs::CHASSIS_FULL_NOTES.walker`.
+- **Выбор стороны брони при атаке персонажа по технике** (wdbc-kp1o,
+  11.09.2026) — `sheets/attack-dialog.mjs` + `sheets/attack/{dialog,form,
+  markup}.mjs` показывают Лоб/Борт/Корму и опцию «Избирательная атака в
+  Корму −20» (с Лба/Борта), когда цель — vehicle; проброс до
+  `damageData.side` через `combat/attack.mjs` → `combat/attack-card.mjs` →
+  `hooks.mjs` → `combat/damage.mjs` (fallback на `"side"`, если сторона не
+  выбрана). Реализует п.9 Шагохода выше: `rearCalledShotBlockedByWalker =
+  isMelee && isWalkerVehicle(target)` — рукопашная Избирательная атака в
+  Корму по Шагоходу запрещена, дальнобойная и атака по обычной технике —
+  разрешена.
 
 ## 19. Корабли, Космический бой, Звёздные системы
 
