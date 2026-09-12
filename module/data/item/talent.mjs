@@ -14,12 +14,7 @@ import { migrateCharBonusPair } from "./_legacy-char-bonus.mjs";
 /** Умолчание `effects`: те же нули, что раздавал template.json. */
 function emptyEffects() {
   return {
-    initMod: 0, fearRating: 0, speedMod: 0,
-    // weaponBuff — та же форма, что у psychic-power.mjs (module/combat/
-    // weapon-mods.mjs::getModEffects читает оба); Таланты always-on, пока на
-    // акторе (нет isSustained-тумблера), поэтому гейта активности не требуют —
-    // тот же рубильник, что charBonuses у Талантов ниже (wdbc-g53k).
-    weaponBuff: { enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, addProps: [] }
+    initMod: 0, fearRating: 0, speedMod: 0
   };
 }
 
