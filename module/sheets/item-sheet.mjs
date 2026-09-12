@@ -2060,6 +2060,19 @@ export class WarhammerItemSheet
     const saveMech = arr => saveMechanics(this.item, arr);
     // Рекурсивный поиск (учитывает вложенные подгруппы kind:"group", см. mechanics.mjs).
     const findEntry = findMechEntry;
+    // Один простой listener «сменилось значение поля записи» — clone/find/
+    // apply/save. Объявлена здесь, а не рядом с первым использованием ниже
+    // (Переброс, kind:"reroll") — так её видят и более ранние по разметке
+    // обработчики (Щит: подвид урона/против тика, wdbc-shr находка 8),
+    // которые раньше реализовывали ровно то же самое каждый своим отдельным
+    // `on(...)`, вместо общей функции.
+    const mechField = (sel, apply) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      apply(e, ev.currentTarget.value);
+      saveMech(arr);
+    });
     on(".grant-entry-kind", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -2199,22 +2212,15 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.absorptionValue = ev.currentTarget.value; saveMech(arr); }
     });
-    // Щит: подвид урона (kind:"shieldSubtype", wdbc-q0q8, только forcefield)
-    on(".mech-shield-subtype-mode", "change", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.shieldSubtypeMode = ev.currentTarget.value; saveMech(arr); }
-    });
-    on(".mech-shield-subtype-key", "change", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.shieldSubtypeKey = ev.currentTarget.value; saveMech(arr); }
-    });
-    on(".mech-shield-subtype-rating", "change", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (e) { e.shieldSubtypeRatingMax = Number(ev.currentTarget.value) || 0; saveMech(arr); }
-    });
+    // Щит: подвид урона (kind:"shieldSubtype", wdbc-q0q8, только forcefield).
+    // Все четыре — простое «сменилось значение поля», без своей логики поверх
+    // clone/find/save (wdbc-shr, находка 8: раньше каждый реализовывал это
+    // отдельным `on(...)` вместо общей mechField, объявленной выше).
+    mechField(".mech-shield-subtype-mode",   (e, v) => { e.shieldSubtypeMode = v; });
+    mechField(".mech-shield-subtype-key",    (e, v) => { e.shieldSubtypeKey = v; });
+    mechField(".mech-shield-subtype-rating", (e, v) => { e.shieldSubtypeRatingMax = Number(v) || 0; });
+    // Щит: против тика Состояния (kind:"shieldVsCondition", wdbc-5knb, только forcefield)
+    mechField(".mech-shield-vs-condition-key", (e, v) => { e.shieldVsConditionKey = v; });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
     on(".mech-terrain-ignore", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -2226,13 +2232,6 @@ export class WarhammerItemSheet
     // Переброс (kind:"reroll"). Смена области меняет набор полей (у «теста
     // характеристики» появляется её выбор, у «теста навыка» — навык), поэтому
     // сохраняем и даём листу перерисоваться, как у Усталости ниже.
-    const mechField = (sel, apply) => on(sel, "change", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (!e) return;
-      apply(e, ev.currentTarget.value);
-      saveMech(arr);
-    });
     mechField(".mech-reroll-scope", (e, v) => { e.rerollScope = v; });
     mechField(".mech-reroll-char",  (e, v) => { e.rerollChar = v; });
     mechField(".mech-reroll-skill", (e, v) => { e.skillKey = v; });
@@ -3228,7 +3227,14 @@ export class WarhammerItemSheet
     });
     on(".xtype-x", "change", async ev => {
       const type = ev.currentTarget.dataset.type;
-      const val  = parseInt(ev.currentTarget.value) || 0;
+      // wdbc-5kd: у психосилы X книжного типа местами формула, не константа —
+      // «Изменение (PR+1)», «Длительная (PR)», «Цикл (6)» (число — частный
+      // случай формулы). У Техночуда книжные X всегда голые числа (Императива
+      // (3), Компенсатор (2)…), и tabs/tech.mjs считает их напрямую как Number —
+      // это единственный тип, для которого parseInt здесь ещё уместен.
+      const val  = this.item.type === "techPower"
+        ? (parseInt(ev.currentTarget.value) || 0)
+        : String(ev.currentTarget.value ?? "").trim();
       const arr  = foundry.utils.deepClone(this.item.system.extraTypes || []);
       const e    = arr.find(x => x.type === type);
       if (e) { e.x = val; await this.item.update({ "system.extraTypes": arr }); }

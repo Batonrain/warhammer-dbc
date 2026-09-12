@@ -16,7 +16,7 @@ import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
-import { performWalkerParry, performWalkerDodge, standUpFromTipOver } from "./combat/walker.mjs";
+import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
@@ -77,8 +77,8 @@ import { processConditionTurnStart, processConditionTurnEnd } from "./combat/con
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
-import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart }
-  from "./rules/sigillite-runes-combat.mjs";
+import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
+         processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
@@ -523,6 +523,19 @@ export function registerHooks() {
         const vehicle = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
         if (!vehicle) return ui.notifications.warn("⚠️ Машина карточки не найдена.");
         await standUpFromTipOver(vehicle);
+      });
+    });
+
+    // Опрокидывание Шагохода после провала теста Трудного Ландшафта
+    // (wdbc-0oe) — кнопка приклеена к карточке самого теста, машина берётся
+    // по uuid из карточки, тот же приём, что у «Встать» выше.
+    html.querySelectorAll(".wh-walker-tipover-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.vehicleUuid;
+        const vehicle = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!vehicle) return ui.notifications.warn("⚠️ Машина карточки не найдена.");
+        await showTipOverDialog(vehicle);
       });
     });
 
@@ -1292,7 +1305,10 @@ async function _applyShipHullDamage(dmg) {
 }
 
 // ── Применение эффекта свойства оружия (Оглушающее, Ослепляющее и т.п.) ──────
-async function _applyWeaponPropEffect(ds) {
+// Экспорт с подчёркиванием — тот же приём, что _resolveSoulBurn выше:
+// внутренняя функция обработчика клика, но тестируемая напрямую (wdbc-5tz),
+// без симуляции самого клика по карточке чата.
+export async function _applyWeaponPropEffect(ds) {
   // forceActorUuid (wdbc-z5mn) — цель уже известна на 100% (Встречная атака:
   // Shocking у Электродуги бьёт по нападающему, не по выбранному на сцене
   // токену) — тот же приём, что data-force-target у кнопки урона выше:
@@ -1302,6 +1318,16 @@ async function _applyWeaponPropEffect(ds) {
     const doc = await fromUuid(ds.wpForceActorUuid).catch(() => null);
     actor = doc?.actor ?? doc ?? null;
     if (!actor) return ui.notifications.warn("⚠️ Цель эффекта не найдена (возможно, удалена).");
+    // Права на изменение актора (wdbc-5tz) — forceActor резолвит по uuid
+    // без обычного requireControlledActor, поэтому кнопку физически может
+    // нажать любой, кто видит карточку (например, защищающийся из
+    // любопытства). Без этой проверки actor.update() ниже по коду упал бы
+    // сырой ошибкой прав Foundry уже ПОСЛЕ броска — результат теста просто
+    // пропадал бы, ничего не объясняя. Проверяем ДО броска и отказываем
+    // понятным сообщением, не трогая кубики вовсе.
+    if (!actor.isOwner) {
+      return ui.notifications.warn(`⚠️ Нет прав менять ${actor.name} — эффект применит владелец или ГМ.`);
+    }
   } else {
     actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
     if (!actor) return;
@@ -2043,6 +2069,10 @@ function _attachFateContextMenu(message, html) {
     // только ГМ, как и соседи по этому хуку. У актора без Черты «Магия
     // Сигиллитов» функция молча выходит.
     if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
+    // Заготовленная Руна (wdbc-p2it): «в начале боя персонаж может выбрать
+    // одну руну» — диалог выбора, тем же тактом и тем же GM-гейтом, что и
+    // соседи по этому хуку (Колдовское Лезвие/Руны Сигиллитов выше).
+    if (game.user.isGM) await processPreparedRuneCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -2214,9 +2244,22 @@ function _attachFateContextMenu(message, html) {
     if (!("status" in sys) || options.whPrevNodeStatus === undefined) return;
     const oldStatus = options.whPrevNodeStatus;
     const newStatus = item.system.status;
+    // Собственные "1d10" директив (robustDesign — спасбросок, explosive —
+    // проверка детонации) раньше отдавали resolveNodeDamage только .total,
+    // а сам Roll выбрасывался — Roll от них не долетал ни до одного
+    // ChatMessage (wdbc-shr, находка 11): Dice So Nice/сворачивание броска
+    // не срабатывали НИ РАЗУ для этих двух бросков, только для отдельного
+    // броска урона explosionDamage ниже. gateRolls копит настоящие Roll той
+    // же чистой функцией — сама resolveNodeDamage как была, так и осталась
+    // чистой (rollFn всё ещё возвращает число, тесты не трогать).
+    const gateRolls = [];
     const { forceStatus, explosionDamage, revertStatus, note } =
       await resolveNodeDamage(resolveShipProps(item), item.system.kind, oldStatus, newStatus,
-        async formula => (await (new Roll(formula)).evaluate()).total);
+        async formula => {
+          const roll = await (new Roll(formula)).evaluate();
+          gateRolls.push(roll);
+          return roll.total;
+        });
     if (!forceStatus && !revertStatus) return;
 
     if (revertStatus) {
@@ -2228,15 +2271,30 @@ function _attachFateContextMenu(message, html) {
       const roll = await (new Roll(explosionDamage)).evaluate();
       const { cur, next, lost } = await applyHullDamage(item.actor, roll.total);
       // Не карточка теста (wdbc-kuun): бросок тут есть, а Порога нет — это
-      // урон Прочности по факту повреждённого узла, а не тест.
+      // урон Прочности по факту повреждённого узла, а не тест. rolls несёт
+      // и gateRolls (детонация 1d10=10, которая и привела сюда), и сам
+      // бросок урона — иначе карточка «💥 детонация!» показывала бы только
+      // урон, без кубика, который решил саму детонацию.
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: item.actor }),
         content: `<div class="wh-roll-result"><div class="roll-header">💥 ${esc(item.name)} — ${note}</div>
           <div class="roll-threshold">Урон Прочности: <b>${roll.total}</b> (${explosionDamage}): ${cur} → ${next}${lost ? `, экипаж −${lost} CP/CM` : ""}</div></div>`,
-        rolls: [roll], sound: CONFIG.sounds.dice
+        rolls: [...gateRolls, roll], sound: CONFIG.sounds.dice
       });
     } else if (note) {
-      ui.notifications.info(`${item.name}: ${note}`);
+      // Карточка в чат, а не только ui.notifications (wdbc-shr, находка 11):
+      // robustDesign — реальный спасбросок 1d10, который решает судьбу узла
+      // корабля, и он обязан остаться в чате рядом с остальными бросками
+      // (gateRolls), а не мелькнуть тостом только у того, кто менял статус.
+      // fragileEngine (форс без броска) — gateRolls пуст, карточка чисто
+      // информационная, тем же способом, что и остальные текстовые находки
+      // проекта (wdbc-kuun).
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: item.actor }),
+        content: `<div class="wh-roll-result"><div class="roll-header">${esc(item.name)}</div>
+          <div class="roll-threshold">${esc(note)}</div></div>`,
+        rolls: gateRolls, sound: gateRolls.length ? CONFIG.sounds.dice : undefined
+      });
     }
   });
 

@@ -70,4 +70,19 @@ describe("maybeGrantEnjoymentPain", () => {
     await maybeGrantEnjoymentPain(actor);
     expect(actor.system.fate.value).toBe(5);
   });
+
+  it("Боль на максимуме — лимит «раз за бой» НЕ сгорает впустую (wdbc-shr, находка 5)", async () => {
+    // Раньше markCapabilityUsed вызывался ДО painChange: при полной Боли
+    // (painChange — no-op) лимит всё равно списывался, и настоящее
+    // срабатывание позже в этом же бою (когда Боль уже не на потолке)
+    // становилось невозможным — Талант терялся без единого реального эффекта.
+    globalThis.game.combat = { id: "combat-1" };
+    const actor = makeActor(true, { pain: 5, painMax: 5 });
+    await maybeGrantEnjoymentPain(actor); // на максимуме — не сработало
+    expect(actor.system.fate.value).toBe(5);
+
+    actor.system.fate.value = 2; // Боль потрачена/снята за это же время боя
+    await maybeGrantEnjoymentPain(actor); // лимит должен быть ещё доступен
+    expect(actor.system.fate.value).toBe(3);
+  });
 });

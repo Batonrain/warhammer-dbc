@@ -96,6 +96,16 @@ export function openAttackDialog(ctx) {
     computeManeuverOptions,
     computeStanceOptions
   } = ctx;
+  // Death Dance / Смертельный Танец (wdbc-shr, находка 2): кнопка в render()
+  // ниже только ВООРУЖАЕТ намерение — реальное списание ОС и счётчика
+  // использований откладывается до подтверждения атаки (кнопка "Бросок!"),
+  // тем же приёмом, что и остальные ресурсы диалога (ОД, Реакция — см. их
+  // spendActionPoints/spendReaction прямо в колбэке "roll"). Раньше и
+  // actor.update, и markDeathDanceUsed срабатывали ПРЯМО ПО КЛИКУ на кнопку
+  // Танца — закрыть диалог кнопкой "Отмена" (или Esc) после этого клика
+  // означало реально потратить Очко Судьбы и сжечь использование впустую,
+  // не бросив ни одной атаки.
+  let deathDancePending = null; // { cost, agBonus } — выставлено кликом, читается в колбэке "roll"
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
@@ -179,6 +189,24 @@ export function openAttackDialog(ctx) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
             }
+          }
+
+          // Death Dance / Смертельный Танец (wdbc-shr, находка 2): списание
+          // ОС и отметка использования — только теперь, при подтверждённой
+          // атаке, не по клику кнопки в форме (см. deathDancePending выше и
+          // ddBtn в render() ниже). Проверяем Очки Судьбы ещё раз: между
+          // вооружением кнопки и подтверждением актор мог их потратить
+          // иначе (тот же принцип, что у ОД/Реакции чуть выше).
+          if (deathDancePending) {
+            if (deathDancePending.cost > 0) {
+              const fateNow = actor.system.fate?.value ?? 0;
+              if (fateNow < deathDancePending.cost) {
+                ui.notifications.warn("⚠️ Не хватает Очков Судьбы для Смертельного Танца.");
+                return false;
+              }
+              await actor.update({ "system.fate.value": fateNow - deathDancePending.cost });
+            }
+            await markDeathDanceUsed(actor);
           }
 
           // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
@@ -472,6 +500,17 @@ export function openAttackDialog(ctx) {
       const ddStatus = form.querySelector("#atk-death-dance-status");
       if (ddBtn) {
         const refreshDeathDance = () => {
+          // Уже вооружено этим диалогом (wdbc-shr, находка 2) — реальный
+          // расход ОС/счётчика произойдёт только в колбэке "roll", здесь
+          // только не даём вооружить бонус второй раз до подтверждения.
+          if (deathDancePending) {
+            ddBtn.disabled = true;
+            ddBtn.classList.add("av-pill-disabled");
+            ddStatus.textContent = deathDancePending.cost > 0
+              ? `— готово: спишет ${deathDancePending.cost} Очков Судьбы при подтверждении атаки`
+              : "— готово (бесплатно): применится при подтверждении атаки";
+            return;
+          }
           const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
           const isCharge   = sel.baseKey === "charge";
           const cost       = deathDanceNextCost(actor);
@@ -485,21 +524,25 @@ export function openAttackDialog(ctx) {
               ? "— бесплатно (первый раз в этом бою)"
               : `— цена ${cost} Очков Судьбы${affordable ? "" : " (не хватает)"}`;
         };
-        ddBtn.addEventListener("click", async ev => {
+        ddBtn.addEventListener("click", ev => {
           ev.preventDefault();
+          if (deathDancePending) return; // уже вооружено — повторный клик не удваивает бонус
           const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
           if (sel.baseKey !== "charge") return;
           const cost = deathDanceNextCost(actor);
           const fate = actor.system.fate?.value ?? 0;
-          if (cost > 0) {
-            if (fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");
-            await actor.update({ "system.fate.value": fate - cost });
-          }
-          await markDeathDanceUsed(actor);
-          const agBonus  = Number(actor.system.characteristics?.ag?.bonus) || 0;
+          if (cost > 0 && fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");
+          // Вооружаем намерение — actor.update/markDeathDanceUsed переехали
+          // в колбэк "roll" (deathDancePending выше, wdbc-shr находка 2):
+          // раньше оба списывались ПРЯМО ПО ЭТОМУ клику, и закрытие диалога
+          // кнопкой «Отмена» после клика сжигало ОС и использование вхолостую,
+          // не бросив атаки. Реальный расход — только если атака дойдёт до
+          // подтверждения.
+          const agBonus = Number(actor.system.characteristics?.ag?.bonus) || 0;
+          deathDancePending = { cost, agBonus };
           const dmgInput = form.querySelector("#atk-dmg-bonus");
           dmgInput.value = (parseInt(dmgInput.value) || 0) + agBonus;
-          ui.notifications.info(`Смертельный Танец: +${agBonus} к Бонусу урона (Brutal Charge).`);
+          ui.notifications.info(`Смертельный Танец: +${agBonus} к Бонусу урона (Brutal Charge) — спишется при подтверждении атаки.`);
           refreshDeathDance();
           updateTotal();
         });

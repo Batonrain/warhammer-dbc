@@ -23,7 +23,6 @@ import { rulesFromItemMechanics, opposedTargetRerollRules } from "./item-rules.m
 import { isItemActive } from "../apps/effects.mjs";
 import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
-import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
@@ -120,10 +119,13 @@ registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx,
 // Командиру — cross-actor проверка вне владельца Таланта, тем же приёмом,
 // что источник «dreadnought» ниже. Вне игры (тесты ядра) game.actors нет —
 // источник молчит, как и остальные Foundry-зависимые источники здесь.
-// Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — статичное when читает метку
-// на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget), не
-// требует cross-actor обхода — регистрируется так же, как "core".
-registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
+//
+// Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — раньше был здесь отдельным
+// источником "avatarOfSlaughter" со статичным when (читает метку на самом
+// акторе, rules/predicates.mjs::avatarOfSlaughterOffTarget, без cross-actor
+// обхода). Перенесён в library/core.mjs → источник "core" (wdbc-shr,
+// находка 1): отдельный источник ради одного статического правила не нужен,
+// когда "core" уже отдаёт такие оптом.
 
 // Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — то же статичное when по
 // предикату (rules/predicates.mjs::hexMarkedPreyAllyBonus), которое само

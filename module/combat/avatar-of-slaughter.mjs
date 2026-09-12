@@ -14,8 +14,10 @@
 //
 //  Тест W−10 — ЦЕЛИ, не Берсерка («иначе» относится к её провалу). Провал →
 //  метка flags.warhammer-dbc.avatarOfSlaughterMark={berserkerUuid} до конца
-//  боя, следствие — module/rules/library/avatar-of-slaughter.mjs (−20 на
-//  атаки не по Берсерку, через общий реестр правил).
+//  боя, следствие — правило "avatarOfSlaughter.penalty" в module/rules/
+//  library/core.mjs (wdbc-shr: раньше в своём отдельном файле library/
+//  avatar-of-slaughter.mjs, слито в core.mjs как одно статичное правило
+//  основной книги) — −20 на атаки не по Берсерку, через общий реестр правил.
 // ════════════════════════════════════════════════════════════════════════
 
 import { itemHasName } from "../rules/predicates.mjs";
