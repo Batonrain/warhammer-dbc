@@ -29,12 +29,14 @@ describe("aggregateArmorAuto", () => {
   it("пустой список — все флаги ложны", () => {
     // apBonusByType — не часть per-локационных флагов (mergeArmorLocFlags их
     // не сводит, см. rules/character.mjs), поэтому не входит в emptyArmorLocFlags().
-    expect(aggregateArmorAuto([])).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {} });
+    expect(aggregateArmorAuto([])).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {}, apBonusBySubtype: {} });
   });
 
-  it("conductive → noEnergy", () => {
+  it("conductive → noApVsSubtype.electrical (не noEnergy — книга целит только в E(El), wdbc-q0q8)", () => {
     const props = resolveArmorProps({ system: { properties: ["conductive"] } });
-    expect(aggregateArmorAuto(props).noEnergy).toBe(true);
+    const a = aggregateArmorAuto(props);
+    expect(a.noApVsSubtype.electrical).toBe(true);
+    expect(a.noEnergy).toBe(false);
   });
 
   it("soft → noImpact", () => {
@@ -42,9 +44,11 @@ describe("aggregateArmorAuto", () => {
     expect(aggregateArmorAuto(props).noImpact).toBe(true);
   });
 
-  it("flak → doubleBlast", () => {
+  it("flak → doubleApVsSubtype.fragmentation (не doubleBlast — книга целит только в X(Fr), wdbc-q0q8)", () => {
     const props = resolveArmorProps({ system: { properties: ["flak"] } });
-    expect(aggregateArmorAuto(props).doubleBlast).toBe(true);
+    const a = aggregateArmorAuto(props);
+    expect(a.doubleApVsSubtype.fragmentation).toBe(true);
+    expect(a.doubleBlast).toBe(false);
   });
 
   it("rods → noRanged и noJointCalled одновременно", () => {
@@ -72,7 +76,7 @@ describe("aggregateArmorAuto", () => {
     // см. отдельный describe "aggregateArmorAuto — cloak" ниже. gorget/protective
     // тоже больше не входят — см. describe "aggregateArmorAuto — Gorget/Protective/Sealed" ниже.
     const props = resolveArmorProps({ system: { properties: ["hard", "void", "undersuit"] } });
-    expect(aggregateArmorAuto(props)).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {} });
+    expect(aggregateArmorAuto(props)).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {}, apBonusBySubtype: {} });
   });
 });
 
@@ -94,7 +98,67 @@ describe("aggregateArmorAuto — Gorget/Protective/Sealed (wdbc-8b5)", () => {
 
   it("sealed не заведён в ARMOR_PROPERTIES с auto — читается отдельно (rules/character.mjs::sealedFullSuit), не через aggregateArmorAuto", () => {
     const props = resolveArmorProps({ system: { properties: ["sealed"] } });
-    expect(aggregateArmorAuto(props)).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {} });
+    expect(aggregateArmorAuto(props)).toEqual({ ...emptyArmorLocFlags(), apBonusByType: {}, apBonusBySubtype: {} });
+  });
+});
+
+describe("aggregateArmorAuto — подвиды урона (wdbc-q0q8)", () => {
+  // Ни одно свойство ARMOR_PROPERTIES ещё не использует noApVsSubtype/
+  // doubleApVsSubtype/apBonusVsSubtype (инфраструктура заведена раньше
+  // контента) — подставляем синтетический def того же вида, что и настоящий.
+  const synthProp = (key, auto) => [{ key, def: { auto } }];
+
+  it("noApVsSubtype — попадает в множество noApVsSubtype под своим ключом", () => {
+    const a = aggregateArmorAuto(synthProp("test", { noApVsSubtype: "electrical" }));
+    expect(a.noApVsSubtype).toEqual({ electrical: true });
+    expect(a.doubleApVsSubtype).toEqual({});
+  });
+
+  it("doubleApVsSubtype — попадает в множество doubleApVsSubtype под своим ключом", () => {
+    const a = aggregateArmorAuto(synthProp("test", { doubleApVsSubtype: "fragmentation" }));
+    expect(a.doubleApVsSubtype).toEqual({ fragmentation: true });
+  });
+
+  it("apBonusVsSubtype с рейтингом — apBonusBySubtype суммирует X", () => {
+    const a = aggregateArmorAuto(synthProp("test", { apBonusVsSubtype: "toxic" }), { test: 3 });
+    expect(a.apBonusBySubtype.toxic).toBe(3);
+  });
+
+  it("vulcanized → tripleApVsSubtype.electrical (×3, не ×2 — отдельно от Flak/doubleApVsSubtype, wdbc-q0q8)", () => {
+    const props = resolveArmorProps({ system: { properties: ["vulcanized"] } });
+    const a = aggregateArmorAuto(props);
+    expect(a.tripleApVsSubtype.electrical).toBe(true);
+    expect(a.doubleApVsSubtype).toEqual({});
+  });
+
+  it("flakLining с рейтингом — +X AP против X(Fr) (Панцирь Темпестус, wdbc-q0q8)", () => {
+    const props = resolveArmorProps({ system: { properties: ["flakLining"] } });
+    const a = aggregateArmorAuto(props, { flakLining: 8 });
+    expect(a.apBonusBySubtype.fragmentation).toBe(8);
+  });
+});
+
+describe("mergeArmorLocFlags — подвиды урона (wdbc-q0q8)", () => {
+  it("OR двух множеств noApVsSubtype/doubleApVsSubtype от разных предметов", () => {
+    const a = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true } };
+    const b = { ...emptyArmorLocFlags(), doubleApVsSubtype: { fragmentation: true } };
+    const merged = mergeArmorLocFlags(a, b);
+    expect(merged.noApVsSubtype).toEqual({ electrical: true });
+    expect(merged.doubleApVsSubtype).toEqual({ fragmentation: true });
+  });
+
+  it("tripleApVsSubtype тоже сводится ИЛИ (Вулканизированный Плащ + др. предмет)", () => {
+    const a = { ...emptyArmorLocFlags(), tripleApVsSubtype: { electrical: true } };
+    const b = { ...emptyArmorLocFlags(), doubleApVsSubtype: { fragmentation: true } };
+    const merged = mergeArmorLocFlags(a, b);
+    expect(merged.tripleApVsSubtype).toEqual({ electrical: true });
+    expect(merged.doubleApVsSubtype).toEqual({ fragmentation: true });
+  });
+
+  it("один и тот же подвид у двух предметов — не дублируется, остаётся true", () => {
+    const a = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true } };
+    const b = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true } };
+    expect(mergeArmorLocFlags(a, b).noApVsSubtype).toEqual({ electrical: true });
   });
 });
 
@@ -220,6 +284,42 @@ describe("resolveArmorAbsorptionAP", () => {
       baseArmorAP: 6, vsTypeBonus: 4, damageType: "energy", primitive: true, flags
     });
     expect(ap).toBe(0);
+  });
+
+  describe("подвиды урона (wdbc-q0q8)", () => {
+    it("subtypeBonus складывается с базой, как vsTypeBonus", () => {
+      const ap = resolveArmorAbsorptionAP({ baseArmorAP: 6, subtypeBonus: 2, damageType: "energy", damageSubtype: "electrical" });
+      expect(ap).toBe(8);
+    });
+
+    it("noApVsSubtype обнуляет AP только против своего подвида, не всего широкого типа", () => {
+      const flags = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true } };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "energy", damageSubtype: "electrical", flags })).toBe(0);
+      // Тот же широкий тип (energy), другой подвид (laser) — не гасится.
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "energy", damageSubtype: "laser", flags })).toBe(6);
+    });
+
+    it("doubleApVsSubtype удваивает AP только против своего подвида", () => {
+      const flags = { ...emptyArmorLocFlags(), doubleApVsSubtype: { fragmentation: true } };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, damageType: "blast", damageSubtype: "fragmentation", flags })).toBe(10);
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, damageType: "blast", damageSubtype: "", flags })).toBe(5);
+    });
+
+    it("без damageSubtype (атака без подвида) — noApVsSubtype/doubleApVsSubtype не срабатывают", () => {
+      const flags = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true }, doubleApVsSubtype: { fragmentation: true } };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 6, damageType: "energy", damageSubtype: "", flags })).toBe(6);
+    });
+
+    it("doubleApVsSubtype удваивает уже с учётом subtypeBonus (моды брони)", () => {
+      const flags = { ...emptyArmorLocFlags(), doubleApVsSubtype: { fragmentation: true } };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 5, subtypeBonus: 1, damageType: "blast", damageSubtype: "fragmentation", flags })).toBe(12);
+    });
+
+    it("tripleApVsSubtype утраивает AP только против своего подвида (Вулканизированный Плащ, wdbc-q0q8)", () => {
+      const flags = { ...emptyArmorLocFlags(), tripleApVsSubtype: { electrical: true } };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 4, damageType: "energy", damageSubtype: "electrical", flags })).toBe(12);
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 4, damageType: "energy", damageSubtype: "laser", flags })).toBe(4);
+    });
   });
 });
 

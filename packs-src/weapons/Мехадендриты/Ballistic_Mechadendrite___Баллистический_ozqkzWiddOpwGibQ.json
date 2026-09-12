@@ -62,7 +62,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "ozqkzWiddOpwGibQ",
   "img": "systems/warhammer-dbc/assets/item-icons/mechadendrite.svg",

@@ -3,8 +3,8 @@
   "type": "forcefield",
   "folder": "IRQ8ooDLYqL9rtA6",
   "system": {
-    "description": "Чародейский дефлектор. Крайне редкий артефакт варп-природы.",
-    "notes": "",
+    "description": "Чародейский дефлектор. Крайне редкий артефакт варп-природы. Требует установленного жёсткого нагрудника.",
+    "notes": "Механизировано (wdbc-q0q8): рейтинг щита заменяется на 1-75 против E(Fl) — flags.mechanics, kind:\"shieldSubtype\" mode:\"override\" (обычный рейтинг 1-25 не трогается против любого другого подвида). Особая перегрузка: осколок впивается в грудь — 1d5 непоглощаемого R Dmg + 1d5-1 Усталости, применяется автоматически (combat/damage.mjs::_rollActiveShield). НЕ смоделировано (текст/усмотрение стола, как и требование «жёсткий нагрудник» выше): «даёт улучшение Cooler, пока активен» — тот же случай, что у армор-мода «Охладитель» (packs-src/armor-mods/Общие/Охладитель…), там уже отмечено «условный порог урона источника без готовой точки входа»; «может бросаться против урона от Горения, гася персонажа» — нет входной точки «бросить щит против тика состояния», а не только против свежего попадания; «щит только на участках тела, закрытых бронёй» — механика Щита в системе не по локациям (поглощает удар целиком или нет), это переписало бы модель щита ради одного предмета. Тест на ремонт (Medicae-10) — только текст в чате, не проверяется кодом (как и «Требование» у модов брони).",
     "shieldNature": "warp",
     "shieldType": "deflector",
     "ratingMin": 1,
@@ -16,7 +16,10 @@
     "status": "inactive",
     "quality": "common",
     "availability": 3,
-    "weight": 0.5
+    "weight": 0.5,
+    "overloadDamageFormula": "1d5",
+    "overloadFatigueFormula": "1d5-1",
+    "overloadRepairTest": "Medicae-10 (1 минута), извлечь и вставить обратно в нагрудник"
   },
   "_id": "7TQw5Wt6gJQu2Epu",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
@@ -26,7 +29,29 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "frozenHeartGroup",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "frozenHeart-override-flame",
+              "kind": "shieldSubtype",
+              "shieldSubtypeMode": "override",
+              "shieldSubtypeKey": "flame",
+              "shieldSubtypeRatingMax": 75,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

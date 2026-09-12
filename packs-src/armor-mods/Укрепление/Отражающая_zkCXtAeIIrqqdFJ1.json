@@ -5,7 +5,7 @@
   "folder": "3S2DLJENpK7spDrg",
   "system": {
     "description": "Зеркальная поверхность: +3 AP против E(Ls) и −15 на Stealth. Не работает, если броня в грязи/крови.",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): +3 AP против E(Ls) — эффект system.absorption.vsSubtype.laser. НЕ механизировано: −15 Stealth (у Модификаций брони нет общего поля скилл-мода, в отличие от Свойств брони) и условие «не работает в грязи/крови» (нет состояния «грязная/окровавленная броня») — решает ГМ.",
     "category": "armor",
     "modGroup": "reinforcement",
     "requirement": "Любая. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -21,7 +21,7 @@
       "apBody": 0,
       "apArms": 0,
       "apLegs": 0,
-      "apVsEnergy": 3,
+      "apVsEnergy": 0,
       "apVsImpact": 0,
       "apVsRending": 0,
       "apVsBlast": 0,
@@ -35,11 +35,11 @@
   "_id": "zkCXtAeIIrqqdFJ1",
   "effects": [
     {
-      "name": "Отражающая (перенесено)",
+      "name": "Отражающая",
       "system": {
         "changes": [
           {
-            "key": "system.absorption.vsType.energy",
+            "key": "system.absorption.vsSubtype.laser",
             "type": "add",
             "value": 3,
             "phase": "final",
@@ -50,7 +50,7 @@
       "_id": "ehCIzPz5SLBxndQw",
       "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
       "type": "base",
-      "disabled": true,
+      "disabled": false,
       "start": null,
       "duration": {
         "value": null,

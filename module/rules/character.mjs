@@ -669,7 +669,7 @@ export function prepareCharacterDerived(actor, system) {
     // Броня вынесена в rules/character/armour.mjs (wdbc-neez). Накопителей
     // сверху ей не нужно — считает по надетым предметам сама, — но четыре
     // её величины читают разделы ниже, поэтому она их возвращает.
-    const { armorFromItems, armorVsType, propFlagsByLoc, sealedCoverage } =
+    const { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage } =
       prepareArmourDerived(actor, system);
     // ── Снятый шлем ────────────────────────────────────────────────────────
     // Показатель «сколько ОБ на голову даёт снаряжение» считается ДО снятия:
@@ -730,6 +730,7 @@ export function prepareCharacterDerived(actor, system) {
       armorOnly:      armorAP,
       wornOnly,
       vsType:         armorVsType,
+      vsSubtype:      armorVsSubtype,
       propFlags:      propFlagsByLoc
     };
 

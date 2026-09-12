@@ -67,7 +67,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кистень"
+    "meleeCategory": "Кистень",
+    "damageSubtype": "crushing"
   },
   "_id": "SPFvDB0oSfFkYcWq",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

@@ -5,7 +5,7 @@
   "folder": "3S2DLJENpK7spDrg",
   "system": {
     "description": "Адамантиевые пластины: +2 AP против R Dmg и X(Fr) Dmg.",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): +2 AP против R (system.absorption.vsType.rending) и +2 AP против X(Fr) (system.absorption.vsSubtype.fragmentation). Эффект был выключен (disabled:true) — включён.",
     "category": "armor",
     "modGroup": "reinforcement",
     "requirement": "Жёсткая броня. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -23,8 +23,8 @@
       "apLegs": 0,
       "apVsEnergy": 0,
       "apVsImpact": 0,
-      "apVsRending": 2,
-      "apVsBlast": 2,
+      "apVsRending": 0,
+      "apVsBlast": 0,
       "maxAgilityMod": 0,
       "addProps": [],
       "charBonuses": []
@@ -46,7 +46,7 @@
             "priority": 0
           },
           {
-            "key": "system.absorption.vsType.blast",
+            "key": "system.absorption.vsSubtype.fragmentation",
             "type": "add",
             "value": 2,
             "phase": "final",
@@ -57,7 +57,7 @@
       "_id": "LI9NqSI786I79VfV",
       "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
       "type": "base",
-      "disabled": true,
+      "disabled": false,
       "start": null,
       "duration": {
         "value": null,

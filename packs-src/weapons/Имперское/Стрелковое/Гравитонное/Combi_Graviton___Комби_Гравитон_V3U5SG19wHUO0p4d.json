@@ -81,7 +81,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "V3U5SG19wHUO0p4d",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

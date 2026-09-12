@@ -119,7 +119,8 @@ const TYPES = {
       shield: {
         enabled: false, shieldNature: "technological", shieldType: "deflector",
         ratingMin: 1, ratingMax: 10, overloadThreshold: 0, isSpecialRating: false,
-        currentRating: 0, equipped: false, status: "inactive"
+        currentRating: 0, equipped: false, status: "inactive",
+        wingPosition: "", wingRatingFolded: 0, wingRatingWrapped: 0
       },
       // Свойства встроенного оружия импланта — правятся на листе предмета
       // (item-sheet.mjs), а в template.json объявлены не были.
@@ -365,7 +366,7 @@ const TYPES = {
       corEffects: [], weaponClass: "melee", weaponType: "laser", itemSize: "", range: 0,
       balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
-      damage: "", damageType: "impact", penetration: 0, quality: "common",
+      damage: "", damageType: "impact", damageSubtype: "", penetration: 0, quality: "common",
       // Строка «Книга» одна на предмет и его модификацию: лист оружия рисует
       // и weapon, и weaponMod (wdbc-eu1d).
       bookSource: "",
@@ -404,7 +405,7 @@ const TYPES = {
     defaults: {
       description: "", notes: "", weaponTypes: [], ammoCategory: "bullets",
       rarity: 0, quantity: 0, weight: 0, availability: 0, attackMod: 0,
-      damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", penetrationMod: 0,
+      damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", damageSubtypeOverride: "", penetrationMod: 0,
       rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
       // поля не было, и замена держалась на одном тексте «Особенностей».
@@ -453,7 +454,7 @@ const TYPES = {
       damage: "", damageType: "energy", penetration: 0, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
-      effect: "", isSustained: false, sustainedDegree: null,
+      effect: "", isSustained: false, sustainedDegree: null, sustainedTargetUuid: "",
       effects: {
         charBonusStat: "", charBonusValue: 0, charBonuses: [],
         armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
@@ -598,7 +599,9 @@ const TYPES = {
       description: "", notes: "", shieldNature: "technological", shieldType: "dome",
       ratingMin: 1, ratingMax: 35, overloadThreshold: 10, currentRating: 0,
       isSpecialRating: false, equipped: false, status: "inactive",
-      quality: "common", availability: 2, weight: 0, drukhari: false
+      quality: "common", availability: 2, weight: 0, drukhari: false,
+      coverVsSubtype: "", coverVsSubtypeAP: 0,
+      overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: ""
     }
   },
 

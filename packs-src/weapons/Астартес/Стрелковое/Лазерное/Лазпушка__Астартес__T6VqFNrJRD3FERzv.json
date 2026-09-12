@@ -64,7 +64,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "damageSubtype": "laser"
   },
   "_id": "T6VqFNrJRD3FERzv",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

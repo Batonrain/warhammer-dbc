@@ -5,7 +5,7 @@
   "folder": "3S2DLJENpK7spDrg",
   "system": {
     "description": "+3 AP против E(Fl) и иммунитет к свойствам Deflagrate и Melta.",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): +3 AP против E(Fl) (system.absorption.vsSubtype.flame) — было ошибочно на весь vsType.energy (задевало и лазер, и электричество). Эффект был выключен (disabled:true) — включён. НЕ механизировано: иммунитет к свойствам Deflagrate/Melta — в системе нет иммунитета к свойствам оружия (только к типам/подвидам урона), решает ГМ.",
     "category": "armor",
     "modGroup": "reinforcement",
     "requirement": "Жёсткая броня. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -21,7 +21,7 @@
       "apBody": 0,
       "apArms": 0,
       "apLegs": 0,
-      "apVsEnergy": 3,
+      "apVsEnergy": 0,
       "apVsImpact": 0,
       "apVsRending": 0,
       "apVsBlast": 0,
@@ -39,7 +39,7 @@
       "system": {
         "changes": [
           {
-            "key": "system.absorption.vsType.energy",
+            "key": "system.absorption.vsSubtype.flame",
             "type": "add",
             "value": 3,
             "phase": "final",
@@ -50,7 +50,7 @@
       "_id": "C5nOxxkNc1UoF0yF",
       "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
       "type": "base",
-      "disabled": true,
+      "disabled": false,
       "start": null,
       "duration": {
         "value": null,

@@ -1,7 +1,7 @@
 // module/combat/damage.mjs
 
 import { HIT_LOCATIONS }  from "../constants/combat.mjs";
-import { DAMAGE_TYPES }   from "../constants/items.mjs";
+import { DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
 import { parseCritEffectPills, critPillsHtml, deathButtonHtml } from "./crit-effect-parser.mjs";
@@ -20,6 +20,8 @@ import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
 import { maybeGrantEnjoymentPain } from "./enjoyment.mjs";
+import { isMercuryElectrified, maybeMarkMercuryLocation } from "./mercury-reaction.mjs";
+import { ADAPTATION_CAPABILITY, maybeGrantAdaptationBonus, adaptationBonusFor } from "./adaptation.mjs";
 import { entropyArmourLoss } from "./touch-of-entropy.mjs";
 import { processNurglingInfestation } from "./nurgling-infestation.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
@@ -28,6 +30,7 @@ import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
 import { coverApForLocation } from "../rules/cover-locations.mjs";
+import { addFatigue } from "../sheets/tabs/conditions.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -190,29 +193,53 @@ const LOCATION_TO_ARMOR = {
  *   { blocked: false, overloaded: false }     — щит не сработал
  *   null                                      — нет активного щита
  */
-async function _rollActiveShield(actor, { skipWarp = false, melee = false } = {}) {
+// Записи kind:"shieldSubtype" (wdbc-q0q8) прямо с предмета щита — читаются
+// НАПРЯМУЮ, не через collectRules/gatherRules: это не эффект на акторе, а
+// собственное поведение ЭТОГО предмета (та же роль, что coverVsSubtype/
+// coverVsSubtypeAP выше по файлу, но требует match/override логики, а не
+// плоского сложения — поэтому Конструктор, а не ещё два bare-поля схемы).
+function _shieldSubtypeEntries(item) {
+  const groups = item.getFlag?.("warhammer-dbc", "mechanics") || [];
+  const out = [];
+  for (const g of groups) for (const e of g?.entries || [])
+    if (e?.kind === "shieldSubtype" && e.shieldSubtypeKey) out.push(e);
+  return out;
+}
+
+async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "" } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
   // (wdbc-1rno, combat/turn-state-shield.mjs) даёт щит ТОЛЬКО от стрелковых
   // атак/взрывов — рукопашное попадание такой щит вообще не рассматривает
   // (не «не срабатывает», а не участвует в выборе самого мощного вовсе).
+  // Нерушимая Лента (wdbc-q0q8): щит с kind:"shieldSubtype" mode:"exclude" на
+  // этот подвид вообще не участвует в выборе — как будто его нет для этого
+  // удара (другой активный щит другой природы всё ещё может сработать).
   const shieldItem = actor.items.contents
     .filter(i =>
       i.type === "forcefield" &&
       i.system.equipped &&
       i.system.status === "active" &&
       !(skipWarp && (i.system.shieldNature || "technological") === "warp") &&
-      !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly"))
+      !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly")) &&
+      !(damageSubtype && _shieldSubtypeEntries(i).some(e => e.shieldSubtypeMode === "exclude" && e.shieldSubtypeKey === damageSubtype))
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
 
   if (!shieldItem) return null;
 
   const s          = shieldItem.system;
-  const rating     = s.currentRating     ?? 0;
   const threshold  = s.overloadThreshold ?? 0;
   const shieldType = s.shieldType        || "dome";
   const shieldNature = s.shieldNature    || "technological";
+
+  // Морозное Сердце (wdbc-q0q8): kind:"shieldSubtype" mode:"override" на этот
+  // подвид ЗАМЕНЯЕТ рейтинг для данного броска (1-25 обычно → 1-75 против
+  // E(Fl)) — не складывается с currentRating, действует только на эту проверку.
+  const subtypeOverride = damageSubtype
+    ? _shieldSubtypeEntries(shieldItem).find(e => e.shieldSubtypeMode === "override" && e.shieldSubtypeKey === damageSubtype && Number(e.shieldSubtypeRatingMax) > 0)
+    : null;
+  const rating = subtypeOverride ? Number(subtypeOverride.shieldSubtypeRatingMax) : (s.currentRating ?? 0);
 
   // Бросок d100
   const roll = await new Roll("1d100").evaluate();
@@ -227,12 +254,36 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false } = {}
   const overloaded = blocked && threshold > 0 && rv <= threshold;
 
   // ── Обновляем статус щита если перегружен ────────────────────────────────
+  const overloadRolls = [];
+  let overloadExtraHtml = "";
   if (overloaded) {
     await shieldItem.update({
       "system.status":       "overloaded",
       "system.equipped":     false,
       "system.currentRating": 0
     });
+
+    // Особая перегрузка (Морозное Сердце, wdbc-q0q8): осколок впивается в
+    // грудь — доп. непоглощаемый урон (мимо AP/щитов, applyWoundLoss тот же
+    // приём, что у Corrosive/Entropy) и доп. Усталость, требует особого теста
+    // для повторной активации (repairTest — только текст, ремонт кнопкой
+    // module/combat/shield.mjs::_repairShield по-прежнему просто сбрасывает
+    // статус, тест не проверяется кодом).
+    if (s.overloadDamageFormula) {
+      const dmgRoll = await new Roll(s.overloadDamageFormula).evaluate();
+      overloadRolls.push(dmgRoll);
+      await applyWoundLoss(actor, dmgRoll.total);
+      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Перегрузка бьёт по актору: <b>${dmgRoll.total}</b> непоглощаемого урона.</div>`;
+    }
+    if (s.overloadFatigueFormula) {
+      const fatRoll = await new Roll(s.overloadFatigueFormula).evaluate();
+      overloadRolls.push(fatRoll);
+      if (fatRoll.total > 0) await addFatigue(actor, fatRoll.total);
+      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Доп. Усталость: <b>${fatRoll.total}</b>.</div>`;
+    }
+    if (s.overloadRepairTest) {
+      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Для повторной активации нужен тест: <b>${esc(s.overloadRepairTest)}</b>.</div>`;
+    }
   }
 
   // ── Тип щита для отображения ──────────────────────────────────────────────
@@ -272,9 +323,10 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false } = {}
         </div>`,
       overloaded ? `<div class="roll-threshold" style="color:#c07000;">
           Щит нуждается в обслуживании перед повторным использованием.
-        </div>` : ""
+        </div>` : "",
+      overloadExtraHtml
     ]
-  }, { rolls: [roll], speaker: { alias: "Система" } });
+  }, { rolls: [roll, ...overloadRolls], speaker: { alias: "Система" } });
 
   return { blocked, overloaded };
 }
@@ -372,6 +424,8 @@ export async function applyDamageToActor(actor, damageData) {
     rawDamage,       // число — урон до поглощения
     penetration,     // число — бронепробитие
     damageType,      // строка — "impact", "rending" и т.д.
+    damageSubtype = "", // строка — подвид в скобках книги: "crushing"/"fragmentation"/
+                         // "electrical"/"flame"/"laser"/"toxic"/"" (wdbc-q0q8, DAMAGE_SUBTYPES)
     hitLocation,     // строка — "Голова", "Торс" и т.д.
     attackerName,    // строка
     attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf)
@@ -398,7 +452,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;
@@ -412,8 +466,20 @@ export async function applyDamageToActor(actor, damageData) {
   // не нужно — если щит уже заблокировал попадание, сюда не дойдём вовсе.
   if (damageType === "chemical" && system.sealedFullSuit) return;
 
+  // Иммунитет по подвиду урона (wdbc-q0q8) — полный игнор попадания, не
+  // только побочного эффекта. Единое пространство имён на все 6 подвидов
+  // (не по одному capability-ключу на подвид) — источник сам называет
+  // подвид, а не жёстко на нём завязан код.
+  if (damageSubtype && hasRuleFlag(actor, `damageImmunity.subtype.${damageSubtype}`)) return;
+
   const absorption = system.absorption || {};
   const armorKey  = LOCATION_TO_ARMOR[hitLocation] || "body";
+  // Замена Крови, субмутация «Ртуть» (wdbc-q0q8): часть тела, отмеченная
+  // прошлым ранением, иммунна к E(Ls) — полный игнор попадания, тот же приём,
+  // что damageImmunity.subtype.* выше, но по конкретной локации, а не всему
+  // актору.
+  const mercuryMarked = isMercuryElectrified(actor, armorKey);
+  if (mercuryMarked && damageSubtype === "laser") return;
   // wdbc-bxw6: аблативный AP-щит (Роба Чемпиона и т.п., system.ablativeApShield)
   // — плоская добавка к поглощению ЭТОГО попадания, читается ДО того, как то
   // же попадание списывает с неё заряд (см. decrement ниже).
@@ -467,11 +533,24 @@ export async function applyDamageToActor(actor, damageData) {
       // AP брони — может быть уменьшен пробитием. Свойства брони этой локации
       // (Conductive/Flak/Soft/Rods/Open/Primitive) — см. armor-properties.mjs и
       // сбор флагов по локациям в documents/actor.mjs.
+      // Ртуть (wdbc-q0q8): отмеченная локация «электропроводна» — тот же
+      // эффект, что свойство брони Conductive (noEnergy), только на ОДНУ
+      // часть тела и временно, поэтому накладывается сверху пропFlags этой
+      // локации, а не хранится на предмете брони.
+      const locFlags = mercuryMarked
+        ? { ...(absorption.propFlags?.[armorKey] || {}), noEnergy: true }
+        : absorption.propFlags?.[armorKey];
+      // Адаптация (wdbc-q0q8): бонус, накопленный ПРЕДЫДУЩИМИ попаданиями
+      // этого же вида урона — читается напрямую (см. adaptation.mjs почему
+      // не через vsType/vsSubtype листа), добавляется к бонусу нужной
+      // гранулярности: подвид, если атака его называет, иначе широкий тип.
+      const adaptBonus = adaptationBonusFor(actor, damageType, damageSubtype);
       armorAP = resolveArmorAbsorptionAP({
         baseArmorAP: (absorption[armorKey] ?? 0) - (absorption.toughnessBonus ?? 0),
-        vsTypeBonus: absorption.vsType?.[damageType] ?? 0,
-        damageType, melee, hitLocation, primitive, frontArcHit,
-        flags: absorption.propFlags?.[armorKey],
+        vsTypeBonus: (absorption.vsType?.[damageType] ?? 0) + (damageSubtype ? 0 : adaptBonus),
+        subtypeBonus: (absorption.vsSubtype?.[damageSubtype] ?? 0) + (damageSubtype ? adaptBonus : 0),
+        damageType, damageSubtype, melee, hitLocation, primitive, frontArcHit,
+        flags: locFlags,
         wornAP: absorption.wornOnly?.[armorKey]
       });
       // Рыцарь Кхорна (wdbc-1rno): демон-скакун, вселённый в технику/скакуна,
@@ -603,6 +682,23 @@ export async function applyDamageToActor(actor, damageData) {
   // Эффект от атаки — 1 Боли раз за бой, без траты Реакции.
   if (netDamage > 0) await maybeGrantEnjoymentPain(actor);
 
+  // Ртуть (wdbc-q0q8, Замена Крови): непоглощённый I/R/X урон отмечает
+  // раненую часть тела — с этого момента иммунна к E(Ls), но проводит ток
+  // (см. mercury-reaction.mjs). Тот же триггер netDamage > 0, что у
+  // Наслаждения выше — книга не разбивает точнее «непоглощённый урон».
+  if (netDamage > 0) {
+    await maybeMarkMercuryLocation(
+      actor, hasRuleFlag(actor, "mutation.bloodReplacement.mercuryReaction"), damageType, armorKey
+    );
+  }
+
+  // Адаптация (wdbc-q0q8, Панцирь): непоглощённый урон — тот же триггер, что
+  // Ртуть выше (см. adaptation.mjs про то, почему не буквальное «до
+  // Избеганий»). Тип/подвид уже известны здесь как раз для этого попадания.
+  if (netDamage > 0) {
+    await maybeGrantAdaptationBonus(actor, hasRuleFlag(actor, ADAPTATION_CAPABILITY), damageType, damageSubtype);
+  }
+
   // Заражение Нурглингами (wdbc-1rno, Дар Нургла): тот же момент — сколько
   // слуг вылезло из свежей раны, считается по величине непоглощённого урона.
   await processNurglingInfestation(actor, netDamage);
@@ -631,6 +727,7 @@ export async function applyDamageToActor(actor, damageData) {
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
   const dtLabel  = DAMAGE_TYPES[damageType] || damageType;
+  const dSubLabel = damageSubtype ? (DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype) : "";
 
   const propNotes = [];
   if (primitive)   propNotes.push("Примитивное: броня ×2");
@@ -642,6 +739,12 @@ export async function applyDamageToActor(actor, damageData) {
     if (pfNote.noEnergy && damageType === "energy")  propNotes.push("Проводящая: без AP от Энергии");
     if (pfNote.noImpact && damageType === "impact")  propNotes.push("Мягкая: без AP от Удара");
     if (pfNote.doubleBlast && damageType === "blast") propNotes.push("Флак: AP брони ×2");
+    if (damageSubtype && pfNote.noApVsSubtype?.[damageSubtype])
+      propNotes.push(`Без AP от ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
+    if (damageSubtype && pfNote.doubleApVsSubtype?.[damageSubtype])
+      propNotes.push(`AP брони ×2 против ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
+    if (damageSubtype && pfNote.tripleApVsSubtype?.[damageSubtype])
+      propNotes.push(`AP брони ×3 против ${DAMAGE_SUBTYPES[damageSubtype]?.label || damageSubtype}`);
     if (pfNote.noRanged && !melee)                    propNotes.push("Стержни: без AP от стрелковой атаки");
     if (pfNote.noJointCalled && hitLocation === "Сочленение / Шея") propNotes.push("Стержни: без AP в Сочленение");
     if (pfNote.noEyeCalled  && hitLocation === "Глаз (Голова)")     propNotes.push("Открытый шлем: без AP в Глаз");
@@ -728,7 +831,7 @@ export async function applyDamageToActor(actor, damageData) {
     lines: [
       `<div class="roll-damage-meta">
           Источник: <b>${attackerName || "?"}</b>${weaponName ? ` (${weaponName})` : ""}
-          · Место: <b>${hitLocation}</b> · Тип: <b>${dtLabel}</b> · Урон: <b>${rawDamage}</b>
+          · Место: <b>${hitLocation}</b> · Тип: <b>${dtLabel}${dSubLabel ? ` (${dSubLabel})` : ""}</b> · Урон: <b>${rawDamage}</b>
         </div>`,
       armorBreakdown,
       shieldFailNote

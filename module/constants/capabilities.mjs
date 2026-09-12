@@ -93,6 +93,44 @@ export const CAPABILITIES = {
     source: "Дар Кхорн (Purity of Wrath)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — condition system.inRage"
   },
+  // ── Иммунитет по подвиду урона (wdbc-q0q8) ───────────────────────────────
+  // Подвиды в скобках книги — I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx). Один
+  // читатель на все шесть (damage.mjs собирает ключ из damageSubtype атаки,
+  // не хардкодит), поэтому здесь достаточно одной записи реестра — конкретный
+  // предмет подставляет свой ключ подвида в capabilityKey Конструктора. Ни
+  // один предмет пака не выдаёт их на 11.09.2026 (инфраструктура заведена
+  // раньше контента) — ближайший кандидат по находке тикета: Живое Зеркало
+  // (Мутации, wdbc-1rno) сейчас держит только текстовую/capability-заглушку.
+  "damageImmunity.subtype.crushing": {
+    label: "Полный иммунитет к урону подвида I(Cr) Дробящий",
+    source: "не выдана ни одним предметом пака на 11.09.2026 — заведена про запас",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по damageSubtype"
+  },
+  "damageImmunity.subtype.fragmentation": {
+    label: "Полный иммунитет к урону подвида X(Fr) Осколочный",
+    source: "не выдана ни одним предметом пака на 11.09.2026 — заведена про запас",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по damageSubtype"
+  },
+  "damageImmunity.subtype.electrical": {
+    label: "Полный иммунитет к урону подвида E(El) Электрический",
+    source: "не выдана ни одним предметом пака на 11.09.2026 — заведена про запас",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по damageSubtype"
+  },
+  "damageImmunity.subtype.flame": {
+    label: "Полный иммунитет к урону подвида E(Fl) Огненный",
+    source: "Имплант Bio-Smelter / Био-Плавильня (Друкхари, Гемункульские) — только на Best.Q (when.quality, wdbc-9k2q), подключено контентным проходом wdbc-q0q8 11.09.2026",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по damageSubtype"
+  },
+  "damageImmunity.subtype.laser": {
+    label: "Полный иммунитет к урону подвида E(Ls) Лазерный",
+    source: "Мутация: Living Mirror / Живое Зеркало (capabilityKey был «mutation.livingMirror», нечитаемая заглушка wdbc-1rno, переключён контентным проходом wdbc-q0q8 11.09.2026); психосила Umbral Form / Мрачная Форма (пока поддерживается, self-only); имплант Aelindrach Wings / Крылья Элиндраха (Друкхари) — оба подключены wdbc-lmd2 11.09.2026",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по damageSubtype"
+  },
+  "damageImmunity.subtype.toxic": {
+    label: "Полный иммунитет к урону подвида C(Tx) Токсический",
+    source: "не выдана ни одним предметом пака на 11.09.2026 — заведена про запас",
+    reader: "module/combat/damage.mjs applyDamageToActor — ранний return по damageSubtype"
+  },
   // ── Модификации брони против Варп-Оружия (wdbc-sg57) ────────────────────
   "armor.apVsWarpFull": {
     label: "AP брони этой локации целиком (не игнорируется) против Варп-Оружия",
@@ -6878,10 +6916,20 @@ export const CAPABILITIES = {
     source: "Мутация: Blood Replacement (Общие мутации)",
     reader: ""
   },
+  "mutation.bloodReplacement.mercuryReaction": {
+    label: "Субмутация «Ртуть»: непоглощённый I/R/X урон отмечает раненую часть тела — иммунна к E(Ls), но проводит ток (noEnergy) до конца боя",
+    source: "Мутация: Blood Replacement / Замена Крови (Общие мутации), субмутация 2 «Ртуть» — подключено контентным проходом wdbc-q0q8 11.09.2026",
+    reader: "module/combat/mercury-reaction.mjs — вызывается из combat/damage.mjs applyDamageToActor при netDamage > 0"
+  },
   "mutation.burningBody": {
     label: "Иммунитет к экстремальным температурам/Горению (подавляемо тестом W+0 на 1 час); рукопашные атакующие в Rng 0-1/Захвате — A+0 или 1d10 E(Fl) Dmg; 10 субмутаций варьируют профиль пламени. Иммунитет к Горению от Flame теперь реализован отдельной записью (weaponPropertyImmunity.flame, wdbc-plsf); экстремальные температуры/подавление тестом/атака в Захвате/субмутации остаются неавтоматизированы (эта запись — оставшаяся заглушка)",
     source: "Мутация: Burning Body (Общие мутации)",
     reader: ""
+  },
+  "mutation.carapace.adaptation": {
+    label: "Субмутация «Адаптация»: непоглощённый урон отмечает вид урона этой атаки, +1 к Поглощению этого вида до конца боя, до потолка Cor.b",
+    source: "Мутация: Carapace / Панцирь (Общие мутации), субмутация 10 «Адаптация» — подключено контентным проходом wdbc-q0q8 11.09.2026",
+    reader: "module/combat/adaptation.mjs — вызывается из combat/damage.mjs applyDamageToActor при netDamage > 0"
   },
   "mutation.centaur": {
     label: "Нижняя половина тела заменяется телом животного по субмутации (10 вариантов — Multiple Arms/Quadruped/Natural Weapons/Таланты и др.), сама база не даёт эффекта без субмутации — не автоматизировано",

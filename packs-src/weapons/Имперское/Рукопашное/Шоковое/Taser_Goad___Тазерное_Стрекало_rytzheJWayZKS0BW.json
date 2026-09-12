@@ -57,7 +57,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Меч"
+    "meleeCategory": "Меч",
+    "damageSubtype": "electrical"
   },
   "_id": "rytzheJWayZKS0BW",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",

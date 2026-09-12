@@ -56,7 +56,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Копьё"
+    "meleeCategory": "Копьё",
+    "damageSubtype": "electrical"
   },
   "_id": "9k3VGKsmvOdNNw6t",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

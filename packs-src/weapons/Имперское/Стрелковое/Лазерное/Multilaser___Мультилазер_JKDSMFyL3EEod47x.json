@@ -59,7 +59,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "laser"
   },
   "_id": "JKDSMFyL3EEod47x",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-heavy.svg",

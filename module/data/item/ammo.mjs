@@ -24,6 +24,10 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       damageMod:          num(0, "Урон"),
       damageDiceMod:      num(0, "Кубы урона"),
       damageTypeOverride: new StringField({ initial: "", label: "Тип урона взамен" }),
+      // Подвид урона взамен (wdbc-q0q8) — та же роль, что damageTypeOverride
+      // выше, но для DAMAGE_SUBTYPES: боеприпас, меняющий природу урона
+      // оружия (напр. зажигательный патрон), может задавать и подвид.
+      damageSubtypeOverride: new StringField({ initial: "", label: "Подвид урона взамен" }),
       penetrationMod:     num(0, "Пробитие"),
       rangeMod:           num(0, "Дальность"),
       rangeMultiplier:    num(1, "Дальность, множитель"),

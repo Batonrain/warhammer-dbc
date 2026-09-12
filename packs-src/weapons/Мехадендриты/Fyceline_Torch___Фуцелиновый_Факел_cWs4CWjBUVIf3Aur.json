@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "flame"
   },
   "_id": "cWs4CWjBUVIf3Aur",
   "img": "systems/warhammer-dbc/assets/item-icons/mechadendrite.svg",

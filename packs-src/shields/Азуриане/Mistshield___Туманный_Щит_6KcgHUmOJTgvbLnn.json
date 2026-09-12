@@ -4,7 +4,7 @@
   "folder": "UnFkx3aiaggUpvuw",
   "system": {
     "description": "Личный щит корсаров. Пока активен — испускает туман, считающийся укрытием 8 AP от E(Ls). Перегрузка: яркая вспышка создаёт область 10 м на 1d10 раундов, укрытие 12 AP против E(Ls).",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): пока щит активен (status=\"active\") — +8 AP против E(Ls) (coverVsSubtype/coverVsSubtypeAP, rules/character/armour.mjs), тем же способом, что обычное Укрытие. НЕ механизирована зона перегрузки (10 м, 1d10 раундов, 12 AP всем внутри, не только владельцу) — это отдельный Region-эффект (как Дым/Гравитонное, module/regions/), не читающееся поле предмета, отдельная работа по масштабу.",
     "shieldNature": "technological",
     "shieldType": "dome",
     "ratingMin": 1,
@@ -16,7 +16,9 @@
     "status": "inactive",
     "quality": "common",
     "availability": 2,
-    "weight": 4
+    "weight": 4,
+    "coverVsSubtype": "laser",
+    "coverVsSubtypeAP": 8
   },
   "_id": "6KcgHUmOJTgvbLnn",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",

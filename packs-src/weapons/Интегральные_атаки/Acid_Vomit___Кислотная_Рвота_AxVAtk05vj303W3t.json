@@ -71,7 +71,8 @@
     "damage": "1d10+2",
     "damageType": "chemical",
     "penetration": 3,
-    "meleeCategory": ""
+    "meleeCategory": "",
+    "damageSubtype": "toxic"
   },
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
   "effects": [],

@@ -3,8 +3,8 @@
   "type": "armor",
   "folder": "ZHj3zPsnlSldJJfS",
   "system": {
-    "description": "",
-    "notes": "",
+    "description": "Продвинутая панцирная броня элитных Отпрысков Темпестус, со встроенным нижним слоем флак-пластин и флак-ткани.",
+    "notes": "Механизировано (wdbc-q0q8): +8 AP против X(Fr) урона — свойство flakLining (rating), propRatings.flakLining=8. НЕ механизировано: «AP 4 на сочленениях» — не про подвиды урона, требует отдельного решения по семантике (фиксированное число вместо обычного деления ap/3 на Сочленении); встроенные модификации (Backpack/Monoscope/Slate Monitron/когитатор/Vox-Bead/Photo-Visor) — вне рамок задачи про подвиды урона.",
     "armorType": "carapace",
     "stacks": false,
     "maxAgility": 50,
@@ -24,13 +24,15 @@
       "hard",
       "heavy",
       "sealed",
-      "void"
+      "void",
+      "flakLining"
     ],
     "strengthBonus": 0,
     "wpBonus": 0,
     "special": "",
     "propRatings": {
-      "gorget": 7
+      "gorget": 7,
+      "flakLining": 8
     }
   },
   "_id": "30ucKqAYlG27E4bR",
