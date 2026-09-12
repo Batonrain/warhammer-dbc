@@ -79,27 +79,6 @@ export function getModEffects(actor, weapon) {
     fx.names.push(power.name);
   }
 
-  // ── Усиление от Талантов (wdbc-g53k) — тот же weaponBuff, что у психосил
-  // выше, но без гейта isSustained: Талант действует, просто пока он на
-  // акторе (тот же рубильник, что charBonuses/armourAll/fearRating Талантов
-  // в module/documents/actor.mjs). ──
-  for (const talent of actor.items) {
-    if (talent.type !== "talent") continue;
-    // system?. — предмет сюда приходит не только настоящим документом Foundry:
-    // бюджет рук считают и на сырых объектах (тесты, компендиум), а талант без
-    // system роняет весь расчёт занятости рук (wdbc-4e60).
-    const wb = talent.system?.effects?.weaponBuff;
-    if (!wb || !wb.enabled) continue;
-    const scope = wb.scope || "equipped";
-    if (scope === "equipped" && !weapon.system.equipped) continue;
-    if (scope === "force" && !(weapon.system.weaponProps || []).some(p => p.key === "force")) continue;
-    fx.damageMod += Number(wb.damageMod) || 0;
-    fx.penMod    += Number(wb.penMod)    || 0;
-    fx.rangeMod  += Number(wb.rangeMod)  || 0;
-    for (const p of (wb.addProps || [])) fx.addProps.push(p);
-    fx.names.push(talent.name);
-  }
-
   // Fully Armed / Во Всеоружии (Черта, wdbc-1rno) — +1 Надёжность для
   // не-тяжёлого стрелкового оружия с установленным Custom Grip (см.
   // module/combat/fully-armed.mjs; вес — отдельно, в module/constants/rig.mjs).
