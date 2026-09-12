@@ -231,7 +231,6 @@ function _wireCalDrag(el) {
 // перезагрузке заново инициализируется БЕЗ выстрела на уже активном делении
 // (иначе F5 спамил бы всем триггер уже идущего деления при каждом входе).
 let _lastWatchByPreset = {};
-let _lastWatchInit = false;
 
 function _isPrimaryGM() {
   return !!game.users.activeGM && game.user.id === game.users.activeGM.id;
@@ -295,13 +294,18 @@ export function checkCalendarWatchTriggers(worldTime) {
     if (!_isPrimaryGM()) return;
     const cfg = calendarConfig();
     const phases = currentEnabledPhases(worldTime, cfg);
-    const isFirst = !_lastWatchInit;
-    _lastWatchInit = true;
     for (const p of phases) {
       const curId = p.watch?.id;
+      // Пресет, включённый ПОСЛЕ инициализации, впервые попадает в phases
+      // здесь и только здесь — у него ещё нет своего prevId, хотя другие
+      // пресеты уже давно отслеживаются. hasOwnProperty (а не общий флаг
+      // isFirst) отличает «этот конкретный пресет видим впервые» от «его
+      // деление реально сменилось» — иначе первый же прогон после включения
+      // стрелял триггером текущего деления, будто оно только что наступило.
+      const seenBefore = Object.prototype.hasOwnProperty.call(_lastWatchByPreset, p.key);
       const prevId = _lastWatchByPreset[p.key];
       _lastWatchByPreset[p.key] = curId;
-      if (!isFirst && curId && curId !== prevId) _fireWatchTrigger(curId, cfg, p);
+      if (seenBefore && curId && curId !== prevId) _fireWatchTrigger(curId, cfg, p);
     }
   } catch (e) { console.warn("warhammer-dbc | imperial calendar watch triggers", e); }
 }

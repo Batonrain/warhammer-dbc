@@ -124,7 +124,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Респиратор",
+              "label": "Респиратор (против вдыхаемых газов)",
               "code": "",
               "when": {
                 "negate": false,
