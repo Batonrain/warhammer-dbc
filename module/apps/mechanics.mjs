@@ -141,6 +141,21 @@
 //      НА ВСЕ шесть локаций, и выдать «+4 только в торс» (Чёрный Панцирь) ею
 //      было нечем: rescaleTraitByRating масштабирует значение, но не сужает
 //      набор локаций.
+//    absorption: { absorptionTarget:"vsType:<energy|impact|rending|blast|chemical>"|
+//                   "vsSubtype:<crushing|fragmentation|electrical|flame|laser|toxic>",
+//                   op:"add"|"subtract", absorptionValue }
+//      → ActiveEffect НА ПРЕДМЕТЕ на system.absorption.vsType.<тип> или
+//      system.absorption.vsSubtype.<подвид> (module/combat/damage.mjs, wdbc-q0q8)
+//      — та же роль, что «Очки Брони» выше, но не складываемый AP локации, а
+//      AP ПРОТИВ КОНКРЕТНОГО ТИПА/ПОДВИДА УРОНА, суммируемый по всем
+//      локациям сразу (см. вычисление armorVsType/armorVsSubtype,
+//      rules/character/armour.mjs). Фаза "final": производное поле,
+//      пересчитывается заново каждый цикл prepareDerivedData.
+//      Заведено потому, что этот бонус раньше умели давать только Свойства
+//      брони (module/constants/items.mjs::ARMOR_PROPERTIES) и Модификации
+//      брони — Мутация/Черта/Талант, дающие «+2 AP против R, но −2 против
+//      I(Cr)» (Панцирь, субмутация «Стальной Мех»), не были Бронёй и такой
+//      записи не имели вовсе, только сырой ActiveEffect без when-гейтов.
 //    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
@@ -296,7 +311,7 @@ import { isThrottleReady, markThrottleUsed,
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
-import { AVAILABILITY, DAMAGE_TYPES }         from "../constants/items.mjs";
+import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
@@ -484,6 +499,8 @@ const KIND_LABELS = {
   failDegMod: "Доп. Провалы при провале",
   capability: "Возможность",
   armour: "Очки Брони (локация)",
+  absorption: "AP против типа/подвида урона",
+  shieldSubtype: "Щит: подвид урона",
   counterAttack: "Встречная атака",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
@@ -756,6 +773,17 @@ export function blankMechEntry(kind = "characteristic") {
     movementTarget: "spd", movementValue: 1,
     // armour (op — общее поле): "all" = все шесть локаций разом
     armourLocation: "body", armourValue: 1,
+    // absorption (op — общее поле): "vsType:<тип>" | "vsSubtype:<подвид>"
+    absorptionTarget: "", absorptionValue: 1,
+    // shieldSubtype (wdbc-q0q8) — только для предметов type:"forcefield":
+    // читается НАПРЯМУЮ с самого предмета в момент броска щита
+    // (combat/damage.mjs::_rollActiveShield), не создаёт синтетический
+    // ActiveEffect на акторе (не входит в DURABLE_MECH_KINDS). mode:"exclude"
+    // — щит вообще не срабатывает против этого подвида (Нерушимая Лента);
+    // mode:"override" — на бросок ПРОТИВ этого подвида рейтинг щита заменяется
+    // на shieldSubtypeRatingMax вместо currentRating, не складывается с ним
+    // (Морозное Сердце: 1-25 обычно, 1-75 против E(Fl)).
+    shieldSubtypeMode: "exclude", shieldSubtypeKey: "", shieldSubtypeRatingMax: 0,
     // terrainIgnore
     ignoreTerrainProps: [],
     // counterAttack — «Встречная атака» (wdbc-2wy7): живой запрос, читается в
@@ -931,6 +959,22 @@ export function describeMechEntry(entry) {
       if (entry.armourValue === "" || entry.armourValue == null) return `Очки Брони: ${loc} (не задано)`;
       const sign = OP_SIGN[entry.op] ?? "+";
       return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
+    }
+    case "absorption": {
+      const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
+      const label = scope === "vsType" ? (DAMAGE_TYPES[absKey] || absKey)
+                  : scope === "vsSubtype" ? (DAMAGE_SUBTYPES[absKey]?.label || absKey) : "";
+      if (!label) return "AP против типа/подвида урона (не задано)";
+      if (entry.absorptionValue === "" || entry.absorptionValue == null) return `AP против ${label} (не задано)`;
+      const sign = OP_SIGN[entry.op] ?? "+";
+      return `AP против ${label}: ${sign}${entry.absorptionValue}`;
+    }
+    case "shieldSubtype": {
+      const subLabel = DAMAGE_SUBTYPES[entry.shieldSubtypeKey]?.label || entry.shieldSubtypeKey;
+      if (!subLabel) return "Щит: подвид урона (не задано)";
+      return entry.shieldSubtypeMode === "override"
+        ? `Щит: против ${subLabel} рейтинг заменяется на 1–${entry.shieldSubtypeRatingMax || 0}`
+        : `Щит: не действует против ${subLabel}`;
     }
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
@@ -1158,6 +1202,13 @@ function isEntryComplete(e) {
       return !!e.movementTarget && formulaOk(e.movementValue);
     case "armour":
       return !!e.armourLocation && formulaOk(e.armourValue);
+    case "absorption": {
+      const [scope, absKey] = String(e.absorptionTarget || "").split(":");
+      return (scope === "vsType" || scope === "vsSubtype") && !!absKey && formulaOk(e.absorptionValue);
+    }
+    case "shieldSubtype":
+      if (!e.shieldSubtypeKey) return false;
+      return e.shieldSubtypeMode === "override" ? Number(e.shieldSubtypeRatingMax) > 0 : true;
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "counterAttack":
@@ -2470,7 +2521,7 @@ export async function setMutationsSuppressed(sourceItem, suppressed) {
 //
 // Разовых записей (Порча, Раны, Слаженность, выдача предмета/Черты/Таланта,
 // Код) это не касается: повтор бросил бы кубик заново и выдал второй предмет.
-export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour"]);
+export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour", "absorption"]);
 
 /**
  * Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи.
@@ -2520,6 +2571,14 @@ function mechEffectData(entry, sourceItem, actor = null) {
       const key = `system.armorBonus.${loc}`;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
                      value: num(entry.armourValue),
+                     phase: expectedPhase(key), priority: 0 });
+    }
+  } else if (entry.kind === "absorption") {
+    const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
+    if ((scope === "vsType" || scope === "vsSubtype") && absKey) {
+      const key = `system.absorption.${scope}.${absKey}`;
+      changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
+                     value: num(entry.absorptionValue),
                      phase: expectedPhase(key), priority: 0 });
     }
   }
@@ -2915,6 +2974,35 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
       <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-armour-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.armourValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+  }
+
+  if (ent.kind === "absorption") {
+    const typeOpts = Object.entries(DAMAGE_TYPES)
+      .map(([k, l]) => optHtml(`vsType:${k}`, `Тип: ${l}`, ent.absorptionTarget === `vsType:${k}`)).join("");
+    const subtypeOpts = Object.entries(DAMAGE_SUBTYPES)
+      .map(([k, d]) => optHtml(`vsSubtype:${k}`, `Подвид: ${d.label}`, ent.absorptionTarget === `vsSubtype:${k}`)).join("");
+    const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
+    return `<select class="mech-absorption-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.absorptionTarget ? "" : "selected"}>— выберите —</option>
+        <optgroup label="Широкий тип">${typeOpts}</optgroup>
+        <optgroup label="Подвид (в скобках книги)">${subtypeOpts}</optgroup>
+      </select>
+      <select class="mech-absorption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
+      <input type="text" class="mech-absorption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.absorptionValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+  }
+
+  if (ent.kind === "shieldSubtype") {
+    const modeOpts = [["exclude", "Не действует против подвида"], ["override", "Рейтинг заменяется против подвида"]]
+      .map(([v, l]) => optHtml(v, l, (ent.shieldSubtypeMode || "exclude") === v)).join("");
+    const subtypeOpts = Object.entries(DAMAGE_SUBTYPES)
+      .map(([k, d]) => optHtml(k, d.label, ent.shieldSubtypeKey === k)).join("");
+    return `<select class="mech-shield-subtype-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      <select class="mech-shield-subtype-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.shieldSubtypeKey ? "" : "selected"}>— подвид —</option>${subtypeOpts}
+      </select>
+      ${ent.shieldSubtypeMode === "override"
+        ? `<input type="number" class="mech-shield-subtype-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.shieldSubtypeRatingMax ?? 0)}" placeholder="напр. 75" ${dis}/>`
+        : ""}`;
   }
 
   if (ent.kind === "terrainIgnore") {
@@ -3740,7 +3828,8 @@ export function mechanicsRelevantChange(changed) {
 // saveItemMechanics при сохранении предупреждает автора (см. ниже).
 const FORMULA_FIELD_BY_KIND = {
   characteristic: "value", poolMax: "value",
-  weight: "weightValue", movement: "movementValue", armour: "armourValue"
+  weight: "weightValue", movement: "movementValue", armour: "armourValue",
+  absorption: "absorptionValue"
 };
 
 /** Непустые формулы записей (рекурсивно, с подгруппами), которые не разбираются. */

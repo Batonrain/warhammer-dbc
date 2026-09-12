@@ -76,7 +76,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  * кнопками: цель выбирается уже после броска, и на момент сборки карточки
  * неизвестно, попадут ли в толпу.
  */
-function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, vehicleSide,
+function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
                                     attackerUuid = "", itemUuid = "", hordeHits = null }) {
   if (!hits.length) return "";
@@ -98,6 +98,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-damage="${hits[0].total}"
       data-penetration="${pen}"
       data-damage-type="${damageType}"
+      data-damage-subtype="${damageSubtype}"
       data-hit-location="${hits[0].loc}"
       data-attacker="${actorName}"
       data-attacker-uuid="${attackerUuid}"
@@ -169,6 +170,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-damage="${d.total}"
     data-penetration="${pen}"
     data-damage-type="${damageType}"
+    data-damage-subtype="${damageSubtype}"
     data-hit-location="${d.loc}"
     data-vehicle-side="${vehicleSide}"
     data-weapon-name="${weaponName}"
@@ -428,7 +430,7 @@ export function attackCard({
   critLine = "",
   hitsCount = 0, hits = [],
   hitLocLabel = "", locRoll = 0, locShift = null, gorget = null,
-  isMelee = false, dtLabel = "", damageType = "", pen = 0,
+  isMelee = false, dtLabel = "", damageType = "", damageSubtype = "", pen = 0,
   // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
   // владение Талантом + не потрачен в этом Раунде), карточка только рисует.
@@ -635,7 +637,7 @@ export function attackCard({
       // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
       (hit && !isSprayAuto)
         ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
-      applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
+      applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),
       soulBurnActorId ? `

@@ -29,6 +29,7 @@ import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 import { situationalRules } from "./situational.mjs";
+import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
@@ -194,6 +195,11 @@ registerRuleSource("dreadnought", (a) => {
 // атаки в момент применения, снимает resetActionEconomy (action-economy.mjs)
 // тем же приёмом, что exposedAggressive/running/movedThisTurn — переносить
 // в постоянное хранимое поле схемы не нужно, живёт как временный флаг.
+// Психосилы, дающие способность цели каста, не владельцу (wdbc-lmd2, найдено
+// внутри wdbc-q0q8) — Dragon Scales/Wings of the Phoenix. См. заголовок
+// module/rules/psychic-sustain-target.mjs про соглашение "target:<флаг>".
+registerRuleSource("psychicSustainTarget", a => psychicSustainTargetRules(a));
+
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];
   return [{

@@ -325,6 +325,38 @@ describe("processConditionTurnEnd: Горение", () => {
     expect(captured.chat[0].content).toContain("успех");
   });
 
+  // Броня Огненного Дракона (wdbc-q0q8, ARMOR_PROPERTIES.fireproof) —
+  // единственное известное исключение из «Горение игнорирует броню целиком»:
+  // собственное AP ТЕЛА этого предмета, удвоенное, вычитается из тика.
+  it("Fireproof (Броня Огненного Дракона): AP тела ×2 снижает урон Горения сверх T.b", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    actor.items = [{
+      type: "armor",
+      system: { equipped: true, body: 8, properties: ["fireproof"] }
+    }];
+    // 10 - T.b(0) - AP(8*2=16) = 0 → урон не проходит вовсе
+    captured.dice = [10, 20]; // второй бросок — тест T+0 запасной ветки
+    actor.system.characteristics.t.total = 60;
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.wounds.value).toBe(5); // не изменилось
+    expect(captured.chat[0].content).toContain("AP(×2) 16");
+  });
+
+  it("Fireproof: неэкипированная броня с этим свойством не считается", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    actor.items = [{
+      type: "armor",
+      system: { equipped: false, body: 8, properties: ["fireproof"] }
+    }];
+    captured.dice = [6]; // 6 - T.b(0) - AP(0, не учтена) = 6 урона, при 5 текущих Ранах — уходит в крит.
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.wounds.value).toBe(0);
+    expect(actor.system.wounds.critical).toBe(1);
+    expect(captured.chat[0].content).toContain("игнор брони");
+  });
+
   it("нет Горения — тишина", async () => {
     const actor = makeActor();
     await processConditionTurnEnd(actor);

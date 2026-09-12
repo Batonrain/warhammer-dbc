@@ -93,6 +93,13 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // тем же item.update, что и isSustained (module/sheets/tabs/psychic.mjs),
       // и сбрасывается в null там же при снятии поддержания.
       sustainedDegree: new NumberField({ initial: null, nullable: true, integer: true, label: "Степень успеха (поддержание)" }),
+      // wdbc-lmd2 (найдено внутри wdbc-q0q8): uuid актора-цели, зафиксированный
+      // в момент включения «Поддерживать» (по game.user.targets, tabs/psychic.mjs).
+      // Читает cross-actor источник module/rules/psychic-sustain-target.mjs —
+      // способности «Цели психосилы получают...» (Dragon Scales/Wings of the
+      // Phoenix), а не только владельцу. Пустая строка — цель не отмечена
+      // (сила не поддерживается, либо игрок ничего не выделил при манифестации).
+      sustainedTargetUuid: new StringField({ initial: "", label: "Цель поддержания (uuid)" }),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
     };
   }

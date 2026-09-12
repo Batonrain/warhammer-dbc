@@ -414,10 +414,14 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
 
     expect(power.updates.at(-1)).toEqual({
       "system.isSustained": false,
-      "system.sustainedDegree": null
+      "system.sustainedDegree": null,
+      "system.sustainedTargetUuid": ""
     });
   });
 
+  // wdbc-lmd2 (найдено внутри wdbc-q0q8): цель поддержания фиксируется по
+  // game.user.targets в момент включения — без выделенного токена остаётся
+  // пустой строкой, психосила всё равно поддерживается как раньше.
   it("включение галочки «Подд.» не трогает сохранённую степень", async () => {
     const power = item({ system: { sustainable: true, isSustained: false, sustainedDegree: 3 } });
     const a = actor({ items: [power] });
@@ -428,7 +432,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
       currentTarget: { dataset: { itemId: power.id }, checked: true }
     });
 
-    expect(power.updates.at(-1)).toEqual({ "system.isSustained": true });
+    expect(power.updates.at(-1)).toEqual({ "system.isSustained": true, "system.sustainedTargetUuid": "" });
   });
 
   it("снятие поддержания Силы навигатора (в общем переключателе на одну) сбрасывает степень", async () => {
