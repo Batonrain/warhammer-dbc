@@ -115,6 +115,7 @@ import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
 import { migrateImplantAvailability } from "./module/migrations/implant-availability.mjs";
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
+import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fix.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -122,7 +123,7 @@ import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
-import { registerDuplicateGrantSettings } from "./module/rules/duplicate-grants.mjs";
+import { registerDuplicateGrantSettings, initTalentGroupIndex } from "./module/rules/duplicate-grants.mjs";
 import { registerAdvancePricingSettings, initTalentGodIndex } from "./module/constants/patronage.mjs";
 import { registerSystemFonts, registerFontSettings, applySystemFont } from "./module/constants/fonts.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
@@ -139,7 +140,7 @@ import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG, postPacifismGateCard } from "./module/combat/pacifism.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
-import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
+import { computeShipIdentity }        from "./module/combat/ship-tokens.mjs";
 import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
 import { needsBestQChoice, runBestQChoice } from "./module/apps/implant-bestq-choice.mjs";
 
@@ -499,6 +500,12 @@ Hooks.once("init", () => {
 
   // Версия довыдачи aptSource Миньонам Хаоса, купленным до привязки цены к Характеристике группы (одноразовая)
   game.settings.register("warhammer-dbc", "minionAptSourceVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия правки ActiveEffect Предсказания «Ты рождён для войны» у уже
+  // применённых копий — снятая альтернатива «Т» и знак Int/Fel (одноразовая, wdbc-7ba)
+  game.settings.register("warhammer-dbc", "bornForWarFixVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -907,7 +914,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1048,6 +1055,23 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
     else console.warn("Warhammer DBC | Размер Геносемени легиона: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
+});
+
+// ── Одноразовая правка: ActiveEffect Предсказания «Ты рождён для войны» у
+// уже применённых копий — снятая альтернатива «Т» и знак Int/Fel (wdbc-7ba) ──
+// Ручной перезапуск: game.warhammerDBC.migrateBornForWarDivination()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "bornForWarFixVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateBornForWarDivination();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "bornForWarFixVersion", VERSION);
+    else console.warn("Warhammer DBC | «Ты рождён для войны»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | «Ты рождён для войны»:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
@@ -1664,6 +1688,11 @@ initFactionIndex();
 initTalentGodIndex();
 initVehicleWeaponIndex();
 initBioImplantCatalog();
+
+// Группа (папка) и Ступень Таланта для альтернативы при дубле (wdbc-91b) —
+// тот же приём «пак первичен», что и три строки выше: кэш из обоих паков
+// Талантов, константа — запасной путь до его построения.
+initTalentGroupIndex();
 
 /** Просил ли ГМ открыть библиотеки (настройка protectCompendiumEdits выше). */
 function _libsUnlocked() {
