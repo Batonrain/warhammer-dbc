@@ -42,18 +42,27 @@
               "shieldSubtypeMode": "override",
               "shieldSubtypeKey": "flame",
               "shieldSubtypeRatingMax": 75,
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             },
             {
               "id": "frozenHeart-vs-burning",
               "kind": "shieldVsCondition",
               "shieldVsConditionKey": "burning",
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             },
             {
               "id": "frozenHeart-armor-gate",
               "kind": "shieldArmorGate",
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }
