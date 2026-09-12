@@ -5,7 +5,7 @@
   "folder": "3S2DLJENpK7spDrg",
   "system": {
     "description": "Бронепакеты с неньютоновой жидкостью: +2 AP против I Dmg (+4 против I(Cr) Dmg).",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): +2 AP против I (vsType.impact) + ещё +2 против I(Cr) (vsSubtype.crushing) = суммарно +4 против дробящего. bookSource был неверным («домашнее правило») — на деле официальный предмет той же секции стр. 231, что Дефлективная/Керамит. Эффект был выключен (disabled:true) — включён.",
     "category": "armor",
     "modGroup": "reinforcement",
     "requirement": "Любая. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -30,7 +30,7 @@
       "charBonuses": []
     },
     "drukhari": false,
-    "bookSource": "Домашнее правило (не из официальной книги)"
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 231)"
   },
   "_id": "oHraQT3sb7ipFHhN",
   "effects": [
@@ -44,13 +44,20 @@
             "value": 2,
             "phase": "final",
             "priority": 0
+          },
+          {
+            "key": "system.absorption.vsSubtype.crushing",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
           }
         ]
       },
       "_id": "o7HFhbHIGN5e450W",
       "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
       "type": "base",
-      "disabled": true,
+      "disabled": false,
       "start": null,
       "duration": {
         "value": null,

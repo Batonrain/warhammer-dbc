@@ -4,7 +4,7 @@
   "folder": "AnN2qDXTrN7Qt3MS",
   "system": {
     "description": "Технологический дефлектор в форме ленты. Порог перегрузки — «−».",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): щит не срабатывает против I(Cr) урона — flags.mechanics, kind:\"shieldSubtype\" mode:\"exclude\" (combat/damage.mjs::_rollActiveShield читает это напрямую с предмета). НЕ смоделировано: «из этих пут невозможно вырваться силой» (использование ленты для связывания) — отдельная механика захвата/пут, вне рамок задачи про подвиды урона.",
     "shieldNature": "technological",
     "shieldType": "deflector",
     "ratingMin": 1,
@@ -26,7 +26,26 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "unbreakableBandGroup",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "unbreakableBand-exclude-crushing",
+              "kind": "shieldSubtype",
+              "shieldSubtypeMode": "exclude",
+              "shieldSubtypeKey": "crushing",
+              "shieldSubtypeRatingMax": 0,
+              "when": { "negate": false, "conditions": [] }
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

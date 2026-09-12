@@ -4,7 +4,7 @@
   "img": "systems/warhammer-dbc/assets/item-icons/implant.svg",
   "system": {
     "description": "R 2. Негорючие перья-теплоизолятор.",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): исправлен перевёрнутый знак армора (было +1, книга требует −1 ко всем 6 локациям — Natural Armour 1) + добавлены +2 AP против всей энергии (vsType.energy) и ещё +4 против E(Fl) (vsSubtype.flame), которые раньше были только в тексте, но не в эффекте. НЕ механизировано: «удерживают жар/холод» — ситуативный бонус на усмотрение ГМа (сам текст предмета так и говорит).",
     "category": "bioimplant",
     "quality": "common",
     "effect": "Укреплённые перья, которые слабо горят и держат внешнюю температуру.\n• Снижает своё AP против всего урона на 1 (то есть Natural Armour 1).\n• +2 AP против всего урона E.\n• Дополнительно +4 AP против урона E(Fl).\n• Удерживают жар и холод подальше от персонажа — ситуативные бонусы на усмотрение ГМа.",
@@ -15,7 +15,7 @@
       "charBonusValue": 0,
       "charBonuses": [],
       "charValueBonuses": [],
-      "armourAll": 1,
+      "armourAll": -1,
       "apHead": 0,
       "apBody": 0,
       "apArms": 0,
@@ -49,43 +49,57 @@
           {
             "key": "system.armorBonus.head",
             "type": "add",
-            "value": 1,
+            "value": -1,
             "phase": "initial",
             "priority": 0
           },
           {
             "key": "system.armorBonus.body",
             "type": "add",
-            "value": 1,
+            "value": -1,
             "phase": "initial",
             "priority": 0
           },
           {
             "key": "system.armorBonus.leftArm",
             "type": "add",
-            "value": 1,
+            "value": -1,
             "phase": "initial",
             "priority": 0
           },
           {
             "key": "system.armorBonus.rightArm",
             "type": "add",
-            "value": 1,
+            "value": -1,
             "phase": "initial",
             "priority": 0
           },
           {
             "key": "system.armorBonus.leftLeg",
             "type": "add",
-            "value": 1,
+            "value": -1,
             "phase": "initial",
             "priority": 0
           },
           {
             "key": "system.armorBonus.rightLeg",
             "type": "add",
-            "value": 1,
+            "value": -1,
             "phase": "initial",
+            "priority": 0
+          },
+          {
+            "key": "system.absorption.vsType.energy",
+            "type": "add",
+            "value": 2,
+            "phase": "final",
+            "priority": 0
+          },
+          {
+            "key": "system.absorption.vsSubtype.flame",
+            "type": "add",
+            "value": 4,
+            "phase": "final",
             "priority": 0
           }
         ]
