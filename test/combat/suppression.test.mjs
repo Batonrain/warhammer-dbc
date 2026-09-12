@@ -182,6 +182,41 @@ describe("rollSuppressionRecovery: возможность sarcophagus.autoPassFe
   });
 });
 
+// sourceActor (wdbc-1rno, 12.09.2026): стрелок известен на момент выстрела
+// (attack-card.mjs несёт attackerUuid), но терялся к моменту клика по кнопке
+// теста в чате — владелец ТОКЕНА ЦЕЛИ жмёт её позже. hooks.mjs теперь читает
+// data-attacker-uuid и передаёт actor'ом сюда; rollMoraleTest едет ctx.
+// targetActor тем же путём, что и у любых других cross-actor правил
+// (Ненависть, module/rules/hatred.mjs).
+describe("rollSuppressionTest: sourceActor едет в ctx.targetActor правил", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  it("с sourceActor — правило видит его как ctx.targetActor", async () => {
+    let seenTarget;
+    clearRuleSources();
+    registerRuleSource("test", (a, ctx) => { seenTarget = ctx.targetActor; return []; });
+    captured.nextRoll = 10;
+    const shooter = { id: "shooter-1", name: "Стрелок", uuid: "Actor.shooter-1" };
+    const a = actor({ wp: 40 });
+    await rollSuppressionTest(a, { mod: 0, sourceActor: shooter });
+    expect(seenTarget).toBe(shooter);
+  });
+
+  it("без sourceActor — ctx.targetActor null, ведёт себя как раньше", async () => {
+    let seenTarget = "непроверено";
+    clearRuleSources();
+    registerRuleSource("test", (a, ctx) => { seenTarget = ctx.targetActor; return []; });
+    captured.nextRoll = 10;
+    const a = actor({ wp: 40 });
+    await rollSuppressionTest(a, { mod: 0 });
+    expect(seenTarget).toBeNull();
+  });
+});
+
 describe("postSuppressionRecoveryPrompt", () => {
   it("публикует карточку с двумя кнопками (+0 и +30)", async () => {
     const a = actor({ wp: 40, pinned: true });

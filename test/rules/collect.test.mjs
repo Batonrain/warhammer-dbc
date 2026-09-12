@@ -123,9 +123,15 @@ describe("источники по умолчанию", () => {
     // avatarOfSlaughter (wdbc-shr, находка 1) БОЛЬШЕ НЕ отдельный ключ —
     // единственное статичное правило Аватара Резни слито в CORE_RULES,
     // отдаётся источником "core" вместе с остальной основной книгой.
+    // hatred (wdbc-1rno, 12.09.2026) — первый реальный потребитель целей
+    // Таланта: +10 рукопашная/переброс социального теста против цели
+    // Ненависти.
+    // devourerOfKnowledge (wdbc-1rno, 12.09.2026) — Навыки, украденные
+    // ПЕРМАНЕНТНО (9 дней подряд), считаются Дружественными для Продвижения.
     expect([...getRuleSources().map(([key]) => key)].sort())
       .toEqual(["addiction", "adjutant", "beastmanShaman", "conditions", "core",
-                "daemonInevitability", "dreadnought", "homeworld", "items", "opposedTarget", "paths", "patron",
+                "daemonInevitability", "devourerOfKnowledge", "dreadnought", "hatred", "homeworld", "items",
+                "opposedTarget", "paths", "patron",
                 "psychicSustainTarget", "race", "situational", "synesthesia"]);
   });
 

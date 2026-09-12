@@ -23,7 +23,10 @@
 //  Ничего не песочница — контекст (actor/item/token) передаётся как есть.
 // ════════════════════════════════════════════════════════════════════════
 
-import { woundLossUpdates } from "../rules/wounds.mjs";
+import { woundLossUpdates, woundDeathThreshold } from "../rules/wounds.mjs";
+import { testOutcome } from "../rules/roll-outcome.mjs";
+import { resolveOpposed } from "../rules/test-kind.mjs";
+import { computeWoundHealing } from "../sheets/tabs/wounds.mjs";
 import { isTokenInSight, tokensThatCanSee } from "../rules/vision-target.mjs";
 import { actorFactionKeys, anySameOrDescendant, getFactionIndex } from "../rules/factions.mjs";
 import { talentGroupOf } from "../rules/duplicate-grants.mjs";
@@ -35,6 +38,11 @@ import { startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo }
 import { canSpendActionPoints, spendActionPoints } from "../combat/action-economy.mjs";
 import { nearestVisiblePsyker } from "../rules/the-hunter.mjs";
 import { defaultSpawnHunterHoundFn } from "../combat/the-hunter.mjs";
+import { nearestVisibleHatredTarget } from "../rules/crimson-angel.mjs";
+import { grantExtraTurn, hasExtraTurn } from "../combat/extra-turn.mjs";
+import { endOfOrderInitiative, mergedVictimUuids } from "../combat/devourer-of-time.mjs";
+import { grantArmourOfTheGods } from "./armour-of-the-gods.mjs";
+import { resolveBurnedSenses } from "./burned-senses.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -79,6 +87,38 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *  - `defaultSpawnHunterHoundFn` (combat/the-hunter.mjs) — призыв Гончей
  *    Плоти (ГМ напрямую/сокет-релей, Бестиарий скрыт от игрока, тот же
  *    приём, что defaultSpawnDemonFn).
+ *  - `nearestVisibleHatredTarget` (rules/crimson-angel.mjs) — «в пределах
+ *    видимости есть цель, к которой у персонажа Талант Ненависти» (Багровый
+ *    Ангел, wdbc-1rno), та же геометрия видимости, что у nearestVisiblePsyker,
+ *    отбор — по hatredTargetsOf(actor)/anyTargetMatches.
+ *  - `testOutcome` (rules/roll-outcome.mjs) / `resolveOpposed` (rules/
+ *    test-kind.mjs) — общая арифметика степени успеха и сравнения встречного
+ *    теста (Поцелуй Смерти, wdbc-1rno: «W+Cor.b×5 vs W+Cor.b×5» — своя
+ *    копия математики степеней в скрипте разошлась бы с той, что уже
+ *    использует resolveKindOutcome).
+ *  - `woundDeathThreshold` (rules/wounds.mjs) — Порог гибели по отрицательным
+ *    Ранам (Макс+7), та же формула, что уже читает module/rules/wounds.mjs
+ *    сам (Поцелуй Смерти: «если атака убивает противника»).
+ *  - `computeWoundHealing` (sheets/tabs/wounds.mjs) — стандартное лечение
+ *    (сперва Критические, потом обычные Раны, клэмп к максимуму) — та же
+ *    формула, что уже даёт вкладка Ран на листе (Поцелуй Смерти: «исцеляет
+ *    1d10+W.b жертвы Ран» себе после убийства).
+ *  - `grantExtraTurn`/`hasExtraTurn` (combat/extra-turn.mjs) — доп. Ход в
+ *    том же бою (доп. Combatant того же актора), уже несёт Last Actor/
+ *    Последнего Актёра; здесь — Пожиратель Времени (Тзинч, wdbc-1rno):
+ *    «первый Ход дважды за Раунд» после успешного захвата Врасплох.
+ *  - `endOfOrderInitiative`/`mergedVictimUuids` (combat/devourer-of-time.mjs)
+ *    — инициатива «в конец порядка» для доп. Хода выше и объединение списка
+ *    захваченных Врасплох жертв без повторов (тот же Пожиратель Времени).
+ *  - `grantArmourOfTheGods` (apps/armour-of-the-gods.mjs) — Доспехи Богов
+ *    (Общие Мутации, wdbc-1rno): выдаёт предмет Элитного архетипа «Ironclad /
+ *    Броненосец» без траты опыта (createItem сам раздаёт Size/Unnatural S,T/
+ *    Divine Plate/9 Талантов — Конструктор предмета Архетипа), +1d10 Порчи,
+ *    отдельную реальную броню «Божественные Латы» (AP 8/10/8/8).
+ *  - `resolveBurnedSenses` (apps/burned-senses.mjs) — Выжженные Чувства
+ *    (Общие Мутации, wdbc-1rno): второй бросок по таблице чувств (первый —
+ *    стандартный автобросок субмутации), перманентная потеря Зрения/Слуха
+ *    (реальное условие), честный нарратив для остального.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -101,6 +141,9 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "changeActorInfamy", "actorInfamyValue", "actorInfamyMax",
     "startEyeOfChallenge", "clearEyeOfChallenge", "eyeOfChallengeInfo",
     "canSpendActionPoints", "spendActionPoints", "nearestVisiblePsyker", "defaultSpawnHunterHoundFn",
+    "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
+    "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
+    "resolveBurnedSenses",
     ...extraNames,
     code
   );
@@ -112,6 +155,9 @@ export async function executeItemCode(item, code, event, extra = {}) {
     changeActorInfamy, actorInfamyValue, actorInfamyMax,
     startEyeOfChallenge, clearEyeOfChallenge, eyeOfChallengeInfo,
     canSpendActionPoints, spendActionPoints, nearestVisiblePsyker, defaultSpawnHunterHoundFn,
+    nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
+    grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
+    resolveBurnedSenses,
     ...extraNames.map(k => extra[k])
   );
 }

@@ -29,13 +29,28 @@ describe("executeItemCode — стандартные помощники в об�
       seen.talentGroupOf = typeof talentGroupOf;
       seen.incrementThrottleCount = typeof incrementThrottleCount;
       seen.tokensWithinRadius = typeof tokensWithinRadius;
+      seen.nearestVisibleHatredTarget = typeof nearestVisibleHatredTarget;
+      seen.testOutcome = typeof testOutcome;
+      seen.resolveOpposed = typeof resolveOpposed;
+      seen.woundDeathThreshold = typeof woundDeathThreshold;
+      seen.computeWoundHealing = typeof computeWoundHealing;
+      seen.grantExtraTurn = typeof grantExtraTurn;
+      seen.hasExtraTurn = typeof hasExtraTurn;
+      seen.endOfOrderInitiative = typeof endOfOrderInitiative;
+      seen.mergedVictimUuids = typeof mergedVictimUuids;
+      seen.grantArmourOfTheGods = typeof grantArmourOfTheGods;
+      seen.resolveBurnedSenses = typeof resolveBurnedSenses;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
       tokensThatCanSee: "function", actorFactionKeys: "function",
       anySameOrDescendant: "function", getFactionIndex: "function",
       talentGroupOf: "function", incrementThrottleCount: "function",
-      tokensWithinRadius: "function"
+      tokensWithinRadius: "function", nearestVisibleHatredTarget: "function",
+      testOutcome: "function", resolveOpposed: "function", woundDeathThreshold: "function",
+      computeWoundHealing: "function", grantExtraTurn: "function", hasExtraTurn: "function",
+      endOfOrderInitiative: "function", mergedVictimUuids: "function", grantArmourOfTheGods: "function",
+      resolveBurnedSenses: "function"
     });
   });
 

@@ -126,7 +126,10 @@ describe("registerHooks() реально подключает делегиров
     expect(executor.sheet._rollCharacteristic).toHaveBeenCalledTimes(1);
     const [, , , , , opts] = executor.sheet._rollCharacteristic.mock.calls[0];
     expect(opts.effectTargetActor).toBeUndefined();
-    expect(opts.opposedRequest).toEqual({ initiatorName: "Инициатор", initiatorSide: { threshold: 40, roll: 22, success: true, deg: 2 }, safe: false });
+    expect(opts.opposedRequest).toEqual({
+      initiatorName: "Инициатор", initiatorUuid: null,
+      initiatorSide: { threshold: 40, roll: 22, success: true, deg: 2 }, safe: false
+    });
   });
 
   // Мутационная проверка: если бы hooks.mjs забыл зарегистрировать kind (ровно

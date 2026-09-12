@@ -26,11 +26,14 @@ import {
 import { computeWoundHealing } from "./wounds.mjs";
 import { conditionApplyFields } from "./conditions.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
-import { spendFromInfamyPool } from "../../apps/infamy-points.mjs";
+import { spendFromInfamyPool, changeActorInfamy } from "../../apps/infamy-points.mjs";
+import { SUNDERING_CAPABILITY } from "../../rules/sundering.mjs";
+import { defaultSpawnSunderingFn } from "../../combat/sundering.mjs";
 import {
   eternalWarriorEligible, eternalWarriorFreeSaveAvailable, markEternalWarriorUsed
 } from "../../combat/eternal-warrior.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
+import { KISS_OF_DEATH_FLAG } from "../../rules/kiss-of-death.mjs";
 
 const NS = "warhammer-dbc";
 
@@ -56,21 +59,32 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
   const current = Number(actor.system.fate?.value) || 0;
   const free = eternalWarrior === "free" || eternalWarrior === "flat";
 
-  let fateRoll = null, loss;
-  if (eternalWarrior === "free") loss = 0;
-  else if (eternalWarrior === "flat") loss = 1;
+  let fateRoll = null, rolledLoss;
+  if (eternalWarrior === "free") rolledLoss = 0;
+  else if (eternalWarrior === "flat") rolledLoss = 1;
   else {
     fateRoll = await new Roll(cfg.fateDie).evaluate();
-    loss = fateRoll.total + (cfg.fateFlat || 0);
+    rolledLoss = fateRoll.total + (cfg.fateFlat || 0);
   }
+  // Kiss of Death/Поцелуй Смерти (Слаанеш, wdbc-1rno): «Спасение от смерти,
+  // вызванной этой атакой, тратит двойное количество Бесчестия или Очков
+  // Судьбы» — метка одноразовая (снимается ниже при ЛЮБОМ исходе попытки),
+  // Вечный Воин (free/flat) книга не упоминает — обе фиксированные цены не
+  // трогаем, удваивать «0» и «1 без кубика» смысла нет. rolledLoss остаётся
+  // «как выпало» для подписи брейкдауна, loss — уже удвоенная сумма списания.
+  const kissOfDeathDoubled = !free && !!actor.getFlag?.("warhammer-dbc", KISS_OF_DEATH_FLAG);
+  const loss = kissOfDeathDoubled ? rolledLoss * 2 : rolledLoss;
   // Временный запас (wdbc-e728, Voice of God и т.п.) гасит цену Спасения первым.
   const spend = await spendFromInfamyPool(actor, loss, "system.fate.value");
   const failed = fateSaveFails(current, spend.poolSpent);
   const tempNote = spend.tempSpent ? `, из них ${spend.tempSpent} из временного запаса` : "";
-  const lossLabel = fateRoll ? `(${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${loss}${tempNote})` : `${loss}${tempNote}`;
+  const kissNote = kissOfDeathDoubled ? ", ×2 Поцелуй Смерти" : "";
+  const lossLabel = fateRoll ? `(${cfg.fateFlat ? `${cfg.fateFlat}+` : ""}${fateRoll.total}=${rolledLoss}${kissNote}${tempNote})` : `${loss}${kissNote}${tempNote}`;
 
   if (failed) {
-    await actor.update({ "system.fate.value": spend.poolValue });
+    const upd = { "system.fate.value": spend.poolValue };
+    if (kissOfDeathDoubled) upd["flags.warhammer-dbc.-=" + KISS_OF_DEATH_FLAG] = null;
+    await actor.update(upd);
     await _postCard(actor, kind, [
       `Пул ${pool}: <b>${current}</b> − ${lossLabel} → опустился бы до 0 и ниже.`,
       `<span class="roll-failure">Провал — Боги отвернулись. Персонаж мёртв по-настоящему.</span>`
@@ -89,13 +103,14 @@ async function _resolveFateSave(actor, kind, cfg, { restoreToZero, resurrectNote
     "system.corruption.value": Math.min(100, newCor)
   };
   updates[`flags.${NS}.deceased`] = false;
+  if (kissOfDeathDoubled) updates[`flags.${NS}.-=${KISS_OF_DEATH_FLAG}`] = null;
   if (restoreToZero) {
     Object.assign(updates, computeWoundHealing(actor.system, Math.max(0, -(Number(actor.system.wounds?.value) || 0)) + (Number(actor.system.wounds?.critical) || 0)));
   }
   await actor.update(updates);
 
   const lines = [
-    `Пул ${pool}: <b>${current}</b> − ${loss}${tempNote} → <b>${newFate}</b>.`,
+    `Пул ${pool}: <b>${current}</b> − ${loss}${kissNote}${tempNote} → <b>${newFate}</b>.`,
     free
       ? `Порча: без изменений (Вечный Воин, ${eternalWarrior === "free" ? "раз за сессию" : "дальнобойная смерть"} — бесплатно в Ярости).`
       : `Порча: +${corGain} → <b>${Math.min(100, newCor)}</b>${newCor > 100 ? " (потолок 100)" : ""}.`,
@@ -157,6 +172,26 @@ export async function doSusAnimation(actor) {
   await _postCard(actor, "Замедленная Анимация", lines, [roll]);
 }
 
+/**
+ * Разделение/Sundering (Дар Тзинча, wdbc-1rno): «на смерти — 1 Очко
+ * Бесчестия → тело исчезает, появляются 2 копии, действующие в его
+ * Инициативу». В отличие от Чудесного Спасения/Божественной Защиты НЕ
+ * снимает флаг deceased — тело чемпиона реально «исчезло», он не то чтобы
+ * жив; deceased снимается только в конце сцены (module/combat/sundering.mjs::
+ * revertSunderingOnSceneEnd), когда чемпион фактически возвращается на поле.
+ */
+export async function doSundering(actor) {
+  await changeActorInfamy(actor, -1);
+  await defaultSpawnSunderingFn(actor.uuid);
+  await _postCard(actor, "Разделение", [
+    "1 Очко Бесчестия → тело исчезает, на его месте появляются 2 копии чемпиона " +
+      "(S/T−20, 9 Ран, Размер−1, Демонический(+1)/Материал Кошмаров/Варп-нестабильность), " +
+      "действующие в его Инициативу, с его снаряжением и поддерживаемыми психосилами.",
+    "В конце сцены обе копии исчезают, чемпион возникает с 0 Ран на месте одной из них (выбор игрока).",
+    "Если обе копии падут раньше конца сцены — это смерть персонажа как обычно, Спасение открыто снова."
+  ]);
+}
+
 export async function doResurrect(actor) {
   await actor.setFlag(NS, "deceased", false);
   await _postCard(actor, "Воскрешение", [
@@ -196,6 +231,12 @@ export function showDeathSaveDialog(actor) {
       </div>`
     : "";
 
+  // Sundering/Разделение (Дар Тзинча, wdbc-1rno) — только у носителя Дара,
+  // не показываем всем отключённой кнопкой (в отличие от Замедленной
+  // Анимации выше — та книжно доступна любому Астартес, просто не всегда
+  // условия выполнены; Разделение без самого Дара не существует вообще).
+  const hasSundering = hasRuleFlag(actor, SUNDERING_CAPABILITY);
+
   const opt = (key, label, note, enabled = true) => `
     <button type="button" class="wh-death-action" data-action="${key}" ${enabled ? "" : "disabled"}
       style="width:100%;text-align:left;margin:3px 0;${enabled ? "" : "opacity:0.45;"}">
@@ -213,6 +254,9 @@ export function showDeathSaveDialog(actor) {
       ${opt("susan", "Замедленная Анимация", canSusAn
         ? `Тест W+30 (не тратит ${pool}/Порчу). Только Астартес с Сус-ан Мембраной, Раны не ниже −15.`
         : "Только Астартес с установленной Сус-ан Мембраной и Ранами не ниже −15.", canSusAn)}
+      ${hasSundering ? opt("sundering", "Разделение (Тзинч)",
+        "1 Очко Бесчестия — тело исчезает, появляются 2 копии (S/T−20, 9 Ран, Размер−1), действующие в вашу Инициативу. "
+        + "В конце сцены обе исчезают, вы возвращаетесь с 0 Ран на месте одной из них.") : ""}
     </div>`;
 
   return foundry.applications.api.DialogV2.wait({
@@ -231,6 +275,7 @@ export function showDeathSaveDialog(actor) {
         if (key === "miraculous") await doMiraculousSave(actor, { eternalWarrior });
         else if (key === "divine") await doDivineProtection(actor, { eternalWarrior });
         else if (key === "susan") await doSusAnimation(actor);
+        else if (key === "sundering") await doSundering(actor);
         dialog.close();
       }));
     }

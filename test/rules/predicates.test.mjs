@@ -426,7 +426,12 @@ describe("общее требование к предикатам", () => {
     // (ctx.targetActor); значение из `when` — необязательный фильтр по god
     // (wdbc-w8z4, см. describe("hexMarkedPreyAllyBonus") выше), undefined
     // здесь достаточно для базовой сигнатуры «строго boolean».
-    hexMarkedPreyAllyBonus: undefined
+    hexMarkedPreyAllyBonus: undefined,
+    // Ненависть (wdbc-1rno) — читает actor.items (targets собственных
+    // Талантов Ненависти) и ctx.targetActor, значение из `when` не участвует
+    // (тот же случай, что hasFaction выше, но без литерала — набор целей
+    // разный у каждого владельца).
+    hasHatredTarget: undefined
   };
 
   it("на пустом акторе каждый возвращает строго true или false", () => {
