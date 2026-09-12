@@ -41,7 +41,19 @@
           (showCounter всегда true) — у Хаосита эта ячейка Судьбы больше не
           дублирует то же самое поле в шапке. --}}
     {{#unless infamy}}
-    <div class="header-cell fate-cell"> <label>{{fateLabel}}</label> <div class="fate-values"> <input type="number" name="system.fate.value" value="{{system.fate.value}}" min="0" {{#if system.fateMaxAuto}}max="{{system.fate.max}}"{{/if}}/> <span>/</span> {{#if system.fateMaxAuto}}<input type="number" value="{{system.fate.max}}" readonly title="Авторасчёт: W.b × (1 + «Бездонная Душа»)"/>{{else}}<input type="number" name="system.fate.max" value="{{system.fate.max}}" min="0"/>{{/if}} </div> {{#if fatePips.length}}<div class="fate-pips" title="Очки Судьбы">{{#each fatePips as |p|}}<i class="fate-pip {{#if p.on}}on{{/if}}"></i>{{/each}}</div>{{/if}} </div>
+    <div class="header-cell fate-cell"> <label>{{fateLabel}}</label> <div class="fate-values"> <input type="number" name="system.fate.value" value="{{system.fate.value}}" min="0" {{#if system.fateMaxAuto}}max="{{system.fate.max}}"{{/if}}/> <span>/</span> {{#if system.fateMaxAuto}}<input type="number" value="{{system.fate.max}}" readonly title="Авторасчёт: W.b × (1 + «Бездонная Душа»)"/>{{else}}<input type="number" name="system.fate.max" value="{{system.fate.max}}" min="0"/>{{/if}} </div> {{#if fatePips.length}}<div class="fate-pips" title="Очки Судьбы">{{#each fatePips as |p|}}<i class="fate-pip {{#if p.on}}on{{/if}}"></i>{{/each}}</div>{{/if}}
+      {{!-- Временное Бесчестие (wdbc-a23, module/rules/temp-infamy.mjs) — Глас
+            Божий и т.п. не привязаны к Мировоззрению; полная полоса Бесчестия
+            (infamy-strip.hbs) недоступна не-Хаоситу, поэтому значок живёт
+            здесь. Тратится через правый клик на карточке броска (Переброс/
+            Усиление) — восстанавливается первым, title держит ограничение. --}}
+      {{#if tempInfamy}}
+      <div class="dp-ip-temp header-temp-infamy" title="{{tempInfamy.restriction}}">
+        <span class="dp-ip-temp-value">+{{tempInfamy.amount}}</span>
+        <span class="dp-ip-temp-label">временное · {{tempInfamy.source}}</span>
+      </div>
+      {{/if}}
+    </div>
     {{/unless}}
     {{#if isYnnari}}
       <div class="header-cell fate-cell"> <label title="Максимум = W.b × 3 (авторасчёт)">Мёртвое Могущество</label> <div class="fate-values"> <input type="number" name="system.deadMight.value" value="{{system.deadMight.value}}" min="0" max="{{system.deadMight.max}}"/> <span>/</span> <input type="number" value="{{system.deadMight.max}}" readonly title="W.b × 3"/> </div> </div> {{/if}}

@@ -63,6 +63,7 @@ import { _resolveSoulBurn }                 from "../hooks.mjs";
 import { openRigManager }                   from "../apps/rig-manager.mjs";
 import { openXpLog }                        from "../apps/xp-log.mjs";
 import { infamyContext, changeInfamy, restoreInfamy, spendInfamy } from "../apps/infamy-points.mjs";
+import { tempInfamyInfo } from "../rules/temp-infamy.mjs";
 import { ruleFlagCost } from "../rules/flags.mjs";
 import { spendCapabilityCost } from "../combat/capability-cost.mjs";
 import { runMechScriptEntry } from "../apps/mechanics.mjs";
@@ -1004,6 +1005,18 @@ export class WarhammerCharacterSheet
       const ip = Math.max(0, Number(foundry.utils.getProperty(this.actor, this._infamyPath)) || 0);
       context.infamy = infamyContext(this.actor, this._infamyKey,
         { ip, ipMax: this._infamyMax, showCounter: this._infamyShowCounter });
+    }
+
+    // Временное Бесчестие (wdbc-a23: Глас Божий/Стервятник и т.п.,
+    // module/rules/temp-infamy.mjs) книжно НЕ привязано к Мировоззрению —
+    // получатель Личной Команды может быть кем угодно, не только Хаоситом.
+    // Полная полоса Бесчестия (infamy-strip.hbs) выше остаётся строго
+    // Хаоситской (корбук 438 — это другая, обычная валюта), поэтому не-Хаосит
+    // без context.infamy иначе не увидел бы временный запас вовсе: значок
+    // всплывает в ячейке Судьбы шапки (header.hbs, fate-cell) вместо неё.
+    if (!context.infamy) {
+      const temp = tempInfamyInfo(this.actor);
+      if (temp) context.tempInfamy = temp;
     }
 
     return context;
