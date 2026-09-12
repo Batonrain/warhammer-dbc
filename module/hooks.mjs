@@ -62,6 +62,8 @@ import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
+import { clearMercuryMarks } from "./combat/mercury-reaction.mjs";
+import { clearAdaptationBonuses } from "./combat/adaptation.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
@@ -752,6 +754,7 @@ export function registerHooks() {
           rawDamage:    parseInt(ds.damage      || "0"),
           penetration:  parseInt(ds.penetration || "0"),
           damageType:   ds.damageType  || "impact",
+          damageSubtype: ds.damageSubtype || "",
           hitLocation:  ds.hitLocation || "Торс",
           side:         ds.vehicleSide || "",   // сторона брони техники (из окна атаки)
           weaponName:   ds.weaponName  || "",
@@ -911,6 +914,7 @@ export function registerHooks() {
             rawDamage:    parseInt(ds.damage      || "0"),
             penetration:  parseInt(ds.penetration || "0"),
             damageType:   ds.damageType  || "impact",
+            damageSubtype: ds.damageSubtype || "",
             hitLocation:  ds.hitLocation || "Торс",
             weaponName:   ds.weaponName  || "",
             attackerName: ds.attacker    || "",
@@ -1905,6 +1909,12 @@ function _attachFateContextMenu(message, html) {
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);
+    // Ртуть (wdbc-q0q8, Замена Крови) — метки «электропроводных» частей тела
+    // живут строго «до конца боя», та же логика, что у остальных меток здесь.
+    await clearMercuryMarks(combat);
+    // Адаптация (wdbc-q0q8, Панцирь) — накопленные за бой бонусы AP по видам
+    // урона живут строго «до конца боя», та же логика, что у Ртути выше.
+    await clearAdaptationBonuses(combat);
     // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
     // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
     for (const combatant of combat.combatants ?? []) {

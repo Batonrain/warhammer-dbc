@@ -125,6 +125,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const eff = effectiveDamage({ sys, profile: P, gripDmgFlat });
   let   effDamage  = eff.damage;
   const effDmgType = eff.damageType;
+  const effDmgSubtype = eff.damageSubtype;
   const effPen0    = eff.penetration;
 
   // ── Особые свойства оружия (+ от установленных модификаций) ───────────────
@@ -199,6 +200,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const ammoRngMult   = ammoSys?.rangeMultiplier    ?? 1;
   const ammoRngAdd    = ammoSys?.rangeMod           ?? 0;
   const ammoDmgType   = ammoSys?.damageTypeOverride || "";
+  const ammoDmgSubtype = ammoSys?.damageSubtypeOverride || "";
   const ammoSpecial   = ammoSys?.special            || "";
 
   // forcedRoll задаётся при перебросе/+10 за Очко Судьбы — повторяем ту же
@@ -718,7 +720,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
       gorget,
-      isMelee, dtLabel, damageType: ammoDmgType || effDmgType, pen,
+      isMelee, dtLabel, damageType: ammoDmgType || effDmgType,
+      damageSubtype: ammoDmgSubtype || effDmgSubtype, pen,
       assassinStrike: isMelee && assassinStrikeAvailable(actor),
       sbEff, sbHalf, taintedAdd, vehicleSide: opts.vehicleSide || "",
       ammo: isMelee ? null : {

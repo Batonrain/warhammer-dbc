@@ -76,6 +76,7 @@ import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-
 import { RITUAL_ITEM_TYPES, RITUAL_TYPES }            from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
 import { runBestQChoice }                            from "../apps/implant-bestq-choice.mjs";
+import { wingPositionShieldUpdate }                  from "../rules/wing-shield.mjs";
 import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
          TARGET_FEATURES, PATRON_ANY, addTarget, removeTargetAt } from "../rules/talent-targets.mjs";
 import { RACES, SUBRACES }                           from "../constants/races.mjs";
@@ -1040,6 +1041,7 @@ export class WarhammerItemSheet
           label: prof.label ?? "",
           damage: prof.damage ?? "",
           damageType: prof.damageType ?? "i",
+          damageSubtype: prof.damageSubtype ?? "",
           penetration: prof.penetration ?? 0,
           range: prof.range ?? "",
           propsActive: pActive
@@ -2181,6 +2183,38 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.armourValue = ev.currentTarget.value; saveMech(arr); }
     });
+    // AP против типа/подвида урона (kind:"absorption", wdbc-q0q8)
+    on(".mech-absorption-target", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.absorptionTarget = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-absorption-op", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-absorption-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.absorptionValue = ev.currentTarget.value; saveMech(arr); }
+    });
+    // Щит: подвид урона (kind:"shieldSubtype", wdbc-q0q8, только forcefield)
+    on(".mech-shield-subtype-mode", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.shieldSubtypeMode = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-shield-subtype-key", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.shieldSubtypeKey = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-shield-subtype-rating", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.shieldSubtypeRatingMax = Number(ev.currentTarget.value) || 0; saveMech(arr); }
+    });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
     on(".mech-terrain-ignore", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -2989,6 +3023,16 @@ export class WarhammerItemSheet
     // Тот же путь, что и автоматический хук получения (warhammer-dbc.mjs) —
     // кнопка видна, пока system.chosenEffects пуст (implant.hbs).
     on(".implant-bestq-choose", "click", () => runBestQChoice(this.item));
+
+    // ── Положение Крыльев импланта (wdbc-lmd2, найдено внутри wdbc-q0q8) ────
+    // Смена положения сама подставляет книжный рейтинг ЭТОГО предмета в
+    // ratingMax (расчёт — module/rules/wing-shield.mjs, чистая функция) —
+    // остальная механика щита (module/combat/shield.mjs) не тронута, читает
+    // ratingMax как обычно. «Расправлены» (в полёте) — щита по книге нет
+    // вовсе, поле гасится, а не просто визуально прячется.
+    on(".implant-wing-position", "change", ev => {
+      this.item.update(wingPositionShieldUpdate(ev.currentTarget.value, this.item.system.shield || {}));
+    });
 
     // ── Особые свойства оружия ─────────────────────────────────────────────────
     on(".wprop-add-select", "change", async ev => {

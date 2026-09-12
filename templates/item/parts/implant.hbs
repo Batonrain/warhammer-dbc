@@ -153,5 +153,28 @@
     </label>
   </div>
   <div class="trait-fx-hint">Статус: <b>{{system.shield.status}}</b>, текущий рейтинг: <b>{{system.shield.currentRating}}</b> (управляется со вкладки СНАРЯЖЕНИЕ).</div>
+
+  {{!-- Положение Крыльев (wdbc-lmd2) — у щита-дефлектора некоторых
+        имплантатов-Крыльев рейтинг зависит от положения. Пусто по умолчанию —
+        для обычных встроенных полей (Боевые Латы Скитарии и т.п.) эта секция
+        не нужна и просто ничего не делает. --}}
+  <div class="weapon-row">
+    <label class="wr-label" title="Только у имплантатов-Крыльев со сменным положением — пусто, если это не Крылья">Положение крыльев</label>
+    <select name="system.shield.wingPosition" class="wr-select-sm implant-wing-position">
+      <option value=""        {{#if (eq system.shield.wingPosition "")}}selected{{/if}}>— не Крылья —</option>
+      <option value="folded"  {{#if (eq system.shield.wingPosition "folded")}}selected{{/if}}>Сложены за спиной (только со спины)</option>
+      <option value="wrapped" {{#if (eq system.shield.wingPosition "wrapped")}}selected{{/if}}>Окутывают (все направления)</option>
+      <option value="flying"  {{#if (eq system.shield.wingPosition "flying")}}selected{{/if}}>Расправлены (в полёте — щита нет)</option>
+    </select>
+  </div>
+  {{#if system.shield.wingPosition}}
+  <div class="weapon-row">
+    <label class="wr-label" title="Книжный рейтинг для положения «Сложены»">Рейтинг: сложены</label>
+    <input type="number" name="system.shield.wingRatingFolded" value="{{system.shield.wingRatingFolded}}" min="0" class="drug-fx-num"/>
+    <label class="wr-label" title="Книжный рейтинг для положения «Окутывают»">Рейтинг: окутывают</label>
+    <input type="number" name="system.shield.wingRatingWrapped" value="{{system.shield.wingRatingWrapped}}" min="0" class="drug-fx-num"/>
+    <div class="trait-fx-hint">Смена положения сама подставляет нужный рейтинг выше и включает/выключает поле. «Только со спины» — направление удара код не проверяет, как «не работает в грязи» у Отражающей: решает стол.</div>
+  </div>
+  {{/if}}
 </div>
 {{/if}}

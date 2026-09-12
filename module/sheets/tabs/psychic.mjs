@@ -1017,7 +1017,21 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     // wdbc-8m0x: снятие поддержания сбрасывает сохранённую степень успеха —
     // иначе на листе осталось бы висеть устаревшее число от прошлого каста.
     const upd = { "system.isSustained": turningOn };
-    if (!turningOn) upd["system.sustainedDegree"] = null;
+    if (!turningOn) {
+      upd["system.sustainedDegree"] = null;
+      // wdbc-lmd2: конец поддержания снимает и цель — источник правил
+      // (module/rules/psychic-sustain-target.mjs) и так перестал бы её
+      // находить по isSustained:false, но обнулить явно честнее, чем
+      // оставлять устаревший uuid висеть в данных предмета.
+      upd["system.sustainedTargetUuid"] = "";
+    } else {
+      // wdbc-lmd2: запоминаем текущую цель (Foundry-таргетинг) — нужна
+      // способностям вида «Цели психосилы получают...» (Dragon Scales/Wings
+      // of the Phoenix). Ничего не выделено — сила всё равно поддерживается
+      // (себе тоже можно), просто без cross-actor эффекта на посторонней цели.
+      const targetActor = [...(game.user?.targets ?? [])][0]?.actor;
+      upd["system.sustainedTargetUuid"] = targetActor?.uuid || "";
+    }
     await item.update(upd); await syncItemEffectsDisabled(item);
   });
   html.find(".psy-manifest-btn").click(ev => {

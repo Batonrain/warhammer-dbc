@@ -37,6 +37,16 @@ const AP_VS_TYPES = {
   rending: "Разрывного", blast: "Взрывного"
 };
 
+// Подвиды урона в скобках книги (wdbc-q0q8) — та же роль, что AP_VS_TYPES
+// выше, но на уровень точнее (DAMAGE_SUBTYPES). Цель — system.absorption.
+// vsSubtype (rules/character/armour.mjs собирает armorVsSubtype из
+// apBonusVsSubtype свойств брони, rules/character.mjs пишет его в absorption).
+const AP_VS_SUBTYPES = {
+  crushing: "Дробящего I(Cr)", fragmentation: "Осколочного X(Fr)",
+  electrical: "Электрического E(El)", flame: "Огненного E(Fl)",
+  laser: "Лазерного E(Ls)", toxic: "Токсического C(Tx)"
+};
+
 /** Путь → подпись. Генерируется из CHARACTERISTICS + AP_LOCATIONS + ручные записи. */
 export const EFFECT_KEY_LABELS = {};
 for (const [key, def] of Object.entries(CHARACTERISTICS)) {
@@ -49,6 +59,9 @@ for (const [key, label] of Object.entries(AP_LOCATIONS)) {
 }
 for (const [key, label] of Object.entries(AP_VS_TYPES)) {
   EFFECT_KEY_LABELS[`system.absorption.vsType.${key}`] = `AP против ${label}`;
+}
+for (const [key, label] of Object.entries(AP_VS_SUBTYPES)) {
+  EFFECT_KEY_LABELS[`system.absorption.vsSubtype.${key}`] = `AP против ${label}`;
 }
 Object.assign(EFFECT_KEY_LABELS, {
   "system.corruptionBonus": "Cor.b (бонус Порчи, Unnatural)",

@@ -95,10 +95,24 @@
   `damageType`+`melee` (`damageImmunity.meleeImpact/.meleeRending/.
   rangedImpact`) и по свойству оружия Blast/Spray (переиспользует namespace
   `weaponPropertyImmunity.*`, но с другим гейтом — wdbc-1rno, Strange
-  Invulnerability). НЕТ в системе: подвид урона в скобках из книги
-  (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx)) — `damageType` хранит только широкую
-  категорию, подвид нигде не читается (см. wdbc-q0q8, минимум 12 предметов
-  дают защиту от конкретного подвида только текстом).
+  Invulnerability).
+- Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
+  12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
+  у оружия (`data/item/weapon.mjs`), `damageImmunity.subtype.*` (иммунитет),
+  `system.absorption.vsSubtype.<подвид>` (AP-бонус, читает
+  `combat/armor-properties.mjs::resolveArmorAbsorptionAP`), `ARMOR_PROPERTIES`
+  auto-директивы `noApVsSubtype`/`doubleApVsSubtype`/`tripleApVsSubtype`/
+  `apBonusVsSubtype` (`constants/items.mjs`) для свойств брони (Conductive,
+  Flak, Vulcanized, Flak Lining), Конструктор-вид `kind:"absorption"` (тот же
+  AP-бонус, но для НЕ-брони — Мутаций/Черт/Талантов) и `kind:"shieldSubtype"`
+  (только `type:"forcefield"`, читается НАПРЯМУЮ с самого предмета щита в
+  момент броска — `_rollActiveShield`, не через синтетический ActiveEffect —
+  щит либо не срабатывает против подвида (mode:"exclude", Нерушимая Лента),
+  либо меняет рейтинг для этого броска (mode:"override", Морозное Сердце)).
+  Исключение из общего конвейера: тик Горения (`combat/condition-ticks.mjs`)
+  игнорирует броню целиком по умолчанию — свойство `fireproof` даёт точечное
+  исключение (собственное AP тела ИМЕННО этого предмета, удвоенное — Броня
+  Огненного Дракона).
 - `module/sheets/tabs/{death,healing,wounds}.mjs` — UI Смерти, Лечения,
   расчётов Ран на листе.
 - Именные: `apps/ablative-ap-shield.mjs` (Роба Чемпиона), `apps/
