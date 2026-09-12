@@ -1,8 +1,15 @@
-// module/constants/ship-tokens.mjs
+// module/combat/ship-tokens.mjs
 // Иконки/размеры/цвета токенов кораблей: условные обозначения по классу корпуса
 // (натовский стиль эшелонов) + цвет по «отношению» (тинт токена).
+//
+// Раньше жил в module/constants/ (wdbc-ye6) — единственный файл в constants/,
+// импортировавший из apps/ (hullEntries — живой кэш компендиума корпусов,
+// apps/ship-hull-library.mjs). constants/ по конвенции проекта — только
+// данные, без зависимости от кэшей compendium/приложений; такую зависимость
+// уже допускают combat/ и rules/ (см. combat/tactical-map.mjs и др.),
+// поэтому файл переехал сюда, а не в apps/ — сам он не окно и не app.
 
-import { SHIP_COMPONENTS } from "./ship-components.mjs";
+import { SHIP_COMPONENTS } from "../constants/ship-components.mjs";
 import { hullEntries } from "../apps/ship-hull-library.mjs";
 
 const ICON_BASE = "systems/warhammer-dbc/assets/ship-icons/";
