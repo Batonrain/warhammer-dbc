@@ -155,7 +155,7 @@
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» называет это оружие «Встроенное Орудие» на руке Дредноута и не даёт числового ГН/ВН (в отличие от текстового «рука» у Рукопашной Руки того же Дредноута). −15°..+15° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -220,9 +220,13 @@
           "reloads": 10,
           "slotId": "Nl8aIrHAZUKtWJJc",
           "options": [
-            "Storm Bolter / Шторм-Болтер",
+            "Combi-Bolter / Комби-Болтер",
             "Heavy Flamer / Тяжёлый Огнемёт",
-            "Meltagun / Мельтаган"
+            "Storm Bolter / Шторм-Болтер",
+            "Meltagun / Мельтаган",
+            "Graviton Gun / Гравитонное Ружьё",
+            "Plasma Blaster / Плазменный Бластер",
+            "Soulburner Petard / Петарда Душесжигатель"
           ]
         },
         "drukhari": false
@@ -254,7 +258,7 @@
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как «Стрелковая Рука» Дредноута без числового ГН/ВН (сравни с текстовым «рука» у Рукопашной Руки того же Дредноута, где дуга не нужна вовсе). −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -1032,6 +1036,105 @@
         "modifiedTime": null
       },
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.MkUbx1g02coB64Uk"
+    },
+    {
+      "name": "Havoc Launcher / Гранатомёт Хавок",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как «Орудие на Корпусе» без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "launcher",
+        "range": 200,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 1,
+        "rof_semi": 2,
+        "rof_full": 6,
+        "damage": "",
+        "damageType": "impact",
+        "penetration": 0,
+        "quality": "common",
+        "availability": 1,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас: ∞ (энергия/подача). Использует ракеты — профиль по типу ракеты.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "reliable"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "KXb6zQYe4DvfSOPT",
+          "mount": "hull",
+          "hArc": "−45°..+45°",
+          "vArc": "—",
+          "standard": false,
+          "reloads": 10,
+          "slotId": "zDwdReTtCBuDFbyw",
+          "options": [
+            "Havoc Launcher / Гранатомёт Хавок",
+            "Cognis Signum / Когнис Сигнум",
+            "Typhoon Launcher / Ракетная Установка Тайфун",
+            "Magna-Grapple / Магна-Гарпун"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "CtEuQd1s6dowyhHe",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!yTXm4Iij7i8TbnT5.CtEuQd1s6dowyhHe"
     }
   ],
   "_id": "yTXm4Iij7i8TbnT5",

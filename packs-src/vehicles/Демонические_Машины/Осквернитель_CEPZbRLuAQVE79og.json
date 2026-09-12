@@ -500,7 +500,7 @@
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
         "description": "",
-        "notes": "",
+        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как один из слотов «Руки ×2 (могут быть разными)» Осквернителя без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -569,7 +569,10 @@
           "options": [
             "Reaper Autocannon / Автопушка Жнец",
             "Twin Heavy Flamer / Спаренный Тяжёлый Огнемёт",
-            "Havoc Launcher / Гранатомёт Хавок"
+            "Havoc Launcher / Гранатомёт Хавок",
+            "Twin Heavy Bolter / Спаренный Тяжёлый Болтер",
+            "Twin Lascannon / Спаренная Лазпушка",
+            "Power Scourge / Силовая Плеть (Осквернитель)"
           ]
         },
         "drukhari": false
@@ -595,6 +598,216 @@
         "lastModifiedBy": "ezwAfZRyYM6SLFHL"
       },
       "_key": "!actors.items!CEPZbRLuAQVE79og.4RCKoshI7ZowD70e"
+    },
+    {
+      "name": "Reaper Autocannon / Автопушка Жнец",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как один из слотов «Руки ×2 (могут быть разными)» Осквернителя без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "solid",
+        "range": 200,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "2",
+        "magazineCur": 200,
+        "magazineMax": 200,
+        "rof_single": 1,
+        "rof_semi": 4,
+        "rof_full": 0,
+        "damage": "3d10+8",
+        "damageType": "impact",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Hefty (R)",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "hefty"
+          },
+          {
+            "key": "reliable"
+          },
+          {
+            "key": "twinLinked"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "Rt2BYQFPeNuLjFLe",
+          "mount": "hull",
+          "hArc": "−45°..+45°",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "ziF2hMjGiAe8GmXa",
+          "options": [
+            "Reaper Autocannon / Автопушка Жнец",
+            "Twin Heavy Flamer / Спаренный Тяжёлый Огнемёт",
+            "Havoc Launcher / Гранатомёт Хавок",
+            "Twin Heavy Bolter / Спаренный Тяжёлый Болтер",
+            "Twin Lascannon / Спаренная Лазпушка",
+            "Power Scourge / Силовая Плеть (Осквернитель)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "v0bjIOWjaxbL5U9G",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341651,
+        "modifiedTime": 1783867341651,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!CEPZbRLuAQVE79og.v0bjIOWjaxbL5U9G"
+    },
+    {
+      "name": "Battle Cannon / Боевая Пушка (Осквернитель)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как «В корпусе» без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "solid",
+        "range": 1200,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "3d10+10",
+        "damageType": "blast",
+        "penetration": 8,
+        "quality": "common",
+        "availability": 2,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Боезапас: ∞ (энергия/подача). Тяжёлая Артиллерия: нельзя стрелять из этого орудия с помощью Трейта Onslaught.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "concussive",
+            "rating": 3
+          },
+          {
+            "key": "blast",
+            "rating": 8
+          },
+          {
+            "key": "ordnance"
+          },
+          {
+            "key": "reliable"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "Rt2BYQFPeNuLjFLe",
+          "mount": "hull",
+          "hArc": "−45°..+45°",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "xvjrp3bip1thuBsD",
+          "options": [
+            "Battle Cannon / Боевая Пушка (Осквернитель)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "Ou3I4lyZFTXc8HPk",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1783867341651,
+        "modifiedTime": 1783867341651,
+        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+      },
+      "_key": "!actors.items!CEPZbRLuAQVE79og.Ou3I4lyZFTXc8HPk"
     }
   ],
   "_id": "CEPZbRLuAQVE79og",
