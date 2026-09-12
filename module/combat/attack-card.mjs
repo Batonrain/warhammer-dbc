@@ -445,7 +445,7 @@ export function attackCard({
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
   // владение Талантом + не потрачен в этом Раунде), карточка только рисует.
   assassinStrike = false,
-  sbEff = 0, sbHalf = false, taintedAdd = 0, vehicleSide = "",
+  sbEff = 0, sbHalf = false, reverseThrustBonus = 0, taintedAdd = 0, vehicleSide = "",
   ammo = null, band = null, suppression = null, allGunsBlazing = null,
   corVal = 0, corEffects = [],
   soulBurnActorId = null,
@@ -476,8 +476,12 @@ export function attackCard({
     : `Промах — ${deg} ${_degWord(deg)}`);
 
   // Бонус Силы в рукопашной: Могучее ×2, Сдержанное 0, Обратный хват ½.
+  // reverseThrustBonus — Выпад Полной Атакой Обратным хватом (стр. 39):
+  // не половинит sbEff выше, а добавляет к нему ещё ½S.b (окр.▲) отдельной
+  // строкой, чтобы игрок видел ДВЕ разные причины числа, а не одну.
   const sbNote = isMelee
     ? `, S.b +${sbEff}${wp.mightySB ? " (Могучее ×2)" : wp.containedSB ? " (Сдержанное)" : ""}${sbHalf ? " (½ хват)" : ""}`
+      + (reverseThrustBonus ? `, +${reverseThrustBonus} (Обратный хват: Выпад Полной Атакой)` : "")
     : "";
   const taintedNote = taintedAdd ? `, Порча +${taintedAdd}` : "";
   // Общее напоминание о свойстве Взрывное едет отдельным блоком (blocks.props/
