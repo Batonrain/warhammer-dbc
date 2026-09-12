@@ -30,6 +30,8 @@ import { addictionPenaltyRules } from "./addiction.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 import { situationalRules } from "./situational.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
+import { hatredRules } from "./hatred.mjs";
+import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -132,6 +134,17 @@ registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
 // цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
 // Навыка, не только атаках), не источник-владелец Мутации.
 registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
+
+// Hatred/Ненависть (wdbc-1rno, 12.09.2026) — первый реальный потребитель
+// инфраструктуры целей Таланта (talent-targets.mjs): +10 рукопашная атака и
+// переброс встречного социального теста против цели, которую персонаж
+// выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
+registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Devourer of Knowledge/Пожиратель Знаний (wdbc-1rno, Тзинч) — Навыки,
+// украденные ПЕРМАНЕНТНО (9 дней подряд), считаются «Дружественными» для
+// цены Продвижения — динамический список по флагу, не статичная запись.
+registerRuleSource("devourerOfKnowledge", a => devourerPermanentRules(a));
 
 // Adjutant/Адъютант регистрирует себя САМ, в module/rules/adjutant.mjs, и
 // отсюда намеренно не импортируется (wdbc-795h). Причина в графе импортов:

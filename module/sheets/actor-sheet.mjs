@@ -81,6 +81,10 @@ import { showDelegateTestPicker, activeOwnerOf, requestDelegatedTest } from "../
 import { testKindHtml, diceModeHtml, readTestKind, readDiceChoice, mergeReroll,
          wireTestKindLive, rollD100WithReroll, opposedComparisonHtml } from "../rules/test-kind-widget.mjs";
 import { resolveOpposed } from "../rules/test-kind.mjs";
+import { egomaniaOverrideResult } from "../rules/egomania.mjs";
+import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
+         personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses }
+  from "../rules/personal-adaptation.mjs";
 import { skillTotal } from "../combat/movement-actions.mjs";
 import { assistRejection, assistThresholdBonus, assistDegrees, DEFAULT_ASSIST_MAX,
          assistsBeyondCap, countedAssists }
@@ -2481,13 +2485,47 @@ export class WarhammerCharacterSheet
 
   /** Ответ соперника (opposedRequest пришёл через опенер "opposedResponse") —
    *  публикует готовую карточку сравнения, видимую обеим сторонам. */
-  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome }) {
+  async _maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey = null }) {
     if (!opposedRequest) return;
-    const theirs = { deg: outcome.deg, success: outcome.success, threshold: baseEff };
-    const result = resolveOpposed(opposedRequest.initiatorSide, theirs, { safe: opposedRequest.safe });
+    // Personal Adaptation/Персональная Адаптация (Тзинч, wdbc-1rno): здесь
+    // this.actor — ОТВЕЧАЮЩАЯ сторона, initiatorUuid (module/hooks.mjs::
+    // "opposedResponse") — её оппонент. Тот же приём, что kind-outcome.mjs
+    // у стороны-инициатора: бонус к своему Порогу нельзя показать галочкой
+    // (вид теста выбирается уже после сбора модификаторов диалога), поэтому
+    // прибавляется здесь же, своей строкой в карточке.
+    const initiatorActor = opposedRequest.initiatorUuid
+      ? await fromUuid(opposedRequest.initiatorUuid).catch(() => null) : null;
+    let theirsEff = baseEff;
+    let personalAdaptationLine = "";
+    if (initiatorActor && hasRuleFlag(this.actor, PERSONAL_ADAPTATION_CAPABILITY)) {
+      const bonus = personalAdaptationBonusFor(
+        this.actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], initiatorActor.uuid, game.time?.worldTime ?? 0);
+      if (bonus > 0) {
+        theirsEff += bonus;
+        personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ` +
+          `${esc(initiatorActor.name)} → Порог <b>${theirsEff}</b></div>`;
+      }
+    }
+    const theirs = { deg: outcome.deg, success: outcome.success, threshold: theirsEff };
+    // Egomania/Эгомания (Слаанеш, wdbc-1rno): та же автопобеда, что уже даёт
+    // rules/kind-outcome.mjs NPC-автоброску — здесь this.actor всегда
+    // ОТВЕЧАЮЩАЯ сторона («theirs» в терминах этого сравнения), инициатора
+    // не видно документом (только его initiatorSide/initiatorName), его
+    // собственную Эгоманию проверить неоткуда — тот же честный предел.
+    const result = egomaniaOverrideResult(this.actor, skillKey, "theirs",
+      resolveOpposed(opposedRequest.initiatorSide, theirs, { safe: opposedRequest.safe }));
+    // «После КАЖДОГО встречного теста» — растёт независимо от исхода выше.
+    if (initiatorActor && hasRuleFlag(this.actor, PERSONAL_ADAPTATION_CAPABILITY)) {
+      const cap = personalAdaptationCap(this.actor.system?.corruptionBonus);
+      const nextList = nextPersonalAdaptationBonuses(
+        this.actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], initiatorActor.uuid,
+        game.time?.worldTime ?? 0, cap);
+      await this.actor.setFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG, nextList);
+    }
     const content = opposedComparisonHtml({
       label, mineName: opposedRequest.initiatorName, mine: opposedRequest.initiatorSide,
-      theirsName: this.actor.name, theirs: { threshold: baseEff, roll: rv }, result
+      theirsName: this.actor.name, theirs: { threshold: theirsEff, roll: rv }, result,
+      theirsNote: personalAdaptationLine
     });
     // Не карточка теста, а готовое сравнение двух уже сделанных бросков
     // (своя разметка в rules/test-kind-widget.mjs) — и намеренно мимо режима
@@ -2605,6 +2643,7 @@ export class WarhammerCharacterSheet
           </div>`,
       lines: [
         outcome.combinedLine,
+        outcome.personalAdaptationLine,
         assistCount ? `<div class="roll-threshold">🤝 Ассистенты: <b>${assistCount}</b> (+${assistThresholdBonus(assistCount)} к порогу${outcome.success ? `, +${assistCount} к степени` : ""})</div>` : ""
       ],
       rv, rerollNote, critLine: outcome.critLine, outcome: outcomeHtml,
@@ -2618,7 +2657,7 @@ export class WarhammerCharacterSheet
         baseEff, rv, outcome
       });
     }
-    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome });
+    await this._maybePostOpposedComparison(opposedRequest, { label, baseEff, rv, outcome, skillKey });
   }
 
   // -- Бросок навыка ---------------------------------------------------------

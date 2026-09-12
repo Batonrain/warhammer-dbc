@@ -552,8 +552,18 @@ export async function _resolveSwim(actor, ath, heavy, ext, mod, sb) {
 }
 
 // ── Падение и Группирование ────────────────────────────────────────────
+/**
+ * Breeze/Бриз (Общие Мутации, wdbc-1rno): «полностью игнорирует
+ * сопротивление воздуха, терминальная скорость падения не ограничена» —
+ * буквально снимает потолок в 25м этой формулы (единственный мех. стенд-ин
+ * терминальной скорости в системе — не физическая модель, просто потолок
+ * высоты). Обоюдоострый пункт книги: без сопротивления воздуха урон с
+ * ОЧЕНЬ большой высоты становится БОЛЬШЕ, не меньше — Мутация, не только
+ * благо.
+ */
 async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
-  const cappedHeight = Math.min(height, 25);
+  const capped = !hasRuleFlag(actor, "mutation.breeze");
+  const cappedHeight = capped ? Math.min(height, 25) : height;
   const dmgRoll = await new Roll(`1d10 + ${cappedHeight}`).evaluate();
   let reduction = 0, tuckLine = "";
   if (tuck) {
@@ -566,7 +576,7 @@ async function _resolveFallDamage(actor, height, { tuck = false } = {}) {
 
   await _postCard(actor, `<div class="wh-roll-result">
     <div class="roll-header">${rollIcon("skull","#ff6b6b")}Падение — ${esc(actor.name)}</div>
-    <div class="roll-threshold">Высота <b>${height}</b>м${height > 25 ? " (ограничено терминальной скоростью 25)" : ""} · 1d10+${cappedHeight}: <b>${dmgRoll.total}</b></div>
+    <div class="roll-threshold">Высота <b>${height}</b>м${(capped && height > 25) ? " (ограничено терминальной скоростью 25)" : ""}${(!capped && height > 25) ? " (Бриз: терминальная скорость не ограничена)" : ""} · 1d10+${cappedHeight}: <b>${dmgRoll.total}</b></div>
     ${tuckLine}
     <div class="roll-outcome"><span class="${finalDmg > 0 ? "roll-failure" : "roll-success"}">Урон: <b>${finalDmg}</b> I (Impact), броня не учитывается.</span></div>
   </div>`);

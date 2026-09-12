@@ -51,6 +51,20 @@
 // реальный призыв Гончей Плоти (module/combat/the-hunter.mjs::
 // spawnHunterHound — метка+синхронизация инициативы), capability-ключ без
 // цены, цена — на самой записи kind:"script".
+//
+// 12.09.2026: Sundering/Разделение (wdbc-1rno) — выбыл из этого списка ПО
+// ДРУГОМУ пути, чем соседи выше: триггер не кнопка «Возможности сейчас»
+// (Разделение бессмысленно активировать заранее — оно только «на смерти»),
+// а новая опция диалога Спасения от смерти (module/sheets/tabs/death.mjs::
+// doSundering). Цена (1 Очко Бесчестия) списывается ТАМ (changeActorInfamy),
+// поэтому пак-запись capability больше не несёт capabilityCostPool/Amount —
+// иначе панель «Возможности сейчас» предлагала бы ВТОРУЮ, отдельную кнопку
+// списания того же Очка без единого эффекта позади неё (то самое двойное
+// списание, от которого этот тест и защищает). capability-ключ остаётся
+// зонтиком, reader в capabilities.mjs честно непустой (module/rules/
+// sundering.mjs — клон/трейты/даунгрейд урона, module/combat/sundering.mjs —
+// спавн/инициатива/откат конца сцены, module/combat/attack.mjs — гейт
+// даунгрейда, module/apps/game-session.mjs — откат конца сцены/сессии).
 
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
@@ -70,7 +84,6 @@ const ROOT = path.resolve(import.meta.dirname, "../..");
  */
 const PAID = [
   { key: "gift.tzeentch.hiddenThreat" },
-  { key: "gift.tzeentch.sundering" },
   { key: "rune.beastmanShaman.boneRuneEtching.slaaneshVariant",
     system: { patronGod: "slaanesh" } }
 ];

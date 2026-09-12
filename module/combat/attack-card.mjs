@@ -513,7 +513,7 @@ export function attackCard({
       тест Подавление (${suppression.testMod >= 0 ? "+" : ""}${suppression.testMod})<br>
       ГМ распределяет <b>${suppression.hits}</b> попадан${suppression.hits === 1 ? "ие" : suppression.hits < 5 ? "ия" : "ий"} в торс
       по случайным целям в секторе (нечётные Успехи, максимум RoF ${suppression.cap})
-      <button class="wh-suppression-test-btn" type="button" data-test-mod="${suppression.testMod}">
+      <button class="wh-suppression-test-btn" type="button" data-test-mod="${suppression.testMod}" data-attacker-uuid="${attackerUuid}">
         ${rollIcon("target","#ff9a4d")}Тест Подавления — выбранный токен цели
       </button>
     </div>` : "";
@@ -525,7 +525,7 @@ export function attackCard({
   const allGunsBlazingHtml = allGunsBlazing ? `<div class="roll-suppression">
       Огонь из Всех Орудий: обе очереди пары — по одной цели —
       тест Подавление (${allGunsBlazing.testMod >= 0 ? "+" : ""}${allGunsBlazing.testMod})
-      <button class="wh-all-guns-blazing-btn" type="button" data-test-mod="${allGunsBlazing.testMod}">
+      <button class="wh-all-guns-blazing-btn" type="button" data-test-mod="${allGunsBlazing.testMod}" data-attacker-uuid="${attackerUuid}">
         ${rollIcon("target","#ff9a4d")}Тест Подавления — выбранный токен цели
       </button>
     </div>` : "";

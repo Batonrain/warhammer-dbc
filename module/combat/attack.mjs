@@ -26,6 +26,7 @@ import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
+import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
 import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair }
@@ -460,10 +461,18 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
   const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
-  const dmgFormula = damageFormulaFor({
+  let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
   });
+  // Sundering/Разделение (Тзинч, wdbc-1rno): «урон ВСЕХ атак копий» — не
+  // способность носителя, а клеймо самой копии (module/combat/sundering.mjs
+  // ставит SUNDERING_COPY_FLAG прямо на актора-копию при спавне, это не
+  // grantFlag правило — не hasRuleFlag). Покрывает основной боевой конвейер
+  // (обычная атака оружием); честно НЕ покрыты более редкие пути урона того
+  // же актора — psychic.mjs/tech.mjs/counter-attack.mjs/horde-sheet.mjs
+  // (тоже зовут applyDamageDiceMods, но отдельными формулами вне attack.mjs).
+  if (actor.getFlag?.("warhammer-dbc", SUNDERING_COPY_FLAG)) dmgFormula = sunderingDamageFormula(dmgFormula);
 
   // Доп. кубы урона: Меткое (одиночный, по СУ), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.

@@ -23,6 +23,11 @@ import { esc } from "../helpers/utils.mjs";
 // (apps/mechanics.mjs), и тот же исполнитель кода (apps/item-script.mjs).
 import { getItemMechanics, findMechEntryById, scriptRunReady, markScriptRunUsed } from "../apps/mechanics.mjs";
 import { executeItemCode } from "../apps/item-script.mjs";
+import { egomaniaOverrideResult } from "./egomania.mjs";
+import { hasRuleFlag } from "./flags.mjs";
+import { PERSONAL_ADAPTATION_CAPABILITY, PERSONAL_ADAPTATION_FLAG,
+         personalAdaptationCap, personalAdaptationBonusFor, nextPersonalAdaptationBonuses }
+  from "./personal-adaptation.mjs";
 
 /**
  * @param {object} actor документ актора (нужен для resolveTest и банка Расширенного)
@@ -76,6 +81,22 @@ export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ct
   const kindLabel = kind !== "base" ? TEST_KINDS[kind] : null;
 
   let eff = baseEff;
+  // Personal Adaptation/Персональная Адаптация (Тзинч, wdbc-1rno): бонус
+  // против КОНКРЕТНОЙ цели прошлых встречных тестов — диалог не может
+  // показать его галочкой (вид теста выбирается уже ПОСЛЕ сбора модификаторов,
+  // см. шапку rules/personal-adaptation.mjs), поэтому прибавляется прямо к
+  // Порогу здесь же, своей строкой в карточке.
+  let personalAdaptationLine = "";
+  if ((kind === "opposed" || kind === "opposedSafe") && ctx?.targetActor
+      && hasRuleFlag(actor, PERSONAL_ADAPTATION_CAPABILITY)) {
+    const bonus = personalAdaptationBonusFor(
+      actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], ctx.targetActor.uuid, game.time?.worldTime ?? 0);
+    if (bonus > 0) {
+      eff += bonus;
+      personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ` +
+        `${esc(ctx.targetActor.name)} → Порог <b>${eff}</b></div>`;
+    }
+  }
   let combinedLine = "";
   if (kind === "combined" && combined) {
     // Явный Предел (даже 0 не вводят намеренно — 0 здесь «не задан»), иначе
@@ -118,11 +139,28 @@ export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ct
     const mine = { deg: baseDeg, success, threshold: eff };
     const theirsOutcome = testOutcome(opposed.roll, opposed.threshold);
     const theirs = { ...theirsOutcome, threshold: opposed.threshold };
-    const result = resolveOpposed(mine, theirs, { safe: kind === "opposedSafe" });
+    // Egomania/Эгомания (Слаанеш, wdbc-1rno): «автоматически побеждает в
+    // любом встречном тесте против социальных взаимодействий» — actor здесь
+    // всегда бросающий («моя» сторона сравнения), соперник в этом пути
+    // (NPC-автобросок) даже не несёт своего документа, только Порог/бросок —
+    // проверить его собственную Эгоманию здесь физически нечем.
+    const result = egomaniaOverrideResult(actor, ctx?.skill,
+      "mine", resolveOpposed(mine, theirs, { safe: kind === "opposedSafe" }));
     const winnerLabel = result.winner === "mine" ? "Вы побеждаете"
       : result.winner === "theirs" ? "Соперник побеждает" : "Ничья — решает ГМ";
     opposedLine = `<div class="roll-threshold">⚔ ${winnerLabel}${result.winner ? `, margin <b>${result.margin}</b>` : ""}</div>`;
+
+    // «После КАЖДОГО встречного теста» — растёт независимо от исхода выше
+    // (книга не говорит «после победы»), поэтому запись безусловна.
+    if (ctx?.targetActor && hasRuleFlag(actor, PERSONAL_ADAPTATION_CAPABILITY)) {
+      const cap = personalAdaptationCap(actor.system?.corruptionBonus);
+      const nextList = nextPersonalAdaptationBonuses(
+        actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], ctx.targetActor.uuid,
+        game.time?.worldTime ?? 0, cap);
+      await actor.setFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG, nextList);
+    }
   }
 
-  return { eff, success, deg: baseDeg, crit, critLine, kindLabel, combinedLine, extendedLine, opposedLine };
+  return { eff, success, deg: baseDeg, crit, critLine, kindLabel, combinedLine, personalAdaptationLine,
+           extendedLine, opposedLine };
 }
