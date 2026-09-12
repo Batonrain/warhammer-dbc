@@ -192,3 +192,27 @@ export function collectRules(actor, ctx = {}) {
   if (cacheable) CACHE.set(actor, rules);
   return rules;
 }
+
+/**
+ * Сбросить кэш ОДНОГО актора внутри текущего withRulesCache — не путать со
+ * снятием обёртки целиком (та обнуляет CACHE и возвращает «нет кэша вовсе»).
+ *
+ * Нужна для середины ОДНОГО пересчёта (wdbc-2gn, module/rules/character.mjs):
+ * первый вопрос за пересчёт (hasRuleFlag на Дредноута, ДО цикла характеристик
+ * и до Object.assign(system.conditions, readAllMirrors(actor))) кладёт в кэш
+ * полный набор правил, отобранный по ЕЩЁ НЕ ОБНОВЛЁННЫМ actor.system —
+ * characteristics[key].bonus и conditions читаются предикатами charBonusMin/
+ * hasCondition прямо с живого актора, а не из снимка на входе. Любое правило,
+ * которое эти предикаты гейтят («нужен Бонус Силы 5», «в Ярости»), отбирается
+ * по значениям ДО пересчёта и в такой форме остаётся в кэше до конца ОДНОГО
+ * withRulesCache — даже когда сам пересчёт уже дописал верные bonus/conditions
+ * на этот же actor.system несколькими строками ниже.
+ *
+ * Вызывается сразу после того, как эти поля устаканились для прохода
+ * (character.mjs — после «Без сознания ⇒ Беспомощен»), чтобы следующий
+ * коллект внутри той же обёртки пересобрал список по актуальному состоянию.
+ * Не трогает кэш других акторов и не выходит из самой обёртки.
+ */
+export function invalidateRulesCacheFor(actor) {
+  if (CACHE && actor && typeof actor === "object") CACHE.delete(actor);
+}
