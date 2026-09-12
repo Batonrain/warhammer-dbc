@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "flame"
   },
   "_id": "15vLMqfxdR3m4btz",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

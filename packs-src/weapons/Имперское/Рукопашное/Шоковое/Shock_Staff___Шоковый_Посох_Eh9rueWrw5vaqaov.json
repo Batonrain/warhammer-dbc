@@ -63,7 +63,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Посох"
+    "meleeCategory": "Посох",
+    "damageSubtype": "electrical"
   },
   "_id": "Eh9rueWrw5vaqaov",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

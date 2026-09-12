@@ -81,7 +81,8 @@
       "reloads": 10
     },
     "meleeCategory": "Молот",
-    "wraithbone": true
+    "wraithbone": true,
+    "damageSubtype": "crushing"
   },
   "_id": "LFatTqalAqzihbDg",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

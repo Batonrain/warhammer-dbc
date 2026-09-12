@@ -72,7 +72,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "damageSubtype": "flame"
   },
   "_id": "9TP1mXLMxdLXi4HI",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

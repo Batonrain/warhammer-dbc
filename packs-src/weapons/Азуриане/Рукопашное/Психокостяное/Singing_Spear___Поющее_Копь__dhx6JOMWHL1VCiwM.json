@@ -18,7 +18,8 @@
         "damage": "1d10+4",
         "damageType": "impact",
         "penetration": 2,
-        "weaponProps": []
+        "weaponProps": [],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
