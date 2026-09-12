@@ -94,7 +94,7 @@ describe("system.absorption.propFlags", () => {
       noEnergy: false, noImpact: false, doubleBlast: false,
       noRanged: false, noJointCalled: false, noEyeCalled: false,
       blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-      frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0,
+      frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0, jointArmourRating: 0,
       noApVsSubtype: {}, doubleApVsSubtype: {}, tripleApVsSubtype: {}
     });
   });
