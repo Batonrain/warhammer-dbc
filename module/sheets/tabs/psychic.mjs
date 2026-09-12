@@ -9,7 +9,7 @@ import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
-import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES } from "../../constants/psyker.mjs";
+import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES, subPathTotals } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
 import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
@@ -29,8 +29,11 @@ import { resolveTest } from "../../rules/resolve-test.mjs";
 import { getPsychicVessel } from "../../rules/psychic-vessel.mjs";
 import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeStrikeMax, runeStrikeRefund, runeUpdate,
-         RUNE_STRIKE_COST } from "../../rules/sigillite-runes.mjs";
+         RUNE_STRIKE_COST, isRuneLearned, hasImprovisedRune,
+         runeLearnInfo, improvisedRuneCostUpdates,
+         preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
+import { mechFormulaTotalSafe } from "../../rules/mech-formula.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -83,6 +86,62 @@ export function missingMarkForPower(actor, item) {
   return null;
 }
 
+/**
+ * Изучение Руны конкретной психосилы (wdbc-exjp, Sigillite Magic, стр. 101-102):
+ * «Псайкер получает возможность изучить Руну любой психосилы, кроме
+ * Божественных и Либрариума, за 50 опыта… Чтобы изучить руну псайкер должен
+ * иметь минимально требуемый бPR, указанный в требованиях психосилы».
+ *
+ * Тот же приём, что и покупка Элитного архетипа (apps/elite-buy.mjs): цена
+ * пишется на САМ предмет (item.system.runeLearnCost — суммируется в
+ * system.experience.spentPsy автоматически, rules/character.mjs), а не
+ * списывается напрямую с experience.current. Нехватка опыта/бPR — вопрос
+ * ГМу («в долг» бывает за столом), а не жёсткий запрет; запрещённая
+ * дисциплина без «Прометеева Огня» — жёсткий запрет книги, кнопка вовсе не
+ * должна была вызваться (sheet-helpers.mjs её не показывает), но проверка
+ * дублируется здесь на случай прямого вызова.
+ */
+export async function learnSigilliteRune(actor, item) {
+  if (!hasRuneMagic(actor) || isRuneLearned(item)) return;
+  const info = runeLearnInfo(actor, item);
+  if (!info.allowed) {
+    ui.notifications.warn(
+      `«${item.name}»: Руну Божественной психосилы/Либрариума нельзя изучить без Таланта ` +
+      "«Prometheus Fire / Прометеев Огонь».");
+    return;
+  }
+  if (info.prBlocked) {
+    const ok = await Dialog.confirm({
+      title: `${item.name}: не хватает бPR`,
+      content: `<p>Книга требует минимум бPR <b>${item.system.prRequired}</b> для изучения этой Руны, ` +
+        `у персонажа бPR <b>${actor.system.psyker?.rating || 0}</b>. Изучить всё равно?</p>`
+    });
+    if (!ok) return;
+  }
+  const exp = actor.system.experience ?? {};
+  const current = Number(exp.current) || 0;
+  if (info.cost > current) {
+    const ok = await Dialog.confirm({
+      title: `${item.name}: не хватает опыта`,
+      content: `<p>Руна стоит <b>${info.cost}</b>${info.forbidden ? " (в т.ч. +50 за «Прометеев Огонь»)" : ""}, ` +
+        `свободно <b>${current}</b>. Изучить всё равно?</p>`
+    });
+    if (!ok) return;
+  }
+  await item.update({ "system.runeLearned": true, "system.runeLearnCost": info.cost });
+  // Журнал опыта (apps/xp-log.mjs) — та же запись, что у Элитного архетипа
+  // (apps/elite-buy.mjs): сумма не влияет на experience.current напрямую (её
+  // считает автосумма spentPsy выше), это только читаемая история трат.
+  const log = Array.isArray(exp.log) ? foundry.utils.deepClone(exp.log) : [];
+  log.push({ at: Date.now(), amount: -info.cost, kind: "spend",
+             reason: `Руна Сигиллитов «${item.name}»${info.forbidden ? " (Прометеев Огонь)" : ""}` });
+  await actor.update({ "system.experience.log": log });
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content: `<p><b>Руна изучена:</b> ${esc(item.name)} — потрачено <b>${info.cost}</b> опыта.</p>`
+  });
+}
+
 export function showManifestDialog(actor, item) {
   if (sarcophagusBlocksPsychicPowers(actor)) {
     ui.notifications.warn("Саркофаг Дредноута: манифестация психосил заблокирована (нужна Матрица Осирис).");
@@ -133,10 +192,21 @@ export function showManifestDialog(actor, item) {
   // Весь блок живёт под одним гейтом: нет Черты — нет ни строки в окне, ни
   // единого лишнего символа в разметке диалога.
   const runeMagic  = hasRuneMagic(actor);
-  const runeBase   = runeMagic ? runeCostForPower(item) : 0;
+  // wdbc-p2it: цена ниже уже со скидкой Заготовленной Руны, если она сейчас
+  // применима к ЭТОЙ психосиле (выбрана на бой и первая манифестация ещё не
+  // потрачена) — actor передан вторым аргументом, без него (как во всех
+  // прочих вызовах системы) скидка не считалась бы вовсе.
+  const runeBase   = runeMagic ? runeCostForPower(item, actor) : 0;
   const runeHave   = runeMagic ? runeValue(actor) : 0;
   const runeCap    = runeMagic ? runeMax(actor) : 0;
   const strikeMax  = runeMagic ? runeStrikeMax(actor, item) : 0;
+  const preparedDiscount = runeMagic ? preparedRuneDiscount(actor, item) : 0;
+  // wdbc-exjp: манифестация через ЭТОТ Путь ограничена изученными Рунами —
+  // Импровизированная Руна снимает ограничение ценой урона, показанной ниже
+  // заранее (реальное списание — только если игрок правда выберет этот Путь
+  // и нажмёт «Психотест!», см. коллбэк кнопки).
+  const runeLearned    = runeMagic ? isRuneLearned(item) : true;
+  const canImprovise   = runeMagic ? hasImprovisedRune(actor) : false;
   const runeBlock  = !runeMagic ? "" : `
         <div class="pm-row">
           <label title="бPR психосилы × 2 (стр. 101-102)">Руны</label>
@@ -144,6 +214,8 @@ export function showManifestDialog(actor, item) {
             цена <b id="pm-rune-cost">${runeBase}</b> · есть <b>${runeHave}</b> из <b>${runeCap}</b>
           </div>
         </div>
+        ${preparedDiscount > 0
+          ? `<div class="pm-note">Заготовленная Руна: −${preparedDiscount} уже учтено в цене (первая манифестация «${esc(item.name)}» в этом бою).</div>` : ""}
         ${strikeMax > 0 ? `
         <div class="pm-row">
           <label title="Талант «Рунный Удар»: 4 Руны за +1 эPR, можно повторять">Рунный Удар</label>
@@ -153,7 +225,18 @@ export function showManifestDialog(actor, item) {
           </select>
         </div>` : `<input type="hidden" id="psy-rune-strike" value="0"/>`}
         ${runeHave < runeBase
-          ? `<div class="pm-warn">Рун не хватает: нужно ${runeBase}, есть ${runeHave}.</div>` : ""}`;
+          ? `<div class="pm-warn">Рун не хватает: нужно ${runeBase}, есть ${runeHave}.</div>` : ""}
+        ${!runeLearned ? (canImprovise
+          ? `<div class="pm-warn">Руна «${esc(item.name)}» не изучена — через этот Путь сработает только Импровизированной Руной: −1 непогл. Рана, −1 к Мод. S/A/W.</div>`
+          : `<div class="pm-warn">Руна «${esc(item.name)}» не изучена — через этот Путь манифестировать нельзя. Изучите Руну (кнопка в таблице Психосил) или возьмите Талант «Improvised Rune / Импровизированная Руна».</div>`) : ""}
+        <div class="pm-row pm-sigillite-subs" id="pm-sigillite-subs" style="display:none;">
+          <label title="Книга (стр. 101-102): «может использовать механику всех следующих путей одновременно, псайкер может определять желаемые» — отметьте любую комбинацию, а не один Путь">Механики Пути</label>
+          <div class="pm-input pm-wide" style="border:none;background:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;">
+            <label style="display:flex;gap:4px;align-items:center;"><input type="checkbox" id="psy-sub-incantation"/> Инкантация (+1 эPR, +20 Феномен, действие→полное)</label>
+            <label style="display:flex;gap:4px;align-items:center;"><input type="checkbox" id="psy-sub-meditation"/> Медитация (+3 эPR, концентрация)</label>
+            <label style="display:flex;gap:4px;align-items:center;"><input type="checkbox" id="psy-sub-unholy"/> Нечестивые Символы (−20 Феномен)</label>
+          </div>
+        </div>`;
 
   const profiles = sys.profiles || [];
   const variants = sys.variants || [];
@@ -170,7 +253,7 @@ export function showManifestDialog(actor, item) {
   };
   const pathData = Object.fromEntries(Object.entries(PSY_PATHS).map(([k, p]) => [k, {
     ePR: p.ePR || 0, testMod: p.testMod || 0, phenMod: p.phenMod || 0, dyn: p.dynamicTestMod || "",
-    runeCost: !!p.runeCost
+    runeCost: !!p.runeCost, subPaths: p.subPaths || null
   }]));
   const dynBonus = { t: actor.system.characteristics?.t?.bonus ?? 0,
                      wp: actor.system.characteristics?.wp?.bonus ?? 0 };
@@ -302,8 +385,27 @@ export function showManifestDialog(actor, item) {
           // выполняется вовсе.
           const path = html.find("#psy-path").val() || "";
           const runeStrike = parseInt(html.find("#psy-rune-strike").val()) || 0;
+          // wdbc-qd6w: у Пути «Руны Сигиллитов» книга разрешает СКЛАДЫВАТЬ
+          // Инкантацию/Медитацию/Нечестивые Символы любой комбинацией — это
+          // единственный Путь реестра с полем `subPaths` (constants/
+          // psyker.mjs), поэтому у всех прочих Путей список пуст и флажки
+          // просто не читаются.
+          const pathSubKeys = PSY_PATHS[path]?.subPaths || [];
+          const sigilliteSubs = pathSubKeys.filter(key => html.find(`#psy-sub-${key}`).is(":checked"));
+          // wdbc-exjp: без изученной Руны этот Путь манифестирует ТОЛЬКО через
+          // Improvised Rune — без Таланта манифестация здесь обязана остаться
+          // невозможной, а не молча пройти как раньше (до этого тикета список
+          // изученных Рун не существовал вовсе, и Путь пускал любую силу).
+          const needsImprovise = runeMagic && PSY_PATHS[path]?.runeCost && !isRuneLearned(item);
+          if (needsImprovise && !hasImprovisedRune(actor)) {
+            ui.notifications.warn(
+              `Руна «${item.name}» не изучена — манифестировать через Путь «Руны Сигиллитов» ` +
+              "нельзя без Таланта «Improvised Rune / Импровизированная Руна». Изучите Руну за опыт " +
+              "(кнопка в таблице Психосил) либо возьмите Талант.");
+            return;
+          }
           if (runeMagic && PSY_PATHS[path]?.runeCost) {
-            const need = runeCostTotal(item, runeStrike);
+            const need = runeCostTotal(item, runeStrike, actor);
             const have = runeValue(actor);
             if (have < need) {
               ui.notifications.warn(
@@ -314,7 +416,7 @@ export function showManifestDialog(actor, item) {
             }
           }
           await executePsychotest(actor, item, {
-            ruleMod, halveRulePenalty, runeStrike,
+            ruleMod, halveRulePenalty, runeStrike, improvisedRune: needsImprovise, sigilliteSubs,
             mPR:      parseInt(html.find("#psy-pr").val())     || minPR,
             prMod:    parseInt(html.find("#psy-pr-mod").val()) || 0,
             mode:     html.find("#psy-mode").val()             || "normal",
@@ -363,7 +465,23 @@ export function wirePsyManifestPreview(html, m) {
       phenText = "Феномен гарантирован";
     }
     const pd = m.pathData[path] || { ePR: 0, testMod: 0, phenMod: 0, dyn: "" };
-    ePR += pd.ePR || 0;
+    // wdbc-qd6w: «Руны Сигиллитов» — единственный Путь, где книга разрешает
+    // складывать несколько суб-механик (Инкантация/Медитация/Нечестивые
+    // Символы) одновременно, а не выбирать одну вместо целого Пути. Блок
+    // флажков скрыт для всех прочих Путей — у них `subPaths` нет вовсе.
+    const subsEl = $("#pm-sigillite-subs");
+    if (subsEl) subsEl.style.display = pd.subPaths ? "flex" : "none";
+    let subEPR = 0, subTestMod = 0;
+    if (pd.subPaths) {
+      for (const key of pd.subPaths) {
+        if ($(`#psy-sub-${key}`)?.checked) {
+          const sp = m.pathData[key] || {};
+          subEPR += sp.ePR || 0;
+          subTestMod += sp.testMod || 0;
+        }
+      }
+    }
+    ePR += (pd.ePR || 0) + subEPR;
     // Рунный Удар (wdbc-fsl9): +1 эPR за каждые 4 Руны, и только когда Путь
     // действительно платит Рунами — переключился на Медитацию, и надбавка
     // исчезает вместе с ценой. Элементов нет ни у кого, кроме Сигиллита.
@@ -372,7 +490,7 @@ export function wirePsyManifestPreview(html, m) {
     const runeCostEl = $("#pm-rune-cost");
     if (runeCostEl)
       runeCostEl.textContent = pd.runeCost ? String((m.runeBase || 0) + strike * RUNE_STRIKE_COST) : "—";
-    const pathTest = (pd.testMod || 0) + (pd.dyn ? (m.dynBonus[pd.dyn] || 0) : 0);
+    const pathTest = (pd.testMod || 0) + (pd.dyn ? (m.dynBonus[pd.dyn] || 0) : 0) + subTestMod;
     const varMod = (varIdx >= 0) ? (m.variantMods[varIdx] || 0) : 0;
     // Галочки правил считаем тем же кодом, что и сам бросок (executePsychotest),
     // иначе игрок увидит в окне одно число, а бросится другое.
@@ -469,8 +587,15 @@ export async function executePsychotest(actor, item, opts) {
   }
 
   // ── Бонусы Пути Силы ──────────────────────────────────────────────────────
+  // wdbc-qd6w: «Руны Сигиллитов» разрешает складывать Инкантацию/Медитацию/
+  // Нечестивые Символы любой отмеченной комбинацией (книга, стр. 101-102) —
+  // единственный Путь реестра с `subPaths`; у всех прочих Путей subTotals
+  // нулевой по построению (subPathTotals фильтрует по `PATH.subPaths`).
+  const subTotals = subPathTotals(opts.path, opts.sigilliteSubs);
   ePR     += PATH.ePR || 0;
   phenMod += PATH.phenMod || 0;
+  ePR     += subTotals.ePR;
+  phenMod += subTotals.phenMod;
   // Рунный Удар (wdbc-fsl9): «потратить дополнительно четыре руны, добавив ей
   // +1 эPR в расчёте всех эффектов». Считается только на Пути, который Рунами
   // и платит: иначе эPR рос бы бесплатно.
@@ -504,7 +629,14 @@ export async function executePsychotest(actor, item, opts) {
     const fCls  = focusMod >= 0 ? "roll-success" : "roll-failure";
     focusNote = `<div class="roll-defense-note">${rollIcon("spark","#c98bff")}Психофокус (W ${wpv}): бросок <b>${fv}</b> → <span class="${fCls}">${fWord}${focusMod ? `, ${focusMod > 0 ? "+" : ""}${focusMod}` : ", без бонуса"}</span> к психотесту. <i>(свободное действие, 1/ход, в свой Ход)</i></div>`;
   }
-  const pathTestMod = (PATH.testMod || 0) + pathDynMod + focusMod;
+  const pathTestMod = (PATH.testMod || 0) + pathDynMod + focusMod + subTotals.testMod;
+  // Заметка в карточку — только если хоть одна суб-механика реально отмечена
+  // (subTotals.labels пуст у всех Путей без `subPaths`, и у Сигиллита без
+  // отмеченных флажков — тогда действует только базовый Best.Q Психофокус).
+  const subPathNote = subTotals.labels.length
+    ? `Руны Сигиллитов: сложены — ${subTotals.labels.join(", ")}` +
+      (opts.sigilliteSubs?.includes("incantation") ? " (Инкантация: действие манифестации на ступень выше — вручную)" : "")
+    : "";
 
   const actorUpdates = {}; // накопленные изменения (Порча Варп-Шока, Раны Конверсии)
 
@@ -516,12 +648,25 @@ export async function executePsychotest(actor, item, opts) {
   const rangePR  = clampPR(opts.rangePR  || 0);
   const aspectsDiffer = damagePR !== ePR || rangePR !== ePR;
 
+  // wdbc-5kd: Пробитие основного профиля — формула, не константа («Разрушение»
+  // Pen=PR, «Сверхъестественный Шторм» Pen=PR×3, в данных — «PR*3»). «PR»
+  // подставляется тем же эПР урона, что и damage чуть ниже (damagePR — тот же
+  // аспект, который игрок мог снизить независимо от психотеста): Пробитие
+  // профиля атаки обязано падать вместе с уроном, а не считаться от «сырого»
+  // текущего ПР персонажа. Остаток (число, +, *, скобки) считает тот же
+  // безопасный парсер, что и Рейтинг записи Конструктора (mech-formula.mjs) —
+  // дайсы Пробитию не нужны, поэтому не через Roll, как damage.
+  const resolvePen = formula =>
+    mechFormulaTotalSafe(String(formula ?? "0").replace(/\bPR\b/gi, damagePR));
+
   // ── Профиль атаки и вариация броска ────────────────────────────────────────
   // Если выбран доп. профиль — берём его урон/тип/пробитие/свойства/урон-в-хар-ку,
   // иначе основной. Вариация добавляет свой модификатор к психотесту.
   const profile = (opts.profileIdx >= 0) ? (sys.profiles || [])[opts.profileIdx] : null;
   const atk = profile ? {
     damage:    profile.damage, damageType: profile.damageType || "energy",
+    // Пробитие доп. профиля — вне wdbc-5kd (не названо в тикете), оставлено
+    // числом как было; свести к формуле — отдельная задача при находке.
     pen:       Number(profile.penetration) || 0,
     props:     parsePsyPropsText(profile.propsText),
     charStat:  profile.charDamageStat || "",
@@ -529,7 +674,7 @@ export async function executePsychotest(actor, item, opts) {
     label:     profile.label || "профиль"
   } : {
     damage:    sys.damage, damageType: sys.damageType || "energy",
-    pen:       Number(sys.penetration) || 0,
+    pen:       resolvePen(sys.penetration),
     props:     sys.weaponProps || [],
     charStat:  sys.charDamageStat || "",
     charForm:  sys.charDamageFormula || "",
@@ -589,7 +734,13 @@ export async function executePsychotest(actor, item, opts) {
   // только запись. Ветка целиком под гейтом Черты.
   let runeLine = "";
   if (PATH.runeCost && hasRuneMagic(actor)) {
-    const cost   = runeCostTotal(item, runeStrike);
+    // wdbc-p2it: скидка Заготовленной Руны считается ДО charge (та же цена,
+    // что уже показывал диалог) — если она реально применилась к ЭТОЙ
+    // манифестации, метка «использована» ставится сразу после, отдельным
+    // вызовом actor.setFlag: списание Рун идёт через actorUpdates/
+    // actor.update ниже по конвейеру, а флаг — своя запись.
+    const discount = preparedRuneDiscount(actor, item);
+    const cost   = runeCostTotal(item, runeStrike, actor);
     const refund = (!success && runeStrike > 0)
       ? Math.min(runeStrikeRefund(actor), runeStrike * RUNE_STRIKE_COST) : 0;
     const before = runeValue(actor);
@@ -598,8 +749,25 @@ export async function executePsychotest(actor, item, opts) {
     const after = patch ? patch["system.sigilliteRunes.value"] : before;
     runeLine = `<div class="roll-threshold">Руны: −<b>${cost}</b> (бPR психосилы × 2`
       + (runeStrike ? `, из них ${runeStrike * RUNE_STRIKE_COST} на Рунный Удар +${runeStrike} эPR` : "")
+      + (discount ? `, Заготовленная Руна: −${discount} (первая манифестация в этом бою)` : "")
       + `)${refund ? `, возврат за провал +<b>${refund}</b>` : ""}`
       + ` → осталось <b>${after}</b> из ${runeMax(actor)}</div>`;
+    if (discount > 0) await markPreparedRuneUsed(actor);
+  }
+
+  // ── Импровизированная Руна (wdbc-exjp) ────────────────────────────────────
+  // Талант Improvised Rune: манифестация ЕЩЁ НЕ изученной Руны через этот
+  // Путь — «взамен получая 1 непоглощаемого R Dmg в руку и 1 урона в S, A и
+  // W». Цена не заменяет обычную цену Рун выше (PATH.runeCost), а идёт
+  // ДОПОЛНИТЕЛЬНО к ней — книга говорит «взамен», а не «вместо»: платится и
+  // Рунами за саму манифестацию, и телом за то, что Руна не изучена. Платится
+  // независимо от исхода психотеста — это цена ПОПЫТКИ сотворить неизвестную
+  // Руну, а не цена успеха (та же логика, что у PATH.woundCost выше).
+  let improviseLine = "";
+  if (opts.improvisedRune) {
+    Object.assign(actorUpdates, improvisedRuneCostUpdates(actor));
+    improviseLine = `<div class="roll-threshold" style="color:#7a1010;">Импровизированная Руна: ` +
+      "−1 непогл. Рана, −1 к Мод. S/A/W (не лечится психосилами, Судьбой/Бесчестием, медитацией).</div>";
   }
 
   // ── Авто-урон (для атакующих сил при успехе) ──────────────────────────────
@@ -843,14 +1011,16 @@ export async function executePsychotest(actor, item, opts) {
     icon: rollIcon("spark","#c98bff"), title: esc(item.name),
     lines: [
       `<div class="roll-threshold">Природа: <b>${NAT.label}</b> | Режим: <b>${MODE.label}</b>${pathLabel ? ` | Путь: <b>${pathLabel}</b>` : ""}</div>`,
-      `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${PATH.ePR ? ` (Путь +${PATH.ePR})` : ""}</div>`,
+      `<div class="roll-threshold">mPR <b>${opts.mPR}</b>${prMod ? ` ${prMod >= 0 ? "+" : ""}${prMod} = <b>${mPR}</b>` : ""} → эPR <b>${ePR}</b>${pushBonus ? ` (Усиление +${pushBonus})` : ""}${(PATH.ePR || subTotals.ePR) ? ` (Путь +${(PATH.ePR || 0) + subTotals.ePR})` : ""}</div>`,
       aspectsDiffer ? `<div class="roll-threshold" style="font-size:0.82em;">эPR по аспектам: тест <b>${ePR}</b>${isDamaging ? ` · урон <b>${damagePR}</b>` : ""} · дальность <b>${rangePR}</b></div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.82em;">Дальность: ${String(sys.range).replace(/\bPR\b/gi, rangePR)}</div>` : "",
       `<div class="roll-threshold">${charAbbr}: <b>${charVal}</b> + 5×${ePR}${opts.modifier ? ` ${opts.modifier >= 0 ? "+" : ""}${opts.modifier}` : ""}${pathTestMod ? ` ${pathTestMod >= 0 ? "+" : ""}${pathTestMod} (Путь)` : ""}${variantMod ? ` ${variantMod >= 0 ? "+" : ""}${variantMod} (Вариация)` : ""}${bodyMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${threshold}</b></div>`,
       variant ? `<div class="roll-threshold" style="font-size:0.82em;">Вариация: <b>${variant.label || "—"}</b>${variant.note ? ` — ${variant.note}` : ""}</div>` : "",
       PATH.note ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">Путь: ${PATH.note}${vessel ? ` — <b>${esc(vessel.name)}</b>` : ""}</div>` : "",
+      subPathNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#5a4a30;">${subPathNote}</div>` : "",
       runeNote ? `<div class="roll-threshold" style="font-size:0.82em;color:#7a1010;">${runeNote}</div>` : "",
       runeLine,
+      improviseLine,
       focusNote,
       `<div class="roll-dice">Психотест: <b>${rv}</b></div>`
     ],
@@ -1037,6 +1207,10 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
   html.find(".psy-manifest-btn").click(ev => {
     const item = actor.items.get(ev.currentTarget.dataset.itemId);
     if (item) showManifestDialog(actor, item);
+  });
+  html.find(".psy-learn-rune-btn").click(async ev => {
+    const item = actor.items.get(ev.currentTarget.dataset.itemId);
+    if (item) await learnSigilliteRune(actor, item);
   });
   html.find(".psy-sense-btn").click(() => {
     if (rollSkill) rollPsyniscience(actor, rollSkill);

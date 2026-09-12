@@ -14,7 +14,12 @@ import {
   RUNE_BASE_MAX, RUNE_STRIKE_COST, RUNE_MAGIC_FLAG,
   hasRuneMagic, talentTakes, archeotechSteps, runeMax, runeGainPerTurn,
   runeStartOfCombat, runeCalculatorBonus, runeCostForPower, runeCostTotal,
-  runeStrikeMax, runeStrikeRefund, runeValue, runeUpdate
+  runeStrikeMax, runeStrikeRefund, runeValue, runeUpdate,
+  RUNE_LEARN_COST, RUNE_LEARN_FORBIDDEN_EXTRA, IMPROVISED_RUNE_FLAG, PROMETHEUS_FIRE_FLAG,
+  isRuneLearned, isForbiddenRuneDiscipline, hasImprovisedRune, hasPrometheusFire,
+  runeLearnInfo, improvisedRuneCostUpdates,
+  PREPARED_RUNE_FLAG, preparedRuneChoiceId, isPreparedRuneUsed, preparedRuneDiscount,
+  markPreparedRuneUsed
 } from "../../module/rules/sigillite-runes.mjs";
 
 /** Предмет с записью Конструктора «Возможность» — так Черта раздаёт Путь. */
@@ -33,9 +38,12 @@ function talent(name, extra = {}) {
 }
 
 function actorOf({ runeMagic = true, talents = [], archeotechRank = null,
-                   int = 40, intBonus = 4, psyRating = 3, runes = 0 } = {}) {
+                   int = 40, intBonus = 4, psyRating = 3, runes = 0,
+                   extraCaps = [], wounds = { value: 10, max: 10, critical: 0 },
+                   charDamage = { s: 0, ag: 0, wp: 0 } } = {}) {
   const items = [];
   if (runeMagic) items.push(capabilityItem(RUNE_MAGIC_FLAG));
+  for (const cap of extraCaps) items.push(capabilityItem(cap));
   items.push(...talents);
   const forbiddenLore = archeotechRank
     ? [{ specKey: "archeotech", specialty: "Археотех", rank: archeotechRank }]
@@ -46,13 +54,18 @@ function actorOf({ runeMagic = true, talents = [], archeotechRank = null,
       characteristics: { int: { total: int, bonus: intBonus } },
       psyker: { rating: psyRating, currentRating: psyRating, class: "bound" },
       groupSkills: { forbiddenLore },
-      sigilliteRunes: { value: runes, max: 0 }
+      sigilliteRunes: { value: runes, max: 0 },
+      wounds, charDamage
     },
     items: Object.assign(items.slice(), { contents: items })
   };
 }
 
 const power = pr => ({ name: "Психосила", system: { prRequired: pr } });
+
+/** Психосила с полем Руны (wdbc-exjp) и, при желании, дисциплиной. */
+const powerOf = ({ prRequired = 2, discipline = "", runeLearned = false } = {}) =>
+  ({ name: "Психосила", system: { prRequired, discipline, runeLearned } });
 
 describe("Руны Сигиллитов — доступ к Пути", () => {
   it("Черта «Магия Сигиллитов» открывает Путь", () => {
@@ -187,6 +200,85 @@ describe("Цена манифестации", () => {
   });
 });
 
+// ── wdbc-p2it: Заготовленная Руна — выбор на бой + скидка I.b на первую
+// манифестацию именно ЭТОЙ Руны, пока скидка не потрачена ─────────────────
+describe("Заготовленная Руна (wdbc-p2it)", () => {
+  /** Подставные getFlag/setFlag ровно под один флаг "preparedRune". */
+  function withFlags(actor, initial = null) {
+    let store = initial;
+    actor.getFlag = (_ns, key) => (key === "preparedRune" ? store : undefined);
+    actor.setFlag = async (_ns, key, value) => { if (key === "preparedRune") store = value; };
+    return actor;
+  }
+
+  it("без Таланта скидки нет, даже если Руна выбрана и не потрачена", () => {
+    const a = withFlags(actorOf(), { itemId: "p1", used: false });
+    expect(preparedRuneDiscount(a, { id: "p1" })).toBe(0);
+  });
+
+  it("с Талантом, но без выбора на этот бой — скидки нет", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG] }));
+    expect(preparedRuneDiscount(a, { id: "p1" })).toBe(0);
+  });
+
+  it("выбрана ДРУГАЯ Руна — скидки нет", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG] }), { itemId: "other", used: false });
+    expect(preparedRuneDiscount(a, { id: "p1" })).toBe(0);
+  });
+
+  it("выбрана эта Руна, первая манифестация ещё не потрачена — скидка I.b", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG], intBonus: 5 }), { itemId: "p1", used: false });
+    expect(preparedRuneDiscount(a, { id: "p1" })).toBe(5);
+    expect(preparedRuneChoiceId(a)).toBe("p1");
+    expect(isPreparedRuneUsed(a)).toBe(false);
+  });
+
+  it("выбрана эта Руна, но скидка уже потрачена в этом бою — скидки нет", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG] }), { itemId: "p1", used: true });
+    expect(preparedRuneDiscount(a, { id: "p1" })).toBe(0);
+    expect(isPreparedRuneUsed(a)).toBe(true);
+  });
+
+  it("runeCostForPower с actor вычитает I.b из цены, но не ниже 1", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG], intBonus: 4 }), { itemId: "p1", used: false });
+    // бPR 1 → база 2, скидка 4 упёрлась бы в 0 — держим пол в 1.
+    expect(runeCostForPower({ id: "p1", system: { prRequired: 1 } }, a)).toBe(1);
+    // бPR 4 → база 8, скидка 4 → 4.
+    expect(runeCostForPower({ id: "p1", system: { prRequired: 4 } }, a)).toBe(4);
+  });
+
+  it("без actor (все старые вызовы системы) скидка не считается вовсе", () => {
+    expect(runeCostForPower({ id: "p1", system: { prRequired: 1 } })).toBe(2);
+  });
+
+  it("runeCostTotal учитывает скидку, когда actor передан третьим аргументом", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG], intBonus: 4 }), { itemId: "p1", used: false });
+    // бPR 3 → база 6, скидка 4 → 2, плюс Рунный Удар не участвует (0).
+    expect(runeCostTotal({ id: "p1", system: { prRequired: 3 } }, 0, a)).toBe(2);
+  });
+
+  it("вторая манифестация той же Руны в том же бою — скидки уже нет", () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG], intBonus: 4 }), { itemId: "p1", used: false });
+    const power = { id: "p1", system: { prRequired: 3 } };
+    expect(runeCostForPower(power, a)).toBe(2);   // первая: 6 − 4
+    a.setFlag("warhammer-dbc", "preparedRune", { itemId: "p1", used: true });
+    expect(runeCostForPower(power, a)).toBe(6);   // вторая: полная цена
+  });
+
+  it("markPreparedRuneUsed отмечает выбранную Руну потраченной, id сохраняется", async () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG] }), { itemId: "p1", used: false });
+    await markPreparedRuneUsed(a);
+    expect(isPreparedRuneUsed(a)).toBe(true);
+    expect(preparedRuneChoiceId(a)).toBe("p1");
+  });
+
+  it("markPreparedRuneUsed без выбора на бой — ничего не делает", async () => {
+    const a = withFlags(actorOf({ extraCaps: [PREPARED_RUNE_FLAG] }), null);
+    await markPreparedRuneUsed(a);
+    expect(preparedRuneChoiceId(a)).toBeNull();
+  });
+});
+
 describe("Запись пула", () => {
   it("трата уменьшает значение", () => {
     const a = actorOf({ runes: 10 });
@@ -218,5 +310,121 @@ describe("Запись пула", () => {
   it("текущее значение читается из пула", () => {
     expect(runeValue(actorOf({ runes: 7 }))).toBe(7);
     expect(runeValue({})).toBe(0);
+  });
+});
+
+// ── wdbc-exjp: список изученных Рун + два зависимых Таланта ──────────────────
+describe("Изученные Руны — состояние на психосиле", () => {
+  it("по умолчанию не изучена", () => {
+    expect(isRuneLearned(powerOf())).toBe(false);
+  });
+
+  it("runeLearned:true на предмете — изучена", () => {
+    expect(isRuneLearned(powerOf({ runeLearned: true }))).toBe(true);
+  });
+
+  it("предмет без system — не изучена, не падает", () => {
+    expect(isRuneLearned(null)).toBe(false);
+    expect(isRuneLearned({})).toBe(false);
+  });
+});
+
+describe("«кроме Божественных и Либрариума» — запрещённые дисциплины", () => {
+  it("Божественные дисциплины (Слаанеш/Нургл/Тзинч) — запрещены", () => {
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "slaanesh" }))).toBe(true);
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "nurgle" }))).toBe(true);
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "tzeentch" }))).toBe(true);
+  });
+
+  it("Либрариум — запрещён (своя дисциплина, не «Божественная» группа)", () => {
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "librarium" }))).toBe(true);
+  });
+
+  it("обычная дисциплина (Телекинез и т.п.) — разрешена", () => {
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "telekinesis" }))).toBe(false);
+  });
+
+  it("пустая/неизвестная дисциплина не считается запрещённой", () => {
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "" }))).toBe(false);
+    expect(isForbiddenRuneDiscipline(powerOf({ discipline: "неведомая" }))).toBe(false);
+  });
+});
+
+describe("Improvised Rune / Prometheus Fire — возможности", () => {
+  it("нет Талантов — обеих возможностей нет", () => {
+    const a = actorOf();
+    expect(hasImprovisedRune(a)).toBe(false);
+    expect(hasPrometheusFire(a)).toBe(false);
+  });
+
+  it("Improvised Rune выдаёт свою возможность и только её", () => {
+    const a = actorOf({ extraCaps: [IMPROVISED_RUNE_FLAG] });
+    expect(hasImprovisedRune(a)).toBe(true);
+    expect(hasPrometheusFire(a)).toBe(false);
+  });
+
+  it("Prometheus Fire выдаёт свою возможность и только её", () => {
+    const a = actorOf({ extraCaps: [PROMETHEUS_FIRE_FLAG] });
+    expect(hasPrometheusFire(a)).toBe(true);
+    expect(hasImprovisedRune(a)).toBe(false);
+  });
+});
+
+describe("Цена и допустимость изучения Руны (runeLearnInfo)", () => {
+  it("обычная дисциплина, бPR хватает — 50 опыта, разрешено", () => {
+    const a = actorOf({ psyRating: 4 });
+    const info = runeLearnInfo(a, powerOf({ prRequired: 3, discipline: "telekinesis" }));
+    expect(info).toEqual({ cost: RUNE_LEARN_COST, forbidden: false, allowed: true, prBlocked: false });
+  });
+
+  it("Божественная дисциплина без Prometheus Fire — запрещено", () => {
+    const a = actorOf();
+    const info = runeLearnInfo(a, powerOf({ discipline: "tzeentch" }));
+    expect(info.forbidden).toBe(true);
+    expect(info.allowed).toBe(false);
+  });
+
+  it("Божественная дисциплина с Prometheus Fire — разрешено, цена 50+50", () => {
+    const a = actorOf({ extraCaps: [PROMETHEUS_FIRE_FLAG] });
+    const info = runeLearnInfo(a, powerOf({ discipline: "librarium" }));
+    expect(info.allowed).toBe(true);
+    expect(info.cost).toBe(RUNE_LEARN_COST + RUNE_LEARN_FORBIDDEN_EXTRA);
+  });
+
+  it("бPR ниже требования психосилы — prBlocked", () => {
+    const a = actorOf({ psyRating: 2 });
+    const info = runeLearnInfo(a, powerOf({ prRequired: 5 }));
+    expect(info.prBlocked).toBe(true);
+  });
+
+  it("бPR равен требованию — не заблокировано (минимум включительно)", () => {
+    const a = actorOf({ psyRating: 3 });
+    const info = runeLearnInfo(a, powerOf({ prRequired: 3 }));
+    expect(info.prBlocked).toBe(false);
+  });
+});
+
+describe("Improvised Rune — цена манифестации неизученной Руны", () => {
+  it("1 непоглощаемая Рана + 1 к Мод. S/A/W разом", () => {
+    const a = actorOf({ wounds: { value: 10, max: 10, critical: 0 } });
+    const patch = improvisedRuneCostUpdates(a);
+    expect(patch["system.wounds.value"]).toBe(9);
+    expect(patch["system.charDamage.s"]).toBe(-1);
+    expect(patch["system.charDamage.ag"]).toBe(-1);
+    expect(patch["system.charDamage.wp"]).toBe(-1);
+  });
+
+  it("копится поверх уже имеющегося Мод. характеристики", () => {
+    const a = actorOf({ charDamage: { s: -2, ag: 0, wp: -1 } });
+    const patch = improvisedRuneCostUpdates(a);
+    expect(patch["system.charDamage.s"]).toBe(-3);
+    expect(patch["system.charDamage.wp"]).toBe(-2);
+  });
+
+  it("Раны ниже нуля уходят в Критические, как любой другой прямой урон", () => {
+    const a = actorOf({ wounds: { value: 0, max: 10, critical: 2 } });
+    const patch = improvisedRuneCostUpdates(a);
+    expect(patch["system.wounds.value"]).toBe(0);
+    expect(patch["system.wounds.critical"]).toBe(3);
   });
 });

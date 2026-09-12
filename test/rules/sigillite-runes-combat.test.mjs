@@ -5,10 +5,12 @@
 // добавляет свой бонус ровно один раз за бой.
 
 import "../support/foundry-stub.mjs";
+import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
+         processPreparedRuneCombatStart, promptPreparedRuneChoice,
          RUNE_CALCULATOR_FLAG } from "../../module/rules/sigillite-runes-combat.mjs";
-import { RUNE_MAGIC_FLAG } from "../../module/rules/sigillite-runes.mjs";
+import { RUNE_MAGIC_FLAG, PREPARED_RUNE_FLAG } from "../../module/rules/sigillite-runes.mjs";
 
 function capabilityItem(key) {
   return {
@@ -121,5 +123,108 @@ describe("Руны Сигиллитов — начало Хода", () => {
     await withCombat("c9", () => processSigilliteRunesTurnStart(a));
     expect(a.getFlag("warhammer-dbc", `usageLimits.${RUNE_CALCULATOR_FLAG.replace(/\./g, "-")}`))
       .toMatchObject({ scope: "battle", battle: "c9" });
+  });
+});
+
+// ── wdbc-p2it: Заготовленная Руна — диалог выбора в начале Encounter-а ──────
+describe("Заготовленная Руна — выбор в начале боя", () => {
+  beforeEach(resetCaptured);
+
+  /** Актор с флагами и (опционально) Талантом/изученными Рунами-психосилами. */
+  function preparedActorOf({ hasTalent = true, runes = [] } = {}) {
+    const items = [];
+    if (hasTalent) {
+      items.push({
+        id: "cap-prepared", type: "trait", name: "Заготовленная Руна",
+        flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+          { id: "e", kind: "capability", capabilityKey: PREPARED_RUNE_FLAG, label: "" }
+        ] }] } }
+      });
+    }
+    for (const r of runes)
+      items.push({ id: r.id, type: "psychicPower", name: r.name, system: { runeLearned: r.learned !== false } });
+    const flags = {};
+    return {
+      name: "Сигиллит", items: Object.assign(items.slice(), { contents: items }),
+      getFlag: (_ns, key) => flags[key],
+      setFlag: async (_ns, key, value) => { flags[key] = value; },
+      unsetFlag: async (_ns, key) => { delete flags[key]; }
+    };
+  }
+
+  describe("promptPreparedRuneChoice", () => {
+    it("нет изученных Рун — ничего не спрашивает, снимает стейл-выбор", async () => {
+      const a = preparedActorOf({ runes: [] });
+      await a.setFlag("warhammer-dbc", "preparedRune", { itemId: "old", used: true });
+      const result = await promptPreparedRuneChoice(a);
+      expect(result).toBeNull();
+      expect(a.getFlag("warhammer-dbc", "preparedRune")).toBeUndefined();
+      expect(captured.dialog).toBeNull();
+    });
+
+    it("выбор кнопкой сохраняет itemId с used:false", async () => {
+      const a = preparedActorOf({ runes: [{ id: "p1", name: "Взор Варпа" }, { id: "p2", name: "Печать Молний" }] });
+      const promise = promptPreparedRuneChoice(a);
+      const html = { find: () => ({ val: () => "p2" }) };
+      await captured.dialog.buttons.choose.callback(html);
+      expect(await promise).toBe("p2");
+      expect(a.getFlag("warhammer-dbc", "preparedRune")).toEqual({ itemId: "p2", used: false });
+    });
+
+    it("«Не готовить» снимает выбор", async () => {
+      const a = preparedActorOf({ runes: [{ id: "p1", name: "Взор Варпа" }] });
+      await a.setFlag("warhammer-dbc", "preparedRune", { itemId: "p1", used: true });
+      const promise = promptPreparedRuneChoice(a);
+      await captured.dialog.buttons.skip.callback();
+      expect(await promise).toBeNull();
+      expect(a.getFlag("warhammer-dbc", "preparedRune")).toBeUndefined();
+    });
+
+    it("закрытие без выбора (крестик/Escape) не оставляет стейл-выбор прошлого боя", async () => {
+      const a = preparedActorOf({ runes: [{ id: "p1", name: "Взор Варпа" }] });
+      await a.setFlag("warhammer-dbc", "preparedRune", { itemId: "p1", used: true });
+      const promise = promptPreparedRuneChoice(a);
+      await captured.dialog.close();
+      expect(await promise).toBeNull();
+      expect(a.getFlag("warhammer-dbc", "preparedRune")).toBeUndefined();
+    });
+
+    it("выбор кнопкой сохраняется даже когда Foundry следом всё равно зовёт close()", async () => {
+      const a = preparedActorOf({ runes: [{ id: "p1", name: "Взор Варпа" }] });
+      const promise = promptPreparedRuneChoice(a);
+      const html = { find: () => ({ val: () => "p1" }) };
+      await captured.dialog.buttons.choose.callback(html);
+      await captured.dialog.close();
+      expect(await promise).toBe("p1");
+      expect(a.getFlag("warhammer-dbc", "preparedRune")).toEqual({ itemId: "p1", used: false });
+    });
+
+    it("неизученная Руна в список выбора не попадает", async () => {
+      const a = preparedActorOf({ runes: [{ id: "p1", name: "Учится", learned: false },
+                                            { id: "p2", name: "Изучена" }] });
+      promptPreparedRuneChoice(a);
+      expect(captured.dialog.content).not.toContain("Учится");
+      expect(captured.dialog.content).toContain("Изучена");
+    });
+  });
+
+  describe("processPreparedRuneCombatStart", () => {
+    it("без Таланта — диалога нет вовсе", async () => {
+      const a = preparedActorOf({ hasTalent: false, runes: [{ id: "p1", name: "Взор Варпа" }] });
+      await processPreparedRuneCombatStart({ combatants: [{ actor: a }] });
+      expect(captured.dialog).toBeNull();
+    });
+
+    it("с Талантом и изученной Руной — диалог открывается", async () => {
+      const a = preparedActorOf({ runes: [{ id: "p1", name: "Взор Варпа" }] });
+      const p = processPreparedRuneCombatStart({ combatants: [{ actor: a }] });
+      expect(captured.dialog).not.toBeNull();
+      await captured.dialog.buttons.skip.callback();
+      await p;
+    });
+
+    it("бой без бойцов ничего не роняет", async () => {
+      await expect(processPreparedRuneCombatStart({})).resolves.toBeUndefined();
+    });
   });
 });

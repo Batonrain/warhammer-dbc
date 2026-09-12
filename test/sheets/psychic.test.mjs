@@ -233,6 +233,135 @@ describe("psychic manifestation", () => {
     expect(captured.chat[0].content).toContain("d5: 4");
   });
 
+  // wdbc-5kd: system.penetration был NumberField — книжные силы вроде
+  // «Разрушения» (Pen=PR) и «Сверхъестественного Шторма» (Pen=PR×3) не могли
+  // записать своё настоящее Пробитие и хранили выдуманный 0. Схема переведена
+  // на формулу строкой (как damage), и «PR» в ней должен подставляться тем же
+  // эффективным ПР урона (damagePR), что и в самом уроне — Пробитие штормовой
+  // силы обязано падать вместе с уроном, если игрок снизил именно этот аспект.
+  describe("Пробитие психосилы — формула (wdbc-5kd)", () => {
+    it("«PR×3» (записано как PR*3) считается через damagePR манифестации", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: "PR*3"
+      } });
+      captured.nextRoll = 10; // психотест точно проходит
+
+      await executePsychotest(a, power, {
+        mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      // damagePR: 0 в диалоге = взять полный эPR (здесь эPR = mPR = 2) → 2×3 = 6.
+      expect(captured.chat[0].content).toContain("Проб. 6");
+      expect(captured.chat[0].content).toContain('data-penetration="6"');
+    });
+
+    it("голое число по-прежнему работает как формула из одного терма — старые данные пака не ломаются", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: "8"
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain("Проб. 8");
+    });
+
+    // Данные пака до миграции хранили именно число (тип поля schema был
+    // NumberField) — resolvePen должен принять и его напрямую, не только строку.
+    it("число (не строка) в penetration тоже считается верно", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: 8
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain("Проб. 8");
+    });
+
+    it("аспект урона (damagePR), сниженный игроком отдельно от психотеста, тянет за собой и Пробитие", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10+PR", damageType: "energy", penetration: "PR"
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        // эPR психотеста — 4 (mPR), но игрок в диалоге отдельно ополовинил
+        // аспект урона до 2 — Пробитие силы, завязанное на тот же PR, что и
+        // урон, обязано взять именно эти 2, а не полный эPR=4.
+        mPR: 4, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 2, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain("Проб. 2");
+    });
+  });
+
+  // wdbc-5kd: превью Пробития в списке сил на листе (buildGetData → psyPowers,
+  // читает tab-combat.hbs/tab-psy.hbs через {{#if p.penetration}}). Formula-строка
+  // "PR"/"0" сюда попадала бы СЫРЫМ ТЕКСТОМ и, хуже, строка "0" (в отличие от
+  // числа 0) для Handlebars ИСТИННА — «(Пб 0)» вылезло бы у всех 590+ сил пака,
+  // у которых Пробития вообще нет. module/sheets/sheet-helpers.mjs обязан сам
+  // посчитать формулу в число тем же тПР, что и для превью Порога рядом.
+  describe("список психосил на листе (buildGetData) — превью Пробития (wdbc-5kd)", () => {
+    it("«PR» в списке — уже посчитанное число (по тПР), а не сырой текст формулы", async () => {
+      const { sheetOf } = await import("../support/foundry-stub.mjs");
+      const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+      const { buildGetData } = await import("../../module/sheets/sheet-helpers.mjs");
+
+      const power = {
+        id: "p1", name: "Разрушение", type: "psychicPower",
+        system: { testChar: "wp", powerType: "attack", damage: "2d10+2*PR", penetration: "PR", cost: 100 },
+        getFlag: () => undefined
+      };
+      const sheet = sheetOf(WarhammerCharacterSheet, {
+        items: [power], characteristics: {}, skills: {}, groupSkills: {},
+        psyker: { rating: 5, currentRating: 3 }
+      });
+      sheet.actor.items.contents = sheet.actor.items;
+
+      const row = buildGetData(sheet.actor).psyPowers?.find(p => p.id === "p1");
+      expect(row.penetration).toBe(3); // тПР=3 подставлен в «PR» и посчитан
+    });
+
+    it("penetration «0» (голое число — тоже формула) остаётся числом 0, а не непустой строкой «(Пб 0)»", async () => {
+      const { sheetOf } = await import("../support/foundry-stub.mjs");
+      const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+      const { buildGetData } = await import("../../module/sheets/sheet-helpers.mjs");
+
+      const power = {
+        id: "p1", name: "Взор Варпа", type: "psychicPower",
+        system: { testChar: "wp", powerType: "utility", damage: "", penetration: "0", cost: 100 },
+        getFlag: () => undefined
+      };
+      const sheet = sheetOf(WarhammerCharacterSheet, {
+        items: [power], characteristics: {}, skills: {}, groupSkills: {},
+        psyker: { rating: 5, currentRating: 3 }
+      });
+      sheet.actor.items.contents = sheet.actor.items;
+
+      const row = buildGetData(sheet.actor).psyPowers?.find(p => p.id === "p1");
+      // Число 0, НЕ строка "0" — {{#if}} в hbs должен счесть его ложным.
+      expect(row.penetration).toBe(0);
+      expect(row.penetration).not.toBe("0");
+    });
+  });
+
   // Жалоба игрока: «Варп-Оружие» на психосиле не срабатывает. wp (aggregateAuto)
   // и раньше считал warpSoak верно — но кнопка «Применить урон» его не несла:
   // клик уходил в applyDamageToActor с warpSoak по умолчанию false, и цель

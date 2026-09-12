@@ -64,6 +64,8 @@
 import { itemHasName } from "./predicates.mjs";
 import { rankIndex } from "./req-atom.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { PSY_DISCIPLINES } from "../constants/disciplines.mjs";
+import { woundLossUpdates } from "./wounds.mjs";
 
 /** Базовый потолок Рун из книги: «У персонажа может быть максимум 20 рун». */
 export const RUNE_BASE_MAX = 20;
@@ -79,6 +81,9 @@ export const TALENT_TAKE_CAP = 3;
 
 /** Возможность, которой открывается вся ветка (выдаётся Чертой Сигиллитов). */
 export const RUNE_MAGIC_FLAG = "psychicPath.sigillites.runeMagic";
+
+/** Возможность Таланта «Prepared Rune / Заготовленная Руна» (wdbc-p2it). */
+export const PREPARED_RUNE_FLAG = "rune.sigillites.prepared";
 
 const num = v => Number(v) || 0;
 
@@ -193,6 +198,65 @@ export function runeCalculatorBonus(actor) {
   return talentTakes(actor, ["Rune Calculator", "Вычислитель Рун"]) * charBonus(actor, "int");
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+//  ЗАГОТОВЛЕННАЯ РУНА (wdbc-p2it) — «Prepared Rune» (стр. 101-102 книги):
+//  «В начале боя персонаж может выбрать одну руну, чья стоимость сотворения в
+//  первый раз падает на I.b персонажа, но не ниже 1».
+//
+//  Состояние НА БОЙ (какая Руна выбрана, была ли уже её первая манифестация)
+//  хранится флагом на АКТОРЕ — не полем на психосиле (та Руна и так уже несёт
+//  СВОЁ отдельное состояние `runeLearned`, wdbc-exjp, и это разные вещи:
+//  «изучена вообще» переживает бои, «выбрана и ещё не использована в ЭТОМ
+//  бою» — нет).
+//
+//  Выбор делает и «уже использована» сбрасывает module/rules/
+//  sigillite-runes-combat.mjs::processPreparedRuneCombatStart — явной
+//  перезаписью флага в начале Encounter-а (тот же приём, что у Witch's Edge,
+//  module/combat/witchs-edge.mjs), а НЕ сравнением с id боя через
+//  rules/cooldown.mjs: тот принцип трогает `game.combat`, а этот модуль
+//  обязан оставаться чистым (см. заголовок файла) — сравнение живёт в
+//  sigillite-runes-combat.mjs, здесь только чтение/запись плоского флага.
+// ════════════════════════════════════════════════════════════════════════════
+
+const PREPARED_RUNE_FLAG_SCOPE = "warhammer-dbc";
+const PREPARED_RUNE_FLAG_KEY   = "preparedRune";
+
+/** Id психосилы, выбранной Заготовленной Руной на текущий бой — или null. */
+export function preparedRuneChoiceId(actor) {
+  return actor?.getFlag?.(PREPARED_RUNE_FLAG_SCOPE, PREPARED_RUNE_FLAG_KEY)?.itemId ?? null;
+}
+
+/** Состоялась ли уже первая манифестация выбранной Руны в этом бою. */
+export function isPreparedRuneUsed(actor) {
+  return !!actor?.getFlag?.(PREPARED_RUNE_FLAG_SCOPE, PREPARED_RUNE_FLAG_KEY)?.used;
+}
+
+/**
+ * Скидка к цене манифестации ИМЕННО этой психосилы прямо сейчас: I.b, но
+ * только когда разом верно всё — есть Талант, эта Руна выбрана на текущий
+ * бой, и первая манифестация в этом бою ещё не потрачена. Иначе 0 — цена не
+ * меняется, и вызывающему не нужно знать причину (нет Таланта / выбрана
+ * другая Руна / скидка уже использована — снаружи это одно и то же «нет»).
+ */
+export function preparedRuneDiscount(actor, item) {
+  if (!hasRuleFlag(actor, PREPARED_RUNE_FLAG)) return 0;
+  if (!item?.id || preparedRuneChoiceId(actor) !== item.id) return 0;
+  if (isPreparedRuneUsed(actor)) return 0;
+  return charBonus(actor, "int");
+}
+
+/**
+ * Отмечает выбранную Заготовленную Руну потраченной на этот бой — вызывать
+ * РОВНО тогда, когда скидка реально применилась к списанию (tabs/psychic.mjs
+ * ::executePsychotest), а не при каждом открытии окна манифестации: диалог
+ * может быть отменён, и списание в долг раньше самого броска не наступает.
+ */
+export async function markPreparedRuneUsed(actor) {
+  const current = actor?.getFlag?.(PREPARED_RUNE_FLAG_SCOPE, PREPARED_RUNE_FLAG_KEY);
+  if (!current?.itemId || !actor?.setFlag) return;
+  await actor.setFlag(PREPARED_RUNE_FLAG_SCOPE, PREPARED_RUNE_FLAG_KEY, { ...current, used: true });
+}
+
 /**
  * Цена манифестации: «бPR психосилы × 2 Руны».
  *
@@ -200,21 +264,27 @@ export function runeCalculatorBonus(actor) {
  * не текущий рейтинг псайкера: соседним предложением книга называет тем же
  * оборотом «минимально требуемый бPR, указанный в требованиях психосилы».
  * Минимум 2 (сила с prRequired 0 всё равно стоит одну «пару»).
+ *
+ * `actor` необязателен: без него (как во всех старых вызовах) скидка
+ * Заготовленной Руны не считается вовсе — тот же приём, что у прочих функций
+ * файла, которым актор не всегда нужен.
  */
-export function runeCostForPower(power) {
+export function runeCostForPower(power, actor = null) {
   const pr = Math.max(1, num(power?.system?.prRequired));
-  return pr * 2;
+  const base = pr * 2;
+  const discount = preparedRuneDiscount(actor, power);
+  return discount > 0 ? Math.max(1, base - discount) : base;
 }
 
 /** Полная цена манифестации с учётом Рунного Удара (0…N дополнительных эPR). */
-export function runeCostTotal(power, runeStrike = 0) {
-  return runeCostForPower(power) + Math.max(0, Math.trunc(num(runeStrike))) * RUNE_STRIKE_COST;
+export function runeCostTotal(power, runeStrike = 0, actor = null) {
+  return runeCostForPower(power, actor) + Math.max(0, Math.trunc(num(runeStrike))) * RUNE_STRIKE_COST;
 }
 
 /** Сколько дополнительных эPR может позволить себе актор прямо сейчас. */
 export function runeStrikeMax(actor, power) {
   if (!hasRuneMagic(actor) || !talentTakes(actor, ["Rune Strike", "Рунный Удар"], 1)) return 0;
-  const left = runeValue(actor) - runeCostForPower(power);
+  const left = runeValue(actor) - runeCostForPower(power, actor);
   return left > 0 ? Math.floor(left / RUNE_STRIKE_COST) : 0;
 }
 
@@ -241,4 +311,115 @@ export function runeUpdate(actor, delta, { set = null } = {}) {
   const next = Math.max(0, Math.min(max, raw));
   if (next === cur) return null;
   return { "system.sigilliteRunes.value": next };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ИЗУЧЕННЫЕ РУНЫ (wdbc-exjp) — «Псайкер получает возможность изучить Руну
+//  любой психосилы, кроме Божественных и Либрариума, за 50 опыта… Чтобы
+//  изучить руну псайкер должен иметь минимально требуемый бPR, указанный в
+//  требованиях психосилы» (стр. 101-102).
+//
+//  Руна привязана к КОНКРЕТНОЙ психосиле — хранится полем на самом предмете
+//  психосилы (item.system.runeLearned/runeLearnCost, data/item/psychic-power.mjs),
+//  не списком на акторе: это та же форма, что isSustained/sustainedDegree
+//  чуть выше по конвейеру (tabs/psychic.mjs), и она переживает удаление ЧУЖИХ
+//  психосил без побочных эффектов — список на акторе пришлось бы чистить
+//  отдельным хуком deleteItem (как это уже сделано для eliteArchetype в
+//  apps/elite-buy.mjs), а так удалённый предмет уносит свою Руну сам.
+//
+//  Без Черты «Магия Сигиллитов» это поле никем не читается — Путь без Черты
+//  недоступен для выбора вовсе (constants/psyker.mjs, PSY_PATHS.sigillite.flag),
+//  и до манифестации через него дело не доходит.
+// ════════════════════════════════════════════════════════════════════════════
+
+/** «за 50 опыта» — базовая цена изучения одной Руны. */
+export const RUNE_LEARN_COST = 50;
+
+/** Prometheus Fire: «изучение таких рун требует на +50 опыта больше». */
+export const RUNE_LEARN_FORBIDDEN_EXTRA = 50;
+
+/** Improvised Rune: «1 непоглощаемого R Dmg в руку» — прямая потеря Раны. */
+export const IMPROVISED_RUNE_WOUND_COST = 1;
+
+/** Improvised Rune: «1 урона в S, A и W» — по каждой из трёх сразу. */
+export const IMPROVISED_RUNE_CHAR_DAMAGE = 1;
+export const IMPROVISED_RUNE_CHARS = ["s", "ag", "wp"];
+
+/** Возможности двух зависимых Талантов (constants/capabilities.mjs). */
+export const IMPROVISED_RUNE_FLAG = "rune.sigillites.improvised";
+export const PROMETHEUS_FIRE_FLAG = "rune.sigillites.prometheusFire";
+
+/** Изучена ли Руна ИМЕННО этой психосилы. */
+export function isRuneLearned(item) {
+  return !!item?.system?.runeLearned;
+}
+
+/**
+ * «кроме Божественных и Либрариума» — дисциплины, чью Руну нельзя изучить без
+ * Prometheus Fire. Божественные — группа "Божественные" реестра дисциплин
+ * (Слаанеш/Нургл/Тзинч, constants/disciplines.mjs); Либрариум — своя
+ * дисциплина того же реестра (психосилы Астартес-Библиотекариев).
+ */
+export function isForbiddenRuneDiscipline(item) {
+  const key = item?.system?.discipline;
+  if (!key) return false;
+  if (key === "librarium") return true;
+  return PSY_DISCIPLINES[key]?.group === "Божественные";
+}
+
+/** Improvised Rune: можно манифестировать даже неизученные Руны — ценой урона. */
+export function hasImprovisedRune(actor) {
+  return hasRuleFlag(actor, IMPROVISED_RUNE_FLAG);
+}
+
+/** Prometheus Fire: снимает запрет на Руны Божественных психосил/Либрариума. */
+export function hasPrometheusFire(actor) {
+  return hasRuleFlag(actor, PROMETHEUS_FIRE_FLAG);
+}
+
+/**
+ * Условия и цена изучения Руны конкретной психосилы для конкретного актора.
+ *
+ * @returns {{cost:number, forbidden:boolean, allowed:boolean, prBlocked:boolean}}
+ *   cost      — сколько опыта спишется (50, либо 100 с Prometheus Fire);
+ *   forbidden — сила из Божественной дисциплины/Либрариума (нужен Prometheus Fire);
+ *   allowed   — можно ли вообще изучить эту Руну (forbidden без Prometheus Fire — нет);
+ *   prBlocked — «должен иметь минимально требуемый бPR» ещё не выполнено —
+ *               это ВОПРОС (как нехватка опыта у Элитного архетипа,
+ *               apps/elite-buy.mjs), а не жёсткий запрет: за столом бывает
+ *               «ГМ разрешил исключение».
+ */
+export function runeLearnInfo(actor, item) {
+  const forbidden = isForbiddenRuneDiscipline(item);
+  const prometheus = hasPrometheusFire(actor);
+  const allowed = !forbidden || prometheus;
+  const cost = RUNE_LEARN_COST + ((forbidden && prometheus) ? RUNE_LEARN_FORBIDDEN_EXTRA : 0);
+  const prBlocked = num(actor?.system?.psyker?.rating) < Math.max(0, num(item?.system?.prRequired));
+  return { cost, forbidden, allowed, prBlocked };
+}
+
+/**
+ * Патч для actor.update(): цена «сымпровизированной» манифестации ещё не
+ * изученной Руны (Талант Improvised Rune) — 1 непоглощаемая Рана + 1 урона
+ * разом в S, A и W (`system.charDamage.*` — тот же знаковый ручной модификатор
+ * характеристики, что и у Гангрены, combat/gangrene.mjs). «Непоглощаемый» —
+ * про броню/ТБ: этот урон приходит не боевым попаданием, а woundLossUpdates
+ * применяется к нему как к уже готовому, непоглощённому числу Ран — армия/ТБ
+ * тут в принципе не участвуют. Аблативный пул (щит из жира/AP) книга не
+ * освобождает — та же общая арифметика Ран, что и у прочих прямых списаний
+ * этого файла (см. PATH.woundCost выше по конвейеру, tabs/psychic.mjs).
+ *
+ * «восстанавливает 1 за 8 часов, не лечится психосилами/судьбой/бесчестия/
+ * медитацией» — НЕ смоделировано: в системе нет вообще ни одного авто-
+ * восстановления system.charDamage.* (см. combat/gangrene.mjs) — этому темпу
+ * сейчас нечему противоречить, лечить эти минус-очки, кроме ручной правки
+ * игроком поля «Мод.», всё равно нечем ни у одного источника такого урона.
+ */
+export function improvisedRuneCostUpdates(actor) {
+  const updates = woundLossUpdates(actor.system, IMPROVISED_RUNE_WOUND_COST);
+  for (const key of IMPROVISED_RUNE_CHARS) {
+    const cur = num(actor?.system?.charDamage?.[key]);
+    updates[`system.charDamage.${key}`] = cur - IMPROVISED_RUNE_CHAR_DAMAGE;
+  }
+  return updates;
 }

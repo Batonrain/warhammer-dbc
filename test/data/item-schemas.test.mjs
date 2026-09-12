@@ -451,10 +451,16 @@ const TYPES = {
       requirement: "",
       testChar: "wp", testMod: 0, action: "half", range: "",
       sustainable: false, sustainCost: 1, sustainAction: "free",
-      damage: "", damageType: "energy", penetration: 0, weaponProps: [],
+      // wdbc-5kd: penetration — формула строкой (как damage), не число:
+      // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
+      damage: "", damageType: "energy", penetration: "0", weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
       effect: "", isSustained: false, sustainedDegree: null, sustainedTargetUuid: "",
+      // wdbc-exjp: Руна Сигиллитов — привязана к ЭТОЙ психосиле, не к актору
+      // (module/rules/sigillite-runes.mjs). У всех, кто не Сигиллит, лежит
+      // как есть и никем не читается.
+      runeLearned: false, runeLearnCost: 0,
       effects: {
         charBonusStat: "", charBonusValue: 0, charBonuses: [],
         armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
@@ -682,7 +688,14 @@ describe("типы данных предметов", () => {
           const after = new Map(leaves(new Model(doc.system).toObject()));
           for (const [key, value] of leaves(doc.system)) {
             if (isEmpty(value) || migratedAway.includes(key)) continue;
-            if (after.get(key) !== value) lost.push(`${file}: ${key} = ${JSON.stringify(value)}`);
+            const got = after.get(key);
+            // Число, ставшее StringField-полем (wdbc-5kd: penetration — теперь
+            // формула строкой, как damage), Foundry сам приводит к строке того
+            // же числа при чистке — это не потеря, а ожидаемое поведение поля.
+            // Допуск однонаправленный: обратное (строка вместо числа) как было
+            // потерей, так и остаётся.
+            const coerced = typeof value === "number" && got === String(value);
+            if (got !== value && !coerced) lost.push(`${file}: ${key} = ${JSON.stringify(value)}`);
           }
         }
         expect(lost).toEqual([]);

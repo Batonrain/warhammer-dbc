@@ -82,7 +82,8 @@
       <div class="wprop-chip">
         <span class="wprop-name">{{t.label}}</span>
         <span class="wprop-slash">X:</span>
-        <input type="number" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}" title="Значение X для этого типа"/>
+        <input type="text" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}"
+               placeholder="напр. PR или PR+1" title="Значение X для этого типа — число или формула (PR, PR+1…)"/>
         <button type="button" class="wprop-remove xtype-remove" data-action="xtypeRemove" data-type="{{t.type}}" title="Убрать тип">✕</button>
       </div>
       {{/each}}
@@ -177,7 +178,8 @@
       <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
     </select>
     <label class="wr-label">Пробитие</label>
-    <input type="number" name="system.penetration" value="{{system.penetration}}" min="0" class="wr-input-xs"/>
+    <input type="text" name="system.penetration" value="{{system.penetration}}"
+           class="wr-input-xs" placeholder="напр. PR или PR*3"/>
   </div>
 
   {{!-- Урон в характеристику --}}
