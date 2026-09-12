@@ -54,6 +54,12 @@ export class WeaponData extends foundry.abstract.TypeDataModel {
       rof_full:     num(0, "Скорострельность: полная"),
       damage:       new StringField({ initial: "", label: "Урон" }),
       damageType:   new StringField({ initial: "impact", label: "Тип урона" }),
+      // Подвид урона в скобках книги — I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx)
+      // (wdbc-q0q8, module/constants/items.mjs::DAMAGE_SUBTYPES). Пустая
+      // строка — книга не называет подвид у этого профиля (большинство
+      // оружия); не проверяется на совпадение с damageType схемой — эта
+      // сверка содержательная (контентный проход), не структурная.
+      damageSubtype: new StringField({ initial: "", label: "Подвид урона (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx))" }),
       penetration:  num(0, "Пробитие"),
       quality:      new StringField({ initial: "common", label: "Качество" }),
       bookSource:   new StringField({ initial: "", label: "Книга-источник" }),

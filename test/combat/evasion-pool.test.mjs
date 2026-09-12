@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import {
   addEvasionSurplus, getEvasionPool, poolHitCost, poolAffordableHits, performPoolSpend,
-  spendPoolForRecoil
+  spendPoolForRecoil, clearEvasionPools
 } from "../../module/combat/evasion-pool.mjs";
 
 function defender(overrides = {}) {
@@ -19,6 +19,7 @@ function defender(overrides = {}) {
     name: "Защитник",
     getFlag: (scope, key) => store[`${scope}.${key}`],
     setFlag: async (scope, key, value) => { store[`${scope}.${key}`] = value; },
+    unsetFlag: async (scope, key) => { delete store[`${scope}.${key}`]; },
     ...overrides
   };
 }
@@ -127,6 +128,24 @@ describe("addEvasionSurplus / getEvasionPool: банк на Ход атакую�
     await addEvasionSurplus(d, ATTACKER, 3, -10);
     globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-2" } };
     expect(getEvasionPool(d, ATTACKER)).toBeNull();
+  });
+});
+
+describe("clearEvasionPools: конец боя чистит флаг (wdbc-8zi)", () => {
+  it("снимает флаг evasionPool со всех комбатантов боя", async () => {
+    globalThis.game.combat = { started: true, id: "c1", combatant: { id: "cbt-1" } };
+    const d = defender();
+    await addEvasionSurplus(d, ATTACKER, 3, -10);
+    expect(getEvasionPool(d, ATTACKER)).not.toBeNull();
+
+    await clearEvasionPools({ combatants: [{ actor: d }] });
+
+    expect(d.getFlag("warhammer-dbc", "evasionPool")).toBeUndefined();
+  });
+
+  it("без флага/без актора — не падает", async () => {
+    await expect(clearEvasionPools({ combatants: [{ actor: null }, {}] })).resolves.toBeUndefined();
+    await expect(clearEvasionPools(null)).resolves.toBeUndefined();
   });
 });
 

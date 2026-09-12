@@ -236,15 +236,14 @@ export function buildSelection(v) {
     const stanceBon = isMelee ? (stDef.wsBonus ?? 0) : 0;
 
     const gKey = sel.gripKey ?? gripKey;
-    const gDef = isMelee
+    const gDefRaw = isMelee
       ? (GRIPS[gKey] ? gripEffects(gKey, gKey !== primGrip) : null)
       : (RANGED_GRIPS[gKey] ? rangedGripEffects(gKey) : null);
-    const gWs  = gDef ? gDef.ws : 0;
 
     // Запрещённый Приём (Cheap Shot, стр. 166): тратит Реакцию вместо
     // действия, но «считается Стандартной Атакой» — База принудительно
     // становится standard, как fullAttackForced принудительно ставит fullatk.
-    const cheapShotActive = isMelee && !!(wp.cheapShot || gDef?.addProps?.includes("cheapShot"));
+    const cheapShotActive = isMelee && !!(wp.cheapShot || gDefRaw?.addProps?.includes("cheapShot"));
 
     const baseKey = fullAttackForced ? "fullatk" : (cheapShotActive ? "standard" : (sel.baseKey ?? meleeBaseKey));
     const bDef    = MELEE_BASES[baseKey] || MELEE_BASES.standard;
@@ -252,6 +251,22 @@ export function buildSelection(v) {
 
     const maneuverKey = isMelee ? (sel.maneuverKey ?? maneuverKeyDefault) : "standard";
     const mDef        = MELEE_MANEUVERS[maneuverKey] || MELEE_MANEUVERS.standard;
+
+    // Обратный Хват (Об, стр. 39): приём Выпад «просто не получает штрафа»
+    // WS от хвата — в любой Базе, не только на Полной Атаке. А на самой
+    // Полной Атаке Выпадом хват вдобавок перестаёт резать S.b пополам и
+    // сам наносит ещё +½S.b (окр.▲) урона СВЕРХ полного S.b, а не вместо
+    // него — двойное исключение из общего −10 WS/½S.b хвата.
+    // reverseThrustBonus не считается числом здесь: он зависит от S.b с
+    // учётом Могучего/Сдержанного/Длани Кхорна, которые известны только в
+    // attack.mjs (sbEff) — здесь только сигнальный флаг.
+    const reverseGripThrust    = isMelee && gKey === "Об" && maneuverKey === "thrust";
+    const reverseThrustFullAtk = reverseGripThrust && baseKey === "fullatk";
+    const gDef = (reverseGripThrust && gDefRaw)
+      ? { ...gDefRaw, ws: 0, sbHalf: reverseThrustFullAtk ? false : gDefRaw.sbHalf,
+          reverseThrustBonus: reverseThrustFullAtk }
+      : gDefRaw;
+    const gWs = gDef ? gDef.ws : 0;
     // Щупальце (Мутация, wdbc-vkwe): «+20 на приём Захват» — модификатор
     // конкретного манёвра, не Стойки/Базы (те целятся во ВСЕ манёвры разом).
     // Нет общего вида записи «+N к манёвру X» в Конструкторе — решение по
@@ -282,6 +297,7 @@ export function buildSelection(v) {
     const note = [
       prof ? `Профиль: ${prof.label || "доп."}${prof.damage ? ` (${prof.damage})` : ""}` : "",
       gDef ? `Хват: ${gDef.label}${gDef.ws ? ` · WS ${gDef.ws >= 0 ? "+" : ""}${gDef.ws}` : ""}${gDef.dmgFlat ? ` · урон ${gDef.dmgFlat >= 0 ? "+" : ""}${gDef.dmgFlat}` : ""}${gDef.sbHalf ? " · ½S.b" : ""} — ${gDef.note}` : "",
+      reverseGripThrust ? `Выпад в Обратном хвате: без штрафа WS${reverseThrustFullAtk ? ", Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху" : ""}` : "",
       maneuverCapBonus ? `Щупальце: +${maneuverCapBonus} на приём Захват` : ""
     ].filter(Boolean).join("<br>");
 

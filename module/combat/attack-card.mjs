@@ -76,7 +76,7 @@ function hitLines(hits, { blastRating = 0 } = {}) {
  * кнопками: цель выбирается уже после броска, и на момент сборки карточки
  * неизвестно, попадут ли в толпу.
  */
-function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, vehicleSide,
+function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", weaponName, actorName, vehicleSide,
                                     isMelee = false, burst = false, weaponRange = 0,
                                     attackerUuid = "", itemUuid = "", hordeHits = null }) {
   if (!hits.length) return "";
@@ -98,6 +98,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
       data-damage="${hits[0].total}"
       data-penetration="${pen}"
       data-damage-type="${damageType}"
+      data-damage-subtype="${damageSubtype}"
       data-hit-location="${hits[0].loc}"
       data-attacker="${actorName}"
       data-attacker-uuid="${attackerUuid}"
@@ -169,6 +170,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
     data-damage="${d.total}"
     data-penetration="${pen}"
     data-damage-type="${damageType}"
+    data-damage-subtype="${damageSubtype}"
     data-hit-location="${d.loc}"
     data-vehicle-side="${vehicleSide}"
     data-weapon-name="${weaponName}"
@@ -239,7 +241,7 @@ function applyDamageSection(hits, { wp, pen, damageType, weaponName, actorName, 
  *   combat/defense.mjs::_performCompression — не здесь, этот модуль
  *   документов Foundry не касается (см. шапку файла).
  */
-export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, note = "",
+export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
                           swarm = null, isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
@@ -317,6 +319,16 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
         ${targetIsVehicle
           ? `<button class="wh-swerve-btn" type="button" data-extra-mod="0" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
                title="Техника: Operate − Размер×10">Вираж</button>`
+          : ""}
+        ${targetIsWalker
+          ? `<button class="wh-walker-parry-btn" type="button" data-extra-mod="${parryMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
+               title="Шагоход (Книга Машин): Парирует рукопашным орудием машины тестом WS ПИЛОТА со штрафом −Размер×10. Реакцию тратит пилот.">
+               Парирование (Шагоход)
+             </button>
+             <button class="wh-walker-dodge-btn" type="button" data-extra-mod="${dodgeMod}" data-attacker-uuid="${attackerUuid}" data-hits-count="${hitsCount}"
+               title="Шагоход (Книга Машин): Уклонение пилота со штрафом −Размер×10, ВСЕГДА комбинированное с Operate−10 машины — один бросок против наименьшего Предела.">
+               Уклонение (Шагоход)
+             </button>`
           : ""}
         ${canCompress
           ? `<button class="wh-compress-btn" type="button" data-location="${compressLocation}" data-attacker-uuid="${attackerUuid}"
@@ -428,12 +440,12 @@ export function attackCard({
   critLine = "",
   hitsCount = 0, hits = [],
   hitLocLabel = "", locRoll = 0, locShift = null, gorget = null,
-  isMelee = false, dtLabel = "", damageType = "", pen = 0,
+  isMelee = false, dtLabel = "", damageType = "", damageSubtype = "", pen = 0,
   // Assassin Strike / Удар Ассасина (wdbc-qpcg): доступность кнопки уже
   // посчитана вызывающей стороной (module/combat/assassin-strike.mjs —
   // владение Талантом + не потрачен в этом Раунде), карточка только рисует.
   assassinStrike = false,
-  sbEff = 0, sbHalf = false, taintedAdd = 0, vehicleSide = "",
+  sbEff = 0, sbHalf = false, reverseThrustBonus = 0, taintedAdd = 0, vehicleSide = "",
   ammo = null, band = null, suppression = null, allGunsBlazing = null,
   corVal = 0, corEffects = [],
   soulBurnActorId = null,
@@ -464,8 +476,12 @@ export function attackCard({
     : `Промах — ${deg} ${_degWord(deg)}`);
 
   // Бонус Силы в рукопашной: Могучее ×2, Сдержанное 0, Обратный хват ½.
+  // reverseThrustBonus — Выпад Полной Атакой Обратным хватом (стр. 39):
+  // не половинит sbEff выше, а добавляет к нему ещё ½S.b (окр.▲) отдельной
+  // строкой, чтобы игрок видел ДВЕ разные причины числа, а не одну.
   const sbNote = isMelee
     ? `, S.b +${sbEff}${wp.mightySB ? " (Могучее ×2)" : wp.containedSB ? " (Сдержанное)" : ""}${sbHalf ? " (½ хват)" : ""}`
+      + (reverseThrustBonus ? `, +${reverseThrustBonus} (Обратный хват: Выпад Полной Атакой)` : "")
     : "";
   const taintedNote = taintedAdd ? `, Порча +${taintedAdd}` : "";
   // Общее напоминание о свойстве Взрывное едет отдельным блоком (blocks.props/
@@ -635,7 +651,7 @@ export function attackCard({
       // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
       (hit && !isSprayAuto)
         ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
-      applyDamageSection(hit ? hits : [], { wp, pen, damageType, weaponName, actorName,
+      applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),
       soulBurnActorId ? `

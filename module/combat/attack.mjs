@@ -8,7 +8,8 @@ import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
-         buildTargetEffectButtons }                 from "./weapon-properties.mjs";
+         buildTargetEffectButtons, hasWeaponPropertyImmunity }
+                                                      from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice,
          attackHitOutcome }                          from "./attack-outcome.mjs";
@@ -21,6 +22,7 @@ import { getModEffects, mergeWeaponPropEntries }    from "./weapon-mods.mjs";
 import { qualityEffects, buildQualityChatBlock }    from "../constants/quality.mjs";
 import { splinterFullAutoTearing, isSplinter, splinterReminders } from "../constants/drukhari-splinter.mjs";
 import { vehicleHitLocation }                        from "../constants/vehicle.mjs";
+import { isWalkerVehicle }                            from "../rules/walker.mjs";
 import { hidingInHordeSplit }                        from "./horde-tokens.mjs";
 import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
@@ -124,6 +126,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const eff = effectiveDamage({ sys, profile: P, gripDmgFlat });
   let   effDamage  = eff.damage;
   const effDmgType = eff.damageType;
+  const effDmgSubtype = eff.damageSubtype;
   const effPen0    = eff.penetration;
 
   // ── Особые свойства оружия (+ от установленных модификаций) ───────────────
@@ -198,6 +201,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const ammoRngMult   = ammoSys?.rangeMultiplier    ?? 1;
   const ammoRngAdd    = ammoSys?.rangeMod           ?? 0;
   const ammoDmgType   = ammoSys?.damageTypeOverride || "";
+  const ammoDmgSubtype = ammoSys?.damageSubtypeOverride || "";
   const ammoSpecial   = ammoSys?.special            || "";
 
   // forcedRoll задаётся при перебросе/+10 за Очко Судьбы — повторяем ту же
@@ -288,7 +292,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Бросок ПОСЛЕ атаки и независимо от попадания: Огрин ломает человеческую
   // рукоять самим ударом. Стрелкового не касается — там своя цена (−20 к
   // тесту, rules/ogryn-fit.mjs).
-  const ogrynBreak = await rollOgrynWeaponBreak({
+  //
+  // wdbc-2gn (находка 4, ревью 07.09.2026): гейт тот же opts.skipAmmo, что
+  // выше не даёт патронам расходоваться повторно (комментарий строкой выше:
+  // «При перебросе/+10 за Очко Судьбы это тот же выстрел»). «Сдвинуть место
+  // попадания», Горжет и оба переброса за Судьбу (hooks.mjs) переигрывают ЭТУ
+  // ЖЕ атаку через opts.forcedRoll поверх той же карточки — без гейта один
+  // физический удар катал 2-3 независимых броска на поломку рукояти, в т.ч.
+  // по клику ЗАЩИЩАЮЩЕГОСЯ (кнопка Горжета жмётся с его стороны стола).
+  const ogrynBreak = opts.skipAmmo ? null : await rollOgrynWeaponBreak({
     actor, item, isMelee,
     hasOgrynized: wProps.some(p => (p?.key ?? p) === "ogryned")
   });
@@ -305,11 +317,29 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   //    либо по указанной части при Избирательной атаке (aimTarget.vehiclePart).
   const targetIsVehicle = [...(game.user?.targets ?? [])]
     .some(t => (t.actor ?? t.document?.actor)?.type === "vehicle");
+  // Шагоход среди целей — отдельный вопрос: только у него книга даёт машине
+  // Парирование и Уклонение (wdbc-6wzt, rules/walker.mjs::isWalkerVehicle).
+  const targetIsWalker = [...(game.user?.targets ?? [])]
+    .some(t => isWalkerVehicle(t.actor ?? t.document?.actor));
   let vehPart = null;
   if (targetIsVehicle) {
     vehPart = aimTarget?.vehiclePart || vehicleHitLocation(locRoll).label;
     hitLocLabel = vehPart;
   }
+
+  // Керамит (wdbc-nquc, DoomBC IV. Арсенал, стр. 231): иммунитет к
+  // СВОЙСТВАМ оружия Deflagrate/Melta — отдельно от иммунитета к типу/
+  // подвиду урона (absorption.vsSubtype.flame), который у Керамита уже
+  // смоделирован ActiveEffect'ом. Оба свойства запекаются прямо в бросок
+  // атаки (доп. кубик Выгорания ниже, удвоение Пробития у attackPenetration)
+  // — не отдельным "rating"-полем, применяемым позже в damage.mjs, как
+  // Corrosive/Piercing/Crippling/Haywire, — поэтому цель читается здесь же,
+  // тем же приёмом, что у Горжета чуть ниже: первый выцеленный токен на
+  // сцене на момент броска.
+  const wpImmunityToken  = [...(game.user?.targets ?? [])][0] ?? null;
+  const wpImmunityActor  = wpImmunityToken?.actor ?? wpImmunityToken?.document?.actor ?? null;
+  const meltaImmune      = hasWeaponPropertyImmunity(wpImmunityActor, "melta");
+  const deflagrateImmune = hasWeaponPropertyImmunity(wpImmunityActor, "deflagrate");
 
   // Горжет (стр. 228, wdbc-8b5): случайное (не Избирательное) попадание в
   // голову можно попытаться перевести в Торс — кнопка на карточке бросает
@@ -397,18 +427,28 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (!isMelee && rofMode !== "melee" && !infiniteAmmo) {
     ammoSpent = _getAmmoSpent({ system: hitCountSys }, rofMode) * (wp.ammoMult || 1) * (maximalOn ? 2 : 1) + prisma.extraAmmo;
     // При перебросе/+10 за Очко Судьбы это тот же выстрел — патроны не тратятся повторно.
-    if (ammoSpent > 0 && !opts.skipAmmo) {
-      const curMag = sys.magazineCur || 0;
-      const newMag = Math.max(0, curMag - ammoSpent);
-      await item.update({ "system.magazineCur": newMag });
-      // Призма сбрасывается наполовину (окр. вниз) после ЛЮБОГО выстрела —
-      // тем же условием, что реальный расход патронов (не переброс/Судьба).
-      if (!opts.skipAmmo) await halvePrismaCharge(item, wp);
-      if (newMag === 0) {
-        ammoWarning = `<div class="roll-allout-note">Магазин пуст! Требуется перезарядка.</div>`;
-      } else if (newMag <= Math.ceil((sys.magazineMax || 1) * 0.25)) {
-        ammoWarning = `<div class="roll-ammo-low">Патроны на исходе: ${newMag}/${sys.magazineMax}</div>`;
+    if (!opts.skipAmmo) {
+      if (ammoSpent > 0) {
+        const curMag = sys.magazineCur || 0;
+        const newMag = Math.max(0, curMag - ammoSpent);
+        await item.update({ "system.magazineCur": newMag });
+        if (newMag === 0) {
+          ammoWarning = `<div class="roll-allout-note">Магазин пуст! Требуется перезарядка.</div>`;
+        } else if (newMag <= Math.ceil((sys.magazineMax || 1) * 0.25)) {
+          ammoWarning = `<div class="roll-ammo-low">Патроны на исходе: ${newMag}/${sys.magazineMax}</div>`;
+        }
       }
+      // Призма сбрасывается наполовину (окр. вниз) после ЛЮБОГО выстрела —
+      // wdbc-8zi (п.5): раньше висело внутри `ammoSpent > 0` — концептуально
+      // неверная связка (сброс должен зависеть от «это не переброс/Очко
+      // Судьбы», а не от того, потратился ли патрон), хотя на СЕГОДНЯШНЕМ
+      // составе свойств она и не давала наблюдаемого расхождения:
+      // prisma.extraAmmo = заряд×рейтинг уже входит в ammoSpent, так что при
+      // заряде>0 (единственный случай, где halvePrismaCharge вообще что-то
+      // меняет) ammoSpent и без него положителен. Разъезд стал бы реальным
+      // при любом будущем свойстве/режиме, зануляющем ammoMult или базовый
+      // расход, — на всякое такое незачем городить отдельный частный случай.
+      await halvePrismaCharge(item, wp);
     }
   }
 
@@ -426,9 +466,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Грозный Вопль/Dread Wail (wdbc-sk8s) — усилитель звукового оружия, живёт
   // до начала следующего Хода (module/combat/dread-wail.mjs).
   const dreadWailBonus = dreadWailWeaponBonus(actor, item);
+  // Керамит (wdbc-nquc): цель с иммунитетом к Melta не получает удвоение
+  // Пробития в упор — attackPenetration остаётся чистой функцией без Foundry,
+  // поэтому иммунитет гасится здесь, клоном wp только для этого вызова
+  // (bonusDamageDice ниже по-прежнему видит настоящий wp.meltaShort — оно
+  // делит поле shortRange с Рассеиванием/Scatter, которое Керамит не гасит).
+  const penWp = meltaImmune ? { ...wp, meltaShort: false } : wp;
   const pen = attackPenetration({
     base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen,
-    wp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
+    wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
   const corVal   = Number(actor.system?.corruption?.value ?? 0);
@@ -442,6 +488,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атаку, module/rules/hand-of-khorne.mjs::isHandOfKhorneWeapon), не
   // заменяет их: тот же принцип, что у stacking модификаторов урона выше.
   const sbEff  = meleeStrengthBonus({ sb, wp, sbHalf }) * (isMelee ? handOfKhorneStrengthMultiplier(item) : 1);
+  // Обратный Хват + Выпад Полной Атакой (стр. 39): sbHalf сюда уже приходит
+  // false (module/sheets/attack/selection.mjs гасит его для этой связки), т.е.
+  // sbEff — полный S.b. Книга поверх него добавляет ЕЩЁ +½S.b (окр.▲) —
+  // именно добавляет, а не заменяет половину на целое (это она уже дала выше).
+  const reverseThrustBonus = (isMelee && opts.reverseThrustBonus) ? Math.ceil(sbEff / 2) : 0;
   // Порча: +Cor.b владельца к урону
   const taintedAdd = wp.taintedCorB ? (actor.system.corruptionBonus ?? 0) : 0;
 
@@ -459,7 +510,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
-  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
+  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
   const dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -529,9 +580,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         total += bRoll.total;
         bonusNote = bRoll.total;
       }
-      // Выгорание (Deflagrate): на 7–10 куба урона — доп. 1d10+X энерг. урона
+      // Выгорание (Deflagrate): на 7–10 куба урона — доп. 1d10+X энерг. урона.
+      // Керамит (wdbc-nquc): иммунитет к свойству Deflagrate гасит именно
+      // этот доп. кубик, не базовый урон попадания.
       let deflagrateNote = 0;
-      if (wp.deflagrate && deflagrateHit) {
+      if (wp.deflagrate && deflagrateHit && !deflagrateImmune) {
         const dRoll = await new Roll(`1d10 + ${wp.deflagrateRating}`).evaluate();
         allRolls.push(dRoll);
         total += dRoll.total;
@@ -703,9 +756,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hitLocLabel, locRoll,
       locShift: canShiftLoc ? { max: agBonus, current: opts.locationShift || 0 } : null,
       gorget,
-      isMelee, dtLabel, damageType: ammoDmgType || effDmgType, pen,
+      isMelee, dtLabel, damageType: ammoDmgType || effDmgType,
+      damageSubtype: ammoDmgSubtype || effDmgSubtype, pen,
       assassinStrike: isMelee && assassinStrikeAvailable(actor),
-      sbEff, sbHalf, taintedAdd, vehicleSide: opts.vehicleSide || "",
+      sbEff, sbHalf, reverseThrustBonus, taintedAdd, vehicleSide: opts.vehicleSide || "",
       ammo: isMelee ? null : {
         name:   loadedAmmo?.name || "",
         mods:   loadedAmmo ? _buildAmmoModString(ammoSys) : "",
@@ -757,7 +811,10 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
         forcedDefenceReroll: opts.forcedDefenceReroll || "",
-        targetIsVehicle, note: techOpts.chatNote
+        // Шагоход (wdbc-6wzt, п.5): у него, в отличие от прочей техники, есть
+        // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
+        // на карточке, потому что считает их ПИЛОТ, а не машина.
+        targetIsVehicle, targetIsWalker, note: techOpts.chatNote
       },
       notes: {
         shelter: shelter

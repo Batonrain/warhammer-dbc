@@ -157,6 +157,18 @@
 .warhammer-dbc .veh-trait-del { grid-column: 2; grid-row: 1 / span 2; align-self: center; cursor: pointer; color: var(--wh-red); padding: 0 4px; }
 .warhammer-dbc .veh-trait-del:hover { color: #fff; background: var(--wh-red); border-radius: 3px; }
 
+/* ── Залп станций (ОГОНЬ — ОРУДИЯ, над обычным веером orudiй) ──
+   wdbc-shr находка 7: .veh-volley-bar/.veh-volley-btn не имели ни одного
+   правила вовсе — рендерились браузерными кнопками по умолчанию, без
+   макета .veh-action-btns и без терминального стиля ниже. */
+.warhammer-dbc .veh-volley-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.warhammer-dbc .veh-volley-btn {
+  flex: 1 1 200px; padding: 5px 10px; font-weight: bold; font-size: 0.86em; cursor: pointer;
+  background: linear-gradient(180deg, var(--wh-parchment2), var(--wh-parchment3));
+  border: 1px solid var(--wh-border-light); border-radius: 3px; color: var(--wh-text-dark);
+}
+.warhammer-dbc .veh-volley-btn:hover { background: linear-gradient(180deg, var(--wh-panel-mid), var(--wh-panel-dark)); color: var(--wh-text-light); }
+
 /* ── Огонь (быстрые кнопки орудий на Обзоре) ── */
 .warhammer-dbc .veh-firebar { display: flex; flex-direction: column; gap: 4px; }
 .warhammer-dbc .veh-fire-item { display: flex; align-items: center; gap: 8px; }
@@ -205,6 +217,12 @@
 /* Диалоги техники */
 .wh-vehicle-dialog .atk-dlg-sub { font-weight: bold; font-size: 0.82em; margin: 4px 0 2px; color: var(--wh-panel-mid); }
 .wh-vehicle-dialog .veh-rof { display: block; font-size: 0.86em; margin: 1px 0; }
+/* .veh-check используется и внутри диалогов техники (.wh-vehicle-dialog —
+   свой корень вне .warhammer-dbc, свой селектор ниже нужен), и прямо на
+   листе техники (Продвинутые Системы Управления, ШАГОХОД-панель, wdbc-shr
+   находка 7) — второй случай не имел правила вовсе, чекбокс с подписью
+   рендерились обычным инлайном без отступа сверху. */
+.warhammer-dbc .veh-check,
 .wh-vehicle-dialog .veh-check { display: block; font-size: 0.84em; margin-top: 5px; }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -359,12 +377,14 @@
 /* ── Кнопки действий/огня — терминальный стиль ── */
 .warhammer-dbc.vehicle-sheet .veh-action-btns button,
 .warhammer-dbc.vehicle-sheet .veh-fire-item .veh-fire-weapon,
+.warhammer-dbc.vehicle-sheet .veh-volley-btn,
 .warhammer-dbc.vehicle-sheet .veh-add-bar .veh-add-stations {
   background: linear-gradient(180deg, #0e2a1a, #08160e); border: 1px solid var(--cg-line);
   color: var(--wh-text-dark); letter-spacing: 0.02em; transition: all 0.13s;
 }
 .warhammer-dbc.vehicle-sheet .veh-action-btns button:hover,
 .warhammer-dbc.vehicle-sheet .veh-fire-item .veh-fire-weapon:hover,
+.warhammer-dbc.vehicle-sheet .veh-volley-btn:hover,
 .warhammer-dbc.vehicle-sheet .veh-add-bar .veh-add-stations:hover {
   border-color: var(--cg); box-shadow: 0 0 12px -4px var(--cg); color: #eafff4; background: linear-gradient(180deg, #143a26, #0a2016);
 }

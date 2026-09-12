@@ -115,13 +115,16 @@
 // данных значит «обычное», а не «никакое».
 
 // ── Выбранный бонусный эффект Best.Q (when.chosenEffect/when.negateChosenEffect) ─
-// Десятый независимый гейт (wdbc-jo51): список подписей ИЗ СОБСТВЕННОГО
-// system.bestQualityEffects ПРЕДМЕТА (implant-bestq-choice.mjs, wdbc-ukpu) —
-// та же форма, что у субмутации (список подписей своего же предмета, ИЛИ
-// между вариантами), но источник другой: не одна текущая строка
-// (item.system.submutation.label), а МУЛЬТИМНОЖЕСТВО уже взятых эффектов
-// (item.system.chosenEffects — можно взять один и тот же вариант повторно,
-// см. bestQChoiceUpdate). Нужен там, где Best.Q Био-импланта Друкхари даёт
+// Десятый независимый гейт (wdbc-jo51): гейт смотрит на МУЛЬТИМНОЖЕСТВО уже
+// взятых эффектов ПРЕДМЕТА — item.system.chosenEffects (можно взять один и тот
+// же вариант повторно, см. bestQChoiceUpdate), НЕ на system.bestQualityEffects
+// (wdbc-5tz: тот несёт только СПИСОК ВОЗМОЖНЫХ вариантов на выбор — источник
+// чекбоксов условия в buildEntryWhenHtml/mechanics.mjs, implant-bestq-choice.mjs,
+// wdbc-ukpu, — но не то, что реально проверяется здесь при броске/применении).
+// Форма условия та же, что у субмутации (список подписей своего же предмета,
+// ИЛИ между вариантами), но источник другой: не одна текущая строка
+// (item.system.submutation.label), а как раз то мультимножество chosenEffects
+// выше. Нужен там, где Best.Q Био-импланта Друкхари даёт
 // на выбор несколько эффектов, и только ОДИН из них должен включать запись
 // Конструктора (Ribcage Carapace: «Костяные шипы» → Встречная атака; Electric
 // Arc: «Электрическая броня» → Встречная атака) — остальные три варианта у
@@ -138,7 +141,8 @@
 // назад» (chosenEffects при этом не чистится, книга такой откат не описывает,
 // решение осторожное: гасить эффект по обоим условиям, а не только по одному).
 
-import { itemHasName, PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
+import { PREDICATES, CTX_DEPENDENT_PREDICATES } from "./predicates.mjs";
+import { itemsNamed } from "./req-atom.mjs";
 
 /** Заполненные ключи Бога-покровителя из entry.when.patronGod. */
 export function whenPatronGod(when) {
@@ -183,12 +187,28 @@ export function whenChosenEffect(when) {
 
 const normSpec = s => String(s ?? "").trim().toLowerCase();
 
-/** Есть ли у актора Талант/Черта с этим именем И этой специализацией. */
+/**
+ * Есть ли у актора Талант/Черта с этим именем И этой специализацией
+ * (wdbc-shr, находка 4). Раньше искала кандидатов собственным ручным
+ * `.some()` вместо общего слоя «есть предмет с таким именем»
+ * (req-atom.mjs::itemsNamed, wdbc-0pki) — тем самым это была уже ЧЕТВЁРТАЯ
+ * отдельная реализация «есть ли у актора такой-то Талант» в кодовой базе
+ * (после mechanics.mjs::actorMeetsReq, elite-requirements.mjs::entryOk и
+ * talent-requirements.mjs::hasTalent, все три уже сведены на itemsNamed).
+ * Специализация сравнивается тем же способом, что у talent-requirements.mjs
+ * ::hasTalent — подстрокой (norm+includes), а не строгим равенством, и с тем
+ * же запасным вариантом «специализация записана в скобках прямо в имени
+ * предмета» (Резчик по Плоти хранит специализацию так у части старых
+ * записей) — не заводить третий вариант сравнения там, где уже есть один.
+ */
 function hasTalentSpec(actor, name, specialization) {
   const want = normSpec(specialization);
-  return (actor?.items ?? []).some(i =>
-    (i?.type === "talent" || i?.type === "trait") &&
-    itemHasName(i, name) && normSpec(i?.system?.specialization) === want);
+  const hits = itemsNamed(actor, name, ["talent", "trait"]);
+  return hits.some(i => {
+    const itemSpec = normSpec(i?.system?.specialization || "");
+    const inName    = normSpec((/\(([^)]*)\)/.exec(normSpec(i?.name)) || [])[1] || "");
+    return itemSpec.includes(want) || inName.includes(want);
+  });
 }
 
 

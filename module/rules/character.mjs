@@ -13,6 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { IMPROVEMENT_BONUS, IMPROVEMENTS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { AP_LOCATIONS } from "../constants/effect-keys.mjs";
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { carryRow }                        from "../helpers/utils.mjs";
@@ -38,6 +39,8 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { invalidateRulesCacheFor } from "./collect.mjs";
+import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
@@ -168,14 +171,20 @@ export function prepareCharacterDerived(actor, system) {
     let traitArmourAll = 0;
     // Пер-локационная броня от имплантов/черт (напр. Боевые Латы Скитарии 6/7/7/5/5)
     const traitArmorLoc = { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0 };
-    // Чёрный Панцирь (импланты Астартес): «БЕЗ БРОНИ считается как нагрудник
-    // с АР 4» — это ЗАМЕНА при отсутствии брони на торсе, а не складываемая
-    // надбавка (в отличие от обычной Естественной Брони выше). Раньше был
-    // заведён как складываемая запись Конструктора (kind:"armour") и давал
-    // +4 АР в торс ПОВЕРХ силовой брони (wdbc bug-report 2026-08-22). Флаг
-    // участвует ниже в best("body") — том же «лучшее из», что и у брони/щита,
-    // не в сумме traitArmorLoc/fxArmor.
-    let hasBlackCarapaceBackup = false;
+    // Броня-ЗАМЕНА (обобщено в wdbc-dg6 из хардкода под один только Чёрный
+    // Панцирь): предмет не добавляет AP к надетой броне, а САМ ЕЙ является —
+    // «лучшее из», как у брони/щита, а не складываемая надбавка (в отличие от
+    // обычной Естественной Брони traitArmorLoc/fxArmor выше и ниже). Участвует
+    // в best(k) ниже per-локационным Math.max, а не суммой.
+    //  - Чёрный Панцирь (импланты Астартес): «БЕЗ БРОНИ считается как
+    //    нагрудник с АР 4» — только торс. Раньше был заведён как складываемая
+    //    запись Конструктора (kind:"armour") и давал +4 АР в торс ПОВЕРХ
+    //    силовой брони (wdbc bug-report 2026-08-22).
+    //  - Warpforged Plate/Закалённые Варпом Латы (Элитный архетип Варп-Кузнец):
+    //    «не может снять доспех, но имеет AP 12/12/12/12» — все шесть локаций.
+    //    Раньше предмет нёс запечённый ActiveEffect system.armorBonus.<loc>
+    //    "add" +12, который так же складывался с надетой бронёй (wdbc-dg6).
+    const armorFloorLoc = { head: 0, body: 0, leftArm: 0, rightArm: 0, leftLeg: 0, rightLeg: 0 };
     let traitFearRating = 0;
     let traitSizeMod = 0;
     // Размер, который НЕ идёт в SPD (wdbc-w8ws, Absurdly Fat/Абсурдно Толстый:
@@ -213,7 +222,12 @@ export function prepareCharacterDerived(actor, system) {
       // его эффекты не считаются, пока GM/игрок не переключит статус обратно.
       if (t === "implant" && item.getFlag("warhammer-dbc", "disabled")) continue;
       if (t === "implant" && (itemHasName(item, "Чёрный Панцирь") || itemHasName(item, "Black Carapace"))) {
-        hasBlackCarapaceBackup = true;
+        armorFloorLoc.body = Math.max(armorFloorLoc.body, 4);
+      }
+      // Warpforged Plate/Закалённые Варпом Латы (wdbc-dg6): та же «броня-
+      // замена», что Чёрный Панцирь, но на все шесть локаций сразу.
+      if (t === "trait" && (itemHasName(item, "Warpforged Plate") || itemHasName(item, "Закалённые Варпом Латы"))) {
+        for (const k of Object.keys(armorFloorLoc)) armorFloorLoc[k] = Math.max(armorFloorLoc[k], 12);
       }
       // Бионические конечности: +2 к эффективному Поглощению этой частью тела.
       // Сторона не выбрана (флаг снят) — бонус никуда не начислять: раньше
@@ -575,11 +589,39 @@ export function prepareCharacterDerived(actor, system) {
     // значением) корректно в обе стороны.
     if (system.conditions?.unconscious) system.conditions.helpless = true;
 
+    // Кэш сборки правил (rules/collect.mjs) сложился ВЫШЕ — на первом же
+    // hasRuleFlag(DREADNOUGHT_PILOT_FLAG), то есть до цикла характеристик и
+    // до Object.assign(system.conditions, readAllMirrors(actor)) — по ещё не
+    // обновлённым bonus/conditions. Правила, которые гейтятся charBonusMin/
+    // hasCondition («нужен Бонус Силы 5», «в Ярости»), в этом кэше отобраны
+    // неверно. Дальше по коду (Сарко́фаг Дредноута ниже, а главное — всё, что
+    // спросит hasRuleFlag/ruleFlags за пределами этой функции, но внутри той
+    // же обёртки withRulesCache — например, диалог атаки, открытый тем же
+    // синхронным проходом) характеристики и Состояния уже верны — сбрасываем
+    // кэш ИМЕННО ЭТОГО актора, чтобы следующий сбор пересчитал список заново
+    // по актуальным данным (wdbc-2gn). Полный сброс withRulesCache() тут не
+    // подходит — обёртка держит кэш других акторов, которых не хотим трогать.
+    invalidateRulesCacheFor(actor);
+
     // Мёртвое Могущество (Иннари): максимум = W.b × 3
     if (system.deadMight) {
       system.deadMight.max = (chars.wp?.bonus ?? 0) * 3;
       if ((system.deadMight.value ?? 0) > system.deadMight.max)
         system.deadMight.value = system.deadMight.max;
+    }
+
+    // Руны Сигиллитов (wdbc-fsl9): 20 базово + за каждое взятие «Библиотеки
+    // Рун» (до 3) «+I.b и ещё +1 за ступень Forbidden Lore (Archeotech)» —
+    // формула, а не число, поэтому считается здесь, а не записью Конструктора
+    // (kind:"poolMax" знает закрытый список из двух целей). Тот же приём, что
+    // у «Бездонной Души» ниже: максимум растёт от ПОДСЧЁТА взятий Таланта.
+    //
+    // У актора без Черты «Магия Сигиллитов» runeMax отдаёт 0 — пул остаётся
+    // нулевым и на листе не значит ничего.
+    if (system.sigilliteRunes) {
+      system.sigilliteRunes.max = runeMax(actor);
+      if ((system.sigilliteRunes.value ?? 0) > system.sigilliteRunes.max)
+        system.sigilliteRunes.value = system.sigilliteRunes.max;
     }
 
     // ── Очки Боли (Друкхари) ───────────────────────────────────────────────
@@ -669,7 +711,7 @@ export function prepareCharacterDerived(actor, system) {
     // Броня вынесена в rules/character/armour.mjs (wdbc-neez). Накопителей
     // сверху ей не нужно — считает по надетым предметам сама, — но четыре
     // её величины читают разделы ниже, поэтому она их возвращает.
-    const { armorFromItems, armorVsType, propFlagsByLoc, sealedCoverage } =
+    const { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage } =
       prepareArmourDerived(actor, system);
     // ── Снятый шлем ────────────────────────────────────────────────────────
     // Показатель «сколько ОБ на голову даёт снаряжение» считается ДО снятия:
@@ -686,8 +728,7 @@ export function prepareCharacterDerived(actor, system) {
     const shieldAP = shieldArmorByLocation(actor);
     system.shieldArmor = shieldAP;
     const best = (k) => Math.max(
-      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0,
-      (k === "body" && hasBlackCarapaceBackup) ? 4 : 0
+      armorFromItems[k], armorManual[k] || 0, shieldAP[k] || 0, armorFloorLoc[k] || 0
     );
     // Складываемая надбавка AP от эффектов (естественная броня Черт, броня
     // имплантов, что угодно ещё). Хранимое поле схемы — эффекты целятся в него
@@ -699,15 +740,14 @@ export function prepareCharacterDerived(actor, system) {
     // попадания, пока броню не починят (combat/damage.mjs пишет сюда).
     const corrosion = system.armorCorrosion || {};
     const corroded = (k) => Math.max(0, (Number(corrosion[k]) || 0));
-    // Естественная броня (трейты) + пер-локационная от имплантов складываются с носимой/ручной
-    const armorAP = {
-      head:     Math.max(0, best("head")     + traitArmourAll + traitArmorLoc.head     + (fxArmor.head     || 0) - corroded("head")),
-      body:     Math.max(0, best("body")     + traitArmourAll + traitArmorLoc.body     + (fxArmor.body     || 0) - corroded("body")),
-      leftArm:  Math.max(0, best("leftArm")  + traitArmourAll + traitArmorLoc.leftArm  + (fxArmor.leftArm  || 0) - corroded("leftArm")),
-      rightArm: Math.max(0, best("rightArm") + traitArmourAll + traitArmorLoc.rightArm + (fxArmor.rightArm || 0) - corroded("rightArm")),
-      leftLeg:  Math.max(0, best("leftLeg")  + traitArmourAll + traitArmorLoc.leftLeg  + (fxArmor.leftLeg  || 0) - corroded("leftLeg")),
-      rightLeg: Math.max(0, best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0) - corroded("rightLeg")),
-    };
+    // Естественная броня (трейты) + пер-локационная от имплантов складываются
+    // с носимой/ручной — одной формулой по всем 6 локациям (AP_LOCATIONS,
+    // constants/effect-keys.mjs), а не 6 повторенными вручную строками
+    // (wdbc-ye6): правка формулы раньше требовала помнить, что менять её надо
+    // сразу в шести местах.
+    const armorAP = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k,
+      Math.max(0, best(k) + traitArmourAll + traitArmorLoc[k] + (fxArmor[k] || 0) - corroded(k))
+    ]));
 
     // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
     // попадание в Глаз игнорирует AP шлема, а не всей головы (стр. 34).
@@ -720,16 +760,12 @@ export function prepareCharacterDerived(actor, system) {
     system.sealedFullSuit = Object.values(sealedCoverage).every(Boolean);
 
     system.absorption = {
-      head:           armorAP.head     + tb,
-      body:           armorAP.body     + tb,
-      leftArm:        armorAP.leftArm  + tb,
-      rightArm:       armorAP.rightArm + tb,
-      leftLeg:        armorAP.leftLeg  + tb,
-      rightLeg:       armorAP.rightLeg + tb,
+      ...Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, armorAP[k] + tb])),
       toughnessBonus: tb,
       armorOnly:      armorAP,
       wornOnly,
       vsType:         armorVsType,
+      vsSubtype:      armorVsSubtype,
       propFlags:      propFlagsByLoc
     };
 
@@ -882,7 +918,11 @@ export function prepareCharacterDerived(actor, system) {
       switch (it.type) {
         case "talent": autoTalentCost += (parseInt(it.system?.cost) || 0); break;
         case "psychicPower":
-          autoPsyCost += (parseInt(it.system?.cost) || 0);
+          // wdbc-exjp: runeLearnCost — отдельная трата опыта на Руну Сигиллитов
+          // этой же психосилы (module/rules/sigillite-runes.mjs), складывается
+          // с ценой изучения самой силы в ту же строку «На психосилы» — обе
+          // траты психокера, книга не разводит их по разным бюджетам.
+          autoPsyCost += (parseInt(it.system?.cost) || 0) + (parseInt(it.system?.runeLearnCost) || 0);
           if (it.system?.isSustained) sustainedCost += (it.system?.sustainCost ?? 1);
           break;
         case "techPower": autoTechCost += (parseInt(it.system?.cost) || 0); break;

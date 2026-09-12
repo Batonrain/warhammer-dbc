@@ -343,6 +343,35 @@ export async function buildLiveSyncReport() {
   return buildSyncReport(game.actors.contents, index);
 }
 
+function isPlainObj(v) {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+/**
+ * wdbc-daz (п.5): у ObjectField (system.charBonus, system.propRatings,
+ * system.zones и т.п.) присвоение целиком через update({"system.path": val})
+ * СЛИВАЕТ новое значение со старым, а не заменяет — Foundry
+ * (common/data/fields.mjs, ObjectField#_updateDiff) считает diff через
+ * diffObject/mergeObject, который не трогает ключи, отсутствующие в новом
+ * значении. Подтверждено эмпирически на настоящем DataModel этой Foundry:
+ * {a,b,c} + update(value:{a,b}) → результат {a,b,c}, ключ c выживает. Значит
+ * подключ, убранный в паке, оставался бы на актёре навсегда и подсвечивался
+ * бы как «есть обновление» при каждом следующем прогоне «Обновить мир».
+ * Лечится тем же приёмом, что и остальной код уже использует для flags —
+ * явным ключом-удалением "-=<имя>": null рядом с новыми значениями.
+ * Работает на глубину ровно один уровень — ровно та глубина, на которой
+ * diffItemAgainstPack вообще способен заметить расхождение (Object.keys
+ * пробегает только верхний уровень system).
+ */
+function withDeletedStaleKeys(actorVal, packVal) {
+  if (!isPlainObj(packVal) || !isPlainObj(actorVal)) return packVal;
+  const stale = Object.keys(actorVal).filter(k => !(k in packVal));
+  if (!stale.length) return packVal;
+  const out = { ...packVal };
+  for (const k of stale) out[`-=${k}`] = null;
+  return out;
+}
+
 /**
  * Применяет отмеченные записи (Set entryKey = "<itemId>::<path>"): пишет
  * новое значение поля и одновременно продвигает опору этого поля на то же
@@ -366,10 +395,10 @@ export async function applySyncReport(report, selectedKeys) {
       byActor.set(entry.actorId, actorUpdates);
       const upd = actorUpdates.get(entry.itemId) || { _id: entry.itemId };
       if (row.path === MECH_PATH) {
-        upd[`flags.${FLAG}.mechanics`] = row.packVal;
+        upd[`flags.${FLAG}.mechanics`] = withDeletedStaleKeys(entry.actorVal, row.packVal);
         upd[`flags.${FLAG}.${MECH_BASELINE_PATH}`] = row.packVal;
       } else {
-        upd[`system.${row.path}`] = row.packVal;
+        upd[`system.${row.path}`] = withDeletedStaleKeys(entry.actorVal, row.packVal);
         upd[`flags.${FLAG}.${BASELINE_PATH}.${row.path}`] = row.packVal;
       }
       actorUpdates.set(entry.itemId, upd);

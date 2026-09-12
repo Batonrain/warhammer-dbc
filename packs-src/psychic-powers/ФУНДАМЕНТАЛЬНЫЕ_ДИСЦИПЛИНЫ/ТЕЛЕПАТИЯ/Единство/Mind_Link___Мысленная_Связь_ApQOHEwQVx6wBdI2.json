@@ -1,0 +1,70 @@
+{
+  "name": "Mind Link / Мысленная Связь",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "fVR9Kv136ssE5PO3",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: числовой эффект масштабируется Пси-Рейтингом/Интеллектом, но сочетается с условием, вторым слагаемым или множественной целью, не сводясь к одной чистой testMod-записи (в отличие от 3 записей пака, механизированных отдельно). Расовый вариант для Механики «Серый Человек» (aeldari-branches.json, «Oteshii/Серые Люди»): бPR этой психосилы у Серого Человека считается на +3 выше — реализовано как +15 к Порогу психотеста манифестации (system.testMod), а не полем «Требуемый ПР» (wdbc-dq3: старая версия ошибочно поднимала prRequired — это требование ИЗУЧЕНИЯ, а не облегчение манифестации, и вдобавок задирало цену в Рунах Сигиллитов). Не выбирать вручную — это копия строго под расовую выдачу, обычным псайкерам брать канонический предмет.",
+    "cost": 150,
+    "discipline": "telepathy",
+    "subtype": "Единство",
+    "powerType": "change",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 2,
+    "testChar": "wp",
+    "testMod": 25,
+    "action": "half",
+    "range": "PR×1км",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Изменение (PR) · Цикл (4). Треб.: Thought Sending. Псайкер и согласные цели связаны общей мысленной связью, шлют друг другу мысли; при достаточном уровне передачи — делятся сенсорной информацией (добавляя секторы обзора).",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "ApQOHEwQVx6wBdI2",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!ApQOHEwQVx6wBdI2"
+}

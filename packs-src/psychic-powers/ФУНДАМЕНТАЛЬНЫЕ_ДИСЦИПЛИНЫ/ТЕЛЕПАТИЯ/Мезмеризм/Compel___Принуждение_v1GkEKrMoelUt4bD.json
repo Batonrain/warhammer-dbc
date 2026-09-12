@@ -1,0 +1,72 @@
+{
+  "name": "Compel / Принуждение",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "9ssV0AszmvvEldQb",
+  "system": {
+    "description": "",
+    "notes": "Тест Сопротивления цели заполнен: WP +0 — по тексту эффекта («…vs WP+0…»). Кнопка «Запросить тест Сопротивления у цели» на манифестации теперь предлагает этот бросок. Расовый вариант для Механики «Серый Человек» (aeldari-branches.json, «Oteshii/Серые Люди»): бPR этой психосилы у Серого Человека считается на +1 выше — реализовано как +5 к Порогу психотеста манифестации (system.testMod), а не полем «Требуемый ПР» (wdbc-dq3: старая версия ошибочно поднимала prRequired — это требование ИЗУЧЕНИЯ, а не облегчение манифестации, и вдобавок задирало цену в Рунах Сигиллитов). Не выбирать вручную — это копия строго под расовую выдачу, обычным псайкерам брать канонический предмет.",
+    "cost": 200,
+    "discipline": "telepathy",
+    "subtype": "Мезмеризм",
+    "powerType": "attack",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 3,
+    "testChar": "wp",
+    "testMod": -5,
+    "action": "half",
+    "range": "PR×5м",
+    "sustainable": false,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Атака · Изменение. Психотест W−10 vs W+0. Треб.: Passion. При победе в свой след. Ход цель выполняет одну простую команду («беги», «упади», «атакуй слева»). Цель осознаёт чужую волю. Откровенно суицидальный приказ — цель +20 на встречный тест.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    },
+    "resistChar": "wp",
+    "resistMod": 0
+  },
+  "_id": "v1GkEKrMoelUt4bD",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!v1GkEKrMoelUt4bD"
+}

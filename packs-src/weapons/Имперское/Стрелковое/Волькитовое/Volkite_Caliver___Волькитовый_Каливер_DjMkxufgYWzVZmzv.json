@@ -61,7 +61,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "damageSubtype": "laser"
   },
   "_id": "DjMkxufgYWzVZmzv",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

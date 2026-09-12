@@ -164,12 +164,52 @@ export const WIZARD_STEPS = [
   { id: "gear",            label: "Снаряжение" }
 ];
 
+// ── Действия шаблона (data-action) ──────────────────────────────────────────
+// Раньше три кнопки шага жили на отдельном атрибуте data-wiz-action со своей
+// ручной делегацией (`on(...)` в _onRender, ниже) — единственное место в
+// проекте, обходящее декларативный DEFAULT_OPTIONS.actions ApplicationV2. Из-
+// за этого v2-sheet-contract.mjs их вообще не проверял: пустое множество
+// data-action и пустая карта actions совпадали как равные, тест проходил
+// вхолостую. Унифицировано под общую конвенцию проекта (см. horde-sheet.mjs).
+function onWizBack() { if (!this._confirmingArchetype) this._goStep(this.stepIndex - 1); }
+function onWizNext() { return this._onNext(); }
+async function onWizFinish() {
+  if (this._confirmingGear) return;
+  if (this.step.id === "gear" && !this._gearDone) await this._confirmGear();
+  // Лёгкое уведомление ГМ (wdbc-agc) — не блокирует персонажа, просто просит
+  // проверить: раньше Мастер завершался молча, и ГМ узнавал о новом персонаже
+  // только случайно наткнувшись на него в списке. Не игроку — свою же
+  // карточку видеть незачем (whisper только GM).
+  if (!game.user.isGM) {
+    // И это уведомление, не тест (wdbc-kuun) — шёпот ГМу «проверь».
+    ChatMessage.create({
+      content: testCardHtml({
+        title: "🧙 Создание персонажа завершено",
+        outcome: `Игрок <b>${esc(game.user.name)}</b> закончил Мастера создания для <b>${esc(this.actor.name)}</b> — стоит проверить.`
+      }),
+      whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
+      speaker: { alias: this.actor.name }
+    });
+  }
+  // _confirmGear() кончает своим render(false) (снять «Применяется…»), который
+  // сам не awaited — вызванный сразу вслед close() иногда проигрывал этой
+  // гонке: рендер из finally долетал ПОСЛЕ close() и окно фактически
+  // оставалось открытым. Даём кадру осесть перед close().
+  await new Promise(r => setTimeout(r, 0));
+  this.close();
+}
+
 export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: "wh-char-wizard-{id}",
     classes: ["warhammer-dbc", "wh-holo", "wh-char-wizard"],
     position: { width: 620, height: 760 },
-    window: { resizable: true }
+    window: { resizable: true },
+    actions: {
+      wizBack: onWizBack,
+      wizNext: onWizNext,
+      wizFinish: onWizFinish
+    }
   };
 
   static PARTS = {
@@ -2002,34 +2042,6 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     const html = globalThis.$(el);
     const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach(n => n.addEventListener(ev, fn));
 
-    on("[data-wiz-action='wizBack']",   "click", () => { if (!this._confirmingArchetype) this._goStep(this.stepIndex - 1); });
-    on("[data-wiz-action='wizNext']",   "click", () => this._onNext());
-    on("[data-wiz-action='wizFinish']", "click", async () => {
-      if (this._confirmingGear) return;
-      if (this.step.id === "gear" && !this._gearDone) await this._confirmGear();
-      // Лёгкое уведомление ГМ (wdbc-agc) — не блокирует персонажа, просто
-      // просит проверить: раньше Мастер завершался молча, и ГМ узнавал о
-      // новом персонаже только случайно наткнувшись на него в списке.
-      // Не игроку — свою же карточку видеть незачем (whisper только GM).
-      if (!game.user.isGM) {
-        // И это уведомление, не тест (wdbc-kuun) — шёпот ГМу «проверь».
-        // Публикация своя по той же причине, что у шёпотов выше.
-        ChatMessage.create({
-          content: testCardHtml({
-            title: "🧙 Создание персонажа завершено",
-            outcome: `Игрок <b>${esc(game.user.name)}</b> закончил Мастера создания для <b>${esc(this.actor.name)}</b> — стоит проверить.`
-          }),
-          whisper: ChatMessage.getWhisperRecipients?.("GM") || [],
-          speaker: { alias: this.actor.name }
-        });
-      }
-      // _confirmGear() кончает своим render(false) (снять «Применяется…»),
-      // который сам не awaited — вызванный сразу вслед close() иногда
-      // проигрывал этой гонке: рендер из finally долетал ПОСЛЕ close() и
-      // окно фактически оставалось открытым. Даём кадру осесть перед close().
-      await new Promise(r => setTimeout(r, 0));
-      this.close();
-    });
     on(".wiz-gear-sel", "change", ev => {
       this.gearPicks[Number(ev.currentTarget.dataset.ci)] = ev.currentTarget.value;
     });
@@ -2291,6 +2303,7 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
     this._isClosing = true;
     for (const row of this.pendingMechChoices.splice(0)) row.resolve(row.type === "spec" && row.need > 1 ? [] : null);
     for (const { hook, id } of this._factionHookIds.splice(0)) Hooks.off(hook, id);
+    if (_wizards.get(this.actorId) === this) _wizards.delete(this.actorId);
     return super.close?.(options);
   }
 
@@ -2481,9 +2494,17 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 }
 
+// Одно окно Мастера на актора: повторный вызов (второй клик по кнопке, вызов
+// из другого места листа) поднимает уже открытое окно, а не плодит второй
+// экземпляр с тем же DOM id (`wh-char-wizard-${actor.id}` в конструкторе) и
+// вторым набором хуков createItem/deleteItem — та же схема, что у
+// XpLogApp (module/apps/xp-log.mjs).
+const _wizards = new Map();
+
 export function openCharacterWizard(actor) {
   if (!actor) return null;
-  const app = new CharacterWizard(actor);
+  let app = _wizards.get(actor.id);
+  if (!app) { app = new CharacterWizard(actor); _wizards.set(actor.id, app); }
   app.render(true);
   return app;
 }

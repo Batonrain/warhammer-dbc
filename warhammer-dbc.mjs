@@ -115,6 +115,7 @@ import { migrateGearEquipped } from "./module/migrations/gear-equipped.mjs";
 import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
 import { migrateImplantAvailability } from "./module/migrations/implant-availability.mjs";
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
+import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fix.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -122,7 +123,7 @@ import { runActorSetup } from "./module/apps/actor-setup.mjs";
 
 import { registerFeatureSettings, registerSettingsSections,
          isFeatureEnabled }           from "./module/constants/features.mjs";
-import { registerDuplicateGrantSettings } from "./module/rules/duplicate-grants.mjs";
+import { registerDuplicateGrantSettings, initTalentGroupIndex } from "./module/rules/duplicate-grants.mjs";
 import { registerAdvancePricingSettings, initTalentGodIndex } from "./module/constants/patronage.mjs";
 import { registerSystemFonts, registerFontSettings, applySystemFont } from "./module/constants/fonts.mjs";
 import { initPackCaches }             from "./module/apps/origin-shared.mjs";
@@ -139,7 +140,7 @@ import { showApplyDamageDialog }      from "./module/combat/damage.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG, postPacifismGateCard } from "./module/combat/pacifism.mjs";
 import { migrateAllItemEffects }       from "./module/migrations/item-effects.mjs";
 import { itemIconFor, isGenericImg }  from "./module/constants/item-icons.mjs";
-import { computeShipIdentity }        from "./module/constants/ship-tokens.mjs";
+import { computeShipIdentity }        from "./module/combat/ship-tokens.mjs";
 import { applySymbolOfPowerGrant, hasSymbolOfPower } from "./module/combat/beastman-shaman.mjs";
 import { needsBestQChoice, runBestQChoice } from "./module/apps/implant-bestq-choice.mjs";
 
@@ -499,6 +500,12 @@ Hooks.once("init", () => {
 
   // Версия довыдачи aptSource Миньонам Хаоса, купленным до привязки цены к Характеристике группы (одноразовая)
   game.settings.register("warhammer-dbc", "minionAptSourceVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия правки ActiveEffect Предсказания «Ты рождён для войны» у уже
+  // применённых копий — снятая альтернатива «Т» и знак Int/Fel (одноразовая, wdbc-7ba)
+  game.settings.register("warhammer-dbc", "bornForWarFixVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -907,7 +914,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -929,8 +936,13 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "geneSeedCleanupVersion") || 0) >= VERSION) return;
   try {
-    await migrateRemoveGeneSeed();
-    await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
+    const result = await migrateRemoveGeneSeed();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены/группы
+    // прошли без ошибок — иначе недомигрированное молча осталось бы таким
+    // навсегда: повторный запуск больше не подхватил бы его, гейт по версии
+    // уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "geneSeedCleanupVersion", VERSION);
+    else console.warn("Warhammer DBC | Чистка Геносемени: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Чистка Геносемени:", e); }
 });
 
@@ -941,8 +953,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "shipHullsVersion") || 0) >= VERSION) return;
   try {
-    await migrateShipHulls();
-    await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
+    const result = await migrateShipHulls();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "shipHullsVersion", VERSION);
+    else console.warn("Warhammer DBC | Корпуса кораблей: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
 });
 
@@ -952,8 +968,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "vehicleTraitEffectsVersion") || 0) >= VERSION) return;
   try {
-    await migrateVehicleTraitEffects();
-    await game.settings.set("warhammer-dbc", "vehicleTraitEffectsVersion", VERSION);
+    const result = await migrateVehicleTraitEffects();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "vehicleTraitEffectsVersion", VERSION);
+    else console.warn("Warhammer DBC | Черты техники: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Черты техники:", e); }
 });
 
@@ -964,8 +984,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "charDamageSignVersion") || 0) >= VERSION) return;
   try {
-    await migrateCharDamageSign();
-    await game.settings.set("warhammer-dbc", "charDamageSignVersion", VERSION);
+    const result = await migrateCharDamageSign();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "charDamageSignVersion", VERSION);
+    else console.warn("Warhammer DBC | Знак Мод. характеристик: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Знак Мод. характеристик:", e); }
 });
 
@@ -976,8 +1000,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "techPowerCostsVersion") || 0) >= VERSION) return;
   try {
-    await migrateTechPowerCosts();
-    await game.settings.set("warhammer-dbc", "techPowerCostsVersion", VERSION);
+    const result = await migrateTechPowerCosts();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "techPowerCostsVersion", VERSION);
+    else console.warn("Warhammer DBC | Цены Техночудес: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Цены Техночудес:", e); }
 });
 
@@ -988,8 +1016,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "gearEquippedVersion") || 0) >= VERSION) return;
   try {
-    await migrateGearEquipped();
-    await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
+    const result = await migrateGearEquipped();
+    // wdbc-dyi: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "gearEquippedVersion", VERSION);
+    else console.warn("Warhammer DBC | Надетое снаряжение: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Надетое снаряжение:", e); }
 });
 
@@ -1000,8 +1032,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "gunArmSourceVersion") || 0) >= VERSION) return;
   try {
-    await migrateGunArmSource();
-    await game.settings.set("warhammer-dbc", "gunArmSourceVersion", VERSION);
+    const result = await migrateGunArmSource();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "gunArmSourceVersion", VERSION);
+    else console.warn("Warhammer DBC | Рука-Пушка: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Рука-Пушка:", e); }
 });
 
@@ -1012,9 +1048,30 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "legionGeneSeedSizeVersion") || 0) >= VERSION) return;
   try {
-    await migrateLegionGeneSeedSize();
-    await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
+    const result = await migrateLegionGeneSeedSize();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "legionGeneSeedSizeVersion", VERSION);
+    else console.warn("Warhammer DBC | Размер Геносемени легиона: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
+});
+
+// ── Одноразовая правка: ActiveEffect Предсказания «Ты рождён для войны» у
+// уже применённых копий — снятая альтернатива «Т» и знак Int/Fel (wdbc-7ba) ──
+// Ручной перезапуск: game.warhammerDBC.migrateBornForWarDivination()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "bornForWarFixVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateBornForWarDivination();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "bornForWarFixVersion", VERSION);
+    else console.warn("Warhammer DBC | «Ты рождён для войны»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | «Ты рождён для войны»:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────
@@ -1024,8 +1081,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "implantAvailabilityVersion") || 0) >= VERSION) return;
   try {
-    await migrateImplantAvailability();
-    await game.settings.set("warhammer-dbc", "implantAvailabilityVersion", VERSION);
+    const result = await migrateImplantAvailability();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "implantAvailabilityVersion", VERSION);
+    else console.warn("Warhammer DBC | Доливка полей биоимплантов: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Доливка полей биоимплантов:", e); }
 });
 
@@ -1048,8 +1109,12 @@ Hooks.once("ready", async () => {
   const VERSION = 1;
   if ((game.settings.get("warhammer-dbc", "contentSyncBaselineVersion") || 0) >= VERSION) return;
   try {
-    await stampContentSyncBaseline();
-    await game.settings.set("warhammer-dbc", "contentSyncBaselineVersion", VERSION);
+    const result = await stampContentSyncBaseline();
+    // wdbc-059h: версия штампуется, только когда ВСЕ акторы/токены прошли без
+    // ошибок — иначе недомигрированные молча остались бы такими навсегда:
+    // повторный запуск больше не подхватил бы их, гейт по версии уже пройден.
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "contentSyncBaselineVersion", VERSION);
+    else console.warn("Warhammer DBC | Опора синхронизации контента: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | Опора синхронизации контента:", e); }
 });
 
@@ -1624,6 +1689,11 @@ initTalentGodIndex();
 initVehicleWeaponIndex();
 initBioImplantCatalog();
 
+// Группа (папка) и Ступень Таланта для альтернативы при дубле (wdbc-91b) —
+// тот же приём «пак первичен», что и три строки выше: кэш из обоих паков
+// Талантов, константа — запасной путь до его построения.
+initTalentGroupIndex();
+
 /** Просил ли ГМ открыть библиотеки (настройка protectCompendiumEdits выше). */
 function _libsUnlocked() {
   try { return game.settings.get("warhammer-dbc", "protectCompendiumEdits") === true; }
@@ -1662,7 +1732,13 @@ Hooks.once("ready", async () => {
   // Пустой компендиум системы = база под него не собрана. Молча это выглядит
   // как «контент забыли», поэтому ГМу говорится сразу и с командой починки.
   warnEmptySystemPacks(game.packs);
-  await migrateAllItemEffects();
+  // wdbc-059h: сама migrateAllItemEffects уже изолирует сбой ОДНОГО предмета
+  // (try/catch внутри неё, не здесь) — этот try защищает только на случай,
+  // если что-то упадёт СНАРУЖИ обоих её циклов (например, game.packs.get
+  // бросит на самой настройке компендиумов); у этой миграции нет версии-
+  // гейта, она идёт заново на каждой загрузке, поэтому здесь нечего штамповать.
+  try { await migrateAllItemEffects(); }
+  catch (e) { console.error("Warhammer DBC | Миграция эффектов:", e); }
 });
 
 /* ═══════════════ ДВУПРОФИЛЬНЫЕ ПРЕДМЕТЫ (снаряжение + оружие) ═══════════════

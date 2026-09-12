@@ -1,6 +1,6 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
-import { performPoolSpend }              from "./combat/evasion-pool.mjs";
+import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
 import { _executeAttackRoll }           from "./combat/attack.mjs";
 import { _executeFearRoll, FAITH_FLAG, rollShockRecovery } from "./combat/fear.mjs";
@@ -16,6 +16,7 @@ import { rollPacifismTest } from "./combat/pacifism.mjs";
 import { rollHordePsychTest }            from "./combat/horde-psych.mjs";
 import { ROUND_DAMAGE_FLAG }             from "./combat/horde-damage.mjs";
 import { _performSwerve, applyStructureLoss } from "./combat/vehicle.mjs";
+import { performWalkerParry, performWalkerDodge, standUpFromTipOver, showTipOverDialog } from "./combat/walker.mjs";
 import { maybeGrantEnjoymentPain }       from "./combat/enjoyment.mjs";
 import { saddleTest, applyFall, showMountedDodgeDialog, resolveHitAllocation } from "./combat/mount.mjs";
 import { resolveWeaponPropsList, aggregateAuto, hasWeaponPropertyImmunity } from "./combat/weapon-properties.mjs";
@@ -61,6 +62,8 @@ import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
 import { clearSongOfSwiftnessBuffs } from "./combat/song-of-swiftness.mjs";
 import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat/reformation-song.mjs";
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
+import { clearMercuryMarks } from "./combat/mercury-reaction.mjs";
+import { clearAdaptationBonuses } from "./combat/adaptation.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
@@ -74,6 +77,8 @@ import { processConditionTurnStart, processConditionTurnEnd } from "./combat/con
 import { sweepConditionDurations } from "./combat/condition-effects.mjs";
 import { conditionExpiryLine, postConditionCard } from "./combat/condition-ticks.mjs";
 import { processAblativeWoundsTurnStart } from "./combat/ablative-wounds.mjs";
+import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
+         processPreparedRuneCombatStart } from "./rules/sigillite-runes-combat.mjs";
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
@@ -276,9 +281,7 @@ export function registerHooks() {
           const handled = await showMountedDodgeDialog(actor, extraMod, hitsCount, attackerUuid);
           if (handled !== null) return;
         }
-        await _performDodge(actor, extraMod,
-          ds.forceReroll || "", hitsCount, attackerUuid,
-          ds.melee === "1", burst, attackerIsHorde);
+        await _performDodge(actor, { extraMod, forcedReroll: ds.forceReroll || "", hitsCount, attackerUuid, isMelee: ds.melee === "1", burst, attackerIsHorde });
       });
     });
 
@@ -423,8 +426,7 @@ export function registerHooks() {
         // момент отрисовки карточки защищающийся ещё не выбран.
         const isMelee = ds.melee !== "0";
         if (!await confirmHordeDefense(actor, "Парирование")) return;
-        await _performParry(actor, extraMod,
-          ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, ds.attackerWeaponUuid || "");
+        await _performParry(actor, { extraMod, attackerUuid: ds.attackerUuid || "", hitsCount, burst, attackerIsHorde, isMelee, attackerWeaponUuid: ds.attackerWeaponUuid || "" });
       });
     });
 
@@ -485,7 +487,55 @@ export function registerHooks() {
         const extraMod = parseInt(ev.currentTarget.dataset.extraMod || "0");
         const hitsCount = parseInt(ev.currentTarget.dataset.hitsCount || "1");
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
-        await _performSwerve(actor, extraMod, hitsCount, attackerUuid);
+        await _performSwerve(actor, { extraMod, hitsCount, attackerUuid });
+      });
+    });
+
+    // Парирование и Уклонение ШАГОХОДА (wdbc-6wzt, п.5 книжного правила
+    // Ходовой): в отличие от Виража считает не машина, а пилот — но выбирается
+    // на сцене всё равно токен МАШИНЫ, она и защищается. Кто именно бросает,
+    // находит combat/walker.mjs по местам экипажа. dataset снимается ДО await
+    // по той же причине, что у Уклонения выше.
+    html.querySelectorAll(".wh-walker-parry-btn, .wh-walker-dodge-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const isParry = el.classList.contains("wh-walker-parry-btn");
+        const ds = { ...el.dataset };
+        const actor = requireControlledActor("⚠️ Выберите токен Шагохода на сцене!");
+        if (!actor) return;
+        const opts = {
+          extraMod: parseInt(ds.extraMod || "0"),
+          hitsCount: parseInt(ds.hitsCount || "1"),
+          attackerUuid: ds.attackerUuid || ""
+        };
+        await (isParry ? performWalkerParry(actor, opts) : performWalkerDodge(actor, opts));
+      });
+    });
+
+    // «Встать» после Опрокидывания — кнопка приклеена к карточке самого
+    // Опрокидывания, поэтому машина берётся по uuid из карточки, а не с
+    // выбранного токена (тот же приём, что у Контратаки и Отскока).
+    html.querySelectorAll(".wh-walker-standup-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.vehicleUuid;
+        const vehicle = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!vehicle) return ui.notifications.warn("⚠️ Машина карточки не найдена.");
+        await standUpFromTipOver(vehicle);
+      });
+    });
+
+    // Опрокидывание Шагохода после провала теста Трудного Ландшафта
+    // (wdbc-0oe) — кнопка приклеена к карточке самого теста, машина берётся
+    // по uuid из карточки, тот же приём, что у «Встать» выше.
+    html.querySelectorAll(".wh-walker-tipover-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const uuid = ev.currentTarget.dataset.vehicleUuid;
+        const vehicle = uuid ? (await fromUuid(uuid).catch(() => null)) : null;
+        if (!vehicle) return ui.notifications.warn("⚠️ Машина карточки не найдена.");
+        await showTipOverDialog(vehicle);
       });
     });
 
@@ -717,6 +767,7 @@ export function registerHooks() {
           rawDamage:    parseInt(ds.damage      || "0"),
           penetration:  parseInt(ds.penetration || "0"),
           damageType:   ds.damageType  || "impact",
+          damageSubtype: ds.damageSubtype || "",
           hitLocation:  ds.hitLocation || "Торс",
           side:         ds.vehicleSide || "",   // сторона брони техники (из окна атаки)
           weaponName:   ds.weaponName  || "",
@@ -876,6 +927,7 @@ export function registerHooks() {
             rawDamage:    parseInt(ds.damage      || "0"),
             penetration:  parseInt(ds.penetration || "0"),
             damageType:   ds.damageType  || "impact",
+            damageSubtype: ds.damageSubtype || "",
             hitLocation:  ds.hitLocation || "Торс",
             weaponName:   ds.weaponName  || "",
             attackerName: ds.attacker    || "",
@@ -1253,7 +1305,10 @@ async function _applyShipHullDamage(dmg) {
 }
 
 // ── Применение эффекта свойства оружия (Оглушающее, Ослепляющее и т.п.) ──────
-async function _applyWeaponPropEffect(ds) {
+// Экспорт с подчёркиванием — тот же приём, что _resolveSoulBurn выше:
+// внутренняя функция обработчика клика, но тестируемая напрямую (wdbc-5tz),
+// без симуляции самого клика по карточке чата.
+export async function _applyWeaponPropEffect(ds) {
   // forceActorUuid (wdbc-z5mn) — цель уже известна на 100% (Встречная атака:
   // Shocking у Электродуги бьёт по нападающему, не по выбранному на сцене
   // токену) — тот же приём, что data-force-target у кнопки урона выше:
@@ -1263,6 +1318,16 @@ async function _applyWeaponPropEffect(ds) {
     const doc = await fromUuid(ds.wpForceActorUuid).catch(() => null);
     actor = doc?.actor ?? doc ?? null;
     if (!actor) return ui.notifications.warn("⚠️ Цель эффекта не найдена (возможно, удалена).");
+    // Права на изменение актора (wdbc-5tz) — forceActor резолвит по uuid
+    // без обычного requireControlledActor, поэтому кнопку физически может
+    // нажать любой, кто видит карточку (например, защищающийся из
+    // любопытства). Без этой проверки actor.update() ниже по коду упал бы
+    // сырой ошибкой прав Foundry уже ПОСЛЕ броска — результат теста просто
+    // пропадал бы, ничего не объясняя. Проверяем ДО броска и отказываем
+    // понятным сообщением, не трогая кубики вовсе.
+    if (!actor.isOwner) {
+      return ui.notifications.warn(`⚠️ Нет прав менять ${actor.name} — эффект применит владелец или ГМ.`);
+    }
   } else {
     actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
     if (!actor) return;
@@ -1396,7 +1461,7 @@ async function _applyWeaponPropEffect(ds) {
     // Enjoyment/Наслаждение (wdbc-sk8s): Усталость/Отравление/Кровотечение/
     // Оглушение от противника — 1 Боли раз за бой, без траты Реакции.
     const ENJOYMENT_CONDITIONS = new Set(["fatigued", "poisoned", "bleeding", "stunned"]);
-    if (conditionsToApply.some(([cond]) => ENJOYMENT_CONDITIONS.has(cond))) {
+    if (conditionsToApply.some(cond => ENJOYMENT_CONDITIONS.has(cond))) {
       await maybeGrantEnjoymentPain(actor);
     }
     // Галлюцинации (Hallucinogenic (X), стр. 168, wdbc-r5o7.8): книга требует
@@ -1854,6 +1919,10 @@ function _attachFateContextMenu(message, html) {
     await clearAvatarOfSlaughterMarks(combat);
     // Бонусы Песни Стремительности (wdbc-sk8s) — та же логика «до конца боя».
     await clearSongOfSwiftnessBuffs(combat);
+    // Пул неизрасходованных Успехов Избегания (wdbc-8zi) — валиден только
+    // «в течение Хода этого же боя», но флаг на защищающемся до этого не
+    // чистился и рос вечно — та же логика «до конца боя».
+    await clearEvasionPools(combat);
     // Reformation Song/Песня Изменений (wdbc-vwfk): моды AP брони, временный
     // Reinforced, временное качество Снаряжения — та же логика «до конца боя».
     await clearReformationSongBuffs(combat);
@@ -1866,6 +1935,12 @@ function _attachFateContextMenu(message, html) {
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
     // восполняются к концу боя (стр. 57, wdbc-drn).
     await refillSarcophagusWarpWounds(combat);
+    // Ртуть (wdbc-q0q8, Замена Крови) — метки «электропроводных» частей тела
+    // живут строго «до конца боя», та же логика, что у остальных меток здесь.
+    await clearMercuryMarks(combat);
+    // Адаптация (wdbc-q0q8, Панцирь) — накопленные за бой бонусы AP по видам
+    // урона живут строго «до конца боя», та же логика, что у Ртути выше.
+    await clearAdaptationBonuses(combat);
     // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
     // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
     for (const combatant of combat.combatants ?? []) {
@@ -1989,6 +2064,15 @@ function _attachFateContextMenu(message, html) {
     // разделяемое состояние боя (тот же принцип, что и у остальных
     // updateCombat/combatStart обработчиков выше).
     if (game.user.isGM) await processLastActorCombatStart(combat);
+    // Руны Сигиллитов (wdbc-fsl9): «В начале боя персонаж стартует с бPR
+    // рун» — установка пула, не прибавка. Пишет разделяемое состояние, значит
+    // только ГМ, как и соседи по этому хуку. У актора без Черты «Магия
+    // Сигиллитов» функция молча выходит.
+    if (game.user.isGM) await processSigilliteRunesCombatStart(combat);
+    // Заготовленная Руна (wdbc-p2it): «в начале боя персонаж может выбрать
+    // одну руну» — диалог выбора, тем же тактом и тем же GM-гейтом, что и
+    // соседи по этому хуку (Колдовское Лезвие/Руны Сигиллитов выше).
+    if (game.user.isGM) await processPreparedRuneCombatStart(combat);
   });
 
   Hooks.on("updateCombat", async (combat, changed) => {
@@ -2058,6 +2142,10 @@ function _attachFateContextMenu(message, html) {
       await processConditionTurnStart(nextCombatant.actor);
       // Регенерация Аблативных Ран (wdbc-smy7) — «1 за Ход», тем же тактом.
       await processAblativeWoundsTurnStart(nextCombatant.actor);
+      // Руны Сигиллитов (wdbc-fsl9) — «в начале своего хода псайкер получает
+      // бPR рун» плюс разовый за бой бонус Таланта «Вычислитель Рун», тем же
+      // тактом, что и регенерация Аблативных Ран выше.
+      await processSigilliteRunesTurnStart(nextCombatant.actor);
       // Reformation Song/Песня Изменений (wdbc-vwfk): Снаряжение, «не
       // работает на раунд» от Разрушения — снимается в начале следующего
       // Хода владельца, тем же тактом, что и Грозный Вопль выше.
@@ -2156,9 +2244,22 @@ function _attachFateContextMenu(message, html) {
     if (!("status" in sys) || options.whPrevNodeStatus === undefined) return;
     const oldStatus = options.whPrevNodeStatus;
     const newStatus = item.system.status;
+    // Собственные "1d10" директив (robustDesign — спасбросок, explosive —
+    // проверка детонации) раньше отдавали resolveNodeDamage только .total,
+    // а сам Roll выбрасывался — Roll от них не долетал ни до одного
+    // ChatMessage (wdbc-shr, находка 11): Dice So Nice/сворачивание броска
+    // не срабатывали НИ РАЗУ для этих двух бросков, только для отдельного
+    // броска урона explosionDamage ниже. gateRolls копит настоящие Roll той
+    // же чистой функцией — сама resolveNodeDamage как была, так и осталась
+    // чистой (rollFn всё ещё возвращает число, тесты не трогать).
+    const gateRolls = [];
     const { forceStatus, explosionDamage, revertStatus, note } =
       await resolveNodeDamage(resolveShipProps(item), item.system.kind, oldStatus, newStatus,
-        async formula => (await (new Roll(formula)).evaluate()).total);
+        async formula => {
+          const roll = await (new Roll(formula)).evaluate();
+          gateRolls.push(roll);
+          return roll.total;
+        });
     if (!forceStatus && !revertStatus) return;
 
     if (revertStatus) {
@@ -2170,15 +2271,30 @@ function _attachFateContextMenu(message, html) {
       const roll = await (new Roll(explosionDamage)).evaluate();
       const { cur, next, lost } = await applyHullDamage(item.actor, roll.total);
       // Не карточка теста (wdbc-kuun): бросок тут есть, а Порога нет — это
-      // урон Прочности по факту повреждённого узла, а не тест.
+      // урон Прочности по факту повреждённого узла, а не тест. rolls несёт
+      // и gateRolls (детонация 1d10=10, которая и привела сюда), и сам
+      // бросок урона — иначе карточка «💥 детонация!» показывала бы только
+      // урон, без кубика, который решил саму детонацию.
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: item.actor }),
         content: `<div class="wh-roll-result"><div class="roll-header">💥 ${esc(item.name)} — ${note}</div>
           <div class="roll-threshold">Урон Прочности: <b>${roll.total}</b> (${explosionDamage}): ${cur} → ${next}${lost ? `, экипаж −${lost} CP/CM` : ""}</div></div>`,
-        rolls: [roll], sound: CONFIG.sounds.dice
+        rolls: [...gateRolls, roll], sound: CONFIG.sounds.dice
       });
     } else if (note) {
-      ui.notifications.info(`${item.name}: ${note}`);
+      // Карточка в чат, а не только ui.notifications (wdbc-shr, находка 11):
+      // robustDesign — реальный спасбросок 1d10, который решает судьбу узла
+      // корабля, и он обязан остаться в чате рядом с остальными бросками
+      // (gateRolls), а не мелькнуть тостом только у того, кто менял статус.
+      // fragileEngine (форс без броска) — gateRolls пуст, карточка чисто
+      // информационная, тем же способом, что и остальные текстовые находки
+      // проекта (wdbc-kuun).
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: item.actor }),
+        content: `<div class="wh-roll-result"><div class="roll-header">${esc(item.name)}</div>
+          <div class="roll-threshold">${esc(note)}</div></div>`,
+        rolls: gateRolls, sound: gateRolls.length ? CONFIG.sounds.dice : undefined
+      });
     }
   });
 

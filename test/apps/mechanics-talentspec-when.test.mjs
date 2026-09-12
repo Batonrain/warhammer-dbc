@@ -9,7 +9,6 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { applyItemMechanics } from "../../module/apps/mechanics.mjs";
-import { entryWhenOk } from "../../module/rules/mech-when.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -63,23 +62,12 @@ beforeEach(() => {
   globalThis.game.packs = new Map();
 });
 
-describe("entryWhenOk — talentSpec, чистая функция", () => {
-  const actorWith = (items) => ({ system: {}, items });
-
-  it("без Таланта — нет", () => {
-    expect(entryWhenOk(actorWith([]), { when: whenTalent("Мастерство", "Психонаука") })).toBe(false);
-  });
-
-  it("Талант есть, специализация та же — да", () => {
-    const actor = actorWith([{ type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психонаука" } }]);
-    expect(entryWhenOk(actor, { when: whenTalent("Мастерство", "Психонаука") })).toBe(true);
-  });
-
-  it("Талант есть, специализация другая — нет", () => {
-    const actor = actorWith([{ type: "talent", name: "Mastery / Мастерство", system: { specialization: "Уклонение" } }]);
-    expect(entryWhenOk(actor, { when: whenTalent("Мастерство", "Психонаука") })).toBe(false);
-  });
-});
+// entryWhenOk — talentSpec как чистая функция (без items/actor/нет, разная
+// специализация) уже покрыта test/rules/mech-when.test.mjs, описание
+// "entryWhenOk: Талант+специализация (wdbc-ta4y)" — те же три сценария
+// дословно дублировались здесь (wdbc-shr, находка 10). Ниже остаётся только
+// то, что там не проверяется: applyItemMechanics целиком (разовая выдача
+// Черты через реальный конвейер Механики, а не голый entryWhenOk).
 
 describe("applyItemMechanics — гейт на разовой выдаче Черты по talentSpec", () => {
   it("Mastery (Психонаука) есть — Warp Sight выдаётся", async () => {

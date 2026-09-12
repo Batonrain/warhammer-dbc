@@ -4,8 +4,15 @@
 //  Foundry-токен: центр в пиксельных координатах сцены + rotation.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc,
-         pixelDistance } from "../rules/facing.mjs";
+import { isFrontArcHit as isFrontArcHitPure, bearingDegrees, isWithinMountArc } from "../rules/facing.mjs";
+// tokenDocDistance (wdbc-shr, находка 3): единственное место, где считается
+// «пиксели → клетки → игровые единицы сцены» — раньше tokenDistance ниже
+// заново реализовывал ТУ ЖЕ формулу (Math.hypot / grid.size × grid.distance)
+// вместо того, чтобы позвать уже существующую auras.mjs::tokenDocDistance.
+// Два вызывающих контекста разные (тут — живой Token/TokenDocument с canvas
+// по умолчанию, там — сырые данные документа + explicit grid для фоновых
+// сцен), поэтому обвязка своя, но сама арифметика теперь одна.
+import { tokenDocDistance } from "../regions/auras.mjs";
 
 /**
  * Центр токена в пиксельных координатах сцены (не клетках — углу масштаб не
@@ -82,12 +89,22 @@ export async function resolveAttackerToken(attackerUuid) {
  * @returns {number|null}
  */
 export function tokenDistance(tokenA, tokenB) {
-  const posA = tokenCenter(tokenA);
-  const posB = tokenCenter(tokenB);
-  if (!posA || !posB) return null;
+  const docA = tokenA?.document ?? tokenA;
+  const docB = tokenB?.document ?? tokenB;
+  if (!docA || !docB) return null;
   const gridSize     = canvas?.grid?.size || 100;
   const unitDistance = canvas?.scene?.grid?.distance ?? canvas?.grid?.distance ?? 1;
-  return (pixelDistance(posA, posB) / gridSize) * unitDistance;
+  // elevation:0 на обеих сторонах — тот же 2D-компромисс, что был здесь и
+  // раньше (см. заголовок функции): tokenDocDistance умеет и высоту, но
+  // менять поведение существующих вызывающих (arc.mjs, vehicle.mjs) с 2D на
+  // 3D — отдельное решение, не часть этой уборки дублирования.
+  return tokenDocDistance(
+    { x: Number(docA.x) || 0, y: Number(docA.y) || 0,
+      width: Number(docA.width) || 1, height: Number(docA.height) || 1, elevation: 0 },
+    { x: Number(docB.x) || 0, y: Number(docB.y) || 0,
+      width: Number(docB.width) || 1, height: Number(docB.height) || 1, elevation: 0 },
+    { size: gridSize, distance: unitDistance }
+  );
 }
 
 /**

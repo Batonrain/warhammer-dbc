@@ -42,7 +42,7 @@ function walk(dir, ext) {
 const NOT_A_FIELD = new Set([
   "this", "else",
   "techIcon", "veilIcon", "ammoHasType", "codeIncludes", "eq", "grantMark",
-  "eqLoose", "lt", "gt", "gte", "lte", "multiply", "divCeil", "poisonHasVector",
+  "eqLoose", "lt", "gt", "gte", "multiply", "divCeil", "poisonHasVector",
   "and", "or", "not", "signedNum", "join"
 ]);
 

@@ -1,0 +1,65 @@
+{
+  "name": "Hellbringer / Несущий ад",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "NfawZJdCJMS3OCWj",
+  "system": {
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 55,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Молот Черепов (нос), 1/5. Vicious Design (1). Особое",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "orbitalStrike",
+        "rating": 10
+      },
+      {
+        "key": "inbuild"
+      },
+      {
+        "key": "viciousDesign",
+        "rating": 1
+      }
+    ],
+    "hull": {
+      "spaceMax": 64,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "Н1, НП1, ЛБ1,ПБ1",
+      "hullIntegrity": 56
+    },
+    "chars": {
+      "speed": 8,
+      "manoeuvrability": 15,
+      "detection": 20,
+      "voidShields": 0,
+      "armour": 18,
+      "turretRating": 1
+    }
+  },
+  "_id": "LIUVYhUS7l9dxH9Y",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!LIUVYhUS7l9dxH9Y"
+}

@@ -1,0 +1,70 @@
+{
+  "name": "Invisibility / Невидимость",
+  "type": "psychicPower",
+  "img": "systems/warhammer-dbc/assets/item-icons/psy-telepathy.svg",
+  "folder": "8gl0enhagbMsTlvk",
+  "system": {
+    "description": "",
+    "notes": "Не смоделировано: эффект на группу/область (аура, шаблон, Императив или аналог), не на самого носителя силы — testMod на предмете действует только на актора-владельца предмета, не на произвольных существ в радиусе/шаблоне/списке целей. Расовый вариант для Механики «Серый Человек» (aeldari-branches.json, «Oteshii/Серые Люди»): бPR этой психосилы у Серого Человека считается на +1 выше — реализовано как +5 к Порогу психотеста манифестации (system.testMod), а не полем «Требуемый ПР» (wdbc-dq3: старая версия ошибочно поднимала prRequired — это требование ИЗУЧЕНИЯ, а не облегчение манифестации, и вдобавок задирало цену в Рунах Сигиллитов). Не выбирать вручную — это копия строго под расовую выдачу, обычным псайкерам брать канонический предмет.",
+    "cost": 500,
+    "discipline": "telepathy",
+    "subtype": "Иллюзионизм",
+    "powerType": "aura",
+    "extraTypes": [],
+    "shootSubtype": "",
+    "prRequired": 5,
+    "testChar": "wp",
+    "testMod": -15,
+    "action": "full",
+    "range": "PR×5м / PR×15м (Аура)",
+    "sustainable": true,
+    "sustainCost": 1,
+    "sustainAction": "free",
+    "damage": "",
+    "damageType": "energy",
+    "penetration": 0,
+    "weaponProps": [],
+    "charDamageStat": "",
+    "charDamageFormula": "",
+    "profiles": [],
+    "variants": [],
+    "effect": "Аура · Изменение (PR). Треб.: See Me Not. Манифестируется как Изменение, эффект на других как аура. Все в ауре — Awareness(W)−5×PR, иначе не воспринимают целей силы. Могут вычислять по следам (Awareness(P)−20, бой вслепую). Размер 2+ считается как Размер персонажей в счёте целей.",
+    "isSustained": false,
+    "effects": {
+      "charBonusStat": "",
+      "charBonusValue": 0,
+      "charBonuses": [],
+      "armourAll": 0,
+      "fearRating": 0,
+      "sizeMod": 0,
+      "grantedTraits": "",
+      "weaponBuff": {
+        "enabled": false,
+        "scope": "equipped",
+        "damageMod": 0,
+        "penMod": 0,
+        "rangeMod": 0,
+        "addProps": []
+      }
+    }
+  },
+  "_id": "Lv3fpIbsinTGvODV",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "14.365",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!Lv3fpIbsinTGvODV"
+}

@@ -39,6 +39,17 @@
 //      sourceImg/sourceHasRating (драг-н-дроп) + rating (Черта) или
 //      specialization (Талант).
 //    skill: skillScope:"plain"|"group", skillKey, specKey/specialty, rank.
+//      specKey:"__choice__" (wdbc-jo51-подобный приём) — «по выбору при
+//      получении»: specChoiceKeys — кандидаты, отмеченные автором,
+//      specChoiceCount — сколько РАЗНЫХ актор берёт из них (resolveEntry-
+//      SpecChoice спрашивает диалогом). specKey:"__choice_any__" (wdbc-2n5t)
+//      — другая ось: не специализация внутри уже зафиксированного автором
+//      Навыка, а САМ Навык/группа+специализация целиком на выбор актора, из
+//      полного masteryTargets() (тот же список, что у ручной покупки
+//      Таланта Mastery). grantsMastery (совместно с __choice_any__) —
+//      applyMechEntry ДОПОЛНИТЕЛЬНО выдаёт Талант Mastery на тот же
+//      Навык/специализацию, что выбрал актор (checkbox «+ Талант Mastery» в
+//      Конструкторе, wdbc-shr находка 9 — раньше не был упомянут здесь).
 //    script: { label, code, scriptThrottleUnit, scriptThrottleMax,
 //               capabilityCostPool, capabilityCostAmount } —
 //      свободный JS. Два независимых пути исполнения: (1) applyMechEntry —
@@ -141,6 +152,77 @@
 //      НА ВСЕ шесть локаций, и выдать «+4 только в торс» (Чёрный Панцирь) ею
 //      было нечем: rescaleTraitByRating масштабирует значение, но не сужает
 //      набор локаций.
+//    absorption: { absorptionTarget:"vsType:<energy|impact|rending|blast|chemical>"|
+//                   "vsSubtype:<crushing|fragmentation|electrical|flame|laser|toxic>",
+//                   op:"add"|"subtract", absorptionValue }
+//      → ActiveEffect НА ПРЕДМЕТЕ на system.absorption.vsType.<тип> или
+//      system.absorption.vsSubtype.<подвид> (module/combat/damage.mjs, wdbc-q0q8)
+//      — та же роль, что «Очки Брони» выше, но не складываемый AP локации, а
+//      AP ПРОТИВ КОНКРЕТНОГО ТИПА/ПОДВИДА УРОНА, суммируемый по всем
+//      локациям сразу (см. вычисление armorVsType/armorVsSubtype,
+//      rules/character/armour.mjs). Фаза "final": производное поле,
+//      пересчитывается заново каждый цикл prepareDerivedData.
+//      Заведено потому, что этот бонус раньше умели давать только Свойства
+//      брони (module/constants/items.mjs::ARMOR_PROPERTIES) и Модификации
+//      брони — Мутация/Черта/Талант, дающие «+2 AP против R, но −2 против
+//      I(Cr)» (Панцирь, субмутация «Стальной Мех»), не были Бронёй и такой
+//      записи не имели вовсе, только сырой ActiveEffect без when-гейтов.
+//    shieldSubtype: { shieldSubtypeMode:"exclude"|"override", shieldSubtypeKey,
+//                      shieldSubtypeRatingMax } — ТОЛЬКО для type:"forcefield".
+//      → ЖИВОЙ ЗАПРОС: ничего не пишет при получении, читается НАПРЯМУЮ с
+//      самого предмета в момент броска щита (combat/damage.mjs::
+//      _rollActiveShield) — не создаёт синтетический ActiveEffect на акторе
+//      (не входит в DURABLE_MECH_KINDS). mode:"exclude" — щит вообще не
+//      срабатывает против этого подвида урона (Нерушимая Лента против I(Cr));
+//      mode:"override" — на бросок ПРОТИВ этого подвида рейтинг щита
+//      заменяется на shieldSubtypeRatingMax вместо currentRating, не
+//      складывается с ним (Морозное Сердце: 1-25 обычно, 1-75 против E(Fl)).
+//      Заведено под подвиды урона в скобках книги (wdbc-q0q8) — до этого вида
+//      записи щит либо ловил любой урон одним числом, либо не ловил вовсе;
+//      «против конкретного подвида — иначе» выразить было нечем.
+//    shieldVsCondition: { shieldVsConditionKey } — ТОЛЬКО для type:"forcefield".
+//      → ЖИВОЙ ЗАПРОС, как shieldSubtype (см. blankMechEntry): ничего не пишет
+//      при получении, читается НАПРЯМУЮ с предмета combat/damage.mjs::
+//      rollShieldAgainstConditionTick в момент ТИКА Состояния (Кровотечение/
+//      Горение/Радиация — module/combat/condition-ticks.mjs), а не в момент
+//      обычного попадания: тик наносит урон НАПРЯМУЮ через applyWoundLoss, минуя
+//      весь конвейер урона (applyDamageToActor/_rollActiveShield выше), поэтому
+//      обычный автоматический бросок щита туда не долетает. Записи нет — щит
+//      против тика вообще не рассматривается (как было). shieldVsConditionKey —
+//      дропдаун из СПЕЦИАЛЬНО ОГРАНИЧЕННОГО списка (сейчас только "burning") —
+//      список = ровно те condKey, для которых condition-ticks.mjs реально ЗОВЁТ
+//      эту функцию; добавлять сюда ключ без соответствующего вызова в тике
+//      значило бы дать игроку выбор, который молча ничего не делает (см.
+//      диагностику «эффект не работает» в шапке скилла dbc-mechanics).
+//      При успешном броске (currentRating, либо override kind:"shieldSubtype"
+//      того же предмета, если передан damageSubtype — Морозное Сердце даёт
+//      1-75 против E(Fl) ОДНОЙ и той же записью override на оба случая: и
+//      обычное попадание, и тик Горения) Состояние СНИМАЕТСЯ ЦЕЛИКОМ
+//      (conditionRemoveFields), а не поглощается только текущий тик — книга
+//      («может бросаться против урона от Горения, гася персонажа при
+//      срабатывании») описывает именно тушение, не однократное поглощение.
+//      Заведено под Frozen Heart/Морозное Сердце (wdbc-5knb): обычная механика
+//      Щита (см. _rollActiveShield) в принципе не имела точки входа «бросить
+//      щит против тика состояния», только против свежего попадания оружия.
+//    shieldArmorGate: {} (без полей — сама запись и есть флаг) — ТОЛЬКО для
+//      type:"forcefield". → ЖИВОЙ ЗАПРОС, как shieldSubtype/shieldVsCondition
+//      выше: ничего не пишет при получении, читается НАПРЯМУЮ combat/damage.mjs::
+//      _rollActiveShield (helper _hasShieldArmorGate) в момент выбора самого
+//      мощного активного щита против ЭТОГО попадания. Присутствие записи
+//      выключает щит для данного удара целиком (щит как будто не активен —
+//      другой активный щит другой природы всё ещё может сработать), если (а)
+//      на торсе нет надетой брони со свойством Hard/«Жёсткая» (_hasHardArmorAtBody,
+//      wdbc-yday — читает system.properties брони, не просто факт ношения) —
+//      «жёсткий нагрудник» не установлен, устройство обесточено, ИЛИ (б) сама
+//      локация этого попадания не закрыта надетой бронёй, любой
+//      (wornOnly[armorKey] ≤ 0) — книга не называет вид брони для этой
+//      оговорки, только для нагрудника. wornOnly — та же величина, что
+//      отличает надетую броню от естественной/трейтовой для правила «Глаз»
+//      (rules/character.mjs) — для локации проверяется факт «надета хоть
+//      какая-то броня», не порог AP (книга порога не называет). Заведено под
+//      Frozen Heart/Морозное Сердце (wdbc-giae, стр. 220: «должен быть
+//      установлен жёсткий нагрудник и даёт щит только на участках тела,
+//      закрытых бронёй»).
 //    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
@@ -213,7 +295,8 @@
 //      system.cohesion.base (постоянная Слаженность, не бой-к-бою). Роль
 //      проверяется по square.system.posts.{leader,commander,coordinator}
 //      .uuid + system.members[].uuid (см. squadRoleOf()/findMemberSquad() —
-//      экспортированы отсюда же). "any" — достаточно просто состоять в
+//      переехали в module/rules/squad-roles.mjs, wdbc-shr находка 9; здесь
+//      только импортируются). "any" — достаточно просто состоять в
 //      отряде. ×/÷ округляют вниз.
 //      Это НЕ разовое правило "получил — применили" — состав/посты отряда
 //      меняются в любой момент, а условие "роль подходит" должно оставаться
@@ -296,7 +379,7 @@ import { isThrottleReady, markThrottleUsed,
 import { squadRoleOf, findMemberSquad } from "../rules/squad-roles.mjs";
 import { TERRAIN_PROPS }                      from "../regions/difficult-terrain.mjs";
 import { openCompendiumBrowser, GRANTABLE_CATEGORIES, coreWeaponTypeFolders, weaponTypeFolderIds } from "./compendium-browser.mjs";
-import { AVAILABILITY, DAMAGE_TYPES }         from "../constants/items.mjs";
+import { AVAILABILITY, DAMAGE_TYPES, DAMAGE_SUBTYPES } from "../constants/items.mjs";
 import { WEAPON_PROPERTIES }                  from "../constants/weapon-properties.mjs";
 import { isItemActive, syncItemEffectsDisabled } from "./effects.mjs";
 import { setMutationsSuppressed as _setMutationsSuppressed } from "../rules/mutation-suppression.mjs";
@@ -366,6 +449,12 @@ const MOVEMENT_TARGETS = [
 ];
 const MOVEMENT_TARGET_LABELS = Object.fromEntries(MOVEMENT_TARGETS.map(t => [t.key, t.label]));
 const TERRAIN_PROP_LABELS = Object.fromEntries(TERRAIN_PROPS.map(p => [p.key, p.label]));
+// Ключи Состояний, чей ТИК умеет спрашивать щит (kind:"shieldVsCondition",
+// wdbc-5knb) — сознательно НЕ весь CONDITIONS_DEF: список = ровно то, что
+// condition-ticks.mjs реально проверяет (rollShieldAgainstConditionTick).
+// Добавлять сюда ключ без соответствующего вызова в тике дало бы игроку
+// выбор, молча ничего не делающий — расширять оба места вместе.
+const SHIELD_VS_CONDITION_KEYS = ["burning"];
 
 // Типы брони (kind:"equipment", режим «Выбор» → фильтр system.armorType) —
 // зеркалит дропдаун «Тип» на вкладке Брони (templates/item/parts/armor.hbs);
@@ -403,7 +492,16 @@ const scriptThrottleFlag = entryId => `mechScript-${entryId}`;
 // интервал МЕЖДУ использованиями, не лимит НА сутки; здесь "day" — свой
 // смысл, номер календарных суток, см. cooldown.mjs::liveValue). При
 // scriptThrottleMax === 1 (умолчание) — как раньше, единичный gate.
-const COUNTABLE_THROTTLE_UNITS = new Set(["round", "battle", "scene", "session", "day", "month"]);
+// wdbc-shr, находка 12: раньше был третий независимый литерал того же
+// списка единиц (после THROTTLE_UNITS в cooldown.mjs и значений
+// SCRIPT_THROTTLE_OPTIONS прямо над этой строкой) — три источника истины,
+// которые ничто не заставляло меняться синхронно (добавили "month" в
+// cooldown.mjs — и его пришлось руками дописывать сюда и в
+// SCRIPT_THROTTLE_OPTIONS отдельно, забыть об одном месте было легко).
+// SCRIPT_THROTTLE_OPTIONS уже несёт ровно те единицы, что предлагает
+// дропдаун «Частота» ("" — единственная, которую здесь нужно исключить, она
+// значит «без гейта», а не «единица для счётчика») — Set строится из него.
+const COUNTABLE_THROTTLE_UNITS = new Set(SCRIPT_THROTTLE_OPTIONS.map(o => o.value).filter(Boolean));
 
 /** Цена записи kind:"script" в форме, которую понимает capability-cost.mjs — null, если бесплатно. */
 function scriptCostOf(entry) {
@@ -484,6 +582,10 @@ const KIND_LABELS = {
   failDegMod: "Доп. Провалы при провале",
   capability: "Возможность",
   armour: "Очки Брони (локация)",
+  absorption: "AP против типа/подвида урона",
+  shieldSubtype: "Щит: подвид урона",
+  shieldVsCondition: "Щит: против тика Состояния",
+  shieldArmorGate: "Щит: только по бронированным участкам",
   counterAttack: "Встречная атака",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
@@ -750,12 +852,42 @@ export function blankMechEntry(kind = "characteristic") {
     // см. resolveEntrySpecChoice): «Общие знания (любые 4)».
     skillScope: "plain", skillKey: "", specKey: "", specialty: "",
     specChoiceKeys: [], specChoiceCount: 1, rank: "untrained",
+    // grantsMastery (wdbc-2n5t, wdbc-shr находка 8): пропущен в исходном
+    // наборе полей — новая запись рождалась вовсе БЕЗ этого поля (undefined),
+    // а не с явным false. undefined и false одинаково «не отмечено» для
+    // чекбокса и для applyMechEntry/describeMechEntry — заметного визуального
+    // бага это не давало, но isEntryComplete и любая другая проверка
+    // Object.hasOwn(entry, "grantsMastery") расходилась бы с записями,
+    // прошедшими через сохранение (saveMech пишет false после первого же
+    // change-события .grant-entry-grants-mastery). Объявлено явно, как и
+    // остальные булевы поля выше (sourceHasRating и т.п.).
+    grantsMastery: false,
     // weight
     weightScope: "all", weightMode: "kg", weightValue: 1,
     // movement (op — общее поле)
     movementTarget: "spd", movementValue: 1,
     // armour (op — общее поле): "all" = все шесть локаций разом
     armourLocation: "body", armourValue: 1,
+    // absorption (op — общее поле): "vsType:<тип>" | "vsSubtype:<подвид>"
+    absorptionTarget: "", absorptionValue: 1,
+    // shieldSubtype (wdbc-q0q8) — только для предметов type:"forcefield":
+    // читается НАПРЯМУЮ с самого предмета в момент броска щита
+    // (combat/damage.mjs::_rollActiveShield), не создаёт синтетический
+    // ActiveEffect на акторе (не входит в DURABLE_MECH_KINDS). mode:"exclude"
+    // — щит вообще не срабатывает против этого подвида (Нерушимая Лента);
+    // mode:"override" — на бросок ПРОТИВ этого подвида рейтинг щита заменяется
+    // на shieldSubtypeRatingMax вместо currentRating, не складывается с ним
+    // (Морозное Сердце: 1-25 обычно, 1-75 против E(Fl)).
+    shieldSubtypeMode: "exclude", shieldSubtypeKey: "", shieldSubtypeRatingMax: 0,
+    // shieldVsCondition (wdbc-5knb) — тоже только для type:"forcefield", тоже
+    // ЖИВОЙ запрос (см. шапку файла): читается rollShieldAgainstConditionTick
+    // (combat/damage.mjs) в момент ТИКА Состояния, а не попадания. Успех
+    // снимает Состояние целиком, не только текущий тик.
+    shieldVsConditionKey: "",
+    // shieldArmorGate (wdbc-giae) — тоже только для type:"forcefield", тоже
+    // ЖИВОЙ запрос, без собственных полей (присутствие записи — сам флаг):
+    // читается _rollActiveShield (combat/damage.mjs) при выборе активного
+    // щита против конкретного попадания. См. шапку файла.
     // terrainIgnore
     ignoreTerrainProps: [],
     // counterAttack — «Встречная атака» (wdbc-2wy7): живой запрос, читается в
@@ -932,6 +1064,29 @@ export function describeMechEntry(entry) {
       const sign = OP_SIGN[entry.op] ?? "+";
       return `Очки Брони: ${loc} ${sign}${entry.armourValue}`;
     }
+    case "absorption": {
+      const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
+      const label = scope === "vsType" ? (DAMAGE_TYPES[absKey] || absKey)
+                  : scope === "vsSubtype" ? (DAMAGE_SUBTYPES[absKey]?.label || absKey) : "";
+      if (!label) return "AP против типа/подвида урона (не задано)";
+      if (entry.absorptionValue === "" || entry.absorptionValue == null) return `AP против ${label} (не задано)`;
+      const sign = OP_SIGN[entry.op] ?? "+";
+      return `AP против ${label}: ${sign}${entry.absorptionValue}`;
+    }
+    case "shieldSubtype": {
+      const subLabel = DAMAGE_SUBTYPES[entry.shieldSubtypeKey]?.label || entry.shieldSubtypeKey;
+      if (!subLabel) return "Щит: подвид урона (не задано)";
+      return entry.shieldSubtypeMode === "override"
+        ? `Щит: против ${subLabel} рейтинг заменяется на 1–${entry.shieldSubtypeRatingMax || 0}`
+        : `Щит: не действует против ${subLabel}`;
+    }
+    case "shieldVsCondition": {
+      const condLabel = CONDITIONS_DEF[entry.shieldVsConditionKey]?.label || entry.shieldVsConditionKey;
+      if (!condLabel) return "Щит: против тика Состояния (не задано)";
+      return `Щит: можно бросить против тика «${condLabel}» — при успехе Состояние снимается целиком`;
+    }
+    case "shieldArmorGate":
+      return "Щит: не срабатывает по локациям без надетой брони (и требует надетой Жёсткой брони на торсе)";
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
@@ -1158,6 +1313,17 @@ function isEntryComplete(e) {
       return !!e.movementTarget && formulaOk(e.movementValue);
     case "armour":
       return !!e.armourLocation && formulaOk(e.armourValue);
+    case "absorption": {
+      const [scope, absKey] = String(e.absorptionTarget || "").split(":");
+      return (scope === "vsType" || scope === "vsSubtype") && !!absKey && formulaOk(e.absorptionValue);
+    }
+    case "shieldSubtype":
+      if (!e.shieldSubtypeKey) return false;
+      return e.shieldSubtypeMode === "override" ? Number(e.shieldSubtypeRatingMax) > 0 : true;
+    case "shieldVsCondition":
+      return SHIELD_VS_CONDITION_KEYS.includes(e.shieldVsConditionKey);
+    case "shieldArmorGate":
+      return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
     case "counterAttack":
@@ -2470,7 +2636,7 @@ export async function setMutationsSuppressed(sourceItem, suppressed) {
 //
 // Разовых записей (Порча, Раны, Слаженность, выдача предмета/Черты/Таланта,
 // Код) это не касается: повтор бросил бы кубик заново и выдал второй предмет.
-export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour"]);
+export const DURABLE_MECH_KINDS = new Set(["characteristic", "weight", "movement", "poolMax", "armour", "absorption"]);
 
 /**
  * Эффект, отыгрывающий одну долговечную запись. Метка — id самой записи.
@@ -2520,6 +2686,14 @@ function mechEffectData(entry, sourceItem, actor = null) {
       const key = `system.armorBonus.${loc}`;
       changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
                      value: num(entry.armourValue),
+                     phase: expectedPhase(key), priority: 0 });
+    }
+  } else if (entry.kind === "absorption") {
+    const [scope, absKey] = String(entry.absorptionTarget || "").split(":");
+    if ((scope === "vsType" || scope === "vsSubtype") && absKey) {
+      const key = `system.absorption.${scope}.${absKey}`;
+      changes.push({ key, type: entry.op === "subtract" ? "subtract" : "add",
+                     value: num(entry.absorptionValue),
                      phase: expectedPhase(key), priority: 0 });
     }
   }
@@ -2915,6 +3089,43 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     return `<select class="mech-armour-loc" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${locOpts}</select>
       <select class="mech-armour-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
       <input type="text" class="mech-armour-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.armourValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+  }
+
+  if (ent.kind === "absorption") {
+    const typeOpts = Object.entries(DAMAGE_TYPES)
+      .map(([k, l]) => optHtml(`vsType:${k}`, `Тип: ${l}`, ent.absorptionTarget === `vsType:${k}`)).join("");
+    const subtypeOpts = Object.entries(DAMAGE_SUBTYPES)
+      .map(([k, d]) => optHtml(`vsSubtype:${k}`, `Подвид: ${d.label}`, ent.absorptionTarget === `vsSubtype:${k}`)).join("");
+    const opOpts = CORRUPTION_OP_OPTIONS.map(o => optHtml(o.value, o.label, (ent.op || "add") === o.value)).join("");
+    return `<select class="mech-absorption-target" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.absorptionTarget ? "" : "selected"}>— выберите —</option>
+        <optgroup label="Широкий тип">${typeOpts}</optgroup>
+        <optgroup label="Подвид (в скобках книги)">${subtypeOpts}</optgroup>
+      </select>
+      <select class="mech-absorption-op" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${opOpts}</select>
+      <input type="text" class="mech-absorption-value" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.absorptionValue ?? "")}" placeholder="напр. 1 или ceil(cor/2)" title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`;
+  }
+
+  if (ent.kind === "shieldSubtype") {
+    const modeOpts = [["exclude", "Не действует против подвида"], ["override", "Рейтинг заменяется против подвида"]]
+      .map(([v, l]) => optHtml(v, l, (ent.shieldSubtypeMode || "exclude") === v)).join("");
+    const subtypeOpts = Object.entries(DAMAGE_SUBTYPES)
+      .map(([k, d]) => optHtml(k, d.label, ent.shieldSubtypeKey === k)).join("");
+    return `<select class="mech-shield-subtype-mode" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${modeOpts}</select>
+      <select class="mech-shield-subtype-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.shieldSubtypeKey ? "" : "selected"}>— подвид —</option>${subtypeOpts}
+      </select>
+      ${ent.shieldSubtypeMode === "override"
+        ? `<input type="number" class="mech-shield-subtype-rating" data-group-id="${groupId}" data-entry-id="${ent.id}" value="${esc(ent.shieldSubtypeRatingMax ?? 0)}" placeholder="напр. 75" ${dis}/>`
+        : ""}`;
+  }
+
+  if (ent.kind === "shieldVsCondition") {
+    const condOpts = SHIELD_VS_CONDITION_KEYS
+      .map(k => optHtml(k, CONDITIONS_DEF[k]?.label || k, ent.shieldVsConditionKey === k)).join("");
+    return `<select class="mech-shield-vs-condition-key" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
+        <option value="" ${ent.shieldVsConditionKey ? "" : "selected"}>— состояние —</option>${condOpts}
+      </select>`;
   }
 
   if (ent.kind === "terrainIgnore") {
@@ -3461,6 +3672,21 @@ function buildSkillSelectorHtml(groupId, ent, dis) {
  * опечататься в подписи и рассинхронизироваться с таблицей. Одна и та же
  * Мутация несёт по записи на каждый набор строк, чьё действие отличается —
  * применяется только та, чья субмутация сейчас выпала (system.submutation).
+ *
+ * Дальше в том же духе идут ЕЩЁ ВОСЕМЬ независимых блоков (wdbc-shr,
+ * находка 9 — этот catalog обрывался на втором, хотя функция ниже реализует
+ * все десять): третий — «Когда Талант» (актор владеет Талантом/Чертой с
+ * именем+специализацией, wdbc-ta4y); четвёртый — «Когда Тир Ран»
+ * (healthy/light/heavy/dying, wdbc-wyr3); пятый — «Когда Ярость»
+ * (actor.system.inRage); шестой — «Когда Покровитель» (system.patronGod,
+ * wdbc-xxb7); седьмой — «Когда Герметичная броня» (wearsSealedArmour,
+ * wdbc-1rno); восьмой — «Когда Состояние» (список ключей Состояний,
+ * wdbc-tl0f); девятый — «Когда Качество» (ступень качества САМОГО предмета,
+ * wdbc-9k2q); десятый — «Когда выбранный эффект Best.Q» (item.system.
+ * chosenEffects, wdbc-jo51). Все складываются по «И» умолчанием, либо по
+ * «ИЛИ» через отдельный переключатель anyOf (wdbc-n48f) — см. каждый блок
+ * ниже по коду и общий разбор в module/rules/mech-when.mjs (там же —
+ * entryWhenOk, единая точка, где все десять реально проверяются).
  */
 function buildEntryWhenHtml(groupId, ent, canEdit, item = null) {
   const dis = canEdit ? "" : "disabled";
@@ -3740,7 +3966,8 @@ export function mechanicsRelevantChange(changed) {
 // saveItemMechanics при сохранении предупреждает автора (см. ниже).
 const FORMULA_FIELD_BY_KIND = {
   characteristic: "value", poolMax: "value",
-  weight: "weightValue", movement: "movementValue", armour: "armourValue"
+  weight: "weightValue", movement: "movementValue", armour: "armourValue",
+  absorption: "absorptionValue"
 };
 
 /** Непустые формулы записей (рекурсивно, с подгруппами), которые не разбираются. */

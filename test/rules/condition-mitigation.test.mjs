@@ -101,6 +101,46 @@ describe("mitigate: книжное правило на несколько Сос
   });
 });
 
+describe("mitigate: несколько источников на один ключ Состояния (wdbc-vgx)", () => {
+  it("два «половина штрафа» дают ОДНУ половину, а не сумму −15−15=−30", () => {
+    const rules = rulesFromItemMechanics([
+      item("Наколенники", [cond({ condMitigate: "half" })]),
+      item("Вторые Наколенники", [{ ...cond({ condMitigate: "half" }), id: "e2" }])
+    ]);
+    const halves = rules.filter(r => r.id.includes(".half.conditions.prone"));
+    expect(halves).toHaveLength(1);
+    const picked = selectRules([...CONDITION_RULES, ...rules], actorWith("prone"), {});
+    const applied = picked.filter(r => r.id.includes("conditions.prone") && r.effects?.length);
+    expect(applied).toHaveLength(1);
+    expect(applied[0].effects).toEqual([
+      { kind: "rollBonus", target: "weapon:melee", value: -10 },
+      { kind: "rollBonus", target: "skill:dodge",  value: -10 },
+      { kind: "rollBonus", target: "skill:stealth", value: 10 }
+    ]);
+  });
+
+  it("«ignore» + «half» на одном ключе — победил полный иммунитет, half не применяется", () => {
+    const rules = rulesFromItemMechanics([
+      item("Панцирь", [cond({ condMitigate: "ignore" })]),
+      item("Наколенники", [{ ...cond({ condMitigate: "half" }), id: "e2" }])
+    ]);
+    expect(rules.some(r => r.id.includes(".half."))).toBe(false);
+    const picked = selectRules([...CONDITION_RULES, ...rules], actorWith("prone"), {});
+    expect(picked.map(r => r.id)).not.toContain("conditions.prone");
+    expect(picked.some(r => r.id.includes(".half.") && r.effects?.length)).toBe(false);
+  });
+
+  it("порядок предметов не важен — «half» затем «ignore» тоже даёт полный иммунитет", () => {
+    const rules = rulesFromItemMechanics([
+      item("Наколенники", [cond({ condMitigate: "half" })]),
+      item("Панцирь", [{ ...cond({ condMitigate: "ignore" }), id: "e2" }])
+    ]);
+    expect(rules.some(r => r.id.includes(".half."))).toBe(false);
+    const picked = selectRules([...CONDITION_RULES, ...rules], actorWith("prone"), {});
+    expect(picked.map(r => r.id)).not.toContain("conditions.prone");
+  });
+});
+
 describe("mitigate: что правилом НЕ становится", () => {
   it("Состояние без числового штрафа в реестре смягчать нечем", () => {
     expect(rulesFromItemMechanics([item("Жгут", [cond({ condKey: "bleeding" })])])).toEqual([]);

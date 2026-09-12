@@ -83,11 +83,23 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
 
 describe("entryWhenOk: гейты независимы и складываются через И", () => {
   it("Геносемя проходит, Талант — нет: итог false", () => {
-    const actor = actorWithItems([], { legion: "I" });
+    // wdbc-shr, находка 10: раньше actor.items был пуст([]), и тест был
+    // зелёным «по чужой причине» — talentOk оказывался false просто потому,
+    // что у актора нет вообще никаких предметов, а не потому, что реально
+    // сработала проверка имени/специализации Таланта (запрос при этом ещё и
+    // нарушал документированное соглашение файла: talentSpec.name должен
+    // нести ОДНУ билингвальную половину, а не полную строку со слэшем —
+    // см. комментарий у описания «Талант+специализация» выше). Актору дан
+    // РЕАЛЬНЫЙ Талант с ДРУГОЙ специализацией — теперь talentOk=false
+    // получается из настоящей проверки, а не из пустого items.
+    const actor = actorWithItems(
+      [{ type: "talent", name: "Mastery / Мастерство", system: { specialization: "Уклонение" } }],
+      { legion: "I" }
+    );
     const entry = {
       when: {
         negate: false, conditions: [{ legion: "I" }],
-        talentSpec: { name: "Mastery / Мастерство", specialization: "Психонаука" }
+        talentSpec: { name: "Мастерство", specialization: "Психонаука" }
       }
     };
     expect(entryWhenOk(actor, entry)).toBe(false);

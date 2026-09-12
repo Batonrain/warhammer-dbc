@@ -3,8 +3,8 @@
   "type": "forcefield",
   "folder": "IRQ8ooDLYqL9rtA6",
   "system": {
-    "description": "Чародейский дефлектор. Крайне редкий артефакт варп-природы.",
-    "notes": "",
+    "description": "Чародейский дефлектор. Крайне редкий артефакт варп-природы. Требует установленного жёсткого нагрудника.",
+    "notes": "Механизировано (wdbc-q0q8): рейтинг щита заменяется на 1-75 против E(Fl) — flags.mechanics, kind:\"shieldSubtype\" mode:\"override\" (обычный рейтинг 1-25 не трогается против любого другого подвида). Особая перегрузка: осколок впивается в грудь — 1d5 непоглощаемого R Dmg + 1d5-1 Усталости, применяется автоматически (combat/damage.mjs::_rollActiveShield). Механизировано (wdbc-5knb): «может бросаться против урона от Горения, гася персонажа» — flags.mechanics, kind:\"shieldVsCondition\" shieldVsConditionKey:\"burning\", живой запрос combat/damage.mjs::rollShieldAgainstConditionTick, вызывается из condition-ticks.mjs ПЕРЕД тиком Горения в конце Хода; при успехе Горение снимается целиком (не поглощается только текущий тик), использует тот же override рейтинга 1-75, что и запись выше. Механизировано (wdbc-giae): «должен быть установлен жёсткий нагрудник и даёт щит только на участках тела, закрытых бронёй» — flags.mechanics, kind:\"shieldArmorGate\" (без полей — сама запись флаг), живой запрос combat/damage.mjs::_rollActiveShield (_hasShieldArmorGate): щит вообще не рассматривается против попадания, если на торсе нет надетой брони (нагрудник не установлен) ИЛИ сама локация попадания не закрыта надетой бронёй (absorption.wornOnly, не порог AP — проверяется факт «надето хоть что-то»). ПРИБЛИЖЕНИЕ: «жёсткий» (свойство брони Hard, отличное от Soft) нигде в системе не отслеживается вообще — проверяется просто «надета броня на торсе», без различения Hard/Soft (wdbc-yday — отдельная находка). НЕ смоделировано (текст/усмотрение стола): «даёт улучшение Cooler, пока активен» — тот же случай, что у армор-мода «Охладитель» (packs-src/armor-mods/Общие/Охладитель…), там уже отмечено «условный порог урона источника без готовой точки входа». Тест на ремонт (Medicae-10) — только текст в чате, не проверяется кодом (как и «Требование» у модов брони).",
     "shieldNature": "warp",
     "shieldType": "deflector",
     "ratingMin": 1,
@@ -16,7 +16,10 @@
     "status": "inactive",
     "quality": "common",
     "availability": 3,
-    "weight": 0.5
+    "weight": 0.5,
+    "overloadDamageFormula": "1d5",
+    "overloadFatigueFormula": "1d5-1",
+    "overloadRepairTest": "Medicae-10 (1 минута), извлечь и вставить обратно в нагрудник"
   },
   "_id": "7TQw5Wt6gJQu2Epu",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",
@@ -26,7 +29,46 @@
     "default": 0,
     "ezwAfZRyYM6SLFHL": 3
   },
-  "flags": {},
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "frozenHeartGroup",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "frozenHeart-override-flame",
+              "kind": "shieldSubtype",
+              "shieldSubtypeMode": "override",
+              "shieldSubtypeKey": "flame",
+              "shieldSubtypeRatingMax": 75,
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "frozenHeart-vs-burning",
+              "kind": "shieldVsCondition",
+              "shieldVsConditionKey": "burning",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            },
+            {
+              "id": "frozenHeart-armor-gate",
+              "kind": "shieldArmorGate",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
   "_stats": {
     "compendiumSource": null,
     "duplicateSource": null,

@@ -7,7 +7,8 @@ import {
   triggerAfterEffect,
   deactivateDrugEffect,
   removeDrugAddiction,
-  activateDrugListeners
+  activateDrugListeners,
+  LORD_OF_SLOTH_CAPABILITY
 } from "../../module/sheets/tabs/drugs.mjs";
 import { computeWoundHealing } from "../../module/sheets/tabs/wounds.mjs";
 import { woundLossUpdates } from "../../module/rules/wounds.mjs";
@@ -36,6 +37,17 @@ function drug({ id = "drug-1", addicted = false, system = null } = {}) {
     toObject: () => ({ _id: id, name: item.name, type: item.type, system: structuredClone(item.system) })
   };
   return item;
+}
+
+/** Предмет-Дар с записью Конструктора «Возможность» — как он лежит в паке (см. test/rules/ability-by-key.test.mjs). */
+function capabilityItem(key, { id = "gift-1", name = "Дар" } = {}) {
+  return {
+    id, name, type: "mutation", system: {},
+    flags: { "warhammer-dbc": { mechanics: [{
+      id: "grp1", operator: "AND",
+      entries: [{ id: "e1", kind: "capability", capabilityKey: key, when: { negate: false, conditions: [] } }]
+    }] } }
+  };
 }
 
 function actor({ items = [], fatigue = 0, t = 40, wp = 35 } = {}) {
@@ -119,6 +131,45 @@ describe("drug addiction test", () => {
     await rollAddictionTest(a, item, "t", 0);
 
     expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": false });
+    expect(a.updates).toEqual([]);
+  });
+});
+
+describe("Lord of Sloth / Владыка Праздности (gift.slaanesh.lordOfSloth) — иммунитет к зависимости от наркотиков (wdbc-1rno)", () => {
+  it("провальный бросок не ставит зависимость носителю Дара", async () => {
+    const item = drug();
+    const gift = capabilityItem(LORD_OF_SLOTH_CAPABILITY);
+    const a = actor({ items: [item, gift], t: 40 });
+    captured.nextRoll = 99; // худший возможный бросок — тест не должен даже дойти до него
+
+    await rollAddictionTest(a, item, "t", 0);
+
+    expect(item.updates).toEqual([]);
+    expect(a.updates).toEqual([]);
+    expect(captured.chat[0].content).toContain("Владыка Праздности");
+    expect(captured.chat[0].content).toContain("Зависимость невозможна");
+  });
+
+  it("без Дара тот же провальный бросок ставит зависимость как обычно (регресс)", async () => {
+    const item = drug();
+    const a = actor({ items: [item], t: 40 });
+    captured.nextRoll = 99;
+
+    await rollAddictionTest(a, item, "t", 0);
+
+    expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": true });
+    expect(a.updates[0]).toEqual({ "system.conditions.addicted": true });
+  });
+
+  it("носитель Дара с уже стоящей (по ошибке/наследству) зависимостью — тест всё равно не идёт, флаг не трогается", async () => {
+    const item = drug({ addicted: true });
+    const gift = capabilityItem(LORD_OF_SLOTH_CAPABILITY);
+    const a = actor({ items: [item, gift], t: 40 });
+    captured.nextRoll = 1; // лучший возможный бросок — тоже не должен потребоваться
+
+    await rollAddictionTest(a, item, "t", 0);
+
+    expect(item.updates).toEqual([]);
     expect(a.updates).toEqual([]);
   });
 });

@@ -76,6 +76,7 @@ import { buildEliteReqHtml, activateEliteReqListeners } from "../apps/elite-req-
 import { RITUAL_ITEM_TYPES, RITUAL_TYPES }            from "../constants/rituals.mjs";
 import { openCompendiumBrowser }                     from "../apps/compendium-browser.mjs";
 import { runBestQChoice }                            from "../apps/implant-bestq-choice.mjs";
+import { wingPositionShieldUpdate }                  from "../rules/wing-shield.mjs";
 import { factionTarget, actorTypeTarget, allTarget, raceTarget, featureTarget, patronTarget,
          TARGET_FEATURES, PATRON_ANY, addTarget, removeTargetAt } from "../rules/talent-targets.mjs";
 import { RACES, SUBRACES }                           from "../constants/races.mjs";
@@ -1040,6 +1041,7 @@ export class WarhammerItemSheet
           label: prof.label ?? "",
           damage: prof.damage ?? "",
           damageType: prof.damageType ?? "i",
+          damageSubtype: prof.damageSubtype ?? "",
           penetration: prof.penetration ?? 0,
           range: prof.range ?? "",
           propsActive: pActive
@@ -2058,6 +2060,19 @@ export class WarhammerItemSheet
     const saveMech = arr => saveMechanics(this.item, arr);
     // Рекурсивный поиск (учитывает вложенные подгруппы kind:"group", см. mechanics.mjs).
     const findEntry = findMechEntry;
+    // Один простой listener «сменилось значение поля записи» — clone/find/
+    // apply/save. Объявлена здесь, а не рядом с первым использованием ниже
+    // (Переброс, kind:"reroll") — так её видят и более ранние по разметке
+    // обработчики (Щит: подвид урона/против тика, wdbc-shr находка 8),
+    // которые раньше реализовывали ровно то же самое каждый своим отдельным
+    // `on(...)`, вместо общей функции.
+    const mechField = (sel, apply) => on(sel, "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (!e) return;
+      apply(e, ev.currentTarget.value);
+      saveMech(arr);
+    });
     on(".grant-entry-kind", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
@@ -2181,6 +2196,31 @@ export class WarhammerItemSheet
       const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
       if (e) { e.armourValue = ev.currentTarget.value; saveMech(arr); }
     });
+    // AP против типа/подвида урона (kind:"absorption", wdbc-q0q8)
+    on(".mech-absorption-target", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.absorptionTarget = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-absorption-op", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.op = ev.currentTarget.value; saveMech(arr); }
+    });
+    on(".mech-absorption-value", "change", ev => {
+      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
+      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
+      if (e) { e.absorptionValue = ev.currentTarget.value; saveMech(arr); }
+    });
+    // Щит: подвид урона (kind:"shieldSubtype", wdbc-q0q8, только forcefield).
+    // Все четыре — простое «сменилось значение поля», без своей логики поверх
+    // clone/find/save (wdbc-shr, находка 8: раньше каждый реализовывал это
+    // отдельным `on(...)` вместо общей mechField, объявленной выше).
+    mechField(".mech-shield-subtype-mode",   (e, v) => { e.shieldSubtypeMode = v; });
+    mechField(".mech-shield-subtype-key",    (e, v) => { e.shieldSubtypeKey = v; });
+    mechField(".mech-shield-subtype-rating", (e, v) => { e.shieldSubtypeRatingMax = Number(v) || 0; });
+    // Щит: против тика Состояния (kind:"shieldVsCondition", wdbc-5knb, только forcefield)
+    mechField(".mech-shield-vs-condition-key", (e, v) => { e.shieldVsConditionKey = v; });
     // Ландшафт — игнорирование свойств (kind:"terrainIgnore")
     on(".mech-terrain-ignore", "change", ev => {
       const arr = foundry.utils.deepClone(getItemMechanics(this.item));
@@ -2192,13 +2232,6 @@ export class WarhammerItemSheet
     // Переброс (kind:"reroll"). Смена области меняет набор полей (у «теста
     // характеристики» появляется её выбор, у «теста навыка» — навык), поэтому
     // сохраняем и даём листу перерисоваться, как у Усталости ниже.
-    const mechField = (sel, apply) => on(sel, "change", ev => {
-      const arr = foundry.utils.deepClone(getItemMechanics(this.item));
-      const e = findEntry(arr, ev.currentTarget.dataset.groupId, ev.currentTarget.dataset.entryId);
-      if (!e) return;
-      apply(e, ev.currentTarget.value);
-      saveMech(arr);
-    });
     mechField(".mech-reroll-scope", (e, v) => { e.rerollScope = v; });
     mechField(".mech-reroll-char",  (e, v) => { e.rerollChar = v; });
     mechField(".mech-reroll-skill", (e, v) => { e.skillKey = v; });
@@ -2990,6 +3023,16 @@ export class WarhammerItemSheet
     // кнопка видна, пока system.chosenEffects пуст (implant.hbs).
     on(".implant-bestq-choose", "click", () => runBestQChoice(this.item));
 
+    // ── Положение Крыльев импланта (wdbc-lmd2, найдено внутри wdbc-q0q8) ────
+    // Смена положения сама подставляет книжный рейтинг ЭТОГО предмета в
+    // ratingMax (расчёт — module/rules/wing-shield.mjs, чистая функция) —
+    // остальная механика щита (module/combat/shield.mjs) не тронута, читает
+    // ratingMax как обычно. «Расправлены» (в полёте) — щита по книге нет
+    // вовсе, поле гасится, а не просто визуально прячется.
+    on(".implant-wing-position", "change", ev => {
+      this.item.update(wingPositionShieldUpdate(ev.currentTarget.value, this.item.system.shield || {}));
+    });
+
     // ── Особые свойства оружия ─────────────────────────────────────────────────
     on(".wprop-add-select", "change", async ev => {
       const key = ev.currentTarget.value;
@@ -3184,7 +3227,14 @@ export class WarhammerItemSheet
     });
     on(".xtype-x", "change", async ev => {
       const type = ev.currentTarget.dataset.type;
-      const val  = parseInt(ev.currentTarget.value) || 0;
+      // wdbc-5kd: у психосилы X книжного типа местами формула, не константа —
+      // «Изменение (PR+1)», «Длительная (PR)», «Цикл (6)» (число — частный
+      // случай формулы). У Техночуда книжные X всегда голые числа (Императива
+      // (3), Компенсатор (2)…), и tabs/tech.mjs считает их напрямую как Number —
+      // это единственный тип, для которого parseInt здесь ещё уместен.
+      const val  = this.item.type === "techPower"
+        ? (parseInt(ev.currentTarget.value) || 0)
+        : String(ev.currentTarget.value ?? "").trim();
       const arr  = foundry.utils.deepClone(this.item.system.extraTypes || []);
       const e    = arr.find(x => x.type === type);
       if (e) { e.x = val; await this.item.update({ "system.extraTypes": arr }); }

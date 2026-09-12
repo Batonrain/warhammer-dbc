@@ -184,40 +184,104 @@ export function registerDuplicateGrantSettings() {
   });
 }
 
-/** Группа (папка) и Ступень Таланта по его имени.
+/**
+ * Группа (папка) и Ступень Таланта по его имени. Пак первичен, константа —
+ * запасной путь (wdbc-91b) — переведено ВМЕСТЕ с talentLibraryEntry() ниже,
+ * а не оставлено на TALENT_LIBRARY, как было решено при wdbc-h59i.
  *
- * ОСТАЁТСЯ на статической библиотеке (module/constants/talents-library.mjs)
- * намеренно, не переведена на pack-первичный паттерн вместе с
- * talentLibraryEntry() ниже (wdbc-h59i). Причина — не техническая, а
- * смысловая: «Группа» здесь означает функциональную категорию правила
- * («Общие», «Боевые», …, стр. 62 — «Таланты той же Группы и Ступени»), и
- * именно её несёт folder в TALENT_LIBRARY. Folder документа В КОМПЕНДИУМЕ —
- * это ID папки, отражающей ФИЗИЧЕСКУЮ организацию пака (по книге/архетипу,
- * см. packs-src/talents/Книга_Пустоты/Пустотный_Волк/…), другая ось
- * классификации; своего поля вроде system.category/system.group у Таланта в
- * схеме нет вовсе. Слепой перенос на pack.index[].folder подменил бы
- * «того же функционального назначения» на «из той же книги» — таланты
- * получали бы неверные альтернативы. Заводить system.category и раскладывать
- * по нему все 1273 записи пака — самостоятельная архитектурная задача, не
- * часть wdbc-h59i. */
+ * Прежняя позиция (см. историю этого файла) держалась на константе намеренно:
+ * «Группа» — функциональная категория правила («Общие», «Боевые», …, стр. 62),
+ * а folder документа в компендиуме будто бы был другой осью — физической
+ * организацией пака по книге/архетипу. При проверке под wdbc-91b это не
+ * подтвердилось: реальные `_Folder.json` пака (`packs-src/talents/Общие/
+ * _Folder.json` → name:"Общие", `.../Книга_Пустоты/Пустоход/_Folder.json` →
+ * name:"Пустоход" с folder-родителем "Книга Пустоты") называют папки ТЕМИ ЖЕ
+ * именами, что и folder в TALENT_LIBRARY — не другой осью, а тем же
+ * разбиением, которое константа просто дублировала вручную и с отставанием
+ * (611/967 записей). Тот же pack-folder уже используется как содержательная
+ * категория в module/sheets/item-picker.mjs::talentGroupLock (гейты «нужна
+ * раса Друкхари», «нужен Элитный архетип «X»» и т.п. — см. test/sheets/
+ * talent-group-lock-folders.test.mjs) — folder как смысловая Группа не новое
+ * допущение для этой системы. Единственное отличие для «Элитные архетипы»/
+ * «Таланты одержимых»: там подпапка — конкретный архетип/тип Дара, а не
+ * категория стр. 62; раньше TALENT_LIBRARY их не знала вовсе и
+ * altTalentCandidates всегда возвращал [] — теперь дубль такого Таланта может
+ * получить замену из того же архетипа/типа Дара и той же Ступени вместо
+ * гарантированного нуля (строго не хуже, чем раньше).
+ *
+ * Синхронная: вызывается из живого рендера (apps/mechanics.mjs) и из скрипта
+ * предмета (apps/item-script.mjs), await туда не проброс — как и
+ * talentGodKeyOf в constants/patronage.mjs, кэш строится ЗАРАНЕЕ асинхронно
+ * (refreshTalentGroupIndex/initTalentGroupIndex ниже) и мемоизируется здесь.
+ */
+let _talentGroupByName = null; // null = ещё не строился; Map(name -> {folder, tier})
+
+function fallbackTalentGroupIndex() {
+  return new Map(TALENT_LIBRARY.map(t => [t.name, { folder: t.folder, tier: t.system.tier }]));
+}
+
+/**
+ * Строит (или перестраивает) кэш Группы/Ступени по обоим пакам Талантов
+ * (TALENT_LIB_PACKS — warhammer-dbc.talents + aeldari-talents). Экспортирована
+ * не только для регистрации на хуках (initTalentGroupIndex ниже), но и для
+ * тестов пак-пути (test/rules/talent-group-pack-primary.test.mjs) — синхронный
+ * кэш иначе неоткуда было бы принудительно пересобрать между кейсами.
+ */
+export async function refreshTalentGroupIndex() {
+  const byName = new Map();
+  let anyPack = false;
+  for (const packId of TALENT_LIB_PACKS) {
+    const pack = (typeof game !== "undefined") ? game.packs?.get?.(packId) : null;
+    if (!pack) continue;
+    anyPack = true;
+    try {
+      const index = await pack.getIndex({ fields: ["system.tier"] });
+      for (const e of index) {
+        const folder = pack.folders?.get?.(e.folder)?.name;
+        if (!folder) continue; // без папки группа неизвестна — как раньше у записей без TALENT_LIBRARY
+        byName.set(e.name, { folder, tier: e.system?.tier ?? 0 });
+      }
+    } catch (err) {
+      console.warn(`Warhammer DBC | кэш Группы Таланта не построился для ${packId}, работает библиотека`, err);
+    }
+  }
+  if (!anyPack) { _talentGroupByName = fallbackTalentGroupIndex(); return; }
+  // Константа как подстраховка: Талант, которого в паке ещё нет (Иннари/
+  // Экзодиты — папки пака под них ещё не заведены, см. talent-group-lock-
+  // folders.test.mjs KNOWN_MISSING), не должен тихо остаться без Группы.
+  for (const [name, grp] of fallbackTalentGroupIndex()) if (!byName.has(name)) byName.set(name, grp);
+  _talentGroupByName = byName;
+}
+
+/** Регистрируется в warhammer-dbc.mjs — строит кэш после готовности мира и
+ * обновляет его при правках любого из паков Талантов. До первого построения
+ * (или в тестах без game.packs) используется прямой запасной путь. */
+export function initTalentGroupIndex() {
+  Hooks.once("ready", () => refreshTalentGroupIndex());
+  for (const h of ["createItem", "deleteItem", "updateItem"])
+    Hooks.on(h, doc => { if (TALENT_LIB_PACKS.includes(doc?.pack)) refreshTalentGroupIndex(); });
+}
+
 export function talentGroupOf(name) {
-  const entry = TALENT_LIBRARY.find(t => t.name === name);
-  return entry ? { folder: entry.folder, tier: entry.system.tier } : null;
+  _talentGroupByName ??= fallbackTalentGroupIndex();
+  return _talentGroupByName.get(name) || null;
 }
 
 /**
  * Таланты той же Группы и Ступени, что и уже имеющийся дублирующий, минус те,
  * что персонаж уже взял (по имени, без учёта регистра). См. talentGroupOf()
- * выше — та же причина остаться на статической библиотеке.
+ * выше — теперь пак-первичный список, а не только 611 записей константы.
  */
 export function altTalentCandidates(name, ownedNames = []) {
   const grp = talentGroupOf(name);
   if (!grp) return [];
   const owned = new Set(ownedNames.map(n => String(n || "").trim().toLowerCase()));
-  return TALENT_LIBRARY
-    .filter(t => t.folder === grp.folder && t.system.tier === grp.tier
-      && !owned.has(String(t.name).trim().toLowerCase()))
-    .map(t => ({ name: t.name, tier: t.system.tier, folder: t.folder }));
+  const out = [];
+  for (const [tName, g] of _talentGroupByName) {
+    if (g.folder === grp.folder && g.tier === grp.tier && !owned.has(String(tName).trim().toLowerCase()))
+      out.push({ name: tName, tier: g.tier, folder: g.folder });
+  }
+  return out;
 }
 
 /**

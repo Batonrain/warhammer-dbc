@@ -5,7 +5,7 @@
   "folder": "zRLNTH5F8WcvnnI4",
   "system": {
     "description": "",
-    "notes": "",
+    "notes": "Механизировано (wdbc-q0q8): capabilityKey переключён с мёртвого «mutation.livingMirror» (объявлен, но никем не читался) на «damageImmunity.subtype.laser» — теперь действительно даёт полный иммунитет к E(Ls) Dmg (damage.mjs applyDamageToActor). НЕ механизирован штраф Stealth «по усмотрению ГМа» — он и по книге не фиксированное число, решает ГМ.",
     "benefit": "Кожа, волосы и даже глаза персонажа становятся зеркальными, словно покрытые тонким слоем серебра. Если он носит любое снаряжение дольше 5 минут, с них начинает слезать грязь с краской и мутация изменяет их, делая их поверхность такой же блестящей и зеркальной. Персонаж получает иммунитет к E(Ls) Dmg, так как лучи рассеиваются и отражаются от него, но блестящее серебристое тело может давать штрафы к тестам Stealth по усмотрению ГМа.",
     "source": "Общие мутации, d100 20",
     "roll": "20",
@@ -80,7 +80,7 @@
               "modValueMode": "flat",
               "modCharBonus": "inf",
               "rerollWho": "self",
-              "capabilityKey": "mutation.livingMirror",
+              "capabilityKey": "damageImmunity.subtype.laser",
               "fatigueAction": "threshold",
               "fatigueThresholdChar": "t",
               "equipMode": "direct",

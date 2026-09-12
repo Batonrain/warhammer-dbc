@@ -87,8 +87,11 @@ export function tranceButtonHtml(item, actor) {
       <div class="pa-trance-status">${rollIcon("bolt", "#ffd24d")}В трансе: <b>${esc(active.optionLabel)}</b> — до конца боя</div>
     </div>`;
   }
+  // data-item-id раньше стоял здесь мёртвым грузом: обработчик клика
+  // (item-sheet.mjs, .pa-trance-btn) берёт предмет из this.item листа, а не
+  // из dataset — на листе предмета брони он и так ровно один.
   return `<div class="pa-trance">
-    <button type="button" class="pa-trance-btn" data-item-id="${item.id}">
+    <button type="button" class="pa-trance-btn">
       ${rollIcon("bolt", "#ffd24d")}${esc(trance.label)}
     </button>
   </div>`;
@@ -130,7 +133,11 @@ async function buildTranceCarrierData(option, armorItem, combat, trance) {
     img: armorItem.img,
     system: { rating: "" },
     effects: [{
-      name: `Дух героя: ${option.label}`, type: "base",
+      // Явного type у ActiveEffect система не заводит нигде (см.
+      // apps/effects.mjs createBlankEffect) — sub-типов ActiveEffect в
+      // system.json нет, Foundry сам подставляет умолчание "base"; писать
+      // его тут было лишним и единственным местом в коде, где это делалось.
+      name: `Дух героя: ${option.label}`,
       system: { changes: [{ key: `system.characteristics.${option.charKey}.totalFx`, type: "add", value: option.value, phase: "initial", priority: 0 }] },
       disabled: false, transfer: true
     }],
@@ -140,23 +147,19 @@ async function buildTranceCarrierData(option, armorItem, combat, trance) {
 
 /** Диалог выбора варианта — ключ выбранного, или null (закрыли без выбора). */
 function promptTranceChoice(trance) {
-  return new Promise(resolve => {
-    let done = false;
-    const buttons = {};
-    for (const opt of trance.options) {
-      buttons[opt.key] = {
-        label: opt.label,
-        callback: () => { if (!done) { done = true; resolve(opt.key); } }
-      };
-    }
-    new Dialog({
-      title: trance.label,
-      content: `<form class="hw-choice-form">
-        <div class="hw-choice-desc">${esc(trance.aftermathLabel || "")}</div>
-      </form>`,
-      buttons,
-      close: () => { if (!done) { done = true; resolve(null); } }
-    }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "hw-choice-dialog"], width: 380 }).render(true);
+  // Раньше — Dialog V1 (устаревший API, wdbc-ye6). DialogV2.wait без
+  // callback у кнопки резолвит её собственным `action` — тем же ключом
+  // варианта, что раньше давал явный callback; закрытие без выбора
+  // (rejectClose: false) резолвит null, как и старый `close:` V1.
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: trance.label },
+    classes: ["warhammer-dbc", "wh-holo", "hw-choice-dialog"],
+    position: { width: 380 },
+    content: `<form class="hw-choice-form">
+      <div class="hw-choice-desc">${esc(trance.aftermathLabel || "")}</div>
+    </form>`,
+    rejectClose: false,
+    buttons: trance.options.map(opt => ({ action: opt.key, label: opt.label }))
   });
 }
 

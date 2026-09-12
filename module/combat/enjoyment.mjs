@@ -48,10 +48,16 @@ function hasEnjoyment(actor) {
  * Даёт 1 Боли за триггер Enjoyment, если актор владеет Талантом и ещё не
  * использовал его в этом бою. Тихо ничего не делает без Таланта/вне лимита —
  * вызывающему коду не нужно самому проверять условия.
+ *
+ * Порядок вызовов (wdbc-shr, находка 5): раньше markCapabilityUsed уходил
+ * ДО painChange — при уже полной Боли (painChange — no-op, только
+ * уведомление «Очки Боли уже на максимуме») лимит «раз за бой» всё равно
+ * сгорал впустую, без единого реального эффекта. Теперь лимит списывается
+ * только когда painChange реально что-то изменил (true).
  */
 export async function maybeGrantEnjoymentPain(actor) {
   if (!hasEnjoyment(actor)) return;
   if (!isCapabilityAvailable(actor, FLAG, "battle")) return;
-  await markCapabilityUsed(actor, FLAG, "battle");
-  await painChange(actor, 1, "enjoyment");
+  const applied = await painChange(actor, 1, "enjoyment");
+  if (applied) await markCapabilityUsed(actor, FLAG, "battle");
 }

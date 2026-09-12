@@ -90,11 +90,22 @@ export function openAttackDialog(ctx) {
     thresholdOf,
     thresholdParts,
     resolveSelectionSafe,
+    resolveVehicleSide,
     computeBaseOptions,
     computeGripOptions,
     computeManeuverOptions,
     computeStanceOptions
   } = ctx;
+  // Death Dance / Смертельный Танец (wdbc-shr, находка 2): кнопка в render()
+  // ниже только ВООРУЖАЕТ намерение — реальное списание ОС и счётчика
+  // использований откладывается до подтверждения атаки (кнопка "Бросок!"),
+  // тем же приёмом, что и остальные ресурсы диалога (ОД, Реакция — см. их
+  // spendActionPoints/spendReaction прямо в колбэке "roll"). Раньше и
+  // actor.update, и markDeathDanceUsed срабатывали ПРЯМО ПО КЛИКУ на кнопку
+  // Танца — закрыть диалог кнопкой "Отмена" (или Esc) после этого клика
+  // означало реально потратить Очко Судьбы и сжечь использование впустую,
+  // не бросив ни одной атаки.
+  let deathDancePending = null; // { cost, agBonus } — выставлено кликом, читается в колбэке "roll"
   return foundry.applications.api.DialogV2.wait({
     window: { title: `Атака: ${item.name}` },
     classes: ["warhammer-dbc", "wh-holo", "wh-attack-dialog", "wh-atk-dialog"],
@@ -121,6 +132,10 @@ export function openAttackDialog(ctx) {
           }
 
           const sel = resolveSelectionSafe(f);
+          // Сторона брони техники (wdbc-kp1o) — считается тем же правилом,
+          // что и построчный штраф в окне (attack-dialog.mjs::resolveVehicleSide),
+          // чтобы бросок никогда не разошёлся с тем, что показал диалог.
+          const vsel = resolveVehicleSide(f);
 
           if (sel.blocked) {
             await ChatMessage.create({
@@ -174,6 +189,24 @@ export function openAttackDialog(ctx) {
               ui.notifications.warn("⚠️ Не хватает ОД.");
               return false;
             }
+          }
+
+          // Death Dance / Смертельный Танец (wdbc-shr, находка 2): списание
+          // ОС и отметка использования — только теперь, при подтверждённой
+          // атаке, не по клику кнопки в форме (см. deathDancePending выше и
+          // ddBtn в render() ниже). Проверяем Очки Судьбы ещё раз: между
+          // вооружением кнопки и подтверждением актор мог их потратить
+          // иначе (тот же принцип, что у ОД/Реакции чуть выше).
+          if (deathDancePending) {
+            if (deathDancePending.cost > 0) {
+              const fateNow = actor.system.fate?.value ?? 0;
+              if (fateNow < deathDancePending.cost) {
+                ui.notifications.warn("⚠️ Не хватает Очков Судьбы для Смертельного Танца.");
+                return false;
+              }
+              await actor.update({ "system.fate.value": fateNow - deathDancePending.cost });
+            }
+            await markDeathDanceUsed(actor);
           }
 
           // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
@@ -267,6 +300,11 @@ export function openAttackDialog(ctx) {
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
               gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
+              // Обратный Хват + Выпад Полной Атакой (стр. 39, module/sheets/
+              // attack/selection.mjs): S.b не режется, но получает ещё
+              // +½S.b (окр.▲) сверху — сам бонус считает attack.mjs, ему
+              // нужен sbEff с учётом Могучего/Длани Кхорна.
+              reverseThrustBonus: !!(sel.gDef && sel.gDef.reverseThrustBonus),
               // Fanning / Быстрый Курок (wdbc-fy33): RoF 2..BS.b по выбору
               // заменяет фиксированный sys.rof_full только в режиме "full".
               rofCapOverride: (fanningActive && f.rofMode === "full") ? f.fanningRof : 0,
@@ -289,7 +327,11 @@ export function openAttackDialog(ctx) {
                     : `Верхом: попадание в скакуна — ${mountPair.mount.name}`)
                 : (mountPair
                     ? `Верхом: не-Избирательная атака — попадание в скакуна (${mountPair.mount.name}), дубль на броске — во всадника (${mountPair.rider.name})`
-                    : "")
+                    : ""),
+              // Сторона брони техники (wdbc-kp1o): "" у не-техники (damage.mjs
+              // подставит "side" сам), иначе Лоб/Борт/Корма из окна — Избира-
+              // тельная атака в Корму (−20) уже свела её к "rear" выше.
+              vehicleSide: vsel.side
             }
           );
 
@@ -458,6 +500,17 @@ export function openAttackDialog(ctx) {
       const ddStatus = form.querySelector("#atk-death-dance-status");
       if (ddBtn) {
         const refreshDeathDance = () => {
+          // Уже вооружено этим диалогом (wdbc-shr, находка 2) — реальный
+          // расход ОС/счётчика произойдёт только в колбэке "roll", здесь
+          // только не даём вооружить бонус второй раз до подтверждения.
+          if (deathDancePending) {
+            ddBtn.disabled = true;
+            ddBtn.classList.add("av-pill-disabled");
+            ddStatus.textContent = deathDancePending.cost > 0
+              ? `— готово: спишет ${deathDancePending.cost} Очков Судьбы при подтверждении атаки`
+              : "— готово (бесплатно): применится при подтверждении атаки";
+            return;
+          }
           const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
           const isCharge   = sel.baseKey === "charge";
           const cost       = deathDanceNextCost(actor);
@@ -471,21 +524,25 @@ export function openAttackDialog(ctx) {
               ? "— бесплатно (первый раз в этом бою)"
               : `— цена ${cost} Очков Судьбы${affordable ? "" : " (не хватает)"}`;
         };
-        ddBtn.addEventListener("click", async ev => {
+        ddBtn.addEventListener("click", ev => {
           ev.preventDefault();
+          if (deathDancePending) return; // уже вооружено — повторный клик не удваивает бонус
           const sel = resolveSelectionSafe(readAttackForm(form, ammoConds));
           if (sel.baseKey !== "charge") return;
           const cost = deathDanceNextCost(actor);
           const fate = actor.system.fate?.value ?? 0;
-          if (cost > 0) {
-            if (fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");
-            await actor.update({ "system.fate.value": fate - cost });
-          }
-          await markDeathDanceUsed(actor);
-          const agBonus  = Number(actor.system.characteristics?.ag?.bonus) || 0;
+          if (cost > 0 && fate < cost) return ui.notifications.warn("Не хватает Очков Судьбы для повторного Смертельного Танца.");
+          // Вооружаем намерение — actor.update/markDeathDanceUsed переехали
+          // в колбэк "roll" (deathDancePending выше, wdbc-shr находка 2):
+          // раньше оба списывались ПРЯМО ПО ЭТОМУ клику, и закрытие диалога
+          // кнопкой «Отмена» после клика сжигало ОС и использование вхолостую,
+          // не бросив атаки. Реальный расход — только если атака дойдёт до
+          // подтверждения.
+          const agBonus = Number(actor.system.characteristics?.ag?.bonus) || 0;
+          deathDancePending = { cost, agBonus };
           const dmgInput = form.querySelector("#atk-dmg-bonus");
           dmgInput.value = (parseInt(dmgInput.value) || 0) + agBonus;
-          ui.notifications.info(`Смертельный Танец: +${agBonus} к Бонусу урона (Brutal Charge).`);
+          ui.notifications.info(`Смертельный Танец: +${agBonus} к Бонусу урона (Brutal Charge) — спишется при подтверждении атаки.`);
           refreshDeathDance();
           updateTotal();
         });
@@ -513,6 +570,27 @@ export function openAttackDialog(ctx) {
       if (offHandEl) {
         offHandEl.addEventListener("change", refreshOffRof);
         refreshOffRof();
+      }
+
+      // Сторона брони техники (wdbc-kp1o): Избирательная атака в Корму имеет
+      // смысл только «с Лба/Борта» (уже выбранную Корму не в кого целиться
+      // избирательно САМА В СЕБЯ) — при выборе Кормы галочка гасится и
+      // блокируется, а не просто перестаёт что-то давать молча. Шагоходу в
+      // рукопашной галочка уже пришла disabled из разметки (см. attack-
+      // dialog.mjs::rearCalledShotBlockedByWalker) — этот слушатель тот
+      // запрет не трогает (ранний return).
+      const vehicleSideEl = form.querySelector("#atk-vehicle-side");
+      const vehicleRearEl = form.querySelector("#atk-vehicle-rear-called");
+      const refreshVehicleRear = () => {
+        if (!vehicleSideEl || !vehicleRearEl || vehicleRearEl.dataset.lockedByWalker === "1") return;
+        const blocked = vehicleSideEl.value === "rear";
+        vehicleRearEl.disabled = blocked;
+        if (blocked) vehicleRearEl.checked = false;
+      };
+      if (vehicleSideEl && vehicleRearEl) {
+        if (vehicleRearEl.disabled) vehicleRearEl.dataset.lockedByWalker = "1";
+        vehicleSideEl.addEventListener("change", refreshVehicleRear);
+        refreshVehicleRear();
       }
 
       // Один слушатель на форму вместо списка селекторов: события всплывают,

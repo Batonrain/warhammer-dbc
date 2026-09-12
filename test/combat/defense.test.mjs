@@ -49,7 +49,7 @@ function grantCounterAttack() {
 async function parryCard(weaponOverrides = {}, meta = {}, hitsCount) {
   const sword = equippedMelee(weaponOverrides, meta);
   const actor = attacker({ items: [sword] });
-  await _performParry(actor, 0, "Actor.attacker-1", hitsCount);
+  await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1", hitsCount });
   return captured.chat.at(-1).content;
 }
 
@@ -65,7 +65,7 @@ describe("_performParry: кнопка Контратаки", () => {
     const sword = equippedMelee({}, { id: "w-parry" });
     const actor = attacker({ items: [sword] });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("wh-counter-attack-btn");
@@ -77,7 +77,7 @@ describe("_performParry: кнопка Контратаки", () => {
     grantCounterAttack();
     const actor = attacker({ items: [] });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     expect(captured.chat.at(-1).content).not.toContain("wh-counter-attack-btn");
   });
@@ -88,7 +88,7 @@ describe("_performParry: кнопка Контратаки", () => {
     const sword = equippedMelee();
     const actor = attacker({ items: [sword] });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Парирование провалено");
@@ -107,7 +107,7 @@ describe("_performParry: кнопка Контратаки", () => {
     await actor.setFlag("warhammer-dbc",
       `usageLimits.${COUNTER_ATTACK_CAPABILITY.replace(/\./g, "-")}`, { scope: "round", used: true, round: 2 });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     expect(captured.chat.at(-1).content).not.toContain("wh-counter-attack-btn");
   });
@@ -119,7 +119,7 @@ describe("_performParry: кнопка Контратаки", () => {
     await actor.setFlag("warhammer-dbc",
       `usageLimits.${COUNTER_ATTACK_CAPABILITY.replace(/\./g, "-")}`, { scope: "round", used: true, round: 2 });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     expect(captured.chat.at(-1).content).toContain("wh-counter-attack-btn");
   });
@@ -141,7 +141,7 @@ describe("_performParry: интегральные атаки не перехва
     const sword    = equippedMelee({ balance: 0 }, { id: "w-sword", name: "Цепной меч" });
     const actor    = attacker({ items: [fist, kick, headbutt, sword] });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Оружие: Цепной меч");
@@ -152,7 +152,7 @@ describe("_performParry: интегральные атаки не перехва
     const fist  = integral("Fist / Удар кулаком", "w-fist", -1);
     const actor = attacker({ items: [fist] });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     expect(captured.chat.at(-1).content).toContain("Оружие: Fist / Удар кулаком");
   });
@@ -232,7 +232,7 @@ describe("_performDodge: несколько попаданий одной ата
   it("Успех меньше числа попаданий — снимает часть, остальные проходят", async () => {
     const actor = attacker();
 
-    await _performDodge(actor, 0, "", 3);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 3 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Уклонение успешно");
@@ -245,7 +245,7 @@ describe("_performDodge: несколько попаданий одной ата
     captured.dice = [96];
     const actor = attacker();
 
-    await _performDodge(actor, 0, "", 4);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 4 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Уклонение провалено");
@@ -261,7 +261,7 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
     actor.system.conditions = { prone: true };
     captured.dice = [90]; // выше нового (отрицательного) порога — провал, но карточка всё равно пишет порог
 
-    await _performDodge(actor, 0, "", 1);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("→ Порог: <b>-5</b>");
@@ -271,7 +271,7 @@ describe("_performDodge: Повален (wdbc-r5o7.2)", () => {
   it("не Повален — штрафа и чипа нет", async () => {
     const actor = attacker();
 
-    await _performDodge(actor, 0, "", 1);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("→ Порог: <b>15</b>");
@@ -288,7 +288,7 @@ describe("_performDodge: Потеря ноги блокирует Уклонен
     actor.system.conditions = { lostLegs: true, lostLegsCount: 1 };
     actor.system.reactions = { value: 1, max: 1, defenseValue: 0, defenseMax: 0 };
 
-    await _performDodge(actor, 0, "", 1);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("нет ног");
@@ -297,7 +297,7 @@ describe("_performDodge: Потеря ноги блокирует Уклонен
 
   it("без потери ног — Уклонение работает как раньше", async () => {
     const actor = attacker();
-    await _performDodge(actor, 0, "", 1);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1 });
     const card = captured.chat.at(-1).content;
     expect(card).not.toContain("нет ног");
   });
@@ -311,7 +311,7 @@ describe("_performDodge/_performParry: банк излишка Успехов в
     // Ag 35, untrained −20 → Порог 15; rv=10 → 1 степень, при hitsCount=1 — 0 излишка,
     // но hitsCount меньше, чем deg, тут не нужен: важно, что game.combat не задан.
     const actor = attacker();
-    await _performDodge(actor, 0, "", 1, "Actor.attacker-1");
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1" });
     expect(captured.chat.at(-1).content).not.toContain("Остаётся");
   });
 
@@ -322,7 +322,7 @@ describe("_performDodge/_performParry: банк излишка Успехов в
     captured.dice = [1]; // Порог 15, rv=1 → deg = floor(14/10)+1 = 2
     const actor = attacker();
 
-    await _performDodge(actor, 0, "", 1, "Actor.attacker-1");
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1" });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Остаётся 1 неизрасходованный Успех");
@@ -335,7 +335,7 @@ describe("_performDodge/_performParry: банк излишка Успехов в
     const sword = equippedMelee();
     const actor = attacker({ items: [sword] });
 
-    await _performParry(actor, 0, "Actor.attacker-1");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1" });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Остаётся 1 неизрасходованный Успех");
@@ -398,7 +398,7 @@ describe("_performDodge: Танец Среди Огня (wdbc-u0by)", () => {
     const actor = attacker({ items: [dancer()] });
     captured.dice = [80, 20];
 
-    await _performDodge(actor, 0, "", 1, "", false, true);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: true });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Танец Среди Огня: Преимущество, отброшено 80");
@@ -409,7 +409,7 @@ describe("_performDodge: Танец Среди Огня (wdbc-u0by)", () => {
     const actor = attacker({ items: [dancer()] });
     captured.nextRoll = 10;
 
-    await _performDodge(actor, 0, "", 1, "", false, false);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: false });
 
     expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
   });
@@ -418,7 +418,7 @@ describe("_performDodge: Танец Среди Огня (wdbc-u0by)", () => {
     const actor = attacker();
     captured.nextRoll = 10;
 
-    await _performDodge(actor, 0, "", 1, "", false, true);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: true });
 
     expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
   });
@@ -427,7 +427,7 @@ describe("_performDodge: Танец Среди Огня (wdbc-u0by)", () => {
     const actor = attacker({ items: [dancer()] });
     captured.dice = [80, 20];
 
-    await _performDodge(actor, 0, "keepWorst", 1, "", false, true);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "keepWorst", hitsCount: 1, attackerUuid: "", isMelee: false, burst: true });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("навязанный переброс, отброшено 20");
@@ -441,7 +441,7 @@ describe("_performParry: Танец Среди Огня (wdbc-u0by)", () => {
     const actor = attacker({ items: [sword, dancer()] });
     captured.dice = [80, 20];
 
-    await _performParry(actor, 0, "", 1, true);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "", hitsCount: 1, burst: true });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Танец Среди Огня: Преимущество, отброшено 80");
@@ -453,7 +453,7 @@ describe("_performParry: Танец Среди Огня (wdbc-u0by)", () => {
     const actor = attacker({ items: [sword, dancer()] });
     captured.nextRoll = 10;
 
-    await _performParry(actor, 0, "", 1, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "", hitsCount: 1, burst: false });
 
     expect(captured.chat.at(-1).content).not.toContain("Танец Среди Огня");
   });
@@ -470,7 +470,7 @@ describe("_performDodge: Один Против Сотни (wdbc-u0by)", () => {
     const actor = attacker({ items: [bladeHost()] });
     captured.dice = [80, 20];
 
-    await _performDodge(actor, 0, "", 1, "", false, false, true);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: false, attackerIsHorde: true });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Один Против Сотни: Преимущество, отброшено 80");
@@ -481,7 +481,7 @@ describe("_performDodge: Один Против Сотни (wdbc-u0by)", () => {
     const actor = attacker({ items: [bladeHost()] });
     captured.nextRoll = 10;
 
-    await _performDodge(actor, 0, "", 1, "", false, false, false);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: false, attackerIsHorde: false });
 
     expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
   });
@@ -490,7 +490,7 @@ describe("_performDodge: Один Против Сотни (wdbc-u0by)", () => {
     const actor = attacker();
     captured.nextRoll = 10;
 
-    await _performDodge(actor, 0, "", 1, "", false, false, true);
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "", isMelee: false, burst: false, attackerIsHorde: true });
 
     expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
   });
@@ -502,7 +502,7 @@ describe("_performParry: Один Против Сотни (wdbc-u0by)", () => {
     const actor = attacker({ items: [sword, bladeHost()] });
     captured.dice = [80, 20];
 
-    await _performParry(actor, 0, "", 1, false, true);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "", hitsCount: 1, burst: false, attackerIsHorde: true });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Один Против Сотни: Преимущество, отброшено 80");
@@ -514,7 +514,7 @@ describe("_performParry: Один Против Сотни (wdbc-u0by)", () => {
     const actor = attacker({ items: [sword, bladeHost()] });
     captured.nextRoll = 10;
 
-    await _performParry(actor, 0, "", 1, false, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "", hitsCount: 1, burst: false, attackerIsHorde: false });
 
     expect(captured.chat.at(-1).content).not.toContain("Один Против Сотни");
   });
@@ -581,7 +581,7 @@ describe("_performParry: стрельба (wdbc-3e2x)", () => {
     if (blade) grantBladeShield();
     const sword = equippedMelee({ balance });
     const actor = attacker({ items: [sword] });
-    await _performParry(actor, 0, "Actor.attacker-1", hitsCount, false, false, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1", hitsCount, burst: false, attackerIsHorde: false, isMelee: false });
     return captured.chat.at(-1).content;
   }
 
@@ -616,7 +616,7 @@ describe("_performParry: стрельба (wdbc-3e2x)", () => {
     grantBladeShield();
     const sword = equippedMelee({ balance: 1 });
     const actor = attacker({ items: [sword] });
-    await _performParry(actor, 0, "Actor.attacker-1", 3);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1", hitsCount: 3 });
     expect(captured.chat.at(-1).content).toContain("снимает все 3");
   });
 });
@@ -652,7 +652,7 @@ describe("_performParry: стрельба в упор — Базовый кон�
 
   it("вплотную к стрелку (x=1, база 1×1) — Парирование доступно без Таланта", async () => {
     const { actor, attackerUuid } = setupContactScene({ distance: 1 });
-    await _performParry(actor, 0, attackerUuid, 1, false, false, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid, hitsCount: 1, burst: false, attackerIsHorde: false, isMelee: false });
     const html = captured.chat.at(-1).content;
     expect(html).not.toContain("Щит Клинков");
     expect(html).toContain("Порог");
@@ -661,7 +661,7 @@ describe("_performParry: стрельба в упор — Базовый кон�
   it("контакт: успех снимает попадания ПО СТЕПЕНИ (как рукопашная), не режется до 1", async () => {
     captured.dice = [10]; // Untrained Parry (WS 45 −20) → порог 25, бросок 10 → 2 степени
     const { actor, attackerUuid } = setupContactScene({ distance: 1 });
-    await _performParry(actor, 0, attackerUuid, 3, false, false, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid, hitsCount: 3, burst: false, attackerIsHorde: false, isMelee: false });
     const html = captured.chat.at(-1).content;
     // Не «снимает 1 из 3» (потолок дистанционного Щита Клинков) — контакт
     // работает как обычная рукопашная, снимает по числу степеней.
@@ -671,7 +671,7 @@ describe("_performParry: стрельба в упор — Базовый кон�
 
   it("далеко от стрелка (x=5) — без Таланта тот же отказ, что и раньше", async () => {
     const { actor, attackerUuid } = setupContactScene({ distance: 5 });
-    await _performParry(actor, 0, attackerUuid, 1, false, false, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid, hitsCount: 1, burst: false, attackerIsHorde: false, isMelee: false });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("Щит Клинков");
     expect(html).not.toContain("Порог");
@@ -682,7 +682,7 @@ describe("_performParry: стрельба в упор — Базовый кон�
     actor.uuid = "Actor.defender-1";
     globalThis.fromUuid = async uuid => (uuid === "Actor.attacker-1" ? { uuid, system: {} } : null);
     // canvas.tokens.placeables пуст — ни у кого нет токена.
-    await _performParry(actor, 0, "Actor.attacker-1", 1, false, false, false);
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.attacker-1", hitsCount: 1, burst: false, attackerIsHorde: false, isMelee: false });
     expect(captured.chat.at(-1).content).toContain("Щит Клинков");
   });
 });
@@ -705,7 +705,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(4);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3 }); // rank по умолчанию untrained
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("требует Навык «Парирование», продвинутый минимум до «Тренированное» (+10)");
     expect(html).not.toContain("Порог");
@@ -715,7 +715,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(4);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "trained" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("Порог");
     expect(html).not.toContain("требует Навык");
@@ -726,7 +726,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(5);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "trained" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("требует Навык «Парирование», продвинутый минимум до «Опытный» (+20)");
     expect(html).not.toContain("Порог");
@@ -736,7 +736,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(5);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "veteran" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     expect(captured.chat.at(-1).content).toContain("Порог");
   });
 
@@ -744,7 +744,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(6);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "veteran" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("требует Навык «Парирование», продвинутый минимум до «Ветеран» (+30)");
     expect(html).not.toContain("Порог");
@@ -754,7 +754,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(6);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "expert" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     expect(captured.chat.at(-1).content).toContain("Порог");
   });
 
@@ -762,7 +762,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(7);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3, skills: { parry: { rank: "expert" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("вообще невозможно");
     expect(html).not.toContain("Порог");
@@ -772,7 +772,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     const attackerUuid = setupSizeAttacker(3);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3 }); // untrained, но разницы Размеров нет
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("Порог");
     expect(html).not.toContain("требует Навык");
@@ -782,7 +782,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
     globalThis.fromUuid = async () => null;
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 3 });
-    await _performParry(actor, 0, "Actor.unknown");
+    await _performParry(actor, { extraMod: 0, attackerUuid: "Actor.unknown" });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("Порог");
     expect(html).not.toContain("требует Навык");
@@ -800,7 +800,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
       (uuid === attackerUuid ? { uuid, system: { size: 0, sizeTotal: 2 } } : null);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 0, sizeTotal: 0 });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("требует Навык «Парирование»");
     expect(html).toContain("+20");
@@ -812,7 +812,7 @@ describe("_performParry: Разница Размеров (wdbc-1rno)", () => {
       (uuid === attackerUuid ? { uuid, system: { size: 4 } } : null);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 0, sizeTotal: 3 });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).toContain("требует Навык «Парирование»");
     expect(html).toContain("+10");
@@ -829,7 +829,7 @@ describe("_performParry: текст отказа по Размеру", () => {
         (uuid === attackerUuid ? { uuid, system: { size: diff } } : null);
       const sword = equippedMelee({ balance: 0 });
       const actor = attacker({ items: [sword], size: 0 });   // untrained
-      await _performParry(actor, 0, attackerUuid);
+      await _performParry(actor, { extraMod: 0, attackerUuid });
       expect(captured.chat.at(-1).content).toContain(expected);
     }
   });
@@ -842,7 +842,7 @@ describe("_performParry: текст отказа по Размеру", () => {
       (uuid === attackerUuid ? { uuid, system: { size: 4 } } : null);
     const sword = equippedMelee({ balance: 0 });
     const actor = attacker({ items: [sword], size: 0, skills: { parry: { rank: "expert" } } });
-    await _performParry(actor, 0, attackerUuid);
+    await _performParry(actor, { extraMod: 0, attackerUuid });
     const html = captured.chat.at(-1).content;
     expect(html).not.toContain("«Ветеран» (+40)");
   });

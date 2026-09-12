@@ -24,7 +24,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -81,7 +82,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кистень"
+    "meleeCategory": "Кистень",
+    "damageSubtype": "crushing"
   },
   "_id": "IAb4O6Jq4HhduoNf",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

@@ -1,0 +1,53 @@
+{
+  "name": "Nova-class Frigate / Фрегат астартес класса «Нова»",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "VOyInFpl9FIDrRXg",
+  "system": {
+    "hullClass": "Фрегаты",
+    "sp": 45,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "",
+    "description": "",
+    "notes": "",
+    "shipProps": [],
+    "hull": {
+      "spaceMax": 43,
+      "powerGen": 0,
+      "turnArc": "90°",
+      "weaponCapacity": "1Н, 1НП",
+      "hullIntegrity": 40
+    },
+    "chars": {
+      "speed": 8,
+      "manoeuvrability": 23,
+      "detection": 15,
+      "voidShields": 0,
+      "armour": 20,
+      "turretRating": 1
+    }
+  },
+  "_id": "u8K5noIdHpCBPuwb",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1789081044058,
+    "modifiedTime": 1789081044058,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!u8K5noIdHpCBPuwb"
+}

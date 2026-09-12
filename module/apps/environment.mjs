@@ -131,8 +131,12 @@ export class EnvironmentApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Заметка ГМа (видна игрокам в виджете)
     el.querySelector("[name=note]")?.addEventListener("change", e => this._patch({ note: e.target.value.trim() }));
 
-    // Сброс к норме
-    el.querySelector("[data-act=reset]")?.addEventListener("click", () => this._patch(defaultEnv()));
+    // Сброс к норме. Селектор нарочно скопирован в границы своего контейнера
+    // (.wh-env) — на общей странице «Сцена» (scene-settings.mjs) el общий для
+    // Окружения и Завесы, а у обеих кнопок одинаковый data-act=reset
+    // (wdbc-gyj: без .wh-env первый querySelector на общем корне находил
+    // именно эту кнопку, и клик по ней стирал Завесу вместо Окружения).
+    el.querySelector(".wh-env [data-act=reset]")?.addEventListener("click", () => this._patch(defaultEnv()));
   }
 }
 

@@ -82,7 +82,8 @@
       <div class="wprop-chip">
         <span class="wprop-name">{{t.label}}</span>
         <span class="wprop-slash">X:</span>
-        <input type="number" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}" title="Значение X для этого типа"/>
+        <input type="text" class="xtype-x" data-type="{{t.type}}" value="{{t.x}}"
+               placeholder="напр. PR или PR+1" title="Значение X для этого типа — число или формула (PR, PR+1…)"/>
         <button type="button" class="wprop-remove xtype-remove" data-action="xtypeRemove" data-type="{{t.type}}" title="Убрать тип">✕</button>
       </div>
       {{/each}}
@@ -177,7 +178,8 @@
       <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
     </select>
     <label class="wr-label">Пробитие</label>
-    <input type="number" name="system.penetration" value="{{system.penetration}}" min="0" class="wr-input-xs"/>
+    <input type="text" name="system.penetration" value="{{system.penetration}}"
+           class="wr-input-xs" placeholder="напр. PR или PR*3"/>
   </div>
 
   {{!-- Урон в характеристику --}}
@@ -302,9 +304,10 @@
 <div class="item-section">
   <div class="item-section-title">БОНУСЫ ХАРАКТЕРИСТИК (пока поддерживается)</div>
   {{#if effectsMigrated}}
-  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Это поле актор больше не читает.</div>
-  {{else}}
+  <div class="drug-stat-hint">⚠ Перенесено в Активный эффект — правьте на вкладке ЭФФЕКТЫ. Ниже — остаток старого значения, только для просмотра, актор его больше не читает.</div>
+  {{/if}}
   <div class="weapon-props-section">
+    {{#unless effectsMigrated}}
     <div class="weapon-props-head">
       <label class="wr-label">Добавить</label>
       <select class="cbonus-add">
@@ -314,20 +317,25 @@
         {{/each}}
       </select>
     </div>
+    {{/unless}}
     {{#if charBonusesActive.length}}
     <div class="weapon-props-list">
       {{#each charBonusesActive as |cb|}}
       <div class="wprop-chip">
         <span class="wprop-name">{{cb.abbr}}</span>
-        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}" title="Прибавка к бонусу характеристики"/>
+        <input type="number" class="cbonus-value" data-stat="{{cb.stat}}" value="{{cb.value}}"
+               {{#if ../effectsMigrated}}disabled title="Не читается актором — значение из старого способа"{{else}}title="Прибавка к бонусу характеристики"{{/if}}/>
+        {{#unless ../effectsMigrated}}
         <button type="button" class="wprop-remove cbonus-remove" data-action="cbonusRemove" data-stat="{{cb.stat}}" title="Убрать">✕</button>
+        {{/unless}}
       </div>
       {{/each}}
     </div>
     {{/if}}
   </div>
+  {{#unless effectsMigrated}}
   <div class="drug-stat-hint">Бонусы применяются, пока психосила отмечена как поддерживаемая (галочка в бою/на вкладке ПСИ). Сверхъестественные характеристики задаются здесь как прибавка к бонусу (Unnatural).</div>
-  {{/if}}
+  {{/unless}}
 </div>
 
 {{!-- Прочие черты от силы (пока поддерживается) --}}

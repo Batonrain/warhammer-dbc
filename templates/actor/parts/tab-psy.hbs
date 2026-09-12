@@ -104,6 +104,7 @@
         <th>Дальность</th>
         <th class="col-narrow">Подд.</th>
         <th class="col-narrow">Цена</th>
+        {{#if hasSigilliteRunes}}<th class="col-narrow" title="Путь Силы «Руны Сигиллитов» манифестирует только изученные Руны (Improvised Rune — исключение ценой урона)">Руна</th>{{/if}}
         <th></th>
       </tr></thead>
       <tbody>
@@ -124,12 +125,19 @@
               {{#if p.sustainable}}<input type="checkbox" class="psy-sustain-cb" data-item-id="{{p.id}}" {{#if p.isSustained}}checked{{/if}} title="Поддерживать (−1 к текущему PR)"/>{{#if p.isSustained}}{{#if p.sustainedDegree}}<span class="psy-sustain-degree" title="Степень успеха психотеста, с которой манифестирована поддерживаемая сила">СУ {{p.sustainedDegree}}</span>{{/if}}{{/if}}{{else}}—{{/if}}
             </td>
             <td class="psy-cost-cell"><input type="number" class="psy-cost-input" data-item-id="{{p.id}}" value="{{p.cost}}" min="0" title="Цена в опыте (идёт в «Потрачено на Психосилы»)"/></td>
+            {{#if ../hasSigilliteRunes}}
+            <td class="psy-rune-cell">
+              {{#if p.runeLearned}}<span class="psy-rune-learned" title="Руна изучена — манифестируется через Путь «Руны Сигиллитов» без Импровизированной Руны">✓</span>
+              {{else if p.runeForbidden}}<span class="psy-rune-forbidden" title="Божественная психосила/Либрариум — Руну нельзя изучить без Таланта «Prometheus Fire / Прометеев Огонь»">—</span>
+              {{else}}<button type="button" class="psy-learn-rune-btn" data-item-id="{{p.id}}" title="Изучить Руну за {{p.runeLearnCost}} опыта (требуется бPR не ниже PR психосилы)">{{p.runeLearnCost}}</button>{{/if}}
+            </td>
+            {{/if}}
             <td class="psy-actions-cell"><button type="button" class="psy-manifest-btn" data-item-id="{{p.id}}" title="Манифестировать (психотест)">Манифест</button></td>
           </tr>
-          <tr class="ability-detail-row" data-item-id="{{p.id}}" style="display:none;"><td colspan="10"><div class="ability-detail-text">{{#if p.effect}}{{p.effect}}{{else}}—{{/if}}</div></td></tr>
+          <tr class="ability-detail-row" data-item-id="{{p.id}}" style="display:none;"><td colspan="{{#if ../hasSigilliteRunes}}11{{else}}10{{/if}}"><div class="ability-detail-text">{{#if p.effect}}{{p.effect}}{{else}}—{{/if}}</div></td></tr>
           {{/each}}
         {{else}}
-          <tr class="items-empty psy-empty"><td colspan="10"><span class="psy-empty-sigil">✧</span> <em>Нет психосил — добавьте ＋ или перетащите из библиотеки</em></td></tr>
+          <tr class="items-empty psy-empty"><td colspan="{{#if hasSigilliteRunes}}11{{else}}10{{/if}}"><span class="psy-empty-sigil">✧</span> <em>Нет психосил — добавьте ＋ или перетащите из библиотеки</em></td></tr>
         {{/if}}
       </tbody>
     </table>

@@ -2,8 +2,9 @@
 //
 // Следствие метки Avatar of Slaughter/Аватар Резни (wdbc-sk8s) через общий
 // реестр правил: rules/predicates.mjs::avatarOfSlaughterOffTarget +
-// rules/library/avatar-of-slaughter.mjs, зарегистрировано как источник
-// "avatarOfSlaughter" в rules/sources.mjs. Сама выдача метки —
+// rules/library/core.mjs (правило "avatarOfSlaughter.penalty", отдаётся
+// источником "core" в rules/sources.mjs — раньше был отдельным источником
+// "avatarOfSlaughter", слит в core.mjs, wdbc-shr). Сама выдача метки —
 // module/combat/avatar-of-slaughter.mjs (см. соответствующий тест).
 
 import "../support/foundry-stub.mjs";

@@ -63,7 +63,8 @@
     "meleeCategory": "Щит",
     "shieldAP": 4,
     "shieldZones": "Т+Р1",
-    "shieldForm": "Тарг"
+    "shieldForm": "Тарг",
+    "damageSubtype": "crushing"
   },
   "_id": "TQThFLgPdAU5R5QF",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

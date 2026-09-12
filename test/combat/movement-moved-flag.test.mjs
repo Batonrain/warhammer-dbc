@@ -221,3 +221,35 @@ describe("moveDegreeThisTurn (Snapshot/Выстрел Навскидку, wdbc-1
     await expect(markMoveDegreeThisTurn(null, "half")).resolves.toBeUndefined();
   });
 });
+
+// wdbc-8zi (п.7): declareDisengage — единственное из пяти боевых Действий
+// Движения со своей веткой (Вызов/Challenge), которую остальные тесты этого
+// файла не задевают вовсе — они гоняют только общие для всех пяти ветки
+// (Повален/обе ноги/обе стопы). Dialog.confirm — тот же приём, что у
+// диалога Acrobatics−10 выше (foundry-stub.mjs, captured.confirmAnswer).
+describe("Вызов (Challenge) спрашивает подтверждение перед Выходом из Боя", () => {
+  const challenged = () => fakeActor({ conditions: { challenged: true } });
+
+  it("отказ в диалоге — Движение не происходит, флаги не ставятся", async () => {
+    captured.confirmAnswer = false;
+    const actor = challenged();
+    await declareDisengage(actor);
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBeUndefined();
+    expect(actor.getFlag("warhammer-dbc", "disengageActive")).toBeUndefined();
+  });
+
+  it("подтверждение — Выход из Боя проходит как обычно", async () => {
+    captured.confirmAnswer = true;
+    const actor = challenged();
+    await declareDisengage(actor);
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
+    expect(actor.getFlag("warhammer-dbc", "disengageActive")).toBe(true);
+  });
+
+  it("нет Вызова — диалог не спрашивается вовсе", async () => {
+    captured.confirmAnswer = false; // если бы диалог всё же спросили — блокировало бы
+    const actor = fakeActor();
+    await declareDisengage(actor);
+    expect(actor.getFlag("warhammer-dbc", "movedThisTurn")).toBe(true);
+  });
+});

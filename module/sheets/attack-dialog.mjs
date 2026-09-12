@@ -38,6 +38,8 @@ import { isRoundCapabilityAvailable, markRoundCapabilityUsed } from "../apps/gam
 import { mountPairFor, mountSelectiveMod, SELECTIVE_MODS,
          mountRangedPenalty, MOUNT_SPEEDS, mountTraits, handsNeeded } from "../rules/mount.mjs";
 import { vehicleCoverMod } from "../rules/vehicle.mjs";
+import { ARMOUR_SIDES } from "../constants/vehicle.mjs";
+import { isWalkerVehicle } from "../rules/walker.mjs";
 import { legionAttackPenalty, LEGION_FIT_FLAG, OVERSIZED_FIT_FLAG } from "../rules/legion-fit.mjs";
 import { ogrynAttackPenalty, OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { meleeTrainingStatus, weaponTrainingPenalty } from "../rules/weapon-training.mjs";
@@ -706,6 +708,49 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
         <b>${mountRiderPen}</b>${mountRiderPen === SELECTIVE_MODS.riderCovered ? " (Укрытие)" : ""} сверх штрафа зоны.
       </div>` : "";
 
+  // ── Сторона брони техники (wdbc-kp1o) ────────────────────────────────────
+  //  До этой правки диалог атаки ПЕРСОНАЖА вообще не спрашивал сторону —
+  //  combat/damage.mjs подставлял "side" (Бортовую) безусловно. Выбор
+  //  Лоб/Борт/Корма уже существовал только в стрельбе САМОЙ машины по другой
+  //  (sheets/vehicle-sheet.mjs, #vf-side) — тот же список ARMOUR_SIDES,
+  //  тот же приём (выбирается в окне атаки, не при применении урона).
+  const targetIsVehicle = attackCtx.targetActor?.type === "vehicle";
+  // Шагоход, п.9 книжного правила Ходовой (wdbc-6wzt): «Рукопашные атаки по
+  // Шагоходу не могут через Избирательную атаку −20 попадать в Кормовую
+  // броню с любой другой стороны» — заперто только для рукопашной; дально-
+  // бойная (и рукопашная по НЕ-Шагоходу) правилом не ограничена.
+  const targetIsWalkerVehicle = targetIsVehicle && isWalkerVehicle(attackCtx.targetActor);
+  const rearCalledShotBlockedByWalker = isMelee && targetIsWalkerVehicle;
+  const VEHICLE_REAR_CALLED_PENALTY = -20;
+  // Разрешён только «с Лба/Борта» (формулировка тикета) — уже выцеленная
+  // Корма не нуждается в Избирательной атаке САМА В СЕБЯ, а Шагоходу в
+  // рукопашной книга запрещает обходной манёвр целиком (см. выше).
+  function resolveVehicleSide(f) {
+    if (!targetIsVehicle) return { side: "", penalty: 0, calledRear: false };
+    const picked = f.vehicleSide || "side";
+    const canCallRear = picked !== "rear" && !rearCalledShotBlockedByWalker;
+    const calledRear = canCallRear && !!f.vehicleRearCalled;
+    return {
+      side: calledRear ? "rear" : picked,
+      penalty: calledRear ? VEHICLE_REAR_CALLED_PENALTY : 0,
+      calledRear
+    };
+  }
+  const vehicleSideHtml = targetIsVehicle ? `
+      <div class="av-row">
+        <label>Сторона брони цели</label>
+        <select id="atk-vehicle-side" class="av-input av-wide">
+          ${Object.entries(ARMOUR_SIDES).map(([key, label]) =>
+            `<option value="${key}" ${key === "side" ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+      </div>
+      <div class="av-row" id="atk-vehicle-rear-row">
+        <label class="attack-mod-check" ${rearCalledShotBlockedByWalker ? `title="Шагоход, п.9 Ходовой (стр. Книга Машин): рукопашная не может Избирательной атакой заходить в Корму с Лба/Борта"` : ""}>
+          <input type="checkbox" id="atk-vehicle-rear-called" ${rearCalledShotBlockedByWalker ? "disabled" : ""}/>
+          <span>Избирательная атака в Корму (${VEHICLE_REAR_CALLED_PENALTY}) — с Лба/Борта${rearCalledShotBlockedByWalker ? " — недоступно Шагоходу в рукопашной" : ""}</span>
+        </label>
+      </div>` : "";
+
   // Pistol Grip (wdbc-8vp1, стр. 166): Дальность ×0.5 действует ТОЛЬКО пока
   // выбран Хват, который дал сам мод (в отличие от безусловного modFx.rangeMult
   // выше) — считается один раз от стартового gripKey, как doubleGripActive.
@@ -1073,6 +1118,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     specificMods,
     sys,
     techSectionsHtml,
+    vehicleSideHtml,
     wp,
     wpDialogHtml,
   });
@@ -1133,6 +1179,10 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // (f.mountPenalty — штраф Избирательной атаки по зоне пары): это два
       // разных мода одной верховой атаки, см. комментарий у readAttackForm.
       { label: "Штраф стрельбы с седла", value: f.mountRangedMod },
+      // Избирательная атака в Корму техники (wdbc-kp1o, стр. Ходовой п.9) —
+      // отдельная строка от "Избирательная атака" выше (та зона тела/машины
+      // тут не выбирается вовсе, это отдельный штраф за смену стороны брони).
+      { label: "Избирательно в Корму", value: resolveVehicleSide(f).penalty },
       { label: "Атака всем телом",     value: f.extraBonus },
       // Парное оружие (wdbc-3jlm): −20 книги минус скидки Талантов ветки.
       // Отдельной строкой, а не в «Доп. мод»: игрок должен видеть, что это
@@ -1200,6 +1250,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     thresholdOf,
     thresholdParts,
     resolveSelectionSafe,
+    resolveVehicleSide,
     computeBaseOptions,
     computeGripOptions,
     computeManeuverOptions,

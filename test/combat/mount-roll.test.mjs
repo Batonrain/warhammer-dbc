@@ -173,6 +173,46 @@ describe("Уклонение верхом: не трогаем встречну�
   });
 });
 
+// wdbc-orxf: попадание по скакуну — Комбинированный тест (стр. 25), один
+// бросок против НАИМЕНЬШЕГО из двух Пределов, а не два броска с требованием
+// пройти оба (было расхождение с rules/test-kind.mjs::combinedThreshold).
+describe("Уклонение верхом: попадание по скакуну — один бросок, не два", () => {
+  it("катает ровно один d100, а не по одному на каждую половину", async () => {
+    resolveMountAs(beast());
+    // Уклонение (ag 40, Dodge нетренированное −20) = 20; Навык управления
+    // (ag 40, Survival тренированное +10) = 50 — Уклонение ниже.
+    const r = rider({ ag: 40, survival: "trained" });
+    const promise = showMountedDodgeDialog(r, 0);
+    await flush();
+
+    captured.nextRoll = 15;
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "mount" }));
+    await promise;
+
+    expect(captured.rolls).toEqual(["1d100"]);
+    const card = captured.chat[0].content;
+    expect(card).toContain("Порог <b>20</b>");
+    expect(card).toContain("Уклонение успешно");
+  });
+
+  it("когда ниже Навык управления, а не Уклонение — Порог берётся по нему", async () => {
+    resolveMountAs(beast());
+    const r = rider({ ag: 40, survival: "untrained" }); // Навык управления = 40−20 = 20
+    r.system.skills.dodge = { rank: "trained", total: 0 }; // Уклонение = 40+10 = 50
+    const promise = showMountedDodgeDialog(r, 0);
+    await flush();
+
+    captured.nextRoll = 30; // выше Порога (20) — провал; но прошёл бы Уклонение (50)
+    await captured.dialog.buttons.roll.callback(fakeHtml({ "#md-target": "mount" }));
+    await promise;
+
+    expect(captured.rolls).toEqual(["1d100"]);
+    const card = captured.chat[0].content;
+    expect(card).toContain("Порог <b>20</b>");
+    expect(card).toContain("Уклонение провалено");
+  });
+});
+
 // Очередь (несколько попаданий одной атаки) верхом — та же механика, что у
 // пешего Уклонения (стр. 12 «Избегание множественных попаданий»): Успех
 // снимает попадания по одному за степень, не встречная проверка.

@@ -191,6 +191,17 @@
   border: 1px solid var(--pc); box-shadow: 0 0 12px -5px var(--pc);
 }
 .warhammer-dbc .psy-manifest-btn:hover { box-shadow: 0 0 16px -2px var(--pc); transform: translateY(-1px); }
+/* wdbc-exjp: колонка «Руна» (Path «Руны Сигиллитов» — только изученные Руны). */
+.warhammer-dbc .psy-rune-cell { text-align: center; }
+.warhammer-dbc .psy-rune-learned { color: #6fe6a0; font-weight: 700; cursor: help; }
+.warhammer-dbc .psy-rune-forbidden { color: #8a97ab; cursor: help; }
+.warhammer-dbc .psy-learn-rune-btn {
+  width: auto; padding: 1px 7px; border-radius: 3px; cursor: pointer; font-family: inherit;
+  font-size: 0.76em; font-weight: 700; white-space: nowrap;
+  color: #e7eefb; background: rgba(0,0,0,0.4);
+  border: 1px solid color-mix(in srgb, var(--pc) 40%, #2a3340);
+}
+.warhammer-dbc .psy-learn-rune-btn:hover { border-color: var(--pc); box-shadow: 0 0 8px -3px var(--pc); }
 .warhammer-dbc .psy-empty { text-align: center; }
 .warhammer-dbc .psy-empty td { padding: 16px 8px !important; color: #8a97ab; font-style: italic; }
 .warhammer-dbc .psy-empty-sigil { color: var(--pc); font-style: normal; margin-right: 4px; animation: psyPip 2.4s ease-in-out infinite; }

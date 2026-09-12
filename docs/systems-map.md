@@ -89,7 +89,43 @@
   попадание» (мод брони, Роба Чемпиона, Минный Плуг техники).
 - `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
-  поглощение, локация, критический эффект — центральный расчёт.
+  поглощение, локация, критический эффект — центральный расчёт. Полный
+  иммунитет к урону (не только к побочному эффекту попадания) — ранние
+  `return` в начале `applyDamageToActor`, рядом с `sealedFullSuit`: по
+  `damageType`+`melee` (`damageImmunity.meleeImpact/.meleeRending/.
+  rangedImpact`) и по свойству оружия Blast/Spray (переиспользует namespace
+  `weaponPropertyImmunity.*`, но с другим гейтом — wdbc-1rno, Strange
+  Invulnerability).
+- Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
+  12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
+  у оружия (`data/item/weapon.mjs`), `damageImmunity.subtype.*` (иммунитет),
+  `system.absorption.vsSubtype.<подвид>` (AP-бонус, читает
+  `combat/armor-properties.mjs::resolveArmorAbsorptionAP`), `ARMOR_PROPERTIES`
+  auto-директивы `noApVsSubtype`/`doubleApVsSubtype`/`tripleApVsSubtype`/
+  `apBonusVsSubtype` (`constants/items.mjs`) для свойств брони (Conductive,
+  Flak, Vulcanized, Flak Lining), Конструктор-вид `kind:"absorption"` (тот же
+  AP-бонус, но для НЕ-брони — Мутаций/Черт/Талантов) и `kind:"shieldSubtype"`
+  (только `type:"forcefield"`, читается НАПРЯМУЮ с самого предмета щита в
+  момент броска — `_rollActiveShield`, не через синтетический ActiveEffect —
+  щит либо не срабатывает против подвида (mode:"exclude", Нерушимая Лента),
+  либо меняет рейтинг для этого броска (mode:"override", Морозное Сердце)).
+  Исключение из общего конвейера: тик Горения (`combat/condition-ticks.mjs`)
+  игнорирует броню целиком по умолчанию — свойство `fireproof` даёт точечное
+  исключение (собственное AP тела ИМЕННО этого предмета, удвоенное — Броня
+  Огненного Дракона). Ещё два вида щита на том же принципе прямого запроса к
+  предмету (wdbc-5knb/wdbc-giae, 12.09.2026): `kind:"shieldVsCondition"` —
+  щит бросается против ТИКА состояния (не только против попадания оружием) и
+  снимает состояние целиком при успехе (Морозное Сердце против Горения);
+  `kind:"shieldArmorGate"` — щит срабатывает, только если локация попадания
+  реально закрыта надетой бронёй, а на Торсе стоит Жёсткая броня (Морозное
+  Сердце: «должен быть установлен жёсткий нагрудник»). Иммунитет к СВОЙСТВУ
+  оружия (не к типу/подвиду урона) — третий случай namespace'а
+  `weaponPropertyImmunity.*`: `.deflagrate`/`.melta` гасят конкретно
+  доп.кубик Выгорания/удвоение Пробития Мельты в упор, живой запрос в
+  `combat/attack.mjs` по первой цели (Керамит, wdbc-nquc, 12.09.2026).
+  `jointLining` (`constants/items.mjs`→`combat/armor-properties.mjs`) — AP
+  Сочленений/Шеи гарантированным минимумом поверх обычного ÷3 (Панцирь
+  Темпестус, wdbc-aq4c, 12.09.2026).
 - `module/sheets/tabs/{death,healing,wounds}.mjs` — UI Смерти, Лечения,
   расчётов Ран на листе.
 - Именные: `apps/ablative-ap-shield.mjs` (Роба Чемпиона), `apps/
@@ -290,7 +326,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `rules/daemon-locus.mjs` (радиус Локуса Герольда), `daemonblood.mjs`
   (+`apps`, психосила «Кровь Демонов»).
 - Бесчестие: `apps/infamy-points.mjs` (общий пул), `rules/starting-infamy.mjs`,
-  `temp-infamy.mjs` (временное, отдельное от обычного).
+  `temp-infamy.mjs` (временное, отдельное от обычного) — начисляется «Гласом
+  Божьим»/«Стервятником», тратится правым кликом на карточке своего броска
+  (Переброс/Усиление), честно сгорает в конце Личной Команды; виден на листе
+  получателя ВСЕГДА (значок в шапке рядом с Судьбой), не только у Хаоситов
+  (wdbc-a23, 12.09.2026 — раньше был виден, только если Мировоззрение
+  героя).
 - Именные: `blood-shield.mjs` (+`apps`), `eternal-war.mjs` (+`apps`,
   Принц Кхейна), `kings-plate.mjs` (+`apps`), `determination-to-fight.mjs`,
   `one-against-a-hundred.mjs`, `dominator.mjs`, `library/avatar-of-slaughter.
@@ -334,19 +375,30 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `just-the-light.mjs`, `conjure-wraith.mjs`, `dread-wail.mjs` (+`apps`),
   `resplendent-raiment.mjs` (+`apps`), `apps/herd-spirits-summon.mjs`,
   `apps/demon-summon.mjs`.
-- **Руны Сигиллитов — ЗАПЛАНИРОВАНО, кода нет** (wdbc-fsl9, тикет открыт).
-  Ни `rules/sigillite-runes.mjs`, ни `rules/sigillite-runes-combat.mjs`, ни
-  папки `packs-src/traits/Элитные_архетипы/Сигиллит/` в репозитории не
-  существует — проверено 10.09.2026 при приёме стопки. Запись оставлена
-  ЗАМЫСЛОМ, чтобы не потерять разбор, и намеренно помечена как нереализованная:
-  этот файл отвечает на вопрос «где лежит код», и описание несуществующих
-  модулей здесь дороже отсутствия записи — следующая сессия построит поверх
-  «готового» пула свою механику и упрётся в пустоту.
-  Замысел: числовой пул (старт боя, +бPR в начале Хода, потолок
-  20+Талант+Археотех) + трата (бPR психосилы×2, Рунный Удар), альтернативный
-  режим манифестации поверх обычного конвейера (`sheets/tabs/psychic.mjs`),
-  включаемый Чертой «Магия Сигиллитов»; не Состояние — у записи реестра
-  Состояний нет поля под растущий максимум.
+- **Руны Сигиллитов** (wdbc-fsl9, 10.09.2026) — `rules/sigillite-runes.mjs`
+  (числовой пул: старт боя, +бPR в начале Хода, потолок 20+Талант+Археотех,
+  список изученных Рун на самой психосиле — wdbc-exjp, 12.09.2026) +
+  `rules/sigillite-runes-combat.mjs` (трата = бPR психосилы×2, Рунный Удар,
+  диалог выбора Заготовленной Руны в начале боя — wdbc-p2it, 12.09.2026).
+  Альтернативный режим манифестации поверх обычного конвейера
+  (`sheets/tabs/psychic.mjs`), включается ТОЛЬКО Чертой «Магия Сигиллитов»
+  (`packs-src/traits/Элитные_архетипы/Сигиллит/`) — на обычных псайкеров не
+  влияет никак. Не Состояние (Condition) — у записи реестра Состояний нет
+  поля под растущий максимум, решение задокументировано в коде. Подключены
+  числами все 6 Талантов ветки: Библиотека Рун/Вычислитель Рун/Рунный Удар
+  (wdbc-fsl9), Импровизированная Руна/Прометеев Огонь (wdbc-exjp),
+  Заготовленная Руна — выбор одной Руны на бой + скидка I.b на её первую
+  манифестацию, пока не потрачена (wdbc-p2it). Путь Силы «Руны Сигиллитов»
+  умеет комбинировать Инкантацию/Медитацию/Нечестивые Символы одновременно
+  (не взаимоисключающе, как у обычных Путей) — `constants/psyker.mjs::
+  subPathTotals` (wdbc-qd6w, 12.09.2026). Живая проверка базовой экономики
+  (пул, начисление, окно манифестации, три первых Таланта) — wdbc-lx57,
+  12.09.2026, все пункты подтверждены. Три Таланта, добавленные ПОСЛЕ этой
+  проверки (Импровизированная Руна/Прометеев Огонь/Заготовленная Руна) и
+  совмещение Путей — живьём ещё не проверялись.
+  (На origin/main этой записи не было — там кода ещё не было, feature жила
+  только в локальной main до мерджа конца сессии wdbc-5i0t 11.09.2026;
+  запись выше верна после мерджа, когда код уже в дереве.)
 
 ## 15. Крафт, Мастерская, Качество, Разгрузка
 
@@ -402,20 +454,44 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `combat/vehicle.mjs` — Вираж/Таран/Трудный Ландшафт/урон по стороне брони.
 - `sheets/vehicle-sheet.mjs`.
 - Пилот Дредноута — см. §9 (`rules/dreadnought.mjs`).
+- **Шагоход (Walker)** — `rules/walker.mjs` (арифметика без Foundry) +
+  `combat/walker.mjs` (обвязка): Ходовая «Шагоход» двигается и бьёт КАК
+  ПЕРСОНАЖ, поэтому её Парирование/Уклонение (−Размер×10, Уклонение
+  комбинировано с Operate−10), Натиск (+20 рукопашной машины на Раунд),
+  Опрокидывание вместо сбивания с ног, поворот 180° вне Хода (Combat Master
+  пилота — до ½WS.b раз) и «всё оружие за одно действие» считает пилот, а не
+  машина. Дословный текст девяти книжных пунктов —
+  `constants/vehicle.mjs::CHASSIS_FULL_NOTES.walker`. Провал теста Трудного
+  Ландшафта даёт кнопку «Опрокинуть Шагоход» вместо молчаливого no-op —
+  `combat/vehicle.mjs::_resolveTerrain` + `combat/walker.mjs::
+  showTipOverDialog` (wdbc-0oe, 12.09.2026). Все девять пунктов живьём
+  проверены реальным боем на тестовом акторе — wdbc-wg78, 12.09.2026,
+  расхождений с книгой не найдено.
+- **Выбор стороны брони при атаке персонажа по технике** (wdbc-kp1o,
+  11.09.2026) — `sheets/attack-dialog.mjs` + `sheets/attack/{dialog,form,
+  markup}.mjs` показывают Лоб/Борт/Корму и опцию «Избирательная атака в
+  Корму −20» (с Лба/Борта), когда цель — vehicle; проброс до
+  `damageData.side` через `combat/attack.mjs` → `combat/attack-card.mjs` →
+  `hooks.mjs` → `combat/damage.mjs` (fallback на `"side"`, если сторона не
+  выбрана). Реализует п.9 Шагохода выше: `rearCalledShotBlockedByWalker =
+  isMelee && isWalkerVehicle(target)` — рукопашная Избирательная атака в
+  Корму по Шагоходу запрещена, дальнобойная и атака по обычной технике —
+  разрешена.
 
 ## 19. Корабли, Космический бой, Звёздные системы
 
 - `data/actor/ship.mjs`, `rules/ship.mjs`, `constants/ship.mjs`.
-- `constants/{ship-combat,ship-corruption,ship-properties,ship-quality,
-  ship-tokens}.mjs`.
+- `constants/{ship-combat,ship-corruption,ship-properties,ship-quality}.mjs`.
 - `data/item/{component,ship-hull,cargo,torpedo,small-craft,celestial-body}.
   mjs`.
 - `data/actor/star-system.mjs`, `constants/star-system.mjs`,
   `constants/warp-travel.mjs` (варп-переходы).
 - `apps/{ship-hud,ship-hull,ship-hull-library,systems-overview}.mjs`,
   `sheets/{ship-sheet,hull-picker,star-system-sheet}.mjs`.
-- `combat/{ship-attack,ship-node-damage}.mjs` — движок автоматизации боевых
-  Свойств узлов и реакции узла на повреждение.
+- `combat/{ship-attack,ship-node-damage,ship-tokens}.mjs` — движок
+  автоматизации боевых Свойств узлов, реакции узла на повреждение и иконки/
+  размеры/цвета токенов кораблей (переехал из constants/, wdbc-ye6 — только
+  он там тянул живой кэш компендиума из apps/).
 - `migrations/ship-hulls.mjs` — перевод легаси-узлов «корпус» на shipHull.
 
 ## 20. Фракции, Отношения, Социум

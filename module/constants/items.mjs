@@ -55,6 +55,22 @@ export const DAMAGE_TYPES = {
   chemical: "Химический"
 };
 
+// Подвиды урона в скобках из книги (wdbc-q0q8): у Энергетического их три
+// (Электрический/Огненный/Лазерный), у остальных широких типов — по одному
+// или ни одного (Режущий подвида не даёт). `parent` — какой DAMAGE_TYPES
+// этот подвид уточняет, читает combat/attack-weapon.mjs при подстановке
+// умолчания и content-пасс при валидации «подвид совпадает с типом урона
+// профиля». Пустая строка "" на оружии/профиле — «книга не называет подвид»,
+// это подавляющее большинство предметов, а не пробел данных.
+export const DAMAGE_SUBTYPES = {
+  crushing:      { label: "Дробящий I(Cr)",      parent: "impact",   book: "I(Cr)" },
+  fragmentation: { label: "Осколочный X(Fr)",    parent: "blast",    book: "X(Fr)" },
+  electrical:    { label: "Электрический E(El)", parent: "energy",   book: "E(El)" },
+  flame:         { label: "Огненный E(Fl)",      parent: "energy",   book: "E(Fl)" },
+  laser:         { label: "Лазерный E(Ls)",      parent: "energy",   book: "E(Ls)" },
+  toxic:         { label: "Токсический C(Tx)",   parent: "chemical", book: "C(Tx)" }
+};
+
 export const AVAILABILITY = {
   "-5": "−5 Повсеместно",
   "-4": "−4 Распространено",
@@ -133,8 +149,20 @@ export const ARMOR_MOD_GROUPS = {
 // Избирательном попадании в Сочленение/Глаз (полностью, сверх базового правила
 // ÷3 — см. resolveArmorAbsorptionAP); noJointReduction — у этой брони нет
 // сочленений, которые можно выцелить (Мягкая): базовое ÷3 к ней не применяется,
-// идёт полный AP; blocksPrimitiveDouble — Примитивное оружие атакующего не
-// удваивает AP этой брони; runesOfProtection — на каждое попадание извне
+// идёт полный AP; jointArmour (rating) — ГАРАНТИРОВАННЫЙ МИНИМУМ AP при
+// попадании в Сочленение/Шею (после обычного ÷3, Math.max — никогда не хуже
+// расчётного значения, только поднимает низкое); blocksPrimitiveDouble —
+// Примитивное оружие атакующего не удваивает AP этой брони;
+// noApVsSubtype/doubleApVsSubtype/apBonusVsSubtype —
+// та же тройка, что noApVsType/doubleApVsType/apBonusVsType выше, но по
+// подвиду урона (DAMAGE_SUBTYPES) вместо широкого типа — на уровень точнее,
+// читает combat/damage.mjs через system.absorption.vsSubtype (wdbc-q0q8).
+// conductive/flak переведены на них 12.09.2026 — книжная сверка (core.json,
+// стр. 226-227) дала дословную цитату: «Она не дает AP от E(El) урона»
+// (Conductive) и «Удваивает AP против X(Fr) урона» (Flak) — оба уже в
+// оригинале говорят про подвид, не про весь широкий тип, открытый вопрос
+// закрыт не предположением, а текстом книги.
+// runesOfProtection — на каждое попадание извне
 // автоматический тест W+0+(бPR×5) (как Активный Щит — исход всегда ≥0, выбор
 // «пробовать» не бывает «нет»), +(бPR+Успехи+4) AP при успехе / +бPR при
 // провале, добавляется к armorAP этой локации ДО Копья/Пробития
@@ -143,8 +171,35 @@ export const ARMOR_MOD_GROUPS = {
 export const ARMOR_PROPERTIES = {
   blinders:   { label: "Blinders / Шоры",        desc: "Шлем. Уменьшает угол обзора до X°." },
   cloak:      { label: "Cloak / Плащ",            desc: "Не защищает с фронта 90°, кроме особых позиций.", auto: { frontArcNoProtect: true } },
-  conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона.", auto: { noApVsType: "energy" } },
-  flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий.", auto: { doubleApVsType: "blast" } },
+  conductive: { label: "Conductive / Проводящая", desc: "Не даёт AP от E(El) урона.", auto: { noApVsSubtype: "electrical" } },
+  flak:       { label: "Flak / Флак",             desc: "Удваивает AP против X(Fr) урона, кроме прямых попаданий.", auto: { doubleApVsSubtype: "fragmentation" } },
+  // Вулканизированный Плащ (wdbc-q0q8, стр. 230): «Утраивает AP против E(El)
+  // урона» — единственный известный предмет с ×3 (не ×2, как Flak), поэтому
+  // свой auto-ключ tripleApVsSubtype, а не переиспользование doubleApVsSubtype.
+  vulcanized: { label: "Vulcanized / Вулканизированная", desc: "Утраивает AP против E(El) урона.", auto: { tripleApVsSubtype: "electrical" } },
+  // Броня Огненного Дракона (wdbc-q0q8, aeldari.json): «Их AP работает против
+  // урона от Огня и удваивается против E(Fl) урона» — НЕ про обычный конвейер
+  // попадания (там AP брони и так всегда действует против любого типа урона,
+  // добавлять нечего), а про исключение из «Горение игнорирует броню целиком»
+  // (combat/condition-ticks.mjs, стр. «Раны и Урон» — тик Горения бьёт
+  // applyWoundLoss напрямую, минуя весь конвейер урона). auto здесь НЕ
+  // читается aggregateArmorAuto (это не про попадание) — condition-ticks.mjs
+  // сканирует resolveArmorProps сам, берёт AP ТЕЛА именно этого предмета
+  // (не суммарное AP актора — «их AP», не общее), удваивает.
+  fireproof:  { label: "Fireproof / Огнеупорная", desc: "Собственное AP тела (удвоенное) применяется против урона от тика Горения, который иначе полностью игнорирует броню.", auto: { apVsBurningBody: true } },
+  // Панцирь Темпестус (wdbc-q0q8, стр. 229): «встроенный нижний слой флак-
+  // пластин... AP 8 против X(Fr) урона». Число ФИКСИРОВАНО книгой (не выбор
+  // игрока), но механизм те же propRatings, что у Protective/Gorget — не
+  // добавляем отдельного «фиксированного» auto-ключа ради одного предмета.
+  flakLining: { label: "Flak Lining / Флак-подложка", desc: "+X AP против X(Fr) урона (скрытый слой флак-пластин).", rating: true, auto: { apBonusVsSubtype: "fragmentation" } },
+  // Панцирь Темпестус (wdbc-aq4c, стр. 229): второе число ТОЙ ЖЕ фразы книги,
+  // что уже дала flakLining выше («...AP 4 на сочленениях и AP 8 против X(Fr)
+  // урона») — тот же встроенный слой флак-подложки, но другая семантика и
+  // другое число: не бонус против типа/подвида урона, а ГАРАНТИРОВАННЫЙ
+  // МИНИМУМ AP на попадании в Сочленение/Шею (стр. 34: обычно ÷3 от AP
+  // локации, округление вниз). Свой rating-ключ, а не переиспользование
+  // flakLining — числа разные (4 и 8), одним полем их не выразить.
+  jointLining: { label: "Joint Lining / Флак-подложка сочленений", desc: "Гарантирует минимум X AP при попадании в Сочленение/Шею (не хуже обычного деления AP локации на 3).", rating: true, auto: { jointArmour: true } },
   // rating: X — порог 1d10 (см. desc), на X+ случайное попадание в голову
   // переносится в Торс. Хранится в system.propRatings.gorget (armor.mjs) —
   // тот же свободный реестр, что и у Protective. Само использование в бою —

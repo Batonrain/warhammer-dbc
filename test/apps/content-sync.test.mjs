@@ -150,6 +150,42 @@ describe("buildSyncReport / applySyncReport", () => {
     }]);
     expect(conflictEntry).toBeTruthy(); // конфликт остался неотмеченным — не в updateCalls
   });
+
+  // wdbc-daz п.5: у ObjectField (system.charBonus и т.п.) Foundry
+  // (common/data/fields.mjs, ObjectField#_updateDiff) СЛИВАЕТ новое значение
+  // со старым через diffObject/mergeObject, а не заменяет целиком — снятый в
+  // паке подключ иначе оставался бы на актёре и подсвечивался бы «есть
+  // обновление» на каждом следующем прогоне «Обновить мир». Подтверждено
+  // эмпирически на настоящем DataModel этой версии Foundry (не по докам):
+  // update({charBonus:{ws,bs}}) поверх {ws,bs,ag} оставляет ag на месте.
+  it("поле-объект: применение явно удаляет подключ, который пак убрал", async () => {
+    const packArmor = doc("u2", "Броня", "armor", { charBonus: { ws: 10, bs: 3 } });
+    const indexArmor = buildPackIndex([packArmor]);
+    const actorD = {
+      id: "a4", name: "Актёр Г",
+      items: [item({
+        id: "i4", name: "Броня", type: "armor", src: "u2",
+        system: { charBonus: { ws: 5, bs: 3, ag: 2 } },
+        baseline: { charBonus: { ws: 5, bs: 3, ag: 2 } }
+      })]
+    };
+    const report = buildSyncReport([actorD], indexArmor);
+    const row = report.rows.find(r => r.path === "charBonus");
+    const entry = row.entries[0];
+
+    const updateCalls = [];
+    globalThis.game = {
+      actors: {
+        get: id => ({
+          id,
+          updateEmbeddedDocuments: async (docType, updates) => updateCalls.push({ id, docType, updates })
+        })
+      }
+    };
+
+    await applySyncReport(report, new Set([entry.entryKey]));
+    expect(updateCalls[0].updates[0]["system.charBonus"]).toEqual({ ws: 10, bs: 3, "-=ag": null });
+  });
 });
 
 

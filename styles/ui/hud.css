@@ -24,7 +24,7 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 
 .wh-hud-bar {
   position: relative; pointer-events: auto;
-  display: flex; align-items: stretch;
+  display: flex; align-items: stretch; gap: 8px;
   width: 100%; max-width: 1040px; min-height: 92px; box-sizing: border-box;
   padding: 6px 28px 6px 11px;        /* справа — место язычку хотбара */
   color: #b8ffd8;
@@ -46,7 +46,6 @@ body.wh-hud-on.wh-hotbar-on #hotbar { display: flex; }
 /* ── Панели-когитаторы (РАНЫ / ПСИХОСИЛЫ) — тот же приём угловых скобок,
      что у .stat-panel/.combat-section-panel на листе персонажа
      (styles/sheets/actor-combat-cog.css), локально для HUD. ── */
-.wh-hud-bar { gap: 8px; }
 .hud-panel {
   position: relative; display: flex; flex-direction: column;
   background: linear-gradient(180deg, #0a1c12, #06120c);

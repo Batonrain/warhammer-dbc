@@ -62,7 +62,15 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       sustainAction: new StringField({ initial: "free", label: "Действие поддержания" }),
       damage:        new StringField({ initial: "", label: "Урон" }),
       damageType:    new StringField({ initial: "energy", label: "Тип урона" }),
-      penetration:   num(0, "Пробитие"),
+      // Формула, не число (wdbc-5kd): книга местами задаёт Пробитие через ПР
+      // самого псайкера — «Разрушение» Pen=PR, «Сверхъестественный Шторм»
+      // Pen=PR×3 (записывается как «PR*3»). Прежнее NumberField умело хранить
+      // только константу — авторам пака оставалось писать в notes и класть 0,
+      // выдуманное значение. Читается тем же способом, что и damage: «PR»
+      // подставляется реальным эПР манифестации (module/sheets/tabs/psychic.mjs),
+      // остаток считает module/rules/mech-formula.mjs. Голое число — валидная
+      // формула из одного терма, старые данные пака (просто "0"/"8"/…) не ломаются.
+      penetration:   new StringField({ initial: "0", label: "Пробитие" }),
       weaponProps:   list("Свойства оружия"),
       charDamageStat:    new StringField({ initial: "", label: "Урон по характеристике" }),
       charDamageFormula: new StringField({ initial: "", label: "Формула урона по характеристике" }),
@@ -93,6 +101,25 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // тем же item.update, что и isSustained (module/sheets/tabs/psychic.mjs),
       // и сбрасывается в null там же при снятии поддержания.
       sustainedDegree: new NumberField({ initial: null, nullable: true, integer: true, label: "Степень успеха (поддержание)" }),
+      // wdbc-lmd2 (найдено внутри wdbc-q0q8): uuid актора-цели, зафиксированный
+      // в момент включения «Поддерживать» (по game.user.targets, tabs/psychic.mjs).
+      // Читает cross-actor источник module/rules/psychic-sustain-target.mjs —
+      // способности «Цели психосилы получают...» (Dragon Scales/Wings of the
+      // Phoenix), а не только владельцу. Пустая строка — цель не отмечена
+      // (сила не поддерживается, либо игрок ничего не выделил при манифестации).
+      sustainedTargetUuid: new StringField({ initial: "", label: "Цель поддержания (uuid)" }),
+      // Руна Сигиллитов (wdbc-exjp, DoomBC — Психокеры-Жабы, стр. 101-102):
+      // «Псайкер получает возможность изучить Руну любой психосилы... за 50
+      // опыта» — Руна привязана к КОНКРЕТНОЙ психосиле, поэтому это поле
+      // самой психосилы (как isSustained/sustainedDegree выше), а не список
+      // на акторе. У всех, кто не Сигиллит, поле просто лежит false и никем
+      // не читается — читает только module/rules/sigillite-runes.mjs и Путь
+      // Силы «Руны Сигиллитов» (tabs/psychic.mjs). runeLearnCost — сколько
+      // реально уплачено (50, либо 100 за Prometheus Fire), нужно отдельно от
+      // общей `cost`, чтобы обе траты складывались в system.experience.spentPsy
+      // независимо (rules/character.mjs) и не путались местами в UI.
+      runeLearned:   new BooleanField({ initial: false, label: "Руна изучена (Сигиллиты)" }),
+      runeLearnCost: num(0, "Уплачено опыта за Руну"),
       effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
     };
   }

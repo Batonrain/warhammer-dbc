@@ -56,7 +56,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Булава"
+    "meleeCategory": "Булава",
+    "damageSubtype": "electrical"
   },
   "_id": "5aWrpJ9AD51x7vdi",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",
