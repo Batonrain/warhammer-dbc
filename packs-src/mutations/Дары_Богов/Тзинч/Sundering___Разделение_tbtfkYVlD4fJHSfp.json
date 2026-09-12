@@ -124,7 +124,7 @@
                 "negate": false,
                 "conditions": []
               },
-              "capabilityCostPool": "infamy",
+              "capabilityCostPool": "",
               "capabilityCostAmount": 1
             }
           ]

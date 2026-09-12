@@ -31,6 +31,8 @@ import { hasRuleFlag } from "../rules/flags.mjs";
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { BLESSED_FITS_PENDING_FLAG, blessedFitsRefundDue } from "../rules/blessed-fits.mjs";
+import { changeActorInfamy } from "../apps/infamy-points.mjs";
 // Срок Состояния штатной Duration эффекта (wdbc-uqco). Состояние, у которого
 // срок задан, сюда не попадает вовсе: его считает Foundry, а истечение
 // подметается ниже. Свой декремент остаётся ровно для тех, кому срок
@@ -124,6 +126,18 @@ export async function processConditionTurnStart(actor) {
     lines.push(next <= 0
       ? `<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`
       : `<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
+
+    // Blessed Fits/Благословенные Припадки (Общие Мутации, wdbc-1rno):
+    // Оглушение от переброшенного провала (hooks.mjs::btnReroll) естественно
+    // дошло до 0 — «провёл полный Раунд в Оглушении», возвращаем списанное
+    // Очко Бесчестия. Снятое ДОСРОЧНО каким-то другим путём сюда не попадёт
+    // вовсе (условие этого декремента не наступает раньше срока) — метка
+    // просто останется висеть без последствий, что и есть книжное «если».
+    if (key === "stunned" && blessedFitsRefundDue(actor.getFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG), next)) {
+      await changeActorInfamy(actor, 1);
+      updates[`flags.warhammer-dbc.-=${BLESSED_FITS_PENDING_FLAG}`] = null;
+      lines.push(`<div class="roll-threshold">🥴 Благословенные Припадки: полный Раунд в Оглушении — Очко Бесчестия вернулось.</div>`);
+    }
   }
 
   // Удушье: пока есть запас (suffocatingRounds > 0) — просто декремент, без

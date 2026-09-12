@@ -9,6 +9,7 @@ import { actorFactionKeys, anySameOrDescendant, isSameOrDescendant, getFactionIn
   from "./factions.mjs";
 import { raceMatches } from "./race.mjs";
 import { hasPathGrade } from "../constants/aeldari-paths.mjs";
+import { anyTargetMatches } from "./talent-targets.mjs";
 
 /** Значение условия к списку: строка считается списком из одного элемента. */
 const list = v => (v == null ? [] : Array.isArray(v) ? v : [v]);
@@ -195,6 +196,27 @@ function inFactions(actor, wanted) {
 }
 
 /**
+ * Цели всех Талантов Ненависти актора разом (wdbc-1rno) — книга допускает
+ * взять Ненависть несколько раз с разной специализацией («конкретный Бог,
+ * конкретный орден»), targets суммируются. Опознаётся по имени Таланта
+ * (itemHasName — любая половина двуязычного «Hatred / Ненависть»), не по
+ * отдельному полю схемы: у Talent нет kind-метки «это Ненависть», только
+ * имя и `system.targets`, выбранные игроком при получении (apps/target-
+ * choice.mjs). «Цифровая Ненависть»/«Digital Hatred» и подобные другие
+ * Таланты с тем же словом в имени НЕ совпадают — itemHasName сравнивает
+ * половину имени целиком, а не подстроку.
+ */
+export function hatredTargetsOf(actor) {
+  const out = [];
+  for (const item of actor?.items ?? []) {
+    if (item?.type !== "talent") continue;
+    if (!itemHasName(item, "Hatred") && !itemHasName(item, "Ненависть")) continue;
+    for (const t of item?.system?.targets ?? []) out.push(t);
+  }
+  return out;
+}
+
+/**
  * Предикаты, которым нужен КОНТЕКСТ БРОСКА, а не один актор: цель, оружие,
  * характеристика теста. Их нельзя спрашивать оттуда, где контекста нет —
  * например из записи Конструктора на предмете (rules/mech-when.mjs): она
@@ -208,7 +230,7 @@ export const CTX_DEPENDENT_PREDICATES = new Set([
   "weaponClass", "charNotIn", "charIn",
   "targetHasTrait", "targetLacksCondition", "targetHasCondition",
   "targetHasSize", "targetKeepsNimbleInArmour", "targetHasFaction",
-  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus"
+  "avatarOfSlaughterOffTarget", "hexMarkedPreyAllyBonus", "hasHatredTarget"
 ]);
 
 export const PREDICATES = {
@@ -341,6 +363,13 @@ export const PREDICATES = {
       return list(value).every(key => isSameOrDescendant(ctx.socialFaction, key, byKey));
     return inFactions(ctx?.targetActor, value);
   },
+
+  // Ненависть (wdbc-1rno) — подходит ли ТЕКУЩАЯ цель броска (ctx.targetActor)
+  // хоть под одну цель хоть одного Таланта Ненависти актора. В отличие от
+  // остальных предикатов здесь нет `value`: набор целей не одинаков у всех
+  // обладателей Таланта (игрок выбирает его сам), поэтому читается не
+  // литерал из данных условия, а собственный `system.targets` предмета.
+  hasHatredTarget: (actor, ctx) => anyTargetMatches(hatredTargetsOf(actor), ctx),
 
   // Avatar of Slaughter/Аватар Резни (wdbc-sk8s): цель провалила тест W−10
   // против Берсерка → до конца боя −20 на атаки/манёвры, НЕ направленные на

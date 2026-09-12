@@ -25,10 +25,10 @@ describe("каркас module/rules", () => {
     // wearsSealedArmour (гейт «Герметичная броня» entry.when, wdbc-1rno),
     // hasCondition/targetHasCondition (Состояния актора/цели, wdbc-r5o7),
     // charNotIn (характеристика теста вне списка, wdbc-r5o7.1), charIn
-    // (характеристика теста в списке, Гангрена, wdbc-r5o7.5) и charBonusMin
+    // (характеристика теста в списке, Гангрена, wdbc-r5o7.5), charBonusMin
     // (порог по Бонусу характеристики, «S.b 5+» у Poor.Q Откатной Перчатки,
-    // wdbc-vsma).
-    expect(Object.keys(predicates.PREDICATES)).toHaveLength(27);
+    // wdbc-vsma) и hasHatredTarget (цель Таланта Ненависти, wdbc-1rno).
+    expect(Object.keys(predicates.PREDICATES)).toHaveLength(28);
     expect(effects.isKnownEffectKind("rollBonus")).toBe(true);
     expect(effects.isKnownEffectKind("rolBonus")).toBe(false);
     expect(typeof sources.registerRuleSource).toBe("function");

@@ -9,6 +9,7 @@ import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
+import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
 import { PSY_NATURES, PSY_MODES, PSY_PATHS, PSY_POWER_TYPES } from "../../constants/psyker.mjs";
 import { PSY_DISCIPLINES } from "../../constants/disciplines.mjs";
 import { getPhenomenon, getPeril } from "../../constants/psyker-tables.mjs";
@@ -90,6 +91,15 @@ export function showManifestDialog(actor, item) {
     ui.notifications.warn(
       `«${item.name}» требует Метку ${noMark.label}. Без Метки психосила не манифестируется — ` +
       "она не забыта, доступ вернётся вместе с Меткой (корбук, Псайкана).");
+    return;
+  }
+  // Высшее Колдовство — книжный запрет по Покровительству (rules/perfect-
+  // sorcerer.mjs), Совершенный Чародей (Дар Тзинча, wdbc-1rno) его снимает.
+  if (highSorceryManifestBlocked(actor, item.system?.discipline)) {
+    ui.notifications.warn(
+      `«${item.name}»: Высшее Колдовство манифестируют только персонажи без Покровительства ` +
+      "конкретного Бога (Хаос Неделимый или вовсе вне Покровительства) — Покровительство " +
+      `${actor.system?.patronGod || "—"} закрывает доступ к этой дисциплине книгой.`);
     return;
   }
   const sys      = item.system;
@@ -691,11 +701,21 @@ export async function executePsychotest(actor, item, opts) {
     // Тот же таргет сцены, что уже читает ruleRollModsHtml выше в
     // showManifestDialog — если игрок сменил цель между открытием диалога и
     // нажатием «Психотест!», в карточку идёт актуальный на МОМЕНТ броска.
-    const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+    const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
+    const targetActor = targetToken?.actor ?? null;
+    // data-discipline/data-target-token-uuid (wdbc-1rno, Фатализм/Нургл):
+    // дисциплина силы и UUID ТОКЕНА (не актора — нужна геометрия сцены, rules/
+    // fatalism.mjs::tokensWithinRadius) едут вместе с запросом. hooks.mjs
+    // проверяет, не защищён ли токен аурой Фатализма, ДО открытия обычного
+    // диалога Характеристики, и если да — тест не открывает вовсе, эффекты
+    // силы игнорируются книжно («игнорируют эффекты», не «получают бонус на
+    // сопротивление»).
     const resistBtn = targetActor
       ? `<button type="button" class="psy-resist-request-btn"
            data-target-uuid="${esc(targetActor.uuid)}" data-caster-uuid="${esc(actor.uuid)}"
            data-char-key="${esc(sys.resistChar)}" data-mod="${resistMod}"
+           data-discipline="${esc(sys.discipline || "")}"
+           data-target-token-uuid="${esc(targetToken?.document?.uuid || "")}"
            data-label="${esc(`Сопротивление: ${item.name}`)}">
            📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
          </button>`

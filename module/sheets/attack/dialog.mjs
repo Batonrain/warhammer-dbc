@@ -27,6 +27,7 @@ import { allGunsBlazingMod } from "../../rules/dual-wield-talents.mjs";
 import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
+import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -74,6 +75,7 @@ export function openAttackDialog(ctx) {
     meleeBaseKey,
     dyn0,
     resolvedAttack,
+    targetActor,
     rofModes,
     ammoConds,
     aimTargets,
@@ -216,7 +218,13 @@ export function openAttackDialog(ctx) {
           // отмечена галочка «в упор / в рукопашной» (см. specificMods выше).
           const helplessAutoHit = helplessAutoMelee || f.autoSuccess;
 
-          await _executeAttackRoll(
+          // Eye of Envy/Око Зависти (wdbc-1rno): оборачивает бросок снаружи,
+          // не трогая _executeAttackRoll — выдаёт временное Очко Бесчестия ДО
+          // броска, если базовая Характеристика цели для f.char выше моей, и
+          // снимает его ПОСЛЕ, если персонаж не потратил (см. rules/eye-of-
+          // envy.mjs). Без Дара/без совпадения — no-op, поведение то же, что
+          // раньше.
+          await withEyeOfEnvy(actor, targetActor, f.char, () => _executeAttackRoll(
             actor, item, f.char, thresholdOf(f),
             f.rofMode || rofModes[0]?.value,
             aimTargets.find(t => t.value === f.aimVal),
@@ -291,7 +299,7 @@ export function openAttackDialog(ctx) {
                     ? `Верхом: не-Избирательная атака — попадание в скакуна (${mountPair.mount.name}), дубль на броске — во всадника (${mountPair.rider.name})`
                     : "")
             }
-          );
+          ));
 
           // Вторая рука — тем же действием, отдельным броском (wdbc-3jlm).
           // Своих ОД не тратит: они уже списаны наибольшим действием выше.
@@ -320,7 +328,9 @@ export function openAttackDialog(ctx) {
             // атаки пары нужны для условия, а второй карточке они обе уже
             // известны (f.rofMode — первая рука, offRofMode — вторая).
             const agbMod = allGunsBlazingMod(actor, f.rofMode, offRofMode);
-            await _executeAttackRoll(
+            // Eye of Envy (wdbc-1rno) — вторая рука та же цель, своя
+            // Характеристика (offChar), свой независимый бросок.
+            await withEyeOfEnvy(actor, targetActor, offChar, () => _executeAttackRoll(
               actor, dualOff, offMelee ? "ws" : "bs",
               thresholdOf(f) + dw.offHand + offPart,
               offRofMode,
@@ -333,7 +343,7 @@ export function openAttackDialog(ctx) {
                   + ")",
                 allGunsBlazingMod: agbMod
               }
-            );
+            ));
           }
           return true;
         }

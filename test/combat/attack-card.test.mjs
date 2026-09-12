@@ -268,6 +268,19 @@ describe("карточка атаки", () => {
       .toContain("ГМ распределяет <b>2</b> попадания в торс");
   });
 
+  // sourceActor (wdbc-1rno, 12.09.2026): кнопка теста Подавления несёт UUID
+  // стрелка — иначе связь стрелка с тестом терялась бы к моменту клика по
+  // кнопке в чате (см. заголовок module/rules/hatred.mjs).
+  it("кнопка Подавления несёт UUID стрелка для cross-actor правил", () => {
+    const html = card({ attackerUuid: "Actor.shooter-1", suppression: { testMod: -20, hits: 2, cap: 4 } });
+    expect(html).toContain('wh-suppression-test-btn" type="button" data-test-mod="-20" data-attacker-uuid="Actor.shooter-1"');
+  });
+
+  it("кнопка Огня из Всех Орудий несёт UUID стрелка", () => {
+    const html = card({ attackerUuid: "Actor.shooter-1", allGunsBlazing: { testMod: -10 } });
+    expect(html).toContain('wh-all-guns-blazing-btn" type="button" data-test-mod="-10" data-attacker-uuid="Actor.shooter-1"');
+  });
+
   it("Порча печатает только доступные при текущей Cor эффекты", () => {
     const html = card({ corVal: 30, corEffects: [
       { cor: 10, text: "Пьёт кровь" }, { cor: 60, text: "Говорит" }

@@ -33,7 +33,7 @@ import { mechFormulaTotalSafe, mechRollData } from "./mech-formula.mjs";
  *
  * Проницательность (scrutiny) помечена «общей» и сюда не входит — так в книге.
  */
-function isSocialSkill(skill) {
+export function isSocialSkill(skill) {
   return SKILLS_DEF?.[String(skill ?? "")]?.apt2 === "social";
 }
 

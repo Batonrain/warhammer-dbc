@@ -11,6 +11,7 @@ import {
 } from "../constants/environment.mjs";
 import { resolveEnvContainer, readEnvForScene, primaryGroupForScene, envSceneHasOverride } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { rollTempHazardTest } from "../combat/temperature-hazard.mjs";
 
 const { HandlebarsApplicationMixin, ApplicationV2 } = foundry.applications.api;
 function currentScene() { return canvas?.scene ?? game.scenes?.current ?? null; }
@@ -154,10 +155,18 @@ function _widgetHTML(v) {
     <span class="wh-env-w-v">${esc(v.weather.label)}</span>
   </div>`);
   const tSign = v.temp.testSigned ? `T${v.temp.testSigned}` : "";
+  // Тест на Жару/Холод (wdbc-1rno) — раньше temp.test был только отображением
+  // (constants/environment.mjs::tempEffect подключён исключительно сюда),
+  // теперь combat/temperature-hazard.mjs::rollTempHazardTest катает его по-настоящему
+  // (T+модификатор, провал — Усталость+1), кнопка появляется, только пока
+  // температура вне комфортной зоны — виджет открыт всем игрокам, не только ГМу.
+  const tempBtn = v.temp.active
+    ? `<button type="button" class="wh-env-w-temp-btn" title="Тест T (${tSign})">🎲</button>` : "";
   rows.push(`<div class="wh-env-w-row" style="--c:${v.temp.tone}">
     <span class="wh-env-w-ic">🌡</span>
     <span class="wh-env-w-k">Температура</span>
     <span class="wh-env-w-v">${v.temp.value}°C${tSign ? ` <b class="wh-env-w-t">${tSign}</b>` : ""}</span>
+    ${tempBtn}
   </div>`);
   rows.push(`<div class="wh-env-w-row" style="--c:${v.gravity.tone}">
     <span class="wh-env-w-ic">🪐</span>
@@ -237,6 +246,15 @@ export function refreshEnvWidget() {
       ev.stopPropagation();
       const c = el.classList.toggle("collapsed");
       try { localStorage.setItem("wh-env-collapsed", c ? "1" : "0"); } catch (e) {}
+    });
+    // Тест на Жару/Холод (wdbc-1rno) — «мой персонаж» тем же способом, что
+    // назначение по умолчанию у самого Foundry (User#character); виджет
+    // глобальный, не листа, привязать к конкретному актору иначе нечем.
+    el.querySelector(".wh-env-w-temp-btn")?.addEventListener("click", async ev => {
+      ev.stopPropagation();
+      const actor = game.user?.character;
+      if (!actor) return ui.notifications?.warn("Нет назначенного персонажа (User → Character) — тест не за кого катать.");
+      await rollTempHazardTest(actor);
     });
     // Клик по телу открывает окно (только ГМ) — объединённую страницу «Сцена»
     // на разделе «Окружение», а не старое отдельное окно (wdbc-59if). Импорт

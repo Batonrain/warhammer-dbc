@@ -38,6 +38,7 @@ import {
 } from "../rules/cooldown.mjs";
 import { actorInfamyMax } from "./infamy-points.mjs";
 import { breakBloodFlameOnSceneEnd } from "../combat/blood-flame.mjs";
+import { revertSunderingOnSceneEnd } from "../combat/sundering.mjs";
 
 const BANNER_TEXT = {
   scene:   "Поворот судьбы",
@@ -186,6 +187,9 @@ export async function triggerNewScene() {
   // Кровавое Пламя (Дар Кхорна): книга ломает оружие «по окончании боя ИЛИ
   // СЦЕНЫ». Конец боя ловится по deleteCombat, конец сцены — здесь.
   await breakBloodFlameOnSceneEnd();
+  // Sundering/Разделение (wdbc-1rno, Тзинч): «в конце сцены обе копии
+  // исчезают» — тот же такт конца сцены, что и Кровавое Пламя выше.
+  await revertSunderingOnSceneEnd();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },
     content: bannerCard("🎬 Новая сцена", BANNER_TEXT.scene)
@@ -201,6 +205,9 @@ export async function triggerSessionEnd() {
   await resetUsageLimit("scene");
   await resetUsageLimit("session");
   await breakBloodFlameOnSceneEnd();
+  // Sundering/Разделение (wdbc-1rno, Тзинч): «в конце сцены обе копии
+  // исчезают» — тот же такт конца сцены, что и Кровавое Пламя выше.
+  await revertSunderingOnSceneEnd();
   await refillFatePools();
   await ChatMessage.create({
     speaker: { alias: "Мастер Игры" },

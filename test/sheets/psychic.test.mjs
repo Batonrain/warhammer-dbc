@@ -120,6 +120,51 @@ describe("psychic manifestation", () => {
     expect(captured.dialog.buttons.cast.label).toBe("Психотест!");
   });
 
+  // Perfect Sorcerer/Совершенный Чародей (wdbc-1rno, Тзинч): Высшее
+  // Колдовство книжно закрыто для персонажей с Покровительством конкретного
+  // Бога (rules/perfect-sorcerer.mjs) — showManifestDialog должен блокировать
+  // манифестацию раньше открытия диалога, тем же тактом, что и Метка выше.
+  describe("Высшее Колдовство и Покровительство (Perfect Sorcerer)", () => {
+    const saved = getRuleSources();
+    afterEach(() => {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    });
+
+    it("Патрон конкретного Бога — манифестация блокируется, диалог не открывается", () => {
+      clearRuleSources();
+      const a = actor({ system: { patronGod: "tzeentch" } });
+      showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
+      expect(captured.dialog).toBeFalsy();
+      expect(captured.warnings.some(w => w.includes("Высшее Колдовство"))).toBe(true);
+    });
+
+    it("Хаос Неделимый — книжное правило и так разрешает, диалог открывается", () => {
+      clearRuleSources();
+      const a = actor({ system: { patronGod: "undivided" } });
+      showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+
+    it("Патрон Бога + Совершенный Чародей — Дар снимает запрет", () => {
+      const a = actor({ system: { patronGod: "khorne" } });
+      clearRuleSources();
+      registerRuleSource("test", act => act === a
+        ? [{ id: "test.perfectSorcerer", when: {},
+             effects: [{ kind: "grantFlag", target: "gift.tzeentch.perfectSorcerer" }] }]
+        : []);
+      showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+
+    it("Патрон Бога, но другая дисциплина — запрет Высшего Колдовства не касается", () => {
+      clearRuleSources();
+      const a = actor({ system: { patronGod: "nurgle" } });
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+  });
+
   // wdbc-jpmh: Путь Силы («Инкантация»/«Медитация»/«Жертва»/«Телесная
   // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
   // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не
@@ -311,6 +356,31 @@ describe("тест Сопротивления цели (wdbc-5vf4)", () => {
     expect(card).toContain('data-caster-uuid="Actor.caster-1"');
     expect(card).toContain('data-char-key="t"');
     expect(card).toContain('data-mod="-5"');
+  });
+
+  // data-discipline/data-target-token-uuid (wdbc-1rno, Фатализм/Нургл) —
+  // hooks.mjs проверяет их ДО открытия обычного диалога Характеристики
+  // (rules/fatalism.mjs). Без discipline="divination" в данных — пустая
+  // строка, кнопка остаётся обычной (тот же гейт fatalismBlocksPower не
+  // сработает ни при каком радиусе).
+  it("кнопка несёт дисциплину силы и UUID токена цели (не актора)", async () => {
+    const a = actor();
+    a.uuid = "Actor.caster-1";
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" }, document: { uuid: "Scene.s1.Token.t1" } }];
+    const power = item({ system: {
+      testChar: "wp", powerType: "utility", testMod: 5,
+      discipline: "divination", resistChar: "t", resistMod: -5
+    } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain('data-discipline="divination"');
+    expect(card).toContain('data-target-token-uuid="Scene.s1.Token.t1"');
   });
 
   it("resistChar задан, но цель не наведена — подсказка вместо кнопки", async () => {

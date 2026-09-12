@@ -1174,6 +1174,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     actor,
     item,
     content,
+    // Eye of Envy/Око Зависти (wdbc-1rno, 12.09.2026): единственный
+    // потребитель targetActor в самом ctx диалога — остальные места читают
+    // его с attackCtx напрямую (тот же объект, просто ещё не был вынесен
+    // наружу шва). rules/eye-of-envy.mjs оборачивает вызов _executeAttackRoll
+    // в attack/dialog.mjs этим полем.
+    targetActor: attackCtx.targetActor,
     techniqueOpts,
     isMelee,
     forceMelee,

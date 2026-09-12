@@ -4,7 +4,7 @@ import { HIT_LOCATIONS }  from "../constants/combat.mjs";
 import { DAMAGE_TYPES }   from "../constants/items.mjs";
 import { _degWord, esc }       from "../helpers/utils.mjs";
 import { getCriticalEffect } from "../../critical-tables.mjs";
-import { parseCritEffectPills, critPillsHtml, deathButtonHtml } from "./crit-effect-parser.mjs";
+import { parseCritEffectPills, critPillsHtml, deathButtonHtml, textAssertsDeath } from "./crit-effect-parser.mjs";
 import { SHIELD_STATUS }  from "../constants/shields.mjs";
 import { applyDamageToVehicle } from "./vehicle.mjs";
 import { applyDamageToHorde }   from "./horde-damage.mjs";
@@ -14,6 +14,8 @@ import { ablativeDamage, mountRangedApBonus } from "../rules/mount.mjs";
 import { LAST_DAMAGE_WEAPON_FLAG } from "./blood-flame.mjs";
 import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-properties.mjs";
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
+import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
+import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -599,6 +601,39 @@ export async function applyDamageToActor(actor, damageData) {
   // Критический эффект по таблице — только при уходе в Критические.
   const critEffect = gotCritical ? getCriticalEffect(damageType, hitLocation, newCritical) : null;
 
+  // Cast Out of Death/Изгнанный из Смерти (Нургл, wdbc-1rno): «после ЛЮБОГО
+  // Критического Эффекта... регенерирует к −7 в течение 7ч» — не действует
+  // против варп-оружия (Выжигание Души мимо этой функции не идёт вовсе, см.
+  // заголовок файла). Дедлайн только СТАВИТСЯ здесь — сама регенерация тикает
+  // по «Календарю» (rules/cast-out-of-death.mjs, hooks.mjs::updateWorldTime,
+  // тот же такт, что у Укрепления Плотеметаллом).
+  if (critEffect && !warpSoak && hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY)) {
+    await actor.setFlag("warhammer-dbc", CAST_OUT_OF_DEATH_FLAG,
+      scheduleCastOutOfDeathRegen(game.time?.worldTime ?? 0));
+  }
+  // Персонаж физически не может умереть от Критического Эффекта, пока
+  // защищён этим Даром — кнопка «Констатировать смерть» заменяется на
+  // информационную строку. warpSoak — то же исключение, что и выше.
+  const castOutOfDeathBlocksDeath = !!critEffect && textAssertsDeath(critEffect)
+    && !warpSoak && hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY);
+
+  // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): «любое разумное
+  // существо в пределах Cor.b м [от носителя] получает Крит.Эффект» — не
+  // обязательно САМ носитель, actor здесь — жертва, чей крит их и накормил.
+  // Несколько носителей рядом срабатывают все разом, каждый своей кнопкой.
+  let eaterOfPainButtons = "";
+  if (critEffect) {
+    const victimToken = actor.getActiveTokens?.(false, true)?.[0] ?? null;
+    if (victimToken) {
+      const holders = eaterOfPainHoldersNear(victimToken);
+      eaterOfPainButtons = holders.map(({ actor: holder }) => `
+        <button type="button" class="wh-eater-of-pain-btn"
+          data-eater-uuid="${esc(holder.uuid)}" data-crit-value="${newCritical}">
+          ${rollIcon("heart","#ff6bd6")}${esc(holder.name)}: Пожиратель Боли — бросок 1d10+1
+        </button>`).join("");
+    }
+  }
+
   // Enjoyment/Наслаждение (wdbc-sk8s): Непоглощённый Урон / Критический
   // Эффект от атаки — 1 Боли раз за бой, без траты Реакции.
   if (netDamage > 0) await maybeGrantEnjoymentPain(actor);
@@ -698,7 +733,10 @@ export async function applyDamageToActor(actor, damageData) {
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
       ${critPillsHtml(critPills, actor.uuid)}
-      ${critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""}
+      ${castOutOfDeathBlocksDeath
+        ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
+        : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : "")}
+      ${eaterOfPainButtons ? `<div class="wh-crit-pills">${eaterOfPainButtons}</div>` : ""}
     </div>` : "";
 
   // Пометка — щит не сработал (для информации в сообщении)

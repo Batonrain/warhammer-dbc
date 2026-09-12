@@ -9,9 +9,11 @@
 import "../../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../../support/foundry-stub.mjs";
 
-import { describe, it, expect, beforeEach } from "vitest";
-import { doMiraculousSave, doDivineProtection, doSusAnimation } from "../../../module/sheets/tabs/death.mjs";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { doMiraculousSave, doDivineProtection, doSusAnimation, doSundering, showDeathSaveDialog }
+  from "../../../module/sheets/tabs/death.mjs";
 import { eternalWarriorFreeSaveAvailable } from "../../../module/combat/eternal-warrior.mjs";
+import { registerRuleSource, clearRuleSources, getRuleSources } from "../../../module/rules/sources.mjs";
 
 // Заглушка foundry.utils.getProperty в стенде всегда отдаёт undefined (не
 // нужна остальным тестам, см. test/apps/infamy-points-gods.test.mjs) —
@@ -76,6 +78,55 @@ describe("Eternal Warrior — путь flat", () => {
   });
 });
 
+// Kiss of Death/Поцелуй Смерти (wdbc-1rno, Слаанеш): «Спасение от смерти,
+// вызванной этой атакой, тратит двойное количество Бесчестия или Очков
+// Судьбы» — метка на ЖЕРТВЕ (не на носителе Дара), одноразовая.
+describe("Kiss of Death — удвоенная цена Спасения (wdbc-1rno)", () => {
+  it("метка стоит — цена Чудесного Спасения удваивается, метка снимается при успехе", async () => {
+    const actor = berserker({ fate: 30, corruption: 10 });
+    actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
+    captured.dice = [5, 3]; // fateDie 1d10 → 5, corDie 1d10 → 3
+    await doMiraculousSave(actor);
+
+    const upd = actor.updates.at(-1);
+    // (5+10)=15 без метки, ×2 с меткой = 30 → 30-30=0
+    expect(upd["system.fate.value"]).toBe(0);
+    expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBeNull();
+    expect(captured.chat.at(-1).content).toContain("×2 Поцелуй Смерти");
+  });
+
+  it("метка стоит — цена удвоена и на провале, метка тоже снимается", async () => {
+    const actor = berserker({ fate: 10, corruption: 10 });
+    actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
+    captured.dice = [5]; // (5+10)×2 = 30 > 10 в пуле → провал
+    await doMiraculousSave(actor);
+
+    const upd = actor.updates.at(-1);
+    expect(upd["flags.warhammer-dbc.-=killedByKissOfDeath"]).toBeNull();
+    expect(captured.chat.at(-1).content).toContain("Провал");
+  });
+
+  it("метки нет — цена обычная, без удвоения", async () => {
+    const actor = berserker({ fate: 30, corruption: 10 });
+    captured.dice = [5, 3];
+    await doMiraculousSave(actor);
+
+    const upd = actor.updates.at(-1);
+    expect(upd["system.fate.value"]).toBe(15); // 30 - 15, без ×2
+    expect(upd).not.toHaveProperty("flags.warhammer-dbc.-=killedByKissOfDeath");
+    expect(captured.chat.at(-1).content).not.toContain("Поцелуй Смерти");
+  });
+
+  it("Вечный Воин free/flat — метка не удваивает фиксированную цену", async () => {
+    const actor = berserker({ fate: 30, corruption: 10 });
+    actor.setFlag("warhammer-dbc", "killedByKissOfDeath", true);
+    await doDivineProtection(actor, { eternalWarrior: "flat" });
+
+    const upd = actor.updates.at(-1);
+    expect(upd["system.fate.value"]).toBe(29); // 30 - 1, не 30 - 2
+  });
+});
+
 function astartesForSusAn({ wp = 40 } = {}) {
   const flags = {};
   const updates = [];
@@ -94,6 +145,57 @@ function astartesForSusAn({ wp = 40 } = {}) {
 // выставляла И unconscious, И helpless — дублирование двух флагов вручную.
 // Теперь Беспомощность — производное поле (rules/character.mjs, derived
 // data), отдельно её здесь ставить не нужно и не должно.
+// Sundering/Разделение (Дар Тзинча, wdbc-1rno): опция диалога Спасения
+// только у носителя Дара (в отличие от Замедленной Анимации, доступной
+// любому Астартес, — Разделения без Дара не существует вовсе, поэтому
+// пункт не показывается ВСЕМ отключённой кнопкой, как та).
+describe("Sundering/Разделение — видимость опции и списание Бесчестия (wdbc-1rno)", () => {
+  const saved = getRuleSources();
+  afterEach(() => {
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+
+  function withSundering(bearer) {
+    clearRuleSources();
+    registerRuleSource("test", a => a === bearer
+      ? [{ id: "test.sundering", when: {}, effects: [{ kind: "grantFlag", target: "gift.tzeentch.sundering" }] }]
+      : []);
+  }
+
+  it("Дар есть — пункт «Разделение» присутствует в диалоге", async () => {
+    const actor = berserker({ fate: 30, corruption: 10 });
+    await actor.setFlag("warhammer-dbc", "deceased", true);
+    withSundering(actor);
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).toContain("Разделение");
+  });
+
+  it("Дара нет — пункта в диалоге нет вовсе (не отключённая кнопка, а отсутствует)", async () => {
+    clearRuleSources();
+    const actor = berserker({ fate: 30, corruption: 10 });
+    await actor.setFlag("warhammer-dbc", "deceased", true);
+    showDeathSaveDialog(actor);
+    expect(captured.dialog.content).not.toContain("Разделение");
+  });
+
+  it("doSundering: списывает 1 Очко Бесчестия и публикует карточку", async () => {
+    const actor = berserker({ fate: 30, corruption: 10 });
+    // actorInfamyMax (Хаосит) читает Inf.b, не fate.max — berserker() его не
+    // задаёт (не нужен остальным тестам файла, идущим через spendFromInfamyPool
+    // с фиксированным путём) — без него потолок 0 и changeActorInfamy(-1)
+    // клампит РЕЗУЛЬТАТ к 0 независимо от before, не только цену.
+    actor.system.characteristics = { inf: { bonus: 99 } };
+    await doSundering(actor);
+
+    const upd = actor.updates.at(-1);
+    expect(upd["system.fate.value"]).toBe(29);
+    const card = captured.chat.at(-1);
+    expect(card.content).toContain("Разделение");
+    expect(card.content).toContain("тело исчезает");
+  });
+});
+
 describe("doSusAnimation (Замедленная Анимация, wdbc-r5o7.7)", () => {
   it("успех — ставит unconscious, НЕ ставит helpless напрямую (она производная)", async () => {
     const actor = astartesForSusAn({ wp: 40 });

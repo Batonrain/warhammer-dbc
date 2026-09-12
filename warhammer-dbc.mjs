@@ -85,6 +85,7 @@ import { openSceneSettings, refreshSceneSettings } from "./module/apps/scene-set
 import { initSceneControlsGuard, registerHubOpener } from "./module/apps/scene-controls-guard.mjs";
 import { spawnDemonOnScene } from "./module/apps/demon-summon.mjs";
 import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
+import { spawnSunderingCopies } from "./module/combat/sundering.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { bindDemonMount } from "./module/apps/demon-mount.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
@@ -783,6 +784,14 @@ Hooks.once("ready", () => {
         // инициативы делает активный ГМ (module/combat/the-hunter.mjs).
         const res = await spawnHunterHound(String(data.championUuid ?? ""), String(data.itemId ?? ""));
         if (!res.ok) console.warn("Warhammer DBC | Загонщик:", res.reason);
+        return;
+      }
+      if (data.action === "spawnSundering") {
+        // Sundering/Разделение (wdbc-1rno, Тзинч) — тот же приём: клон САМОГО
+        // умирающего персонажа требует прав ГМа на Actor.create, спавн+метки+
+        // синхронизацию инициативы делает активный ГМ (module/combat/sundering.mjs).
+        const res = await spawnSunderingCopies(String(data.championUuid ?? ""));
+        if (!res.ok) console.warn("Warhammer DBC | Разделение:", res.reason);
         return;
       }
       if (data.action === "bindArmigerWeapon") {

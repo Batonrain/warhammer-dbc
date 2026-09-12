@@ -613,4 +613,43 @@ describe("авто-встречный тест (wdbc-j814)", () => {
     expect(content).toContain("⚔");
     expect(content).toContain("Иван");
   });
+
+  // Personal Adaptation/Персональная Адаптация (wdbc-1rno, Тзинч): ответчик
+  // применяет накопленный бонус к СВОЕМУ Порогу против уже известного
+  // инициатора (initiatorUuid, module/hooks.mjs::"opposedResponse") и растит
+  // запись дальше — растёт независимо от исхода этого конкретного сравнения.
+  it("ответчик с Персональной Адаптацией: накопленный бонус поднимает Порог и растёт дальше", async () => {
+    const { registerRuleSource, clearRuleSources, getRuleSources } =
+      await import("../../module/rules/sources.mjs");
+    const saved = getRuleSources();
+    const initiator = { id: "init-1", uuid: "Actor.init-1", name: "Иван" };
+    globalThis.fromUuid = async uuid => (uuid === initiator.uuid ? initiator : null);
+
+    const s = sheet({ corruptionBonus: 5 }); // cap = ⌈5/2⌉×5 = 15, довольно для роста до 15
+    registerRuleSource("test", a => a === s.actor
+      ? [{ id: "test.personalAdaptation", when: {},
+           effects: [{ kind: "grantFlag", target: "gift.tzeentch.personalAdaptation" }] }]
+      : []);
+    await s.actor.setFlag("warhammer-dbc", "personalAdaptationBonuses",
+      [{ targetUuid: initiator.uuid, bonus: 10, expiresAt: 999999999999 }]);
+
+    // Без бонуса 45 > 40 — провал; с бонусом +10 Порог 50, 45<=50 — успех.
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" }, {
+      opposedRequest: { initiatorName: "Иван", initiatorUuid: initiator.uuid,
+        initiatorSide: { threshold: 40, roll: 35, success: true, deg: 1 }, safe: false }
+    });
+    captured.nextRoll = 45;
+    await captured.press("roll", fakeForm({ "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "base" }));
+    await promise;
+
+    const content = captured.chat.at(-1)?.content ?? "";
+    expect(content).toContain("Персональная Адаптация");
+    expect(content).toContain("+10");
+    expect(content).toContain("Порог <b>50</b>");
+    const list = s.actor.getFlag("warhammer-dbc", "personalAdaptationBonuses");
+    expect(list.find(r => r.targetUuid === initiator.uuid).bonus).toBe(15);
+
+    clearRuleSources();
+    for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
 });

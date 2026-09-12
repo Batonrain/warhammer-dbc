@@ -38,6 +38,7 @@ import { raceMatches } from "../rules/race.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard } from "../helpers/test-card.mjs";
+import { EATER_OF_PAIN_CAPABILITY, eaterOfPainChoiceButtonsHtml } from "../rules/eater-of-pain.mjs";
 
 const FLAG = "skillfulTorture";
 
@@ -205,9 +206,21 @@ export async function showSkillfulTortureDialog(torturer) {
           if (capped.length) lines.push(`<span style="color:#a33;">Дневной лимит исчерпан:</span> ${capped.map(esc).join(", ")}`);
           if (!recipients.length) lines.push(`<i>Рядом нет друкхари, способных насытиться.</i>`);
 
+          // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): «успешно
+          // проведя Пытку... преимущества за каждый Успех» — единственное
+          // кодифицированное действие Пытки в системе (честное ограничение,
+          // см. заголовок rules/eater-of-pain.mjs). margin здесь — та же
+          // мера «Успехов», что уже даёт extraTiers() чуть выше для тиров
+          // друкхари, переиспользована без нового счётчика. Одна кнопка на
+          // margin кубов разом (не margin независимых выборов) — тот же
+          // компромисс упрощения, что и у прочих находок этого тикета.
+          const eaterOfPainButtons = margin > 0 && hasRuleFlag(torturer, EATER_OF_PAIN_CAPABILITY)
+            ? eaterOfPainChoiceButtonsHtml(torturer.uuid, margin) : "";
+          if (eaterOfPainButtons) lines.push(`${rollIcon("heart","#ff6bd6")}Пожиратель Боли (${margin} Успехов):`);
+
           await postTestCard(torturer, {
             title: "Искусная Пытка — успех",
-            lines: [lines.join("<br/>")]
+            lines: [lines.join("<br/>"), eaterOfPainButtons]
           }, { sound: false });
         }
       },

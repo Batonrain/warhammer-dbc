@@ -38,6 +38,9 @@ import { processTurnStateShieldsTurnEnd, clearTurnStateShields } from "./combat/
 import { processVultureTurnStart } from "./combat/vulture.mjs";
 import { processIrradiatedTurnStart } from "./combat/irradiated.mjs";
 import { getModEffects, mergeWeaponPropEntries } from "./combat/weapon-mods.mjs";
+import { fatalismBlocksPower } from "./rules/fatalism.mjs";
+import { everYouthfulBlocksPower } from "./rules/ever-youthful.mjs";
+import { eaterOfPainBenefitUpdate, eaterOfPainChoiceButtonsHtml } from "./rules/eater-of-pain.mjs";
 import { fateTerm, esc }                 from "./helpers/utils.mjs";
 import { rollIcon }                      from "./constants/roll-icons.mjs";
 import { postTestCard, thresholdLine }   from "./helpers/test-card.mjs";
@@ -54,7 +57,9 @@ import { placeGravitonZone, processGravitonShooterTurnStart, clearAllGravitonZon
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard, spendActionPoints } from "./combat/action-economy.mjs";
+import { isDevourerOfTimeExtraTurn, devourerOfTimeVictimUuids } from "./combat/devourer-of-time.mjs";
+import { BLESSED_FITS_CAPABILITY, BLESSED_FITS_PENDING_FLAG } from "./rules/blessed-fits.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
 import { clearBowToAudienceMark } from "./combat/bow-to-audience.mjs";
 import { clearAvatarOfSlaughterMarks } from "./combat/avatar-of-slaughter.mjs";
@@ -65,6 +70,8 @@ import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
 import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
+import { planCastOutOfDeathRegen, CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG } from "./rules/cast-out-of-death.mjs";
+import { DEVOURER_OF_KNOWLEDGE_CAPABILITY, DEVOURER_THEFTS_FLAG, expiredTheftEntries } from "./rules/devourer-of-knowledge.mjs";
 import { planFleshmetalRegen, FLESHMETAL_CAPABILITY, FLESHMETAL_FLAG }
   from "./rules/fleshmetal-regen.mjs";
 import { hasRuleFlag as hasFleshmetalFlag } from "./rules/flags.mjs";
@@ -169,8 +176,13 @@ export function registerHooks() {
   // этого броска (_maybePostOpposedComparison), без обратной связи инициатору.
   registerDelegatedTestOpener("opposedResponse", (executorActor, effectTargetActor, payload) => {
     const sheet = executorActor.sheet;
-    const { testKind, skillKey, charKey, initiatorLabel, initiatorName, initiatorSide, safe, hideCharSelect } = payload;
-    const opts = { opposedRequest: { initiatorName, initiatorSide, safe } };
+    const { testKind, skillKey, charKey, initiatorLabel, initiatorName, initiatorSide, safe, hideCharSelect,
+             requesterActorUuid } = payload;
+    // Personal Adaptation/Персональная Адаптация (Тзинч, wdbc-1rno):
+    // ответчику нужен uuid ИНИЦИАТОРА (кто именно её встречный оппонент),
+    // а не только имя/сторону — requesterActorUuid уже несёт общий конверт
+    // rules/delegate-test.mjs, здесь только прокинут дальше в opposedRequest.
+    const opts = { opposedRequest: { initiatorName, initiatorUuid: requesterActorUuid, initiatorSide, safe } };
     if (testKind === "characteristic") {
       if (typeof sheet?._rollCharacteristic !== "function") {
         return ui.notifications?.warn(`У актора «${executorActor.name}» нет обычного листа персонажа — встречный тест так не открыть.`);
@@ -224,6 +236,30 @@ export function registerHooks() {
         const d = ev.currentTarget.dataset;
         const targetActor = d.targetUuid ? await fromUuid(d.targetUuid).catch(() => null) : null;
         if (!targetActor) return ui.notifications?.warn("Цель психосилы не найдена (токен снят/удалён с этого момента?).");
+        // Фатализм/Fatalism (wdbc-1rno, Дар Нургла) — «игнорируют эффекты»,
+        // не «получают бонус на сопротивление»: если цель в ауре носителя и
+        // дисциплина силы защищена (rules/fatalism.mjs), тест Сопротивления
+        // не открывается вовсе, сила фиксируется как провалившаяся сразу.
+        const targetToken = d.targetTokenUuid ? await fromUuid(d.targetTokenUuid).catch(() => null) : null;
+        if (targetToken && fatalismBlocksPower(targetToken, d.discipline)) {
+          await postTestCard(targetActor, `<div class="wh-roll-result">
+            <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Фатализм — ${esc(targetActor.name)}</div>
+            <div class="roll-threshold">В ауре Фатализма (Дар Нургла): эффекты психосилы Прорицания игнорируются, тест Сопротивления не нужен.</div>
+            </div>`,
+            { sound: false });
+          return;
+        }
+        // Ever-Youthful/Вечно Юный (wdbc-1rno, Дар Слаанеш) — та же схема,
+        // что Фатализм выше, но иммунитет ЛИЧНЫЙ (без ауры): гасит негативные
+        // эффекты Биомантии на самом носителе, тест Сопротивления не нужен.
+        if (everYouthfulBlocksPower(targetActor, d.discipline)) {
+          await postTestCard(targetActor, `<div class="wh-roll-result">
+            <div class="roll-header">${rollIcon("shield", "#8fd0ff")}Вечно Юный — ${esc(targetActor.name)}</div>
+            <div class="roll-threshold">Иммунитет к негативным эффектам Биомантии (Дар Слаанеш): тест Сопротивления не нужен.</div>
+            </div>`,
+            { sound: false });
+          return;
+        }
         const requesterActor = d.casterUuid ? await fromUuid(d.casterUuid).catch(() => null) : null;
         const extra = {
           testKind: "characteristic", charKey: d.charKey, label: d.label,
@@ -1079,6 +1115,53 @@ export function registerHooks() {
       });
     });
 
+    // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): бросок 1d10+1
+    // против значения Крит.Эффекта, что накормил носителя (кнопка появляется
+    // в самой карточке крита, combat/damage.mjs). При успехе (бросок НИЖЕ
+    // крит-значения) — та же карточка получает три кнопки выбора преимущества.
+    html.querySelectorAll(".wh-eater-of-pain-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const eater = await fromUuid(el.dataset.eaterUuid).catch(() => null);
+        if (!eater?.isOwner) return ui.notifications.warn("Бросок доступен владельцу Пожирателя Боли (или ГМу).");
+        el.disabled = true;
+        const critValue = Number(el.dataset.critValue) || 0;
+        const roll = await new Roll("1d10+1").evaluate();
+        const success = roll.total < critValue;
+        await postTestCard(eater, {
+          icon: rollIcon("heart", "#ff6bd6"), title: `Пожиратель Боли — ${esc(eater.name)}`,
+          outcome: `<div class="roll-outcome"><b>${roll.total}</b> vs крит <b>${critValue}</b> — ${success
+            ? `<span class="roll-success">ниже — выберите преимущество</span>`
+            : `<span class="roll-failure">не ниже крита — впустую</span>`}</div>`,
+          lines: [success ? eaterOfPainChoiceButtonsHtml(eater.uuid, 1) : ""]
+        }, { rolls: [roll], sound: false });
+      });
+    });
+
+    // Выбор преимущества Пожирателя Боли — общий для обоих триггеров (крит
+    // рядом выше, успешная Пытка — apps/skillful-torture.mjs). data-dice уже
+    // несёт готовую формулу ("1d5"/"3d10" и т.п.) — считать множитель здесь
+    // незачем, eaterOfPainChoiceButtonsHtml уже его подставила.
+    html.querySelectorAll(".wh-eater-of-pain-choice-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const eater = await fromUuid(el.dataset.eaterUuid).catch(() => null);
+        if (!eater?.isOwner) return ui.notifications.warn("Выбрать преимущество может владелец Пожирателя Боли (или ГМ).");
+        el.disabled = true;
+        const choice = el.dataset.choice;
+        const roll = await new Roll(el.dataset.dice || "1d5").evaluate();
+        const update = eaterOfPainBenefitUpdate(eater.system, choice, roll.total);
+        if (Object.keys(update).length) await eater.update(update);
+        const labels = { fatigue: "Усталость снята", wounds: "Раны исцелены", char: "Характеристики восстановлены" };
+        await postTestCard(eater, {
+          icon: rollIcon("heart", "#ff6bd6"), title: `Пожиратель Боли — ${esc(eater.name)}`,
+          outcome: `<div class="roll-outcome">${labels[choice] || choice}: <b>${roll.total}</b></div>`
+        }, { rolls: [roll], sound: false });
+      });
+    });
+
     // Загонщик/The Hunter (wdbc-1rno) — «убив добычу, возвращается в Варп»:
     // кнопка появляется в карточке «Констатировать смерть» сама (см. выше),
     // удаление — тот же паттерн подтверждения, что у демона-дестабилизации.
@@ -1100,13 +1183,21 @@ export function registerHooks() {
 
     // Тест на Подавление (Стрельба на подавление, стр. 32-33) — по выбранному
     // токену цели, штраф уже посчитан (RoF + Импульсное) в attack.mjs.
+    //
+    // sourceActor (wdbc-1rno, 12.09.2026) — кнопка несёт UUID стрелка
+    // (data-attacker-uuid, тот же attackerUuid, что уже едет в карточку ради
+    // Орды) специально ради cross-actor правил вроде Ненависти: карточка
+    // рисуется в момент выстрела, когда стрелок известен, а тест катает
+    // ПОЗЖЕ владелец токена цели — без UUID в самой кнопке связь стрелка с
+    // тестом терялась бы между этими двумя моментами насовсем.
     html.querySelectorAll(".wh-suppression-test-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
         ev.preventDefault();
         const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
         const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
-        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление" });
+        const sourceActor = await fromUuid(ev.currentTarget.dataset.attackerUuid || "").catch(() => null);
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Стрельба на подавление", sourceActor });
       });
     });
     // Огонь из Всех Орудий (стр. 62, wdbc-pb60): обе очереди пары по одной
@@ -1119,7 +1210,8 @@ export function registerHooks() {
         const actor = requireControlledActor("⚠️ Выберите токен цели на сцене!");
         if (!actor) return;
         const mod = parseInt(ev.currentTarget.dataset.testMod || "0");
-        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий" });
+        const sourceActor = await fromUuid(ev.currentTarget.dataset.attackerUuid || "").catch(() => null);
+        await rollSuppressionTest(actor, { mod, sourceLabel: "Огонь из Всех Орудий", sourceActor });
       });
     });
     html.querySelectorAll(".wh-suppression-recovery-btn").forEach(btn => {
@@ -1697,6 +1789,21 @@ function _attachFateContextMenu(message, html) {
           : `<span class="roll-failure">Провал — ${deg} ${_degWord(deg)}</span>`)
         : "";
 
+      // Blessed Fits/Благословенные Припадки (Общие Мутации, wdbc-1rno):
+      // переброшенный тест ВСЁ РАВНО провален (hit===false, не null — тест
+      // без распознанного Порога это условие не проверяет вовсе) — Оглушение
+      // на 1 Раунд, метка на возврат Очка ждёт естественного декремента
+      // (module/combat/condition-ticks.mjs).
+      let blessedFitsLine = "";
+      if (hit === false && hasFleshmetalFlag(actor, BLESSED_FITS_CAPABILITY)) {
+        await actor.update({
+          ...conditionApplyFields("stunned", 1, actor),
+          [`flags.warhammer-dbc.${BLESSED_FITS_PENDING_FLAG}`]: true
+        });
+        blessedFitsLine = `<div class="roll-threshold">🥴 Благословенные Припадки: Оглушён на 1 Раунд — ` +
+          `если проведёт его в Оглушении полностью, ${ft.one} вернётся сама.</div>`;
+      }
+
       // Карточка — общим сборщиком (wdbc-kuun). Порядок строк сохранён: трата
       // Очка стоит выше Порога, а сам бросок подписан «Новый бросок», как и
       // был, поэтому идёт своей строкой, а не общей строкой броска.
@@ -1707,7 +1814,8 @@ function _attachFateContextMenu(message, html) {
             ${ft.word} потрачена (осталось: ${reroll1.poolValue})
           </div>`,
           threshold !== null ? thresholdLine({ threshold }) : "",
-          `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`
+          `<div class="roll-dice">Новый бросок: <b>${rv}</b></div>`,
+          blessedFitsLine
         ],
         outcome: outcomeSpan
       }, { rolls: [newRoll], speaker: message.speaker });
@@ -1946,6 +2054,41 @@ function _attachFateContextMenu(message, html) {
           await actor.setFlag("warhammer-dbc", FLESHMETAL_FLAG, plan.flagAt);
         }
       }
+
+      // Cast Out of Death/Изгнанный из Смерти (Нургл, wdbc-1rno): дедлайн
+      // ставится в момент Критического Эффекта (combat/damage.mjs), тикает
+      // здесь — тот же такт, что у Укрепления Плотеметаллом выше, разница в
+      // форме (одноразовый дедлайн, не трикл без потолка).
+      if (hasFleshmetalFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY)) {
+        const deadline = actor.getFlag("warhammer-dbc", CAST_OUT_OF_DEATH_FLAG) ?? null;
+        const plan = planCastOutOfDeathRegen(actor.system, deadline, game.time.worldTime);
+        if (plan) {
+          if (Object.keys(plan.update).length) await actor.update(plan.update);
+          await actor.unsetFlag("warhammer-dbc", CAST_OUT_OF_DEATH_FLAG);
+        }
+      }
+
+      // Devourer of Knowledge/Пожиратель Знаний (Тзинч, wdbc-1rno): кража
+      // Навыка на «1 день» — список активных краж лежит на НОСИТЕЛЕ (кто
+      // украл), запись несёт UUID жертвы и исходные Ступени обеих сторон,
+      // чтобы откатить их ровно к тому, что было. Перманентные кражи (9 дней
+      // подряд) сюда не попадают вовсе — та кнопка сама чистит список и
+      // больше не ставит дедлайн, см. packs-src Devourer_of_Knowledge.
+      if (hasFleshmetalFlag(actor, DEVOURER_OF_KNOWLEDGE_CAPABILITY)) {
+        const list = actor.getFlag("warhammer-dbc", DEVOURER_THEFTS_FLAG) ?? [];
+        const expired = expiredTheftEntries(list, game.time.worldTime);
+        if (expired.length) {
+          const bearerUpdate = {};
+          for (const rec of expired) {
+            const victim = await fromUuid(rec.victimUuid).catch(() => null);
+            if (victim) await victim.update({ [`system.skills.${rec.skillKey}.rank`]: rec.victimPrevRank || "untrained" });
+            bearerUpdate[`system.skills.${rec.skillKey}.rank`] = rec.bearerPrevRank || "untrained";
+          }
+          await actor.update(bearerUpdate);
+          const expiredKeys = new Set(expired.map(r => r.key));
+          await actor.setFlag("warhammer-dbc", DEVOURER_THEFTS_FLAG, list.filter(r => !expiredKeys.has(r.key)));
+        }
+      }
     }
   });
 
@@ -2046,6 +2189,20 @@ function _attachFateContextMenu(message, html) {
       // носителя Дара в 3 м — книга бьёт им «в начале своего Хода» жертвы,
       // тот же такт и та же геометрия, что у Стервятника выше.
       await processIrradiatedTurnStart(nextCombatant.actor, nextCombatant.token);
+      // Пожиратель Времени/Devourer of Time (Тзинч, wdbc-1rno): «застигнутые
+      // Врасплох теряют полудействие в [обладателя дара] второй Ход» — этот
+      // такт срабатывает именно тогда, когда начинается доп. Ход самой
+      // находки (isDevourerOfTimeExtraTurn), а не обычный Ход чемпиона —
+      // доп. Combatant повторяется каждый раунд сам (combat/extra-turn.mjs),
+      // так что потеря ОД у жертв повторяется вместе с ним без отдельного
+      // счётчика раундов. Жертвы могут не иметь токена в этой сцене/уже
+      // выйти из боя — fromUuid тогда просто не находит актора, пропуск.
+      if (isDevourerOfTimeExtraTurn(nextCombatant)) {
+        for (const uuid of devourerOfTimeVictimUuids(nextCombatant.actor)) {
+          const victim = await fromUuid(uuid).catch(() => null);
+          if (victim) await spendActionPoints(victim, 1);
+        }
+      }
       // Временные эффекты Шамана Зверолюдей (wdbc-xxb7) — «до начала
       // следующего Хода ШАМАНА» (не получателя), тем же тактом.
       await clearBeastmanShamanTempEffects(combat, nextCombatant.actor);
