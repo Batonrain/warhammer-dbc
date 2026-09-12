@@ -8,7 +8,8 @@ import { _getAmmoSpent, _buildAmmoModString }       from "../helpers/utils.mjs";
 import { getCriticalEffect }                        from "../../critical-tables.mjs";
 import { resolveWeaponProps, resolveWeaponPropsList, aggregateAuto,
          jamThreshold, sprayJamFace, sprayJams, buildPropertyChatBlock,
-         buildTargetEffectButtons }                 from "./weapon-properties.mjs";
+         buildTargetEffectButtons, hasWeaponPropertyImmunity }
+                                                      from "./weapon-properties.mjs";
 import { hitCount, hitLocation, locationForHit, meleeStrengthBonus,
          attackPenetration, damageFormulaFor, bonusDamageDice,
          attackHitOutcome }                          from "./attack-outcome.mjs";
@@ -291,7 +292,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Бросок ПОСЛЕ атаки и независимо от попадания: Огрин ломает человеческую
   // рукоять самим ударом. Стрелкового не касается — там своя цена (−20 к
   // тесту, rules/ogryn-fit.mjs).
-  const ogrynBreak = await rollOgrynWeaponBreak({
+  //
+  // wdbc-2gn (находка 4, ревью 07.09.2026): гейт тот же opts.skipAmmo, что
+  // выше не даёт патронам расходоваться повторно (комментарий строкой выше:
+  // «При перебросе/+10 за Очко Судьбы это тот же выстрел»). «Сдвинуть место
+  // попадания», Горжет и оба переброса за Судьбу (hooks.mjs) переигрывают ЭТУ
+  // ЖЕ атаку через opts.forcedRoll поверх той же карточки — без гейта один
+  // физический удар катал 2-3 независимых броска на поломку рукояти, в т.ч.
+  // по клику ЗАЩИЩАЮЩЕГОСЯ (кнопка Горжета жмётся с его стороны стола).
+  const ogrynBreak = opts.skipAmmo ? null : await rollOgrynWeaponBreak({
     actor, item, isMelee,
     hasOgrynized: wProps.some(p => (p?.key ?? p) === "ogryned")
   });
@@ -317,6 +326,20 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
     vehPart = aimTarget?.vehiclePart || vehicleHitLocation(locRoll).label;
     hitLocLabel = vehPart;
   }
+
+  // Керамит (wdbc-nquc, DoomBC IV. Арсенал, стр. 231): иммунитет к
+  // СВОЙСТВАМ оружия Deflagrate/Melta — отдельно от иммунитета к типу/
+  // подвиду урона (absorption.vsSubtype.flame), который у Керамита уже
+  // смоделирован ActiveEffect'ом. Оба свойства запекаются прямо в бросок
+  // атаки (доп. кубик Выгорания ниже, удвоение Пробития у attackPenetration)
+  // — не отдельным "rating"-полем, применяемым позже в damage.mjs, как
+  // Corrosive/Piercing/Crippling/Haywire, — поэтому цель читается здесь же,
+  // тем же приёмом, что у Горжета чуть ниже: первый выцеленный токен на
+  // сцене на момент броска.
+  const wpImmunityToken  = [...(game.user?.targets ?? [])][0] ?? null;
+  const wpImmunityActor  = wpImmunityToken?.actor ?? wpImmunityToken?.document?.actor ?? null;
+  const meltaImmune      = hasWeaponPropertyImmunity(wpImmunityActor, "melta");
+  const deflagrateImmune = hasWeaponPropertyImmunity(wpImmunityActor, "deflagrate");
 
   // Горжет (стр. 228, wdbc-8b5): случайное (не Избирательное) попадание в
   // голову можно попытаться перевести в Торс — кнопка на карточке бросает
@@ -443,9 +466,15 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Грозный Вопль/Dread Wail (wdbc-sk8s) — усилитель звукового оружия, живёт
   // до начала следующего Хода (module/combat/dread-wail.mjs).
   const dreadWailBonus = dreadWailWeaponBonus(actor, item);
+  // Керамит (wdbc-nquc): цель с иммунитетом к Melta не получает удвоение
+  // Пробития в упор — attackPenetration остаётся чистой функцией без Foundry,
+  // поэтому иммунитет гасится здесь, клоном wp только для этого вызова
+  // (bonusDamageDice ниже по-прежнему видит настоящий wp.meltaShort — оно
+  // делит поле shortRange с Рассеиванием/Scatter, которое Керамит не гасит).
+  const penWp = meltaImmune ? { ...wp, meltaShort: false } : wp;
   const pen = attackPenetration({
     base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen,
-    wp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
+    wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
   const corVal   = Number(actor.system?.corruption?.value ?? 0);
@@ -551,9 +580,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         total += bRoll.total;
         bonusNote = bRoll.total;
       }
-      // Выгорание (Deflagrate): на 7–10 куба урона — доп. 1d10+X энерг. урона
+      // Выгорание (Deflagrate): на 7–10 куба урона — доп. 1d10+X энерг. урона.
+      // Керамит (wdbc-nquc): иммунитет к свойству Deflagrate гасит именно
+      // этот доп. кубик, не базовый урон попадания.
       let deflagrateNote = 0;
-      if (wp.deflagrate && deflagrateHit) {
+      if (wp.deflagrate && deflagrateHit && !deflagrateImmune) {
         const dRoll = await new Roll(`1d10 + ${wp.deflagrateRating}`).evaluate();
         allRolls.push(dRoll);
         total += dRoll.total;

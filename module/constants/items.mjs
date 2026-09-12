@@ -149,8 +149,11 @@ export const ARMOR_MOD_GROUPS = {
 // Избирательном попадании в Сочленение/Глаз (полностью, сверх базового правила
 // ÷3 — см. resolveArmorAbsorptionAP); noJointReduction — у этой брони нет
 // сочленений, которые можно выцелить (Мягкая): базовое ÷3 к ней не применяется,
-// идёт полный AP; blocksPrimitiveDouble — Примитивное оружие атакующего не
-// удваивает AP этой брони; noApVsSubtype/doubleApVsSubtype/apBonusVsSubtype —
+// идёт полный AP; jointArmour (rating) — ГАРАНТИРОВАННЫЙ МИНИМУМ AP при
+// попадании в Сочленение/Шею (после обычного ÷3, Math.max — никогда не хуже
+// расчётного значения, только поднимает низкое); blocksPrimitiveDouble —
+// Примитивное оружие атакующего не удваивает AP этой брони;
+// noApVsSubtype/doubleApVsSubtype/apBonusVsSubtype —
 // та же тройка, что noApVsType/doubleApVsType/apBonusVsType выше, но по
 // подвиду урона (DAMAGE_SUBTYPES) вместо широкого типа — на уровень точнее,
 // читает combat/damage.mjs через system.absorption.vsSubtype (wdbc-q0q8).
@@ -189,6 +192,14 @@ export const ARMOR_PROPERTIES = {
   // игрока), но механизм те же propRatings, что у Protective/Gorget — не
   // добавляем отдельного «фиксированного» auto-ключа ради одного предмета.
   flakLining: { label: "Flak Lining / Флак-подложка", desc: "+X AP против X(Fr) урона (скрытый слой флак-пластин).", rating: true, auto: { apBonusVsSubtype: "fragmentation" } },
+  // Панцирь Темпестус (wdbc-aq4c, стр. 229): второе число ТОЙ ЖЕ фразы книги,
+  // что уже дала flakLining выше («...AP 4 на сочленениях и AP 8 против X(Fr)
+  // урона») — тот же встроенный слой флак-подложки, но другая семантика и
+  // другое число: не бонус против типа/подвида урона, а ГАРАНТИРОВАННЫЙ
+  // МИНИМУМ AP на попадании в Сочленение/Шею (стр. 34: обычно ÷3 от AP
+  // локации, округление вниз). Свой rating-ключ, а не переиспользование
+  // flakLining — числа разные (4 и 8), одним полем их не выразить.
+  jointLining: { label: "Joint Lining / Флак-подложка сочленений", desc: "Гарантирует минимум X AP при попадании в Сочленение/Шею (не хуже обычного деления AP локации на 3).", rating: true, auto: { jointArmour: true } },
   // rating: X — порог 1d10 (см. desc), на X+ случайное попадание в голову
   // переносится в Торс. Хранится в system.propRatings.gorget (armor.mjs) —
   // тот же свободный реестр, что и у Protective. Само использование в бою —

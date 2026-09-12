@@ -27,6 +27,12 @@ import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { resolveArmorProps } from "./armor-properties.mjs";
+// Морозное Сердце (wdbc-5knb): щит с записью Конструктора
+// kind:"shieldVsCondition" можно бросить против ТИКА Горения, гася его
+// целиком при успехе — единственная причина, по которой этот модуль вообще
+// знает о combat/damage.mjs (в остальном тик состояний намеренно идёт мимо
+// конвейера урона, см. шапку файла).
+import { rollShieldAgainstConditionTick } from "./damage.mjs";
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
 // system.conditions.<key> (bool) + system.conditions.<field> (число). Из
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
@@ -219,7 +225,17 @@ export async function processConditionTurnEnd(actor) {
     lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
   }
 
-  if (conds.burning) {
+  // Морозное Сердце (wdbc-5knb): щит с kind:"shieldVsCondition" на "burning"
+  // можно бросить ПРОТИВ этого тика ДО того, как считать урон, — при успехе
+  // Горение снимается целиком (rollShieldAgainstConditionTick сам обновляет
+  // actor и постит свою карточку), и обычный тик 1d10 ниже не считается
+  // вовсе. damageSubtype:"flame" даёт сработать override рейтинга
+  // (kind:"shieldSubtype") того же щита — 1-75 против E(Fl), как и при
+  // обычном попадании.
+  const burningExtinguishedByShield = conds.burning
+    && await rollShieldAgainstConditionTick(actor, "burning", { damageSubtype: "flame" });
+
+  if (conds.burning && !burningExtinguishedByShield) {
     const roll = await new Roll("1d10").evaluate();
     const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
     const fireAp = fireproofBurningApBonus(actor);

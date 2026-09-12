@@ -36,7 +36,7 @@ export function aggregateArmorAuto(props, ratings = {}) {
     noRanged: false, noJointCalled: false, noEyeCalled: false,
     blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
     frontArcNoProtect: false, runesOfProtection: false,
-    gorgetRating: 0, apBonusByType: {},
+    gorgetRating: 0, jointArmourRating: 0, apBonusByType: {},
     // Подвиды урона (wdbc-q0q8) — те же три директивы, что noApVsType/
     // doubleApVsType/apBonusVsType выше, но ключом служит DAMAGE_SUBTYPES
     // (crushing/fragmentation/electrical/flame/laser/toxic), а не DAMAGE_TYPES:
@@ -76,6 +76,9 @@ export function aggregateArmorAuto(props, ratings = {}) {
     // (combat/attack.mjs). Несколько предметов на одной локации (редкость) —
     // берём лучший рейтинг, как и остальные числовые бонусы брони.
     if (au.gorget) a.gorgetRating = Math.max(a.gorgetRating, Number(ratings[p.key]) || 0);
+    // Joint Lining (wdbc-aq4c, Панцирь Темпестус): рейтинг X — гарантированный
+    // минимум AP при попадании в Сочленение/Шею, см. resolveArmorAbsorptionAP.
+    if (au.jointArmour) a.jointArmourRating = Math.max(a.jointArmourRating, Number(ratings[p.key]) || 0);
     // Protective (wdbc-8b5): +X AP против конкретного damageType — та же
     // точность/упрощение, что уже принята для armorVsType от модов брони
     // (rules/character.mjs): не привязано к конкретной локации, суммируется
@@ -127,6 +130,7 @@ export function mergeArmorLocFlags(a, b) {
     frontArcNoProtect:       a.frontArcNoProtect || b.frontArcNoProtect,
     runesOfProtection:       a.runesOfProtection || b.runesOfProtection,
     gorgetRating:            Math.max(a.gorgetRating || 0, b.gorgetRating || 0),
+    jointArmourRating:       Math.max(a.jointArmourRating || 0, b.jointArmourRating || 0),
     noApVsSubtype:           orSubtypeSet(a.noApVsSubtype, b.noApVsSubtype),
     doubleApVsSubtype:       orSubtypeSet(a.doubleApVsSubtype, b.doubleApVsSubtype),
     tripleApVsSubtype:       orSubtypeSet(a.tripleApVsSubtype, b.tripleApVsSubtype)
@@ -137,7 +141,7 @@ const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
   blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0,
+  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0, jointArmourRating: 0,
   noApVsSubtype: Object.freeze({}), doubleApVsSubtype: Object.freeze({}), tripleApVsSubtype: Object.freeze({})
 });
 
@@ -225,7 +229,15 @@ export function resolveArmorAbsorptionAP({
   // Попадание в Сочленение/Шею — AP этой части тела втрое меньше настоящего,
   // округление вниз (стр. 34). У брони без сочленений (Мягкая) выцелить
   // нечего — идёт полный AP.
-  if (hitLocation === "Сочленение / Шея" && !pf.noJointReduction) ap = Math.floor(ap / 3);
+  if (hitLocation === "Сочленение / Шея" && !pf.noJointReduction) {
+    ap = Math.floor(ap / 3);
+    // Joint Lining (wdbc-aq4c, Панцирь Темпестус, стр. 229): «AP 4 на
+    // сочленениях» — не бонус К расчёту, а ГАРАНТИРОВАННЫЙ МИНИМУМ поверх
+    // него: Math.max, никогда не хуже обычного ÷3 (напр. при бонусе против
+    // подвида урона обычное деление уже может дать больше 4 — тогда его и
+    // берём), только поднимает низкое значение до X.
+    if (pf.jointArmourRating) ap = Math.max(ap, pf.jointArmourRating);
+  }
   if (pf.doubleBlast && damageType === "blast") ap *= 2;
   if (damageSubtype && pf.doubleApVsSubtype?.[damageSubtype]) ap *= 2;
   if (damageSubtype && pf.tripleApVsSubtype?.[damageSubtype]) ap *= 3;

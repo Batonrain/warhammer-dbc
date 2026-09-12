@@ -30,7 +30,8 @@ import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
 import { coverApForLocation } from "../rules/cover-locations.mjs";
-import { addFatigue } from "../sheets/tabs/conditions.mjs";
+import { addFatigue, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
+import { CONDITIONS_DEF } from "../constants/conditions.mjs";
 
 // ─── Свойства оружия wdbc-plsf: Corrosive/Piercing/Crippling/Haywire ──────────
 // Применяются здесь (не в attack.mjs/hooks.mjs), потому что только тут разом
@@ -206,7 +207,86 @@ function _shieldSubtypeEntries(item) {
   return out;
 }
 
-async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "" } = {}) {
+/**
+ * kind:"shieldArmorGate" (wdbc-giae, Морозное Сердце) — та же прямая читка
+ * предмета, что shieldSubtype/shieldVsCondition выше: собственное поведение
+ * ЭТОГО щита, не общее правило системы. Присутствие записи включает две
+ * книжные оговорки одним флагом (стр. 220): «должен быть установлен жёсткий
+ * нагрудник» и «даёт щит только на участках тела, закрытых бронёй». Первая
+ * (wdbc-yday) читается _hasHardArmorAtBody ниже — свойство брони Hard/
+ * «Жёсткая» (constants/items.mjs::ARMOR_PROPERTIES.hard) именно на Торсе, не
+ * любая надетая броня там. Вторая по-прежнему читается в _rollActiveShield
+ * ниже по absorption.wornOnly (носимая броня без естественной/трейтовой — та
+ * же величина, что уже отличает надетый шлем от голой головы для правила
+ * «Глаз», rules/character.mjs): книга не называет для неё конкретный вид
+ * брони, «любая» остаётся «любой». Порог по AP книга не называет — «закрыто
+ * бронёй» проверяется по факту (wornOnly > 0), не по минимальному рейтингу.
+ */
+function _hasShieldArmorGate(item) {
+  const groups = item.getFlag?.("warhammer-dbc", "mechanics") || [];
+  for (const g of groups) for (const e of g?.entries || [])
+    if (e?.kind === "shieldArmorGate") return true;
+  return false;
+}
+
+/**
+ * «Должен быть установлен жёсткий нагрудник» (Морозное Сердце, стр. 220,
+ * wdbc-yday) — проверяет свойство Hard/«Жёсткая» на надетой броне, закрывающей
+ * Торс, а не просто факт ношения какой-либо брони там. Та же пара условий
+ * (equipped + базовое AP локации > 0), что уже проверяет
+ * sheets/tabs/gear.mjs::_conflictingHardArmor при запрете носить два Жёстких
+ * элемента на одной части тела — здесь то же «есть ли на теле Жёсткая
+ * броня», но по конкретной локации и без сравнения с другим предметом.
+ */
+function _hasHardArmorAtBody(actor) {
+  return (actor.items?.contents ?? actor.items ?? []).some(i =>
+    i.type === "armor" && i.system?.equipped
+    && (Number(i.system?.body) || 0) > 0
+    && (i.system?.properties || []).includes("hard"));
+}
+
+/**
+ * Общий побочный эффект перегрузки щита — выключает щит и, если у предмета
+ * заданы особые формулы (Морозное Сердце, wdbc-q0q8), бьёт по актору доп.
+ * непоглощаемым уроном и Усталостью. Общая между обычным броском щита
+ * (_rollActiveShield) и броском щита ПРОТИВ ТИКА Состояния
+ * (rollShieldAgainstConditionTick, wdbc-5knb) — перегрузка ведёт себя
+ * одинаково независимо от того, что её вызвало.
+ */
+async function _applyShieldOverload(shieldItem, actor, s) {
+  await shieldItem.update({
+    "system.status":       "overloaded",
+    "system.equipped":     false,
+    "system.currentRating": 0
+  });
+
+  const overloadRolls = [];
+  let overloadExtraHtml = "";
+  // Особая перегрузка (Морозное Сердце, wdbc-q0q8): осколок впивается в
+  // грудь — доп. непоглощаемый урон (мимо AP/щитов, applyWoundLoss тот же
+  // приём, что у Corrosive/Entropy) и доп. Усталость, требует особого теста
+  // для повторной активации (repairTest — только текст, ремонт кнопкой
+  // module/combat/shield.mjs::_repairShield по-прежнему просто сбрасывает
+  // статус, тест не проверяется кодом).
+  if (s.overloadDamageFormula) {
+    const dmgRoll = await new Roll(s.overloadDamageFormula).evaluate();
+    overloadRolls.push(dmgRoll);
+    await applyWoundLoss(actor, dmgRoll.total);
+    overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Перегрузка бьёт по актору: <b>${dmgRoll.total}</b> непоглощаемого урона.</div>`;
+  }
+  if (s.overloadFatigueFormula) {
+    const fatRoll = await new Roll(s.overloadFatigueFormula).evaluate();
+    overloadRolls.push(fatRoll);
+    if (fatRoll.total > 0) await addFatigue(actor, fatRoll.total);
+    overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Доп. Усталость: <b>${fatRoll.total}</b>.</div>`;
+  }
+  if (s.overloadRepairTest) {
+    overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Для повторной активации нужен тест: <b>${esc(s.overloadRepairTest)}</b>.</div>`;
+  }
+  return { overloadRolls, overloadExtraHtml };
+}
+
+async function _rollActiveShield(actor, { skipWarp = false, melee = false, damageSubtype = "", hitLocation = "" } = {}) {
   // Ищем самый мощный активный щит (по currentRating). Освящённое оружие
   // (skipWarp) пропускает чародейские (варп-природные) щиты. Кровопомазанник
   // (wdbc-1rno, combat/turn-state-shield.mjs) даёт щит ТОЛЬКО от стрелковых
@@ -215,6 +295,16 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   // Нерушимая Лента (wdbc-q0q8): щит с kind:"shieldSubtype" mode:"exclude" на
   // этот подвид вообще не участвует в выборе — как будто его нет для этого
   // удара (другой активный щит другой природы всё ещё может сработать).
+  // Морозное Сердце (wdbc-giae, kind:"shieldArmorGate"): щит с такой записью
+  // вообще не участвует в выборе, если (а) на торсе нет надетой Жёсткой
+  // брони (wdbc-yday, _hasHardArmorAtBody) — «жёсткий нагрудник» не
+  // установлен, весь щит обесточен, или (б) само ЭТО попадание пришло в
+  // локацию без надетой брони (любой) — «только на участках тела, закрытых
+  // бронёй». armorKey — тот же LOCATION_TO_ARMOR, что и ниже по файлу для
+  // обычного поглощения; wornOnly — носимая/ручная броня без
+  // естественной/трейтовой добавки (rules/character.mjs).
+  const wornOnly  = actor.system.absorption?.wornOnly || {};
+  const hitArmorKey = LOCATION_TO_ARMOR[hitLocation] || "body";
   const shieldItem = actor.items.contents
     .filter(i =>
       i.type === "forcefield" &&
@@ -222,7 +312,8 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
       i.system.status === "active" &&
       !(skipWarp && (i.system.shieldNature || "technological") === "warp") &&
       !(melee && i.getFlag?.("warhammer-dbc", "turnStateShieldRangedOnly")) &&
-      !(damageSubtype && _shieldSubtypeEntries(i).some(e => e.shieldSubtypeMode === "exclude" && e.shieldSubtypeKey === damageSubtype))
+      !(damageSubtype && _shieldSubtypeEntries(i).some(e => e.shieldSubtypeMode === "exclude" && e.shieldSubtypeKey === damageSubtype)) &&
+      !(_hasShieldArmorGate(i) && (!_hasHardArmorAtBody(actor) || Number(wornOnly[hitArmorKey]) <= 0))
     )
     .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
 
@@ -254,37 +345,9 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   const overloaded = blocked && threshold > 0 && rv <= threshold;
 
   // ── Обновляем статус щита если перегружен ────────────────────────────────
-  const overloadRolls = [];
+  let overloadRolls = [];
   let overloadExtraHtml = "";
-  if (overloaded) {
-    await shieldItem.update({
-      "system.status":       "overloaded",
-      "system.equipped":     false,
-      "system.currentRating": 0
-    });
-
-    // Особая перегрузка (Морозное Сердце, wdbc-q0q8): осколок впивается в
-    // грудь — доп. непоглощаемый урон (мимо AP/щитов, applyWoundLoss тот же
-    // приём, что у Corrosive/Entropy) и доп. Усталость, требует особого теста
-    // для повторной активации (repairTest — только текст, ремонт кнопкой
-    // module/combat/shield.mjs::_repairShield по-прежнему просто сбрасывает
-    // статус, тест не проверяется кодом).
-    if (s.overloadDamageFormula) {
-      const dmgRoll = await new Roll(s.overloadDamageFormula).evaluate();
-      overloadRolls.push(dmgRoll);
-      await applyWoundLoss(actor, dmgRoll.total);
-      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Перегрузка бьёт по актору: <b>${dmgRoll.total}</b> непоглощаемого урона.</div>`;
-    }
-    if (s.overloadFatigueFormula) {
-      const fatRoll = await new Roll(s.overloadFatigueFormula).evaluate();
-      overloadRolls.push(fatRoll);
-      if (fatRoll.total > 0) await addFatigue(actor, fatRoll.total);
-      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Доп. Усталость: <b>${fatRoll.total}</b>.</div>`;
-    }
-    if (s.overloadRepairTest) {
-      overloadExtraHtml += `<div class="roll-threshold" style="color:#c07000;">Для повторной активации нужен тест: <b>${esc(s.overloadRepairTest)}</b>.</div>`;
-    }
-  }
+  if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s));
 
   // ── Тип щита для отображения ──────────────────────────────────────────────
   const typeLabels = { dome: "Купол", deflector: "Дефлект.", penetrating: "Сквозной" };
@@ -329,6 +392,94 @@ async function _rollActiveShield(actor, { skipWarp = false, melee = false, damag
   }, { rolls: [roll, ...overloadRolls], speaker: { alias: "Система" } });
 
   return { blocked, overloaded };
+}
+
+// Записи kind:"shieldVsCondition" (wdbc-5knb) — как и shieldSubtype выше,
+// читаются НАПРЯМУЮ с предмета щита: собственное поведение ЭТОГО предмета,
+// не общее правило.
+function _shieldVsConditionEntries(item) {
+  const groups = item.getFlag?.("warhammer-dbc", "mechanics") || [];
+  const out = [];
+  for (const g of groups) for (const e of g?.entries || [])
+    if (e?.kind === "shieldVsCondition" && e.shieldVsConditionKey) out.push(e);
+  return out;
+}
+
+/**
+ * Бросок щита ПРОТИВ ТИКА Состояния (Frozen Heart/Морозное Сердце, wdbc-5knb;
+ * книга: «может бросаться против урона от Горения, гася персонажа при
+ * срабатывании»). Отдельная точка входа от _rollActiveShield выше: тик
+ * Состояния (module/combat/condition-ticks.mjs) наносит урон НАПРЯМУЮ через
+ * applyWoundLoss/rules/wounds.mjs, минуя весь конвейер урона
+ * (applyDamageToActor), поэтому обычный автоматический бросок щита при
+ * попадании сюда вообще не долетает — condition-ticks.mjs зовёт эту функцию
+ * явно, ДО того как посчитать урон тика.
+ *
+ * Рассматриваются только щиты с записью kind:"shieldVsCondition", у которой
+ * shieldVsConditionKey === condKey — обычный щит без такой записи против
+ * тика Состояния по-прежнему не бросается вовсе (как было до wdbc-5knb).
+ * damageSubtype (опционально) даёт kind:"shieldSubtype" override ТОГО ЖЕ
+ * предмета сработать и здесь — Морозное Сердце получает рейтинг 1-75 против
+ * тика Горения тем же override, что и против свежего попадания E(Fl), одной
+ * записью Конструктора на оба случая.
+ *
+ * При успехе Состояние СНИМАЕТСЯ ЦЕЛИКОМ (conditionRemoveFields) — «гася
+ * персонажа» из книги означает потушить, а не поглотить один тик и
+ * продолжать гореть дальше. Возвращает true, если тик надо отменить целиком
+ * (условие потушено — вызывающий код не наносит урон/Усталость этого тика).
+ */
+export async function rollShieldAgainstConditionTick(actor, condKey, { damageSubtype = "" } = {}) {
+  const items = actor.items?.contents ?? actor.items ?? [];
+  const shieldItem = items
+    .filter(i =>
+      i.type === "forcefield" &&
+      i.system.equipped &&
+      i.system.status === "active" &&
+      _shieldVsConditionEntries(i).some(e => e.shieldVsConditionKey === condKey)
+    )
+    .sort((a, b) => (b.system.currentRating ?? 0) - (a.system.currentRating ?? 0))[0];
+  if (!shieldItem) return false;
+
+  const s         = shieldItem.system;
+  const threshold = s.overloadThreshold ?? 0;
+
+  const subtypeOverride = damageSubtype
+    ? _shieldSubtypeEntries(shieldItem).find(e => e.shieldSubtypeMode === "override" && e.shieldSubtypeKey === damageSubtype && Number(e.shieldSubtypeRatingMax) > 0)
+    : null;
+  const rating = subtypeOverride ? Number(subtypeOverride.shieldSubtypeRatingMax) : (s.currentRating ?? 0);
+
+  const roll = await new Roll("1d100").evaluate();
+  const rv   = roll.total;
+  const blocked    = rv <= rating;
+  const overloaded = blocked && threshold > 0 && rv <= threshold;
+
+  let overloadRolls = [];
+  let overloadExtraHtml = "";
+  if (overloaded) ({ overloadRolls, overloadExtraHtml } = await _applyShieldOverload(shieldItem, actor, s));
+
+  if (blocked) await actor.update(conditionRemoveFields(condKey));
+
+  const condLabel = CONDITIONS_DEF[condKey]?.label || condKey;
+  const resultLabel = blocked
+    ? `Бросок <b>${rv}</b> ≤ Рейтинг <b>${rating}</b> — «${condLabel}» потушено${overloaded ? ", но щит перегружен и выключен" : ""}`
+    : `Бросок <b>${rv}</b> > Рейтинг <b>${rating}</b> — щит не сработал, тик идёт как обычно`;
+
+  await postTestCard(null, {
+    title: blocked ? `Щит потушил «${condLabel}»` : "Бросок щита против тика Состояния",
+    threshold: `<div class="roll-threshold">${esc(shieldItem.name)}</div>`,
+    outcome: `<span class="${overloaded ? "roll-warning" : blocked ? "roll-success" : "roll-failure"}">${resultLabel}</span>`,
+    sections: [
+      `<div class="roll-threshold" style="font-size:0.85em; opacity:0.8;">
+          Рейтинг: <b>${rating}</b>${threshold > 0 ? ` | Порог перегрузки: <b>${threshold}</b>` : ""}
+        </div>`,
+      overloaded ? `<div class="roll-threshold" style="color:#c07000;">
+          Щит нуждается в обслуживании перед повторным использованием.
+        </div>` : "",
+      overloadExtraHtml
+    ]
+  }, { rolls: [roll, ...overloadRolls], speaker: { alias: "Система" } });
+
+  return blocked;
 }
 
 /**
@@ -454,7 +605,7 @@ export async function applyDamageToActor(actor, damageData) {
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
   // варп-природные (чародейские) щиты пропускаются.
-  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype });
+  const shieldResult = ignoreShield ? null : await _rollActiveShield(actor, { skipWarp: sanctified, melee, damageSubtype, hitLocation });
 
   // Если щит заблокировал — урон аннулирован, выходим
   if (shieldResult?.blocked) return;
@@ -498,6 +649,17 @@ export async function applyDamageToActor(actor, damageData) {
   // — плоская добавка к поглощению ЭТОГО попадания, читается ДО того, как то
   // же попадание списывает с неё заряд (см. decrement ниже).
   const ablativeShieldBefore = Number(system.ablativeApShield?.value) || 0;
+
+  // Правки самого актора (не embedded-предметов — тем нужен свой
+  // updateEmbeddedDocuments, здесь не смешиваются), накопленные за это
+  // попадание — armorCorrosion/ablativeApShield/sarcophagusWarpWounds ниже
+  // писали до трёх отдельных actor.update() на одно попадание (wdbc-ye6);
+  // теперь копятся здесь и уходят ОДНИМ вызовом (см. flush ниже, перед
+  // applyWoundLoss). Вычисления, которые от значений этих полей зависят
+  // (armorAP, rawNet), читают локальные переменные и от момента записи в БД
+  // не зависят — порядок расчёта не меняется, меняется только когда
+  // накопленное уходит на сервер.
+  const actorUpdate = {};
 
   let tb, armorAP, effArmorAP, totalAbsorption;
   let runesBonus = 0;
@@ -586,7 +748,7 @@ export async function applyDamageToActor(actor, damageData) {
         entropyLost = entropyArmourLoss(apNow, entropyRating);
         if (entropyLost > 0) {
           const existing = Number(system.armorCorrosion?.[armorKey]) || 0;
-          await actor.update({ [`system.armorCorrosion.${armorKey}`]: existing + entropyLost });
+          actorUpdate[`system.armorCorrosion.${armorKey}`] = existing + entropyLost;
           armorAP = Math.max(0, armorAP - entropyLost);
         }
       }
@@ -659,7 +821,7 @@ export async function applyDamageToActor(actor, damageData) {
     })));
   }
   if (ablativeShieldBefore > 0) {
-    await actor.update({ "system.ablativeApShield.value": ablativeApAfterHit(ablativeShieldBefore) });
+    actorUpdate["system.ablativeApShield.value"] = ablativeApAfterHit(ablativeShieldBefore);
   }
 
   // Саркофаг Дредноута: аблативные Раны ПРОТИВ ВАРП-ОРУЖИЯ (стр. 57,
@@ -670,10 +832,13 @@ export async function applyDamageToActor(actor, damageData) {
   if (warpSoak && rawNet > 0) {
     const { ablative, absorbed, remaining } = ablativeAbsorb(system.sarcophagusWarpWounds?.value, rawNet);
     if (absorbed > 0) {
-      await actor.update({ "system.sarcophagusWarpWounds.value": ablative });
+      actorUpdate["system.sarcophagusWarpWounds.value"] = ablative;
       rawNet = remaining;
     }
   }
+  // Флаш накопленных выше правок актора — один запрос вместо до трёх.
+  if (Object.keys(actorUpdate).length) await actor.update(actorUpdate);
+
   const netDamage = ablativeDamage(rawNet, actor);
   const ablated = netDamage !== rawNet;
 

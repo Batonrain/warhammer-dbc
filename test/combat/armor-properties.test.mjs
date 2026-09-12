@@ -136,6 +136,16 @@ describe("aggregateArmorAuto — подвиды урона (wdbc-q0q8)", () => {
     const a = aggregateArmorAuto(props, { flakLining: 8 });
     expect(a.apBonusBySubtype.fragmentation).toBe(8);
   });
+
+  it("jointLining без рейтинга — auto присутствует, но jointArmourRating остаётся 0 (Панцирь Темпестус, wdbc-aq4c)", () => {
+    const props = resolveArmorProps({ system: { properties: ["jointLining"] } });
+    expect(aggregateArmorAuto(props).jointArmourRating).toBe(0);
+  });
+
+  it("jointLining с рейтингом — jointArmourRating подхватывает X (Панцирь Темпестус, wdbc-aq4c)", () => {
+    const props = resolveArmorProps({ system: { properties: ["jointLining"] } });
+    expect(aggregateArmorAuto(props, { jointLining: 4 }).jointArmourRating).toBe(4);
+  });
 });
 
 describe("mergeArmorLocFlags — подвиды урона (wdbc-q0q8)", () => {
@@ -159,6 +169,13 @@ describe("mergeArmorLocFlags — подвиды урона (wdbc-q0q8)", () => {
     const a = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true } };
     const b = { ...emptyArmorLocFlags(), noApVsSubtype: { electrical: true } };
     expect(mergeArmorLocFlags(a, b).noApVsSubtype).toEqual({ electrical: true });
+  });
+
+  it("jointArmourRating — берётся лучший (максимум) из двух предметов (wdbc-aq4c)", () => {
+    const a = { ...emptyArmorLocFlags(), jointArmourRating: 4 };
+    const b = { ...emptyArmorLocFlags(), jointArmourRating: 2 };
+    expect(mergeArmorLocFlags(a, b).jointArmourRating).toBe(4);
+    expect(mergeArmorLocFlags(b, a).jointArmourRating).toBe(4);
   });
 });
 
@@ -284,6 +301,29 @@ describe("resolveArmorAbsorptionAP", () => {
       baseArmorAP: 6, vsTypeBonus: 4, damageType: "energy", primitive: true, flags
     });
     expect(ap).toBe(0);
+  });
+
+  describe("Joint Lining — минимум AP на Сочленении/Шее (Панцирь Темпестус, wdbc-aq4c)", () => {
+    it("поднимает низкий расчётный AP до X (книга: «AP 4 на сочленениях»)", () => {
+      // База 7 (тело Панциря Темпестус), обычное ÷3 округляет вниз до 2 — jointArmourRating=4 поднимает до 4.
+      const flags = { ...emptyArmorLocFlags(), jointArmourRating: 4 };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", hitLocation: "Сочленение / Шея", flags })).toBe(4);
+    });
+
+    it("не понижает AP, если обычный расчёт уже даёт больше X (Math.max, не замена)", () => {
+      // База 15 (напр. с бонусом против подвида урона), ÷3 = 5, что уже больше гарантированных 4 — берём 5.
+      const flags = { ...emptyArmorLocFlags(), jointArmourRating: 4 };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 15, damageType: "impact", hitLocation: "Сочленение / Шея", flags })).toBe(5);
+    });
+
+    it("не действует на попадания не в Сочленение/Шею", () => {
+      const flags = { ...emptyArmorLocFlags(), jointArmourRating: 4 };
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", hitLocation: "Торс", flags })).toBe(7);
+    });
+
+    it("без jointArmourRating (0) обычное ÷3 работает как раньше", () => {
+      expect(resolveArmorAbsorptionAP({ baseArmorAP: 7, damageType: "impact", hitLocation: "Сочленение / Шея" })).toBe(2);
+    });
   });
 
   describe("подвиды урона (wdbc-q0q8)", () => {
