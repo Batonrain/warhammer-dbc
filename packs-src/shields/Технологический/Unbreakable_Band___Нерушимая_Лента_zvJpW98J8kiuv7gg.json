@@ -39,7 +39,10 @@
               "shieldSubtypeMode": "exclude",
               "shieldSubtypeKey": "crushing",
               "shieldSubtypeRatingMax": 0,
-              "when": { "negate": false, "conditions": [] }
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
             }
           ]
         }

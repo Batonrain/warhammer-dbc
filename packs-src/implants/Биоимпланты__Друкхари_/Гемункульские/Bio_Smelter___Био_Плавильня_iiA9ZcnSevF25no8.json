@@ -164,7 +164,9 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "quality": ["best"],
+                "quality": [
+                  "best"
+                ],
                 "negateQuality": false
               }
             },
@@ -277,7 +279,9 @@
               "when": {
                 "negate": false,
                 "conditions": [],
-                "quality": ["best"],
+                "quality": [
+                  "best"
+                ],
                 "negateQuality": false
               }
             }
