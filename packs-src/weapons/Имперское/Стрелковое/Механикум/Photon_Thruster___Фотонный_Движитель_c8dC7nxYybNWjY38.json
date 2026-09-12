@@ -67,7 +67,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "laser"
   },
   "_id": "c8dC7nxYybNWjY38",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

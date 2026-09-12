@@ -82,7 +82,8 @@
       "standard": false,
       "reloads": 10
     },
-    "rangeBands": []
+    "rangeBands": [],
+    "damageSubtype": "crushing"
   },
   "_id": "OVEQ1BZZomuGiGL8",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

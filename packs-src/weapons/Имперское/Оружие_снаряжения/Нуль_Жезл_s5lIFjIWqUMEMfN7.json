@@ -31,7 +31,8 @@
           {
             "key": "sanctified"
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",

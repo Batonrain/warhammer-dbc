@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": ""
   },
   "_id": "rb8SPCNhJoug7tqx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

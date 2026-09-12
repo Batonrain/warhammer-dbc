@@ -60,7 +60,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кулаки"
+    "meleeCategory": "Кулаки",
+    "damageSubtype": "electrical"
   },
   "_id": "G1xgPljHZRDPdYdH",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

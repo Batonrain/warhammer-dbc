@@ -67,7 +67,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Молот"
+    "meleeCategory": "Молот",
+    "damageSubtype": "crushing"
   },
   "_id": "Ap5YcNQmlSr6B5bI",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

@@ -40,7 +40,8 @@
         "damage": "1d10-2",
         "damageType": "impact",
         "penetration": 0,
-        "weaponProps": []
+        "weaponProps": [],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -98,7 +99,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Молот"
+    "meleeCategory": "Молот",
+    "damageSubtype": "crushing"
   },
   "_id": "Ly34UpOPYR7uxeNx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

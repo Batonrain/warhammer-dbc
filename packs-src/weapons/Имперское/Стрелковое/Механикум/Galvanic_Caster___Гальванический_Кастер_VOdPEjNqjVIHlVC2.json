@@ -65,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "electrical"
   },
   "_id": "VOdPEjNqjVIHlVC2",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

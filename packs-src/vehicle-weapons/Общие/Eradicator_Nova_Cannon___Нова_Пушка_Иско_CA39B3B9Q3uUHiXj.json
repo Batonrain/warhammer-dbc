@@ -67,7 +67,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "fragmentation"
   },
   "_id": "CA39B3B9Q3uUHiXj",
   "effects": [],

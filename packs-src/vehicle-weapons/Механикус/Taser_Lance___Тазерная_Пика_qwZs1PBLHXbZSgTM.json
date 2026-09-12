@@ -64,7 +64,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "electrical"
   },
   "_id": "qwZs1PBLHXbZSgTM",
   "effects": [],
