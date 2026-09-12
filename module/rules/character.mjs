@@ -13,6 +13,7 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import { IMPROVEMENT_BONUS, IMPROVEMENTS, SKILL_RANKS } from "../constants/characteristics.mjs";
+import { AP_LOCATIONS } from "../constants/effect-keys.mjs";
 import { HAEM_STAGES, isHaemonculus } from "../constants/haemonculus.mjs";
 import { SKILLS_DEF, GROUP_SKILLS_DEF }   from "../constants/skills.mjs";
 import { carryRow }                        from "../helpers/utils.mjs";
@@ -38,6 +39,7 @@ import { PA_TABLES } from "../constants/power-armour-lore.mjs";
 import { sanityMax, madnessLevels, sarcophagusCharDelta, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusWarpWounds, sarcophagusHelplessNow } from "./dreadnought.mjs";
 import { hasRuleFlag } from "./flags.mjs";
+import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
 import { woundLevel } from "./wound-tier.mjs";
@@ -587,6 +589,20 @@ export function prepareCharacterDerived(actor, system) {
     // значением) корректно в обе стороны.
     if (system.conditions?.unconscious) system.conditions.helpless = true;
 
+    // Кэш сборки правил (rules/collect.mjs) сложился ВЫШЕ — на первом же
+    // hasRuleFlag(DREADNOUGHT_PILOT_FLAG), то есть до цикла характеристик и
+    // до Object.assign(system.conditions, readAllMirrors(actor)) — по ещё не
+    // обновлённым bonus/conditions. Правила, которые гейтятся charBonusMin/
+    // hasCondition («нужен Бонус Силы 5», «в Ярости»), в этом кэше отобраны
+    // неверно. Дальше по коду (Сарко́фаг Дредноута ниже, а главное — всё, что
+    // спросит hasRuleFlag/ruleFlags за пределами этой функции, но внутри той
+    // же обёртки withRulesCache — например, диалог атаки, открытый тем же
+    // синхронным проходом) характеристики и Состояния уже верны — сбрасываем
+    // кэш ИМЕННО ЭТОГО актора, чтобы следующий сбор пересчитал список заново
+    // по актуальным данным (wdbc-2gn). Полный сброс withRulesCache() тут не
+    // подходит — обёртка держит кэш других акторов, которых не хотим трогать.
+    invalidateRulesCacheFor(actor);
+
     // Мёртвое Могущество (Иннари): максимум = W.b × 3
     if (system.deadMight) {
       system.deadMight.max = (chars.wp?.bonus ?? 0) * 3;
@@ -724,15 +740,14 @@ export function prepareCharacterDerived(actor, system) {
     // попадания, пока броню не починят (combat/damage.mjs пишет сюда).
     const corrosion = system.armorCorrosion || {};
     const corroded = (k) => Math.max(0, (Number(corrosion[k]) || 0));
-    // Естественная броня (трейты) + пер-локационная от имплантов складываются с носимой/ручной
-    const armorAP = {
-      head:     Math.max(0, best("head")     + traitArmourAll + traitArmorLoc.head     + (fxArmor.head     || 0) - corroded("head")),
-      body:     Math.max(0, best("body")     + traitArmourAll + traitArmorLoc.body     + (fxArmor.body     || 0) - corroded("body")),
-      leftArm:  Math.max(0, best("leftArm")  + traitArmourAll + traitArmorLoc.leftArm  + (fxArmor.leftArm  || 0) - corroded("leftArm")),
-      rightArm: Math.max(0, best("rightArm") + traitArmourAll + traitArmorLoc.rightArm + (fxArmor.rightArm || 0) - corroded("rightArm")),
-      leftLeg:  Math.max(0, best("leftLeg")  + traitArmourAll + traitArmorLoc.leftLeg  + (fxArmor.leftLeg  || 0) - corroded("leftLeg")),
-      rightLeg: Math.max(0, best("rightLeg") + traitArmourAll + traitArmorLoc.rightLeg + (fxArmor.rightLeg || 0) - corroded("rightLeg")),
-    };
+    // Естественная броня (трейты) + пер-локационная от имплантов складываются
+    // с носимой/ручной — одной формулой по всем 6 локациям (AP_LOCATIONS,
+    // constants/effect-keys.mjs), а не 6 повторенными вручную строками
+    // (wdbc-ye6): правка формулы раньше требовала помнить, что менять её надо
+    // сразу в шести местах.
+    const armorAP = Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k,
+      Math.max(0, best(k) + traitArmourAll + traitArmorLoc[k] + (fxArmor[k] || 0) - corroded(k))
+    ]));
 
     // Только носимое/ручное/щит, без естественной брони Черт и имплантов:
     // попадание в Глаз игнорирует AP шлема, а не всей головы (стр. 34).
@@ -745,12 +760,7 @@ export function prepareCharacterDerived(actor, system) {
     system.sealedFullSuit = Object.values(sealedCoverage).every(Boolean);
 
     system.absorption = {
-      head:           armorAP.head     + tb,
-      body:           armorAP.body     + tb,
-      leftArm:        armorAP.leftArm  + tb,
-      rightArm:       armorAP.rightArm + tb,
-      leftLeg:        armorAP.leftLeg  + tb,
-      rightLeg:       armorAP.rightLeg + tb,
+      ...Object.fromEntries(Object.keys(AP_LOCATIONS).map(k => [k, armorAP[k] + tb])),
       toughnessBonus: tb,
       armorOnly:      armorAP,
       wornOnly,
@@ -908,7 +918,11 @@ export function prepareCharacterDerived(actor, system) {
       switch (it.type) {
         case "talent": autoTalentCost += (parseInt(it.system?.cost) || 0); break;
         case "psychicPower":
-          autoPsyCost += (parseInt(it.system?.cost) || 0);
+          // wdbc-exjp: runeLearnCost — отдельная трата опыта на Руну Сигиллитов
+          // этой же психосилы (module/rules/sigillite-runes.mjs), складывается
+          // с ценой изучения самой силы в ту же строку «На психосилы» — обе
+          // траты психокера, книга не разводит их по разным бюджетам.
+          autoPsyCost += (parseInt(it.system?.cost) || 0) + (parseInt(it.system?.runeLearnCost) || 0);
           if (it.system?.isSustained) sustainedCost += (it.system?.sustainCost ?? 1);
           break;
         case "techPower": autoTechCost += (parseInt(it.system?.cost) || 0); break;
