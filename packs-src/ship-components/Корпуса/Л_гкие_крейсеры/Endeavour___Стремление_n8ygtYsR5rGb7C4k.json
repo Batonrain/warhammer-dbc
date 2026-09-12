@@ -1,0 +1,57 @@
+{
+  "name": "Endeavour / Стремление",
+  "type": "shipHull",
+  "img": "systems/warhammer-dbc/assets/item-icons/component.svg",
+  "folder": "NfawZJdCJMS3OCWj",
+  "system": {
+    "hullClass": "Лёгкие крейсеры",
+    "sp": 57,
+    "rarity": 0,
+    "quality": "common",
+    "qualityPicks": [],
+    "qualityCustom": false,
+    "aspects": "In-build: Торпедный аппарат системы Восс (нос), 1/1",
+    "description": "",
+    "notes": "",
+    "shipProps": [
+      {
+        "key": "inbuild"
+      }
+    ],
+    "hull": {
+      "spaceMax": 62,
+      "powerGen": 0,
+      "turnArc": "45°",
+      "weaponCapacity": "Н2, ПБ1, ЛБ1",
+      "hullIntegrity": 60
+    },
+    "chars": {
+      "speed": 6,
+      "manoeuvrability": 12,
+      "detection": 15,
+      "voidShields": 0,
+      "armour": 20,
+      "turretRating": 2
+    }
+  },
+  "_id": "n8ygtYsR5rGb7C4k",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {},
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782051270642,
+    "modifiedTime": 1782752981064,
+    "lastModifiedBy": "0avJJRhWNcjVNZyk"
+  },
+  "_key": "!items!n8ygtYsR5rGb7C4k"
+}

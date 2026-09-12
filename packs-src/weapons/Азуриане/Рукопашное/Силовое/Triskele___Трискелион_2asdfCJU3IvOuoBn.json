@@ -1,0 +1,381 @@
+{
+  "name": "Triskele / Трискелион",
+  "type": "weapon",
+  "folder": "qeNef9C2zvUaeA9b",
+  "system": {
+    "description": "",
+    "notes": "",
+    "weaponClass": "melee",
+    "itemSize": "2x1",
+    "weaponType": "power",
+    "range": 2,
+    "balance": 1,
+    "grips": "1р",
+    "profileLabel": "",
+    "profiles": [
+      {
+        "label": "Метательный",
+        "range": "S.b×4",
+        "damage": "1d10+4",
+        "damageType": "energy",
+        "penetration": 4,
+        "weaponProps": [
+          {
+            "key": "devastating",
+            "rating": 5,
+            "rating2": 0
+          },
+          {
+            "key": "extreme",
+            "rating": 9,
+            "rating2": 0
+          },
+          {
+            "key": "felling",
+            "rating": 4,
+            "rating2": 0
+          },
+          {
+            "key": "powerField",
+            "rating": 0,
+            "rating2": 0
+          },
+          {
+            "key": "reinforced",
+            "rating": 0,
+            "rating2": 0
+          }
+        ]
+      }
+    ],
+    "reload": "–",
+    "magazineCur": 0,
+    "magazineMax": 0,
+    "rof_single": 0,
+    "rof_semi": 0,
+    "rof_full": 0,
+    "damage": "1d10+4",
+    "damageType": "energy",
+    "penetration": 4,
+    "quality": "common",
+    "availability": 4,
+    "weight": 2,
+    "attackBonus": 0,
+    "special": "Нож (рукопашный/метательный); Хват 1р; Досягаемость 0–2. Aspect: Воющие Баньши. Метательный (S.b×4): 1d10+4 E, Pen 4, Devastating (5), Extreme (9), Felling (4), Power Field, Reinforced.",
+    "equipped": false,
+    "loadedAmmoId": "",
+    "weaponProps": [
+      {
+        "key": "aspect"
+      },
+      {
+        "key": "extreme",
+        "rating": 7
+      },
+      {
+        "key": "felling",
+        "rating": 4
+      },
+      {
+        "key": "multiStrike",
+        "rating": 3
+      },
+      {
+        "key": "powerField"
+      },
+      {
+        "key": "reinforced"
+      }
+    ],
+    "needsRecharge": false,
+    "legacyWeapon": false,
+    "sacred": false,
+    "daemonWeapon": {
+      "bound": false,
+      "god": "",
+      "demonName": "",
+      "binding": 0,
+      "demonWb": 0,
+      "demonInf": 0,
+      "subdued": false,
+      "runic": false,
+      "properties": [],
+      "preProps": [],
+      "preDamage": "",
+      "prePen": 0
+    },
+    "vehicleMount": {
+      "isMounted": false,
+      "operator": "gunner",
+      "stationId": "",
+      "mount": "turret",
+      "hArc": "360°",
+      "vArc": "",
+      "standard": false,
+      "reloads": 10
+    },
+    "meleeCategory": "Нож"
+  },
+  "_id": "2asdfCJU3IvOuoBn",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "Bh2eMXBlRSXAdCgx": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true,
+      "profilesAuto": true,
+      "mechanics": [
+        {
+          "id": "K6MFRaniCoSUmkXD",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "vMKbUeq7jVW7ZMCy",
+              "kind": "capability",
+              "group": null,
+              "capabilityKey": "defence.psychicParryTool",
+              "label": "Парирует психосилы (Щит Клинков)"
+            }
+          ]
+        }
+      ]
+    },
+    "autoanimations": {
+      "id": "2b8ecb8e-4e68-4e30-aef9-c9b6744cb4ec",
+      "label": "Трискелион",
+      "levels3d": {
+        "type": "explosion",
+        "data": {
+          "color01": "#FFFFFF",
+          "color02": "#FFFFFF",
+          "spritePath": "modules/levels-3d-preview/assets/particles/dust.png"
+        },
+        "sound": {
+          "enable": false
+        },
+        "secondary": {
+          "enable": false,
+          "data": {
+            "color01": "#FFFFFF",
+            "color02": "#FFFFFF",
+            "spritePath": "modules/levels-3d-preview/assets/particles/dust.png"
+          }
+        }
+      },
+      "macro": {
+        "enable": false,
+        "playWhen": "0"
+      },
+      "menu": "melee",
+      "primary": {
+        "video": {
+          "dbSection": "melee",
+          "menuType": "weapon",
+          "animation": "lasersword",
+          "variant": "01",
+          "color": "blue",
+          "enableCustom": false,
+          "customPath": ""
+        },
+        "sound": {
+          "enable": false,
+          "delay": 0,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "startTime": 0,
+          "volume": 0.75
+        },
+        "options": {
+          "contrast": 0,
+          "delay": 0,
+          "elevation": 1000,
+          "isWait": false,
+          "opacity": 1,
+          "playbackRate": 1,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "saturate": 0,
+          "size": 1,
+          "tint": false,
+          "tintColor": "#FFFFFF",
+          "zIndex": 1
+        }
+      },
+      "secondary": {
+        "enable": false,
+        "video": {
+          "dbSection": "static",
+          "menuType": "spell",
+          "animation": "curewounds",
+          "variant": "01",
+          "color": "blue",
+          "enableCustom": false,
+          "customPath": ""
+        },
+        "sound": {
+          "enable": false,
+          "delay": 0,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "startTime": 0,
+          "volume": 0.75
+        },
+        "options": {
+          "addTokenWidth": false,
+          "anchor": "0.5",
+          "contrast": 0,
+          "delay": 0,
+          "elevation": 1000,
+          "fadeIn": 250,
+          "fadeOut": 500,
+          "isMasked": false,
+          "isRadius": true,
+          "isWait": false,
+          "opacity": 1,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "saturate": 0,
+          "size": 1.5,
+          "tint": false,
+          "tintColor": "#FFFFFF",
+          "zIndex": 1
+        }
+      },
+      "soundOnly": {
+        "sound": {
+          "enable": false,
+          "delay": 0,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "startTime": 0,
+          "volume": 0.75
+        }
+      },
+      "source": {
+        "enable": false,
+        "video": {
+          "dbSection": "static",
+          "menuType": "spell",
+          "animation": "curewounds",
+          "variant": "01",
+          "color": "blue",
+          "enableCustom": false,
+          "customPath": ""
+        },
+        "sound": {
+          "enable": false,
+          "delay": 0,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "startTime": 0,
+          "volume": 0.75
+        },
+        "options": {
+          "addTokenWidth": false,
+          "anchor": "0.5",
+          "contrast": 0,
+          "delay": 0,
+          "elevation": 1000,
+          "fadeIn": 250,
+          "fadeOut": 500,
+          "isMasked": false,
+          "isRadius": false,
+          "isWait": true,
+          "opacity": 1,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "saturate": 0,
+          "size": 1,
+          "tint": false,
+          "tintColor": "#FFFFFF",
+          "zIndex": 1
+        }
+      },
+      "target": {
+        "enable": false,
+        "video": {
+          "dbSection": "static",
+          "menuType": "spell",
+          "animation": "curewounds",
+          "variant": "01",
+          "color": "blue",
+          "enableCustom": false,
+          "customPath": ""
+        },
+        "sound": {
+          "enable": false,
+          "delay": 0,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "startTime": 0,
+          "volume": 0.75
+        },
+        "options": {
+          "addTokenWidth": false,
+          "anchor": "0.5",
+          "contrast": 0,
+          "delay": 0,
+          "elevation": 1000,
+          "fadeIn": 250,
+          "fadeOut": 500,
+          "isMasked": false,
+          "isRadius": false,
+          "opacity": 1,
+          "persistent": false,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "saturate": 0,
+          "size": 1,
+          "tint": false,
+          "tintColor": "#FFFFFF",
+          "unbindAlpha": false,
+          "unbindVisibility": false,
+          "zIndex": 1
+        }
+      },
+      "isEnabled": true,
+      "isCustomized": true,
+      "fromAmmo": false,
+      "version": 5,
+      "meleeSwitch": {
+        "video": {
+          "dbSection": "range",
+          "menuType": "weapon",
+          "animation": "arrow",
+          "variant": "regular",
+          "color": "regular"
+        },
+        "sound": {
+          "enable": false,
+          "delay": 0,
+          "repeat": 1,
+          "repeatDelay": 250,
+          "startTime": 0,
+          "volume": 0.75
+        },
+        "options": {
+          "detect": "automatic",
+          "range": 2,
+          "returning": false,
+          "switchType": "on"
+        }
+      }
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784645463257,
+    "modifiedTime": 1784646561800,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!2asdfCJU3IvOuoBn"
+}
