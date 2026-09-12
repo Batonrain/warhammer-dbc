@@ -14,35 +14,32 @@ import { join } from "node:path";
 // остальное ниже 0x20 в JS-исходнике не нужно: непечатаемые байты внутри
 // строковых литералов положено писать явным escape (\x00, \uXXXX), а не
 // вставлять сырым байтом.
+//
+// wdbc-awvf: тот же паттерн нашёлся ещё раз в tools/pack-fingerprint.mjs (NUL
+// и SOH как разделители отпечатка пака) и был починен по тому же образцу —
+// сырой байт заменён на явный escape-литерал `\x00`/`\x01`, значение байта не
+// менялось (иначе разошлись бы уже посчитанные отпечатки). Поэтому у обоих
+// файлов теперь одна и та же форма: сырых control-байтов в исходнике нет
+// вовсе, а стабильность разделителя проверяется отдельно ниже — по каждому
+// файлу своим списком строк, а не перечислением байтов-исключений.
 
 const TOOLS_DIR = join(import.meta.dirname, "..", "..", "tools");
 const ALLOWED_CODES = new Set([0x09, 0x0a, 0x0d]); // \t \n \r
 
-// Разрешённое исключение №1 (wdbc-gap5, эта задача): разделитель stableId() в
-// tools/book-docs.mjs — живые _id глав/страниц книжных паков вычислены именно
-// с этим байтом, менять нельзя. Экранирован явным `\x00` в исходнике, поэтому
-// сырого control-байта в самом файле больше нет; вторая проверка ниже следит,
-// чтобы явный escape-литерал не выветрился при будущих правках.
+// Разделители, экранированные явным escape-литералом в исходнике (не сырым
+// байтом) — сторож ниже следит, чтобы они не выветрились при будущих правках.
+// tools/book-docs.mjs, stableId() (bd wdbc-gap5): живые _id глав/страниц
+// книжных паков вычислены именно с этим байтом, менять нельзя.
 const STABLE_ID_LINE = /createHash\("sha256"\)\.update\(parts\.join\("\\x00"\)\)\.digest\(\);/;
 
-// Разрешённые исключения №2 (та же природа, но НЕ трогались в этой задаче —
-// wdbc-gap5 касается только book-docs.mjs; заведён отдельный тикет на их
-// очистку по тому же образцу). tools/pack-fingerprint.mjs использует NUL и
-// SOH (0x00, 0x01) как разделители при подсчёте отпечатка пака —
-// authored()/stable() и rowsFingerprint(); байты сырые, не через явный
-// escape, с тем же риском случайной порчи копипастом/автоформатированием.
-// Раз уж этот сторож ищет ИМЕННО такие байты по всему tools/ — эти три
-// известные строки перечислены явно, а не молчаливым исключением всего
-// файла, чтобы новый непредвиденный control-байт в pack-fingerprint.mjs
-// сторож всё равно поймал.
-// Внимание: здесь single-backslash \x00/\x01 — это регэксп-эскейпы,
-// матчащие настоящий сырой байт (0x00 / 0x01) внутри строки `line`, а НЕ
-// текст "\x00". В pack-fingerprint.mjs, в отличие от book-docs.mjs, байт
-// до сих пор лежит сырым, без явного escape-литерала в исходнике.
-const KNOWN_ISSUE_LINES = [
-  /`\$\{key\}\x00\$\{stable\(authored\(key, value\)\)\}`/,
-  /h\.update\(`\$\{rows\.length\}\x01`\);/,
-  /h\.update\(row \+ "\x01"\);/
+// tools/pack-fingerprint.mjs, fingerprintOf() (bd wdbc-awvf): NUL между
+// ключом и значением, SOH перед затравкой длины и после каждой строки.
+// Смена значения байта пересчитала бы отпечаток у всех паков — сторож здесь
+// проверяет только форму записи (явный escape, не сырой байт), не значение.
+const FINGERPRINT_SEP_LINES = [
+  /`\$\{key\}\\x00\$\{stable\(authored\(key, value\)\)\}`/,
+  /h\.update\(`\$\{rows\.length\}\\x01`\);/,
+  /h\.update\(row \+ "\\x01"\);/
 ];
 
 function findControlBytes(fileName) {
@@ -54,9 +51,7 @@ function findControlBytes(fileName) {
     for (let i = 0; i < line.length; i++) {
       const code = line.charCodeAt(i);
       if (code >= 0x20 || ALLOWED_CODES.has(code)) continue;
-      const known =
-        (fileName === "book-docs.mjs" && STABLE_ID_LINE.test(line)) ||
-        (fileName === "pack-fingerprint.mjs" && KNOWN_ISSUE_LINES.some(re => re.test(line)));
+      const known = fileName === "book-docs.mjs" && STABLE_ID_LINE.test(line);
       if (!known) bad.push({ file: fileName, code, line });
     }
   }
@@ -76,10 +71,10 @@ describe("tools/*.mjs: нет непреднамеренных control-байт�
     expect(text).toMatch(STABLE_ID_LINE);
   });
 
-  it("известные строки-исключения в pack-fingerprint.mjs реально на месте — иначе список исключений устарел", () => {
+  it("разделители fingerprintOf() в pack-fingerprint.mjs остаются явными литералами \\x00/\\x01, не сырым байтом", () => {
     const text = readFileSync(join(TOOLS_DIR, "pack-fingerprint.mjs"), "utf8").replace(/\r\n/g, "\n");
     const lines = text.split("\n");
-    for (const re of KNOWN_ISSUE_LINES) {
+    for (const re of FINGERPRINT_SEP_LINES) {
       expect(lines.some(l => re.test(l))).toBe(true);
     }
   });
