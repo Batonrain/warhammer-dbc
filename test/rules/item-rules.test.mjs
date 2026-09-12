@@ -324,33 +324,53 @@ describe("rulesFromItemMechanics: гейт по Геносемени (entry.when
 // на бросках именно группы Ремесло, и только у актора, чья Мутация сейчас
 // несёт нужную субмутацию (entryWhenOk, mech-when.mjs).
 describe("rulesFromItemMechanics + rollModsFromRules: «Тонкая работа» — testMod гейтованный when.submutations (wdbc-7khe)", () => {
-  const fineWorkTradeMod = (subs) => ({
+  // wdbc-5tz: настоящая запись пака (Странные_Руки_ApXVLD3qzW9ngnuC.json,
+  // entry «strangeHands-sub9-boneHands») гейтована ДВУМЯ условиями разом —
+  // when.submutations:["9"] И when.patronGod:["slaanesh"] (Костлявые Руки —
+  // дар именно Слаанеш). Фикстура ниже раньше несла только первое условие:
+  // тест был зелёным независимо от того, жив ли в паке гейт по Богу, потому
+  // что (а) сама фикстура его не заявляла и (б) ни один вызов не передавал
+  // actor третьим аргументом — entryWhenOk пропускает проверку patronGod
+  // вовсе, если actor нет (см. mech-when.mjs::entryWhenOk, `if (patronGods.length && actor)`).
+  // Теперь фикстура зеркалит оба условия реальной записи, и есть actor —
+  // либо тест ничего не доказывает о живом гейте.
+  const fineWorkTradeMod = (subs, patronGod = ["slaanesh"]) => ({
     id: "bonyHandsFineWork", kind: "testMod", modScope: "skill", skillKey: "trade",
     modValueMode: "flat", value: 20, label: "Тонкая работа (Костлявые Руки)",
-    when: { submutations: subs }
+    when: { submutations: subs, patronGod }
   });
-  const bonyHands = (submutationLabel) => ({
+  const bonyHands = (submutationLabel, patronGod = ["slaanesh"]) => ({
     id: "strangeHands", name: "Странные Руки",
     system: { submutation: { label: submutationLabel } },
-    flags: { [SYSTEM]: { mechanics: [{ id: "g1", operator: "AND", entries: [fineWorkTradeMod(["9"])] }] } }
+    flags: { [SYSTEM]: { mechanics: [{ id: "g1", operator: "AND", entries: [fineWorkTradeMod(["9"], patronGod)] }] } }
   });
+  /** Актор-Слаанешит по умолчанию — единственный, у кого субмутация 9 вообще книжно возможна. */
+  const slaaneshActor = (god = "slaanesh") => ({ system: { patronGod: god } });
 
-  it("субмутация 9 (Костлявые Руки) выпала — запись даёт правило testMod +20 на skill:trade", () => {
-    const rules = rulesFromItemMechanics([bonyHands("9")]);
+  it("субмутация 9 (Костлявые Руки) выпала у Слаанешита — запись даёт правило testMod +20 на skill:trade", () => {
+    const rules = rulesFromItemMechanics([bonyHands("9")], () => true, slaaneshActor());
     expect(rules).toHaveLength(1);
     expect(rules[0].effects[0]).toEqual({ kind: "rollBonus", target: "skill:trade", value: 20 });
   });
 
+  // wdbc-5tz: без этого теста фикстура могла бы потерять patronGod, а тест
+  // выше остался бы зелёным — actor есть, но с ПРАВИЛЬНЫМ богом, и гейт
+  // прошёл бы что с проверкой, что без неё.
+  it("та же субмутация 9, но актор не Слаанешит — гейт patronGod держит, правила нет", () => {
+    expect(rulesFromItemMechanics([bonyHands("9")], () => true, slaaneshActor("tzeentch"))).toEqual([]);
+    expect(rulesFromItemMechanics([bonyHands("9")], () => true, { system: {} })).toEqual([]);
+  });
+
   it("выпала другая субмутация — записи нет вовсе, откуда бы бонусу ни взяться", () => {
-    expect(rulesFromItemMechanics([bonyHands("2-3")])).toEqual([]);
+    expect(rulesFromItemMechanics([bonyHands("2-3")], () => true, slaaneshActor())).toEqual([]);
   });
 
   it("субмутация ещё не выбрана — записи нет (та же логика, что у прочих субмутаций мутации)", () => {
-    expect(rulesFromItemMechanics([bonyHands("")])).toEqual([]);
+    expect(rulesFromItemMechanics([bonyHands("")], () => true, slaaneshActor())).toEqual([]);
   });
 
   it("бонус — опциональная галочка (не auto): требует, чтобы игрок отметил чекбокс на этом броске", () => {
-    const rules = rulesFromItemMechanics([bonyHands("9")]);
+    const rules = rulesFromItemMechanics([bonyHands("9")], () => true, slaaneshActor());
     const mods = rollModsFromRules(rules, { group: "trade", specialty: "Armourer" });
     expect(mods).toEqual([{ ruleId: "item.Странные Руки.bonyHandsFineWork",
       label: "Тонкая работа (Костлявые Руки)", value: 20, halvePenalty: false }]);
@@ -360,8 +380,38 @@ describe("rulesFromItemMechanics + rollModsFromRules: «Тонкая работ�
   });
 
   it("чекбокс — только для Ремесла: другой групповой Навык (или голый skill) бонус не видит", () => {
-    const rules = rulesFromItemMechanics([bonyHands("9")]);
+    const rules = rulesFromItemMechanics([bonyHands("9")], () => true, slaaneshActor());
     expect(rollModsFromRules(rules, { group: "navigation", specialty: "Surface" })).toEqual([]);
     expect(rollModsFromRules(rules, { skill: "commerce" })).toEqual([]);
+  });
+
+  // wdbc-5tz: фикстура выше набрана руками — здесь сверяем её форму с
+  // НАСТОЯЩЕЙ записью пака через packDocByFileHint (уже импортирован выше
+  // для другого блока), чтобы будущий дрейф пака (снятый гейт, другое
+  // значение) уронил именно этот тест, а не остался незамеченным.
+  it("настоящая запись пака несёт тот же двойной гейт (submutations:[9] И patronGod:[slaanesh])", () => {
+    const data = packDocByFileHint(
+      "packs-src/mutations/Общие_мутации/Strange_Hands___Странные_Руки_ApXVLD3qzW9ngnuC.json");
+    const mechanics = data.flags[SYSTEM].mechanics;
+    const entry = mechanics.flatMap(g => g.entries).find(e => e.id === "strangeHands-sub9-boneHands");
+    expect(entry).toBeTruthy();
+    expect(entry.when.submutations).toEqual(["9"]);
+    expect(entry.when.patronGod).toEqual(["slaanesh"]);
+    expect(entry.modScope).toBe("skill");
+    expect(entry.skillKey).toBe("trade");
+    expect(entry.value).toBe(20);
+
+    // И живой прогон именно этих (не ручных) данных — не только форма JSON,
+    // но и что rulesFromItemMechanics с ними реально согласится дать бонус
+    // Слаанешиту и откажет кому угодно ещё.
+    const asItem = (submutationLabel) => ({
+      id: "strangeHands", name: "Странные Руки",
+      system: { submutation: { label: submutationLabel } },
+      flags: { [SYSTEM]: { mechanics } }
+    });
+    const slaaneshRules = rulesFromItemMechanics([asItem("9")], () => true, slaaneshActor());
+    expect(slaaneshRules.some(r => r.effects.some(ef => ef.target === "skill:trade" && ef.value === 20))).toBe(true);
+    const tzeentchRules = rulesFromItemMechanics([asItem("9")], () => true, slaaneshActor("tzeentch"));
+    expect(tzeentchRules.some(r => r.effects.some(ef => ef.target === "skill:trade"))).toBe(false);
   });
 });

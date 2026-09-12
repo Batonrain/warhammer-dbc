@@ -330,4 +330,28 @@ describe("counterAttackSectionHtml — Shocking (ccShocking)", () => {
     expect(html).toContain("wh-wprop-apply-btn");
     expect(html).toContain('data-wp-force-actor-uuid="Actor.attacker7"');
   });
+
+  // wdbc-5tz: buildTargetEffectButtons раньше пушился ОТДЕЛЬНОЙ секцией
+  // карточки — сестрой .roll-counter-attack, а не её содержимым. На карточке
+  // с безоружной атакой/Захватом это давало ДВА одинаково подписанных блока
+  // «Эффекты свойств» (один от оружия атакующего, второй от встречной атаки),
+  // различимых только подсказкой справа. Кнопка Шокирующего должна лежать
+  // ВНУТРИ .roll-counter-attack — считаем глубину вложенности div'ов до
+  // начала блока «Эффекты свойств»: если она осталась бы 0 (сестра), тест
+  // должен падать.
+  it("кнопка Шокирующего вложена внутрь .roll-counter-attack, а не отдельной секцией рядом", async () => {
+    const item = ccItem({ ccShocking: true });
+    const w = wearer({ items: [item] });
+    const attacker = { uuid: "Actor.attacker8", name: "Оглушённый" };
+    const { html } = await counterAttackSectionHtml(w, attacker, { onMiss: true, onUnarmedOrGrapple: false });
+
+    const effectsIdx = html.indexOf('<div class="roll-wprop-effects"');
+    expect(effectsIdx).toBeGreaterThan(-1);
+    const before = html.slice(0, effectsIdx);
+    const openDivs = (before.match(/<div\b/g) || []).length;
+    const closeDivs = (before.match(/<\/div>/g) || []).length;
+    // Ровно один незакрытый div к этому месту — сам .roll-counter-attack,
+    // всё ещё открытый вокруг блока эффектов.
+    expect(openDivs - closeDivs).toBe(1);
+  });
 });

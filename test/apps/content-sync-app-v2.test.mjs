@@ -14,11 +14,24 @@
 // живого Foundry), поэтому этот риск нужно перепроверить вручную в игре —
 // см. отчёт задачи.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import "../support/foundry-stub.mjs";
 import { listenerRoot } from "../support/foundry-stub.mjs";
 import { describeV2Sheet } from "../support/v2-sheet-contract.mjs";
-import { ContentSyncApp, rowsNeedingExpansion } from "../../module/apps/content-sync-app.mjs";
+
+// wdbc-5tz: _ensureReport() ниже мокает buildLiveSyncReport, чтобы дважды
+// прогнать его и проверить, что второй прогон ДОПОЛНЯЕТ this.expanded, а не
+// заменяет — мок должен стоять ДО импорта content-sync-app.mjs (тот импортирует
+// buildLiveSyncReport на верхнем уровне).
+const buildLiveSyncReport = vi.fn();
+vi.mock("../../module/apps/content-sync.mjs", () => ({
+  buildLiveSyncReport: (...args) => buildLiveSyncReport(...args),
+  applySyncReport: vi.fn(),
+  fieldLabel: p => p,
+  describeValue: () => null
+}));
+
+const { ContentSyncApp, rowsNeedingExpansion } = await import("../../module/apps/content-sync-app.mjs");
 
 describeV2Sheet(ContentSyncApp, {
   sheet: "module/apps/content-sync-app.mjs",
@@ -152,5 +165,56 @@ describe("rowsNeedingExpansion: чистая функция авто-раскр�
     ];
     const selected = new Set(["a::x", "b::x", "c::x"]);
     expect(rowsNeedingExpansion(rows, selected)).toEqual(new Set(["mixed"]));
+  });
+});
+
+// wdbc-5tz: _ensureReport() раньше заменял this.expanded целиком результатом
+// rowsNeedingExpansion — «Обновить список»/«Применить» (оба сбрасывают
+// this.report в null и просят полный ререндер, см. тесты [data-act=refresh]/
+// [data-act=apply] выше) тем самым тихо схлопывали группы, которые ГМ уже
+// раскрыл руками кликом (toggle-group/toggle-row). Починка — объединение
+// множеств, не замена.
+describe("_ensureReport: повторный прогон объединяет expanded, а не затирает (wdbc-5tz)", () => {
+  const mixedReport = () => ({
+    rows: [{ key: "mixed", entries: [{ entryKey: "c::x", status: "conflict" }, { entryKey: "d::x", status: "clean" }] }],
+    unmatched: []
+  });
+
+  it("первый прогон разворачивает неоднородную группу как раньше", async () => {
+    buildLiveSyncReport.mockResolvedValueOnce(mixedReport());
+    const app = Object.create(ContentSyncApp.prototype);
+    app.report = null;
+    app.selected = new Set();
+    app.expanded = new Set();
+
+    await ContentSyncApp.prototype._ensureReport.call(app);
+
+    expect(app.expanded.has("mixed")).toBe(true);
+  });
+
+  it("группа, раскрытая ГМом вручную (не по авто-правилу), переживает «Обновить список»", async () => {
+    buildLiveSyncReport.mockResolvedValueOnce({
+      rows: [{ key: "homogeneous", entries: [{ entryKey: "a::x", status: "clean" }, { entryKey: "b::x", status: "clean" }] }],
+      unmatched: []
+    });
+    const app = Object.create(ContentSyncApp.prototype);
+    app.report = null;
+    app.selected = new Set();
+    // Группа однородная (все clean) — rowsNeedingExpansion её бы не раскрыл,
+    // но ГМ раскрыл кликом toggle-group ДО повторного прогона.
+    app.expanded = new Set(["homogeneous"]);
+
+    await ContentSyncApp.prototype._ensureReport.call(app);
+    // report уже стоит (не null) — этот вызов no-op, expanded не трогается.
+    expect(app.expanded.has("homogeneous")).toBe(true);
+
+    // Симулируем «Обновить список»: report сбрасывается в null, второй прогон
+    // должен ДОБАВИТЬ авто-раскрытие поверх, не заменить ручное раскрытие.
+    buildLiveSyncReport.mockResolvedValueOnce(mixedReport());
+    app.report = null;
+    await ContentSyncApp.prototype._ensureReport.call(app);
+
+    expect(app.expanded.has("homogeneous")).toBe(true); // ручное раскрытие цело
+    expect(app.expanded.has("mixed")).toBe(true);        // новое авто-раскрытие тоже есть
   });
 });
