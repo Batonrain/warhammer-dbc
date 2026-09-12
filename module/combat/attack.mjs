@@ -442,6 +442,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // атаку, module/rules/hand-of-khorne.mjs::isHandOfKhorneWeapon), не
   // заменяет их: тот же принцип, что у stacking модификаторов урона выше.
   const sbEff  = meleeStrengthBonus({ sb, wp, sbHalf }) * (isMelee ? handOfKhorneStrengthMultiplier(item) : 1);
+  // Обратный Хват + Выпад Полной Атакой (стр. 39): sbHalf сюда уже приходит
+  // false (module/sheets/attack/selection.mjs гасит его для этой связки), т.е.
+  // sbEff — полный S.b. Книга поверх него добавляет ЕЩЁ +½S.b (окр.▲) —
+  // именно добавляет, а не заменяет половину на целое (это она уже дала выше).
+  const reverseThrustBonus = (isMelee && opts.reverseThrustBonus) ? Math.ceil(sbEff / 2) : 0;
   // Порча: +Cor.b владельца к урону
   const taintedAdd = wp.taintedCorB ? (actor.system.corruptionBonus ?? 0) : 0;
 
@@ -459,7 +464,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
-  const flatBonus = (isMelee ? sbEff : 0) + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
+  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
   const dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -705,7 +710,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       gorget,
       isMelee, dtLabel, damageType: ammoDmgType || effDmgType, pen,
       assassinStrike: isMelee && assassinStrikeAvailable(actor),
-      sbEff, sbHalf, taintedAdd, vehicleSide: opts.vehicleSide || "",
+      sbEff, sbHalf, reverseThrustBonus, taintedAdd, vehicleSide: opts.vehicleSide || "",
       ammo: isMelee ? null : {
         name:   loadedAmmo?.name || "",
         mods:   loadedAmmo ? _buildAmmoModString(ammoSys) : "",

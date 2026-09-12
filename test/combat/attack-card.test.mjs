@@ -75,6 +75,16 @@ describe("карточка атаки", () => {
     expect(card({ isMelee: false, sbEff: 4 })).not.toContain("S.b");
   });
 
+  // Обратный Хват + Выпад Полной Атакой (стр. 39, wdbc-report): sbHalf сюда
+  // приходит уже false (attack.mjs гасит половинку сам), а reverseThrustBonus —
+  // отдельная добавка сверху, не замена половинки на целое.
+  it("Обратный хват + Выпад Полной Атакой: бонус ½S.b подписан отдельной строкой, без пометки «½ хват»", () => {
+    const html = card({ isMelee: true, sbEff: 6, sbHalf: false, reverseThrustBonus: 3 });
+    expect(html).toContain("S.b +6");
+    expect(html).not.toContain("½ хват");
+    expect(html).toContain("+3 (Обратный хват: Выпад Полной Атакой)");
+  });
+
   it("кнопка урона несёт число, место и свойства оружия", () => {
     const html = card({ pen: 6, dtLabel: "Взрывной", damageType: "explosive",
       wp: { fellingRating: 2, primitive: true } });
