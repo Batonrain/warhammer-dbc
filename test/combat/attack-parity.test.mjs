@@ -193,6 +193,24 @@ describe("рукопашная", () => {
     expect(damageFormula()).toBe("1d10+2 + 2");        // S.b 4 → ½
     expect(card()).toContain("S.b +2 (½ хват)");
   });
+
+  // Обратный Хват + Выпад Полной Атакой (стр. 39, wdbc-report): диалог
+  // (module/sheets/attack/selection.mjs) на этой связке шлёт сюда
+  // gripSbHalf:false и reverseThrustBonus:true — S.b не режется, а получает
+  // ЕЩЁ ½S.b (окр.▲) СВЕРХУ уже целого S.b, а не вместо половинки.
+  it("Обратный хват + Выпад Полной Атакой: S.b целиком + ещё ½S.b сверху, не половинка", async () => {
+    const weapon = chainsword({ weaponProps: [] });
+    const actor  = actorFor({ items: [weapon] });
+    captured.dice = [15, 5];
+
+    await _executeAttackRoll(actor, weapon, "ws", 85, "melee", null,
+      { gripKey: "Об", gripSbHalf: false, reverseThrustBonus: true, baseKey: "fullatk" });
+
+    expect(damageFormula()).toBe("1d10+2 + 6");        // S.b 4 (целиком) + ⌈4/2⌉=2 сверху
+    expect(card()).toContain("S.b +4");
+    expect(card()).not.toContain("½ хват");
+    expect(card()).toContain("+2 (Обратный хват: Выпад Полной Атакой)");
+  });
 });
 
 // ── Профиль, боеприпас, прицел, щит ─────────────────────────────────────────

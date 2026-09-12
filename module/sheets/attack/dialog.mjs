@@ -267,6 +267,11 @@ export function openAttackDialog(ctx) {
               gripProps: sel.gDef ? sel.gDef.addProps : [],
               gripDmgFlat: sel.gDef ? sel.gDef.dmgFlat : 0,
               gripSbHalf: sel.gDef ? sel.gDef.sbHalf : false,
+              // Обратный Хват + Выпад Полной Атакой (стр. 39, module/sheets/
+              // attack/selection.mjs): S.b не режется, но получает ещё
+              // +½S.b (окр.▲) сверху — сам бонус считает attack.mjs, ему
+              // нужен sbEff с учётом Могучего/Длани Кхорна.
+              reverseThrustBonus: !!(sel.gDef && sel.gDef.reverseThrustBonus),
               // Fanning / Быстрый Курок (wdbc-fy33): RoF 2..BS.b по выбору
               // заменяет фиксированный sys.rof_full только в режиме "full".
               rofCapOverride: (fanningActive && f.rofMode === "full") ? f.fanningRof : 0,
