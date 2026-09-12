@@ -63,6 +63,24 @@ export const CAPABILITIES = {
     source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас (см. weaponPropertyImmunityInRage.snare)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — hooks.mjs _applyWeaponPropEffect (кнопка condition:\"pinned\")"
   },
+  // Deflagrate/Melta (wdbc-nquc, книга стр. 231, Керамит): гасят конкретную
+  // числовую надбавку свойства, а не всё попадание — та же семантика, что у
+  // восьми записей выше (Corrosive и т.д. тоже не отменяют базовый урон).
+  // Оба свойства запекаются В САМ БРОСОК АТАКИ (combat/attack.mjs), не в
+  // отдельном "rating"-поле, применяемом позже в damage.mjs — поэтому и
+  // читаются там же, до того как доп. кубик Выгорания брошен/Пробитие Мельты
+  // удвоено, а не в applyDamageToActor, как Corrosive/Piercing/Crippling/
+  // Haywire.
+  "weaponPropertyImmunity.deflagrate": {
+    label: "Иммунитет к свойству оружия Deflagrate (нет доп. энерг. урона Выгорания)",
+    source: "Керамит (модификация брони «Укрепление», DoomBC IV. Арсенал, стр. 231)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/attack.mjs (доп. кубик Выгорания на 7-10 куба урона)"
+  },
+  "weaponPropertyImmunity.melta": {
+    label: "Иммунитет к свойству оружия Melta (Пробитие не удваивается в упор)",
+    source: "Керамит (модификация брони «Укрепление», DoomBC IV. Арсенал, стр. 231)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/attack.mjs (attackPenetration, удвоение от meltaShort)"
+  },
   // ── Иммунитет к свойствам оружия ТОЛЬКО в Ярости (wdbc-plsf) ────────────
   // Второе пространство имён: hasWeaponPropertyImmunity() принимает его лишь
   // когда system.inRage === true (простой тумблер — стойка/база принцип,
@@ -744,30 +762,45 @@ export const CAPABILITIES = {
   //    Сигиллиты (wdbc-fsl9, 10.09.2026): экономика Рун РЕАЛЬНО заведена —
   //    пул system.sigilliteRunes, максимум/начисление/цена/списание. Три
   //    Таланта из шести подключены числами (Библиотека, Вычислитель, Рунный
-  //    Удар); Заготовленная Руна, Импровизированная Руна и Прометеев Огонь
-  //    остаются документацией — первому нужен выбор руны на бой, двум другим
-  //    нужен сам список изученных Рун, которого в системе ещё нет.
+  //    Удар).
+  //
+  //    wdbc-exjp (12.09.2026): список изученных Рун заведён (поле на самой
+  //    психосиле, не на акторе — data/item/psychic-power.mjs) вместе с
+  //    покупкой за опыт (кнопка в таблице Психосил, tabs/psychic.mjs::
+  //    learnSigilliteRune) — это разблокировало Improvised Rune и Prometheus
+  //    Fire.
+  //
+  //    wdbc-p2it (12.09.2026): Prepared Rune (Заготовленная Руна) подключена
+  //    последней из шести — выбор ОДНОЙ Руны на бой (диалог при combatStart,
+  //    rules/sigillite-runes-combat.mjs::processPreparedRuneCombatStart) и
+  //    скидка I.b на её первую манифестацию в этом бою (rules/
+  //    sigillite-runes.mjs::preparedRuneDiscount, вычитается из цены прямо в
+  //    runeCostForPower/runeCostTotal). Все шесть Талантов ветки теперь
+  //    подключены числами.
   //
   //    ВАЖНО: самих предметов (Элитный Архетип, Черта, шесть Талантов) в
-  //    packs-src на 10.09.2026 НЕТ ни одного — заведение контента описано
-  //    отдельной задачей. Пока Черты нет, ни одна из этих возможностей никому
-  //    не выдана, и вся ветка на столе молчит.
+  //    packs-src на 10.09.2026 НЕ БЫЛО ни одного — заведены той же сессией
+  //    fsl9. Пока Черты нет, ни одна из этих возможностей никому не выдана, и
+  //    вся ветка на столе молчит.
   "psychicPath.sigillites.runeMagic": {
     label: "Уникальный Путь Силы «Руны Сигиллитов» — своя экономика рун вместо обычных Психофокусов",
     source: "Sigillite Magic / Магия Сигиллитов",
-    reader: "module/rules/sigillite-runes.mjs (пул, максимум, цена), module/rules/sigillite-runes-combat.mjs (начисление по тактам боя, хуки в module/hooks.mjs), module/sheets/tabs/psychic.mjs (Путь PSY_PATHS.sigillite: виден только носителю, только Безопасный/Обычный режим, Феномен лишь на 99, Психофокус, списание Рун). НЕ смоделировано: −30 обнаружению манифестации и доп. −30 при варп-прорыве (теста обнаружения в системе нет), одновременное использование механик Инкантации/Медитации/Нечестивых Символов, доступ к Тауматургии, сам список изученных Рун и их покупка за 50 опыта."
+    reader: "module/rules/sigillite-runes.mjs (пул, максимум, цена, список изученных Рун — wdbc-exjp), module/rules/sigillite-runes-combat.mjs (начисление по тактам боя, хуки в module/hooks.mjs), module/sheets/tabs/psychic.mjs (Путь PSY_PATHS.sigillite: виден только носителю, только Безопасный/Обычный режим, Феномен лишь на 99, Психофокус, списание Рун, гейт «манифестировать можно только изученную Руну»). НЕ смоделировано: −30 обнаружению манифестации и доп. −30 при варп-прорыве (теста обнаружения в системе нет), одновременное использование механик Инкантации/Медитации/Нечестивых Символов, доступ к Тауматургии."
   },
   "rune.sigillites.improvised": {
-    label: "Может создавать любые руны ценой R Dmg в руку + урона S/A/W",
-    source: "Improvised Rune / Импровизированная Руна", reader: ""
+    label: "Может манифестировать НЕизученные Руны ценой R Dmg в руку + урона S/A/W",
+    source: "Improvised Rune / Импровизированная Руна",
+    reader: "module/rules/sigillite-runes.mjs::hasImprovisedRune/improvisedRuneCostUpdates — module/sheets/tabs/psychic.mjs (showManifestDialog: гейт «Руна не изучена → манифестация только через этот Талант»; executePsychotest: списывает 1 непогл. Рану + 1 к Мод. S/A/W, wdbc-exjp)."
   },
   "rune.sigillites.prepared": {
     label: "Одна выбранная руна дешевле на I.b в начале боя",
-    source: "Prepared Rune / Заготовленная Руна", reader: ""
+    source: "Prepared Rune / Заготовленная Руна",
+    reader: "module/rules/sigillite-runes-combat.mjs::processPreparedRuneCombatStart (диалог выбора Руны, хук combatStart в module/hooks.mjs) — module/rules/sigillite-runes.mjs::preparedRuneDiscount/markPreparedRuneUsed (скидка и списание разового использования на бой) — module/sheets/tabs/psychic.mjs (showManifestDialog: цена уже со скидкой; executePsychotest: отмечает скидку потраченной, wdbc-p2it)."
   },
   "rune.sigillites.prometheusFire": {
-    label: "Может создавать руны Божественных психосил/Либрариума, игнорируя их уникальные требования",
-    source: "Prometheus Fire / Прометеев Огонь", reader: ""
+    label: "Может изучать Руны Божественных психосил/Либрариума за +50 опыта сверху",
+    source: "Prometheus Fire / Прометеев Огонь",
+    reader: "module/rules/sigillite-runes.mjs::hasPrometheusFire/runeLearnInfo — снимает forbidden для Божественных дисциплин/Либрариума и удваивает цену изучения Руны (50→100), читает tabs/psychic.mjs::learnSigilliteRune (wdbc-exjp). «Игнорируя все уникальные требования» изучения (Генное Наследие/Покровительство/Метка/Cor) сверх Божественного гейта — НЕ смоделировано, эти требования и так не проверяются нигде при покупке психосилы (текстовые requirement)."
   },
   "rune.sigillites.library": {
     label: "Лимит рун +I.b + бонус от Forbidden Lore (Archeotech), до 3 взятий",
@@ -5687,7 +5720,7 @@ export const CAPABILITIES = {
   // ── Черты: packs-src/traits/Элитные_архетипы\Берсерк_Кхорна — Фаза 2, capability-документация ──
   "trait.elitnyeArhetipy.berserkKhorna.avatarOfSlaughter": {
     label: "Раз за бой в конце своего Хода может потратить Очко Бесчестия, чтобы направить кровожадность в одного противника в пределах видимости.",
-    source: "Avatar of Slaughter / Аватар Резни", reader: "module/combat/avatar-of-slaughter.mjs + rules/library/avatar-of-slaughter.mjs (wdbc-sk8s)"
+    source: "Avatar of Slaughter / Аватар Резни", reader: "module/combat/avatar-of-slaughter.mjs + rules/library/core.mjs::avatarOfSlaughter.penalty (wdbc-sk8s, перенесено wdbc-shr)"
   },
   "trait.elitnyeArhetipy.berserkKhorna.butcherSNails": {
     label: "Импланты гложут разум, держа на границе боевого безумия. Может входить в Ярость свободным действием, неограниченное число раз за бой.",
@@ -6686,9 +6719,9 @@ export const CAPABILITIES = {
     reader: "packs-src/mutations/Дары_Богов/Слаанеш/Knight_of_Slaanesh___Рыцарь_Слаанеш_EdwbZMDBWbqbIBSb.json (entries knightOfSlaanesh-operate уже была, +knightOfSlaanesh-ritual/-ritual-mount новые) + packs-src/rituals/Архетипа/Summon_the_Bound_Mount___Призыв_Связанно_KnightSlaanR3c1x.json + Bind_the_Mount_into_a_Vehicle___Вселение_KnightSlMountS3c.json; module/apps/demon-mount.mjs::bindDemonMount"
   },
   "gift.slaanesh.lordOfSloth": {
-    label: "Иммунитет к пост-эффектам/зависимостям от наркотиков; никаких негативных эффектов от еды (включая яды в пище); не набирает вес от обжорства",
+    label: "Иммунитет к пост-эффектам/зависимостям от наркотиков механизирован (rollAddictionTest никогда не ставит зависимость этому носителю, каким бы ни был бросок) — capability покрывает ТОЛЬКО остаток: никаких негативных эффектов от еды (включая яды в пище) и не набирает вес от обжорства не смоделированы — в системе нет ни механики яда через пищу отдельно от общего свойства оружия Toxic, ни трекера веса тела персонажа (rig.mjs весит только снаряжение)",
     source: "Дар Слаанеш (Lord of Sloth)",
-    reader: ""
+    reader: "module/sheets/tabs/drugs.mjs hasRuleFlag(actor, LORD_OF_SLOTH_CAPABILITY) — rollAddictionTest() короткое замыкание перед тестом Зависимости от наркотиков"
   },
   "gift.slaanesh.nobleBearing": {
     label: "Игнор штрафов Трудного Ландшафта механизирован отдельной записью kind:\"terrainIgnore\" (все 11 свойств) на этом же предмете — capability покрывает ТОЛЬКО остаток: может (и обязан при грязной жидкости) ходить по поверхности жидкостей на телекинетических полях — не смоделировано",

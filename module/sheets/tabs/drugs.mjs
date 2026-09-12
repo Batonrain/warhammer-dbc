@@ -13,6 +13,20 @@ import { woundLossUpdates } from "../../rules/wounds.mjs";
 import { conditionLevelField } from "../../constants/conditions.mjs";
 import { maybeGrantEnjoymentPain } from "../../combat/enjoyment.mjs";
 import { postTestCard } from "../../helpers/test-card.mjs";
+import { hasRuleFlag } from "../../rules/flags.mjs";
+
+// wdbc-1rno (кластер Дары Богов — Слаанеш): «Владыка Праздности» — «Персонаж
+// приобретает иммунитет к любым пост-эффектам и зависимостям от употребления
+// наркотиков». Тест Зависимости (rollAddictionTest ниже) — единственное место
+// движка, где вообще возникает system.addiction.isAddicted/состояние
+// "addicted" — им и гасим: обладатель Дара никогда не проваливает и никогда
+// не остаётся зависимым, каким бы ни был бросок. «Никаких негативных
+// эффектов от еды (включая яды в пище)» и «не набирает вес от обжорства» —
+// не смоделированы: в системе нет ни механики яда именно ЧЕРЕЗ еду (Toxic —
+// общее свойство оружия/укуса, не пищи), ни трекера веса тела персонажа
+// (rig.mjs весит только снаряжение) — читать/гасить нечего, честно остаётся
+// текстом Дара (capabilities.mjs).
+export const LORD_OF_SLOTH_CAPABILITY = "gift.slaanesh.lordOfSloth";
 
 const DELIVERY_RU = {
   injection: "Инъекция",
@@ -523,6 +537,14 @@ export function activateDrugListeners(html, actor, { resolveOtherTargetActor } =
 }
 
 export async function rollAddictionTest(actor, item, charKey = "t", testMod = 0) {
+  if (hasRuleFlag(actor, LORD_OF_SLOTH_CAPABILITY)) {
+    await postTestCard(actor, {
+      icon: rollIcon("shield", "#9d7cd8"), title: `Тест Зависимости — ${item?.name ?? "Наркотик"}`,
+      threshold: `<div class="roll-threshold">Дар Слаанеш «Владыка Праздности» — иммунитет к пост-эффектам и зависимости от наркотиков.</div>`,
+      rv: "—", outcome: `<span class="roll-success">Зависимость невозможна — тест не требуется.</span>`
+    }, { sound: false });
+    return;
+  }
   const charTotal = actor.system.characteristics[charKey]?.total ?? 0;
   // Общий сбор модификаторов (wdbc-ct65.2) — см. tabs/tech.mjs, тот же перевод.
   const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey });
