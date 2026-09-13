@@ -274,6 +274,13 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `vampiric-dependency.mjs` (+`apps`), `warp-eater.mjs`, `fleshmetal-regen.mjs`
   (Облитератор), `breath-of-life.mjs` (+`apps`, Дар Нургла), `perfect-host.
   mjs`, `unseen-beggar.mjs` (см. также §5 — многие мутации срабатывают в бою).
+- Лик Бога (Countenance of Khorne/Nurgle/Slaanesh/Tzeentch) — общий
+  переиспользуемый механизм на все 4 Дарителя: `rules/countenance-of-
+  gods.mjs`, script-запись на самом предмете (`apps/item-script.mjs`).
+  `combat/purity-of-battle.mjs` (Дар Кхорна — снимает боевые
+  наркотики/психосилы в радиусе), `combat/touch-of-pain.mjs` (Дар Слаанеш —
+  безоружные/природные атаки игнорируют T.b и получают Shocking) (wdbc-1rno,
+  13.09.2026).
 
 ## 13. Демонология: Демоны, Демон-Принц, Одержимость
 
@@ -322,9 +329,12 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `rules/item-rules.mjs::scopeTarget`, `rules/resolve-test.mjs::powerScopeApplies`
   (wdbc-4bxa). `system.weaponProps` психосил (Экстремальный урон/Felling/Lance
   и т.п. на психической атаке) — движок готов (`sheets/tabs/psychic.mjs`,
-  `aggregateAuto`), но данные не заполнены ни у одного из 847 предметов пака
-  (wdbc-lui3) — не значит, что свойство не читается, значит, что его никто не
-  вписал в контент.
+  `aggregateAuto`); rating свойства может быть формулой с «PR» (Blast(2×PR) и
+  т.п.) — резолвится `combat/weapon-properties.mjs::resolvePropRating(s)` тем
+  же безопасным парсером, что и Пробитие (wdbc-lui3, 13.09.2026). Контентом
+  заполнена пока одна сила-пилот (Eldritch Storm) из 847 — остальные ждут
+  прохода по дисциплинам, не значит, что свойство не читается, значит, что
+  его никто не вписал в контент.
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`
