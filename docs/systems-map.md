@@ -423,6 +423,24 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `combat/vehicle.mjs` — Вираж/Таран/Трудный Ландшафт/урон по стороне брони.
 - `sheets/vehicle-sheet.mjs`.
 - Пилот Дредноута — см. §9 (`rules/dreadnought.mjs`).
+- **Шагоход (Walker)** — `rules/walker.mjs` (арифметика без Foundry) +
+  `combat/walker.mjs` (обвязка): Ходовая «Шагоход» двигается и бьёт КАК
+  ПЕРСОНАЖ, поэтому её Парирование/Уклонение (−Размер×10, Уклонение
+  комбинировано с Operate−10), Натиск (+20 рукопашной машины на Раунд),
+  Опрокидывание вместо сбивания с ног, поворот 180° вне Хода (Combat Master
+  пилота — до ½WS.b раз) и «всё оружие за одно действие» считает пилот, а не
+  машина. Дословный текст девяти книжных пунктов —
+  `constants/vehicle.mjs::CHASSIS_FULL_NOTES.walker`.
+- **Выбор стороны брони при атаке персонажа по технике** (wdbc-kp1o,
+  11.09.2026) — `sheets/attack-dialog.mjs` + `sheets/attack/{dialog,form,
+  markup}.mjs` показывают Лоб/Борт/Корму и опцию «Избирательная атака в
+  Корму −20» (с Лба/Борта), когда цель — vehicle; проброс до
+  `damageData.side` через `combat/attack.mjs` → `combat/attack-card.mjs` →
+  `hooks.mjs` → `combat/damage.mjs` (fallback на `"side"`, если сторона не
+  выбрана). Реализует п.9 Шагохода выше: `rearCalledShotBlockedByWalker =
+  isMelee && isWalkerVehicle(target)` — рукопашная Избирательная атака в
+  Корму по Шагоходу запрещена, дальнобойная и атака по обычной технике —
+  разрешена.
 
 ## 19. Корабли, Космический бой, Звёздные системы
 
