@@ -12,7 +12,7 @@
     "qualityCustom": false,
     "aspects": "",
     "description": "",
-    "notes": "",
+    "notes": "wdbc-kf5k: заявленный bookSource указывал на реальный диапазон стр. DoomBC — Книги Пустоты (Линейные крейсеры, 160-172), но там перечислен другой полный список хуллов без этого имени (проверено программно). Внешняя проверка подтвердила: 'Gulgor' — настоящий канон GW ('Gulgor Assault Barque', эпоха Ереси Гора, Imperialis Armada/Space Marine Fleet), но не из текста DoomBC. Решение оставить/убрать контент — за владельцем.",
     "shipProps": [],
     "hull": {
       "spaceMax": 50,
@@ -29,7 +29,7 @@
       "armour": 23,
       "turretRating": 1
     },
-    "bookSource": "DoomBC — Книга Пустоты, Линейные крейсеры, стр. 160-172"
+    "bookSource": "Домашнее правило (не из официальной книги)"
   },
   "_id": "HXUQmgMzpXOmfVj8",
   "effects": [],
