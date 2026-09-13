@@ -10,7 +10,8 @@
     "quality": "common",
     "rarity": 1,
     "baseRarity": "",
-    "description": "TR 20. Управляемая система."
+    "description": "TR 20. Управляемая система.",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "DAoMxv5jqvvmJxOP",
   "effects": [],

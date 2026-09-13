@@ -26,6 +26,7 @@ export class CargoData extends foundry.abstract.TypeDataModel {
       price:        num(0, "Цена"),
       origin:       new StringField({ initial: "", label: "Происхождение" }),
       consignee:    new StringField({ initial: "", label: "Получатель" }),
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" }),
       description:  new HTMLField({ initial: "", label: "Описание" }),
       // В template.json объявлено не было, но лежит у четырёх грузов пака —
       // лист предмета показывает «Заметки» всем типам.

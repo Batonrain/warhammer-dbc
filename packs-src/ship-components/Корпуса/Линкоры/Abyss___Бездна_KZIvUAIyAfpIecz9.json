@@ -32,7 +32,8 @@
       "voidShields": 0,
       "armour": 40,
       "turretRating": 8
-    }
+    },
+    "bookSource": "DoomBC — Книга Пустоты, Линкоры, стр. 182-198"
   },
   "_id": "KZIvUAIyAfpIecz9",
   "effects": [],

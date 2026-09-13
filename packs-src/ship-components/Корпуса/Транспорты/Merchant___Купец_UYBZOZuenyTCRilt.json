@@ -32,7 +32,8 @@
       "voidShields": 0,
       "armour": 9,
       "turretRating": 1
-    }
+    },
+    "bookSource": "DoomBC — Книга Пустоты, Транспорты, стр. 80-104"
   },
   "_id": "UYBZOZuenyTCRilt",
   "effects": [],

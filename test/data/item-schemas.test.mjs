@@ -499,7 +499,7 @@ const TYPES = {
     defaults: {
       kind: "supplemental", power: 0, space: 0, sp: 0, rarity: 0,
       quality: "common", qualityPicks: [], qualityCustom: false,
-      hulls: "", aspects: "", description: "", notes: "",
+      hulls: "", aspects: "", bookSource: "", description: "", notes: "",
       essential: false, external: false, damaged: false, status: "intact",
       lcBonus: 0, pcBonus: 0, modChar: "", modValue: 0, shipProps: [],
       hull:  { spaceMax: 0, powerGen: 0, turnArc: "90°", weaponCapacity: "", hullIntegrity: 0 },
@@ -513,7 +513,7 @@ const TYPES = {
     pack: "ship-components",
     defaults: {
       hullClass: "", sp: 0, rarity: 0, quality: "common", qualityPicks: [], qualityCustom: false,
-      aspects: "", description: "", notes: "", shipProps: [],
+      aspects: "", bookSource: "", description: "", notes: "", shipProps: [],
       hull:  { spaceMax: 0, powerGen: 0, turnArc: "90°", weaponCapacity: "", hullIntegrity: 0 },
       chars: { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0 }
     }
@@ -524,7 +524,7 @@ const TYPES = {
       cargoType: "minerals", lc: 1, quantity: 1, quality: "common", rarity: 0,
       baseRarity: "", shipSupply: false, rarityManual: false, xenos: false,
       astartes: false, inHold: false, price: 0, origin: "", consignee: "",
-      description: "",
+      bookSource: "", description: "",
       // В template.json объявлено не было, но лежит у четырёх грузов пака.
       notes: ""
     }

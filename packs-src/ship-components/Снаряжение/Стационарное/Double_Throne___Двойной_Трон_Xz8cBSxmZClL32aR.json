@@ -10,7 +10,8 @@
     "quality": "common",
     "rarity": 3,
     "baseRarity": "",
-    "description": "Обладатель Psyniscience ведёт корабль по правилам Навигатора. Poor: варп-навигация −10. Good: читает навигаторские карты как навигатор дома. Best: использует Psyniscience и Navigation (Warp) самого пленного навигатора."
+    "description": "Обладатель Psyniscience ведёт корабль по правилам Навигатора. Poor: варп-навигация −10. Good: читает навигаторские карты как навигатор дома. Best: использует Psyniscience и Navigation (Warp) самого пленного навигатора.",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "Xz8cBSxmZClL32aR",
   "effects": [],
