@@ -513,12 +513,16 @@ const REROLL_SCOPES = [
   // Тесты Морали (Страх/выход из Шока/Паника от Горения/Подавление/встречные
   // Запугивание и Пытки) — wdbc-zepq, Lord of the Exodites.
   ["morale",     "тесты Морали"],
-  ["climbing",   "Карабканье"]
+  ["climbing",   "Карабканье"],
+  // Манифестация психосилы (wdbc-4bxa) — «power» само по себе уже область
+  // («любая психосила»), имя (powerName) необязательно сужает до конкретной.
+  ["power",      "манифестация психосилы"]
 ];
 const REROLL_SCOPE_LABEL = (e) => {
   switch (e.rerollScope) {
     case "char":  return e.rerollChar ? `тест ${CHARACTERISTICS[e.rerollChar]?.label || e.rerollChar}` : "";
     case "skill": return e.skillKey ? `тест «${SKILLS_DEF[e.skillKey]?.label || e.skillKey}»` : "";
+    case "power": return e.powerName ? `манифестация «${e.powerName}»` : "манифестация любой психосилы";
     default: return REROLL_SCOPES.find(([v]) => v === e.rerollScope)?.[1] || "";
   }
 };
@@ -1182,6 +1186,7 @@ function isEntryComplete(e) {
     case "testMod":
       if (e.modScope === "char")  return !!e.rerollChar;
       if (e.modScope === "skill") return !!e.skillKey;
+      // power не требует имени — «power» само по себе валидная область (см. item-rules.mjs::scopeTarget).
       if (e.modValueMode === "halvePenalty") return !!e.modScope;
       if (e.modValueMode === "charBonus" || e.modValueMode === "masterCharBonus") return !!e.modCharBonus;
       if (e.modValueMode === "formula") return !!e.modScope && formulaOk(e.value);
@@ -3006,6 +3011,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
           `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+    } else if (ent.modScope === "power") {
+      detail = `<input type="text" class="mech-reroll-power" placeholder="— любая психосила (или впишите имя) —"
+                 value="${esc(ent.powerName || "")}" title="Пусто — любая манифестация; имя — только эта психосила (любая половина двуязычного названия)"
+                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     }
     // «Бонус характеристики» умеет и Пси-Рейтинг с множителем («+3×PR»,
     // Психосилы, wdbc-jw81): без этих двух полей запись из пака показывалась
@@ -3047,6 +3056,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
       detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
           `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+    } else if (ent.modScope === "power") {
+      detail = `<input type="text" class="mech-reroll-power" placeholder="— любая психосила (или впишите имя) —"
+                 value="${esc(ent.powerName || "")}" title="Пусто — любая манифестация; имя — только эта психосила"
+                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     }
     return `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>
       ${detail}
@@ -3073,6 +3086,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
         .map(([k, d]) => `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("");
       detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
         <option value="">— навык —</option>${opts}</select>`;
+    } else if (ent.rerollScope === "power") {
+      detail = `<input type="text" class="mech-reroll-power" placeholder="— любая психосила (или впишите имя) —"
+                 value="${esc(ent.powerName || "")}" title="Пусто — любая манифестация; имя — только эта психосила"
+                 data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
     }
     // "opponent" (wdbc-1rno, Уравнитель) — третье значение, ИНОЙ путь доставки,
     // чем у "target": не «мой бросок навязывает переброс цели» (ручная
@@ -3344,6 +3361,10 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
         detail = `<select class="mech-reroll-skill" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>
           <option value="">— навык —</option>${Object.entries(SKILLS_DEF).map(([k, d]) =>
             `<option value="${k}" ${ent.skillKey === k ? "selected" : ""}>${esc(d.label || k)}</option>`).join("")}</select>`;
+      } else if (ent.modScope === "power") {
+        detail = `<input type="text" class="mech-reroll-power" placeholder="— любая психосила (или впишите имя) —"
+                   value="${esc(ent.powerName || "")}" title="Пусто — любая манифестация; имя — только эта психосила"
+                   data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}/>`;
       }
       triggerScopeHtml = `<select class="mech-mod-scope" data-group-id="${groupId}" data-entry-id="${ent.id}" ${dis}>${scopeOpts}</select>${detail}`;
     }

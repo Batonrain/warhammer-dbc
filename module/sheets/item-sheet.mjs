@@ -2202,6 +2202,7 @@ export class WarhammerItemSheet
     mechField(".mech-reroll-scope", (e, v) => { e.rerollScope = v; });
     mechField(".mech-reroll-char",  (e, v) => { e.rerollChar = v; });
     mechField(".mech-reroll-skill", (e, v) => { e.skillKey = v; });
+    mechField(".mech-reroll-power", (e, v) => { e.powerName = v; });
     mechField(".mech-reroll-mode",  (e, v) => { e.rerollMode = v; });
     mechField(".mech-reroll-label", (e, v) => { e.label = v; });
     mechField(".mech-mod-scope",     (e, v) => { e.modScope = v; });

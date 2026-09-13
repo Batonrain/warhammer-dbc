@@ -71,6 +71,24 @@ describe("rulesFromItemMechanics: сборка правил", () => {
     expect(rules[0].effects[0]).toEqual({ kind: "rollBonus", target: "skill:awareness", formula: "ceil(cor/2)" });
   });
 
+  // wdbc-4bxa: область "power" у kind:testMod — resolve-test.mjs::powerScopeApplies
+  // уже читала её для эффектов ЛЮБОГО источника; здесь — только производитель для
+  // контентных записей Конструктора (item-rules.mjs::scopeTarget).
+  it("testMod modScope:power без имени даёт голую область power (любая психосила)", () => {
+    const testMod = { id: "e1", kind: "testMod", modScope: "power", modValueMode: "flat", value: 10, label: "" };
+    const rules = rulesFromItemMechanics([item("Серый Человек", [testMod])]);
+    expect(rules[0].effects[0]).toEqual({ kind: "rollBonus", target: "power", value: 10 });
+  });
+
+  it("testMod modScope:power с powerName сужает область до power:<имя>", () => {
+    const testMod = {
+      id: "e1", kind: "testMod", modScope: "power", powerName: "Doombolt",
+      modValueMode: "flat", value: 10, label: ""
+    };
+    const rules = rulesFromItemMechanics([item("Серый Человек", [testMod])]);
+    expect(rules[0].effects[0]).toEqual({ kind: "rollBonus", target: "power:Doombolt", value: 10 });
+  });
+
   // failDegMod (wdbc-1rno, Sentient Cyst) — тот же scopeTarget, что testMod,
   // но эффект своего вида kind:"failDegMod" (не rollBonus): применяется после
   // броска, не в галочках диалога, см. resolve-test.mjs/kind-outcome.mjs.

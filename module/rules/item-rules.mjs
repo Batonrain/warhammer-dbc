@@ -107,6 +107,15 @@ function scopeTarget(rawScope, entry, ruleId, what) {
     const key = String(entry.skillKey || "").trim();
     if (key) return `skill:${key.toLowerCase()}`;
   }
+  // power — манифестация психосилы (wdbc-4bxa): в отличие от char/skill, само
+  // «power» без имени УЖЕ осмысленная область («+10 к любой манифестации») —
+  // resolve-test.mjs::powerScopeApplies читает её как есть. Имя (если задано)
+  // сужает до конкретной силы, тем же нечётким сравнением, что itemHasName
+  // у Талантов/Черт (обе половины двуязычного имени, без специализации).
+  if (scope === "power") {
+    const key = String(entry.powerName || "").trim();
+    return key ? `power:${key}` : "power";
+  }
   console.error(`Warhammer DBC | запись «${what}» (${ruleId}): не заполнена область «${scope}»`);
   return null;
 }
