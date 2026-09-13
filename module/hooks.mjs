@@ -1062,11 +1062,30 @@ export function registerHooks() {
         const candidates = canvas.tokens.placeables.filter(t => t !== primaryToken && t !== attackerToken);
         const target = findArcTarget(primaryToken, candidates, 5);
         if (!target?.actor) return ui.notifications.info("⚡ В радиусе 5м от цели никого нет — Дуга не сработала.");
-        const arcDamage = parseInt(ds.arcDamage || "0");
+        // wdbc-wv8u: rating2 «Y» может быть дайс-формулой («2d10», книжное
+        // «Arc(6/2d10)») — раньше parseInt() тихо обрезал её до первой цифры
+        // («2d10» → 2), теперь дайс-паттерн бросается по-честному; голое
+        // число (подавляющее большинство существующего оружия) — как раньше.
+        const arcFormula = ds.arcDamage || "0";
+        const isDiceArc  = /\d+d\d+/i.test(arcFormula);
+        const arcRoll    = isDiceArc ? await new Roll(arcFormula).evaluate() : null;
+        const arcDamage  = isDiceArc ? arcRoll.total : (parseInt(arcFormula) || 0);
         await applyDamageToActor(target.actor, {
           rawDamage: arcDamage, penetration: arcDamage, damageType: "energy", hitLocation: "Торс",
           weaponName: ds.weaponName || "", attackerName: ds.attacker || "", attackerUuid: ds.attackerUuid || ""
         });
+        if (isDiceArc) {
+          await ChatMessage.create(ChatMessage.applyRollMode({
+            speaker: ChatMessage.getSpeaker({ actor: target.actor }),
+            content: `
+              <div class="wh-roll-result">
+                <div class="roll-header">${rollIcon("spark", "#c98bff")}⚡ Дуга (${esc(arcFormula)}) → ${esc(target.name)}</div>
+                <div class="roll-outcome">Урон: <b>${arcDamage}</b>(El) Pen ${arcDamage}</div>
+              </div>`,
+            rolls: [arcRoll],
+            sound: CONFIG.sounds.dice
+          }, game.settings.get("core", "rollMode")));
+        }
         ui.notifications.info(`⚡ Дуга поразила ${target.name}.`);
       });
     });

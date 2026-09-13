@@ -7,6 +7,7 @@
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach } from "vitest";
 import { findArcTarget } from "../../module/combat/arc.mjs";
+import { aggregateAuto, resolveWeaponPropsList } from "../../module/combat/weapon-properties.mjs";
 
 function token({ x = 0, y = 0, width = 1, height = 1, id = "" } = {}) {
   return { id, actor: {}, document: { x, y, width, height, rotation: 0 } };
@@ -43,5 +44,26 @@ describe("findArcTarget", () => {
 
   it("нет originToken — null", () => {
     expect(findArcTarget(null, [token()], 5)).toBeNull();
+  });
+});
+
+describe("aggregateAuto — Дуга (Arc) с дайс-рейтингом rating2 (wdbc-wv8u)", () => {
+  it("голое число rating2 работает как раньше (Math.max)", () => {
+    const props = resolveWeaponPropsList([{ key: "arc", rating: 7, rating2: 12 }]);
+    const wp = aggregateAuto(props);
+    expect(wp.arcRating).toBe(7);
+    expect(wp.arcDamage).toBe(12);
+  });
+
+  it("дайс-строка в rating2 сохраняется КАК ЕСТЬ, не даёт NaN (раньше Math.max(0,\"2d10\") тихо портил wp.arcDamage целиком)", () => {
+    const props = resolveWeaponPropsList([{ key: "arc", rating: 7, rating2: "2d10+PR" }]);
+    const wp = aggregateAuto(props);
+    expect(wp.arcDamage).toBe("2d10+PR");
+    expect(Number.isNaN(wp.arcDamage)).toBe(false);
+  });
+
+  it("без свойства Дуга — arcDamage остаётся дефолтным нулём", () => {
+    const wp = aggregateAuto(resolveWeaponPropsList([]));
+    expect(wp.arcDamage).toBe(0);
   });
 });
