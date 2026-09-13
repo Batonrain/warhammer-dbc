@@ -1,0 +1,1710 @@
+{
+  "name": "Cultist Zealot / Культист Фанатик",
+  "type": "character",
+  "img": "systems/warhammer-dbc/assets/art/chaos/fanatik.webp",
+  "folder": "bxRx0CNrjWZoicYj",
+  "system": {
+    "bodyType": "male",
+    "race": "human",
+    "subrace": "",
+    "ynnariPast": "",
+    "harlequinPast": "",
+    "harlequinMasque": "",
+    "navigatorHouse": "",
+    "lineageOrigin": "",
+    "archetype": "",
+    "eliteArchetype": "",
+    "alignment": "heretic",
+    "patronGod": "undivided",
+    "isPsyker": false,
+    "isTechpriest": false,
+    "isRogueTrader": false,
+    "meleeStance": "standard",
+    "aiming": "none",
+    "initiativeMod": 0,
+    "aspirations": {
+      "pride": "",
+      "motivation": "",
+      "influence": "",
+      "profitFactor": 0
+    },
+    "experience": {
+      "total": 0,
+      "spent": 0,
+      "spentChar": 0,
+      "spentSkills": 0,
+      "spentTalents": 0,
+      "spentPsy": 0,
+      "spentOther": 0,
+      "current": 0
+    },
+    "wounds": {
+      "value": 12,
+      "max": 12,
+      "critical": 0,
+      "firstAidUsed": false
+    },
+    "fate": {
+      "value": 0,
+      "max": 1
+    },
+    "deadMight": {
+      "value": 0,
+      "max": 0
+    },
+    "fatigue": {
+      "value": 0,
+      "max": 7
+    },
+    "insanity": {
+      "value": 30,
+      "threshold": 0
+    },
+    "corruption": {
+      "value": 35,
+      "threshold": 0
+    },
+    "characteristics": {
+      "ws": {
+        "base": 38,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 38,
+        "bonus": 3,
+        "cost": 0
+      },
+      "bs": {
+        "base": 28,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 28,
+        "bonus": 2,
+        "cost": 0
+      },
+      "s": {
+        "base": 42,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 42,
+        "bonus": 4,
+        "cost": 0
+      },
+      "t": {
+        "base": 45,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 45,
+        "bonus": 4,
+        "cost": 0
+      },
+      "ag": {
+        "base": 35,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 35,
+        "bonus": 3,
+        "cost": 0
+      },
+      "int": {
+        "base": 23,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 23,
+        "bonus": 2,
+        "cost": 0
+      },
+      "per": {
+        "base": 31,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 31,
+        "bonus": 3,
+        "cost": 0
+      },
+      "wp": {
+        "base": 35,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 35,
+        "bonus": 3,
+        "cost": 0
+      },
+      "fel": {
+        "base": 28,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 28,
+        "bonus": 2,
+        "cost": 0
+      },
+      "inf": {
+        "base": 0,
+        "advance": 0,
+        "supernatural": 0,
+        "improvement": "none",
+        "grantedImp": "none",
+        "total": 0,
+        "bonus": 0,
+        "cost": 0
+      }
+    },
+    "charDamage": {
+      "ws": 0,
+      "bs": 0,
+      "s": 0,
+      "t": 0,
+      "ag": 0,
+      "int": 0,
+      "per": 0,
+      "wp": 0,
+      "fel": 0,
+      "inf": 0
+    },
+    "skills": {
+      "acrobatics": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "athletics": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "awareness": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "charm": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "command": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "commerce": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "deceive": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "dodge": {
+        "rank": "knows",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "inquiry": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "interrogate": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "intimidate": {
+        "rank": "veteran",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "logic": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "medicae": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "parry": {
+        "rank": "trained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": 0
+      },
+      "psyniscience": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "scrutiny": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "security": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "sleightOfHand": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "stealth": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "survival": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      },
+      "techUse": {
+        "rank": "untrained",
+        "grantedRank": "untrained",
+        "cost": 0,
+        "total": -20
+      }
+    },
+    "groupSkills": {
+      "commonLore": [
+        {
+          "specialty": "Chaos",
+          "rank": "veteran",
+          "char": "int",
+          "total": 43,
+          "cost": 0
+        },
+        {
+          "specialty": "любое",
+          "rank": "knows",
+          "char": "int",
+          "total": 23,
+          "cost": 0
+        }
+      ],
+      "forbiddenLore": [],
+      "scholasticLore": [],
+      "linguistics": [
+        {
+          "specialty": "Low Gothic",
+          "rank": "knows",
+          "char": "int",
+          "total": 23,
+          "cost": 0
+        }
+      ],
+      "navigation": [],
+      "operate": [],
+      "trade": []
+    },
+    "armor": {
+      "head": 0,
+      "leftArm": 0,
+      "rightArm": 0,
+      "body": 0,
+      "leftLeg": 0,
+      "rightLeg": 0
+    },
+    "movement": {
+      "halfMove": 0,
+      "move": 0,
+      "charge": 0,
+      "run": 0
+    },
+    "initiative": 0,
+    "size": 0,
+    "encumbrance": {
+      "current": 13.5,
+      "max": 56
+    },
+    "psyker": {
+      "class": "bound",
+      "rating": 0,
+      "sustain": 0,
+      "currentRating": 0
+    },
+    "cognition": {
+      "value": 0,
+      "max": 0,
+      "regen": 0
+    },
+    "energy": {
+      "value": 0,
+      "max": 0
+    },
+    "geneSeed": {
+      "origin": "",
+      "legion": "",
+      "chapter": "",
+      "cultureLegion": "",
+      "cultureChapter": ""
+    },
+    "bio": {
+      "gender": "",
+      "age": 0,
+      "height": "",
+      "build": "",
+      "hair": "",
+      "divination": "",
+      "features": "",
+      "prejudices": "",
+      "souvenir": ""
+    },
+    "notes": "<p>Крепкие рукопашники культа с арсеналом настоящего оружия; «мышцы» лидеров, идеологически обработанные до фанатизма.</p><p><b>Вариации:</b> Берсерк (2-е рукопашное вместо пистолета), Молотильщик (Двуручный Пиломеч/Пилосекира/Метеоритный Молот), Оплот (Штурмовой Щит вместо пистолета).</p><p><b>Броня:</b> Импровизированная+Кираса (0/6/2/2). <b>Как Средний Миньон-человек.</b> Химия: 1×Stimm, 1×Spur.</p>",
+    "craftAvailable": false,
+    "possessed": false,
+    "haemonculus": {
+      "stage": 0,
+      "flesh": [],
+      "warp": [],
+      "splitPools": false,
+      "notes": ""
+    },
+    "possession": {
+      "demon": "katart",
+      "demonName": "",
+      "symbiosis": 0,
+      "manifested": false,
+      "greaterPossessed": false,
+      "demonWounds": {
+        "value": 0,
+        "max": 0
+      },
+      "swapWs": false,
+      "swapBs": false,
+      "notes": ""
+    },
+    "aptitudes": [],
+    "advanceTalents": [],
+    "paths": [],
+    "world": "",
+    "band": "",
+    "drukhariFaction": "",
+    "drukhariDistrict": "",
+    "insanityBonus": 0,
+    "corruptionBonus": 0,
+    "conditions": {
+      "bleeding": false,
+      "bleedingLevel": 0,
+      "haemorrhaging": false,
+      "haemorrhagingLevel": 0,
+      "stunned": false,
+      "stunnedRounds": 0,
+      "fatigued": false,
+      "fatiguedLevel": 0,
+      "poisoned": false,
+      "prone": false,
+      "unconscious": false,
+      "blinded": false,
+      "blindedRounds": 0,
+      "deafened": false,
+      "burning": false,
+      "burningLevel": 0,
+      "radiation": false,
+      "radiationLevel": 0,
+      "hallucinogenic": false,
+      "pinned": false,
+      "crippling": false,
+      "addicted": false
+    },
+    "vitals": {
+      "hunger": 0,
+      "thirst": 0,
+      "sleep": 0
+    },
+    "bookSource": "DoomBC — Хаос"
+  },
+  "items": [
+    {
+      "name": "Автопистолет",
+      "type": "weapon",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "pistol",
+        "weaponType": "solid",
+        "range": 30,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "1",
+        "magazineCur": 18,
+        "magazineMax": 18,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 6,
+        "damage": "1d10+2",
+        "damageType": "impact",
+        "penetration": 0,
+        "quality": "common",
+        "availability": -1,
+        "weight": 1.5,
+        "attackBonus": 0,
+        "special": "",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "combi"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        },
+        "drukhari": false
+      },
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+      "effects": [],
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_id": "6xfU351aVukcBp6C",
+      "folder": null,
+      "ownership": {
+        "default": 0
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.6xfU351aVukcBp6C"
+    },
+    {
+      "name": "Ambidextrous",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "−10 штраф за 2 оружия; нет штрафа за левую руку.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "cpE63NuLp7AEWaFc",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.cpE63NuLp7AEWaFc"
+    },
+    {
+      "name": "Berserk Charge",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "+10 к атаке с Натиска.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "iPJQz1nuBHhpiu9z",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.iPJQz1nuBHhpiu9z"
+    },
+    {
+      "name": "Double Team",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Ещё +10 за численное превосходство.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "2pgHS2LGrP1O80L1",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.2pgHS2LGrP1O80L1"
+    },
+    {
+      "name": "Fire in the Blood",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Даёт возможность действия (вход в Ярость за полудействие вместо целого) — модификатор экономии действий у конкретного манёвра, не число в тесте и не постоянный эффект.",
+        "benefit": "Вход в Ярость за полудействие.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "WYyLXsPWvwqaCfTw",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.WYyLXsPWvwqaCfTw"
+    },
+    {
+      "name": "Field Execution",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Казнь, чтобы подавить страх и панику.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "MorEIyZaXnBcIRQy",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.MorEIyZaXnBcIRQy"
+    },
+    {
+      "name": "Frenzy",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Может войти в Ярость: +10 WS, S, W, −20 BS, I, F.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "K1kSaU7xiGvxAMKK",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.K1kSaU7xiGvxAMKK"
+    },
+    {
+      "name": "Idolater",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Бесстрашие в присутствии кумира.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "xsFEAYmgSt5lzhiM",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.xsFEAYmgSt5lzhiM"
+    },
+    {
+      "name": "Nerves of Steel",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Переброс тестов Подавления.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "ncVuPHdERqhRxsvp",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.ncVuPHdERqhRxsvp"
+    },
+    {
+      "name": "Pity the Weak",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Бонусы к командованию слабыми.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "Kk4UcwyFmSnPNb01",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.Kk4UcwyFmSnPNb01"
+    },
+    {
+      "name": "Takedown",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Оглушить неприцельно любым оружием.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "M2BRnnTz3sDCVG1O",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.M2BRnnTz3sDCVG1O"
+    },
+    {
+      "name": "Two-Weapon Wielder (Оба)",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Тот же концепт, что канонический «Two Weapon Wielder / Два Оружия» (нотами не решён) — общий штраф без фиксированной цели теста, не безусловный testMod.",
+        "benefit": "Бой двумя оружиями со штрафом −20.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "LvzCvepbxWhf7Vnw",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.LvzCvepbxWhf7Vnw"
+    },
+    {
+      "name": "Нож",
+      "type": "weapon",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "weaponClass": "melee",
+        "weaponType": "lowtech",
+        "range": 1,
+        "balance": 0,
+        "grips": "1р (Об)",
+        "profileLabel": "Нож",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d5",
+        "damageType": "rending",
+        "penetration": 0,
+        "quality": "common",
+        "availability": -3,
+        "weight": 0.2,
+        "attackBonus": 0,
+        "special": "Нож; Хват 1р [Об]; Досягаемость 1",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "precise"
+          },
+          {
+            "key": "primitive"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        }
+      },
+      "_id": "a0IXl4EoMwhOycVg",
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "Bh2eMXBlRSXAdCgx": 3
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "gripsAuto": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "13.346",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1784645463257,
+        "modifiedTime": 1784646561800,
+        "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.a0IXl4EoMwhOycVg"
+    },
+    {
+      "name": "Пилотопор",
+      "type": "weapon",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "weaponClass": "melee",
+        "weaponType": "chain",
+        "range": 3,
+        "balance": -1,
+        "grips": "1р (2р, Кл)",
+        "profileLabel": "Топор",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+3",
+        "damageType": "rending",
+        "penetration": 2,
+        "quality": "common",
+        "availability": 0,
+        "weight": 1.9,
+        "attackBonus": 0,
+        "special": "Топор; Хват 1р [2р, Кл]; Досягаемость 3",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "imprecise"
+          },
+          {
+            "key": "tearing"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": false,
+          "operator": "gunner",
+          "stationId": "",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "",
+          "standard": false,
+          "reloads": 10
+        }
+      },
+      "_id": "N9SDy4OYIBDM6tPH",
+      "img": "systems/warhammer-dbc/assets/item-icons/weapon-axe.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "Bh2eMXBlRSXAdCgx": 3
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "gripsAuto": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "13.346",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1784645463257,
+        "modifiedTime": 1784646561800,
+        "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.N9SDy4OYIBDM6tPH"
+    },
+    {
+      "name": "Импровизированная Броня",
+      "type": "armor",
+      "folder": null,
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "simple",
+        "stacks": false,
+        "maxAgility": 40,
+        "equipped": false,
+        "head": 0,
+        "body": 3,
+        "leftArm": 2,
+        "rightArm": 2,
+        "leftLeg": 2,
+        "rightLeg": 2,
+        "quality": "common",
+        "availability": -3,
+        "weight": 6,
+        "properties": [
+          "primitive",
+          "soft"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "special": ""
+      },
+      "_id": "YM420Yox0RO9vWDO",
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "effects": [],
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "TcTwVVgsrGiUR4X7": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "13.346",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1781990283526,
+        "modifiedTime": 1782752979796,
+        "lastModifiedBy": "0avJJRhWNcjVNZyk"
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.YM420Yox0RO9vWDO"
+    },
+    {
+      "name": "Carapace Chestplate / Панцирная Кираса",
+      "type": "armor",
+      "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "armorType": "carapace",
+        "stacks": false,
+        "maxAgility": 60,
+        "equipped": false,
+        "head": 0,
+        "body": 6,
+        "leftArm": 0,
+        "rightArm": 0,
+        "leftLeg": 0,
+        "rightLeg": 0,
+        "quality": "common",
+        "availability": 1,
+        "weight": 6,
+        "properties": [
+          "conductive",
+          "gorget",
+          "hard"
+        ],
+        "strengthBonus": 0,
+        "wpBonus": 0,
+        "special": "",
+        "propRatings": {
+          "gorget": 8
+        }
+      },
+      "_id": "BV4U53jNcHHj3i5r",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.BV4U53jNcHHj3i5r"
+    },
+    {
+      "name": "Fire in Blood",
+      "type": "talent",
+      "img": "icons/svg/upgrade.svg",
+      "system": {
+        "description": "",
+        "notes": "Не смоделировано: эффект срабатывает по условию/триггеру или сочетает несколько эффектов сразу (конкретная ситуация, ограниченная частота, конкретное оружие/стойка/статус) — безусловный testMod исказил бы механику, применяясь всегда.",
+        "benefit": "Вход в Ярость за полудействие.",
+        "tier": 1,
+        "requirement": "",
+        "aptitudes": [],
+        "aptSource": "",
+        "aspirations": [],
+        "god": "",
+        "specialization": "",
+        "cost": 0,
+        "purchased": false,
+        "granted": false,
+        "effects": {
+          "charBonusStat": "",
+          "charBonusValue": 0,
+          "initMod": 0,
+          "fearRating": 0,
+          "speedMod": 0
+        }
+      },
+      "_id": "Jyunm2ADBqNlfrPv",
+      "effects": [],
+      "folder": null,
+      "sort": 100,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!WZcxqLXzxUI2SwYU.Jyunm2ADBqNlfrPv"
+    }
+  ],
+  "prototypeToken": {
+    "name": "Cultist Zealot / Культист Фанатик",
+    "displayName": 30,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "systems/warhammer-dbc/assets/art/chaos/fanatik.webp",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1,
+      "tint": "#ffffff",
+      "alphaThreshold": 0.75
+    },
+    "lockRotation": false,
+    "rotation": 0,
+    "alpha": 1,
+    "disposition": -1,
+    "displayBars": 0,
+    "bar1": {
+      "attribute": "wounds.value"
+    },
+    "bar2": {
+      "attribute": "fate.value"
+    },
+    "light": {
+      "negative": false,
+      "priority": 0,
+      "alpha": 0.5,
+      "angle": 360,
+      "bright": 0,
+      "color": null,
+      "coloration": 1,
+      "dim": 0,
+      "attenuation": 0.5,
+      "luminosity": 0.5,
+      "saturation": 0,
+      "contrast": 0,
+      "shadows": 0,
+      "animation": {
+        "type": null,
+        "speed": 5,
+        "intensity": 5,
+        "reverse": false
+      },
+      "darkness": {
+        "min": 0,
+        "max": 1
+      }
+    },
+    "sight": {
+      "enabled": false,
+      "range": 0,
+      "angle": 360,
+      "visionMode": "basic",
+      "color": null,
+      "attenuation": 0.1,
+      "brightness": 0,
+      "saturation": 0,
+      "contrast": 0
+    },
+    "detectionModes": {},
+    "occludable": {
+      "radius": 0
+    },
+    "ring": {
+      "enabled": false,
+      "colors": {
+        "ring": null,
+        "background": null
+      },
+      "effects": 1,
+      "subject": {
+        "scale": 1,
+        "texture": null
+      }
+    },
+    "turnMarker": {
+      "mode": 1,
+      "animation": null,
+      "src": null,
+      "disposition": false
+    },
+    "movementAction": null,
+    "flags": {},
+    "randomImg": false,
+    "appendNumber": false,
+    "prependAdjective": false,
+    "depth": 1
+  },
+  "_id": "WZcxqLXzxUI2SwYU",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "ezwAfZRyYM6SLFHL": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "setup": {
+        "source": "DoomBC — Хаос, II. СМЕРТНЫЕ, Культист Фанатик",
+        "groups": [
+          {
+            "key": "variant",
+            "label": "Вариация",
+            "mode": "one",
+            "default": "base",
+            "options": [
+              {
+                "key": "base",
+                "label": "Базовый",
+                "hint": "Автопистолет и рукопашное — как в статблоке."
+              },
+              {
+                "key": "berserk",
+                "label": "Берсерк",
+                "hint": "Заменяет пистолет ещё одним основным рукопашным оружием.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Второе рукопашное",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.xiGYQuH43rL38Ww6",
+                      "Compendium.warhammer-dbc.weapons.AVKfqjQHadZpIT8n",
+                      "Compendium.warhammer-dbc.weapons.m2PGsSvckeZqPOpX",
+                      "Compendium.warhammer-dbc.weapons.pcGw5BXNa6babCXF",
+                      "Compendium.warhammer-dbc.weapons.Ka5brh3MV2wUKBpN",
+                      "Compendium.warhammer-dbc.weapons.NBfTELkUW2lopbDw",
+                      "Compendium.warhammer-dbc.weapons.4zlZFSoy2Rbr7Srx"
+                    ]
+                  }
+                ]
+              },
+              {
+                "key": "thresher",
+                "label": "Молотильщик",
+                "hint": "Двуручное оружие вместо пистолета.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "pick": [
+                  {
+                    "label": "Двуручное",
+                    "from": [
+                      "Compendium.warhammer-dbc.weapons.AVKfqjQHadZpIT8n",
+                      "Compendium.warhammer-dbc.weapons.FwJgjC1oniNJDYB8",
+                      "Compendium.warhammer-dbc.weapons.Ap5YcNQmlSr6B5bI"
+                    ]
+                  }
+                ]
+              },
+              {
+                "key": "bulwark",
+                "label": "Оплот",
+                "hint": "Заменяет пистолет щитом.",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.BHmDOjHS94YmUvR2"
+                ]
+              }
+            ]
+          },
+          {
+            "key": "chem",
+            "label": "Химия",
+            "mode": "many",
+            "options": [
+              {
+                "key": "stimm",
+                "label": "1× Stimm",
+                "add": [
+                  "Compendium.warhammer-dbc.chemistry.M0kMI1HfIJSJ6khc"
+                ]
+              },
+              {
+                "key": "spur",
+                "label": "1× Spur",
+                "add": [
+                  "Compendium.warhammer-dbc.chemistry.y5o3ig8ofSNpEM8d"
+                ]
+              }
+            ]
+          },
+          {
+            "key": "melee",
+            "label": "Рукопашное оружие",
+            "mode": "one",
+            "default": "chainaxe",
+            "options": [
+              {
+                "key": "chainaxe",
+                "label": "Пилотопор",
+                "hint": "Как на листе."
+              },
+              {
+                "key": "chainsword",
+                "label": "Пиломеч",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.pcGw5BXNa6babCXF"
+                ]
+              },
+              {
+                "key": "shockMaul",
+                "label": "Шоковая Палица",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.Ka5brh3MV2wUKBpN"
+                ]
+              },
+              {
+                "key": "mace",
+                "label": "Булава",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.NBfTELkUW2lopbDw"
+                ]
+              },
+              {
+                "key": "warhammer",
+                "label": "Боевой Молот",
+                "hint": "Заменяет «Пилотопор».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Пилотопор"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.4zlZFSoy2Rbr7Srx"
+                ]
+              }
+            ]
+          },
+          {
+            "key": "pistol",
+            "label": "Пистолет",
+            "mode": "one",
+            "default": "autopistol",
+            "options": [
+              {
+                "key": "autopistol",
+                "label": "Автопистолет",
+                "hint": "Как на листе."
+              },
+              {
+                "key": "sawnOff",
+                "label": "Обрез Двуствольного Дробовика",
+                "hint": "Заменяет «Автопистолет».",
+                "remove": [
+                  {
+                    "type": "weapon",
+                    "name": "Автопистолет"
+                  }
+                ],
+                "add": [
+                  "Compendium.warhammer-dbc.weapons.6nINfIHIrlEG9Eyx"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1783437660884,
+    "modifiedTime": 1783443939509,
+    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+  },
+  "_key": "!actors!WZcxqLXzxUI2SwYU"
+}

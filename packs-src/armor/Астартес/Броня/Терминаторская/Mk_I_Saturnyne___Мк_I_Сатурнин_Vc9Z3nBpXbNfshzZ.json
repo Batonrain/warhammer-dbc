@@ -1,0 +1,248 @@
+{
+  "name": "Mk I Saturnyne / Мк I Сатурнин",
+  "type": "armor",
+  "folder": "od7g4AunuERomXc7",
+  "system": {
+    "description": "",
+    "notes": "",
+    "armorType": "power",
+    "stacks": false,
+    "maxAgility": 25,
+    "equipped": false,
+    "head": 16,
+    "body": 20,
+    "leftArm": 18,
+    "rightArm": 18,
+    "leftLeg": 18,
+    "rightLeg": 18,
+    "quality": "common",
+    "availability": 5,
+    "weight": 1600,
+    "properties": [
+      "gorget"
+    ],
+    "strengthBonus": 40,
+    "wpBonus": 0,
+    "special": "Сверхброня. Второй профиль AP: 4/6/5/5. +15 аблативных Ран. Штраф −30 к Ловкости. Экспериментальная: нельзя Бежать, поворот ≤90°/ход, скорость Натиска вдвое, обзор 90°. На спину — тяжёлое/длинное оружие (Shoulder Mount).",
+    "isRig": true,
+    "rig": {
+      "comfort": "normal",
+      "backSlot": false,
+      "slots": [
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, слева",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "пояс спереди, справа",
+          "variants": [
+            {
+              "key": "holster",
+              "label": "кобура",
+              "size": "2x1"
+            }
+          ]
+        }
+      ],
+      "magLocks": [
+        {
+          "size": "4x1",
+          "count": 2,
+          "note": "бёдра"
+        },
+        {
+          "size": "3x1",
+          "count": 2,
+          "note": "бока кирасы"
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени спереди",
+          "awkward": true
+        },
+        {
+          "size": "2x1",
+          "count": 2,
+          "note": "голени сзади",
+          "awkward": "veryAwkward"
+        },
+        {
+          "size": "1x1",
+          "count": 2,
+          "note": "предплечья",
+          "variants": [
+            {
+              "key": "shield",
+              "label": "щит",
+              "size": "3x3"
+            }
+          ]
+        },
+        {
+          "size": "4x1",
+          "count": 1,
+          "note": "пояс сзади",
+          "awkward": true
+        },
+        {
+          "size": "5x3",
+          "count": 1,
+          "note": "ранец сзади",
+          "awkward": "veryAwkward"
+        }
+      ]
+    },
+    "propRatings": {
+      "gorget": 4
+    },
+    "apSecond": {
+      "head": 4,
+      "body": 6,
+      "arms": 5,
+      "legs": 5,
+      "kind": "super"
+    },
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Силовая броня», стр. 235)"
+  },
+  "_id": "Vc9Z3nBpXbNfshzZ",
+  "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
+  "effects": [],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "mechanics": [
+        {
+          "id": "f2HWqIfZ0f0c9UD6",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "PiXfzr7wxsJFVcxR",
+              "kind": "poolMax",
+              "group": null,
+              "corruptionValue": "1",
+              "woundsValue": "1",
+              "cohesionRole": "any",
+              "cohesionValue": "1",
+              "charKey": "s",
+              "field": "total",
+              "op": "add",
+              "value": 15,
+              "sourceUuid": "",
+              "sourceName": "",
+              "sourceImg": "",
+              "sourceHasRating": false,
+              "rating": "",
+              "specialization": "",
+              "minionGroup": "",
+              "minionTier": "",
+              "skillScope": "plain",
+              "skillKey": "",
+              "specKey": "",
+              "specialty": "",
+              "specChoiceKeys": [],
+              "specChoiceCount": 1,
+              "rank": "untrained",
+              "weightScope": "all",
+              "weightMode": "kg",
+              "weightValue": 1,
+              "movementTarget": "spd",
+              "movementValue": 1,
+              "armourLocation": "body",
+              "armourValue": 1,
+              "ignoreTerrainProps": [],
+              "rerollScope": "all",
+              "rerollChar": "ag",
+              "rerollMode": "keepBest",
+              "modScope": "all",
+              "modValueMode": "flat",
+              "modCharBonus": "inf",
+              "rerollWho": "self",
+              "capabilityKey": "",
+              "fatigueAction": "threshold",
+              "fatigueThresholdChar": "t",
+              "equipMode": "direct",
+              "equipQty": 1,
+              "equipSourceUuid": "",
+              "equipSourceName": "",
+              "equipSourceImg": "",
+              "equipCategoryPack": "weapons",
+              "equipWeaponType": "",
+              "equipWeaponProp": "",
+              "equipArmorType": "",
+              "equipMaxAvailability": 5,
+              "equipQuality": "common",
+              "equipTalentTier": "",
+              "equipMaxPsyRating": "",
+              "equipImplantCategory": "",
+              "equipBudgetMode": "count",
+              "equipBudgetValue": 1,
+              "loyaltyMinionType": "",
+              "loyaltyOp": "add",
+              "loyaltyValue": 1,
+              "auraRadius": "1",
+              "auraAffects": "allies",
+              "auraIncludesSelf": false,
+              "weaponPropAction": "add",
+              "weaponPropKey": "",
+              "weaponPropLabel": "",
+              "weaponPropHasRating": false,
+              "weaponPropHasRating2": false,
+              "weaponPropValue": "1",
+              "weaponPropValue2": "0",
+              "weaponPropNewKey": "",
+              "weaponPropNewLabel": "",
+              "weaponPropNewHasRating": false,
+              "weaponPropNewHasRating2": false,
+              "weaponPropNewValue": "1",
+              "weaponPropNewValue2": "0",
+              "label": "",
+              "code": "",
+              "when": {
+                "negate": false,
+                "conditions": []
+              },
+              "poolTarget": "ablativeWounds"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "13.346",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781990283526,
+    "modifiedTime": 1785255156659,
+    "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
+  },
+  "_key": "!items!Vc9Z3nBpXbNfshzZ"
+}
