@@ -20,15 +20,12 @@
     "weight": 6,
     "properties": [
       "conductive",
-      "gorget",
       "hard"
     ],
     "strengthBonus": 0,
     "wpBonus": 0,
     "special": "",
-    "propRatings": {
-      "gorget": 8
-    }
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 229)"
   },
   "_id": "201ckN5SAhaeVkAc",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",
