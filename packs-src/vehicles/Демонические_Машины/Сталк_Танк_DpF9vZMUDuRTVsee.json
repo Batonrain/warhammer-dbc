@@ -1,40 +1,42 @@
 {
-  "name": "Осквернитель",
+  "name": "Сталк-Танк",
   "type": "vehicle",
-  "img": "systems/warhammer-dbc/assets/art/doombc-machines/oskvernitel.webp",
+  "img": "systems/warhammer-dbc/assets/art/doombc-machines/stalk-tank.webp",
   "folder": "aoMAoicVfGoTjds8",
   "system": {
-    "vehicleClass": "Осквернитель",
+    "vehicleClass": "Сталк-Танк",
     "vehicleType": "walker",
     "origin": "",
     "commander": "",
-    "manoeuvrability": 0,
+    "manoeuvrability": 20,
     "operate": 0,
-    "size": 3,
+    "size": 2,
     "chassis": {
       "type": "walker",
-      "spd": 10,
+      "spd": 9,
       "spdDamage": 0,
       "manoeuvreDamage": 0,
-      "strength": 85,
-      "unnaturalS": 6
+      "strength": 60,
+      "unnaturalS": 4
     },
     "armour": {
-      "front": 35,
-      "side": 35,
+      "front": 32,
+      "side": 30,
       "rear": 20
     },
     "structure": {
-      "value": 55,
-      "max": 55,
-      "critical": 0
+      "value": 25,
+      "max": 25,
+      "critical": 0,
+      "ablative": 0,
+      "ablativeMax": 0
     },
     "ammoReloads": 10,
     "openTopped": false,
     "traits": "",
     "stations": [
       {
-        "id": "Rt2BYQFPeNuLjFLe",
+        "id": "YPUEFESpu6CjafEQ",
         "role": "pilot",
         "uuid": "",
         "name": "",
@@ -42,9 +44,9 @@
       }
     ],
     "damageStates": [],
-    "notes": "<p><b>Хаос — демон-движок.</b> Шестиногий Defiler: 2 клешни + 2 руки со сменным оружием. Пилот — заточённый демон (<b>+5 WS</b>; WS/BS/A задаются ритуалом вселения). <b>Штурм</b>, <b>Многоногая (6)</b>.</p>",
+    "notes": "<p><b>Хаос — демон-движок разведки.</b> Stalk-Tank: шестиногий шагоход-разведчик и засадный охотник, Scythe-Leg на ногах + Mantis Claws на руках (может проводить Захват против целей Размером ≤1), Тяжёлый Огнемёт в пасти (можно как укус, если из него не стреляли в этот Ход), орудие в башне на выбор. Пилот — заточённый демон (<b>+5 A</b>, Athletics+10, Stealth+10; WS/BS/A задаются ритуалом вселения). <b>Вездеходный</b>, <b>Длинные Ноги</b>, <b>Тихий Ход</b>, <b>Многоногая (4)</b>, <b>Саркофаг</b>.</p>",
     "gmNotes": "",
-    "availability": 2
+    "availability": 1
   },
   "items": [
     {
@@ -66,7 +68,7 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -85,7 +87,7 @@
           "flickerfield": false
         }
       },
-      "_id": "lbfs8U5wvJdmKXrE",
+      "_id": "ey4dCdUxWoYEJRnu",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -104,7 +106,7 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.lbfs8U5wvJdmKXrE"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.ey4dCdUxWoYEJRnu"
     },
     {
       "name": "Штурм / Onslaught",
@@ -125,7 +127,7 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
@@ -155,7 +157,7 @@
           "advancedControls": false
         }
       },
-      "_id": "VZu9CuHBx9V3JOmO",
+      "_id": "twLUZyjv0ykgeLMw",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -174,7 +176,7 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.VZu9CuHBx9V3JOmO"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.twLUZyjv0ykgeLMw"
     },
     {
       "name": "Многоногая / Multi-Legged",
@@ -186,7 +188,7 @@
         "benefit": "Легче переносит Опрокидывание.",
         "availability": 0,
         "hasRating": true,
-        "rating": 6,
+        "rating": 4,
         "hasRating2": false,
         "rating2": 0,
         "hasRating3": false,
@@ -214,7 +216,7 @@
           "flickerfield": false
         }
       },
-      "_id": "DzsS8I7wxgDivJPn",
+      "_id": "sMJbQ64fRJxnGtNT",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -233,16 +235,16 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.DzsS8I7wxgDivJPn"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.sMJbQ64fRJxnGtNT"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Вездеходный",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
-        "description": "Броня усилена, важнейшие системы защищены. Уменьшает вдвое (окр.▲) свою Отрицательную Структуру в расчёте Критических Эффектов (при −10 Стр. получает Крит 5). При непрямом попадании оружия со Blast половина (окр.▼) кубиков урона взрыва игнорируется (отбрасывая наибольшие).",
+        "description": "Трудный Ландшафт не замедляет машину и она может перебрасывать тесты, чтобы не упасть при Беге и Натиске через Трудный Ландшафт.",
         "notes": "",
-        "benefit": "½ крит-эффектов от негативной Структуры.",
+        "benefit": "Не замедляется Трудным Ландшафтом, переброс тестов от падения.",
         "availability": 0,
         "hasRating": false,
         "rating": 0,
@@ -254,13 +256,13 @@
           "openTopped": false,
           "manoeuvreMod": 0,
           "spdMod": 0,
-          "spdDamageReduce": 0,
+          "spdDamageReduce": false,
           "noMove": false,
           "swerveDisabled": false,
           "fullMoveSpdMult": 0,
           "smallMoveOnly": false,
           "ignoreDifficultTerrain": false,
-          "critHalved": true,
+          "critHalved": false,
           "trackHitsToHull": false,
           "siege": false,
           "reloadRapid": false,
@@ -273,7 +275,7 @@
           "flickerfield": false
         }
       },
-      "_id": "4DnsQcikauRqTWFa",
+      "_id": "IacmzCb4yQdcqAvi",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -292,10 +294,187 @@
         "createdTime": null,
         "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.4DnsQcikauRqTWFa"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.IacmzCb4yQdcqAvi"
     },
     {
-      "name": "Pincer Claw / Клешня (Осквернитель)",
+      "name": "Длинные Ноги",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Сталк-Танк не считает преграды высотой меньше 1,5 м Трудным Ландшафтом и просто перешагивает через них, не сбавляя хода.",
+        "notes": "",
+        "benefit": "Перешагивает преграды ниже 1,5 м без потери хода.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": false,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "qLeXq94X4CdjKgBS",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.qLeXq94X4CdjKgBS"
+    },
+    {
+      "name": "Тихий Ход",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "При передвижении на Полудвижение, двигатель и сервоприводы Сталк-Танка почти не издают звука и его выхлоп незаметен.",
+        "notes": "",
+        "benefit": "Почти бесшумен на Полудвижении.",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": false,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "P8ZrLnDFjhwFc1El",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.P8ZrLnDFjhwFc1El"
+    },
+    {
+      "name": "Саркофаг",
+      "type": "vehicleTrait",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "Когда Сталк-Танк держит существо Размером 1 и меньше в Захвате, он может за полудействие пройти против него встречный тест Athletics+0 vs Athletics+0 и при Успехе заключить цель в саркофаге в своём брюхе. Цель в саркофаге Беспомощна и считается внутри Сталк-Танка, как если бы он имел Трейты Enclosed и Sealed. В саркофаг может уместиться только одна цель, но Сталк-Танк может выбросить текущую из своего саркофага за свободное действие. Персонаж, что провёл хотя бы W.b часов в саркофаге, получает штраф –20 на свои тесты против допроса на следующие 24–W.b часа.",
+        "notes": "",
+        "benefit": "Захваченную цель Размером ≤1 можно заключить в саркофаге (Беспомощна, как Enclosed+Sealed).",
+        "availability": 0,
+        "hasRating": false,
+        "rating": 0,
+        "hasRating2": false,
+        "rating2": 0,
+        "hasRating3": false,
+        "rating3": 0,
+        "effects": {
+          "openTopped": false,
+          "manoeuvreMod": 0,
+          "spdMod": 0,
+          "spdDamageReduce": false,
+          "noMove": false,
+          "swerveDisabled": false,
+          "fullMoveSpdMult": 0,
+          "smallMoveOnly": false,
+          "ignoreDifficultTerrain": false,
+          "critHalved": false,
+          "trackHitsToHull": false,
+          "siege": false,
+          "reloadRapid": false,
+          "commandBonus": 0,
+          "repairBonus": 0,
+          "deflectorShield": false,
+          "deflectorDaemonic": false,
+          "ignoreCrewCrits": false,
+          "autonomous": false,
+          "flickerfield": false
+        }
+      },
+      "_id": "QDWHbYQ8QO2atPPR",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.QDWHbYQ8QO2atPPR"
+    },
+    {
+      "name": "Scythe-Leg / Нога-Коса (Сталк-Танк)",
       "type": "weapon",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -306,7 +485,7 @@
         "gripProps2h": [],
         "corEffects": [],
         "weaponClass": "melee",
-        "weaponType": "power",
+        "weaponType": "primitive",
         "range": 0,
         "balance": -1,
         "grips": "",
@@ -318,23 +497,17 @@
         "rof_single": 0,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "3d10+18",
-        "damageType": "impact",
-        "penetration": 8,
+        "damage": "1d10+10",
+        "damageType": "rending",
+        "penetration": 6,
         "quality": "common",
         "availability": 0,
         "weight": 0,
         "attackBonus": 0,
-        "special": "Досягаемость 2–5. Природное оружие.",
-        "equipped": false,
+        "special": "Ноги, досягаемость 2–4.",
+        "equipped": true,
         "loadedAmmoId": "",
         "weaponProps": [
-          {
-            "key": "crunch"
-          },
-          {
-            "key": "imprecise"
-          },
           {
             "key": "reinforced"
           }
@@ -359,20 +532,20 @@
         "vehicleMount": {
           "isMounted": true,
           "operator": "gunner",
-          "stationId": "Rt2BYQFPeNuLjFLe",
+          "stationId": "YPUEFESpu6CjafEQ",
           "mount": "hull",
-          "hArc": "—",
+          "hArc": "ноги",
           "vArc": "—",
           "standard": true,
           "reloads": 10,
-          "slotId": "Jh6SBMhv6F79frDB",
+          "slotId": "ArDkO1geQdIZbHR2",
           "options": [
-            "Pincer Claw / Клешня (Осквернитель)"
+            "Scythe-Leg / Нога-Коса (Сталк-Танк)"
           ]
         },
         "drukhari": false
       },
-      "_id": "6XU7ZjCYBHDRkr1O",
+      "_id": "sAd2gYh773Pyhf96",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -380,7 +553,11 @@
         "default": 0,
         "ezwAfZRyYM6SLFHL": 3
       },
-      "flags": {},
+      "flags": {
+        "warhammer-dbc": {
+          "integralAttack": true
+        }
+      },
       "_stats": {
         "compendiumSource": null,
         "duplicateSource": null,
@@ -388,14 +565,14 @@
         "coreVersion": "14.365",
         "systemId": "warhammer-dbc",
         "systemVersion": "0.1.0",
-        "createdTime": 1783867341651,
-        "modifiedTime": 1783867341651,
-        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.6XU7ZjCYBHDRkr1O"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.sAd2gYh773Pyhf96"
     },
     {
-      "name": "Pincer Claw / Клешня (Осквернитель)",
+      "name": "Scythe-Leg / Нога-Коса (Сталк-Танк)",
       "type": "weapon",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -406,7 +583,7 @@
         "gripProps2h": [],
         "corEffects": [],
         "weaponClass": "melee",
-        "weaponType": "power",
+        "weaponType": "primitive",
         "range": 0,
         "balance": -1,
         "grips": "",
@@ -418,23 +595,17 @@
         "rof_single": 0,
         "rof_semi": 0,
         "rof_full": 0,
-        "damage": "3d10+18",
-        "damageType": "impact",
-        "penetration": 8,
+        "damage": "1d10+10",
+        "damageType": "rending",
+        "penetration": 6,
         "quality": "common",
         "availability": 0,
         "weight": 0,
         "attackBonus": 0,
-        "special": "Досягаемость 2–5. Природное оружие.",
-        "equipped": false,
+        "special": "Ноги, досягаемость 2–4.",
+        "equipped": true,
         "loadedAmmoId": "",
         "weaponProps": [
-          {
-            "key": "crunch"
-          },
-          {
-            "key": "imprecise"
-          },
           {
             "key": "reinforced"
           }
@@ -459,20 +630,121 @@
         "vehicleMount": {
           "isMounted": true,
           "operator": "gunner",
-          "stationId": "Rt2BYQFPeNuLjFLe",
+          "stationId": "YPUEFESpu6CjafEQ",
+          "mount": "hull",
+          "hArc": "ноги",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "YmhdzqPH1He7mFxC",
+          "options": [
+            "Scythe-Leg / Нога-Коса (Сталк-Танк)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "gug8ZIeg3NfP81Mw",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {
+        "warhammer-dbc": {
+          "integralAttack": true
+        }
+      },
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.gug8ZIeg3NfP81Mw"
+    },
+    {
+      "name": "Mantis Claws / Клешни Богомола (Сталк-Танк)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "power",
+        "range": 0,
+        "balance": -2,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+14",
+        "damageType": "energy",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 1,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Досягаемость 0–4. Этим оружием можно проводить Захват против целей Размером до 1.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "crunch"
+          },
+          {
+            "key": "powerField"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "YPUEFESpu6CjafEQ",
           "mount": "hull",
           "hArc": "—",
           "vArc": "—",
           "standard": true,
           "reloads": 10,
-          "slotId": "cDbN2nHRs9aGMDXY",
+          "slotId": "lTTGnvDq4mEYGnda",
           "options": [
-            "Pincer Claw / Клешня (Осквернитель)"
+            "Mantis Claws / Клешни Богомола (Сталк-Танк)"
           ]
         },
         "drukhari": false
       },
-      "_id": "zWlWIE75LtAUOY9m",
+      "_id": "v40ciIW53shPHhKP",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -488,11 +760,209 @@
         "coreVersion": "14.365",
         "systemId": "warhammer-dbc",
         "systemVersion": "0.1.0",
-        "createdTime": 1783867341651,
-        "modifiedTime": 1783867341651,
-        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.zWlWIE75LtAUOY9m"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.v40ciIW53shPHhKP"
+    },
+    {
+      "name": "Mantis Claws / Клешни Богомола (Сталк-Танк)",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "melee",
+        "weaponType": "power",
+        "range": 0,
+        "balance": -2,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "–",
+        "magazineCur": 0,
+        "magazineMax": 0,
+        "rof_single": 0,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+14",
+        "damageType": "energy",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 1,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Досягаемость 0–4. Этим оружием можно проводить Захват против целей Размером до 1.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "crunch"
+          },
+          {
+            "key": "powerField"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "YPUEFESpu6CjafEQ",
+          "mount": "hull",
+          "hArc": "—",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "zwBFC1MpXNGqlC45",
+          "options": [
+            "Mantis Claws / Клешни Богомола (Сталк-Танк)"
+          ]
+        },
+        "drukhari": false
+      },
+      "_id": "Gj97bz9dxqrdK94V",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.Gj97bz9dxqrdK94V"
+    },
+    {
+      "name": "Heavy Flamer / Тяжёлый Огнемёт",
+      "type": "weapon",
+      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
+      "system": {
+        "description": "",
+        "notes": "",
+        "rangeBands": [],
+        "offProfile": {},
+        "gripProps2h": [],
+        "corEffects": [],
+        "weaponClass": "heavy",
+        "weaponType": "flame",
+        "range": 60,
+        "balance": 0,
+        "grips": "",
+        "profileLabel": "",
+        "profiles": [],
+        "reload": "2",
+        "magazineCur": 15,
+        "magazineMax": 15,
+        "rof_single": 1,
+        "rof_semi": 0,
+        "rof_full": 0,
+        "damage": "1d10+12",
+        "damageType": "energy",
+        "penetration": 6,
+        "quality": "common",
+        "availability": 0,
+        "weight": 0,
+        "attackBonus": 0,
+        "special": "Linger (1d5). В Борьбе можно использовать как атаку укусом, если из него не стреляли в этот Ход.",
+        "equipped": false,
+        "loadedAmmoId": "",
+        "weaponProps": [
+          {
+            "key": "flame"
+          },
+          {
+            "key": "spray"
+          },
+          {
+            "key": "linger"
+          }
+        ],
+        "needsRecharge": false,
+        "legacyWeapon": false,
+        "sacred": false,
+        "daemonWeapon": {
+          "bound": false,
+          "god": "",
+          "demonName": "",
+          "binding": 0,
+          "demonWb": 0,
+          "demonInf": 0,
+          "subdued": false,
+          "runic": false,
+          "properties": [],
+          "preProps": [],
+          "preDamage": "",
+          "prePen": 0
+        },
+        "vehicleMount": {
+          "isMounted": true,
+          "operator": "gunner",
+          "stationId": "YPUEFESpu6CjafEQ",
+          "mount": "hull",
+          "hArc": "—",
+          "vArc": "—",
+          "standard": true,
+          "reloads": 10,
+          "slotId": "xratj2fjPUUr0ScP",
+          "options": [
+            "Heavy Flamer / Тяжёлый Огнемёт"
+          ]
+        },
+        "drukhari": false,
+        "damageSubtype": "flame"
+      },
+      "_id": "Wq7bnKlY6UjsDlk8",
+      "effects": [],
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0,
+        "ezwAfZRyYM6SLFHL": 3
+      },
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
+      },
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.Wq7bnKlY6UjsDlk8"
     },
     {
       "name": "Reaper Autocannon / Автопушка Жнец",
@@ -500,7 +970,7 @@
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
         "description": "",
-        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как один из слотов «Руки ×2 (могут быть разными)» Осквернителя без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
+        "notes": "",
         "rangeBands": [],
         "offProfile": {},
         "gripProps2h": [],
@@ -559,25 +1029,24 @@
         "vehicleMount": {
           "isMounted": true,
           "operator": "gunner",
-          "stationId": "Rt2BYQFPeNuLjFLe",
-          "mount": "hull",
-          "hArc": "−45°..+45°",
-          "vArc": "—",
+          "stationId": "YPUEFESpu6CjafEQ",
+          "mount": "turret",
+          "hArc": "360°",
+          "vArc": "−5°..+90°",
           "standard": true,
           "reloads": 10,
-          "slotId": "qKnIvmwihUAqALWM",
+          "slotId": "qRj6x9E3jQIUwuhh",
           "options": [
             "Reaper Autocannon / Автопушка Жнец",
             "Twin Heavy Flamer / Спаренный Тяжёлый Огнемёт",
             "Havoc Launcher / Гранатомёт Хавок",
             "Twin Heavy Bolter / Спаренный Тяжёлый Болтер",
-            "Twin Lascannon / Спаренная Лазпушка",
-            "Power Scourge / Силовая Плеть (Осквернитель)"
+            "Twin Lascannon / Спаренная Лазпушка"
           ]
         },
         "drukhari": false
       },
-      "_id": "4RCKoshI7ZowD70e",
+      "_id": "JBC1qtdJFAEcNGF0",
       "effects": [],
       "folder": null,
       "sort": 0,
@@ -593,232 +1062,22 @@
         "coreVersion": "14.365",
         "systemId": "warhammer-dbc",
         "systemVersion": "0.1.0",
-        "createdTime": 1783867341651,
-        "modifiedTime": 1783867341651,
-        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+        "lastModifiedBy": null,
+        "createdTime": null,
+        "modifiedTime": null
       },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.4RCKoshI7ZowD70e"
-    },
-    {
-      "name": "Reaper Autocannon / Автопушка Жнец",
-      "type": "weapon",
-      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
-      "system": {
-        "description": "",
-        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как один из слотов «Руки ×2 (могут быть разными)» Осквернителя без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
-        "rangeBands": [],
-        "offProfile": {},
-        "gripProps2h": [],
-        "corEffects": [],
-        "weaponClass": "heavy",
-        "weaponType": "solid",
-        "range": 400,
-        "balance": 0,
-        "grips": "",
-        "profileLabel": "",
-        "profiles": [],
-        "reload": "2",
-        "magazineCur": 200,
-        "magazineMax": 200,
-        "rof_single": 1,
-        "rof_semi": 4,
-        "rof_full": 0,
-        "damage": "3d10+8",
-        "damageType": "impact",
-        "penetration": 6,
-        "quality": "common",
-        "availability": 2,
-        "weight": 0,
-        "attackBonus": 0,
-        "special": "Hefty (R)",
-        "equipped": false,
-        "loadedAmmoId": "",
-        "weaponProps": [
-          {
-            "key": "hefty"
-          },
-          {
-            "key": "reliable"
-          },
-          {
-            "key": "twinLinked"
-          }
-        ],
-        "needsRecharge": false,
-        "legacyWeapon": false,
-        "sacred": false,
-        "daemonWeapon": {
-          "bound": false,
-          "god": "",
-          "demonName": "",
-          "binding": 0,
-          "demonWb": 0,
-          "demonInf": 0,
-          "subdued": false,
-          "runic": false,
-          "properties": [],
-          "preProps": [],
-          "preDamage": "",
-          "prePen": 0
-        },
-        "vehicleMount": {
-          "isMounted": true,
-          "operator": "gunner",
-          "stationId": "Rt2BYQFPeNuLjFLe",
-          "mount": "hull",
-          "hArc": "−45°..+45°",
-          "vArc": "—",
-          "standard": true,
-          "reloads": 10,
-          "slotId": "ziF2hMjGiAe8GmXa",
-          "options": [
-            "Reaper Autocannon / Автопушка Жнец",
-            "Twin Heavy Flamer / Спаренный Тяжёлый Огнемёт",
-            "Havoc Launcher / Гранатомёт Хавок",
-            "Twin Heavy Bolter / Спаренный Тяжёлый Болтер",
-            "Twin Lascannon / Спаренная Лазпушка",
-            "Power Scourge / Силовая Плеть (Осквернитель)"
-          ]
-        },
-        "drukhari": false
-      },
-      "_id": "v0bjIOWjaxbL5U9G",
-      "effects": [],
-      "folder": null,
-      "sort": 0,
-      "ownership": {
-        "default": 0,
-        "ezwAfZRyYM6SLFHL": 3
-      },
-      "flags": {},
-      "_stats": {
-        "compendiumSource": null,
-        "duplicateSource": null,
-        "exportSource": null,
-        "coreVersion": "14.365",
-        "systemId": "warhammer-dbc",
-        "systemVersion": "0.1.0",
-        "createdTime": 1783867341651,
-        "modifiedTime": 1783867341651,
-        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
-      },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.v0bjIOWjaxbL5U9G"
-    },
-    {
-      "name": "Battle Cannon / Боевая Пушка (Осквернитель)",
-      "type": "weapon",
-      "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
-      "system": {
-        "description": "",
-        "notes": "<p><b>Дуга ГН — не книжная.</b> «Машины» описывает это оружие как «В корпусе» без числового ГН/ВН. −45°..+45° — домашнее приближение для предупреждения «вне сектора наводки» на листе, не значение из книги (wdbc-n8m).</p>",
-        "rangeBands": [],
-        "offProfile": {},
-        "gripProps2h": [],
-        "corEffects": [],
-        "weaponClass": "heavy",
-        "weaponType": "solid",
-        "range": 1200,
-        "balance": 0,
-        "grips": "",
-        "profileLabel": "",
-        "profiles": [],
-        "reload": "–",
-        "magazineCur": 0,
-        "magazineMax": 0,
-        "rof_single": 1,
-        "rof_semi": 0,
-        "rof_full": 0,
-        "damage": "3d10+10",
-        "damageType": "blast",
-        "penetration": 8,
-        "quality": "common",
-        "availability": 2,
-        "weight": 0,
-        "attackBonus": 0,
-        "special": "Боезапас: ∞ (энергия/подача). Тяжёлая Артиллерия: нельзя стрелять из этого орудия с помощью Трейта Onslaught.",
-        "equipped": false,
-        "loadedAmmoId": "",
-        "weaponProps": [
-          {
-            "key": "concussive",
-            "rating": 3
-          },
-          {
-            "key": "blast",
-            "rating": 8
-          },
-          {
-            "key": "ordnance"
-          },
-          {
-            "key": "reliable"
-          }
-        ],
-        "needsRecharge": false,
-        "legacyWeapon": false,
-        "sacred": false,
-        "daemonWeapon": {
-          "bound": false,
-          "god": "",
-          "demonName": "",
-          "binding": 0,
-          "demonWb": 0,
-          "demonInf": 0,
-          "subdued": false,
-          "runic": false,
-          "properties": [],
-          "preProps": [],
-          "preDamage": "",
-          "prePen": 0
-        },
-        "vehicleMount": {
-          "isMounted": true,
-          "operator": "gunner",
-          "stationId": "Rt2BYQFPeNuLjFLe",
-          "mount": "hull",
-          "hArc": "−45°..+45°",
-          "vArc": "—",
-          "standard": true,
-          "reloads": 10,
-          "slotId": "xvjrp3bip1thuBsD",
-          "options": [
-            "Battle Cannon / Боевая Пушка (Осквернитель)"
-          ]
-        },
-        "drukhari": false
-      },
-      "_id": "Ou3I4lyZFTXc8HPk",
-      "effects": [],
-      "folder": null,
-      "sort": 0,
-      "ownership": {
-        "default": 0,
-        "ezwAfZRyYM6SLFHL": 3
-      },
-      "flags": {},
-      "_stats": {
-        "compendiumSource": null,
-        "duplicateSource": null,
-        "exportSource": null,
-        "coreVersion": "14.365",
-        "systemId": "warhammer-dbc",
-        "systemVersion": "0.1.0",
-        "createdTime": 1783867341651,
-        "modifiedTime": 1783867341651,
-        "lastModifiedBy": "ezwAfZRyYM6SLFHL"
-      },
-      "_key": "!actors.items!CEPZbRLuAQVE79og.Ou3I4lyZFTXc8HPk"
+      "_key": "!actors.items!DpF9vZMUDuRTVsee.JBC1qtdJFAEcNGF0"
     }
   ],
-  "_id": "CEPZbRLuAQVE79og",
+  "_id": "DpF9vZMUDuRTVsee",
   "prototypeToken": {
-    "name": "Осквернитель",
+    "name": "Сталк-Танк",
     "displayName": 30,
     "actorLink": false,
     "width": 1,
     "height": 1,
     "texture": {
-      "src": "systems/warhammer-dbc/assets/art/doombc-machines/oskvernitel.webp",
+      "src": "systems/warhammer-dbc/assets/art/doombc-machines/stalk-tank.webp",
       "anchorX": 0.5,
       "anchorY": 0.5,
       "fit": "contain",
@@ -906,8 +1165,7 @@
   "effects": [],
   "sort": 0,
   "ownership": {
-    "default": 0,
-    "ezwAfZRyYM6SLFHL": 3
+    "default": 0
   },
   "flags": {},
   "_stats": {
@@ -917,9 +1175,9 @@
     "coreVersion": "14.365",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1783857422280,
-    "modifiedTime": 1783869240848,
-    "lastModifiedBy": "ezwAfZRyYM6SLFHL"
+    "lastModifiedBy": null,
+    "createdTime": null,
+    "modifiedTime": null
   },
-  "_key": "!actors!CEPZbRLuAQVE79og"
+  "_key": "!actors!DpF9vZMUDuRTVsee"
 }
