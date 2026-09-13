@@ -24,7 +24,17 @@
     "damage": "1d10+5+PR*2",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "flush"
+      },
+      {
+        "key": "spray"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

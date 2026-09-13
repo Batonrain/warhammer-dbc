@@ -378,11 +378,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   (wdbc-4bxa). `system.weaponProps` психосил (Экстремальный урон/Felling/Lance
   и т.п. на психической атаке) — движок готов (`sheets/tabs/psychic.mjs`,
   `aggregateAuto`); rating свойства может быть формулой с «PR» (Blast(2×PR) и
-  т.п.) — резолвится `combat/weapon-properties.mjs::resolvePropRating(s)` тем
-  же безопасным парсером, что и Пробитие (wdbc-lui3, 13.09.2026). Контентом
-  заполнена пока одна сила-пилот (Eldritch Storm) из 847 — остальные ждут
-  прохода по дисциплинам, не значит, что свойство не читается, значит, что
-  его никто не вписал в контент.
+  т.п.), «СУ»/книжным «Успехи» (Devastating Rain) или Cor.b/др. бонусом
+  характеристики (Infernal Gaze: Felling(Cor.b)) — резолвится
+  `combat/weapon-properties.mjs::resolvePropRating(s, prValue, {deg, rollData})`
+  тем же безопасным парсером, что и Пробитие, плюс `mechRollData(actor)` для
+  X.b-нотации; дайс-рейтинг (Flame «2d10») возвращается строкой для
+  `new Roll()`, не резолвится числом (wdbc-lui3/wdbc-kifa, 13-14.09.2026).
+  Контентом заполнено 57 атакующих психосил из ~93 с непустым уроном (не 847 —
+  остальные ~750 не атаки, weaponProps у них пуст правомерно); деление на
+  под-тикеты по дисциплинам не понадобилось, реальный остаток — тикеты
+  wdbc-wv8u (Дуга читает второй рейтинг через `parseInt`, не `Roll` — дайс
+  обрежется) и wdbc-cy4z (Toxic/Haywire игнорируют rating2 в реестре).
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`

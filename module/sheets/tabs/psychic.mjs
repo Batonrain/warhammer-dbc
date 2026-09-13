@@ -34,7 +34,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeLearnInfo, improvisedRuneCostUpdates,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
-import { mechFormulaTotalSafe } from "../../rules/mech-formula.mjs";
+import { mechFormulaTotalSafe, mechRollData } from "../../rules/mech-formula.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -786,7 +786,11 @@ export async function executePsychotest(actor, item, opts) {
   // Blast/Devastating, «PR» у Linger) — резолвим тем же аспектом эПР, что и
   // урон (damagePR), ДО агрегации: aggregateAuto читает rating как голое
   // число (общий движок с обычным оружием, где rating всегда константа).
-  const atkProps   = resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR);
+  // wdbc-kifa: плюс «СУ» книжного «Успехи» (deg этого психотеста, известна
+  // только сейчас, после броска) и Cor.b/др. бонусы характеристик через
+  // общий mechRollData(actor) — Felling(Cor.b) у Infernal Gaze.
+  const atkProps   = resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR,
+    { deg, rollData: mechRollData(actor) });
   // Тот же движок, что читает system.weaponProps у обычного оружия
   // (module/combat/attack.mjs): без него Рвущее/Проверенное/Экстремальный урон
   // и подобные свойства атаки психосилы были только текстовой памяткой ниже,

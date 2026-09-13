@@ -23,7 +23,16 @@
     "damage": "1d10+2*PR",
     "damageType": "impact",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "concussive",
+        "rating": "ceil(PR/2)"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

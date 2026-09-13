@@ -23,7 +23,19 @@
     "damage": "1d10+2*PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "piercing"
+      },
+      {
+        "key": "snare",
+        "rating": "ceil(PR/2)"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

@@ -55,20 +55,52 @@ export function resolveWeaponProps(item) {
  * (wdbc-lui3): у психосил рейтинг часто завязан на эПР — «Blast (2×PR)»,
  * «Devastating (2×PR)», «Linger (PR)» — а не на константу, как у обычного
  * оружия. У обычного оружия rating всегда уже число — Number(rating)||0 тогда
- * не меняет поведение. Тот же безопасный парсер, что у Пробития психосилы
- * (см. resolvePen в sheets/tabs/psychic.mjs) — дайсы рейтингу не нужны.
+ * не меняет поведение.
+ *
+ * wdbc-kifa — три дальнейших книжных случая, найденных при переносе
+ * weaponProps (wdbc-lui3), которых чистая PR-формула не покрывала:
+ *
+ * 1. «СУ» (Степень(и) Успеха психотеста, книжное «Успехи» — Devastating Rain:
+ *    «Blast((PR+Успехи)×3)») — известна только после броска (deg в
+ *    psychic.mjs::executePsychotest), подставляется здесь ЛОКАЛЬНО, до общего
+ *    парсера: это разовое боевое число, а не общий концепт формул Конструктора
+ *    (mech-formula.mjs), поэтому не заведено там как ключ. БЕЗ \b: кириллица
+ *    не входит в \w, поэтому «\bСУ\b» не сработал бы вовсе —
+ *    "(PR+СУ)".replace(/\bСУ\b/, …) не матчится ни разу (буквы по обе стороны
+ *    от «С»/«У» тоже вне \w, границы слова между ними нет).
+ * 2. Cor.b (Infernal Gaze: «Felling(Cor.b)») — не текстовая замена, а
+ *    настоящий rollData для общего парсера mech-formula.mjs: тот уже умеет
+ *    «X.b» → короткий ключ → подстановка (mechRollData(actor) даёт «cor»).
+ *    ЛОКАЛЬНО «PR» больше не подставляется — вместо этого rollData.pr несёт
+ *    prValue и резолвится тем же встроенным путём, что и «cor» (mech-formula.
+ *    mjs уже знает короткий ключ «pr»), не отдельным regex-ом, как раньше.
+ * 3. Дайс-формула вместо числа (Flame «2d10», Arc «7/2d10+PR» и т.п.) —
+ *    mechFormulaTotalSafe такое не разбирает («d» вне SAFE_REST) и раньше
+ *    молча схлопывала в 0 — не просто недостающая фича, а тихая порча данных
+ *    для ЛЮБОГО будущего дайс-рейтинга психосилы. buildTargetEffectButtons/
+ *    hooks.mjs::_applyWeaponPropEffect кормят такой rating прямо в
+ *    `new Roll(dmgFormula)` (см. `te.damageFromRating`), а не в arithmetic-
+ *    парсер — значит дайс-паттерн нужно вернуть КАК СТРОКУ, до прогона через
+ *    mechFormulaTotalSafe, не после.
+ *    Отдельно (НЕ чинится здесь): module/hooks.mjs — «Дуга»/Arc читает свой
+ *    второй рейтинг через `parseInt(ds.arcDamage)`, а не `new Roll` — дайс-
+ *    рейтинг Arc («7/2d10+PR») там всё равно обрежется до первого числа
+ *    («7»/«2»), это отдельный баг самого Arc-обработчика в hooks.mjs, не
+ *    resolvePropRating; заведён отдельным тикетом.
  */
-export function resolvePropRating(rating, prValue) {
+export function resolvePropRating(rating, prValue, { deg, rollData } = {}) {
   if (typeof rating !== "string") return Number(rating) || 0;
-  return mechFormulaTotalSafe(rating.replace(/\bPR\b/gi, prValue));
+  const withSuccesses = deg != null ? rating.replace(/СУ/gi, String(deg)) : rating;
+  if (/\d+d\d+/i.test(withSuccesses)) return withSuccesses;
+  return mechFormulaTotalSafe(withSuccesses, { ...rollData, pr: prValue });
 }
 
 /** Резолвит rating/rating2 у всего списка свойств (см. resolvePropRating). */
-export function resolvePropRatings(list, prValue) {
+export function resolvePropRatings(list, prValue, extra = {}) {
   return (list ?? []).map(p => ({
     ...p,
-    rating:  resolvePropRating(p.rating, prValue),
-    rating2: resolvePropRating(p.rating2, prValue)
+    rating:  resolvePropRating(p.rating, prValue, extra),
+    rating2: resolvePropRating(p.rating2, prValue, extra)
   }));
 }
 
@@ -177,7 +209,18 @@ export function aggregateAuto(props) {
       a.lingerRating = Math.max(a.lingerRating, r);
       a.lingerDrift  = Math.max(a.lingerDrift, p.rating2 || 0);
     }
-    if (au.arc !== undefined) { a.arcRating = Math.max(a.arcRating, r); a.arcDamage = Math.max(a.arcDamage, p.rating2 || 0); }
+    if (au.arc !== undefined) {
+      a.arcRating = Math.max(a.arcRating, r);
+      // wdbc-wv8u: rating2 может теперь быть дайс-строкой («2d10+PR» —
+      // resolvePropRating отдаёт такие как есть, не резолвит числом) —
+      // Math.max(a.arcDamage, "2d10") молча дал бы NaN (Number("2d10")).
+      // Формула — hooks.mjs::wh-arc-btn теперь бросает её через Roll(),
+      // как есть; голое число ведёт себя как раньше (Math.max нескольких
+      // Arc-записей, хотя больше одной на предмет на практике не бывает).
+      a.arcDamage = (typeof p.rating2 === "string" && /\d+d\d+/i.test(p.rating2))
+        ? p.rating2
+        : Math.max(a.arcDamage, p.rating2 || 0);
+    }
     if (au.hefty) { a.hefty = true; if (typeof au.hefty === "string") a.heftyType = au.hefty; }
     if (au.carbine)        a.carbine = true;
     if (au.antiAir)        a.antiAir = true;

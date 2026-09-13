@@ -23,7 +23,18 @@
     "damage": "3d10+2*PR",
     "damageType": "energy",
     "penetration": 10,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "flame"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

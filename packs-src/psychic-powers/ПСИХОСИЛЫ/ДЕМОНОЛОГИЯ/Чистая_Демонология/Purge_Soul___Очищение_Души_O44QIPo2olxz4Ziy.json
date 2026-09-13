@@ -23,7 +23,18 @@
     "damage": "1d10+PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blinding",
+        "rating": "PR"
+      },
+      {
+        "key": "sanctified"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

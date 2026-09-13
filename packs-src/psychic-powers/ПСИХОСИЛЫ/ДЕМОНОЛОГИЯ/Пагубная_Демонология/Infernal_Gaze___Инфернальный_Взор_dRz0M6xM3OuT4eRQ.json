@@ -23,7 +23,19 @@
     "damage": "1d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blinding",
+        "rating": 1
+      },
+      {
+        "key": "felling",
+        "rating": "Cor.b"
+      },
+      {
+        "key": "tainted"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

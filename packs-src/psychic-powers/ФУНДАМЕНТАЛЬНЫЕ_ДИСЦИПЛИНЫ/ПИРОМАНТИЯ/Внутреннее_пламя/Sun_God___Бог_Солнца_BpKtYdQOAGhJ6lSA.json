@@ -23,7 +23,16 @@
     "damage": "3d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blinding",
+        "rating": "ceil(PR/2)"
+      },
+      {
+        "key": "deflagrate",
+        "rating": "PR"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

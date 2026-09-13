@@ -24,7 +24,11 @@
     "damage": "2d10+PR*3",
     "damageType": "energy",
     "penetration": 6,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

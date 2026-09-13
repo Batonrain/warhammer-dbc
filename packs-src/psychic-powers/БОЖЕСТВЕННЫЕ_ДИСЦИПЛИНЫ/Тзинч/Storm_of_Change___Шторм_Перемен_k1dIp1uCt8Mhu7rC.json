@@ -23,7 +23,16 @@
     "damage": "3d10+6",
     "damageType": "energy",
     "penetration": 9,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "felling",
+        "rating": "PR"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],

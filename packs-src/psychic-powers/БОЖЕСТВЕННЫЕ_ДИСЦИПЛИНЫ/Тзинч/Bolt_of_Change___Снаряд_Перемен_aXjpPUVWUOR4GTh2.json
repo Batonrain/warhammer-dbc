@@ -23,7 +23,12 @@
     "damage": "½PR(окр.▲)d10+9",
     "damageType": "energy",
     "penetration": 9,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "felling",
+        "rating": "PR"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
