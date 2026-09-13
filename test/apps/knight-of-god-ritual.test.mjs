@@ -13,6 +13,7 @@
 import { describe, it, expect } from "vitest";
 import { packDocById } from "../support/pack-doc.mjs";
 import { applyRitualItem } from "../../module/constants/rituals.mjs";
+import { ruName } from "../../module/apps/demon-summon.mjs";
 
 const GODS = [
   { god: "Кхорн",   dir: "packs-src/mutations/Дары_Богов/Кхорн",   mutationId: "qA0S0sVfQLF9EbF4",
@@ -62,7 +63,10 @@ describe.each(GODS)("Рыцарь Бога ($god): ритуал призыва �
   it("демон реально существует в Бестиарии под тем же именем (findBestiaryActor его найдёт)", () => {
     const bestiaryHint = BESTIARY_BY_GOD[god];
     const daemon = packDocById(`${BESTIARY_DIR}/${bestiaryHint.dir}`, bestiaryHint.id);
-    expect(daemon.name).toBe(demon);
+    // Сравниваем по русской половине (как findBestiaryActor/ruName), а не по
+    // полному doc.name — wdbc-o30i дописал оригинал слева ("English /
+    // Русский"), поиск демона по имени от этого не ломается.
+    expect(ruName(daemon.name)).toBe(demon);
     expect(daemon.type).toBe("daemon");
   });
 

@@ -35,7 +35,7 @@ import path from "node:path";
 
 import { PACKS_SRC, packFileText } from "../support/pack-docs.mjs";
 
-const RACE_FILE = path.join(PACKS_SRC, "races/Субрасы/Grey_Man___Серый_Человек_nMKfyeoo5SiSSdTQ.json");
+const RACE_FILE = path.join(PACKS_SRC, "races/Субрасы/Oteshii___Серые_Люди_nMKfyeoo5SiSSdTQ.json");
 
 /** Книжная дельта PR для каждой из пяти психосил (aeldari-branches.json). */
 const BOOK_PR_DELTA = {
