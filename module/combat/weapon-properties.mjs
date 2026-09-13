@@ -8,6 +8,7 @@
 import { WEAPON_PROPERTIES } from "../constants/weapon-properties.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { esc } from "../helpers/utils.mjs";
+import { mechFormulaTotalSafe } from "../rules/mech-formula.mjs";
 
 /**
  * Иммунитет к свойству оружия (wdbc-plsf): capability
@@ -47,6 +48,28 @@ export function resolveWeaponPropsList(list) {
 /** Разрешает system.weaponProps[] оружия (без учёта модификаций). */
 export function resolveWeaponProps(item) {
   return resolveWeaponPropsList(item?.system?.weaponProps);
+}
+
+/**
+ * Резолвит rating/rating2 свойства оружия, когда это формула-строка с «PR»
+ * (wdbc-lui3): у психосил рейтинг часто завязан на эПР — «Blast (2×PR)»,
+ * «Devastating (2×PR)», «Linger (PR)» — а не на константу, как у обычного
+ * оружия. У обычного оружия rating всегда уже число — Number(rating)||0 тогда
+ * не меняет поведение. Тот же безопасный парсер, что у Пробития психосилы
+ * (см. resolvePen в sheets/tabs/psychic.mjs) — дайсы рейтингу не нужны.
+ */
+export function resolvePropRating(rating, prValue) {
+  if (typeof rating !== "string") return Number(rating) || 0;
+  return mechFormulaTotalSafe(rating.replace(/\bPR\b/gi, prValue));
+}
+
+/** Резолвит rating/rating2 у всего списка свойств (см. resolvePropRating). */
+export function resolvePropRatings(list, prValue) {
+  return (list ?? []).map(p => ({
+    ...p,
+    rating:  resolvePropRating(p.rating, prValue),
+    rating2: resolvePropRating(p.rating2, prValue)
+  }));
 }
 
 /**

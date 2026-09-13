@@ -17,7 +17,7 @@ import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
-         aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
+         aggregateAuto, applyDamageDiceMods, resolvePropRatings } from "../../combat/weapon-properties.mjs";
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
@@ -782,7 +782,11 @@ export async function executePsychotest(actor, item, opts) {
 
   // ── Авто-урон (для атакующих сил при успехе) ──────────────────────────────
   const isDamaging = ["attack", "psychicShoot", "psychicBlade"].includes(sys.powerType);
-  const atkProps   = resolveWeaponPropsList(atk.props);   // свойства атаки (профиля)
+  // wdbc-lui3: rating свойства психосилы может быть формулой с PR («2*PR» у
+  // Blast/Devastating, «PR» у Linger) — резолвим тем же аспектом эПР, что и
+  // урон (damagePR), ДО агрегации: aggregateAuto читает rating как голое
+  // число (общий движок с обычным оружием, где rating всегда константа).
+  const atkProps   = resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR);
   // Тот же движок, что читает system.weaponProps у обычного оружия
   // (module/combat/attack.mjs): без него Рвущее/Проверенное/Экстремальный урон
   // и подобные свойства атаки психосилы были только текстовой памяткой ниже,
