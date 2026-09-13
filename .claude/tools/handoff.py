@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Stop-hook: snapshot `git status`/`git diff --stat` into .handoff.md at repo root.
+"""Stop-hook: snapshot `git status`/`git diff --stat` into .handoff/<session_id>.md.
 
 Runs on every Stop event so the file always reflects the current working
-copy, even if the session ends mid-context without a final summary.
+copy, even if the session ends mid-context without a final summary. One file
+per session_id (not a single shared .handoff.md) — иначе на общей рабочей
+копии несколько параллельных сессий тихо затирают друг другу снимок при
+каждом Stop (wdbc-n8i).
 """
 import json
 import subprocess
@@ -90,7 +93,9 @@ def main() -> int:
 """
 
     try:
-        (root / ".handoff.md").write_text(content, encoding="utf-8")
+        handoff_dir = root / ".handoff"
+        handoff_dir.mkdir(exist_ok=True)
+        (handoff_dir / f"{session_id}.md").write_text(content, encoding="utf-8")
     except Exception:
         pass
 

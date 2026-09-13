@@ -36,7 +36,8 @@ node_modules/
 # Побочный продукт запуска скриптов скилов
 __pycache__/
 
-# Авто-снимок git status/diff для сессии «Гит» (Stop-хук .claude/tools/handoff.py)
+# Авто-снимок git status/diff, по файлу на session_id (Stop-хук .claude/tools/handoff.py)
+.handoff/
 .handoff.md
 
 # Локальная отметка "pr-reviewer прошёл чисто на этом дереве" (worktree-local,
