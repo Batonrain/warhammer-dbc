@@ -39,9 +39,11 @@ describe("aggregateArmorAuto", () => {
     expect(a.noEnergy).toBe(false);
   });
 
-  it("soft → noImpact", () => {
+  it("soft → noApVsSubtype.crushing (не noImpact — книга целит только в I(Cr), wdbc-vkjt)", () => {
     const props = resolveArmorProps({ system: { properties: ["soft"] } });
-    expect(aggregateArmorAuto(props).noImpact).toBe(true);
+    const a = aggregateArmorAuto(props);
+    expect(a.noApVsSubtype.crushing).toBe(true);
+    expect(a.noImpact).toBe(false);
   });
 
   it("flak → doubleApVsSubtype.fragmentation (не doubleBlast — книга целит только в X(Fr), wdbc-q0q8)", () => {
@@ -233,8 +235,8 @@ describe("resolveArmorAbsorptionAP", () => {
     ["Conductive обнуляет AP только против Энергетического урона", { noEnergy: true }, [
       [{ damageType: "energy" }, 0], [{ damageType: "impact" }, 6]
     ]],
-    ["Мягкая (soft) обнуляет AP только против Ударного урона", { noImpact: true }, [
-      [{ damageType: "impact" }, 0]
+    ["Мягкая (soft) обнуляет AP только против Дробящего I(Cr), не всего Ударного", { noApVsSubtype: { crushing: true } }, [
+      [{ damageType: "impact", damageSubtype: "crushing" }, 0], [{ damageType: "impact", damageSubtype: "" }, 6]
     ]],
     ["Стержни (rods) обнуляют AP от стрелковой атаки, но не от рукопашной", { noRanged: true }, [
       [{ damageType: "impact", melee: false }, 0], [{ damageType: "impact", melee: true }, 6]
