@@ -28,7 +28,8 @@ export class VehicleTraitData extends foundry.abstract.TypeDataModel {
       rating2:      num(0, "Второй рейтинг"),
       hasRating3:   new BooleanField({ initial: false, label: "Есть третий рейтинг" }),
       rating3:      num(0, "Третий рейтинг"),
-      effects:      new ObjectField({ initial: () => ({ ...VEHICLE_TRAIT_EFFECTS }), label: "Механика" })
+      effects:      new ObjectField({ initial: () => ({ ...VEHICLE_TRAIT_EFFECTS }), label: "Механика" }),
+      bookSource:   new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 }

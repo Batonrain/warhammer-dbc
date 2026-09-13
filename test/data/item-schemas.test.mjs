@@ -289,7 +289,8 @@ const TYPES = {
       activeEffect: {
         isActive: false, isAfterEffect: false, appliedAt: null, expiresAt: null,
         roundsRemaining: 0, charDamageStat: "", charDamageAmount: 0
-      }
+      },
+      bookSource: ""
     }
   },
 
@@ -346,7 +347,7 @@ const TYPES = {
     defaults: {
       diseaseType: "warp", severity: "", god: "nurgle", contagion: "",
       incubation: "", symptoms: "", vectors: "", cure: "", active: false,
-      description: "", notes: ""
+      description: "", notes: "", bookSource: ""
     }
   },
   mentalDisorder: {
@@ -407,7 +408,7 @@ const TYPES = {
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
       // поля не было, и замена держалась на одном тексте «Особенностей».
       removeProps: [],
-      drukhari: false
+      drukhari: false, bookSource: ""
     }
   },
   armor: {
@@ -465,7 +466,8 @@ const TYPES = {
           enabled: false, scope: "equipped",
           damageMod: 0, penMod: 0, rangeMod: 0, addProps: []
         }
-      }
+      },
+      bookSource: ""
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
@@ -478,7 +480,8 @@ const TYPES = {
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
       compiled: false, range: "", damage: "", damageType: "energy",
       penetration: 0, weaponProps: [], effect: "",
-      effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] }
+      effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] },
+      bookSource: ""
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
@@ -584,7 +587,8 @@ const TYPES = {
         onslaught: false, multiTargeter: false, advancedTargeting: false, advancedControls: false,
         sideHatches: false, assaultRamp: false, enclosed: false, sealed: false,
         daemonicAbsorb: false
-      }
+      },
+      bookSource: ""
     }
   },
   smallCraft: {
@@ -592,7 +596,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", craftKind: "fighter", faction: "", cr: 0,
       crAlt: 0, spd: 0, squadronSize: 0, props: "", rarity: 0, qty: 1,
-      state: "stored", strength: "full", turnsOut: 0, role: "independent"
+      state: "stored", strength: "full", turnsOut: 0, role: "independent",
+      bookSource: ""
     }
   },
 
@@ -604,7 +609,8 @@ const TYPES = {
       isSpecialRating: false, equipped: false, status: "inactive",
       quality: "common", availability: 2, weight: 0, drukhari: false,
       coverVsSubtype: "", coverVsSubtypeAP: 0,
-      overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: ""
+      overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
+      bookSource: ""
     }
   },
 

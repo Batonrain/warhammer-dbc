@@ -20,7 +20,8 @@ export class DiseaseData extends foundry.abstract.TypeDataModel {
       cure:        new StringField({ initial: "", label: "Лечение" }),
       active:      new BooleanField({ initial: false, label: "Действует" }),
       description: new HTMLField({ initial: "", label: "Описание" }),
-      notes:       new HTMLField({ initial: "", label: "Заметки" })
+      notes:       new HTMLField({ initial: "", label: "Заметки" }),
+      bookSource:  new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 }

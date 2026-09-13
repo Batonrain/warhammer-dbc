@@ -27,7 +27,8 @@ export class SmallCraftData extends foundry.abstract.TypeDataModel {
       state:        str("stored", "Где эскадрилья"),
       strength:     str("full", "Состав"),
       turnsOut:     num(0, "Ходов вне корабля"),
-      role:         str("independent", "Роль")
+      role:         str("independent", "Роль"),
+      bookSource:   str("", "Книга-источник")
     };
   }
 }

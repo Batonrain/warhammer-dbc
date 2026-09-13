@@ -37,7 +37,8 @@ export class AmmoData extends foundry.abstract.TypeDataModel {
       // Tearing, и одним лишь текстом в «Особенностях» это не считалось.
       removeProps:        new ArrayField(new StringField(), { label: "Убирает свойства" }),
       condMods:           new ArrayField(new ObjectField(), { label: "Условные модификаторы" }),
-      drukhari:           new BooleanField({ initial: false, label: "Друкхари" })
+      drukhari:           new BooleanField({ initial: false, label: "Друкхари" }),
+      bookSource:         new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 }

@@ -42,7 +42,8 @@ export class ForcefieldData extends foundry.abstract.TypeDataModel {
       // уровень строгости, что у текстового поля "Требование" в модах брони).
       overloadDamageFormula:  new StringField({ initial: "", label: "Перегрузка: доп. урон (формула)" }),
       overloadFatigueFormula: new StringField({ initial: "", label: "Перегрузка: доп. усталость (формула)" }),
-      overloadRepairTest:     new StringField({ initial: "", label: "Ремонт: требуемый тест" })
+      overloadRepairTest:     new StringField({ initial: "", label: "Ремонт: требуемый тест" }),
+      bookSource:             new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 }

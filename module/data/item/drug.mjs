@@ -97,7 +97,8 @@ export class DrugData extends foundry.abstract.TypeDataModel {
         roundsRemaining:  num(0, "Раундов осталось"),
         charDamageStat:   text("Повреждённая характеристика"),
         charDamageAmount: num(0, "Повреждение характеристики")
-      }, { label: "Состояние" })
+      }, { label: "Состояние" }),
+      bookSource: new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 }

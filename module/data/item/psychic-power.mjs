@@ -120,7 +120,8 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // независимо (rules/character.mjs) и не путались местами в UI.
       runeLearned:   new BooleanField({ initial: false, label: "Руна изучена (Сигиллиты)" }),
       runeLearnCost: num(0, "Уплачено опыта за Руну"),
-      effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
+      effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      bookSource:    new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 
