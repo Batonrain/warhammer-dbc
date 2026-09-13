@@ -99,7 +99,11 @@ export function bookNamePairs() {
 /** Есть ли у документа английская половина имени. */
 export function hasOriginal(doc) {
   if (String(doc?.system?.originalName || "").trim() !== "") return true;
-  const head = String(doc?.name || "").split("/")[0];
+  const name = String(doc?.name || "");
+  // wdbc-ssbb: без разделителя "/" latin-буква в имени ничего не доказывает —
+  // "Y-Визор" целиком проходил как "оригинал уже есть" из-за одной буквы Y.
+  if (!name.includes("/")) return false;
+  const head = name.split("/")[0];
   return LATIN.test(head);
 }
 
