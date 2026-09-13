@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 3,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Огнеметы», стр. 80)",
     "availability": 4,
     "weight": 12,
     "attackBonus": 0,

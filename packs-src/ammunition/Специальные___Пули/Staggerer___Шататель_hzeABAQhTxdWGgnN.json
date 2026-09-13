@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Тест S+20+(15×Размер) или сбит с ног",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Пули», стр. 203)"
   },
   "_id": "hzeABAQhTxdWGgnN",
   "effects": [],

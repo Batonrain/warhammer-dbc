@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "t",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Слаанеш» стр. 341)"
   },
   "_id": "Sh2qwpyTeYXcj7Tn",
   "effects": [],

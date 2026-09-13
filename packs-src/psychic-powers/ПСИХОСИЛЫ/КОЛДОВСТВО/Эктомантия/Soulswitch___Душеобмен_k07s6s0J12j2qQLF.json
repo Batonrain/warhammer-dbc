@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "wp",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Эктомантия» стр. 304)"
   },
   "_id": "k07s6s0J12j2qQLF",
   "effects": [],

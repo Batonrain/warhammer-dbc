@@ -34,7 +34,8 @@
       "ignoreCrewCrits": false,
       "autonomous": false,
       "flickerfield": true
-    }
+    },
+    "bookSource": "Книга Эльдар: Техника, II. МАШИНЫ ДРУКХАРИ (стр. 40)"
   },
   "_id": "zDnL3ON3ttYqsL7I",
   "effects": [],

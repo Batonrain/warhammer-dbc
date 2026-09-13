@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 2,
     "special": "Трассер; +1d10 по сочленениям/визору/незащищённому телу; авто-Клин при любой очереди",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "MBnAOXtUVCdxwqUi",
   "effects": [],

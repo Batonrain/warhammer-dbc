@@ -28,7 +28,8 @@
       "maxAgilityMod": 0,
       "addProps": [],
       "charBonuses": []
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Нестандартные Системы: Руки», стр. 239)"
   },
   "_id": "B1IHTbTOgtZL0fsB",
   "effects": [],
@@ -92,7 +93,7 @@
               "equipMode": "direct",
               "equipQty": 1,
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.PrrOe4AarPhk1iEw",
-              "equipSourceName": "Шоковый Удар (Шоковые Костяшки)",
+              "equipSourceName": "Shock Knuckles / Шоковый Удар (Шоковые Костяшки)",
               "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",

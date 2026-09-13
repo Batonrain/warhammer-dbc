@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Piercing; игнор поглощения Daemonic; убирает Tearing; демон перебрасывает успешную нестабильность",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "cYzOfArznHHO1tE0",
   "effects": [],

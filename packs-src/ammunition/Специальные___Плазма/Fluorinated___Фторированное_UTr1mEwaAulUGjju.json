@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "При Перегреве/Перезарядке: облако Газ(Контакт) Blast (2), Smoke (2), Toxic (3) на операторе",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Плазменное Топливо», стр. 206)"
   },
   "_id": "UTr1mEwaAulUGjju",
   "effects": [],

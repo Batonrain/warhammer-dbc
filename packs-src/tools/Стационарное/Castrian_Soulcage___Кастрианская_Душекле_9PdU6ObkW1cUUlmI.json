@@ -7,6 +7,7 @@
     "notes": "Не смоделировано целиком: многоступенчатый ритуал призыва/удержания демона (Tech-Use(I) вместо W, вместимость по типу демона) — вне схемы testMod.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 260)",
     "availability": 3,
     "quality": "common",
     "toolCategory": "stationary",

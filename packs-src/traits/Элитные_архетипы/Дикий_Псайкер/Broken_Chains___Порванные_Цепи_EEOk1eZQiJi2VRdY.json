@@ -5,7 +5,7 @@
   "folder": "zT2Ovr1Nc79zbuTy",
   "system": {
     "description": "",
-    "notes": "Каскадный грант подключён (wdbc-ddz): Трейты Hoverer (W.b) и Unnatural WP (+2) выдаются группами Механики. +3 бPR (эффективный Пси-Рейтинг), запрет жёсткой/силовой брони и неуязвимость к Haywire — по-прежнему не смоделированы (не грант предмета, а модификаторы других расчётов).",
+    "notes": "Каскадный грант подключён (wdbc-ddz): Трейты Hoverer (W.b) и Unnatural Willpower (+2) выдаются группами Механики. +3 бPR (эффективный Пси-Рейтинг), запрет жёсткой/силовой брони и неуязвимость к Haywire — по-прежнему не смоделированы (не грант предмета, а модификаторы других расчётов).",
     "benefit": "Аркано-механическая разгрузка вживлена в спину, затылок и руки, интегрирована в нервную систему. Даёт +3 бPR и Трейты Hoverer (W.b) и Unnatural W (+2), но не позволяет носить жёсткую или силовую броню. Порванные Цепи неуязвимы к эффектам Haywire и хорошо изолированы от воды и грязи.",
     "source": "Элитный архетип: Дикий Псайкер",
     "hasRating": false,
@@ -143,7 +143,7 @@
               "op": "add",
               "value": 1,
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.0A12TcD79wynam9l",
-              "sourceName": "Unnatural WP (+2) / Сверхъест. Воля",
+              "sourceName": "Unnatural Willpower (+2) / Сверхъест. Воля",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,
               "rating": "",

@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Прорицание — Управление вероятностью» стр. 328)"
   },
   "_id": "RlyLMu0lqvkNt9ql",
   "effects": [],

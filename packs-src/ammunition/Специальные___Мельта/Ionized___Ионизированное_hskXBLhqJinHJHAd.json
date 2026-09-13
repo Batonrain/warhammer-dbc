@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "В упор: +1 кубик урона, Blinding (1); на Боевой — макс. кубик→мин.; на Дальней+ −1 кубик",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Мельта-Топливо», стр. 206)"
   },
   "_id": "hskXBLhqJinHJHAd",
   "effects": [],

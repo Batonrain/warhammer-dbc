@@ -30,7 +30,8 @@
     "special": "Aspect (Зловещие Мстители). Встроенный сигнум-целеуказатель (распространяет прицел на отмеченные цели).",
     "propRatings": {
       "protective": 5
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "r55CB4tsbd5tnVqq",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

@@ -7,6 +7,7 @@
     "notes": "«Проходит Awareness на 1-75» — это шанс срабатывания ловушки, не бонус теста владельца.",
     "quantity": 1,
     "weight": 2,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 254)",
     "availability": -1,
     "quality": "common",
     "toolCategory": "general",

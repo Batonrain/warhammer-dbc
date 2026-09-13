@@ -7,6 +7,7 @@
     "notes": "Не смоделировано целиком: аура +20 в радиусе на ГРУППУ (не владельца), плюс каскадный взрыв при разрушении — area-эффект, не testMod.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 259)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "stationary",
@@ -18,7 +19,7 @@
       "best": ""
     },
     "bonuses": [],
-    "linkedWeapon": "Хрустальный Шпиль (разрушение)"
+    "linkedWeapon": "Crystal Spire / Хрустальный Шпиль (разрушение)"
   },
   "folder": "ctQPw7eYnC387VcR",
   "_id": "NsV7kL1tJPyKpXGe",

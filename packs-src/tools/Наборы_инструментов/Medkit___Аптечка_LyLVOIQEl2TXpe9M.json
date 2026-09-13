@@ -7,6 +7,7 @@
     "notes": "Оговорка не смоделирована: +20 — на лечение/диагностику, не любой тест Medicae; не складывается с Нартецием.",
     "quantity": 1,
     "weight": 2,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 257)",
     "availability": -2,
     "quality": "common",
     "toolCategory": "kits",

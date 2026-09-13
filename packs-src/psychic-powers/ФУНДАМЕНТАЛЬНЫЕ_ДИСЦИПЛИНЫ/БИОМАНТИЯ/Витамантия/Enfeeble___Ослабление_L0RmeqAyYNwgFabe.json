@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "t",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Биомантия — Витамантия» стр. 333)"
   },
   "_id": "L0RmeqAyYNwgFabe",
   "effects": [],

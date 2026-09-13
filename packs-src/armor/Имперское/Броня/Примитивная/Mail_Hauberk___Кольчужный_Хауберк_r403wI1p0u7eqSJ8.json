@@ -25,7 +25,8 @@
     ],
     "strengthBonus": 0,
     "wpBonus": 0,
-    "special": ""
+    "special": "",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 228)"
   },
   "_id": "r403wI1p0u7eqSJ8",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

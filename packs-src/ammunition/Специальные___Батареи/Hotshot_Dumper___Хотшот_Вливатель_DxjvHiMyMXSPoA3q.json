@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "+1d10 урона, Tearing; −2 Надёжность; 1 выстрел; несовместим с хотшот-оружием",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Батареи», стр. 204)"
   },
   "_id": "DxjvHiMyMXSPoA3q",
   "effects": [],

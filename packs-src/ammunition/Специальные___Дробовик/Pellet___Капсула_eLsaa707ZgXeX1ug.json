@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Кубик урона → 1d5; Concussive (−1), Primitive; убирает Scatter",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Патроны для Дробовика», стр. 204)"
   },
   "_id": "eLsaa707ZgXeX1ug",
   "effects": [],

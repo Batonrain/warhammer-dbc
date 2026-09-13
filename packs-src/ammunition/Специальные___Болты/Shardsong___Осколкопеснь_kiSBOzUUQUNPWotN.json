@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Разбивает небронированное стекло (визоры, прицелы) в радиусе 5 м",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "kiSBOzUUQUNPWotN",
   "effects": [],

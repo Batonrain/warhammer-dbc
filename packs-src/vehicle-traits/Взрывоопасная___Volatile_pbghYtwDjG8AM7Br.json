@@ -41,7 +41,8 @@
       "volatile": true,
       "fallBreaks": false,
       "orbitalDeployment": false
-    }
+    },
+    "bookSource": "DoomBC — Машины, «ТРЕЙТЫ МАШИН» (стр. 10)"
   },
   "_id": "pbghYtwDjG8AM7Br",
   "effects": [],

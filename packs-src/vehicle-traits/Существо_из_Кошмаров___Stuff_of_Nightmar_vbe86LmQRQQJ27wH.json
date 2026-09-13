@@ -34,7 +34,8 @@
       "ignoreCrewCrits": false,
       "autonomous": false,
       "flickerfield": false
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Трейты» стр. 107)"
   },
   "_id": "vbe86LmQRQQJ27wH",
   "effects": [],

@@ -28,7 +28,8 @@
       "maxAgilityMod": 0,
       "addProps": [],
       "charBonuses": []
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Нестандартные Системы: Руки», стр. 239)"
   },
   "_id": "Su0Fkf09uqp20X7v",
   "effects": [],
@@ -92,7 +93,7 @@
               "equipMode": "direct",
               "equipQty": 1,
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.PJ80PHM3R7ME8dIl",
-              "equipSourceName": "Трос-Опутыватель (Фибертрос)",
+              "equipSourceName": "Fibercord / Трос-Опутыватель (Фибертрос)",
               "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-ranged.svg",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",

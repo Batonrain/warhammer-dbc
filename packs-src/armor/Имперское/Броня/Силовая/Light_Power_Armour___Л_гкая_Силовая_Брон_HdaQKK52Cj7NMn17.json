@@ -111,7 +111,8 @@
         }
       ]
     },
-    "weightless": true
+    "weightless": true,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Силовая броня», стр. 233)"
   },
   "_id": "HdaQKK52Cj7NMn17",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

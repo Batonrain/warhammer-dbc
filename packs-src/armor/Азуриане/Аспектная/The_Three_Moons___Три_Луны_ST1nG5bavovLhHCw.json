@@ -32,7 +32,8 @@
     "special": "Aspect (Видящие). Как Рунная. В начале раунда — 2d6, выбор эффекта Трёх Лун (благословения/рок).",
     "propRatings": {
       "protective": 6
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "ST1nG5bavovLhHCw",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

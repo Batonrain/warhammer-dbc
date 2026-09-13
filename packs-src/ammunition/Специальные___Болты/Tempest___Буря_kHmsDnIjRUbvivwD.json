@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Shocking; +3 урона по целям с Machine",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "kHmsDnIjRUbvivwD",
   "effects": [],

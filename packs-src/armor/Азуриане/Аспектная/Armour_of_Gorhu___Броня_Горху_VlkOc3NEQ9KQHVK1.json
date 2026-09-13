@@ -29,7 +29,8 @@
     "special": "Regeneration (7), Undying + таланты; нельзя снять; проклятие забвения навыков (см. справочник).",
     "propRatings": {
       "protective": 8
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "VlkOc3NEQ9KQHVK1",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

@@ -7,6 +7,7 @@
     "notes": "Не смоделировано: W+0 — порог сохранения эффекта, не бонус; снятие штрафов PR/Феноменов — специфика психической механики (wdbc-jw81).",
     "quantity": 10,
     "weight": 0.1,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 262)",
     "availability": 2,
     "quality": "common",
     "toolCategory": "mystic",
@@ -18,7 +19,7 @@
       "best": ""
     },
     "bonuses": [],
-    "linkedWeapon": "Проблескамень (облако)"
+    "linkedWeapon": "Glimmerstone / Проблескамень (облако)"
   },
   "folder": "RpwK7hjZB6380LhD",
   "_id": "jmrJ4DW71ynT5yfb",

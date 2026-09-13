@@ -30,7 +30,8 @@
     "special": "Aspect (Воющие Баньши). Встроенный Шлем Баньши (активация — свободное действие).",
     "propRatings": {
       "protective": 5
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "LyVfEwX3glfl6EOS",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

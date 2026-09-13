@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 8,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Бионика и кибернетика», стр. 277)",
     "availability": 3,
     "weight": 3,
     "attackBonus": 0,

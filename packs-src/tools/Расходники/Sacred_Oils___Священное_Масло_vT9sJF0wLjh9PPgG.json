@@ -7,6 +7,7 @@
     "notes": "+1 к Надёжности ОРУЖИЯ в следующем бою — свойство применяется к другому предмету (оружию) по расходу этого, не собственный тест владельца-Tools; не путать с armor/weapon-mods схемой.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 261)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "consumable",

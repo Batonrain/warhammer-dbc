@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 8,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Силовое оружие», стр. 129)",
     "availability": 3,
     "weight": 0.8,
     "attackBonus": 0,

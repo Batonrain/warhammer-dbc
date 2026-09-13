@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "−1 Надёжность оружия",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Патроны для Дробовика», стр. 204)"
   },
   "_id": "iQkuharVZtrKA7T7",
   "effects": [],

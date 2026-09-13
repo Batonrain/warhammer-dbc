@@ -32,6 +32,7 @@
     "damageType": "rending",
     "penetration": 7,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Психокостяное оружие», стр. 89)",
     "availability": 3,
     "weight": 0.9,
     "attackBonus": 0,

@@ -29,7 +29,8 @@
       "addProps": [],
       "charBonuses": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Нестандартные Системы: Торс», стр. 238)"
   },
   "_id": "2WwTsyJZqPMR3Nfd",
   "effects": [],

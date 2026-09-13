@@ -32,7 +32,8 @@
     "special": "Aspect (Сияющие Копья). +20 на управление гравициклами.",
     "propRatings": {
       "protective": 7
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "DKVeCixs9WxEiv1J",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "I(Cr); ×2 урон по земле/камню/рокриту; тест S+10+(15×Размер) или сбит с ног",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "D9cDhsRyDrpI7TuD",
   "effects": [],

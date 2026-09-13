@@ -23,7 +23,8 @@
     ],
     "strengthBonus": 0,
     "wpBonus": 0,
-    "special": "Шлем. Трейт Fear (2/+1). Встраивается в любую броню."
+    "special": "Шлем. Трейт Fear (2/+1). Встраивается в любую броню.",
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Ячеистая броня» стр. 91)"
   },
   "_id": "wC62SvLj49JPvhKp",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

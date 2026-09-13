@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "int",
-    "resistMod": -20
+    "resistMod": -20,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телепатия — Манипуляция памятью» стр. 322)"
   },
   "_id": "G0o1DRf9DI1Xiade",
   "effects": [],

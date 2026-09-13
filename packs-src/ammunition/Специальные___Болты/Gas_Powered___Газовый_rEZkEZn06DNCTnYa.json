@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 0.5,
     "special": "Тихий; не взрывается; с глушителем — бесшумно",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "rEZkEZn06DNCTnYa",
   "effects": [],

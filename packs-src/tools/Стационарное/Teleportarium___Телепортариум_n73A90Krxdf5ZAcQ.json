@@ -7,6 +7,7 @@
     "notes": "Не смоделировано целиком: комбо-тест из двух Навыков с условными модификаторами по режиму — не одиночный testMod.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 260)",
     "availability": 4,
     "quality": "common",
     "toolCategory": "stationary",

@@ -16,7 +16,8 @@
     "rarity": 0,
     "qty": 1,
     "state": "stored",
-    "strength": "full"
+    "strength": "full",
+    "bookSource": "DoomBC — Книга Пустоты, ЛИНКОРЫ («Суда» стр. 256)"
   },
   "_id": "5s3SoBnPdJXeSyz7",
   "effects": [],

@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Ракетные установки», стр. 84)",
     "availability": 3,
     "weight": 40,
     "attackBonus": 0,

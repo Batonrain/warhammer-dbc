@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 15,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Фузионное оружие», стр. 79)",
     "availability": 2,
     "weight": 4.5,
     "attackBonus": 0,

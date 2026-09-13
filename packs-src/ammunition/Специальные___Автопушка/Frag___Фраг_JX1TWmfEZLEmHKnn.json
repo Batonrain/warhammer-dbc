@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Blast (3); −1 кубик урона; убирает Accurate",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Снаряды для Автопушки», стр. 204)"
   },
   "_id": "JX1TWmfEZLEmHKnn",
   "effects": [],

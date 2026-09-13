@@ -32,7 +32,8 @@
     "special": "Aspect (Видящие). Как Рунная. Психосилы Проблеск и Прекогнитивное Уклонение (PR 8).",
     "propRatings": {
       "protective": 6
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "shbwaM8XMZFwmWXQ",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

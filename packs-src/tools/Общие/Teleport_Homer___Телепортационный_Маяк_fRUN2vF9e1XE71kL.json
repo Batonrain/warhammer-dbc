@@ -7,6 +7,7 @@
     "notes": "Убирает шанс несчастного случая при телепортации — вероятностный эффект отдельной телепортационной механики (см. Teleportarium/Tizcan Anchor), не тестовый модификатор Навыка/Характеристики.",
     "quantity": 1,
     "weight": 3,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 256)",
     "availability": 2,
     "quality": "common",
     "toolCategory": "general",

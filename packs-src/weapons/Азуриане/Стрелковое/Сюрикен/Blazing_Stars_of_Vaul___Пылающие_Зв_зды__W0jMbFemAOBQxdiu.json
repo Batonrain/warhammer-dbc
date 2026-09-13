@@ -22,6 +22,7 @@
     "damageType": "rending",
     "penetration": 6,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Сюрикен оружие», стр. 75)",
     "availability": 3,
     "weight": 10,
     "attackBonus": 0,

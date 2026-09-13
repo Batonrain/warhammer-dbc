@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Бионика и кибернетика», стр. 277)",
     "availability": 2,
     "weight": 6,
     "attackBonus": 0,

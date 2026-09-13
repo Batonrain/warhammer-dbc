@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 12,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Темносветовое оружие», стр. 116)",
     "availability": 5,
     "weight": 17,
     "attackBonus": 0,

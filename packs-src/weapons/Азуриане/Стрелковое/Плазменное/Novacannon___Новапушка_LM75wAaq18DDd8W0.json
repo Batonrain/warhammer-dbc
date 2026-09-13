@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 15,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Плазменное оружие», стр. 78)",
     "availability": 4,
     "weight": 50,
     "attackBonus": 0,

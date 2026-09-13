@@ -45,6 +45,7 @@
     "damageType": "energy",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 256)",
     "availability": 4,
     "weight": 1,
     "attackBonus": 0,

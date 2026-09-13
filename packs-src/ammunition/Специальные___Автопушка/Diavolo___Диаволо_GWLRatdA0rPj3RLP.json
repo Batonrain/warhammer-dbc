@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Flame; −1 кубик урона; поджог машины при непоглощённом уроне в корпус/башню (1d10:10+)",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Снаряды для Автопушки», стр. 204)"
   },
   "_id": "GWLRatdA0rPj3RLP",
   "effects": [],

@@ -26,6 +26,7 @@
     "damageType": "rending",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, ЭЛИТНЫЕ АРХЕТИПЫ ДРУКХАРИ («Избиратель Плоти», стр. 90)",
     "availability": 4,
     "weight": 4.1,
     "attackBonus": 0,

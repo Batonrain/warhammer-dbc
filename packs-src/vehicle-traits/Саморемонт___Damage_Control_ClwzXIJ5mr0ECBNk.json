@@ -34,7 +34,8 @@
       "ignoreCrewCrits": false,
       "autonomous": false,
       "flickerfield": false
-    }
+    },
+    "bookSource": "DoomBC — Машины, «ТРЕЙТЫ МАШИН» (стр. 9)"
   },
   "_id": "ClwzXIJ5mr0ECBNk",
   "effects": [],

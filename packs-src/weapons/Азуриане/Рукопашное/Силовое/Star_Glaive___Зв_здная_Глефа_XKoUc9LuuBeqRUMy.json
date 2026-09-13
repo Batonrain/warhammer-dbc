@@ -31,6 +31,7 @@
     "damageType": "energy",
     "penetration": 9,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Силовое оружие», стр. 88)",
     "availability": 4,
     "weight": 4,
     "attackBonus": 0,

@@ -7,6 +7,7 @@
     "notes": "Не смоделировано целиком: имплантация знаний NPC — не тест владельца-игрока.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 259)",
     "availability": 2,
     "quality": "common",
     "toolCategory": "stationary",

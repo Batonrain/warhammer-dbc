@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "+4 Пробитие и Tearing — только на начальном попадании",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Огнеметное Топливо», стр. 206)"
   },
   "_id": "sacBevmonn8X6b4m",
   "effects": [],

@@ -22,6 +22,7 @@
     "damageType": "chemical",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Экзотическое», стр. 118)",
     "availability": 3,
     "weight": 5,
     "attackBonus": 0,

@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Примарис» стр. 297)"
   },
   "_id": "yzaUwALNYIVZQuro",
   "effects": [],

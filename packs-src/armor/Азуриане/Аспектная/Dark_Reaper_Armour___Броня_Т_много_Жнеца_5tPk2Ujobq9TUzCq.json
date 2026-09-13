@@ -32,7 +32,8 @@
     "special": "Aspect (Тёмные Жнецы). Без движения: Auto-Stabilized и Sturdy; дальномер тёмных жнецов.",
     "propRatings": {
       "protective": 8
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "5tPk2Ujobq9TUzCq",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

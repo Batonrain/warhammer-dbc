@@ -37,7 +37,8 @@
       "arms": 4,
       "legs": 4,
       "kind": "super"
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 230)"
   },
   "_id": "81t2sNvbzDSoVvae",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

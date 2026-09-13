@@ -29,7 +29,8 @@
       "addProps": [],
       "charBonuses": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стандартные Системы», стр. 237)"
   },
   "_id": "7ihFa147qRIbkQDM",
   "effects": [],

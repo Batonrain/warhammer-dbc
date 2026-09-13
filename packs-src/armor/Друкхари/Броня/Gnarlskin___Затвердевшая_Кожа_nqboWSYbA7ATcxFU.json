@@ -23,7 +23,8 @@
     ],
     "strengthBonus": 0,
     "wpBonus": 5,
-    "special": "AP = T.b носителя (для не-Друкхари — 3/4/3/3). W +5."
+    "special": "AP = T.b носителя (для не-Друкхари — 3/4/3/3). W +5.",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Броня» стр. 131)"
   },
   "_id": "nqboWSYbA7ATcxFU",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

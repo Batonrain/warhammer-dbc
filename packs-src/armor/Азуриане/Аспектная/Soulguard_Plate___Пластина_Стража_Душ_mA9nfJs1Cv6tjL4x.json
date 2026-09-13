@@ -29,7 +29,8 @@
     "special": "+10 WS/BS на тесты, +10 S/A на атакующие. Снимает форс. «ничью» против Unnatural.",
     "propRatings": {
       "protective": 5
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "mA9nfJs1Cv6tjL4x",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

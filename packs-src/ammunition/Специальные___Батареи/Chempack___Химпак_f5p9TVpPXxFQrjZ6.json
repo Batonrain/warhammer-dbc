@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Не перезаряжается; при ≥50% разряде — граната 2d10+3 E, Pen 2, Blast 3, Toxic (0)",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Батареи», стр. 204)"
   },
   "_id": "f5p9TVpPXxFQrjZ6",
   "effects": [],

@@ -19,7 +19,8 @@
     "weight": 0.5,
     "overloadDamageFormula": "1d5",
     "overloadFatigueFormula": "1d5-1",
-    "overloadRepairTest": "Medicae-10 (1 минута), извлечь и вставить обратно в нагрудник"
+    "overloadRepairTest": "Medicae-10 (1 минута), извлечь и вставить обратно в нагрудник",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Силовые щиты» стр. 241)"
   },
   "_id": "7TQw5Wt6gJQu2Epu",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",

@@ -33,7 +33,7 @@
       "Друкхари",
       "Снаряжение"
     ],
-    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Снаряжение» стр. 133, «Артефакты Гемункулов» стр. 142)"
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Снаряжение» стр. 136)"
   },
   "folder": "Ky6sLKx2BPYFWtJP",
   "_id": "NpupATOxtNYDW1Hz",
@@ -98,7 +98,7 @@
               "equipMode": "direct",
               "equipQty": 1,
               "equipSourceUuid": "Compendium.warhammer-dbc.weapons.Item.UPL5YApF9GJxmXpF",
-              "equipSourceName": "Осколочный Пистолет (Шлем Мучителя)",
+              "equipSourceName": "Tormentor Helmet / Осколочный Пистолет (Шлем Мучителя)",
               "equipSourceImg": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
               "equipCategoryPack": "weapons",
               "equipWeaponType": "",

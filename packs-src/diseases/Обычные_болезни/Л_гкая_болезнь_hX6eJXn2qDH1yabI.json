@@ -14,7 +14,8 @@
     "cure": "Само за 2–3 недели или 1 неделя постельного режима. Каждый успех Medicae+0 при постельном режиме −1 день.",
     "active": false,
     "description": "",
-    "notes": ""
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Болезни» стр. 470)"
   },
   "_id": "hX6eJXn2qDH1yabI",
   "effects": [],

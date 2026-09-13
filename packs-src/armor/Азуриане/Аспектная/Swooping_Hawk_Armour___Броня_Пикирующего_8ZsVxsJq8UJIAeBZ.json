@@ -30,7 +30,8 @@
     "special": "Aspect (Пикирующие Ястребы). Встроенные спектральные крылья.",
     "propRatings": {
       "protective": 5
-    }
+    },
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Аспектная броня» стр. 92)"
   },
   "_id": "8ZsVxsJq8UJIAeBZ",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

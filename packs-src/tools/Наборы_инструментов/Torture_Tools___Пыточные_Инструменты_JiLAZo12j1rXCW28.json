@@ -7,6 +7,7 @@
     "notes": "Оговорка не смоделирована: +20 — на пытки, не любой тест Interrogate. Урон от проваленного теста (1d5−1) не смоделирован.",
     "quantity": 1,
     "weight": 2,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 258)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "kits",

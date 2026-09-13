@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Разрушение» стр. 300)"
   },
   "_id": "DISeyD6d6OTLxLwE",
   "effects": [],

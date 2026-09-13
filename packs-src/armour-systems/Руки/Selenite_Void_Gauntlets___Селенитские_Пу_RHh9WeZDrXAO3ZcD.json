@@ -29,7 +29,8 @@
       "addProps": [],
       "charBonuses": []
     },
-    "drukhari": false
+    "drukhari": false,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Нестандартные Системы: Руки», стр. 239)"
   },
   "_id": "RHh9WeZDrXAO3ZcD",
   "effects": [],

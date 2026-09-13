@@ -34,7 +34,8 @@
       "ignoreCrewCrits": false,
       "autonomous": false,
       "flickerfield": false
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Верховой Бой» стр. 478)"
   },
   "_id": "deeIPWZg32ww2tam",
   "effects": [],

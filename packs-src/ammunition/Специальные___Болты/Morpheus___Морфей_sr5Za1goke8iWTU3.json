@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Профиль 1d10 R, Pen 2; урон от попадания не наносится — инъекция при пробитии",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "sr5Za1goke8iWTU3",
   "effects": [],

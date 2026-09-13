@@ -57,6 +57,7 @@
     "damageType": "impact",
     "penetration": 2,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Психокостяное оружие», стр. 89)",
     "availability": 3,
     "weight": 1.5,
     "attackBonus": 0,

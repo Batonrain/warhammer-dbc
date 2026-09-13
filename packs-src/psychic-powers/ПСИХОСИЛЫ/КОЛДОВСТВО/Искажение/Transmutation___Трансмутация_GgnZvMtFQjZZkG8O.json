@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Искажение» стр. 300)"
   },
   "_id": "GgnZvMtFQjZZkG8O",
   "effects": [],

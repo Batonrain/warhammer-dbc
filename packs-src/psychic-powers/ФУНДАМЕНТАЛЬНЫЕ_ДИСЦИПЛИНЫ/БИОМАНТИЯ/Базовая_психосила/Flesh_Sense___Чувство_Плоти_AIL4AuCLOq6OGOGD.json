@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Биомантия — Базовая психосила» стр. 330)"
   },
   "_id": "AIL4AuCLOq6OGOGD",
   "effects": [],

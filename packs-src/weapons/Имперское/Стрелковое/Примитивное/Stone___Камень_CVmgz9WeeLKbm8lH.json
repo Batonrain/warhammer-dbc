@@ -23,6 +23,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Хаос, II. СМЕРТНЫЕ («Отребье», стр. 43)",
     "availability": -4,
     "weight": 0.3,
     "attackBonus": 0,

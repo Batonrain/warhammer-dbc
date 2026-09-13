@@ -18,7 +18,8 @@
     "availability": 2,
     "weight": 4,
     "coverVsSubtype": "laser",
-    "coverVsSubtypeAP": 8
+    "coverVsSubtypeAP": 8,
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Силовые щиты эльдар» стр. 94)"
   },
   "_id": "6KcgHUmOJTgvbLnn",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",

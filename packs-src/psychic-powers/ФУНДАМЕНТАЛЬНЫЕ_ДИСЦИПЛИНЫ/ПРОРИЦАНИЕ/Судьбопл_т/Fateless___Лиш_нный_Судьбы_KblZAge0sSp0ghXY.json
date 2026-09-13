@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Прорицание — Судьбоплет» стр. 327)"
   },
   "_id": "KblZAge0sSp0ghXY",
   "effects": [],

@@ -23,6 +23,7 @@
     "damageType": "rending",
     "penetration": 2,
     "quality": "common",
+    "bookSource": "DoomBC — Хаос, II. СМЕРТНЫЕ («Мутант», стр. 47)",
     "availability": 0,
     "weight": 0,
     "attackBonus": 0,

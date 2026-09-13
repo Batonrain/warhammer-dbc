@@ -7,6 +7,7 @@
     "notes": "Разрешает Command/социальные тесты в условиях, где иначе не расслышат — снятие ситуативного штрафа GM, не фиксированный бонус.",
     "quantity": 1,
     "weight": 2,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 255)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "general",

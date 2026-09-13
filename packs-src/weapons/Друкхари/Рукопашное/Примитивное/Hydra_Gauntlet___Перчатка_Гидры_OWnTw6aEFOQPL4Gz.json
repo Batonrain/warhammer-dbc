@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Примитивное оружие», стр. 123)",
     "availability": 3,
     "weight": 0.2,
     "attackBonus": 0,

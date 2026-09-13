@@ -22,6 +22,7 @@
     "damageType": "rending",
     "penetration": 8,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Моносетевое оружие», стр. 77)",
     "availability": 5,
     "weight": 3,
     "attackBonus": 0,

@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 0.5,
     "special": "Concussive (0), Primitive; +1d10 по неподвижным целям в упор",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Патроны для Дробовика», стр. 204)"
   },
   "_id": "PM4SCz1gSmiqNLFl",
   "effects": [],

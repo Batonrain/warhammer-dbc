@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Тише выстрел (как глушитель); с глушителем — бесшумно",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Пули», стр. 203)"
   },
   "_id": "SIVFkf3AZwrA1LoH",
   "effects": [],

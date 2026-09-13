@@ -7,6 +7,7 @@
     "notes": "Не смоделировано: −20 — штраф ПРОТИВНИКУ (забрызганный визор), не владельцу.",
     "quantity": 1,
     "weight": 0.1,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 253)",
     "availability": -4,
     "quality": "common",
     "toolCategory": "general",

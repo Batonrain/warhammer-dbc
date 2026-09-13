@@ -22,6 +22,7 @@
     "damageType": "rending",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Игольное оружие», стр. 81)",
     "availability": 1,
     "weight": 1,
     "attackBonus": 0,

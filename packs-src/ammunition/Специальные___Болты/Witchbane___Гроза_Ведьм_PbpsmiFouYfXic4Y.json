@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "При ≥1 урона: развеять психосилу, −1 тPR на 1d10 ходов, тест на нестабильность",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "PbpsmiFouYfXic4Y",
   "effects": [],

@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Цель-неимператорец не лечит Раны 2 раунда; некроны телепортируются в гробницу",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "x6jkemWPVSpZG6QW",
   "effects": [],
