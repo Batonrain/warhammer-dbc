@@ -40,6 +40,8 @@ describe("executeItemCode — стандартные помощники в об�
       seen.mergedVictimUuids = typeof mergedVictimUuids;
       seen.grantArmourOfTheGods = typeof grantArmourOfTheGods;
       seen.resolveBurnedSenses = typeof resolveBurnedSenses;
+      seen.buildCountenanceFearFlag = typeof buildCountenanceFearFlag;
+      seen.purityOfBattleWave = typeof purityOfBattleWave;
     `, null, { seen });
     expect(seen).toEqual({
       woundLossUpdates: "function", isTokenInSight: "function",
@@ -50,7 +52,7 @@ describe("executeItemCode — стандартные помощники в об�
       testOutcome: "function", resolveOpposed: "function", woundDeathThreshold: "function",
       computeWoundHealing: "function", grantExtraTurn: "function", hasExtraTurn: "function",
       endOfOrderInitiative: "function", mergedVictimUuids: "function", grantArmourOfTheGods: "function",
-      resolveBurnedSenses: "function"
+      resolveBurnedSenses: "function", buildCountenanceFearFlag: "function", purityOfBattleWave: "function"
     });
   });
 

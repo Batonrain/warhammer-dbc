@@ -53,6 +53,11 @@ function actorFor(fate = { value: 2, max: 4 }) {
   doc.getFlag = (scope, key) => flags[`${scope}.${key}`];
   doc.setFlag = async (scope, key, value) => { flags[`${scope}.${key}`] = value; return value; };
   doc.unsetFlag = async (scope, key) => { delete flags[`${scope}.${key}`]; };
+  // Токен на сцене (нужен purityOfBattle — реальная геометрия tokensWithinRadius,
+  // wdbc-1rno) — остальным 6 записям этого файла безразличен, не трогает их.
+  const tokenDoc = { id: "token-1", hidden: false, actor: doc, x: 0, y: 0, width: 1, height: 1 };
+  tokenDoc.parent = { tokens: Object.assign([tokenDoc], { contents: [tokenDoc] }), grid: { size: 100, distance: 1, type: 0 } };
+  doc.getActiveTokens = () => [{ document: tokenDoc }];
   return doc;
 }
 

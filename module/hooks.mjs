@@ -836,6 +836,9 @@ export function registerHooks() {
           // Касание Энтропии (wdbc-1rno) — снимает AP ДО расчёта поглощения, в
           // отличие от Разъедающего выше, поэтому едет отдельным числом.
           entropyRating:   parseInt(ds.entropy || "0"),
+          // Touch of Pain/Касание Боли (wdbc-1rno): T.b Поглощения этой атаки
+          // игнорируется целиком (не только Сверхъест. часть, как у Разящего).
+          touchOfPainIgnoreTb: ds.touchOfPain === "1",
           cripplingRating: parseInt(ds.crippling || "0"),
           piercing:        ds.piercing === "1",
           // Haywire(0) — валидный рейтинг («привязан к цели»), поэтому наличие
@@ -981,6 +984,7 @@ export function registerHooks() {
             powerField:   ds.powerField   === "1",
             corrosiveRating: parseInt(ds.corrosive || "0"),
             entropyRating:   parseInt(ds.entropy || "0"),
+            touchOfPainIgnoreTb: ds.touchOfPain === "1",
             cripplingRating: parseInt(ds.crippling || "0"),
             piercing:        ds.piercing === "1",
             haywireActive:   ds.haywire != null && ds.haywire !== "",

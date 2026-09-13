@@ -43,6 +43,8 @@ import { grantExtraTurn, hasExtraTurn } from "../combat/extra-turn.mjs";
 import { endOfOrderInitiative, mergedVictimUuids } from "../combat/devourer-of-time.mjs";
 import { grantArmourOfTheGods } from "./armour-of-the-gods.mjs";
 import { resolveBurnedSenses } from "./burned-senses.mjs";
+import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
+import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -119,6 +121,16 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    (Общие Мутации, wdbc-1rno): второй бросок по таблице чувств (первый —
  *    стандартный автобросок субмутации), перманентная потеря Зрения/Слуха
  *    (реальное условие), честный нарратив для остального.
+ *  - `buildCountenanceFearFlag` (rules/countenance-of-gods.mjs) — общий
+ *    остаток четырёх Даров «Лик <Бога>» (wdbc-1rno): рейтинг Страха 3 + кого
+ *    исключает + особая реакция другого конкретного Бога, для флага и
+ *    карточки. Книга не даёт этой способности радиуса — рейтинг не
+ *    интегрирован в fearRating (тот же уровень, что уже у Dread Wail),
+ *    применение к конкретному тесту Страха остаётся отметкой вручную.
+ *  - `purityOfBattleWave` (combat/purity-of-battle.mjs) — Чистота Битвы
+ *    (Дар Кхорна, wdbc-1rno): реально снимает боевые наркотики и психосилы
+ *    (свои и чужие, нацеленные на жертву) со всех токенов сцены в радиусе.
+ *    Техночудеса не тронуты — isSustained у них нет вообще нигде в системе.
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -143,7 +155,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "canSpendActionPoints", "spendActionPoints", "nearestVisiblePsyker", "defaultSpawnHunterHoundFn",
     "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
     "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
-    "resolveBurnedSenses",
+    "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave",
     ...extraNames,
     code
   );
@@ -157,7 +169,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     canSpendActionPoints, spendActionPoints, nearestVisiblePsyker, defaultSpawnHunterHoundFn,
     nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
     grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
-    resolveBurnedSenses,
+    resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave,
     ...extraNames.map(k => extra[k])
   );
 }

@@ -36,6 +36,7 @@ import { gunGuardCancelsDodgeBonus, savageExtraHits, pounderPair }
 import { attackedThisTurn }                           from "../rules/turn-flags.mjs";
 import { prismaFireBonus, halvePrismaCharge }         from "./prisma.mjs";
 import { attackEntropyRating } from "./touch-of-entropy.mjs";
+import { touchOfPainActive } from "./touch-of-pain.mjs";
 import { withWitchsEdge }                             from "./witchs-edge.mjs";
 import { dreadWailWeaponBonus }                       from "./dread-wail.mjs";
 import { bloodFlameDamageBonus }                      from "../rules/blood-flame.mjs";
@@ -167,6 +168,14 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   if (splinterFullAutoTearing(sys, rofMode) && !_mergedEntries.some(x => x.key === "tearing")) {
     _mergedEntries.push({ key: "tearing" });
   }
+  // Touch of Pain/Касание Боли (wdbc-1rno, Дар Слаанеш): безоружные/природные
+  // атаки носителя получают Shocking СИНТЕТИЧЕСКИ — только для ЭТОГО выстрела,
+  // не записано на сам предмет Кулака/Пинка (иначе получили бы все персонажи
+  // с голыми руками). Тот же приём добавления, что Tearing выше.
+  const touchOfPainOn = touchOfPainActive(actor, item);
+  if (touchOfPainOn && !_mergedEntries.some(x => x.key === "shocking")) {
+    _mergedEntries.push({ key: "shocking" });
+  }
 
   const wProps    = resolveWeaponPropsList(_mergedEntries);
   const wp         = aggregateAuto(wProps);
@@ -182,6 +191,9 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // известны и атакующий, и оружие; применяется в damage.mjs (там известно
   // место попадания). 0 у всех прочих — атрибут карточки просто пустеет.
   wp.entropyRating = attackEntropyRating(actor, item);
+  // Touch of Pain: T.b Поглощения этой атаки игнорируется целиком (не
+  // сравнимо с Разящим — тот бьёт только Сверхъест. часть, здесь весь T.b).
+  wp.touchOfPainIgnoreTb = touchOfPainOn;
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)

@@ -594,6 +594,7 @@ export async function applyDamageToActor(actor, damageData) {
     frontArcHit = false, // Атака из передней дуги защищающегося — Cloak/Плащ (wdbc-p5el)
     corrosiveRating = 0, // Разъедающее (X): −X AP в месте попадания (wdbc-plsf)
     entropyRating = 0,   // Касание Энтропии: −X AP места попадания ДО поглощения (wdbc-1rno)
+    touchOfPainIgnoreTb = false, // Касание Боли: T.b Поглощения этой атаки игнорируется целиком (wdbc-1rno)
     cripplingRating = 0, // Калечащее (X): рана с шипами (wdbc-plsf)
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
@@ -695,6 +696,9 @@ export async function applyDamageToActor(actor, damageData) {
   } else {
     // T.b — не игнорируется пробитием. Разящее снижает Сверхъест. часть Стойкости.
     tb = absorption.toughnessBonus ?? 0;
+    // Touch of Pain/Касание Боли (wdbc-1rno): весь T.b Поглощения этой атаки
+    // обнулён — шире Разящего, тот бьёт только Сверхъест. часть.
+    if (touchOfPainIgnoreTb) tb = 0;
     if (felling > 0) {
       const unnaturalT = (system.characteristics?.t?.supernatural ?? 0)
                        + (system.traitCharBonus?.t ?? 0);
@@ -946,6 +950,7 @@ export async function applyDamageToActor(actor, damageData) {
   const propNotes = [];
   if (primitive)   propNotes.push("Примитивное: броня ×2");
   if (felling > 0) propNotes.push(`Разящее ${felling}: −Сверхъест. T`);
+  if (touchOfPainIgnoreTb) propNotes.push("Касание Боли: T.b Поглощения проигнорирован");
   if (ignoreShield && !warpSoak) propNotes.push("Омывание: щит проигнорирован");
   if (ignoreArmour && !warpSoak) propNotes.push("Приём Борьбы: броня проигнорирована");
   if (!warpSoak) {
