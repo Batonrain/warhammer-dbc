@@ -235,7 +235,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,
   `sheets/tabs/paths.mjs`, `apps/subrace-choice.mjs` (выбор «по игроку» у
-  Африэль/Эльданар).
+  Африэль/Эльданар). Книжная фраза Таланта «Мастер на Пути X» уже проверяется
+  готовой формальной системой, не нужно искать отдельный механизм (wdbc-318b):
+  `AZURIANE_PATHS` хранит путь по ключу (например `bonesinger`) с градациями
+  novice/next/master/lost, актёр хранит `system.paths: [{key, grade}]` —
+  проверка `paths.some(p => p.key === X && p.grade === "master")`.
 - Происхождения Аэльдари (Миры-Корабли/Корсары): `constants/aeldari-origins.
   mjs`.
 - `module/constants/archetypes.mjs`, `data/item/archetype.mjs`, `apps/
@@ -313,7 +317,14 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
   манифестация), `constants/{disciplines,psyker,psyker-tables}.mjs`,
-  `sheets/tabs/psychic.mjs`.
+  `sheets/tabs/psychic.mjs`. Область Конструктора `power`/`power:<имя>`
+  (модификатор/переброс/доп.провалы к манифестации конкретной силы или любой) —
+  `rules/item-rules.mjs::scopeTarget`, `rules/resolve-test.mjs::powerScopeApplies`
+  (wdbc-4bxa). `system.weaponProps` психосил (Экстремальный урон/Felling/Lance
+  и т.п. на психической атаке) — движок готов (`sheets/tabs/psychic.mjs`,
+  `aggregateAuto`), но данные не заполнены ни у одного из 847 предметов пака
+  (wdbc-lui3) — не значит, что свойство не читается, значит, что его никто не
+  вписал в контент.
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`
