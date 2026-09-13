@@ -221,7 +221,7 @@ export const ARMOR_PROPERTIES = {
   // ограничения по слоям) — только флейвор «можно незаметно носить под другой
   // бронёй». Оставлено без auto сознательно, не как пробел.
   undersuit:  { label: "Undersuit / Подкладка",   desc: "Носится под другой бронёй." },
-  soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsType: "impact", noJointReduction: true } },
+  soft:       { label: "Soft / Мягкая",           desc: "Нет AP от I(Cr) урона. Нет Сочленений.", auto: { noApVsSubtype: "crushing", noJointReduction: true } },
   void:       { label: "Void / Пустотная",         desc: "Защита от вакуума, жара, газов, радиации. 6 часов воздуха." },
   // ── Эльдарские (Азуриане) ──
   // rating: текст Пути/группы (напр. «Варп-Пауки»), как у оружейного aspect —
