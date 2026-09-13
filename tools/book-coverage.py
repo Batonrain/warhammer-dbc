@@ -274,6 +274,38 @@ def table_order_overlap(hole_ws, tgt_words_list, tgt_counts, pos_index):
     return best
 
 
+def is_power_card_slogan(hole_ws):
+    """wdbc-fik1: страница психосилы в PDF содержит графическую сводную
+    карточку/дерево психосил дисциплины — 4 колонки (Психосила / Требования /
+    Стоимость / короткий слоган). packs-src переносит эту карточку только
+    тремя колонками (без слогана); сам слоган нигде дословно не повторяется —
+    ни в карточке, ни в полном тексте психосилы ниже (Действие/Психотест/
+    Дальность/Тип/Эффект, который присутствует и совпадает с PDF дословно).
+    Реальной потери контента нет: слоган осознанно не перенесён (см.
+    book-proofreader, wdbc-e2ng), просто table_order_overlap() не гасит эту
+    дыру — рядом с этими словами в JSON нет ничего похожего, ведь слогана там
+    вообще нет, не только в другом порядке.
+
+    Опознаём карточку по несущей конструкции колонок «Требования»/«Стоимость»:
+    токен «pr» (психорейтинг, например «PR 5+») сразу перед числом и токен
+    «xp» (очки опыта) где-то в дыре. Эта пара — не общая лексика правил: она
+    встречается только в блоках психосил (сводная карточка и полный текст),
+    а не в оружейных/бронеформах и не в обычной прозе книги (проверено на
+    остальных ложных находках core.json стр.207-219 — там оружейные таблицы,
+    ни «pr», ни «xp» как токенов нет вообще). Если полный текст психосилы
+    пропущен целиком (не только слоган), тот же «pr ... xp» будет в дыре —
+    это одна и та же карточная структура, и book-proofreader (wdbc-e2ng) уже
+    проверил, что на стр. 305-363 core.json настоящих потерь под этим
+    паттерном нет; --dump сохраняет и эти дыры отдельно, чтобы можно было
+    перепроверить, если появится книга/глава, где это не так."""
+    for i, w in enumerate(hole_ws):
+        if w == "pr" and i + 1 < len(hole_ws) and hole_ws[i + 1].isdigit():
+            break
+    else:
+        return False
+    return "xp" in hole_ws
+
+
 def _selftest():
     """wdbc-3iw: самопроверка на двух синтетических дырах — гарантирует, что
     table_order_overlap() продолжает гасить настоящий шум таблиц и перестаёт
@@ -321,6 +353,28 @@ def _selftest():
         fails.append(f"дыра из частых слов правил не должна гаситься как шум (перекрытие "
                       f"{ratio2:.0%} >= порога {TABLE_NOISE_RATIO:.0%}) — регресс исходного бага "
                       f"wdbc-3iw: частая лексика снова прячет настоящую пропажу")
+
+    # wdbc-fik1: is_power_card_slogan() — слоган сводной карточки психосилы
+    # («hephaestus гефест голые руки псайкера способны плавить и ковать
+    # металл pr 5 500 xp») должен опознаваться по паре «pr <число> … xp»,
+    # а обычная оружейная дыра (ни «pr», ни «xp» как токенов) — нет.
+    card_hole = (
+        "hephaestus гефест голые руки псайкера способны плавить и ковать "
+        "металл pr 5 500 xp"
+    ).split()
+    if not is_power_card_slogan(card_hole):
+        fails.append("слоган карточки психосилы («pr 5 500 xp») должен опознаваться "
+                      "is_power_card_slogan() — вернула False")
+    weapon_hole = reordered_table_hole
+    if is_power_card_slogan(weapon_hole):
+        fails.append("оружейная дыра без токенов «pr»/«xp» не должна опознаваться "
+                      "is_power_card_slogan() как карточка психосилы — вернула True")
+    # «pr» без числа сразу за ним (например, часть другого слова/сокращения)
+    # не должен засчитываться — иначе якорь слишком широкий.
+    no_digit_hole = "pr психосилы описание без числа рядом xp".split()
+    if is_power_card_slogan(no_digit_hole):
+        fails.append("«pr» без числа сразу за ним не должен опознаваться как карточка "
+                      "психосилы — is_power_card_slogan() вернула True")
     return fails
 
 
@@ -370,6 +424,7 @@ def main():
 
         rows, total_src, covered, holes, hole_words = [], 0, 0, [], 0
         table_noise, table_noise_words, table_noise_dump = 0, 0, []
+        card_noise, card_noise_words, card_noise_dump = 0, 0, []
         for label, text in chunks:
             ws = words(text)
             total_src += len(ws)
@@ -396,19 +451,33 @@ def main():
                         table_noise += 1
                         table_noise_words += j - i
                         table_noise_dump.append((label, j - i, " ".join(hole_ws), ratio))
+                    elif is_power_card_slogan(hole_ws):
+                        # wdbc-fik1: слоган сводной карточки психосилы — см.
+                        # is_power_card_slogan(). table_order_overlap() тут не
+                        # спасает (слогана нет рядом нигде, его вообще нет в
+                        # JSON), но это осознанный пропуск, не потеря.
+                        card_noise += 1
+                        card_noise_words += j - i
+                        card_noise_dump.append((label, j - i, " ".join(hole_ws), ratio))
                     else:
                         holes.append((label, j - i, " ".join(hole_ws), ratio))
                         hole_words += j - i
                 i = j
         pct = 100.0 * covered / total_src if total_src else 0.0
         tgt_words = len(words(tgt_text))
-        noise_note = f"  (+{table_noise} подозрений на порядок таблицы, {table_noise_words} слов)" if table_noise else ""
+        noise_bits = []
+        if table_noise:
+            noise_bits.append(f"+{table_noise} подозрений на порядок таблицы, {table_noise_words} слов")
+        if card_noise:
+            noise_bits.append(f"+{card_noise} слоганов карточки психосилы, {card_noise_words} слов")
+        noise_note = f"  ({'; '.join(noise_bits)})" if noise_bits else ""
         print(f"{slug:<18} {total_src:>9} {tgt_words:>9} {pct:>8.1f}% {len(holes):>5} {hole_words:>12}{noise_note}")
         if dump:
             with open(os.path.join(dump, slug + ".txt"), "w", encoding="utf-8") as f:
                 f.write(f"# {slug} — исходник {path}\n")
                 f.write(f"# покрытие {pct:.1f}%  дыр {len(holes)}  слов в дырах {hole_words}"
-                        f"  подозрений на порядок таблицы {table_noise} ({table_noise_words} слов)\n\n")
+                        f"  подозрений на порядок таблицы {table_noise} ({table_noise_words} слов)"
+                        f"  слоганов карточки психосилы {card_noise} ({card_noise_words} слов)\n\n")
                 for label, n, txt, ratio in sorted(holes, key=lambda h: -h[1]):
                     f.write(f"--- {label}  ({n} слов, перекрытие лексики {ratio:.0%})\n{txt}\n\n")
                 # wdbc-3iw: отфильтрованное как «шум таблицы» раньше нигде не
@@ -421,6 +490,16 @@ def main():
                             f"({table_noise} шт., {table_noise_words} слов) — проверить, что это правда "
                             f"переставленная таблица, а не потерянная проза ===\n\n")
                     for label, n, txt, ratio in sorted(table_noise_dump, key=lambda h: -h[1]):
+                        f.write(f"--- {label}  ({n} слов, перекрытие лексики {ratio:.0%})\n{txt}\n\n")
+                # wdbc-fik1: то же самое для слоганов сводной карточки психосилы
+                # (is_power_card_slogan) — по той же логике: если сюда попадёт
+                # не слоган, а настоящая пропажа текста психосилы, эвристику
+                # («pr N ... xp») надо сузить.
+                if card_noise_dump:
+                    f.write(f"\n\n# === отфильтровано как «слоган сводной карточки психосилы» "
+                            f"({card_noise} шт., {card_noise_words} слов) — проверить, что это правда "
+                            f"нигде не переносимый слоган, а не потерянный текст психосилы ===\n\n")
+                    for label, n, txt, ratio in sorted(card_noise_dump, key=lambda h: -h[1]):
                         f.write(f"--- {label}  ({n} слов, перекрытие лексики {ratio:.0%})\n{txt}\n\n")
 
 
