@@ -638,6 +638,18 @@ export function prepareCharacterDerived(actor, system) {
       if ((system.fate.value ?? 0) > system.fate.max) system.fate.value = system.fate.max;
       system.painActive  = true;
       system.fateMaxAuto = true;
+    } else if (system.fate) {
+      // У всех прочих рас system.fate.max нигде не пишется — целиком приходит
+      // ActiveEffect'ом Конструктора (kind:"poolMax", final-фаза, wdbc-zzz2):
+      // Actor#applyActiveEffects складывает "текущее значение + прибавка"
+      // ПОВЕРХ того, что уже лежит в system.fate.max на момент финальной фазы.
+      // Без явного сброса это неидемпотентно при повторном prepareData() в
+      // обход полной пересборки actor._initialize() из _source (сегодня
+      // недостижимо через обычную игру — Foundry пересобирает схему из
+      // _source перед каждым update(), — но контракт "idempotent per
+      // initialization" из client-document.mjs требует явного сброса, а не
+      // молчаливой опоры на то, что снаружи всегда есть полная пересборка.
+      system.fate.max = 0;
     }
 
     // ── Здравомыслие пилота Дредноута (Книга Машин, стр. 57) ────────────────
