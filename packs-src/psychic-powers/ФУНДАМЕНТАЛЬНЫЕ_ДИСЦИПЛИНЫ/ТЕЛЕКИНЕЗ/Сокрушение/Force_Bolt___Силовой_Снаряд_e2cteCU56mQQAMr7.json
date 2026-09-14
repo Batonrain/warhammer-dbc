@@ -24,7 +24,11 @@
     "damageType": "impact",
     "penetration": 0,
     "weaponProps": [
-      { "key": "knockdown", "requiredSuccesses": 3, "requiredSuccessesScalesSize": true }
+      {
+        "key": "knockdown",
+        "requiredSuccesses": 3,
+        "requiredSuccessesScalesSize": true
+      }
     ],
     "charDamageStat": "",
     "charDamageFormula": "",

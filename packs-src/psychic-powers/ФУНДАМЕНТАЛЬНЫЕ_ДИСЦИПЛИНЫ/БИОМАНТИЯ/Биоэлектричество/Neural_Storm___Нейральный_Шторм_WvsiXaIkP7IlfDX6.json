@@ -24,8 +24,15 @@
     "damageType": "energy",
     "penetration": 0,
     "weaponProps": [
-      { "key": "shocking", "requiredSuccesses": 3 },
-      { "key": "haywire", "rating": 0, "requiredSuccesses": 3 }
+      {
+        "key": "shocking",
+        "requiredSuccesses": 3
+      },
+      {
+        "key": "haywire",
+        "rating": 0,
+        "requiredSuccesses": 3
+      }
     ],
     "charDamageStat": "",
     "charDamageFormula": "",

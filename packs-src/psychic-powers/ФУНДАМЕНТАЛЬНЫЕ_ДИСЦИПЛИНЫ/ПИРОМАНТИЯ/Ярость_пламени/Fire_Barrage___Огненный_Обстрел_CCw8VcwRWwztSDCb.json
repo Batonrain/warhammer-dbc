@@ -24,7 +24,10 @@
     "damageType": "energy",
     "penetration": 0,
     "weaponProps": [
-      { "key": "flame", "requiredSuccesses": 4 }
+      {
+        "key": "flame",
+        "requiredSuccesses": 4
+      }
     ],
     "charDamageStat": "",
     "charDamageFormula": "",
