@@ -117,6 +117,7 @@ import { migrateGunArmSource } from "./module/migrations/gun-arm-source.mjs";
 import { migrateImplantAvailability } from "./module/migrations/implant-availability.mjs";
 import { migrateLegionGeneSeedSize } from "./module/migrations/legion-geneseed-size-fix.mjs";
 import { migrateBornForWarDivination } from "./module/migrations/born-for-war-fix.mjs";
+import { migrateWarpforgedPlate } from "./module/migrations/warpforged-plate-fix.mjs";
 import { stampContentSyncBaseline } from "./module/migrations/content-sync-baseline.mjs";
 import { ContentSyncApp, openContentSync } from "./module/apps/content-sync-app.mjs";
 import { SessionRewardsApp, openSessionRewards } from "./module/apps/session-rewards-app.mjs";
@@ -507,6 +508,13 @@ Hooks.once("init", () => {
   // Версия правки ActiveEffect Предсказания «Ты рождён для войны» у уже
   // применённых копий — снятая альтернатива «Т» и знак Int/Fel (одноразовая, wdbc-7ba)
   game.settings.register("warhammer-dbc", "bornForWarFixVersion", {
+    scope: "world", config: false, type: Number, default: 0
+  });
+
+  // Версия снятия запечённой надбавки брони у уже выданных копий Черты
+  // «Закалённые Варпом Латы» — теперь это броня-замена, пол держит код
+  // (одноразовая, приём стопки #478-#481)
+  game.settings.register("warhammer-dbc", "warpforgedPlateFixVersion", {
     scope: "world", config: false, type: Number, default: 0
   });
 
@@ -923,7 +931,7 @@ Hooks.once("ready", () => {
 // ── Кнопка «Обзор звёздных систем» в меню управления сценой ───────────────────
 // Доступ-фолбэк (на случай иной версии API контролов): game.warhammerDBC.openSystemsOverview()
 Hooks.once("ready", () => {
-  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
+  game.warhammerDBC = foundry.utils.mergeObject(game.warhammerDBC || {}, { importBooks, openSystemsOverview, openCraftWorkshop, openCogitatorManager, openTarotReader, openRigManager, openSurgeon, openVeilMystic, veilShift, openSceneNexus, openSceneSettings, migrateWeaponGrips, migrateRemoveGeneSeed, migrateShipHulls, migrateCharDamageSign, migrateTechPowerCosts, migrateGearEquipped, migrateGunArmSource, migrateLegionGeneSeedSize, migrateImplantAvailability, migrateBornForWarDivination, migrateWarpforgedPlate, runActorSetup, backfillAspirationGrants, backfillMinionAptSource, stampContentSyncBaseline, openContentSync });
 });
 
 // ── Одноразовая миграция: хваты + профили ББ из канон-текста (стр. 39, 207-221) ─
@@ -1081,6 +1089,21 @@ Hooks.once("ready", async () => {
     if (!result?.failed) await game.settings.set("warhammer-dbc", "bornForWarFixVersion", VERSION);
     else console.warn("Warhammer DBC | «Ты рождён для войны»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
   } catch (e) { console.error("Warhammer DBC | «Ты рождён для войны»:", e); }
+});
+
+// ── Одноразовая правка: снятие запечённого ActiveEffect у уже выданных копий
+// Черты «Закалённые Варпом Латы» — иначе пол в коде складывается со старой
+// надбавкой и даёт 24 AP вместо книжных 12 ──
+// Ручной перезапуск: game.warhammerDBC.migrateWarpforgedPlate()
+Hooks.once("ready", async () => {
+  if (!game.user.isGM) return;
+  const VERSION = 1;
+  if ((game.settings.get("warhammer-dbc", "warpforgedPlateFixVersion") || 0) >= VERSION) return;
+  try {
+    const result = await migrateWarpforgedPlate();
+    if (!result?.failed) await game.settings.set("warhammer-dbc", "warpforgedPlateFixVersion", VERSION);
+    else console.warn("Warhammer DBC | «Закалённые Варпом Латы»: версия не проставлена из-за частичных ошибок, миграция повторится при следующей загрузке.");
+  } catch (e) { console.error("Warhammer DBC | «Закалённые Варпом Латы»:", e); }
 });
 
 // ── Одноразовая доливка: биоимпланты, выданные до появления Доступности ──────

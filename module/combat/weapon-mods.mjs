@@ -72,6 +72,11 @@ export function getModEffects(actor, weapon) {
     const scope = wb.scope || "equipped";
     if (scope === "equipped" && !weapon.system.equipped) continue;
     if (scope === "force" && !(weapon.system.weaponProps || []).some(p => p.key === "force")) continue;
+    // Психосила, наложенная на КОНКРЕТНОЕ оружие (Force Blade, wdbc-vxgd):
+    // книга даёт свойства именно тому предмету, на котором манифестировали.
+    // Пустое поле — прежнее поведение «по всей надетой», чтобы старые записи
+    // и случай «выбирать было не из чего» не остались без способности вовсе.
+    if (wb.weaponId && String(wb.weaponId) !== String(weapon.id)) continue;
     fx.damageMod  += Number(wb.damageMod)  || 0;
     fx.penMod     += Number(wb.penMod)     || 0;
     fx.rangeMod   += Number(wb.rangeMod)   || 0;

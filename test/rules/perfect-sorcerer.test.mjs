@@ -44,26 +44,40 @@ describe("highSorceryManifestBlocked", () => {
     for (const [key, fn] of saved) registerRuleSource(key, fn);
   });
 
-  it("другая дисциплина — не блокируется вовсе, даже с Патроном", () => {
+  it("другая дисциплина — не блокируется вовсе, даже у лоялиста", () => {
     clearRuleSources();
-    const actor = { system: { patronGod: "khorne" } };
+    const actor = { system: { alignment: "loyalist", patronGod: "" } };
     expect(highSorceryManifestBlocked(actor, "divination")).toBe(false);
   });
 
-  it("Высшее Колдовство + Патрон Бога + БЕЗ Дара — блок", () => {
+  it("не-Хаосит — блок: книга закрывает манифестацию именно им", () => {
     clearRuleSources();
-    const actor = { system: { patronGod: "tzeentch" } };
+    const actor = { system: { alignment: "loyalist", patronGod: "" } };
     expect(highSorceryManifestBlocked(actor, "highSorcery")).toBe(true);
   });
 
-  it("Высшее Колдовство + Хаос Неделимый — не блок (книжное правило и так разрешает)", () => {
+  // Прежний тест требовал здесь `true` — и закреплял ошибку. Книга (запись
+  // дисциплины в constants/disciplines.mjs) говорит обратное: «если они
+  // получают покровительство Богов ПОСЛЕ ЭТОГО, они сохраняют способность их
+  // использования». Покровительство закрывает ИЗУЧЕНИЕ, не применение.
+  it("хаосит с Покровительством Бога — НЕ блок: выученное остаётся доступным", () => {
     clearRuleSources();
-    const actor = { system: { patronGod: "undivided" } };
-    expect(highSorceryManifestBlocked(actor, "highSorcery")).toBe(false);
+    for (const god of ["khorne", "nurgle", "tzeentch", "slaanesh"]) {
+      const actor = { system: { alignment: "heretic", patronGod: god } };
+      expect(highSorceryManifestBlocked(actor, "highSorcery")).toBe(false);
+    }
   });
 
-  it("Высшее Колдовство + Патрон Бога + Совершенный Чародей — Дар снимает блок", () => {
-    const actor = { system: { patronGod: "slaanesh" } };
+  it("хаосит без Покровительства и с Хаосом Неделимым — не блок", () => {
+    clearRuleSources();
+    for (const god of ["", "undivided"]) {
+      const actor = { system: { alignment: "heretic", patronGod: god } };
+      expect(highSorceryManifestBlocked(actor, "highSorcery")).toBe(false);
+    }
+  });
+
+  it("Совершенный Чародей носителю не нужен для манифестации — он и так хаосит", () => {
+    const actor = { system: { alignment: "heretic", patronGod: "slaanesh" } };
     grantPerfectSorcererTo(actor);
     expect(highSorceryManifestBlocked(actor, "highSorcery")).toBe(false);
   });

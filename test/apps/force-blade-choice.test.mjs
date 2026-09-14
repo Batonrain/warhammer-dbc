@@ -85,7 +85,7 @@ describe("forceBladeShopUpdate", () => {
 describe("forceBladeShopClear", () => {
   it("выключенный weaponBuff без свойств", () => {
     expect(forceBladeShopClear()).toEqual({
-      enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
+      enabled: false, scope: "equipped", weaponId: "", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
     });
   });
 });
@@ -96,7 +96,7 @@ describe("promptForceBladeShop: диалог", () => {
     const promise = promptForceBladeShop(3);
     const html = fakeHtml({}, { ".fb-shop-cb:checked": [{ dataset: { id: "tearing" } }, { dataset: { id: "shocking" } }] });
     captured.dialog.buttons.ok.callback(html);
-    expect(await promise).toEqual(["tearing", "shocking"]);
+    expect(await promise).toEqual({ ids: ["tearing", "shocking"], weaponId: "" });
   });
 
   it("Применить сверх бюджета — предупреждение и null", async () => {
@@ -112,14 +112,14 @@ describe("promptForceBladeShop: диалог", () => {
     resetCaptured();
     const promise = promptForceBladeShop(3);
     captured.dialog.buttons.cancel.callback();
-    expect(await promise).toEqual([]);
+    expect(await promise).toEqual({ ids: [], weaponId: "" });
   });
 
   it("закрытие без ответа — тоже пустой массив, не null", async () => {
     resetCaptured();
     const promise = promptForceBladeShop(3);
     captured.dialog.close();
-    expect(await promise).toEqual([]);
+    expect(await promise).toEqual({ ids: [], weaponId: "" });
   });
 });
 

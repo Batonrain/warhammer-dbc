@@ -44,6 +44,9 @@ import { endOfOrderInitiative, mergedVictimUuids } from "../combat/devourer-of-t
 import { grantArmourOfTheGods } from "./armour-of-the-gods.mjs";
 import { resolveBurnedSenses } from "./burned-senses.mjs";
 import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
+// Арифметика Ступеней при краже Навыка «Пожирателем Знаний» живёт в модуле,
+// а не внутри скрипта пака: внутри скрипта её не видит ни один тест.
+import { devouredSkillRank } from "../rules/devourer-of-knowledge.mjs";
 import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
@@ -155,7 +158,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "canSpendActionPoints", "spendActionPoints", "nearestVisiblePsyker", "defaultSpawnHunterHoundFn",
     "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
     "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
-    "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave",
+    "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
     ...extraNames,
     code
   );
@@ -169,7 +172,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     canSpendActionPoints, spendActionPoints, nearestVisiblePsyker, defaultSpawnHunterHoundFn,
     nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
     grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
-    resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave,
+    resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
     ...extraNames.map(k => extra[k])
   );
 }

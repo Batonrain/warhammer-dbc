@@ -31,6 +31,19 @@ describe("matchTraitDoc", () => {
     expect(matchTraitDoc("Неизвестная", docs)).toBeNull();
   });
 
+  // #480 перевернул порядок половин в паке на «Английское / Русское», а на
+  // уже выданной машине лежит СНИМОК старого имени. Раньше делилось только
+  // имя из пака, входящее сравнивалось целиком — и канон не находился.
+  it("на акторе старый порядок половин, в паке новый — канон всё равно находится", () => {
+    const renamed = [{ name: "Open Topped / Открытая", system: { effects: { openTopped: true } } }];
+    expect(matchTraitDoc("Открытая / Open Topped", renamed)).toBe(renamed[0]);
+  });
+
+  it("порядок половин перевёрнут И у рейтинговой Черты", () => {
+    const renamed = [{ name: "Daemonic (X) / Демонический (X)", system: { effects: { daemonicAbsorb: true } } }];
+    expect(matchTraitDoc("Демонический (4) / Daemonic (4)", renamed)).toBe(renamed[0]);
+  });
+
   it("рейтинг копии «(4)» матчится с шаблоном «(X)» канона", () => {
     const rated = [{ name: "Демонический (X) / Daemonic (X)", system: { effects: { daemonicAbsorb: true } } }];
     expect(matchTraitDoc("Демонический (4)", rated)).toBe(rated[0]);

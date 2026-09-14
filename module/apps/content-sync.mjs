@@ -394,12 +394,19 @@ export async function applySyncReport(report, selectedKeys) {
       const actorUpdates = byActor.get(entry.actorId) || new Map();
       byActor.set(entry.actorId, actorUpdates);
       const upd = actorUpdates.get(entry.itemId) || { _id: entry.itemId };
+      // Опора пишется тем же приёмом, что и само поле. flags — тот же
+      // ObjectField, который СЛИВАЕТ, а не заменяет (см. withDeletedStaleKeys):
+      // без ключей-удалений снятый в паке подключ оставался в опоре навсегда,
+      // строка возвращалась при каждом прогоне и, поскольку поле-то уже
+      // почищено, помечалась «конфликт» — то есть врала, будто её правили
+      // руками. Сравнивать надо с ПРЕЖНЕЙ опорой (entry.baseVal), а не со
+      // значением на предмете: чистим именно то, что лежит в опоре.
       if (row.path === MECH_PATH) {
         upd[`flags.${FLAG}.mechanics`] = withDeletedStaleKeys(entry.actorVal, row.packVal);
-        upd[`flags.${FLAG}.${MECH_BASELINE_PATH}`] = row.packVal;
+        upd[`flags.${FLAG}.${MECH_BASELINE_PATH}`] = withDeletedStaleKeys(entry.baseVal, row.packVal);
       } else {
         upd[`system.${row.path}`] = withDeletedStaleKeys(entry.actorVal, row.packVal);
-        upd[`flags.${FLAG}.${BASELINE_PATH}.${row.path}`] = row.packVal;
+        upd[`flags.${FLAG}.${BASELINE_PATH}.${row.path}`] = withDeletedStaleKeys(entry.baseVal, row.packVal);
       }
       actorUpdates.set(entry.itemId, upd);
     }

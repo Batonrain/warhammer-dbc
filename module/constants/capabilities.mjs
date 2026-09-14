@@ -33,6 +33,21 @@ export const CAPABILITIES = {
     source: "Мутация: Shield of Purity (Общие мутации)",
     reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — combat/damage.mjs applyDamageToActor (_applyCorrosive)"
   },
+  "weaponPropertyImmunity.blinding": {
+    label: "Иммунитет к свойству оружия Blinding (вспышка не ослепляет)",
+    source: "Blood Replacement / Замена Крови (субмутация «зеркальная кровь»)",
+    reader: "module/combat/weapon-properties.mjs hasWeaponPropertyImmunity() — тем же путём, что соседние weaponPropertyImmunity.*"
+  },
+  "mutation.multipleEyes.pseudoNavigator": {
+    label: "Псевдонавигатор: можно вести корабль через Варп при Навыке Navigate (Warp)",
+    source: "Multiple Eyes / Множественные Глаза, субмутация 1",
+    reader: "кода нет намеренно: навигация в Варпе в системе не смоделирована вовсе, признак нужен как метка на листе — играется мастером"
+  },
+  "mutation.warpTouched.quickToAnger": {
+    label: "Вспыльчивость: субмутация «Затронутый Варпом» у последователя Кхорна",
+    source: "Warp-Touched / Затронутый Варпом, субмутация 8 (гейт patronGod: khorne)",
+    reader: "module/rules/quick-to-anger.mjs (QUICK_TO_ANGER_CAPABILITY)"
+  },
   "weaponPropertyImmunity.crippling": {
     label: "Иммунитет к свойству оружия Crippling (не получает рану с шипами)",
     source: "не выдана ни одним предметом пака на 30.08.2026 — заведена про запас",
@@ -7712,9 +7727,19 @@ for (const key of INITIATIVE_CHAR_KEYS) {
   };
 }
 
+/** Префикс «признак выдаётся не носителю, а ЦЕЛИ поддерживаемой психосилы»
+ *  (module/rules/psychic-sustain-target.mjs). За ним идёт обычное имя. */
+export const TARGET_CAPABILITY_PREFIX = "target:";
+
 /** Известно ли имя. Неизвестное — почти наверняка опечатка в записи. */
 export function isKnownCapability(key) {
-  return Object.hasOwn(CAPABILITIES, String(key ?? ""));
+  const raw = String(key ?? "");
+  // «target:<имя>» — то же имя, только адресованное цели: проверять надо имя,
+  // иначе каждое такое имя пришлось бы заводить в реестре вторым экземпляром.
+  const name = raw.startsWith(TARGET_CAPABILITY_PREFIX)
+    ? raw.slice(TARGET_CAPABILITY_PREFIX.length)
+    : raw;
+  return Object.hasOwn(CAPABILITIES, name);
 }
 
 /** Список для дропдауна в Конструкторе: [ключ, подпись]. */

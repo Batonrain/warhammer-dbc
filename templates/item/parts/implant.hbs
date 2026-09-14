@@ -167,14 +167,15 @@
       <option value="flying"  {{#if (eq system.shield.wingPosition "flying")}}selected{{/if}}>Расправлены (в полёте — щита нет)</option>
     </select>
   </div>
-  {{#if system.shield.wingPosition}}
+  {{!-- Числа показываются ВСЕГДА, а не после выбора положения: раньше они
+        были скрыты до выбора, и штатный порядок «сначала положение» писал в
+        ratingMax ноль поверх уже выставленного рейтинга. --}}
   <div class="weapon-row">
     <label class="wr-label" title="Книжный рейтинг для положения «Сложены»">Рейтинг: сложены</label>
     <input type="number" name="system.shield.wingRatingFolded" value="{{system.shield.wingRatingFolded}}" min="0" class="drug-fx-num"/>
     <label class="wr-label" title="Книжный рейтинг для положения «Окутывают»">Рейтинг: окутывают</label>
     <input type="number" name="system.shield.wingRatingWrapped" value="{{system.shield.wingRatingWrapped}}" min="0" class="drug-fx-num"/>
-    <div class="trait-fx-hint">Смена положения сама подставляет нужный рейтинг выше и включает/выключает поле. «Только со спины» — направление удара код не проверяет, как «не работает в грязи» у Отражающей: решает стол.</div>
+    <div class="trait-fx-hint">Смена положения сама подставляет нужный рейтинг выше и включает/выключает поле. Пустое число — положение рейтинг не меняет. «Только со спины» — направление удара код не проверяет, как «не работает в грязи» у Отражающей: решает стол.</div>
   </div>
-  {{/if}}
 </div>
 {{/if}}

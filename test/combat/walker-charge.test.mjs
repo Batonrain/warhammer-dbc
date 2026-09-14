@@ -13,7 +13,7 @@ import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { actorFor, char, weaponFor } from "../support/combat-fixtures.mjs";
 import { declareWalkerCharge, walkerChargeActive, resolveWalkerAllArms, WALKER_CHARGE_FLAG }
   from "../../module/combat/walker.mjs";
-import { TIP_OVER_LABEL } from "../../module/rules/walker.mjs";
+import { TIP_OVER_LABEL, walkerChargeMark, isWalkerChargeActive } from "../../module/rules/walker.mjs";
 
 const realFromUuid = globalThis.fromUuid;
 
@@ -190,5 +190,27 @@ describe("resolveWalkerAllArms", () => {
     const res = await resolveWalkerAllArms(walkerVehicle({ chassis: "tracked", weapons: [gun()] }));
     expect(res.ok).toBe(false);
     expect(res.error).toContain("Шагоход");
+  });
+});
+
+// Метка Натиска и конец боя (приём 14.09.2026). Раньше `isWalkerChargeActive`
+// отвечала «действует» на любой запрос вне боя — а после «Закончить бой»
+// game.combat пропадает, round становится 0, и +20 к рукопашной оставался на
+// Шагоходе навсегда, снять его было нечем.
+describe("Метка Натиска и конец боя", () => {
+  it("бой кончился — метка, объявленная В бою, погасла", () => {
+    const mark = walkerChargeMark({ combatId: "c1", round: 3 });
+    expect(isWalkerChargeActive(mark, { combatId: "c1", round: 3 })).toBe(true);
+    expect(isWalkerChargeActive(mark, { combatId: "", round: 0 })).toBe(false);
+  });
+
+  it("метка, объявленная ВНЕ боя, вне боя живёт — считать Раунды нечем", () => {
+    const mark = walkerChargeMark({ combatId: "", round: 0 });
+    expect(isWalkerChargeActive(mark, { combatId: "", round: 0 })).toBe(true);
+  });
+
+  it("начался новый бой — метка прошлого боя не действует", () => {
+    const mark = walkerChargeMark({ combatId: "c1", round: 3 });
+    expect(isWalkerChargeActive(mark, { combatId: "c2", round: 1 })).toBe(false);
   });
 });

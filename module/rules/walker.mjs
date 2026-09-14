@@ -132,17 +132,22 @@ export function walkerChargeMark({ combatId = "", round = 0 } = {}) {
 }
 
 /**
- * Действует ли объявленный Натиск сейчас. Вне боя (round 0 и пустой combatId)
- * метка живёт до следующего объявления: считать Раунды нечем, и гасить бонус
- * молча значило бы отнимать у стола то, что он только что объявил.
+ * Действует ли объявленный Натиск сейчас.
+ *
+ * Вне боя метка живёт, только если она САМА объявлена вне боя (пустой
+ * `mark.combat`): считать Раунды нечем, и гасить молча то, что стол только
+ * что объявил, неправильно. А вот метка ИЗ боя вне боя не живёт — раньше
+ * жила, и это давало +20 к рукопашной навсегда: бой кончился, `game.combat`
+ * пропал, `round` стал 0, и `isWalkerChargeActive` отвечала «действует» до
+ * начала следующего боя. Снять это игрок не мог ничем (приём 14.09.2026).
  */
 export function isWalkerChargeActive(mark, { combatId = "", round = 0 } = {}) {
   if (!mark) return false;
-  const markRound = num(mark.round);
-  const nowRound  = num(round);
-  if (!nowRound) return true;                       // боя нет — метка не истекает сама
-  if (String(mark.combat || "") !== String(combatId || "")) return false;
-  return markRound === nowRound;
+  const markCombat = String(mark.combat || "");
+  const nowRound   = num(round);
+  if (!nowRound) return !markCombat;                // метка из закончившегося боя погасла
+  if (markCombat !== String(combatId || "")) return false;
+  return num(mark.round) === nowRound;
 }
 
 // ── Опрокидывание (п.2) ─────────────────────────────────────────────────────

@@ -34,16 +34,25 @@ export function missingEffectKeys(canon = {}, current = {}) {
 
 /** Каноническая запись пака по имени встроенной Черты: «A / Б» матчится
  *  половинами, рейтинг «(4)» приводится к шаблонному «(X)» — иначе
- *  «Демонический (4)» не находил канон «Демонический (X)» нигде. */
+ *  «Демонический (4)» не находил канон «Демонический (X)» нигде.
+ *
+ *  Половинами режутся ОБЕ стороны. Раньше делилось только имя из пака, и
+ *  входящее сравнивалось целиком — а на акторе лежит СНИМОК имени на момент
+ *  выдачи машины. После того как #480 перевернул порядок на «Английское /
+ *  Русское», у выданной раньше машины осталось «Открытая / Open Topped», в
+ *  паке стало «Open Topped / Открытая», и канон не находился ни целиком, ни
+ *  половиной. Тот же приём уже применён в apps/content-sync.mjs::nameKeys —
+ *  там обе стороны режутся с самого начала, поэтому «Обновить мир»
+ *  переименование пережил, а эта миграция бы не пережила. */
 export function matchTraitDoc(name, docs = []) {
   const norm = s => String(s || "").trim().toLowerCase().replace(/\(\s*[\d½]+\s*\)/g, "(x)");
-  const n = norm(name);
-  if (!n) return null;
-  return docs.find(d => {
-    const full = norm(d.name);
-    if (full === n) return true;
-    return full.split("/").map(x => x.trim()).includes(n);
-  }) || null;
+  const halves = s => {
+    const full = norm(s);
+    return full ? [full, ...full.split("/").map(x => x.trim()).filter(Boolean)] : [];
+  };
+  const want = new Set(halves(name));
+  if (!want.size) return null;
+  return docs.find(d => halves(d.name).some(h => want.has(h))) || null;
 }
 
 /**

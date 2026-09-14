@@ -22,6 +22,7 @@
 //  украденный Навык у каждого игрока свой, автору пака заранее не известен).
 // ════════════════════════════════════════════════════════════════════════
 
+import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../constants/skills.mjs";
 
 export const DEVOURER_OF_KNOWLEDGE_CAPABILITY = "gift.tzeentch.devourerOfKnowledge";
@@ -68,4 +69,34 @@ export function devourerPermanentRules(actor) {
     when: {},
     effects: [{ kind: "grantAptitudeOverride", scope: "skill", match: SKILLS_DEF[skillKey]?.label ?? skillKey, align: "ally" }]
   }));
+}
+
+/**
+ * Какая Ступень Навыка достаётся чемпиону при краже (временной и
+ * перманентной). Вынесено из kind:"script" записи пака именно затем, чтобы
+ * это можно было проверить тестом — внутри скрипта эта арифметика ошибалась
+ * молча (приём стопки #478-#481, 14.09.2026).
+ *
+ * Две книжные оговорки, обе были нарушены:
+ *
+ * 1. Перманентная кража случается только когда вчерашняя ВРЕМЕННАЯ кража ещё
+ *    жива, то есть Ступень жертвы ПРЯМО СЕЙЧАС уже обнулена в "untrained".
+ *    Брать «текущую Ступень жертвы» в этот момент нельзя — надо брать ту,
+ *    что запомнена в записи кражи (`victimPrevRank`). Иначе жертва теряет
+ *    Навык навсегда, а чемпион получает «не изучен».
+ * 2. Книга говорит «ПОЛУЧИТЬ один из Навыков жертвы на том же уровне
+ *    изучения», а не «обменяться»: если собственная Ступень чемпиона выше,
+ *    она остаётся. Прежний код присваивал Ступень жертвы безусловно и мог
+ *    понизить чемпиона — во временной ветке на сутки, в перманентной навсегда.
+ *
+ * @param {{victimPrevRank?: string}|null} prevTheft  запись прошлой кражи
+ * @param {string} victimRankNow   Ступень жертвы сейчас
+ * @param {string} ownRank         Ступень чемпиона сейчас
+ * @returns {{stolen: string, gained: string}} что украдено и что в итоге у чемпиона
+ */
+export function devouredSkillRank(prevTheft, victimRankNow, ownRank) {
+  const bonus = r => SKILL_RANKS[r ?? "untrained"]?.bonus ?? -20;
+  const stolen = prevTheft?.victimPrevRank || victimRankNow || "untrained";
+  const own = ownRank || "untrained";
+  return { stolen, gained: bonus(own) >= bonus(stolen) ? own : stolen };
 }
