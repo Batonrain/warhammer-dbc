@@ -90,3 +90,45 @@ describe("реестр возможностей знает всё, что выд
     expect(CAPABILITY_OPTIONS.every(([, label]) => typeof label === "string" && label.trim())).toBe(true);
   });
 });
+
+// ── Третья сторона того же договора: ДАННЫЕ ПАКА ────────────────────────────
+//
+// Проверка стояла на записи Конструктора (isKnownCapability при вводе) и на
+// правилах библиотеки. Мимо шла третья сторона: `capabilityKey`, уже лежащий
+// в packs-src. Опечатка или снятое из реестра имя туда попадали молча, и
+// последствие видно за столом — вкладка ВОЗМОЖНОСТИ подписывает такую строку
+// СЫРЫМ английским ключом (sheet-helpers.mjs: `CAPABILITIES[key]?.label || key`).
+//
+// На приёме стопки #478-#481 так нашлись пять имён: три отсутствовали в
+// реестре вовсе, два были известны, но с префиксом «target:», который
+// isKnownCapability не снимал.
+describe("реестр знает все capabilityKey из packs-src", () => {
+  const packKeys = () => {
+    const out = new Map();   // ключ → файл, где встретился первым
+    const walk = dir => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) { walk(full); continue; }
+        if (!e.name.endsWith(".json")) continue;
+        const text = fs.readFileSync(full, "utf8");
+        for (const m of text.matchAll(/"capabilityKey"\s*:\s*"([^"]+)"/g)) {
+          if (m[1] && !out.has(m[1])) out.set(m[1], path.relative(ROOT, full));
+        }
+      }
+    };
+    walk(path.join(ROOT, "packs-src"));
+    return out;
+  };
+
+  const keys = packKeys();
+
+  it("ключи в паке вообще нашлись — иначе тест зелен впустую", () => {
+    expect(keys.size).toBeGreaterThanOrEqual(300);
+  });
+
+  it("каждый ключ из пака известен реестру", () => {
+    const unknown = [...keys].filter(([k]) => !isKnownCapability(k))
+      .map(([k, file]) => `${k} ← ${file}`);
+    expect(unknown).toEqual([]);
+  });
+});

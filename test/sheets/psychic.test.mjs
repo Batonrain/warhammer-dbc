@@ -124,42 +124,45 @@ describe("psychic manifestation", () => {
   // Колдовство книжно закрыто для персонажей с Покровительством конкретного
   // Бога (rules/perfect-sorcerer.mjs) — showManifestDialog должен блокировать
   // манифестацию раньше открытия диалога, тем же тактом, что и Метка выше.
-  describe("Высшее Колдовство и Покровительство (Perfect Sorcerer)", () => {
+  // Книга (constants/disciplines.mjs, запись highSorcery) различает ИЗУЧЕНИЕ и
+  // ПРИМЕНЕНИЕ: Покровительство закрывает первое, но «если они получают
+  // покровительство Богов после этого, они сохраняют способность их
+  // использования». Манифестацию книга закрывает другой фразой — «Псайкеры
+  // не-Хаоситы не могут изучать или манифестировать». Прежние три теста
+  // требовали блока по Покровительству и закрепляли ошибку: колдун, выучивший
+  // силу до присяги Богу, получал отказ на своё же заклинание.
+  describe("Высшее Колдовство: манифестацию закрывает не Покровительство, а не-Хаосит", () => {
     const saved = getRuleSources();
     afterEach(() => {
       clearRuleSources();
       for (const [key, fn] of saved) registerRuleSource(key, fn);
     });
 
-    it("Патрон конкретного Бога — манифестация блокируется, диалог не открывается", () => {
+    it("не-Хаосит — манифестация блокируется, диалог не открывается", () => {
       clearRuleSources();
-      const a = actor({ system: { patronGod: "tzeentch" } });
+      const a = actor({ system: { alignment: "loyalist", patronGod: "" } });
       showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
       expect(captured.dialog).toBeFalsy();
-      expect(captured.warnings.some(w => w.includes("Высшее Колдовство"))).toBe(true);
+      expect(captured.warnings.some(w => w.includes("Высшего Колдовства"))).toBe(true);
     });
 
-    it("Хаос Неделимый — книжное правило и так разрешает, диалог открывается", () => {
+    it("хаосит с Покровительством Бога — диалог открывается: выученное остаётся доступным", () => {
       clearRuleSources();
-      const a = actor({ system: { patronGod: "undivided" } });
+      const a = actor({ system: { alignment: "heretic", patronGod: "tzeentch" } });
       showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
       expect(captured.dialog.title).toContain("Манифестация");
     });
 
-    it("Патрон Бога + Совершенный Чародей — Дар снимает запрет", () => {
-      const a = actor({ system: { patronGod: "khorne" } });
+    it("хаосит с Хаосом Неделимым — диалог открывается", () => {
       clearRuleSources();
-      registerRuleSource("test", act => act === a
-        ? [{ id: "test.perfectSorcerer", when: {},
-             effects: [{ kind: "grantFlag", target: "gift.tzeentch.perfectSorcerer" }] }]
-        : []);
+      const a = actor({ system: { alignment: "heretic", patronGod: "undivided" } });
       showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
       expect(captured.dialog.title).toContain("Манифестация");
     });
 
-    it("Патрон Бога, но другая дисциплина — запрет Высшего Колдовства не касается", () => {
+    it("не-Хаосит, но другая дисциплина — запрет Высшего Колдовства не касается", () => {
       clearRuleSources();
-      const a = actor({ system: { patronGod: "nurgle" } });
+      const a = actor({ system: { alignment: "loyalist", patronGod: "" } });
       showManifestDialog(a, item({ system: { discipline: "divination" } }));
       expect(captured.dialog.title).toContain("Манифестация");
     });
@@ -841,8 +844,11 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
     });
 
     const upd = power.updates.at(-1);
+    // weaponId: "" — привязка к конкретному оружию тоже снимается, иначе
+    // следующая манифестация на другое оружие оставила бы старую.
     expect(upd["system.effects.weaponBuff"]).toEqual({
-      enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
+      enabled: false, scope: "equipped", weaponId: "",
+      damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
     });
   });
 

@@ -70,6 +70,7 @@ import { clearReformationSongBuffs, clearExpiredGearMalfunction } from "./combat
 import { refillSarcophagusWarpWounds } from "./combat/damage.mjs";
 import { clearMercuryMarks } from "./combat/mercury-reaction.mjs";
 import { clearAdaptationBonuses } from "./combat/adaptation.mjs";
+import { clearEyeOfEnvyOnCombatEnd } from "./rules/eye-of-envy.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
@@ -2149,6 +2150,9 @@ function _attachFateContextMenu(message, html) {
     // Адаптация (wdbc-q0q8, Панцирь) — накопленные за бой бонусы AP по видам
     // урона живут строго «до конца боя», та же логика, что у Ртути выше.
     await clearAdaptationBonuses(combat);
+    // Очко «Ока Зависти» — та же уборка по концу боя, что у меток Ртути и
+    // бонусов Адаптации: временный запас не должен переживать бой.
+    await clearEyeOfEnvyOnCombatEnd(combat);
     // Щит по состоянию Хода — предмет, а не флаг: «забытый» после боя
     // щит-дефлектор видно в инвентаре и он выглядел бы настоящим.
     for (const combatant of combat.combatants ?? []) {

@@ -3038,8 +3038,8 @@ export class WarhammerItemSheet
     // остальная механика щита (module/combat/shield.mjs) не тронута, читает
     // ratingMax как обычно. «Расправлены» (в полёте) — щита по книге нет
     // вовсе, поле гасится, а не просто визуально прячется.
-    on(".implant-wing-position", "change", ev => {
-      this.item.update(wingPositionShieldUpdate(ev.currentTarget.value, this.item.system.shield || {}));
+    on(".implant-wing-position", "change", async ev => {
+      await this.item.update(wingPositionShieldUpdate(ev.currentTarget.value, this.item.system.shield || {}));
     });
 
     // ── Особые свойства оружия ─────────────────────────────────────────────────

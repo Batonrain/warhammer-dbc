@@ -32,7 +32,7 @@ export function forceBladeShopCost(selectedIds) {
  * ступенях каталога) — оставляем запись САМОЙ ДОРОГОЙ выбранной ступени,
  * остальные молча отбрасываем (более высокая ступень строго сильнее).
  */
-export function forceBladeShopUpdate(selectedIds, maxSuccesses) {
+export function forceBladeShopUpdate(selectedIds, maxSuccesses, weaponId = "") {
   const ids = [...new Set(selectedIds || [])];
   const spent = forceBladeShopCost(ids);
   if (spent > Math.max(0, Number(maxSuccesses) || 0)) return null;
@@ -57,7 +57,14 @@ export function forceBladeShopUpdate(selectedIds, maxSuccesses) {
     spent,
     remaining: Math.max(0, Number(maxSuccesses) || 0) - spent,
     weaponBuff: {
-      enabled: true, scope: "equipped",
+      // weaponId — КОНКРЕТНОЕ оружие, на которое манифестировали. Книга:
+      // «Если данная психосила была манифестирована на не-психосиловом
+      // оружии, то ОНО получает свойство Force» — одно, а не всё надетое.
+      // Раньше поля не было вовсе, и Варлок с мечом и пистолетом в руках
+      // получал Force и все купленные свойства на ОБА (приём 14.09.2026).
+      // Пустая строка = оружие выбрать не из чего: поведение как раньше,
+      // по всему надетому, чтобы не отнять способность целиком.
+      enabled: true, scope: "equipped", weaponId: String(weaponId || ""),
       damageMod: 0, penMod: 0, rangeMod: 0, balanceMod, addProps
     }
   };
@@ -65,7 +72,7 @@ export function forceBladeShopUpdate(selectedIds, maxSuccesses) {
 
 /** Пустой weaponBuff — снятие поддержания Force Blade (та же форма, что emptyEffects()). */
 export function forceBladeShopClear() {
-  return { enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: [] };
+  return { enabled: false, scope: "equipped", weaponId: "", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: [] };
 }
 
 function tierRows(tier) {
@@ -76,7 +83,31 @@ function tierRows(tier) {
     </label>`).join("");
 }
 
-function shopDialogHtml(maxSuccesses) {
+/** Рукопашное оружие носителя — на что психосилу можно наложить.
+ *  Книга: «манифестирована на НЕ-психосиловом оружии», поэтому уже
+ *  психосиловое из списка убираем: ему давать Force незачем. */
+function meleeWeaponChoices(actor) {
+  return [...(actor?.items ?? [])]
+    .filter(i => i.type === "weapon" && i.system?.melee
+      && !(i.system?.weaponProps || []).some(p => p.key === "force"))
+    .map(i => ({ id: i.id, name: i.name, equipped: !!i.system?.equipped }));
+}
+
+function weaponPickerHtml(weapons) {
+  if (!weapons.length) {
+    return `<div class="hw-choice-desc fb-shop-noweapon">Рукопашного не-психосилового оружия у персонажа нет —
+      свойства применятся ко всему надетому оружию, как раньше. Выберите оружие и манифестируйте заново,
+      если так не задумано.</div>`;
+  }
+  const opts = weapons.map(w =>
+    `<option value="${esc(w.id)}"${w.equipped ? " selected" : ""}>${esc(w.name)}${w.equipped ? "" : " (не надето)"}</option>`).join("");
+  return `<div class="weapon-row fb-shop-weapon-row">
+    <label class="wr-label" title="Психосила накладывается на ОДНО оружие — книга: «оно получает свойство Force»">На какое оружие</label>
+    <select class="fb-shop-weapon wr-select-sm">${opts}</select>
+  </div>`;
+}
+
+function shopDialogHtml(maxSuccesses, weapons = []) {
   const tiers = [1, 2, 3, 4, 5].map(t => `
     <fieldset class="fb-shop-tier">
       <legend>${t} У.</legend>
@@ -87,6 +118,7 @@ function shopDialogHtml(maxSuccesses) {
       Успехов психотеста: <b>${maxSuccesses}</b>. Force уже добавится безусловно —
       выберите дополнительные свойства, потратив Успехи (1-5 за штуку).
     </div>
+    ${weaponPickerHtml(weapons)}
     ${tiers}
     <div class="fb-shop-summary">Потрачено: <span class="fb-shop-spent">0</span> из ${maxSuccesses}
       — осталось: <span class="fb-shop-left">${maxSuccesses}</span></div>
@@ -109,36 +141,37 @@ function wireShopDialog(h, maxSuccesses) {
 function readShopDialog(h) {
   const ids = [];
   h.find(".fb-shop-cb:checked").each((_, el) => ids.push(el.dataset.id));
-  return ids;
+  return { ids, weaponId: h.find(".fb-shop-weapon").val() || "" };
 }
 
 /**
  * @param {number} maxSuccesses  Успехи психотеста манифестации.
- * @returns {Promise<string[]|null>}  выбранные id или null (закрыли без выбора)
+ * @param {Array<{id:string,name:string,equipped:boolean}>} weapons  на что накладывать
+ * @returns {Promise<{ids:string[],weaponId:string}|null>}  выбор или null (перебор Успехов)
  */
-export function promptForceBladeShop(maxSuccesses) {
+export function promptForceBladeShop(maxSuccesses, weapons = []) {
   return new Promise(resolve => {
     let done = false;
     new Dialog({
       title: "Force Blade: свойства оружия",
-      content: shopDialogHtml(maxSuccesses),
+      content: shopDialogHtml(maxSuccesses, weapons),
       buttons: {
         ok: {
           icon: '<i class="fas fa-check"></i>', label: "Применить",
           callback: h => {
             if (done) return; done = true;
-            const ids = readShopDialog(h);
-            if (forceBladeShopCost(ids) > maxSuccesses) {
+            const picked = readShopDialog(h);
+            if (forceBladeShopCost(picked.ids) > maxSuccesses) {
               ui.notifications.warn("Выбрано больше свойств, чем позволяют Успехи — ничего не применено.");
               resolve(null);
-            } else resolve(ids);
+            } else resolve(picked);
           }
         },
-        cancel: { label: "Только Force", callback: () => { if (!done) { done = true; resolve([]); } } }
+        cancel: { label: "Только Force", callback: h => { if (!done) { done = true; resolve({ ids: [], weaponId: h?.find?.(".fb-shop-weapon")?.val?.() || "" }); } } }
       },
       default: "ok",
       render: h => wireShopDialog(h, maxSuccesses),
-      close: () => { if (!done) { done = true; resolve([]); } }
+      close: () => { if (!done) { done = true; resolve({ ids: [], weaponId: "" }); } }
     }, { classes: ["dialog", "warhammer-dbc", "wh-holo", "hw-choice-dialog", "fb-shop-dialog"], width: 420 }).render(true);
   });
 }
@@ -149,8 +182,9 @@ export function promptForceBladeShop(maxSuccesses) {
  * (module/sheets/tabs/psychic.mjs), только для success && item.system.hasWeaponShop.
  */
 export async function runForceBladeShop(item, successes) {
-  const ids = await promptForceBladeShop(Math.max(0, Number(successes) || 0));
-  const picked = ids ?? [];
-  const result = forceBladeShopUpdate(picked, successes) ?? forceBladeShopUpdate([], successes);
+  const weapons = meleeWeaponChoices(item?.parent);
+  const picked = await promptForceBladeShop(Math.max(0, Number(successes) || 0), weapons);
+  const result = forceBladeShopUpdate(picked?.ids ?? [], successes, picked?.weaponId ?? "")
+              ?? forceBladeShopUpdate([], successes, picked?.weaponId ?? "");
   await item.update({ "system.effects.weaponBuff": result.weaponBuff });
 }

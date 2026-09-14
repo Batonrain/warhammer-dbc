@@ -40,7 +40,7 @@
 // запас (Стервятник/Глас Божий), если он у актора тоже есть прямо сейчас.
 
 import { hasRuleFlag } from "./flags.mjs";
-import { tempInfamyAmount, grantTempInfamy, spendTempInfamy } from "./temp-infamy.mjs";
+import { tempInfamyInfo, grantTempInfamy, spendTempInfamy } from "./temp-infamy.mjs";
 
 const CAPABILITY = "gift.slaanesh.eyeOfEnvy";
 
@@ -54,30 +54,65 @@ export function eyeOfEnvyTriggers(actor, targetActor, charKey) {
   return theirs > mine;
 }
 
+/** Подпись источника во временном запасе — по ней и только по ней Очко
+ *  этого Дара отличается от чужих одновременно висящих (Стервятник/Глас
+ *  Божий делят с ним один флаг на актора). */
+export const EYE_OF_ENVY_SOURCE = "Дар Слаанеш «Око Зависти»";
+
 /**
  * Оборачивает один бросок (атака/встречный тест): при совпадении выдаёт
- * временное Очко Бесчестия ДО броска и снимает его ПОСЛЕ, если персонаж его
- * не потратил, — независимо от исхода (попал/промазал, заклинило и т.п.,
- * roll всё равно считается «отыгранным»). `roll` — асинхронная функция
+ * временное Очко Бесчестия ПЕРЕД броском. `roll` — асинхронная функция
  * самого броска, вызывается ровно один раз, её результат прокидывается как
  * есть.
+ *
+ * ПОЧЕМУ ОЧКО НЕ СНИМАЕТСЯ ЗДЕСЬ ЖЕ. Сначала было наоборот: грант до броска
+ * и снятие в `finally`. На настоящем пути (sheets/attack/dialog.mjs) внутри
+ * `roll` сидит `_executeAttackRoll` — она не спрашивает игрока ни о чём:
+ * катает кубик, собирает карточку, постит её и возвращается. А все траты
+ * Бесчестия на атаку (Переброс, +10 из контекстного меню карточки —
+ * hooks.mjs::_attachFateContextMenu) происходят ПОСЛЕ, когда `finally` уже
+ * отработал. То есть Очко появлялось и исчезало между двумя строчками кода,
+ * и Дар не делал ничего вовсе (приём стопки #478-#481, 14.09.2026).
+ *
+ * Поэтому Очко живёт до ВНЕШНЕГО триггера — ровно как у Стервятника
+ * (combat/vulture.mjs): следующая сработавшая атака сменяет его своим,
+ * конец боя снимает (clearEyeOfEnvyInfamy в hooks.mjs::deleteCombat).
  */
 export async function withEyeOfEnvy(actor, targetActor, charKey, roll) {
-  const triggered = eyeOfEnvyTriggers(actor, targetActor, charKey);
-  if (triggered) {
+  if (eyeOfEnvyTriggers(actor, targetActor, charKey)) {
+    // Своё прошлое Очко снимаем перед выдачей нового, чтобы они не копились
+    // от атаки к атаке; чужой висящий temp при этом не трогаем.
+    await clearEyeOfEnvyInfamy(actor);
     await grantTempInfamy(actor, 1, {
-      source: "Дар Слаанеш «Око Зависти»",
-      restriction: "теряется, если не потрачено до конца этой атаки"
+      source: EYE_OF_ENVY_SOURCE,
+      restriction: "на эту атаку: Переброс/Усиление из меню карточки; теряется в конце боя"
     });
   }
-  const before = triggered ? tempInfamyAmount(actor) : 0;
-  try {
-    return await roll();
-  } finally {
-    // > before-1, а не !==0: если между грантом и этой строкой запас успел
-    // подрасти (другой источник добавил свой temp), лишнее чужое трогать
-    // нельзя — списываем СТРОГО 1, и только если моё Очко физически ещё там
-    // (амаунт не опустился ниже уровня сразу после гранта).
-    if (triggered && tempInfamyAmount(actor) >= before) await spendTempInfamy(actor, 1);
+  return roll();
+}
+
+/**
+ * Снимает Очко ИМЕННО этого Дара, если оно висит.
+ *
+ * Снимается ровно ОДНА единица, а не весь запас: `grantTempInfamy` складывает
+ * числа в один флаг на актора и перезаписывает подпись источника, так что под
+ * подписью «Око Зависти» могут лежать и чужие Очки (Стервятник, Глас Божий),
+ * выданные раньше. Своё Око выдаёт не больше одного за раз и снимает прежнее
+ * перед новым, поэтому «минус один» — точная цифра, а `clearTempInfamy()`
+ * стёр бы чужое заодно.
+ *
+ * Обратная сторона того же общего флага: если ПОСЛЕ Ока Очко выдал другой
+ * источник, подпись станет чужой и снятие не сработает — Очко Ока доживёт до
+ * конца боя. Это ограничение самого примитива (rules/temp-infamy.mjs), а не
+ * этого Дара; лучше лишнее Очко у игрока, чем стёртое чужое.
+ */
+export async function clearEyeOfEnvyInfamy(actor) {
+  if (tempInfamyInfo(actor)?.source === EYE_OF_ENVY_SOURCE) await spendTempInfamy(actor, 1);
+}
+
+/** Конец боя — снять Очко у всех участников (hooks.mjs::deleteCombat). */
+export async function clearEyeOfEnvyOnCombatEnd(combat) {
+  for (const combatant of combat?.combatants ?? []) {
+    if (combatant.actor) await clearEyeOfEnvyInfamy(combatant.actor);
   }
 }

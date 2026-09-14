@@ -6,7 +6,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, afterEach } from "vitest";
-import { dayNumber, expiredTheftEntries, devourerPermanentRules, DAY }
+import { dayNumber, expiredTheftEntries, devourerPermanentRules, devouredSkillRank, DAY }
   from "../../module/rules/devourer-of-knowledge.mjs";
 import { resolveAptitudeOverride } from "../../module/rules/aptitude-overrides.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
@@ -89,5 +89,43 @@ describe("devourerPermanentRules — сквозная проверка чере�
     clearRuleSources();
     registerRuleSource("test", a => devourerPermanentRules(a));
     expect(resolveAptitudeOverride(actor, "skill", "Медика")).toBeNull();
+  });
+});
+
+// Приём стопки #478-#481 (14.09.2026). Арифметика Ступеней жила внутри
+// kind:"script" записи пака, где её не видел ни один тест, и ошибалась молча:
+// перманентная кража стирала Навык у жертвы НАВСЕГДА и выдавала чемпиону
+// «не изучен».
+describe("devouredSkillRank — какая Ступень достаётся чемпиону", () => {
+  // В ветку перманентной кражи попадают только когда вчерашняя временная
+  // кража ещё жива, то есть Ступень жертвы ПРЯМО СЕЙЧАС уже "untrained".
+  it("перманентная кража берёт Ступень ДО кражи, а не обнулённую текущую", () => {
+    const prev = { victimPrevRank: "trained", lastDay: 8, streak: 9 };
+    expect(devouredSkillRank(prev, "untrained", "untrained"))
+      .toEqual({ stolen: "trained", gained: "trained" });
+  });
+
+  it("без записи прошлой кражи берётся текущая Ступень жертвы", () => {
+    expect(devouredSkillRank(null, "veteran", "untrained"))
+      .toEqual({ stolen: "veteran", gained: "veteran" });
+  });
+
+  // «Получить один из Навыков жертвы на том же уровне изучения», а не
+  // «обменяться»: своя Ступень, если она выше, не понижается.
+  it("собственная Ступень выше украденной — остаётся своя", () => {
+    expect(devouredSkillRank(null, "trained", "veteran").gained).toBe("veteran");
+  });
+
+  it("собственная Ступень ниже украденной — берётся украденная", () => {
+    expect(devouredSkillRank(null, "veteran", "trained").gained).toBe("veteran");
+  });
+
+  it("равные Ступени — ничего не меняется", () => {
+    expect(devouredSkillRank(null, "trained", "trained").gained).toBe("trained");
+  });
+
+  it("пустые значения не роняют расчёт", () => {
+    expect(devouredSkillRank(null, undefined, undefined))
+      .toEqual({ stolen: "untrained", gained: "untrained" });
   });
 });

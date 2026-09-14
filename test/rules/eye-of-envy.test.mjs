@@ -8,7 +8,7 @@
 
 import "../support/foundry-stub.mjs";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { eyeOfEnvyTriggers, withEyeOfEnvy } from "../../module/rules/eye-of-envy.mjs";
+import { eyeOfEnvyTriggers, withEyeOfEnvy, clearEyeOfEnvyOnCombatEnd } from "../../module/rules/eye-of-envy.mjs";
 import { tempInfamyAmount, grantTempInfamy, spendTempInfamy } from "../../module/rules/temp-infamy.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
 
@@ -94,7 +94,11 @@ describe("withEyeOfEnvy", () => {
   const strongerTarget = { system: { characteristics: { ws: charOf(50) } } };
   const weaker = () => flagActor({ system: { characteristics: { ws: charOf(30) } } });
 
-  it("совпало — выдаёт временное Очко на время броска и снимает его после, если не потрачено", async () => {
+  // Раньше тест требовал, чтобы Очко ПРОПАДАЛО сразу после `roll()` — и
+  // именно это делало Дар бесполезным: внутри `roll` на настоящем пути сидит
+  // неинтерактивная `_executeAttackRoll`, а тратят Бесчестие уже из меню
+  // готовой карточки, то есть позже. Очко обязано пережить бросок.
+  it("совпало — Очко выдано ДО броска и остаётся доступным ПОСЛЕ него", async () => {
     const a = weaker();
     let seenDuringRoll = -1;
     const result = await withEyeOfEnvy(a, strongerTarget, "ws", async () => {
@@ -102,15 +106,29 @@ describe("withEyeOfEnvy", () => {
       return "rolled";
     });
     expect(result).toBe("rolled");
-    expect(seenDuringRoll).toBe(1); // доступно ВО ВРЕМЯ броска
-    expect(tempInfamyAmount(a)).toBe(0); // и пропало после
+    expect(seenDuringRoll).toBe(1);
+    expect(tempInfamyAmount(a)).toBe(1);   // доступно для Переброса/+10 из карточки
   });
 
-  it("персонаж потратил Очко во время броска — после ничего лишнего не снимает", async () => {
+  it("персонаж потратил Очко — второй раз оно не появляется само", async () => {
     const a = weaker();
-    await withEyeOfEnvy(a, strongerTarget, "ws", async () => {
-      await spendTempInfamy(a, 1); // тот же путь, что и обычная трата Бесчестия
-    });
+    await withEyeOfEnvy(a, strongerTarget, "ws", async () => "ok");
+    await spendTempInfamy(a, 1);           // тот же путь, что и обычная трата Бесчестия
+    expect(tempInfamyAmount(a)).toBe(0);
+  });
+
+  it("Очки не копятся от атаки к атаке — новая сработавшая атака сменяет прежнее", async () => {
+    const a = weaker();
+    await withEyeOfEnvy(a, strongerTarget, "ws", async () => "ok");
+    await withEyeOfEnvy(a, strongerTarget, "ws", async () => "ok");
+    await withEyeOfEnvy(a, strongerTarget, "ws", async () => "ok");
+    expect(tempInfamyAmount(a)).toBe(1);
+  });
+
+  it("конец боя снимает Очко у всех участников", async () => {
+    const a = weaker();
+    await withEyeOfEnvy(a, strongerTarget, "ws", async () => "ok");
+    await clearEyeOfEnvyOnCombatEnd({ combatants: [{ actor: a }] });
     expect(tempInfamyAmount(a)).toBe(0);
   });
 
@@ -122,18 +140,21 @@ describe("withEyeOfEnvy", () => {
     expect(tempInfamyAmount(a)).toBe(2); // чужой запас цел
   });
 
-  it("совпало, но у актора уже был ЧУЖОЙ temp-запас — снимает СВОЮ 1 единицу, не весь чужой", async () => {
+  it("у актора уже был ЧУЖОЙ temp-запас — своё Очко добавляется к нему, чужое цело", async () => {
     const a = weaker();
-    await grantTempInfamy(a, 2, { source: "Voice of God" }); // чужой запас ДО броска Ока Зависти
+    await grantTempInfamy(a, 2, { source: "Voice of God" }); // чужой запас ДО атаки
     await withEyeOfEnvy(a, strongerTarget, "ws", async () => "ok");
-    // 2 (чужих) + 1 (моё) − 1 (моё же снято после) = 2, чужие целы
+    expect(tempInfamyAmount(a)).toBe(3);
+    // Конец боя снимает РОВНО своё Очко, чужие два остаются: общий флаг один
+    // на актора, и clearTempInfamy() стёр бы чужое заодно.
+    await clearEyeOfEnvyOnCombatEnd({ combatants: [{ actor: a }] });
     expect(tempInfamyAmount(a)).toBe(2);
   });
 
-  it("бросок падает — временный запас всё равно снимается (finally)", async () => {
+  it("бросок упал — Очко остаётся: атака состоялась, снимет её конец боя", async () => {
     const a = weaker();
     await expect(withEyeOfEnvy(a, strongerTarget, "ws", async () => { throw new Error("бросок сломался"); }))
       .rejects.toThrow("бросок сломался");
-    expect(tempInfamyAmount(a)).toBe(0);
+    expect(tempInfamyAmount(a)).toBe(1);
   });
 });

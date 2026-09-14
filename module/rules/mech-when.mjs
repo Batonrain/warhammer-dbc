@@ -195,11 +195,17 @@ const normSpec = s => String(s ?? "").trim().toLowerCase();
  * отдельная реализация «есть ли у актора такой-то Талант» в кодовой базе
  * (после mechanics.mjs::actorMeetsReq, elite-requirements.mjs::entryOk и
  * talent-requirements.mjs::hasTalent, все три уже сведены на itemsNamed).
- * Специализация сравнивается тем же способом, что у talent-requirements.mjs
- * ::hasTalent — подстрокой (norm+includes), а не строгим равенством, и с тем
- * же запасным вариантом «специализация записана в скобках прямо в имени
- * предмета» (Резчик по Плоти хранит специализацию так у части старых
- * записей) — не заводить третий вариант сравнения там, где уже есть один.
+ * Специализация сравнивается СТРОГО, но в двух местах: поле
+ * `system.specialization` и скобки прямо в имени предмета (Резчик по Плоти
+ * хранит специализацию так у части старых записей).
+ *
+ * Подстрочное сравнение (norm+includes), как в talent-requirements.mjs::
+ * hasTalent, здесь НЕ годится, хотя выглядит как единообразие. Там разбирается
+ * книжная строка требований — заведомо неточный человеческий текст, и мягкость
+ * уместна. Здесь специализацию выбирает автор записи Конструктора из поля, и
+ * он вправе ждать точного совпадения: при `includes` условие «работает только
+ * с Мастерством (Мечи)» срабатывало бы и у того, у кого записано «Мечи и
+ * Топоры», то есть бонус включался бы там, где книга его не даёт.
  */
 function hasTalentSpec(actor, name, specialization) {
   const want = normSpec(specialization);
@@ -207,7 +213,7 @@ function hasTalentSpec(actor, name, specialization) {
   return hits.some(i => {
     const itemSpec = normSpec(i?.system?.specialization || "");
     const inName    = normSpec((/\(([^)]*)\)/.exec(normSpec(i?.name)) || [])[1] || "");
-    return itemSpec.includes(want) || inName.includes(want);
+    return itemSpec === want || inName === want;
   });
 }
 

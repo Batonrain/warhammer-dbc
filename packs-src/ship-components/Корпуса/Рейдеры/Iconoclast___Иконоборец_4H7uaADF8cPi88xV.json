@@ -24,7 +24,7 @@
       }
     ],
     "hull": {
-      "spaceMax": 36,
+      "spaceMax": 32,
       "powerGen": 0,
       "turnArc": "90°",
       "weaponCapacity": "НП2",

@@ -39,11 +39,36 @@ describe("wingPositionShieldUpdate", () => {
     });
   });
 
-  it("без переданных рейтингов — не падает, подставляет 0", () => {
+  // Прежний тест требовал здесь ratingMax: 0 — и закреплял потерю данных.
+  // Штатный порядок действий навязан самим листом: поля книжных рейтингов
+  // раньше показывались ТОЛЬКО после выбора положения, то есть первый же
+  // выбор писал ноль поверх уже выставленного рейтинга, и вернуть прежнее
+  // число было нечем (приём стопки #478-#481, 14.09.2026).
+  it("рейтинг положения не заполнен — ratingMax не трогается вовсе", () => {
     expect(wingPositionShieldUpdate("folded")).toEqual({
-      "system.shield.wingPosition": "folded",
-      "system.shield.ratingMax": 0,
-      "system.shield.enabled": true
+      "system.shield.wingPosition": "folded"
     });
+    expect(wingPositionShieldUpdate("wrapped", { wingRatingFolded: 75 })).toEqual({
+      "system.shield.wingPosition": "wrapped"
+    });
+  });
+
+  // Бросок щита катается против currentRating (combat/shield.mjs), а тот
+  // заполняется из ratingMax только при ВКЛЮЧЕНИИ щита. Без синхронизации
+  // лист показывал новое число, а кубик катился против старого.
+  it("щит включён — смена положения меняет и текущий рейтинг, не только максимум", () => {
+    expect(wingPositionShieldUpdate("wrapped",
+      { wingRatingFolded: 75, wingRatingWrapped: 40, status: "active" })).toEqual({
+      "system.shield.wingPosition": "wrapped",
+      "system.shield.ratingMax": 40,
+      "system.shield.enabled": true,
+      "system.shield.currentRating": 40
+    });
+  });
+
+  it("щит выключен — текущий рейтинг не выставляется (его задаст включение)", () => {
+    expect(wingPositionShieldUpdate("wrapped",
+      { wingRatingWrapped: 40, status: "inactive" }))
+      .not.toHaveProperty("system.shield.currentRating");
   });
 });
