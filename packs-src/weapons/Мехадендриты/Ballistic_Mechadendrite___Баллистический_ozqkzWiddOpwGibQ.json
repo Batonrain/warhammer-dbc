@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Бионика и кибернетика», стр. 277)",
     "availability": 2,
     "weight": 3,
     "attackBonus": 0,
@@ -62,7 +63,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "ozqkzWiddOpwGibQ",
   "img": "systems/warhammer-dbc/assets/item-icons/mechadendrite.svg",

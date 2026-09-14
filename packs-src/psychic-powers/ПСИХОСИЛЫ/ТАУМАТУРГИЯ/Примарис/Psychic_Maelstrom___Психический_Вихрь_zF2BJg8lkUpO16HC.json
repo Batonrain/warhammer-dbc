@@ -23,7 +23,11 @@
     "damage": "2d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "spray"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +50,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Примарис» стр. 297)"
   },
   "_id": "zF2BJg8lkUpO16HC",
   "effects": [],

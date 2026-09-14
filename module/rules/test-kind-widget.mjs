@@ -155,7 +155,7 @@ export function diceModeHtml() {
  *   theirsName:string, theirs:{threshold:number,roll:number},
  *   result:{winner:"mine"|"theirs"|null, margin:number}}} p
  */
-export function opposedComparisonHtml({ label, mineName, mine, theirsName, theirs, result }) {
+export function opposedComparisonHtml({ label, mineName, mine, theirsName, theirs, result, theirsNote = "" }) {
   const winnerName = result.winner === "mine" ? mineName : result.winner === "theirs" ? theirsName : null;
   const winnerHtml = winnerName
     ? `Побеждает <b>${esc(winnerName)}</b>, margin <b>${result.margin}</b>`
@@ -165,6 +165,7 @@ export function opposedComparisonHtml({ label, mineName, mine, theirsName, their
       <div class="roll-header">⚔ Встречный тест: ${esc(label)}</div>
       <div class="roll-threshold">${esc(mineName)}: Порог <b>${mine.threshold}</b>, бросок <b>${mine.roll}</b></div>
       <div class="roll-threshold">${esc(theirsName)}: Порог <b>${theirs.threshold}</b>, бросок <b>${theirs.roll}</b></div>
+      ${theirsNote}
       <div class="roll-outcome">${winnerHtml}</div>
     </div>`;
 }

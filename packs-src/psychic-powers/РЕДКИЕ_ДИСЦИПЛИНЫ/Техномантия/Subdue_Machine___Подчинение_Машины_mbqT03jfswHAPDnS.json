@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "s",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Техномантия» стр. 356)"
   },
   "_id": "mbqT03jfswHAPDnS",
   "effects": [],

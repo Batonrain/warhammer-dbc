@@ -90,6 +90,11 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
   get actor() { return game.actors.get(this.actorId); }
   get title() { return `Хирургеон — имплантация — ${this.actor?.name || ""}`; }
 
+  async close(options) {
+    if (_surgeons.get(this.actorId) === this) _surgeons.delete(this.actorId);
+    return super.close(options);
+  }
+
   async _library() {
     if (this._lib) return this._lib;
     let docs = [];
@@ -299,9 +304,15 @@ export class SurgeonWindow extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 }
 
+// Одно окно Хирургеона на актора — та же схема, что у XpLogApp
+// (module/apps/xp-log.mjs): повторный вызов поднимает уже открытое окно, а
+// не плодит второй экземпляр с тем же DOM id (`wh-surgeon-${actor.id}`).
+const _surgeons = new Map();
+
 export function openSurgeon(actor) {
   if (!actor) return null;
-  const app = new SurgeonWindow(actor);
+  let app = _surgeons.get(actor.id);
+  if (!app) { app = new SurgeonWindow(actor); _surgeons.set(actor.id, app); }
   app.render(true);
   return app;
 }

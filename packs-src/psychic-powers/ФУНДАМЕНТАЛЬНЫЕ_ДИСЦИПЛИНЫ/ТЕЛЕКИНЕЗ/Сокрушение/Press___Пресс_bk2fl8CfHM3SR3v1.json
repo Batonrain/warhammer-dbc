@@ -23,7 +23,15 @@
     "damage": "PRd10",
     "damageType": "impact",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "snare",
+        "rating": "ceil(PR/2)"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -48,7 +56,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телекинез — Сокрушение» стр. 313)"
   },
   "_id": "bk2fl8CfHM3SR3v1",
   "effects": [],

@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 213)",
     "availability": 4,
     "weight": 1,
     "attackBonus": 0,
@@ -70,7 +71,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Посох"
+    "meleeCategory": "Посох",
+    "damageSubtype": "crushing"
   },
   "_id": "ghJXJE2Wz1ppNkGl",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-staff.svg",

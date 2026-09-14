@@ -11,7 +11,7 @@
 // beastman-shaman.mjs::applyHexMarkedPrey, метка лежит на ЦЕЛИ
 // (flags.warhammer-dbc.hexMarkedPrey={shamanUuid,god}). Здесь — только
 // СЛЕДСТВИЕ метки: правило со статичным when, тем же образцом, что Avatar
-// of Slaughter (rules/library/avatar-of-slaughter.mjs) — предикат читает
+// of Slaughter (rules/library/core.mjs::avatarOfSlaughter.penalty) — предикат читает
 // флаг через ctx.targetActor (кто ЦЕЛЬ текущего теста Атаки), не сам actor.
 // «Союзники-зверолюди» — раса effectiveRace(actor.system)==="beastman"
 // (rules/race.mjs), не проверка disposition/фракции: predicates.mjs не

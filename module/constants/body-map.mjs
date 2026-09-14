@@ -33,11 +33,11 @@ const IMPLANT_KINDS = [
   { kind: "leg",
     re: /\bleg\b|нога|ноги|ногу|ноге|tracked|гусениц|digitigrad|дигитигр|all-?terrain|вездеход|talon|коготь птер|птераксии|arachnid|арахнид|serpentine|серпентин|repulsor|репульсор/i },
   { kind: "skeleton",
-    re: /skeletal|скелет|petrifaction|petrif|укреплен|spined|шипаст|reinforced skel|усиленн\w* скелет|flexible skel|гибк\w* скелет|joint reconfig|реконфиг сустав|\bbone\b|кост(ь|и|ей|ный)|adamant|адамант|sicarian efm|сикарианск|оссмодул|ossmodul/i },
+    re: /skeletal|скелет|petrifaction|petrif|укреплен|spined|шипаст|reinforced skel|усиленн[а-яё]* скелет|flexible skel|гибк[а-яё]* скелет|joint reconfig|реконфиг сустав|\bbone\b|кост(ь|и|ей|ный)|adamant|адамант|sicarian efm|сикарианск|оссмодул|ossmodul/i },
   { kind: "skin",
-    re: /subdermal|подкожн|voidskin|пустотн\w* кож|synthmusc|синтемускул|\bdermal\b|slime skin|слизист\w* кож|scale skin|чешу|skin mite|кожн\w* параз|membrane|мембран|reconstructor|реконструктор|меланохром|melanochrom|мукраноид|mucranoid/i },
+    re: /subdermal|подкожн|voidskin|пустотн[а-яё]* кож|synthmusc|синтемускул|\bdermal\b|slime skin|слизист[а-яё]* кож|scale skin|чешу|skin mite|кожн[а-яё]* параз|membrane|мембран|reconstructor|реконструктор|меланохром|melanochrom|мукраноид|mucranoid/i },
   { kind: "torso",
-    re: /carapace|панцирь|war plate|латы|mantle|мантия|rib|рёбр|ребр|torso|тулов|\bbody\b|тело|internal|внутрен|bio-monitor|биомонитор|gastral|гастрал|sucroregul|сахарорег|waste proc|обработк\w* отход|бископе|biscopea|преомнор|preomnor|омофаге|omophage|оолитическ|oolitic|прогеноид|progenoid/i },
+    re: /carapace|панцирь|war plate|латы|mantle|мантия|rib|рёбр|ребр|torso|тулов|\bbody\b|тело|internal|внутрен|bio-monitor|биомонитор|gastral|гастрал|sucroregul|сахарорег|waste proc|обработк[а-яё]* отход|бископе|biscopea|преомнор|preomnor|омофаге|omophage|оолитическ|oolitic|прогеноид|progenoid/i },
 ];
 
 /**
@@ -573,10 +573,10 @@ function gTreads(x, y, color) {
 }
 // Библиотека адд-онов: {re, kinds, fn(ctx)}. ctx={name,side,color,anchor}.
 const ADDON_LIB = [
-  { re: /iron fist|железн\w* кулак/i,                 kinds: ["arm"], fn: c => gFist(c.anchor[0], c.anchor[1], c.color) },
-  { re: /blade tine|когт.?-?лезв|neural tine|нейральн\w* когт/i, kinds: ["arm"], fn: c => gClaws(c.anchor[0], c.anchor[1], c.color) },
-  { re: /рука-?оружие|weapon\)|weapon arm|встроен\w* оруж|интегрир\w* оруж/i, kinds: ["arm"], fn: c => gGun(c.anchor[0], c.anchor[1], c.side, c.color) },
-  { re: /weapon brace|оружейн\w* зажим/i,             kinds: ["arm"], fn: c => gGun(c.anchor[0], c.anchor[1], c.side, c.color) },
+  { re: /iron fist|железн[а-яё]* кулак/i,                 kinds: ["arm"], fn: c => gFist(c.anchor[0], c.anchor[1], c.color) },
+  { re: /blade tine|когт.?-?лезв|neural tine|нейральн[а-яё]* когт/i, kinds: ["arm"], fn: c => gClaws(c.anchor[0], c.anchor[1], c.color) },
+  { re: /рука-?оружие|weapon\)|weapon arm|встроен[а-яё]* оруж|интегрир[а-яё]* оруж/i, kinds: ["arm"], fn: c => gGun(c.anchor[0], c.anchor[1], c.side, c.color) },
+  { re: /weapon brace|оружейн[а-яё]* зажим/i,             kinds: ["arm"], fn: c => gGun(c.anchor[0], c.anchor[1], c.side, c.color) },
   { re: /scribe|писар/i,                              kinds: ["arm"], fn: c => gStylus(c.anchor[0], c.anchor[1], c.color) },
   { re: /tracked|гусениц/i,                           kinds: ["leg"], fn: c => gTreads(c.anchor[0], c.anchor[1], c.color) },
   { re: /talon|коготь птер|птераксии|blade|лезв/i,    kinds: ["leg"], fn: c => gClaws(c.anchor[0], c.anchor[1], c.color) },
@@ -901,11 +901,11 @@ function gCooler(x, y, c) {
 
 // re → {anchor [x,y], fn}. Особые импланты. Остальные «Прочее» → gModule (столбиком).
 const SPECIAL_LIB = [
-  { re: /filtration|фильтрац|air filt|воздушн\w* фильтр|rebreather|ребризер/i, a: [230, 200], fn: gFilter },
-  { re: /injector|инжектор|inject|стим|combat drug|боев\w* препарат|dispenser|диспенсер/i, a: [292, 232], fn: gInjector },
+  { re: /filtration|фильтрац|air filt|воздушн[а-яё]* фильтр|rebreather|ребризер/i, a: [230, 200], fn: gFilter },
+  { re: /injector|инжектор|inject|стим|combat drug|боев[а-яё]* препарат|dispenser|диспенсер/i, a: [292, 232], fn: gInjector },
   { re: /vox|вокс|voice|голосов|speaker|динамик|hailer/i,      a: [222, 128], fn: gVox },
   { re: /auspex|ауспик|sensor|сенсор|scanner|сканер|detect|детект/i, a: [280, 140], fn: gAuspex },
-  { re: /memory|памят|data ?store|хранилищ\w* данн|archive|архив|lexi|лекси/i, a: [232, 130], fn: gArchive },
+  { re: /memory|памят|data ?store|хранилищ[а-яё]* данн|archive|архив|lexi|лекси/i, a: [232, 130], fn: gArchive },
   { re: /gyro|гиро|stabiliz|стабилиз|balance|равновес|vestib|вестибул/i, a: [268, 176], fn: gGyro },
   { re: /pump|насос|circulat|кровообращ|haemo|гемо/i,          a: [214, 210], fn: gPump },
   { re: /exoskelet|экзоскелет|frame|каркас|brace|корсет|support|поддержк/i, a: [206, 190], fn: gExo },
@@ -919,19 +919,19 @@ const SPECIAL_LIB = [
   { re: /subskin|подкожн|armour plat|бронеплас|carapace|панцирн/i, a: [286, 176], fn: gPlate },
   { re: /reactor|реактор|power plant|энергоблок|generator|генератор/i, a: [250, 232], fn: gReactor },
   { re: /optic|оптик|magnocular|магнокул|augmetic eye|окулярн/i, a: [274, 96],  fn: gLens },
-  { re: /hidden blade|скрыт\w* клинок|retractable|выдвижн/i, a: [292, 214], fn: gBladeSm },
+  { re: /hidden blade|скрыт[а-яё]* клинок|retractable|выдвижн/i, a: [292, 214], fn: gBladeSm },
   { re: /smuggl|контрабанд|hidden compart|тайник|cache|схрон/i, a: [214, 236], fn: gCache },
-  { re: /internal battery|внутрен\w* батар/i,          a: [250, 188], fn: gBattery },
+  { re: /internal battery|внутрен[а-яё]* батар/i,          a: [250, 188], fn: gBattery },
   { re: /bio-?monitor|био-?монитор/i,                  a: [238, 200], fn: gMonitor },
-  { re: /sonic shrieker|звуков\w* крикун|крикун/i,     a: [250, 120], fn: gWaves },
+  { re: /sonic shrieker|звуков[а-яё]* крикун|крикун/i,     a: [250, 120], fn: gWaves },
   { re: /vox-?bead|вокс-?бус/i,                         a: [266, 110], fn: gAntenna },
   { re: /pheromone|феромон/i,                           a: [250, 218], fn: gEmit },
-  { re: /waste proc|обработк\w* отход/i,                a: [250, 278], fn: gTank },
+  { re: /waste proc|обработк[а-яё]* отход/i,                a: [250, 278], fn: gTank },
   { re: /gastral|гастрал/i,                             a: [238, 246], fn: gStomach },
   { re: /sucroregul|сахарорег/i,                        a: [270, 244], fn: gModule },
   { re: /pain ward|болеогражд/i,                        a: [250, 162], fn: gShield },
   { re: /autosangu|автосангв/i,                         a: [250, 206], fn: gDrop },
-  { re: /interface port|интерфейсн\w* порт|\bmiu\b|миу|neuroconnector|нейроконнектор|servo-?shunt|серво-?шунт/i, a: [264, 108], fn: gSocket },
+  { re: /interface port|интерфейсн[а-яё]* порт|\bmiu\b|миу|neuroconnector|нейроконнектор|servo-?shunt|серво-?шунт/i, a: [264, 108], fn: gSocket },
   { re: /reconstructor|реконструктор/i,                a: [250, 98],  fn: gMaskFace },
 ];
 

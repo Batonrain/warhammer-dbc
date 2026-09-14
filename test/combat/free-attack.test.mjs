@@ -8,10 +8,10 @@
 
 import "../support/foundry-stub.mjs";
 import { resetCaptured, captured } from "../support/foundry-stub.mjs";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   enemyContactTokenDocs, processTokenMove, offerFreeAttack,
-  resolveFreeAttackClick, FREE_ATTACK_CAPABILITY
+  resolveFreeAttackClick, initFreeAttackHooks, FREE_ATTACK_CAPABILITY
 } from "../../module/combat/free-attack.mjs";
 
 const HOSTILE = -1, FRIENDLY = 1;
@@ -206,5 +206,97 @@ describe("resolveFreeAttackClick: клик по кнопке в чате", () =>
 
     expect(captured.warnings.some(w => w.includes("уже потрачена"))).toBe(true);
     expect(reactor.system.reactions.value).toBe(1);
+  });
+});
+
+// wdbc-8zi (п.7 и п.3): раньше проверялась только логика, которую зовут
+// колбэки initFreeAttackHooks (processTokenMove выше), не сама подписка на
+// Hooks.on — Hooks.on в foundry-stub.mjs no-op, поэтому колбэки ловятся
+// локальным перехватчиком (тот же приём, что в regions/
+// scene-live-recalc.test.mjs). Заодно закрывает п.3: протухание записи по
+// TTL и очистка на deleteToken — до этих тестов у обеих веток не было ни
+// одной проверки.
+describe("initFreeAttackHooks: подписка на Foundry-хуки", () => {
+  let handlers;
+  beforeEach(() => {
+    handlers = {};
+    globalThis.Hooks.on = (name, fn) => { (handlers[name] ??= []).push(fn); };
+    globalThis.game.user = { id: "u1" };
+    initFreeAttackHooks();
+  });
+
+  function fire(name, ...args) {
+    return Promise.all((handlers[name] || []).map(fn => fn(...args)));
+  }
+
+  it("регистрирует preUpdateToken/updateToken/deleteToken", () => {
+    expect(handlers.preUpdateToken?.length).toBe(1);
+    expect(handlers.updateToken?.length).toBe(1);
+    expect(handlers.deleteToken?.length).toBe(1);
+  });
+
+  it("полный цикл через хуки — разрыв контакта предлагает Свободную атаку", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    // Реагирующий (кто теряет контакт) должен реально мочь потратить Реакцию —
+    // isEncounterActive() уже true (game.combat.started), поэтому
+    // canSpendReaction смотрит на настоящие system.reactions (тот же приём,
+    // что у resolveFreeAttackClick выше).
+    const enemyActor = fakeActor({
+      type: "character", uuid: "Actor.enemy", name: "Культист",
+      reactions: { value: 1, max: 1, defenseValue: 0, defenseMax: 0 }
+    });
+    const enemy = token({ id: "e", x: 2, y: 0, disposition: HOSTILE, actor: enemyActor, name: "Культист" });
+    const mover = token({ id: "m", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }), name: "Герой" });
+    canvas.tokens.placeables = [mover, enemy];
+
+    fire("preUpdateToken", mover.document, { x: 20, y: 20 });
+    mover.document.x = 20; mover.document.y = 20; // токен физически передвинут за тот же вызов
+
+    await fire("updateToken", mover.document, { x: 20, y: 20 }, {}, "u1");
+
+    expect(captured.chat.length).toBe(1);
+    expect(captured.chat[0].content).toContain("Свободная атака");
+  });
+
+  it("deleteToken чистит запись ДО апдейта (п.3) — отменённый драг не всплывает контактом", async () => {
+    globalThis.game.combat = { started: true, round: 1 };
+    const enemy = token({ id: "e2", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+    const mover = token({ id: "m2", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+    canvas.tokens.placeables = [mover, enemy];
+
+    fire("preUpdateToken", mover.document, { x: 20, y: 20 });
+    // Апдейт так и не пришёл (отменённый драг/удаление ГМ-ом прямо во время
+    // хода) — вместо него токен удалён.
+    fire("deleteToken", mover.document);
+
+    mover.document.x = 20; mover.document.y = 20;
+    await fire("updateToken", mover.document, { x: 20, y: 20 }, {}, "u1");
+
+    expect(captured.chat.length).toBe(0);
+  });
+
+  it("протухшая по TTL запись (п.3) не всплывает в чужом апдейте", async () => {
+    vi.useFakeTimers();
+    try {
+      globalThis.game.combat = { started: true, round: 1 };
+      const enemy = token({ id: "e3", x: 2, y: 0, disposition: HOSTILE, actor: fakeActor({ type: "character" }) });
+      const mover = token({ id: "m3", x: 0, y: 0, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+      const other = token({ id: "o3", x: 100, y: 100, disposition: FRIENDLY, actor: fakeActor({ type: "character" }) });
+      canvas.tokens.placeables = [mover, enemy, other];
+
+      fire("preUpdateToken", mover.document, { x: 20, y: 20 });
+      vi.advanceTimersByTime(6000); // > PRE_MOVE_TTL_MS (5с)
+      // Чужой preUpdateToken (даже для другого токена) чистит протухшие
+      // записи целиком, в т.ч. запись mover — protuхание не завязано на
+      // конкретный tokenId.
+      fire("preUpdateToken", other.document, { x: 101, y: 100 });
+
+      mover.document.x = 20; mover.document.y = 20;
+      await fire("updateToken", mover.document, { x: 20, y: 20 }, {}, "u1");
+
+      expect(captured.chat.length).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

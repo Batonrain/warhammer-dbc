@@ -49,7 +49,8 @@
     },
     "resistChar": "",
     "resistMod": 0,
-    "requirement": "Метка Нургла, PR 4+, Nurgle's Rot"
+    "requirement": "Метка Нургла, PR 4+, Nurgle's Rot",
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Нургл» стр. 346)"
   },
   "_id": "7OvLdTTRagY3NoGS",
   "effects": [],

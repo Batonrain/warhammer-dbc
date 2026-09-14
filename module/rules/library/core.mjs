@@ -75,5 +75,22 @@ export const CORE_RULES = [
     label: "Пси-Рейтинг",
     when: { psyRatingMin: 1 },
     effects: [{ kind: "grantFlag", target: "talents.psyker" }]
+  },
+  {
+    // Avatar of Slaughter/Аватар Резни (Черта, элитный архетип Берсерк
+    // Кхорна, wdbc-sk8s) — раньше жила своим отдельным источником
+    // "avatarOfSlaughter" (rules/sources.mjs), хотя когда-то была
+    // зарегистрирована совсем как "core" — статичное when, читающее метку
+    // на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget),
+    // без cross-actor обхода. Перенесена сюда (wdbc-shr, находка 1): нет
+    // причины заводить отдельный источник ради одного статического правила,
+    // когда основная книга уже отдаёт такие через "core" оптом. Покрывает
+    // только «атаки» (ctx.kind==="attack") — «манёвры» (Состязания,
+    // combat/techniques.mjs) используют другой вид теста, не покрытый
+    // effectAppliesTo, оставлено открытым пробелом.
+    id: "avatarOfSlaughter.penalty",
+    label: "Аватар Резни: не тот противник",
+    when: { avatarOfSlaughterOffTarget: true },
+    effects: [{ kind: "rollBonus", target: "attack", value: -20, label: "Аватар Резни: атакует не Берсерка" }]
   }
 ];

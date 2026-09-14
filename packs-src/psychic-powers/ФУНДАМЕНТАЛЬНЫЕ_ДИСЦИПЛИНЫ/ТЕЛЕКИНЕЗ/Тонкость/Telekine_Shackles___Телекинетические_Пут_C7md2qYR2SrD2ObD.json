@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "s",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телекинез — Тонкость» стр. 316)"
   },
   "_id": "C7md2qYR2SrD2ObD",
   "effects": [],

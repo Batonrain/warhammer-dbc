@@ -36,38 +36,85 @@ export function matchHullDoc(item, docs = []) {
   }) || null;
 }
 
-/** Переводит легаси-Корпуса всех кораблей мира на тип shipHull. */
+/**
+ * Перевод легаси-Корпусов ОДНОГО корабля-актора на тип shipHull. Бросает
+ * исключение наружу — решение, что делать со сбоем (пропустить и продолжить
+ * остальных), принимает вызывающий код в migrateShipHulls (тот же приём, что
+ * и в module/migrations/gear-equipped.mjs). Возвращает {migrated, skipped}.
+ */
+async function migrateOneShipHulls(actor, docs) {
+  let migrated = 0, skipped = 0;
+  if (actor.type !== "ship") return { migrated, skipped };
+  for (const legacy of legacyHullItems(actor.items)) {
+    const doc = matchHullDoc(legacy, docs);
+    if (!doc) {
+      skipped++;
+      console.warn(`Warhammer DBC | Корпус «${legacy.name}» (${actor.name}) не найден в паке — оставлен как есть.`);
+      continue;
+    }
+    const data = doc.toObject();
+    delete data._id;
+    // Источник — как в apps/ship-hull.mjs::applyHull: пикер узнаёт текущий
+    // Корпус по uuid библиотеки.
+    data._stats = { ...(data._stats || {}), compendiumSource: doc.uuid };
+    await actor.createEmbeddedDocuments("Item", [data]);
+    await actor.deleteEmbeddedDocuments("Item", [legacy.id]);
+    migrated++;
+  }
+  return { migrated, skipped };
+}
+
+/**
+ * Переводит легаси-Корпуса всех кораблей мира на тип shipHull, а также
+ * несвязанных токенов сцен (wdbc-059h, по образцу gear-equipped/wdbc-dyi) —
+ * для кораблей это НЕ краевой случай: prototypeToken.actorLink у типа "ship"
+ * по умолчанию false (см. warhammer-dbc.mjs, preCreateActor), то есть корабль
+ * на сцене чаще всего именно непривязанный токен со своей ActorDelta, а не
+ * запись в game.actors.
+ *
+ * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
+ * обработку следующих: Корпуса разных кораблей друг от друга не зависят.
+ */
 export async function migrateShipHulls() {
   if (!game.user?.isGM) { ui.notifications?.warn("Корпуса кораблей: только для ГМа."); return; }
 
   const pack = game.packs?.get(PACK);
   const docs = pack ? (await pack.getDocuments()).filter(d => d.type === "shipHull") : [];
-  let migrated = 0, skipped = 0;
+  let migrated = 0, skipped = 0, failed = 0;
 
-  try {
-    for (const actor of game.actors) {
-      if (actor.type !== "ship") continue;
-      for (const legacy of legacyHullItems(actor.items)) {
-        const doc = matchHullDoc(legacy, docs);
-        if (!doc) {
-          skipped++;
-          console.warn(`Warhammer DBC | Корпус «${legacy.name}» (${actor.name}) не найден в паке — оставлен как есть.`);
-          continue;
-        }
-        const data = doc.toObject();
-        delete data._id;
-        // Источник — как в apps/ship-hull.mjs::applyHull: пикер узнаёт текущий
-        // Корпус по uuid библиотеки.
-        data._stats = { ...(data._stats || {}), compendiumSource: doc.uuid };
-        await actor.createEmbeddedDocuments("Item", [data]);
-        await actor.deleteEmbeddedDocuments("Item", [legacy.id]);
-        migrated++;
+  // Мировые акторы. Связанные токены (actorLink:true) используют тот же
+  // документ Actor — им отдельный проход не нужен.
+  for (const actor of game.actors) {
+    try {
+      const res = await migrateOneShipHulls(actor, docs);
+      migrated += res.migrated; skipped += res.skipped;
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Корпуса кораблей: сбой на акторе «${actor.name}» (${actor.id}), пропущен:`, e);
+    }
+  }
+
+  // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
+  // прямо в ActorDelta токена.
+  for (const scene of game.scenes ?? []) {
+    for (const tokenDoc of scene.tokens?.contents ?? []) {
+      if (tokenDoc.actorLink) continue;
+      const actor = tokenDoc.actor;
+      if (!actor) continue;
+      try {
+        const res = await migrateOneShipHulls(actor, docs);
+        migrated += res.migrated; skipped += res.skipped;
+      } catch (e) {
+        failed++;
+        console.error(`Warhammer DBC | Корпуса кораблей: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
       }
     }
-  } catch (e) { console.error("Warhammer DBC | Корпуса кораблей:", e); }
+  }
 
-  const msg = `Корпуса кораблей переведены на shipHull: ${migrated}${skipped ? `, без соответствия ${skipped}` : ""}.`;
-  console.log("Warhammer DBC |", msg);
-  if (migrated || skipped) ui.notifications?.info("Warhammer DBC: " + msg);
-  return { migrated, skipped };
+  const msg = failed
+    ? `Корпуса кораблей переведены на shipHull: ${migrated}${skipped ? `, без соответствия ${skipped}` : ""}; ${failed} акторов/токенов пропущено из-за ошибок — миграция повторится при следующей загрузке мира.`
+    : `Корпуса кораблей переведены на shipHull: ${migrated}${skipped ? `, без соответствия ${skipped}` : ""}.`;
+  console[failed ? "warn" : "log"]("Warhammer DBC |", msg);
+  if (migrated || skipped || failed) ui.notifications?.[failed ? "warn" : "info"]("Warhammer DBC: " + msg);
+  return { migrated, skipped, failed };
 }

@@ -108,22 +108,30 @@ export function prepareMovementDerived(actor, system, { chars, agBonus, traitSiz
   }
 
   // Потеря стоп/ног (стр. 30-31, wdbc-r5o7.5): «SPD уменьшена вдвое (окр.
-  // вниз)» — в отличие от Поваленного (обычное ÷2, минимум 0.5), здесь
-  // явное книжное округление вниз, поэтому Math.floor, не Math.max(0.5,…);
-  // одна потерянная стопа/нога уже даёт полный штраф — книга не говорит
-  // «за каждую», считаем булево (есть хоть одна — эффект применён), не по
-  // счётчику count. Без ОБЕИХ ног — «не может ходить» вообще, это сильнее
-  // деления и обнуляет Движение целиком (см. lostLegsCount ниже);
-  // Уклонение при потере ног — отдельно, combat/defense.mjs.
+  // вниз)» — округление именно вниз (Math.floor), а не обычное ÷2 Поваленного.
+  // Округление вниз НЕ отменяет общий книжный пол «Минимум SPD — 0.5» (стр.
+  // 28, тот же порог, что у Поваленного строками выше и у блока spd-модов
+  // повыше): без Math.max(0.5, …) деление уже клампнутых Math.max(0.5,…)
+  // чисел Поваленного могло уйти в 0 при том, что «Полное» тем же проходом
+  // оставалось 1 и больше (wdbc-2gn, находка 2: Ag.b 3, Повален, одна стопа
+  // → halfMove = floor(1.5/2) = 0 при move = floor(3/2) = 1 — Полудвижение
+  // строго МЕНЬШЕ половины Полного, хотя книга такого не описывает, и
+  // подсказка «Минимум SPD» такое расхождение не подсвечивала, потому что
+  // expectedHalfMove ниже считался той же формулой без пола). Одна потерянная
+  // стопа/нога уже даёт полный штраф — книга не говорит «за каждую», считаем
+  // булево (есть хоть одна — эффект применён), не по счётчику count. Без
+  // ОБЕИХ ног — «не может ходить» вообще, это сильнее деления и обнуляет
+  // Движение целиком (см. lostLegsCount ниже); Уклонение при потере ног —
+  // отдельно, combat/defense.mjs.
   const lostFeetOrLeg = !!(system.conditions?.lostFeet || system.conditions?.lostLegs);
   const bothLegsLost  = (Number(system.conditions?.lostLegsCount) || 0) >= 2;
   if (bothLegsLost) {
     halfMove = 0; move = 0; charge = 0; run = 0;
   } else if (lostFeetOrLeg) {
-    halfMove = Math.floor(halfMove / 2);
-    move     = Math.floor(move / 2);
-    charge   = Math.floor(charge / 2);
-    run      = Math.floor(run / 2);
+    halfMove = Math.max(0.5, Math.floor(halfMove / 2));
+    move     = Math.max(0.5, Math.floor(move / 2));
+    charge   = Math.max(0.5, Math.floor(charge / 2));
+    run      = Math.max(0.5, Math.floor(run / 2));
   }
 
   system.movement.halfMove = halfMove;

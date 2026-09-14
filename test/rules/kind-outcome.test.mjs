@@ -98,6 +98,149 @@ describe("resolveKindOutcome — opposed", () => {
   });
 });
 
+// Egomania/Эгомания (wdbc-1rno, Слаанеш): «автоматически побеждает в любом
+// встречном тесте против социальных взаимодействий» — здесь только
+// bросающий (NPC-соперник — числа, не документ, свою Эгоманию проверить
+// неоткуда, см. заголовок rules/egomania.mjs).
+describe("resolveKindOutcome — opposed, Egomania (wdbc-1rno)", () => {
+  const withEgomania = bearer => {
+    clearRuleSources();
+    registerRuleSource("test", a => a === bearer
+      ? [{ id: "test.egomania", when: {}, effects: [{ kind: "grantFlag", target: "gift.slaanesh.egomania" }] }]
+      : []);
+  };
+
+  it("Дар + социальный Навык (charm) — побеждает, даже проиграв по степени", async () => {
+    const bearer = actor();
+    withEgomania(bearer);
+    const out = await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 20, rv: 90, // провал моего броска
+      ctx: { ...ctx(bearer), skill: "charm" },
+      opposed: { threshold: 60, roll: 10 } // соперник уверенно выигрывает по цифрам
+    });
+    expect(out.opposedLine).toContain("Вы побеждаете");
+  });
+
+  it("Дар, но НЕсоциальный Навык (scrutiny) — обычный исход, без подмены", async () => {
+    const bearer = actor();
+    withEgomania(bearer);
+    const out = await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 20, rv: 90,
+      ctx: { ...ctx(bearer), skill: "scrutiny" },
+      opposed: { threshold: 60, roll: 10 }
+    });
+    expect(out.opposedLine).toContain("Соперник побеждает");
+  });
+
+  it("без Дара — обычный исход социального Навыка, без подмены", async () => {
+    clearRuleSources();
+    const out = await resolveKindOutcome(actor(), {
+      kind: "opposed", baseEff: 20, rv: 90,
+      ctx: { ...ctx(actor()), skill: "charm" },
+      opposed: { threshold: 60, roll: 10 }
+    });
+    expect(out.opposedLine).toContain("Соперник побеждает");
+  });
+});
+
+// Personal Adaptation/Персональная Адаптация (wdbc-1rno, Тзинч): +5 к Порогу
+// встречного теста против конкретной цели, растёт после КАЖДОГО такого
+// теста (не только победы), капируется Cor.b, хранится флагом на бросающем.
+describe("resolveKindOutcome — opposed, Personal Adaptation (wdbc-1rno)", () => {
+  const withPersonalAdaptation = bearer => {
+    clearRuleSources();
+    registerRuleSource("test", a => a === bearer
+      ? [{ id: "test.personalAdaptation", when: {}, effects: [{ kind: "grantFlag", target: "gift.tzeentch.personalAdaptation" }] }]
+      : []);
+  };
+  const target = { uuid: "Actor.target", name: "Соперник" };
+
+  afterEach(() => { delete globalThis.game.time; });
+
+  it("без Дара — Порог не меняется, запись не пишется", async () => {
+    clearRuleSources();
+    const bearer = actor({ corruptionBonus: 3 });
+    await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 40, rv: 50, ctx: { ...ctx(bearer), targetActor: target },
+      opposed: { threshold: 40, roll: 50 }
+    });
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")).toBeUndefined();
+  });
+
+  it("первый встречный тест против цели — записывает +5, следующий читает его в Пороге", async () => {
+    const bearer = actor({ corruptionBonus: 3 }); // cap = ⌈3/2⌉×5 = 10
+    withPersonalAdaptation(bearer);
+    globalThis.game.time = { worldTime: 1000 };
+
+    const first = await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 40, rv: 50, ctx: { ...ctx(bearer), targetActor: target },
+      opposed: { threshold: 40, roll: 50 }
+    });
+    expect(first.personalAdaptationLine).toBe(""); // ещё нечего показывать — это первый тест
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")).toEqual([
+      { targetUuid: "Actor.target", bonus: 5, expiresAt: 1000 + 9 * 365 * 86400 }
+    ]);
+
+    const second = await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 40, rv: 50, ctx: { ...ctx(bearer), targetActor: target },
+      opposed: { threshold: 40, roll: 50 }
+    });
+    expect(second.eff).toBe(45); // 40 + 5 накопленных
+    expect(second.personalAdaptationLine).toContain("+5");
+    expect(second.personalAdaptationLine).toContain("Соперник");
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")[0].bonus).toBe(10); // 5+5, ещё не капировано (cap=10)
+  });
+
+  it("растёт даже при поражении («после КАЖДОГО», не только победы)", async () => {
+    const bearer = actor({ corruptionBonus: 3 });
+    withPersonalAdaptation(bearer);
+    globalThis.game.time = { worldTime: 1000 };
+    await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 20, rv: 90, ctx: { ...ctx(bearer), targetActor: target },
+      opposed: { threshold: 60, roll: 10 } // соперник уверенно выигрывает
+    });
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")[0].bonus).toBe(5);
+  });
+
+  it("капируется потолком по Cor.b — дальше не растёт", async () => {
+    const bearer = actor({ corruptionBonus: 1 }); // cap = ⌈1/2⌉×5 = 5
+    withPersonalAdaptation(bearer);
+    globalThis.game.time = { worldTime: 1000 };
+    await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 40, rv: 50, ctx: { ...ctx(bearer), targetActor: target },
+      opposed: { threshold: 40, roll: 50 }
+    });
+    await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 40, rv: 50, ctx: { ...ctx(bearer), targetActor: target },
+      opposed: { threshold: 40, roll: 50 }
+    });
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")[0].bonus).toBe(5);
+  });
+
+  it("Дар, но нет цели (targetActor отсутствует) — не применяется и не пишется", async () => {
+    const bearer = actor({ corruptionBonus: 3 });
+    withPersonalAdaptation(bearer);
+    globalThis.game.time = { worldTime: 1000 };
+    const out = await resolveKindOutcome(bearer, {
+      kind: "opposed", baseEff: 40, rv: 50, ctx: ctx(bearer),
+      opposed: { threshold: 40, roll: 50 }
+    });
+    expect(out.personalAdaptationLine).toBe("");
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")).toBeUndefined();
+  });
+
+  it("не Встречный тест (base) — Дар не применяется, даже с целью в ctx", async () => {
+    const bearer = actor({ corruptionBonus: 3 });
+    withPersonalAdaptation(bearer);
+    globalThis.game.time = { worldTime: 1000 };
+    const out = await resolveKindOutcome(bearer, {
+      kind: "base", baseEff: 40, rv: 50, ctx: { ...ctx(bearer), targetActor: target }
+    });
+    expect(out.eff).toBe(40);
+    expect(bearer.getFlag("warhammer-dbc", "personalAdaptationBonuses")).toBeUndefined();
+  });
+});
+
 describe("resolveKindOutcome — crit", () => {
   it("натуральный 1-5 — Критический Успех в строке", async () => {
     const out = await resolveKindOutcome(actor(), { kind: "base", baseEff: 45, rv: 3, ctx: ctx(actor()) });

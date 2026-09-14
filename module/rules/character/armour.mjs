@@ -20,8 +20,9 @@ import { PA_TABLES } from "../../constants/power-armour-lore.mjs";
 /**
  * @param {object} actor  актор — для надетых предметов
  * @param {object} system system актора, правится на месте
- * @returns {{armorFromItems: object, armorVsType: object, propFlagsByLoc: object,
- *           sealedCoverage: object}} величины, которые читают разделы ниже
+ * @returns {{armorFromItems: object, armorVsType: object, armorVsSubtype: object,
+ *           propFlagsByLoc: object, sealedCoverage: object}} величины, которые
+ *           читают разделы ниже
  */
 export function prepareArmourDerived(actor, system) {
   // ── Броня ─────────────────────────────────────────────────────────────
@@ -35,6 +36,14 @@ export function prepareArmourDerived(actor, system) {
   // chemical добавлен для Protective (wdbc-8b5, «+X AP против урона от
   // среды», DAMAGE_TYPES.chemical), суммируется ниже вместе с остальными.
   const armorVsType = { energy: 0, impact: 0, rending: 0, blast: 0, chemical: 0 };
+  // Подвиды урона (wdbc-q0q8) — тот же принцип, что armorVsType выше, но на
+  // уровень точнее (DAMAGE_SUBTYPES вместо DAMAGE_TYPES). На 11.09.2026
+  // заполняется только через apBonusBySubtype свойств брони (Protective-
+  // подобных с auto.apBonusVsSubtype) — ни одно свойство пака им ещё не
+  // пользуется, инфраструктура заведена раньше контента.
+  const armorVsSubtype = {
+    crushing: 0, fragmentation: 0, electrical: 0, flame: 0, laser: 0, toxic: 0
+  };
   // «Полный комплект» Sealed (стр. 228, wdbc-8b5): иммунитет к химическому
   // урону, пока не пробита ни одна из 6 закрывающих локаций. По локации —
   // true, если её покрывает (ap[k]>0) хотя бы один надетый непробитый
@@ -80,6 +89,9 @@ export function prepareArmourDerived(actor, system) {
     // у остальных armorVsType — см. комментарий у объявления armorVsType).
     for (const [t, x] of Object.entries(propAuto.apBonusByType)) {
       armorVsType[t] = (armorVsType[t] || 0) + x;
+    }
+    for (const [st, x] of Object.entries(propAuto.apBonusBySubtype)) {
+      armorVsSubtype[st] = (armorVsSubtype[st] || 0) + x;
     }
     // Sealed «полным комплектом» (wdbc-8b5): локация закрыта непробитым
     // Sealed-предметом — считаем это ниже AND'ом по всем 6 локациям.
@@ -129,5 +141,19 @@ export function prepareArmourDerived(actor, system) {
     }
   }
 
-  return { armorFromItems, armorVsType, propFlagsByLoc, sealedCoverage };
+  // Укрытие по подвиду урона от активного Защитного поля (Mistshield/Туманный
+  // Щит, wdbc-q0q8) — «Пока активен» книги: не сам бросок срабатывания щита
+  // (combat/damage.mjs::_rollActiveShield, отдельный d100), а плоская добавка
+  // AP ко всем локациям, как обычное Укрытие. Перегруженный/снятый щит эту
+  // добавку не даёт — активность держит только status, currentRating тут ни
+  // при чём (0 AP через vsSubtype никого не защитит сам по себе).
+  for (const item of actor.items) {
+    if (item.type !== "forcefield" || !item.system.equipped || item.system.status !== "active") continue;
+    const st = item.system.coverVsSubtype;
+    if (st && item.system.coverVsSubtypeAP) {
+      armorVsSubtype[st] = (armorVsSubtype[st] || 0) + item.system.coverVsSubtypeAP;
+    }
+  }
+
+  return { armorFromItems, armorVsType, armorVsSubtype, propFlagsByLoc, sealedCoverage };
 }

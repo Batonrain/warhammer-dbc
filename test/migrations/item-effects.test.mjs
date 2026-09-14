@@ -638,6 +638,51 @@ describe("миграция мира", () => {
 
     expect(lock).toEqual([]);
   });
+
+  // wdbc-059h: раньше двойной цикл по акторам/предметам был не защищён вовсе
+  // (ни try на весь цикл, ни поштучно) — сбойный предмет обрывал pass() и
+  // вместе с ним обработку ВСЕХ предметов после него, в т.ч. на других
+  // акторах. Эта миграция без версии-гейта (идёт заново на каждой загрузке),
+  // но постоянно сбойный предмет держал бы весь хвост списка недомигрированным
+  // на КАЖДОМ будущем запуске без изоляции.
+  it("сбой на одном предмете не прерывает перенос у остальных предметов и акторов", async () => {
+    const bad = itemDoc({ name: "Сбойная Черта", effects: { sizeMod: 1 } });
+    bad.getFlag = () => { throw new Error("boom on bad"); };
+    const goodSameActor = itemDoc({ name: "Аморфный", effects: { sizeMod: 1 } });
+    const goodOtherActor = itemDoc({ name: "Аморфный 2", effects: { sizeMod: 1 } });
+    goodSameActor.id = "item-good1";
+    goodOtherActor.id = "item-good2";
+
+    globalThis.game.actors = [
+      { name: "Персонаж 1", items: [bad, goodSameActor] },
+      { name: "Персонаж 2", items: [goodOtherActor] }
+    ];
+
+    const { migrated, failed } = await migrateAllItemEffects();
+
+    expect(failed).toBe(1);
+    expect(migrated).toBe(2);
+    expect(changesOf(goodSameActor)).toEqual(legacyEffectsToChanges({ sizeMod: 1 }));
+    expect(changesOf(goodOtherActor)).toEqual(legacyEffectsToChanges({ sizeMod: 1 }));
+    expect(bad.effects).toEqual([]); // не тронут, попробуется заново
+  });
+
+  it("сбой на одном документе пака не прерывает перенос у остальных документов того же пака", async () => {
+    const bad = itemDoc({ name: "Сбойный", effects: { sizeMod: 1 } });
+    bad.getFlag = () => { throw new Error("boom on bad doc"); };
+    const good = itemDoc({ name: "Мир-улей", effects: { charValueBonuses: [{ stat: "wp", value: 3 }] } });
+    good.id = "doc-good";
+    const lock = [];
+    globalThis.game.packs = new Map([["warhammer-dbc.homeworlds",
+      packStub(lock, { getDocuments: async () => [bad, good] })]]);
+
+    const { migrated, failed } = await migrateAllItemEffects();
+
+    expect(failed).toBe(1);
+    expect(migrated).toBe(1);
+    expect(changesOf(good)).toEqual(legacyEffectsToChanges({ charValueBonuses: [{ stat: "wp", value: 3 }] }));
+    expect(lock).toEqual([false, true]); // замок всё равно возвращён
+  });
 });
 
 describe("предметы packs-src", () => {
@@ -700,9 +745,14 @@ describe("предметы packs-src", () => {
   it("ни один предмет пака не правит характеристику из двух источников", async () => {
     // Иначе на акторе сложатся оба: эффект приезжает с предметом, записи
     // Конструктора он отыгрывает сам при получении (wdbc-43d — 13 Родных миров).
-    // Таймаут увеличен: полный обход packs-src подрос (flags.autoanimations
-    // на Оружии/Психосилах/Техночудесах), под общей нагрузкой суйта иногда не
-    // укладывался в дефолтные 5с при заведомо валидном ~1.1с сольно.
+    // wdbc-daz п.11: раньше здесь точечно поднятый 15000 — тот же класс
+    // проблемы, что и у восьми соседних it() в этом файле (полный обход
+    // packs-src под общей нагрузкой суйта не укладывался в дефолтные 5с при
+    // заведомо валидном ~1.1с сольно), а лекарство для него уже есть и
+    // используется рядом — общий кэш файлов packs-src (test/support/
+    // pack-docs.mjs, wdbc-lxyl) и его PACK_SCAN_TIMEOUT. Поднимать число
+    // точечно третий раз вместо того, чтобы взять готовую инфраструктуру,
+    // было бы тем самым "лечить симптом, а не причину".
     const doubled = [];
     for (const doc of allPackDocs()) {
       const mech = new Set(mechanicsKeys(doc));
@@ -711,7 +761,7 @@ describe("предметы packs-src", () => {
       if (both.length) doubled.push(`${doc.name}: ${[...new Set(both)].join(", ")}`);
     }
     expect(doubled).toEqual([]);
-  }, 15000);
+  }, PACK_SCAN_TIMEOUT);
 
   it("ни один имплант пака не получает от росписи ключ, который у него уже есть", async () => {
     // Роспись IMPLANT_MECH подбирается по ИМЕНИ, поэтому её надбавка легко

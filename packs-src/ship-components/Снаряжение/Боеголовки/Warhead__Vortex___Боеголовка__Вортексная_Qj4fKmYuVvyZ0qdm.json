@@ -11,7 +11,8 @@
     "rarity": 5,
     "baseRarity": "",
     "description": "SPD 10, Урон 2d10+5, Крит 6+, Дальн. 60. Terminal Penetration (5).",
-    "notes": ""
+    "notes": "",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "Qj4fKmYuVvyZ0qdm",
   "effects": [],

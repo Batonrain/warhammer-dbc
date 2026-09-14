@@ -150,6 +150,87 @@ describe("buildSyncReport / applySyncReport", () => {
     }]);
     expect(conflictEntry).toBeTruthy(); // конфликт остался неотмеченным — не в updateCalls
   });
+
+  // wdbc-daz п.5: у ObjectField (system.charBonus и т.п.) Foundry
+  // (common/data/fields.mjs, ObjectField#_updateDiff) СЛИВАЕТ новое значение
+  // со старым через diffObject/mergeObject, а не заменяет целиком — снятый в
+  // паке подключ иначе оставался бы на актёре и подсвечивался бы «есть
+  // обновление» на каждом следующем прогоне «Обновить мир». Подтверждено
+  // эмпирически на настоящем DataModel этой версии Foundry (не по докам):
+  // update({charBonus:{ws,bs}}) поверх {ws,bs,ag} оставляет ag на месте.
+  it("поле-объект: применение явно удаляет подключ, который пак убрал", async () => {
+    const packArmor = doc("u2", "Броня", "armor", { charBonus: { ws: 10, bs: 3 } });
+    const indexArmor = buildPackIndex([packArmor]);
+    const actorD = {
+      id: "a4", name: "Актёр Г",
+      items: [item({
+        id: "i4", name: "Броня", type: "armor", src: "u2",
+        system: { charBonus: { ws: 5, bs: 3, ag: 2 } },
+        baseline: { charBonus: { ws: 5, bs: 3, ag: 2 } }
+      })]
+    };
+    const report = buildSyncReport([actorD], indexArmor);
+    const row = report.rows.find(r => r.path === "charBonus");
+    const entry = row.entries[0];
+
+    const updateCalls = [];
+    globalThis.game = {
+      actors: {
+        get: id => ({
+          id,
+          updateEmbeddedDocuments: async (docType, updates) => updateCalls.push({ id, docType, updates })
+        })
+      }
+    };
+
+    await applySyncReport(report, new Set([entry.entryKey]));
+    expect(updateCalls[0].updates[0]["system.charBonus"]).toEqual({ ws: 10, bs: 3, "-=ag": null });
+
+    // Опора лежит в ТОМ ЖЕ объекте обновления и пишется в flags — а flags
+    // сливаются точно так же. Раньше сюда клали сырой packVal, `ag` в опоре
+    // оставался, и на следующем прогоне строка возвращалась уже с пометкой
+    // «конфликт»: поле почищено, опора — нет.
+    expect(updateCalls[0].updates[0]["flags.warhammer-dbc.contentSync.baseline.charBonus"])
+      .toEqual({ ws: 10, bs: 3, "-=ag": null });
+  });
+
+  // Тот же случай, доведённый до конца: после применения строка не должна
+  // вернуться вовсе — ни «есть обновление», ни тем более «конфликт».
+  it("после применения строка не возвращается на следующем прогоне", async () => {
+    const packArmor = doc("u2", "Броня", "armor", { charBonus: { ws: 10, bs: 3 } });
+    const indexArmor = buildPackIndex([packArmor]);
+    const before = item({
+      id: "i4", name: "Броня", type: "armor", src: "u2",
+      system: { charBonus: { ws: 5, bs: 3, ag: 2 } },
+      baseline: { charBonus: { ws: 5, bs: 3, ag: 2 } }
+    });
+    const report = buildSyncReport([{ id: "a4", name: "Актёр Г", items: [before] }], indexArmor);
+    const entry = report.rows.find(r => r.path === "charBonus").entries[0];
+
+    const updateCalls = [];
+    globalThis.game = {
+      actors: { get: id => ({ id, updateEmbeddedDocuments: async (t, u) => updateCalls.push(...u) }) }
+    };
+    await applySyncReport(report, new Set([entry.entryKey]));
+
+    // Применяем патч так, как это сделал бы Foundry: "-=<ключ>" снимает ключ.
+    const applyPatch = (was, patch) => {
+      const out = { ...was };
+      for (const [k, v] of Object.entries(patch)) {
+        if (k.startsWith("-=")) delete out[k.slice(2)]; else out[k] = v;
+      }
+      return out;
+    };
+    const after = item({
+      id: "i4", name: "Броня", type: "armor", src: "u2",
+      system: { charBonus: applyPatch(before.system.charBonus, updateCalls[0]["system.charBonus"]) },
+      baseline: { charBonus: applyPatch(
+        before.flags["warhammer-dbc"].contentSync.baseline.charBonus,
+        updateCalls[0]["flags.warhammer-dbc.contentSync.baseline.charBonus"]) }
+    });
+    const again = buildSyncReport([{ id: "a4", name: "Актёр Г", items: [after] }], indexArmor);
+    expect(again.rows.find(r => r.path === "charBonus")).toBeUndefined();
+  });
 });
 
 

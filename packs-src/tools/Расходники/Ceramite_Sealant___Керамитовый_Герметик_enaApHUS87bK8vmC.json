@@ -7,6 +7,7 @@
     "notes": "Восстанавливает свойство Sealed/Void брони — воздействие на ДРУГОЙ предмет (доспех), не тест владельца.",
     "quantity": 10,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 261)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "consumable",

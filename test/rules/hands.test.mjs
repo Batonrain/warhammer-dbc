@@ -396,6 +396,64 @@ describe("weaponHandsRequired — свойства от модификаций (
   });
 });
 
+// ── wdbc-2gn (находка 3, ревью 07.09.2026): бюджет рук должен знать про ВСЕ
+// пять источников доп. хвата, что и окно атаки (attack-dialog.mjs::extraGrips) —
+// modGrantedGrips (Pistol Grip), commandoGrip, doubleGripGrip, oneHandRifleGrip,
+// pathOneHandGrip. Раньше здесь были только последние два.
+describe("weaponHandsRequired — доп. хват дальнобойного (wdbc-2gn, паритет с attack-dialog.mjs)", () => {
+  it("Pistol Grip (мод grantsGrip «1р») на винтовке — «1р» становится доступен, 1 рука", () => {
+    const rifle = weapon({ id: "r1", system: { weaponClass: "basic", grips: "2р", equipped: true } });
+    rifle.setFlag("warhammer-dbc", "hudGrip", "1р");
+    const pistolGripMod = {
+      type: "weaponMod", id: "mod-r1", name: "Pistol Grip",
+      system: { installedOn: "r1", effects: { grantsGrip: "1р" } }
+    };
+    const a = actorOwning([rifle, pistolGripMod]);
+    expect(weaponHandsRequired(rifle, a)).toBe(1);
+  });
+
+  it("без Pistol Grip та же винтовка «1р» не даёт — 2 руки, даже если игрок выбрал", () => {
+    const rifle = weapon({ id: "r2", system: { weaponClass: "basic", grips: "2р", equipped: true } });
+    rifle.setFlag("warhammer-dbc", "hudGrip", "1р");
+    const a = actorOwning([rifle]);
+    expect(weaponHandsRequired(rifle, a)).toBe(2);
+  });
+
+  it("Pistol Grip чужого оружия на бюджет не влияет", () => {
+    const rifle = weapon({ id: "r3", system: { weaponClass: "basic", grips: "2р", equipped: true } });
+    rifle.setFlag("warhammer-dbc", "hudGrip", "1р");
+    const otherMod = {
+      type: "weaponMod", id: "mod-other", name: "Pistol Grip",
+      system: { installedOn: "some-other-weapon", effects: { grantsGrip: "1р" } }
+    };
+    const a = actorOwning([rifle, otherMod]);
+    expect(weaponHandsRequired(rifle, a)).toBe(2);
+  });
+
+  it("Commando Carbine (карабин + возможность) — «1р» доступен, 1 рука", () => {
+    const carbine = weapon({ id: "c1", system: {
+      weaponClass: "basic", grips: "2р", equipped: true, weaponProps: [{ key: "carbine" }]
+    } });
+    carbine.setFlag("warhammer-dbc", "hudGrip", "1р");
+    const a = actorOwning([carbine, withCapability("Коммандо", "weapon.commandoCarbine")]);
+    expect(weaponHandsRequired(carbine, a)).toBe(1);
+  });
+
+  it("Double Grip (пистолет + возможность) — «2р» доступен, 2 руки", () => {
+    const pistol = weapon({ id: "p1", system: { weaponClass: "pistol", grips: "1р", equipped: true } });
+    pistol.setFlag("warhammer-dbc", "hudGrip", "2р");
+    const a = actorOwning([pistol, withCapability("Двуручный хват", "weapon.doubleGripPistol")]);
+    expect(weaponHandsRequired(pistol, a)).toBe(2);
+  });
+
+  it("без Double Grip тот же пистолет игнорирует выбранное «2р» — 1 рука (список не содержит «2р»)", () => {
+    const pistol = weapon({ id: "p2", system: { weaponClass: "pistol", grips: "1р", equipped: true } });
+    pistol.setFlag("warhammer-dbc", "hudGrip", "2р");
+    const a = actorOwning([pistol]);
+    expect(weaponHandsRequired(pistol, a)).toBe(1);
+  });
+});
+
 describe("weaponHandsRequired — пальцевое оружие (wdbc-9dg8 A)", () => {
   const finger = id => weapon({ id, system: {
     weaponClass: "pistol", grips: "1р", equipped: true, weaponProps: [{ key: "digital" }]

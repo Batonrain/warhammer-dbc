@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Высшее Колдовство» стр. 308)"
   },
   "_id": "xNMOMTN7tjamOGyq",
   "effects": [],

@@ -75,6 +75,16 @@ describe("карточка атаки", () => {
     expect(card({ isMelee: false, sbEff: 4 })).not.toContain("S.b");
   });
 
+  // Обратный Хват + Выпад Полной Атакой (стр. 39, wdbc-report): sbHalf сюда
+  // приходит уже false (attack.mjs гасит половинку сам), а reverseThrustBonus —
+  // отдельная добавка сверху, не замена половинки на целое.
+  it("Обратный хват + Выпад Полной Атакой: бонус ½S.b подписан отдельной строкой, без пометки «½ хват»", () => {
+    const html = card({ isMelee: true, sbEff: 6, sbHalf: false, reverseThrustBonus: 3 });
+    expect(html).toContain("S.b +6");
+    expect(html).not.toContain("½ хват");
+    expect(html).toContain("+3 (Обратный хват: Выпад Полной Атакой)");
+  });
+
   it("кнопка урона несёт число, место и свойства оружия", () => {
     const html = card({ pen: 6, dtLabel: "Взрывной", damageType: "explosive",
       wp: { fellingRating: 2, primitive: true } });
@@ -266,6 +276,19 @@ describe("карточка атаки", () => {
   it("Подавление печатает число попаданий и штраф теста", () => {
     expect(card({ suppression: { pen: "−20", hits: 2, cap: 4 } }))
       .toContain("ГМ распределяет <b>2</b> попадания в торс");
+  });
+
+  // sourceActor (wdbc-1rno, 12.09.2026): кнопка теста Подавления несёт UUID
+  // стрелка — иначе связь стрелка с тестом терялась бы к моменту клика по
+  // кнопке в чате (см. заголовок module/rules/hatred.mjs).
+  it("кнопка Подавления несёт UUID стрелка для cross-actor правил", () => {
+    const html = card({ attackerUuid: "Actor.shooter-1", suppression: { testMod: -20, hits: 2, cap: 4 } });
+    expect(html).toContain('wh-suppression-test-btn" type="button" data-test-mod="-20" data-attacker-uuid="Actor.shooter-1"');
+  });
+
+  it("кнопка Огня из Всех Орудий несёт UUID стрелка", () => {
+    const html = card({ attackerUuid: "Actor.shooter-1", allGunsBlazing: { testMod: -10 } });
+    expect(html).toContain('wh-all-guns-blazing-btn" type="button" data-test-mod="-10" data-attacker-uuid="Actor.shooter-1"');
   });
 
   it("Порча печатает только доступные при текущей Cor эффекты", () => {

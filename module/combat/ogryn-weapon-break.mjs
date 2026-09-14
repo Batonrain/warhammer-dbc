@@ -21,6 +21,7 @@
 
 import { OGRYN_FIT_FLAG } from "../rules/ogryn-fit.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { isIntegralAttack } from "./equipped-melee.mjs";
 
 /** Грани 1d10, на которых оружие ломается. */
 export const OGRYN_BREAK_FACES = [1, 2, 3];
@@ -43,9 +44,16 @@ export function ogrynBreaksWeapon({ fitsOgryn = false, hasOgrynized = false,
   return OGRYN_BREAK_FACES.includes(Number(d10));
 }
 
-/** Нужен ли вообще бросок — чтобы не катать куб там, где он ничего не решает. */
+/**
+ * Нужен ли вообще бросок — чтобы не катать куб там, где он ничего не решает.
+ *
+ * Интегральные атаки (кулак, укус — flags.warhammer-dbc.integralAttack)
+ * исключены: это не «человеческое оружие не по руке», а часть тела Огрина,
+ * ломать нечего (wdbc-1lz).
+ */
 export function ogrynBreakApplies({ actor, item, isMelee, hasOgrynized } = {}) {
-  return !!isMelee && !hasOgrynized && hasRuleFlag(actor, OGRYN_FIT_FLAG);
+  return !!isMelee && !hasOgrynized && !isIntegralAttack(item)
+    && hasRuleFlag(actor, OGRYN_FIT_FLAG);
 }
 
 /**

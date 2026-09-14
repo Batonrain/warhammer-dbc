@@ -26,6 +26,7 @@ export class ShipHullData extends foundry.abstract.TypeDataModel {
       qualityPicks:  list("Выбранные качества"),
       qualityCustom: new BooleanField({ initial: false, label: "Своё качество" }),
       aspects:       str("", "Аспекты"),
+      bookSource:    str("", "Книга-источник"),
       description:   html("", "Описание"),
       notes:         html("", "Заметки"),
       shipProps:     list("Свойства"),

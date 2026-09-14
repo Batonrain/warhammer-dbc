@@ -191,6 +191,40 @@ describe("запись Конструктора «Модификатор тес�
     ]);
   });
 
+  // wdbc-1wvn: сустейн-бафф психосилы («+N×PR» у Sharpened Senses/Внутренние
+  // Часы) — бонус фиксируется на эPR момента каста (system.sustainedEpr),
+  // не на текущем тPR персонажа на момент того ПОЗДНЕГО теста.
+  it("психосила с sustainedEpr — плоское число от зафиксированного эPR, не valueFrom", () => {
+    const psychicItem = {
+      id: "sharpened", name: "Sharpened Senses", type: "psychicPower",
+      system: { sustainedEpr: 5 },
+      flags: { [SYSTEM]: { mechanics: [{ id: "g", operator: "AND", entries: [
+        testMod({ modValueMode: "charBonus", modCharBonus: "pr", modCharBonusMultiplier: 3 })
+      ] }] } }
+    };
+    const rules = rulesFromItemMechanics([psychicItem]);
+    expect(rules[0].effects).toEqual([{ kind: "rollBonus", target: "instability", value: 15 }]);
+  });
+
+  it("психосила без sustainedEpr (ещё не манифестировалась) — как раньше, живой valueFrom", () => {
+    const psychicItem = {
+      id: "sharpened", name: "Sharpened Senses", type: "psychicPower",
+      system: { sustainedEpr: null },
+      flags: { [SYSTEM]: { mechanics: [{ id: "g", operator: "AND", entries: [
+        testMod({ modValueMode: "charBonus", modCharBonus: "pr" })
+      ] }] } }
+    };
+    const rules = rulesFromItemMechanics([psychicItem]);
+    expect(rules[0].effects).toEqual([{ kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "pr" } }]);
+  });
+
+  it("не-психосила с modCharBonus:\"pr\" не задета — живой valueFrom, как раньше", () => {
+    const rules = rulesFromItemMechanics([item("Внутренние Часы", [
+      testMod({ modValueMode: "charBonus", modCharBonus: "pr" })
+    ])]);
+    expect(rules[0].effects).toEqual([{ kind: "rollBonus", target: "instability", valueFrom: { selfCharBonus: "pr" } }]);
+  });
+
   it("modCharBonusMultiplier отсутствующий/1 не добавляет multiplier (как раньше)", () => {
     const rules = rulesFromItemMechanics([item("Локус Цепей", [
       testMod({ modValueMode: "charBonus", modCharBonus: "inf", modCharBonusMultiplier: 1 })

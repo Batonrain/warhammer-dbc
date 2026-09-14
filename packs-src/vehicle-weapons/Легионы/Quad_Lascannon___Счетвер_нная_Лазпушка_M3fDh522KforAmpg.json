@@ -61,7 +61,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "laser"
   },
   "_id": "M3fDh522KforAmpg",
   "effects": [],

@@ -32,7 +32,7 @@
       },
       {
         "key": "internalDefense",
-        "rating": 25
+        "rating": 5
       }
     ],
     "hull": {
@@ -43,13 +43,14 @@
       "hullIntegrity": 135
     },
     "chars": {
-      "speed": 4,
+      "speed": 5,
       "manoeuvrability": -5,
       "detection": 10,
       "voidShields": 0,
       "armour": 25,
       "turretRating": 5
-    }
+    },
+    "bookSource": "DoomBC — Книга Пустоты, Линкоры, стр. 182-198"
   },
   "_id": "x5HjmGY2CNnd1iP4",
   "effects": [],

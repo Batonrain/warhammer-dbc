@@ -10,10 +10,12 @@ import { getShipCrit, SHIP_MANEUVERS, SHIP_LONG_ACTIONS,
 import { CREW_POP_TABLE, CREW_MORALE_TABLE, CREW_RATING_TABLE, crewActiveRows, OFFICER_POSTS,
          crewActionsPerSR, moralePerInfluence, SHORE_LEAVE, CREW_RECRUIT,
          MUTINY_APPROACHES, MUTINY_WIN_DOS } from "../constants/ship.mjs";
-import { SHIP_RELATIONS } from "../constants/ship-tokens.mjs";
+import { SHIP_RELATIONS } from "../combat/ship-tokens.mjs";
 import { CRAFT_KINDS } from "../constants/small-craft.mjs";
 import { degreesOfSuccess } from "../constants/craft.mjs";
-import { resolveShipProps, aggregateShipAttackAuto } from "../combat/ship-attack.mjs";
+import { resolveShipProps, aggregateShipAttackAuto, hitsAfterShields,
+         terminalPenetrationTargets, terminalPenetrationAdjustment,
+         resolveShipAttackDamage, resolveShipCritRoll, lifetakerDamage } from "../combat/ship-attack.mjs";
 import { isCapabilityAvailable, markCapabilityUsed } from "../rules/cooldown.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { postTestCard, outcomeHtml } from "../helpers/test-card.mjs";
@@ -1022,11 +1024,11 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       // Нова даже при промахе может задеть — памятка
       if (wt === "nova") body += `<div class="roll-threshold" style="font-size:0.82em;">Нова: точка смещается на 1 ПЕ (чёт — от стрелка, нечёт — к стрелку); суда в 1 ПЕ от точки получают 1d5 попаданий.</div>`;
     } else {
-      const shieldsUsed = shieldsApply ? Math.min(o.shields, hitsRaw) : 0;
-      // Волкитное (wdbc-jr93): число попаданий, прошедших щиты, удваивается.
-      let hitsAfter = Math.max(0, hitsRaw - shieldsUsed);
-      if (shipAuto.volkiteDouble) hitsAfter *= 2;
-      let totalHI = 0, dmgParts = [], critByNova = 0;
+      // Попадания сквозь щиты + удвоение Волкитным (module/combat/ship-attack.mjs).
+      const { shieldsUsed, hitsAfter } = hitsAfterShields({
+        hitsRaw, shields: o.shields, shieldsApply, volkiteDouble: shipAuto.volkiteDouble
+      });
+      let dmgParts = [], critByNova = 0;
       for (let i = 0; i < hitsAfter; i++) {
         let dr;
         try {
@@ -1038,32 +1040,32 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
         allRolls.push(dr);
         // Глубокое Пробитие (Terminal Penetration X, wdbc-jr93): кубики урона
         // ≤ X перебрасываются один раз, новый результат окончателен (даже если
-        // он тоже низкий). dr.total не трогаем — считаем поправку отдельно и
-        // прибавляем её к итогу, чтобы не лезть во внутренности Roll.
+        // он тоже низкий) — какие кубики и какая поправка, решает
+        // module/combat/ship-attack.mjs; здесь только сам переброс (Roll).
+        // dr.total не трогаем, прибавляем поправку отдельно, чтобы не лезть
+        // во внутренности Roll.
         let dieAdjustment = 0;
         if (shipAuto.terminalPenetration > 0) {
           const term = dr.dice?.[0];
-          for (const die of (term?.results ?? [])) {
-            if (die.result > shipAuto.terminalPenetration) continue;
+          const values  = (term?.results ?? []).map(d => d.result);
+          const targets = terminalPenetrationTargets(values, shipAuto.terminalPenetration);
+          const rerolled = [];
+          for (let i = 0; i < targets.length; i++) {
             const reroll = await (new Roll(`1d${term.faces}`)).evaluate();
             allRolls.push(reroll);
-            dieAdjustment += reroll.total - die.result;
+            rerolled.push(reroll.total);
           }
+          dieAdjustment = terminalPenetrationAdjustment(values, targets, rerolled);
         }
         dmgParts.push(dr.total + dieAdjustment);
         if (wt === "nova" && dr.dice?.[0]?.results?.some(d => d.result >= 10)) critByNova++;
         if (wt === "torpedo" && critN && dr.dice?.[0]?.results?.some(d => d.result >= critN)) critByNova++;
       }
-      if (sumDamage) {
-        const sum = dmgParts.reduce((a, b) => a + b, 0);
-        totalHI = ignoreArmour ? sum : Math.max(0, sum - effArmour);
-      } else {
-        totalHI = dmgParts.reduce((a, b) => a + (ignoreArmour ? b : Math.max(0, b - effArmour)), 0);
-      }
-      // Разрушительное (Devastating, wdbc-qhwb): +X к урону ВСЕХ атак узлов типа
-      // wt — флотский баф с любого узла корабля, не обязательно стреляющего.
+      // Броня + Разрушительное (Devastating, wdbc-qhwb): +X к урону ВСЕХ атак
+      // узлов типа wt — флотский баф с любого узла корабля, не обязательно
+      // стреляющего; арифметика — module/combat/ship-attack.mjs.
       const devastatingBonus = Number(this.actor.system.derived?.devastatingByType?.[wt]) || 0;
-      if (devastatingBonus && hitsAfter > 0) totalHI += devastatingBonus;
+      let totalHI = resolveShipAttackDamage({ dmgParts, ignoreArmour, effArmour, sumDamage, devastatingBonus, hitsAfter });
 
       // Критическое попадание. Нова/торпеда может дать N критов за один залп
       // (по числу кубов урона, ушедших за порог) — раньше только первый
@@ -1083,19 +1085,17 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
         for (let i = 0; i < numCrits; i++) {
           const cr = await (new Roll("1d5")).evaluate();
           allRolls.push(cr);
-          // Опустошительное (Havoc X, wdbc-jr93): +X к результату крита ДО поиска в таблице.
-          const critRollVal = cr.total + shipAuto.havocBonus;
-          const ce = getShipCrit(critRollVal);
-          const havocNote = shipAuto.havocBonus ? ` +${shipAuto.havocBonus} Havoc = <b>${critRollVal}</b>` : "";
-          // Цепная реакция / Испарение (wdbc-qhwb): только на 1–2 по таблице критов
-          // эффект бьёт по нескольким узлам сразу — выбор КОНКРЕТНЫХ узлов остаётся
+          // Опустошительное (Havoc X, wdbc-jr93) + Цепная реакция/Испарение
+          // (wdbc-qhwb): критический результат и порог «1–2» считает
+          // module/combat/ship-attack.mjs — выбор КОНКРЕТНЫХ узлов остаётся
           // текстовым решением ГМа (вся таблица критов не резолвит узлы в коде),
           // здесь только пометка числа.
+          const { critRollVal, entry: ce, multiNode } = resolveShipCritRoll(cr.total, shipAuto.havocBonus, propsForCrit);
+          const havocNote = shipAuto.havocBonus ? ` +${shipAuto.havocBonus} Havoc = <b>${critRollVal}</b>` : "";
           let multiNodeNote = "";
-          if (critRollVal <= 2) {
-            const chain = propsForCrit.find(p => p.key === "chainReaction");
-            if (chain) multiNodeNote = ` <span style="opacity:.8">(Цепная реакция: ×${Number(chain.rating) || 2} узла — выбрать вручную)</span>`;
-            else if (propsForCrit.some(p => p.key === "vapourisation")) multiNodeNote = ` <span style="opacity:.8">(Испарение: ×2 узла — выбрать вручную)</span>`;
+          if (multiNode) {
+            const label = multiNode.type === "chainReaction" ? "Цепная реакция" : "Испарение";
+            multiNodeNote = ` <span style="opacity:.8">(${label}: ×${multiNode.count} узла — выбрать вручную)</span>`;
           }
           critParts.push(`<div class="roll-damage-section"><div class="roll-damage-label">${ICO.crit} КРИТ!${numCrits > 1 ? ` (${i + 1}/${numCrits})` : ""} 1d5 = <b>${cr.total}</b>${havocNote} — ${esc(ce?.name)}${multiNodeNote}</div><div class="roll-distort-desc">${ce?.text || ""}</div></div>`);
         }
@@ -1107,8 +1107,8 @@ export class WarhammerShipSheet extends WarhammerStructuralSheet {
       // Забирающее жизни (Lifetaker, wdbc-qhwb): урон CP цели за каждое
       // непоглощённое попадание, В ДОПОЛНЕНИЕ к обычному урону макробатарей.
       let lifetakerSection = "";
-      if (shipAuto.lifetakerCP > 0 && hitsAfter > 0) {
-        const cpDmg = shipAuto.lifetakerCP * hitsAfter;
+      const cpDmg = lifetakerDamage(shipAuto.lifetakerCP, hitsAfter);
+      if (cpDmg > 0) {
         // Не пишем в чужого актора отсюда: у игрока нет прав на вражеский
         // корабль, и упавший update ронял всю карточку атаки. Кнопкой из
         // чата (hooks.mjs), как соседние wh-ship-dmg-btn/wh-ship-vs-btn —

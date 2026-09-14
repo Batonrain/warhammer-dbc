@@ -10,7 +10,8 @@
     "quality": "common",
     "rarity": 4,
     "baseRarity": "",
-    "description": "SPD 10, Дальн. 60. 1d5 (+1 за СУ) случайных систем выводятся из строя хакерской атакой."
+    "description": "SPD 10, Дальн. 60. 1d5 (+1 за СУ) случайных систем выводятся из строя хакерской атакой.",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "rIKiZFqaXdwdVbVD",
   "effects": [],

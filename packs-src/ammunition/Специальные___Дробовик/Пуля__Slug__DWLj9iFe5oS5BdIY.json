@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Убирает Scatter",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Патроны для Дробовика», стр. 204)"
   },
   "_id": "DWLj9iFe5oS5BdIY",
   "effects": [],

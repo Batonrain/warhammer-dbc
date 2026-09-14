@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Вездеход / All-Terrain",
+      "name": "All-Terrain / Вездеход",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!zkRrpBtwHzSuIlMv.CB2zEwAeYPHwr3TZ"
     },
     {
-      "name": "Манёвренный / Maneuverable",
+      "name": "Maneuverable / Манёвренный",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

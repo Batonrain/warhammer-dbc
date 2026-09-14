@@ -859,7 +859,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.vmdgEt00JRBetf8A"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -929,7 +929,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.JcWmoTTtyCGjhpyh"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -999,7 +999,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.lrZRL5How4V70MhW"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1073,7 +1073,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.yM1GCrd208PKV4UN"
     },
     {
-      "name": "Тормоза Падения / Fall Breaks",
+      "name": "Fall Breaks / Тормоза Падения",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1139,7 +1139,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.wOh4mHhFBIJ545Dw"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1198,7 +1198,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.k83qzDhtCpV07Epz"
     },
     {
-      "name": "Мультиприцел / Multi-Targeter",
+      "name": "Multi-Targeter / Мультиприцел",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1268,7 +1268,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.LBACr4gqBo0E3HxY"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1342,7 +1342,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.eskbfTAx10fX0882"
     },
     {
-      "name": "Векторные Двигатели / Vector Thrusters",
+      "name": "Vector Thrusters / Векторные Двигатели",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1401,7 +1401,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.WyYIAVVnhcWyjOFb"
     },
     {
-      "name": "Космолет / Voidcraft",
+      "name": "Voidcraft / Космолет",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1460,7 +1460,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.TCe2pRfffHGv5JDG"
     },
     {
-      "name": "Вертикальный Взлёт / VTOL",
+      "name": "VTOL / Вертикальный Взлёт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1519,7 +1519,7 @@
       "_key": "!actors.items!xTmX1VMnRnCVRiCh.kYyvsbjPUtaaW9po"
     },
     {
-      "name": "Мерцающие Поля / Flickerfield",
+      "name": "Flickerfield / Мерцающие Поля",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

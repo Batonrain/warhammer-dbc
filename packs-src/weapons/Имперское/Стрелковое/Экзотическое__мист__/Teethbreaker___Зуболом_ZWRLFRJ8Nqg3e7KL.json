@@ -22,6 +22,7 @@
     "damageType": "chemical",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 188-198)",
     "availability": 4,
     "weight": 6,
     "attackBonus": 0,
@@ -63,7 +64,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": ""
   },
   "_id": "ZWRLFRJ8Nqg3e7KL",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

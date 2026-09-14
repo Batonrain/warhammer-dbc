@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 7,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
     "availability": 2,
     "weight": 5.5,
     "attackBonus": 0,
@@ -60,7 +61,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "laser"
   },
   "_id": "Dh8z4atDY2ydsXFV",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

@@ -6,8 +6,8 @@
 // нулевой, а bestQualityEffects пустым. Пустой список — ещё и гейт диалога
 // выбора эффекта (needsBestQChoice), так что окно им не предлагалось вовсе.
 
-import { describe, it, expect } from "vitest";
-import { implantAvailabilityPatch } from "../../module/migrations/implant-availability.mjs";
+import { describe, it, expect, afterEach } from "vitest";
+import { implantAvailabilityPatch, migrateImplantAvailability } from "../../module/migrations/implant-availability.mjs";
 
 const implant = (system = {}) => ({ type: "implant", name: "Биологическая Рука", system });
 const book    = (system = {}) => ({ type: "implant", name: "Биологическая Рука", system });
@@ -104,5 +104,51 @@ describe("данные паков: заполнено ровно там, где 
     expect(files.length).toBeGreaterThan(250);
     expect(withKey).toBe(79);
     expect(zeros).toBe(2);
+  });
+});
+
+// wdbc-059h: по образцу gear-equipped/wdbc-dyi — было один try на ВЕСЬ цикл по
+// акторам, сбой на одном глушил доливку остальным молча.
+describe("migrateImplantAvailability: изоляция сбоя одного актора (wdbc-059h)", () => {
+  afterEach(() => { delete globalThis.game; delete globalThis.ui; });
+
+  const fakePack = (doc) => ({
+    getIndex: async () => [{ _id: "src1", name: doc.name }],
+    getDocument: async (id) => (id === "src1" ? doc : null)
+  });
+
+  function actorWith(id, items, { throwOnUpdate = false } = {}) {
+    return {
+      id, name: `Actor ${id}`, items,
+      async updateEmbeddedDocuments(type, updates) {
+        if (throwOnUpdate) throw new Error(`boom on ${id}`);
+        for (const u of updates) {
+          const item = items.find(i => i.id === u._id);
+          if (item) Object.assign(item.system, { availability: u["system.availability"] });
+        }
+      }
+    };
+  }
+
+  it("сбой на одном акторе не прерывает доливку остальным и не топит их результат", async () => {
+    const src = book({ availability: 4 });
+    src._id = "src1";
+    const bad = actorWith("bad", [implant({ availability: 0 })], { throwOnUpdate: true });
+    const good = actorWith("good", [implant({ availability: 0 })]);
+
+    globalThis.game = {
+      user: { isGM: true },
+      actors: [bad, good],
+      scenes: [],
+      packs: { get: () => fakePack(src) }
+    };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    const res = await migrateImplantAvailability();
+
+    expect(res.fixed).toBe(1);
+    expect(res.failed).toBe(1);
+    expect(good.items[0].system.availability).toBe(4);
+    expect(bad.items[0].system.availability).toBe(0);
   });
 });

@@ -28,6 +28,7 @@ export class ComponentData extends foundry.abstract.TypeDataModel {
       qualityCustom: new BooleanField({ initial: false, label: "Своё качество" }),
       hulls:         str("", "Корпуса"),
       aspects:       str("", "Аспекты"),
+      bookSource:    str("", "Книга-источник"),
       description:   html("", "Описание"),
       notes:         html("", "Заметки"),
       essential:     new BooleanField({ initial: false, label: "Основной" }),

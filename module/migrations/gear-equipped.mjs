@@ -43,21 +43,69 @@ export function gearNeedingEquipped(items = []) {
     && !i.system?.equipped);
 }
 
-/** Проставляет «надето» носимому снаряжению всех акторов мира. */
+/**
+ * Простановка «надето» снаряжению ОДНОГО актора. Бросает исключение наружу —
+ * решение о том, что делать со сбоем на одном акторе (пропустить и продолжить
+ * остальных), принимает вызывающий код в migrateGearEquipped, а не эта
+ * функция: у неё нет доступа к «сколько акторов ещё впереди».
+ */
+async function migrateOneActorGear(actor) {
+  const updates = gearNeedingEquipped(actor.items)
+    .map(item => ({ _id: item.id, "system.equipped": true }));
+  if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
+  return updates.length;
+}
+
+/**
+ * Проставляет «надето» носимому снаряжению всех акторов мира, а также
+ * несвязанных токенов на сценах (wdbc-dyi): у токена с actorLink:false
+ * предметы лежат в его собственной ActorDelta, а не в мировом Actor — такой
+ * токен не входит в game.actors и без отдельного прохода остался бы вовсе не
+ * замечен, независимо от прочих сбоев.
+ *
+ * Ошибка на одном акторе/токене (wdbc-dyi: было — try на весь цикл сразу,
+ * сбой глушил миграцию остальных акторов молча) логируется и пропускается,
+ * не прерывая обработку следующих: gear-equipped идёт по вещам разных
+ * персонажей, и они друг от друга не зависят.
+ */
 export async function migrateGearEquipped() {
   if (!game.user?.isGM) { ui.notifications?.warn("Надетое снаряжение: только для ГМа."); return; }
 
   let updated = 0;
-  try {
-    for (const actor of game.actors) {
-      const updates = gearNeedingEquipped(actor.items)
-        .map(item => ({ _id: item.id, "system.equipped": true }));
-      if (updates.length) { await actor.updateEmbeddedDocuments("Item", updates); updated += updates.length; }
-    }
-  } catch (e) { console.error("Warhammer DBC | Надетое снаряжение:", e); }
+  let failed = 0;
 
-  const msg = `Носимое снаряжение отмечено надетым: ${updated} предметов.`;
-  console.log("Warhammer DBC |", msg);
-  if (updated) ui.notifications?.info("Warhammer DBC: " + msg);
-  return { updated };
+  // Мировые акторы. Связанные токены (actorLink:true) используют тот же
+  // документ Actor — им отдельный проход не нужен.
+  for (const actor of game.actors) {
+    try {
+      updated += await migrateOneActorGear(actor);
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Надетое снаряжение: сбой на акторе «${actor.name}» (${actor.id}), пропущен:`, e);
+    }
+  }
+
+  // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
+  // прямо в ActorDelta токена — тот же приём, что и везде в проекте
+  // (module/combat/*.mjs, module/regions/*.mjs — tokenDoc.actor).
+  for (const scene of game.scenes ?? []) {
+    for (const tokenDoc of scene.tokens?.contents ?? []) {
+      if (tokenDoc.actorLink) continue;
+      const actor = tokenDoc.actor;
+      if (!actor) continue;
+      try {
+        updated += await migrateOneActorGear(actor);
+      } catch (e) {
+        failed++;
+        console.error(`Warhammer DBC | Надетое снаряжение: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
+      }
+    }
+  }
+
+  const msg = failed
+    ? `Носимое снаряжение отмечено надетым: ${updated} предметов; ${failed} акторов/токенов пропущено из-за ошибок — миграция повторится при следующей загрузке мира.`
+    : `Носимое снаряжение отмечено надетым: ${updated} предметов.`;
+  console[failed ? "warn" : "log"]("Warhammer DBC |", msg);
+  if (updated || failed) ui.notifications?.[failed ? "warn" : "info"]("Warhammer DBC: " + msg);
+  return { updated, failed };
 }

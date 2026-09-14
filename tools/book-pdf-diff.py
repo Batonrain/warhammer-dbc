@@ -58,11 +58,26 @@ _spec.loader.exec_module(_cov)
 sys.argv = _argv
 
 WORD = re.compile(r"[а-яa-z0-9]+")
+SPACE_BEFORE_PUNCT = re.compile(r"\s+([.,:;!?…»)\]])")
+
+
+def strip_tags(text):
+    """Снимает HTML-теги, не оставляя паразитный пробел перед пунктуацией.
+
+    Наивная замена тега на пробел нужна между словами (`</strong>Иначе` не
+    должно слипнуться в «ИначеБез_пробела»), но перед знаком препинания
+    пробела в исходнике нет: «<strong>Прием</strong>: Х.» должно читаться
+    как «Прием: Х.», а не «Прием : Х.» — лишний пробел перед двоеточием
+    иначе даёт ложное «подпись не найдена» при сверке с PDF, где знак
+    препинания всегда приклеен к слову.
+    """
+    t = re.sub(r"(?s)<[^>]+>", " ", text or "")
+    return SPACE_BEFORE_PUNCT.sub(r"\1", t)
 
 
 def words(text):
     """Слова в сравнимом виде: без разметки, ё→е, апострофы к одному виду."""
-    t = re.sub(r"(?s)<[^>]+>", " ", text or "")
+    t = strip_tags(text)
     t = unescape(t).replace("ё", "е").replace("Ё", "Е").replace("’", "'").lower()
     return WORD.findall(t)
 
@@ -227,7 +242,7 @@ def main():
     junction_index = set(" ".join(chapter_words[i:i + 6]) for i in range(len(chapter_words) - 5))
     junction_index |= set(" ".join(chapter_words[i:i + 5]) for i in range(len(chapter_words) - 4))
     sections = sections_by_page(html_all)
-    book_plain = re.sub(r"\s+", " ", unescape(re.sub(r"(?s)<[^>]+>", " ", html_all))).replace("ё", "е").lower()
+    book_plain = re.sub(r"\s+", " ", unescape(strip_tags(html_all))).replace("ё", "е").lower()
 
     doc = pymupdf.open(pdf_path)
     report = [f"книга {slug} · {os.path.basename(pdf_path)} · страницы {lo}-{hi}",

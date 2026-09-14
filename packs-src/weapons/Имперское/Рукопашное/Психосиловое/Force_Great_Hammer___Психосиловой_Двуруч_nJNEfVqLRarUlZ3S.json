@@ -48,7 +48,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -61,6 +62,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 213)",
     "availability": 4,
     "weight": 3,
     "attackBonus": 0,
@@ -106,7 +108,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Молот"
+    "meleeCategory": "Молот",
+    "damageSubtype": "crushing"
   },
   "_id": "nJNEfVqLRarUlZ3S",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-hammer.svg",

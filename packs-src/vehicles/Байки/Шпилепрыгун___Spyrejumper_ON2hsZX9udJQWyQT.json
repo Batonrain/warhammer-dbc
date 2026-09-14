@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Парящий (X) / Hoverer (X)",
+      "name": "Hoverer (X) / Парящий (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!ON2hsZX9udJQWyQT.XD5zvOb9fIP2Wl08"
     },
     {
-      "name": "Интегрированное Оружие / Integral Weapon",
+      "name": "Integral Weapon / Интегрированное Оружие",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

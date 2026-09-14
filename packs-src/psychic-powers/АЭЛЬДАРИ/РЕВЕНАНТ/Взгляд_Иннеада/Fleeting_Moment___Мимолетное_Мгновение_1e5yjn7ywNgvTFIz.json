@@ -24,7 +24,11 @@
     "damage": "1d5+бPR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -50,7 +54,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "Книга Аэльдари: Ответвления, ДИСЦИПЛИНА РЕВЕНАНТА («Взгляд Иннеада»)"
   },
   "_id": "1e5yjn7ywNgvTFIz",
   "effects": [],

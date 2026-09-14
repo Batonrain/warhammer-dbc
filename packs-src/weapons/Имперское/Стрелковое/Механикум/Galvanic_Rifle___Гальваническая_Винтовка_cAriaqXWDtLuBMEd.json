@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 6,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 188-198)",
     "availability": 0,
     "weight": 5,
     "attackBonus": 0,
@@ -62,7 +63,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "electrical"
   },
   "_id": "cAriaqXWDtLuBMEd",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

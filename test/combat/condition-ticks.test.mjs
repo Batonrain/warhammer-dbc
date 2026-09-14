@@ -10,6 +10,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 import { processConditionTurnStart, processConditionTurnEnd, rollBurningPanicTest } from "../../module/combat/condition-ticks.mjs";
 import { clearRuleSources, registerRuleSource, getRuleSources } from "../../module/rules/sources.mjs";
+import { BLESSED_FITS_PENDING_FLAG } from "../../module/rules/blessed-fits.mjs";
 
 function makeActor(overrides = {}) {
   const updates = [];
@@ -62,6 +63,58 @@ describe("processConditionTurnStart: декремент длительности
     expect(actor.system.conditions.stunnedRounds).toBe(0);
     expect(actor.system.conditions.stunned).toBe(false);
     expect(captured.chat[0].content).toContain("снято");
+  });
+
+  // Blessed Fits/Благословенные Припадки (wdbc-1rno, Общие Мутации):
+  // Оглушение от переброшенного провала естественно доходит до 0 — «провёл
+  // полный Раунд» — Очко Бесчестия возвращается тем же тактом.
+  describe("Blessed Fits/Благословенные Припадки (wdbc-1rno)", () => {
+    function withFateActor(overrides = {}) {
+      return makeActor({
+        alignment: "heretic", fate: { value: 5 },
+        characteristics: { t: { bonus: 0, total: 40 }, wp: { bonus: 0 }, inf: { bonus: 10 } },
+        conditions: { stunned: true, stunnedRounds: 1 },
+        ...overrides
+      });
+    }
+
+    it("метка стоит, Оглушение 1 → 0 — Очко возвращается, метка снимается", async () => {
+      const actor = withFateActor();
+      await actor.setFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG, true);
+      await processConditionTurnStart(actor);
+
+      expect(actor.system.conditions.stunned).toBe(false);
+      expect(actor.system.fate.value).toBe(6); // 5 + 1
+      expect(actor.getFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG)).toBeUndefined();
+      expect(captured.chat[0].content).toContain("вернулось");
+    });
+
+    it("без метки — обычный декремент, Очко не трогается", async () => {
+      const actor = withFateActor();
+      await processConditionTurnStart(actor);
+
+      expect(actor.system.fate.value).toBe(5);
+      expect(captured.chat[0].content).not.toContain("Благословенные Припадки");
+    });
+
+    it("метка стоит, но Оглушение ещё НЕ на 0 (было 2) — рано, Очко не трогается", async () => {
+      const actor = withFateActor({ conditions: { stunned: true, stunnedRounds: 2 } });
+      await actor.setFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG, true);
+      await processConditionTurnStart(actor);
+
+      expect(actor.system.conditions.stunnedRounds).toBe(1);
+      expect(actor.system.fate.value).toBe(5);
+      expect(actor.getFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG)).toBe(true); // метка ещё ждёт
+    });
+
+    it("Оглушения нет вовсе (снято раньше срока) — метка просто повисает без возврата", async () => {
+      const actor = withFateActor({ conditions: {} });
+      await actor.setFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG, true);
+      await processConditionTurnStart(actor);
+
+      expect(actor.system.fate.value).toBe(5);
+      expect(actor.getFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG)).toBe(true);
+    });
   });
 
   // Галлюцинации (стр. 168, wdbc-r5o7.8): раньше counter не был заведён в
@@ -323,6 +376,38 @@ describe("processConditionTurnEnd: Горение", () => {
     expect(actor.system.wounds.value).toBe(5);
     expect(actor.system.fatigue.value).toBe(0);
     expect(captured.chat[0].content).toContain("успех");
+  });
+
+  // Броня Огненного Дракона (wdbc-q0q8, ARMOR_PROPERTIES.fireproof) —
+  // единственное известное исключение из «Горение игнорирует броню целиком»:
+  // собственное AP ТЕЛА этого предмета, удвоенное, вычитается из тика.
+  it("Fireproof (Броня Огненного Дракона): AP тела ×2 снижает урон Горения сверх T.b", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    actor.items = [{
+      type: "armor",
+      system: { equipped: true, body: 8, properties: ["fireproof"] }
+    }];
+    // 10 - T.b(0) - AP(8*2=16) = 0 → урон не проходит вовсе
+    captured.dice = [10, 20]; // второй бросок — тест T+0 запасной ветки
+    actor.system.characteristics.t.total = 60;
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.wounds.value).toBe(5); // не изменилось
+    expect(captured.chat[0].content).toContain("AP(×2) 16");
+  });
+
+  it("Fireproof: неэкипированная броня с этим свойством не считается", async () => {
+    const actor = makeActor({ conditions: { burning: true } });
+    actor.items = [{
+      type: "armor",
+      system: { equipped: false, body: 8, properties: ["fireproof"] }
+    }];
+    captured.dice = [6]; // 6 - T.b(0) - AP(0, не учтена) = 6 урона, при 5 текущих Ранах — уходит в крит.
+    await processConditionTurnEnd(actor);
+
+    expect(actor.system.wounds.value).toBe(0);
+    expect(actor.system.wounds.critical).toBe(1);
+    expect(captured.chat[0].content).toContain("игнор брони");
   });
 
   it("нет Горения — тишина", async () => {

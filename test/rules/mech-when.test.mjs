@@ -55,6 +55,26 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
     expect(entryWhenOk(actor, entry)).toBe(true);
   });
 
+  // Сравнение СТРОГОЕ, а не подстрокой. Специализацию автор записи выбирает
+  // сам, из поля, и вправе ждать точного совпадения: иначе условие «только с
+  // Мастерством (Психонаука)» срабатывало бы у того, у кого записано
+  // «Психонаука и Телепатия», — бонус там, где книга его не даёт.
+  it("специализация лишь СОДЕРЖИТ искомую — false", () => {
+    const actor = actorWithItems([
+      { type: "talent", name: "Mastery / Мастерство", system: { specialization: "Психонаука и Телепатия" } }
+    ]);
+    expect(entryWhenOk(actor, entry)).toBe(false);
+  });
+
+  // Запасной вариант «специализация в скобках прямо в имени» остаётся —
+  // так её хранит часть старых записей (Резчик по Плоти), — но тоже строгий.
+  it("специализация в скобках имени — true при точном совпадении", () => {
+    const actor = actorWithItems([
+      { type: "talent", name: "Mastery / Мастерство (Психонаука)", system: {} }
+    ]);
+    expect(entryWhenOk(actor, entry)).toBe(true);
+  });
+
   it("сравнение по любой билингвальной половине имени, без учёта регистра/пробелов", () => {
     const actor = actorWithItems([
       { type: "talent", name: "Mastery / Мастерство", system: { specialization: "  психонаука  " } }
@@ -83,11 +103,23 @@ describe("entryWhenOk: Талант+специализация (wdbc-ta4y)", () 
 
 describe("entryWhenOk: гейты независимы и складываются через И", () => {
   it("Геносемя проходит, Талант — нет: итог false", () => {
-    const actor = actorWithItems([], { legion: "I" });
+    // wdbc-shr, находка 10: раньше actor.items был пуст([]), и тест был
+    // зелёным «по чужой причине» — talentOk оказывался false просто потому,
+    // что у актора нет вообще никаких предметов, а не потому, что реально
+    // сработала проверка имени/специализации Таланта (запрос при этом ещё и
+    // нарушал документированное соглашение файла: talentSpec.name должен
+    // нести ОДНУ билингвальную половину, а не полную строку со слэшем —
+    // см. комментарий у описания «Талант+специализация» выше). Актору дан
+    // РЕАЛЬНЫЙ Талант с ДРУГОЙ специализацией — теперь talentOk=false
+    // получается из настоящей проверки, а не из пустого items.
+    const actor = actorWithItems(
+      [{ type: "talent", name: "Mastery / Мастерство", system: { specialization: "Уклонение" } }],
+      { legion: "I" }
+    );
     const entry = {
       when: {
         negate: false, conditions: [{ legion: "I" }],
-        talentSpec: { name: "Mastery / Мастерство", specialization: "Психонаука" }
+        talentSpec: { name: "Мастерство", specialization: "Психонаука" }
       }
     };
     expect(entryWhenOk(actor, entry)).toBe(false);

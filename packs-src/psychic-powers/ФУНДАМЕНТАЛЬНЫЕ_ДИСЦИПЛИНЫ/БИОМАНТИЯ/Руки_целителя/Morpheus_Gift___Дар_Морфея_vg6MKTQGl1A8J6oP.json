@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "t",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Биомантия — Руки целителя» стр. 331)"
   },
   "_id": "vg6MKTQGl1A8J6oP",
   "effects": [],

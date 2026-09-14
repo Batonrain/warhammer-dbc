@@ -7,6 +7,7 @@
     "notes": "Не смоделировано целиком: призыв к иконе, +30 Нестабильности демонам рядом — площадные/чужие эффекты; Баланс−2 — свойство самого предмета как оружия, отдельная запись.",
     "quantity": 1,
     "weight": 6,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 262)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "mystic",
@@ -18,7 +19,7 @@
       "best": ""
     },
     "bonuses": [],
-    "linkedWeapon": "Икона Хаоса"
+    "linkedWeapon": "Icon of Chaos / Икона Хаоса"
   },
   "folder": "RpwK7hjZB6380LhD",
   "_id": "NPdQdD06D1P3vpe0",

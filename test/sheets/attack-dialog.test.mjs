@@ -197,6 +197,33 @@ describe("разметка диалога: рукопашное оружие", (
     expect(captured.dialog.content).toContain("Хват: Обратный (Об) · WS -10");
   });
 
+  // Обратный Хват + Выпад (стр. 39): «атаки с приемом Выпад просто не
+  // получают штрафа» — в любой Базе, не только на Полной Атаке.
+  it("Обратный хват + Выпад: штраф WS от хвата снят целиком (любая База)", () => {
+    const weapon = sword({ grips: "1р (Об)" },
+                         { flags: { "warhammer-dbc.hudGrip": "Об" } });
+    showAttackDialog(attacker({ items: [weapon] }), weapon, { technique: "thrust" });
+    const html = captured.dialog.content;
+
+    expect(dialogThreshold()).toBe(55);        // WS 45 + База «Стандартная» 10 + Выпад 0, хват 0
+    expect(html).not.toContain("Хват: Обратный (Об) · WS -10");
+    expect(html).toContain("Выпад в Обратном хвате: без штрафа WS");
+  });
+
+  // На Полной Атаке та же связка ещё и не режет S.b пополам (проверено в
+  // test/combat/attack-card.test.mjs — числа зависят от sbEff, который тут
+  // не считается), но окно уже обязано сказать об этом в сводке.
+  it("Обратный хват + Выпад Полной Атакой: сводка называет обе льготы", () => {
+    const weapon = sword({ grips: "1р (Об)" },
+                         { flags: { "warhammer-dbc.hudGrip": "Об" } });
+    showAttackDialog(attacker({ items: [weapon] }), weapon, { technique: "thrust", forceBase: "fullatk" });
+    const html = captured.dialog.content;
+
+    expect(dialogThreshold()).toBe(75);        // WS 45 + База «Полная Атака» 30 + Выпад 0, хват 0
+    expect(html).not.toContain("· ½S.b");
+    expect(html).toContain("Полная Атака — полный S.b + ещё ½S.b (окр.▲) урона сверху");
+  });
+
   it("Рука Смерти (wdbc-hftn): двуручное слитое оружие форсирует Стандартный Хват (1р), пилюли не рисуются", () => {
     // Профиль двуручный и hudGrip намеренно оставлен на «Об» с прошлого
     // выбора — слияние должно перекрыть ОБА источника, не только профиль.

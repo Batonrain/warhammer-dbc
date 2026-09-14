@@ -62,6 +62,15 @@ describe("ogrynBreakApplies: когда куб вообще катается", (
     expect(ogrynBreakApplies({ actor: ogrynActor(), isMelee: true, hasOgrynized: true })).toBe(false);
     expect(ogrynBreakApplies({ actor: ogrynActor(), isMelee: false, hasOgrynized: false })).toBe(false);
   });
+
+  // wdbc-1lz: кулак/укус — часть тела Огрина, а не человеческое оружие не по
+  // руке. Без этого исключения каждый третий безоружный удар ломал бы Огрину
+  // собственную конечность (system.destroyed).
+  it("интегральная атака (кулак/укус) — не катаем, ломать нечего", () => {
+    const fist = { getFlag: (scope, key) => scope === "warhammer-dbc" && key === "integralAttack" };
+    expect(ogrynBreakApplies({ actor: ogrynActor(), item: fist, isMelee: true, hasOgrynized: false }))
+      .toBe(false);
+  });
 });
 
 describe("ogrynBreakNote: что видно в карточке", () => {

@@ -23,7 +23,16 @@
     "damage": "3d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blinding",
+        "rating": "ceil(PR/2)"
+      },
+      {
+        "key": "deflagrate",
+        "rating": "PR"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +55,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Пиромантия — Внутреннее пламя» стр. 339)"
   },
   "_id": "BpKtYdQOAGhJ6lSA",
   "effects": [],

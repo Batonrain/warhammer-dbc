@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "wp",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Тзинч» стр. 348)"
   },
   "_id": "SgfYNES5DGqLKvOs",
   "effects": [],

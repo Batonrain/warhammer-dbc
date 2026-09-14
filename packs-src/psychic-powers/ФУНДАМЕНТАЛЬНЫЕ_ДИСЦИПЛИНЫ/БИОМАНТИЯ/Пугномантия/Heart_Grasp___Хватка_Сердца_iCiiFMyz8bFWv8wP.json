@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "t",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Биомантия — Пугномантия» стр. 334)"
   },
   "_id": "iCiiFMyz8bFWv8wP",
   "effects": [],

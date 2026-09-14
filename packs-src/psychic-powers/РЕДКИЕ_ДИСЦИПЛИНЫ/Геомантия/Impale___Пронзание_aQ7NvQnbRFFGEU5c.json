@@ -23,7 +23,14 @@
     "damage": "1d10+2*PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "piercing"
+      },
+      {
+        "key": "primitive"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +53,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Геомантия» стр. 358)"
   },
   "_id": "aQ7NvQnbRFFGEU5c",
   "effects": [],

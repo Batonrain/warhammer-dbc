@@ -23,7 +23,15 @@
     "damage": "1d10+PR",
     "damageType": "chemical",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "tainted"
+      },
+      {
+        "key": "toxic",
+        "rating": 4
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +54,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Нургл» стр. 346)"
   },
   "_id": "NpwR0ksT551eGZwB",
   "effects": [],

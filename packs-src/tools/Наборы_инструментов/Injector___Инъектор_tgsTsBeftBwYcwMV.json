@@ -7,6 +7,7 @@
     "notes": "Medicae+0 — порог применения, не бонус; инъекции как атака — отдельная боевая механика, не testMod.",
     "quantity": 1,
     "weight": 0.5,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 257)",
     "availability": -1,
     "quality": "common",
     "toolCategory": "kits",

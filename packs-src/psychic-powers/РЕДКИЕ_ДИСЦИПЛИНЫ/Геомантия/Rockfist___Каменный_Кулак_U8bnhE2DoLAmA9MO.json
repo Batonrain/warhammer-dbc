@@ -23,7 +23,12 @@
     "damage": "1d10+2*PR",
     "damageType": "impact",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "concussive",
+        "rating": "ceil(PR/2)"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +51,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Геомантия» стр. 358)"
   },
   "_id": "U8bnhE2DoLAmA9MO",
   "effects": [],

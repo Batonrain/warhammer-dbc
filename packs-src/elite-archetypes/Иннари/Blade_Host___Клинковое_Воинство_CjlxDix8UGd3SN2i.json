@@ -66,7 +66,7 @@
     "gear": "",
     "traits": [
       "Unnatural WS (+4) / Сверхъест. Оружейное Мастерство",
-      "Unnatural WP (+2) / Сверхъест. Воля",
+      "Unnatural Willpower (+2) / Сверхъест. Воля",
       "Touched by the Fates / Избранный Судьбой (+1)",
       "Death Incarnate / Смерть Воплощённая",
       "Devour the Soul / Пожрать Душу"
@@ -337,7 +337,7 @@
               "op": "add",
               "value": 1,
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.0A12TcD79wynam9l",
-              "sourceName": "Unnatural WP (+2) / Сверхъест. Воля",
+              "sourceName": "Unnatural Willpower (+2) / Сверхъест. Воля",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,
               "rating": "",

@@ -34,7 +34,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -47,6 +48,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 219)",
     "availability": 2,
     "weight": 3,
     "attackBonus": 0,
@@ -95,7 +97,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Булава"
+    "meleeCategory": "Булава",
+    "damageSubtype": "crushing"
   },
   "_id": "eXYRawHXaSspj3B6",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",

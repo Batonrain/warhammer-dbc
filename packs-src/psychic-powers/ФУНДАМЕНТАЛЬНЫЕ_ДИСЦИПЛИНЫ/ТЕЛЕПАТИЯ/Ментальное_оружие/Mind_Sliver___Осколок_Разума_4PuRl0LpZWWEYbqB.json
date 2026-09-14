@@ -23,7 +23,11 @@
     "damage": "2d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +50,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телепатия — Ментальное оружие» стр. 321)"
   },
   "_id": "4PuRl0LpZWWEYbqB",
   "effects": [],

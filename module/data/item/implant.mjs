@@ -98,7 +98,21 @@ export class ImplantData extends foundry.abstract.TypeDataModel {
         isSpecialRating:   new BooleanField({ initial: false, label: "Особый рейтинг" }),
         currentRating:     new NumberField({ initial: 0, integer: true, nullable: false, label: "Текущий рейтинг" }),
         equipped:          new BooleanField({ initial: false, label: "Надето" }),
-        status:            new StringField({ initial: "inactive", label: "Состояние" })
+        status:            new StringField({ initial: "inactive", label: "Состояние" }),
+        // Положение Крыльев (wdbc-lmd2, найдено внутри wdbc-q0q8) — у щита-
+        // дефлектора некоторых имплантатов-Крыльев (Aelindrach Wings и
+        // подобные) рейтинг зависит от того, сложены крылья за спиной (защита
+        // только со спины — направление код не проверяет, это решает стол по
+        // тому же принципу, что «не работает в грязи» у Отражающей) или
+        // окутывают персонажа (защита со всех направлений), а в полёте
+        // (расправлены) щита нет вовсе. Пусто — импланту эта механика не
+        // нужна (не Крылья): поля ниже не читаются, ratingMax правится вручную,
+        // как раньше. wingRatingFolded/Wrapped — книжные числа ЭТОГО
+        // конкретного предмета (напр. 75/40) — при смене wingPosition
+        // item-sheet.mjs подставляет нужное в ratingMax сам.
+        wingPosition:      new StringField({ initial: "", label: "Положение крыльев" }),
+        wingRatingFolded:  new NumberField({ initial: 0, integer: true, nullable: false, label: "Рейтинг: сложены (только со спины)" }),
+        wingRatingWrapped: new NumberField({ initial: 0, integer: true, nullable: false, label: "Рейтинг: окутывают (все направления)" })
       }, { label: "Защитное поле" }),
       // Свойства встроенного оружия импланта — правятся на листе предмета
       // (item-sheet.mjs), а в template.json объявлены не были.

@@ -22,6 +22,14 @@ function armorItem({ id, head = 0, body = 0, leftArm = 0, rightArm = 0, leftLeg 
   };
 }
 
+function forcefieldItem({ id, equipped = true, status = "active", coverVsSubtype = "", coverVsSubtypeAP = 0 } = {}) {
+  return {
+    id, name: `Щит ${id}`, type: "forcefield",
+    system: { equipped, status, coverVsSubtype, coverVsSubtypeAP },
+    getFlag: () => undefined
+  };
+}
+
 function characterWith(items = [], systemOverrides = {}) {
   const system = { ...new ACTOR_DATA_MODELS.character({}).toObject(), ...systemOverrides };
   const list = [...items];
@@ -38,12 +46,12 @@ describe("system.absorption.propFlags", () => {
     expect(system.absorption.propFlags.head.noRanged).toBe(false);
   });
 
-  it("Conductive на нагруднике поднимает noEnergy только у тела", () => {
+  it("Conductive на нагруднике поднимает noApVsSubtype.electrical только у тела (wdbc-q0q8: книга целит в E(El), не в весь energy)", () => {
     const system = characterWith([
       armorItem({ id: "a1", body: 6, properties: ["conductive"] })
     ]);
-    expect(system.absorption.propFlags.body.noEnergy).toBe(true);
-    expect(system.absorption.propFlags.head.noEnergy).toBe(false);
+    expect(system.absorption.propFlags.body.noApVsSubtype.electrical).toBe(true);
+    expect(system.absorption.propFlags.head.noApVsSubtype.electrical).toBeUndefined();
   });
 
   it("не отмечает локацию, где у этого предмета AP === 0", () => {
@@ -51,7 +59,7 @@ describe("system.absorption.propFlags", () => {
     const system = characterWith([
       armorItem({ id: "a1", body: 6, head: 0, properties: ["conductive"] })
     ]);
-    expect(system.absorption.propFlags.head.noEnergy).toBe(false);
+    expect(system.absorption.propFlags.head.noApVsSubtype.electrical).toBeUndefined();
   });
 
   it("два предмета на одной локации — флаги ИЛИ (OR), не перезаписывают друг друга", () => {
@@ -59,8 +67,8 @@ describe("system.absorption.propFlags", () => {
       armorItem({ id: "a1", body: 4, properties: ["conductive"], stacks: true }),
       armorItem({ id: "a2", body: 2, properties: ["flak"], stacks: true })
     ]);
-    expect(system.absorption.propFlags.body.noEnergy).toBe(true);
-    expect(system.absorption.propFlags.body.doubleBlast).toBe(true);
+    expect(system.absorption.propFlags.body.noApVsSubtype.electrical).toBe(true);
+    expect(system.absorption.propFlags.body.doubleApVsSubtype.fragmentation).toBe(true);
   });
 
   it("Cloak на плаще поднимает frontArcNoProtect только у тела (wdbc-p5el)", () => {
@@ -75,7 +83,7 @@ describe("system.absorption.propFlags", () => {
     const system = characterWith([
       armorItem({ id: "a1", body: 6, properties: ["conductive"], equipped: false })
     ]);
-    expect(system.absorption.propFlags.body.noEnergy).toBe(false);
+    expect(system.absorption.propFlags.body.noApVsSubtype.electrical).toBeUndefined();
   });
 
   it("свойство без auto-директивы (undersuit) не поднимает флаги", () => {
@@ -86,7 +94,8 @@ describe("system.absorption.propFlags", () => {
       noEnergy: false, noImpact: false, doubleBlast: false,
       noRanged: false, noJointCalled: false, noEyeCalled: false,
       blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-      frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0
+      frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0, jointArmourRating: 0,
+      noApVsSubtype: {}, doubleApVsSubtype: {}, tripleApVsSubtype: {}
     });
   });
 
@@ -110,6 +119,43 @@ describe("system.absorption.propFlags", () => {
       armorItem({ id: "a1", body: 4, properties: ["protective"], propRatings: { protective: 3 } })
     ]);
     expect(system.absorption.vsType.chemical).toBe(3);
+  });
+
+  it("без брони — system.absorption.vsSubtype заведён нулями по всем 6 подвидам (wdbc-q0q8)", () => {
+    // Ни одно свойство ARMOR_PROPERTIES ещё не поднимает apBonusBySubtype
+    // (инфраструктура заведена раньше контента) — здесь только структурная
+    // проверка, что путь до system.absorption.vsSubtype реально собирается.
+    const system = characterWith();
+    expect(system.absorption.vsSubtype).toEqual({
+      crushing: 0, fragmentation: 0, electrical: 0, flame: 0, laser: 0, toxic: 0
+    });
+  });
+
+  it("Mistshield-подобный щит: активный даёт AP против своего подвида (wdbc-q0q8)", () => {
+    const system = characterWith([
+      forcefieldItem({ id: "f1", status: "active", coverVsSubtype: "laser", coverVsSubtypeAP: 8 })
+    ]);
+    expect(system.absorption.vsSubtype.laser).toBe(8);
+    expect(system.absorption.vsSubtype.electrical).toBe(0);
+  });
+
+  it("Mistshield-подобный щит: неактивный/перегруженный AP не даёт", () => {
+    const inactive = characterWith([
+      forcefieldItem({ id: "f1", status: "inactive", coverVsSubtype: "laser", coverVsSubtypeAP: 8 })
+    ]);
+    expect(inactive.absorption.vsSubtype.laser).toBe(0);
+
+    const overloaded = characterWith([
+      forcefieldItem({ id: "f1", status: "overloaded", coverVsSubtype: "laser", coverVsSubtypeAP: 8 })
+    ]);
+    expect(overloaded.absorption.vsSubtype.laser).toBe(0);
+  });
+
+  it("снятый щит с coverVsSubtype не участвует", () => {
+    const system = characterWith([
+      forcefieldItem({ id: "f1", equipped: false, status: "active", coverVsSubtype: "laser", coverVsSubtypeAP: 8 })
+    ]);
+    expect(system.absorption.vsSubtype.laser).toBe(0);
   });
 
   it("Sealed на всех 6 локациях и непробитая — sealedFullSuit true (wdbc-8b5)", () => {

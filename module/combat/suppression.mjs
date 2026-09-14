@@ -23,11 +23,14 @@ export function suppressionTestMod(sys) {
 
 /**
  * Тест на Подавление одной цели. mod — сумма штрафов (RoF-модификатор,
- * Импульсное и т.п.), уже посчитанная снаружи.
+ * Импульсное и т.п.), уже посчитанная снаружи. sourceActor (wdbc-1rno) —
+ * стрелок, если он известен (кнопка несёт его UUID из карточки атаки) —
+ * cross-actor правила вроде Ненависти читают его как ctx.targetActor теста
+ * Морали; без него ведёт себя как раньше.
  */
-export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "" } = {}) {
+export async function rollSuppressionTest(actor, { mod = 0, sourceLabel = "", sourceActor = null } = {}) {
   const wpTotal   = actor.system.characteristics?.wp?.total ?? 0;
-  const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod);
+  const { eff: threshold, parts, roll, rv, rerollNote, success: rolledSuccess, dof, usedReroll } = await rollMoraleTest(actor, wpTotal + mod, { sourceActor });
   // Саркофаг Дредноута (стр. 57, wdbc-drn): автоматически проходит тесты
   // Подавления независимо от броска.
   const success   = rolledSuccess || hasRuleFlag(actor, "sarcophagus.autoPassFear");

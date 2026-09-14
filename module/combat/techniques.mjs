@@ -8,6 +8,9 @@ import { testOutcome }                      from "../rules/roll-outcome.mjs";
 import { hasRuleFlag, ruleFlagLabels }      from "../rules/flags.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
 import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { DANCE_OF_DECEPTION_CAPABILITY, danceOfDeceptionFeintOptions } from "../rules/dance-of-deception.mjs";
+import { spendFromInfamyPool } from "../apps/infamy-points.mjs";
+import { tempInfamyAmount } from "../rules/temp-infamy.mjs";
 
 export async function _showContestDialog(actor, techDef) {
   // Повалить и Напролом — Athletics(S) vs Athletics(S), Финт/Давление — WS vs WS.
@@ -44,6 +47,21 @@ export async function _showContestDialog(actor, techDef) {
       ${meta.abbr} — ${meta.label} (${val})
     </option>`;
   }).join("");
+
+  // Dance of Deception/Танец Обмана (wdbc-1rno, Слаанеш): у Финта — доп.
+  // варианты Навыком вместо WS+0. Техника задаётся общим статичным объектом
+  // MELEE_CONTESTS (constants/combat.mjs), актор-специфичные варианты в него
+  // не положить — гейт по имени, тот же приём, что isKnock выше.
+  const danceOfDeceptionActive = techDef.label === "Финт" && hasRuleFlag(actor, DANCE_OF_DECEPTION_CAPABILITY);
+  const danceOptions = danceOfDeceptionActive ? danceOfDeceptionFeintOptions(actor) : [];
+  const danceOptionsHtml = danceOptions.map(o =>
+    `<option value="${esc(o.key)}">${esc(o.label)} (${o.value})</option>`).join("");
+  const danceFreeActionHtml = danceOfDeceptionActive
+    ? `<div class="atk-dlg-row">
+         <label><input type="checkbox" id="dance-free-action"/>
+           💃 Танец Обмана: потратить Очко Бесчестия — Финт как свободное действие</label>
+       </div>`
+    : "";
 
   const stanceBonusNote = stanceWsBonus
     ? `<div style="font-size:0.85em;color:#8fd0ff;margin-bottom:6px;">
@@ -101,7 +119,7 @@ export async function _showContestDialog(actor, techDef) {
 
         <div class="atk-dlg-row">
           <label>Характеристика:</label>
-          <select id="contest-char">${charOptions}</select>
+          <select id="contest-char">${charOptions}${danceOptionsHtml}</select>
         </div>
 
         <div class="atk-dlg-row">
@@ -119,19 +137,44 @@ export async function _showContestDialog(actor, techDef) {
           <span id="contest-total-display">${baseVal}</span>
         </div>
         ${rr.html}
+        ${danceFreeActionHtml}
       </form>`,
     buttons: {
       roll: {
         icon: '<i class="fas fa-dice-d10"></i>', label: "Бросок!",
         callback: async html => {
           const charKey  = html.find("#contest-char").val();
-          const charMeta = CHARACTERISTICS[charKey];
+          // Dance of Deception (wdbc-1rno): выбранный пункт — не сырая
+          // Характеристика, а один из вариантов danceOptions (Навык).
+          const danceOpt = danceOptions.find(o => o.key === charKey);
+          const charMeta = danceOpt ? null : CHARACTERISTICS[charKey];
           const selfVal  = parseInt(html.find("#contest-self").val()) || 0;
           const mod      = parseInt(html.find("#contest-mod").val())  || 0;
           // Общий сбор модификаторов (wdbc-ct65.3): встречный тест приёма
           // шёл мимо реестра правил — «Цель» в окне игрок правил руками.
-          const ruleMods = collectTestMods(actor, { kind: "skill", char: charKey });
+          // Навыком (danceOpt) — ctx несёт и char (Ловкость), и сам Навык,
+          // как у обычного броска Навыка (actor-sheet.mjs::_rollSkill).
+          const ruleMods = collectTestMods(actor, danceOpt
+            ? { kind: "skill", char: danceOpt.charKey, skill: danceOpt.skillKey }
+            : { kind: "skill", char: charKey });
           const eff      = selfVal + mod + ruleMods.total;
+
+          // Dance of Deception — свободное действие за Очко Бесчестия
+          // (wdbc-1rno): Состязания не списывают ОД программно вовсе (см.
+          // заголовок rules/dance-of-deception.mjs) — механизируема только
+          // цена, тем же путём, что обычная трата Бесчестия (_ipSpend).
+          let freeActionNote = "";
+          if (danceOfDeceptionActive && html.find("#dance-free-action").is(":checked")) {
+            const poolPath = actor.sheet?._infamyPath ?? "system.fate.value";
+            const curIp = Math.max(0, Number(foundry.utils.getProperty(actor, poolPath)) || 0);
+            if (curIp < 1 && tempInfamyAmount(actor) < 1) {
+              ui.notifications?.warn("Танец Обмана: нет Очков Бесчестия — Финт остаётся обычным действием.");
+            } else {
+              const spend = await spendFromInfamyPool(actor, 1, poolPath);
+              await actor.update({ [poolPath]: spend.poolValue });
+              freeActionNote = `<div class="roll-threshold">💃 Танец Обмана: потрачено 1 Очко Бесчестия — Финт проведён как свободное действие.</div>`;
+            }
+          }
 
           // Опциональный переброс правил (wdbc-u0by) — тот же приём чтения,
           // что actor-sheet.mjs::_showSkillRollDialog (.rule-reroll-opt:checked).
@@ -173,7 +216,7 @@ export async function _showContestDialog(actor, techDef) {
               </div>`,
             title: techDef.label,
             threshold: thresholdLine({
-              label: charMeta?.abbr ?? charKey, base: selfVal, parts: modParts, threshold: eff
+              label: danceOpt ? danceOpt.label : (charMeta?.abbr ?? charKey), base: selfVal, parts: modParts, threshold: eff
             }),
             rv, rerollNote, outcome,
             sections: [
@@ -186,7 +229,8 @@ export async function _showContestDialog(actor, techDef) {
                 ? `<div class="roll-location" style="font-size:0.88em;margin-top:3px;color:#e08a3a;">
                      ⚠️ ${esc(target.name)}: нельзя обезоружить${immuneLabels ? ` (${esc(immuneLabels)})` : ""} — эффект Приёма не применяется
                    </div>`
-                : ""
+                : "",
+              freeActionNote
             ]
           }, { rolls: [roll] });
 
@@ -204,9 +248,15 @@ export async function _showContestDialog(actor, techDef) {
       // При смене характеристики — обновляем базовое значение
       html.find("#contest-char").on("change", ev => {
         const key = ev.currentTarget.value;
-        let val = actor.system.characteristics[key]?.total ?? 0;
-        if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
-        val += extraBonus;
+        const danceOpt = danceOptions.find(o => o.key === key);
+        let val;
+        if (danceOpt) {
+          val = danceOpt.value;
+        } else {
+          val = actor.system.characteristics[key]?.total ?? 0;
+          if (key === "ws" && stanceWsBonus) val += stanceWsBonus;
+          val += extraBonus;
+        }
         html.find("#contest-self").val(val);
         _updateTotal(html);
       });

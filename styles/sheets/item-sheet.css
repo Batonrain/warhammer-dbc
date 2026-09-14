@@ -699,6 +699,19 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
   text-align: center;
   padding: 0 2px;
 }
+/* wdbc-5kd: X доп. типа психосилы стал text (принимает формулу «PR+1» и т.п.),
+   а не number — без явной ширины браузерный text-input растянул бы чип
+   .wprop-chip шире, чем прежний узкий number (тот же повод, что у
+   .wprop-rating/.shipprop-rating выше). */
+.warhammer-dbc .xtype-x {
+  width: 56px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text);
+  font-size: 0.85em;
+  text-align: center;
+  padding: 0 2px;
+}
 
 /* Контролы свойств узла корабля (wdbc-jr93): без ширины голый input/select
    растягивался на всю форму внутри inline-чипа .wprop-chip. */
@@ -991,12 +1004,35 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 /* Условие «Когда субмутация» — независимый второй гейт под тем же, только у
    Мутации с разобранной таблицей субмутаций (см. buildEntryWhenHtml). */
 .warhammer-dbc .grant-entry-when-sub { border-top-style: solid; }
+/* «Когда Талант» (wdbc-ta4y, wdbc-shr находка 7) — та же нужда в сплошной
+   границе, что у субмутации выше: для большинства предметов (не Мутаций,
+   subHtml у них пуст) это ПЕРВЫЙ доп.блок «Когда» сразу под базовым
+   «Когда Геносемя» — без своего border-top-style он наследовал бы обычный
+   пунктир .grant-entry-when и визуально сливался с блоком выше в одну
+   невнятную полосу вместо двух различимых условий. */
+.warhammer-dbc .grant-entry-when-talent { border-top-style: solid; }
 .warhammer-dbc .grant-when-sub-list {
   display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px;
   max-height: 140px; overflow-y: auto; padding-right: 4px;
 }
 .warhammer-dbc .grant-when-sub-row { display: flex; align-items: center; gap: 5px; font-size: .8em; }
 .warhammer-dbc .grant-when-sub-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Условие «Когда выбранный эффект Best.Q» (wdbc-jo51) — та же форма списка,
+   что у субмутации выше (подписи своего же предмета, ИЛИ между вариантами),
+   и та же нужда во flex-строке (wdbc-b8kh, найдено живой проверкой wdbc-5tz):
+   у длинных списков (Кожно-/Биологические импланты Друкхари — до 8 подписей,
+   Flesh-Crafted Eye) без display:flex обычный инлайн-перенос браузера рвёт
+   <label> на чекбокс и текст по РАЗНЫМ визуальным строкам панели, когда для
+   пары не хватает места до конца текущей строки — у «Когда Качество» (4
+   короткие аббревиатуры) это осталось незамеченным просто потому, что перенос
+   внутри строки там не случается. */
+.warhammer-dbc .grant-when-chosen-list {
+  display: flex; flex-direction: column; gap: 2px; flex: 1 1 260px;
+  max-height: 140px; overflow-y: auto; padding-right: 4px;
+}
+.warhammer-dbc .grant-when-chosen-row { display: flex; align-items: center; gap: 5px; font-size: .8em; }
+.warhammer-dbc .grant-when-chosen-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Сус-ан Мембрана: активное исцеление Призраков Смерти раз в сутки (module/apps/sus-an-heal.mjs) */
 .warhammer-dbc .sus-an-heal {
@@ -1054,6 +1090,21 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
 .warhammer-dbc .grant-entry-script .grant-entry-row { align-items: flex-start; }
 .warhammer-dbc .mech-script-throttle-max { flex: 0 1 55px; }
 .warhammer-dbc .mech-script-label { flex: 1 1 100%; order: 2; }
+/* wdbc-shr, находка 7: .mech-script-throttle не имел собственного order —
+   при заданных order:2 (Название) и order:3 (Код) браузер укладывал его (и
+   соседние поля той же строки — лимит throttle, цена в пуле, автозапуск по
+   исходу) в НУЛЕВОЙ порядок по умолчанию, то есть ПЕРЕД Названием, хотя в
+   разметке (buildEntryFieldsHtml) они идут ПОСЛЕ него. order:2 у всех них —
+   тот же порядковый уровень, что у Названия: при равном order браузер решает
+   по порядку в самой разметке, а там Название уже стоит первым. */
+.warhammer-dbc .grant-entry-script .mech-script-throttle,
+.warhammer-dbc .grant-entry-script .mech-script-throttle-max,
+.warhammer-dbc .grant-entry-script .mech-capability-cost-pool,
+.warhammer-dbc .grant-entry-script .mech-capability-cost-amount,
+.warhammer-dbc .grant-entry-script .mech-script-trigger,
+.warhammer-dbc .grant-entry-script .mech-mod-scope,
+.warhammer-dbc .grant-entry-script .mech-reroll-char,
+.warhammer-dbc .grant-entry-script .mech-reroll-skill { order: 2; }
 .warhammer-dbc .mech-script-code {
   flex: 1 1 100%; order: 3; min-height: 90px;
   font-family: var(--font-mono, "Courier New", monospace); font-size: .82em; white-space: pre;

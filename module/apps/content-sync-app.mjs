@@ -91,8 +91,15 @@ export class ContentSyncApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
     // Конфликт вперемешку с чистыми записями внутри одной группы — раскрыть
-    // сразу, до первого клика ГМа (wdbc-1ccm).
-    this.expanded = rowsNeedingExpansion(this.report.rows, this.selected);
+    // сразу, до первого клика ГМа (wdbc-1ccm). ДОБАВЛЯЕМ в this.expanded, а не
+    // заменяем его целиком (wdbc-5tz): «Обновить список»/«Применить» сбрасывают
+    // только this.report (перечитать пак и акторов заново), this.expanded —
+    // память уже сделанных ГМом раскрытий (toggle-group/toggle-row ниже) и
+    // должна её пережить. Замена целиком молча схлопывала бы то, что ГМ
+    // раскрыл руками, при каждом «Обновить список».
+    for (const key of rowsNeedingExpansion(this.report.rows, this.selected)) {
+      this.expanded.add(key);
+    }
   }
 
   _rowVM(row) {

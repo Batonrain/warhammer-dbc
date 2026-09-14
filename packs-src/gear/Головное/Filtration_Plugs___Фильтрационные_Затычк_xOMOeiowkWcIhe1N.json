@@ -27,7 +27,8 @@
     },
     "itemSize": "",
     "bonuses": [],
-    "linkedWeapon": ""
+    "linkedWeapon": "",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Головное» стр. 243)"
   },
   "folder": "UiZz594A4rVxruoa",
   "_id": "xOMOeiowkWcIhe1N",
@@ -124,7 +125,7 @@
               "weaponPropNewHasRating2": false,
               "weaponPropNewValue": "1",
               "weaponPropNewValue2": "0",
-              "label": "Фильтрационные Затычки",
+              "label": "Фильтрационные Затычки (против вдыхаемых газов)",
               "code": "",
               "when": {
                 "negate": false,

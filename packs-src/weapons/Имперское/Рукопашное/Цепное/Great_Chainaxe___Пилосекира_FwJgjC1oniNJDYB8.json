@@ -56,6 +56,7 @@
     "damageType": "rending",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 209)",
     "availability": 1,
     "weight": 5,
     "attackBonus": 0,

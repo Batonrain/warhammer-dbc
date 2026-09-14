@@ -274,6 +274,44 @@ describe("_prepareContext", () => {
     expect(ctx.showPatronPicker).toBeUndefined();
     expect(ctx.chaosPatrons).toBeUndefined();
   });
+
+  // wdbc-a23: Глас Божий/Стервятник (module/rules/temp-infamy.mjs) выдают
+  // временное Бесчестие получателю Личной Команды — не обязательно Хаоситу
+  // (полная полоса Бесчестия строго Хаоситская, см. тест выше). Без этой
+  // ветки не-Хаосит получал бы валюту, которую физически не может увидеть
+  // на своём листе — ровно баг из тикета.
+  it("не-Хаосит с временным Бесчестием видит его в ячейке Судьбы (ctx.tempInfamy)", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, alignment: "loyalist"
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+    await sheet.actor.setFlag("warhammer-dbc", "tempInfamy",
+      { amount: 1, source: "Voice of God / Глас Божий", restriction: "только на эту Команду" });
+
+    const ctx = await WarhammerCharacterSheet.prototype._prepareContext.call(sheet, {});
+
+    expect(ctx.infamy).toBeUndefined();
+    expect(ctx.tempInfamy).toEqual({ amount: 1, source: "Voice of God / Глас Божий", restriction: "только на эту Команду" });
+  });
+
+  it("Хаосит с временным Бесчестием — значок только внутри infamy-strip (ctx.infamy.tempInfamy), не дублируется в ctx.tempInfamy", async () => {
+    const sheet = sheetOf(WarhammerCharacterSheet, {
+      characteristics: {}, skills: {}, groupSkills: {}, alignment: "heretic",
+      fate: { value: 2, max: 5 }
+    });
+    sheet.actor.items.contents = sheet.actor.items;
+    await sheet.actor.setFlag("warhammer-dbc", "tempInfamy", { amount: 1, source: "Стервятник", restriction: "" });
+
+    const ctx = await WarhammerCharacterSheet.prototype._prepareContext.call(sheet, {});
+
+    expect(ctx.infamy?.tempInfamy?.amount).toBe(1);
+    expect(ctx.tempInfamy).toBeUndefined();
+  });
+
+  it("нет временного Бесчестия — ctx.tempInfamy не заводится", async () => {
+    const ctx = await ctxOf(WarhammerCharacterSheet, { alignment: "loyalist" });
+    expect(ctx.tempInfamy).toBeUndefined();
+  });
 });
 
 // wdbc-unpb: Система продвижения — один каскадный пункт меню настроек листа,

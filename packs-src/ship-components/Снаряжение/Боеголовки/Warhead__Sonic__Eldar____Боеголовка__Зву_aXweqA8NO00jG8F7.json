@@ -10,7 +10,8 @@
     "quality": "common",
     "rarity": 5,
     "baseRarity": "",
-    "description": "SPD 10, Урон 2d10+5, Крит 10+, Дальн. 20. Terminal Penetration (5); урон игнорирует броню."
+    "description": "SPD 10, Урон 2d10+5, Крит 10+, Дальн. 20. Terminal Penetration (5); урон игнорирует броню.",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "aXweqA8NO00jG8F7",
   "effects": [],

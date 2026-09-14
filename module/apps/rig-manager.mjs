@@ -34,6 +34,11 @@ export class RigManager extends HandlebarsApplicationMixin(ApplicationV2) {
   get actor() { return game.actors.get(this.actorId); }
   get title() { return `Разгрузка — ${this.actor?.name || ""}`; }
 
+  async close(options) {
+    if (_rigManagers.get(this.actorId) === this) _rigManagers.delete(this.actorId);
+    return super.close(options);
+  }
+
   // ВАЖНО: update() рекурсивно МЕРЖИТ объекты флага, поэтому удаление ключа —
   // только через синтаксис `-=`, иначе «убрать из слота» не работает.
   async _assign(itemId, location) {
@@ -147,9 +152,15 @@ export class RigManager extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 }
 
+// Одно окно Разгрузки на актора — та же схема, что у XpLogApp
+// (module/apps/xp-log.mjs): повторный вызов поднимает уже открытое окно, а
+// не плодит второй экземпляр с тем же DOM id (`wh-rig-${actor.id}`).
+const _rigManagers = new Map();
+
 export function openRigManager(actor) {
   if (!actor) return null;
-  const app = new RigManager(actor);
+  let app = _rigManagers.get(actor.id);
+  if (!app) { app = new RigManager(actor); _rigManagers.set(actor.id, app); }
   app.render(true);
   return app;
 }

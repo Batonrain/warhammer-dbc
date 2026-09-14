@@ -50,6 +50,29 @@ export function docsMissingInDb(srcIds, dbIds) {
  *
  * @returns {Map<string, string>} идентификатор → путь файла, для отчёта
  */
+/**
+ * Останавливаться ли перед тем, как стереть документы (или главы/разделы
+ * книг), которых нет в базе, — тем самым `rmSync`/`writeFileSync`, что
+ * извлечение кладёт поверх исходника.
+ *
+ * Отдельная функция ОТ сторожа незакоммиченных правок (wdbc-aje): у него своё
+ * согласие, `--force`, и оно НЕ должно попадать сюда. До разделения оба
+ * сторожа читали один и тот же `--force`, и разработчик, согласившийся
+ * снести свою мелкую незакоммиченную правку, неожиданно получал согласие и
+ * на то, чтобы unpack стёр закоммиченный контент, которого нет в базе —
+ * хотя думал он только про свою правку. Здесь принимается ТОЛЬКО отдельный
+ * флаг `--force-drift`, поэтому сигнатура физически не может перепутать
+ * два разных согласия местами.
+ *
+ * @param {number} lostCount  сколько докум./глав/разделов пропало бы,
+ *   docsMissingInDb(...).length
+ * @param {boolean} forceDrift  флаг --force-drift
+ * @returns {boolean} true — остановиться, не перезаписывать
+ */
+export function shouldStopOnDrift(lostCount, forceDrift) {
+  return lostCount > 0 && !forceDrift;
+}
+
 export function docIdsIn(dir) {
   const out = new Map();
   if (!existsSync(dir)) return out;

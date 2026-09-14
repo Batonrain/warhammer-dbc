@@ -37,7 +37,7 @@
     "freeTalents": "",
     "gear": "",
     "traits": [
-      "Unnatural WP (+2) / Сверхъест. Воля",
+      "Unnatural Willpower (+2) / Сверхъест. Воля",
       "Unnatural I (+2) / Сверхъест. Интеллект",
       "Touched by the Fates / Избранный Судьбой (+2)",
       "The Sorrow of the Hearer / Горе Слышащего",
@@ -230,7 +230,7 @@
               "op": "add",
               "value": 1,
               "sourceUuid": "Compendium.warhammer-dbc.traits.Item.0A12TcD79wynam9l",
-              "sourceName": "Unnatural WP (+2) / Сверхъест. Воля",
+              "sourceName": "Unnatural Willpower (+2) / Сверхъест. Воля",
               "sourceImg": "systems/warhammer-dbc/assets/item-icons/trait.svg",
               "sourceHasRating": false,
               "rating": "",

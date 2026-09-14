@@ -23,7 +23,11 @@
     "damage": "1d10+PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "piercing"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +50,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («МАГИЯ КРОВИ» стр. 366)"
   },
   "_id": "jr0LIULvv4CwIAdv",
   "effects": [],

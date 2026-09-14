@@ -35,6 +35,7 @@ import { conditionApplyFields } from "../sheets/tabs/conditions.mjs";
 import { SKILL_RANKS }   from "../constants/characteristics.mjs";
 import { criticalOutcome } from "../rules/roll-outcome.mjs";
 import { resolveKindOutcome } from "../rules/kind-outcome.mjs";
+import { combinedThreshold } from "../rules/test-kind.mjs";
 import { testKindHtml, diceModeHtml, critLineHtml, readTestKind, readDiceChoice,
          mergeReroll, wireTestKindLive, rollD100WithReroll } from "../rules/test-kind-widget.mjs";
 import {
@@ -701,8 +702,8 @@ export async function showMountDamageTest(rider) {
 
 /**
  * Уклонение верхом устроено по-разному, смотря по кому попадание:
- *  • по скакуну — комбинированный тест, к Уклонению добавляется Навык
- *    управления (Survival+0 или Operate−10), и провал любой половины валит всё;
+ *  • по скакуну — комбинированный тест с Навыком управления (Survival+0 или
+ *    Operate−10): один бросок против наименьшего из двух Пределов (стр. 25);
  *  • по всаднику — обычное Уклонение, но со штрафом −10.
  * Поэтому диалог сначала спрашивает, куда пришлось попадание.
  */
@@ -732,7 +733,7 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
         roll: { icon: '<i class="fas fa-dice-d10"></i>', label: "Уклонение!",
           callback: async html => {
             const target = html.find("#md-target").val();
-            await resolveMountedDodge(rider, ctx, target, extraMod, hitsCount, attackerUuid);
+            await resolveMountedDodge(rider, ctx, target, { extraMod, hitsCount, attackerUuid });
             resolve(true);
           } },
         cancel: { label: "Отмена", callback: () => resolve(false) }
@@ -742,7 +743,9 @@ export async function showMountedDodgeDialog(rider, extraMod = 0, hitsCount = 1,
   });
 }
 
-async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, attackerUuid = "") {
+// wdbc-8zi (п.6): объект опций для extraMod/hitsCount/attackerUuid — тот же
+// приём и порядок полей, что у _performDodge/_performParry/_performSwerve.
+async function resolveMountedDodge(rider, ctx, target, { extraMod = 0, hitsCount = 1, attackerUuid = "" } = {}) {
   // Уклонение — Реакция (стр. 12) и верхом тоже: та же трата, что в
   // _performDodge, иначе конный всадник уклонялся бы бесплатно без лимита.
   if (!(await spendReaction(rider, { forDefense: true }))) return _noReactionCard(rider, "Уклонение");
@@ -755,22 +758,19 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, 
   const dodgeMod = riderHit ? -10 : 0;
   const dodgeThreshold = dodgeBase + dodgeMod + extraMod;
 
-  const { roll: dodgeRoll, rv: dodgeRv, passed: dodgePassed, deg: dodgeDeg, critLine } = await rollAgainst(dodgeThreshold);
-  const rolls = [dodgeRoll];
+  // Комбинированный тест (корбук, стр. 25) — ОДИН бросок против наименьшего из
+  // двух Пределов, а не два броска с требованием пройти оба (wdbc-orxf: тот
+  // прежний вариант ошибочно называл себя «как у любого совместного теста в
+  // системе» — второго такого места нет, книжный образец — combat/walker.mjs
+  // ::performWalkerDodge). По всаднику попадание — обычное Уклонение, Навык
+  // управления сюда не примешивается.
+  const ctrlThreshold = riderHit ? null : control.value + testMod(STAY_MOD, mount);
+  const threshold = ctrlThreshold === null ? dodgeThreshold : combinedThreshold(dodgeThreshold, ctrlThreshold);
 
-  // Комбинированный тест: вторая половина — Навык управления. Обе должны
-  // пройти, а степенями считается меньшая из двух — как у любого совместного
-  // теста в системе.
-  let ctrlPart = null;
-  if (!riderHit) {
-    const ctrlThreshold = control.value + testMod(STAY_MOD, mount);
-    const res = await rollAgainst(ctrlThreshold);
-    rolls.push(res.roll);
-    ctrlPart = { ...res, threshold: ctrlThreshold };
-  }
+  const { roll, rv, passed, deg, critLine } = await rollAgainst(threshold);
+  const rolls = [roll];
+  const lower = ctrlThreshold !== null && ctrlThreshold < dodgeThreshold ? control.label : "Уклонение";
 
-  const passed = dodgePassed && (!ctrlPart || ctrlPart.passed);
-  const deg = ctrlPart && passed ? Math.min(dodgeDeg, ctrlPart.deg) : dodgeDeg;
   const { total: totalHits, negated, remaining } = negatedHits(passed, deg, hitsCount);
   // Излишек Успехов — банкуется на попадания ДРУГИХ атак того же противника
   // в этом Ходу (стр. 12, module/combat/evasion-pool.mjs). Пеналти — extraMod
@@ -780,8 +780,7 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, 
 
   let outcome;
   if (!passed) {
-    outcome = `<span class="roll-failure">Уклонение провалено${
-      ctrlPart && !ctrlPart.passed && dodgePassed ? " — подвёл сам скакун" : ""} — ${
+    outcome = `<span class="roll-failure">Уклонение провалено — ${
       totalHits > 1 ? `все ${totalHits} ${_hitWord(totalHits)} проходят.` : "попадание проходит."}</span>`;
   } else if (remaining === 0) {
     outcome = `<span class="roll-success">Уклонение успешно — ${deg} ${_degWord(deg)}${
@@ -793,16 +792,14 @@ async function resolveMountedDodge(rider, ctx, target, extraMod, hitsCount = 1, 
     ? `<div class="roll-defense-note">Остаётся ${leftover} ${_leftoverSuccessPhrase(leftover)} — можно потратить на попадания других атак этого противника в этом Ходу (2 Усп./попадание).</div>`
     : "";
 
-  // Броски здесь показаны внутри строк Порога (у теста их два — Уклонение и
-  // Навык управления), поэтому отдельной строки «Бросок» у карточки нет.
   await postCard(rider, {
     icon: rollIcon("run"), title: `Уклонение верхом — ${esc(rider.name)}`,
     threshold: `<div class="roll-threshold">Цель попадания: <b>${riderHit ? "всадник" : esc(mount.name)}</b></div>`,
     lines: [
-      `<div class="roll-threshold">Уклонение <b>${dodgeBase}</b> ${sgn(dodgeMod + extraMod)} → Порог <b>${dodgeThreshold}</b>
-      · 1d100: <b>${dodgeRv}</b> — ${dodgePassed ? "успех" : "провал"}</div>`,
-      ctrlPart ? `<div class="roll-threshold">${control.label} <b>${control.value}</b> ${sgn(testMod(STAY_MOD, mount))}
-      → Порог <b>${ctrlPart.threshold}</b> · 1d100: <b>${ctrlPart.rv}</b> — ${ctrlPart.passed ? "успех" : "провал"}</div>` : ""
+      `<div class="roll-threshold">Уклонение <b>${dodgeBase}</b> ${sgn(dodgeMod + extraMod)} = <b>${dodgeThreshold}</b>${
+        ctrlThreshold !== null ? `, ${control.label} <b>${control.value}</b> ${sgn(testMod(STAY_MOD, mount))} = <b>${ctrlThreshold}</b>` : ""
+      }${ctrlThreshold !== null ? ` — Комбинированный (ниже оказался ${lower})` : ""} → Порог <b>${threshold}</b>
+      · 1d100: <b>${rv}</b> — ${passed ? "успех" : "провал"}</div>`
     ],
     critLine, outcome,
     sections: [leftoverNote]

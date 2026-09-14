@@ -36,7 +36,13 @@ export function aggregateArmorAuto(props, ratings = {}) {
     noRanged: false, noJointCalled: false, noEyeCalled: false,
     blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
     frontArcNoProtect: false, runesOfProtection: false,
-    gorgetRating: 0, apBonusByType: {}
+    gorgetRating: 0, jointArmourRating: 0, apBonusByType: {},
+    // Подвиды урона (wdbc-q0q8) — те же три директивы, что noApVsType/
+    // doubleApVsType/apBonusVsType выше, но ключом служит DAMAGE_SUBTYPES
+    // (crushing/fragmentation/electrical/flame/laser/toxic), а не DAMAGE_TYPES:
+    // множества, не булевы поля — иначе на каждый подвид пришлось бы заводить
+    // свой noEnergy-подобный флаг, ×6 к размеру объекта.
+    noApVsSubtype: {}, doubleApVsSubtype: {}, tripleApVsSubtype: {}, apBonusBySubtype: {}
   };
   for (const p of props) {
     const au = p.def.auto;
@@ -44,6 +50,15 @@ export function aggregateArmorAuto(props, ratings = {}) {
     if (au.noApVsType === "energy")   a.noEnergy = true;
     if (au.noApVsType === "impact")   a.noImpact = true;
     if (au.doubleApVsType === "blast") a.doubleBlast = true;
+    if (au.noApVsSubtype)     a.noApVsSubtype[au.noApVsSubtype] = true;
+    if (au.doubleApVsSubtype) a.doubleApVsSubtype[au.doubleApVsSubtype] = true;
+    // Вулканизированный Плащ (wdbc-q0q8) — единственный источник ×3, отдельно
+    // от doubleApVsSubtype (Flak, ×2), чтобы не путать множители на чтении.
+    if (au.tripleApVsSubtype) a.tripleApVsSubtype[au.tripleApVsSubtype] = true;
+    if (au.apBonusVsSubtype) {
+      const st = au.apBonusVsSubtype;
+      a.apBonusBySubtype[st] = (a.apBonusBySubtype[st] || 0) + (Number(ratings[p.key]) || 0);
+    }
     if (au.noApRanged)      a.noRanged = true;
     if (au.noApJointCalled) a.noJointCalled = true;
     if (au.noApEyeCalled)   a.noEyeCalled = true;
@@ -61,6 +76,9 @@ export function aggregateArmorAuto(props, ratings = {}) {
     // (combat/attack.mjs). Несколько предметов на одной локации (редкость) —
     // берём лучший рейтинг, как и остальные числовые бонусы брони.
     if (au.gorget) a.gorgetRating = Math.max(a.gorgetRating, Number(ratings[p.key]) || 0);
+    // Joint Lining (wdbc-aq4c, Панцирь Темпестус): рейтинг X — гарантированный
+    // минимум AP при попадании в Сочленение/Шею, см. resolveArmorAbsorptionAP.
+    if (au.jointArmour) a.jointArmourRating = Math.max(a.jointArmourRating, Number(ratings[p.key]) || 0);
     // Protective (wdbc-8b5): +X AP против конкретного damageType — та же
     // точность/упрощение, что уже принята для armorVsType от модов брони
     // (rules/character.mjs): не привязано к конкретной локации, суммируется
@@ -90,6 +108,13 @@ export function aggregateArmorSkillMods(props) {
   return out;
 }
 
+/** OR множества подвидов (noApVsSubtype/doubleApVsSubtype) двух предметов. */
+function orSubtypeSet(a = {}, b = {}) {
+  const out = { ...a };
+  for (const k of Object.keys(b)) if (b[k]) out[k] = true;
+  return out;
+}
+
 /** OR флагов нескольких предметов брони, покрывающих одну и ту же локацию. */
 export function mergeArmorLocFlags(a, b) {
   return {
@@ -104,7 +129,11 @@ export function mergeArmorLocFlags(a, b) {
     isPowerArmor:            a.isPowerArmor || b.isPowerArmor,
     frontArcNoProtect:       a.frontArcNoProtect || b.frontArcNoProtect,
     runesOfProtection:       a.runesOfProtection || b.runesOfProtection,
-    gorgetRating:            Math.max(a.gorgetRating || 0, b.gorgetRating || 0)
+    gorgetRating:            Math.max(a.gorgetRating || 0, b.gorgetRating || 0),
+    jointArmourRating:       Math.max(a.jointArmourRating || 0, b.jointArmourRating || 0),
+    noApVsSubtype:           orSubtypeSet(a.noApVsSubtype, b.noApVsSubtype),
+    doubleApVsSubtype:       orSubtypeSet(a.doubleApVsSubtype, b.doubleApVsSubtype),
+    tripleApVsSubtype:       orSubtypeSet(a.tripleApVsSubtype, b.tripleApVsSubtype)
   };
 }
 
@@ -112,7 +141,8 @@ const EMPTY_FLAGS = Object.freeze({
   noEnergy: false, noImpact: false, doubleBlast: false,
   noRanged: false, noJointCalled: false, noEyeCalled: false,
   blocksPrimitiveDouble: false, noJointReduction: false, isPowerArmor: false,
-  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0
+  frontArcNoProtect: false, runesOfProtection: false, gorgetRating: 0, jointArmourRating: 0,
+  noApVsSubtype: Object.freeze({}), doubleApVsSubtype: Object.freeze({}), tripleApVsSubtype: Object.freeze({})
 });
 
 export function emptyArmorLocFlags() {
@@ -154,6 +184,11 @@ export async function breachArmorAtLocation(actor, armorKey) {
  * @param {number}  baseArmorAP  AP брони этой локации до бонусов/свойств
  * @param {number}  vsTypeBonus  доп. AP против damageType (моды брони)
  * @param {string}  damageType   "energy"|"impact"|"rending"|"blast"|"chemical"
+ * @param {number}  subtypeBonus доп. AP против damageSubtype (моды/свойства брони,
+ *   wdbc-q0q8) — та же роль, что vsTypeBonus, но на уровень точнее
+ * @param {string}  damageSubtype "crushing"|"fragmentation"|"electrical"|"flame"|
+ *   "laser"|"toxic"|"" — подвид урона из скобок книги (см. DAMAGE_SUBTYPES),
+ *   пустая строка — книга не называет подвид у этой атаки
  * @param {boolean} melee        атака была рукопашной (не стрелковой)
  * @param {string}  hitLocation  метка попадания (для Сочленения/Глаза)
  * @param {boolean} primitive    атакующее оружие имеет свойство Primitive
@@ -167,12 +202,14 @@ export async function breachArmorAtLocation(actor, armorKey) {
  *   Нужен только правилу Глаза; null — считать весь baseArmorAP носимым.
  */
 export function resolveArmorAbsorptionAP({
-  baseArmorAP, vsTypeBonus = 0, damageType, melee = false, hitLocation = "",
+  baseArmorAP, vsTypeBonus = 0, damageType, subtypeBonus = 0, damageSubtype = "",
+  melee = false, hitLocation = "",
   primitive = false, flags = null, frontArcHit = false, wornAP = null
 }) {
   const pf = flags || emptyArmorLocFlags();
   const armorNulled = (pf.noEnergy && damageType === "energy")
                     || (pf.noImpact && damageType === "impact")
+                    || (damageSubtype && pf.noApVsSubtype?.[damageSubtype])
                     || (pf.noRanged && !melee)
                     || (pf.noJointCalled && hitLocation === "Сочленение / Шея")
                     || (pf.noEyeCalled  && hitLocation === "Глаз (Голова)")
@@ -188,12 +225,22 @@ export function resolveArmorAbsorptionAP({
     return natural + (pf.isPowerArmor ? 4 : 0);
   }
 
-  let ap = baseArmorAP + vsTypeBonus;
+  let ap = baseArmorAP + vsTypeBonus + subtypeBonus;
   // Попадание в Сочленение/Шею — AP этой части тела втрое меньше настоящего,
   // округление вниз (стр. 34). У брони без сочленений (Мягкая) выцелить
   // нечего — идёт полный AP.
-  if (hitLocation === "Сочленение / Шея" && !pf.noJointReduction) ap = Math.floor(ap / 3);
+  if (hitLocation === "Сочленение / Шея" && !pf.noJointReduction) {
+    ap = Math.floor(ap / 3);
+    // Joint Lining (wdbc-aq4c, Панцирь Темпестус, стр. 229): «AP 4 на
+    // сочленениях» — не бонус К расчёту, а ГАРАНТИРОВАННЫЙ МИНИМУМ поверх
+    // него: Math.max, никогда не хуже обычного ÷3 (напр. при бонусе против
+    // подвида урона обычное деление уже может дать больше 4 — тогда его и
+    // берём), только поднимает низкое значение до X.
+    if (pf.jointArmourRating) ap = Math.max(ap, pf.jointArmourRating);
+  }
   if (pf.doubleBlast && damageType === "blast") ap *= 2;
+  if (damageSubtype && pf.doubleApVsSubtype?.[damageSubtype]) ap *= 2;
+  if (damageSubtype && pf.tripleApVsSubtype?.[damageSubtype]) ap *= 3;
   if (primitive && !pf.blocksPrimitiveDouble && ap > 0) ap += Math.min(ap, 6);
   return ap;
 }

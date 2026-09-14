@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Водный / Aquatic",
+      "name": "Aquatic / Водный",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

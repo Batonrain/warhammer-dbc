@@ -23,7 +23,12 @@
     "damage": "2d10+3*PR",
     "damageType": "impact",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "devastating",
+        "rating": 2
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +51,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Телекинез — Сокрушение» стр. 313)"
   },
   "_id": "58aYFChd9xVNTvfp",
   "effects": [],

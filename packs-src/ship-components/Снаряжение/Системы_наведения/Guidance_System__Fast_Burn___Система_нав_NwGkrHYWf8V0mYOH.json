@@ -10,7 +10,8 @@
     "quality": "common",
     "rarity": 1,
     "baseRarity": "",
-    "description": "TR 15. Форсированный двигатель — выше скорость."
+    "description": "TR 15. Форсированный двигатель — выше скорость.",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "NwGkrHYWf8V0mYOH",
   "effects": [],

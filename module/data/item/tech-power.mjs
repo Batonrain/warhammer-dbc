@@ -50,7 +50,8 @@ export class TechPowerData extends foundry.abstract.TypeDataModel {
       // и подобное для техночудес не считались вовсе — только текстом в «Эффекте».
       weaponProps:   list("Свойства атаки"),
       effect:        new StringField({ initial: "", label: "Эффект" }),
-      effects:       new ObjectField({ initial: emptyEffects, label: "Механика" })
+      effects:       new ObjectField({ initial: emptyEffects, label: "Механика" }),
+      bookSource:    new StringField({ initial: "", label: "Книга-источник" })
     };
   }
 

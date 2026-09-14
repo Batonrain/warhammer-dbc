@@ -23,6 +23,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Хаос, II. СМЕРТНЫЕ («Носильщик», стр. 42)",
     "availability": -3,
     "weight": 1.2,
     "attackBonus": 0,
@@ -63,7 +64,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "iYetscOhjmfXcaPF",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-mace.svg",

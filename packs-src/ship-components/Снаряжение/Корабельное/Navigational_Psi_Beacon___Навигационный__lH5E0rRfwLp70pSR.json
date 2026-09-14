@@ -10,7 +10,8 @@
     "quality": "common",
     "rarity": 4,
     "baseRarity": "",
-    "description": "Каждый на борту: +1 к Low Spirit, трейт Heretech (Psykers). Развёрнутый в системе: +15 к Navigation (Warp) к полёту в эту систему для знающих тональность вопля. Богохульство против Омниссии."
+    "description": "Каждый на борту: +1 к Low Spirit, трейт Heretech (Psykers). Развёрнутый в системе: +15 к Navigation (Warp) к полёту в эту систему для знающих тональность вопля. Богохульство против Омниссии.",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "lH5E0rRfwLp70pSR",
   "effects": [],

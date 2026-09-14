@@ -68,7 +68,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "flame"
   },
   "_id": "XXDqN5z7epH9yurj",
   "effects": [],

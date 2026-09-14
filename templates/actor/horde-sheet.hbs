@@ -43,14 +43,14 @@
 
 <nav class="horde-tabs tabs" data-group="primary">
   {{#each tabs as |t|}}
-  <a class="item {{#if (eq ../tab t.id)}}active{{/if}}" data-action="tab" data-group="primary" data-tab="{{t.id}}">{{t.label}}</a>
+  <a class="item {{#if (eq ../tab t.id)}}active{{/if}}" data-action="tab" data-tab="{{t.id}}" data-group="primary">{{t.label}}</a>
   {{/each}}
 </nav>
 
 <div class="horde-body">
 
   {{!-- ── БОЙ ── --}}
-  <div class="tab {{#if (eq tab "battle")}}active{{/if}}" data-group="primary" data-tab="battle">
+  <div class="tab {{#if (eq tab "battle")}}active{{/if}}" data-tab="battle" data-group="primary">
 
     {{!-- Магнитуда --}}
     <section class="horde-panel">
@@ -200,7 +200,7 @@
   </div>
 
   {{!-- ── ПОКАЗАТЕЛИ ── --}}
-  <div class="tab {{#if (eq tab "traits")}}active{{/if}}" data-group="primary" data-tab="traits">
+  <div class="tab {{#if (eq tab "traits")}}active{{/if}}" data-tab="traits" data-group="primary">
 
     {{!-- Навыки --}}
     <section class="horde-panel">
@@ -282,7 +282,7 @@
   </div>
 
   {{!-- ── ЗАМЕТКИ ── --}}
-  <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-group="primary" data-tab="notes">
+  <div class="tab {{#if (eq tab "notes")}}active{{/if}}" data-tab="notes" data-group="primary">
     <section class="horde-panel">
       <div class="horde-panel-title">ЗАМЕТКИ</div>
       <prose-mirror name="system.notes" class="horde-textarea tall" toggled
@@ -298,7 +298,7 @@
   </div>
 
   {{!-- ── ПРАВИЛА ── --}}
-  <div class="tab {{#if (eq tab "rules")}}active{{/if}}" data-group="primary" data-tab="rules">
+  <div class="tab {{#if (eq tab "rules")}}active{{/if}}" data-tab="rules" data-group="primary">
     <section class="horde-panel horde-rules">
       <div class="horde-panel-title">ПРАВИЛА ОРД</div>
       <p><b>Действия.</b> Орда действует как один персонаж: обычный запас ОД и действия, но большая площадь. Не может Избегать, но имеет Реакции (тратит только в свой Ход на особые действия). Характеристики — как у членов; вместо Ран — Магнитуда.</p>

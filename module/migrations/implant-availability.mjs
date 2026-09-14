@@ -66,39 +66,81 @@ async function findSource(item, pack, byName) {
   return byName.get(item.name) ?? null;
 }
 
-/** Доливает книжные поля имплантам всех акторов мира. */
+/**
+ * Доливка книжных полей имплантам ОДНОГО актора. Бросает исключение наружу —
+ * решение, что делать со сбоем (пропустить и продолжить остальных), принимает
+ * вызывающий код в migrateImplantAvailability (тот же приём, что и в
+ * module/migrations/gear-equipped.mjs).
+ */
+async function migrateOneActorImplantAvailability(actor, pack, byName) {
+  const updates = [];
+  for (const item of actor.items ?? []) {
+    if (item.type !== "implant") continue;
+    const src = await findSource(item, pack, byName);
+    if (!src) continue;
+    const full = src.system ? src : await pack.getDocument(src._id).catch(() => null);
+    const patch = implantAvailabilityPatch(item, full);
+    if (patch) updates.push({ _id: item.id, ...patch });
+  }
+  if (updates.length) await actor.updateEmbeddedDocuments("Item", updates);
+  return updates.length;
+}
+
+/**
+ * Доливает книжные поля имплантам всех акторов мира, а также несвязанным
+ * токенам сцен (wdbc-059h, по образцу gear-equipped/wdbc-dyi): у токена с
+ * actorLink:false импланты лежат в его собственной ActorDelta, а не в мировом
+ * Actor — такой токен не входит в game.actors и без отдельного прохода
+ * остался бы не замечен.
+ *
+ * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
+ * обработку следующих: импланты разных персонажей друг от друга не зависят.
+ */
 export async function migrateImplantAvailability() {
   if (!game.user?.isGM) { ui.notifications?.warn("Доливка полей биоимплантов: только для ГМа."); return; }
   const pack = game.packs?.get(FLAG_PACK);
-  if (!pack) return { fixed: 0 };
+  if (!pack) return { fixed: 0, failed: 0 };
 
   let fixed = 0;
-  try {
-    // Индекс по имени — запасной путь для предметов без sourceId (созданных
-    // до того, как Foundry начал его проставлять, или скопированных вручную).
-    const index = await pack.getIndex();
-    const byName = new Map();
-    for (const e of index) byName.set(e.name, e);
+  let failed = 0;
 
-    for (const actor of game.actors ?? []) {
-      const updates = [];
-      for (const item of actor.items ?? []) {
-        if (item.type !== "implant") continue;
-        const src = await findSource(item, pack, byName);
-        if (!src) continue;
-        const full = src.system ? src : await pack.getDocument(src._id).catch(() => null);
-        const patch = implantAvailabilityPatch(item, full);
-        if (patch) updates.push({ _id: item.id, ...patch });
-      }
-      if (updates.length) {
-        await actor.updateEmbeddedDocuments("Item", updates);
-        fixed += updates.length;
+  // Индекс по имени — запасной путь для предметов без sourceId (созданных
+  // до того, как Foundry начал его проставлять, или скопированных вручную).
+  const index = await pack.getIndex();
+  const byName = new Map();
+  for (const e of index) byName.set(e.name, e);
+
+  // Мировые акторы. Связанные токены (actorLink:true) используют тот же
+  // документ Actor — им отдельный проход не нужен.
+  for (const actor of game.actors ?? []) {
+    try {
+      fixed += await migrateOneActorImplantAvailability(actor, pack, byName);
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Доливка полей биоимплантов: сбой на акторе «${actor.name}» (${actor.id}), пропущен:`, e);
+    }
+  }
+
+  // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
+  // прямо в ActorDelta токена.
+  for (const scene of game.scenes ?? []) {
+    for (const tokenDoc of scene.tokens?.contents ?? []) {
+      if (tokenDoc.actorLink) continue;
+      const actor = tokenDoc.actor;
+      if (!actor) continue;
+      try {
+        fixed += await migrateOneActorImplantAvailability(actor, pack, byName);
+      } catch (e) {
+        failed++;
+        console.error(`Warhammer DBC | Доливка полей биоимплантов: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
       }
     }
-  } catch (e) { console.error("Warhammer DBC | Доливка полей биоимплантов:", e); }
+  }
 
-  const msg = `Биоимплантам долиты книжные Доступность/варианты Best.Q: ${fixed}.`;
-  console.log("Warhammer DBC |", msg);
-  if (fixed) ui.notifications?.info("Warhammer DBC: " + msg);
-  return { fixed };
+  const msg = failed
+    ? `Биоимплантам долиты книжные Доступность/варианты Best.Q: ${fixed}; ${failed} акторов/токенов пропущено из-за ошибок — миграция повторится при следующей загрузке мира.`
+    : `Биоимплантам долиты книжные Доступность/варианты Best.Q: ${fixed}.`;
+  console[failed ? "warn" : "log"]("Warhammer DBC |", msg);
+  if (fixed || failed) ui.notifications?.[failed ? "warn" : "info"]("Warhammer DBC: " + msg);
+  return { fixed, failed };
 }

@@ -24,7 +24,12 @@
     "damage": "1d10+PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR*3"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -50,7 +55,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "Книга Аэльдари: Ответвления, ДИСЦИПЛИНА РЕВЕНАНТА («Крещендо Иннеада»)"
   },
   "_id": "oDYfXjm4k7ZNmllo",
   "effects": [],

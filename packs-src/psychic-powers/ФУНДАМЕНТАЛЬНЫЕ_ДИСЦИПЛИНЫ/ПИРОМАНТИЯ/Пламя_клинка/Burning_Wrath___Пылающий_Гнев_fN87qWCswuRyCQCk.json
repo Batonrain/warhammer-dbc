@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Пиромантия — Пламя клинка» стр. 340)"
   },
   "_id": "fN87qWCswuRyCQCk",
   "effects": [],

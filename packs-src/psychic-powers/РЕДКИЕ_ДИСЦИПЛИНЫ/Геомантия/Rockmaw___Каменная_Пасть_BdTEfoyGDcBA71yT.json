@@ -23,7 +23,15 @@
     "damage": "2d10+PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "primitive"
+      },
+      {
+        "key": "snare",
+        "rating": "ceil(PR/2)"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +54,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Геомантия» стр. 358)"
   },
   "_id": "BdTEfoyGDcBA71yT",
   "effects": [],

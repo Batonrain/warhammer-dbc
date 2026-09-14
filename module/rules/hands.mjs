@@ -16,7 +16,7 @@
 
 import { parseGrips, RANGED_GRIPS } from "../constants/combat.mjs";
 import { resolveWeaponPropsList, aggregateAuto } from "../combat/weapon-properties.mjs";
-import { getModEffects, mergeWeaponPropEntries } from "../combat/weapon-mods.mjs";
+import { getModEffects, mergeWeaponPropEntries, getInstalledMods } from "../combat/weapon-mods.mjs";
 import { isHandShield } from "../combat/hand-shield.mjs";
 import { isMultipleArmsTrait } from "./cybernetic-excellence.mjs";
 import { isFusedByHandOfDeath } from "./hand-of-death.mjs";
@@ -63,22 +63,38 @@ export function currentMeleeGrip(item) {
  * плюс выданные возможностями. Держится в одном месте с attack-dialog.mjs
  * (extraGrips) намеренно: если бюджет рук не знает про выданный хват, лист
  * запретит взять оружие, которое окно атаки разрешает держать одной рукой.
- * Здесь только те источники, что не зависят от выбора в открытом окне —
- * Commando и Double Grip живут в диалоге, они меняют не занятость рук, а
- * модификаторы броска.
+ *
+ * wdbc-2gn (находка 3, ревью 07.09.2026): этот список расходился с
+ * attack-dialog.mjs::extraGrips — тот собирает ПЯТЬ источников (modGrantedGrips,
+ * commandoGrip, doubleGripGrip, oneHandRifleGrip, pathOneHandGrip), а здесь
+ * было только два последних. Игрок ставил модификацию «Pistol Grip» (даёт
+ * «1р» через system.effects.grantsGrip установленной weaponMod), выбирал в
+ * диалоге атаки «1р» — HUD-флаг записывался, а бюджет рук ниже (не находя
+ * этот хват в своём списке) продолжал требовать «2р» и не давал надеть щит
+ * во вторую руку. Commando Carbine и Double Grip — тот же класс расхождения,
+ * просто до сих пор без жалобы: они «живут в диалоге» только в смысле «дают
+ * галочку на бросок», а какую РУКУ они требуют — общий вопрос с бюджетом.
  */
-function availableRangedGrips(item, actor) {
+function availableRangedGrips(item, actor, auto) {
   const own = parseGrips(item.system?.grips).filter(k => RANGED_GRIPS[k]);
+  const extra = [];
+  const addExtra = key => { if (RANGED_GRIPS[key] && !own.includes(key) && !extra.includes(key)) extra.push(key); };
+  // Хват от модификации (Pistol Grip и подобные, wdbc-8vp1): system.effects.
+  // grantsGrip установленной weaponMod — то же поле, что читает attack-dialog.mjs
+  // (modGrantedGrips).
+  for (const mod of getInstalledMods(actor, item)) addExtra(mod.system?.effects?.grantsGrip);
+  // Commando/Коммандо (wdbc-eduq): карабин держат одной рукой, как пистолет.
+  if (auto?.carbine && hasRuleFlag(actor, "weapon.commandoCarbine")) addExtra("1р");
+  // Double Grip/Двуручный хват пистолета (wdbc-mu6v): пистолет двумя руками.
+  if (item.system?.weaponClass === "pistol" && hasRuleFlag(actor, "weapon.doubleGripPistol")) addExtra("2р");
   // Откатная Перчатка / Подавители Отдачи / Рука-Пушка: винтовку (класс basic —
   // в нём и «Винтовка», и «Длинная Винтовка», стр. 171) можно держать одной
   // рукой (wdbc-f7iw, wdbc-6tzk).
-  const oneHandRifle = item.system?.weaponClass === "basic"
-                    && hasRuleFlag(actor, "weapon.oneHandedRifle");
+  if (item.system?.weaponClass === "basic" && hasRuleFlag(actor, "weapon.oneHandedRifle")) addExtra("1р");
   // Стрела Кхейна у адепта Пути Воина уровня Следующий (wdbc-4e60) — тот же
   // список читает окно атаки; расходиться этим двум местам нельзя.
-  const pathOneHand = isPathOneHandedWeapon(item)
-                   && hasRuleFlag(actor, "weapon.oneHandedWarriorPath");
-  return (oneHandRifle || pathOneHand) && !own.includes("1р") ? [...own, "1р"] : own;
+  if (isPathOneHandedWeapon(item) && hasRuleFlag(actor, "weapon.oneHandedWarriorPath")) addExtra("1р");
+  return [...own, ...extra];
 }
 
 /**
@@ -104,7 +120,7 @@ function effectiveAuto(item, actor) {
 }
 
 function effectiveRangedGripHands(item, actor, auto) {
-  const list = availableRangedGrips(item, actor);
+  const list = availableRangedGrips(item, actor, auto);
   if (!list.length) return null;
   const flagged = item.getFlag?.(NS, "hudGrip");
   let key = list.includes(flagged) ? flagged : list[0];

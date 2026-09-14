@@ -110,30 +110,15 @@ async function syncMarkStatuses(actor) {
   }
 }
 
-function registerConditionStatusSync() {
-  // Лист (и вообще любой код, пишущий system.conditions.<key> через
-  // actor.update — кнопки листа, эффекты оружия, наркотики) → токен.
-  Hooks.on("updateActor", async (actor, changes, options, userId) => {
-    if (_syncing || userId !== game.user.id) return;
-    if (!(actor instanceof Actor)) return;
-    // Метки — ПЕРЕД разбором патча и независимо от него: их источники лежат
-    // вне system.conditions, и по «что изменилось» их не поймать (wdbc-6xhl).
-    await syncMarkStatuses(actor);
-    const changedConditions = changes?.system?.conditions;
-    if (!changedConditions) return;
-    for (const key of Object.keys(changedConditions)) {
-      if (!CONDITIONS_DEF[key] || TOKEN_SYNC_EXCLUDE.has(key)) continue;
-      const want = !!actor.system.conditions?.[key];
-      const has  = actor.statuses?.has(key) ?? false;
-      if (want === has) continue;
-      _syncing = true;
-      try { await actor.toggleStatusEffect(key, { active: want }); }
-      finally { _syncing = false; }
-    }
-  });
-
-  // Токен (HUD статусов/ПКМ по токену) → лист.
-  const syncFromEffect = async (effect, options, userId, removed) => {
+/**
+ * Токен (HUD статусов/ПКМ по токену) → лист. Вынесена из
+ * registerConditionStatusSync и экспортирована (wdbc-2gn) — иначе её нельзя
+ * проверить юнит-тестом: тестовая заглушка Hooks.on ничего не запоминает и не
+ * вызывает (test/support/foundry-stub.mjs), а сама логика (в отличие от
+ * markStatusPlan) не сводится к чистой функции — ей нужно позвать
+ * effect.delete()/actor.update()/actor.toggleStatusEffect().
+ */
+export async function syncFromEffect(effect, options, userId, removed) {
     if (_syncing || userId !== game.user.id) return;
     const actor = effect.parent;
     if (!(actor instanceof Actor) || !actor.system?.conditions) return;
@@ -161,13 +146,49 @@ function registerConditionStatusSync() {
       }
       // Снятие МЕТКИ, живущей на предмете («Щит поднят»): патчем актора её не
       // достать, поэтому иконку возвращаем на место, а не делаем вид, что сняли.
+      //
+      // wdbc-2gn (находка 5, ревью 07.09.2026): этот хук вызван уже ПОСЛЕ
+      // deleteActiveEffect — сам эффект (и его иконка на токене) к этому
+      // моменту Foundry уже удалил. Раньше здесь стояли только уведомление и
+      // `return`: обещание «возвращаем на место» не выполнялось никаким
+      // кодом. Симптом — снятие «Щит поднят» через HUD токена гасило иконку
+      // навсегда (system.conditions при этом не менялся, тег на листе
+      // оставался «поднят», и на следующий бросок актор всё ещё защищался
+      // щитом, которого на токене больше не видно). toggleStatusEffect(key,
+      // {active:true}) — тот же вызов, что создал эффект в первый раз (см.
+      // syncMarkStatuses выше) — под уже установленным _syncing, поэтому не
+      // зацикливается через createActiveEffect этого же хука.
       if (!want && isMirroredCondition(key) && !isMirrorClearable(key)) {
         ui.notifications?.info(`${actor.name}: «${CONDITIONS_DEF[key]?.label || key}» снимается кнопкой у самого предмета — щит опускается на вкладке БОЙ.`);
+        await actor.toggleStatusEffect(key, { active: true });
         return;
       }
       await actor.update(fields);
     } finally { _syncing = false; }
-  };
+}
+
+function registerConditionStatusSync() {
+  // Лист (и вообще любой код, пишущий system.conditions.<key> через
+  // actor.update — кнопки листа, эффекты оружия, наркотики) → токен.
+  Hooks.on("updateActor", async (actor, changes, options, userId) => {
+    if (_syncing || userId !== game.user.id) return;
+    if (!(actor instanceof Actor)) return;
+    // Метки — ПЕРЕД разбором патча и независимо от него: их источники лежат
+    // вне system.conditions, и по «что изменилось» их не поймать (wdbc-6xhl).
+    await syncMarkStatuses(actor);
+    const changedConditions = changes?.system?.conditions;
+    if (!changedConditions) return;
+    for (const key of Object.keys(changedConditions)) {
+      if (!CONDITIONS_DEF[key] || TOKEN_SYNC_EXCLUDE.has(key)) continue;
+      const want = !!actor.system.conditions?.[key];
+      const has  = actor.statuses?.has(key) ?? false;
+      if (want === has) continue;
+      _syncing = true;
+      try { await actor.toggleStatusEffect(key, { active: want }); }
+      finally { _syncing = false; }
+    }
+  });
+
   Hooks.on("createActiveEffect", (effect, options, userId) => syncFromEffect(effect, options, userId, false));
   Hooks.on("deleteActiveEffect", (effect, options, userId) => syncFromEffect(effect, options, userId, true));
 

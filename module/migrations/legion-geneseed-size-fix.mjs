@@ -102,29 +102,75 @@ async function fixGeneSeedEffects(item, correct) {
   if (emptied.length) await item.deleteEmbeddedDocuments("ActiveEffect", emptied);
 }
 
-/** Правит расхождения у Черт «Геносемя» всех акторов мира. */
+/**
+ * Правка расхождений у Черт «Геносемя» ОДНОГО актора. Бросает исключение
+ * наружу — решение, что делать со сбоем (пропустить и продолжить остальных),
+ * принимает вызывающий код в migrateLegionGeneSeedSize (тот же приём, что и в
+ * module/migrations/gear-equipped.mjs).
+ */
+async function migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName) {
+  let fixed = 0;
+  for (const item of actor.items) {
+    const mismatch = geneSeedSizeMismatch(item, sizeModByEffName);
+    if (!mismatch) continue;
+    // Правятся ОБА хранилища: легаси-поле — чтобы hasLegacyEffects не завёл
+    // эффект заново на следующей загрузке мира, и сам ActiveEffect — потому
+    // что именно его читает актор у мигрированной Черты.
+    await item.update({ "system.effects.sizeMod": mismatch.correct });
+    await fixGeneSeedEffects(item, mismatch.correct);
+    fixed++;
+  }
+  return fixed;
+}
+
+/**
+ * Правит расхождения у Черт «Геносемя» всех акторов мира, а также у
+ * несвязанных токенов сцен (wdbc-059h, по образцу gear-equipped/wdbc-dyi): у
+ * токена с actorLink:false предметы лежат в его собственной ActorDelta, а не
+ * в мировом Actor — такой токен не входит в game.actors и без отдельного
+ * прохода остался бы не замечен.
+ *
+ * Ошибка на одном акторе/токене логируется и пропускается, не прерывая
+ * обработку следующих: Черты «Геносемя» разных персонажей друг от друга не
+ * зависят.
+ */
 export async function migrateLegionGeneSeedSize() {
   if (!game.user?.isGM) { ui.notifications?.warn("Правка Размера Геносемени: только для ГМа."); return; }
   const sizeModByEffName = currentSizeModByEffName();
   let fixed = 0;
+  let failed = 0;
 
-  try {
-    for (const actor of game.actors) {
-      for (const item of actor.items) {
-        const mismatch = geneSeedSizeMismatch(item, sizeModByEffName);
-        if (!mismatch) continue;
-        // Правятся ОБА хранилища: легаси-поле — чтобы hasLegacyEffects не
-        // завёл эффект заново на следующей загрузке мира, и сам ActiveEffect —
-        // потому что именно его читает актор у мигрированной Черты.
-        await item.update({ "system.effects.sizeMod": mismatch.correct });
-        await fixGeneSeedEffects(item, mismatch.correct);
-        fixed++;
+  // Мировые акторы. Связанные токены (actorLink:true) используют тот же
+  // документ Actor — им отдельный проход не нужен.
+  for (const actor of game.actors) {
+    try {
+      fixed += await migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName);
+    } catch (e) {
+      failed++;
+      console.error(`Warhammer DBC | Размер Геносемени легиона: сбой на акторе «${actor.name}» (${actor.id}), пропущен:`, e);
+    }
+  }
+
+  // Несвязанные токены сцен: их синтетический актор (tokenDoc.actor) пишет
+  // прямо в ActorDelta токена.
+  for (const scene of game.scenes ?? []) {
+    for (const tokenDoc of scene.tokens?.contents ?? []) {
+      if (tokenDoc.actorLink) continue;
+      const actor = tokenDoc.actor;
+      if (!actor) continue;
+      try {
+        fixed += await migrateOneActorLegionGeneSeedSize(actor, sizeModByEffName);
+      } catch (e) {
+        failed++;
+        console.error(`Warhammer DBC | Размер Геносемени легиона: сбой на токене «${tokenDoc.name}» сцены «${scene.name}» (${tokenDoc.id}), пропущен:`, e);
       }
     }
-  } catch (e) { console.error("Warhammer DBC | Размер Геносемени легиона:", e); }
+  }
 
-  const msg = `Размер Геносемени легиона выправлен у Черт: ${fixed}.`;
-  console.log("Warhammer DBC |", msg);
-  if (fixed) ui.notifications?.info("Warhammer DBC: " + msg);
-  return { fixed };
+  const msg = failed
+    ? `Размер Геносемени легиона выправлен у Черт: ${fixed}; ${failed} акторов/токенов пропущено из-за ошибок — миграция повторится при следующей загрузке мира.`
+    : `Размер Геносемени легиона выправлен у Черт: ${fixed}.`;
+  console[failed ? "warn" : "log"]("Warhammer DBC |", msg);
+  if (fixed || failed) ui.notifications?.[failed ? "warn" : "info"]("Warhammer DBC: " + msg);
+  return { fixed, failed };
 }

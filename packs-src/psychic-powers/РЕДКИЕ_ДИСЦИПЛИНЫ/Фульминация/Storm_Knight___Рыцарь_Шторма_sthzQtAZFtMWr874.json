@@ -23,7 +23,20 @@
     "damage": "3d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "arc",
+        "rating": 7,
+        "rating2": "2d10+PR"
+      },
+      {
+        "key": "blinding",
+        "rating": 0
+      },
+      {
+        "key": "shocking"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -48,7 +61,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Фульминация» стр. 360)"
   },
   "_id": "sthzQtAZFtMWr874",
   "effects": [],

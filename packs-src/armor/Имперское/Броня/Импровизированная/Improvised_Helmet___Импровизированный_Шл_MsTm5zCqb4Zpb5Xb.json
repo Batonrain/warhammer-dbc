@@ -24,7 +24,8 @@
     ],
     "strengthBonus": 0,
     "wpBonus": 0,
-    "special": "Головная часть комплекта Improvised Armour / Импровизированная Броня (0l0f5q7DEDMadHZa) для профилей с AP головы 2 (DoomBC - Хаос, Культист Посвященный, стр. 43)."
+    "special": "Головная часть комплекта Improvised Armour / Импровизированная Броня (0l0f5q7DEDMadHZa) для профилей с AP головы 2 (DoomBC - Хаос, Культист Посвященный, стр. 43).",
+    "bookSource": "DoomBC — Хаос, II. Смертные («Культисты», стр. 43)"
   },
   "_id": "MsTm5zCqb4Zpb5Xb",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

@@ -90,6 +90,23 @@
 - `module/combat/ablative-wounds.mjs` — авторегенерация аблатива по Ходу.
 - `module/combat/damage.mjs` — применение урона (`showApplyDamageDialog`):
   поглощение, локация, критический эффект — центральный расчёт.
+- Подвиды урона в скобках книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx), wdbc-q0q8,
+  12.09.2026) — на уровень точнее широкого `damageType`: `system.damageSubtype`
+  у оружия (`data/item/weapon.mjs`), `damageImmunity.subtype.*` (иммунитет),
+  `system.absorption.vsSubtype.<подвид>` (AP-бонус, читает
+  `combat/armor-properties.mjs::resolveArmorAbsorptionAP`), `ARMOR_PROPERTIES`
+  auto-директивы `noApVsSubtype`/`doubleApVsSubtype`/`tripleApVsSubtype`/
+  `apBonusVsSubtype` (`constants/items.mjs`) для свойств брони (Conductive,
+  Flak, Vulcanized, Flak Lining), Конструктор-вид `kind:"absorption"` (тот же
+  AP-бонус, но для НЕ-брони — Мутаций/Черт/Талантов) и `kind:"shieldSubtype"`
+  (только `type:"forcefield"`, читается НАПРЯМУЮ с самого предмета щита в
+  момент броска — `_rollActiveShield`, не через синтетический ActiveEffect —
+  щит либо не срабатывает против подвида (mode:"exclude", Нерушимая Лента),
+  либо меняет рейтинг для этого броска (mode:"override", Морозное Сердце)).
+  Исключение из общего конвейера: тик Горения (`combat/condition-ticks.mjs`)
+  игнорирует броню целиком по умолчанию — свойство `fireproof` даёт точечное
+  исключение (собственное AP тела ИМЕННО этого предмета, удвоенное — Броня
+  Огненного Дракона).
 - `module/sheets/tabs/{death,healing,wounds}.mjs` — UI Смерти, Лечения,
   расчётов Ран на листе.
 - Именные: `apps/ablative-ap-shield.mjs` (Роба Чемпиона), `apps/
@@ -107,7 +124,9 @@
 - Визуализация: `combat/range-cells.mjs`, `range-rings.mjs`,
   `reachable-cells.mjs` (подсветка клеток по Dijkstra).
 - Доп. ходы/действия: `combat/snapshot.mjs`, `assassin-strike.mjs`,
-  `extra-turn.mjs`, `last-actor.mjs`, `middle-of-the-hunt.mjs`.
+  `extra-turn.mjs`, `last-actor.mjs`, `middle-of-the-hunt.mjs`,
+  `devourer-of-time.mjs` (Пожиратель Времени — доп. Ход в конец инициативы
+  после захвата Врасплох, полудействие жертв каждый раунд).
 
 ## 5. Бой: конвейер атаки/защиты, состязания
 
@@ -136,6 +155,13 @@ mjs` (верховой бой), `combat/tactical-map.mjs` + `rules/tactical-map.
 
 **Мораль/Страх/Подавление:** `rules/morale-test.mjs`, `combat/suppression.
 mjs`, `combat/intimidate.mjs`, `combat/fear.mjs`.
+
+**Встречный тест — накопленный бонус по цели:** `rules/personal-adaptation.
+mjs` (Персональная Адаптация, Тзинч — +5 к Порогу за каждый встречный тест
+против ТОЙ ЖЕ цели, капируется Cor.b, срок 9 лет), подключена в ОБОИХ
+местах разрешения встречного (сторона-инициатор — `rules/kind-outcome.mjs`;
+сторона-ответчик — `sheets/actor-sheet.mjs::_maybePostOpposedComparison`,
+uuid инициатора прокинут через `hooks.mjs::"opposedResponse"`).
 
 **Именные боевые способности (по одному файлу на Талант/Дар/Черту)** — если
 ищешь конкретный корбук-приём и не нашёл выше, он почти наверняка здесь:
@@ -235,7 +261,11 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Проклятье); `rules/legion-fit.mjs`, `legion-upgrade.mjs`.
 - Пути Азуриан: `constants/aeldari-paths.mjs`, `rules/library/paths.mjs`,
   `sheets/tabs/paths.mjs`, `apps/subrace-choice.mjs` (выбор «по игроку» у
-  Африэль/Эльданар).
+  Африэль/Эльданар). Книжная фраза Таланта «Мастер на Пути X» уже проверяется
+  готовой формальной системой, не нужно искать отдельный механизм (wdbc-318b):
+  `AZURIANE_PATHS` хранит путь по ключу (например `bonesinger`) с градациями
+  novice/next/master/lost, актёр хранит `system.paths: [{key, grade}]` —
+  проверка `paths.some(p => p.key === X && p.grade === "master")`.
 - Происхождения Аэльдари (Миры-Корабли/Корсары): `constants/aeldari-origins.
   mjs`.
 - `module/constants/archetypes.mjs`, `data/item/archetype.mjs`, `apps/
@@ -270,6 +300,35 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `vampiric-dependency.mjs` (+`apps`), `warp-eater.mjs`, `fleshmetal-regen.mjs`
   (Облитератор), `breath-of-life.mjs` (+`apps`, Дар Нургла), `perfect-host.
   mjs`, `unseen-beggar.mjs` (см. также §5 — многие мутации срабатывают в бою).
+- Лик Бога (Countenance of Khorne/Nurgle/Slaanesh/Tzeentch) — общий
+  переиспользуемый механизм на все 4 Дарителя: `rules/countenance-of-
+  gods.mjs`, script-запись на самом предмете (`apps/item-script.mjs`).
+  `combat/purity-of-battle.mjs` (Дар Кхорна — снимает боевые
+  наркотики/психосилы в радиусе), `combat/touch-of-pain.mjs` (Дар Слаанеш —
+  безоружные/природные атаки игнорируют T.b и получают Shocking) (wdbc-1rno,
+  13.09.2026).
+- Ещё именные (wdbc-1rno, кластер Дары Богов/Общие Мутации, 12.09.2026):
+  `crimson-angel.mjs` (Багровый Ангел, Кхорн), `cast-out-of-death.mjs`
+  (Изгнанный из Смерти, Нургл — регенерация по «Календарю»), `fatalism.mjs`
+  (Фатализм, Нургл), `dance-of-deception.mjs` (Танец Обмана, Слаанеш),
+  `eater-of-pain.mjs` (Пожиратель Боли, Слаанеш), `egomania.mjs` (Эгомания,
+  Слаанеш), `ever-youthful.mjs` (Вечно Юный, Слаанеш), `eye-of-envy.mjs` (Око
+  Зависти, Слаанеш), `kiss-of-death.mjs` (Поцелуй Смерти, Слаанеш),
+  `hatred.mjs` (Ненависть, Талант), `devourer-of-knowledge.mjs` (Пожиратель
+  Знаний, Тзинч — кража Навыка на сутки/навсегда по «Календарю»),
+  `perfect-sorcerer.mjs` (Совершенный Чародей, Тзинч — снимает запрет
+  Высшего Колдовства по Покровительству), `sundering.mjs` (+`apps/`,
+  Разделение, Тзинч — на смерти клонирует САМОГО чемпиона в 2 копии,
+  урон копий d10→d5→флэт, откат в конце сцены), `armour-of-the-gods.mjs`
+  (+`apps/`, Доспехи Богов, Общие Мутации — выдаёт Элитный архетип
+  «Ironclad/Броненосец» без опыта + реальную броню «Божественные Латы»),
+  `blessed-fits.mjs` (Благословенные Припадки, Общие Мутации — Оглушение от
+  провала переброса за Очко Бесчестия, возврат Очка через
+  `combat/condition-ticks.mjs`), `burned-senses.mjs` (+`apps/`, Выжженные
+  Чувства, Общие Мутации — второй бросок по таблице чувств, перманентная
+  потеря Зрения/Слуха). Общесистемный тест на Жару/Холод (`combat/
+  temperature-hazard.mjs` — раньше был только в display-виджете Окружения,
+  см. §21) найден и реализован попутно при разборе Бриза (Breeze).
 
 ## 13. Демонология: Демоны, Демон-Принц, Одержимость
 
@@ -313,7 +372,35 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - Психосилы: `data/item/psychic-power.mjs`, `rules/psyker.mjs`, `psy-range.
   mjs` (парсер дальности), `psychic-vessel.mjs` (фамильяр/конструкт-
   манифестация), `constants/{disciplines,psyker,psyker-tables}.mjs`,
-  `sheets/tabs/psychic.mjs`.
+  `sheets/tabs/psychic.mjs`. Область Конструктора `power`/`power:<имя>`
+  (модификатор/переброс/доп.провалы к манифестации конкретной силы или любой) —
+  `rules/item-rules.mjs::scopeTarget`, `rules/resolve-test.mjs::powerScopeApplies`
+  (wdbc-4bxa). `system.weaponProps` психосил (Экстремальный урон/Felling/Lance
+  и т.п. на психической атаке) — движок готов (`sheets/tabs/psychic.mjs`,
+  `aggregateAuto`); rating свойства может быть формулой с «PR» (Blast(2×PR) и
+  т.п.), «СУ»/книжным «Успехи» (Devastating Rain) или Cor.b/др. бонусом
+  характеристики (Infernal Gaze: Felling(Cor.b)) — резолвится
+  `combat/weapon-properties.mjs::resolvePropRating(s, prValue, {deg, rollData})`
+  тем же безопасным парсером, что и Пробитие, плюс `mechRollData(actor)` для
+  X.b-нотации; дайс-рейтинг (Flame «2d10») возвращается строкой для
+  `new Roll()`, не резолвится числом (wdbc-lui3/wdbc-kifa, 13-14.09.2026).
+  Контентом заполнено 66 атакующих психосил из ~93 с непустым уроном (не 847 —
+  остальные ~750 не атаки, weaponProps у них пуст правомерно); деление на
+  под-тикеты по дисциплинам не понадобилось, реальный остаток — тикеты
+  wdbc-cy4z (Toxic/Haywire игнорируют rating2 в реестре) и wdbc-zlx7 (условные
+  свойства по числу Успехов — Neural Storm/Fire Barrage и т.п. — движок не
+  умеет вообще, только безусловное применение на каждое попадание).
+  Сустейн-баффы к ДРУГИМ тестам (не к своей манифестации, kind:testMod
+  modCharBonus:"pr") фиксируют эPR момента каста в `system.sustainedEpr`
+  психосилы (по образцу `sustainedDegree`, wdbc-8m0x) — `item-rules.mjs`
+  читает его вместо живого `psyker.currentRating`, если не null (wdbc-1wvn,
+  14.09.2026). Force Blade (wdbc-vxgd) — первый пример ДИНАМИЧЕСКОГО заполнения
+  `system.effects.weaponBuff` игроком через диалог (`apps/force-blade-choice.
+  mjs`) вместо ручного авторства Конструктором: игрок тратит Успехи манифестации
+  на покупку свойств из книжного прайс-листа (`constants/force-blade-shop.
+  mjs`), результат пишется в weaponBuff и читается тем же
+  `combat/weapon-mods.mjs`, что и статично прописанные баффы — переиспользовать
+  этот паттерн, если появится вторая такая сила (флаг `hasWeaponShop`).
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`
@@ -334,19 +421,22 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `just-the-light.mjs`, `conjure-wraith.mjs`, `dread-wail.mjs` (+`apps`),
   `resplendent-raiment.mjs` (+`apps`), `apps/herd-spirits-summon.mjs`,
   `apps/demon-summon.mjs`.
-- **Руны Сигиллитов — ЗАПЛАНИРОВАНО, кода нет** (wdbc-fsl9, тикет открыт).
-  Ни `rules/sigillite-runes.mjs`, ни `rules/sigillite-runes-combat.mjs`, ни
-  папки `packs-src/traits/Элитные_архетипы/Сигиллит/` в репозитории не
-  существует — проверено 10.09.2026 при приёме стопки. Запись оставлена
-  ЗАМЫСЛОМ, чтобы не потерять разбор, и намеренно помечена как нереализованная:
-  этот файл отвечает на вопрос «где лежит код», и описание несуществующих
-  модулей здесь дороже отсутствия записи — следующая сессия построит поверх
-  «готового» пула свою механику и упрётся в пустоту.
-  Замысел: числовой пул (старт боя, +бPR в начале Хода, потолок
-  20+Талант+Археотех) + трата (бPR психосилы×2, Рунный Удар), альтернативный
-  режим манифестации поверх обычного конвейера (`sheets/tabs/psychic.mjs`),
-  включаемый Чертой «Магия Сигиллитов»; не Состояние — у записи реестра
-  Состояний нет поля под растущий максимум.
+- Руны Сигиллитов: `rules/sigillite-runes.mjs` (пул `system.sigilliteRunes`,
+  производный максимум 20 + Библиотека Рун × Бонус Интеллекта + ступени
+  Forbidden Lore (Archeotech), цена манифестации бPR×2, Рунный Удар),
+  `rules/sigillite-runes-combat.mjs` (установка пула в бPR на старте боя и
+  начисление в начале своего Хода — хуки `combatStart`/`updateCombat`),
+  Путь Силы `PSY_PATHS.sigillite` поверх обычного конвейера
+  (`sheets/tabs/psychic.mjs`), ячейка «Руны N/M» в шапке листа. Включается
+  Чертой «Магия Сигиллитов»; контент — `packs-src/traits/Элитные_архетипы/
+  Сигиллит/` и Таланты в той же папке Талантов. Не Состояние: у записи
+  реестра Состояний нет поля под растущий максимум.
+  Сделано и подтверждено живой проверкой 12.09.2026 (wdbc-fsl9 закрыт,
+  чек-лист wdbc-lx57 — 9 из 9 без расхождений). Числами подключены три
+  Таланта из шести; остальные три — открытые тикеты wdbc-p2it (Заготовленная
+  Руна), wdbc-exjp (Импровизированная Руна, Прометеев Огонь — обоим нужен
+  список изученных Рун), wdbc-qd6w (сочетание механик Пути, Тауматургия,
+  −30 обнаружению манифестации).
 
 ## 15. Крафт, Мастерская, Качество, Разгрузка
 
@@ -402,6 +492,24 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `combat/vehicle.mjs` — Вираж/Таран/Трудный Ландшафт/урон по стороне брони.
 - `sheets/vehicle-sheet.mjs`.
 - Пилот Дредноута — см. §9 (`rules/dreadnought.mjs`).
+- **Шагоход (Walker)** — `rules/walker.mjs` (арифметика без Foundry) +
+  `combat/walker.mjs` (обвязка): Ходовая «Шагоход» двигается и бьёт КАК
+  ПЕРСОНАЖ, поэтому её Парирование/Уклонение (−Размер×10, Уклонение
+  комбинировано с Operate−10), Натиск (+20 рукопашной машины на Раунд),
+  Опрокидывание вместо сбивания с ног, поворот 180° вне Хода (Combat Master
+  пилота — до ½WS.b раз) и «всё оружие за одно действие» считает пилот, а не
+  машина. Дословный текст девяти книжных пунктов —
+  `constants/vehicle.mjs::CHASSIS_FULL_NOTES.walker`.
+- **Выбор стороны брони при атаке персонажа по технике** (wdbc-kp1o,
+  11.09.2026) — `sheets/attack-dialog.mjs` + `sheets/attack/{dialog,form,
+  markup}.mjs` показывают Лоб/Борт/Корму и опцию «Избирательная атака в
+  Корму −20» (с Лба/Борта), когда цель — vehicle; проброс до
+  `damageData.side` через `combat/attack.mjs` → `combat/attack-card.mjs` →
+  `hooks.mjs` → `combat/damage.mjs` (fallback на `"side"`, если сторона не
+  выбрана). Реализует п.9 Шагохода выше: `rearCalledShotBlockedByWalker =
+  isMelee && isWalkerVehicle(target)` — рукопашная Избирательная атака в
+  Корму по Шагоходу запрещена, дальнобойная и атака по обычной технике —
+  разрешена.
 
 ## 19. Корабли, Космический бой, Звёздные системы
 
@@ -435,7 +543,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
 - `apps/game-session.mjs` — уже в AGENTS.md (кнопки «Сцена»/«Сессия»).
 - `constants/environment.mjs` + `apps/environment.mjs` (окно+виджет
   Погода/Температура/Гравитация/Радиация), `apps/scene-settings.mjs` (общая
-  страница настроек сцены).
+  страница настроек сцены). Тест на Жару/Холод (`rules/temperature-hazard.
+  mjs` + `combat/temperature-hazard.mjs`, wdbc-1rno, 12.09.2026) — раньше
+  `constants/environment.mjs::tempEffect` (штраф T + частота) был подключён
+  ТОЛЬКО к отображению в виджете, ни для кого не катался; теперь кнопка в
+  самом виджете реально катает тест (worldTime-кулдаун по частоте книги,
+  провал — Усталость+1, тот же приём, что Лучевая болезнь `combat/
+  radiation.mjs`). Аналогичный по форме штраф за сильный ветер (`WEATHER`,
+  ключ "wind") и урон трения атмосферы на входе с орбиты по-прежнему НЕ
+  реализованы вообще — ни числа, ни формулы для них в системе нет.
 - `apps/scene-nexus.mjs` + `constants/scene-nexus.mjs` — Нексус Сцен (группы
   сцен, телепортация).
 - `constants/vitals.mjs` — Голод/Жажда/Сон, авто-прогресс по `worldTime`.

@@ -10,8 +10,8 @@
 
 import "../support/foundry-stub.mjs";
 
-import { describe, it, expect } from "vitest";
-import { gunArmDecision, gunArmCandidates } from "../../module/migrations/gun-arm-source.mjs";
+import { describe, it, expect, afterEach } from "vitest";
+import { gunArmDecision, gunArmCandidates, migrateGunArmSource } from "../../module/migrations/gun-arm-source.mjs";
 
 const FLAG = "warhammer-dbc";
 
@@ -49,5 +49,39 @@ describe("простановка вросшего оружия «Руки-Пуш
   it("рукопашное и метательное Дар не втягивает", () => {
     expect(gunArmCandidates([weapon("bolt"), { id: "axe", type: "weapon", system: { weaponClass: "melee" } }])
       .map(i => i.id)).toEqual(["bolt"]);
+  });
+});
+
+// wdbc-059h: цикл по акторам УЖЕ ловил ошибку на каждом (try внутри for), но
+// не считал failed — версия миграции штамповалась безусловно, и недомигриро-
+// ванный актор не подхватывался повторным запуском.
+describe("migrateGunArmSource: изоляция сбоя одного актора (wdbc-059h)", () => {
+  const savedGame = globalThis.game;
+  afterEach(() => { globalThis.game = savedGame; });
+
+  function actorWith(id, items, { throwOnGet = false } = {}) {
+    const list = [...items];
+    list.get = id2 => {
+      if (throwOnGet) throw new Error(`boom on ${id}`);
+      return list.find(i => i.id === id2) ?? null;
+    };
+    return { id, name: `Actor ${id}`, items: list };
+  }
+
+  it("сбой на одном акторе не прерывает простановку остальным и не топит их результат", async () => {
+    const bad = actorWith("bad", [gift(), weapon("boltBad")], { throwOnGet: true });
+    let goodMarked = false;
+    const goodWeapon = weapon("boltGood");
+    goodWeapon.setFlag = async (scope, key, value) => { goodMarked = (scope === FLAG && key === "gunArmSource" && value === true); };
+    const good = actorWith("good", [gift(), goodWeapon]);
+
+    globalThis.game = { user: { isGM: true }, actors: [bad, good], scenes: [] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    const res = await migrateGunArmSource();
+
+    expect(res.marked).toBe(1);
+    expect(res.failed).toBe(1);
+    expect(goodMarked).toBe(true);
   });
 });

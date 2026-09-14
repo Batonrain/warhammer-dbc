@@ -12,7 +12,7 @@ import "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { CONDITIONS_DEF } from "../../module/constants/conditions.mjs";
-import { buildConditionStatusEffects, statusIconUri } from "../../module/apps/token-conditions.mjs";
+import { buildConditionStatusEffects, statusIconUri, syncFromEffect } from "../../module/apps/token-conditions.mjs";
 
 beforeEach(() => {
   CONFIG.specialStatusEffects = { DEFEATED: "dead", INVISIBLE: "invisible", BLIND: "blind" };
@@ -113,5 +113,68 @@ describe("markStatusPlan: метки на токене", () => {
   it("пустые входные данные не роняют", () => {
     expect(markStatusPlan()).toEqual({ add: [], remove: [] });
     expect(markStatusPlan(null, null)).toEqual({ add: [], remove: [] });
+  });
+});
+
+// ── wdbc-2gn (находка 5, ревью 07.09.2026): снятие метки-с-предмета через
+// HUD токена не возвращало иконку на место ────────────────────────────────
+//
+// «Щит поднят» (shieldUp) зеркалится с ФЛАГА ПРЕДМЕТА (щита), а не с поля
+// актора — mirrorClearPatch у неё пуст, isMirrorClearable("shieldUp") === false.
+// syncFromEffect вызывается уже ПОСЛЕ deleteActiveEffect (Foundry сам снял
+// иконку до вызова хука): раньше ветка только показывала уведомление и
+// возвращалась, ничего не воссоздавая — обещание «возвращаем иконку на
+// место» не выполнялось. Хуки в заглушке (Hooks.on) — no-op и не запоминают
+// колбэки, поэтому проверяется прямым вызовом экспортированной
+// syncFromEffect, а не через настоящий Hooks.callAll.
+describe("syncFromEffect: снятие иконки метки-с-предмета возвращает её на место", () => {
+  const shieldItem = (raised) => ({
+    id: "shield-1", type: "armor",
+    getFlag: (scope, key) => (scope === "warhammer-dbc" && key === "shieldRaised" ? raised : undefined),
+    flags: {}
+  });
+
+  function ogrynActor({ shieldRaised = false } = {}) {
+    const a = Object.assign(new Actor(), {
+      id: "a1", name: "Испытуемый",
+      system: { conditions: { shieldUp: shieldRaised } },
+      items: [shieldItem(shieldRaised)],
+      toggleStatusEffect: async () => {},
+      update: async () => {}
+    });
+    return a;
+  }
+
+  beforeEach(() => { game.user = { id: "u1" }; });
+
+  it("«Щит поднят» снят HUD-иконкой, но щит на предмете всё ещё поднят — иконка восстанавливается", async () => {
+    const actor = ogrynActor({ shieldRaised: true }); // источник (флаг щита) всё ещё активен
+    let toggled = null;
+    actor.toggleStatusEffect = async (key, opts) => { toggled = { key, opts }; };
+    const effect = { parent: actor, statuses: new Set(["shieldUp"]), delete: async () => {} };
+
+    await syncFromEffect(effect, {}, "u1", /* removed */ true);
+
+    expect(toggled).toEqual({ key: "shieldUp", opts: { active: true } });
+  });
+
+  it("книжное Состояние (не метка-с-предмета) по-прежнему снимается патчем актора, без восстановления", async () => {
+    const actor = Object.assign(new Actor(), {
+      id: "a2", name: "Испытуемый-2",
+      system: { conditions: { stunned: true } },
+      items: [],
+      toggleStatusEffect: async () => {},
+      update: async () => {}
+    });
+    let toggled = false;
+    let updated = null;
+    actor.toggleStatusEffect = async () => { toggled = true; };
+    actor.update = async (fields) => { updated = fields; };
+    const effect = { parent: actor, statuses: new Set(["stunned"]), delete: async () => {} };
+
+    await syncFromEffect(effect, {}, "u1", true);
+
+    expect(toggled).toBe(false); // не метка-с-предмета — восстановление не про неё
+    expect(updated).toBeTruthy(); // патч актора всё же применяется
   });
 });

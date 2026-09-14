@@ -45,14 +45,14 @@ beforeEach(() => {
 describe("_performDodge: кнопка Отскока только у успешной СТРЕЛКОВОЙ защиты", () => {
   it("успех, isMelee=false (по умолчанию) — кнопка есть", async () => {
     const d = defender();
-    await _performDodge(d, 0, "", 1, "Actor.attacker-1", false);
+    await _performDodge(d, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: false });
     expect(card()).toContain("wh-recoil-btn");
     expect(card()).toContain(`data-actor-uuid="${d.uuid}"`);
   });
 
   it("успех, isMelee=true — кнопки нет (Отскок только от стрелковой)", async () => {
     const d = defender();
-    await _performDodge(d, 0, "", 1, "Actor.attacker-1", true);
+    await _performDodge(d, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: true });
     expect(card()).toContain("Уклонение успешно");
     expect(card()).not.toContain("wh-recoil-btn");
   });
@@ -60,14 +60,14 @@ describe("_performDodge: кнопка Отскока только у успеш�
   it("провал — кнопки нет независимо от isMelee", async () => {
     captured.dice = [96];
     const d = defender();
-    await _performDodge(d, 0, "", 1, "Actor.attacker-1", false);
+    await _performDodge(d, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: false });
     expect(card()).toContain("Уклонение провалено");
     expect(card()).not.toContain("wh-recoil-btn");
   });
 
   it("data-actor-uuid на обёртке карточки — контратака-подобный приём для клика", async () => {
     const d = defender();
-    await _performDodge(d, 0, "", 1, "Actor.attacker-1", false);
+    await _performDodge(d, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: false });
     expect(card()).toContain(`data-actor-uuid="${d.uuid}"`);
   });
 });

@@ -22,6 +22,7 @@
     "damageType": "chemical",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 187)",
     "availability": 1,
     "weight": 0.5,
     "attackBonus": 0,
@@ -64,7 +65,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "toxic"
   },
   "_id": "iL2fY0uKMz7yD4aa",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-thrown.svg",

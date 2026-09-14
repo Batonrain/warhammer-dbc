@@ -23,7 +23,14 @@
     "damage": "1d10+PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "shocking"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +53,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Тзинч» стр. 348)"
   },
   "_id": "bd5p7GHtIOpTkvOT",
   "effects": [],

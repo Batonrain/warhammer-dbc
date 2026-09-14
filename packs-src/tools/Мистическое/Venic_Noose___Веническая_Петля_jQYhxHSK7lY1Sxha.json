@@ -7,6 +7,7 @@
     "notes": "Не смоделировано: +20 — бонус только против ОДНОГО конкретного пойманного демона (Демоническое Владычество/социалка), не общий testMod по навыку.",
     "quantity": 1,
     "weight": 2,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 262)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "mystic",
@@ -18,7 +19,7 @@
       "best": ""
     },
     "bonuses": [],
-    "linkedWeapon": "Веническая Петля (бросок)"
+    "linkedWeapon": "Venic Noose / Веническая Петля (бросок)"
   },
   "folder": "RpwK7hjZB6380LhD",
   "_id": "jQYhxHSK7lY1Sxha",

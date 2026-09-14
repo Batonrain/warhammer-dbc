@@ -21,7 +21,8 @@
     "rangeMod": 0,
     "rangeMultiplier": 1,
     "special": "Extreme (9), Toxic (3); против биологических игнорирует Natural Armour",
-    "properties": []
+    "properties": [],
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Специальные Боеприпасы: Болты», стр. 205)"
   },
   "_id": "hnPiu0li25dBNfHJ",
   "effects": [],

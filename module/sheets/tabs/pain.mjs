@@ -21,17 +21,24 @@ export async function painChatMsg(actor, text) {
   }, game.settings.get("core", "rollMode")));
 }
 
-/** Впитать (+1) или потратить (-1) Очко Боли. */
+/**
+ * Впитать (+1) или потратить (-1) Очко Боли.
+ * @returns {boolean} применилось ли изменение — false на уже-максимуме/уже-нуле
+ *   (только уведомление, actor.update не звался). Нужно вызывающим, которые
+ *   перед этим списывают отдельный ограниченный ресурс (Enjoyment/Наслаждение,
+ *   wdbc-shr находка 5): списывать «раз за бой» впустую, когда сама Боль не
+ *   добавилась, — терять лимит без реального эффекта.
+ */
 export async function painChange(actor, delta, kind) {
   const cur = actor.system.fate?.value ?? 0;
   const max = actor.system.fate?.max ?? 0;
   if (delta > 0 && cur >= max) {
     ui.notifications.info(`Очки Боли уже на максимуме (${max}).`);
-    return;
+    return false;
   }
   if (delta < 0 && cur <= 0) {
     ui.notifications.info("Нет Очков Боли для траты.");
-    return;
+    return false;
   }
   const next = Math.max(0, Math.min(max, cur + delta));
   await actor.update({ "system.fate.value": next });
@@ -41,6 +48,7 @@ export async function painChange(actor, delta, kind) {
       ? `＋ Получена <b>1</b> Боль (Наслаждение, без траты Реакции). Текущая Боль: <b>${next}</b> / ${max}.`
       : `− Потрачена <b>1</b> Боль. Осталось: <b>${next}</b> / ${max}.`;
   await painChatMsg(actor, text);
+  return true;
 }
 
 /**

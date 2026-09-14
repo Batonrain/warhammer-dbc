@@ -141,6 +141,25 @@ export async function counterAttackSectionHtml(defenderActor, attackerActor, tri
     }
     const dtLabel = DAMAGE_TYPES[entry.ccDamageType] || entry.ccDamageType || "Ударный";
     const label = entry.ccLabel || item.name;
+
+    // Shocking (ccShocking, wdbc-z5mn) — та же запись WEAPON_PROPERTIES.shocking,
+    // что у обычного оружия (тест T+0, иначе Оглушение на 1 раунд), но целью
+    // становится АТАКУЮЩИЙ, а не выцеленный на сцене токен — forceActor
+    // (buildTargetEffectButtons) кладёт его uuid на кнопку напрямую.
+    //
+    // Кнопка вложена ВНУТРЬ .roll-counter-attack (wdbc-5tz), а не отдельной
+    // секцией карточки: при безоружной атаке/Захвате с попаданием на карточке
+    // уже есть своя «Эффекты свойств» от оружия атакующего (buildTargetEffectButtons
+    // в attack.mjs) — второй такой же заголовок отдельным блоком было не
+    // отличить от первого, кроме подсказки справа. Вложенность делает
+    // понятным, что это эффект именно встречной атаки, а не основной.
+    const shockingHtml = (entry.ccShocking && attackerActor)
+      ? buildTargetEffectButtons(
+          resolveWeaponPropsList([{ key: "shocking" }]),
+          { hit: true, forceActor: attackerActor }
+        )
+      : "";
+
     sections.push(`
       <div class="roll-damage-section roll-counter-attack">
         <div class="roll-damage-label">${esc(label)} — встречная атака (${dtLabel}, Проб. ${entry.ccPen || 0}${entry.ccTearing ? ", Рвущее" : ""}): <b>${dmgTotal}</b></div>
@@ -157,18 +176,8 @@ export async function counterAttackSectionHtml(defenderActor, attackerActor, tri
           </div>
           <div class="roll-defense-note">Парирование против встречной атаки недоступно (стр. брони).</div>
         </div>
+        ${shockingHtml}
       </div>`);
-
-    // Shocking (ccShocking, wdbc-z5mn) — та же запись WEAPON_PROPERTIES.shocking,
-    // что у обычного оружия (тест T+0, иначе Оглушение на 1 раунд), но целью
-    // становится АТАКУЮЩИЙ, а не выцеленный на сцене токен — forceActor
-    // (buildTargetEffectButtons) кладёт его uuid на кнопку напрямую.
-    if (entry.ccShocking && attackerActor) {
-      sections.push(buildTargetEffectButtons(
-        resolveWeaponPropsList([{ key: "shocking" }]),
-        { hit: true, forceActor: attackerActor }
-      ));
-    }
   }
   return { html: sections.join(""), rolls };
 }

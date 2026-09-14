@@ -7,6 +7,7 @@
     "notes": "Числа — параметры удержания цели (движение/взлом), не тестовый модификатор владельцу.",
     "quantity": 1,
     "weight": 0.5,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 254)",
     "availability": -1,
     "quality": "common",
     "toolCategory": "general",

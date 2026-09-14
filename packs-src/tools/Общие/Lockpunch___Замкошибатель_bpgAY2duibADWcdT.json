@@ -7,6 +7,7 @@
     "notes": "«AP ≤16 → уничтожить замок» — порог применения инструмента (сравнение с AP предмета), не тест Навыка/Характеристики.",
     "quantity": 1,
     "weight": 5,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 255)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "general",

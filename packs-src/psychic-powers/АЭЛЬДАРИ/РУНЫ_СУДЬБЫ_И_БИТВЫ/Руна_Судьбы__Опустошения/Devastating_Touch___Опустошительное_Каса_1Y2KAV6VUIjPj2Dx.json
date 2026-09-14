@@ -24,7 +24,11 @@
     "damage": "4d10+PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "shocking"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -50,7 +54,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "Книга Аэльдари, РУНЫ СУДЬБЫ И БИТВЫ («Руна Судьбы: Опустошения»)"
   },
   "_id": "1Y2KAV6VUIjPj2Dx",
   "effects": [],

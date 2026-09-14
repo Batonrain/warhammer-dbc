@@ -18,6 +18,15 @@ import { SceneSettingsApp } from "../../module/apps/scene-settings.mjs";
 // Завеса._navigators()/_ritualActors() читают game.actors на каждый _prepareContext.
 globalThis.game.actors = Object.assign([], { get: () => null });
 
+/**
+ * Одиночный узел для el.querySelector(...) — в отличие от querySelectorAll,
+ * listenerRoot отдаёт его «как есть», без обёртки addEventListener, поэтому
+ * узел носит свой addEventListener, который сам пишет в общий handlers.
+ */
+function single(handlers, selector) {
+  return { dataset: {}, addEventListener: (evt, fn) => { handlers[`${selector}:${evt}`] = fn; } };
+}
+
 function stubScene(id = "sc1", name = "Тестовая сцена") {
   const flags = {};
   return {
@@ -119,6 +128,48 @@ describe("_onRender: переключатель вкладок и разводк
     SceneSettingsApp.prototype._onRender.call(app, { env: {}, veil: {} }, {});
     await handlers["[data-factor]:change"]({ target: { checked: true } });
     expect(scene._flags.veil?.factors?.storm).toBe(true);
+    expect(scene._flags.env).toBeUndefined();
+  });
+
+  // Регресс wdbc-gyj: hbs вставляет ОБА партиала в общий el всегда (вкладки
+  // различаются только классом active), а у кнопок «Сброс» Окружения и Завесы
+  // одинаковый data-act=reset. Без уточнения контейнера первый querySelector
+  // на общем корне находил кнопку Окружения (она в разметке раньше) — клик по
+  // ней стирал Завесу целиком, а собственная кнопка сброса Завесы не работала.
+  it("«Сброс» Окружения не стирает Завесу — при обеих кнопках на общем el", async () => {
+    game.user = { isGM: true };
+    const scene = stubScene();
+    canvas.scene = scene;
+    game.scenes = { current: null };
+    const app = new SceneSettingsApp();
+    app.env.uiState.target = "scene";
+    const handlers = {};
+    app.element = listenerRoot({
+      ".wh-env [data-act=reset]": [single(handlers, ".wh-env [data-act=reset]")],
+      ".wh-veil-app [data-act=reset]": [single(handlers, ".wh-veil-app [data-act=reset]")]
+    }, handlers);
+    app.render = () => {};
+    SceneSettingsApp.prototype._onRender.call(app, { env: {}, veil: {} }, {});
+    await handlers[".wh-env [data-act=reset]:click"]();
+    expect(scene._flags.env).toBeTruthy();
+    expect(scene._flags.veil).toBeUndefined();
+  });
+
+  it("«Сброс» Завесы срабатывает и не задевает Окружение — своя кнопка на общем el", async () => {
+    game.user = { isGM: true };
+    const scene = stubScene();
+    canvas.scene = scene;
+    game.scenes = { current: null };
+    const app = new SceneSettingsApp();
+    const handlers = {};
+    app.element = listenerRoot({
+      ".wh-env [data-act=reset]": [single(handlers, ".wh-env [data-act=reset]")],
+      ".wh-veil-app [data-act=reset]": [single(handlers, ".wh-veil-app [data-act=reset]")]
+    }, handlers);
+    app.render = () => {};
+    SceneSettingsApp.prototype._onRender.call(app, { env: {}, veil: {} }, {});
+    await handlers[".wh-veil-app [data-act=reset]:click"]();
+    expect(scene._flags.veil).toBeTruthy();
     expect(scene._flags.env).toBeUndefined();
   });
 });

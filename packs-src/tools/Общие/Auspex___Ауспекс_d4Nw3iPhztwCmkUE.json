@@ -7,6 +7,7 @@
     "notes": "Оговорка не смоделирована: +20 — только на нахождение засекаемой цели, здесь на любой тест Awareness; Tech-Use+0 (настройка режима) — порог, не бонус.",
     "quantity": 1,
     "weight": 1,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 254)",
     "availability": 0,
     "quality": "common",
     "toolCategory": "general",

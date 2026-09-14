@@ -19,9 +19,24 @@
 //  раньше цели туда ГМ отмечал вручную (см. doombc-blast-scatter).
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** Пикселей на 1 метр текущей сцены — тот же приём у Шаблонов/Остаётся/Тактической карты. */
+/**
+ * Пикселей на 1 метр текущей сцены — тот же приём у Шаблонов/Остаётся/
+ * Тактической карты.
+ *
+ * wdbc-8zi (п.4): фолбэк (когда `canvas.dimensions` ещё не готов — сцена не
+ * загружена/тест без канваса) раньше отдавал голый `grid.size` — это
+ * пикселей на ОДНУ КЛЕТКУ, а не на метр. На сетке, где клетка = 2 метра
+ * (`grid.distance = 2`, обычное дело для сцен большого масштаба), Взрывное
+ * и Распыление рисовались бы вдвое крупнее, чем должны, — раньше сцена почти
+ * всегда грузилась до первого измерения, поэтому баг не проявлялся. Верная
+ * формула та же, что использует сам Foundry для distancePixels: клетка,
+ * делённая на количество метров в клетке.
+ */
 export function pxPerMeter() {
-  return canvas?.dimensions?.distancePixels || canvas?.grid?.size || canvas?.scene?.grid?.size || 100;
+  if (canvas?.dimensions?.distancePixels) return canvas.dimensions.distancePixels;
+  const size     = canvas?.grid?.size || canvas?.scene?.grid?.size || 100;
+  const distance = canvas?.grid?.distance || canvas?.scene?.grid?.distance || 1;
+  return size / distance;
 }
 
 /**

@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Прорицание — Пастырь» стр. 327)"
   },
   "_id": "cQNec3SBjoAo1nD7",
   "effects": [],

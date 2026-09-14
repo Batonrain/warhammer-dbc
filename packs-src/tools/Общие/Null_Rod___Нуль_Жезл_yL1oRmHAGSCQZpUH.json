@@ -7,6 +7,7 @@
     "notes": "Не смоделировано: +30 на встречные броски против психосил — нет области testMod для «встречный тест против психосилы» как класса (тот же пробел, что в wdbc-jw81); −30/−10 псайкерам рядом — эффект на ДРУГИХ, не владельца.",
     "quantity": 1,
     "weight": 1,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 256)",
     "availability": 4,
     "quality": "common",
     "toolCategory": "general",
@@ -18,7 +19,7 @@
       "best": "Как Good.Q; при парировании психосилового оружия (или его атаки) на 1 Ход лишает его Force."
     },
     "bonuses": [],
-    "linkedWeapon": "Нуль Жезл"
+    "linkedWeapon": "Null Rod / Нуль Жезл"
   },
   "folder": "5FVoqWozzDt5phPp",
   "_id": "yL1oRmHAGSCQZpUH",

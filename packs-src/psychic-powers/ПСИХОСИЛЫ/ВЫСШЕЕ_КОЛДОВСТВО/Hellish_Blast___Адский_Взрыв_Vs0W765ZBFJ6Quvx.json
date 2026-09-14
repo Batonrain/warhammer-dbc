@@ -23,7 +23,18 @@
     "damage": "3d10+2*PR",
     "damageType": "energy",
     "penetration": 10,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "flame"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +57,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Высшее Колдовство» стр. 307)"
   },
   "_id": "Vs0W765ZBFJ6Quvx",
   "effects": [],

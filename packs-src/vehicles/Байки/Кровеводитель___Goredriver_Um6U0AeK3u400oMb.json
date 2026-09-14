@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Аблативное Бронирование / Ablative Plating",
+      "name": "Ablative Plating / Аблативное Бронирование",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!Um6U0AeK3u400oMb.TNxfZRg6LMpBZy2b"
     },
     {
-      "name": "Вездеход / All-Terrain",
+      "name": "All-Terrain / Вездеход",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!Um6U0AeK3u400oMb.b7mqOUPESIbvzglp"
     },
     {
-      "name": "Лезвия (X) / Blades (X)",
+      "name": "Blades (X) / Лезвия (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -225,7 +225,7 @@
       "_key": "!actors.items!Um6U0AeK3u400oMb.164DyJvduIo5Xxmq"
     },
     {
-      "name": "Демонический (4) / Daemonic (4)",
+      "name": "Daemonic (4) / Демонический (4)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

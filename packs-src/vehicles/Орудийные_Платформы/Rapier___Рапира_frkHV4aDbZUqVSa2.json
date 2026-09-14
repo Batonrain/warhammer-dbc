@@ -148,7 +148,7 @@
       "_key": "!actors.items!frkHV4aDbZUqVSa2.iy9tqx4r5X29O5C8"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -207,7 +207,7 @@
       "_key": "!actors.items!frkHV4aDbZUqVSa2.fxInYwn7Jniqi39s"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

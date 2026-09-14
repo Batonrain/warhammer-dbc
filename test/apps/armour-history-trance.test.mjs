@@ -166,8 +166,8 @@ describe("useTrance", () => {
     globalThis.game.combat = { id: "combat1", combatants: [{ actor }] };
 
     const promise = useTrance(actor, item);
-    expect(captured.dialog?.buttons?.ws).toBeTruthy();
-    await captured.dialog.buttons.ws.callback();
+    expect(captured.dialog?.buttons?.some(b => b.action === "ws")).toBe(true);
+    await captured.press("ws");
     await promise;
 
     expect(actor.items.length).toBe(1);
@@ -186,7 +186,7 @@ describe("useTrance", () => {
     globalThis.game.combat = { id: "combat1", combatants: [{ actor }] };
 
     const promise = useTrance(actor, item);
-    await captured.dialog.buttons.fearless.callback();
+    await captured.press("fearless");
     await promise;
 
     expect(actor.items.length).toBe(1);
@@ -200,7 +200,7 @@ describe("useTrance", () => {
     globalThis.game.combat = { id: "combat1", combatants: [{ actor }] };
 
     const promise = useTrance(actor, item);
-    await captured.dialog.close();
+    captured.dismiss();
     await promise;
 
     expect(actor.items.length).toBe(0);

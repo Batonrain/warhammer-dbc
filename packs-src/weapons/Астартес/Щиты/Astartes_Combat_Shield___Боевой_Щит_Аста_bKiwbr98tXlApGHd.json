@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 215)",
     "availability": 2,
     "weight": 3,
     "attackBonus": 0,
@@ -69,7 +70,8 @@
     "meleeCategory": "Щит",
     "shieldAP": 3,
     "shieldZones": "Р1",
-    "shieldForm": "Тарг"
+    "shieldForm": "Тарг",
+    "damageSubtype": "crushing"
   },
   "_id": "bKiwbr98tXlApGHd",
   "img": "systems/warhammer-dbc/assets/item-icons/shield.svg",

@@ -4,8 +4,8 @@
 // остались на листах. Чистка обязана снести ровно её остатки и не задеть чужие
 // импланты — иначе миграция вычистит Механикус вместе с Прогеноидами.
 
-import { describe, it, expect } from "vitest";
-import { isGeneSeedLeftover, geneSeedLeftoverIds } from "../../module/migrations/gene-seed-cleanup.mjs";
+import { describe, it, expect, afterEach } from "vitest";
+import { isGeneSeedLeftover, geneSeedLeftoverIds, migrateRemoveGeneSeed } from "../../module/migrations/gene-seed-cleanup.mjs";
 
 /** Предмет актора: чистка читает флаги и через getFlag, и из сырых данных. */
 function item({ id, name = "Предмет", type = "implant", category = "", flags = {} }) {
@@ -41,5 +41,39 @@ describe("чистка остатков Органов Геносемени", ()
     ]);
 
     expect(ids).toEqual(["organ", "spit"]);
+  });
+});
+
+// wdbc-059h: по образцу gear-equipped/wdbc-dyi — было один try на ВЕСЬ цикл по
+// акторам, сбой на одном глушил чистку остальным молча.
+describe("migrateRemoveGeneSeed: изоляция сбоя одного актора (wdbc-059h)", () => {
+  afterEach(() => { delete globalThis.game; delete globalThis.ui; });
+
+  function actorWith(id, items, { throwOnDelete = false } = {}) {
+    return {
+      id, name: `Actor ${id}`, items,
+      async deleteEmbeddedDocuments(type, ids) {
+        if (throwOnDelete) throw new Error(`boom on ${id}`);
+        for (const delId of ids) {
+          const idx = items.findIndex(i => i.id === delId);
+          if (idx >= 0) items.splice(idx, 1);
+        }
+      }
+    };
+  }
+
+  it("сбой на одном акторе не прерывает чистку остальным и не топит их результат", async () => {
+    const bad = actorWith("bad", [item({ id: "organ1", category: "geneseed" })], { throwOnDelete: true });
+    const good = actorWith("good", [item({ id: "organ2", category: "geneseed" })]);
+
+    globalThis.game = { user: { isGM: true }, actors: [bad, good], scenes: [], items: [] };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    const res = await migrateRemoveGeneSeed();
+
+    expect(res.actorCount).toBe(1);
+    expect(res.failed).toBe(1);
+    expect(good.items).toEqual([]);
+    expect(bad.items.map(i => i.id)).toEqual(["organ1"]);
   });
 });

@@ -7,6 +7,7 @@
     "notes": "Не смоделировано: выдаёт Демонические Трейты чемпиону — вне схемы testMod.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 260)",
     "availability": 3,
     "quality": "common",
     "toolCategory": "stationary",

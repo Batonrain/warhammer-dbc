@@ -23,7 +23,16 @@
     "damage": "1d10+PR",
     "damageType": "chemical",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "toxic",
+        "rating": 2
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +55,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Нургл» стр. 345)"
   },
   "_id": "dvOyChhZj1F1cATj",
   "effects": [],

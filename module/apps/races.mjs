@@ -82,8 +82,8 @@ export function raceCharsUpdate(actor, chars) {
  * (applyRace), ключ всё равно перезаписывается следом её собственным
  * update — двойная запись безвредна.
  */
-export async function clearRace(actor) {
-  await clearSubrace(actor);
+export async function clearRace(actor, { keepSubrace = false } = {}) {
+  if (!keepSubrace) await clearSubrace(actor);
   await clearRacePast(actor);
   await clearGrantedBy(actor, "race", actorRaceItem(actor));
   await actor.update({ "system.race": "" });
@@ -114,8 +114,17 @@ export async function clearRacePast(actor) {
  */
 export async function applyRace(actor, key, { tag = "race", mirror = true } = {}) {
   if (!actor) return;
-  // Своя раса тянет за собой субрасу и Прошлое; Прошлое снимает только себя.
-  if (tag === "race") await clearRace(actor);
+  // Своя раса тянет за собой субрасу и Прошлое, ТОЛЬКО когда раса реально
+  // меняется. Кнопка «Применить» в шапке листа (onRaceApply) всегда зовёт
+  // applyRace с УЖЕ стоящим ключом — это «обновить/переприменить эту же
+  // расу» (миграция старых персонажей, синхронизация после правки Механики
+  // в библиотеке), не «сменить расу». Раньше clearRace срабатывала
+  // безусловно, и повторный клик по той же расе молча сносил уже выбранную
+  // субрасу и все её бонусы (wdbc-f8lk) — теперь субраса снимается только
+  // при настоящей смене ключа (пикер расы — sheets/race-picker.mjs — либо
+  // отличный ключ, либо явное снятие расы пустым key).
+  const raceUnchanged = tag === "race" && !!key && key === (actor.system.race || "");
+  if (tag === "race") await clearRace(actor, { keepSubrace: raceUnchanged });
   else await clearRacePast(actor);
   if (!key) {
     if (mirror) await actor.update({ "system.race": "", "system.subrace": "" });
@@ -151,7 +160,7 @@ export async function applyRace(actor, key, { tag = "race", mirror = true } = {}
   }
 
   await actor.update({
-    ...(mirror ? { "system.race": key, "system.subrace": "" } : {}),
+    ...(mirror ? { "system.race": key, ...(raceUnchanged ? {} : { "system.subrace": "" }) } : {}),
     ...raceCharsUpdate(actor, def?.chars || {})
   });
 

@@ -23,7 +23,14 @@
     "damage": "2d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "sanctified"
+      },
+      {
+        "key": "tearing"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +53,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Демонология» стр. 310)"
   },
   "_id": "iloWFW4nLSyLxK4Z",
   "effects": [],

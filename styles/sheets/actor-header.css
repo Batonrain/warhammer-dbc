@@ -331,6 +331,16 @@
   padding: 2px;
 }
 
+/* Временное Бесчестие в ячейке Судьбы шапки не-Хаосита (wdbc-a23) — тот же
+   значок, что infamy-strip.hbs у Хаосита (.dp-ip-temp, actor-header не
+   переопределяет цвета), только уже: ячейка узкая и колонкой. */
+.warhammer-dbc .header-temp-infamy {
+  margin-top: 2px;
+  font-size: 0.9em;
+  white-space: normal;
+  text-align: center;
+}
+
 .warhammer-dbc .header-checks {
   display: flex;
   gap: 16px;

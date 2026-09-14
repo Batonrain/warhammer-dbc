@@ -1,5 +1,5 @@
 {
-  "name": "Combi Grav / Комби-Грав",
+  "name": "Combi-Grav / Комби-Грав",
   "type": "weapon",
   "folder": "cHwiIsG6VZt9ZiIR",
   "system": {
@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 15,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
     "availability": 3,
     "weight": 6,
     "attackBonus": 0,

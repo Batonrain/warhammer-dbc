@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 5,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 188-198)",
     "availability": 3,
     "weight": 3,
     "attackBonus": 0,
@@ -69,7 +70,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "flame"
   },
   "_id": "5bzIgTnFGfgmFN0G",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",

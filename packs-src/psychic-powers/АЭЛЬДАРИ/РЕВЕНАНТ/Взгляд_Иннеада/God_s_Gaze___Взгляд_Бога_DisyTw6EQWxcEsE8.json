@@ -24,7 +24,25 @@
     "damage": "PRd10+PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "felling",
+        "rating": "PR"
+      },
+      {
+        "key": "flame",
+        "rating": "2d10"
+      },
+      {
+        "key": "flush"
+      },
+      {
+        "key": "spray"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -50,7 +68,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "Книга Аэльдари: Ответвления, ДИСЦИПЛИНА РЕВЕНАНТА («Взгляд Иннеада»)"
   },
   "_id": "DisyTw6EQWxcEsE8",
   "effects": [],

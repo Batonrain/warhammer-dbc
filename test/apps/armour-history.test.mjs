@@ -33,12 +33,20 @@ describe("setArmourEntry: числовая часть особенности (wd
     expect(commandRule.effects[0].value).toBe(10);
   });
 
-  it("char-scope testMod резолвится по правильной характеристике (не по дефолту ag)", async () => {
+  it("char-scope запись «Твоя сила станет легендой» — kind:characteristic на S, не testMod (wdbc-zmb)", async () => {
+    // +10 к S — постоянный бонус характеристики (меняет производные: урон,
+    // вес, переносимый груз), а не необязательная галочка на одном броске,
+    // поэтому здесь ActiveEffect (kind:"characteristic"), не kind:"testMod".
+    // rulesFromItemMechanics не видит долговечные записи вовсе (см.
+    // test/rules/item-rules.test.mjs) — они читаются через ActiveEffect,
+    // заведённый syncMechanicsEffects/applyItemMechanics, поэтому здесь
+    // проверяется сама запись Механики, а не rulesFromItemMechanics.
     const item = armorItem();
     await setArmourEntry(item, "history", "Твоя сила станет легендой");
-    const rules = rulesFromItemMechanics([item]);
-    expect(rules).toHaveLength(1);
-    expect(rules[0].effects[0]).toMatchObject({ kind: "rollBonus", target: "char:s", value: 10 });
+    const entry = item.flags["warhammer-dbc"].mechanics
+      .find(g => g.id === "armour-history").entries[0];
+    expect(entry).toMatchObject({ kind: "characteristic", charKey: "s", field: "total", op: "add", value: 10 });
+    expect(rulesFromItemMechanics([item])).toEqual([]);
   });
 
   it("запись без def.mech (Наслаждение смертью) не создаёт группу вовсе", async () => {
@@ -75,9 +83,15 @@ describe("setArmourEntry: числовая часть особенности (wd
     const item = armorItem();
     await setArmourEntry(item, "history", "Твоя сила станет легендой");
     await setArmourEntry(item, "scars", "Потрёпанный войной", { second: true });
+    // «Твоя сила станет легендой» — kind:characteristic (wdbc-zmb), долговечная
+    // запись без live-правила в rulesFromItemMechanics; в её выдаче участвует
+    // только testMod-часть второй особенности.
     const rules = rulesFromItemMechanics([item]);
     const targets = rules.map(r => r.effects[0].target).sort();
-    expect(targets).toEqual(["char:s", "skill:charm", "skill:intimidate"]);
+    expect(targets).toEqual(["skill:charm", "skill:intimidate"]);
+    const sEntry = item.flags["warhammer-dbc"].mechanics
+      .find(g => g.id === "armour-history").entries[0];
+    expect(sEntry).toMatchObject({ kind: "characteristic", charKey: "s" });
   });
 
   it("clearArmourHistory снимает обе группы", async () => {

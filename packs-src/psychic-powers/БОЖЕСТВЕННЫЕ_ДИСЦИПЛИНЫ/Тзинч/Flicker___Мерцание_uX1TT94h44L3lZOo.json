@@ -47,7 +47,8 @@
         "addProps": []
       }
     },
-    "requirement": "Метка Тзинча, PR 4+, W 50+"
+    "requirement": "Метка Тзинча, PR 4+, W 50+",
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Тзинч» стр. 349)"
   },
   "_id": "uX1TT94h44L3lZOo",
   "effects": [],

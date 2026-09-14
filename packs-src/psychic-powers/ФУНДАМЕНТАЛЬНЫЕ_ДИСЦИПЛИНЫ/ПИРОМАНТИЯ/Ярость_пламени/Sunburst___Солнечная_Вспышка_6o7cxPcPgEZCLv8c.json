@@ -23,7 +23,16 @@
     "damage": "1d10+PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR"
+      },
+      {
+        "key": "blinding",
+        "rating": 0
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +55,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ФУНДАМЕНТАЛЬНЫЕ ДИСЦИПЛИНЫ («Пиромантия — Ярость пламени» стр. 337)"
   },
   "_id": "6o7cxPcPgEZCLv8c",
   "effects": [],

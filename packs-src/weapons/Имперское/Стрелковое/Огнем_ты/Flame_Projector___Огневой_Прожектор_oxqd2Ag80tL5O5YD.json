@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 4,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
     "availability": 4,
     "weight": 12,
     "attackBonus": 0,
@@ -65,7 +66,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "flame"
   },
   "_id": "oxqd2Ag80tL5O5YD",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

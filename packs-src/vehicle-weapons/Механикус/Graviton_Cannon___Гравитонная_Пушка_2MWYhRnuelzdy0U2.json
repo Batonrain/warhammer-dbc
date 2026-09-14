@@ -73,7 +73,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "2MWYhRnuelzdy0U2",
   "effects": [],

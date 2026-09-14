@@ -23,7 +23,19 @@
     "damage": "2d10+PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "3*PR"
+      },
+      {
+        "key": "concussive",
+        "rating": 1
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -47,7 +59,8 @@
         "addProps": []
       }
     },
-    "requirement": "Метка Слаанеш, PR 5+, T 40+"
+    "requirement": "Метка Слаанеш, PR 5+, T 40+",
+    "bookSource": "DoomBC — Основная книга, БОЖЕСТВЕННЫЕ ДИСЦИПЛИНЫ («Слаанеш» стр. 341)"
   },
   "_id": "LnoCwgG0ZdKTtwjl",
   "effects": [],

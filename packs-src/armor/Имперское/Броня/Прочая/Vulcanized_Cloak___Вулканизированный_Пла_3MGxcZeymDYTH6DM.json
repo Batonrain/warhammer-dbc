@@ -3,8 +3,8 @@
   "type": "armor",
   "folder": "mcOoQEqYG2VhixBm",
   "system": {
-    "description": "",
-    "notes": "",
+    "description": "Тяжёлый плащ высокопоставленных Механикум, защищающий от смертельных ударов мотивирующей силы.",
+    "notes": "Механизировано (wdbc-q0q8): утраивает AP против E(El) урона — свойство vulcanized (module/constants/items.mjs), auto.tripleApVsSubtype.",
     "armorType": "simple",
     "stacks": false,
     "maxAgility": 100,
@@ -21,12 +21,14 @@
     "properties": [
       "cloak",
       "open",
-      "soft"
+      "soft",
+      "vulcanized"
     ],
     "strengthBonus": 0,
     "wpBonus": 0,
     "special": "",
-    "propRatings": {}
+    "propRatings": {},
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 230)"
   },
   "_id": "3MGxcZeymDYTH6DM",
   "img": "systems/warhammer-dbc/assets/item-icons/armor.svg",

@@ -14,7 +14,8 @@
     "cure": "Постельный режим + расширенный Medicae (мод −30…+30) через промежутки, Банк успехов 5–20.",
     "active": false,
     "description": "",
-    "notes": ""
+    "notes": "",
+    "bookSource": "DoomBC — Основная книга, VIII. ПРОЧЕЕ («Болезни» стр. 470)"
   },
   "_id": "Gy18kXVVDoDUOyI2",
   "effects": [],

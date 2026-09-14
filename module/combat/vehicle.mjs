@@ -25,7 +25,9 @@ const sgn = (n) => `${n >= 0 ? "+" : ""}${n}`;
 // Порог = Operate мехвода + swerveMod (−Размер×10, −10 для гусеничной) + extraMod.
 // При Успехе попадание становится промахом — как обычное Уклонение (стр. книги
 // про машины: «аналогично как с пешим Уклонением»), без сравнения степеней.
-export async function _performSwerve(actor, extraMod = 0, hitsCount = 1, attackerUuid = "") {
+// wdbc-8zi (п.6): объект опций — тот же приём, что у _performDodge/_performParry
+// (module/combat/defense.mjs), тем же именам полей.
+export async function _performSwerve(actor, { extraMod = 0, hitsCount = 1, attackerUuid = "" } = {}) {
   if (actor.type !== "vehicle") {
     return ui.notifications.warn("⚠️ Вираж может совершать только Техника — выберите токен машины.");
   }
@@ -177,11 +179,23 @@ async function _resolveTerrain(actor, operate, terrainMod, manMod, extraMod, amp
     body = `<div class="roll-outcome"><span class="roll-success">Успех — ${deg} ${_degWord(deg)}. Ходовая не повреждена.</span></div>`;
   } else if (isWalker) {
     // Шагоход (wdbc-6wzt): движется как пехота — Провал не наносит урон
-    // Ходовой вовсе (в отличие от колёсной/гусеничной ниже), только сбивает
-    // темп движения.
+    // Ходовой вовсе (в отличие от колёсной/гусеничной ниже). Но, как и у
+    // пехоты («тест A+0 или упасть», corebook стр.29), Провал должен что-то
+    // ДЕЛАТЬ — а собственное правило Шагохода прямо говорит: «вместо
+    // сбивания с ног — Опрокидывается» (constants/vehicle.mjs:47). До этой
+    // правки (wdbc-0oe) карточка была декоративной: ни урона (правильно), ни
+    // Опрокидывания (баг) — кнопка ниже вызывает уже готовый резолвер
+    // Опрокидывания (module/combat/walker.mjs::showTipOverDialog), тем же
+    // приёмом «кнопка в карточке теста», что и урон в Ходовую у колёсной/
+    // гусеничной ниже.
     body = `
       <div class="roll-outcome"><span class="roll-failure">Провал — ${dop} ${_degWord(dop)}${critFail ? " (Крит.Провал!)" : ""}. Шагоход спотыкается.</span></div>
-      <div class="roll-allout-note">Ходовая не повреждена — Шагоход движется как пехота, урон от Трудного Ландшафта на него не распространяется.</div>
+      <div class="roll-allout-note">Ходовая не повреждена — Шагоход движется как пехота, урон от Трудного Ландшафта на него не распространяется. Вместо сбивания с ног — Опрокидывается.</div>
+      <div class="roll-defense-section">
+        <button class="wh-walker-tipover-btn" type="button" data-vehicle-uuid="${actor.uuid}">
+          Опрокинуть Шагоход
+        </button>
+      </div>
       ${stopped ? `<div class="roll-allout-note">Машина останавливается, зайдя наполовину в область Трудного Ландшафта.</div>` : ""}`;
   } else {
     body = `

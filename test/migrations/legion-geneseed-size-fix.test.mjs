@@ -5,7 +5,7 @@
 // «Геносемя: <легион>» — эта миграция выправляет сохранённое значение по
 // ТЕКУЩЕЙ константе (не по двум захардкоженным именам).
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   currentSizeModByEffName, geneSeedSizeMismatch, migrateLegionGeneSeedSize, geneSeedEffectSizeMod
 } from "../../module/migrations/legion-geneseed-size-fix.mjs";
@@ -200,5 +200,31 @@ describe("migrateLegionGeneSeedSize", () => {
 
     const res = await migrateLegionGeneSeedSize();
     expect(res.fixed).toBe(0);
+  });
+});
+
+// wdbc-059h: по образцу gear-equipped/wdbc-dyi — было один try на ВЕСЬ цикл по
+// акторам, сбой на одном глушил правку остальным молча.
+describe("migrateLegionGeneSeedSize: изоляция сбоя одного актора (wdbc-059h)", () => {
+  afterEach(() => { delete globalThis.game; delete globalThis.ui; });
+
+  it("сбой на одном акторе не прерывает правку остальным и не топит их результат", async () => {
+    const bad = trait({ id: "bad", name: "Геносемя: XX Альфа Легион", sizeMod: 1 });
+    bad.update = async () => { throw new Error("boom on bad"); };
+    const good = trait({ id: "good", name: "Геносемя: XIII Железные Змеи", sizeMod: 1 });
+
+    globalThis.game = {
+      user: { isGM: true },
+      actors: [{ id: "a1", name: "Actor bad", items: [bad] }, { id: "a2", name: "Actor good", items: [good] }],
+      scenes: []
+    };
+    globalThis.ui = { notifications: { info: () => {}, warn: () => {} } };
+
+    const res = await migrateLegionGeneSeedSize();
+
+    expect(res.fixed).toBe(1);
+    expect(res.failed).toBe(1);
+    expect(good.system.effects.sizeMod).toBe(0);
+    expect(bad.system.effects.sizeMod).toBe(1); // не тронут, попробуется заново
   });
 });

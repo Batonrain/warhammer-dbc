@@ -61,7 +61,14 @@ export function openFearDialog(actor) {
   // та же область testMod, что у Травмы ниже: Каталептический Узел и
   // подобное сюда же. morale:true подключает и переброс (Lord of the
   // Exodites и т.п. — wdbc-zepq), которого раньше в этом диалоге не было.
-  const ctx = { kind: "skill", char: "wp", morale: true };
+  //
+  // targetActor (wdbc-1rno, 12.09.2026) — выделенный на сцене токен, тот же
+  // приём, что у attack-dialog.mjs::attackCtx: Тест Страха книжно не привязан
+  // к конкретному токену (игрок выбирает числовой рейтинг руками), но если
+  // источник угрозы всё же выделен, cross-actor правила (Ненависть) могут его
+  // прочитать. Без выделенного токена — null, ведёт себя как раньше.
+  const targetActor = [...(game.user?.targets ?? [])][0]?.actor ?? null;
+  const ctx = { kind: "skill", char: "wp", morale: true, targetActor };
   const rm = ruleRollModsHtml(actor, ctx);
   const rr = ruleRerollsHtml(actor, ctx);
   new Dialog({
@@ -119,7 +126,7 @@ export function openFearDialog(actor) {
           // Предпросмотр обязан совпадать с тем, что посчитает сам бросок
           // (combat/fear.mjs), иначе игрок видит один Порог, а получает другой.
           return wp + ratingMod + mod + difficulty
-            + autoTestMods(actor, { kind: "skill", char: "wp", morale: true }).total;
+            + autoTestMods(actor, { kind: "skill", char: "wp", morale: true, targetActor }).total;
         }
       });
       root.querySelectorAll("#fear-rating, #fear-type, #fear-mod, .rule-mod").forEach(el =>

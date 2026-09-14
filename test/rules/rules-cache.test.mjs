@@ -15,7 +15,7 @@
 // время Зависимости), и молча отдавал бы вчерашний ответ.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { collectRules, gatherRules, withRulesCache } from "../../module/rules/collect.mjs";
+import { collectRules, gatherRules, withRulesCache, invalidateRulesCacheFor } from "../../module/rules/collect.mjs";
 import { registerRuleSource, clearRuleSources, getRuleSources } from "../../module/rules/sources.mjs";
 import { hasRuleFlag, ruleFlags } from "../../module/rules/flags.mjs";
 
@@ -104,6 +104,76 @@ describe("withRulesCache — сбор правил один раз на пере
     collectRules(a);
     collectRules(a);
     expect(calls).toBe(2);
+  });
+});
+
+describe("invalidateRulesCacheFor — сброс кэша ОДНОГО актора без выхода из обёртки (wdbc-2gn)", () => {
+  // Симптом ревью 07.09.2026: hasRuleFlag(DREADNOUGHT_PILOT_FLAG) в
+  // rules/character.mjs:413 — ПЕРВЫЙ вопрос за пересчёт, задан ДО цикла
+  // характеристик и ДО Object.assign(system.conditions, readAllMirrors(actor)).
+  // Правила, гейтящиеся charBonusMin/hasCondition, отбираются по значениям
+  // «до», и этот (неверный) полный список остаётся в кэше до конца ОДНОГО
+  // withRulesCache — даже когда актор внутри той же обёртки уже дописал
+  // верные bonus/conditions. Ниже — та же форма мутации «в середине прохода»,
+  // но на голом акторе, без всего character.mjs: источник читает
+  // изменяемое поле актора напрямую (как это делают предикаты charBonusMin/
+  // hasCondition).
+  it("без сброса: правило остаётся не найденным, даже когда актор уже обновился", () => {
+    const a = actor();
+    a.system.inRage = false;
+    clearRuleSources();
+    registerRuleSource("live", act =>
+      act.system.inRage
+        ? [{ id: "live.rage", when: {}, effects: [{ kind: "grantFlag", target: "live.flag" }] }]
+        : []);
+
+    withRulesCache(() => {
+      expect(hasRuleFlag(a, "live.flag")).toBe(false); // первый вопрос — до мутации, кладёт [] в кэш
+      a.system.inRage = true; // «мутация в середине пересчёта» (тег «в Ярости» появился)
+      expect(hasRuleFlag(a, "live.flag")).toBe(false); // всё ещё старый (пустой) кэш — баг
+    });
+  });
+
+  it("после invalidateRulesCacheFor(actor) — следующий сбор видит актуальные данные", () => {
+    const a = actor();
+    a.system.inRage = false;
+    clearRuleSources();
+    registerRuleSource("live", act =>
+      act.system.inRage
+        ? [{ id: "live.rage", when: {}, effects: [{ kind: "grantFlag", target: "live.flag" }] }]
+        : []);
+
+    withRulesCache(() => {
+      expect(hasRuleFlag(a, "live.flag")).toBe(false);
+      a.system.inRage = true;
+      invalidateRulesCacheFor(a);
+      expect(hasRuleFlag(a, "live.flag")).toBe(true); // сброшен именно этот актор — свежий ответ
+    });
+  });
+
+  it("не трогает кэш ДРУГОГО актора той же обёртки", () => {
+    const a = actor();
+    const b = actor();
+    clearRuleSources();
+    registerRuleSource("bench", () => {
+      calls++;
+      return [{ id: "bench.rule", when: {}, effects: [{ kind: "grantFlag", target: "bench.flag" }] }];
+    });
+
+    withRulesCache(() => {
+      collectRules(a);
+      collectRules(b);
+      expect(calls).toBe(2);
+      invalidateRulesCacheFor(a);
+      collectRules(a); // пересобран заново
+      collectRules(b); // взят из кэша, как был
+      expect(calls).toBe(3);
+    });
+  });
+
+  it("вне обёртки (CACHE === null) — безопасный no-op", () => {
+    const a = actor();
+    expect(() => invalidateRulesCacheFor(a)).not.toThrow();
   });
 });
 

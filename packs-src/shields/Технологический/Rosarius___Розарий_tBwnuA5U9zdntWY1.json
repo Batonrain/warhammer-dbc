@@ -16,7 +16,8 @@
     "status": "inactive",
     "quality": "common",
     "availability": 3,
-    "weight": 0.5
+    "weight": 0.5,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Силовые щиты» стр. 241)"
   },
   "_id": "tBwnuA5U9zdntWY1",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",

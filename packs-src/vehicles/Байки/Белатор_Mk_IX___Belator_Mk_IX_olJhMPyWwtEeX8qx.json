@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Аблативное Бронирование / Ablative Plating",
+      "name": "Ablative Plating / Аблативное Бронирование",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!olJhMPyWwtEeX8qx.i7yJqIaqlTJKsvyv"
     },
     {
-      "name": "Интегрированное Оружие / Integral Weapon",
+      "name": "Integral Weapon / Интегрированное Оружие",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!olJhMPyWwtEeX8qx.wcBCAw9ufKMOD4lE"
     },
     {
-      "name": "Манёвренный / Maneuverable",
+      "name": "Maneuverable / Манёвренный",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

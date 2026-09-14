@@ -7,6 +7,7 @@
     "notes": "Та же причина, что у Апотекариона — тиры по Редкости, переменная величина.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 259)",
     "availability": 1,
     "quality": "common",
     "toolCategory": "stationary",

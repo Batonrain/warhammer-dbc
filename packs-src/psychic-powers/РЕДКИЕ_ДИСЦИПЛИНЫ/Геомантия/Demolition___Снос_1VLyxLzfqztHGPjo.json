@@ -23,7 +23,12 @@
     "damage": "2*PRd10+10",
     "damageType": "impact",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "5*PR"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +51,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Геомантия» стр. 358)"
   },
   "_id": "1VLyxLzfqztHGPjo",
   "effects": [],

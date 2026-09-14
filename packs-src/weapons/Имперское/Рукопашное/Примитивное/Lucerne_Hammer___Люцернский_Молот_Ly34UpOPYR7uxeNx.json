@@ -40,7 +40,8 @@
         "damage": "1d10-2",
         "damageType": "impact",
         "penetration": 0,
-        "weaponProps": []
+        "weaponProps": [],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -53,6 +54,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 207)",
     "availability": -2,
     "weight": 3,
     "attackBonus": 0,
@@ -98,7 +100,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Молот"
+    "meleeCategory": "Молот",
+    "damageSubtype": "crushing"
   },
   "_id": "Ly34UpOPYR7uxeNx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-spear.svg",

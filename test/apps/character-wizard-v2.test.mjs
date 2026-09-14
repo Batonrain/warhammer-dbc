@@ -131,36 +131,32 @@ describe("_prepareContext", () => {
   });
 });
 
-describe("_onRender: разводка кнопок шага", () => {
-  it("data-wiz-action=wizBack откатывает шаг назад, пока не идёт применение Архетипа", () => {
-    const app = appLike({ id: "a1" },
-      { "[data-wiz-action='wizBack']": [{ dataset: {} }] });
-    app.stepIndex = 2;
+// wdbc-ye6 (пункт 4): раньше эти три кнопки жили на отдельном атрибуте
+// data-wiz-action со своей ручной делегацией в _onRender — сейчас, как и все
+// остальные v2-окна проекта (см. horde-v2.test.mjs), они объявлены через
+// data-action + DEFAULT_OPTIONS.actions, и вызываются напрямую как action-
+// функции с `this` = приложение.
+describe("DEFAULT_OPTIONS.actions: кнопки шага", () => {
+  const actions = CharacterWizard.DEFAULT_OPTIONS.actions;
+
+  it("wizBack откатывает шаг назад, пока не идёт применение Архетипа", () => {
     const calls = [];
-    app._goStep = i => calls.push(i);
-    CharacterWizard.prototype._onRender.call(app, {}, {});
-    app.element.handlers["[data-wiz-action='wizBack']:click"]();
+    const app = { stepIndex: 2, _confirmingArchetype: false, _goStep: i => calls.push(i) };
+    actions.wizBack.call(app);
     expect(calls).toEqual([1]);
   });
 
-  it("data-wiz-action=wizBack не срабатывает во время применения Архетипа", () => {
-    const app = appLike({ id: "a1" },
-      { "[data-wiz-action='wizBack']": [{ dataset: {} }] });
-    app._confirmingArchetype = true;
+  it("wizBack не срабатывает во время применения Архетипа", () => {
     const calls = [];
-    app._goStep = i => calls.push(i);
-    CharacterWizard.prototype._onRender.call(app, {}, {});
-    app.element.handlers["[data-wiz-action='wizBack']:click"]();
+    const app = { stepIndex: 2, _confirmingArchetype: true, _goStep: i => calls.push(i) };
+    actions.wizBack.call(app);
     expect(calls).toEqual([]);
   });
 
-  it("data-wiz-action=wizNext зовёт _onNext", () => {
-    const app = appLike({ id: "a1" },
-      { "[data-wiz-action='wizNext']": [{ dataset: {} }] });
+  it("wizNext зовёт _onNext", () => {
     const calls = [];
-    app._onNext = () => calls.push("next");
-    CharacterWizard.prototype._onRender.call(app, {}, {});
-    app.element.handlers["[data-wiz-action='wizNext']:click"]();
+    const app = { _onNext: () => calls.push("next") };
+    actions.wizNext.call(app);
     expect(calls).toEqual(["next"]);
   });
 });

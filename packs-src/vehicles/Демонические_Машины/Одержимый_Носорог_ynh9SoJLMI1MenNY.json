@@ -118,7 +118,7 @@
   },
   "items": [
     {
-      "name": "Демоническая Одержимость / Daemonic Possession",
+      "name": "Daemonic Possession / Демоническая Одержимость",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -177,7 +177,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.gFhLvyE6HANmQkMT"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -236,7 +236,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.zTBEh0Puo9DmagE7"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -310,7 +310,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.5guPvUDvcBDy1QVR"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -369,7 +369,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.OjKbboFdIBqYjJxE"
     },
     {
-      "name": "Легион / Legion",
+      "name": "Legion / Легион",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -428,7 +428,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.M5vuA4eoGAZZCq1o"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -487,7 +487,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.Css07u98VneRzDkf"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -546,7 +546,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.NbQNaJEJUIpqbP0U"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -620,7 +620,7 @@
       "_key": "!actors.items!ynh9SoJLMI1MenNY.mQSGbsSjNZeCxNPG"
     },
     {
-      "name": "Боковые Двери / Side Hatches",
+      "name": "Side Hatches / Боковые Двери",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

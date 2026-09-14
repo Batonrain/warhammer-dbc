@@ -54,11 +54,28 @@ export function squadsCommandedBy(commanderActor, allActors) {
   return (allActors ?? []).filter(a => a?.type === "squad" && a.system?.posts?.commander?.uuid === uuid);
 }
 
+/**
+ * Индекс uuid→актор (wdbc-shr, находка 1): subordinatesOf раньше искал
+ * каждого подчинённого через allActors.find(...) — линейный проход по ВСЕМ
+ * акторам мира НА КАЖДОГО члена КАЖДОГО Отряда. adjutantRerollRules зовётся
+ * как источник правил на каждый resolveTest (каждый бросок), а значит и
+ * этот проход — тоже: с крупным ростером (десятки акторов × Отряды на
+ * несколько персонажей) стоимость одного броска росла квадратично от
+ * размера мира. Map строится один раз за вызов и даёт O(1) поиск вместо
+ * повторного O(N) — ранний выход (uuid не найден → пропуск) остаётся тем же.
+ */
+function actorIndex(allActors) {
+  const map = new Map();
+  for (const a of allActors ?? []) if (a?.uuid) map.set(a.uuid, a);
+  return map;
+}
+
 /** Все подчинённые (любой пост/членство) во ВСЕХ Отрядах commanderActor, кроме него самого. */
 export function subordinatesOf(commanderActor, allActors) {
   const myUuid = commanderActor?.uuid;
   const out = [];
   const seen = new Set();
+  const index = actorIndex(allActors);
   for (const squad of squadsCommandedBy(commanderActor, allActors)) {
     const uuids = [
       squad.system?.posts?.leader?.uuid, squad.system?.posts?.coordinator?.uuid,
@@ -67,7 +84,7 @@ export function subordinatesOf(commanderActor, allActors) {
     for (const uuid of uuids) {
       if (uuid === myUuid || seen.has(uuid)) continue;
       seen.add(uuid);
-      const actor = (allActors ?? []).find(a => a.uuid === uuid);
+      const actor = index.get(uuid);
       if (actor) out.push(actor);
     }
   }

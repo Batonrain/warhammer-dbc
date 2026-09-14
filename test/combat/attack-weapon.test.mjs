@@ -13,19 +13,27 @@ describe("effectiveDamage", () => {
   const sys = { damage: "1d10+5", damageType: "X", penetration: 4 };
 
   it("без профиля берёт урон оружия", () => {
-    expect(effectiveDamage({ sys })).toEqual({ damage: "1d10+5", damageType: "X", penetration: 4 });
+    expect(effectiveDamage({ sys })).toEqual({ damage: "1d10+5", damageType: "X", damageSubtype: "", penetration: 4 });
   });
 
   it("профиль переопределяет урон, тип и Пробитие", () => {
     const profile = { damage: "1d10+9", damageType: "R", penetration: 7 };
-    expect(effectiveDamage({ sys, profile })).toEqual({ damage: "1d10+9", damageType: "R", penetration: 7 });
+    expect(effectiveDamage({ sys, profile })).toEqual({ damage: "1d10+9", damageType: "R", damageSubtype: "", penetration: 7 });
   });
 
   it("профиль без своего урона оставляет урон оружия, но Пробитие берёт своё", () => {
     // Профиль без penetration — это Пробитие 0, а не «как у оружия»:
     // так записаны профили-захваты в книге.
     expect(effectiveDamage({ sys, profile: { label: "Захват" } }))
-      .toEqual({ damage: "1d10+5", damageType: "X", penetration: 0 });
+      .toEqual({ damage: "1d10+5", damageType: "X", damageSubtype: "", penetration: 0 });
+  });
+
+  it("подвид урона (wdbc-q0q8): профиль переопределяет, если у оружия/профиля он указан", () => {
+    const sysWithSub = { ...sys, damageSubtype: "crushing" };
+    expect(effectiveDamage({ sys: sysWithSub }).damageSubtype).toBe("crushing");
+    expect(effectiveDamage({ sys: sysWithSub, profile: { damageSubtype: "fragmentation" } }).damageSubtype).toBe("fragmentation");
+    // Профиль без своего подвида — падает назад на подвид оружия, не сбрасывает в "".
+    expect(effectiveDamage({ sys: sysWithSub, profile: { label: "Захват" } }).damageSubtype).toBe("crushing");
   });
 
   it("плоский мод хвата приписывается к формуле урона", () => {

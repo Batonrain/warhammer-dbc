@@ -37,6 +37,18 @@ describe("disciplineDescByFolderName", () => {
     expect(disciplineDescByFolderName(null)).toBe("");
     expect(disciplineDescByFolderName(undefined)).toBe("");
   });
+
+  // wdbc-1nb: у аэльдарских дисциплин label стоит в родительном падеже
+  // («Провидца»), а папка пака названа именительным («ПРОВИДЕЦ») — раньше
+  // сравнение по label било мимо для этих 5 папок (ВАРЛОКА и РУНЫ СУДЬБЫ И
+  // БИТВЫ совпадали и без этого, т.к. их label уже в именительном).
+  it("папка Аэльдари в именительном падеже против label в родительном", () => {
+    expect(disciplineDescByFolderName("ПРОВИДЕЦ")).toContain("Провидцы Эльдар");
+    expect(disciplineDescByFolderName("ПРОВИДЕЦ ДУХОВ")).toContain("Духовидцы");
+    expect(disciplineDescByFolderName("ПУСТОТНЫЙ МЕЧТАТЕЛЬ")).toContain("Корсаров");
+    expect(disciplineDescByFolderName("РЕВЕНАНТ")).toContain("Иннеада");
+    expect(disciplineDescByFolderName("МИРОВОЙ ПЕВЕЦ")).toContain("Иши и Курноуса");
+  });
 });
 
 describe("renderNodeHtml: тултип дисциплины на заголовке папки", () => {

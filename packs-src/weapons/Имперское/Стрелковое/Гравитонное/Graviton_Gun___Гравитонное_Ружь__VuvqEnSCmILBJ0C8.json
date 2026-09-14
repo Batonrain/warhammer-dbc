@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 171-186)",
     "availability": 3,
     "weight": 8,
     "attackBonus": 0,
@@ -78,7 +79,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "crushing"
   },
   "_id": "VuvqEnSCmILBJ0C8",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-basic.svg",

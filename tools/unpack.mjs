@@ -17,6 +17,14 @@
 //  (wdbc-bncx: словесное предупреждение в dbc-workflow уже не сработало
 //  один раз, и требовать от каждого вызова помнить об этом руками — не план).
 //
+//  --force и --force-drift — два РАЗНЫХ согласия, не одно (wdbc-aje). --force
+//  отвечает только за сторож выше: «снеси мою незакоммиченную правку».
+//  --force-drift отвечает за отдельный сторож ниже (обратный рассинхрон,
+//  wdbc-uozs): «сотри закоммиченные документы/главы книг, которых нет в
+//  базе». До разделения один --force обслуживал оба — разработчик,
+//  согласившийся снести свою мелкую правку, неожиданно давал согласие и на
+//  стирание чужого закоммиченного контента, о котором не думал вовсе.
+//
 //  --pack=имя1,имя2 — снять только перечисленные паки (имена как в
 //  system.json), не все LIBRARY_PACKS/JOURNAL_PACKS разом. Сторож дирти тоже
 //  сужается до исходников этих паков: дрейф в одном паке больше не требует
@@ -32,10 +40,11 @@ import { join } from "node:path";
 import { NAME_LIMIT, safe } from "./pack-file-name.mjs";
 import { JOURNAL_PACKS, LIBRARY_PACKS, ROOT, SRC_ROOT, abs, isPacksBusy, reportBusy } from "./packs.mjs";
 import { bookSource } from "./book-source.mjs";
+import { bookDocIds } from "./book-docs.mjs";
 import { writeStamp } from "./pack-stamp.mjs";
 import { allFingerprints } from "./pack-fingerprint.mjs";
 import { uncommittedPacksSrc } from "./git-status.mjs";
-import { docIdsIn, docsMissingInDb } from "./pack-drift.mjs";
+import { docIdsIn, docsMissingInDb, shouldStopOnDrift } from "./pack-drift.mjs";
 
 // ── --pack=имя1,имя2: сузить набор паков ──
 const packArg = process.argv.find((a) => a.startsWith("--pack="));
@@ -56,6 +65,10 @@ if (packFilter) {
 
 // ── Сторож несохранённых правок packs-src ──
 const FORCE = process.argv.includes("--force");
+// ── Сторож ОБРАТНОГО рассинхрона (см. блок комментариев выше) — своё,
+// отдельное от FORCE согласие: снести закоммиченные документы/главы книг,
+// которых нет в базе (wdbc-aje).
+const FORCE_DRIFT = process.argv.includes("--force-drift");
 const guardRoots = packFilter
   ? [...libraryPacks.map((p) => p.src), ...journalPacks.map((b) => `${SRC_ROOT}/books/${b.slug}.json`)]
   : [SRC_ROOT];
@@ -127,7 +140,7 @@ try {
 
     const srcIds = docIdsIn(abs(p.src));
     const lost = docsMissingInDb(srcIds.keys(), docIdsIn(stage).keys());
-    if (lost.length && !FORCE) {
+    if (shouldStopOnDrift(lost.length, FORCE_DRIFT)) {
       behind.push({ pack: p.name, files: lost.map(id => srcIds.get(id)) });
       continue;
     }
@@ -150,13 +163,14 @@ if (behind.length) {
   }
   console.error("");
   console.error("Похоже, packs-src правили и не собирали. Соберите базу: npm run packs:build");
-  console.error("Если эти документы не нужны — снимите поверх них: npm run packs:unpack -- --force");
+  console.error("Если эти документы не нужны — снимите поверх них: npm run packs:unpack -- --force-drift");
   process.exit(1);
 }
 
 // Книги извлекаются во временную папку по документу на файл, а в исходник
 // пишутся одним файлом на книгу: так их читает импорт в мире.
 const tmp = mkdtempSync(join(tmpdir(), "dbc-unpack-"));
+const bookBehind = [];
 try {
   for (const b of journalPacks) {
     if (!hasDb(b)) continue;
@@ -166,7 +180,25 @@ try {
       .filter(f => f.endsWith(".json"))
       .map(f => JSON.parse(readFileSync(join(stage, f), "utf8")));
     const file = abs(`${SRC_ROOT}/books/${b.slug}.json`);
-    const source = bookSource(JSON.parse(readFileSync(file, "utf8")), docs);
+    const existing = JSON.parse(readFileSync(file, "utf8"));
+
+    // Тот же сторож обратного рассинхрона, что и у библиотек чуть выше
+    // (wdbc-uozs, теперь и wdbc-aje): bookSource строит книгу ЦЕЛИКОМ из
+    // того, что нашлось в базе — глава или раздел, дописанные в исходник, но
+    // ещё не собранные (npm run packs:build не гоняли), молча исчезли бы.
+    const oldIds = bookDocIds(b, existing);
+    const dbIds = new Map();
+    for (const doc of docs) {
+      dbIds.set(String(doc._id), doc.name);
+      for (const page of doc.pages ?? []) dbIds.set(String(page._id), `${doc.name} → ${page.name}`);
+    }
+    const lost = docsMissingInDb(oldIds.keys(), dbIds.keys());
+    if (shouldStopOnDrift(lost.length, FORCE_DRIFT)) {
+      bookBehind.push({ book: b.slug, items: lost.map(id => oldIds.get(id)) });
+      continue;
+    }
+
+    const source = bookSource(existing, docs);
     // Перевод строки в конце — как у extractPack (CLI пишет `JSON.stringify(...) + "\n"`,
     // lib/package.mjs). Без него круговорот сборка → извлечение показывал правку в каждой
     // книге, а тест ниже сверяет исходники именно с тем, что пишут инструменты.
@@ -177,6 +209,19 @@ try {
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
+}
+
+if (bookBehind.length) {
+  console.error("Исходники книг ОБГОНЯЮТ базу — извлечение стёрло бы главы/разделы, которых там ещё нет:");
+  for (const { book, items } of bookBehind) {
+    console.error(`  ${book}: ${items.length} шт. только в packs-src`);
+    for (const name of items.slice(0, 5)) console.error(`    ${name}`);
+    if (items.length > 5) console.error(`    …и ещё ${items.length - 5}`);
+  }
+  console.error("");
+  console.error("Похоже, книгу правили и не собирали. Соберите базу: npm run packs:build");
+  console.error("Если эти главы/разделы не нужны — снимите поверх них: npm run packs:unpack -- --force-drift");
+  process.exit(1);
 }
 
 // Правки сняты в исходники — базы и packs-src снова сведены. Сборка сверяется

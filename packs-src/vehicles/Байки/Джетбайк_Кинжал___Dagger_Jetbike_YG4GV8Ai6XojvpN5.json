@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Парящий (X) / Hoverer (X)",
+      "name": "Hoverer (X) / Парящий (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

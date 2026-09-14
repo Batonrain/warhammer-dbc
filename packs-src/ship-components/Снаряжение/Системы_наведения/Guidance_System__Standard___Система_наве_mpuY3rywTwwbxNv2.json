@@ -11,7 +11,8 @@
     "rarity": 0,
     "baseRarity": "",
     "description": "TR 20. Идёт в комплекте с боеголовкой; не меняет правила залпа.",
-    "notes": ""
+    "notes": "",
+    "bookSource": "DoomBC — Книга Пустоты, «Грузы», стр. 291"
   },
   "_id": "mpuY3rywTwwbxNv2",
   "effects": [],

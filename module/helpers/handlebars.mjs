@@ -51,9 +51,6 @@ export function registerHandlebarsHelpers() {
   Handlebars.registerHelper("gte", function(a, b) {
     return a >= b;
   });
-  Handlebars.registerHelper("lte", function(a, b) {
-    return a <= b;
-  });
   Handlebars.registerHelper("multiply", function(a, b) {
     return (parseFloat(a) || 0) * (parseFloat(b) || 0);
   });

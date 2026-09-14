@@ -140,6 +140,17 @@ export function packsChangedSince(stamp, packs = [], toleranceMs = 1000) {
   return packs
     .filter(p => (p.mtimeMs || 0) > when + toleranceMs)
     .filter(p => {
+      // wdbc-2gn (находка 7): на практике этот `if` сейчас достижим только
+      // когда вызывающий (tools/pack.mjs) уже прошёл свою собственную проверку
+      // версии отпечатка с флагом --force — старый числовой `stamp` даёт
+      // stampVersion=1, и без --force несовпадение с текущим FINGERPRINT_VERSION
+      // (сейчас 3) останавливает сборку раньше, до этой функции. Внутри
+      // --force результат ниже по стеку не читается (тот же --force гасит и
+      // проверку edited.length в pack.mjs) — так что «верим дате» здесь не
+      // мёртвый код в смысле unreachable, а код без наблюдаемого следствия.
+      // Не удаляю: останется живым и полезным, если контракт --force
+      // когда-нибудь изменится (например, --force перестанет глушить итог
+      // packsChangedSince) — тогда эта ветка должна остаться прежней.
       if (!known) return true;                 // старый формат — верим дате
       const was = known[p.name];
       if (!was || !p.fingerprint) return true; // сравнивать не с чем

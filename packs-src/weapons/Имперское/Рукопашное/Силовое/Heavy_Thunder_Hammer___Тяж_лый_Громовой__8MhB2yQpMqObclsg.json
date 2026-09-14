@@ -29,7 +29,8 @@
             "rating": 0,
             "rating2": 0
           }
-        ]
+        ],
+        "damageSubtype": "crushing"
       }
     ],
     "reload": "–",
@@ -42,6 +43,7 @@
     "damageType": "energy",
     "penetration": 8,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 211)",
     "availability": 5,
     "weight": 5,
     "attackBonus": 0,

@@ -1,0 +1,126 @@
+{
+  "name": "Ceramite / Керамит",
+  "type": "armorMod",
+  "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+  "folder": "3S2DLJENpK7spDrg",
+  "system": {
+    "description": "+3 AP против E(Fl) и иммунитет к свойствам Deflagrate и Melta.",
+    "notes": "Механизировано (wdbc-q0q8): +3 AP против E(Fl) (system.absorption.vsSubtype.flame) — было ошибочно на весь vsType.energy (задевало и лазер, и электричество). Эффект был выключен (disabled:true) — включён. Механизировано (wdbc-nquc): иммунитет к свойствам оружия Deflagrate/Melta — capability weaponPropertyImmunity.deflagrate/.melta, гасят доп. кубик Выгорания и удвоение Пробития Мельты в упор (module/combat/attack.mjs), не сам урон/подвид урона.",
+    "category": "armor",
+    "modGroup": "reinforcement",
+    "requirement": "Жёсткая броня. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
+    "installedOn": "",
+    "weight": 2,
+    "availability": 1,
+    "quality": "common",
+    "activatable": false,
+    "active": false,
+    "effects": {
+      "apAll": 0,
+      "apHead": 0,
+      "apBody": 0,
+      "apArms": 0,
+      "apLegs": 0,
+      "apVsEnergy": 0,
+      "apVsImpact": 0,
+      "apVsRending": 0,
+      "apVsBlast": 0,
+      "maxAgilityMod": 0,
+      "addProps": [],
+      "charBonuses": []
+    },
+    "drukhari": false,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Броня», стр. 231)"
+  },
+  "_id": "d13eDPB3xskVF5sW",
+  "effects": [
+    {
+      "name": "Керамит (перенесено)",
+      "system": {
+        "changes": [
+          {
+            "key": "system.absorption.vsSubtype.flame",
+            "type": "add",
+            "value": 3,
+            "phase": "final",
+            "priority": 0
+          }
+        ]
+      },
+      "_id": "C5nOxxkNc1UoF0yF",
+      "img": "systems/warhammer-dbc/assets/item-icons/armormod.svg",
+      "type": "base",
+      "disabled": false,
+      "start": null,
+      "duration": {
+        "value": null,
+        "units": "seconds",
+        "expiry": null,
+        "expired": false
+      },
+      "description": "",
+      "origin": null,
+      "tint": "#ffffff",
+      "transfer": true,
+      "statuses": [],
+      "showIcon": 1,
+      "folder": null,
+      "sort": 0,
+      "flags": {},
+      "_stats": {
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null,
+        "coreVersion": "14.365",
+        "systemId": "warhammer-dbc",
+        "systemVersion": "0.1.0",
+        "createdTime": 1782157649068,
+        "modifiedTime": 1786122045334,
+        "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+      },
+      "_key": "!items.effects!d13eDPB3xskVF5sW.C5nOxxkNc1UoF0yF"
+    }
+  ],
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "TcTwVVgsrGiUR4X7": 3
+  },
+  "flags": {
+    "warhammer-dbc": {
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "g1",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "e1",
+              "kind": "capability",
+              "capabilityKey": "weaponPropertyImmunity.deflagrate",
+              "label": "Керамит: иммунитет к свойству оружия Deflagrate"
+            },
+            {
+              "id": "e2",
+              "kind": "capability",
+              "capabilityKey": "weaponPropertyImmunity.melta",
+              "label": "Керамит: иммунитет к свойству оружия Melta"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "_stats": {
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null,
+    "coreVersion": "14.365",
+    "systemId": "warhammer-dbc",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782157649068,
+    "modifiedTime": 1786122045334,
+    "lastModifiedBy": "4Q6l1C4FQOMQVofr"
+  },
+  "_key": "!items!d13eDPB3xskVF5sW"
+}

@@ -7,6 +7,7 @@
     "notes": "Не смоделировано целиком: изменение правил дублей для Феноменов и условный порог W−30 — специфика психической механики (wdbc-jw81), не testMod.",
     "quantity": 1,
     "weight": 0,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Инструменты», стр. 260)",
     "availability": 4,
     "quality": "common",
     "toolCategory": "stationary",

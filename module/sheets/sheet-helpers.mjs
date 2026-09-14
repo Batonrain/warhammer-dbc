@@ -15,7 +15,8 @@ import { shieldCoverageLabel }                        from "../combat/hand-shiel
 import { getLegion, getChapter, buildChapterOptions,
          buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
-import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
+import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
+import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet } from "../constants/advancement.mjs";
@@ -46,6 +47,7 @@ import { isMirroredCondition, isMirrorClearable, mirrorHint } from "../rules/con
 import { aptBindingContext, entryAptitudeOverride } from "../rules/aptitude-binding.mjs";
 import { skillAdvanceCat, advanceCatSource } from "../rules/advance-category.mjs";
 import { missingMarkForPower } from "./tabs/psychic.mjs";
+import { hasRuneMagic, runeLearnInfo } from "../rules/sigillite-runes.mjs";
 import { buildBodyState, buildEcg, buildImplantsSvg, buildBodyLayers,
          implantCatColor }                          from "../constants/body-map.mjs";
 import { VITALS, VITAL_MAX_STAGE, VITAL_TIME_FIELD, vitalEffectiveStage } from "../constants/vitals.mjs";
@@ -63,6 +65,7 @@ import { capabilityCostLabel, capabilityCostGate }   from "../combat/capability-
 import { scriptAbilityRow }                          from "../apps/mechanics.mjs";
 import { parseRangeMeters, rangeVerdict }            from "../rules/psy-range.mjs";
 import { measureTokens }                             from "../combat/tactical-map.mjs";
+import { mechFormulaTotalSafe }                      from "../rules/mech-formula.mjs";
 
 // Определение всех Состояний листа — реестр constants/conditions.mjs
 // (wdbc-w88h): label/desc/иконка/счётчик собраны там, здесь только реэкспорт
@@ -1114,6 +1117,17 @@ export function buildGetData(actor) {
   const _psyTargetToken   = [...(game.user?.targets ?? [])][0] ?? null;
   const _psyMeasured = (_psyAttackerToken && _psyTargetToken)
     ? measureTokens(_psyAttackerToken, _psyTargetToken) : null;
+  // wdbc-exjp: колонка «Руна» в таблице Психосил целиком под этим гейтом —
+  // без Черты «Магия Сигиллитов» ни колонки, ни кнопки «Изучить» никто не
+  // видит, тот же приём, что и у самого runeBlock окна манифестации
+  // (tabs/psychic.mjs). Сам флаг context.hasSigilliteRunes на актор-листе
+  // выставляет character-context.mjs (уже существовал до этого тикета — им
+  // же кормится ячейка «Руны» в шапке, wdbc-fsl9); здесь читаем ту же
+  // возможность напрямую, а не полагаемся на порядок Object.assign в
+  // actor-sheet.mjs, потому что buildGetData может быть вызван и без
+  // characterContext (см. test/sheets/psychic-sigillite-runes.test.mjs).
+  const _sigilliteRunes = hasRuneMagic(actor);
+  const _psyFocus = effectiveFocusDisciplines(actor);
   context.psyPowers = allItems.filter(i => i.type === "psychicPower").map(i => {
     const s = i.system;
     // Порог считаем только для тестов по характеристике (не Порча/Псинаука-навык).
@@ -1136,6 +1150,7 @@ export function buildGetData(actor) {
       missingMark:  missingMarkForPower(actor, i)?.label ?? "",
       cost:         s.cost ?? 0,
       disciplineLabel: PSY_DISCIPLINES[s.discipline]?.label ?? "",
+      hasFocus:     _psyFocus.includes(s.discipline),
       subtype:      s.subtype || "",
       actionLabel:  PSY_ACTIONS[s.action] ?? s.action ?? "",
       range:        s.range || "—",
@@ -1150,8 +1165,21 @@ export function buildGetData(actor) {
       sustainActionLabel: PSY_ACTIONS[s.sustainAction] ?? s.sustainAction ?? "Свободное",
       damage:       s.damage || "",
       damageType:   DAMAGE_TYPES[s.damageType] ?? s.damageType ?? "",
-      penetration:  s.penetration ?? 0,
-      effect:       s.effect || s.description || ""
+      // wdbc-5kd: penetration теперь формула строкой («PR», «PR*3»…), как и
+      // damage — но, в отличие от damage (дайсы, единого числа нет), Пробитие
+      // без дайсов и его можно сразу посчитать для превью тем же тПР, что и
+      // порог психотеста чуть выше. Считаем НАПЕРЁД в число: «Пб {{penetration}}»
+      // в шаблоне (tab-combat.hbs) — {{#if}}, а строка "0" (в отличие от числа 0)
+      // для Handlebars ИСТИННА и без этого показывала бы «(Пб 0)» у всех сил.
+      penetration:  mechFormulaTotalSafe(String(s.penetration ?? "0").replace(/\bPR\b/gi, _psyTpr)),
+      effect:       s.effect || s.description || "",
+      // wdbc-exjp: «Изучить Руну» — только у Сигиллита и только пока не
+      // изучена. runeForbidden — Божественная психосила/Либрариум без
+      // Prometheus Fire: книга прямо запрещает, кнопка не появляется вовсе
+      // (жёсткий гейт книги, не вопрос ГМу, как нехватка опыта/бPR ниже).
+      runeLearned:    _sigilliteRunes ? !!s.runeLearned : false,
+      runeForbidden:  (_sigilliteRunes && !s.runeLearned) ? !runeLearnInfo(actor, i).allowed : false,
+      runeLearnCost:  (_sigilliteRunes && !s.runeLearned) ? runeLearnInfo(actor, i).cost : 0
     };
   });
 
@@ -1241,6 +1269,29 @@ export function buildGetData(actor) {
                      (_, i) => ({ charged: (i + 1) <= psyTPR })),
     overload:      psyTPR < 0
   };
+
+  // ── Фокус Дисциплины (wdbc-l6zg) ──────────────────────────────────────────
+  // "own" — выбор игрока (снимаемый чипами ниже), "granted" — дарован
+  // способностью (Perfect Sorcerer и т.п.), чип для него показан, но
+  // заблокирован — снять можно только сняв саму способность.
+  {
+    const own = ownFocusDisciplines(actor);
+    const granted = grantedFocusDisciplines(actor);
+    // Пикер предлагает только группы, которыми психайкер реально «рождается»
+    // (core.json стр.293: «одной из пяти фундаментальных... или изредка
+    // одной из редких») — Регулярные и Аэльдари/Божественные дисциплины
+    // Фокуса при обычном выборе не имеют (canHaveFocusDiscipline).
+    const pickerGroups = ["Фундаментальные", "Редкие"];
+    const chips = Object.entries(PSY_DISCIPLINES)
+      .filter(([key, d]) => granted.includes(key) || (pickerGroups.includes(d.group) && canHaveFocusDiscipline(key)))
+      .map(([key, d]) => ({
+        key, label: d.label,
+        active: own.includes(key) || granted.includes(key),
+        forced: granted.includes(key) && !own.includes(key)
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+    context.psyFocus = { chips, hasAny: chips.some(c => c.active) };
+  }
 
   context.abilityTechPowers = allItems.filter(i => i.type === "techPower").map(i => ({
     id:   i.id,

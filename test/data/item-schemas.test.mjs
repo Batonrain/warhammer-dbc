@@ -119,7 +119,8 @@ const TYPES = {
       shield: {
         enabled: false, shieldNature: "technological", shieldType: "deflector",
         ratingMin: 1, ratingMax: 10, overloadThreshold: 0, isSpecialRating: false,
-        currentRating: 0, equipped: false, status: "inactive"
+        currentRating: 0, equipped: false, status: "inactive",
+        wingPosition: "", wingRatingFolded: 0, wingRatingWrapped: 0
       },
       // Свойства встроенного оружия импланта — правятся на листе предмета
       // (item-sheet.mjs), а в template.json объявлены не были.
@@ -288,7 +289,8 @@ const TYPES = {
       activeEffect: {
         isActive: false, isAfterEffect: false, appliedAt: null, expiresAt: null,
         roundsRemaining: 0, charDamageStat: "", charDamageAmount: 0
-      }
+      },
+      bookSource: ""
     }
   },
 
@@ -304,11 +306,8 @@ const TYPES = {
       hasRating: false, rating: 0, targets: [],
       // Ручная цена (вкладка «Развитие», wdbc-cct) — тоже позже template.json.
       costManual: false,
-      // weaponBuff (wdbc-g53k) — та же форма, что у psychic-power.mjs; читает
-      // module/combat/weapon-mods.mjs::getModEffects, без гейта isSustained.
       effects: {
-        initMod: 0, fearRating: 0, speedMod: 0,
-        weaponBuff: { enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, addProps: [] }
+        initMod: 0, fearRating: 0, speedMod: 0
       }
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
@@ -348,7 +347,7 @@ const TYPES = {
     defaults: {
       diseaseType: "warp", severity: "", god: "nurgle", contagion: "",
       incubation: "", symptoms: "", vectors: "", cure: "", active: false,
-      description: "", notes: ""
+      description: "", notes: "", bookSource: ""
     }
   },
   mentalDisorder: {
@@ -365,7 +364,7 @@ const TYPES = {
       corEffects: [], weaponClass: "melee", weaponType: "laser", itemSize: "", range: 0,
       balance: 0, grips: "", profileLabel: "", meleeCategory: "", profiles: [], reload: "1",
       magazineCur: 0, magazineMax: 0, rof_single: 0, rof_semi: 0, rof_full: 0,
-      damage: "", damageType: "impact", penetration: 0, quality: "common",
+      damage: "", damageType: "impact", damageSubtype: "", penetration: 0, quality: "common",
       // Строка «Книга» одна на предмет и его модификацию: лист оружия рисует
       // и weapon, и weaponMod (wdbc-eu1d).
       bookSource: "",
@@ -404,12 +403,12 @@ const TYPES = {
     defaults: {
       description: "", notes: "", weaponTypes: [], ammoCategory: "bullets",
       rarity: 0, quantity: 0, weight: 0, availability: 0, attackMod: 0,
-      damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", penetrationMod: 0,
+      damageMod: 0, damageDiceMod: 0, damageTypeOverride: "", damageSubtypeOverride: "", penetrationMod: 0,
       rangeMod: 0, rangeMultiplier: 1, special: "", properties: [], condMods: [],
       // Свойства, которые боеприпас у оружия отнимает (Инферно Тзинча — Tearing):
       // поля не было, и замена держалась на одном тексте «Особенностей».
       removeProps: [],
-      drukhari: false
+      drukhari: false, bookSource: ""
     }
   },
   armor: {
@@ -450,18 +449,26 @@ const TYPES = {
       requirement: "",
       testChar: "wp", testMod: 0, action: "half", range: "",
       sustainable: false, sustainCost: 1, sustainAction: "free",
-      damage: "", damageType: "energy", penetration: 0, weaponProps: [],
+      // wdbc-5kd: penetration — формула строкой (как damage), не число:
+      // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
+      damage: "", damageType: "energy", penetration: "0", weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
-      effect: "", isSustained: false, sustainedDegree: null,
+      effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",
+      hasWeaponShop: false,
+      // wdbc-exjp: Руна Сигиллитов — привязана к ЭТОЙ психосиле, не к актору
+      // (module/rules/sigillite-runes.mjs). У всех, кто не Сигиллит, лежит
+      // как есть и никем не читается.
+      runeLearned: false, runeLearnCost: 0,
       effects: {
         charBonusStat: "", charBonusValue: 0, charBonuses: [],
         armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
         weaponBuff: {
           enabled: false, scope: "equipped",
-          damageMod: 0, penMod: 0, rangeMod: 0, addProps: []
+          damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
         }
-      }
+      },
+      bookSource: ""
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
@@ -474,7 +481,8 @@ const TYPES = {
       testSkill: "techUse", testMod: 0, action: "full", sustained: false,
       compiled: false, range: "", damage: "", damageType: "energy",
       penetration: 0, weaponProps: [], effect: "",
-      effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] }
+      effects: { charBonusStat: "", charBonusValue: 0, charBonuses: [] },
+      bookSource: ""
     },
     migratedAway: ["effects.charBonusStat", "effects.charBonusValue"]
   },
@@ -495,7 +503,7 @@ const TYPES = {
     defaults: {
       kind: "supplemental", power: 0, space: 0, sp: 0, rarity: 0,
       quality: "common", qualityPicks: [], qualityCustom: false,
-      hulls: "", aspects: "", description: "", notes: "",
+      hulls: "", aspects: "", bookSource: "", description: "", notes: "",
       essential: false, external: false, damaged: false, status: "intact",
       lcBonus: 0, pcBonus: 0, modChar: "", modValue: 0, shipProps: [],
       hull:  { spaceMax: 0, powerGen: 0, turnArc: "90°", weaponCapacity: "", hullIntegrity: 0 },
@@ -509,7 +517,7 @@ const TYPES = {
     pack: "ship-components",
     defaults: {
       hullClass: "", sp: 0, rarity: 0, quality: "common", qualityPicks: [], qualityCustom: false,
-      aspects: "", description: "", notes: "", shipProps: [],
+      aspects: "", bookSource: "", description: "", notes: "", shipProps: [],
       hull:  { spaceMax: 0, powerGen: 0, turnArc: "90°", weaponCapacity: "", hullIntegrity: 0 },
       chars: { speed: 0, manoeuvrability: 0, detection: 0, voidShields: 0, armour: 0, turretRating: 0 }
     }
@@ -520,7 +528,7 @@ const TYPES = {
       cargoType: "minerals", lc: 1, quantity: 1, quality: "common", rarity: 0,
       baseRarity: "", shipSupply: false, rarityManual: false, xenos: false,
       astartes: false, inHold: false, price: 0, origin: "", consignee: "",
-      description: "",
+      bookSource: "", description: "",
       // В template.json объявлено не было, но лежит у четырёх грузов пака.
       notes: ""
     }
@@ -580,7 +588,8 @@ const TYPES = {
         onslaught: false, multiTargeter: false, advancedTargeting: false, advancedControls: false,
         sideHatches: false, assaultRamp: false, enclosed: false, sealed: false,
         daemonicAbsorb: false
-      }
+      },
+      bookSource: ""
     }
   },
   smallCraft: {
@@ -588,7 +597,8 @@ const TYPES = {
     defaults: {
       description: "", notes: "", craftKind: "fighter", faction: "", cr: 0,
       crAlt: 0, spd: 0, squadronSize: 0, props: "", rarity: 0, qty: 1,
-      state: "stored", strength: "full", turnsOut: 0, role: "independent"
+      state: "stored", strength: "full", turnsOut: 0, role: "independent",
+      bookSource: ""
     }
   },
 
@@ -598,7 +608,10 @@ const TYPES = {
       description: "", notes: "", shieldNature: "technological", shieldType: "dome",
       ratingMin: 1, ratingMax: 35, overloadThreshold: 10, currentRating: 0,
       isSpecialRating: false, equipped: false, status: "inactive",
-      quality: "common", availability: 2, weight: 0, drukhari: false
+      quality: "common", availability: 2, weight: 0, drukhari: false,
+      coverVsSubtype: "", coverVsSubtypeAP: 0,
+      overloadDamageFormula: "", overloadFatigueFormula: "", overloadRepairTest: "",
+      bookSource: ""
     }
   },
 
@@ -679,7 +692,14 @@ describe("типы данных предметов", () => {
           const after = new Map(leaves(new Model(doc.system).toObject()));
           for (const [key, value] of leaves(doc.system)) {
             if (isEmpty(value) || migratedAway.includes(key)) continue;
-            if (after.get(key) !== value) lost.push(`${file}: ${key} = ${JSON.stringify(value)}`);
+            const got = after.get(key);
+            // Число, ставшее StringField-полем (wdbc-5kd: penetration — теперь
+            // формула строкой, как damage), Foundry сам приводит к строке того
+            // же числа при чистке — это не потеря, а ожидаемое поведение поля.
+            // Допуск однонаправленный: обратное (строка вместо числа) как было
+            // потерей, так и остаётся.
+            const coerced = typeof value === "number" && got === String(value);
+            if (got !== value && !coerced) lost.push(`${file}: ${key} = ${JSON.stringify(value)}`);
           }
         }
         expect(lost).toEqual([]);

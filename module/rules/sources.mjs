@@ -23,13 +23,15 @@ import { rulesFromItemMechanics, opposedTargetRerollRules } from "./item-rules.m
 import { isItemActive } from "../apps/effects.mjs";
 import { isDreadnoughtPilot, DREADNOUGHT_PILOT_FLAG,
          SARCOPHAGUS, sarcophagusFlags } from "./dreadnought.mjs";
-import { AVATAR_OF_SLAUGHTER_RULES } from "./library/avatar-of-slaughter.mjs";
 import { PATRON_RULES } from "./library/patronage.mjs";
 import { BEASTMAN_SHAMAN_RULES } from "./library/beastman-shaman.mjs";
 import { addictionPenaltyRules } from "./addiction.mjs";
 import { SYNESTHESIA_RULES } from "./library/synesthesia.mjs";
 import { situationalRules } from "./situational.mjs";
+import { psychicSustainTargetRules } from "./psychic-sustain-target.mjs";
 import { pathRulesFor } from "./library/paths.mjs";
+import { hatredRules } from "./hatred.mjs";
+import { devourerPermanentRules } from "./devourer-of-knowledge.mjs";
 import { registerRuleSource } from "./source-registry.mjs";
 
 export { registerRuleSource, getRuleSources, clearRuleSources } from "./source-registry.mjs";
@@ -119,10 +121,13 @@ registerRuleSource("opposedTarget", (a, ctx) => opposedTargetRerollRules(a, ctx,
 // Командиру — cross-actor проверка вне владельца Таланта, тем же приёмом,
 // что источник «dreadnought» ниже. Вне игры (тесты ядра) game.actors нет —
 // источник молчит, как и остальные Foundry-зависимые источники здесь.
-// Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — статичное when читает метку
-// на самом акторе (rules/predicates.mjs::avatarOfSlaughterOffTarget), не
-// требует cross-actor обхода — регистрируется так же, как "core".
-registerRuleSource("avatarOfSlaughter", () => AVATAR_OF_SLAUGHTER_RULES);
+//
+// Avatar of Slaughter/Аватар Резни (wdbc-sk8s) — раньше был здесь отдельным
+// источником "avatarOfSlaughter" со статичным when (читает метку на самом
+// акторе, rules/predicates.mjs::avatarOfSlaughterOffTarget, без cross-actor
+// обхода). Перенесён в library/core.mjs → источник "core" (wdbc-shr,
+// находка 1): отдельный источник ради одного статического правила не нужен,
+// когда "core" уже отдаёт такие оптом.
 
 // Hex-Marked Prey/Проклятая Метка (wdbc-xxb7) — то же статичное when по
 // предикату (rules/predicates.mjs::hexMarkedPreyAllyBonus), которое само
@@ -132,6 +137,17 @@ registerRuleSource("beastmanShaman", () => BEASTMAN_SHAMAN_RULES);
 // цель ТЕКУЩЕГО теста (targetHasTrait, теперь живой и на обычных тестах
 // Навыка, не только атаках), не источник-владелец Мутации.
 registerRuleSource("synesthesia", () => SYNESTHESIA_RULES);
+
+// Hatred/Ненависть (wdbc-1rno, 12.09.2026) — первый реальный потребитель
+// инфраструктуры целей Таланта (talent-targets.mjs): +10 рукопашная атака и
+// переброс встречного социального теста против цели, которую персонаж
+// выбрал Ненавистной при получении Таланта. См. заголовок rules/hatred.mjs.
+registerRuleSource("hatred", (a, ctx) => hatredRules(a, ctx));
+
+// Devourer of Knowledge/Пожиратель Знаний (wdbc-1rno, Тзинч) — Навыки,
+// украденные ПЕРМАНЕНТНО (9 дней подряд), считаются «Дружественными» для
+// цены Продвижения — динамический список по флагу, не статичная запись.
+registerRuleSource("devourerOfKnowledge", a => devourerPermanentRules(a));
 
 // Adjutant/Адъютант регистрирует себя САМ, в module/rules/adjutant.mjs, и
 // отсюда намеренно не импортируется (wdbc-795h). Причина в графе импортов:
@@ -194,6 +210,11 @@ registerRuleSource("dreadnought", (a) => {
 // атаки в момент применения, снимает resetActionEconomy (action-economy.mjs)
 // тем же приёмом, что exposedAggressive/running/movedThisTurn — переносить
 // в постоянное хранимое поле схемы не нужно, живёт как временный флаг.
+// Психосилы, дающие способность цели каста, не владельцу (wdbc-lmd2, найдено
+// внутри wdbc-q0q8) — Dragon Scales/Wings of the Phoenix. См. заголовок
+// module/rules/psychic-sustain-target.mjs про соглашение "target:<флаг>".
+registerRuleSource("psychicSustainTarget", a => psychicSustainTargetRules(a));
+
 registerRuleSource("daemonInevitability", a => {
   if (!a?.getFlag?.("warhammer-dbc", "inevitabilityPenalty")) return [];
   return [{

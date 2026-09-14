@@ -65,8 +65,27 @@ function movesPosition(changes) {
       || Object.prototype.hasOwnProperty.call(changes, "y");
 }
 
-// tokenId → Set(enemyTokenId), контакт ДО перемещения (между pre/update одного и того же вызова).
+// tokenId → { ids: Set(enemyTokenId), ts }, контакт ДО перемещения (между
+// pre/update одного и того же вызова).
+//
+// wdbc-8zi: запись чистится штатно в updateToken ниже, но апдейт токена
+// может быть отменён (другой модуль вернул false из своего preUpdateToken,
+// либо запрос вовсе не дошёл до сервера) — тогда updateToken для этого
+// tokenId не придёт НИКОГДА, а сам токен обычно продолжает существовать
+// (id не освобождается), и запись висела бы в Map бессрочно. Foundry не
+// даёт отдельного хука «апдейт отменён», поэтому отмена не детектируется
+// напрямую — вместо этого запись помечается временем и протухает сама:
+// каждый следующий preUpdateToken/updateToken (не обязательно того же
+// токена) чистит все записи старше PRE_MOVE_TTL_MS. deleteToken ниже —
+// точный случай (токен удалён, апдейта для него уже не будет в принципе).
 const _preMoveContacts = new Map();
+const PRE_MOVE_TTL_MS = 5000;
+
+function pruneStalePreMoveContacts(now = Date.now()) {
+  for (const [id, entry] of _preMoveContacts) {
+    if (now - entry.ts > PRE_MOVE_TTL_MS) _preMoveContacts.delete(id);
+  }
+}
 
 export async function offerFreeAttack(reactorTokenDoc, moverTokenDoc) {
   const reactor = actorOf(reactorTokenDoc);
@@ -128,12 +147,14 @@ export async function processTokenMove(tokenDoc, beforeContactIds) {
 
 export function initFreeAttackHooks() {
   Hooks.on("preUpdateToken", (tokenDoc, changes) => {
+    pruneStalePreMoveContacts();
     if (!game.combat?.started || !movesPosition(changes) || !isPersonalScale(tokenDoc)) return;
-    _preMoveContacts.set(tokenDoc.id, new Set(enemyContactTokenDocs(tokenDoc).map(d => d.id)));
+    _preMoveContacts.set(tokenDoc.id, { ids: new Set(enemyContactTokenDocs(tokenDoc).map(d => d.id)), ts: Date.now() });
   });
 
   Hooks.on("updateToken", async (tokenDoc, changes, options, userId) => {
-    const before = _preMoveContacts.get(tokenDoc.id);
+    pruneStalePreMoveContacts();
+    const before = _preMoveContacts.get(tokenDoc.id)?.ids;
     _preMoveContacts.delete(tokenDoc.id);
     // Только клиент, вызвавший перемещение, считает разрыв контакта — иначе
     // карточка в чат ушла бы с каждого подключённого клиента разом.
@@ -141,6 +162,13 @@ export function initFreeAttackHooks() {
     if (!before || before.size === 0) return;
     if (!game.combat?.started || !movesPosition(changes)) return;
     await processTokenMove(tokenDoc, before);
+  });
+
+  // Токен удалён до того, как пришёл updateToken (отменённый/незавершённый
+  // драг, удаление ГМ-ом прямо во время хода) — апдейта для этого id уже не
+  // будет никогда, ждать TTL незачем.
+  Hooks.on("deleteToken", tokenDoc => {
+    _preMoveContacts.delete(tokenDoc.id);
   });
 }
 

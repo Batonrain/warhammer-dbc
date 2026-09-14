@@ -120,6 +120,54 @@ describe("psychic manifestation", () => {
     expect(captured.dialog.buttons.cast.label).toBe("Психотест!");
   });
 
+  // Perfect Sorcerer/Совершенный Чародей (wdbc-1rno, Тзинч): Высшее
+  // Колдовство книжно закрыто для персонажей с Покровительством конкретного
+  // Бога (rules/perfect-sorcerer.mjs) — showManifestDialog должен блокировать
+  // манифестацию раньше открытия диалога, тем же тактом, что и Метка выше.
+  // Книга (constants/disciplines.mjs, запись highSorcery) различает ИЗУЧЕНИЕ и
+  // ПРИМЕНЕНИЕ: Покровительство закрывает первое, но «если они получают
+  // покровительство Богов после этого, они сохраняют способность их
+  // использования». Манифестацию книга закрывает другой фразой — «Псайкеры
+  // не-Хаоситы не могут изучать или манифестировать». Прежние три теста
+  // требовали блока по Покровительству и закрепляли ошибку: колдун, выучивший
+  // силу до присяги Богу, получал отказ на своё же заклинание.
+  describe("Высшее Колдовство: манифестацию закрывает не Покровительство, а не-Хаосит", () => {
+    const saved = getRuleSources();
+    afterEach(() => {
+      clearRuleSources();
+      for (const [key, fn] of saved) registerRuleSource(key, fn);
+    });
+
+    it("не-Хаосит — манифестация блокируется, диалог не открывается", () => {
+      clearRuleSources();
+      const a = actor({ system: { alignment: "loyalist", patronGod: "" } });
+      showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
+      expect(captured.dialog).toBeFalsy();
+      expect(captured.warnings.some(w => w.includes("Высшего Колдовства"))).toBe(true);
+    });
+
+    it("хаосит с Покровительством Бога — диалог открывается: выученное остаётся доступным", () => {
+      clearRuleSources();
+      const a = actor({ system: { alignment: "heretic", patronGod: "tzeentch" } });
+      showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+
+    it("хаосит с Хаосом Неделимым — диалог открывается", () => {
+      clearRuleSources();
+      const a = actor({ system: { alignment: "heretic", patronGod: "undivided" } });
+      showManifestDialog(a, item({ system: { discipline: "highSorcery" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+
+    it("не-Хаосит, но другая дисциплина — запрет Высшего Колдовства не касается", () => {
+      clearRuleSources();
+      const a = actor({ system: { alignment: "loyalist", patronGod: "" } });
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+  });
+
   // wdbc-jpmh: Путь Силы («Инкантация»/«Медитация»/«Жертва»/«Телесная
   // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
   // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не
@@ -233,6 +281,135 @@ describe("psychic manifestation", () => {
     expect(captured.chat[0].content).toContain("d5: 4");
   });
 
+  // wdbc-5kd: system.penetration был NumberField — книжные силы вроде
+  // «Разрушения» (Pen=PR) и «Сверхъестественного Шторма» (Pen=PR×3) не могли
+  // записать своё настоящее Пробитие и хранили выдуманный 0. Схема переведена
+  // на формулу строкой (как damage), и «PR» в ней должен подставляться тем же
+  // эффективным ПР урона (damagePR), что и в самом уроне — Пробитие штормовой
+  // силы обязано падать вместе с уроном, если игрок снизил именно этот аспект.
+  describe("Пробитие психосилы — формула (wdbc-5kd)", () => {
+    it("«PR×3» (записано как PR*3) считается через damagePR манифестации", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: "PR*3"
+      } });
+      captured.nextRoll = 10; // психотест точно проходит
+
+      await executePsychotest(a, power, {
+        mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      // damagePR: 0 в диалоге = взять полный эPR (здесь эPR = mPR = 2) → 2×3 = 6.
+      expect(captured.chat[0].content).toContain("Проб. 6");
+      expect(captured.chat[0].content).toContain('data-penetration="6"');
+    });
+
+    it("голое число по-прежнему работает как формула из одного терма — старые данные пака не ломаются", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: "8"
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain("Проб. 8");
+    });
+
+    // Данные пака до миграции хранили именно число (тип поля schema был
+    // NumberField) — resolvePen должен принять и его напрямую, не только строку.
+    it("число (не строка) в penetration тоже считается верно", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: 8
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain("Проб. 8");
+    });
+
+    it("аспект урона (damagePR), сниженный игроком отдельно от психотеста, тянет за собой и Пробитие", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10+PR", damageType: "energy", penetration: "PR"
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        // эPR психотеста — 4 (mPR), но игрок в диалоге отдельно ополовинил
+        // аспект урона до 2 — Пробитие силы, завязанное на тот же PR, что и
+        // урон, обязано взять именно эти 2, а не полный эPR=4.
+        mPR: 4, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 2, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain("Проб. 2");
+    });
+  });
+
+  // wdbc-5kd: превью Пробития в списке сил на листе (buildGetData → psyPowers,
+  // читает tab-combat.hbs/tab-psy.hbs через {{#if p.penetration}}). Formula-строка
+  // "PR"/"0" сюда попадала бы СЫРЫМ ТЕКСТОМ и, хуже, строка "0" (в отличие от
+  // числа 0) для Handlebars ИСТИННА — «(Пб 0)» вылезло бы у всех 590+ сил пака,
+  // у которых Пробития вообще нет. module/sheets/sheet-helpers.mjs обязан сам
+  // посчитать формулу в число тем же тПР, что и для превью Порога рядом.
+  describe("список психосил на листе (buildGetData) — превью Пробития (wdbc-5kd)", () => {
+    it("«PR» в списке — уже посчитанное число (по тПР), а не сырой текст формулы", async () => {
+      const { sheetOf } = await import("../support/foundry-stub.mjs");
+      const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+      const { buildGetData } = await import("../../module/sheets/sheet-helpers.mjs");
+
+      const power = {
+        id: "p1", name: "Разрушение", type: "psychicPower",
+        system: { testChar: "wp", powerType: "attack", damage: "2d10+2*PR", penetration: "PR", cost: 100 },
+        getFlag: () => undefined
+      };
+      const sheet = sheetOf(WarhammerCharacterSheet, {
+        items: [power], characteristics: {}, skills: {}, groupSkills: {},
+        psyker: { rating: 5, currentRating: 3 }
+      });
+      sheet.actor.items.contents = sheet.actor.items;
+
+      const row = buildGetData(sheet.actor).psyPowers?.find(p => p.id === "p1");
+      expect(row.penetration).toBe(3); // тПР=3 подставлен в «PR» и посчитан
+    });
+
+    it("penetration «0» (голое число — тоже формула) остаётся числом 0, а не непустой строкой «(Пб 0)»", async () => {
+      const { sheetOf } = await import("../support/foundry-stub.mjs");
+      const { WarhammerCharacterSheet } = await import("../../module/sheets/actor-sheet.mjs");
+      const { buildGetData } = await import("../../module/sheets/sheet-helpers.mjs");
+
+      const power = {
+        id: "p1", name: "Взор Варпа", type: "psychicPower",
+        system: { testChar: "wp", powerType: "utility", damage: "", penetration: "0", cost: 100 },
+        getFlag: () => undefined
+      };
+      const sheet = sheetOf(WarhammerCharacterSheet, {
+        items: [power], characteristics: {}, skills: {}, groupSkills: {},
+        psyker: { rating: 5, currentRating: 3 }
+      });
+      sheet.actor.items.contents = sheet.actor.items;
+
+      const row = buildGetData(sheet.actor).psyPowers?.find(p => p.id === "p1");
+      // Число 0, НЕ строка "0" — {{#if}} в hbs должен счесть его ложным.
+      expect(row.penetration).toBe(0);
+      expect(row.penetration).not.toBe("0");
+    });
+  });
+
   // Жалоба игрока: «Варп-Оружие» на психосиле не срабатывает. wp (aggregateAuto)
   // и раньше считал warpSoak верно — но кнопка «Применить урон» его не несла:
   // клик уходил в applyDamageToActor с warpSoak по умолчанию false, и цель
@@ -313,6 +490,31 @@ describe("тест Сопротивления цели (wdbc-5vf4)", () => {
     expect(card).toContain('data-mod="-5"');
   });
 
+  // data-discipline/data-target-token-uuid (wdbc-1rno, Фатализм/Нургл) —
+  // hooks.mjs проверяет их ДО открытия обычного диалога Характеристики
+  // (rules/fatalism.mjs). Без discipline="divination" в данных — пустая
+  // строка, кнопка остаётся обычной (тот же гейт fatalismBlocksPower не
+  // сработает ни при каком радиусе).
+  it("кнопка несёт дисциплину силы и UUID токена цели (не актора)", async () => {
+    const a = actor();
+    a.uuid = "Actor.caster-1";
+    game.user.targets = [{ actor: { uuid: "Actor.target-1", name: "Культист" }, document: { uuid: "Scene.s1.Token.t1" } }];
+    const power = item({ system: {
+      testChar: "wp", powerType: "utility", testMod: 5,
+      discipline: "divination", resistChar: "t", resistMod: -5
+    } });
+    captured.nextRoll = 30;
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    const card = captured.chat[0].content;
+    expect(card).toContain('data-discipline="divination"');
+    expect(card).toContain('data-target-token-uuid="Scene.s1.Token.t1"');
+  });
+
   it("resistChar задан, но цель не наведена — подсказка вместо кнопки", async () => {
     const a = actor();
     const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5, resistChar: "wp", resistMod: 0 } });
@@ -373,7 +575,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
       pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
     });
 
-    expect(power.updates).toContainEqual({ "system.sustainedDegree": 3 });
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 3, "system.sustainedEpr": 2 });
   });
 
   it("провал манифестации не оставляет степень (поддерживать нечего)", async () => {
@@ -386,7 +588,97 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
       pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
     });
 
-    expect(power.updates).toContainEqual({ "system.sustainedDegree": null });
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": null, "system.sustainedEpr": null });
+  });
+
+  // wdbc-1wvn: эPR психотеста фиксируется на предмете тем же приёмом, что и
+  // sustainedDegree — сустейн-баффы к ДРУГИМ тестам обязаны считать бонус по
+  // эPR МОМЕНТА КАСТА (книга), а не по текущему тPR персонажа на момент того
+  // позднего теста.
+  it("успешная манифестация с mPR>1 пишет эPR психотеста на предмет", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 30; // Порог 40+5×5+5=70, |30-70|/10+1=5, успех.
+
+    await executePsychotest(a, power, {
+      mPR: 5, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 5, "system.sustainedEpr": 5 });
+  });
+
+  // wdbc-vxgd: Force Blade — успешная манифестация открывает диалог-«магазин»
+  // (module/apps/force-blade-choice.mjs), результат уходит в
+  // system.effects.weaponBuff отдельным item.update.
+  it("успешная манифестация психосилы с hasWeaponShop открывает диалог свойств", async () => {
+    const a = actor();
+    const power = item({
+      name: "Force Blade / Психосиловой Клинок",
+      system: { testChar: "wp", powerType: "psychicBlade", testMod: -10, hasWeaponShop: true }
+    });
+    captured.nextRoll = 30; // Порог 40+5×2-10=40, |30-40|/10+1=2, успех.
+
+    const promise = executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+    // Внутри executePsychotest несколько await до самого диалога (бросок,
+    // запись sustainedDegree/sustainedEpr) — дать микрозадачам довести
+    // выполнение до конструктора Dialog, прежде чем читать captured.dialog.
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+
+    expect(captured.dialog?.title).toMatch(/Force Blade/i);
+    const html = fakeHtml({}, { ".fb-shop-cb:checked": [{ dataset: { id: "shocking" } }] });
+    captured.dialog.buttons.ok.callback(html);
+    await promise;
+
+    const wb = power.updates.at(-1)["system.effects.weaponBuff"];
+    expect(wb.enabled).toBe(true);
+    expect(wb.addProps).toContainEqual({ key: "force" });
+    expect(wb.addProps).toContainEqual({ key: "shocking" });
+  });
+
+  it("провал манифестации Force Blade не открывает диалог", async () => {
+    const a = actor();
+    const power = item({
+      name: "Force Blade / Психосиловой Клинок",
+      system: { testChar: "wp", powerType: "psychicBlade", testMod: -10, hasWeaponShop: true }
+    });
+    captured.nextRoll = 90; // выше Порога 40 — провал.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.dialog).toBe(null);
+    expect(power.updates.some(u => "system.effects.weaponBuff" in u)).toBe(false);
+  });
+
+  it("снятие поддержания Force Blade сбрасывает weaponBuff", async () => {
+    const power = item({
+      name: "Force Blade / Психосиловой Клинок",
+      system: {
+        sustainable: true, isSustained: true, hasWeaponShop: true,
+        effects: { weaponBuff: { enabled: true, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: [{ key: "force" }] } }
+      }
+    });
+    const a = actor({ items: [power] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".psy-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: power.id }, checked: false }
+    });
+
+    const upd = power.updates.at(-1);
+    // weaponId: "" — привязка к конкретному оружию тоже снимается, иначе
+    // следующая манифестация на другое оружие оставила бы старую.
+    expect(upd["system.effects.weaponBuff"]).toEqual({
+      enabled: false, scope: "equipped", weaponId: "",
+      damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
+    });
   });
 
   it("успешное применение Силы навигатора тоже пишет sustainedDegree", async () => {
@@ -414,10 +706,15 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
 
     expect(power.updates.at(-1)).toEqual({
       "system.isSustained": false,
-      "system.sustainedDegree": null
+      "system.sustainedDegree": null,
+      "system.sustainedEpr": null,
+      "system.sustainedTargetUuid": ""
     });
   });
 
+  // wdbc-lmd2 (найдено внутри wdbc-q0q8): цель поддержания фиксируется по
+  // game.user.targets в момент включения — без выделенного токена остаётся
+  // пустой строкой, психосила всё равно поддерживается как раньше.
   it("включение галочки «Подд.» не трогает сохранённую степень", async () => {
     const power = item({ system: { sustainable: true, isSustained: false, sustainedDegree: 3 } });
     const a = actor({ items: [power] });
@@ -428,7 +725,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
       currentTarget: { dataset: { itemId: power.id }, checked: true }
     });
 
-    expect(power.updates.at(-1)).toEqual({ "system.isSustained": true });
+    expect(power.updates.at(-1)).toEqual({ "system.isSustained": true, "system.sustainedTargetUuid": "" });
   });
 
   it("снятие поддержания Силы навигатора (в общем переключателе на одну) сбрасывает степень", async () => {

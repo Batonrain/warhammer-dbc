@@ -64,7 +64,8 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "damageSubtype": "laser"
   },
   "_id": "elL4C4O5Xaq3i7Z9",
   "effects": [],

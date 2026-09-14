@@ -26,11 +26,20 @@ import { rollMoraleTest } from "../rules/morale-test.mjs";
 import { postShockRecoveryPrompt } from "./fear.mjs";
 import { applyLordOfExoditesFailPenalty } from "./lord-of-exodites.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { resolveArmorProps } from "./armor-properties.mjs";
+// Морозное Сердце (wdbc-5knb): щит с записью Конструктора
+// kind:"shieldVsCondition" можно бросить против ТИКА Горения, гася его
+// целиком при успехе — единственная причина, по которой этот модуль вообще
+// знает о combat/damage.mjs (в остальном тик состояний намеренно идёт мимо
+// конвейера урона, см. шапку файла).
+import { rollShieldAgainstConditionTick } from "./damage.mjs";
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
 // system.conditions.<key> (bool) + system.conditions.<field> (число). Из
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
 // "rounds" тикает здесь само, заводить его в этом списке отдельно не нужно.
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
+import { BLESSED_FITS_PENDING_FLAG, blessedFitsRefundDue } from "../rules/blessed-fits.mjs";
+import { changeActorInfamy } from "../apps/infamy-points.mjs";
 // Срок Состояния штатной Duration эффекта (wdbc-uqco). Состояние, у которого
 // срок задан, сюда не попадает вовсе: его считает Foundry, а истечение
 // подметается ниже. Свой декремент остаётся ровно для тех, кому срок
@@ -57,6 +66,23 @@ export async function postConditionCard(actor, lines) {
       ${lines.join("")}
     </div>`
   }, game.settings.get("core", "rollMode")));
+}
+
+/**
+ * Броня Огненного Дракона (wdbc-q0q8, ARMOR_PROPERTIES.fireproof) — точечное
+ * исключение из «Горение игнорирует броню целиком»: собственное AP тела
+ * ИМЕННО ЭТОГО предмета (не суммарное AP актора со всех надетых сразу —
+ * книга говорит «их AP», не «броня персонажа»), удвоенное. Несколько таких
+ * предметов разом — маловероятно, берём максимум, не сумму.
+ */
+function fireproofBurningApBonus(actor) {
+  let best = 0;
+  for (const item of actor?.items ?? []) {
+    if (item.type !== "armor" || !item.system?.equipped) continue;
+    const fireproof = resolveArmorProps(item).some(p => p.def.auto?.apVsBurningBody);
+    if (fireproof) best = Math.max(best, (Number(item.system.body) || 0) * 2);
+  }
+  return best;
 }
 
 /**
@@ -124,6 +150,18 @@ export async function processConditionTurnStart(actor) {
     lines.push(next <= 0
       ? `<div class="roll-threshold">${label}: <b>${cur}</b> → снято</div>`
       : `<div class="roll-threshold">${label}: <b>${cur}</b> → <b>${next}</b></div>`);
+
+    // Blessed Fits/Благословенные Припадки (Общие Мутации, wdbc-1rno):
+    // Оглушение от переброшенного провала (hooks.mjs::btnReroll) естественно
+    // дошло до 0 — «провёл полный Раунд в Оглушении», возвращаем списанное
+    // Очко Бесчестия. Снятое ДОСРОЧНО каким-то другим путём сюда не попадёт
+    // вовсе (условие этого декремента не наступает раньше срока) — метка
+    // просто останется висеть без последствий, что и есть книжное «если».
+    if (key === "stunned" && blessedFitsRefundDue(actor.getFlag("warhammer-dbc", BLESSED_FITS_PENDING_FLAG), next)) {
+      await changeActorInfamy(actor, 1);
+      updates[`flags.warhammer-dbc.-=${BLESSED_FITS_PENDING_FLAG}`] = null;
+      lines.push(`<div class="roll-threshold">🥴 Благословенные Припадки: полный Раунд в Оглушении — Очко Бесчестия вернулось.</div>`);
+    }
   }
 
   // Удушье: пока есть запас (suffocatingRounds > 0) — просто декремент, без
@@ -201,21 +239,32 @@ export async function processConditionTurnEnd(actor) {
     lines.push(`<div class="roll-threshold">${rollIcon("bolt", "#8fd0ff")}Электрошок саркофага снял Оглушение</div>`);
   }
 
-  if (conds.burning) {
+  // Морозное Сердце (wdbc-5knb): щит с kind:"shieldVsCondition" на "burning"
+  // можно бросить ПРОТИВ этого тика ДО того, как считать урон, — при успехе
+  // Горение снимается целиком (rollShieldAgainstConditionTick сам обновляет
+  // actor и постит свою карточку), и обычный тик 1d10 ниже не считается
+  // вовсе. damageSubtype:"flame" даёт сработать override рейтинга
+  // (kind:"shieldSubtype") того же щита — 1-75 против E(Fl), как и при
+  // обычном попадании.
+  const burningExtinguishedByShield = conds.burning
+    && await rollShieldAgainstConditionTick(actor, "burning", { damageSubtype: "flame" });
+
+  if (conds.burning && !burningExtinguishedByShield) {
     const roll = await new Roll("1d10").evaluate();
     const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
-    const net = Math.max(0, roll.total - tb);
+    const fireAp = fireproofBurningApBonus(actor);
+    const net = Math.max(0, roll.total - tb - fireAp);
     if (net > 0) {
       const { currentWounds, newWounds, newCritical, maxWounds, gotCritical } = await applyWoundLoss(actor, net);
       await addFatigue(actor, 1);
       const destroyed = gotCritical && newCritical >= woundDeathThreshold(maxWounds);
-      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: 1d10 <b>${roll.total}</b> − T.b ${tb} = <b>${net}</b> урона E(Fl), игнор брони. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: 1d10 <b>${roll.total}</b> − T.b ${tb}${fireAp ? ` − AP(×2) ${fireAp}` : ""} = <b>${net}</b> урона E(Fl)${fireAp ? "" : ", игнор брони"}. Раны: ${currentWounds} → ${newWounds}${gotCritical ? ` (крит. <b>${newCritical}</b>)` : ""} · 😓 Усталость +1${destroyed ? ` — <b>уничтожен</b>` : ""}</div>`);
     } else {
       const tTotal = Number(actor.system?.characteristics?.t?.total) || 0;
       const test = await new Roll("1d100").evaluate();
       const failed = test.total > tTotal;
       if (failed) await addFatigue(actor, 1);
-      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: 1d10 <b>${roll.total}</b> целиком в T.b — тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed ? `<span class="roll-failure">провал → 😓 Усталость +1</span>` : `<span class="roll-success">успех</span>`}</div>`);
+      lines.push(`<div class="roll-threshold">${rollIcon("fire", "#ff8a3a")}Горение: 1d10 <b>${roll.total}</b> целиком в T.b${fireAp ? ` + AP(×2) ${fireAp}` : ""} — тест T+0 (<b>${tTotal}</b>): <b>${test.total}</b> ${failed ? `<span class="roll-failure">провал → 😓 Усталость +1</span>` : `<span class="roll-success">успех</span>`}</div>`);
     }
   }
 

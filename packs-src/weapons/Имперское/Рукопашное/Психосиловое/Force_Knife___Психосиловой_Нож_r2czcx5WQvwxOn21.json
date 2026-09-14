@@ -23,6 +23,7 @@
     "damageType": "impact",
     "penetration": 2,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 213)",
     "availability": 4,
     "weight": 0.2,
     "attackBonus": 0,

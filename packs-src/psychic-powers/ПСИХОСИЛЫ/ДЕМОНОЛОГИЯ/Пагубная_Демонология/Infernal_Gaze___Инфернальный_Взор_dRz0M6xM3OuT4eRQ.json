@@ -23,7 +23,19 @@
     "damage": "1d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blinding",
+        "rating": 1
+      },
+      {
+        "key": "felling",
+        "rating": "Cor.b"
+      },
+      {
+        "key": "tainted"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +58,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Демонология» стр. 310)"
   },
   "_id": "dRz0M6xM3OuT4eRQ",
   "effects": [],

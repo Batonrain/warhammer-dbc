@@ -80,10 +80,22 @@ export function describeV2Sheet(SheetClass, files) {
       const group = SheetClass.TABS?.primary;
       if (!group) return;
 
-      const sections = [...TEMPLATE.matchAll(/<div class="tab[^"]*"[^>]*data-tab="(\w+)"[^>]*data-group="primary"/g)];
+      // data-tab и data-group встречаются в разных порядках по разным листам
+      // (большинство пишет data-tab первым, horde-sheet/systems-overview —
+      // наоборот) — раньше единый регексп требовал жёсткий порядок и на
+      // втором варианте не находил вообще ни одной секции, из-за чего
+      // проверка проходила вхолостую (пустой список "без active" всегда
+      // пуст). Ищем открывающий тег целиком и проверяем атрибуты внутри
+      // него независимо от их порядка.
+      const openTags = [...TEMPLATE.matchAll(/<div class="tab[^"]*"[^>]*>/g)].map(m => m[0]);
+      const sections = openTags
+        .filter(tag => /data-group="primary"/.test(tag))
+        .map(tag => ({ tag, id: tag.match(/data-tab="(\w+)"/)?.[1] }))
+        .filter(s => s.id);
+
       const withoutActive = sections
-        .filter(m => !/\{\{#if \(eq (\.\.\/)?tab "\w+"\)\}\}active/.test(m[0]))
-        .map(m => m[1]);
+        .filter(({ tag }) => !/\{\{#if \(eq (\.\.\/)?tab "\w+"\)\}\}active/.test(tag))
+        .map(({ id }) => id);
 
       expect(withoutActive).toEqual([]);
     });

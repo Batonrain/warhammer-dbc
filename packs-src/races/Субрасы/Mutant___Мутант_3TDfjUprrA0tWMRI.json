@@ -13,7 +13,7 @@
     "talents": "",
     "removesTraits": [],
     "description": "+5 Cor и 1 дополнительная мутация (выбор из списка). Навыки Deceive или For.Lore (Mutants) становятся дружественными.",
-    "notes": "",
+    "notes": "Механикой не выражено: выбор дружественного Навыка между Deceive и Forbidden Lore (Mutants) — нет способа задать игроку выбор дружественности между двумя конкретными Навыками. +5 Cor и добор дополнительной мутации из списка уже смоделированы группами Механики (kind:\"corruption\" и kind:\"equipment\" equipMode:\"choice\" по паку mutations).",
     "bookSource": "DoomBC — Основная книга"
   },
   "_id": "3TDfjUprrA0tWMRI",

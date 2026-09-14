@@ -2,7 +2,7 @@
 //
 // module/combat/avatar-of-slaughter.mjs (wdbc-sk8s) — раз за бой, трата 1
 // Очка Бесчестия, тест W−10 цели, провал метит цель на −20 (следствие —
-// rules/library/avatar-of-slaughter.mjs + предикат, см.
+// rules/library/core.mjs::avatarOfSlaughter.penalty + предикат, см.
 // test/rules/avatar-of-slaughter-rule.test.mjs).
 
 import "../support/foundry-stub.mjs";

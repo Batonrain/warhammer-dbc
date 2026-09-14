@@ -219,6 +219,13 @@ export function creatureSchema({ granted = false } = {}) {
     }, { label: "Аблативный AP-щит" }),
     fate:      pool("Судьба"),
     deadMight: pool("Мощь мёртвых"),
+    // Руны Сигиллитов (wdbc-fsl9) — ресурс Элитного Архетипа «Последователь
+    // Ордена Сигиллитов». Пул, а не Состояние: у Состояния в этой системе нет
+    // ни поля под максимум, ни слота в пересчёте листа, а на нуле его тег
+    // просто гаснет — разбор в шапке rules/sigillite-runes.mjs. `max`
+    // считается производно там же, где deadMight.max (rules/character.mjs),
+    // и равен нулю у всех, у кого нет Черты «Магия Сигиллитов».
+    sigilliteRunes: pool("Руны Сигиллитов"),
     fatigue:   pool("Усталость"),
     // Отношения (вкладка СОЦИУМ): к кому этот персонаж как относится. Запись —
     // ссылка на актора и четыре модификатора, по одному на Навык таблицы
@@ -373,7 +380,11 @@ export function creatureSchema({ granted = false } = {}) {
       class:         str("bound", "Класс псайкера"),
       rating:        num(0, "Психорейтинг"),
       sustain:       num(0, "Поддерживается"),
-      currentRating: num(0, "Текущий рейтинг")
+      currentRating: num(0, "Текущий рейтинг"),
+      // wdbc-l6zg: Фокус Дисциплины — выбор игрока при создании персонажа
+      // (core.json стр.293), ключи PSY_DISCIPLINES. Читатель:
+      // module/rules/psy-focus.mjs::effectiveFocusDisciplines.
+      focusDisciplines: strList("Фокусы Дисциплин")
     }, { label: "Псайкер" }),
     cognition: new SchemaField({
       value: num(0, "Текущая"), max: num(0, "Максимум"), regen: num(0, "Восстановление")

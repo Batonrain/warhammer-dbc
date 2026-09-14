@@ -23,7 +23,12 @@
     "damage": "1d10+PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "felling",
+        "rating": "PR"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +51,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Умбрамантия» стр. 362)"
   },
   "_id": "KO9kttBXdSrggVJn",
   "effects": [],

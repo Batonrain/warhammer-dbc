@@ -76,14 +76,15 @@
       "standard": false,
       "reloads": 10
     },
-    "bookSource": "",
+    "bookSource": "DoomBC — Основная книга, III. ПРОДВИЖЕНИЕ («Элитные архетипы», стр. 132)",
     "weaponClass": "ranged",
     "weaponType": "exotic",
     "range": 150,
     "damage": "1d10",
     "damageType": "chemical",
     "penetration": 2,
-    "meleeCategory": ""
+    "meleeCategory": "",
+    "damageSubtype": ""
   },
   "_id": "QODEBevIrEnsoMPa",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

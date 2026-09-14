@@ -8,6 +8,9 @@ import { _executeAttackRoll } from "../combat/attack.mjs";
 import { showRamDialog, showTerrainDialog, showRepairDialog, showVoidShieldRepairDialog,
          showOrbitalDeployTurn1, showOrbitalDeployTurn2, showFireDetonationDialog,
          showFallBreaksDialog, showDisembarkDialog, resolveVolleyAction } from "../combat/vehicle.mjs";
+import { declareWalkerCharge, performWalkerTurnAbout, showTipOverDialog,
+         standUpFromTipOver, resolveWalkerAllArms, walkerChargeActive } from "../combat/walker.mjs";
+import { isTippedOver } from "../rules/walker.mjs";
 import { isTargetWithinVehicleArc } from "../combat/facing.mjs";
 import { measureTokens } from "../combat/tactical-map.mjs";
 import { rangeBandKey } from "../rules/tactical-map.mjs";
@@ -109,6 +112,29 @@ function onFireDetonation()     { return showFireDetonationDialog(this.actor); }
 function onFallBreaks()         { return showFallBreaksDialog(this.actor); }
 function onDisembark()          { return showDisembarkDialog(this.actor); }
 
+// ── Шагоход (wdbc-6wzt): книжные правила Ходовой «Шагоход» ──────────────────
+// Кнопки показываются только при chassis.type === "walker" (см. isWalker в
+// контексте) — у прочих шасси этих правил нет вовсе.
+function onWalkerCharge()   { return declareWalkerCharge(this.actor); }
+function onWalkerTurn()     { return performWalkerTurnAbout(this.actor); }
+function onWalkerTipOver()  { return showTipOverDialog(this.actor); }
+function onWalkerStandUp()  { return standUpFromTipOver(this.actor); }
+async function onWalkerAllArms() {
+  const res = await resolveWalkerAllArms(this.actor);
+  if (!res.ok) return ui.notifications.warn(`⚠️ ${res.error}`);
+  // Уведомление, а не карточка теста (ни броска, ни Порога) — тот же выбор,
+  // что у Залпа и Перезарядки (wdbc-kuun).
+  const rollMode = game.settings.get("core", "rollMode");
+  await ChatMessage.create(ChatMessage.applyRollMode({
+    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    content: `<div class="wh-roll-result">
+      <div class="roll-header">🦿 Весь арсенал — ${esc(this.actor.name)}</div>
+      <div class="roll-outcome"><span class="roll-success">Полное действие пилота (${esc(res.occupant.name)}) потрачено на ВСЕ орудия машины.</span></div>
+      <div class="roll-allout-note">Шагоход бьёт как персонаж с достаточным Multiple Arms: в этот Ход можно выстрелить/ударить каждым орудием — ${res.weapons.map(w => esc(w.name)).join(", ")} — без дополнительной траты ОД.</div>
+    </div>`
+  }, rollMode));
+}
+
 async function onStateAdd() {
   const val = this.element.querySelector(".veh-state-select")?.value;
   if (!val) return;
@@ -164,6 +190,11 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
       fireDetonation:     whenEditable(onFireDetonation),
       fallBreaks:         whenEditable(onFallBreaks),
       disembark:          whenEditable(onDisembark),
+      walkerCharge:       whenEditable(onWalkerCharge),
+      walkerTurn:         whenEditable(onWalkerTurn),
+      walkerTipOver:      whenEditable(onWalkerTipOver),
+      walkerStandUp:      whenEditable(onWalkerStandUp),
+      walkerAllArms:      whenEditable(onWalkerAllArms),
       stateAdd:       whenEditable(onStateAdd),
       stateDel:       whenEditable(onStateDel)
     }
@@ -206,6 +237,12 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     context.hitLocations  = VEHICLE_HIT_LOCATIONS;
     context.crewActions   = CREW_ACTIONS;
     context.isWalker      = sys.chassis?.type === "walker";
+    // Шагоход (wdbc-6wzt): два живых состояния его боевых правил — Опрокинут
+    // ли он сейчас и объявлен ли Натиск в этом Раунде. Оба читаются, а не
+    // хранятся отдельным полем: Опрокидывание живёт строкой в damageStates,
+    // Натиск — меткой с номером Раунда (rules/walker.mjs).
+    context.walkerTipped  = isTippedOver(this.actor);
+    context.walkerCharged = walkerChargeActive(this.actor);
     // Максимум Структуры: производный (с +X Коляски) показывать нельзя как
     // value инпута — submitOnChange отправил бы раздутое число в БД, и
     // следующий пересчёт прибавил бы X снова (6 → 9 → 12 за пару кликов).
@@ -540,7 +577,15 @@ export class WarhammerVehicleSheet extends WarhammerStructuralSheet {
     // Режимы огня.
     const rofModes = [];
     if (isMelee) {
-      rofModes.push({ value: "melee", label: "Рукопашная (±0)", bonus: 0 });
+      // Натиск Шагохода (wdbc-6wzt, п.1 книжного правила Ходовой): объявленный
+      // кнопкой «Натиск» на вкладке «Бой» даёт рукопашной атаке машины +20 в
+      // этом Раунде — тот же бонус, что База «Натиск» даёт персонажу (стр. 13).
+      // Читается здесь, а не хранится в system: метка помнит бой и Раунд и
+      // гаснет сама (rules/walker.mjs::isWalkerChargeActive).
+      const charging = walkerChargeActive(this.actor);
+      rofModes.push(charging
+        ? { value: "melee", label: "Рукопашная — Натиск (+20)", bonus: 20 }
+        : { value: "melee", label: "Рукопашная (±0)", bonus: 0 });
     } else {
       if ((sys.rof_single ?? 0) > 0 || (!sys.rof_semi && !sys.rof_full))
         rofModes.push({ value: "single", label: "Одиночный (+10)", bonus: 10 });

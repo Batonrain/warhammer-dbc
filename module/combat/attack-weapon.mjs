@@ -24,6 +24,9 @@ export function effectiveDamage({ sys, profile = null, gripDmgFlat = 0 }) {
   return {
     damage:      withFlat((profile && profile.damage) ? profile.damage : sys.damage, flat),
     damageType:  (profile && profile.damageType) ? profile.damageType : sys.damageType,
+    // Подвид урона (wdbc-q0q8) — тот же приём, что damageType выше: профиль
+    // переопределяет, если у него свой подвид указан.
+    damageSubtype: (profile && profile.damageSubtype) ? profile.damageSubtype : (sys.damageSubtype || ""),
     penetration: profile ? (Number(profile.penetration) || 0) : (Number(sys.penetration) || 0)
   };
 }

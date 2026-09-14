@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "wp",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Амальгамы» стр. 305)"
   },
   "_id": "2Ry9JGjapfqNfN8J",
   "effects": [],

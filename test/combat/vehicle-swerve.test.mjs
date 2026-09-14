@@ -28,7 +28,7 @@ beforeEach(() => {
 describe("_performSwerve: несколько попаданий (Очередь)", () => {
   it("одно попадание (по умолчанию) — текст как у обычного Виража", async () => {
     const actor = vehicle();
-    await _performSwerve(actor, 0);
+    await _performSwerve(actor, { extraMod: 0 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Вираж успешен");
@@ -38,7 +38,7 @@ describe("_performSwerve: несколько попаданий (Очередь)
 
   it("Успех меньше числа попаданий — снимает часть, остальные проходят", async () => {
     const actor = vehicle();
-    await _performSwerve(actor, 0, 3);
+    await _performSwerve(actor, { extraMod: 0, hitsCount: 3 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Вираж успешен");
@@ -49,7 +49,7 @@ describe("_performSwerve: несколько попаданий (Очередь)
   it("Провал — все попадания очереди проходят", async () => {
     captured.dice = [96];
     const actor = vehicle();
-    await _performSwerve(actor, 0, 4);
+    await _performSwerve(actor, { extraMod: 0, hitsCount: 4 });
 
     const card = captured.chat.at(-1).content;
     expect(card).toContain("Вираж провален");

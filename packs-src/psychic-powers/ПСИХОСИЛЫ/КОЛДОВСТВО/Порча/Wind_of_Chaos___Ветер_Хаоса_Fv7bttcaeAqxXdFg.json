@@ -23,7 +23,17 @@
     "damage": "1d10+PR",
     "damageType": "rending",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "tainted"
+      },
+      {
+        "key": "spray"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -46,7 +56,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Порча» стр. 301)"
   },
   "_id": "Fv7bttcaeAqxXdFg",
   "effects": [],

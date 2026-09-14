@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, ПСИХОСИЛЫ («Призыв» стр. 302)"
   },
   "_id": "Wo7vmmcRk9MPlls7",
   "effects": [],

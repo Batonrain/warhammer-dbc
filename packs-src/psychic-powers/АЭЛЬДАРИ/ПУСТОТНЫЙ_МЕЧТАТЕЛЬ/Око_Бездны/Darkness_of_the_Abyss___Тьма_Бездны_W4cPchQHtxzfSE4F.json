@@ -24,7 +24,15 @@
     "damage": "1d5+PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "blast",
+        "rating": "PR*10"
+      },
+      {
+        "key": "warpWeapon"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
@@ -49,7 +57,8 @@
         "rangeMod": 0,
         "addProps": []
       }
-    }
+    },
+    "bookSource": "Книга Аэльдари, ДИСЦИПЛИНА ПУСТОТНОГО МЕЧТАТЕЛЯ («Око Бездны»)"
   },
   "_id": "W4cPchQHtxzfSE4F",
   "effects": [],

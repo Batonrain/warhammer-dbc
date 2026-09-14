@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Парящий (X) / Hoverer (X)",
+      "name": "Hoverer (X) / Парящий (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!CtZYDR36KouV7CKv.xGNAsFAVimeMMaBY"
     },
     {
-      "name": "Манёвренный / Maneuverable",
+      "name": "Maneuverable / Манёвренный",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!CtZYDR36KouV7CKv.L8Q3PwiA94jJOlxW"
     },
     {
-      "name": "Стойка / Stand",
+      "name": "Stand / Стойка",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

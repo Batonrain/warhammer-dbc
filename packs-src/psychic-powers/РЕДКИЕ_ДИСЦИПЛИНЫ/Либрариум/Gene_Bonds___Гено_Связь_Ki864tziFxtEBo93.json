@@ -48,7 +48,8 @@
       }
     },
     "resistChar": "",
-    "resistMod": 0
+    "resistMod": 0,
+    "bookSource": "DoomBC — Основная книга, РЕДКИЕ ДИСЦИПЛИНЫ («Либрариум» стр. 364)"
   },
   "_id": "Ki864tziFxtEBo93",
   "effects": [],

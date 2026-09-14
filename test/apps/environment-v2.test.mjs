@@ -103,12 +103,16 @@ describe("_onRender: разводка кнопок", () => {
   });
 
   it("data-act=reset зовёт _patch(defaultEnv())", () => {
+    // Селектор скопирован в границы .wh-env (wdbc-gyj) — на общей странице
+    // «Сцена» el общий с Завесой, и без уточнения нашёлся бы первый
+    // [data-act=reset] в документе, а не свой собственный.
     game.user = { isGM: true };
-    const app = appLike(h => ({ "[data-act=reset]": [single(h, "[data-act=reset]")] }));
+    const SEL = ".wh-env [data-act=reset]";
+    const app = appLike(h => ({ [SEL]: [single(h, SEL)] }));
     const calls = [];
     app._patch = p => calls.push(p);
     EnvironmentApp.prototype._onRender.call(app, {}, {});
-    app.element.handlers["[data-act=reset]:click"]();
+    app.element.handlers[`${SEL}:click`]();
     expect(calls).toEqual([defaultEnv()]);
   });
 });

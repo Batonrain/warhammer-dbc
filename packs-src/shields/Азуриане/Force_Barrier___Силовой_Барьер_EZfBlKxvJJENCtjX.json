@@ -16,7 +16,8 @@
     "status": "inactive",
     "quality": "common",
     "availability": 5,
-    "weight": 0
+    "weight": 0,
+    "bookSource": "Книга Аэльдари, V. Арсенал Эльдар («Силовые щиты эльдар» стр. 94)"
   },
   "_id": "EZfBlKxvJJENCtjX",
   "img": "systems/warhammer-dbc/assets/item-icons/forcefield.svg",

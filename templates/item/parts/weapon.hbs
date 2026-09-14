@@ -60,6 +60,15 @@
       <option value="blast"    {{#if (eq system.damageType "blast")}}selected{{/if}}>Взрывной</option>
       <option value="chemical" {{#if (eq system.damageType "chemical")}}selected{{/if}}>Химический</option>
     </select>
+    <select name="system.damageSubtype" class="wr-select-sm" title="Подвид урона из скобок книги (I(Cr)/X(Fr)/E(El)/E(Fl)/E(Ls)/C(Tx))">
+      <option value="" {{#if (eq system.damageSubtype "")}}selected{{/if}}>— подвид —</option>
+      <option value="crushing"      {{#if (eq system.damageSubtype "crushing")}}selected{{/if}}>Дробящий I(Cr)</option>
+      <option value="fragmentation" {{#if (eq system.damageSubtype "fragmentation")}}selected{{/if}}>Осколочный X(Fr)</option>
+      <option value="electrical"    {{#if (eq system.damageSubtype "electrical")}}selected{{/if}}>Электрический E(El)</option>
+      <option value="flame"         {{#if (eq system.damageSubtype "flame")}}selected{{/if}}>Огненный E(Fl)</option>
+      <option value="laser"         {{#if (eq system.damageSubtype "laser")}}selected{{/if}}>Лазерный E(Ls)</option>
+      <option value="toxic"         {{#if (eq system.damageSubtype "toxic")}}selected{{/if}}>Токсический C(Tx)</option>
+    </select>
     <label class="wr-label">Проб.</label>
     <input type="number" name="system.penetration" value="{{system.penetration}}" class="wr-input-xs"/>
     <label class="wr-label">СКС</label>
@@ -122,6 +131,17 @@
             <option value="energy"   {{#if (eq prof.damageType "energy")}}selected{{/if}}>Энергет.</option>
             <option value="blast"    {{#if (eq prof.damageType "blast")}}selected{{/if}}>Взрывной</option>
             <option value="chemical" {{#if (eq prof.damageType "chemical")}}selected{{/if}}>Химич.</option>
+          </select>
+        </label>
+        <label>Подвид
+          <select class="wprofile-field" data-field="damageSubtype" title="Подвид урона из скобок книги">
+            <option value="" {{#if (eq prof.damageSubtype "")}}selected{{/if}}>—</option>
+            <option value="crushing"      {{#if (eq prof.damageSubtype "crushing")}}selected{{/if}}>Дробящий I(Cr)</option>
+            <option value="fragmentation" {{#if (eq prof.damageSubtype "fragmentation")}}selected{{/if}}>Осколочный X(Fr)</option>
+            <option value="electrical"    {{#if (eq prof.damageSubtype "electrical")}}selected{{/if}}>Электрический E(El)</option>
+            <option value="flame"         {{#if (eq prof.damageSubtype "flame")}}selected{{/if}}>Огненный E(Fl)</option>
+            <option value="laser"         {{#if (eq prof.damageSubtype "laser")}}selected{{/if}}>Лазерный E(Ls)</option>
+            <option value="toxic"         {{#if (eq prof.damageSubtype "toxic")}}selected{{/if}}>Токсический C(Tx)</option>
           </select>
         </label>
         <label>Пробой<input type="number" class="wprofile-field" data-field="penetration" value="{{prof.penetration}}"/></label>

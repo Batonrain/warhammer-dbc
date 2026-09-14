@@ -58,6 +58,7 @@ export function buildAttackContent(v) {
     specificMods,
     sys,
     techSectionsHtml,
+    vehicleSideHtml,
     wp,
     wpDialogHtml,
   } = v;
@@ -150,6 +151,7 @@ return `
       <select id="atk-aim" class="av-input av-wide">${aimHtml}</select>
     </div>
     ${mountHtml}
+    ${vehicleSideHtml}
 
     ${rangeInfoHtml}
     ${distanceHintHtml}

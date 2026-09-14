@@ -235,6 +235,23 @@
         <button type="button" class="veh-orbital-2" data-action="orbitalDeployTurn2" title="Ход 2: приземление со смещением 2d10м, атаки из машины −20"><i class="fas fa-satellite"></i> Орб. высадка: Ход 2</button>
         {{/if}}
       </div>
+      {{#if isWalker}}
+      {{!-- Шагоход: книжные правила Ходовой, которых нет у прочих шасси (wdbc-6wzt) --}}
+      <div class="veh-panel-title">ШАГОХОД</div>
+      <div class="veh-action-btns">
+        <button type="button" class="veh-walker-charge" data-action="walkerCharge" {{#if walkerTipped}}disabled{{/if}} title="Двигается и атакует как персонаж: перемещение до SPD×3 (не менее 4 м) в контакт, рукопашная атака машины в этом Раунде +20. Полное действие пилота."><i class="fas fa-person-running"></i> Натиск{{#if walkerCharged}} — объявлен{{/if}}</button>
+        <button type="button" class="veh-walker-turn" data-action="walkerTurn" title="Раз в Раунд ВНЕ своего Хода — разворот до 180° (подставить Лобовую броню). С Талантом Combat Master у пилота — до ½WS.b раз."><i class="fas fa-rotate"></i> Поворот 180° вне Хода</button>
+        <button type="button" class="veh-walker-all-arms" data-action="walkerAllArms" title="Пилот использует всё оружие машины — дальнее и ближнее — в один Ход, как с Трейтом Multiple Arms. Списывает одно полное действие пилота на все орудия."><i class="fas fa-hand-fist"></i> Весь арсенал за одно действие</button>
+        {{#if walkerTipped}}
+        <button type="button" class="veh-walker-standup" data-action="walkerStandUp" title="Полное действие; с Талантом Leap Up — полудействие"><i class="fas fa-arrow-up"></i> Встать (Опрокинут)</button>
+        {{else}}
+        <button type="button" class="veh-walker-tipover" data-action="walkerTipOver" title="Вместо сбивания с ног Шагоход Опрокидывается: <Размер>d10 урона в приземлившуюся сторону, её АР вдвое ниже; с уступа +1 за каждые ½ м; экипаж T+0 или Оглушение"><i class="fas fa-person-falling"></i> Опрокидывание</button>
+        {{/if}}
+      </div>
+      <div class="veh-hint">
+        <b>Парирование и Уклонение</b> Шагохода — кнопки на карточке атаки по машине (штраф −Размер×10; Уклонение всегда комбинировано с Operate−10). Реакцию тратит пилот, а не машина.
+      </div>
+      {{/if}}
       {{#if derived.traitFlags.advancedControls}}
       <label class="veh-check" title="Ставится автоматически при выстреле из Закреплённого орудия; сбросьте вручную в начале нового Раунда">
         <input type="checkbox" class="veh-flag-toggle" data-flag="movedThisTurn" {{#if system.movedThisTurn}}checked{{/if}}/>

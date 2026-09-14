@@ -15,14 +15,21 @@ import { testOutcome } from "./roll-outcome.mjs";
 /**
  * @param {Actor} actor
  * @param {number} baseThreshold порог ДО бонусов реестра правил (напр. W+0)
+ * @param {object} [opts]
+ * @param {?Actor} [opts.sourceActor] — источник угрозы (wdbc-1rno), если он
+ *   известен на момент теста: стрелок у Подавления. Едет как ctx.targetActor —
+ *   тот же ключ, что у остальных cross-actor правил (Ненависть и т.п.), не
+ *   отдельное имя поля. У Выхода из Шока/Паники от Горения источника нет
+ *   структурно (состояние уже оторвано от исходной угрозы) — вызывающая
+ *   сторона просто не передаёт opts, ведёт себя как раньше.
  * @returns {Promise<{eff:number, bonus:number, roll:Roll, rv:number, rolls:Roll[],
  *   rerollNote:string, success:boolean, dof:number, usedReroll:boolean}>}
  *   dof — степень провала (0 при успехе); usedReroll — был ли доступен и
  *   применён переброс из реестра правил (для applyLordOfExoditesFailPenalty);
  *   parts — подписи применённых модификаторов для карточки.
  */
-export async function rollMoraleTest(actor, baseThreshold) {
-  const resolved = resolveTest({ actor, kind: "skill", char: "wp", morale: true });
+export async function rollMoraleTest(actor, baseThreshold, { sourceActor = null } = {}) {
+  const resolved = resolveTest({ actor, kind: "skill", char: "wp", morale: true, targetActor: sourceActor });
   // autoMods наравне с mods (wdbc-ct65.1): Усталость и прочие штрафы состояния
   // тела — такие же правила реестра, просто без галочки. Спрашивать всё равно
   // негде: тест катается одной кнопкой.

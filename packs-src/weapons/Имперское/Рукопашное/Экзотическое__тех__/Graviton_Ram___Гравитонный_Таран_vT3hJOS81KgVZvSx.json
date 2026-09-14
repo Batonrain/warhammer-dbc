@@ -22,6 +22,7 @@
     "damageType": "impact",
     "penetration": 0,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 217)",
     "availability": 3,
     "weight": 4,
     "attackBonus": 0,
@@ -78,7 +79,8 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Кулаки"
+    "meleeCategory": "Кулаки",
+    "damageSubtype": "crushing"
   },
   "_id": "vT3hJOS81KgVZvSx",
   "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",

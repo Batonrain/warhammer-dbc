@@ -181,6 +181,67 @@ describe("применение расы без прочитанной библи
   });
 });
 
+// wdbc-f8lk: кнопка «Применить» у поля Раса (onRaceApply, actor-sheet.mjs)
+// всегда зовёт applyRace с УЖЕ стоящим ключом расы — это «переприменить эту
+// же расу» (миграция старых персонажей, синхронизация после правки Механики
+// в библиотеке), не «сменить расу». Раньше applyRace безусловно чистила
+// субрасу через clearRace, и повторный клик по той же расе молча сносил
+// уже выбранную субрасу и её бонусы.
+describe("applyRace не трогает субрасу, если раса не меняется (wdbc-f8lk)", () => {
+  const subraceItem = (id) => ({
+    id, type: "subrace",
+    flags: { "warhammer-dbc": { originGrant: "subrace" } },
+    getFlag(scope, key) { return this.flags[scope]?.[key]; }
+  });
+
+  function actorStub(raceKey, items) {
+    const list = [...items];
+    list.get = id => list.find(i => i.id === id) ?? null;
+    const actor = {
+      system: { race: raceKey, subrace: "eldanar", characteristics: chars(), skills: {}, groupSkills: {}, wounds: {} },
+      items: list, updates: [], deleted: [],
+      update: async data => { actor.updates.push(data); actor.system = { ...actor.system, ...flatten(data) }; return data; },
+      createEmbeddedDocuments: async () => [],
+      deleteEmbeddedDocuments: async (_type, ids) => { actor.deleted.push(...ids); return ids; }
+    };
+    return actor;
+  }
+  function flatten(data) {
+    const out = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (k === "system.race") out.race = v;
+      if (k === "system.subrace") out.subrace = v;
+    }
+    return out;
+  }
+
+  it("та же раса, что уже стоит на акторе — субраса остаётся", async () => {
+    const actor = actorStub("aeldari", [subraceItem("sub-1")]);
+
+    await applyRace(actor, "aeldari");
+
+    expect(actor.deleted).not.toContain("sub-1");
+    expect(actor.updates.some(u => u["system.subrace"] === "")).toBe(false);
+  });
+
+  it("другая раса — субраса снимается, как раньше", async () => {
+    const actor = actorStub("aeldari", [subraceItem("sub-1")]);
+
+    await applyRace(actor, "human");
+
+    expect(actor.deleted).toContain("sub-1");
+    expect(actor.updates.some(u => u["system.subrace"] === "")).toBe(true);
+  });
+
+  it("снятие расы (пустой ключ) всё ещё снимает субрасу", async () => {
+    const actor = actorStub("aeldari", [subraceItem("sub-1")]);
+
+    await applyRace(actor, "");
+
+    expect(actor.deleted).toContain("sub-1");
+  });
+});
+
 // Запрет чужой субрасы держался на сверке def.parent с расой актора, но у
 // субрасы, которой нет в библиотеке, def === undefined — сверять было не с чем,
 // и такой ключ проходил насквозь: старая субраса снималась, новая не выдавалась,

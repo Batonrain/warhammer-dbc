@@ -22,6 +22,7 @@
     "damageType": "rending",
     "penetration": 2,
     "quality": "common",
+    "bookSource": "Книга Аэльдари: Ответвления, АРСЕНАЛ ДРУКХАРИ («Осколочное оружие», стр. 112)",
     "availability": 2,
     "weight": 6,
     "attackBonus": 0,
