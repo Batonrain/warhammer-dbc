@@ -1,5 +1,5 @@
 {
-  "name": "Mjod / Мёд",
+  "name": "Mjod / Мьёд",
   "type": "drug",
   "img": "systems/warhammer-dbc/assets/item-icons/drug-poison.svg",
   "system": {
@@ -104,7 +104,7 @@
     "bookSource": "DoomBC — Основная книга, ХИМИЯ («Яды» стр. 287)"
   },
   "folder": "jlFjxNv8CM13npE5",
-  "_id": "neXL9GJrFgr6K1Bt",
+  "_id": "1MovJ0FcC0gCxSTC",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -119,9 +119,9 @@
     "coreVersion": "13.346",
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
-    "createdTime": 1781652069548,
+    "createdTime": 1781650101934,
     "modifiedTime": 1782752980922,
     "lastModifiedBy": "0avJJRhWNcjVNZyk"
   },
-  "_key": "!items!neXL9GJrFgr6K1Bt"
+  "_key": "!items!1MovJ0FcC0gCxSTC"
 }
