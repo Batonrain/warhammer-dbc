@@ -15,7 +15,8 @@ import { shieldCoverageLabel }                        from "../combat/hand-shiel
 import { getLegion, getChapter, buildChapterOptions,
          buildCultureLegionOptions, resolveCulture } from "../constants/legions.mjs";
 import { TECH_MIRACLE_TYPES, TECH_ACTIONS, NOOSPHERE_ACTIONS } from "../constants/tech.mjs";
-import { PSY_DISCIPLINES, TECH_DISCIPLINES }         from "../constants/disciplines.mjs";
+import { PSY_DISCIPLINES, TECH_DISCIPLINES, canHaveFocusDiscipline } from "../constants/disciplines.mjs";
+import { effectiveFocusDisciplines, ownFocusDisciplines, grantedFocusDisciplines } from "../rules/psy-focus.mjs";
 import { implantMech }                               from "../constants/implant-mechanics.mjs";
 import { TALENT_LIBRARY }                            from "../constants/talents-library.mjs";
 import { charAptitudeSet } from "../constants/advancement.mjs";
@@ -1126,6 +1127,7 @@ export function buildGetData(actor) {
   // actor-sheet.mjs, потому что buildGetData может быть вызван и без
   // characterContext (см. test/sheets/psychic-sigillite-runes.test.mjs).
   const _sigilliteRunes = hasRuneMagic(actor);
+  const _psyFocus = effectiveFocusDisciplines(actor);
   context.psyPowers = allItems.filter(i => i.type === "psychicPower").map(i => {
     const s = i.system;
     // Порог считаем только для тестов по характеристике (не Порча/Псинаука-навык).
@@ -1148,6 +1150,7 @@ export function buildGetData(actor) {
       missingMark:  missingMarkForPower(actor, i)?.label ?? "",
       cost:         s.cost ?? 0,
       disciplineLabel: PSY_DISCIPLINES[s.discipline]?.label ?? "",
+      hasFocus:     _psyFocus.includes(s.discipline),
       subtype:      s.subtype || "",
       actionLabel:  PSY_ACTIONS[s.action] ?? s.action ?? "",
       range:        s.range || "—",
@@ -1266,6 +1269,29 @@ export function buildGetData(actor) {
                      (_, i) => ({ charged: (i + 1) <= psyTPR })),
     overload:      psyTPR < 0
   };
+
+  // ── Фокус Дисциплины (wdbc-l6zg) ──────────────────────────────────────────
+  // "own" — выбор игрока (снимаемый чипами ниже), "granted" — дарован
+  // способностью (Perfect Sorcerer и т.п.), чип для него показан, но
+  // заблокирован — снять можно только сняв саму способность.
+  {
+    const own = ownFocusDisciplines(actor);
+    const granted = grantedFocusDisciplines(actor);
+    // Пикер предлагает только группы, которыми психайкер реально «рождается»
+    // (core.json стр.293: «одной из пяти фундаментальных... или изредка
+    // одной из редких») — Регулярные и Аэльдари/Божественные дисциплины
+    // Фокуса при обычном выборе не имеют (canHaveFocusDiscipline).
+    const pickerGroups = ["Фундаментальные", "Редкие"];
+    const chips = Object.entries(PSY_DISCIPLINES)
+      .filter(([key, d]) => granted.includes(key) || (pickerGroups.includes(d.group) && canHaveFocusDiscipline(key)))
+      .map(([key, d]) => ({
+        key, label: d.label,
+        active: own.includes(key) || granted.includes(key),
+        forced: granted.includes(key) && !own.includes(key)
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "ru"));
+    context.psyFocus = { chips, hasAny: chips.some(c => c.active) };
+  }
 
   context.abilityTechPowers = allItems.filter(i => i.type === "techPower").map(i => ({
     id:   i.id,
