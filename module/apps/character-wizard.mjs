@@ -2100,7 +2100,12 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         return;
       }
       this._pendingHomeworldKey = null;
-      applyHomeworldPicks(this.actor, key, {}).then(() => this.render(false));
+      // wdbc-gbpe: было .then(...) без await — быстрая повторная смена
+      // выбора в дропдауне (или медленная сеть) могла запустить ВТОРОЙ
+      // applyHomeworldPicks до того, как первый (clear→grant внутри) успевал
+      // дойти до grant — оба видели «мира ещё нет» и оба создавали предмет.
+      await applyHomeworldPicks(this.actor, key, {});
+      this.render(false);
     });
     // Оживляет строки выбора Родного мира, показанные инлайн выше (живой
     // счётчик специализаций, пикер цели Таланта) — html здесь тот же jQuery-
@@ -2127,7 +2132,10 @@ export class CharacterWizard extends HandlebarsApplicationMixin(ApplicationV2) {
         return;
       }
       this._pendingDivinationKey = null;
-      applyDivinationPicks(this.actor, key, {}).then(() => this.render(false));
+      // wdbc-gbpe: тот же класс гонки, что у applyHomeworldPicks выше —
+      // .then(...) без await, divination-носитель тоже не самотегируется.
+      await applyDivinationPicks(this.actor, key, {});
+      this.render(false);
     });
     {
       const dvChoice = this._divinationChoiceContext();

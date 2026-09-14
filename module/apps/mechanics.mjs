@@ -249,14 +249,21 @@
 //      Отката при снятии предмета НЕТ, и это осознанный пробел: правка
 //      нескольких ЧУЖИХ акторов сразу не укладывается в откат deleteItem,
 //      который работает по флагу на предмете владельца.
-//    condition: { condKey, condMode:"apply"|"remove"|"immunity"|"mitigate",
-//                  condLevel, condMitigate:"ignore"|"half" }
-//      → СОСТОЯНИЕ (wdbc-tl0f). Книга пишет четыре оборота, и до этого вида
+//    condition: { condKey, condMode:"apply"|"remove"|"immunity"|"mitigate"|
+//                  "onTargetFail", condLevel, condMitigate:"ignore"|"half" }
+//      → СОСТОЯНИЕ (wdbc-tl0f). Книга пишет пять оборотов, и до этого вида
 //      записи ни один из них не выражался данными — только кодом:
 //      «накладывает Оглушение на N раундов» (condMode:"apply" + condLevel),
 //      «снимает Кровотечение» (condMode:"remove"), «иммунитет к Ослеплению»
 //      (condMode:"immunity"), «Состояние на нём не даёт обычного штрафа /
-//      даёт половину» (condMode:"mitigate" + condMitigate).
+//      даёт половину» (condMode:"mitigate" + condMitigate), «цель провалила
+//      делегированный тест Сопротивления этой психосилы — Оглушение до начала
+//      своего Хода» (condMode:"onTargetFail" + condLevel/condDurationUnit,
+//      wdbc-tqfj — Choir of Poxes). Пятый режим той же формы, что «Наложить»
+//      (те же поля величины/срока), но триггер другой: не получение предмета
+//      владельцем, а провал ЧУЖОГО делегированного теста, вызванного этим
+//      предметом (module/rules/on-target-fail.mjs, читает Механику ЖИВЬЁМ в
+//      момент резолва теста — не кэширует condKey/уровень/срок заранее).
 //      condKey — ключ из реестра Состояний (constants/conditions.mjs), тот же
 //      источник, из которого строятся схема существа, лист и иконки токена.
 //      Два режима РАЗОВЫЕ, применяются к владельцу в момент получения предмета
@@ -633,15 +640,17 @@ const REROLL_SCOPE_LABEL = (e) => {
 // одно; список оставлен на вырост, чтобы будущее («Снять уровень», «Порог
 // потери сознания») не ломало уже сохранённые записи.
 const FATIGUE_ACTIONS = [["threshold", "Порог штрафа"]];
-// «Состояние» (kind:"condition", wdbc-tl0f) — четыре оборота книги одним
-// каскадом «режим → уточнение». apply/remove разовые (владелец, момент
-// получения), immunity/mitigate живые (читаются rules/condition-guards.mjs и
-// rules/item-rules.mjs). Порядок в списке — от самого частого к редкому.
+// «Состояние» (kind:"condition", wdbc-tl0f/wdbc-tqfj) — пять оборотов книги
+// одним каскадом «режим → уточнение». apply/remove разовые (владелец, момент
+// получения), immunity/mitigate/onTargetFail живые (читаются
+// rules/condition-guards.mjs, rules/item-rules.mjs и rules/on-target-fail.mjs
+// соответственно). Порядок в списке — от самого частого к редкому.
 const CONDITION_MODES_UI = [
-  ["apply",    "Наложить"],
-  ["remove",   "Снять"],
-  ["immunity", "Иммунитет"],
-  ["mitigate", "Смягчить штраф"]
+  ["apply",         "Наложить"],
+  ["remove",        "Снять"],
+  ["immunity",      "Иммунитет"],
+  ["mitigate",      "Смягчить штраф"],
+  ["onTargetFail",  "Цели при провале теста Сопротивления этой психосилы"]
 ];
 const CONDITION_MODE_LABELS = Object.fromEntries(CONDITION_MODES_UI);
 const CONDITION_MITIGATE_UI = [
@@ -1169,6 +1178,11 @@ export function describeMechEntry(entry) {
       const termLabel = durationLabel(term.value, term.unit)
         || (term.unit ? `${term.value} ${term.unit}` : "");
       if (termLabel) bits.push(`на ${termLabel}`);
+      if (mode === "onTargetFail") {
+        return bits.length
+          ? `Состояние: цели при провале теста Сопротивления — «${label}» (${bits.join(", ")})`
+          : `Состояние: цели при провале теста Сопротивления — «${label}»`;
+      }
       return bits.length
         ? `Состояние: наложить «${label}» (${bits.join(", ")})`
         : `Состояние: наложить «${label}»`;
@@ -1338,7 +1352,9 @@ function isEntryComplete(e) {
       // Величина проверяется только там, где она вообще есть: у Состояния без
       // счётчика пустой condLevel — не незаполненность записи.
       if (!e.condKey || !CONDITIONS_DEF[e.condKey]) return false;
-      if ((e.condMode || "apply") !== "apply") return true;
+      // onTargetFail несёт те же поля величины/срока, что apply — проверяется
+      // так же, не как immunity/remove/mitigate ниже (только condKey).
+      if (!["apply", "onTargetFail"].includes(e.condMode || "apply")) return true;
       // Сила проверяется только там, где она вообще есть; срок — только если
       // автор его задал (единица непуста). Ни то ни другое не обязательно:
       // «Повален» без срока и без уровня — полноценная запись.
@@ -1944,10 +1960,12 @@ export async function applyMechEntry(actor, entry, sourceItem, fromChoice = fals
     const key = String(entry.condKey || "").trim();
     if (!key || !CONDITIONS_DEF[key]) return;
     const mode = entry.condMode || "apply";
-    // Иммунитет и Смягчение — живой запрос, как fatigue выше: их читают
-    // rules/condition-guards.mjs (в момент наложения) и rules/item-rules.mjs
-    // (в момент броска). Писать и откатывать нечего.
-    if (mode === "immunity" || mode === "mitigate") return;
+    // Иммунитет, Смягчение и «цели при провале теста Сопротивления» — живой
+    // запрос, как fatigue выше: их читают rules/condition-guards.mjs (в момент
+    // наложения), rules/item-rules.mjs (в момент броска) и
+    // rules/on-target-fail.mjs (в момент финализации делегированного теста,
+    // wdbc-tqfj) соответственно. Писать и откатывать нечего.
+    if (mode === "immunity" || mode === "mitigate" || mode === "onTargetFail") return;
     if (mode === "remove") {
       const fields = conditionRemoveFields(key);
       if (Object.keys(fields).length) await actor.update(fields);
@@ -3354,15 +3372,16 @@ function buildEntryFieldsHtml(groupId, ent, canEdit) {
     // Сила и срок — разные поля и разные вопросы (wdbc-uqco). Сила есть только
     // у Состояний со счётчиком «уровни/штуки»: у «раундов» счётчик и ЕСТЬ срок,
     // спрашивать его дважды незачем.
+    const hasLevelTermFields = mode === "apply" || mode === "onTargetFail";
     const counter = conditionCounterLabel(ent.condKey);
-    const levelInput = (mode === "apply" && conditionHasLevelInput(ent.condKey))
+    const levelInput = (hasLevelTermFields && conditionHasLevelInput(ent.condKey))
       ? `<input type="text" class="mech-cond-level" data-group-id="${groupId}" data-entry-id="${ent.id}"
                 value="${esc(ent.condLevel ?? "")}" placeholder="${esc(counter)}: 1 или t"
                 title="${esc(MECH_FORMULA_HINT)}" ${dis}/>`
       : "";
     const term = conditionEntryTerm(ent);
     const unitOpts = DURATION_UNITS.map(u => optHtml(u.key, u.label, term.unit === u.key)).join("");
-    const termHtml = mode === "apply"
+    const termHtml = hasLevelTermFields
       ? `<input type="text" class="mech-cond-duration" data-group-id="${groupId}" data-entry-id="${ent.id}"
                 value="${esc(term.value ?? "")}" placeholder="срок: 2 или t" title="${esc(MECH_FORMULA_HINT)}"
                 ${term.unit ? "" : "disabled"} ${dis}/>

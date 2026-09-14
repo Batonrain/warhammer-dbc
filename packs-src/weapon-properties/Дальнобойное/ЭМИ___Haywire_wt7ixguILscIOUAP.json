@@ -8,7 +8,7 @@
     "reminder": "📡 ЭМИ (X): нарушает высокотех. снаряжение (таблица 1d10+X)",
     "category": "ranged",
     "hasRating": true,
-    "hasRating2": false,
+    "hasRating2": true,
     "autoKey": "haywire",
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Особые свойства оружия», стр. 166)"
   },
