@@ -23,7 +23,20 @@
     "damage": "2d10+2*PR",
     "damageType": "energy",
     "penetration": 0,
-    "weaponProps": [],
+    "weaponProps": [
+      {
+        "key": "arc",
+        "rating": 6,
+        "rating2": "2d10+PR"
+      },
+      {
+        "key": "blinding",
+        "rating": 0
+      },
+      {
+        "key": "shocking"
+      }
+    ],
     "charDamageStat": "",
     "charDamageFormula": "",
     "profiles": [],
