@@ -380,7 +380,11 @@ export function creatureSchema({ granted = false } = {}) {
       class:         str("bound", "Класс псайкера"),
       rating:        num(0, "Психорейтинг"),
       sustain:       num(0, "Поддерживается"),
-      currentRating: num(0, "Текущий рейтинг")
+      currentRating: num(0, "Текущий рейтинг"),
+      // wdbc-l6zg: Фокус Дисциплины — выбор игрока при создании персонажа
+      // (core.json стр.293), ключи PSY_DISCIPLINES. Читатель:
+      // module/rules/psy-focus.mjs::effectiveFocusDisciplines.
+      focusDisciplines: strList("Фокусы Дисциплин")
     }, { label: "Псайкер" }),
     cognition: new SchemaField({
       value: num(0, "Текущая"), max: num(0, "Максимум"), regen: num(0, "Восстановление")

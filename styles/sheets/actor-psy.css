@@ -116,6 +116,24 @@
 .warhammer-dbc .psy-rf-val { font-size: 1.5em; font-weight: 800; color: var(--pc); text-shadow: 0 0 10px color-mix(in srgb, var(--pc) 50%, transparent); line-height: 1; }
 .warhammer-dbc .psy-rf-static { font-size: 1em; font-weight: 700; color: var(--pc2); padding: 3px 2px; }
 
+/* ── Фокус Дисциплины (wdbc-l6zg) ───────────────────────── */
+.warhammer-dbc .psy-focus-row { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 12px 0; }
+.warhammer-dbc .psy-focus-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.warhammer-dbc .psy-focus-chip {
+  font-size: 0.72em; padding: 1px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap;
+  color: #9fb0c4; background: rgba(0,0,0,0.3); border: 1px solid color-mix(in srgb, var(--pc) 25%, transparent);
+}
+.warhammer-dbc .psy-focus-chip:hover:not(:disabled) { border-color: var(--pc); color: #e7eefb; }
+.warhammer-dbc .psy-focus-chip.active {
+  color: color-mix(in srgb, var(--pc) 75%, #fff); background: var(--pc-soft);
+  border-color: var(--pc); box-shadow: 0 0 6px -1px var(--pc);
+}
+.warhammer-dbc .psy-focus-chip:disabled { cursor: help; opacity: 0.85; }
+.warhammer-dbc .psy-focus-badge {
+  font-size: 0.95em; font-weight: 700; color: color-mix(in srgb, var(--pc) 70%, #ffd76a);
+  cursor: help;
+}
+
 /* ── Подсказки ──────────────────────────────────────────── */
 .warhammer-dbc .psy-hint { position: relative; z-index: 1; font-size: 0.8em; line-height: 1.55; color: #aab6c8; padding: 6px 12px 2px; }
 .warhammer-dbc .psy-hint b { color: color-mix(in srgb, var(--pc) 60%, #d6e2f2); }
