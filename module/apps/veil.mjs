@@ -747,7 +747,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const pack = game.packs.get(isVehicle ? "warhammer-dbc.vehicle-traits" : "warhammer-dbc.traits");
     if (!pack) return [];
     const wanted = isVehicle
-      ? [{ starts: "Демонический (", rating: wb }, { starts: "Существо из Кошмаров", rating: null }]
+      ? [{ starts: "Daemonic (", rating: wb }, { starts: "Stuff of Nightmares", rating: null }]
       : [{ starts: "Daemonic /", rating: wb }, { starts: "Stuff of Nightmares", rating: null }];
 
     const docs = await pack.getDocuments();

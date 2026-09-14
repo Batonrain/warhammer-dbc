@@ -104,7 +104,7 @@
   },
   "items": [
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -163,7 +163,7 @@
       "_key": "!actors.items!clBlKJmTkpz85hqE.kHfCCee3dxciC9hq"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -237,7 +237,7 @@
       "_key": "!actors.items!clBlKJmTkpz85hqE.2r04sdMhRw0E9ctZ"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

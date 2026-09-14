@@ -55,7 +55,7 @@
   },
   "items": [
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -114,7 +114,7 @@
       "_key": "!actors.items!4OpMp1BRUPFofoLu.rx4Zun6ssHn40OEs"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -173,7 +173,7 @@
       "_key": "!actors.items!4OpMp1BRUPFofoLu.3NIqP20PlI4XYRQw"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

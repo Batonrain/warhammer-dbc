@@ -69,7 +69,7 @@
   },
   "items": [
     {
-      "name": "Амфибия / Amphibious",
+      "name": "Amphibious / Амфибия",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -130,7 +130,7 @@
       "_key": "!actors.items!8Oen6utGJctwCNAd.I2e7l4xsnc5FMSHE"
     },
     {
-      "name": "Командно-Штабная / Command & Control",
+      "name": "Command & Control / Командно-Штабная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -189,7 +189,7 @@
       "_key": "!actors.items!8Oen6utGJctwCNAd.vLSWPThCxMErzzlQ"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -248,7 +248,7 @@
       "_key": "!actors.items!8Oen6utGJctwCNAd.ORzYJ8gvqtO9Y4ob"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -307,7 +307,7 @@
       "_key": "!actors.items!8Oen6utGJctwCNAd.KrsxVU7O8v2ipZqg"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -366,7 +366,7 @@
       "_key": "!actors.items!8Oen6utGJctwCNAd.3J8kzCJt0ifOBO9K"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

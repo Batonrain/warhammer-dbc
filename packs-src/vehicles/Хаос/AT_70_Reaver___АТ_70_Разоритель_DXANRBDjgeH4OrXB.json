@@ -352,7 +352,7 @@
       "_key": "!actors.items!DXANRBDjgeH4OrXB.Y3tuXH2XvvOuBOw3"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -411,7 +411,7 @@
       "_key": "!actors.items!DXANRBDjgeH4OrXB.ZgwgYMv4InPR6LUo"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -485,7 +485,7 @@
       "_key": "!actors.items!DXANRBDjgeH4OrXB.6EboZruFj8GQdq1E"
     },
     {
-      "name": "Громоздкая / Ponderous",
+      "name": "Ponderous / Громоздкая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -544,7 +544,7 @@
       "_key": "!actors.items!DXANRBDjgeH4OrXB.WC1cpKkxqpRkcRxB"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -603,7 +603,7 @@
       "_key": "!actors.items!DXANRBDjgeH4OrXB.071PhIZABv6jpfru"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -662,7 +662,7 @@
       "_key": "!actors.items!DXANRBDjgeH4OrXB.gt0eIq4ZlkzohZnB"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

@@ -455,7 +455,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.E0AgNYM7OrYnlcVR"
     },
     {
-      "name": "Атоматические Щиты / Atomantic Shielding",
+      "name": "Atomantic Shielding / Атоматические Щиты",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -514,7 +514,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.2NrLaVoxMb6P3ubt"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -573,7 +573,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.rmGjOsuMClhjWzV7"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -647,7 +647,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.pZ4z1vmAsaxpYXVS"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -706,7 +706,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.FizX8l6qIKmgGteT"
     },
     {
-      "name": "Перезарядка на Земле / Land Resupply",
+      "name": "Land Resupply / Перезарядка на Земле",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -765,7 +765,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.Z6lFFR1VCr4CznWK"
     },
     {
-      "name": "Мультиприцел / Multi-Targeter",
+      "name": "Multi-Targeter / Мультиприцел",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -835,7 +835,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.I5x5NADQRT0m3gL7"
     },
     {
-      "name": "Штурм / Onslaught",
+      "name": "Onslaught / Штурм",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -905,7 +905,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.ZEUAOUo3EJWYoqMz"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -964,7 +964,7 @@
       "_key": "!actors.items!yTXm4Iij7i8TbnT5.3slPc2EpVGxmHagQ"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

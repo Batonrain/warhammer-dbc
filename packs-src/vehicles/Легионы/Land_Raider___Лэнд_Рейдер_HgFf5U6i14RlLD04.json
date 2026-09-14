@@ -139,7 +139,7 @@
   },
   "items": [
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -209,7 +209,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.iaYH3mVSzfXOa6qW"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -279,7 +279,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.uscKHRuiWlmfr4Y2"
     },
     {
-      "name": "Штурмовая Рампа / Assault Ramp",
+      "name": "Assault Ramp / Штурмовая Рампа",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -353,7 +353,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.UhzNFWyWkDjY8cNO"
     },
     {
-      "name": "Автозарядник / Auto-Loader",
+      "name": "Auto-Loader / Автозарядник",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -412,7 +412,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.2I966ba76SnI4BSH"
     },
     {
-      "name": "Автономная / Autonomous",
+      "name": "Autonomous / Автономная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -471,7 +471,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.sG5vWy92W1TIREy1"
     },
     {
-      "name": "Командно-Штабная / Command & Control",
+      "name": "Command & Control / Командно-Штабная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -530,7 +530,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.sH7ry9RSgccyFyLt"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -604,7 +604,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.x84U2QdbtOUTcnQN"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -663,7 +663,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.UoeYplr97p27KcZC"
     },
     {
-      "name": "Легион / Legion",
+      "name": "Legion / Легион",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -722,7 +722,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.cjPhvkA3qW7BqPj0"
     },
     {
-      "name": "Мультиприцел / Multi-Targeter",
+      "name": "Multi-Targeter / Мультиприцел",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -792,7 +792,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.H8ajyzoDTO6uc4bZ"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -851,7 +851,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.MOkDql1F76Y79zBs"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -925,7 +925,7 @@
       "_key": "!actors.items!HgFf5U6i14RlLD04.FiWKwQKTuMzF7Pbi"
     },
     {
-      "name": "Боковые Двери / Side Hatches",
+      "name": "Side Hatches / Боковые Двери",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

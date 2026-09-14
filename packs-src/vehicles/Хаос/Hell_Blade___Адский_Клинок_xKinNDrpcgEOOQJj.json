@@ -248,7 +248,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.yWpLUrLiny2u2ued"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -318,7 +318,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.fDzyc0gosfdPqNJZ"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -388,7 +388,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.Xgsii8So3nLtIkdb"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -462,7 +462,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.GLqwZNhhSed0vGWM"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -521,7 +521,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.M1nkdDuXa2bs3SKg"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -595,7 +595,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.VLfX18IhwsdJZybP"
     },
     {
-      "name": "Векторные Двигатели / Vector Thrusters",
+      "name": "Vector Thrusters / Векторные Двигатели",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -654,7 +654,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.E6CVV6yg7PKlMSfq"
     },
     {
-      "name": "Космолет / Voidcraft",
+      "name": "Voidcraft / Космолет",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -713,7 +713,7 @@
       "_key": "!actors.items!xKinNDrpcgEOOQJj.0dVpeeoo7AdXFgd4"
     },
     {
-      "name": "Вертикальный Взлёт / VTOL",
+      "name": "VTOL / Вертикальный Взлёт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!KGv6kUYRRgIyS6uP.w3dyfpOAQz0fS8lf"
     },
     {
-      "name": "Штурм / Onslaught",
+      "name": "Onslaught / Штурм",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -177,7 +177,7 @@
       "_key": "!actors.items!KGv6kUYRRgIyS6uP.u3LUuifwFKSYEbXs"
     },
     {
-      "name": "Векторные Двигатели / Vector Thrusters",
+      "name": "Vector Thrusters / Векторные Двигатели",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -236,7 +236,7 @@
       "_key": "!actors.items!KGv6kUYRRgIyS6uP.4DT0duRwv2wb8sKx"
     },
     {
-      "name": "Космолет / Voidcraft",
+      "name": "Voidcraft / Космолет",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -295,7 +295,7 @@
       "_key": "!actors.items!KGv6kUYRRgIyS6uP.7Rqoo3XaMIMpS1in"
     },
     {
-      "name": "Вертикальный Взлёт / VTOL",
+      "name": "VTOL / Вертикальный Взлёт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

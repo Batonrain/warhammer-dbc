@@ -69,7 +69,7 @@
   },
   "items": [
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -139,7 +139,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.ohNNONg0eAFJ68Y7"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -209,7 +209,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.Lb0gC0KrzIvk931Q"
     },
     {
-      "name": "Автозарядник / Auto-Loader",
+      "name": "Auto-Loader / Автозарядник",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -268,7 +268,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.AtTPz2zT6El250BT"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -327,7 +327,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.kLLlYoybpzQJKfkH"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -401,7 +401,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.O7aHWeI3YkuDaTKA"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -460,7 +460,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.bwCObL2VC7uMM3Tf"
     },
     {
-      "name": "Легион / Legion",
+      "name": "Legion / Легион",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -519,7 +519,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.oS5KYNm2ppQTbZ8y"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -578,7 +578,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.q3mb3bLLEui1Pk0p"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -637,7 +637,7 @@
       "_key": "!actors.items!SBdOVLjQieG6iiRg.40YCqjJ2ENJVXwk3"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

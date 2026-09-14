@@ -118,7 +118,7 @@
   },
   "items": [
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -188,7 +188,7 @@
       "_key": "!actors.items!5lq0qMVXZHIU8SBN.wELY4Qy0NDh9OmJF"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -247,7 +247,7 @@
       "_key": "!actors.items!5lq0qMVXZHIU8SBN.ydF4LGkRHx4awEMb"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -321,7 +321,7 @@
       "_key": "!actors.items!5lq0qMVXZHIU8SBN.iuqC2k93iI0omvfR"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -380,7 +380,7 @@
       "_key": "!actors.items!5lq0qMVXZHIU8SBN.70LN10CGbwlWndvP"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -454,7 +454,7 @@
       "_key": "!actors.items!5lq0qMVXZHIU8SBN.7V2ikRGacSnfSsjZ"
     },
     {
-      "name": "Боковые Двери / Side Hatches",
+      "name": "Side Hatches / Боковые Двери",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

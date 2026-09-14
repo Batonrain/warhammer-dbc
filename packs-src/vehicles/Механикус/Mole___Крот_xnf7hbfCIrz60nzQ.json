@@ -234,7 +234,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.TPV9aGl7GUBYiDTd"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -304,7 +304,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.ksXzSkHPWWtdDfCq"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -374,7 +374,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.BwmGTp0aADSutbK6"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -448,7 +448,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.t0LiWseJ44VLfspE"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -507,7 +507,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.gEbRTjpbIKBsCwKW"
     },
     {
-      "name": "Громоздкая / Ponderous",
+      "name": "Ponderous / Громоздкая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -566,7 +566,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.FBfgQxsqVw9qxGOG"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -625,7 +625,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.qOGMjJf3Vncs6T4R"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -684,7 +684,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.F9fV4GBIGH4BLgV6"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -758,7 +758,7 @@
       "_key": "!actors.items!xnf7hbfCIrz60nzQ.ppDjzqNX9nvrOnxk"
     },
     {
-      "name": "Боковые Двери / Side Hatches",
+      "name": "Side Hatches / Боковые Двери",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

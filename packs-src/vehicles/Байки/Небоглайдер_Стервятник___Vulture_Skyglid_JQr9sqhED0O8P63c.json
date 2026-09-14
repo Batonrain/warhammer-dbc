@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Аблативное Бронирование / Ablative Plating",
+      "name": "Ablative Plating / Аблативное Бронирование",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!JQr9sqhED0O8P63c.WtFPts0OgGQExC3i"
     },
     {
-      "name": "Интегрированное Оружие / Integral Weapon",
+      "name": "Integral Weapon / Интегрированное Оружие",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!JQr9sqhED0O8P63c.Id57AIlSy46G0MYb"
     },
     {
-      "name": "Парящий (X) / Hoverer (X)",
+      "name": "Hoverer (X) / Парящий (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -225,7 +225,7 @@
       "_key": "!actors.items!JQr9sqhED0O8P63c.B3Pt4mMaEOwyrYmF"
     },
     {
-      "name": "Стойка / Stand",
+      "name": "Stand / Стойка",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

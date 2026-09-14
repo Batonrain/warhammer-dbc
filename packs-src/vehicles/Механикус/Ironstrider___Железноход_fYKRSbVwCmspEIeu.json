@@ -160,7 +160,7 @@
       "_key": "!actors.items!fYKRSbVwCmspEIeu.N6h5uSpXcRRd0we0"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -219,7 +219,7 @@
       "_key": "!actors.items!fYKRSbVwCmspEIeu.Fr95LbhcOKL0lA2H"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -278,7 +278,7 @@
       "_key": "!actors.items!fYKRSbVwCmspEIeu.xv6TwhgnTAwejAgG"
     },
     {
-      "name": "Перезарядка на Земле / Land Resupply",
+      "name": "Land Resupply / Перезарядка на Земле",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -337,7 +337,7 @@
       "_key": "!actors.items!fYKRSbVwCmspEIeu.8wUlZY6vCQn1GKao"
     },
     {
-      "name": "Штурм / Onslaught",
+      "name": "Onslaught / Штурм",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -407,7 +407,7 @@
       "_key": "!actors.items!fYKRSbVwCmspEIeu.Q6ZU55wnwf9FyUSx"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

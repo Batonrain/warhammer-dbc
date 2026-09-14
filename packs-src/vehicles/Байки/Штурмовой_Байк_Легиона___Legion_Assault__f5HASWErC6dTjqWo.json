@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Аблативное Бронирование / Ablative Plating",
+      "name": "Ablative Plating / Аблативное Бронирование",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!f5HASWErC6dTjqWo.uu74UkBcQXG870Be"
     },
     {
-      "name": "Вездеход / All-Terrain",
+      "name": "All-Terrain / Вездеход",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!f5HASWErC6dTjqWo.MiTOboABKCscEEnU"
     },
     {
-      "name": "Лезвия (X) / Blades (X)",
+      "name": "Blades (X) / Лезвия (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -225,7 +225,7 @@
       "_key": "!actors.items!f5HASWErC6dTjqWo.w07kYKiV0jEBZupL"
     },
     {
-      "name": "Интегрированное Оружие / Integral Weapon",
+      "name": "Integral Weapon / Интегрированное Оружие",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -284,7 +284,7 @@
       "_key": "!actors.items!f5HASWErC6dTjqWo.gbb8nK2XxNOxfw5Y"
     },
     {
-      "name": "Легион / Legion",
+      "name": "Legion / Легион",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -343,7 +343,7 @@
       "_key": "!actors.items!f5HASWErC6dTjqWo.sVNDcRqvAw8sxeO9"
     },
     {
-      "name": "Коляска (X) / Sidecar (X)",
+      "name": "Sidecar (X) / Коляска (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

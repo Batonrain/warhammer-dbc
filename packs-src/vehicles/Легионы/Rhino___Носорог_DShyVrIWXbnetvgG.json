@@ -118,7 +118,7 @@
   },
   "items": [
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -188,7 +188,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.fpIS0oqj0CxrGm2P"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -258,7 +258,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.0QW4cJOeU781YiR8"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -317,7 +317,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.wUJmKZ2onRSC5sUR"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -391,7 +391,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.kmkX8TTqKzGwqloj"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -450,7 +450,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.HMa7KV46aPFxs8ko"
     },
     {
-      "name": "Легион / Legion",
+      "name": "Legion / Легион",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -509,7 +509,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.svY2eXzqwhwJE6cO"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -568,7 +568,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.PpQFCmebr7APEwTM"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -627,7 +627,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.Vt1etrVQXODV0ndH"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -701,7 +701,7 @@
       "_key": "!actors.items!DShyVrIWXbnetvgG.2wG79mmFfJyynZDe"
     },
     {
-      "name": "Боковые Двери / Side Hatches",
+      "name": "Side Hatches / Боковые Двери",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

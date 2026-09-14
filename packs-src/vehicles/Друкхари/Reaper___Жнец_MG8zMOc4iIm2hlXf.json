@@ -188,7 +188,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.XFQnIcSuQK1ET1z2"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -258,7 +258,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.sB9TgyHeuNnA6tqA"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -328,7 +328,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.3PsuEh4odOkaYbFV"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -387,7 +387,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.K2Zmn8hBGRN35aKY"
     },
     {
-      "name": "Тормоза Падения / Fall Breaks",
+      "name": "Fall Breaks / Тормоза Падения",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -453,7 +453,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.lhPegplrpHtaTLWm"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -512,7 +512,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.9cnbqej9rMRVJXdF"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -571,7 +571,7 @@
       "_key": "!actors.items!MG8zMOc4iIm2hlXf.qgQzeK6XOTgAUYEX"
     },
     {
-      "name": "Мерцающие Поля / Flickerfield",
+      "name": "Flickerfield / Мерцающие Поля",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

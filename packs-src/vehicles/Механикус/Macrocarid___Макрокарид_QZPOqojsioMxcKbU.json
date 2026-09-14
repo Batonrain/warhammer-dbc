@@ -238,7 +238,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.EBm8APk2bR84j71B"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -308,7 +308,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.CoPjGY1xpPjrAzWK"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -378,7 +378,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.amVRJuPhU2jQjjE1"
     },
     {
-      "name": "Автозарядник / Auto-Loader",
+      "name": "Auto-Loader / Автозарядник",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -437,7 +437,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.cr8zLzM3YJUqyGB2"
     },
     {
-      "name": "Автономная / Autonomous",
+      "name": "Autonomous / Автономная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -496,7 +496,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.pHkgLj055qdCRbj0"
     },
     {
-      "name": "Командно-Штабная / Command & Control",
+      "name": "Command & Control / Командно-Штабная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -555,7 +555,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.XGRJkdoO8vNT49wh"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -614,7 +614,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.ihMwLlzzQLFvI6PR"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -688,7 +688,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.HmIj9NK7oIcjOCJV"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -747,7 +747,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.fYPmIq6gif4uI940"
     },
     {
-      "name": "Мультиприцел / Multi-Targeter",
+      "name": "Multi-Targeter / Мультиприцел",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -817,7 +817,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.JAA3pGuAUlhoOJGC"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -876,7 +876,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.597IikfrmnrZ4lLm"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -950,7 +950,7 @@
       "_key": "!actors.items!QZPOqojsioMxcKbU.dDRGZANxBluNFv6A"
     },
     {
-      "name": "Боковые Двери / Side Hatches",
+      "name": "Side Hatches / Боковые Двери",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

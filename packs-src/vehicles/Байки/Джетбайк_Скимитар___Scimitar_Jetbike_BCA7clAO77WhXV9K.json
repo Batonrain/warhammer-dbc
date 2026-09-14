@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Аблативное Бронирование / Ablative Plating",
+      "name": "Ablative Plating / Аблативное Бронирование",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!BCA7clAO77WhXV9K.s1dBlyv2u2vuKeh6"
     },
     {
-      "name": "Парящий (X) / Hoverer (X)",
+      "name": "Hoverer (X) / Парящий (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!BCA7clAO77WhXV9K.9NA6BdUuHmgI1C6y"
     },
     {
-      "name": "Интегрированное Оружие / Integral Weapon",
+      "name": "Integral Weapon / Интегрированное Оружие",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -225,7 +225,7 @@
       "_key": "!actors.items!BCA7clAO77WhXV9K.RiqimoAbL2XKpfR2"
     },
     {
-      "name": "Легион / Legion",
+      "name": "Legion / Легион",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

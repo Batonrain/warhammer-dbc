@@ -480,7 +480,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.sI3QkxuA3OkVCqH8"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -550,7 +550,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.2DgqOSf8sD7SRWxq"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -609,7 +609,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.KwDLxsul9aSor89h"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -668,7 +668,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.WKB4WvZK9P1OACgX"
     },
     {
-      "name": "Тормоза Падения / Fall Breaks",
+      "name": "Fall Breaks / Тормоза Падения",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -734,7 +734,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.jdWnQ6SMfQHJFlEz"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -793,7 +793,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.b9w2xe6EzFNgctew"
     },
     {
-      "name": "Мерцающие Поля / Flickerfield",
+      "name": "Flickerfield / Мерцающие Поля",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -852,7 +852,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.2TVB7uXgvqrD0Rt5"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -922,7 +922,7 @@
       "_key": "!actors.items!yPTXIoNTH8C48Gz4.MWsG8oZF5wV1i5GJ"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

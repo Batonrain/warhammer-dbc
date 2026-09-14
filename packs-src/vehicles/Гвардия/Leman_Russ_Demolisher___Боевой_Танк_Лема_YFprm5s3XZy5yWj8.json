@@ -474,7 +474,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.d478XpYz6TR8nAhs"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -533,7 +533,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.ccIzfSCVMouAa4cC"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -607,7 +607,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.2yYsHa0xBo7hwdkE"
     },
     {
-      "name": "Громоздкая / Ponderous",
+      "name": "Ponderous / Громоздкая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -666,7 +666,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.tvrRUg6ldFogM1CA"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -725,7 +725,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.BLTmPyAEYEGeZ5Pl"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -784,7 +784,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.8r19TjX46DXhfNdh"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -858,7 +858,7 @@
       "_key": "!actors.items!YFprm5s3XZy5yWj8.xsDjR9mvPwEFwA1o"
     },
     {
-      "name": "Осадная / Siege",
+      "name": "Siege / Осадная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

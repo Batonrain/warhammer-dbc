@@ -240,7 +240,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.887XsGVGEVYA3KBV"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -310,7 +310,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.X96nD3BmHFndkGdW"
     },
     {
-      "name": "Автозарядник / Auto-Loader",
+      "name": "Auto-Loader / Автозарядник",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -369,7 +369,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.8euScCakc9HGP9j6"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -443,7 +443,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.X0SgupDlRlUu9ySo"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -502,7 +502,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.aGczbL1hRvf4LZoX"
     },
     {
-      "name": "Многоногая / Multi-Legged",
+      "name": "Multi-Legged / Многоногая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -561,7 +561,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.iL5aEKzODhNZArDx"
     },
     {
-      "name": "Мультиприцел / Multi-Targeter",
+      "name": "Multi-Targeter / Мультиприцел",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -631,7 +631,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.siU0kBxGYYwzMAyB"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -690,7 +690,7 @@
       "_key": "!actors.items!mGPhEF5eb7SQn3iQ.KYst7b1rlHZH9LuY"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

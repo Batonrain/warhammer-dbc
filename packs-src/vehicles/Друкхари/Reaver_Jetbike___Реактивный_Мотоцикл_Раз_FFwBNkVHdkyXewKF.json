@@ -242,7 +242,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.seLwfxkNxoVJRdVZ"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -312,7 +312,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.tyo1dYuUzIK2A5bF"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -371,7 +371,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.khc5IVYkMEy7GDKK"
     },
     {
-      "name": "Тормоза Падения / Fall Breaks",
+      "name": "Fall Breaks / Тормоза Падения",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -437,7 +437,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.HijAW8ynWgoCkEW9"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -496,7 +496,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.gauCw4cwyvlYt1dr"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -566,7 +566,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.2PZzqN0oIu6memNF"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -625,7 +625,7 @@
       "_key": "!actors.items!FFwBNkVHdkyXewKF.ou0f4VwbtN7a3t0V"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

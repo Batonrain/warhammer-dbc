@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Аблативное Бронирование / Ablative Plating",
+      "name": "Ablative Plating / Аблативное Бронирование",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!IRRUC3bP9pxmHMi4.yPQo7iNdt4xxG3aQ"
     },
     {
-      "name": "Лезвия (X) / Blades (X)",
+      "name": "Blades (X) / Лезвия (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!IRRUC3bP9pxmHMi4.wEKNgilAILLmFwrP"
     },
     {
-      "name": "Парящий (X) / Hoverer (X)",
+      "name": "Hoverer (X) / Парящий (X)",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -225,7 +225,7 @@
       "_key": "!actors.items!IRRUC3bP9pxmHMi4.rpcOgU58owS9QWOf"
     },
     {
-      "name": "Манёвренный / Maneuverable",
+      "name": "Maneuverable / Манёвренный",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -284,7 +284,7 @@
       "_key": "!actors.items!IRRUC3bP9pxmHMi4.274yy6gv7w1rHXVa"
     },
     {
-      "name": "Стойка / Stand",
+      "name": "Stand / Стойка",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

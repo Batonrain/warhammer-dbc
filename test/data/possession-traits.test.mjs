@@ -20,7 +20,7 @@ const WANTED = {
   },
   "vehicle-traits": {
     type: "vehicleTrait",
-    starts: ["Демонический (", "Существо из Кошмаров"]
+    starts: ["Daemonic (", "Stuff of Nightmares"]
   }
 };
 
@@ -40,8 +40,8 @@ describe("Черты Одержимости лежат в паках под ож
   // поиск по подстроке «Daemonic» нашёл бы обе.
   it("Daemonic и Daemonic Possession — разные Черты техники", () => {
     const docs = packDocuments("vehicle-traits", "vehicleTrait").map(({ doc }) => doc);
-    const daemonic = docs.find(d => d.name.startsWith("Демонический ("));
-    const possession = docs.find(d => d.name.startsWith("Демоническая Одержимость"));
+    const daemonic = docs.find(d => d.name.startsWith("Daemonic ("));
+    const possession = docs.find(d => d.name.startsWith("Daemonic Possession"));
     expect(possession).toBeTruthy();
     expect(daemonic.name).not.toBe(possession.name);
     expect(possession.system.effects.deflectorShield).toBe(true);

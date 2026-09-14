@@ -48,7 +48,7 @@
   },
   "items": [
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -107,7 +107,7 @@
       "_key": "!actors.items!eUElNnkSUXdaO2pX.32JNrwv8vFh8R5Na"
     },
     {
-      "name": "Многоногая / Multi-Legged",
+      "name": "Multi-Legged / Многоногая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -166,7 +166,7 @@
       "_key": "!actors.items!eUElNnkSUXdaO2pX.VvqrQ4e8nb4KVkb5"
     },
     {
-      "name": "Штурм / Onslaught",
+      "name": "Onslaught / Штурм",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -236,7 +236,7 @@
       "_key": "!actors.items!eUElNnkSUXdaO2pX.Flgub78tB7LiBmCN"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

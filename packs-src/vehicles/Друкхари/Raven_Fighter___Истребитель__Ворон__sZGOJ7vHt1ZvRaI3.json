@@ -359,7 +359,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.TpyumpNSr6BN31ag"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -429,7 +429,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.VfxkWebk6ONF9vgm"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -499,7 +499,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.WAvSsNRxL2d26Gfq"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -573,7 +573,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.L5tNlc5ZJZ4DfOxf"
     },
     {
-      "name": "Тормоза Падения / Fall Breaks",
+      "name": "Fall Breaks / Тормоза Падения",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -639,7 +639,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.2vYxuAmBraWTZyuC"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -698,7 +698,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.IHOPslrH89cxetWo"
     },
     {
-      "name": "Перезарядка на Земле / Land Resupply",
+      "name": "Land Resupply / Перезарядка на Земле",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -757,7 +757,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.eQXQCS0W06VCrirN"
     },
     {
-      "name": "Мультиприцел / Multi-Targeter",
+      "name": "Multi-Targeter / Мультиприцел",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -827,7 +827,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.jCA5gZ4GNsGRHwB3"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -886,7 +886,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.l5ybFlWnadZJICPN"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -960,7 +960,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.g9HwRBrZOHUHwVnv"
     },
     {
-      "name": "Векторные Двигатели / Vector Thrusters",
+      "name": "Vector Thrusters / Векторные Двигатели",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1019,7 +1019,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.vTpqhw7Joem243Dv"
     },
     {
-      "name": "Космолет / Voidcraft",
+      "name": "Voidcraft / Космолет",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1078,7 +1078,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.Uix2NJzHSp5kKi6C"
     },
     {
-      "name": "Вертикальный Взлёт / VTOL",
+      "name": "VTOL / Вертикальный Взлёт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -1137,7 +1137,7 @@
       "_key": "!actors.items!sZGOJ7vHt1ZvRaI3.uxkdlV5GTii7Jt4g"
     },
     {
-      "name": "Мерцающие Поля / Flickerfield",
+      "name": "Flickerfield / Мерцающие Поля",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

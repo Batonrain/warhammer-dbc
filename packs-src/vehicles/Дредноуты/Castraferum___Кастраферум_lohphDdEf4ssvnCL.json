@@ -455,7 +455,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.pCiWCtVCmUWt0k4J"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -514,7 +514,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.QEPAo6JnDoMngBzR"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -588,7 +588,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.XDlY9tstsieFtgQX"
     },
     {
-      "name": "Неразрушимое Шасси / Indestructible Chassis",
+      "name": "Indestructible Chassis / Неразрушимое Шасси",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -647,7 +647,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.4yIAN7hJLVFBabMs"
     },
     {
-      "name": "Перезарядка на Земле / Land Resupply",
+      "name": "Land Resupply / Перезарядка на Земле",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -706,7 +706,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.BAdme83nP5BNr5K3"
     },
     {
-      "name": "Штурм / Onslaught",
+      "name": "Onslaught / Штурм",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -776,7 +776,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.FHM6YxPapRuvVFfS"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -835,7 +835,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.q2kqNSCR5ix9yodA"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -894,7 +894,7 @@
       "_key": "!actors.items!lohphDdEf4ssvnCL.ZKE8jf9yoc5MXxlp"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

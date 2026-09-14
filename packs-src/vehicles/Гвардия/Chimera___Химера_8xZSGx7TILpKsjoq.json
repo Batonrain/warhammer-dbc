@@ -146,7 +146,7 @@
   },
   "items": [
     {
-      "name": "Амфибия / Amphibious",
+      "name": "Amphibious / Амфибия",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -207,7 +207,7 @@
       "_key": "!actors.items!8xZSGx7TILpKsjoq.5eZaub48UaFQbk9P"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -266,7 +266,7 @@
       "_key": "!actors.items!8xZSGx7TILpKsjoq.vmf7fMIjUtJ6fsO5"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -340,7 +340,7 @@
       "_key": "!actors.items!8xZSGx7TILpKsjoq.JXGaOZW3tUnVbVNx"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -399,7 +399,7 @@
       "_key": "!actors.items!8xZSGx7TILpKsjoq.yMgMOYqtZZrl8gsh"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

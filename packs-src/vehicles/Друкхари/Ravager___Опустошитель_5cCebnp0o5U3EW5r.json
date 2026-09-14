@@ -476,7 +476,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.DYdMPniFn8MRxGIf"
     },
     {
-      "name": "Продвинутые Прицельные Системы / Advanced Targeting",
+      "name": "Advanced Targeting / Продвинутые Прицельные Системы",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -546,7 +546,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.OXmy369lD54DsAUj"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -605,7 +605,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.8oPBkRtfMZxUYcp9"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -664,7 +664,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.xid5vYnxRI69Thjj"
     },
     {
-      "name": "Тормоза Падения / Fall Breaks",
+      "name": "Fall Breaks / Тормоза Падения",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -730,7 +730,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.o99MuVy9FtirTUjg"
     },
     {
-      "name": "Мерцающие Поля / Flickerfield",
+      "name": "Flickerfield / Мерцающие Поля",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -789,7 +789,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.hd2QS4ES8BKAGAUe"
     },
     {
-      "name": "Продвинутые Системы Управления / Advanced Controls",
+      "name": "Advanced Controls / Продвинутые Системы Управления",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -859,7 +859,7 @@
       "_key": "!actors.items!5cCebnp0o5U3EW5r.H1pjVHXkPEUL5TUF"
     },
     {
-      "name": "Саморемонт / Damage Control",
+      "name": "Damage Control / Саморемонт",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

@@ -62,7 +62,7 @@
   },
   "items": [
     {
-      "name": "Амфибия / Amphibious",
+      "name": "Amphibious / Амфибия",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -123,7 +123,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.HBRGjELNHz5v0qoH"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -182,7 +182,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.3wOQMrr4z9JBXqOv"
     },
     {
-      "name": "Закрытая / Enclosed",
+      "name": "Enclosed / Закрытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -256,7 +256,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.DqQgp6BaYtAXbnaz"
     },
     {
-      "name": "Быстрая / Fast",
+      "name": "Fast / Быстрая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -315,7 +315,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.auuBfSEsF9IwDe78"
     },
     {
-      "name": "Укреплённая Броня / Reinforced Armour",
+      "name": "Reinforced Armour / Укреплённая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -374,7 +374,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.pMxTL8UyGpRFjWLL"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -433,7 +433,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.aYKOM9nnQiE6MvM5"
     },
     {
-      "name": "Герметичная / Sealed",
+      "name": "Sealed / Герметичная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -507,7 +507,7 @@
       "_key": "!actors.items!gcftw3mOGHNqaUVp.ezHZpdBTvMlqkWyS"
     },
     {
-      "name": "Взрывоопасная / Volatile",
+      "name": "Volatile / Взрывоопасная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {

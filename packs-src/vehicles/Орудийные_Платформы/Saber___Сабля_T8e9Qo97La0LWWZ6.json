@@ -145,7 +145,7 @@
       "_key": "!actors.items!T8e9Qo97La0LWWZ6.uWzYGkRaRTuZOiFv"
     },
     {
-      "name": "Проводящая Броня / Conductive Plating",
+      "name": "Conductive Plating / Проводящая Броня",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -204,7 +204,7 @@
       "_key": "!actors.items!T8e9Qo97La0LWWZ6.kllo1EQTxBl5162r"
     },
     {
-      "name": "Неподвижная / Immobile",
+      "name": "Immobile / Неподвижная",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -263,7 +263,7 @@
       "_key": "!actors.items!T8e9Qo97La0LWWZ6.8blzf48fkDHgRiBH"
     },
     {
-      "name": "Открытая / Open Topped",
+      "name": "Open Topped / Открытая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
@@ -322,7 +322,7 @@
       "_key": "!actors.items!T8e9Qo97La0LWWZ6.nONhC5uuz8Mn1Yfv"
     },
     {
-      "name": "Простая / Rugged",
+      "name": "Rugged / Простая",
       "type": "vehicleTrait",
       "img": "systems/warhammer-dbc/assets/actor-icons/vehicle.svg",
       "system": {
