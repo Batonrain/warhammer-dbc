@@ -15,7 +15,7 @@
     "notes": "",
     "shipProps": [],
     "hull": {
-      "spaceMax": 69,
+      "spaceMax": 65,
       "powerGen": 0,
       "turnArc": "45°",
       "weaponCapacity": "2К, 1НП, 1Н",
