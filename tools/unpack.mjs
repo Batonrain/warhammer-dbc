@@ -110,8 +110,19 @@ const hasDb = (p) => {
 //
 // Поэтому извлекаем СНАЧАЛА во временный каталог, сравниваем состав по
 // идентификаторам документов и только потом переносим на место.
+//
+//  И — отдельно от сверки состава — извлечение НИЧЕГО не пишет в исходники,
+//  пока не проверены ВСЕ паки. Раньше запись шла внутри того же цикла: пак
+//  без расхождения перезаписывался сразу, а отказ печатался только после
+//  цикла, когда часть исходников уже была затёрта. Из-за этого wdbc-aje
+//  дважды выглядел как «обе команды напечатали отказ, ничего не
+//  форсировали — и packs-src всё равно переписан»: 10.09.2026 на 510
+//  файлах, 14.09.2026 на 1226 файлах и 150 тысячах удалённых строк.
+//  Теперь сначала стадия для всех паков, потом общее решение, и только
+//  затем перенос на место.
 const libTmp = mkdtempSync(join(tmpdir(), "dbc-unpack-lib-"));
 const behind = [];
+const staged = [];   // {pack, src, stage} — готовы к переносу, если отказа не будет
 
 let done = 0;
 try {
@@ -144,11 +155,17 @@ try {
       behind.push({ pack: p.name, files: lost.map(id => srcIds.get(id)) });
       continue;
     }
+    staged.push({ pack: p.name, src: p.src, stage });
+  }
 
-    rmSync(abs(p.src), { recursive: true, force: true });
-    cpSync(stage, abs(p.src), { recursive: true });
-    console.log(`извлечён ${p.name} → ${p.src}`);
-    done++;
+  // Перенос на место — только когда ни один пак не дал расхождения.
+  if (!behind.length) {
+    for (const { pack, src, stage } of staged) {
+      rmSync(abs(src), { recursive: true, force: true });
+      cpSync(stage, abs(src), { recursive: true });
+      console.log(`извлечён ${pack} → ${src}`);
+      done++;
+    }
   }
 } finally {
   rmSync(libTmp, { recursive: true, force: true });
@@ -171,6 +188,7 @@ if (behind.length) {
 // пишутся одним файлом на книгу: так их читает импорт в мире.
 const tmp = mkdtempSync(join(tmpdir(), "dbc-unpack-"));
 const bookBehind = [];
+const stagedBooks = [];   // {slug, file, source} — записываются только без отказа
 try {
   for (const b of journalPacks) {
     if (!hasDb(b)) continue;
@@ -198,14 +216,21 @@ try {
       continue;
     }
 
-    const source = bookSource(existing, docs);
-    // Перевод строки в конце — как у extractPack (CLI пишет `JSON.stringify(...) + "\n"`,
-    // lib/package.mjs). Без него круговорот сборка → извлечение показывал правку в каждой
-    // книге, а тест ниже сверяет исходники именно с тем, что пишут инструменты.
-    writeFileSync(file, JSON.stringify(source, null, 1) + "\n", "utf8");
-    const pages = source.entries.reduce((n, e) => n + e.pages.length, 0);
-    console.log(`извлечена книга ${b.slug}: глав — ${source.entries.length}, разделов — ${pages}`);
-    done++;
+    stagedBooks.push({ slug: b.slug, file, source: bookSource(existing, docs) });
+  }
+
+  // Та же отсрочка записи, что и у библиотек выше: ни одна книга не
+  // перезаписывается, пока не проверены все.
+  if (!bookBehind.length) {
+    for (const { slug, file, source } of stagedBooks) {
+      // Перевод строки в конце — как у extractPack (CLI пишет `JSON.stringify(...) + "\n"`,
+      // lib/package.mjs). Без него круговорот сборка → извлечение показывал правку в каждой
+      // книге, а тест ниже сверяет исходники именно с тем, что пишут инструменты.
+      writeFileSync(file, JSON.stringify(source, null, 1) + "\n", "utf8");
+      const pages = source.entries.reduce((n, e) => n + e.pages.length, 0);
+      console.log(`извлечена книга ${slug}: глав — ${source.entries.length}, разделов — ${pages}`);
+      done++;
+    }
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
