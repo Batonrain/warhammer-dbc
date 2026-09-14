@@ -1180,3 +1180,5 @@
 {"id":"int-ee393cd207f640d902d3e7b1f8f1790d","kind":"field_change","created_at":"2026-09-14T12:29:25.0012601Z","actor":"Derbius","issue_id":"wdbc-w1lm","extra":{"field":"status","new_value":"closed","old_value":"open","reason":"Опечатка исправлена в книге и паке, дубликат удалён"}}
 {"id":"int-65bfce550e91d0fb3ca89b553c86d2f6","kind":"field_change","created_at":"2026-09-14T12:42:04.2426718Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"status","new_value":"open","old_value":"in_progress"}}
 {"id":"int-2413df946abd2284dd8d8735eb560b7f","kind":"field_change","created_at":"2026-09-14T12:42:04.2431951Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
+{"id":"int-5fa60f9750d736069c36f64aa66b19f5","kind":"field_change","created_at":"2026-09-14T13:02:13.0337436Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"status","new_value":"open","old_value":"in_progress"}}
+{"id":"int-6dfd39e79a5a46dd8a0af9fae0cfbb90","kind":"field_change","created_at":"2026-09-14T13:02:13.0342643Z","actor":"Derbius","issue_id":"wdbc-izef","extra":{"field":"assignee","new_value":"","old_value":"Derbius"}}
