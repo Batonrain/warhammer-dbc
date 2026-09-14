@@ -72,9 +72,13 @@ export function getModEffects(actor, weapon) {
     const scope = wb.scope || "equipped";
     if (scope === "equipped" && !weapon.system.equipped) continue;
     if (scope === "force" && !(weapon.system.weaponProps || []).some(p => p.key === "force")) continue;
-    fx.damageMod += Number(wb.damageMod) || 0;
-    fx.penMod    += Number(wb.penMod)    || 0;
-    fx.rangeMod  += Number(wb.rangeMod)  || 0;
+    fx.damageMod  += Number(wb.damageMod)  || 0;
+    fx.penMod     += Number(wb.penMod)     || 0;
+    fx.rangeMod   += Number(wb.rangeMod)   || 0;
+    // wdbc-vxgd: Баланс — не запись weaponProps, а прямое числовое поле
+    // оружия (system.balance, combat/defense.mjs::parryProfile) — тот же
+    // канал balanceMod, что уже используют Модификации оружия выше.
+    fx.balanceMod += Number(wb.balanceMod) || 0;
     for (const p of (wb.addProps || [])) fx.addProps.push(p);
     fx.names.push(power.name);
   }

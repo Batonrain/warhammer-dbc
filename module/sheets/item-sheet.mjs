@@ -1383,7 +1383,7 @@ export class WarhammerItemSheet
       // Усиление оружия от психосилы (только для психосил): свойства как у оружия.
       if (this.item.type === "psychicPower") {
         if (!context.system.effects.weaponBuff)
-          context.system.effects.weaponBuff = { enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, addProps: [] };
+          context.system.effects.weaponBuff = { enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: [] };
         const wb = context.system.effects.weaponBuff;
         if (!Array.isArray(wb.addProps)) wb.addProps = [];
         const wbKeys = new Set(wb.addProps.map(p => p.key));

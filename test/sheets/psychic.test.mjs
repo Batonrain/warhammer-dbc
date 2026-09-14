@@ -572,7 +572,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
       pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
     });
 
-    expect(power.updates).toContainEqual({ "system.sustainedDegree": 3 });
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 3, "system.sustainedEpr": 2 });
   });
 
   it("провал манифестации не оставляет степень (поддерживать нечего)", async () => {
@@ -585,7 +585,94 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
       pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
     });
 
-    expect(power.updates).toContainEqual({ "system.sustainedDegree": null });
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": null, "system.sustainedEpr": null });
+  });
+
+  // wdbc-1wvn: эPR психотеста фиксируется на предмете тем же приёмом, что и
+  // sustainedDegree — сустейн-баффы к ДРУГИМ тестам обязаны считать бонус по
+  // эPR МОМЕНТА КАСТА (книга), а не по текущему тPR персонажа на момент того
+  // позднего теста.
+  it("успешная манифестация с mPR>1 пишет эPR психотеста на предмет", async () => {
+    const a = actor();
+    const power = item({ system: { testChar: "wp", powerType: "utility", testMod: 5 } });
+    captured.nextRoll = 30; // Порог 40+5×5+5=70, |30-70|/10+1=5, успех.
+
+    await executePsychotest(a, power, {
+      mPR: 5, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(power.updates).toContainEqual({ "system.sustainedDegree": 5, "system.sustainedEpr": 5 });
+  });
+
+  // wdbc-vxgd: Force Blade — успешная манифестация открывает диалог-«магазин»
+  // (module/apps/force-blade-choice.mjs), результат уходит в
+  // system.effects.weaponBuff отдельным item.update.
+  it("успешная манифестация психосилы с hasWeaponShop открывает диалог свойств", async () => {
+    const a = actor();
+    const power = item({
+      name: "Force Blade / Психосиловой Клинок",
+      system: { testChar: "wp", powerType: "psychicBlade", testMod: -10, hasWeaponShop: true }
+    });
+    captured.nextRoll = 30; // Порог 40+5×2-10=40, |30-40|/10+1=2, успех.
+
+    const promise = executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+    // Внутри executePsychotest несколько await до самого диалога (бросок,
+    // запись sustainedDegree/sustainedEpr) — дать микрозадачам довести
+    // выполнение до конструктора Dialog, прежде чем читать captured.dialog.
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+
+    expect(captured.dialog?.title).toMatch(/Force Blade/i);
+    const html = fakeHtml({}, { ".fb-shop-cb:checked": [{ dataset: { id: "shocking" } }] });
+    captured.dialog.buttons.ok.callback(html);
+    await promise;
+
+    const wb = power.updates.at(-1)["system.effects.weaponBuff"];
+    expect(wb.enabled).toBe(true);
+    expect(wb.addProps).toContainEqual({ key: "force" });
+    expect(wb.addProps).toContainEqual({ key: "shocking" });
+  });
+
+  it("провал манифестации Force Blade не открывает диалог", async () => {
+    const a = actor();
+    const power = item({
+      name: "Force Blade / Психосиловой Клинок",
+      system: { testChar: "wp", powerType: "psychicBlade", testMod: -10, hasWeaponShop: true }
+    });
+    captured.nextRoll = 90; // выше Порога 40 — провал.
+
+    await executePsychotest(a, power, {
+      mPR: 2, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    });
+
+    expect(captured.dialog).toBe(null);
+    expect(power.updates.some(u => "system.effects.weaponBuff" in u)).toBe(false);
+  });
+
+  it("снятие поддержания Force Blade сбрасывает weaponBuff", async () => {
+    const power = item({
+      name: "Force Blade / Психосиловой Клинок",
+      system: {
+        sustainable: true, isSustained: true, hasWeaponShop: true,
+        effects: { weaponBuff: { enabled: true, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: [{ key: "force" }] } }
+      }
+    });
+    const a = actor({ items: [power] });
+    const html = listenerHtml();
+
+    activatePsychicListeners(html, a, {});
+    await html.handlers[".psy-sustain-cb:change"]({
+      currentTarget: { dataset: { itemId: power.id }, checked: false }
+    });
+
+    const upd = power.updates.at(-1);
+    expect(upd["system.effects.weaponBuff"]).toEqual({
+      enabled: false, scope: "equipped", damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
+    });
   });
 
   it("успешное применение Силы навигатора тоже пишет sustainedDegree", async () => {
@@ -614,6 +701,7 @@ describe("wdbc-8m0x: степень успеха поддерживаемой с
     expect(power.updates.at(-1)).toEqual({
       "system.isSustained": false,
       "system.sustainedDegree": null,
+      "system.sustainedEpr": null,
       "system.sustainedTargetUuid": ""
     });
   });

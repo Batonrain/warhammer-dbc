@@ -284,8 +284,23 @@ function ruleFromEntry(item, entry, groupId = null) {
     // resolve-test.mjs::rollModsFromRules) — по решению пользователя
     // автоматической тихой отмены штрафа в системе нет нигде, галочка всегда
     // предлагается игроку, а не применяется молча (wdbc-gzuf).
+    // wdbc-1wvn: сустейн-бафф психосилы к ДРУГОМУ тесту («+N×PR» у Sharpened
+    // Senses и подобных) обязан считать бонус по эPR МОМЕНТА КАСТА (книга:
+    // «если описание психосилы упоминает PR — это эPR»), а не по текущему
+    // тPR персонажа на момент того позднего теста — тот меняется независимо
+    // (взял/снял другую поддерживаемую силу). item.system.sustainedEpr
+    // (module/data/item/psychic-power.mjs) хранит именно это число, пока
+    // сила поддерживается (isSustained — сюда попадают только активные
+    // предметы, см. registerRuleSource("items", ...) в rules/sources.mjs).
+    // null — сила ещё не манифестировалась ни разу (или это не психосила
+    // вовсе) — тогда, как и раньше, живой currentRating.
+    const fixedEpr = entry.modCharBonus === "pr" && entry.modValueMode === "charBonus"
+      && item.type === "psychicPower" ? item.system?.sustainedEpr : null;
+    const multiplier = Number(entry.modCharBonusMultiplier) || 1;
     const effect = entry.modValueMode === "halvePenalty"
       ? { kind: "penaltyMul", target, factor: 0.5 }
+      : (fixedEpr != null)
+      ? { kind: "rollBonus", target, value: fixedEpr * multiplier }
       : (entry.modValueMode === "charBonus" || entry.modValueMode === "masterCharBonus")
       ? { kind: "rollBonus", target, valueFrom: {
           [entry.modValueMode === "masterCharBonus" ? "masterCharBonus" : "selfCharBonus"]: entry.modCharBonus || "inf",

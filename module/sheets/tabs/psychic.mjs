@@ -35,6 +35,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
 import { mechFormulaTotalSafe, mechRollData } from "../../rules/mech-formula.mjs";
+import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 
 /**
  * Через что кастуется психосила. Прорицание (divination) — через навык
@@ -729,7 +730,20 @@ export async function executePsychotest(actor, item, opts) {
   // (не только когда isSustained уже включён), чтобы число было готово к
   // моменту, когда игрок следом поставит галочку «Подд.». Провал — сброс в
   // null, поддерживать нечего.
-  await item.update({ "system.sustainedDegree": success ? deg : null });
+  //
+  // wdbc-1wvn: тем же приёмом сохраняем эPR психотеста — сустейн-баффы к
+  // ДРУГИМ тестам (Sharpened Senses и подобные) обязаны считать бонус по эPR
+  // МОМЕНТА КАСТА (книга), а не по текущему тPR персонажа на момент того
+  // позднего теста. item-rules.mjs (modCharBonus:"pr") читает это поле вместо
+  // currentRating, если оно не null.
+  await item.update({ "system.sustainedDegree": success ? deg : null, "system.sustainedEpr": success ? ePR : null });
+
+  // wdbc-vxgd: Force Blade — «магазин» покупки свойств оружия за Успехи ЭТОГО
+  // психотеста. Диалог сам пишет system.effects.weaponBuff на предмете; при
+  // провале (нечего тратить) или отказе от диалога — Force Blade просто не
+  // накладывает временных свойств (weaponBuff остаётся как после последнего
+  // снятия поддержания).
+  if (success && sys.hasWeaponShop) await runForceBladeShop(item, deg);
 
   // Телесная Конверсия — цена в Ранах (платится при использовании Пути)
   if (PATH.woundCost) {
@@ -1217,6 +1231,14 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     const upd = { "system.isSustained": turningOn };
     if (!turningOn) {
       upd["system.sustainedDegree"] = null;
+      // wdbc-1wvn: конец поддержания снимает и зафиксированный эPR — иначе
+      // следующая манифестация без сустейна (или до повторного каста) читала
+      // бы устаревшее число из прошлого поддержания.
+      upd["system.sustainedEpr"] = null;
+      // wdbc-vxgd: конец поддержания Force Blade снимает и купленные за
+      // Успехи свойства оружия — иначе они остались бы висеть на оружии
+      // (combat/weapon-mods.mjs читает weaponBuff только пока isSustained).
+      if (item.system.hasWeaponShop) upd["system.effects.weaponBuff"] = forceBladeShopClear();
       // wdbc-lmd2: конец поддержания снимает и цель — источник правил
       // (module/rules/psychic-sustain-target.mjs) и так перестал бы её
       // находить по isSustained:false, но обнулить явно честнее, чем

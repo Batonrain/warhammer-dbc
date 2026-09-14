@@ -454,7 +454,8 @@ const TYPES = {
       damage: "", damageType: "energy", penetration: "0", weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
-      effect: "", isSustained: false, sustainedDegree: null, sustainedTargetUuid: "",
+      effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",
+      hasWeaponShop: false,
       // wdbc-exjp: Руна Сигиллитов — привязана к ЭТОЙ психосиле, не к актору
       // (module/rules/sigillite-runes.mjs). У всех, кто не Сигиллит, лежит
       // как есть и никем не читается.
@@ -464,7 +465,7 @@ const TYPES = {
         armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
         weaponBuff: {
           enabled: false, scope: "equipped",
-          damageMod: 0, penMod: 0, rangeMod: 0, addProps: []
+          damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
         }
       },
       bookSource: ""

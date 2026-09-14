@@ -16,9 +16,14 @@ function emptyEffects() {
     // оставлена как была, чтобы перевод типа ничего не менял в механике.
     charBonusStat: "", charBonusValue: 0, charBonuses: [],
     armourAll: 0, fearRating: 0, sizeMod: 0, grantedTraits: "",
+    // wdbc-vxgd: balanceMod — тот же канал, что у Модификаций оружия
+    // (combat/weapon-mods.mjs::getModEffects), для книжных бонусов вида
+    // «+1 Баланс», которые НЕ являются записью system.weaponProps (Баланс —
+    // отдельное числовое поле оружия system.balance, читаемое напрямую
+    // combat/defense.mjs::parryProfile, а не список свойств).
     weaponBuff: {
       enabled: false, scope: "equipped",
-      damageMod: 0, penMod: 0, rangeMod: 0, addProps: []
+      damageMod: 0, penMod: 0, rangeMod: 0, balanceMod: 0, addProps: []
     }
   };
 }
@@ -101,6 +106,18 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // тем же item.update, что и isSustained (module/sheets/tabs/psychic.mjs),
       // и сбрасывается в null там же при снятии поддержания.
       sustainedDegree: new NumberField({ initial: null, nullable: true, integer: true, label: "Степень успеха (поддержание)" }),
+      // wdbc-1wvn: эPR, на котором сила была манифестирована — держится, пока
+      // сила поддерживается, тем же приёмом, что sustainedDegree выше. Книга
+      // (core.json, определение эPR): «если описание психосилы упоминает PR,
+      // это эPR» — сустейн-баффы к ДРУГИМ тестам (Sharpened Senses, Muscle
+      // Mass, Telekine Mantle, Force Armor, Inner Clock) должны считать бонус
+      // по эPR МОМЕНТА КАСТА, а не по текущему тPR персонажа, который меняется
+      // независимо (снятие/взятие других поддерживаемых сил). item-rules.mjs
+      // (ruleFromEntry, modCharBonus:"pr") читает это поле вместо
+      // actor.system.psyker.currentRating, если оно не null. Пишется тем же
+      // item.update, что и sustainedDegree (module/sheets/tabs/psychic.mjs),
+      // и сбрасывается в null там же при снятии поддержания.
+      sustainedEpr:    new NumberField({ initial: null, nullable: true, integer: true, label: "эPR (поддержание)" }),
       // wdbc-lmd2 (найдено внутри wdbc-q0q8): uuid актора-цели, зафиксированный
       // в момент включения «Поддерживать» (по game.user.targets, tabs/psychic.mjs).
       // Читает cross-actor источник module/rules/psychic-sustain-target.mjs —
@@ -108,6 +125,15 @@ export class PsychicPowerData extends foundry.abstract.TypeDataModel {
       // Phoenix), а не только владельцу. Пустая строка — цель не отмечена
       // (сила не поддерживается, либо игрок ничего не выделил при манифестации).
       sustainedTargetUuid: new StringField({ initial: "", label: "Цель поддержания (uuid)" }),
+      // wdbc-vxgd: Force Blade — «магазин» покупки свойств оружия за Успехи
+      // психотеста (книга: Персонаж может тратить Успехи, чтобы добавлять
+      // психосиловому оружию свойства из прайс-листа 1-5 У. за штуку). Флаг
+      // на психосиле, а не жёсткая привязка по имени предмета — если у
+      // системы появится ВТОРАЯ такая сила, ей достаточно проставить этот
+      // же флаг, диалог (module/apps/force-blade-choice.mjs) и запись в
+      // system.effects.weaponBuff общие для любой психосилы с этим флагом.
+      // Каталог покупаемых свойств — module/constants/force-blade-shop.mjs.
+      hasWeaponShop: new BooleanField({ initial: false, label: "«Магазин» свойств оружия за Успехи" }),
       // Руна Сигиллитов (wdbc-exjp, DoomBC — Психокеры-Жабы, стр. 101-102):
       // «Псайкер получает возможность изучить Руну любой психосилы... за 50
       // опыта» — Руна привязана к КОНКРЕТНОЙ психосиле, поэтому это поле
