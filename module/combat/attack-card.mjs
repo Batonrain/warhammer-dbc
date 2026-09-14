@@ -115,6 +115,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-crippling="${wp.cripplingRating ?? 0}"
       data-piercing="${wp.piercing ? 1 : 0}"
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
+      data-haywire-dmg2="${wp.haywireDamage2 || ""}"
       data-through-shot="${wp.throughShot ? 1 : 0}"` : "";
   // Гравитонное (wdbc-wlwf): только на Blast/Spray-шаблоне, взаимоисключимо с
   // Остаётся (Linger) — если у оружия почему-то есть оба, приоритет у Linger
@@ -198,6 +199,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-crippling="${wp.cripplingRating ?? 0}"
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
+    data-haywire-dmg2="${wp.haywireDamage2 || ""}"
     data-through-shot="${wp.throughShot ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${

@@ -1024,7 +1024,15 @@ export class WarhammerItemSheet
           def:     WEAPON_PROPERTIES[p.key],
           // Призма: текущий накопленный заряд (не рейтинг-максимум X, а живое
           // состояние на предмете) — своя мини-панель в чипе, не общий rating2.
-          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null
+          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null,
+          // requiredSuccesses/requiredSuccessesScalesSize (wdbc-zlx7) — поле
+          // читает только psychic.mjs (combat/weapon-properties.mjs::
+          // filterPropsBySuccesses, deg известна лишь у психотеста, у обычной
+          // атаки — нет до броска), поэтому вход для них есть только в
+          // templates/item/parts/psychic-power.hbs, не в weapon.hbs/tech-power.hbs
+          // (те делят этот же контекст-билдер, но поле у них молча не сработает).
+          requiredSuccesses: p.requiredSuccesses ?? 0,
+          requiredSuccessesScalesSize: !!p.requiredSuccessesScalesSize
         }))
         .filter(p => p.def);
       context.weaponPropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !activeKeys.has(d.key));
@@ -3051,6 +3059,24 @@ export class WarhammerItemSheet
       const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
       const p     = props.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.weaponProps": props }); }
+    });
+    // wdbc-zlx7: порог Успехов, при котором свойство вообще срабатывает
+    // (Neural Storm/Fire Barrage/Bolt/Storm), и опциональный масштаб порога
+    // Размером цели (Force Bolt) — читает только module/sheets/tabs/psychic.mjs,
+    // см. комментарий в контекст-билдере выше (this.item.type === "psychicPower").
+    on(".wprop-required-successes", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const val   = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+      const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p.requiredSuccesses = val; await this.item.update({ "system.weaponProps": props }); }
+    });
+    on(".wprop-required-successes-size", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const val   = !!ev.currentTarget.checked;
+      const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p.requiredSuccessesScalesSize = val; await this.item.update({ "system.weaponProps": props }); }
     });
     // Призма: живой заряд на предмете (не weaponProps[].rating — тот X-максимум).
     on(".wprop-prisma-charge", "change", async ev => {

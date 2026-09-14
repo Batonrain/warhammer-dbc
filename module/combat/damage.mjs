@@ -153,6 +153,8 @@ const HAYWIRE_TABLE = [
   { max: 6,  label: "Сильное Нарушение",      text: "Действия с хай-тек снаряжением −20. Рукопашное оружие — как примитивное. SPD силовой брони −3. Машины Оглушены, пока не покинут поле." },
   { max: 8,  label: "Мёртвая Зона",           text: "Хай-тек снаряжение отключено: стрелковое не работает, рукопашное — как примитивное, силовая броня отключена, бионика отключена (штрафы по ГМу). Машины Беспомощны." },
   { max: 10, label: "Длительная Мёртвая Зона", text: "Как Мёртвая Зона, но на два Хода." },
+  // Машины 1d5+1 E Dmg — дефолт (стр. 168); rating2 предмета (wdbc-cy4z:
+  // Death of Machines «2d10+5») подставляется в текст вместо него ниже.
   { max: Infinity, label: "ЭМИ Шторм",        text: "Как Мёртвая Зона + Качество электроники −1 (или отключение ниже Poor.Q), стрелковое Заклинивает, Машины — 1d5+1 непоглощ. E Dmg." }
 ];
 
@@ -160,17 +162,23 @@ const HAYWIRE_TABLE = [
  * ЭМИ: бросок 1d10+X по таблице (стр. 168). Применяется только к персонажам/
  * тварям — Техника (actor.type "vehicle") уходит через applyDamageToVehicle
  * ДО этой функции (см. applyDamageToActor), у неё нет system.absorption/
- * этой ветки урона вовсе; урон «Машинам» по столбцу 11+ (1d5+1 E) — ручное
- * применение ГМом через обычную кнопку «Применить урон», как и остальные
- * эффекты таблицы (действия/SPD/Заклинивание/деградация Качества).
+ * этой ветки урона вовсе; урон «Машинам» по столбцу 11+ (1d5+1 E, либо
+ * damage2 предмета, если задан) — ручное применение ГМом через обычную
+ * кнопку «Применить урон», как и остальные эффекты таблицы (действия/SPD/
+ * Заклинивание/деградация Качества) — damage2 не роллится и не применяется
+ * автоматически, только заменяет текст-подсказку (симметрично дефолту).
  */
-async function _applyHaywire(actor, rating) {
+async function _applyHaywire(actor, rating, damage2 = "") {
   // X у Haywire — РАДИУС поля в метрах, к мощности не прибавляется:
   // «Изначальная мощность ЭМИ-поля определяется броском 1d10» (стр. 168).
   const roll = await new Roll("1d10").evaluate();
   const total = roll.total;
   const tier = HAYWIRE_TABLE.find(t => total <= t.max);
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
+  const isStorm = tier.max === Infinity;
+  const text = (isStorm && damage2)
+    ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
+    : tier.text;
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -599,6 +607,7 @@ export async function applyDamageToActor(actor, damageData) {
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
     haywireRating = 0,   // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
+    haywireDamage2 = "", // ЭМИ: нестандартный урон Машине на тир «ЭМИ Шторм» вместо «1d5+1» (wdbc-cy4z)
     throughShot = false, // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
     ignoreArmour = false, // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
@@ -940,7 +949,7 @@ export async function applyDamageToActor(actor, damageData) {
     propEffectNotes.push(await _applyCrippling(actor, armorKey, hitLocation, damageType, cripplingRating));
   }
   if (haywireActive && !hasWeaponPropertyImmunity(actor, "haywire")) {
-    propEffectNotes.push(await _applyHaywire(actor, haywireRating));
+    propEffectNotes.push(await _applyHaywire(actor, haywireRating, haywireDamage2));
   }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────

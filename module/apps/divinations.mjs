@@ -10,7 +10,7 @@ import { DIVINATIONS, DIVINATION_BY_KEY, DIVINATION_SOURCE,
          rollLabel, divinationByRoll, hasChoices } from "../constants/divinations.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
 import { promptGrantChoices, applyGrants, clearGrantedBy,
-         registerPackCache, packEntries, charBonusesToMechanics } from "./origin-shared.mjs";
+         registerPackCache, packEntries, charBonusesToMechanics, withOriginLock } from "./origin-shared.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
@@ -51,9 +51,18 @@ export function divinationSheetContext(actor) {
 
 // ── Применение ───────────────────────────────────────────────────────────
 
-/** Снимает предсказание и всё, что оно выдало. */
-export async function clearDivination(actor) {
+/** Без замка — только для вызова ИЗНУТРИ уже залоченного applyDivination(Picks). */
+async function _clearDivinationUnlocked(actor) {
   await clearGrantedBy(actor, DIVINATION_TAG, actorDivinationItem(actor));
+}
+
+/**
+ * Снимает предсказание и всё, что оно выдало.
+ * wdbc-gbpe: тот же замок actor+DIVINATION_TAG, что applyDivination(Picks) —
+ * см. подробный разбор гонки в module/apps/homeworlds.mjs::clearHomeworld.
+ */
+export async function clearDivination(actor) {
+  return withOriginLock(actor, DIVINATION_TAG, () => _clearDivinationUnlocked(actor));
 }
 
 /**
@@ -87,8 +96,10 @@ export async function applyDivination(actor, key) {
     if (picks === null) return;                       // окно закрыли — ничего не меняем
   }
 
-  await clearDivination(actor);
-  await grantDivination(actor, key, def, entry, picks || {}, rolled);
+  await withOriginLock(actor, DIVINATION_TAG, async () => {
+    await _clearDivinationUnlocked(actor);
+    await grantDivination(actor, key, def, entry, picks || {}, rolled);
+  });
 }
 
 /** Бросок «Бросить к100» — вынесено отдельно: Мастер создания сперва
@@ -120,8 +131,10 @@ export async function applyDivinationPicks(actor, key, picks, rolled = null) {
   const entry = packEntries(DIVINATION_TAG, () => []).find(e => e.key === key);
   const def   = DIVINATION_BY_KEY[key];
   if (!def && !entry) return;
-  await clearDivination(actor);
-  await grantDivination(actor, key, def, entry, picks || {}, rolled);
+  await withOriginLock(actor, DIVINATION_TAG, async () => {
+    await _clearDivinationUnlocked(actor);
+    await grantDivination(actor, key, def, entry, picks || {}, rolled);
+  });
 }
 
 async function grantDivination(actor, key, def, entry, picks, rolled) {
