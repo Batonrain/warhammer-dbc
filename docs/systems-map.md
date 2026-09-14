@@ -384,11 +384,23 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   тем же безопасным парсером, что и Пробитие, плюс `mechRollData(actor)` для
   X.b-нотации; дайс-рейтинг (Flame «2d10») возвращается строкой для
   `new Roll()`, не резолвится числом (wdbc-lui3/wdbc-kifa, 13-14.09.2026).
-  Контентом заполнено 57 атакующих психосил из ~93 с непустым уроном (не 847 —
+  Контентом заполнено 66 атакующих психосил из ~93 с непустым уроном (не 847 —
   остальные ~750 не атаки, weaponProps у них пуст правомерно); деление на
   под-тикеты по дисциплинам не понадобилось, реальный остаток — тикеты
-  wdbc-wv8u (Дуга читает второй рейтинг через `parseInt`, не `Roll` — дайс
-  обрежется) и wdbc-cy4z (Toxic/Haywire игнорируют rating2 в реестре).
+  wdbc-cy4z (Toxic/Haywire игнорируют rating2 в реестре) и wdbc-zlx7 (условные
+  свойства по числу Успехов — Neural Storm/Fire Barrage и т.п. — движок не
+  умеет вообще, только безусловное применение на каждое попадание).
+  Сустейн-баффы к ДРУГИМ тестам (не к своей манифестации, kind:testMod
+  modCharBonus:"pr") фиксируют эPR момента каста в `system.sustainedEpr`
+  психосилы (по образцу `sustainedDegree`, wdbc-8m0x) — `item-rules.mjs`
+  читает его вместо живого `psyker.currentRating`, если не null (wdbc-1wvn,
+  14.09.2026). Force Blade (wdbc-vxgd) — первый пример ДИНАМИЧЕСКОГО заполнения
+  `system.effects.weaponBuff` игроком через диалог (`apps/force-blade-choice.
+  mjs`) вместо ручного авторства Конструктором: игрок тратит Успехи манифестации
+  на покупку свойств из книжного прайс-листа (`constants/force-blade-shop.
+  mjs`), результат пишется в weaponBuff и читается тем же
+  `combat/weapon-mods.mjs`, что и статично прописанные баффы — переиспользовать
+  этот паттерн, если появится вторая такая сила (флаг `hasWeaponShop`).
 - Техночудеса: `data/item/tech-power.mjs`, `constants/tech.mjs`,
   `tech-imperatives.mjs` + `combat/imperative-bonuses.mjs` + `rules/
   imperative.mjs`, `constants/implant-mechanics.mjs`, `apps/infoguard.mjs`
