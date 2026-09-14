@@ -1212,6 +1212,19 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
     actor.update({ "system.psyker.class": ev.currentTarget.value });
   });
 
+  // wdbc-l6zg: чип «Фокус Дисциплины» — клик отмечает/снимает свой выбор.
+  // Дарованные способностью (Perfect Sorcerer и т.п.) чипы приходят disabled
+  // из шаблона; disabled-кнопка click в браузере не всплывает, проверка ниже
+  // — просто защита для тестовых стабов, где .disabled не влияет на click().
+  html.find(".psy-focus-chip").click(ev => {
+    if (ev.currentTarget.disabled) return;
+    const key = ev.currentTarget.dataset.discipline;
+    if (!key) return;
+    const own = Array.isArray(actor.system.psyker?.focusDisciplines) ? actor.system.psyker.focusDisciplines : [];
+    const next = own.includes(key) ? own.filter(k => k !== key) : [...own, key];
+    actor.update({ "system.psyker.focusDisciplines": next });
+  });
+
   html.find(".psy-add-btn").click(async ev => {
     ev.preventDefault();
     const item = await Item.create({ name: "Новая психосила", type: "psychicPower" }, { parent: actor });

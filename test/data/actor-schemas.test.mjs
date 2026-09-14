@@ -269,6 +269,9 @@ const DEVIATIONS = {
     // аблативных Ран пул, заведён гораздо позже template.json.
     "ablativeApShield.value": 0,
     "ablativeApShield.max": 0,
+    // Фокус Дисциплины (wdbc-l6zg, стр.293) — выбор игрока при создании
+    // персонажа, заведён гораздо позже template.json.
+    "psyker.focusDisciplines": [],
     ...Object.fromEntries(Object.keys(CHARACTERISTICS)
       .flatMap(k => [[`characteristics.${k}.bonusFx`, 0], [`characteristics.${k}.totalFx`, 0]])),
     // Постоянный модификатор Навыка (wdbc-q4wb) — поле на листе рядом с Итогом,

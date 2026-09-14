@@ -72,6 +72,22 @@
       </div>
     </div>
 
+    {{!-- Фокус Дисциплины (wdbc-l6zg) — чипы: клик по своей отмечает/снимает
+          свой выбор; дарованные способностью (напр. Perfect Sorcerer)
+          показаны отмеченными и заблокированными — снять можно только
+          сняв саму способность. --}}
+    <div class="psy-focus-row" title="Фокус Дисциплины: изучение психосил своей дисциплины без обычного 'изучения', только за опыт (книга, стр.293). Выбирается один раз, как правило, при создании персонажа.">
+      <span class="psy-rf-lbl">Фокус Дисциплины</span>
+      <div class="psy-focus-chips">
+        {{#each psyFocus.chips as |c|}}
+        <button type="button" class="psy-focus-chip {{#if c.active}}active{{/if}}" data-discipline="{{c.key}}"
+                {{#if c.forced}}disabled title="Даровано способностью — снять нельзя"{{else}}title="Нажмите, чтобы отметить/снять Фокус этой Дисциплины"{{/if}}>
+          {{c.label}}{{#if c.forced}} 🔒{{/if}}
+        </button>
+        {{/each}}
+      </div>
+    </div>
+
     <div class="psy-hint">
       <b>бPR</b> = уровень Таланта Psy Rating. <b>тPR</b> = бPR − поддерживаемые силы (при 0 нельзя манифестировать новые). <b>эPR</b> — эффективный PR силы при манифестации (по умолчанию = тPR; его можно снизить независимо для психотеста, урона и дальности, минимум 1 — задаётся в окне манифестации). Психотест: <b>+5×эPR</b> по дару <b>{{psyker.natureLabel}}</b>. Режим и Путь Силы выбираются при манифестации.
     </div>
@@ -113,7 +129,7 @@
           <tr class="item-row {{#if p.isSustained}}psy-row-sustained{{/if}}" data-item-id="{{p.id}}">
             <td class="ability-toggle-cell"><button type="button" class="ability-detail-toggle" data-action="abilityDetail" data-item-id="{{p.id}}" title="Показать/скрыть описание">▸</button></td>
             <td class="item-name-cell"><span class="psy-power-name">{{p.name}}</span>{{#if p.missingMark}} <span class="psy-mark-missing" title="Книга требует Метку {{p.missingMark}} и для изучения, и для манифестации. Без Метки сила не применяется — но и не забывается: доступ вернётся вместе с Меткой.">без Метки {{p.missingMark}}</span>{{/if}}
-              {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.subtype}} · {{p.subtype}}{{/if}}{{#if p.damage}} · <span class="psy-dmg-sub">урон {{p.damage}}</span>{{/if}}</div>{{else}}{{#if p.damage}}<div class="psy-discipline-sub"><span class="psy-dmg-sub">урон {{p.damage}}</span></div>{{/if}}{{/if}}
+              {{#if p.disciplineLabel}}<div class="psy-discipline-sub">{{p.disciplineLabel}}{{#if p.hasFocus}} <span class="psy-focus-badge" title="Фокус Дисциплины — изучается без обычного изучения, только за опыт">★ Фокус</span>{{/if}}{{#if p.subtype}} · {{p.subtype}}{{/if}}{{#if p.damage}} · <span class="psy-dmg-sub">урон {{p.damage}}</span>{{/if}}</div>{{else}}{{#if p.damage}}<div class="psy-discipline-sub"><span class="psy-dmg-sub">урон {{p.damage}}</span></div>{{/if}}{{/if}}
               {{#if p.requirement}}<div class="psy-requirement" title="Требование книги">Треб.: {{p.requirement}}</div>{{/if}}
             </td>
             <td><span class="psy-type-chip">{{p.typeLabel}}</span></td>
