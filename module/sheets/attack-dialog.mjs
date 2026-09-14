@@ -890,7 +890,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
 
   // Свойства оружия — напоминание + чекбокс короткой дистанции + перезарядка
   const wpDialogList = wProps.map(p => {
-    const r = p.def.rating ? ` (${p.rating ?? 0}${p.def.rating2 ? "/" + (p.rating2 ?? 0) : ""})` : "";
+    // wdbc-cy4z: показываем «/Y» только когда у ЭТОГО предмета реально задан
+    // rating2 (p.rating2), а не когда свойство лишь СПОСОБНО его нести
+    // (p.def.rating2) — Toxic/Haywire теперь тоже умеют rating2 (нестандартный
+    // книжный урон), но у подавляющего большинства предметов он не задан, и
+    // «Токсичное (1/0)» вместо «Токсичное (1)» было бы шумом для каждого из них.
+    const r = p.def.rating ? ` (${p.rating ?? 0}${p.rating2 ? "/" + p.rating2 : ""})` : "";
     const tip = esc(p.def.desc);
     return `<span class="atk-wprop-badge" title="${tip}">${p.def.label}${r}</span>`;
   }).join("");

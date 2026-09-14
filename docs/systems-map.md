@@ -224,6 +224,19 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   Укрытия и Трудного Ландшафта (ГМ ставит вручную).
 - `module/regions/graviton-zone.mjs` — свойство «Гравитонное» (уменьшающийся
   Blast).
+- `module/regions/vortex-zone.mjs` — Vortex of Doom/Вихрь Рока (психосила,
+  wdbc-ufns, 14.09.2026): персистентная Region-зона с раундовым тестом
+  поддержания КОНТРОЛЁРА (W+5×тPR−5×Х на начале его Хода, тот же триггер, что
+  и у Гравитонного/Linger — `processVortexTurnStart` из `updateCombat`),
+  приглашением других псайкеров с Mind Over Matter в радиусе Х×10м
+  вмешаться Реакцией и ПЕРЕХВАТИТЬ контроль (попарное состязание «текущий
+  чемпион vs новый реагирующий», тай-брейк Успехи→тPR→W — не N-сторонний
+  одновременный турнир, тот же принцип упрощения асинхронного чата, что у
+  ЛЮБОГО делегированного теста проекта, `rules/delegate-test.mjs`),
+  победитель тратит Успехи на ±1 Х или сдвиг зоны на 1м (`wh-vortex-spend-btn`),
+  провал — случайный дрейф Х (1d10−6) и позиции. Первый прецедент в проекте
+  «несколько кандидатов в радиусе МОГУТ вмешаться, победитель определяется
+  состязанием» — если появится вторая такая сила, этот файл и есть образец.
 - `module/regions/runic-weave-zone.mjs` — Руническая Вязь как Region-документ
   (носитель — стена/помещение, не предмет на акторе).
 - `module/regions/scene-live-recalc.mjs` — общий регистратор «живой пересчёт
@@ -240,6 +253,15 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `condition-mirrors.mjs` (игровые метки, отображаемые как Состояния),
   `turn-flags.mjs` (флаги «до начала следующего своего Хода»),
   `fatigue-grace.mjs` (порог Усталости).
+- Конструктор kind:"condition" — пять режимов (не четыре книжных, wdbc-tqfj):
+  apply/remove (разовые, момент получения предмета), immunity/mitigate (живые,
+  condition-guards.mjs/item-rules.mjs), и **onTargetFail** (живой, новый,
+  14.09.2026) — «наложить Состояние ЦЕЛИ делегированного теста Сопротивления
+  психосилы при провале» (Choir of Poxes). Читает `rules/on-target-fail.mjs`
+  из ЕДИНОЙ точки финализации ЛЮБОГО делегированного теста Навыка/
+  Характеристики (`actor-sheet.mjs::_runTest`) по новому полю payload
+  `onFailItemUuid` — кладёт ТОЛЬКО psychic.mjs при запросе теста
+  Сопротивления, gate строгий (обычный делегированный тест это поле не несёт).
 - `module/combat/condition-effects.mjs`, `condition-ticks.mjs` (тик по Ходам —
   Кровотечение/Горение).
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
@@ -283,7 +305,19 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   divinations.mjs`.
 - `rules/library/homeworlds.mjs` — машинная часть (Мир-храм/Мир Смерти/
   Промышленный мир).
-- `apps/origin-shared.mjs` — общий диалог выборов/выдачи/отката для обоих.
+- `apps/origin-shared.mjs` — общий диалог выборов/выдачи/отката для обоих;
+  `withOriginLock(actor, tag, fn)` — очередь (не запрет) на actor+tag для
+  ЛЮБОГО «clear носитель, потом grant новый» апплая (applyHomeworld(Picks),
+  applyDivination(Picks), races.mjs::applyLegion) — без неё параллельный/
+  повторный вызов (напр. character-wizard.mjs раньше звал `.then(...)` без
+  `await`) читает «носителя ещё нет» дважды и создаёт два, задваивая бонусы
+  (видно только на вкладке ЭФФЕКТЫ, не на самом листе — там дропдаун/`.find()`
+  показывает только первый) — wdbc-gbpe, 14.09.2026. `clearGrantedBy` там же
+  подчищает «осиротевших» дублей-носителей (только для homeworld/divination —
+  их носитель НЕ самотегируется `originGrant`, в отличие от race/subrace/
+  archetype, которых granted-фильтр уже ловит по тегу без доп. логики).
+  Разовая миграция уже существующих дублей — `migrations/duplicate-origin-
+  cleanup.mjs`, `game.warhammerDBC.migrateDuplicateOrigins()`.
 - Подключаются флагами `homeworlds`/`divinations` в `constants/features.mjs`
   (см. §26).
 
@@ -380,16 +414,36 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `aggregateAuto`); rating свойства может быть формулой с «PR» (Blast(2×PR) и
   т.п.), «СУ»/книжным «Успехи» (Devastating Rain) или Cor.b/др. бонусом
   характеристики (Infernal Gaze: Felling(Cor.b)) — резолвится
-  `combat/weapon-properties.mjs::resolvePropRating(s, prValue, {deg, rollData})`
-  тем же безопасным парсером, что и Пробитие, плюс `mechRollData(actor)` для
-  X.b-нотации; дайс-рейтинг (Flame «2d10») возвращается строкой для
-  `new Roll()`, не резолвится числом (wdbc-lui3/wdbc-kifa, 13-14.09.2026).
-  Контентом заполнено 66 атакующих психосил из ~93 с непустым уроном (не 847 —
-  остальные ~750 не атаки, weaponProps у них пуст правомерно); деление на
-  под-тикеты по дисциплинам не понадобилось, реальный остаток — тикеты
-  wdbc-cy4z (Toxic/Haywire игнорируют rating2 в реестре) и wdbc-zlx7 (условные
-  свойства по числу Успехов — Neural Storm/Fire Barrage и т.п. — движок не
-  умеет вообще, только безусловное применение на каждое попадание).
+  `combat/weapon-properties.mjs::resolvePropRating(s, prValue, {deg, rollData, x})`
+  тем же безопасным парсером, что и Пробитие психосилы (тот же резолвер, не
+  отдельная копия, wdbc-ufns), плюс `mechRollData(actor)` для X.b-нотации;
+  дайс-рейтинг (Flame «2d10», Arc «7/2d10+PR») возвращается строкой для
+  `new Roll()`, не резолвится числом, «PR» ВНУТРИ дайс-строки тоже
+  подставляется (wdbc-lui3/wdbc-kifa/wdbc-cy4z/wdbc-wv8u, 13-14.09.2026) —
+  раньше не подставлялось и роняло бросок исключением Unresolved StringTerm.
+  «Х» — опциональное item-defined производное значение (`sys.xFormula`, тем
+  же языком формул), когда книга вводит одну переменную сразу для
+  damage+penetration+rating одного предмета (Vortex of Doom: «Х=½Успехи
+  (окр.▲)», wdbc-ufns) — считается один раз в psychic.mjs, подставляется
+  текстом в damage (Roll не понимает функции резолвера) и через options.x
+  во все резолверы rating/pen того же предмета. `requiredSuccesses` — поле
+  НА ЗАПИСИ weaponProps (не в реестре), гейтит применение записи по числу
+  Успехов ЭТОГО психотеста (`filterPropsBySuccesses`, Neural Storm/Fire
+  Barrage-Bolt-Storm/Force Bolt, wdbc-zlx7); `requiredSuccessesScalesSize` —
+  порог ×2 за уровень Размера ЦЕЛИ, проверяется отдельно в
+  `hooks.mjs::_applyWeaponPropEffect` в момент клика (Размер известен только
+  тогда, кнопка строится раньше выбора цели). Toxic/Haywire — нестандартный
+  книжный урон через `rating2` вместо дефолтного «1d10»/табличного значения
+  (`damageFromRating2`, wdbc-cy4z). Дуга (Arc) у психосил — кнопка `.wh-arc-btn`
+  раньше не рисовалась вовсе (только у обычного оружия, attack-card.mjs);
+  теперь строится и в psychic.mjs::executePsychotest тем же гейтом «первое
+  попадание достигло arcRating» (wdbc-86rm).
+  Контентом заполнены практически все атакующие психосилы с непустым уроном
+  (~93 из 847 — остальные не атаки, weaponProps у них пуст правомерно);
+  открытые остатки — wdbc-rhst (Energy Surge: профиль атаки по войдшипу, не
+  по персонажу — реестр WEAPON_PROPERTIES тут неприменим в принципе, другой
+  домен) и Neural Storm (движок не различает «выбрать одно» vs «оба сразу» —
+  договорённость на игроке/ГМ по тексту карточки, не энфорсится).
   Сустейн-баффы к ДРУГИМ тестам (не к своей манифестации, kind:testMod
   modCharBonus:"pr") фиксируют эPR момента каста в `system.sustainedEpr`
   психосилы (по образцу `sustainedDegree`, wdbc-8m0x) — `item-rules.mjs`
