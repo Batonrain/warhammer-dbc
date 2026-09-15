@@ -226,6 +226,18 @@
         <input type="number" class="wprop-rating" data-key="{{p.key}}" data-field="rating2" value="{{p.rating2}}" title="Рейтинг Y"/>
         {{/if}}
         {{/if}}
+        {{!-- wdbc-zlx7: свойство активно только при N+ Успехах этого психотеста
+             (Neural Storm, Fire Barrage/Bolt/Storm) — необязательно, 0/пусто
+             значит «как раньше», применяется на любое попадание. --}}
+        <span class="wprop-req-successes-wrap" title="Свойство срабатывает только при N+ Успехах манифестации (0 — всегда, как раньше)">
+          <input type="number" class="wprop-required-successes" data-key="{{p.key}}"
+                 value="{{p.requiredSuccesses}}" placeholder="N+" min="0"/>
+          <label title="Порог удваивается за каждый уровень Размера цели >0 (Force Bolt и подобные)">
+            <input type="checkbox" class="wprop-required-successes-size" data-key="{{p.key}}"
+                   {{#if p.requiredSuccessesScalesSize}}checked{{/if}}/>
+            ×Размер
+          </label>
+        </span>
         <button type="button" class="wprop-remove" data-action="wpropRemove" data-key="{{p.key}}" title="Удалить свойство">✕</button>
       </div>
       {{/each}}

@@ -29,6 +29,7 @@ import { parrySizeGate } from "../rules/parry-size.mjs";
 import { tokenRect } from "./horde-tokens.mjs";
 import { contactType } from "../rules/tactical-map.mjs";
 import { handOfKhorneAttackSizeBonus } from "../rules/hand-of-khorne.mjs";
+import { phantomCopiesDodgePenalty } from "../rules/wrapped-in-chaos.mjs";
 
 // Контратака (стр. 12, Талант Counter Attack) — «раз в Раунд» ключ учёта,
 // тот же примитив, что у Локуса Сокрушения (constants/capabilities.mjs).
@@ -112,7 +113,16 @@ export async function _performDodge(actor, {
   if ((Number(actor.system.conditions?.lostLegsCount) || 0) > 0)
     return _noReactionCard(actor, "Уклонение (нет ног)");
   if (!(await spendReaction(actor, { forDefense: true }))) return _noReactionCard(actor, "Уклонение");
-  const { agTotal, threshold, modParts } = dodgeProfile(actor, extraMod);
+  const { agTotal, threshold: baseThreshold, modParts } = dodgeProfile(actor, extraMod);
+  // Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
+  // ЧУЖОЙ рукопашной атаки — направленный модификатор атакующий→защитник,
+  // резолвится тем же путём, что Разница Размеров у Парирования ниже
+  // (attackerUuid → attackerActor ДО построения порога; неизвестный/пустой
+  // attackerUuid — штрафа нет, тот же честный дефолт, что и там).
+  const attackerActor = attackerUuid ? await fromUuid(attackerUuid).catch(() => null) : null;
+  const wicDodgePenalty = phantomCopiesDodgePenalty(attackerActor, isMelee);
+  const threshold = baseThreshold + wicDodgePenalty;
+  if (wicDodgePenalty !== 0) modParts.push(`Фантомные Копии атакующего ${wicDodgePenalty}`);
 
   // Навязанный переброс (Локус Кровопролития: «заставить цель перебросить тест
   // Избегания»). Режим приходит с кнопки карточки: цель обязана оставить

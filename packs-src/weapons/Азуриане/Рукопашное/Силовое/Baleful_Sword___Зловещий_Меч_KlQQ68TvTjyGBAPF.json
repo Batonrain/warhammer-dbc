@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 7,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Силовое оружие», стр. 88). В книге это «Diresword» — англ. имя отличается, рус. «Зловещий Меч» и характеристики (2d10+4 E, Pen 7) совпадают дословно.",
     "availability": 4,
     "weight": 3,
     "attackBonus": 0,

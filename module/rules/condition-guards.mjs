@@ -32,8 +32,20 @@ import { flattenMechEntries } from "./fatigue-grace.mjs";
 
 const FLAG_SCOPE = "warhammer-dbc";
 
-/** Режимы записи «Состояние». apply/remove разовые, immunity/mitigate — живые. */
-export const CONDITION_MODES = ["apply", "remove", "immunity", "mitigate"];
+/**
+ * Режимы записи «Состояние». apply/remove разовые, immunity/mitigate/
+ * onTargetFail — живые.
+ *
+ * onTargetFail (wdbc-tqfj) — «наложить цели проваленного делегированного
+ * теста Сопротивления психосилы» (Choir of Poxes: «...и Оглушение до начала
+ * своего Хода»). Читается НЕ здесь (этот файл — только iммунитет/смягчение
+ * своего владельца), а module/sheets/actor-sheet.mjs::_runTest через
+ * module/rules/on-target-fail.mjs — единую точку финализации ЛЮБОГО
+ * делегированного теста Навыка/Характеристики (genericTest, hooks.mjs).
+ * Значится в общем списке режимов только ради isConditionEntry() ниже —
+ * без него Конструктор считал бы такую запись «незаполненной».
+ */
+export const CONDITION_MODES = ["apply", "remove", "immunity", "mitigate", "onTargetFail"];
 
 /** Виды смягчения: снять штраф целиком или ополовинить. */
 export const CONDITION_MITIGATIONS = ["ignore", "half"];

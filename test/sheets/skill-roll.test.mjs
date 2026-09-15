@@ -427,14 +427,23 @@ describe("регрессия: тест Характеристики теперь
 function effectTarget(name, { items = [] } = {}) {
   const updates = [];
   const flags = {};
-  return {
+  const actor = {
     id: `${name}-stub`, name, items,
     system: { characteristics: {} },
+    effects: [],
     update: async data => { updates.push(data); return data; },
     getFlag: (ns, key) => flags[`${ns}.${key}`],
     setFlag: async (ns, key, value) => { flags[`${ns}.${key}`] = value; return value; },
+    // wdbc-tqfj: applyConditionWithDuration заводит ActiveEffect со сроком —
+    // минимальный стенд, тот же приём, что test/combat/condition-effects.test.mjs.
+    async createEmbeddedDocuments(_type, docs) {
+      const made = docs.map(d => ({ ...d, update: async () => {}, delete: async () => {} }));
+      actor.effects.push(...made);
+      return made;
+    },
     updates
   };
+  return actor;
 }
 
 describe("делегированный тест (wdbc-uez7): _showSkillRollDialog с effectTargetActor", () => {
@@ -505,6 +514,69 @@ describe("делегированный тест (wdbc-uez7): _rollSkill/_rollCha
     await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
     await promise;
     expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+});
+
+// wdbc-tqfj: onFailItemUuid — тот же genericTest-канал, что делегированный
+// тест выше, но с третьим полем: предмет-источник теста Сопротивления
+// (Choir of Poxes), чьи onTargetFail-записи накладывают Состояние
+// effectTargetActor ПРИ ПРОВАЛЕ. Само чтение Mechanics уже покрыто
+// test/rules/on-target-fail.test.mjs — здесь только проводка через
+// _rollCharacteristic/_runTest (actor-sheet.mjs).
+describe("onFailItemUuid (wdbc-tqfj): _rollCharacteristic доводит до applyOnTargetFailConditions", () => {
+  const realFromUuid = globalThis.fromUuid;
+  afterEach(() => { globalThis.fromUuid = realFromUuid; });
+
+  function choirItem() {
+    const item = {
+      uuid: "Item.choir", actor: null,
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "e1", kind: "condition", condMode: "onTargetFail", condKey: "stunned", condLevel: "1" }
+      ] }] } }
+    };
+    globalThis.fromUuid = async u => (u === item.uuid ? item : null);
+    return item;
+  }
+
+  it("провал цели — карточка называет наложенное Состояние", async () => {
+    choirItem();
+    const target = effectTarget("Цель");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Сопротивление", "T", 45, "t", true,
+      { effectTargetActor: target, onFailItemUuid: "Item.choir" });
+    captured.nextRoll = 90; // 90 > 45 — провал
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    const content = captured.chat.at(-1)?.content;
+    expect(content).toContain("Провал");
+    expect(content).toContain("Состояние наложено");
+    expect(content).toContain("Оглушение");
+  });
+
+  it("успех цели — Mechanics предмета не читается, Состояние не накладывается", async () => {
+    let called = false;
+    globalThis.fromUuid = async () => { called = true; return null; };
+    const target = effectTarget("Цель");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Сопротивление", "T", 45, "t", true,
+      { effectTargetActor: target, onFailItemUuid: "Item.choir" });
+    captured.nextRoll = 10; // 10 <= 45 — успех
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    expect(called).toBe(false);
+    expect(captured.chat.at(-1)?.content).not.toContain("Состояние наложено");
+  });
+
+  it("без onFailItemUuid (обычный делегированный/личный тест Характеристики) — fromUuid не зовётся, поведение прежнее", async () => {
+    let called = false;
+    globalThis.fromUuid = async () => { called = true; return null; };
+    const target = effectTarget("Цель");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Воля", "WP", 45, "wp", true, { effectTargetActor: target });
+    captured.nextRoll = 90;
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    expect(called).toBe(false);
   });
 });
 

@@ -170,15 +170,24 @@ function formulaIsDice(formula) {
  * УЖЕ на этапе применения урона (applyDamageToActor), поэтому в отличие от
  * пилюль Ритуала (module/apps/ritual-cast.mjs — перетаскиваемые, без
  * фиксированной цели) здесь достаточно кликабельной кнопки.
+ *
+ * hitNetDamage (wdbc-3pv5, опционально) — непоглощённый урон САМОГО удара,
+ * породившего крит-эффект: у пилюли «Загорается» (в отличие от Огня-свойства
+ * оружия) книга не даёт отдельного числа для «пламя наносит не больше 1d10» —
+ * крит-таблица бьёт только фактом. Ближайший осмысленный кандидат — урон
+ * этого же попадания, поэтому кладём его в data-source-damage, только у
+ * пилюли "burning" (остальным он не нужен).
  */
-export function critPillsHtml(pills, actorUuid) {
+export function critPillsHtml(pills, actorUuid, hitNetDamage = null) {
   if (!pills?.length || !actorUuid) return "";
   const btns = pills.map(p => {
     const def = CONDITIONS_DEF[p.key];
     if (!def) return "";
     const durTxt = p.permanent ? " (перм.)" : (p.formula ? ` ${esc(p.formula)}` : "");
+    const srcDmgAttr = (p.key === "burning" && hitNetDamage != null)
+      ? ` data-source-damage="${esc(String(hitNetDamage))}"` : "";
     return `<button type="button" class="wh-crit-apply-btn" data-actor-uuid="${esc(actorUuid)}"
-      data-cond-key="${p.key}" data-formula="${esc(p.formula || "")}" data-permanent="${p.permanent ? "1" : "0"}"
+      data-cond-key="${p.key}" data-formula="${esc(p.formula || "")}" data-permanent="${p.permanent ? "1" : "0"}"${srcDmgAttr}
       title="Наложить на цель карточки">
       ${def.svg || def.icon} ${esc(def.label)}${durTxt}</button>`;
   }).filter(Boolean).join("");
@@ -193,8 +202,14 @@ export function critPillsHtml(pills, actorUuid) {
  * кинутая длительность идёт в карточку текстом: тикающей инфраструктуры для
  * них нет (см. condition-ticks.mjs — только Оглушение/Ослепление/Удушье),
  * снимать их ГМ будет вручную, как и раньше.
+ *
+ * sourceDamage (wdbc-3pv5, только для key==="burning") — непоглощённый урон
+ * попадания, породившего крит-эффект (data-source-damage кнопки,
+ * critPillsHtml). Кладётся в system.conditions.burningSourceDamage той же
+ * записью, что накладывает само Состояние — Cooler/Морозное Сердце сравнивают
+ * его с книжным порогом (condition-ticks.mjs::ensureBurningGrace).
  */
-export async function applyCritEffectPill(actor, { key, formula, permanent } = {}) {
+export async function applyCritEffectPill(actor, { key, formula, permanent, sourceDamage = null } = {}) {
   const def = CONDITIONS_DEF[key];
   if (!actor || !def) return;
 
@@ -213,7 +228,11 @@ export async function applyCritEffectPill(actor, { key, formula, permanent } = {
   } else if (def.hasLevel && def.levelField && amount != null && !permanent) {
     await actor.update(conditionAdjustFields(actor, key, amount));
   } else {
-    await actor.update(conditionApplyFields(key, null, actor));
+    const fields = conditionApplyFields(key, null, actor);
+    if (key === "burning" && sourceDamage != null && Object.keys(fields).length) {
+      fields["system.conditions.burningSourceDamage"] = sourceDamage;
+    }
+    await actor.update(fields);
   }
 
   const noteParts = [];

@@ -22,6 +22,7 @@
     "damageType": "energy",
     "penetration": 6,
     "quality": "common",
+    "bookSource": "Книга Аэльдари, V. АРСЕНАЛ ЭЛЬДАР («Гранаты и бомбы», стр. 85)",
     "availability": -1,
     "weight": 0.2,
     "attackBonus": 0,

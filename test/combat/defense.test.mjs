@@ -303,6 +303,66 @@ describe("_performDodge: Потеря ноги блокирует Уклонен
   });
 });
 
+// Фантомные Копии (Wrapped in Chaos "2-3", wdbc-1rno): штраф Уклонению
+// защитника от рукопашной атаки владельца — направленный модификатор
+// атакующий→защитник, резолвится attackerUuid тем же путём, что Разница
+// Размеров у Парирования (module/rules/hand-of-khorne.mjs тесты выше).
+describe("_performDodge: Фантомные Копии атакующего (Wrapped in Chaos «2-3», wdbc-1rno)", () => {
+  function phantomCopiesItem(label = "2-3") {
+    return {
+      type: "mutation", name: "Wrapped in Chaos / Укутанный в Хаос",
+      system: { submutation: { label } },
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+        { id: "e", kind: "capability", capabilityKey: "mutation.wrappedInChaos", label: "" }
+      ] }] } }
+    };
+  }
+
+  // Ag 35 (actorFor), untrained −20 → база Порог 15; с «2-3» и рукопашной −10 → 5.
+  it("атакующий с «2-3», рукопашная атака — доп. −10 к порогу, чип в карточке", async () => {
+    const actor = attacker();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.attacker-1" ? { uuid, items: [phantomCopiesItem()] } : null);
+
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: true });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>5</b>");
+    expect(card).toContain("Фантомные Копии атакующего -10");
+  });
+
+  it("тот же атакующий, но атака стрелковая — штрафа нет", async () => {
+    const actor = attacker();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.attacker-1" ? { uuid, items: [phantomCopiesItem()] } : null);
+
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: false });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).not.toContain("Фантомные Копии");
+  });
+
+  it("атакующий без «2-3» — штрафа нет", async () => {
+    const actor = attacker();
+    globalThis.fromUuid = async uuid => (uuid === "Actor.attacker-1" ? { uuid, items: [] } : null);
+
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.attacker-1", isMelee: true });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>15</b>");
+    expect(card).not.toContain("Фантомные Копии");
+  });
+
+  it("attackerUuid не резолвится — штрафа нет, не падает", async () => {
+    const actor = attacker();
+    globalThis.fromUuid = async () => null;
+
+    await _performDodge(actor, { extraMod: 0, forcedReroll: "", hitsCount: 1, attackerUuid: "Actor.unknown", isMelee: true });
+
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("→ Порог: <b>15</b>");
+  });
+});
+
 // Пул Избегания (стр. 12, module/combat/evasion-pool.mjs): излишек Успехов
 // сверх того, что нужно ЭТОЙ атаке, банкуется на попадания ДРУГИХ атак того
 // же противника в этом Ходу — но только пока «Ход» отследим (активный бой).

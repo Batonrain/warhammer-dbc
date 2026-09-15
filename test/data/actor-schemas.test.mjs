@@ -192,6 +192,12 @@ const DEVIATIONS = {
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
+    // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце): урон
+    // поджигания и остаток окна «без эффектов Горения» — два бесхозных числа
+    // сверх общего флаг+счётчик (burningLevel), заведены гораздо позже
+    // template.json (module/data/actor/_creature.mjs).
+    "conditions.burningSourceDamage": 0,
+    "conditions.burningGraceRounds": 0,
     // Стр. 30-31 («Раны и Урон», «Статусы») — Ступор/Удушье/Гангрена/Потеря
     // Конечностей (по частям тела) заведены гораздо позже template.json.
     "conditions.dazed": false,
@@ -202,6 +208,19 @@ const DEVIATIONS = {
     // заведён гораздо позже template.json (раньше decay не срабатывал
     // вовсе, поле отсутствовало).
     "conditions.hallucinogenicRounds": 0,
+    // Стазис (wdbc-1rno) — заведено гораздо позже template.json, на основе
+    // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
+    "conditions.stasis": false,
+    "conditions.stasisRounds": 0,
+    // Сладкий Туман (wdbc-1rno) — заведено гораздо позже template.json.
+    "conditions.sweetMist": false,
+    "conditions.sweetMistExpiresAt": 0,
+    // Мононить «Поцелуй Мимика» (wdbc-ux8a) — заведено гораздо позже template.json.
+    "conditions.mimicWire": false,
+    "conditions.mimicWireBlocksPowers": false,
+    // Паразитический контакт (Трейт Parasite, wdbc-ux8a) — заведено гораздо позже template.json.
+    "conditions.parasiticContact": false,
+    "conditions.parasiticContactRounds": 0,
     "conditions.lostHands": false,
     "conditions.lostHandsCount": 0,
     "conditions.lostArms": false,

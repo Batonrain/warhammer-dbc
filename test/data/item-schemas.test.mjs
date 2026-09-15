@@ -335,7 +335,7 @@ const TYPES = {
       },
       // Выпавшая субмутация (стр. 440): в template.json поля не было, в паке
       // его тоже нет — оно заполняется броском уже на листе персонажа.
-      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 },
+      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0, multi: [] },
       // Трекер Зависимости (wdbc-5inv) — та же логика, что submutation выше:
       // заполняется на листе (subst./"Удовлетворить"), в паке пусто у всех.
       dependency: { substance: "", lastSatisfied: null }
@@ -451,7 +451,7 @@ const TYPES = {
       sustainable: false, sustainCost: 1, sustainAction: "free",
       // wdbc-5kd: penetration — формула строкой (как damage), не число:
       // «Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3.
-      damage: "", damageType: "energy", penetration: "0", weaponProps: [],
+      damage: "", damageType: "energy", penetration: "0", xFormula: "", vortexPersistent: false, weaponProps: [],
       charDamageStat: "", charDamageFormula: "", profiles: [], variants: [],
       resistChar: "", resistMod: 0,
       effect: "", isSustained: false, sustainedDegree: null, sustainedEpr: null, sustainedTargetUuid: "",

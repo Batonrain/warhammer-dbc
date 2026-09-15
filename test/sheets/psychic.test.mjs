@@ -168,6 +168,42 @@ describe("psychic manifestation", () => {
     });
   });
 
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // доп. блок манифестации психосил — тот же такт, что Высшее Колдовство выше.
+  describe("Мононить «Поцелуй Мимика»: mimicWireBlocksPowers блокирует манифестацию", () => {
+    it("флаг стоит — манифестация блокируется, диалог не открывается", () => {
+      const a = actor({ system: { conditions: { mimicWire: true, mimicWireBlocksPowers: true } } });
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog).toBeFalsy();
+      expect(captured.warnings.some(w => w.includes("мононить блокирует манифестацию"))).toBe(true);
+    });
+
+    it("mimicWire стоит, но без mimicWireBlocksPowers — манифестация доступна", () => {
+      const a = actor({ system: { conditions: { mimicWire: true, mimicWireBlocksPowers: false } } });
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+  });
+
+  // Parasite/Паразит (Трейт — общий, wdbc-ux8a): хост под полным контролем
+  // паразита «не может использовать психосилы» — тот же гейт-приём выше.
+  describe("Parasite/Паразит: possessedByParasiteUuid блокирует манифестацию", () => {
+    it("флаг стоит — манифестация блокируется, диалог не открывается", () => {
+      const a = actor({});
+      a.flags = { "warhammer-dbc": { possessedByParasiteUuid: "Actor.parasite" } };
+      a.getFlag = (scope, key) => a.flags[scope]?.[key];
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog).toBeFalsy();
+      expect(captured.warnings.some(w => w.includes("под контролем паразита"))).toBe(true);
+    });
+
+    it("флага нет — манифестация доступна", () => {
+      const a = actor({});
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+  });
+
   // wdbc-jpmh: Путь Силы («Инкантация»/«Медитация»/«Жертва»/«Телесная
   // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
   // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не
@@ -279,6 +315,177 @@ describe("psychic manifestation", () => {
     expect(captured.chat[0].content).toContain("Урон (Энергетический, Проб. 0): <b>12</b>");
     expect(captured.chat[0].content).toContain("Экстремальный урон");
     expect(captured.chat[0].content).toContain("d5: 4");
+  });
+
+  // wdbc-luca: сила без прямого урона (Death of Machines — книжная таблица
+  // Dmg/Pen «–», весь эффект через Haywire) должна оставлять damage ПУСТЫМ,
+  // не «–»: непустая строка уходила в new Roll() и падала исключением
+  // Unresolved StringTerm при каждом успехе.
+  it("damage=\"\" (сила без прямого урона, эффект только через weaponProps) — не бросает урон, не падает", async () => {
+    const a = actor();
+    const power = item({ system: {
+      testChar: "wp", powerType: "attack", testMod: 0,
+      damage: "", damageType: "energy",
+      weaponProps: [{ key: "haywire", rating: "PR*3", rating2: "2d10+5" }]
+    } });
+    captured.nextRoll = 10;
+
+    await expect(executePsychotest(a, power, {
+      mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+      pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+    })).resolves.not.toThrow();
+
+    expect(captured.rolls).not.toContain("");
+    expect(captured.rolls.some(f => f.includes("–"))).toBe(false);
+    // Haywire всё равно должен показаться — эффект не завязан на damage.
+    expect(captured.chat[0].content).toContain("ЭМИ");
+  });
+
+  // wdbc-86rm: у психосил с Дугой (Lightning Bolt/Chain Lightning/Storm
+  // Knight и подобные) кнопки .wh-arc-btn в карточке манифестации не было
+  // вовсе — buildTargetEffectButtons её не строит (arc: auto:{arc:null},
+  // без targetEffect), реальная кнопка жила только в attack-card.mjs
+  // (обычное оружие). Обработчик hooks.mjs::.wh-arc-btn общий и переиспользован
+  // как есть — проверяется только сама разметка/гейт, не клик по ней.
+  describe("Дуга у психосил (wdbc-86rm): .wh-arc-btn появляется, если первое попадание достигло порога X", () => {
+    it("первое попадание >= arcRating — кнопка есть, несёт arcDamage/attacker-uuid", async () => {
+      const a = actor();
+      a.uuid = "Actor.caster-arc-test";
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10+100", damageType: "energy", // гарантированно бьёт порог arcRating=7
+        weaponProps: [{ key: "arc", rating: 7, rating2: "2d10" }]
+      } });
+      captured.dice = [10, 5]; // психотест успех, дайс урона 1d10=5 (итог 105 >= 7)
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      const card = captured.chat[0].content;
+      expect(card).toContain("wh-arc-btn");
+      expect(card).toContain('data-arc-damage="2d10"');
+      expect(card).toContain('data-attacker-uuid="Actor.caster-arc-test"');
+    });
+
+    it("первое попадание не достигло arcRating — кнопки нет (только текстовая памятка)", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1", damageType: "energy", // фиксированный маленький урон
+        weaponProps: [{ key: "arc", rating: 999, rating2: "2d10" }]
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      const card = captured.chat[0].content;
+      expect(card).not.toContain("wh-arc-btn");
+      expect(card).toContain("Дуга"); // текстовая памятка (buildPropertyChatBlock) остаётся
+    });
+  });
+
+  // wdbc-zlx7: requiredSuccesses на записи weaponProps — свойство срабатывает
+  // только при достаточном числе Успехов ЭТОГО психотеста (Fire Bolt/Barrage/
+  // Storm, Neural Storm), а не на любое попадание.
+  describe("requiredSuccesses (wdbc-zlx7): свойство атаки психосилы только при N+ Успехах", () => {
+    it("deg < requiredSuccesses — кнопки/заметки свойства в карточке нет вовсе", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy",
+        weaponProps: [{ key: "flame", requiredSuccesses: 3 }]
+      } });
+      captured.nextRoll = 30; // wp.total=40 → |30-40|/10+1 = deg 2 (< 3)
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).not.toContain('data-wp-key="flame"');
+    });
+
+    it("deg >= requiredSuccesses — кнопка/заметка свойства есть", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy",
+        weaponProps: [{ key: "flame", requiredSuccesses: 3 }]
+      } });
+      captured.nextRoll = 10; // deg = |10-40|/10+1 = 4 (>= 3)
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain('data-wp-key="flame"');
+    });
+
+    it("без requiredSuccesses (обычная запись) — поведение прежнее, не отсекается", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy",
+        weaponProps: [{ key: "flame" }]
+      } });
+      captured.nextRoll = 30; // тот же низкий deg=2 — но без порога не задет
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.chat[0].content).toContain('data-wp-key="flame"');
+    });
+  });
+
+  // wdbc-ufns: «Х» (Vortex of Doom: Х=½Успехи(окр.▲), используется сразу в
+  // damage/penetration/weaponProps-rating одного предмета) — sys.xFormula
+  // считается один раз и подставляется во все три места.
+  describe("xFormula (wdbc-ufns): производное «Х» в damage/pen/weaponProps-rating", () => {
+    it("Х=ceil(СУ/2) при deg=5 (Х=3) — damage «3d10+Х», pen «2*Х», Blast(Х) все получают 3", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "3d10+Х", damageType: "impact", penetration: "2*Х",
+        xFormula: "ceil(СУ/2)",
+        weaponProps: [{ key: "blast", rating: "Х" }]
+      } });
+      captured.nextRoll = 10; // wp.total=40 → deg=|10-40|/10+1=4 → Х=ceil(4/2)=2
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      const card = captured.chat[0].content;
+      // deg=4 → Х=ceil(4/2)=2 → damage "3d10+2", pen "2*2"=4, Blast(2)
+      expect(captured.rolls).toContain("3d10+2");
+      expect(card).toContain("Проб. 4");
+      expect(card).toContain("Взрывное (2)");
+    });
+
+    it("без xFormula — «Х» в чужой формуле не подставляется (не задет предмет без sys.xFormula)", async () => {
+      const a = actor();
+      const power = item({ system: {
+        testChar: "wp", powerType: "attack", testMod: 0,
+        damage: "1d10", damageType: "energy", penetration: "0"
+      } });
+      captured.nextRoll = 10;
+
+      await executePsychotest(a, power, {
+        mPR: 1, prMod: 0, mode: "normal", path: "", modifier: 0, eldar: false,
+        pushChoice: 1, damagePR: 0, rangePR: 0, profileIdx: -1, variantIdx: -1
+      });
+
+      expect(captured.rolls).toContain("1d10");
+    });
   });
 
   // wdbc-5kd: system.penetration был NumberField — книжные силы вроде
