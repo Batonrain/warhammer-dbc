@@ -15,7 +15,7 @@ import "../support/foundry-stub.mjs";
 import { captured, resetCaptured } from "../support/foundry-stub.mjs";
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { hasBurningGraceCapability } from "../../module/combat/damage.mjs";
+import { hasBurningGraceCapability, burningGraceSourceItem } from "../../module/combat/damage.mjs";
 import { ensureBurningGrace, processConditionTurnStart, processConditionTurnEnd } from "../../module/combat/condition-ticks.mjs";
 
 const burningGraceMechanics = [{
@@ -23,9 +23,9 @@ const burningGraceMechanics = [{
   entries: [{ id: "e1", kind: "burningGrace" }]
 }];
 
-function forcefield({ equipped = true, status = "active", mechanics = burningGraceMechanics } = {}) {
+function forcefield({ name = "Frozen Heart / Морозное Сердце", equipped = true, status = "active", mechanics = burningGraceMechanics } = {}) {
   return {
-    type: "forcefield",
+    name, type: "forcefield",
     system: { equipped, status },
     flags: { "warhammer-dbc": { mechanics } },
     getFlag(scope, key) { return this.flags?.[scope]?.[key]; }
@@ -36,9 +36,9 @@ function armor({ id = "armor1", equipped = true } = {}) {
   return { id, type: "armor", system: { equipped, body: 1 } };
 }
 
-function armorMod({ installedOn = "armor1", activatable = false, active = false, mechanics = burningGraceMechanics } = {}) {
+function armorMod({ name = "Cooler / Охладитель", installedOn = "armor1", activatable = false, active = false, mechanics = burningGraceMechanics } = {}) {
   return {
-    type: "armorMod",
+    name, type: "armorMod",
     system: { installedOn, category: "armor", activatable, active, modGroup: "general" },
     flags: { "warhammer-dbc": { mechanics } },
     getFlag(scope, key) { return this.flags?.[scope]?.[key]; }
@@ -113,6 +113,28 @@ describe("hasBurningGraceCapability", () => {
   });
 });
 
+// wdbc-lm83: заметка в чате раньше звала окно «Cooler» даже когда сработал
+// только Frozen Heart без Cooler на акторе — burningGraceSourceItem отдаёт
+// РЕАЛЬНЫЙ предмет, чтобы вызывающий код мог назвать его по имени.
+describe("burningGraceSourceItem (wdbc-lm83)", () => {
+  it("только Frozen Heart (без Cooler) — возвращает именно Frozen Heart", () => {
+    const shield = forcefield();
+    const actor = makeActor({ items: [shield] });
+    expect(burningGraceSourceItem(actor)).toBe(shield);
+  });
+
+  it("только Cooler (без Frozen Heart) — возвращает именно Cooler", () => {
+    const mod = armorMod();
+    const actor = makeActor({ items: [armor(), mod] });
+    expect(burningGraceSourceItem(actor)).toBe(mod);
+  });
+
+  it("ни одного предмета со способностью — null", () => {
+    const actor = makeActor({ items: [armor()] });
+    expect(burningGraceSourceItem(actor)).toBeNull();
+  });
+});
+
 describe("ensureBurningGrace", () => {
   it("нет способности — не выдаёт окно", async () => {
     const actor = makeActor({ overrides: { conditions: { burning: true, burningSourceDamage: 5 } } });
@@ -155,7 +177,7 @@ describe("ensureBurningGrace", () => {
 });
 
 describe("processConditionTurnStart: Cooler/Морозное Сердце гасит Панику от Горения", () => {
-  it("порог пройден — Паника пропущена, окно выдано автоматически (без кнопки)", async () => {
+  it("только Frozen Heart (без Cooler) — заметка зовёт Frozen Heart, не «Cooler» (wdbc-lm83)", async () => {
     const actor = makeActor({
       items: [forcefield()],
       overrides: { conditions: { burning: true, burningSourceDamage: 8 } }
@@ -163,15 +185,28 @@ describe("processConditionTurnStart: Cooler/Морозное Сердце гас
     captured.dice = [4]; // 1d5 окна
     await processConditionTurnStart(actor);
 
-    // "Паника от Горения" тоже встречается в самой строке-заметке Cooler —
-    // проверяем отсутствие НАСТОЯЩЕЙ карточки теста Морали по её исходу.
+    // "Паника от Горения" тоже встречается в самой строке-заметке — проверяем
+    // отсутствие НАСТОЯЩЕЙ карточки теста Морали по её исходу.
     expect(captured.chat.some(c =>
       c.content.includes("держит себя в руках") || c.content.includes("потерян в панике")
     )).toBe(false);
     expect(actor.system.conditions.burningGraceRounds).toBe(4);
-    const card = captured.chat.find(c => c.content.includes("Cooler"));
+    const card = captured.chat.find(c => c.content.includes("Паника от Горения пропущена"));
     expect(card).toBeTruthy();
-    expect(card.content).toContain("Паника от Горения пропущена");
+    expect(card.content).toContain("Frozen Heart / Морозное Сердце");
+    expect(card.content).not.toContain("Cooler"); // wdbc-lm83: не жёстко зашитое имя
+  });
+
+  it("только Cooler (без Frozen Heart) — заметка зовёт Cooler по имени", async () => {
+    const actor = makeActor({
+      items: [armor(), armorMod()],
+      overrides: { conditions: { burning: true, burningSourceDamage: 8 } }
+    });
+    captured.dice = [3];
+    await processConditionTurnStart(actor);
+
+    const card = captured.chat.find(c => c.content.includes("Паника от Горения пропущена"));
+    expect(card.content).toContain("Cooler / Охладитель");
   });
 
   it("нет способности — Паника от Горения проходит как обычно", async () => {
@@ -196,6 +231,10 @@ describe("processConditionTurnEnd: Cooler/Морозное Сердце гаси
     expect(actor.system.fatigue.value).toBe(0);      // не изменилось
     expect(actor.system.conditions.burningGraceRounds).toBe(3); // 4 выдано − 1 потрачено этим тиком
     expect(actor.system.conditions.burning).toBe(true); // само Состояние не снимается — только эффекты
+    // wdbc-lm83: только Frozen Heart на акторе — заметка зовёт его, не «Cooler».
+    const card = captured.chat.find(c => c.content.includes("тик Горения пропущен"));
+    expect(card.content).toContain("Frozen Heart / Морозное Сердце");
+    expect(card.content).not.toContain("Cooler");
   });
 
   it("окно уже открыто с прошлого Хода (burningGraceRounds=1) — тик пропущен, окно закрывается на 0", async () => {

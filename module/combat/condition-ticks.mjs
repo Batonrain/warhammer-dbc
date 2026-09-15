@@ -32,7 +32,7 @@ import { resolveArmorProps } from "./armor-properties.mjs";
 // целиком при успехе — единственная причина, по которой этот модуль вообще
 // знает о combat/damage.mjs (в остальном тик состояний намеренно идёт мимо
 // конвейера урона, см. шапку файла).
-import { rollShieldAgainstConditionTick, hasBurningGraceCapability } from "./damage.mjs";
+import { rollShieldAgainstConditionTick, burningGraceSourceItem } from "./damage.mjs";
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
 // system.conditions.<key> (bool) + system.conditions.<field> (число). Из
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
@@ -114,21 +114,33 @@ const BURNING_GRACE_DAMAGE_THRESHOLD = 10;
  * же самое (ещё не остывшее) значение urона поджигания. Новое загорание
  * (свежий Flame-удар/крит, пока горит) перезапишет burningSourceDamage
  * заново — второе окно за бой возможно, просто не за счёт СТАРОГО числа.
+ *
+ * sourceName (wdbc-lm83) — имя предмета, реально дающего способность СЕЙЧАS
+ * (Cooler/Охладитель ИЛИ Frozen Heart/Морозное Сердце, кто на акторе есть),
+ * а не жёстко «Cooler»: заметка в чате раньше звала окно Cooler даже когда
+ * сработал только Frozen Heart без Cooler на акторе. Ищется заново на каждом
+ * вызове, в том числе когда окно уже открыто (current > 0) — предмет мог
+ * смениться (снят один, надет другой) с прошлого Хода; пустая строка, если
+ * сейчас на акторе ни одного нет вовсе (окно всё равно продолжает тикать —
+ * решение «убрать предмет не гасит уже открытое окно» не пересматривается
+ * здесь, только подпись).
  */
 export async function ensureBurningGrace(actor) {
   const conds = actor?.system?.conditions;
-  if (!conds) return { rounds: 0, roll: null };
+  if (!conds) return { rounds: 0, roll: null, sourceName: "" };
+  const sourceItem = burningGraceSourceItem(actor);
+  const sourceName = sourceItem?.name || "";
   const current = Number(conds.burningGraceRounds) || 0;
-  if (current > 0) return { rounds: current, roll: null };
-  if (!hasBurningGraceCapability(actor)) return { rounds: 0, roll: null };
+  if (current > 0) return { rounds: current, roll: null, sourceName };
+  if (!sourceItem) return { rounds: 0, roll: null, sourceName };
   const srcDmg = Number(conds.burningSourceDamage) || 0;
-  if (srcDmg <= 0 || srcDmg > BURNING_GRACE_DAMAGE_THRESHOLD) return { rounds: 0, roll: null };
+  if (srcDmg <= 0 || srcDmg > BURNING_GRACE_DAMAGE_THRESHOLD) return { rounds: 0, roll: null, sourceName };
   const roll = await new Roll("1d5").evaluate();
   await actor.update({
     "system.conditions.burningGraceRounds": roll.total,
     "system.conditions.burningSourceDamage": 0
   });
-  return { rounds: roll.total, roll };
+  return { rounds: roll.total, roll, sourceName };
 }
 
 /**
@@ -169,9 +181,11 @@ export async function processConditionTurnStart(actor) {
     // Cooler/Морозное Сердце (wdbc-3pv5): окно «игнорировать ВСЕ негативные
     // эффекты Горения» гасит и эту Панику, не только тик урона ниже —
     // книга не разделяет «эффекты» на подвиды.
-    const { rounds, roll } = await ensureBurningGrace(actor);
+    const { rounds, roll, sourceName } = await ensureBurningGrace(actor);
     if (rounds > 0) {
-      lines.push(`<div class="roll-threshold">${rollIcon("fire","#8fd0ff")}Cooler: Паника от Горения пропущена (осталось Ходов: <b>${rounds}</b>${roll ? `, выдано 1d5 = <b>${roll.total}</b>` : ""})</div>`);
+      // wdbc-lm83: имя сработавшего предмета, не жёстко «Cooler» — Frozen
+      // Heart без Cooler на акторе даёт то же окно.
+      lines.push(`<div class="roll-threshold">${rollIcon("fire","#8fd0ff")}${esc(sourceName || "Охлаждение")}: Паника от Горения пропущена (осталось Ходов: <b>${rounds}</b>${roll ? `, выдано 1d5 = <b>${roll.total}</b>` : ""})</div>`);
     } else {
       await rollBurningPanicTest(actor);
     }
@@ -311,12 +325,13 @@ export async function processConditionTurnEnd(actor) {
   // Ход окна здесь — processConditionTurnStart его не трогает, только читает.
   let burningGraceActive = false;
   if (conds.burning && !burningExtinguishedByShield) {
-    const { rounds, roll: graceRoll } = await ensureBurningGrace(actor);
+    const { rounds, roll: graceRoll, sourceName } = await ensureBurningGrace(actor);
     if (rounds > 0) {
       burningGraceActive = true;
       const next = rounds - 1;
       await actor.update({ "system.conditions.burningGraceRounds": next });
-      lines.push(`<div class="roll-threshold">${rollIcon("fire","#8fd0ff")}Cooler: тик Горения пропущен${graceRoll ? ` (выдано 1d5 = <b>${graceRoll.total}</b>)` : ""} — осталось Ходов: <b>${next}</b></div>`);
+      // wdbc-lm83: имя сработавшего предмета, не жёстко «Cooler».
+      lines.push(`<div class="roll-threshold">${rollIcon("fire","#8fd0ff")}${esc(sourceName || "Охлаждение")}: тик Горения пропущен${graceRoll ? ` (выдано 1d5 = <b>${graceRoll.total}</b>)` : ""} — осталось Ходов: <b>${next}</b></div>`);
     }
   }
 
