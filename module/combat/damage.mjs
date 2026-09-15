@@ -249,20 +249,31 @@ function _hasMechKind(item, kind) {
  * оба типа предметов одним геттером вместо двух копий. armorMod проверяется
  * через getInstalledArmorMods (armor-mods.mjs) — тот уже знает про
  * activatable/active и надетую ли броня, повторно эту логику здесь не пишем.
+ *
+ * Возвращает САМ ПРЕДМЕТ (не булево) — wdbc-lm83: живая проверка нашла, что
+ * заметка в чате звала окно «Cooler» даже когда сработал только Frozen Heart
+ * без Cooler на акторе, потому что раньше здесь возвращался голый true/false
+ * и имя предмета неоткуда было взять. hasBurningGraceCapability ниже —
+ * тонкая булева обёртка для мест, которым нужен только факт.
  * Читает module/combat/condition-ticks.mjs::ensureBurningGrace.
  */
-export function hasBurningGraceCapability(actor) {
+export function burningGraceSourceItem(actor) {
   for (const item of actor?.items ?? []) {
     if (item.type === "forcefield" && item.system?.equipped && item.system?.status === "active"
-      && _hasMechKind(item, "burningGrace")) return true;
+      && _hasMechKind(item, "burningGrace")) return item;
   }
   for (const armor of actor?.items ?? []) {
     if (armor.type !== "armor" || !armor.system?.equipped) continue;
     for (const mod of getInstalledArmorMods(actor, armor)) {
-      if (_hasMechKind(mod, "burningGrace")) return true;
+      if (_hasMechKind(mod, "burningGrace")) return mod;
     }
   }
-  return false;
+  return null;
+}
+
+/** Булев факт способности, без имени предмета — см. burningGraceSourceItem выше. */
+export function hasBurningGraceCapability(actor) {
+  return !!burningGraceSourceItem(actor);
 }
 
 /**
