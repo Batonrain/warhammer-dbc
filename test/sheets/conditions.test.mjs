@@ -277,8 +277,12 @@ describe("conditionApplyFields / conditionRemoveFields / conditionAdjustFields",
   });
 
   it("conditionRemoveFields: флаг + счётчик обнулены у состояния с уровнем", () => {
+    // Горение (wdbc-3pv5) несёт ещё два бесхозных поля сверх общего
+    // флаг+счётчик — burningSourceDamage/burningGraceRounds (Cooler/Морозное
+    // Сердце), снятие Состояния обнуляет и их же.
     expect(conditionRemoveFields("burning")).toEqual({
-      "system.conditions.burning": false, "system.conditions.burningLevel": 0
+      "system.conditions.burning": false, "system.conditions.burningLevel": 0,
+      "system.conditions.burningSourceDamage": 0, "system.conditions.burningGraceRounds": 0
     });
   });
 
@@ -363,7 +367,10 @@ describe("activateConditionsListeners", () => {
     await handlers[".condition-level-input:change"](ev({ condition: "burning" }, "2"));
 
     expect(a.updates).toEqual([
-      { "system.conditions.burning": false, "system.conditions.burningLevel": 0 },
+      {
+        "system.conditions.burning": false, "system.conditions.burningLevel": 0,
+        "system.conditions.burningSourceDamage": 0, "system.conditions.burningGraceRounds": 0
+      },
       { "system.conditions.burningLevel": 2 }
     ]);
   });

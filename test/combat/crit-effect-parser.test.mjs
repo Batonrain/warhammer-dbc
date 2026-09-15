@@ -218,6 +218,31 @@ describe("applyCritEffectPill — клик применяет состояние
     expect(actor.system.conditions.unconscious).toBe(true);
     expect(captured.chat[0].content).toContain("без автотика");
   });
+
+  // wdbc-3pv5: «Загорается» крит-таблицы не даёт своего числа урона —
+  // sourceDamage (непоглощённый урон САМОГО попадания, передан кнопкой)
+  // кладётся в burningSourceDamage той же записью, что накладывает Горение,
+  // Cooler/Морозное Сердце сравнивают его с книжным порогом.
+  it("Горение с sourceDamage — burningSourceDamage записан вместе с флагом", async () => {
+    const actor = makeActor();
+    await applyCritEffectPill(actor, { key: "burning", formula: null, sourceDamage: 7 });
+    expect(actor.system.conditions.burning).toBe(true);
+    expect(actor.system.conditions.burningSourceDamage).toBe(7);
+  });
+
+  it("Горение без sourceDamage (напр. старый вызов) — флаг ставится, burningSourceDamage не трогается", async () => {
+    const actor = makeActor();
+    await applyCritEffectPill(actor, { key: "burning", formula: null });
+    expect(actor.system.conditions.burning).toBe(true);
+    expect(actor.system.conditions.burningSourceDamage).toBeUndefined();
+  });
+
+  it("другое Состояние с sourceDamage — поле игнорируется (только у burning)", async () => {
+    const actor = makeActor();
+    await applyCritEffectPill(actor, { key: "bleeding", formula: null, sourceDamage: 7 });
+    expect(actor.system.conditions.bleeding).toBe(true);
+    expect(actor.system.conditions.burningSourceDamage).toBeUndefined();
+  });
 });
 
 describe("critPillsHtml — рендер кнопок", () => {
@@ -232,6 +257,22 @@ describe("critPillsHtml — рендер кнопок", () => {
     expect(html).toContain('data-actor-uuid="Actor.stub"');
     expect(html).toContain('data-cond-key="stunned"');
     expect(html).toContain('data-formula="1d10"');
+  });
+
+  // wdbc-3pv5
+  it("пилюля «burning» с hitNetDamage несёт data-source-damage", () => {
+    const html = critPillsHtml([{ key: "burning", formula: null }], "Actor.stub", 6);
+    expect(html).toContain('data-source-damage="6"');
+  });
+
+  it("другая пилюля с тем же hitNetDamage — data-source-damage не ставится", () => {
+    const html = critPillsHtml([{ key: "stunned", formula: "1d10" }], "Actor.stub", 6);
+    expect(html).not.toContain("data-source-damage");
+  });
+
+  it("пилюля «burning» без hitNetDamage — data-source-damage не ставится", () => {
+    const html = critPillsHtml([{ key: "burning", formula: null }], "Actor.stub");
+    expect(html).not.toContain("data-source-damage");
   });
 });
 

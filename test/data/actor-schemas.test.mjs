@@ -192,6 +192,12 @@ const DEVIATIONS = {
     // Состояние «Беспомощный» заведено гораздо позже template.json (auto-успех
     // и удвоенный урон против него — attack-dialog.mjs/attack.mjs).
     "conditions.helpless": false,
+    // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце): урон
+    // поджигания и остаток окна «без эффектов Горения» — два бесхозных числа
+    // сверх общего флаг+счётчик (burningLevel), заведены гораздо позже
+    // template.json (module/data/actor/_creature.mjs).
+    "conditions.burningSourceDamage": 0,
+    "conditions.burningGraceRounds": 0,
     // Стр. 30-31 («Раны и Урон», «Статусы») — Ступор/Удушье/Гангрена/Потеря
     // Конечностей (по частям тела) заведены гораздо позже template.json.
     "conditions.dazed": false,
