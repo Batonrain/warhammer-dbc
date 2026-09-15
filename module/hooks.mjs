@@ -1149,7 +1149,8 @@ export function registerHooks() {
         }
         el.disabled = true;
         await applyCritEffectPill(actor, {
-          key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1"
+          key: ds.condKey, formula: ds.formula || null, permanent: ds.permanent === "1",
+          sourceDamage: ds.sourceDamage != null && ds.sourceDamage !== "" ? Number(ds.sourceDamage) : null
         });
       });
     });
@@ -1599,6 +1600,15 @@ export async function _applyWeaponPropEffect(ds) {
     const dmg = dmgRoll.total;
     const { currentWounds, newWounds, newCritical, gotCritical } = await applyWoundLoss(actor, dmg);
     dmgNote = `<div class="roll-threshold">${rollIcon("burst","#ffb84d")}Доп. урон (минуя броню): <b>${dmg}</b> → Раны ${currentWounds} → ${newWounds}${gotCritical ? ` | Крит. раны: <b>${newCritical}</b>` : ""}</div>`;
+    // Горение (wdbc-3pv5): у Огня (Flame) этот же dmg — рейтинг-бросок
+    // свойства (damageFromRating), ровно то число, с которым Cooler/Морозное
+    // Сердце сравнивают книжный порог «пламя наносит не больше 1d10» —
+    // отдельного броска заводить не нужно, читаем то, что и так посчитано.
+    // actor.system.conditions?.burning проверяет, что Горение реально
+    // наложилось (не погашено иммунитетом цели в блоке выше).
+    if (condition === "burning" && actor.system.conditions?.burning) {
+      await actor.update({ "system.conditions.burningSourceDamage": dmg });
+    }
     // Гиперрост (wdbc-utaw): этот же тик яда, если он от боеприпаса
     // «Гиперрост» именно — цель получает столько же аблативных Ран.
     // isHyperGrowthAmmoName внутри отсеивает любой другой Toxic-боеприпас.

@@ -27,7 +27,7 @@ import { ADAPTATION_CAPABILITY, maybeGrantAdaptationBonus, adaptationBonusFor } 
 import { entropyArmourLoss } from "./touch-of-entropy.mjs";
 import { processNurglingInfestation } from "./nurgling-infestation.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
-import { activeAblativeArmorMods } from "./armor-mods.mjs";
+import { activeAblativeArmorMods, getInstalledArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
@@ -228,6 +228,40 @@ function _hasShieldArmorGate(item) {
   const groups = item.getFlag?.("warhammer-dbc", "mechanics") || [];
   for (const g of groups) for (const e of g?.entries || [])
     if (e?.kind === "shieldArmorGate") return true;
+  return false;
+}
+
+/** Есть ли на предмете запись Конструктора данного kind (общий сканер групп). */
+function _hasMechKind(item, kind) {
+  const groups = item.getFlag?.("warhammer-dbc", "mechanics") || [];
+  for (const g of groups) for (const e of g?.entries || [])
+    if (e?.kind === kind) return true;
+  return false;
+}
+
+/**
+ * kind:"burningGrace" (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце,
+ * «даёт улучшение Cooler, пока активен») — присутствие записи на активном
+ * предмете и есть флаг, как shieldArmorGate выше, но НЕ ограничена
+ * type:"forcefield": Cooler — armorMod, Frozen Heart — forcefield, а книжный
+ * эффект («игнорировать все негативные эффекты Горения 1d5 Ходов, если
+ * пламя наносит не больше 1d10 урона») у обоих один и тот же, поэтому читает
+ * оба типа предметов одним геттером вместо двух копий. armorMod проверяется
+ * через getInstalledArmorMods (armor-mods.mjs) — тот уже знает про
+ * activatable/active и надетую ли броня, повторно эту логику здесь не пишем.
+ * Читает module/combat/condition-ticks.mjs::ensureBurningGrace.
+ */
+export function hasBurningGraceCapability(actor) {
+  for (const item of actor?.items ?? []) {
+    if (item.type === "forcefield" && item.system?.equipped && item.system?.status === "active"
+      && _hasMechKind(item, "burningGrace")) return true;
+  }
+  for (const armor of actor?.items ?? []) {
+    if (armor.type !== "armor" || !armor.system?.equipped) continue;
+    for (const mod of getInstalledArmorMods(actor, armor)) {
+      if (_hasMechKind(mod, "burningGrace")) return true;
+    }
+  }
   return false;
 }
 
@@ -1019,7 +1053,7 @@ export async function applyDamageToActor(actor, damageData) {
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
-      ${critPillsHtml(critPills, actor.uuid)}
+      ${critPillsHtml(critPills, actor.uuid, netDamage)}
       ${castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
         : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : "")}

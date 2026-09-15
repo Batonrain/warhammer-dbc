@@ -32,7 +32,7 @@ import { resolveArmorProps } from "./armor-properties.mjs";
 // целиком при успехе — единственная причина, по которой этот модуль вообще
 // знает о combat/damage.mjs (в остальном тик состояний намеренно идёт мимо
 // конвейера урона, см. шапку файла).
-import { rollShieldAgainstConditionTick } from "./damage.mjs";
+import { rollShieldAgainstConditionTick, hasBurningGraceCapability } from "./damage.mjs";
 // Состояния «N раундов», тикающие в начале Хода их обладателя — ключ
 // system.conditions.<key> (bool) + system.conditions.<field> (число). Из
 // реестра constants/conditions.mjs (wdbc-w88h): любое Состояние со счётчиком
@@ -85,6 +85,52 @@ function fireproofBurningApBonus(actor) {
   return best;
 }
 
+// Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце, «даёт улучшение
+// Cooler, пока активен»): книжный порог «пламя, которым объят персонаж,
+// наносит не больше 1d10 урона» — 10, не повторный бросок 1d10 (это разбор
+// РЕЙТИНГА свойства/удара, уже посчитанного в момент поджигания, а не гонка
+// с новым кубом).
+const BURNING_GRACE_DAMAGE_THRESHOLD = 10;
+
+/**
+ * Даёт (если ещё не выдано и порог пройден) или продлевает чтение окна
+ * «игнорировать все негативные эффекты Горения 1d5 Ходов» — Cooler/Морозное
+ * Сердце (kind:"burningGrace", combat/damage.mjs::hasBurningGraceCapability).
+ * ЖИВОЙ ЗАПРОС и АВТОМАТИКА разом: без кнопки и без риска отказаться зря —
+ * у способности нет цены и нет исхода «хуже, чем не пробовать» (в отличие от
+ * броска щита rollShieldAgainstConditionTick выше, где неудача возможна),
+ * поэтому спрашивать игрока нечего, включаем сами (wdbc-3pv5, решение по
+ * итогам обсуждения — реальный wdbc-5knb тоже автоматика, не кнопка).
+ *
+ * Идемпотентна в пределах уже открытого окна: если burningGraceRounds уже
+ * >0 (выдано на этом же или предыдущем Ходу), просто возвращает текущий
+ * остаток без нового броска — вызывается и из processConditionTurnStart
+ * (Паника), и из processConditionTurnEnd (тик), оба должны видеть одно и то
+ * же окно одного и того же пожара.
+ *
+ * Выдача ОДНОРАЗОВА на одно загорание: burningSourceDamage обнуляется в
+ * момент выдачи (roll.total записан в burningGraceRounds) — иначе счётчик
+ * ходов кончался бы, а на следующем же Ходу тут же выдавался заново на то
+ * же самое (ещё не остывшее) значение urона поджигания. Новое загорание
+ * (свежий Flame-удар/крит, пока горит) перезапишет burningSourceDamage
+ * заново — второе окно за бой возможно, просто не за счёт СТАРОГО числа.
+ */
+export async function ensureBurningGrace(actor) {
+  const conds = actor?.system?.conditions;
+  if (!conds) return { rounds: 0, roll: null };
+  const current = Number(conds.burningGraceRounds) || 0;
+  if (current > 0) return { rounds: current, roll: null };
+  if (!hasBurningGraceCapability(actor)) return { rounds: 0, roll: null };
+  const srcDmg = Number(conds.burningSourceDamage) || 0;
+  if (srcDmg <= 0 || srcDmg > BURNING_GRACE_DAMAGE_THRESHOLD) return { rounds: 0, roll: null };
+  const roll = await new Roll("1d5").evaluate();
+  await actor.update({
+    "system.conditions.burningGraceRounds": roll.total,
+    "system.conditions.burningSourceDamage": 0
+  });
+  return { rounds: roll.total, roll };
+}
+
 /**
  * Тест Паники от Горения (W+0, тест Морали) — в начале Хода Горящего
  * персонажа. Провал: персонаж проводит Ход, паникуя и воя — обнуляем ОД
@@ -117,12 +163,22 @@ export async function rollBurningPanicTest(actor) {
 export async function processConditionTurnStart(actor) {
   const conds = actor?.system?.conditions;
   if (!conds) return;
-  if (conds.burning) await rollBurningPanicTest(actor);
+  const updates = {};
+  const lines = [];
+  if (conds.burning) {
+    // Cooler/Морозное Сердце (wdbc-3pv5): окно «игнорировать ВСЕ негативные
+    // эффекты Горения» гасит и эту Панику, не только тик урона ниже —
+    // книга не разделяет «эффекты» на подвиды.
+    const { rounds, roll } = await ensureBurningGrace(actor);
+    if (rounds > 0) {
+      lines.push(`<div class="roll-threshold">${rollIcon("fire","#8fd0ff")}Cooler: Паника от Горения пропущена (осталось Ходов: <b>${rounds}</b>${roll ? `, выдано 1d5 = <b>${roll.total}</b>` : ""})</div>`);
+    } else {
+      await rollBurningPanicTest(actor);
+    }
+  }
   // Выход из Шока (стр. 53) — по кнопке, не автоматически (тот же приём, что
   // напоминание Подавления в конце Хода — suppression.mjs).
   if (conds.shocked) await postShockRecoveryPrompt(actor);
-  const updates = {};
-  const lines = [];
 
   // Сроки, заданные штатной Duration, истекают сами — здесь только подмести
   // истёкшие и освежить видимый остаток. Гашение самого Состояния делает мост
@@ -249,7 +305,22 @@ export async function processConditionTurnEnd(actor) {
   const burningExtinguishedByShield = conds.burning
     && await rollShieldAgainstConditionTick(actor, "burning", { damageSubtype: "flame" });
 
+  // Cooler/Морозное Сердце (wdbc-3pv5): окно из processConditionTurnStart
+  // (или выданное только что, если загорелся уже ПОСЛЕ своего начала Хода —
+  // ensureBurningGrace идемпотентна) гасит и сам тик. Расходуем ровно один
+  // Ход окна здесь — processConditionTurnStart его не трогает, только читает.
+  let burningGraceActive = false;
   if (conds.burning && !burningExtinguishedByShield) {
+    const { rounds, roll: graceRoll } = await ensureBurningGrace(actor);
+    if (rounds > 0) {
+      burningGraceActive = true;
+      const next = rounds - 1;
+      await actor.update({ "system.conditions.burningGraceRounds": next });
+      lines.push(`<div class="roll-threshold">${rollIcon("fire","#8fd0ff")}Cooler: тик Горения пропущен${graceRoll ? ` (выдано 1d5 = <b>${graceRoll.total}</b>)` : ""} — осталось Ходов: <b>${next}</b></div>`);
+    }
+  }
+
+  if (conds.burning && !burningExtinguishedByShield && !burningGraceActive) {
     const roll = await new Roll("1d10").evaluate();
     const tb = Number(actor.system?.characteristics?.t?.bonus) || 0;
     const fireAp = fireproofBurningApBonus(actor);

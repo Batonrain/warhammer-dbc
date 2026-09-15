@@ -223,6 +223,21 @@
 //      Frozen Heart/Морозное Сердце (wdbc-giae, стр. 220: «должен быть
 //      установлен жёсткий нагрудник и даёт щит только на участках тела,
 //      закрытых бронёй»).
+//    burningGrace: {} (без полей — сама запись и есть флаг) — НЕ ограничена
+//      одним типом предмета (в отличие от shieldSubtype/shieldVsCondition/
+//      shieldArmorGate выше): Cooler/Охладитель — armorMod, Frozen Heart/
+//      Морозное Сердце — forcefield, а книжный эффект («даёт улучшение
+//      Cooler, пока активен» / «игнорировать все негативные эффекты Горения
+//      1d5 Ходов, если пламя наносит не больше 1d10 урона», wdbc-3pv5) у
+//      обоих один и тот же. ЖИВОЙ ЗАПРОС И АВТОМАТИКА разом: читается
+//      combat/damage.mjs::hasBurningGraceCapability из combat/condition-
+//      ticks.mjs::ensureBurningGrace в момент тика/Паники Горения — без
+//      кнопки, потому что у способности нет ни цены, ни исхода «хуже, чем
+//      не пробовать» (в отличие от shieldVsCondition, где бросок может не
+//      сработать), спрашивать игрока нечего. Порог урона поджигания (≤10) и
+//      длительность окна (1d5 Ходов) — книжные константы, не поля записи: у
+//      обоих известных на 15.09.2026 предметов число одно и то же, заводить
+//      под него редактируемое поле было бы гаданием на будущее.
 //    integralAttack: { equipSourceUuid, equipSourceName, equipSourceImg }
 //      → ВСТРОЕННАЯ АТАКА: то же создание предмета-оружия на акторе, что и у
 //      equipment режима "direct", но с двумя отличиями, ради которых она и
@@ -586,6 +601,7 @@ const KIND_LABELS = {
   shieldSubtype: "Щит: подвид урона",
   shieldVsCondition: "Щит: против тика Состояния",
   shieldArmorGate: "Щит: только по бронированным участкам",
+  burningGrace: "Горение: окно без эффектов (Cooler)",
   counterAttack: "Встречная атака",
   equipment: "Снаряжение",
   integralAttack: "Интегральная атака",
@@ -892,6 +908,9 @@ export function blankMechEntry(kind = "characteristic") {
     // ЖИВОЙ запрос, без собственных полей (присутствие записи — сам флаг):
     // читается _rollActiveShield (combat/damage.mjs) при выборе активного
     // щита против конкретного попадания. См. шапку файла.
+    // burningGrace (wdbc-3pv5) — armorMod ИЛИ forcefield, живой запрос без
+    // полей (присутствие записи — сам флаг): читается hasBurningGraceCapability
+    // (combat/damage.mjs) из ensureBurningGrace (combat/condition-ticks.mjs).
     // terrainIgnore
     ignoreTerrainProps: [],
     // counterAttack — «Встречная атака» (wdbc-2wy7): живой запрос, читается в
@@ -1091,6 +1110,8 @@ export function describeMechEntry(entry) {
     }
     case "shieldArmorGate":
       return "Щит: не срабатывает по локациям без надетой брони (и требует надетой Жёсткой брони на торсе)";
+    case "burningGrace":
+      return "Горение: пока активен — при поджигании ≤10 урона даёт 1d5 Ходов без эффектов Горения (автоматически)";
     case "terrainIgnore": {
       if (!entry.ignoreTerrainProps?.length) return "Ландшафт: игнорировать (не выбрано)";
       const labels = entry.ignoreTerrainProps.map(k => TERRAIN_PROP_LABELS[k] || k);
@@ -1327,6 +1348,8 @@ function isEntryComplete(e) {
     case "shieldVsCondition":
       return SHIELD_VS_CONDITION_KEYS.includes(e.shieldVsConditionKey);
     case "shieldArmorGate":
+      return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
+    case "burningGrace":
       return true; // без полей — сама запись и есть флаг, нечему быть незаполненным
     case "terrainIgnore":
       return Array.isArray(e.ignoreTerrainProps) && e.ignoreTerrainProps.length > 0;
