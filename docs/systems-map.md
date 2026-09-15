@@ -263,7 +263,16 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   `onFailItemUuid` — кладёт ТОЛЬКО psychic.mjs при запросе теста
   Сопротивления, gate строгий (обычный делегированный тест это поле не несёт).
 - `module/combat/condition-effects.mjs`, `condition-ticks.mjs` (тик по Ходам —
-  Кровотечение/Горение).
+  Кровотечение/Горение). Горение несёт три завязанных на предметы живых
+  проверки — все читают Механику НАПРЯМУЮ с предмета, ничего не пишут при
+  получении (`combat/damage.mjs`): `kind:"shieldVsCondition"` (щит можно
+  бросить против тика, гасит Состояние целиком, wdbc-5knb),
+  `kind:"shieldArmorGate"` (щит не рассматривается без надетой брони,
+  wdbc-giae), `kind:"burningGrace"` (armorMod ИЛИ forcefield — Cooler/
+  Охладитель, Frozen Heart/Морозное Сердце: при уроне поджигания ≤10 даёт
+  1d5 Ходов без эффектов Горения, автоматика без кнопки, `ensureBurningGrace`
+  — wdbc-3pv5). Урон поджигания хранит `system.conditions.burningSourceDamage`
+  (выставляется в момент наложения — Flame-свойство/крит-таблица).
 - `module/apps/token-conditions.mjs` — синхронизация с Token HUD.
 - `module/sheets/tabs/conditions.mjs` — вкладка Состояния/Усталость.
 - `module/constants/fear-tables.mjs` — Страх/Шок/Ментальная Травма/Расстройства.

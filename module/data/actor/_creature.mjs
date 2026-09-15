@@ -133,6 +133,19 @@ export function creatureSchema({ granted = false } = {}) {
     const counter = CONDITION_COUNTERS[flag];
     if (counter) conditionFields[flag + counter] = num(0, flag + counter);
   }
+  // Горение (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце): два бесхозных
+  // числа сверх общего флаг+счётчик выше — burningLevel (counter:"level")
+  // остаётся свободным ручным полем ГМ, ни один код его не читает. Эти два —
+  // читает combat/condition-ticks.mjs::ensureBurningGrace: burningSourceDamage
+  // — урон ПОДЖИГАНИЯ (для сравнения с книжным порогом ≤10, «Cooler» книги),
+  // выставляется в момент наложения Горения (combat/weapon-properties.mjs
+  // Flame → module/hooks.mjs::_applyWeaponPropEffect, крит-эффект «Загорается»
+  // → combat/crit-effect-parser.mjs::applyCritEffectPill); burningGraceRounds
+  // — сколько Ходов из книжных 1d5 ещё действует «игнорировать все негативные
+  // эффекты Горения». Оба гасит conditionRemoveFields("burning") вместе с
+  // самим флагом — новое загорание не должно унаследовать чужой остаток.
+  conditionFields.burningSourceDamage = num(0, "Горение: урон поджигания");
+  conditionFields.burningGraceRounds  = num(0, "Горение: Ходов без эффектов (Cooler)");
 
   return {
     // Книга-источник (wdbc-7pjs). У предметов это поле есть у полутора десятков
