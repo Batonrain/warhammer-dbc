@@ -26,7 +26,10 @@
     "xFormula": "ceil(СУ/2)",
     "vortexPersistent": true,
     "weaponProps": [
-      { "key": "blast", "rating": "Х" }
+      {
+        "key": "blast",
+        "rating": "Х"
+      }
     ],
     "charDamageStat": "",
     "charDamageFormula": "",
