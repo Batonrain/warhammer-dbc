@@ -7,6 +7,7 @@ import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
@@ -165,6 +166,19 @@ export function showManifestDialog(actor, item) {
     ui.notifications.warn(
       `«${item.name}»: психосилы Высшего Колдовства манифестируют только псайкеры-хаоситы ` +
       "(корбук, запись дисциплины).");
+    return;
+  }
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // за доп. 10 сек/1м мононити персонаж лишается возможности манифестировать
+  // психосилы/техночудеса — тот же гейт-приём, что Высшее Колдовство выше.
+  if (actor.system.conditions?.mimicWireBlocksPowers) {
+    ui.notifications.warn(`«${item.name}»: мононить блокирует манифестацию психосил.`);
+    return;
+  }
+  // Parasite/Паразит (Трейт — общий, wdbc-ux8a): хост под полным контролем
+  // паразита «не может использовать психосилы» — тот же гейт-приём.
+  if (isPossessedByParasite(actor)) {
+    ui.notifications.warn(`«${item.name}»: тело под контролем паразита — собственные психосилы недоступны.`);
     return;
   }
   const sys      = item.system;
@@ -1305,6 +1319,20 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
       ev.currentTarget.checked = false;
       ui.notifications.warn("Саркофаг Дредноута: поддержание психосил заблокировано (нужна Матрица Осирис).");
       return;
+    }
+    // Заточение Силы (Fruit of Flesh/Плод Плоти, Тзинч, wdbc-1rno,
+    // apps/fruit-of-flesh.mjs::activateSpellLockFruit): цель психосилы
+    // выбрала провалить встречный тест на W и заточить атаку в плод — снять
+    // поддержание нельзя, пока плод (fromUuid по сохранённому uuid) ещё
+    // существует. Уничтоженный/удалённый плод просто не резолвится —
+    // отдельного хука на его удаление не нужно.
+    if (!turningOn) {
+      const lockUuid = item.getFlag?.("warhammer-dbc", "fruitOfFleshLockUuid");
+      if (lockUuid && await fromUuid(lockUuid)) {
+        ev.currentTarget.checked = true;
+        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен.");
+        return;
+      }
     }
     // wdbc-8m0x: снятие поддержания сбрасывает сохранённую степень успеха —
     // иначе на листе осталось бы висеть устаревшее число от прошлого каста.

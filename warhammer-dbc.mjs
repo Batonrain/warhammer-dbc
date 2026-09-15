@@ -39,6 +39,7 @@ import { WarhammerFormationSheet }    from "./module/sheets/formation-sheet.mjs"
 import { WarhammerItemSheet }         from "./module/sheets/item-sheet.mjs";
 import { WarhammerActiveEffectConfig } from "./module/sheets/active-effect-config.mjs";
 import { refreshCalendarWidget, initTimeFlow, checkCalendarWatchTriggers } from "./module/apps/imperial-calendar.mjs";
+import { sweepSweetMistExpiry } from "./module/apps/wrapped-in-chaos.mjs";
 import { showFateTurnBanner } from "./module/apps/game-session.mjs";
 import { runAutoScripts }             from "./module/apps/item-script.mjs";
 import { applyItemMechanics, syncMechanicsEffects, reconcileCohesionForActor, initEquipmentIndex,
@@ -88,6 +89,7 @@ import { spawnHunterHound } from "./module/combat/the-hunter.mjs";
 import { spawnSunderingCopies } from "./module/combat/sundering.mjs";
 import { bindArmigerWeapon } from "./module/apps/armiger-weapon.mjs";
 import { bindDemonMount } from "./module/apps/demon-mount.mjs";
+import { grantControlOwnership, revokeControlOwnership } from "./module/apps/actor-control.mjs";
 import { refreshEnvWidget } from "./module/apps/environment.mjs";
 import { initHUD, refreshHUD } from "./module/apps/hud.mjs";
 import { initConditionStatusEffects } from "./module/apps/token-conditions.mjs";
@@ -840,6 +842,19 @@ Hooks.once("ready", () => {
         if (!res.ok) console.warn("Warhammer DBC | Демон-скакун Рыцаря Бога в скакуна/технику:", res.reason);
         return;
       }
+      if (data.action === "grantActorControlOwnership") {
+        // Контроль чужого токена (wdbc-ux8a) — реальная передача Foundry-
+        // владения, тот же relay-приём, что bindDemonMount выше. Владение —
+        // GM-only поле на сервере, поэтому исполняет только активный ГМ.
+        const target = await fromUuid(data.targetUuid).catch(() => null);
+        if (target) await grantControlOwnership(target, data.controllerUserId);
+        return;
+      }
+      if (data.action === "revokeActorControlOwnership") {
+        const target = await fromUuid(data.targetUuid).catch(() => null);
+        if (target) await revokeControlOwnership(target, data.controllerUserId);
+        return;
+      }
       if (data.action === "vehicleStations") {
         const veh = (await fromUuid(data.vehicleUuid))?.actor ?? await fromUuid(data.vehicleUuid);
         if (veh?.type !== "vehicle") return;
@@ -1219,7 +1234,14 @@ Hooks.on("updateScene", (scene) => {
 //    поэтому Duration (Seconds) у эффектов синхронна с прокруткой без доп. кода) ──
 Hooks.once("ready", () => refreshCalendarWidget());
 Hooks.once("ready", () => initTimeFlow());
-Hooks.on("updateWorldTime", worldTime => { checkCalendarWatchTriggers(worldTime); refreshCalendarWidget(); });
+Hooks.on("updateWorldTime", worldTime => {
+  checkCalendarWatchTriggers(worldTime);
+  refreshCalendarWidget();
+  // Сладкий Туман/Wrapped in Chaos (wdbc-1rno): «3 часа после вдыхания» —
+  // та же точка входа, что уже двигает виджет Календаря выше, по прямому
+  // указанию пользователя, не отдельный новый хук.
+  sweepSweetMistExpiry(worldTime);
+});
 
 // ── Нексус Сцен: держать открытое окно в актуальном состоянии ─────────────────
 // Сцены (имя/превью/флаг-переход/активна) и выбор токенов влияют на галерею.

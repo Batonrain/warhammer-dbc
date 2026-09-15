@@ -25,6 +25,10 @@ import { tranceButtonHtml, useTrance }               from "../apps/armour-histor
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
 import { bloodFlameButtonHtml, useBloodFlame }       from "../apps/blood-flame.mjs";
 import { handOfKhorneButtonHtml, useHandOfKhorne }   from "../apps/hand-of-khorne.mjs";
+import { organOfChaosButtonHtml, useOrganOfChaos }   from "../apps/organ-of-chaos.mjs";
+import { becomeParasiteHostButtonHtml, becomeParasiteHost } from "../apps/maggot-parasite.mjs";
+import { beginParasiticContactButtonHtml, beginParasiticContact } from "../apps/parasite-trait.mjs";
+import { stabilizeRealityRendingButtonHtml, useStabilizeRealityRending } from "../apps/wrapped-in-chaos.mjs";
 import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
@@ -1125,6 +1129,14 @@ export class WarhammerItemSheet
       context.bloodFlameHtml = bloodFlameButtonHtml(this.item, this.item.parent);
       // Длань Кхорна (wdbc-1rno) — выбор руки, тот же принцип, что выше.
       context.handOfKhorneHtml = handOfKhorneButtonHtml(this.item, this.item.parent);
+      // Орган Хаоса (wdbc-1rno) — выбор Характеристики/малой способности ГМом на месте выдачи.
+      context.organOfChaosHtml = organOfChaosButtonHtml(this.item, this.item.parent);
+      // Опарыш-Паразит (wdbc-ux8a) — превращение исходного тела в носителя.
+      context.maggotParasiteHtml = becomeParasiteHostButtonHtml(this.item);
+      // Parasite/Паразит (Трейт — общий, wdbc-ux8a) — начать заражение цели.
+      context.parasiteBeginContactHtml = beginParasiticContactButtonHtml(this.item, this.item.parent);
+      // Рассечение Реальности/Wrapped in Chaos (wdbc-1rno) — выбор исключённых союзников.
+      context.stabilizeRealityRendingHtml = stabilizeRealityRendingButtonHtml(this.item);
       // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
       context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
@@ -1938,6 +1950,34 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfKhorne(actor, this.item);
+    });
+
+    // ── Мутация «Орган Хаоса»: выбор Характеристики/способности (wdbc-1rno) ──
+    on(".organ-of-chaos-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useOrganOfChaos(actor, this.item);
+    });
+
+    // ── Мутация «Опарыш-Паразит»: превращение тела в носителя (wdbc-ux8a) ──
+    on(".maggot-parasite-become-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await becomeParasiteHost(actor, this.item);
+    });
+
+    // ── Трейт «Parasite»: начать заражение цели (wdbc-ux8a) ──
+    on(".parasite-begin-contact-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await beginParasiticContact(actor);
+    });
+
+    // ── Мутация «Укутанный в Хаос», субмутация «Рассечение Реальности» (wdbc-1rno) ──
+    on(".stabilize-reality-rending-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useStabilizeRealityRending(actor, this.item);
     });
 
     // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────

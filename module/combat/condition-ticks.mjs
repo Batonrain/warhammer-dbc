@@ -40,6 +40,11 @@ import { rollShieldAgainstConditionTick, burningGraceSourceItem } from "./damage
 import { ROUND_TICK_CONDITIONS as ROUND_CONDITIONS, CONDITIONS_DEF } from "../constants/conditions.mjs";
 import { BLESSED_FITS_PENDING_FLAG, blessedFitsRefundDue } from "../rules/blessed-fits.mjs";
 import { changeActorInfamy } from "../apps/infamy-points.mjs";
+// Parasite/Паразит (Трейт — общий, wdbc-ux8a): parasiticContact — тот же
+// генерик-цикл, что Оглушение/Ослепление, спец-хук на 0 — тот же приём, что
+// возврат Очка Бесчестия у Blessed Fits ниже (апп-слой можно звать отсюда —
+// тот прецедент уже есть, changeActorInfamy тоже apps/).
+import { completeInfection } from "../apps/parasite-trait.mjs";
 // Срок Состояния штатной Duration эффекта (wdbc-uqco). Состояние, у которого
 // срок задан, сюда не попадает вовсе: его считает Foundry, а истечение
 // подметается ниже. Свой декремент остаётся ровно для тех, кому срок
@@ -232,6 +237,12 @@ export async function processConditionTurnStart(actor) {
       updates[`flags.warhammer-dbc.-=${BLESSED_FITS_PENDING_FLAG}`] = null;
       lines.push(`<div class="roll-threshold">🥴 Благословенные Припадки: полный Раунд в Оглушении — Очко Бесчестия вернулось.</div>`);
     }
+
+    // Parasite/Паразит (Трейт, wdbc-ux8a): контакт дотикал до 0 — заражение
+    // завершено, completeInfection сама пишет свои update/флаги/карточку
+    // (маршрутизация Опарыш-Паразит vs общий фьюжн). Накопленный здесь
+    // updates.parasiticContact=false всё равно применится следом — не мешает.
+    if (key === "parasiticContact" && next <= 0) await completeInfection(actor);
   }
 
   // Удушье: пока есть запас (suffocatingRounds > 0) — просто декремент, без

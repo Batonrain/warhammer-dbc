@@ -48,6 +48,9 @@ import { buildCountenanceFearFlag } from "../rules/countenance-of-gods.mjs";
 // а не внутри скрипта пака: внутри скрипта её не видит ни один тест.
 import { devouredSkillRank } from "../rules/devourer-of-knowledge.mjs";
 import { purityOfBattleWave } from "../combat/purity-of-battle.mjs";
+import { activateFruitOfFlesh, eatHealFruit } from "./fruit-of-flesh.mjs";
+import { useSoulSeer } from "./soul-seer.mjs";
+import { activateWrappedInChaos } from "./wrapped-in-chaos.mjs";
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 
@@ -134,6 +137,18 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
  *    (Дар Кхорна, wdbc-1rno): реально снимает боевые наркотики и психосилы
  *    (свои и чужие, нацеленные на жертву) со всех токенов сцены в радиусе.
  *    Техночудеса не тронуты — isSustained у них нет вообще нигде в системе.
+ *  - `activateFruitOfFlesh`/`eatHealFruit` (apps/fruit-of-flesh.mjs) — Fruit
+ *    of Flesh/Плод Плоти (Общие Мутации, wdbc-1rno): диспетчер по выпавшей
+ *    субмутации (Плод Исцеления/Пламя/Яд-Радиация реализованы, остальные —
+ *    честное предупреждение) + отдельное «съесть» созревший Плод Исцеления.
+ *  - `useSoulSeer` (apps/soul-seer.mjs) — Soul-Seer/Душевидец (Общие
+ *    Мутации, wdbc-1rno): список душ (люди/духи машин/демоны) в радиусе
+ *    10м, сквозь преграды (LOS в системе и так не учитывает стены).
+ *  - `activateWrappedInChaos` (apps/wrapped-in-chaos.mjs) — Wrapped in
+ *    Chaos/Укутанный в Хаос (Общие Мутации, wdbc-1rno): диспетчер по
+ *    выпавшей субмутации (Дымовая Завеса реализована, остальные — честное
+ *    предупреждение; «Мухи» — не здесь, бьёт атакующего, см. sheets/
+ *    attack-dialog.mjs).
  *
  * `extra` — необязательный набор ДОПОЛНИТЕЛЬНЫХ именованных функций для
  * конкретного вызывающего (например, runMechScriptEntry добавляет
@@ -159,6 +174,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     "nearestVisibleHatredTarget", "testOutcome", "resolveOpposed", "woundDeathThreshold", "computeWoundHealing",
     "grantExtraTurn", "hasExtraTurn", "endOfOrderInitiative", "mergedVictimUuids", "grantArmourOfTheGods",
     "resolveBurnedSenses", "buildCountenanceFearFlag", "purityOfBattleWave", "devouredSkillRank",
+    "activateFruitOfFlesh", "eatHealFruit", "useSoulSeer", "activateWrappedInChaos",
     ...extraNames,
     code
   );
@@ -173,6 +189,7 @@ export async function executeItemCode(item, code, event, extra = {}) {
     nearestVisibleHatredTarget, testOutcome, resolveOpposed, woundDeathThreshold, computeWoundHealing,
     grantExtraTurn, hasExtraTurn, endOfOrderInitiative, mergedVictimUuids, grantArmourOfTheGods,
     resolveBurnedSenses, buildCountenanceFearFlag, purityOfBattleWave, devouredSkillRank,
+    activateFruitOfFlesh, eatHealFruit, useSoulSeer, activateWrappedInChaos,
     ...extraNames.map(k => extra[k])
   );
 }

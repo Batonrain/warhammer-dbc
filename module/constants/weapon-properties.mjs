@@ -608,6 +608,19 @@ export const WEAPON_PROPERTIES = {
     auto: { taintedCorB: true }
   },
 
+  // Смертоносное Природное Оружие (Cor.b)/Deadly Natural Weapons (wdbc-ux8a,
+  // Опарыш-Паразит и общий Трейт Parasite) — ЖИВОЙ пересчёт от Cor.b, не
+  // снимок (решение пользователя): и к урону, и к пробитию, суммируется на
+  // каждой атаке заново, тот же приём, что tainted выше даёт урону, но
+  // ОТДЕЛЬНЫЙ флаг (tainted — другая находка, wdbc-1rno, смешивать нельзя).
+  deadlyNaturalCorB: {
+    key: "deadlyNaturalCorB", label: "Смертоносное Природное Оружие (Cor.b)", en: "Deadly Natural Weapons (Cor.b)",
+    rating: false, cat: "melee",
+    desc: "Природное оружие. Добавляет +Cor.b (бонус Порчи владельца) и к урону, и к Пробитию — живой пересчёт на каждой атаке.",
+    reminder: "🪱 Смертоносное Природное (Cor.b): +Cor.b к урону и Пробитию",
+    auto: { deadlyNaturalCorB: true }
+  },
+
   twinLinked: {
     key: "twinLinked", label: "Спаренное", en: "Twin-Linked", rating: false, cat: "ranged",
     desc: "Стреляет 2 раза. +1 попадание, если оба ствола попали (удвоенный расход боеприпасов).",

@@ -485,8 +485,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (bonusDamageDice ниже по-прежнему видит настоящий wp.meltaShort — оно
   // делит поле shortRange с Рассеиванием/Scatter, которое Керамит не гасит).
   const penWp = meltaImmune ? { ...wp, meltaShort: false } : wp;
+  // Смертоносное Природное Оружие (Cor.b)/Deadly Natural Weapons (wdbc-ux8a):
+  // +Cor.b владельца И к Пробитию (здесь), И к урону (flatBonus ниже) —
+  // живой пересчёт на каждой атаке, отдельный флаг от tainted (другая находка).
+  const deadlyNaturalCorBAdd = wp.deadlyNaturalCorB ? (actor.system.corruptionBonus ?? 0) : 0;
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -523,7 +527,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
-  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
+  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee

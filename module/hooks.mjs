@@ -72,6 +72,10 @@ import { clearMercuryMarks } from "./combat/mercury-reaction.mjs";
 import { clearAdaptationBonuses } from "./combat/adaptation.mjs";
 import { clearEyeOfEnvyOnCombatEnd } from "./rules/eye-of-envy.mjs";
 import { clearExpiredTempGrants } from "./rules/temp-grant.mjs";
+import { sweepExpiredControl, releaseControlOnCombatEnd } from "./rules/actor-control.mjs";
+import { checkMimicWireSurgery, cutMimicWire, startMimicWireSurgery, confirmMimicWireExtraction, captureWithMimicWire } from "./apps/volunteer-actor.mjs";
+import { checkAbandonedHostDeath } from "./apps/maggot-parasite.mjs";
+import { beginParasiticContact, tearOffParasite } from "./apps/parasite-trait.mjs";
 import { processEyeOfChallengeDeadline } from "./combat/eye-of-challenge.mjs";
 import { processDestabilizeTick } from "./combat/demon-destabilize.mjs";
 import { processWarpEaterMonthCheck } from "./rules/warp-eater.mjs";
@@ -91,6 +95,7 @@ import { processSigilliteRunesTurnStart, processSigilliteRunesCombatStart,
 import { applyCritEffectPill } from "./combat/crit-effect-parser.mjs";
 import { setDeceased } from "./sheets/tabs/body.mjs";
 import { clearBloodFlameBuffs } from "./combat/blood-flame.mjs";
+import { clearTaintedBladeBuffs } from "./combat/wrapped-in-chaos.mjs";
 import { huntReturnToWarpButtonHtml } from "./combat/the-hunter.mjs";
 import { isHunterHoundActor } from "./rules/the-hunter.mjs";
 import { applyHyperGrowthTick } from "./apps/hyper-growth.mjs";
@@ -1246,6 +1251,103 @@ export function registerHooks() {
       });
     });
 
+    // Volunteer Actor/Доброволец Актёр (wdbc-ux8a): «Поцелуй Мимика» вместо
+    // смерти — клик спрашивает про доп. блок психосил/техночудес (книжная
+    // доплата 10 сек/1м мононити), затем захватывает (1 Рана + mimicWire +
+    // контроль). Владеть должен АТАКУЮЩИЙ (это его Талант/оружие), не цель.
+    html.querySelectorAll(".wh-kiss-of-mimic-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const ds = el.dataset;
+        const target = await fromUuid(ds.actorUuid).catch(() => null);
+        const attackerActor = await fromUuid(ds.attackerUuid).catch(() => null);
+        if (!attackerActor?.isOwner) {
+          return ui.notifications.warn("Поцелуй Мимика доступен владельцу атакующего (или ГМ).");
+        }
+        el.disabled = true;
+        const blockPowers = await foundry.applications.api.DialogV2.confirm({
+          window: { title: "Поцелуй Мимика" },
+          content: "<p>Потратить доп. 10 сек и 1м мононити, чтобы также блокировать психосилы/техночудеса цели?</p>"
+        });
+        await captureWithMimicWire(attackerActor, target, { blockPowers: !!blockPowers });
+      });
+    });
+
+    html.querySelectorAll(".wh-mimic-wire-cut-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Оборвать нить может владелец цели (или ГМ).");
+        el.disabled = true;
+        await cutMimicWire(actor);
+      });
+    });
+
+    html.querySelectorAll(".wh-mimic-wire-surgery-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Начать операцию может владелец цели (или ГМ).");
+        el.disabled = true;
+        await startMimicWireSurgery(actor);
+      });
+    });
+
+    html.querySelectorAll(".wh-mimic-wire-extract-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Подтвердить извлечение может владелец цели (или ГМ).");
+        el.disabled = true;
+        await confirmMimicWireExtraction(actor);
+      });
+    });
+
+    // Maggot Parasite/Опарыш-Паразит (wdbc-ux8a): вместо смерти носителя —
+    // начать контакт Трейта Parasite с текущей целью (game.user.targets),
+    // не мгновенный захват (переоценка 15.09.2026 — полный книжный текст
+    // Трейта: контакт/длительность/срыв, см. module/apps/parasite-trait.mjs).
+    html.querySelectorAll(".wh-parasite-begin-contact-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Начать заражение может владелец паразита (или ГМ).");
+        el.disabled = true;
+        await beginParasiticContact(actor);
+      });
+    });
+
+    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): кнопка на самом предмете-
+    // Трейте (любой носитель, не только Опарыш) — та же beginParasiticContact.
+    html.querySelectorAll(".parasite-begin-contact-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Начать заражение может владелец паразита (или ГМ).");
+        el.disabled = true;
+        await beginParasiticContact(actor);
+      });
+    });
+
+    // Сорвать паразита (Трейт Parasite, wdbc-ux8a) — доступна жертве/союзнику,
+    // владеющему целью (не паразиту).
+    html.querySelectorAll(".wh-parasite-tear-off-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        const actor = await fromUuid(el.dataset.actorUuid).catch(() => null);
+        if (!actor?.isOwner) return ui.notifications.warn("Сорвать паразита может владелец жертвы (или ГМ).");
+        el.disabled = true;
+        await tearOffParasite(actor);
+      });
+    });
+
     // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): бросок 1d10+1
     // против значения Крит.Эффекта, что накормил носителя (кнопка появляется
     // в самой карточке крита, combat/damage.mjs). При успехе (бросок НИЖЕ
@@ -2149,6 +2251,13 @@ function _attachFateContextMenu(message, html) {
     // прямо ломает оружие по концу боя/сцены — clearBloodFlameBuffs это и
     // делает (не только снимает временные свойства).
     await clearBloodFlameBuffs(combat);
+    // Осквернённый Клинок/Wrapped in Chaos (wdbc-1rno): Tainted снимается,
+    // оружие не ломается (в отличие от Кровавого Пламени выше) — та же
+    // логика «до конца боя», округление книжных 12 Раундов (нет счётчика).
+    await clearTaintedBladeBuffs(combat);
+    // Контроль чужого токена (wdbc-ux8a): unit "battle" снимается ЦЕЛИКОМ
+    // здесь, не сравнением — та же логика «до конца боя», что у buffs выше.
+    await releaseControlOnCombatEnd(combat);
     // Метка Проклятой Метки (wdbc-xxb7) — та же логика «до конца боя».
     await clearHexMarkedPreyMarks(combat);
     // Аблативные Раны Саркофага Дредноута против варп-оружия — полностью
@@ -2193,11 +2302,23 @@ function _attachFateContextMenu(message, html) {
       // сдвигать «паузой верхом» нечего.
       if (combatant.actor)
         await processDestabilizeTick(combatant.actor, game.time.worldTime, 0, combat);
+      // Контроль чужого токена (wdbc-ux8a) — "round"-длительность меряется
+      // живым Раундом того же боя, тот же такт, что temp-grant выше.
+      if (combatant.actor) await sweepExpiredControl(combatant.actor, { worldTime: game.time.worldTime, combat });
     }
   });
   Hooks.on("updateWorldTime", async (worldTime, dt) => {
     if (!game.user.isGM) return;
     for (const actor of game.actors ?? []) {
+      // Контроль чужого токена (wdbc-ux8a) — "worldTime"-длительность, тот
+      // же такт, что temp-grant/Око Вызова выше.
+      await sweepExpiredControl(actor, { worldTime: game.time.worldTime, combat: game.combat });
+      // Volunteer Actor/Доброволец Актёр (wdbc-ux8a): 16ч хирургического
+      // извлечения мононити — тот же такт, что Cast Out of Death ниже.
+      await checkMimicWireSurgery(actor, game.time.worldTime);
+      // Maggot Parasite/Опарыш-Паразит (wdbc-ux8a): 7ч смерти покинутого
+      // живого хоста — тот же такт, что мононить/Cast Out of Death.
+      await checkAbandonedHostDeath(actor, game.time.worldTime);
       await clearExpiredTempGrants(actor, { worldTime: game.time.worldTime, combat: game.combat });
       // Око Вызова/Дар Кхорна (wdbc-1rno): не брошенный за минуту вызов —
       // 2d10+8 урона в Раны чемпиону. Тот же такт, что временные выдачи Черт

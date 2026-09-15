@@ -168,6 +168,42 @@ describe("psychic manifestation", () => {
     });
   });
 
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // доп. блок манифестации психосил — тот же такт, что Высшее Колдовство выше.
+  describe("Мононить «Поцелуй Мимика»: mimicWireBlocksPowers блокирует манифестацию", () => {
+    it("флаг стоит — манифестация блокируется, диалог не открывается", () => {
+      const a = actor({ system: { conditions: { mimicWire: true, mimicWireBlocksPowers: true } } });
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog).toBeFalsy();
+      expect(captured.warnings.some(w => w.includes("мононить блокирует манифестацию"))).toBe(true);
+    });
+
+    it("mimicWire стоит, но без mimicWireBlocksPowers — манифестация доступна", () => {
+      const a = actor({ system: { conditions: { mimicWire: true, mimicWireBlocksPowers: false } } });
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+  });
+
+  // Parasite/Паразит (Трейт — общий, wdbc-ux8a): хост под полным контролем
+  // паразита «не может использовать психосилы» — тот же гейт-приём выше.
+  describe("Parasite/Паразит: possessedByParasiteUuid блокирует манифестацию", () => {
+    it("флаг стоит — манифестация блокируется, диалог не открывается", () => {
+      const a = actor({});
+      a.flags = { "warhammer-dbc": { possessedByParasiteUuid: "Actor.parasite" } };
+      a.getFlag = (scope, key) => a.flags[scope]?.[key];
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog).toBeFalsy();
+      expect(captured.warnings.some(w => w.includes("под контролем паразита"))).toBe(true);
+    });
+
+    it("флага нет — манифестация доступна", () => {
+      const a = actor({});
+      showManifestDialog(a, item({ system: { discipline: "divination" } }));
+      expect(captured.dialog.title).toContain("Манифестация");
+    });
+  });
+
   // wdbc-jpmh: Путь Силы («Инкантация»/«Медитация»/«Жертва»/«Телесная
   // Конверсия» — PSY_PATHS, module/constants/psyker.mjs) уже даёт реальные
   // эффекты при выборе (ePR/phenMod/testMod и т.п. в самом расчёте) — не

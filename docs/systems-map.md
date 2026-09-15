@@ -372,6 +372,17 @@ mjs`, `recoil.mjs`/`recoil-pool.mjs`/`recoil-item-bonuses.mjs` (Отскок,
   потеря Зрения/Слуха). Общесистемный тест на Жару/Холод (`combat/
   temperature-hazard.mjs` — раньше был только в display-виджете Окружения,
   см. §21) найден и реализован попутно при разборе Бриза (Breeze).
+- Ещё именные (wdbc-1rno/wdbc-ux8a, 15.09.2026): `fruit-of-flesh.mjs`
+  (+`apps`, Плод Плоти), `soul-seer.mjs` (+`apps`, Душевидец),
+  `organ-of-chaos.mjs` (+`apps`, Общие Мутации), `combat/wrapped-in-chaos.mjs`
+  (+`apps`, Укутанный в Хаос — направленные штрафы атакующий↔защитник поверх
+  паттерна из `combat/defense.mjs`, все 10 субмутаций закрыты),
+  `volunteer-actor.mjs` (+`apps`, Доброволец Актёр — Поцелуй Арлекина, полная
+  миграция личности через §22 `actor-control.mjs`), `maggot-parasite.mjs`
+  (+`apps`, Опарыш-Паразит), `parasite-trait.mjs` (+`apps`, общий Трейт
+  «Parasite» — контакт/срыв/слияние характеристик, любой носитель Трейта, не
+  только Опарыш; `constants/conditions.mjs::parasiticContact` тикает
+  generic-циклом `combat/condition-ticks.mjs`).
 
 ## 13. Демонология: Демоны, Демон-Принц, Одержимость
 
@@ -646,6 +657,12 @@ mjs`, `mech-formula.mjs` (мини-DSL формул), `effects.mjs` (реест�
 (+`apps`), `cooldown.mjs`, `temp-grant.mjs`, `supply-timer.mjs`, `turn-flags.
 mjs`. Реестр ключей ActiveEffect — `constants/effect-keys.mjs` (уже в
 AGENTS.md).
+- `rules/actor-control.mjs` (+`apps/actor-control.mjs`) — общий примитив
+  «контроль над чужим актором» (флаг `controlledBy`, длительность
+  permanent/round/battle/worldTime, честный контест через синтетический
+  `techDef` в `combat/techniques.mjs::_showContestDialog`, GM-relay смена
+  владения/`User#character`) — заведён под Volunteer Actor (wdbc-ux8a,
+  15.09.2026), переиспользован без изменений для механики Паразита (см. §12).
 
 ## 23. Требования Талантов — текстовый разбор
 

@@ -208,6 +208,19 @@ const DEVIATIONS = {
     // заведён гораздо позже template.json (раньше decay не срабатывал
     // вовсе, поле отсутствовало).
     "conditions.hallucinogenicRounds": 0,
+    // Стазис (wdbc-1rno) — заведено гораздо позже template.json, на основе
+    // находки Fruit of Flesh/Плода Плоти (module/constants/conditions.mjs).
+    "conditions.stasis": false,
+    "conditions.stasisRounds": 0,
+    // Сладкий Туман (wdbc-1rno) — заведено гораздо позже template.json.
+    "conditions.sweetMist": false,
+    "conditions.sweetMistExpiresAt": 0,
+    // Мононить «Поцелуй Мимика» (wdbc-ux8a) — заведено гораздо позже template.json.
+    "conditions.mimicWire": false,
+    "conditions.mimicWireBlocksPowers": false,
+    // Паразитический контакт (Трейт Parasite, wdbc-ux8a) — заведено гораздо позже template.json.
+    "conditions.parasiticContact": false,
+    "conditions.parasiticContactRounds": 0,
     "conditions.lostHands": false,
     "conditions.lostHandsCount": 0,
     "conditions.lostArms": false,

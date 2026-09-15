@@ -42,6 +42,8 @@ import { hasRuleFlag } from "./flags.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
+import { realityRendingPenalty } from "./wrapped-in-chaos.mjs";
+import { applyParasiteFusion } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
@@ -162,6 +164,18 @@ export function prepareCharacterDerived(actor, system) {
       }
     }
     system.drugCharMods = drugCharMods;
+
+    // Рассечение Реальности/Reality Rending (Wrapped in Chaos/Укутанный в
+    // Хаос, субмутация "9", wdbc-1rno): «+3 ко всему входящему урону» всем
+    // в радиусе 3м владельца, кроме исключённых до W.b союзников — ВТОРОЙ
+    // независимый источник того же поля, что наркотики выше (по прямому
+    // запросу пользователя обобщить incomingDamageReduction, не только под
+    // наркотики). Живой cross-actor источник (module/rules/wrapped-in-
+    // chaos.mjs::realityRendingPenalty), тот же приём, что уже даёт
+    // rules/psychic-sustain-target.mjs — считается заново каждый раз,
+    // ничего не хранится на цели.
+    system.incomingDamageReduction =
+      (Number(system.incomingDamageReduction) || 0) + realityRendingPenalty(actor);
 
     // ── Эффекты от черт (трейтов) ──────────────────────────────────────────
     // Ядро автоматизации: +X к бонусу характеристики (Unnatural), естественная
@@ -969,4 +983,7 @@ export function prepareCharacterDerived(actor, system) {
     // считается из уже готовых чисел, поэтому выносится без риска для порядка.
     prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
                                        sustainedCost, implantCompBonus, techFocusInstalled });
+    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): числовая часть слияния —
+    // ПОСЛЕ Инициативы/Характеристик выше, иначе нечего перезаписывать.
+    applyParasiteFusion(actor, system, chars);
 }

@@ -287,6 +287,35 @@ describe("избирательные попадания", () => {
     showAttackDialog(attacker({ items: [plain] }), plain);
     expect(captured.dialog.content).not.toContain("underfoot");
   });
+
+  // Опарыш-Паразит (wdbc-ux8a): «более не может быть выцелен Избирательной
+  // атакой» — жёсткий запрет ПО ЦЕЛИ (книга говорит «не может»), первый такой
+  // гейт в этом файле — все опции прицела убраны, кроме «Без прицела».
+  it("Опарыш-Паразит у цели — все опции прицела убраны", () => {
+    const weapon = weaponFor();
+    const maggotHost = actorFor({
+      items: [{ type: "mutation", name: "Maggot Parasite / Опарыш-Паразит", system: {},
+        flags: { "warhammer-dbc": { mechanics: [{ id: "g", operator: "AND", entries: [
+          { id: "e", kind: "capability", capabilityKey: "gift.nurgle.maggotParasite", label: "" }
+        ] }] } } }]
+    });
+    setTargets([maggotHost]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const html = captured.dialog.content;
+
+    expect(html).toContain("— Без прицела —");
+    expect(html).not.toContain("Торс (");
+    expect(html).not.toContain("Нога (");
+    expect(html).not.toContain("Рука (");
+    expect(html).not.toContain("Голова (");
+  });
+
+  it("обычная цель — опции прицела на месте", () => {
+    const weapon = weaponFor();
+    setTargets([actorFor({})]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    expect(captured.dialog.content).toContain("Торс (−10)");
+  });
 });
 
 describe("свойства оружия и полосы дальности", () => {
@@ -1878,6 +1907,137 @@ describe("Оглушение/Ступор (цель): wdbc-r5o7.3", () => {
 
     expect(dialogThreshold()).toBe(55);
     expect(captured.dialog.content).not.toContain("💫 Цель Оглушена/в Ступоре");
+  });
+});
+
+// Мухи, субмутация "7" Wrapped in Chaos/Укутанный в Хаос (стр. 440-452,
+// wdbc-1rno): «Все атаки по нему, полагающиеся на зрение, получают штраф
+// −5... растёт по тиру Ран». Тот же приём проверки, что у Повален/Оглушена
+// (dialogThreshold превью + thresholdInCard реального броска, wdbc-r5o7.2
+// нашёл ровно такой баг расхождения между ними).
+describe("Мухи (цель): wdbc-1rno", () => {
+  function fliesTarget(label, tier) {
+    return actorFor({
+      items: [{ type: "mutation", name: "Wrapped in Chaos / Укутанный в Хаос", system: { submutation: { label } } }],
+      wounds: { tier }
+    });
+  }
+
+  it("здоровая цель с Мухами — −5 к стрелковой, бейдж, реальный бросок", async () => {
+    const weapon = weaponFor();
+    setTargets([fliesTarget("7", "healthy")]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    const baseline = dialogThreshold();
+    expect(captured.dialog.content).toContain("🪰 Мухи цели (-5)");
+
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(baseline);
+  });
+
+  it("тяжело ранена — −15 вместо −5", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([fliesTarget("7", "heavy")]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline - 15);
+    expect(captured.dialog.content).toContain("🪰 Мухи цели (-15)");
+  });
+
+  it("критически ранена (displayKey \"dying\") — −20", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([fliesTarget("7", "dying")]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline - 20);
+  });
+
+  it("другая субмутация той же Мутации (не «7») — не срабатывает", () => {
+    const weapon = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baseline = dialogThreshold();
+
+    setTargets([fliesTarget("4-5", "healthy")]);
+    showAttackDialog(attacker({ items: [weapon] }), weapon);
+
+    expect(dialogThreshold()).toBe(baseline);
+    expect(captured.dialog.content).not.toContain("Мухи цели");
+  });
+
+  it("реальный бросок с Избирательной атакой по здоровой цели с Мухами — эскалация −10 в карточке", async () => {
+    const weapon = weaponFor();
+    setTargets([fliesTarget("7", "healthy")]);
+    const p = showAttackDialog(attacker({ items: [weapon] }), weapon);
+    const baselineNoAim = dialogThreshold(); // без прицела, −5 уже внутри
+
+    await captured.press("roll", attackForm({ "#atk-aim option:checked": { dataset: { penalty: "-20" } } }));
+    await p;
+
+    // Порог в карточке: базовый (с −5 Мух) минус доп. −5 за эскалацию до −10,
+    // минус −20 самой Избирательной атаки за место попадания.
+    expect(thresholdInCard()).toBe(baselineNoAim - 5 - 20);
+  });
+});
+
+// Жар Гнева, субмутация "8" Wrapped in Chaos/Укутанный в Хаос (стр. 440-452,
+// wdbc-1rno): «...даёт штраф −10 на атаки в рукопашной против него и его
+// союзников в радиусе 3м». Гейт книги «в Ярости ИЛИ связан рукопашной»
+// сведён к «действует всегда при самой рукопашной атаке» (решение
+// пользователя) — тот же приём проверки, что у Мух выше; радиус-скан до
+// союзника-держателя уже покрыт unit-тестами module/rules/wrapped-in-
+// chaos.mjs::wrathHeatAttackPenalty, здесь — только проводка в диалог.
+describe("Жар Гнева (цель): wdbc-1rno", () => {
+  function wrathHeatTarget(label) {
+    return actorFor({
+      items: [{ type: "mutation", name: "Wrapped in Chaos / Укутанный в Хаос", system: { submutation: { label } } }]
+    });
+  }
+
+  it("держатель «8», рукопашная атака — штраф −10, бейдж, реальный бросок", async () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([wrathHeatTarget("8")]);
+    const p = showAttackDialog(attacker({ items: [sword] }), sword);
+
+    const baseline = dialogThreshold();
+    expect(captured.dialog.content).toContain("🔥 Жар Гнева (-10)");
+
+    await pressRoll(p);
+    expect(thresholdInCard()).toBe(baseline);
+  });
+
+  it("та же цель, но стрелковая атака — штрафа нет", () => {
+    const gun = weaponFor();
+    setTargets([]);
+    showAttackDialog(attacker({ items: [gun] }), gun);
+    const baseline = dialogThreshold();
+
+    setTargets([wrathHeatTarget("8")]);
+    showAttackDialog(attacker({ items: [gun] }), gun);
+
+    expect(dialogThreshold()).toBe(baseline);
+    expect(captured.dialog.content).not.toContain("Жар Гнева");
+  });
+
+  it("другая субмутация той же Мутации (не «8») — не срабатывает", () => {
+    const sword = weaponFor({ weaponClass: "melee" });
+    setTargets([]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+    const baseline = dialogThreshold();
+
+    setTargets([wrathHeatTarget("2-3")]);
+    showAttackDialog(attacker({ items: [sword] }), sword);
+
+    expect(dialogThreshold()).toBe(baseline);
+    expect(captured.dialog.content).not.toContain("Жар Гнева");
   });
 });
 

@@ -16,6 +16,8 @@ import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-propert
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
+import { VOLUNTEER_ACTOR_CAPABILITY, isHarlequinsKissItem } from "../rules/volunteer-actor.mjs";
+import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
@@ -612,6 +614,21 @@ export async function applyDamageToActor(actor, damageData) {
   // в торс — общий расчёт зон брони и Критических Ран ей не подходит.
   if (actor.type === "horde") return applyDamageToHorde(actor, damageData);
 
+  // Стазис (wdbc-1rno, Fruit of Flesh/Плод Плоти, субмутация «Оглушение»):
+  // «абсолютно неуязвимы... даже пинок Титана неспособен как-то повредить»
+  // — единственный TOTAL_IMMUNITY-гейт в конвейере урона, до брони/Раней/
+  // Крит-эффектов и до любых Реакций-щитов (immune ко всему без исключений
+  // по книжной цитате, не только к конкретному типу/подвиду урона).
+  if (actor.system?.conditions?.stasis) {
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: { alias: "Система" },
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("warp", "#8fd0ff")}Стазис — ${esc(actor.name)}</div>
+        <div class="roll-outcome"><span class="roll-success">Заморожен во времени — попадание не наносит никакого урона.</span></div>
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+  }
+
   // «Избегает атак Орды как одиночная цель» (wdbc-gzuf, Серый Человек) —
   // цель ещё не была известна на момент броска Орды (magDiceBonus едет
   // отдельным числом от horde-sheet.mjs через hooks.mjs), поэтому кубы
@@ -933,6 +950,42 @@ export async function applyDamageToActor(actor, damageData) {
   const castOutOfDeathBlocksDeath = !!critEffect && textAssertsDeath(critEffect)
     && !warpSoak && hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY);
 
+  // Volunteer Actor/Доброволец Актёр (wdbc-ux8a): вместо «Констатировать
+  // смерть» — кнопка «Поцелуй Мимика», когда крит-эффект утверждает смерть,
+  // атакующий несёт Талант и удар нанесён именно Поцелуем Арлекина. Silent
+  // Elimination/атака врасплох со спины НЕ проверяются кодом (нет детектора
+  // «из скрытности»/«со спины» в системе) — стол подтверждает эти условия
+  // самим кликом, тот же честный уровень автоматизации, что у остальных
+  // находок тикета.
+  let kissOfMimicHtml = "";
+  if (critEffect && textAssertsDeath(critEffect) && !warpSoak && attackerUuid && weaponUuid) {
+    const attackerActor = await fromUuid(attackerUuid).catch(() => null);
+    const weaponItem = await fromUuid(weaponUuid).catch(() => null);
+    if (attackerActor && hasRuleFlag(attackerActor, VOLUNTEER_ACTOR_CAPABILITY) && isHarlequinsKissItem(weaponItem)) {
+      kissOfMimicHtml = `<div class="wh-crit-pills">
+        <button type="button" class="wh-kiss-of-mimic-btn" data-actor-uuid="${esc(actor.uuid)}"
+          data-attacker-uuid="${esc(attackerUuid)}"
+          title="Volunteer Actor: вместо смерти — 1 Рана + мононить + контроль (стол подтверждает Silent Elimination/врасплох со спины)">
+          🕸️ Поцелуй Мимика — захват вместо смерти</button>
+      </div>`;
+    }
+  }
+
+  // Maggot Parasite/Опарыш-Паразит (Нургл, wdbc-ux8a): вместо смерти самого
+  // носителя — «Опарыш выскакивает» (свободное действие книги), начинает
+  // контакт Трейта Parasite с целью в 3м (module/apps/parasite-trait.mjs::
+  // beginParasiticContact — контакт/длительность/срыв, не мгновенный захват:
+  // переоценка от 15.09.2026, полный книжный текст Трейта). Проверяется
+  // capability ЖЕРТВЫ (actor), не атакующего — в отличие от Поцелуя Мимика.
+  let maggotParasiteHtml = "";
+  if (critEffect && textAssertsDeath(critEffect) && !warpSoak && hasRuleFlag(actor, MAGGOT_PARASITE_CAPABILITY)) {
+    maggotParasiteHtml = `<div class="wh-crit-pills">
+      <button type="button" class="wh-parasite-begin-contact-btn" data-actor-uuid="${esc(actor.uuid)}"
+        title="Maggot Parasite: вместо смерти — начать контакт Трейта Parasite с целью в 3м">
+        🪱 Опарыш выскакивает — начать заражение цели</button>
+    </div>`;
+  }
+
   // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): «любое разумное
   // существо в пределах Cor.b м [от носителя] получает Крит.Эффект» — не
   // обязательно САМ носитель, actor здесь — жертва, чей крит их и накормил.
@@ -1074,9 +1127,9 @@ export async function applyDamageToActor(actor, damageData) {
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
       ${critPillsHtml(critPills, actor.uuid, netDamage)}
-      ${castOutOfDeathBlocksDeath
+      ${maggotParasiteHtml || kissOfMimicHtml || (castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
-        : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : "")}
+        : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""))}
       ${eaterOfPainButtons ? `<div class="wh-crit-pills">${eaterOfPainButtons}</div>` : ""}
     </div>` : "";
 

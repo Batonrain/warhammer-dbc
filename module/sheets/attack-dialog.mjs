@@ -60,6 +60,8 @@ import { isIntegralAttack }                    from "../combat/equipped-melee.mj
 import { isPathOneHandedWeapon }               from "../rules/library/paths.mjs";
 import { canDualWield, offHandCandidates, dualWieldMods }
   from "../rules/dual-wield.mjs";
+import { targetHasActiveFlies, fliesAttackPenalty, wrathHeatAttackPenalty } from "../rules/wrapped-in-chaos.mjs";
+import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 
 // Локус Сокрушения (стр. 31): раз в Раунд любая рукопашная атака (с оружием
 // и голыми руками) считается имеющей Базу «Полная Атака» — см. meleeBaseKey
@@ -427,11 +429,39 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     ? `<span class="atk-training-warn" title="Цель Оглушена/в Ступоре (стр. 30-31)">💫 Цель Оглушена/в Ступоре (+20)</span>`
     : "";
 
+  // Мухи, субмутация "7" Wrapped in Chaos/Укутанный в Хаос (wdbc-1rno, книга
+  // стр. 440-452): «Все атаки по нему, полагающиеся на зрение, получают
+  // штраф −5, поднимающийся до −10, если они Избирательные... растёт по
+  // тиру Ран». Безусловная часть — тем же приёмом, что Повален/Оглушена
+  // выше; эскалация при Избирательной атаке читает ЖИВОЙ чекбокс
+  // (f.aimPenalty !== 0, sheets/attack/form.mjs) — не сюда, отдельной
+  // строкой внутри thresholdParts ниже, тем же местом, где f.aimPenalty
+  // сам уже участвует в пороге. «Полагающиеся на зрение» не сужается — в
+  // системе нет классификатора «атака вслепую», применяется ко всем.
+  const targetFlies    = targetHasActiveFlies(attackCtx.targetActor);
+  const fliesTier      = attackCtx.targetActor?.system?.wounds?.tier;
+  const fliesMod       = targetFlies ? fliesAttackPenalty(fliesTier, false) : 0;
+  const fliesAimedMod  = targetFlies ? fliesAttackPenalty(fliesTier, true) : 0;
+  const fliesBadge     = targetFlies
+    ? `<span class="atk-training-warn" title="Мухи (Укутанный в Хаос, стр. 440-452): штраф атакам по зрению, растёт по тиру Ран цели">🪰 Мухи цели (${fliesMod})</span>`
+    : "";
+
+  // Жар Гнева (Укутанный в Хаос "8", wdbc-1rno): штраф рукопашной атаке,
+  // если цель сама держит "8" либо в 3м от держателя-союзника цели — тем
+  // же приёмом, что Мухи выше, но не "по зрению" (isMelee только). Гейт
+  // книги «в Ярости ИЛИ связан рукопашной» сведён к «действует всегда при
+  // самой рукопашной атаке» (решение пользователя) — см. rules/wrapped-
+  // in-chaos.mjs::wrathHeatAttackPenalty.
+  const wrathHeatMod   = isMelee ? wrathHeatAttackPenalty(attackCtx.targetActor, true) : 0;
+  const wrathHeatBadge = wrathHeatMod
+    ? `<span class="atk-training-warn" title="Жар Гнева (Укутанный в Хаос, стр. 440-452): штраф рукопашным атакам против держателя/союзников в 3м">🔥 Жар Гнева (${wrathHeatMod})</span>`
+    : "";
+
   // Шаг За Шагом (стр. 73 Книги Аэльдари): +10, пока персонаж инициировал
   // рукопашный бой или продолжает в нём находиться — то есть практически
   // всегда, когда идёт рукопашная атака этим оружием; безусловно, без галочки.
   const stepByStepMod = (isMelee && wp.stepByStep) ? 10 : 0;
-  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod;
+  const wpAttackMod  = (wp.attackMod || 0) + (modFx.attackMod || 0) + qTestMod + legionFit.total + ogrynFit.total + weaponTraining.total + targetStanceMod + exposedMod + helplessRangedMod + runningMod + stepByStepMod + bowMarkedMod + proneMod + stunnedMod + fliesMod + wrathHeatMod;
   const meleeCategory = sys.meleeCategory || "";
   // Категория оружия по выбранному Профилю (стр. 14, «Композиция Рукопашной
   // Атаки»): у многопрофильного оружия каждый альт-профиль — фактически
@@ -566,7 +596,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     const blockedBadge = sel.blocked
       ? `<span class="atk-training-warn" title="Защитная Стойка без щита запрещает атаки (стр. 15)">🚫 Защитная Стойка — атака запрещена</span>`
       : "";
-    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
+    return `${baseBadge}${stanceBadge}${blockedBadge}${computeLockNoteHtml(sel.pIdx)}${targetStanceBadge}${exposedBadge}${runningBadge}${bowMarkedBadge}${targetHelplessBadge}${proneBadge}${stunnedBadge}${fliesBadge}${wrathHeatBadge}${ammoBadge}${fatigueBadge}${drugAtkBadge}${handsBadge(sel)}`;
   }
 
   // Недоступные варианты (без Рукопашной Тренировки/не подходит категории) не
@@ -676,6 +706,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // зону; ничего сверх aimVal/aimPenalty не требуется.
   if (wp.blastRating > 0) {
     aimTargets.splice(1, 0, { value: "underfoot", label: "Под цель (Взрывное, −20)", penalty: -20 });
+  }
+  // Опарыш-Паразит (wdbc-ux8a): «более не может быть выцелен Избирательной
+  // атакой» — жёсткий запрет (книга говорит «не может», не предупреждение),
+  // по ЦЕЛИ, а не по оружию — первый такой гейт в этом файле.
+  if (attackCtx.targetActor && hasRuleFlag(attackCtx.targetActor, MAGGOT_PARASITE_CAPABILITY)) {
+    aimTargets = aimTargets.filter(t => !t.value);
   }
   const aimHtml = aimTargets.map(t => {
     const pen = (t.precise && csMod) ? Math.min(0, t.penalty + csMod) : t.penalty;
@@ -1159,6 +1195,12 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       { label: "Цель бежит",         value: runningMod },
       { label: "Цель Повалена",      value: proneMod },
       { label: "Оглушение/Ступор цели", value: stunnedMod },
+      // Мухи (wdbc-1rno) — эскалация читает ЖИВОЙ f.aimPenalty (чекбокс
+      // «Избирательная атака»), поэтому считается здесь, не в wpAttackMod
+      // выше (тот же принцип, что уже разводит "Избирательная атака" саму
+      // как отдельную живую строку f.aimPenalty ниже в modParts).
+      { label: "Мухи цели",          value: targetFlies ? (f.aimPenalty ? fliesAimedMod : fliesMod) : 0 },
+      { label: "Жар Гнева",          value: wrathHeatMod },
       { label: "Поклон Публике",     value: bowMarkedMod },
       { label: "Шаг за шагом",       value: stepByStepMod },
       { label: "База",               value: sel.baseBon },

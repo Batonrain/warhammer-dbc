@@ -335,7 +335,7 @@ const TYPES = {
       },
       // Выпавшая субмутация (стр. 440): в template.json поля не было, в паке
       // его тоже нет — оно заполняется броском уже на листе персонажа.
-      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0 },
+      submutation: { name: "", label: "", text: "", god: "", roll: 0, shift: 0, total: 0, multi: [] },
       // Трекер Зависимости (wdbc-5inv) — та же логика, что submutation выше:
       // заполняется на листе (subst./"Удовлетворить"), в паке пусто у всех.
       dependency: { substance: "", lastSatisfied: null }

@@ -14,7 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseSubmutations, hasSubmutations, subShiftLimit, submutationByRoll,
-         subShiftOptions, isSubBlocked, patronSubmutation, needsReroll }
+         subShiftOptions, isSubBlocked, patronSubmutation, needsReroll,
+         multiRollCount, multiRollResults }
   from "../../module/rules/submutations.mjs";
 import { MUTATIONS, MUTATION_LIBRARY } from "../../module/constants/mutations.mjs";
 import { opposedGod, areGodsHostile, CHAOS_PATRONS } from "../../module/constants/chaos-patron.mjs";
@@ -191,5 +192,47 @@ describe("цвета Богов", () => {
     expect(needsReroll(subShiftOptions(full, 6, 1, "khorne"))).toBe(false);
     // Нурглиту та же шестёрка не закрыта вовсе: Слаанеш ему не соперник.
     expect(needsReroll(subShiftOptions(full, 6, 0, "nurgle"))).toBe(false);
+  });
+});
+
+// «Бросьте N раз на субмутации без обычных модификаторов от Inf.b» —
+// найдено дважды в книге (wdbc-1rno): Fruit of Flesh «11 — Тройной Плод»,
+// Wings/Крылья «12 — Многокрылый». Проверяем на РЕАЛЬНОМ тексте обеих
+// таблиц, не на придуманном примере.
+const FRUIT = parseSubmutations(MUTATION_LIBRARY.find(i => i.name === "Плод Плоти").system.benefit).entries;
+const WINGS = parseSubmutations(MUTATION_LIBRARY.find(i => i.name === "Крылья").system.benefit).entries;
+
+describe("multiRollCount — «Бросьте N раз» из текста строки", () => {
+  it("Тройной Плод (Fruit of Flesh) — 3 раза", () => {
+    const triple = FRUIT.find(e => e.name === "Тройной Плод");
+    expect(multiRollCount(triple)).toBe(3);
+  });
+
+  it("Многокрылый (Wings) — 3 раза", () => {
+    const multi = WINGS.find(e => e.name === "Многокрылый");
+    expect(multiRollCount(multi)).toBe(3);
+  });
+
+  it("обычная строка — 0", () => {
+    const heal = FRUIT.find(e => e.label === "0");
+    expect(multiRollCount(heal)).toBe(0);
+  });
+});
+
+describe("multiRollResults — до N результатов, дубликаты и самоссылка схлопываются", () => {
+  it("три разных броска — три разных результата", () => {
+    // Fruit of Flesh: 1→ЭМИ, 7→Яд и Радиация, 10→Осколки.
+    const res = multiRollResults(FRUIT, [1, 7, 10], "11");
+    expect(res.map(r => r.label)).toEqual(["1", "7", "10"]);
+  });
+
+  it("повторный бросок на ту же строку схлопывается в один результат", () => {
+    const res = multiRollResults(FRUIT, [1, 1, 7], "11");
+    expect(res.map(r => r.label)).toEqual(["1", "7"]);
+  });
+
+  it("попадание на саму multi-roll строку выпадает из списка", () => {
+    const res = multiRollResults(FRUIT, [11, 1, 7], "11");
+    expect(res.map(r => r.label)).toEqual(["1", "7"]);
   });
 });

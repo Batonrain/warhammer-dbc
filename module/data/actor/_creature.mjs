@@ -146,6 +146,16 @@ export function creatureSchema({ granted = false } = {}) {
   // самим флагом — новое загорание не должно унаследовать чужой остаток.
   conditionFields.burningSourceDamage = num(0, "Горение: урон поджигания");
   conditionFields.burningGraceRounds  = num(0, "Горение: Ходов без эффектов (Cooler)");
+  // Сладкий Туман (wdbc-1rno) — момент истечения (game.time.worldTime),
+  // 0 = не активно. Тот же приём ручной надстройки, что и два поля выше:
+  // sweetMist сам по себе булев без "часового" counter (тех трёх типов не
+  // хватает), момент истечения хранится отдельным числом.
+  conditionFields.sweetMistExpiresAt = num(0, "Сладкий Туман: worldTime истечения");
+  // Мононить «Поцелуй Мимика» (wdbc-ux8a) — «за доп. 10 сек/1м можно лишить
+  // цель психосил/техночудес», опциональная надстройка сверх самого
+  // Состояния (та же форма ручной надстройки, что burningSourceDamage/
+  // sweetMistExpiresAt выше) — читает module/sheets/tabs/psychic.mjs.
+  conditionFields.mimicWireBlocksPowers = bool(false, "Мононить: блокирует психосилы/техночудеса");
 
   return {
     // Книга-источник (wdbc-7pjs). У предметов это поле есть у полутора десятков
