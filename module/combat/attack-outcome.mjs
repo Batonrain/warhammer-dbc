@@ -218,9 +218,12 @@ export function damageFormulaFor({ damage, flatBonus = 0, chars = {}, corruption
  *
  * Эти кубы не вызывают Экстремальный урон — их бросает отдельный Roll.
  */
-export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0 }) {
+export function bonusDamageDice({ wp, rofMode, hit, deg, shortRange = false, maximal = false, band = null, ammoDice = 0, aimed = false }) {
   let dice = 0;
-  if (wp.accurate && rofMode === "single" && hit) {
+  // «При одиночных выстрелах С Прицеливанием» (стр. 166) — без Прицеливания
+  // (aimed=false) Меткое не даёт этих кубов вовсе, только удвоение бонуса
+  // Прицеливания к порогу (attack-dialog.mjs) — оно неприменимо без aimed.
+  if (wp.accurate && rofMode === "single" && hit && aimed) {
     // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs):
     // «до 4-х доп. кубиков вместо обычных 2-х (на 3, 5, 7 и 9 Успехов)» —
     // тот же Accurate-порог, только продлённая лестница. wp.sniperAssassin

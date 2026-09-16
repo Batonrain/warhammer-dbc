@@ -28,6 +28,7 @@ import { measureTokens } from "../../combat/tactical-map.mjs";
 import { attackIsMelee } from "../../combat/weapon-profiles.mjs";
 import { weaponThresholdPart } from "../../combat/attack-threshold.mjs";
 import { withEyeOfEnvy } from "../../rules/eye-of-envy.mjs";
+import { AIM_FOCUS_EXTENDED_FLAG } from "../../rules/aim-focus.mjs";
 
 /**
  * Два условия книги на парную атаку (стр. 62, wdbc-3jlm), которые до этого
@@ -65,6 +66,8 @@ export function openAttackDialog(ctx) {
     actor,
     item,
     content,
+    currentAiming,
+    aimingBonus,
     techniqueOpts,
     isMelee,
     forceMelee,
@@ -211,10 +214,27 @@ export function openAttackDialog(ctx) {
             await markDeathDanceUsed(actor);
           }
 
+          // Прицеливание (wdbc-1rno.5): обычно сбрасывается любой Атакой —
+          // Aim Focus/Фокус на Прицеле (rules/aim-focus.mjs), если активно
+          // продление ("pending"/"armed") И атака дальнобойная («все его
+          // стрелковые атаки» — рукопашную книга не продлевает), не тратит
+          // его на этой атаке вовсе — переживает до конца следующего Хода
+          // (снимается action-economy.mjs::applyAimFocusTurnEnd) или до
+          // следующего объявления Прицеливания (aiming-action.mjs::declareAim
+          // перезаписывает флаг заново).
+          const aimFocusKeepsAiming = !isMelee && !!actor.getFlag?.("warhammer-dbc", AIM_FOCUS_EXTENDED_FLAG);
+
           // Стойка/База — персистентны на акторе (как радио на вкладке БОЙ),
           // Хват/Профиль — во флагах предмета (как раньше в HUD): выбор в этом
           // диалоге должен остаться в силе и после закрытия окна, а не сбрасываться.
-          const actorUpdates = { "system.aiming": "none" };
+          const actorUpdates = aimFocusKeepsAiming ? {} : { "system.aiming": "none" };
+          // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs):
+          // «его следующий выстрел» — тратится ПЕРВЫМ ЖЕ дальнобойным выстрелом
+          // независимо от Aim Focus (тот продлевает сам бонус Прицеливания на
+          // несколько атак, это — отдельный один раз использованный тест).
+          if (!isMelee && actor.getFlag?.("warhammer-dbc", "trackingAimActive")) {
+            actorUpdates["flags.warhammer-dbc.-=trackingAimActive"] = null;
+          }
           if (isMelee && sel.stanceKey !== stance) actorUpdates["system.meleeStance"] = sel.stanceKey;
           if (isMelee && !fullAttackForced && sel.baseKey !== meleeBaseKey) actorUpdates["system.meleeBase"] = sel.baseKey;
           await actor.update(actorUpdates);
@@ -264,6 +284,10 @@ export function openAttackDialog(ctx) {
             {
               forceHit: helplessAutoHit, doubleDamage: helplessAutoHit,
               fixedSuccessDeg: autoHitUsed ? 1 : undefined,
+              // Прицеливание (wdbc-1rno.5): actor.system.aiming уже сброшен в
+              // "none" выше (actorUpdates), значение для Меткого/bonusDamageDice
+              // нужно явным параметром, захваченным ДО сброса.
+              aiming: currentAiming,
               // Быстрая/Молниеносная — теперь Приём (стр. 14), а не отдельная
               // галочка: множитель попаданий включается выбором пилюли.
               isSwift: sel.maneuverKey === "swift", isLightning: sel.maneuverKey === "lightning",
@@ -323,8 +347,8 @@ export function openAttackDialog(ctx) {
               // Свойства оружия от правила (wdbc-w8z4) — уже отобраны по `when`
               // выше (resolvedAttack), attack.mjs только доливает их в _entries.
               ruleProps: resolvedAttack.weaponProps,
-              aimingLabel: (f.aiming !== "none" && !wp.noAim)
-                ? (f.aiming === "half" ? `Полу-прицеливание (+${f.aimBonus})` : `Полное прицеливание (+${f.aimBonus})`)
+              aimingLabel: (currentAiming !== "none" && !wp.noAim)
+                ? (currentAiming === "half" ? `Полу-прицеливание (+${aimingBonus})` : `Полное прицеливание (+${aimingBonus})`)
                 : "",
               // Кого выцелили в паре: урон применяют к листу, а на сцене у пары
               // обычно один токен — без этой строки попадание во всадника ушло

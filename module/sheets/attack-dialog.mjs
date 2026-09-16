@@ -374,9 +374,25 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   // −20, вся Рукопашная +20 (module/combat/movement-actions.mjs, declareRun
   // ставит флаг; снимается resetActionEconomy — action-economy.mjs).
   const targetRunning = !!attackCtx.targetActor?.getFlag?.("warhammer-dbc", "running");
-  const runningMod = targetRunning ? (isMelee ? 20 : -20) : 0;
+  // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs):
+  // успешный тест P+0 при объявлении Прицеливания гасит именно этот штраф на
+  // следующем дальнобойном выстреле — рукопашный бонус +20 не задет (Талант
+  // читается как чисто стрелковый по книге).
+  const trackingAimIgnoresRunning = !isMelee && !!actor.getFlag?.("warhammer-dbc", "trackingAimActive");
+  // Предсказатель Движения/Motion Predictor (weapon-mods, wdbc-1rno.5,
+  // находка 12/12, стр. 198, метка «прицеливание»): «Оружие игнорирует
+  // штрафы за скорость... цели» — только скоростная половина реализуема
+  // (высотная блокирована wdbc-1rno.29, честный остаток), только пока
+  // Прицеливание взято (installedMods/modFxOf уже в скоупе, строки 179-187).
+  const motionPredictorIgnoresRunning = !isMelee && (actor.system.aiming || "none") !== "none"
+    && installedMods.some(m => !!modFxOf(m).aimIgnoresRunning);
+  const runningMod = targetRunning
+    ? (isMelee ? 20 : ((trackingAimIgnoresRunning || motionPredictorIgnoresRunning) ? 0 : -20))
+    : 0;
   const runningBadge = targetRunning
-    ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`
+    ? ((trackingAimIgnoresRunning || motionPredictorIgnoresRunning)
+        ? `<span class="atk-training-warn" title="Цель Бежит (стр. 32) — погашено">🏃 Цель Бежит (−20, погашено)</span>`
+        : `<span class="atk-training-warn" title="Цель Бежит (стр. 32)">🏃 Цель Бежит (${isMelee ? "+20" : "−20"})</span>`)
     : "";
 
   // Bow to the Audience/Поклон Публике (wdbc-1rno): метка живёт на
@@ -529,6 +545,16 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const halfAimBonus  = doubleGripActive ? 15 : 10;
   const fullAimBonus  = doubleGripActive ? 30 : 20;
   const aimingBonus   = currentAiming === "half" ? halfAimBonus : currentAiming === "full" ? fullAimBonus : 0;
+
+  // Прицеливание (wdbc-1rno.5): раньше выбиралось радиокнопкой прямо тут
+  // (без расхода ОД); теперь это HUD-действие (combat/aiming-action.mjs),
+  // объявленное ДО открытия этого окна — здесь только читаем актора и
+  // показываем итог, без возможности сменить выбор в этом окне.
+  const aimingBadgeHtml = currentAiming === "none" ? "" : `
+    <div class="av-section">
+      <div class="av-sec-lbl">Прицеливание</div>
+      <div class="av-pills"><span class="av-pill av-pill-static">${currentAiming === "half" ? "Полу-прицеливание" : "Полное Прицеливание"} +${aimingBonus}</span></div>
+    </div>`;
 
   const loadedAmmo = sys.loadedAmmoId ? actor.items.get(sys.loadedAmmoId) : null;
   const ammoSys    = loadedAmmo?.system;
@@ -1020,10 +1046,6 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
   const rofPills = rofModes.map((mm, i) =>
     `<label class="av-pill"><input type="radio" name="atk-rof" value="${mm.value}" data-bonus="${mm.bonus}" ${i === 0 ? "checked" : ""}/><span>${mm.label}</span></label>`
   ).join("");
-  const aimingPills = [["none", 0, "Без прицела"], ["half", halfAimBonus, `Полу +${halfAimBonus}`], ["full", fullAimBonus, `Полное +${fullAimBonus}`]].map(([v, bon, lbl]) =>
-    `<label class="av-pill"><input type="radio" name="atk-aiming" value="${v}" data-bonus="${bon}" ${currentAiming === v ? "checked" : ""}/><span>${lbl}</span></label>`
-  ).join("");
-
   // ── Стойка/База/Приём/Хват/Профиль — теперь выбираются прямо в диалоге ───
   // Под пилюлями каждой группы — своя заметка с полным текстом эффекта
   // текущего выбора (id для updateTotal ниже), тем же приёмом, что раньше
@@ -1124,7 +1146,7 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     actor,
     dualWieldHtml,
     aimHtml,
-    aimingPills,
+    aimingBadgeHtml,
     ammoCondHtml,
     ammoDialogHtml,
     attackerMount,
@@ -1211,7 +1233,20 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
       // Fanning: «без бонусов от Прицеливания» — только в режиме Длинной
       // очереди, которую этот Талант и меняет (stanceKey/база и т.п. живут своей
       // жизнью, тут проверяется именно выбранный rofMode этого броска).
-      { label: "Прицеливание",       value: (fanningActive && f.rofMode === "full") ? 0 : (wp.noAim ? 0 : f.aimBonus) }
+      // Меткое (Accurate, стр. 166): «Одиночные выстрелы этим оружием получают
+      // удвоенный бонус от Прицеливания» — только rofMode==='single', не
+      // задевает Длинную/Короткую очередь.
+      { label: "Прицеливание",       value: (fanningActive && f.rofMode === "full") ? 0
+        : wp.noAim ? 0
+        : (wp.accurate && f.rofMode === "single") ? aimingBonus * 2
+        : aimingBonus },
+      // Прицелы с меткой «прицеливание» (weapon-mods, wdbc-1rno.5, находка
+      // 12/12, стр. 198): «дают эффект только для атаки с использованием
+      // Полу-/Полного Прицеливания» — только Коллиматорный Прицел реально
+      // подключён (aimAttackMod), остальные упираются в отдельные пробелы
+      // (wdbc-1rno.29/.31/.36/.37/.38).
+      { label: "Прицел (пока Прицеливаюсь)", value: currentAiming === "none" ? 0
+        : installedMods.reduce((n, m) => n + (Number(modFxOf(m).aimAttackMod) || 0), 0) }
     ];
     const modParts = [
       { label: "Доп. модификатор",     value: f.modifier },
@@ -1277,6 +1312,11 @@ export async function showAttackDialog(actor, item, techniqueOpts = {}) {
     // наружу шва). rules/eye-of-envy.mjs оборачивает вызов _executeAttackRoll
     // в attack/dialog.mjs этим полем.
     targetActor: attackCtx.targetActor,
+    // wdbc-1rno.5: аттак-диалог больше не выбирает Прицеливание сам (см.
+    // aimingBadgeHtml выше) — attack/dialog.mjs использует их напрямую вместо
+    // f.aiming/f.aimBonus (той радиокнопки в форме больше нет).
+    currentAiming,
+    aimingBonus,
     techniqueOpts,
     isMelee,
     forceMelee,

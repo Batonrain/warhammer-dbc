@@ -62,7 +62,7 @@ import { placeVortexZone, processVortexTurnStart, clearAllVortexZones, reactToVo
 import { placeSmokeZone } from "./regions/difficult-terrain.mjs";
 import { findArcTarget } from "./combat/arc.mjs";
 import { findThroughShotTarget } from "./combat/through-shot.mjs";
-import { resetActionEconomy, applyTurnEndStanceEffects, postTurnStartCard, spendActionPoints } from "./combat/action-economy.mjs";
+import { resetActionEconomy, applyTurnEndStanceEffects, applyAimFocusTurnEnd, postTurnStartCard, spendActionPoints } from "./combat/action-economy.mjs";
 import { isDevourerOfTimeExtraTurn, devourerOfTimeVictimUuids } from "./combat/devourer-of-time.mjs";
 import { BLESSED_FITS_CAPABILITY, BLESSED_FITS_PENDING_FLAG } from "./rules/blessed-fits.mjs";
 import { clearDreadWailWeaponBuff } from "./combat/dread-wail.mjs";
@@ -2526,6 +2526,9 @@ function _attachFateContextMenu(message, html) {
       const prevActor = prevCombatant?.actor;
       if (prevActor) {
         await applyTurnEndStanceEffects(prevActor);
+        // Aim Focus/Фокус на Прицеле (wdbc-1rno.5): «до конца его следующего
+        // Хода» — тот же такт, что Стойка выше.
+        await applyAimFocusTurnEnd(prevActor);
         // Конец Хода Подавленного (стр. 33) — предложить тест на преодоление.
         if (prevActor.system.conditions?.pinned) await postSuppressionRecoveryPrompt(prevActor);
         // Кровотечение/Горение (wdbc-j3yf) — книга бьёт ими «в конце своего

@@ -3045,8 +3045,9 @@ export const CAPABILITIES = {
   },
   // ── Стрелок
   "rangedCore.core.aimFocus": {
-    label: "Совершая любое прицеливание, персонаж может потратить 1 Реакцию, чтобы бонус прицеливания действовал на все его стрелковые атаки до конца сл…",
-    source: "Aim Focus / Фокус на Прицеле", reader: ""
+    label: "РЕАЛИЗОВАНО (16.09.2026, wdbc-1rno.5): HUD-галочка «Фокус» рядом с кнопками Прицеливания — включена, клик по Полу-/Полному Прицеливанию тратит ещё 1 Реакцию и продлевает бонус на ВСЕ дальнобойные атаки до конца следующего Хода актора (или до нового объявления Прицеливания), вместо одной атаки. Рукопашные атаки не продлеваются — книга прямо говорит «все его стрелковые атаки».",
+    source: "Aim Focus / Фокус на Прицеле",
+    reader: "module/rules/aim-focus.mjs (hasAimFocus), module/combat/aiming-action.mjs (declareAim/toggleAimFocusPending/aimFocusToggleState), module/sheets/attack/dialog.mjs (aimFocusKeepsAiming — не сбрасывает system.aiming дальнобойной атакой), module/combat/action-economy.mjs (applyAimFocusTurnEnd — снятие в конце следующего Хода), module/hooks.mjs (вызов applyAimFocusTurnEnd на конце Хода актора)"
   },
   "rangedCore.core.appliedPhysics": {
     label: "Попадая из оружия со свойством Blast, после Избеганий персонаж может сместить шаблон взрыва на до ½ BS.b (окр.▲) м.",
@@ -3085,8 +3086,9 @@ export const CAPABILITIES = {
     source: "Deadeye Shot / В Яблочко", reader: ""
   },
   "rangedCore.core.doubleGrip": {
-    label: "Держа пистолет двумя руками, Полу- и Полное Прицеливание дают +15/+30 вместо +10/+20, а Короткие/Длинные очереди — +5/+10 соответственно.",
-    source: "Double Grip / Двойной Хват", reader: ""
+    label: "Дубль-ключ той же способности, что weapon.doubleGripPistol (16.09.2026, wdbc-1rno.5) — второй capabilityKey для ОДНОГО И ТОГО ЖЕ Таланта Double Grip/Двойной Хват, появился при отдельной инвентаризации ветки «Стрелок» (rangedCore.core.*), не замечен как дубль ранее. Реально РЕАЛИЗОВАНО — см. weapon.doubleGripPistol: предмет-Талант несёт только тот ключ (capabilityKey:\"weapon.doubleGripPistol\" в packs-src/talents/Стрелок/Double_Grip), этот ключ не читается ни одним предметом и ни одним местом кода — пустой, но не потому что не реализовано, а потому что дублирует уже реализованное под другим именем.",
+    source: "Double Grip / Двойной Хват",
+    reader: "дубль weapon.doubleGripPistol — module/sheets/attack-dialog.mjs (doubleGripActive/doubleGripGrip)"
   },
   "rangedCore.core.doubleTap": {
     label: "Совершая любую не-Избирательную очередь, персонаж может нанести первое успешное попадание (после Избеганий) в торс, а второе — в голову,",
@@ -3178,8 +3180,19 @@ export const CAPABILITIES = {
     source: "Terror Sniper / Снайпер Ужаса", reader: ""
   },
   "rangedCore.core.trackingAim": {
-    label: "Совершая Прицеливание, персонаж может пройти P+0, чтобы его следующий выстрел игнорировал все штрафы за скорость цели, высоту и Таланты,",
-    source: "Tracking Aim / Прицел на Упреждение", reader: ""
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.5): HUD-галочка «Упреждение» рядом с кнопками Прицеливания — включена, клик катает бесплатный P+0, успех гасит штраф −20 «Цель Бежит» на следующем дальнобойном выстреле. Из трёх книжных условий реализовано только это (единственное реально существующее в движке); «штраф за высоту» и «Таланты, дающие штрафы по Бег/Натиск целям» (Hard Target/Трудная Цель, сам не реализован) — честные архитектурные пробелы, отдельные тикеты wdbc-1rno.29 (Полёт/высота) и wdbc-1rno.30 (Hard Target).",
+    source: "Tracking Aim / Прицел на Упреждение",
+    reader: "module/rules/tracking-aim.mjs (hasTrackingAim), module/combat/aiming-action.mjs (declareAim/rollTrackingAimTest/toggleTrackingAimPending/trackingAimToggleState), module/sheets/attack-dialog.mjs (trackingAimIgnoresRunning — гасит runningMod), module/sheets/attack/dialog.mjs (сброс trackingAimActive первым дальнобойным выстрелом), module/combat/action-economy.mjs + module/combat/damage.mjs (тратится впустую любым иным действием, та же точка, что system.aiming)"
+  },
+  "techPower.cybertheurgy.psalmOfGuidance": {
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 8/12): Техножрец с этим Техночудом, носящий экипированное оружие со свойством Cognis, платит Когницией (1/2) вместо ОД за Полу-/Полное Прицеливание — тихий фоллбэк на обычный ОД, если Когниции не хватает («может тратить», не обязан). «Можно совершать такие прицеливания посреди атаки с нескольких рук» честно НЕ реализовано — требует per-оружие состояния Прицеливания и объявления действия посреди уже идущего резолва атаки, которых в системе нет вообще (одно поле actor.system.aiming на всего актора, диалог парной атаки резолвится одним броском) — архитектурный пробел, тикет wdbc-1rno.32.",
+    source: "Psalm of the Guidance / Псалом Наставления",
+    reader: "module/rules/psalm-of-guidance.mjs (hasPsalmOfGuidance/actorHasEquippedCognisWeapon/psalmCognitionCost/canSpendCognition/spendCognition), module/combat/aiming-action.mjs (declareAim/aimCostLabel)"
+  },
+  "psychicPower.tzeentch.blessingOfMagnus": {
+    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.5, находка 10/12): пока сила поддерживается (item.system.isSustained) И актор тяжело/критически ранен (woundTier heavy/dying) И носит экипированное психосиловое оружие (weaponProp key:\"force\") — Полу-Прицеливание свободным действием. Только Полу- (книга Полное не упоминает). «+5×PR на тесты W» и «действие Пси-Капюшон без капюшона» честно НЕ реализованы — отдельный тикет wdbc-1rno.34.",
+    source: "Blessing of Magnus / Благословение Магнуса",
+    reader: "module/rules/blessing-of-magnus.mjs (hasActiveBlessingOfMagnus/actorHasEquippedForceWeapon/blessingOfMagnusFreeHalfAim), module/rules/aiming.mjs (aimApCost)"
   },
   "rangedCore.core.trickShooter": {
     label: "Персонаж уменьшает на 30 штраф за атаки по необычным целям, не наносящим прямого урона персонажам (выстрел по летящей гранате, сбить шапку,",
@@ -6661,9 +6674,9 @@ export const CAPABILITIES = {
     reader: ""
   },
   "gift.slaanesh.blackEyes": {
-    label: "РЕАЛИЗОВАНО ЧАСТИЧНО (16.09.2026, wdbc-1rno.1): +½Cor(окр.▲) Бдительность механизировано отдельной записью kind:\"testMod\" (modValueMode:formula, wdbc-1rno) на этом же предмете, тот же навык, что Cyclops. Из трёх пороговых бонусов Cor 40+/60+/80+ реализован ВТОРОЙ: при Cor 60+ штрафы «Слабый свет»/«Дым / туман»/«Тьма» в диалоге атаки АТАКУЮЩЕГО реально гасятся (module/rules/black-eyes.mjs::hasBlackEyesDarknessImmunity, подключено в module/sheets/attack/mods.mjs) — перепроверка 16.09.2026 нашла, что эти штрафы, в отличие от старого вывода 13.09.2026 («штрафа в конвейере атаки нет»), РЕАЛЬНО существуют как галочки диалога (attack/mods.mjs:44-48), просто без механизма гашения (immuneFlag) — тот же паттерн, что уже есть у «Цель Врасплох», применён здесь к атакующему. «Колдовской морок/психосилы Иллюзий» из той же строки книги остаются честным остатком — отдельного числового штрафа от иллюзий на попадание в системе нет нигде (module/rules/illusion-detection.mjs — только про засечение Пси-чутьём, не про BS). Cor 40+ (ИК/УФ-зрение) — честный остаток, механики спектра зрения нет вообще ни у одного предмета. Cor 80+ (бесплатное Полу-Прицеливание) — Прицеливание сейчас НЕ списывает ОД технически ни для одного актора системы вообще (не только для этого Дара) — по прямому указанию пользователя это признано багом основного конвейера, а не «нечего реализовывать», заведён отдельный тикет wdbc-1rno.5 (реворк Прицеливания по правилам + довесок от Чёрных Глаз, когда база появится).",
+    label: "РЕАЛИЗОВАНО (16.09.2026, wdbc-1rno.1 + wdbc-1rno.5): +½Cor(окр.▲) Бдительность механизировано отдельной записью kind:\"testMod\" (modValueMode:formula, wdbc-1rno) на этом же предмете, тот же навык, что Cyclops. Из трёх пороговых бонусов Cor 40+/60+/80+ реализованы ВТОРОЙ и ТРЕТИЙ: при Cor 60+ штрафы «Слабый свет»/«Дым / туман»/«Тьма» в диалоге атаки АТАКУЮЩЕГО реально гасятся (module/rules/black-eyes.mjs::hasBlackEyesDarknessImmunity, подключено в module/sheets/attack/mods.mjs) — перепроверка 16.09.2026 нашла, что эти штрафы, в отличие от старого вывода 13.09.2026 («штрафа в конвейере атаки нет»), РЕАЛЬНО существуют как галочки диалога (attack/mods.mjs:44-48), просто без механизма гашения (immuneFlag) — тот же паттерн, что уже есть у «Цель Врасплох», применён здесь к атакующему. При Cor 80+ Полу-Прицеливание бесплатно, если актор видит выбранную цель (module/rules/aiming.mjs::blackEyesFreeHalfAim, читает isBlackEyesItem отсюда; combat/aiming-action.mjs::aimApCost применяет цену в HUD-кнопке «Полу-прицеливание») — реализовано вместе с реворком Прицеливания (wdbc-1rno.5): Прицеливание раньше не списывало ОД вообще ни для одного актора, это признано багом основного конвейера, не «нечего реализовывать». «Колдовской морок/психосилы Иллюзий» из той же строки книги остаются честным остатком — отдельного числового штрафа от иллюзий на попадание в системе нет нигде (module/rules/illusion-detection.mjs — только про засечение Пси-чутьём, не про BS). Cor 40+ (ИК/УФ-зрение) — честный остаток, механики спектра зрения нет вообще ни у одного предмета.",
     source: "Дар Слаанеш (Black Eyes)",
-    reader: "module/rules/black-eyes.mjs (isBlackEyesItem/hasBlackEyesDarknessImmunity), module/sheets/attack/mods.mjs (гашение visionPenalty-галочек)"
+    reader: "module/rules/black-eyes.mjs (isBlackEyesItem/hasBlackEyesDarknessImmunity), module/sheets/attack/mods.mjs (гашение visionPenalty-галочек), module/rules/aiming.mjs (blackEyesFreeHalfAim), module/combat/aiming-action.mjs (aimApCost/aimMenuItems)"
   },
   "gift.slaanesh.confessorOfDesires": {
     label: "Реализовано (wdbc-1rno) записью kind:\"script\" на этом же предмете: кнопка «▶ Запустить» катает за таргетнутую цель тест W-60, при успехе честно ставит цели 6-дневный иммунитет (worldTime-флаг), при провале — только чат-заметка (сам факт вопроса о желаниях — реплика за столом)",

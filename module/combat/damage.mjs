@@ -629,6 +629,16 @@ export async function applyDamageToActor(actor, damageData) {
   if (hasRuleFlag(actor, QUICK_TO_ANGER_CAPABILITY) && !actor.system.inRage) {
     await rollQuickToAngerTest(actor);
   }
+  // Прицеливание (wdbc-1rno.5, module/rules/aiming.mjs): получение урона
+  // сбивает незавершённое Прицеливание — тратится впустую, без бонуса.
+  if (actor.system?.aiming && actor.system.aiming !== "none") {
+    await actor.update({ "system.aiming": "none" });
+  }
+  // Tracking Aim/Прицел на Упреждение (wdbc-1rno.5, rules/tracking-aim.mjs) —
+  // та же точка, тратится впустую вместе с самим Прицеливанием.
+  if (actor.getFlag?.("warhammer-dbc", "trackingAimActive")) {
+    await actor.unsetFlag("warhammer-dbc", "trackingAimActive");
+  }
   // Техника: урон сразу в Структуру. Сторона брони пришла из окна атаки
   // (damageData.side), часть машины — из авто-места попадания (damageData.hitLocation).
   if (actor.type === "vehicle") {

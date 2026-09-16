@@ -253,12 +253,21 @@ describe("damageFormulaFor", () => {
 });
 
 describe("bonusDamageDice", () => {
-  it("Меткое даёт кубы по степеням успеха только на одиночном выстреле", () => {
+  it("Меткое даёт кубы по степеням успеха только на одиночном выстреле С Прицеливанием (aimed)", () => {
     const wp = withProps({ accurate: true });
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3 })).toBe(1);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5 })).toBe(2);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2 })).toBe(0);
-    expect(bonusDamageDice({ wp, rofMode: "semi",   hit: true, deg: 5 })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3, aimed: true })).toBe(1);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5, aimed: true })).toBe(2);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2, aimed: true })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "semi",   hit: true, deg: 5, aimed: true })).toBe(0);
+  });
+
+  // Книга (стр. 166): «При одиночных выстрелах С Прицеливанием» — без
+  // Прицеливания (wdbc-1rno.5) кубы не начисляются, даже на одиночном
+  // выстреле Метким оружием с высокой степенью успеха.
+  it("без aimed (не прицелился) — кубов нет, даже на 5+ Успехов", () => {
+    const wp = withProps({ accurate: true });
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9 })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: false })).toBe(0);
   });
 
   it("Рассеивание, Максимальный режим, полоса и боеприпас складываются", () => {
@@ -270,18 +279,18 @@ describe("bonusDamageDice", () => {
 
   // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2): продлённая лестница
   // Accurate — до 4 кубиков на 3/5/7/9 Успехов вместо обычных 2 на 3/5.
-  it("wp.sniperAssassin продлевает лестницу Меткого до 4 кубиков на 3/5/7/9", () => {
+  it("wp.sniperAssassin продлевает лестницу Меткого до 4 кубиков на 3/5/7/9 (с aimed)", () => {
     const wp = withProps({ accurate: true, sniperAssassin: true });
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2 })).toBe(0);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3 })).toBe(1);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5 })).toBe(2);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 7 })).toBe(3);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9 })).toBe(4);
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 20 })).toBe(4);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2, aimed: true })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3, aimed: true })).toBe(1);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5, aimed: true })).toBe(2);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 7, aimed: true })).toBe(3);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: true })).toBe(4);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 20, aimed: true })).toBe(4);
   });
 
   it("sniperAssassin без accurate ничего не даёт — свойство Accurate обязательно", () => {
     const wp = withProps({ sniperAssassin: true });
-    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9 })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9, aimed: true })).toBe(0);
   });
 });

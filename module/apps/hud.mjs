@@ -18,6 +18,7 @@ import { weaponProfiles, canStrikeWithGun, attackIsMelee } from "../combat/weapo
 import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/action-economy.mjs";
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
+import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimToggleState, toggleTrackingAimPending } from "../combat/aiming-action.mjs";
 import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -359,6 +360,23 @@ export function hudData(actor) {
   // (см. wire() ниже).
   const movement = movementMenuItems(actor).map(({ key, label, cost }) => ({ key, label, cost }));
 
+  // Прицеливание (wdbc-1rno.5): всегда на виду рядом с ОД/Реакциями, не
+  // вкладка — тем же приёмом, что и они (частое боевое действие, не место
+  // прятать за переключением вкладки). active — активный уровень актора,
+  // подсвечивает уже объявленное Прицеливание, ждущее следующей Атаки.
+  // Фокус на Прицеле (wdbc-1rno.5): галочка ДО клика по кнопке Прицеливания
+  // (решение пользователя — не модальное подтверждение после), видна только
+  // обладателю Таланта. Само продление применяется в aiming-action.mjs::
+  // declareAim при клике — здесь только состояние галочки.
+  const aiming = {
+    current: sys.aiming || "none",
+    items: aimMenuItems(actor).map(({ key, label, cost }) => ({
+      key, label, cost, active: (key === "aimHalf" && sys.aiming === "half") || (key === "aimFull" && sys.aiming === "full")
+    })),
+    focus: aimFocusToggleState(actor),
+    tracking: trackingAimToggleState(actor)
+  };
+
   // Вкладка «Химия» (wdbc-zdu4): препараты актора для быстрого применения в
   // бою — та же applyDrug()/deactivateDrugEffect(), что вкладка «Химия»
   // листа (tabs/drugs.mjs), без новой логики применения. Показываем, пока
@@ -379,6 +397,7 @@ export function hudData(actor) {
     isGM: game.user.isGM,
     myTurn,
     actionEconomy,
+    aiming,
     armor,
     // Раны — крупным блоком.
     wounds: {
@@ -609,6 +628,26 @@ function wire(el, actor) {
   el.querySelectorAll("[data-movement]").forEach(b => b.addEventListener("click", () => {
     if (!own) return;
     movementMenuItems(actor).find(i => i.key === b.dataset.movement)?.action();
+  }));
+
+  // Прицеливание (wdbc-1rno.5): тот же приём, что Движение выше — hudData не
+  // сериализует action() в шаблон, здесь находим пункт по key и вызываем
+  // заново.
+  el.querySelectorAll("[data-aim]").forEach(b => b.addEventListener("click", () => {
+    if (!own) return;
+    aimMenuItems(actor).find(i => i.key === b.dataset.aim)?.action();
+  }));
+
+  // Фокус на Прицеле (wdbc-1rno.5): галочка сама ничего не тратит — только
+  // переключает состояние, читаемое declareAim при следующем клике по
+  // кнопке Прицеливания (aiming-action.mjs::toggleAimFocusPending).
+  el.querySelectorAll("[data-aim-focus-toggle]").forEach(b => b.addEventListener("click", () => {
+    if (!own) return;
+    toggleAimFocusPending(actor);
+  }));
+  el.querySelectorAll("[data-tracking-aim-toggle]").forEach(b => b.addEventListener("click", () => {
+    if (!own) return;
+    toggleTrackingAimPending(actor);
   }));
 
   // Химия (wdbc-zdu4): применить/снять эффект — та же applyDrug/deactivateDrugEffect,

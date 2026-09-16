@@ -598,11 +598,16 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (тоже зовут applyDamageDiceMods, но отдельными формулами вне attack.mjs).
   if (actor.getFlag?.("warhammer-dbc", SUNDERING_COPY_FLAG)) dmgFormula = sunderingDamageFormula(dmgFormula);
 
-  // Доп. кубы урона: Меткое (одиночный, по СУ), Рассеивание (кор. дист.),
+  // Доп. кубы урона: Меткое (одиночный, по СУ, ТОЛЬКО с Прицеливанием — книга
+  // «При одиночных выстрелах С Прицеливанием»), Рассеивание (кор. дист.),
   // Максимальный режим (+1d10). Эти кубы НЕ вызывают Экстремальный урон.
+  // aimed читает opts.aiming — actor.system.aiming к этому моменту уже сброшен
+  // в "none" диалогом (attack/dialog.mjs:217, ДО этого вызова), поэтому
+  // значение приходит явным параметром, захваченным до сброса (wdbc-1rno.5).
   const bonusDice = bonusDamageDice({
     wp, rofMode, hit, deg, shortRange, maximal: maximalOn, band,
-    ammoDice: ammoSys?.damageDiceMod
+    ammoDice: ammoSys?.damageDiceMod,
+    aimed: !!opts.aiming && opts.aiming !== "none"
   });
 
   const damageRolls = [];
