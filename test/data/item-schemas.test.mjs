@@ -593,7 +593,10 @@ const TYPES = {
     }
   },
   smallCraft: {
-    pack: "small-craft",
+    // Пак small-craft выведен из системы целиком 16.09.2026 (хоумрул-контент,
+    // не переведённый из книги — перенесён в мировой компендиум iz-pepla) —
+    // сохранять нечего, проверяются только умолчания, как у cybernetic.
+    pack: null,
     defaults: {
       description: "", notes: "", craftKind: "fighter", faction: "", cr: 0,
       crAlt: 0, spd: 0, squadronSize: 0, props: "", rarity: 0, qty: 1,
