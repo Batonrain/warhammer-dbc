@@ -26,6 +26,7 @@ import { conditionApplyFields } from "./sheets/tabs/conditions.mjs";
 import { rollHallucinogenicEffect } from "./combat/hallucinogenic.mjs";
 import { rollSuppressionTest, rollSuppressionRecovery, postSuppressionRecoveryPrompt } from "./combat/suppression.mjs";
 import { resolveFreeAttackClick } from "./combat/free-attack.mjs";
+import { clearOverwatch, resolveOverwatchFireClick, resolveOverwatchHairTriggerClick } from "./combat/overwatch.mjs";
 import { resolveAssassinStrikeClick } from "./combat/assassin-strike.mjs";
 import { processPrismaTurnStart } from "./combat/prisma.mjs";
 import { processRechargeTurnStart } from "./combat/recharge.mjs";
@@ -1532,6 +1533,24 @@ export function registerHooks() {
       });
     });
 
+    // Караул (wdbc-1rno.27) — выбор режима очереди списывает бюджет,
+    // назначает цель и катает Подавление+20 у обстрелянного.
+    html.querySelectorAll(".wh-overwatch-fire-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const ds = ev.currentTarget.dataset;
+        await resolveOverwatchFireClick(ds.shooterUuid, ds.moverUuid, ds.mode);
+      });
+    });
+    // Hair Trigger/Палец на Спуске (wdbc-1rno.37) — победа во встречном
+    // тесте разыгрывается за столом, кнопка только фиксирует её исход.
+    html.querySelectorAll(".wh-overwatch-hair-trigger-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        await resolveOverwatchHairTriggerClick(ev.currentTarget.dataset.shooterUuid);
+      });
+    });
+
     // Удар Ассасина (wdbc-qpcg) — раз в Раунд после рукопашной атаки: Acrobatics+0 → Полудвижение свободным действием
     html.querySelectorAll(".wh-assassin-strike-btn").forEach(btn => {
       btn.addEventListener("click", async (ev) => {
@@ -2572,6 +2591,8 @@ function _attachFateContextMenu(message, html) {
       await clearUnseenDetection(nextCombatant.actor);
       // Blindside/Из Слепой Зоны (wdbc-1rno.2): «Раз в Ход» — тот же такт.
       await clearBlindsideUse(nextCombatant.actor);
+      // Караул (wdbc-1rno.27): «до начала следующего Хода» — тот же такт.
+      await clearOverwatch(nextCombatant.actor);
       // Стервятник/Дар Нургла (wdbc-1rno): временное Очко Бесчестия за три
       // умирающих/трупа в 7 м — начисляется и сгорает тем же тактом, поэтому
       // нужен токен носителя, а не только актор.

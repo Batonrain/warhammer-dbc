@@ -76,6 +76,25 @@
           {{/if}}
         </div>
         {{/if}}
+        {{!-- Караул (wdbc-1rno.27/.37): та же вёрстка, что Прицеливание —
+              список пунктов (aimMenuItems-паттерн, combat/overwatch.mjs), плюс
+              ручная кнопка «Стрелять из Караула» пока Караул активен (для
+              условий огня, которые движок не детектирует автоматически —
+              автодетект сам предлагает выстрел карточкой в чат при движении
+              врага в сектор). --}}
+        {{#if overwatch.items.length}}
+        <div class="wh-hud-aiming">
+          {{#each overwatch.items as |o|}}
+          <a class="wh-hud-aim-btn" data-overwatch="{{o.key}}"
+             data-tooltip="{{o.label}}{{#if o.cost}} — {{o.cost}}{{/if}}">{{o.label}}<span class="wh-hud-aim-cost">{{o.cost}}</span></a>
+          {{/each}}
+        </div>
+        {{/if}}
+        {{#if overwatch.active}}
+        <div class="wh-hud-aiming" data-tooltip="Караул активен: сектор {{overwatch.state.arcWidth}}°, осталось {{overwatch.state.shotsRemaining}}/{{overwatch.state.maxBudget}} Одиночных{{#if overwatch.state.condition}}, условие: «{{overwatch.state.condition}}»{{/if}}">
+          <a class="wh-hud-aim-btn active" data-overwatch-fire>Стрелять из Караула</a>
+        </div>
+        {{/if}}
         {{#if lamps.length}}
         <div class="wh-hud-lamps">
           {{#each lamps as |l|}}<span class="wh-hud-lamp {{#if l.bad}}bad{{/if}}">{{l.label}}</span>{{/each}}

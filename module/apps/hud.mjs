@@ -19,6 +19,7 @@ import { hasActionEconomy, isEncounterActive, apSpendGate } from "../combat/acti
 import { getHeldHand, weaponHandsRequired } from "../rules/hands.mjs";
 import { movementMenuItems } from "../combat/movement-actions.mjs";
 import { aimMenuItems, aimFocusToggleState, toggleAimFocusPending, trackingAimToggleState, toggleTrackingAimPending } from "../combat/aiming-action.mjs";
+import { overwatchMenuItems, overwatchManualFireItem, isOverwatchActive, overwatchState } from "../combat/overwatch.mjs";
 import { applyDrug, deactivateDrugEffect } from "../sheets/tabs/drugs.mjs";
 
 const SYSTEM = "warhammer-dbc";
@@ -377,6 +378,14 @@ export function hudData(actor) {
     tracking: trackingAimToggleState(actor)
   };
 
+  // Караул (wdbc-1rno.27/.37): та же вёрстка/приём, что Прицеливание —
+  // hudData не сериализует action() в шаблон, wire() находит пункт по key.
+  const overwatch = {
+    items: overwatchMenuItems(actor).map(({ key, label, cost }) => ({ key, label, cost })),
+    active: isOverwatchActive(actor),
+    state: overwatchState(actor)
+  };
+
   // Вкладка «Химия» (wdbc-zdu4): препараты актора для быстрого применения в
   // бою — та же applyDrug()/deactivateDrugEffect(), что вкладка «Химия»
   // листа (tabs/drugs.mjs), без новой логики применения. Показываем, пока
@@ -398,6 +407,7 @@ export function hudData(actor) {
     myTurn,
     actionEconomy,
     aiming,
+    overwatch,
     armor,
     // Раны — крупным блоком.
     wounds: {
@@ -649,6 +659,17 @@ function wire(el, actor) {
     if (!own) return;
     toggleTrackingAimPending(actor);
   }));
+
+  // Караул (wdbc-1rno.27/.37): тот же приём, что Движение/Прицеливание —
+  // hudData не сериализует action() в шаблон, здесь находим пункт по key.
+  el.querySelectorAll("[data-overwatch]").forEach(b => b.addEventListener("click", () => {
+    if (!own) return;
+    overwatchMenuItems(actor).find(i => i.key === b.dataset.overwatch)?.action();
+  }));
+  el.querySelector("[data-overwatch-fire]")?.addEventListener("click", () => {
+    if (!own) return;
+    overwatchManualFireItem(actor)?.action();
+  });
 
   // Химия (wdbc-zdu4): применить/снять эффект — та же applyDrug/deactivateDrugEffect,
   // что вкладка «Химия» листа (tabs/drugs.mjs), без новой логики применения.

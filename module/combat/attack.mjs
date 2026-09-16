@@ -29,6 +29,7 @@ import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
 import { consumeHiddenThreatPending }                 from "../rules/hidden-threat.mjs";
+import { consumeHairTriggerUnseenPending }            from "../rules/hair-trigger.mjs";
 import { isUnseenDetected }                           from "../rules/unseen-attack.mjs";
 import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnifeWeapon, hasSniperAssassin, isBlindsideMarked, consumeBlindsideMark } from "../rules/unseen-talents.mjs";
 import { actorInfamyValue }                           from "../apps/infamy-points.mjs";
@@ -239,7 +240,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // тип ОДНОЙ следующей атаке, не длящемуся эффекту) — раньше эта строка
   // стояла ближе к концу функции, смысл переноса не изменился, только такт.
   const hiddenThreatFlag = await consumeHiddenThreatPending(actor);
-  const unseen = !!(wp.unseen || hiddenThreatFlag);
+  // Hair Trigger/Палец на Спуске (wdbc-1rno.27/.37, rules/hair-trigger.mjs):
+  // «выигранный встречный тест — выстрел из Караула считается Незримым».
+  // Та же одноразовая пометка, снятая тем же тактом, что Hidden Threat выше.
+  const hairTriggerFlag = await consumeHairTriggerUnseenPending(actor);
+  const unseen = !!(wp.unseen || hiddenThreatFlag || hairTriggerFlag);
   // Сокрытая Угроза добавляет реактивному тесту засечения её собственный
   // −50 (её книжный текст, не общее правило стр. 32 — там штрафа нет).
   const unseenPenalty = hiddenThreatFlag ? -50 : 0;
