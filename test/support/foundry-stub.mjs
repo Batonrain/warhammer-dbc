@@ -378,6 +378,12 @@ function parseRollFormula(formula, takeDie) {
   return { total, terms };
 }
 
+// Foundry расширяет глобальный Math этими двумя (client/utils/helpers.mjs) —
+// геометрия дрейфа зон (module/regions/linger-zone.mjs/vortex-zone.mjs)
+// вызывает их напрямую, без своей обёртки.
+Math.toRadians ??= degrees => degrees * (Math.PI / 180);
+Math.toDegrees ??= radians => radians * (180 / Math.PI);
+
 /**
  * Бросок без случайности.
  *

@@ -46,7 +46,14 @@ function packFiles(pack) {
       out.push(full);
     }
   };
-  walk(path.join(PACKS_SRC, pack));
+  // Пака без единого документа в packs-src не бывает у системных компендиумов
+  // (npm run packs:build сам откажется собирать пустой пак) — но у типа
+  // документа, чей единственный источник примеров выведен из системы целиком
+  // (small-craft, 16.09.2026 — хоумрул-контент, перенесён в мировой
+  // компендиум iz-pepla), директории пака больше нет вовсе. Отсутствие
+  // каталога — не ошибка теста, а честные ноль документов.
+  const dir = path.join(PACKS_SRC, pack);
+  if (fs.existsSync(dir)) walk(dir);
   dirCache.set(pack, out);
   return out;
 }

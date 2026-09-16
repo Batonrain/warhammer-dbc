@@ -43,7 +43,7 @@ import { resolveVeilContainer, currentScene, veilShift,
          readVeilForScene as readVeil, writeVeilForScene as writeVeil } from "../constants/scene-nexus.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, testCardHtml, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, testCardHtml, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { veilShift };
 
@@ -1015,12 +1015,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     await postTestCard(actor, {
       icon: `${veilIcon("compass")} `,
       title: `Навигация в Варпе — ${esc(actor.name)}`,
-      threshold: thresholdLine({
+      threshold: rollStatLine({
         label: "Навигация", base,
         parts: [`завеса ${info.label} ${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
-        threshold: eff
+        threshold: eff, rv
       }),
-      rv,
       outcome: outcomeHtml(success, success
         ? `Курс проложен — ${deg} ст.`
         : `Сбился с курса — ${deg} ст. (риск варп-инцидента)`)
@@ -1113,7 +1112,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     // реестра (wdbc-9jj7): нашлось при правке соседнего _findBeacon.
     const ruleMods = collectTestMods(a, { kind: "skill", skill: "psyniscience", char: "per" });
     const res = await this._roll(base + mod + ruleMods.total);
-    let body = `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    let body = rollStatLine({
+      label: "Psyniscience", base,
+      parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
+      threshold: res.eff, rv: res.rv
+    });
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Знамения ясны — ${res.deg} ${degWord(res.deg)}. Судно готово ко входу.</span></div>`;
     else { const g = GUIDE_ESTIMATE[Math.floor(Math.random() * 5)]; body += `<div class="roll-outcome"><span class="roll-failure">Знамения смутны.</span></div><div class="roll-threshold">Оценка Проводника: длительность ${g.mult}, Астрономикон: ${esc(g.astro)}</div>`; }
     await this._jPost(`${veilIcon("eye")} Чтение знамений — ${esc(a.name)}`, "stable", body, [res.roll]);
@@ -1125,7 +1128,7 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const a = this._journeyNav();
     const base = this._jSkillTotal(a, this.journey.helmSkill) ?? 30;
     const res = await this._roll(base + loc.mod);
-    let body = `<div class="roll-threshold">Operate (Voidship): ${base} ${loc.mod} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    let body = rollStatLine({ label: "Operate (Voidship)", base, parts: [String(loc.mod)], threshold: res.eff, rv: res.rv });
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">${esc(loc.success)}</span></div>`;
     else { this.journey.emergency = true; this.render(false); body += `<div class="roll-outcome"><span class="roll-failure">${esc(loc.fail)}</span></div>`; }
     await this._jPost(`${veilIcon("spiral")} Вход в варп — ${esc(loc.label)}`, res.success ? "stable" : "torn", body, [res.roll]);
@@ -1142,7 +1145,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const bm = (res.success ? 1 : -1) * Math.floor(Math.abs(res.deg) / 2) * 10;
     this.journey.beaconMod = bm; this.render(false);
     await this._jPost(`${veilIcon("star")} Поиск Астрономикона — ${esc(a.name)}`, "stable",
-      `<div class="roll-threshold">Psyniscience: ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div><div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
+      `${rollStatLine({
+        label: "Psyniscience", base,
+        parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
+        threshold: res.eff, rv: res.rv
+      })}<div class="roll-outcome">${res.success ? `<span class="roll-success">Маяк найден — ${res.deg} ${degWord(res.deg)}` : `<span class="roll-failure">Маяк тускл — ${Math.abs(res.deg)} ${degWord(res.deg)}`} → мод. навигации <b>${bm >= 0 ? "+" : ""}${bm}</b></span></div>`, [res.roll]);
   }
   async _directShip() {
     const a = this._journeyNav(); if (!a) { ui.notifications?.warn("Навигация: нет Проводника."); return; }
@@ -1153,8 +1160,13 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     const res = await this._roll(base + mod + ruleMods.total);
     const mult = jumpDurationMult(res.deg);
     const real = this.journey.baseDuration != null ? `≈ ${Math.ceil(this.journey.baseDuration * ({ "×1/4": .25, "×1/2": .5, "×3/4": .75, "×1": 1, "×2": 2, "×3": 3, "×4": 4 }[mult] || 1))} дн.` : "";
+    const dosText = res.deg > 0 ? `${res.deg} СУ` : `${Math.abs(res.deg)} СП`;
     await this._jPost(`${veilIcon("compass")} Направление корабля — ${esc(a.name)}`, "stable",
-      `<div class="roll-threshold">Navigation (Warp): ${base}${mod ? ` ${mod >= 0 ? "+" : ""}${mod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b> → ${res.deg > 0 ? res.deg + " СУ" : Math.abs(res.deg) + " СП"}</div><div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка: <b>${mult}</b> ${real}</span></div>`, [res.roll]);
+      `${rollStatLine({
+        label: "Navigation (Warp)", base,
+        parts: [mod ? `${mod >= 0 ? "+" : ""}${mod}` : "", ...ruleMods.parts],
+        threshold: res.eff, rv: res.rv
+      })}<div class="roll-outcome"><span class="${res.success ? "roll-success" : "roll-failure"}">Длительность прыжка (${dosText}): <b>${mult}</b> ${real}</span></div>`, [res.roll]);
   }
   async _warpEncounter() {
     // Не тест против порога, а бросок ПО ТАБЛИЦЕ (wdbc-ct65.3): характеристики
@@ -1181,7 +1193,11 @@ export class VeilMystic extends HandlebarsApplicationMixin(ApplicationV2) {
     // Тот же общий сбор, что у _directShip и _rollNavigation (wdbc-9jj7).
     const ruleMods = collectTestMods(a, { kind: "skill", group: "navigation", char: "int" });
     const res = await this._roll(base + mod + ruleMods.total);
-    let body = `<div class="roll-threshold">Navigation (Warp) −20: ${base} ${mod >= 0 ? "+" : ""}${mod}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог ${res.eff}</div><div class="roll-dice">Бросок: <b>${res.rv}</b></div>`;
+    let body = rollStatLine({
+      label: "Navigation (Warp) −20", base,
+      parts: [`${mod >= 0 ? "+" : ""}${mod}`, ...ruleMods.parts],
+      threshold: res.eff, rv: res.rv
+    });
     if (res.success) body += `<div class="roll-outcome"><span class="roll-success">Точный выход — ${res.deg} ${degWord(res.deg)}.</span></div>`;
     else { const er = await new Roll("1d100").evaluate(); const row = lookupTable(INACCURATE_EXIT, er.total); body += `<div class="roll-outcome"><span class="roll-failure">Отклонение от курса.</span></div><div class="roll-threshold">Неаккуратный выход (1d100: ${er.total}): ${esc(row.text)}</div>`; await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "torn", body, [res.roll, er]); return; }
     await this._jPost(`${veilIcon("door")} Выход из варпа — ${esc(a.name)}`, "stable", body, [res.roll]);

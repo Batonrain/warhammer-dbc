@@ -41,7 +41,7 @@ describe("executePsychotest: Усталость в пороге манифест
     captured.nextRoll = 99;
     await executePsychotest(makeActor({ fatigue: 0 }), item, baseOpts);
     const msg = captured.chat.at(-1);
-    expect(msg.content).toContain("Порог: <b>50</b>");
+    expect(msg.content).toContain("<label>Порог</label><b>50</b>");
     expect(msg.content).not.toContain("Усталость");
   });
 
@@ -49,7 +49,7 @@ describe("executePsychotest: Усталость в пороге манифест
     captured.nextRoll = 99;
     await executePsychotest(makeActor({ fatigue: 1 }), item, baseOpts);
     const msg = captured.chat.at(-1);
-    expect(msg.content).toContain("Порог: <b>40</b>");
+    expect(msg.content).toContain("<label>Порог</label><b>40</b>");
     expect(msg.content).toContain("😓 Усталость");
   });
 });

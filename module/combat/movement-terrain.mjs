@@ -10,7 +10,7 @@
 
 import { _degWord, esc } from "../helpers/utils.mjs";
 import { rollIcon } from "../constants/roll-icons.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 import { getTerrainInfoForToken } from "../regions/difficult-terrain.mjs";
 import { getItemMechanics } from "../apps/mechanics.mjs";
 import { entryWhenOk } from "../rules/mech-when.mjs";
@@ -130,8 +130,8 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
     ? outcomeHtml(true,  `Успех — ${deg} ${_degWord(deg)}. Устоял на ногах.`)
     : outcomeHtml(false, `Провал — ${deg} ${_degWord(deg)}. Персонаж падает!`);
 
-  // Слагаемые Порога — в скобки общего формата (thresholdLine): раньше здесь
-  // рядом стояли и суммарный модификатор, и его разбор, теперь только разбор.
+  // Слагаемые Порога — во всплывающую подсказку ячейки Порога (rollStatLine):
+  // разбор базы и модификаторов, сама плашка несёт только итоговое число.
   const parts = [
     `ландшафт ${sgn(terrainMod)}${labels.length ? `: ${labels.join(", ")}` : ""}`,
     extraMod ? `доп. мод ${sgn(extraMod)}` : ""
@@ -139,8 +139,8 @@ async function _resolveDifficultTerrain(actor, ag, terrainMod, extraMod, labels)
 
   await postTestCard(actor, {
     icon: rollIcon("burst","#b0a080"), title: `Трудный Ландшафт — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "Ag", base: ag, parts, threshold }),
-    rv, outcome
+    threshold: rollStatLine({ label: "Ag", base: ag, parts, threshold, rv }),
+    outcome
   }, { rolls: [roll] });
 }
 

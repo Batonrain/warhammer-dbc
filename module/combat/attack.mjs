@@ -28,6 +28,10 @@ import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
+import { consumeHiddenThreatPending }                 from "../rules/hidden-threat.mjs";
+import { isUnseenDetected }                           from "../rules/unseen-attack.mjs";
+import { hasSixthSense, hasMusicOfBattle, hasBlindFighting, hasBackstab, isKnifeWeapon, hasSniperAssassin, isBlindsideMarked, consumeBlindsideMark } from "../rules/unseen-talents.mjs";
+import { actorInfamyValue }                           from "../apps/infamy-points.mjs";
 import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
@@ -194,6 +198,59 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Touch of Pain: T.b Поглощения этой атаки игнорируется целиком (не
   // сравнимо с Разящим — тот бьёт только Сверхъест. часть, здесь весь T.b).
   wp.touchOfPainIgnoreTb = touchOfPainOn;
+
+  // Sniper Assassin / Снайпер-Убийца (wdbc-1rno.2, rules/unseen-talents.mjs)
+  // — ДО блока unseen ниже: сам ставит wp.unseen, тот читается следующей
+  // строкой. actor.system.aiming — персистентное поле актора (то же самое,
+  // что sheets/attack-dialog.mjs::currentAiming читает для бонуса
+  // Прицеливания), не диалоговая опция.
+  const sniperAssassinActive = wp.accurate && rofMode === "single"
+    && actor.system?.aiming === "full" && hasSniperAssassin(actor);
+  if (sniperAssassinActive) { wp.unseen = true; wp.sniperAssassin = true; }
+
+  // targetToken/defenderActor (wdbc-1rno.2): вынесены СЮДА, раньше, чем были
+  // (изначально считались только у секции Орды/пула Уклонения, ниже) — нужны
+  // Blindside следующим блоком, до формулы урона. game.user.targets не
+  // зависит от hit/остального состояния атаки, переносить безопасно.
+  const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
+  const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
+
+  // Blindside / Из Слепой Зоны (wdbc-1rno.2, rules/unseen-talents.mjs):
+  // «При победе, если его следующее действие — атака ножом по этой цели,
+  // эта атака считается Незримой». Метка target-scoped (не как у Hidden
+  // Threat — «следующая атака ЛЮБЫМ оружием по ЛЮБОЙ цели»), ставится
+  // кнопкой на предмете (пак: kind:"script"). «Раз в Ход»/«численное
+  // преимущество»/сам встречный тест Stealth vs Awareness — НЕ проверяются
+  // движком (см. текст кнопки) — честная граница, см. capabilities.mjs.
+  // Отклонение от буквы книги (задокументировано, не скрыто): «его СЛЕДУЮЩЕЕ
+  // действие» строго значит consume-на-любом-следующем-действии; здесь метка
+  // переживает промежуточные НЕ-ножевые/не-по-этой-цели действия и ждёт
+  // первую подходящую атаку — нет общего хука «актор совершил действие» вне
+  // атак, чтобы честно снять метку раньше.
+  const blindsideActive = defenderActor && isKnifeWeapon(item)
+    && isBlindsideMarked(actor, defenderActor.uuid);
+  if (blindsideActive) { wp.unseen = true; await consumeBlindsideMark(actor); }
+
+  // Незримое (стр. 32, wdbc-1rno.2): считается ЗДЕСЬ, до формулы урона —
+  // Backstab (rules/unseen-talents.mjs, ниже) должен знать unseen раньше,
+  // чем damageFormulaFor построит dmgFormula. Сокрытая Угроза / Hidden
+  // Threat (wdbc-1rno.1, rules/hidden-threat.mjs) снимается РОВНО здесь, на
+  // самой следующей атаке АТАКУЮЩЕГО, независимо от hit/засечения (RAW даёт
+  // тип ОДНОЙ следующей атаке, не длящемуся эффекту) — раньше эта строка
+  // стояла ближе к концу функции, смысл переноса не изменился, только такт.
+  const hiddenThreatFlag = await consumeHiddenThreatPending(actor);
+  const unseen = !!(wp.unseen || hiddenThreatFlag);
+  // Сокрытая Угроза добавляет реактивному тесту засечения её собственный
+  // −50 (её книжный текст, не общее правило стр. 32 — там штрафа нет).
+  const unseenPenalty = hiddenThreatFlag ? -50 : 0;
+
+  // Backstab / Удар в Спину (wdbc-1rno.2, rules/unseen-talents.mjs):
+  // «Незримой Избирательной атакой ножом — удваивает базовые кубики урона».
+  // Избирательная — aimTarget.value непусто (то же условие, что читает
+  // notes.aim ниже); нож — meleeCategory "Нож" на самом предмете.
+  const backstabDoubled = unseen && isMelee && !!aimTarget?.value
+    && hasBackstab(actor) && isKnifeWeapon(item);
+  if (backstabDoubled) wp.doubleDice = true;
   // ── Качество оружия ──────────────────────────────────────────────────────
   //   Стрелковое: ±Надёжность; Рукопашное Best: +1 урон; Best: теряет Primitive.
   //   (Мод теста для рукопашного применяется в _showAttackDialog → threshold.)
@@ -485,8 +542,12 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // (bonusDamageDice ниже по-прежнему видит настоящий wp.meltaShort — оно
   // делит поле shortRange с Рассеиванием/Scatter, которое Керамит не гасит).
   const penWp = meltaImmune ? { ...wp, meltaShort: false } : wp;
+  // Смертоносное Природное Оружие (Cor.b)/Deadly Natural Weapons (wdbc-ux8a):
+  // +Cor.b владельца И к Пробитию (здесь), И к урону (flatBonus ниже) —
+  // живой пересчёт на каждой атаке, отдельный флаг от tainted (другая находка).
+  const deadlyNaturalCorBAdd = wp.deadlyNaturalCorB ? (actor.system.corruptionBonus ?? 0) : 0;
   const pen = attackPenetration({
-    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen,
+    base: effPen0 + ammoPenMod + (modFx.penMod || 0) + offPenMod + (qAuto.penMod || 0) + changePenBonus + dreadWailBonus.pen + deadlyNaturalCorBAdd,
     wp: penWp, hit, deg, shortRange, maximal: maximalOn, band, forceBonus
   });
 
@@ -523,7 +584,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // начала усиления, до +8 — читается заново на каждый бросок с самого
   // оружия (module/rules/blood-flame.mjs), не хранится отдельным числом.
   const bloodFlameBonus = bloodFlameDamageBonus(item);
-  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
+  const flatBonus = (isMelee ? sbEff : 0) + reverseThrustBonus + taintedAdd + deadlyNaturalCorBAdd + (isMelee ? 0 : ammoDmgMod + ammoCondDmg) + forceBonus + bandDmg + offDmgMod + (modFx.damageMod || 0) + (qAuto.damageMod || 0) + dmgBonus + chargeBonus + dreadWailBonus.dmg + bloodFlameBonus;
   let dmgFormula = damageFormulaFor({
     damage: effDamage, flatBonus, chars,
     corruptionBonus: actor.system.corruptionBonus ?? 0, wp, isMelee
@@ -660,7 +721,6 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // Цель стоит внутри союзной Орды (токены наложены), и не-Избирательный
   // выстрел половиной попаданий уходит в толпу: одиночный — по чётности броска,
   // очередь — каждым нечётным попаданием.
-  const targetToken = [...(game.user?.targets ?? [])][0] ?? null;
   const shelter = hit && targetToken
     ? hidingInHordeSplit(targetToken, {
         hitsCount, rv, isMelee,
@@ -679,7 +739,6 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // попаданий и атак» — вторая половина правила, module/combat/evasion-pool.mjs).
   // Считается здесь: этот модуль один касается документов Foundry (актор цели),
   // attack-card.mjs только рисует уже готовое число.
-  const defenderActor = targetToken?.actor ?? targetToken?.document?.actor ?? null;
   const evasionPoolEntry = hit && defenderActor
     ? getEvasionPool(defenderActor, actor.uuid || "") : null;
   // canRecoil (wdbc-16ss, Voltagheist Blast): банк можно пустить в Отскок
@@ -697,6 +756,32 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   // цели уже под рукой), attack-card.mjs только рисует готовое число.
   const etherealSwarm = hit && defenderActor
     ? activeSwarm(defenderActor, game.time?.worldTime) : null;
+
+  // Незримое (стр. 32, wdbc-1rno.2): unseen/hiddenThreatFlag уже посчитаны
+  // выше (до формулы урона — нужны Backstab'у, rules/unseen-talents.mjs).
+  // Гейт Уклонения/Парирования и кнопки засечения в карточке рендерятся
+  // только при hit — тот же гейт, что у Уклонения/Парирования ниже
+  // (defenderActor неизвестен раньше).
+  const unseenRolledDetected = unseen && defenderActor
+    ? isUnseenDetected(defenderActor, { isPsychic: item?.type === "psychicPower", isRadiation: !!wp.radiationSourced })
+    : false;
+  // Blind Fighting / Бой Вслепую (wdbc-1rno.2, rules/unseen-talents.mjs):
+  // «Может Избегать от Незримых атак в рукопашной со штрафом −20» — НЕ
+  // тест засечения, альтернативный канал доступности, только в рукопашной.
+  // Пока эта бонус-скидка активна, дальше карточка ведёт себя так, как
+  // если бы атака уже была засечена (unseenDetected=true) — только с
+  // прибавленным штрафом в самом dodgeMod/parryMod ниже.
+  const blindFightingBypass = unseen && !unseenRolledDetected && isMelee
+    && defenderActor && hasBlindFighting(defenderActor);
+  const unseenDetected = unseenRolledDetected || blindFightingBypass;
+  // Sixth Sense/Music of Battle (wdbc-1rno.2): кнопки «потратить Очко
+  // Бесчестия» в карточке — доступны при locked-состоянии (unseen ещё не
+  // detected НИКАК, включая Bлind Fighting выше) и наличии хотя бы 1 Очка.
+  const unseenLockedForBypass = unseen && !unseenDetected;
+  const sixthSenseBypassAvailable = unseenLockedForBypass && defenderActor
+    && hasSixthSense(defenderActor) && actorInfamyValue(defenderActor) >= 1;
+  const musicOfBattleBypassAvailable = unseenLockedForBypass && defenderActor
+    && hasMusicOfBattle(defenderActor) && actorInfamyValue(defenderActor) >= 1;
 
   // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/
   // grapple.mjs) — состояние conditions.grappling, как у Оглушения/Беспомощного.
@@ -804,6 +889,8 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hordeHits,
       pool: evasionPool,
       swarm: etherealSwarm,
+      unseen, unseenDetected, unseenPenalty,
+      sixthSenseBypassAvailable, musicOfBattleBypassAvailable,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {
@@ -823,11 +910,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Винтовочная Гарда (стр. 62, wdbc-pb60): с рукопашным оружием Баланса
         // не ниже −1 в другой руке выстрел в рукопашной НЕ даёт цели бонуса
         // вовсе — ни +30 винтовки, ни +10 Карабина.
-        dodgeMod: meleeShotDodgeBonus + evasionImperativeBonus(defenderActor),
+        dodgeMod: meleeShotDodgeBonus + evasionImperativeBonus(defenderActor) + (blindFightingBypass ? -20 : 0),
         dodgeModRecoil: hasEvasionRecoilImperative(defenderActor)
-          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true })
+          ? meleeShotDodgeBonus + evasionImperativeBonus(defenderActor, { planningRecoil: true }) + (blindFightingBypass ? -20 : 0)
           : null,
-        parryMod: techOpts.targetParryMod ?? 0,
+        parryMod: (techOpts.targetParryMod ?? 0) + (blindFightingBypass ? -20 : 0),
         // Переброс, НАВЯЗАННЫЙ защищающемуся (Локус Кровопролития): бросает его
         // цель у себя, а знает о нём атакующий — поэтому он едет атрибутом на
         // кнопках защиты в карточке.
@@ -835,7 +922,11 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
         // Шагоход (wdbc-6wzt, п.5): у него, в отличие от прочей техники, есть
         // не только Вираж, но и настоящие Парирование/Уклонение — свои кнопки
         // на карточке, потому что считает их ПИЛОТ, а не машина.
-        targetIsVehicle, targetIsWalker, note: techOpts.chatNote
+        targetIsVehicle, targetIsWalker,
+        // Бой Вслепую (wdbc-1rno.2): −20 выше уже применён — здесь только
+        // подпись, откуда он взялся, чтобы не выглядеть немотивированным штрафом.
+        note: [techOpts.chatNote, blindFightingBypass ? "Бой Вслепую: Незримая атака, Уклонение/Парирование в рукопашной −20 без засечения." : ""]
+          .filter(Boolean).join(" ")
       },
       notes: {
         shelter: shelter

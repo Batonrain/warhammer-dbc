@@ -22,6 +22,7 @@
     "damageType": "rending",
     "penetration": 12,
     "quality": "common",
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Разное» стр. 243)",
     "availability": 3,
     "weight": 0,
     "attackBonus": 0,

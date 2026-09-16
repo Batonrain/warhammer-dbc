@@ -25,6 +25,10 @@ import { tranceButtonHtml, useTrance }               from "../apps/armour-histor
 import { handOfDeathButtonHtml, useHandOfDeath }     from "../apps/hand-of-death.mjs";
 import { bloodFlameButtonHtml, useBloodFlame }       from "../apps/blood-flame.mjs";
 import { handOfKhorneButtonHtml, useHandOfKhorne }   from "../apps/hand-of-khorne.mjs";
+import { organOfChaosButtonHtml, useOrganOfChaos }   from "../apps/organ-of-chaos.mjs";
+import { becomeParasiteHostButtonHtml, becomeParasiteHost } from "../apps/maggot-parasite.mjs";
+import { beginParasiticContactButtonHtml, beginParasiticContact } from "../apps/parasite-trait.mjs";
+import { stabilizeRealityRendingButtonHtml, useStabilizeRealityRending } from "../apps/wrapped-in-chaos.mjs";
 import { gunArmButtonHtml, useGunArm }              from "../apps/gun-arm.mjs";
 import { illusionOfNormalityHtml, attemptNoticeIllusion, attemptSeeThroughIllusion, setIllusionMaintained }
   from "../apps/illusion-of-normality.mjs";
@@ -1024,7 +1028,15 @@ export class WarhammerItemSheet
           def:     WEAPON_PROPERTIES[p.key],
           // Призма: текущий накопленный заряд (не рейтинг-максимум X, а живое
           // состояние на предмете) — своя мини-панель в чипе, не общий rating2.
-          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null
+          prismaCharge: p.key === "prisma" ? (context.system.prismaCharge ?? 0) : null,
+          // requiredSuccesses/requiredSuccessesScalesSize (wdbc-zlx7) — поле
+          // читает только psychic.mjs (combat/weapon-properties.mjs::
+          // filterPropsBySuccesses, deg известна лишь у психотеста, у обычной
+          // атаки — нет до броска), поэтому вход для них есть только в
+          // templates/item/parts/psychic-power.hbs, не в weapon.hbs/tech-power.hbs
+          // (те делят этот же контекст-билдер, но поле у них молча не сработает).
+          requiredSuccesses: p.requiredSuccesses ?? 0,
+          requiredSuccessesScalesSize: !!p.requiredSuccessesScalesSize
         }))
         .filter(p => p.def);
       context.weaponPropsAvailable = WEAPON_PROPERTIES_LIST.filter(d => !activeKeys.has(d.key));
@@ -1117,6 +1129,14 @@ export class WarhammerItemSheet
       context.bloodFlameHtml = bloodFlameButtonHtml(this.item, this.item.parent);
       // Длань Кхорна (wdbc-1rno) — выбор руки, тот же принцип, что выше.
       context.handOfKhorneHtml = handOfKhorneButtonHtml(this.item, this.item.parent);
+      // Орган Хаоса (wdbc-1rno) — выбор Характеристики/малой способности ГМом на месте выдачи.
+      context.organOfChaosHtml = organOfChaosButtonHtml(this.item, this.item.parent);
+      // Опарыш-Паразит (wdbc-ux8a) — превращение исходного тела в носителя.
+      context.maggotParasiteHtml = becomeParasiteHostButtonHtml(this.item);
+      // Parasite/Паразит (Трейт — общий, wdbc-ux8a) — начать заражение цели.
+      context.parasiteBeginContactHtml = beginParasiticContactButtonHtml(this.item, this.item.parent);
+      // Рассечение Реальности/Wrapped in Chaos (wdbc-1rno) — выбор исключённых союзников.
+      context.stabilizeRealityRendingHtml = stabilizeRealityRendingButtonHtml(this.item);
       // Щупальце, субмутация 9 «Изменчивое» (wdbc-2ynk) — пусто у остальных.
       context.tentacleHandFormHtml = tentacleHandFormButtonHtml(this.item, this.item.parent);
       // «Иллюзия Нормальности» (wdbc-zbc0) — пусто у остальных Мутаций.
@@ -1930,6 +1950,34 @@ export class WarhammerItemSheet
       ev.preventDefault();
       const actor = this.item.parent;
       if (actor) await useHandOfKhorne(actor, this.item);
+    });
+
+    // ── Мутация «Орган Хаоса»: выбор Характеристики/способности (wdbc-1rno) ──
+    on(".organ-of-chaos-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useOrganOfChaos(actor, this.item);
+    });
+
+    // ── Мутация «Опарыш-Паразит»: превращение тела в носителя (wdbc-ux8a) ──
+    on(".maggot-parasite-become-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await becomeParasiteHost(actor, this.item);
+    });
+
+    // ── Трейт «Parasite»: начать заражение цели (wdbc-ux8a) ──
+    on(".parasite-begin-contact-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await beginParasiticContact(actor);
+    });
+
+    // ── Мутация «Укутанный в Хаос», субмутация «Рассечение Реальности» (wdbc-1rno) ──
+    on(".stabilize-reality-rending-btn", "click", async ev => {
+      ev.preventDefault();
+      const actor = this.item.parent;
+      if (actor) await useStabilizeRealityRending(actor, this.item);
     });
 
     // ── Мутация «Щупальце», субмутация 9 «Изменчивое» (wdbc-2ynk) ───────────
@@ -3051,6 +3099,24 @@ export class WarhammerItemSheet
       const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
       const p     = props.find(x => x.key === key);
       if (p) { p[field] = val; await this.item.update({ "system.weaponProps": props }); }
+    });
+    // wdbc-zlx7: порог Успехов, при котором свойство вообще срабатывает
+    // (Neural Storm/Fire Barrage/Bolt/Storm), и опциональный масштаб порога
+    // Размером цели (Force Bolt) — читает только module/sheets/tabs/psychic.mjs,
+    // см. комментарий в контекст-билдере выше (this.item.type === "psychicPower").
+    on(".wprop-required-successes", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const val   = Math.max(0, parseInt(ev.currentTarget.value) || 0);
+      const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p.requiredSuccesses = val; await this.item.update({ "system.weaponProps": props }); }
+    });
+    on(".wprop-required-successes-size", "change", async ev => {
+      const key   = ev.currentTarget.dataset.key;
+      const val   = !!ev.currentTarget.checked;
+      const props = foundry.utils.deepClone(this.item.system.weaponProps || []);
+      const p     = props.find(x => x.key === key);
+      if (p) { p.requiredSuccessesScalesSize = val; await this.item.update({ "system.weaponProps": props }); }
     });
     // Призма: живой заряд на предмете (не weaponProps[].rating — тот X-максимум).
     on(".wprop-prisma-charge", "change", async ev => {

@@ -106,7 +106,7 @@ describe("drug addiction test", () => {
 
     expect(item.updates[0]).toEqual({ "system.addiction.isAddicted": true });
     expect(a.updates[0]).toEqual({ "system.conditions.addicted": true });
-    expect(captured.chat[0].content).toContain("Порог: <b>25</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>25</b>");
     expect(captured.chat[0].content).toContain("Персонаж стал зависим");
   });
 

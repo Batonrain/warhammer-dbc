@@ -3,7 +3,7 @@
   "type": "weapon",
   "folder": "41PfRYM48BxJYurB",
   "system": {
-    "description": "",
+    "description": "Лучевой Очиститель проецирует широкий луч гамма-радиации, разрушающий внутреннюю структуру органики и деградирующий сложную электронику.",
     "notes": "",
     "weaponClass": "basic",
     "weaponType": "exotic",
@@ -26,7 +26,7 @@
     "availability": 3,
     "weight": 20,
     "attackBonus": 0,
-    "special": "Rad: 1d10",
+    "special": "Rad: 1d10. Выстрел этого оружия считается Незримым, если его цель не может засекать радиацию (засекание радиации — Electroepithany/Электропрозрение, module/rules/unseen-attack.mjs::hasRadiationDetection).",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
@@ -42,6 +42,12 @@
       },
       {
         "key": "spray"
+      },
+      {
+        "key": "unseen"
+      },
+      {
+        "key": "radiationSourced"
       }
     ],
     "needsRecharge": false,

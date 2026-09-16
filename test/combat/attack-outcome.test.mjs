@@ -267,4 +267,21 @@ describe("bonusDamageDice", () => {
       shortRange: true, maximal: true, band: { dice: 2 }, ammoDice: 1
     })).toBe(5);
   });
+
+  // Sniper Assassin/Снайпер-Убийца (wdbc-1rno.2): продлённая лестница
+  // Accurate — до 4 кубиков на 3/5/7/9 Успехов вместо обычных 2 на 3/5.
+  it("wp.sniperAssassin продлевает лестницу Меткого до 4 кубиков на 3/5/7/9", () => {
+    const wp = withProps({ accurate: true, sniperAssassin: true });
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 2 })).toBe(0);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 3 })).toBe(1);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 5 })).toBe(2);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 7 })).toBe(3);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9 })).toBe(4);
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 20 })).toBe(4);
+  });
+
+  it("sniperAssassin без accurate ничего не даёт — свойство Accurate обязательно", () => {
+    const wp = withProps({ sniperAssassin: true });
+    expect(bonusDamageDice({ wp, rofMode: "single", hit: true, deg: 9 })).toBe(0);
+  });
 });

@@ -246,6 +246,13 @@ export function conditionRemoveFields(key) {
   const def    = CONDITIONS_DEF[key];
   const fields = { [`system.conditions.${key}`]: false };
   if (def?.hasLevel && def.levelField) fields[`system.conditions.${def.levelField}`] = 0;
+  // Горение (wdbc-3pv5): снятие тушит и запомненные числа Cooler/Морозного
+  // Сердца — иначе следующее загорание унаследовало бы чужие урон поджигания
+  // и остаток окна от предыдущего пожара.
+  if (key === "burning") {
+    fields["system.conditions.burningSourceDamage"] = 0;
+    fields["system.conditions.burningGraceRounds"]  = 0;
+  }
   return fields;
 }
 

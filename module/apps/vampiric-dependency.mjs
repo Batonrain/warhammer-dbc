@@ -13,7 +13,7 @@ import { isVampiricDependencyItem, vampiricMonthsSince, vampiricTestRequired,
 import { rollIcon } from "../constants/roll-icons.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { collectTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine, outcomeHtml } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine, outcomeHtml } from "../helpers/test-card.mjs";
 
 export { isVampiricDependencyItem };
 
@@ -67,13 +67,12 @@ export async function useVampiricTest(actor, item) {
   await postTestCard(actor, {
     icon: rollIcon("blood", "#8b1a1a"),
     title: `ГОЛОД — ${esc(item.name)}`,
-    threshold: thresholdLine({
+    threshold: rollStatLine({
       label: "T", base: t,
       parts: [penalty ? `воздержание ${penalty}` : "", ...ruleMods.parts].filter(Boolean),
-      threshold: target
+      threshold: target, rv: roll.total
     }),
     lines: [`<div class="roll-threshold">Воздержание: ${months} мес.</div>`],
-    rv: roll.total,
     outcome: outcomeHtml(success, success ? "Успех" : "Провал: +1 Порчи")
   }, { rolls: [roll] });
 }
