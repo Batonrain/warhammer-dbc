@@ -1,4 +1,5 @@
 import { _performDodge, _performParry, _performSprayCancel, _performCompression, _performExtendBodyPart, _performEtherealSwarm, _performPsychicParry, COUNTER_ATTACK_CAPABILITY } from "./combat/defense.mjs";
+import { _performHiddenThreatDetect } from "./combat/hidden-threat.mjs";
 import { applyCancerousHealingFromButton, APPLY_BTN_CLASS as CH_APPLY_BTN_CLASS } from "./apps/cancerous-healing.mjs";
 import { performPoolSpend, clearEvasionPools } from "./combat/evasion-pool.mjs";
 import { showRecoilDialog, performRecoil, performPoolRecoil } from "./combat/recoil.mjs";
@@ -470,6 +471,18 @@ export function registerHooks() {
         if (!actor) return;
         const attackerUuid = ev.currentTarget.dataset.attackerUuid || "";
         await _performEtherealSwarm(actor, attackerUuid);
+      });
+    });
+
+    // Сокрытая Угроза (Дар Тзинч, wdbc-1rno.1) — реактивный тест на засечение
+    // Незримой атаки, не Реакция, не блокирует Уклонение (wdbc-1rno.2).
+    html.querySelectorAll(".wh-hidden-threat-detect-btn").forEach(btn => {
+      btn.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        const actor = requireControlledActor("⚠️ Выберите токен защищающегося персонажа на сцене!");
+        if (!actor) return;
+        const skillKey = ev.currentTarget.dataset.skill || "";
+        await _performHiddenThreatDetect(actor, skillKey);
       });
     });
 
@@ -1697,7 +1710,11 @@ export async function _applyWeaponPropEffect(ds) {
     // Общий сбор модификаторов (wdbc-ct65.2): тест Сопротивления считался
     // мимо реестра правил — ни Усталость, ни Черты на эту характеристику
     // в него не попадали.
-    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar });
+    // poisonTest (wdbc-1rno.1): единственная точка в системе, где реально
+    // кидается «тест против яда» — только у condition==="poisoned" (Toxic),
+    // остальные свойства оружия (Concussive/Flame/…) идут тем же кодом с
+    // другим condition и этот флаг не несут.
+    const resistMods = collectTestMods(actor, { kind: "skill", char: testChar, poisonTest: condition === "poisoned" });
     const threshold = charTotal + testMod + resistMods.total;
     const roll      = await new Roll("1d100").evaluate();
     allRolls.push(roll);

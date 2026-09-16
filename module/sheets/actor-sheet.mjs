@@ -2598,16 +2598,34 @@ export class WarhammerCharacterSheet
     // сошёлся бы с брошенным.
     const autoCtx = { kind: "skill", targetActor: sceneTarget, ...(rollContext || {}), char: charKey };
     if (isMoraleOpposedSkill(skillKey)) autoCtx.morale = true;
-    const autoMods = resolveTest({ actor: this.actor, ...autoCtx }).autoMods;
+    const autoResolved = resolveTest({ actor: this.actor, ...autoCtx });
+    const autoMods = autoResolved.autoMods;
     const autoLines = autoMods
       .map(m => ` ${m.value >= 0 ? "+" : "−"} ${Math.abs(m.value)} (${m.label})`).join("");
 
     // Мод препаратов уже входит в target (через char.total -> итог навыка)
     const baseEff = target + modifier + difficulty + autoModsTotal(autoMods);
+    // Уравнитель / The Equalizer (wdbc-1rno.1, вторая половина Дара,
+    // rules/item-rules.mjs::opposedTargetRerollRules): «противник выступает
+    // атакующим во встречном тесте, и его базовая Характеристика выше» —
+    // если это Я атакую/оппонирую носителя Дара (targetActor на сцене) и
+    // МОЯ базовая Характеристика этого теста выше его, ОН навязывает МНЕ
+    // переброс на МОЁМ броске, без спроса, старше и выбора игрока, и общего
+    // Кубика. Тот же приоритет «внешнее навязывание важнее своего», что уже
+    // есть в sheets/attack/dialog.mjs — там же лежит единственный прежде
+    // существовавший путь принудительного применения who:"opponent" (общий
+    // ruleRerollsHtml нарочно фильтрует его из галочек диалога, см.
+    // rules/roll-mods.mjs — наказанный сам такую галочку не поставил бы).
+    // Гейт по kind (opposed/opposedSafe) — RAW ограничивает именно встречным
+    // тестом, не любым тестом с целью на сцене.
+    const opposedKind = kind === "opposed" || kind === "opposedSafe";
+    const forcedOpponentReroll = opposedKind
+      ? (autoResolved.rerolls || []).find(r => r.who === "opponent")
+      : null;
     // Переброс: бросаем сколько сказано и оставляем один. Какой именно —
     // решает rules/reroll-pick.mjs: на d100 «лучший» это МЕНЬШИЙ, и это знание
     // держится в одном месте, а не переписывается на каждом месте броска.
-    const { roll, rv, rerollNote } = await rollD100WithReroll(reroll);
+    const { roll, rv, rerollNote } = await rollD100WithReroll(forcedOpponentReroll || reroll);
     const charAbbr = CHARACTERISTICS[charKey]?.abbr ?? charKey;
 
     // Авто-встречный тест (wdbc-j814): ручные поля (opposed) в приоритете —

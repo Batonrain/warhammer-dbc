@@ -117,7 +117,9 @@ const DEVIATIONS = {
     "movedThisTurn": false,
     // Аблативная Структура (Минный Плуг, wdbc-bxw6) — заведена гораздо позже template.json.
     "structure.ablative": 0,
-    "structure.ablativeMax": 0
+    "structure.ablativeMax": 0,
+    // Пророк Гэллерпокса (wdbc-1rno.1) — заведено гораздо позже template.json.
+    "gallerpoxInfected": false
   },
   ship: {
     // Свободная заметка «Класс корпуса» дублировала выбор реального Корпуса
@@ -125,7 +127,9 @@ const DEVIATIONS = {
     // вместе с полем целиком (wdbc-zuf4). undefined убирает ключ из
     // ожидаемого объекта тем же приёмом, что и toEqual прощает отсутствующим
     // полям.
-    shipClass: undefined
+    shipClass: undefined,
+    // Пророк Гэллерпокса (wdbc-1rno.1) — заведено гораздо позже template.json.
+    "gallerpoxInfected": false
   },
   horde: {
     // Навыки Орды заведены позже template.json (вкладка «ПОКАЗАТЕЛИ»): у Орды

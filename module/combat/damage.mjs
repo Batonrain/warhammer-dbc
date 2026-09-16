@@ -20,6 +20,7 @@ import { VOLUNTEER_ACTOR_CAPABILITY, isHarlequinsKissItem } from "../rules/volun
 import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
@@ -649,7 +650,7 @@ export async function applyDamageToActor(actor, damageData) {
     damageType,      // строка — "impact", "rending" и т.д.
     damageSubtype = "", // строка — подвид в скобках книги: "crushing"/"fragmentation"/
                          // "electrical"/"flame"/"laser"/"toxic"/"" (wdbc-q0q8, DAMAGE_SUBTYPES)
-    hitLocation,     // строка — "Голова", "Торс" и т.д.
+    hitLocation: rawHitLocation, // строка — "Голова", "Торс" и т.д. (до редиректа Bronze Myrmidon ниже)
     attackerName,    // строка
     attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf)
     weaponName,      // строка
@@ -675,6 +676,12 @@ export async function applyDamageToActor(actor, damageData) {
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
     spray = false // Распыление: свойство присутствует (wdbc-1rno)
   } = damageData;
+
+  // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
+  // активным Трейтом Machine (Ярость) попадание в Сочленение/Глаз резолвится
+  // ДАЛЬШЕ (AP, крит-таблица) как попадание в Руку/Голову — редирект целиком,
+  // одной точкой, а не патчем каждого места, читающего hitLocation.
+  const hitLocation = redirectHitLocationForMachine(rawHitLocation, actor);
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но

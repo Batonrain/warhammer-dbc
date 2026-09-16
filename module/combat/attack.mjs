@@ -28,6 +28,7 @@ import { applyGrappleOnHit }                          from "./grapple.mjs";
 import { rollOgrynWeaponBreak, ogrynBreakNote }      from "./ogryn-weapon-break.mjs";
 import { getEvasionPool, poolAffordableHits }         from "./evasion-pool.mjs";
 import { activeSwarm }                                from "../rules/ethereal-swarm.mjs";
+import { consumeHiddenThreatPending }                 from "../rules/hidden-threat.mjs";
 import { sunderingDamageFormula, SUNDERING_COPY_FLAG } from "../rules/sundering.mjs";
 import { recoilRemaining as recoilPoolRemaining }     from "./recoil-pool.mjs";
 import { suppressionTestMod }                         from "./suppression.mjs";
@@ -702,6 +703,13 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
   const etherealSwarm = hit && defenderActor
     ? activeSwarm(defenderActor, game.time?.worldTime) : null;
 
+  // Сокрытая Угроза / Hidden Threat (wdbc-1rno.1, rules/hidden-threat.mjs) —
+  // снимается РОВНО здесь, на самой следующей атаке АТАКУЮЩЕГО, независимо
+  // от hit/засечения (RAW даёт тип ОДНОЙ следующей атаке, не длящемуся
+  // эффекту). Кнопка засечения в карточке рендерится только при hit — тот же
+  // гейт, что у Уклонения/Парирования выше (defenderActor неизвестен раньше).
+  const hiddenThreat = await consumeHiddenThreatPending(actor);
+
   // Стр. 12: успешный Приём «Захват» связывает обоих Борьбой (module/combat/
   // grapple.mjs) — состояние conditions.grappling, как у Оглушения/Беспомощного.
   // Не блокирует построение карточки: чат-сообщение о связывании уходит своим,
@@ -808,6 +816,7 @@ export async function _executeAttackRoll(actor, item, charKey, threshold, rofMod
       hordeHits,
       pool: evasionPool,
       swarm: etherealSwarm,
+      hiddenThreat,
       // Выжигание Души: Психосиловое оружие в руках псайкера при попадании.
       soulBurnActorId: (hit && wp.forcePR && isPsyker) ? actor.id : null,
       defense: {

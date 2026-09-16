@@ -725,3 +725,97 @@ describe("авто-встречный тест (wdbc-j814)", () => {
     for (const [key, fn] of saved) registerRuleSource(key, fn);
   });
 });
+
+// Уравнитель / The Equalizer (wdbc-1rno.1, вторая половина Дара): «противник
+// выступает атакующим во встречном тесте и его базовая Характеристика выше».
+// s.actor в этих тестах — «противник» по формулировке книги (тот, у кого
+// проверяют характеристику и кого штрафуют), targetActor — носитель Дара.
+// Переброс навязан БЕЗ СПРОСА тому, кто катает (s.actor), тем же приоритетом,
+// что уже даёт sheets/attack/dialog.mjs первой половине (атака). Здесь —
+// точка принудительного применения в общем диалоге Навыка/Характеристики
+// (_runTest, module/sheets/actor-sheet.mjs).
+describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанный переброс на встречном тесте Навыка/Характеристики", () => {
+  afterEach(() => {
+    globalThis.fromUuid = undefined;
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+  });
+
+  /** Цель на сцене, несущая реальную запись Уравнителя (rerollWho:"opponent"). */
+  function equalizerHolder(name, wpTotal) {
+    const opp = {
+      id: `${name}-stub`, uuid: `Actor.${name}-stub`, name,
+      system: { skills: {}, characteristics: { wp: { total: wpTotal } } },
+      items: [{ name: "The Equalizer / Уравнитель", flags: { "warhammer-dbc": { mechanics: [
+        { id: "g1", operator: "AND", entries: [
+          { id: "eq1", kind: "reroll", rerollScope: "all", rerollMode: "keepWorst", rerollWho: "opponent" }
+        ] }
+      ] } } }]
+    };
+    globalThis.fromUuid = async uuid => (uuid === opp.uuid ? opp : null);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: opp }]) };
+    return opp;
+  }
+
+  // Я (s.actor, катающий этот тест) играю роль «противника» по формулировке
+  // книги — того, кого штрафует чужой Уравнитель. Штраф падает на МЕНЯ, когда
+  // МОЯ базовая WP выше, чем у цели (носителя Дара) — ровно как в книге:
+  // «противник, чья базовая Характеристика выше», а не наоборот.
+  it("моя базовая WP выше цели (носителя Дара), тест Встречный — переброс форсируется (keepWorst), без моей галочки Кубика", async () => {
+    equalizerHolder("Слабак", 20);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.dice = [10, 90]; // keepWorst должен оставить 90, не 10
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>90</b>");
+  });
+
+  it("моя базовая WP не выше цели — переброс НЕ навязывается, один бросок", async () => {
+    equalizerHolder("Мортарион", 60);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.nextRoll = 33;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100"]);
+  });
+
+  it("тест НЕ Встречный (kind base) — переброс не навязывается, даже если моя WP выше цели (RAW ограничивает встречным)", async () => {
+    equalizerHolder("Слабак", 20);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.nextRoll = 33;
+    await captured.press("roll", fakeForm({ "#skill-target": "40", "#skill-modifier": "0" }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100"]);
+  });
+
+  it("навязанный переброс важнее МОЕГО собственного выбора Кубика (Преимущество/keepBest проигрывает)", async () => {
+    equalizerHolder("Слабак", 20);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.dice = [10, 90]; // keepBest (моё Преимущество) взял бы 10; форсированный keepWorst берёт 90
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
+    await promise;
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>90</b>");
+  });
+
+  it("на сцене нет цели — переброс не навязывается (ctx.targetActor пуст)", async () => {
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.nextRoll = 33;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100"]);
+  });
+});
