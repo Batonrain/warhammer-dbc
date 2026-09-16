@@ -14,7 +14,7 @@ import { RACES } from "../constants/races.mjs";
 import { getLegion, getChapter, resolveCulture } from "../constants/legions.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { raceDef, subraceEntries } from "./race-library.mjs";
-import { clearGrantedBy } from "./origin-shared.mjs";
+import { clearGrantedBy, withOriginLock } from "./origin-shared.mjs";
 import { itemHasName } from "../rules/predicates.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
 import { needsAptitudeChoice, promptSubraceAptitudeChoice, applySubraceAptitudeChoice } from "./subrace-choice.mjs";
@@ -285,7 +285,13 @@ export async function applyLegion(actor, { createTraits }) {
     { name: `Культура: ${cul.name}`, benefit: cul.culture }
   ];
 
-  const apply = async (curseEntry) => {
+  // wdbc-gbpe: тот же замок actor+тег, что homeworlds.mjs/divinations.mjs —
+  // без него два параллельных applyLegion (двойной клик, медленная сеть)
+  // оба читают «старых Черт Легиона нет» до того, как первый успевает
+  // создать свои, и оба создают свой набор — Неестественная Сила/Стойкость
+  // и прочие числовые бонусы Геносемени задваиваются молча (видно только на
+  // вкладке ЭФФЕКТЫ, не на самом листе).
+  const apply = async (curseEntry) => withOriginLock(actor, "legion", async () => {
     // Удаляем прежние легион-Черты (source «Легион»), чтобы переприменить.
     const old = actor.items.filter(i => i.type === "trait" && i.system?.source === "Легион").map(i => i.id);
     if (old.length) await actor.deleteEmbeddedDocuments("Item", old);
@@ -293,7 +299,7 @@ export async function applyLegion(actor, { createTraits }) {
     if (curseEntry) list.push({ name: `Проклятье: ${curseEntry.name}`, benefit: curseEntry.text });
     const n = await createTraits(list, "Легион");
     ui.notifications.info(`Легион применён: ${effName}. Создано Черт: ${n}${effects ? " (числовые бонусы Геносемени применены)" : ""}.`);
-  };
+  });
 
   // Если у проклятья есть варианты — даём выбрать.
   if (choices && choices.length) {

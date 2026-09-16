@@ -28,6 +28,8 @@
     "charDamageFormula": "",
     "profiles": [],
     "variants": [],
+    "resistChar": "t",
+    "resistMod": 0,
     "effect": "Атака · Аура. Психотест W−10 vs T+0. Каждый в ауре без покровительства Нургла, проигравший встречный: 1d10+PR C, Pen 0, и Оглушение до начала своего Хода. Heightened Senses (Hearing) — −10 встречному. Лишённые слуха иммунны.",
     "isSustained": false,
     "effects": {
@@ -58,7 +60,23 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "onFail",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "stun",
+              "kind": "condition",
+              "condMode": "onTargetFail",
+              "condKey": "stunned",
+              "condLevel": "1",
+              "label": "Хор Хворей: Оглушение проигравшему встречный тест"
+            }
+          ]
+        }
+      ]
     },
     "autoanimations": {
       "id": "cb026f57-b855-4e22-8507-ac43dc76060d",

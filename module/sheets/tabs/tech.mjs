@@ -11,7 +11,7 @@ import { ironModForQuality, leastQuality } from "../../constants/implant-mechani
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { syncItemEffectsDisabled } from "../../apps/effects.mjs";
 import { collectTestMods } from "../../rules/roll-mods.mjs";
-import { postTestCard } from "../../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../../helpers/test-card.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
          aggregateAuto, applyDamageDiceMods } from "../../combat/weapon-properties.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
@@ -32,6 +32,14 @@ export async function activateTechMiracle(actor, item) {
   let   enCost   = sys.energyCost || 0;
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
+
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // за доп. 10 сек/1м мононити персонаж лишается возможности творить
+  // техночудеса — тот же гейт, что module/sheets/tabs/psychic.mjs у психосил.
+  if (actor.system.conditions?.mimicWireBlocksPowers) {
+    ui.notifications.warn(`«${item.name}»: мононить блокирует техночудеса.`);
+    return;
+  }
 
   if (cogCost > (cog.value || 0)) {
     ui.notifications.warn(`Недостаточно Когниции: нужно ${cogCost}, есть ${cog.value || 0}.`);
@@ -126,8 +134,11 @@ export async function activateTechMiracle(actor, item) {
     const enBefore = enCost;
     enCost = Math.max(0, enCost - reduce);
     const electroNote = cPicked.dropped.length ? `, Электрорвение: Преимущество, отброшено ${cPicked.dropped.join(", ")}` : "";
-    compLine = `Компенсатор (X${compX}): T−${10 * compX}${compBonus ? ` +${compBonus}` : ""} → Порог ${compTh}${electroNote}, бросок ${cRoll.total} → `
-      + (cSucc ? `−${reduce} ⚡ (${enBefore}→${enCost})` : `Провал, цена ${enCost} ⚡`);
+    compLine = rollStatLine({
+      label: `Компенсатор (X${compX})`, base: tTot,
+      parts: [`T−${10 * compX}`, ...(compBonus ? [`+${compBonus}`] : [])],
+      threshold: compTh, rv: cRoll.total, rerollNote: electroNote
+    }) + `<div class="roll-threshold" style="font-size:0.85em;">${cSucc ? `−${reduce} ⚡ (${enBefore}→${enCost})` : `Провал, цена ${enCost} ⚡`}</div>`;
   }
 
   // Проверка Энергии — после снижения Компенсатором, до основного теста
@@ -290,16 +301,17 @@ export async function activateTechMiracle(actor, item) {
   const techDice = (await Promise.all(allRolls.map(r => r.render()))).join("");
   await postTestCard(actor, {
     icon: rollIcon("gear", "#8fd0ff"), title: `Техночудо: ${esc(item.name)}`,
-    threshold: `<div class="roll-threshold">
-            ${skillLabel}: <b>${base}</b>${testMod !== 0 ? ` ${testMod >= 0 ? "+" : ""}${testMod}` : ""}${ruleMods.parts.map(p => ` ${p}`).join("")} → Порог: <b>${eff}</b>
-          </div>`,
+    threshold: rollStatLine({
+      label: skillLabel, base,
+      parts: [...(testMod !== 0 ? [`${testMod >= 0 ? "+" : ""}${testMod}`] : []), ...ruleMods.parts],
+      threshold: eff, rv
+    }),
     lines: [
       ironLine ? `<div class="roll-threshold" style="font-size:0.85em;">${ironLine}</div>` : "",
-      compLine ? `<div class="roll-threshold" style="font-size:0.85em;">${compLine}</div>` : "",
+      compLine,
       costLine ? `<div class="roll-threshold">${costLine}</div>` : "",
       sys.range ? `<div class="roll-threshold" style="font-size:0.85em;">Дальность: <b>${sys.range}</b></div>` : ""
     ],
-    rv,
     outcome: success
       ? `<span class="roll-success">Активировано — ${deg} ${_degWord(deg)}</span>`
       : `<span class="roll-failure">Сбой — ${deg} ${_degWord(deg)}</span>`,

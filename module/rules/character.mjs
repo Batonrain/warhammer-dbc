@@ -42,6 +42,8 @@ import { hasRuleFlag } from "./flags.mjs";
 import { invalidateRulesCacheFor } from "./collect.mjs";
 import { runeMax } from "./sigillite-runes.mjs";
 import { itemHasName, giftNamesOf } from "./predicates.mjs";
+import { realityRendingPenalty } from "./wrapped-in-chaos.mjs";
+import { applyParasiteFusion } from "./parasite-trait.mjs";
 import { woundLevel } from "./wound-tier.mjs";
 import { prepareFinalPools } from "./character/final-pools.mjs";
 import { prepareMovementDerived } from "./character/movement.mjs";
@@ -162,6 +164,18 @@ export function prepareCharacterDerived(actor, system) {
       }
     }
     system.drugCharMods = drugCharMods;
+
+    // Рассечение Реальности/Reality Rending (Wrapped in Chaos/Укутанный в
+    // Хаос, субмутация "9", wdbc-1rno): «+3 ко всему входящему урону» всем
+    // в радиусе 3м владельца, кроме исключённых до W.b союзников — ВТОРОЙ
+    // независимый источник того же поля, что наркотики выше (по прямому
+    // запросу пользователя обобщить incomingDamageReduction, не только под
+    // наркотики). Живой cross-actor источник (module/rules/wrapped-in-
+    // chaos.mjs::realityRendingPenalty), тот же приём, что уже даёт
+    // rules/psychic-sustain-target.mjs — считается заново каждый раз,
+    // ничего не хранится на цели.
+    system.incomingDamageReduction =
+      (Number(system.incomingDamageReduction) || 0) + realityRendingPenalty(actor);
 
     // ── Эффекты от черт (трейтов) ──────────────────────────────────────────
     // Ядро автоматизации: +X к бонусу характеристики (Unnatural), естественная
@@ -638,6 +652,18 @@ export function prepareCharacterDerived(actor, system) {
       if ((system.fate.value ?? 0) > system.fate.max) system.fate.value = system.fate.max;
       system.painActive  = true;
       system.fateMaxAuto = true;
+    } else if (system.fate) {
+      // У всех прочих рас system.fate.max нигде не пишется — целиком приходит
+      // ActiveEffect'ом Конструктора (kind:"poolMax", final-фаза, wdbc-zzz2):
+      // Actor#applyActiveEffects складывает "текущее значение + прибавка"
+      // ПОВЕРХ того, что уже лежит в system.fate.max на момент финальной фазы.
+      // Без явного сброса это неидемпотентно при повторном prepareData() в
+      // обход полной пересборки actor._initialize() из _source (сегодня
+      // недостижимо через обычную игру — Foundry пересобирает схему из
+      // _source перед каждым update(), — но контракт "idempotent per
+      // initialization" из client-document.mjs требует явного сброса, а не
+      // молчаливой опоры на то, что снаружи всегда есть полная пересборка.
+      system.fate.max = 0;
     }
 
     // ── Здравомыслие пилота Дредноута (Книга Машин, стр. 57) ────────────────
@@ -957,4 +983,7 @@ export function prepareCharacterDerived(actor, system) {
     // считается из уже готовых чисел, поэтому выносится без риска для порядка.
     prepareFinalPools(actor, system, { chars, agBonus, traitInitMod, implantEnergyMax,
                                        sustainedCost, implantCompBonus, techFocusInstalled });
+    // Parasite/Паразит (Трейт — общий, wdbc-ux8a): числовая часть слияния —
+    // ПОСЛЕ Инициативы/Характеристик выше, иначе нечего перезаписывать.
+    applyParasiteFusion(actor, system, chars);
 }

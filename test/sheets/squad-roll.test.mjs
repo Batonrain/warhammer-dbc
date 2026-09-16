@@ -61,7 +61,7 @@ describe("_executeCommand: Вид теста/Сложность/Кубик", () 
     captured.nextRoll = 30;
     await WarhammerSquadSheet.prototype._executeCommand.call(sheetLike(actor), "short", "commander", 50);
 
-    expect(captured.chat[0].content).toContain("Порог <b>50</b>");
+    expect(captured.chat[0].content).toContain("<label>Порог</label><b>50</b>");
     expect(captured.chat[0].content).toContain("Успех");
   });
 
@@ -95,7 +95,7 @@ describe("_executeCommand: Вид теста/Сложность/Кубик", () 
       {}, { kind: "base", difficulty: 0, reroll: { rolls: 2, mode: "keepBest", label: "Преимущество" } });
 
     expect(captured.rolls).toEqual(["1d100", "1d100"]);
-    expect(captured.chat[0].content).toContain("Бросок: <b>20</b>");
+    expect(captured.chat[0].content).toContain("<label>Бросок</label><b>20</b>");
     expect(captured.chat[0].content).toContain("Преимущество: отброшено 80");
   });
 

@@ -214,6 +214,36 @@ describe("Haywire: мощность — чистый 1d10 по таблице, X
     const card = captured.chat.at(-1).content;
     expect(card).not.toContain("ЭМИ");
   });
+
+  // wdbc-cy4z: Death of Machines — «Haywire (PR×3, 2d10+5)», второе число
+  // заменяет дефолтное книжное «1d5+1» на тире «ЭМИ Шторм» (11+). Только
+  // подмена ТЕКСТА-подсказки — урон Машине по-прежнему не роллится/не
+  // применяется автоматически ни для дефолта, ни для override (ГМ вручную).
+  it("haywireDamage2 задан и выпал тир «ЭМИ Шторм» (11+) — текст несёт override, не дефолтное «1d5+1»", async () => {
+    captured.nextRoll = 11;
+    const actor = characterActor({ armorAP: 0, wounds: 20 });
+    await applyDamageToActor(actor, damage({ rawDamage: 0, haywireActive: true, haywireRating: 6, haywireDamage2: "2d10+5" }));
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("ЭМИ Шторм");
+    expect(card).toContain("2d10+5 непоглощ. E Dmg");
+    expect(card).not.toContain("1d5+1");
+  });
+
+  it("haywireDamage2 задан, но тир НЕ «ЭМИ Шторм» — override не подмешивается вовсе", async () => {
+    captured.nextRoll = 8;
+    const actor = characterActor({ armorAP: 0, wounds: 20 });
+    await applyDamageToActor(actor, damage({ rawDamage: 0, haywireActive: true, haywireRating: 6, haywireDamage2: "2d10+5" }));
+    const card = captured.chat.at(-1).content;
+    expect(card).not.toContain("2d10+5");
+  });
+
+  it("без haywireDamage2 (обычное оружие с Haywire) — дефолтное «1d5+1» на тире «ЭМИ Шторм», поведение не изменилось", async () => {
+    captured.nextRoll = 11;
+    const actor = characterActor({ armorAP: 0, wounds: 20 });
+    await applyDamageToActor(actor, damage({ rawDamage: 0, haywireActive: true, haywireRating: 6 }));
+    const card = captured.chat.at(-1).content;
+    expect(card).toContain("1d5+1 непоглощ. E Dmg");
+  });
 });
 
 describe("Иммунитет ТОЛЬКО в Ярости (Дар Кхорна Purity of Wrath, wdbc-plsf)", () => {

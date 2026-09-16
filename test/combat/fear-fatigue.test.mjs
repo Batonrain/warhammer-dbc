@@ -32,7 +32,7 @@ describe("_executeFearRoll: Усталость в пороге теста Стр
     captured.nextRoll = 99; // гарантированный провал, чтобы дойти до конца без лишних веток
     await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 1, "important", 0, 0);
     const msg = captured.chat.at(-1);
-    expect(msg.content).toContain("Порог: <b>50</b>"); // 40 + важный(+10) + 0
+    expect(msg.content).toContain("<label>Порог</label><b>50</b>"); // 40 + важный(+10) + 0
     expect(msg.content).not.toContain("Усталость");
   });
 
@@ -40,7 +40,7 @@ describe("_executeFearRoll: Усталость в пороге теста Стр
     captured.nextRoll = 99;
     await _executeFearRoll(makeActor({ fatigue: 1, wp: 40 }), 1, "important", 0, 0);
     const msg = captured.chat.at(-1);
-    expect(msg.content).toContain("Порог: <b>40</b>"); // 40 + 10 − 10
+    expect(msg.content).toContain("<label>Порог</label><b>40</b>"); // 40 + 10 − 10
     expect(msg.content).toContain("😓 Усталость");
   });
 
@@ -106,7 +106,7 @@ describe("_executeFearRoll: Стальное Сердце — все рейти�
     // 40+0=40, каким был бы порог настоящего Страха 2 (important:0).
     await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 2, "important", 0, 0);
     const msg = captured.chat.at(-1);
-    expect(msg.content).toContain("Порог: <b>50</b>");
+    expect(msg.content).toContain("<label>Порог</label><b>50</b>");
   });
 
   it("без Стального Сердца тот же Страх 1 не автопасс, порог считается по настоящему рейтингу", async () => {
@@ -115,7 +115,7 @@ describe("_executeFearRoll: Стальное Сердце — все рейти�
     await _executeFearRoll(makeActor({ fatigue: 0, wp: 40 }), 1, "important", 0, 0);
     const msg = captured.chat.at(-1);
     expect(msg.content).not.toContain("выстоял");
-    expect(msg.content).toContain("Порог: <b>50</b>"); // 40 + важный(+10)
+    expect(msg.content).toContain("<label>Порог</label><b>50</b>"); // 40 + важный(+10)
   });
 });
 

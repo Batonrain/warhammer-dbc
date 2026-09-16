@@ -230,18 +230,6 @@
       }
     },
     {
-      "name": "small-craft",
-      "label": "Малые суда (МЛА) — Библиотека (DBC)",
-      "path": "packs/small-craft",
-      "type": "Item",
-      "system": "warhammer-dbc",
-      "ownership": {
-        "PLAYER": "OBSERVER",
-        "ASSISTANT": "OWNER",
-        "GAMEMASTER": "OWNER"
-      }
-    },
-    {
       "name": "diseases",
       "label": "Болезни — Библиотека (DBC)",
       "path": "packs/diseases",
@@ -758,8 +746,7 @@
           "sorting": "m",
           "packs": [
             "book-void",
-            "ship-components",
-            "small-craft"
+            "ship-components"
           ]
         },
         {
@@ -900,7 +887,8 @@
       "lingerZone": {},
       "gravitonZone": {},
       "cover": {},
-      "runicWeaveZone": {}
+      "runicWeaveZone": {},
+      "vortexZone": {}
     }
   },
   "grid": {

@@ -10,6 +10,7 @@
 {{!--     утоления по игровому времени, кнопка «Утолить».                     --}}
 {{!--   • «Tireless Warrior» (wdbc-1rno) — кнопка «Убил рукопашной».           --}}
 {{!--   • «Дыхание Жизни» (wdbc-1rno) — кнопка «Вдохнуть жизнь» в цель.        --}}
+{{!--   • «Опарыш-Паразит» (wdbc-ux8a) — кнопка превращения тела в носителя.    --}}
 {{!-- ══════════════════════════════════════════════════════════════════════ --}}
 {{#if (eq item.type "mutation")}}
 
@@ -40,6 +41,27 @@
 <div class="item-section">
   <div class="item-section-title">ДЛАНЬ КХОРНА</div>
   {{{handOfKhorneHtml}}}
+</div>
+{{/if}}
+
+{{#if organOfChaosHtml}}
+<div class="item-section">
+  <div class="item-section-title">ОРГАН ХАОСА</div>
+  {{{organOfChaosHtml}}}
+</div>
+{{/if}}
+
+{{#if maggotParasiteHtml}}
+<div class="item-section">
+  <div class="item-section-title">ОПАРЫШ-ПАРАЗИТ</div>
+  {{{maggotParasiteHtml}}}
+</div>
+{{/if}}
+
+{{#if stabilizeRealityRendingHtml}}
+<div class="item-section">
+  <div class="item-section-title">РАССЕЧЕНИЕ РЕАЛЬНОСТИ</div>
+  {{{stabilizeRealityRendingHtml}}}
 </div>
 {{/if}}
 

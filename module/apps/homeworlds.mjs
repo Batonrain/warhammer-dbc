@@ -14,7 +14,7 @@ import { SKILLS_DEF, GROUP_SKILLS_DEF } from "../constants/skills.mjs";
 import { SKILL_SPECIALIZATIONS } from "../constants/skill-specializations.mjs";
 import { SKILL_RANKS } from "../constants/characteristics.mjs";
 import { isFeatureEnabled } from "../constants/features.mjs";
-import { registerPackCache, packEntries, clearGrantedBy, charBonusesToMechanics } from "./origin-shared.mjs";
+import { registerPackCache, packEntries, clearGrantedBy, charBonusesToMechanics, withOriginLock } from "./origin-shared.mjs";
 import { esc } from "../helpers/utils.mjs";
 import { SKIP_MECHANICS_HOOK } from "./races.mjs";
 import { applyItemMechanics } from "./mechanics.mjs";
@@ -71,9 +71,19 @@ export function homeworldSheetContext(actor) {
 
 // ── Применение и очистка ─────────────────────────────────────────────────
 
-/** Всё, что было выдано родным миром, помечено флагом — снимаем разом. */
-export async function clearHomeworld(actor) {
+/** Без замка — только для вызова ИЗНУТРИ уже залоченного applyHomeworld(Picks). */
+async function _clearHomeworldUnlocked(actor) {
   await clearGrantedBy(actor, TAG, actorHomeworldItem(actor));
+}
+
+/**
+ * Всё, что было выдано родным миром, помечено флагом — снимаем разом.
+ * wdbc-gbpe: под тем же замком actor+TAG, что applyHomeworld(Picks) —
+ * прямой вызов (дропдаун листа «— без мира —») не должен гоняться наперегонки
+ * с уже идущим применением того же актора.
+ */
+export async function clearHomeworld(actor) {
+  return withOriginLock(actor, TAG, () => _clearHomeworldUnlocked(actor));
 }
 
 /**
@@ -104,14 +114,19 @@ export async function applyHomeworld(actor, key) {
   if (!key || !hw) { await clearHomeworld(actor); return; }
 
   // Сначала спрашиваем — чтобы отмена не оставила персонажа без прежнего мира.
+  // Замок (wdbc-gbpe) берётся только на сам clear+grant, НЕ на ожидание
+  // Dialog — держать очередь применений на время, пока игрок думает над
+  // диалогом выбора, было бы куда хуже гонки, которую замок чинит.
   let picks = null;
   if (hasChoices(hw)) {
     picks = await promptChoices(hw, actor);
     if (picks === null) return;                       // игрок закрыл окно
   }
 
-  await clearHomeworld(actor);
-  await grantHomeworld(actor, hw, picks || {});
+  await withOriginLock(actor, TAG, async () => {
+    await _clearHomeworldUnlocked(actor);
+    await grantHomeworld(actor, hw, picks || {});
+  });
 }
 
 /** Бросок «Выбрать случайно» — вынесено отдельно: Мастер создания сперва
@@ -136,8 +151,10 @@ export async function applyHomeworldPicks(actor, key, picks) {
   if (!isFeatureEnabled("homeworlds")) return;
   const hw = HOMEWORLD_BY_KEY[key];
   if (!key || !hw) { await clearHomeworld(actor); return; }
-  await clearHomeworld(actor);
-  await grantHomeworld(actor, hw, picks || {});
+  await withOriginLock(actor, TAG, async () => {
+    await _clearHomeworldUnlocked(actor);
+    await grantHomeworld(actor, hw, picks || {});
+  });
 }
 
 /**

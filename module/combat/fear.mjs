@@ -14,7 +14,7 @@ import { resolveKindOutcome }                      from "../rules/kind-outcome.m
 import { rollD100WithReroll }                      from "../rules/test-kind-widget.mjs";
 import { conditionApplyFields, conditionRemoveFields } from "../sheets/tabs/conditions.mjs";
 import { autoTestMods } from "../rules/roll-mods.mjs";
-import { postTestCard, thresholdLine } from "../helpers/test-card.mjs";
+import { postTestCard, rollStatLine } from "../helpers/test-card.mjs";
 import { parseCritEffectPills, critPillsHtml, deathButtonHtml } from "./crit-effect-parser.mjs";
 import { rollMoraleTest }                          from "../rules/morale-test.mjs";
 import { applyLordOfExoditesFailPenalty }          from "./lord-of-exodites.mjs";
@@ -231,8 +231,8 @@ export async function rollShockRecovery(actor) {
 
   await postTestCard(actor, {
     icon: rollIcon("target","#8fd0ff"), title: `Выход из Шока — ${esc(actor.name)}`,
-    threshold: thresholdLine({ label: "WP", base: wp, parts, threshold: eff }),
-    rv, rerollNote,
+    threshold: rollStatLine({ label: "WP", base: wp, parts, threshold: eff, rv }),
+    rerollNote,
     outcome: success
       ? `<span class="roll-success">Успех — Шок снят</span>`
       : `<span class="roll-failure">Провал — всё ещё в Шоке</span>`
@@ -288,9 +288,9 @@ export async function _postFearMsg(actor, header, sub, wp, mod, rv, eff, success
   ];
   await postTestCard(actor, {
     title: `${header}${kindLabel ? ` · ${kindLabel}` : ""} — ${esc(actor.name)}`,
-    threshold: thresholdLine({ prefix: sub, label: "W", base: wp, parts, threshold: eff }),
+    threshold: rollStatLine({ prefix: sub, label: "W", base: wp, parts, threshold: eff, rv }),
     lines: [combinedLine, propsHtml],
-    rv, rerollNote, critLine,
+    rerollNote, critLine,
     outcome: success
       ? `<span class="roll-success">Успех — выстоял</span>`
       : `<span class="roll-failure">Провал — ${dof} ${_degWord(dof)}</span>`,

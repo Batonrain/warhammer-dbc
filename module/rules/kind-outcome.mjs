@@ -93,8 +93,11 @@ export async function resolveKindOutcome(actor, { kind = "base", baseEff, rv, ct
       actor.getFlag("warhammer-dbc", PERSONAL_ADAPTATION_FLAG) ?? [], ctx.targetActor.uuid, game.time?.worldTime ?? 0);
     if (bonus > 0) {
       eff += bonus;
-      personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ` +
-        `${esc(ctx.targetActor.name)} → Порог <b>${eff}</b></div>`;
+      // wdbc-fyvv: НЕ через rollStatLine — эта строка не тест-плашка, а важная
+      // для игрока информация (за что и на сколько вырос Порог, персонаж
+      // копил это скрытно), прятать её за наведением мыши неверно так же, как
+      // и у combinedLine ниже.
+      personalAdaptationLine = `<div class="roll-threshold">🧠 Персональная Адаптация: +${bonus} против ${esc(ctx.targetActor.name)} → Порог <b>${eff}</b></div>`;
     }
   }
   let combinedLine = "";

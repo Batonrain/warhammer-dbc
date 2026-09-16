@@ -57,6 +57,55 @@ describe("ammoName (wdbc-utaw): нить «какой боеприпас дал 
   });
 });
 
+describe("damageFromRating2 (wdbc-cy4z): Toxic — нестандартный урон яда через rating2, дефолт «1d10» сохранён", () => {
+  it("без rating2 — дефолтная формула «1d10» как раньше (старые предметы не меняют поведение)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-damage="1d10"');
+  });
+
+  it("с rating2 (Kurnous Darts: Toxic(PR, 2d10+PR), уже резолвленный PR=4) — rating2 заменяет дефолт", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 4, rating2: "2d10+4" }]), { hit: true });
+    expect(html).toContain('data-wp-damage="2d10+4"');
+  });
+
+  it("rating2 = 0 (falsy) — падает обратно на дефолт «1d10», не на пустую строку", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2, rating2: 0 }]), { hit: true });
+    expect(html).toContain('data-wp-damage="1d10"');
+  });
+});
+
+describe("knockdown (wdbc-zlx7, Force Bolt): условие без testChar — накладывает Ничком безусловно", () => {
+  it("даёт кнопку с condition=prone, без теста (testChar пуст)", () => {
+    const html = buildTargetEffectButtons(props([{ key: "knockdown" }]), { hit: true });
+    expect(html).toContain('data-wp-condition="prone"');
+    expect(html).toContain('data-wp-test-char=""');
+  });
+});
+
+describe("data-wp-required-successes(-size)/data-wp-deg (wdbc-zlx7): плюс к обычным атрибутам кнопки", () => {
+  it("без requiredSuccesses на предмете — атрибуты нулевые/пустые", () => {
+    const html = buildTargetEffectButtons(props([{ key: "shocking" }]), { hit: true, deg: 4 });
+    expect(html).toContain('data-wp-required-successes="0"');
+    expect(html).toContain('data-wp-required-successes-size="0"');
+    expect(html).toContain('data-wp-deg="4"');
+  });
+
+  it("requiredSuccessesScalesSize — несёт базовый порог и флаг масштаба (Force Bolt)", () => {
+    const html = buildTargetEffectButtons(
+      props([{ key: "knockdown", requiredSuccesses: 3, requiredSuccessesScalesSize: true }]),
+      { hit: true, deg: 3 }
+    );
+    expect(html).toContain('data-wp-required-successes="3"');
+    expect(html).toContain('data-wp-required-successes-size="1"');
+    expect(html).toContain('data-wp-deg="3"');
+  });
+
+  it("без deg в опциях (обычная атака, не психосила) — data-wp-deg=\"0\", не падает", () => {
+    const html = buildTargetEffectButtons(props([{ key: "toxic", rating: 2 }]), { hit: true });
+    expect(html).toContain('data-wp-deg="0"');
+  });
+});
+
 describe("provalyDamage: урон «рейтинг×mult + add + Провалы» без кубика", () => {
   it("Bane — mult:0, add:0: кнопка есть, несмотря на отсутствие condition", () => {
     const html = buildTargetEffectButtons(props([{ key: "bane", rating: 3 }]), { hit: true });
