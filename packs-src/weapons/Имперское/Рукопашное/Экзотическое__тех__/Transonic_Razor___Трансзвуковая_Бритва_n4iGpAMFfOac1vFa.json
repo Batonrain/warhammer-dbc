@@ -1,51 +1,41 @@
 {
-  "name": "Nanite Replicator / Нанитный Репликатор",
+  "name": "Transonic Razor / Трансзвуковая Бритва",
   "type": "weapon",
-  "folder": "41PfRYM48BxJYurB",
+  "folder": "I5YnUU7FALBAujS6",
   "system": {
     "description": "",
     "notes": "",
-    "weaponClass": "pistol",
+    "weaponClass": "melee",
+    "itemSize": "2x1",
     "weaponType": "exotic",
-    "range": 30,
+    "range": 1,
     "balance": 0,
-    "grips": "1р",
-    "profileLabel": "",
+    "grips": "1р (Об)",
+    "profileLabel": "Нож",
     "profiles": [],
-    "reload": "†",
+    "reload": "–",
     "magazineCur": 0,
     "magazineMax": 0,
-    "rof_single": 1,
+    "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d10+3",
+    "damage": "1d5+2",
     "damageType": "rending",
     "penetration": 4,
     "quality": "common",
-    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Стрелковое оружие», стр. 188-198)",
-    "availability": 5,
-    "weight": 3,
+    "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 217)",
+    "availability": 1,
+    "weight": 0.3,
     "attackBonus": 0,
-    "special": "Cognis. Linger: ?/1d5. Обойма ∞ (наниты).",
+    "special": "Нож; Хват 1р [Об]; Досягаемость 1",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
       {
-        "key": "blast",
-        "rating": 2
+        "key": "precise"
       },
       {
-        "key": "combi"
-      },
-      {
-        "key": "corrosive",
-        "rating": 2
-      },
-      {
-        "key": "linger"
-      },
-      {
-        "key": "recharge"
+        "key": "resonant"
       }
     ],
     "needsRecharge": false,
@@ -74,10 +64,11 @@
       "vArc": "",
       "standard": false,
       "reloads": 10
-    }
+    },
+    "meleeCategory": "Нож"
   },
-  "_id": "WKT4npNPRSErovD8",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-pistol.svg",
+  "_id": "n4iGpAMFfOac1vFa",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -85,9 +76,12 @@
     "Bh2eMXBlRSXAdCgx": 3
   },
   "flags": {
+    "warhammer-dbc": {
+      "gripsAuto": true
+    },
     "autoanimations": {
-      "id": "8abc979d-8beb-41c7-b1a5-8bd0e457d955",
-      "label": "Нанитный Репликатор",
+      "id": "2e9ad47b-29bf-4e15-9b21-6b82afd3e296",
+      "label": "Трансзвуковая Бритва",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -111,10 +105,10 @@
         "enable": false,
         "playWhen": "0"
       },
-      "menu": "range",
+      "menu": "melee",
       "primary": {
         "video": {
-          "dbSection": "range",
+          "dbSection": "melee",
           "menuType": "weapon",
           "animation": "sword",
           "variant": "01",
@@ -315,8 +309,8 @@
     "systemId": "warhammer-dbc",
     "systemVersion": "0.1.0",
     "createdTime": 1784645463257,
-    "modifiedTime": 1784645463257,
+    "modifiedTime": 1784646561800,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!WKT4npNPRSErovD8"
+  "_key": "!items!n4iGpAMFfOac1vFa"
 }

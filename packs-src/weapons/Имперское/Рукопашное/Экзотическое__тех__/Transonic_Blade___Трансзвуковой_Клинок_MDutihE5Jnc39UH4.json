@@ -1,17 +1,16 @@
 {
-  "name": "Transonic Razor / Транзвуковая Бритва",
+  "name": "Transonic Blade / Трансзвуковой Клинок",
   "type": "weapon",
   "folder": "I5YnUU7FALBAujS6",
   "system": {
     "description": "",
     "notes": "",
     "weaponClass": "melee",
-    "itemSize": "2x1",
     "weaponType": "exotic",
-    "range": 1,
-    "balance": 0,
+    "range": 3,
+    "balance": 1,
     "grips": "1р (Об)",
-    "profileLabel": "Нож",
+    "profileLabel": "Меч",
     "profiles": [],
     "reload": "–",
     "magazineCur": 0,
@@ -19,21 +18,18 @@
     "rof_single": 0,
     "rof_semi": 0,
     "rof_full": 0,
-    "damage": "1d5+2",
+    "damage": "1d10+2",
     "damageType": "rending",
     "penetration": 4,
     "quality": "common",
     "bookSource": "DoomBC — Основная книга, IV. Арсенал («Рукопашное оружие», стр. 217)",
     "availability": 1,
-    "weight": 0.3,
+    "weight": 1.2,
     "attackBonus": 0,
-    "special": "Нож; Хват 1р [Об]; Досягаемость 1",
+    "special": "Меч; Хват 1р [Об]; Досягаемость 1–3",
     "equipped": false,
     "loadedAmmoId": "",
     "weaponProps": [
-      {
-        "key": "precise"
-      },
       {
         "key": "resonant"
       }
@@ -65,10 +61,10 @@
       "standard": false,
       "reloads": 10
     },
-    "meleeCategory": "Нож"
+    "meleeCategory": "Меч"
   },
-  "_id": "n4iGpAMFfOac1vFa",
-  "img": "systems/warhammer-dbc/assets/item-icons/weapon-knife.svg",
+  "_id": "MDutihE5Jnc39UH4",
+  "img": "systems/warhammer-dbc/assets/item-icons/weapon-melee.svg",
   "effects": [],
   "sort": 0,
   "ownership": {
@@ -80,8 +76,8 @@
       "gripsAuto": true
     },
     "autoanimations": {
-      "id": "2e9ad47b-29bf-4e15-9b21-6b82afd3e296",
-      "label": "Транзвуковая Бритва",
+      "id": "a56d5aa8-1bca-4c5f-9f35-940e8c7c335a",
+      "label": "Трансзвуковой Клинок",
       "levels3d": {
         "type": "explosion",
         "data": {
@@ -312,5 +308,5 @@
     "modifiedTime": 1784646561800,
     "lastModifiedBy": "Bh2eMXBlRSXAdCgx"
   },
-  "_key": "!items!n4iGpAMFfOac1vFa"
+  "_key": "!items!MDutihE5Jnc39UH4"
 }

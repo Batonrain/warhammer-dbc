@@ -1,5 +1,5 @@
 {
-  "name": "Psylencer / Псайлгушитель",
+  "name": "Psylencer / Псиглушитель",
   "type": "weapon",
   "folder": "w5Z1gtrovQkaFTiW",
   "system": {
@@ -80,7 +80,7 @@
   "flags": {
     "autoanimations": {
       "id": "8dea8b20-ffa4-4538-bd3e-1e86a322fdf8",
-      "label": "Псайлгушитель",
+      "label": "Псиглушитель",
       "levels3d": {
         "type": "explosion",
         "data": {
