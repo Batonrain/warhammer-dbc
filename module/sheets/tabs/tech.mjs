@@ -33,6 +33,14 @@ export async function activateTechMiracle(actor, item) {
   const cog      = actor.system.cognition || { value: 0, max: 0 };
   const en       = actor.system.energy || { value: 0, max: 0 };
 
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // за доп. 10 сек/1м мононити персонаж лишается возможности творить
+  // техночудеса — тот же гейт, что module/sheets/tabs/psychic.mjs у психосил.
+  if (actor.system.conditions?.mimicWireBlocksPowers) {
+    ui.notifications.warn(`«${item.name}»: мононить блокирует техночудеса.`);
+    return;
+  }
+
   if (cogCost > (cog.value || 0)) {
     ui.notifications.warn(`Недостаточно Когниции: нужно ${cogCost}, есть ${cog.value || 0}.`);
     return;

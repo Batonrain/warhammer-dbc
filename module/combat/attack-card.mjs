@@ -115,6 +115,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
       data-crippling="${wp.cripplingRating ?? 0}"
       data-piercing="${wp.piercing ? 1 : 0}"
       data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
+      data-haywire-dmg2="${wp.haywireDamage2 || ""}"
       data-through-shot="${wp.throughShot ? 1 : 0}"` : "";
   // Гравитонное (wdbc-wlwf): только на Blast/Spray-шаблоне, взаимоисключимо с
   // Остаётся (Linger) — если у оружия почему-то есть оба, приоритет у Linger
@@ -198,6 +199,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
     data-crippling="${wp.cripplingRating ?? 0}"
     data-piercing="${wp.piercing ? 1 : 0}"
     data-haywire="${wp.haywire ? (wp.haywireRating ?? 0) : ""}"
+    data-haywire-dmg2="${wp.haywireDamage2 || ""}"
     data-through-shot="${wp.throughShot ? 1 : 0}"
     ${toHorde ? `data-force-horde="${toHorde}"` : ""}>
     Применить урон ${i + 1}: <b>${d.total}</b> → ${toHorde ? "Орду (прикрыла цель)" : d.loc}${
@@ -245,7 +247,7 @@ function applyDamageSection(hits, { wp, pen, damageType, damageSubtype = "", wea
  */
 export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = false, targetIsWalker = false, note = "",
                           forcedDefenceReroll = "", dodgeModRecoil = null }, { wp, attackerUuid = "", itemUuid = "", hitsCount = 1, pool = null,
-                          swarm = null, isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
+                          swarm = null, hiddenThreat = false, isMelee = false, burst = false, attackerIsHorde = false, hitLocLabel = "" }) {
   const cannotDodge = dodgeMod <= -900;
   const cannotParry = wp.flexible || parryMod <= -900;
   const canCompress = !targetIsVehicle && isCompressibleLocation(hitLocLabel);
@@ -344,6 +346,16 @@ export function defenseSection({ dodgeMod = 0, parryMod = 0, targetIsVehicle = f
           ? `<button class="wh-swarm-btn" type="button" data-attacker-uuid="${attackerUuid}"
                title="Дар «Эфирная Стая»/Ethereal Swarm: тест Cor+0 (не Реакция) — Успех переносит ЭТО попадание на призрачного Крикуна (осталось ${swarm.count}), изгоняя его.">
                👻 Эфирная Стая (${swarm.count})
+             </button>`
+          : ""}
+        ${hiddenThreat
+          ? `<button class="wh-hidden-threat-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="psyniscience"
+               title="Дар «Сокрытая Угроза»/Hidden Threat: эта атака Незримая — тест Пси-чутья на засечение получает −50. Не Реакция, не блокирует Уклонение (wdbc-1rno.2).">
+               🔮 Засечь (Пси-чутьё −50)
+             </button>
+             <button class="wh-hidden-threat-detect-btn" type="button" data-attacker-uuid="${attackerUuid}" data-skill="techUse"
+               title="Дар «Сокрытая Угроза»/Hidden Threat: эта атака Незримая — тест Ноосканирования на засечение получает −50. Не Реакция, не блокирует Уклонение (wdbc-1rno.2).">
+               🔮 Засечь (Ноосканирование −50)
              </button>`
           : ""}
       </div>
@@ -465,6 +477,11 @@ export function attackCard({
   // истекла. Считается вызывающей стороной (attack.mjs) — этот модуль,
   // как и для pool выше, документов Foundry не касается.
   swarm = null,
+  // Сокрытая Угроза / Hidden Threat (wdbc-1rno.1, rules/hidden-threat.mjs) —
+  // true, если у АТАКУЮЩЕГО была снята пометка «следующая атака Незримая»
+  // именно на этой атаке (снятие — в attack.mjs, этот модуль документов
+  // Foundry не касается, как и pool/swarm выше).
+  hiddenThreat = false,
   defense = {}, notes = {}, blocks = {}
 } = {}) {
   const hitCountNote = hitsCount > 1 ? ` (${hitsCount} попадани${hitsCount < 5 ? "я" : "й"})` : "";
@@ -652,7 +669,7 @@ export function attackCard({
       // две кнопки сразу — легко сжечь Реакцию там, где платить не надо
       // (wdbc-09t). У рукопашной Spray не бывает, поэтому гейт по autoHit.
       (hit && !isSprayAuto)
-        ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
+        ? defenseSection(defense, { wp, attackerUuid, itemUuid, hitsCount, pool, swarm, hiddenThreat, isMelee, burst, attackerIsHorde, hitLocLabel }) : "",
       applyDamageSection(hit ? hits : [], { wp, pen, damageType, damageSubtype, weaponName, actorName,
                                             vehicleSide, isMelee, burst, weaponRange,
                                             attackerUuid, itemUuid, hordeHits }),

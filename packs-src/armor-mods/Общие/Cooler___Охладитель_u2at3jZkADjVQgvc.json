@@ -5,7 +5,7 @@
   "folder": "vAuHo2O7CxjhPObv",
   "system": {
     "description": "Контуры охлаждения: игнор негативных эффектов Горения 1d5 Ходов, если пламя наносит не больше 1d10 урона.",
-    "notes": "Не смоделировано: игнор эффектов Горения при уроне ≤1d10 — условный порог урона источника без готовой точки входа (Горение как статус не несёт «силу» урона для сравнения).",
+    "notes": "Механизировано (wdbc-3pv5): игнор всех негативных эффектов Горения 1d5 Ходов при уроне поджигания ≤1d10 — flags.mechanics, kind:\"burningGrace\" (без полей — сама запись флаг, общая с щитом «Frozen Heart / Морозное Сердце»), живой запрос И автоматика разом (без кнопки — у способности нет цены/риска отказа), читается combat/condition-ticks.mjs::ensureBurningGrace из Паники Горения (начало Хода) и тика Горения (конец Хода). system.conditions.burningSourceDamage — урон поджигания — выставляется в момент наложения Горения (module/hooks.mjs::_applyWeaponPropEffect у свойства Flame, module/combat/crit-effect-parser.mjs::applyCritEffectPill у пилюли «Загорается» крит-таблицы, где явного числа книга не даёт — используется непоглощённый урон самого попадания).",
     "category": "armor",
     "modGroup": "general",
     "requirement": "Полный комплект со свойством Sealed. Установка: Tech-Use+0 или Trade (Armourer)+20 (если не с бронёй).",
@@ -41,7 +41,23 @@
   },
   "flags": {
     "warhammer-dbc": {
-      "migratedEffect": true
+      "migratedEffect": true,
+      "mechanics": [
+        {
+          "id": "coolerGroup",
+          "operator": "AND",
+          "entries": [
+            {
+              "id": "cooler-burning-grace",
+              "kind": "burningGrace",
+              "when": {
+                "negate": false,
+                "conditions": []
+              }
+            }
+          ]
+        }
+      ]
     }
   },
   "_stats": {

@@ -16,8 +16,11 @@ import { resolveArmorAbsorptionAP, breachArmorAtLocation } from "./armor-propert
 import { applyWoundLoss, ablativeAbsorb } from "../rules/wounds.mjs";
 import { CAST_OUT_OF_DEATH_CAPABILITY, CAST_OUT_OF_DEATH_FLAG, scheduleCastOutOfDeathRegen } from "../rules/cast-out-of-death.mjs";
 import { eaterOfPainHoldersNear } from "../rules/eater-of-pain.mjs";
+import { VOLUNTEER_ACTOR_CAPABILITY, isHarlequinsKissItem } from "../rules/volunteer-actor.mjs";
+import { MAGGOT_PARASITE_CAPABILITY } from "../rules/maggot-parasite.mjs";
 import { isFrontArcHit, resolveAttackerToken } from "./facing.mjs";
 import { hasRuleFlag } from "../rules/flags.mjs";
+import { redirectHitLocationForMachine } from "../rules/bronze-myrmidon.mjs";
 import { hasWeaponPropertyImmunity } from "./weapon-properties.mjs";
 import { PACIFISM_CAPABILITY, PACIFISM_ATTACKED_FLAG } from "./pacifism.mjs";
 import { QUICK_TO_ANGER_CAPABILITY, rollQuickToAngerTest } from "../rules/quick-to-anger.mjs";
@@ -27,7 +30,7 @@ import { ADAPTATION_CAPABILITY, maybeGrantAdaptationBonus, adaptationBonusFor } 
 import { entropyArmourLoss } from "./touch-of-entropy.mjs";
 import { processNurglingInfestation } from "./nurgling-infestation.mjs";
 import { throughShotPierces, throughShotReductionDie } from "./through-shot.mjs";
-import { activeAblativeArmorMods } from "./armor-mods.mjs";
+import { activeAblativeArmorMods, getInstalledArmorMods } from "./armor-mods.mjs";
 import { ablativeApAfterHit } from "../rules/ablative-ap.mjs";
 import { determinationToFightReduction, determinationToFightWsReduction } from "../rules/determination-to-fight.mjs";
 import { justTheLightReduction } from "./just-the-light.mjs";
@@ -153,6 +156,8 @@ const HAYWIRE_TABLE = [
   { max: 6,  label: "Сильное Нарушение",      text: "Действия с хай-тек снаряжением −20. Рукопашное оружие — как примитивное. SPD силовой брони −3. Машины Оглушены, пока не покинут поле." },
   { max: 8,  label: "Мёртвая Зона",           text: "Хай-тек снаряжение отключено: стрелковое не работает, рукопашное — как примитивное, силовая броня отключена, бионика отключена (штрафы по ГМу). Машины Беспомощны." },
   { max: 10, label: "Длительная Мёртвая Зона", text: "Как Мёртвая Зона, но на два Хода." },
+  // Машины 1d5+1 E Dmg — дефолт (стр. 168); rating2 предмета (wdbc-cy4z:
+  // Death of Machines «2d10+5») подставляется в текст вместо него ниже.
   { max: Infinity, label: "ЭМИ Шторм",        text: "Как Мёртвая Зона + Качество электроники −1 (или отключение ниже Poor.Q), стрелковое Заклинивает, Машины — 1d5+1 непоглощ. E Dmg." }
 ];
 
@@ -160,17 +165,23 @@ const HAYWIRE_TABLE = [
  * ЭМИ: бросок 1d10+X по таблице (стр. 168). Применяется только к персонажам/
  * тварям — Техника (actor.type "vehicle") уходит через applyDamageToVehicle
  * ДО этой функции (см. applyDamageToActor), у неё нет system.absorption/
- * этой ветки урона вовсе; урон «Машинам» по столбцу 11+ (1d5+1 E) — ручное
- * применение ГМом через обычную кнопку «Применить урон», как и остальные
- * эффекты таблицы (действия/SPD/Заклинивание/деградация Качества).
+ * этой ветки урона вовсе; урон «Машинам» по столбцу 11+ (1d5+1 E, либо
+ * damage2 предмета, если задан) — ручное применение ГМом через обычную
+ * кнопку «Применить урон», как и остальные эффекты таблицы (действия/SPD/
+ * Заклинивание/деградация Качества) — damage2 не роллится и не применяется
+ * автоматически, только заменяет текст-подсказку (симметрично дефолту).
  */
-async function _applyHaywire(actor, rating) {
+async function _applyHaywire(actor, rating, damage2 = "") {
   // X у Haywire — РАДИУС поля в метрах, к мощности не прибавляется:
   // «Изначальная мощность ЭМИ-поля определяется броском 1d10» (стр. 168).
   const roll = await new Roll("1d10").evaluate();
   const total = roll.total;
   const tier = HAYWIRE_TABLE.find(t => total <= t.max);
-  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${tier.text}</div>`;
+  const isStorm = tier.max === Infinity;
+  const text = (isStorm && damage2)
+    ? tier.text.replace(/1d5\+1 непоглощ\. E Dmg\.$/, `${damage2} непоглощ. E Dmg (книжный нестандартный урон этого предмета).`)
+    : tier.text;
+  return `<div class="dmg-tb-note">📡 ЭМИ${rating ? ` (радиус ${rating} м)` : ""}: 1d10=<b>${total}</b> → <b>${tier.label}</b>. ${text}</div>`;
 }
 
 // ─── Маппинг места попадания → поле брони актора ──────────────────────────────
@@ -229,6 +240,51 @@ function _hasShieldArmorGate(item) {
   for (const g of groups) for (const e of g?.entries || [])
     if (e?.kind === "shieldArmorGate") return true;
   return false;
+}
+
+/** Есть ли на предмете запись Конструктора данного kind (общий сканер групп). */
+function _hasMechKind(item, kind) {
+  const groups = item.getFlag?.("warhammer-dbc", "mechanics") || [];
+  for (const g of groups) for (const e of g?.entries || [])
+    if (e?.kind === kind) return true;
+  return false;
+}
+
+/**
+ * kind:"burningGrace" (wdbc-3pv5, Cooler/Охладитель + Морозное Сердце,
+ * «даёт улучшение Cooler, пока активен») — присутствие записи на активном
+ * предмете и есть флаг, как shieldArmorGate выше, но НЕ ограничена
+ * type:"forcefield": Cooler — armorMod, Frozen Heart — forcefield, а книжный
+ * эффект («игнорировать все негативные эффекты Горения 1d5 Ходов, если
+ * пламя наносит не больше 1d10 урона») у обоих один и тот же, поэтому читает
+ * оба типа предметов одним геттером вместо двух копий. armorMod проверяется
+ * через getInstalledArmorMods (armor-mods.mjs) — тот уже знает про
+ * activatable/active и надетую ли броня, повторно эту логику здесь не пишем.
+ *
+ * Возвращает САМ ПРЕДМЕТ (не булево) — wdbc-lm83: живая проверка нашла, что
+ * заметка в чате звала окно «Cooler» даже когда сработал только Frozen Heart
+ * без Cooler на акторе, потому что раньше здесь возвращался голый true/false
+ * и имя предмета неоткуда было взять. hasBurningGraceCapability ниже —
+ * тонкая булева обёртка для мест, которым нужен только факт.
+ * Читает module/combat/condition-ticks.mjs::ensureBurningGrace.
+ */
+export function burningGraceSourceItem(actor) {
+  for (const item of actor?.items ?? []) {
+    if (item.type === "forcefield" && item.system?.equipped && item.system?.status === "active"
+      && _hasMechKind(item, "burningGrace")) return item;
+  }
+  for (const armor of actor?.items ?? []) {
+    if (armor.type !== "armor" || !armor.system?.equipped) continue;
+    for (const mod of getInstalledArmorMods(actor, armor)) {
+      if (_hasMechKind(mod, "burningGrace")) return mod;
+    }
+  }
+  return null;
+}
+
+/** Булев факт способности, без имени предмета — см. burningGraceSourceItem выше. */
+export function hasBurningGraceCapability(actor) {
+  return !!burningGraceSourceItem(actor);
 }
 
 /**
@@ -559,6 +615,21 @@ export async function applyDamageToActor(actor, damageData) {
   // в торс — общий расчёт зон брони и Критических Ран ей не подходит.
   if (actor.type === "horde") return applyDamageToHorde(actor, damageData);
 
+  // Стазис (wdbc-1rno, Fruit of Flesh/Плод Плоти, субмутация «Оглушение»):
+  // «абсолютно неуязвимы... даже пинок Титана неспособен как-то повредить»
+  // — единственный TOTAL_IMMUNITY-гейт в конвейере урона, до брони/Раней/
+  // Крит-эффектов и до любых Реакций-щитов (immune ко всему без исключений
+  // по книжной цитате, не только к конкретному типу/подвиду урона).
+  if (actor.system?.conditions?.stasis) {
+    return ChatMessage.create(ChatMessage.applyRollMode({
+      speaker: { alias: "Система" },
+      content: `<div class="wh-roll-result">
+        <div class="roll-header">${rollIcon("warp", "#8fd0ff")}Стазис — ${esc(actor.name)}</div>
+        <div class="roll-outcome"><span class="roll-success">Заморожен во времени — попадание не наносит никакого урона.</span></div>
+      </div>`
+    }, game.settings.get("core", "rollMode")));
+  }
+
   // «Избегает атак Орды как одиночная цель» (wdbc-gzuf, Серый Человек) —
   // цель ещё не была известна на момент броска Орды (magDiceBonus едет
   // отдельным числом от horde-sheet.mjs через hooks.mjs), поэтому кубы
@@ -579,7 +650,7 @@ export async function applyDamageToActor(actor, damageData) {
     damageType,      // строка — "impact", "rending" и т.д.
     damageSubtype = "", // строка — подвид в скобках книги: "crushing"/"fragmentation"/
                          // "electrical"/"flame"/"laser"/"toxic"/"" (wdbc-q0q8, DAMAGE_SUBTYPES)
-    hitLocation,     // строка — "Голова", "Торс" и т.д.
+    hitLocation: rawHitLocation, // строка — "Голова", "Торс" и т.д. (до редиректа Bronze Myrmidon ниже)
     attackerName,    // строка
     attackerUuid = "", // Выстрел Насквозь: нужен токен стрелка для геометрии луча (wdbc-wlwf)
     weaponName,      // строка
@@ -599,11 +670,18 @@ export async function applyDamageToActor(actor, damageData) {
     piercing = false,    // Проникающее: снаряд в ране при непоглощ. уроне (wdbc-plsf)
     haywireActive = false, // ЭМИ: свойство присутствует (Haywire(0) — валидный рейтинг, wdbc-plsf)
     haywireRating = 0,   // ЭМИ (X): бросок по таблице при попадании (wdbc-plsf)
+    haywireDamage2 = "", // ЭМИ: нестандартный урон Машине на тир «ЭМИ Шторм» вместо «1d5+1» (wdbc-cy4z)
     throughShot = false, // Выстрел Насквозь: свойство присутствует (wdbc-wlwf)
     ignoreArmour = false, // Заломить (стр. 12, Борьба): урон "игнорирующий броню" — AP=0, T.b всё равно поглощает
     blast = 0,   // Взрывное(X): уже в damageData для доп. попаданий по Орде — Странной Неуязвимости нужен сам факт свойства (wdbc-1rno)
     spray = false // Распыление: свойство присутствует (wdbc-1rno)
   } = damageData;
+
+  // Bronze Myrmidon (wdbc-1rno.1, rules/bronze-myrmidon.mjs): у актора с
+  // активным Трейтом Machine (Ярость) попадание в Сочленение/Глаз резолвится
+  // ДАЛЬШЕ (AP, крит-таблица) как попадание в Руку/Голову — редирект целиком,
+  // одной точкой, а не патчем каждого места, читающего hitLocation.
+  const hitLocation = redirectHitLocationForMachine(rawHitLocation, actor);
 
   // ── Бросок щита (если есть активный) ─────────────────────────────────────
   // ignoreShield (Flush/Варп) — щит не катится совсем; sanctified — катится, но
@@ -879,6 +957,42 @@ export async function applyDamageToActor(actor, damageData) {
   const castOutOfDeathBlocksDeath = !!critEffect && textAssertsDeath(critEffect)
     && !warpSoak && hasRuleFlag(actor, CAST_OUT_OF_DEATH_CAPABILITY);
 
+  // Volunteer Actor/Доброволец Актёр (wdbc-ux8a): вместо «Констатировать
+  // смерть» — кнопка «Поцелуй Мимика», когда крит-эффект утверждает смерть,
+  // атакующий несёт Талант и удар нанесён именно Поцелуем Арлекина. Silent
+  // Elimination/атака врасплох со спины НЕ проверяются кодом (нет детектора
+  // «из скрытности»/«со спины» в системе) — стол подтверждает эти условия
+  // самим кликом, тот же честный уровень автоматизации, что у остальных
+  // находок тикета.
+  let kissOfMimicHtml = "";
+  if (critEffect && textAssertsDeath(critEffect) && !warpSoak && attackerUuid && weaponUuid) {
+    const attackerActor = await fromUuid(attackerUuid).catch(() => null);
+    const weaponItem = await fromUuid(weaponUuid).catch(() => null);
+    if (attackerActor && hasRuleFlag(attackerActor, VOLUNTEER_ACTOR_CAPABILITY) && isHarlequinsKissItem(weaponItem)) {
+      kissOfMimicHtml = `<div class="wh-crit-pills">
+        <button type="button" class="wh-kiss-of-mimic-btn" data-actor-uuid="${esc(actor.uuid)}"
+          data-attacker-uuid="${esc(attackerUuid)}"
+          title="Volunteer Actor: вместо смерти — 1 Рана + мононить + контроль (стол подтверждает Silent Elimination/врасплох со спины)">
+          🕸️ Поцелуй Мимика — захват вместо смерти</button>
+      </div>`;
+    }
+  }
+
+  // Maggot Parasite/Опарыш-Паразит (Нургл, wdbc-ux8a): вместо смерти самого
+  // носителя — «Опарыш выскакивает» (свободное действие книги), начинает
+  // контакт Трейта Parasite с целью в 3м (module/apps/parasite-trait.mjs::
+  // beginParasiticContact — контакт/длительность/срыв, не мгновенный захват:
+  // переоценка от 15.09.2026, полный книжный текст Трейта). Проверяется
+  // capability ЖЕРТВЫ (actor), не атакующего — в отличие от Поцелуя Мимика.
+  let maggotParasiteHtml = "";
+  if (critEffect && textAssertsDeath(critEffect) && !warpSoak && hasRuleFlag(actor, MAGGOT_PARASITE_CAPABILITY)) {
+    maggotParasiteHtml = `<div class="wh-crit-pills">
+      <button type="button" class="wh-parasite-begin-contact-btn" data-actor-uuid="${esc(actor.uuid)}"
+        title="Maggot Parasite: вместо смерти — начать контакт Трейта Parasite с целью в 3м">
+        🪱 Опарыш выскакивает — начать заражение цели</button>
+    </div>`;
+  }
+
   // Eater of Pain/Пожиратель Боли (Слаанеш, wdbc-1rno): «любое разумное
   // существо в пределах Cor.b м [от носителя] получает Крит.Эффект» — не
   // обязательно САМ носитель, actor здесь — жертва, чей крит их и накормил.
@@ -940,7 +1054,7 @@ export async function applyDamageToActor(actor, damageData) {
     propEffectNotes.push(await _applyCrippling(actor, armorKey, hitLocation, damageType, cripplingRating));
   }
   if (haywireActive && !hasWeaponPropertyImmunity(actor, "haywire")) {
-    propEffectNotes.push(await _applyHaywire(actor, haywireRating));
+    propEffectNotes.push(await _applyHaywire(actor, haywireRating, haywireDamage2));
   }
 
   // ── Сообщение в чат ──────────────────────────────────────────────────────
@@ -1019,10 +1133,10 @@ export async function applyDamageToActor(actor, damageData) {
     <div class="dmg-critical-block">
       <b>Критический урон</b> · отрицательные раны: <b>${newCritical}</b>
       ${critEffect ? `<div class="roll-crit-effect">${critEffect}</div>` : ""}
-      ${critPillsHtml(critPills, actor.uuid)}
-      ${castOutOfDeathBlocksDeath
+      ${critPillsHtml(critPills, actor.uuid, netDamage)}
+      ${maggotParasiteHtml || kissOfMimicHtml || (castOutOfDeathBlocksDeath
         ? `<div class="wh-crit-pills roll-threshold">💀 Изгнанный из Смерти: не может умереть от этого — Раны сами вернутся к −7 в течение 7ч (Календарь).</div>`
-        : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : "")}
+        : (critEffect ? deathButtonHtml(critEffect, actor.uuid, weaponUuid) : ""))}
       ${eaterOfPainButtons ? `<div class="wh-crit-pills">${eaterOfPainButtons}</div>` : ""}
     </div>` : "";
 

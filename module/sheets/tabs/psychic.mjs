@@ -7,6 +7,7 @@ import { CHARACTERISTICS } from "../../constants/characteristics.mjs";
 import { SKILLS_DEF } from "../../constants/skills.mjs";
 import { DAMAGE_TYPES } from "../../constants/items.mjs";
 import { hasRuleFlag } from "../../rules/flags.mjs";
+import { isPossessedByParasite } from "../../rules/parasite-trait.mjs";
 import { requiredMarks, MARK_LABELS } from "../../constants/talent-requirements.mjs";
 import { dreadnoughtOf, hasOsirisMatrix } from "../../rules/dreadnought.mjs";
 import { highSorceryManifestBlocked } from "../../rules/perfect-sorcerer.mjs";
@@ -17,7 +18,8 @@ import { WEAPON_PROPERTIES } from "../../constants/weapon-properties.mjs";
 import { rollIcon } from "../../constants/roll-icons.mjs";
 import { _degWord, resolveCharFormula, esc } from "../../helpers/utils.mjs";
 import { resolveWeaponPropsList, buildTargetEffectButtons, buildPropertyChatBlock,
-         aggregateAuto, applyDamageDiceMods, resolvePropRatings } from "../../combat/weapon-properties.mjs";
+         aggregateAuto, applyDamageDiceMods, resolvePropRatings, resolvePropRating,
+         filterPropsBySuccesses } from "../../combat/weapon-properties.mjs";
 import { attackThreshold } from "../../combat/attack-threshold.mjs";
 import { psychicHitCount } from "../../combat/attack-outcome.mjs";
 import { rollExtremeDamage } from "../../combat/attack.mjs";
@@ -34,7 +36,7 @@ import { hasRuneMagic, runeMax, runeValue, runeCostForPower, runeCostTotal,
          runeLearnInfo, improvisedRuneCostUpdates,
          preparedRuneDiscount, markPreparedRuneUsed } from "../../rules/sigillite-runes.mjs";
 import { postTestCard, outcomeHtml } from "../../helpers/test-card.mjs";
-import { mechFormulaTotalSafe, mechRollData } from "../../rules/mech-formula.mjs";
+import { mechRollData } from "../../rules/mech-formula.mjs";
 import { runForceBladeShop, forceBladeShopClear } from "../../apps/force-blade-choice.mjs";
 
 /**
@@ -164,6 +166,19 @@ export function showManifestDialog(actor, item) {
     ui.notifications.warn(
       `«${item.name}»: психосилы Высшего Колдовства манифестируют только псайкеры-хаоситы ` +
       "(корбук, запись дисциплины).");
+    return;
+  }
+  // Мононить «Поцелуй Мимика» (Volunteer Actor/Доброволец Актёр, wdbc-ux8a):
+  // за доп. 10 сек/1м мононити персонаж лишается возможности манифестировать
+  // психосилы/техночудеса — тот же гейт-приём, что Высшее Колдовство выше.
+  if (actor.system.conditions?.mimicWireBlocksPowers) {
+    ui.notifications.warn(`«${item.name}»: мононить блокирует манифестацию психосил.`);
+    return;
+  }
+  // Parasite/Паразит (Трейт — общий, wdbc-ux8a): хост под полным контролем
+  // паразита «не может использовать психосилы» — тот же гейт-приём.
+  if (isPossessedByParasite(actor)) {
+    ui.notifications.warn(`«${item.name}»: тело под контролем паразита — собственные психосилы недоступны.`);
     return;
   }
   const sys      = item.system;
@@ -660,17 +675,21 @@ export async function executePsychotest(actor, item, opts) {
   const rangePR  = clampPR(opts.rangePR  || 0);
   const aspectsDiffer = damagePR !== ePR || rangePR !== ePR;
 
-  // wdbc-5kd: Пробитие основного профиля — формула, не константа («Разрушение»
-  // Pen=PR, «Сверхъестественный Шторм» Pen=PR×3, в данных — «PR*3»). «PR»
-  // подставляется тем же эПР урона, что и damage чуть ниже (damagePR — тот же
-  // аспект, который игрок мог снизить независимо от психотеста): Пробитие
-  // профиля атаки обязано падать вместе с уроном, а не считаться от «сырого»
-  // текущего ПР персонажа. Остаток (число, +, *, скобки) считает тот же
-  // безопасный парсер, что и Рейтинг записи Конструктора (mech-formula.mjs) —
-  // дайсы Пробитию не нужны, поэтому не через Roll, как damage.
-  const resolvePen = formula =>
-    mechFormulaTotalSafe(String(formula ?? "0").replace(/\bPR\b/gi, damagePR));
-
+  // wdbc-5kd/wdbc-ufns: Пробитие основного профиля — формула, не константа
+  // («Разрушение» Pen=PR, «Сверхъестественный Шторм» Pen=PR×3, «Вихрь Рока»
+  // Pen=2×Х где Х=½Успехи(окр.▲) — в данных «2*ceil(СУ/2)»). Раньше здесь был
+  // собственный резолвер (голый \bPR\b-replace + mechFormulaTotalSafe) —
+  // теперь то же самое место, что читает rating свойств оружия психосилы
+  // (combat/weapon-properties.mjs::resolvePropRating): один резолвер формул на
+  // damage/pen/rating, а не три независимых копии одной и той же подстановки
+  // (та же причина, что у PR-подстановки в дайс-строках, wdbc-cy4z/wdbc-wv8u —
+  // разошедшиеся копии рано или поздно расходятся МЕЖДУ собой, не только с
+  // документацией). Раньше «PR» подставлялся, «СУ»/Cor.b — нет; теперь Пробитие
+  // психосилы умеет то же самое, что Рейтинг записи Конструктора. Формула не
+  // резолвится здесь СРАЗУ (deg ещё не известна, психотест ещё не брошен) —
+  // atk.pen хранит СЫРУЮ формулу/число, реальное число считается ниже, вместе
+  // с atkProps (там же уже есть {deg, rollData}).
+  //
   // ── Профиль атаки и вариация броска ────────────────────────────────────────
   // Если выбран доп. профиль — берём его урон/тип/пробитие/свойства/урон-в-хар-ку,
   // иначе основной. Вариация добавляет свой модификатор к психотесту.
@@ -686,7 +705,7 @@ export async function executePsychotest(actor, item, opts) {
     label:     profile.label || "профиль"
   } : {
     damage:    sys.damage, damageType: sys.damageType || "energy",
-    pen:       resolvePen(sys.penetration),
+    pen:       sys.penetration,
     props:     sys.weaponProps || [],
     charStat:  sys.charDamageStat || "",
     charForm:  sys.charDamageFormula || "",
@@ -804,8 +823,32 @@ export async function executePsychotest(actor, item, opts) {
   // wdbc-kifa: плюс «СУ» книжного «Успехи» (deg этого психотеста, известна
   // только сейчас, после броска) и Cor.b/др. бонусы характеристик через
   // общий mechRollData(actor) — Felling(Cor.b) у Infernal Gaze.
-  const atkProps   = resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR,
-    { deg, rollData: mechRollData(actor) });
+  // wdbc-zlx7: свойства с requiredSuccesses (Neural Storm «3+ Успеха —
+  // Shocking/Haywire», Fire Barrage/Bolt/Storm «N+ Успехов — поджигает»)
+  // отсекаются здесь по deg ЭТОГО психотеста — ниже aggregateAuto/
+  // buildTargetEffectButtons их уже не видят вовсе, как будто не было в
+  // weaponProps.
+  //
+  // wdbc-ufns: «Х» (Vortex of Doom: Х=½Успехи(окр.▲), используется сразу в
+  // damage/pen/Blast-rating/Linger-rating) — считается ОДИН раз здесь (та же
+  // resolvePropRating, что и rating ниже — sys.xFormula пишется тем же
+  // языком формул, «ceil(СУ/2)») и передаётся дальше через rollOpts.x во ВСЕ
+  // резолверы этого предмета. Пусто у sys.xFormula → xValue=null → «Х» нигде
+  // не подставляется, поведение любого другого предмета не меняется.
+  const xValue = sys.xFormula
+    ? Number(resolvePropRating(sys.xFormula, damagePR, { deg, rollData: mechRollData(actor) })) || 0
+    : null;
+  const rollOpts = { deg, rollData: mechRollData(actor), ...(xValue != null ? { x: xValue } : {}) };
+  const atkProps   = filterPropsBySuccesses(
+    resolvePropRatings(resolveWeaponPropsList(atk.props), damagePR, rollOpts),
+    deg
+  );
+  // wdbc-5kd/wdbc-ufns: тот же резолвер, что у rating выше — Пробитие никогда
+  // не дайс (см. комментарий у atk.pen), поэтому дайс-ветка resolvePropRating
+  // (вернула бы строку) здесь отбрасывается Number(...)||0, как и раньше
+  // отбрасывала mechFormulaTotalSafe молчаливым 0 на «d» вне SAFE_REST — не
+  // регрессия.
+  const atkPen = Number(resolvePropRating(atk.pen, damagePR, rollOpts)) || 0;
   // Тот же движок, что читает system.weaponProps у обычного оружия
   // (module/combat/attack.mjs): без него Рвущее/Проверенное/Экстремальный урон
   // и подобные свойства атаки психосилы были только текстовой памяткой ниже,
@@ -814,8 +857,13 @@ export async function executePsychotest(actor, item, opts) {
   let damageSection = "";
   if (success && isDamaging && atk.damage) {
     const chars = actor.system.characteristics;
+    // wdbc-ufns: «Х» подставляется той же текстовой заменой, что и «PR» —
+    // damage остаётся дайс-капабельной строкой для Roll() ниже, через
+    // resolvePropRating/mechFormulaTotalSafe (нет дайсов) её не провести.
+    let dmgRaw = String(atk.damage).replace(/\bPR\b/gi, damagePR);
+    if (xValue != null) dmgRaw = dmgRaw.replace(/Х/gi, String(xValue));
     const dmgFormula = applyDamageDiceMods(
-      resolveCharFormula(String(atk.damage).replace(/\bPR\b/gi, damagePR), chars, actor.system.corruptionBonus ?? 0),
+      resolveCharFormula(dmgRaw, chars, actor.system.corruptionBonus ?? 0),
       wp
     );
     // Число попаданий по подтипу Психострельбы (стр. 290). Считается по самому
@@ -831,11 +879,13 @@ export async function executePsychotest(actor, item, opts) {
       : "";
     try {
       const dtLabel = DAMAGE_TYPES[atk.damageType] || atk.damageType;
-      const pen     = atk.pen;
+      const pen     = atkPen;
       const hitLines = [];
+      let firstHitTotal = null;
       for (let h = 0; h < hits; h++) {
         const dmgRoll = await new Roll(dmgFormula).evaluate();
         allRolls.push(dmgRoll);
+        if (h === 0) firstHitTotal = dmgRoll.total;
         // Экстремальный урон (стр. 166-170) — тот же расчёт, что у оружия.
         const ext = await rollExtremeDamage(dmgRoll, { wp, damageType: atk.damageType, hitLocation: "Торс" });
         if (ext.exRoll) allRolls.push(ext.exRoll);
@@ -861,10 +911,24 @@ export async function executePsychotest(actor, item, opts) {
               </button>
             </div>${extStr}`);
       }
+      // wdbc-86rm: Дуга (wp.arcRating/arcDamage, module/combat/weapon-
+      // properties.mjs::aggregateAuto) у психосил не рисовала кнопку вовсе —
+      // buildTargetEffectButtons её не строит (arc: {auto:{arc:null}}, без
+      // targetEffect), настоящая кнопка .wh-arc-btn до сих пор жила только в
+      // attack-card.mjs (обычное оружие). Тот же гейт «первое попадание
+      // очереди достигло порога X» и та же разметка — обработчик в hooks.mjs
+      // (.wh-arc-btn) общий, ничего своего заводить не пришлось.
+      const arcBtn = (wp.arcRating > 0 && firstHitTotal != null && firstHitTotal >= wp.arcRating) ? `
+        <button class="wh-arc-btn" type="button"
+          data-arc-damage="${wp.arcDamage}" data-weapon-name="${item.name}"
+          data-attacker="${actor.name}" data-attacker-uuid="${actor.uuid}">
+          ⚡ Дуга: выберите поражённую цель → ближайшая вторая в 5м (${wp.arcDamage}(El) Pen ${wp.arcDamage})
+        </button>` : "";
       damageSection = `
           <div class="roll-damage-section">
             ${hitsNote ? `<div class="roll-threshold" style="font-size:0.82em;">${hitsNote}${profile ? ` Профиль «${atk.label}».` : ""} Вторичные цели (в 2м) — попадания в Торс.</div>` : (profile ? `<div class="roll-threshold" style="font-size:0.82em;">Профиль «${atk.label}».</div>` : "")}
             ${hitLines.join("")}
+            ${arcBtn}
           </div>`;
     } catch(e) {
       ui.notifications.warn(`Не удалось бросить урон психосилы: ${atk.damage}`);
@@ -893,8 +957,23 @@ export async function executePsychotest(actor, item, opts) {
   let attackPropsSection = "";
   if (success && isDamaging && atkProps.length) {
     const propBlock  = buildPropertyChatBlock(atkProps);
-    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false });
+    const effectBtns = buildTargetEffectButtons(atkProps, { hit: true, netDamageKnown: false, deg });
     attackPropsSection = (propBlock || "") + (effectBtns || "");
+  }
+
+  // wdbc-ufns: «Разместить Вихрь» — персистентная зона (module/regions/
+  // vortex-zone.mjs) для предметов с sys.vortexPersistent (сейчас только
+  // Vortex of Doom). xValue уже посчитан выше (sys.xFormula), тот же, что
+  // ушёл в damage/pen/Blast-rating этого попадания.
+  if (success && sys.vortexPersistent && xValue != null && xValue > 0) {
+    attackPropsSection += `
+      <div class="roll-threshold" style="margin-top:4px;">
+        <button type="button" class="wh-vortex-place-btn"
+          data-x-value="${xValue}" data-owner-uuid="${esc(actor.uuid)}"
+          data-item-uuid="${esc(item.uuid)}" data-item-name="${esc(item.name)}">
+          🌀 Разместить Вихрь (Х=${xValue})
+        </button>
+      </div>`;
   }
 
   // ── Феномен / Прорыв ──────────────────────────────────────────────────────
@@ -1008,6 +1087,7 @@ export async function executePsychotest(actor, item, opts) {
            data-char-key="${esc(sys.resistChar)}" data-mod="${resistMod}"
            data-discipline="${esc(sys.discipline || "")}"
            data-target-token-uuid="${esc(targetToken?.document?.uuid || "")}"
+           data-item-uuid="${esc(item.uuid)}"
            data-label="${esc(`Сопротивление: ${item.name}`)}">
            📨 Запросить тест Сопротивления у ${esc(targetActor.name)}
          </button>`
@@ -1239,6 +1319,20 @@ export function activatePsychicListeners(html, actor, { rollSkill, resolveSoulBu
       ev.currentTarget.checked = false;
       ui.notifications.warn("Саркофаг Дредноута: поддержание психосил заблокировано (нужна Матрица Осирис).");
       return;
+    }
+    // Заточение Силы (Fruit of Flesh/Плод Плоти, Тзинч, wdbc-1rno,
+    // apps/fruit-of-flesh.mjs::activateSpellLockFruit): цель психосилы
+    // выбрала провалить встречный тест на W и заточить атаку в плод — снять
+    // поддержание нельзя, пока плод (fromUuid по сохранённому uuid) ещё
+    // существует. Уничтоженный/удалённый плод просто не резолвится —
+    // отдельного хука на его удаление не нужно.
+    if (!turningOn) {
+      const lockUuid = item.getFlag?.("warhammer-dbc", "fruitOfFleshLockUuid");
+      if (lockUuid && await fromUuid(lockUuid)) {
+        ev.currentTarget.checked = true;
+        ui.notifications.warn("Заточена в Плоде Плоти — нельзя развеять, пока плод не уничтожен.");
+        return;
+      }
     }
     // wdbc-8m0x: снятие поддержания сбрасывает сохранённую степень успеха —
     // иначе на листе осталось бы висеть устаревшее число от прошлого каста.

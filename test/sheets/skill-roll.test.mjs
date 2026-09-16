@@ -427,14 +427,23 @@ describe("регрессия: тест Характеристики теперь
 function effectTarget(name, { items = [] } = {}) {
   const updates = [];
   const flags = {};
-  return {
+  const actor = {
     id: `${name}-stub`, name, items,
     system: { characteristics: {} },
+    effects: [],
     update: async data => { updates.push(data); return data; },
     getFlag: (ns, key) => flags[`${ns}.${key}`],
     setFlag: async (ns, key, value) => { flags[`${ns}.${key}`] = value; return value; },
+    // wdbc-tqfj: applyConditionWithDuration заводит ActiveEffect со сроком —
+    // минимальный стенд, тот же приём, что test/combat/condition-effects.test.mjs.
+    async createEmbeddedDocuments(_type, docs) {
+      const made = docs.map(d => ({ ...d, update: async () => {}, delete: async () => {} }));
+      actor.effects.push(...made);
+      return made;
+    },
     updates
   };
+  return actor;
 }
 
 describe("делегированный тест (wdbc-uez7): _showSkillRollDialog с effectTargetActor", () => {
@@ -505,6 +514,69 @@ describe("делегированный тест (wdbc-uez7): _rollSkill/_rollCha
     await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
     await promise;
     expect(captured.chat.at(-1)?.content).toContain("— за Пациент");
+  });
+});
+
+// wdbc-tqfj: onFailItemUuid — тот же genericTest-канал, что делегированный
+// тест выше, но с третьим полем: предмет-источник теста Сопротивления
+// (Choir of Poxes), чьи onTargetFail-записи накладывают Состояние
+// effectTargetActor ПРИ ПРОВАЛЕ. Само чтение Mechanics уже покрыто
+// test/rules/on-target-fail.test.mjs — здесь только проводка через
+// _rollCharacteristic/_runTest (actor-sheet.mjs).
+describe("onFailItemUuid (wdbc-tqfj): _rollCharacteristic доводит до applyOnTargetFailConditions", () => {
+  const realFromUuid = globalThis.fromUuid;
+  afterEach(() => { globalThis.fromUuid = realFromUuid; });
+
+  function choirItem() {
+    const item = {
+      uuid: "Item.choir", actor: null,
+      flags: { "warhammer-dbc": { mechanics: [{ id: "g1", operator: "AND", entries: [
+        { id: "e1", kind: "condition", condMode: "onTargetFail", condKey: "stunned", condLevel: "1" }
+      ] }] } }
+    };
+    globalThis.fromUuid = async u => (u === item.uuid ? item : null);
+    return item;
+  }
+
+  it("провал цели — карточка называет наложенное Состояние", async () => {
+    choirItem();
+    const target = effectTarget("Цель");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Сопротивление", "T", 45, "t", true,
+      { effectTargetActor: target, onFailItemUuid: "Item.choir" });
+    captured.nextRoll = 90; // 90 > 45 — провал
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    const content = captured.chat.at(-1)?.content;
+    expect(content).toContain("Провал");
+    expect(content).toContain("Состояние наложено");
+    expect(content).toContain("Оглушение");
+  });
+
+  it("успех цели — Mechanics предмета не читается, Состояние не накладывается", async () => {
+    let called = false;
+    globalThis.fromUuid = async () => { called = true; return null; };
+    const target = effectTarget("Цель");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Сопротивление", "T", 45, "t", true,
+      { effectTargetActor: target, onFailItemUuid: "Item.choir" });
+    captured.nextRoll = 10; // 10 <= 45 — успех
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    expect(called).toBe(false);
+    expect(captured.chat.at(-1)?.content).not.toContain("Состояние наложено");
+  });
+
+  it("без onFailItemUuid (обычный делегированный/личный тест Характеристики) — fromUuid не зовётся, поведение прежнее", async () => {
+    let called = false;
+    globalThis.fromUuid = async () => { called = true; return null; };
+    const target = effectTarget("Цель");
+    const s = sheet({});
+    const promise = s._rollCharacteristic("Воля", "WP", 45, "wp", true, { effectTargetActor: target });
+    captured.nextRoll = 90;
+    await captured.press("roll", fakeForm({ "#skill-target": "45", "#skill-modifier": "0" }));
+    await promise;
+    expect(called).toBe(false);
   });
 });
 
@@ -651,5 +723,99 @@ describe("авто-встречный тест (wdbc-j814)", () => {
 
     clearRuleSources();
     for (const [key, fn] of saved) registerRuleSource(key, fn);
+  });
+});
+
+// Уравнитель / The Equalizer (wdbc-1rno.1, вторая половина Дара): «противник
+// выступает атакующим во встречном тесте и его базовая Характеристика выше».
+// s.actor в этих тестах — «противник» по формулировке книги (тот, у кого
+// проверяют характеристику и кого штрафуют), targetActor — носитель Дара.
+// Переброс навязан БЕЗ СПРОСА тому, кто катает (s.actor), тем же приоритетом,
+// что уже даёт sheets/attack/dialog.mjs первой половине (атака). Здесь —
+// точка принудительного применения в общем диалоге Навыка/Характеристики
+// (_runTest, module/sheets/actor-sheet.mjs).
+describe("Уравнитель / The Equalizer (wdbc-1rno.1): навязанный переброс на встречном тесте Навыка/Характеристики", () => {
+  afterEach(() => {
+    globalThis.fromUuid = undefined;
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+  });
+
+  /** Цель на сцене, несущая реальную запись Уравнителя (rerollWho:"opponent"). */
+  function equalizerHolder(name, wpTotal) {
+    const opp = {
+      id: `${name}-stub`, uuid: `Actor.${name}-stub`, name,
+      system: { skills: {}, characteristics: { wp: { total: wpTotal } } },
+      items: [{ name: "The Equalizer / Уравнитель", flags: { "warhammer-dbc": { mechanics: [
+        { id: "g1", operator: "AND", entries: [
+          { id: "eq1", kind: "reroll", rerollScope: "all", rerollMode: "keepWorst", rerollWho: "opponent" }
+        ] }
+      ] } } }]
+    };
+    globalThis.fromUuid = async uuid => (uuid === opp.uuid ? opp : null);
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set([{ actor: opp }]) };
+    return opp;
+  }
+
+  // Я (s.actor, катающий этот тест) играю роль «противника» по формулировке
+  // книги — того, кого штрафует чужой Уравнитель. Штраф падает на МЕНЯ, когда
+  // МОЯ базовая WP выше, чем у цели (носителя Дара) — ровно как в книге:
+  // «противник, чья базовая Характеристика выше», а не наоборот.
+  it("моя базовая WP выше цели (носителя Дара), тест Встречный — переброс форсируется (keepWorst), без моей галочки Кубика", async () => {
+    equalizerHolder("Слабак", 20);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.dice = [10, 90]; // keepWorst должен оставить 90, не 10
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100", "1d100"]);
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>90</b>");
+  });
+
+  it("моя базовая WP не выше цели — переброс НЕ навязывается, один бросок", async () => {
+    equalizerHolder("Мортарион", 60);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.nextRoll = 33;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100"]);
+  });
+
+  it("тест НЕ Встречный (kind base) — переброс не навязывается, даже если моя WP выше цели (RAW ограничивает встречным)", async () => {
+    equalizerHolder("Слабак", 20);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.nextRoll = 33;
+    await captured.press("roll", fakeForm({ "#skill-target": "40", "#skill-modifier": "0" }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100"]);
+  });
+
+  it("навязанный переброс важнее МОЕГО собственного выбора Кубика (Преимущество/keepBest проигрывает)", async () => {
+    equalizerHolder("Слабак", 20);
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.dice = [10, 90]; // keepBest (моё Преимущество) взял бы 10; форсированный keepWorst берёт 90
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }, { ".dice-mode-opt:checked": [{ value: "advantage" }] }));
+    await promise;
+    expect(captured.chat.at(-1)?.content).toContain("Бросок: <b>90</b>");
+  });
+
+  it("на сцене нет цели — переброс не навязывается (ctx.targetActor пуст)", async () => {
+    globalThis.game.user = { ...globalThis.game.user, targets: new Set() };
+    const s = sheet({ characteristics: { wp: { total: 40 } } });
+    const promise = s._rollSkill("Запугивание", 40, "wp", { skill: "intimidate" });
+    captured.nextRoll = 33;
+    await captured.press("roll", fakeForm({
+      "#skill-target": "40", "#skill-modifier": "0", "#test-kind": "opposed"
+    }));
+    await promise;
+    expect(captured.rolls).toEqual(["1d100"]);
   });
 });

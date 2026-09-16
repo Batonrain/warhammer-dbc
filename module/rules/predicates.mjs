@@ -135,6 +135,20 @@ function wearsSealedArmour(actor) {
     (i?.system?.properties ?? []).includes("sealed"));
 }
 
+// Респиратор/Противогаз (wdbc-1rno, Sweet Mist/Сладкий Туман) — предметы
+// gear в Головном слоте (system.gearCategory:"head"), НЕ armor и не несут
+// свойства "sealed" (проверено по packs-src — оба JSON без system.properties
+// вовсе, только testMod T+30 и текст "считается шлемом со свойством Sealed",
+// не реальное поле). Название — единственный надёжный признак: gearCategory
+// "head" сам по себе слишком широк (шлемы/наушники/визоры и т.п.).
+const GAS_PROTECTION_NAMES = ["Respirator", "Gas Mask"];
+
+/** Носит ли актор надетый Респиратор/Противогаз (иммунитет к вдыхаемому газу). */
+export function wearsGasProtection(actor) {
+  return (actor?.items ?? []).some(i =>
+    i?.type === "gear" && i?.system?.equipped && GAS_PROTECTION_NAMES.some(n => itemHasName(i, n)));
+}
+
 /**
  * Сус-ан Мембрана — орган Геносемени Гвардии Ворона/Призраков Смерти
  * (wdbc-l07y, дубль был в rules/death-save.mjs и apps/sus-an-heal.mjs).

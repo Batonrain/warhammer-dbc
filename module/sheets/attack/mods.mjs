@@ -16,6 +16,7 @@ import { meleeContactCount, hasHighGround } from "../../combat/tactical-map.mjs"
 import { rangeBandKey }           from "../../rules/tactical-map.mjs";
 import { getTerrainInfoForToken } from "../../regions/difficult-terrain.mjs";
 import { actorHasAspectPath }     from "../../constants/aeldari-paths.mjs";
+import { hasBlackEyesDarknessImmunity } from "../../rules/black-eyes.mjs";
 /**
  * @param {object} v состояние броска: оружие, токены, замеренная дистанция
  * @returns {{commonMods: object[], specificMods: object[], charSwapWhy: string[], bandKey: string|null}}
@@ -42,9 +43,12 @@ export function situationalMods(v) {
 
   const commonMods = [
     { label: "Усталость",     value: -10, autoCheck: hasFatigue },
-    { label: "Слабый свет",   value: -10 },
-    { label: "Дым / туман",   value: isMelee ? -10 : -20 },
-    { label: "Тьма",          value: isMelee ? -20 : -30 },
+    // visionPenalty (wdbc-1rno.1, Чёрные Глаза/Black Eyes, Cor 60+) — три
+    // галочки ниже гасятся у АТАКУЮЩЕГО (не у цели, поэтому не immuneFlag —
+    // тот гасит только возможности ЦЕЛИ, см. цикл ниже).
+    { label: "Слабый свет",   value: -10, visionPenalty: true },
+    { label: "Дым / туман",   value: isMelee ? -10 : -20, visionPenalty: true },
+    { label: "Тьма",          value: isMelee ? -20 : -30, visionPenalty: true },
     { label: "Ослеплён",      value: isMelee ? -30 : -99, autofail: !isMelee, autoCheck: isBlinded },
     // Потеря глаз (частичная): −10 на BS и «тесты определения расстояний»
     // (последнее не автоматизировано — нет отдельного типа теста «на глаз»)
@@ -79,6 +83,17 @@ export function situationalMods(v) {
     m.value  = 0;
     m.immune = true;
     m.note   = `${attackCtx.targetActor.name}: ${why[0]}`;
+  }
+  // Чёрные Глаза / Black Eyes (wdbc-1rno.1, rules/black-eyes.mjs): Cor 60+ —
+  // АТАКУЮЩИЙ видит сквозь дым/тьму/слабый свет, штрафы гасятся у него
+  // самого (в отличие от immuneFlag выше, который гасит возможности ЦЕЛИ).
+  if (hasBlackEyesDarknessImmunity(actor)) {
+    for (const m of commonMods) {
+      if (!m.visionPenalty) continue;
+      m.value  = 0;
+      m.immune = true;
+      m.note   = "Чёрные Глаза: видит сквозь тьму/дым/слабый свет (Cor 60+)";
+    }
   }
   // Aspect (wdbc-8b5/wdbc-28ld, стр. 168): без соответствующего Пути — −30 на
   // тесты использования. wProps хранит текст рейтинга (не число, см. aspect

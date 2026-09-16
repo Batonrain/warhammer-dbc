@@ -699,6 +699,32 @@ prose-mirror.item-textarea button.toggle:enabled { display: block; }
   text-align: center;
   padding: 0 2px;
 }
+/* wdbc-zlx7: порог Успехов (N+) и переключатель «×Размер» у свойства атаки
+   психосилы — тот же приём ширины, что у .wprop-rating выше, plus flex-обёртка,
+   чтобы чекбокс не переносился на свою строку внутри узкого inline-чипа. */
+.warhammer-dbc .wprop-req-successes-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+.warhammer-dbc .wprop-required-successes {
+  width: 30px;
+  background: var(--wh-input-bg);
+  border: 1px solid var(--wh-border);
+  color: var(--wh-text);
+  font-size: 0.95em;
+  text-align: center;
+  padding: 0 2px;
+}
+.warhammer-dbc .wprop-req-successes-wrap label {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+}
+
 /* wdbc-5kd: X доп. типа психосилы стал text (принимает формулу «PR+1» и т.п.),
    а не number — без явной ширины браузерный text-input растянул бы чип
    .wprop-chip шире, чем прежний узкий number (тот же повод, что у

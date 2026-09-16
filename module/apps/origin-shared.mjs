@@ -19,6 +19,36 @@ const FLAG = "warhammer-dbc";
 const GRANT = "originGrant";           // помечает всё выданное (для отката)
 
 /**
+ * Замок «clear-потом-grant» на актор+тег (wdbc-gbpe).
+ *
+ * applyHomeworld/applyHomeworldPicks/applyDivinationPicks и подобные читают
+ * «есть ли уже носитель» (clearXxx), потом создают новый — без замка второй
+ * параллельный вызов (быстрая повторная смена дропдауна, медленная сеть,
+ * character-wizard.mjs раньше звал через .then(...) без await вовсе) читает
+ * «носителя ещё нет» РАНЬШЕ, чем первый вызов успевал его создать/снять — оба
+ * создают свой предмет, актор получает ДВА носителя одного типа. Лист их не
+ * различает (везде `.find()` — виден только первый), задвоенные бонусы видны
+ * только на вкладке ЭФФЕКТЫ (она честно перечисляет все ActiveEffect).
+ *
+ * Не запрет параллельного вызова, а ОЧЕРЕДЬ: второй вызов дожидается, пока
+ * первый (clear+grant целиком) закончится, и только тогда стартует сам —
+ * тот же результат, что у пользователя, terpelivo щёлкающего раз за разом,
+ * просто без гонки между ними. Ключ — actor.uuid+tag, не только actor: смена
+ * Родного мира и смена Предсказания на ОДНОМ акторе друг другу не мешают.
+ */
+const originLocks = new Map();
+export async function withOriginLock(actor, tag, fn) {
+  const key = `${actor?.uuid ?? actor?.id ?? ""}:${tag}`;
+  const prior = originLocks.get(key) ?? Promise.resolve();
+  // Предыдущий reject гасится ЗДЕСЬ (не должен блокировать очередь навечно),
+  // но вызывающий ЭТОГО withOriginLock всё равно видит свою собственную
+  // ошибку — run ниже её не глотает.
+  const queued = prior.catch(() => {}).then(fn);
+  originLocks.set(key, queued);
+  return queued;
+}
+
+/**
  * [{stat, value}, ...] → одна И-группа Конструктора (kind:"characteristic",
  * field:"total" — обычный +X к значению, как раньше делал charValueBonuses,
  * см. effect-keys.mjs). Общий для Родных миров и Предсказаний: оба выдают
@@ -350,14 +380,50 @@ export async function applyGrants(actor, { def, picks = {}, tag, owner, sourceLa
   return lines;
 }
 
-/** Снимает предмет-источник и всё, что он выдал, возвращая ранги навыков. */
+/**
+ * Снимает предмет-источник и всё, что он выдал, возвращая ранги навыков.
+ *
+ * wdbc-gbpe: ownerItem — это то, что нашёл вызывающий (`actorXItem(actor)`,
+ * почти везде голый `.find()` — берёт только ПЕРВЫЙ предмет этого типа).
+ * Из-за гонки в применении (applyHomeworld/applyLegion и т.п. делают «clear,
+ * потом grant» без замка от повторного/параллельного входа — конкретный
+ * пример: character-wizard.mjs звал applyHomeworldPicks(...).then(...) без
+ * await) на акторе иногда оказывается ВТОРОЙ, «осиротевший» предмет того же
+ * типа: лист его не показывает (тот же `.find()` в дропдауне видит только
+ * первый), но вкладка ЭФФЕКТЫ честно показывает оба набора бонусов —
+ * пользователь видел это как «одни и те же значения по 2-3 раза».
+ *
+ * Носители двух разных форм в этой кодовой базе:
+ *   - homeworld/divination — сам носитель НИЧЕМ не помечен (flags без
+ *     originGrant), только то, что он выдал, несёт GRANT===tag. Сирота
+ *     такого вида НЕ попадает ни в granted (не помечен), ни (раньше) в ids —
+ *     это и есть дыра wdbc-gbpe.
+ *   - race/subrace/archetype — САМ носитель тоже несёт GRANT===tag (см.
+ *     races.mjs::applyRace, `data.flags[FLAG][GRANT] = tag`). Через это его
+ *     уже ловит granted-фильтр ниже, сколько бы копий ни возникло — чинить
+ *     здесь нечего, тег и есть источник истины.
+ *
+ * ВАЖНО: race/racePast — оба хранятся предметами ОДНОГО item.type ("race"),
+ * различаясь только тегом (races.mjs: «Прошлое Иннари/Арлекина кладёт
+ * документ той же расы»). Поэтому чистить «любой предмет того же типа, что
+ * ownerItem» нельзя — задело бы чужой тег того же типа. Сироты (untagged)
+ * ищутся ТОЛЬКО когда сам ownerItem тоже untagged (homeworld/divination) —
+ * self-тегированный ownerItem (race/subrace/archetype) эту ветку не запускает.
+ */
 export async function clearGrantedBy(actor, tag, ownerItem) {
+  const ownerIsUntagged = !!ownerItem && !ownerItem.getFlag(FLAG, GRANT);
+  const orphansSameType = ownerIsUntagged
+    ? actor.items.filter(i => i.type === ownerItem.type && !i.getFlag(FLAG, GRANT))
+    : [];
+  const ownerItems = ownerItem ? [ownerItem, ...orphansSameType.filter(i => i.id !== ownerItem.id)] : [];
   const granted = actor.items.filter(i => i.getFlag(FLAG, GRANT) === tag);
-  const ids = [...new Set([...(ownerItem ? [ownerItem.id] : []), ...granted.map(i => i.id)])];
+  const ids = [...new Set([...ownerItems.map(i => i.id), ...granted.map(i => i.id)])];
 
   const update = {};
-  for (const [key, rec] of Object.entries(ownerItem?.getFlag(FLAG, "skillRanks") || {})) {
-    if (actor.system.skills?.[key]?.rank === rec.to) update[`system.skills.${key}.rank`] = rec.from;
+  for (const owner of ownerItems) {
+    for (const [key, rec] of Object.entries(owner?.getFlag(FLAG, "skillRanks") || {})) {
+      if (actor.system.skills?.[key]?.rank === rec.to) update[`system.skills.${key}.rank`] = rec.from;
+    }
   }
   const groups = foundry.utils.deepClone(actor.system.groupSkills || {});
   let touched = false;
@@ -368,7 +434,7 @@ export async function clearGrantedBy(actor, tag, ownerItem) {
   }
   if (touched) update["system.groupSkills"] = groups;
 
-  const wb = Number(ownerItem?.getFlag(FLAG, "woundBonus")) || 0;
+  const wb = ownerItems.reduce((sum, owner) => sum + (Number(owner?.getFlag(FLAG, "woundBonus")) || 0), 0);
   if (wb) update["system.wounds.max"] = Math.max(0, (Number(actor.system.wounds?.max) || 0) - wb);
 
   if (Object.keys(update).length) await actor.update(update);
